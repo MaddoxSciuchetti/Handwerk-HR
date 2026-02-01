@@ -1,18 +1,14 @@
+import { useState } from "react";
 import { Button } from "../ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuPortal,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { FileModal } from "../file-exports/FileExport-Modal";
+import { createPortal } from "react-dom";
 
 interface ToDoItem {
   item_value: number;
@@ -31,46 +27,61 @@ export function Worker_Item({
   gotopage,
   onRemove,
 }: ToDoItem) {
+  const [modal, setModal] = useState<boolean>(false);
+
   return (
-    <tr>
-      <td className="text-xl">{item}</td>
+    <>
+      <tr>
+        <td className="text-xl">{item}</td>
 
-      <td
-        className={`${
-          form_type === "Onboarding"
-            ? "bg-blue-200 font-bold text-blue-400! p-0 m-0 outline "
-            : "bg-fuchsia-200 font-bold text-pink-400! rounded-2xl p-0 m-0"
-        }`}
-        lang="en"
-      >
-        {form_type}
-      </td>
-      <td>
-        <Button
-          onClick={() => gotopage(item_value, form_type)}
-          variant="outline"
-          size="sm"
+        <td
+          className={`${
+            form_type === "Onboarding"
+              ? "bg-blue-200 font-bold text-blue-400! p-0 m-0 outline "
+              : "bg-fuchsia-200 font-bold text-pink-400! rounded-2xl p-0 m-0"
+          }`}
+          lang="en"
         >
-          Live thread
-        </Button>
-      </td>
-      <th>8/10</th>
+          {form_type}
+        </td>
+        <td>
+          <Button
+            onClick={() => gotopage(item_value, form_type)}
+            variant="outline"
+            size="sm"
+          >
+            Live thread
+          </Button>
+        </td>
+        <th>8/10</th>
 
-      <td>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline">XXX</Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-40" align="start">
-            <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => onRemove(item_value)}>
-                Löschen
-              </DropdownMenuItem>
-              <DropdownMenuItem>Export</DropdownMenuItem>
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </td>
-    </tr>
+        <td>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">XXX</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-40" align="start">
+              <DropdownMenuGroup>
+                <DropdownMenuItem onClick={() => onRemove(item_value)}>
+                  Löschen
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setModal(true)}>
+                  Export
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </td>
+      </tr>
+      {modal &&
+        createPortal(
+          <FileModal
+            id={item_value}
+            onClose={setModal}
+            form_type={form_type}
+          />,
+          document.body,
+        )}
+    </>
   );
 }

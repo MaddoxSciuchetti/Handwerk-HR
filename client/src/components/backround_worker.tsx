@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchFileData } from "@/lib/api";
 
 interface Worker_Backround {
-  id: string;
+  id: number;
 }
 
 export type File_Request = {
@@ -18,21 +18,20 @@ export type File_Request = {
   uploaded_at: Date;
 };
 
+export const fileIcon = (content_type: string) => {
+  if (content_type.startsWith("/image")) return "🖼️";
+  if (content_type.includes("pdf")) return "📄";
+  if (content_type.includes("document") || content_type.includes("word"))
+    return "📝";
+  if (content_type.includes("excel") || content_type.includes("spreadsheet"))
+    return "📊";
+};
+
+export const getFileName = (url: string, originalName: string) => {
+  return originalName || url.split("/").pop() || "unknown file";
+};
 function Worker_Backround({ id }: Worker_Backround) {
   const [setModal, setModalState] = useState<boolean>(false);
-
-  const fileIcon = (content_type: string) => {
-    if (content_type.startsWith("/image")) return "🖼️";
-    if (content_type.includes("pdf")) return "📄";
-    if (content_type.includes("document") || content_type.includes("word"))
-      return "📝";
-    if (content_type.includes("excel") || content_type.includes("spreadsheet"))
-      return "📊";
-  };
-
-  const getFileName = (url: string, originalName: string) => {
-    return originalName || url.split("/").pop() || "unknown file";
-  };
 
   const {
     data: fetchFiles,

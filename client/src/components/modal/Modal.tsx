@@ -34,7 +34,7 @@ const Modal: React.FC<ModalProps> = ({ toggleModal, onSuccess }) => {
               checked={selectedOption === "Onboarding"}
               onChange={(e) =>
                 setSelectedOption(
-                  e.target.value as "Onboarding" | "Offboarding"
+                  e.target.value as "Onboarding" | "Offboarding",
                 )
               }
             />
@@ -47,7 +47,7 @@ const Modal: React.FC<ModalProps> = ({ toggleModal, onSuccess }) => {
               checked={selectedOption === "Offboarding"}
               onChange={(e) =>
                 setSelectedOption(
-                  e.target.value as "Onboarding" | "Offboarding"
+                  e.target.value as "Onboarding" | "Offboarding",
                 )
               }
             />

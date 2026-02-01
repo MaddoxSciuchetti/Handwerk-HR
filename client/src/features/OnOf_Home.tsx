@@ -141,14 +141,16 @@ function OnOf_Home() {
             </Button>
           </div>
 
-          <table>
-            <tr>
-              <th>Handwerker</th>
-              <th>Status</th>
-              <th>Bearbeiten</th>
-              <th>Offene Aufgaben</th>
-              <th>Aktionen</th>
-            </tr>
+          <table className="w-full">
+            <thead>
+              <tr>
+                <th>Handwerker</th>
+                <th>Status</th>
+                <th>Bearbeiten</th>
+                <th>Offene Aufgaben</th>
+                <th>Aktionen</th>
+              </tr>
+            </thead>
             <tbody>
               {data?.map((task: OffboardingItem) => (
                 <Worker_Item
