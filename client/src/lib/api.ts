@@ -95,7 +95,7 @@ type FileResponse = {
 
 export const postFile = async (
   files: File[],
-  id: string,
+  id: number,
 ): Promise<FileResponse> => {
   const formData = new FormData();
   files.forEach((file) => formData.append("files", file));
@@ -107,6 +107,13 @@ export const postFile = async (
   return response;
 };
 
-export const fetchFileData = async (id: string): Promise<File_Request[]> => {
+export const fetchFileData = async (id: number): Promise<File_Request[]> => {
   return API.get(`/offboarding/getFileData/file/${id}`);
+};
+
+export const fetchProcessData = async (
+  id: number,
+  form_type: string,
+): Promise<any> => {
+  return API.get(`offboarding/user/${id}?param1=${form_type}`);
 };

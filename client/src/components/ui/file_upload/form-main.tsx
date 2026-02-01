@@ -15,7 +15,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { postFile } from "@/lib/api";
 
 interface FileUploadProps01 {
-  id: string;
+  id: number;
   setModal: (val: boolean) => void;
 }
 

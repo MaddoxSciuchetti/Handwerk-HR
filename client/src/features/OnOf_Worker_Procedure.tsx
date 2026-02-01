@@ -11,7 +11,7 @@ import useAuth from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import Worker_Backround from "@/components/backround_worker";
 
-type form_field = {
+export type form_field = {
   id: number;
   form_field_id: number;
   description: string;
@@ -19,7 +19,7 @@ type form_field = {
   edit: string;
 };
 
-type api_Response = {
+export type api_Response = {
   user: {
     id: number;
     name: string;
@@ -39,7 +39,7 @@ const formSchema = z.object({
 });
 
 type OffboardingFormProps = {
-  id: string;
+  id: number;
   search: { param1: string }; // match validateSearch
 };
 
