@@ -9,7 +9,6 @@ import { APIResponse } from "../types/api_response";
 import PreviewComponent from "@/components/worker_components/preivew_component";
 import useAuth from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import FileUpload01 from "@/components/ui/file_upload/form-main";
 import Worker_Backround from "@/components/backround_worker";
 
 type form_field = {
@@ -147,7 +146,9 @@ const OnOf_Worker_Procedure: React.FC<OffboardingFormProps> = ({
     if (!res.ok) {
       throw new Error("response not ok");
     }
+    console.log("=== Fetch formData === ");
     const response = await res.json();
+    console.log(response);
 
     return response;
   }

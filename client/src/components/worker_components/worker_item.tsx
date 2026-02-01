@@ -16,6 +16,7 @@ import { Progress } from "@/components/ui/progress";
 
 interface ToDoItem {
   item_value: number;
+
   item: string;
   form_type: string;
   gotopage: (taskId: number, form_type: any) => void;
@@ -25,6 +26,7 @@ interface ToDoItem {
 export function Worker_Item({
   form_type,
   item_value,
+
   item,
   gotopage,
   onRemove,
