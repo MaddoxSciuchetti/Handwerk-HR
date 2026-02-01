@@ -141,20 +141,30 @@ function OnOf_Home() {
             </Button>
           </div>
 
+          <table>
+            <tr>
+              <th>Handwerker</th>
+              <th>Status</th>
+              <th>Bearbeiten</th>
+              <th>Offene Aufgaben</th>
+              <th>Aktionen</th>
+            </tr>
+            <tbody>
+              {data?.map((task: OffboardingItem) => (
+                <Worker_Item
+                  key={task.id}
+                  item_value={task.id}
+                  // somewhere here the wrong id is being passed.
+                  form_type={getFirstFormType(task)}
+                  item={task.vorname}
+                  onRemove={removeTask}
+                  gotopage={handleNavigate}
+                />
+              ))}
+            </tbody>
+          </table>
           {/* fix any here */}
-          <div className="w-full px-4">
-            {data?.map((task: OffboardingItem) => (
-              <Worker_Item
-                key={task.id}
-                item_value={task.id}
-                // somewhere here the wrong id is being passed.
-                form_type={getFirstFormType(task)}
-                item={task.vorname}
-                onRemove={removeTask}
-                gotopage={handleNavigate}
-              />
-            ))}
-          </div>
+          <div className="w-full px-4"></div>
 
           {modal && (
             <div className="fixed inset-0 outline ">
