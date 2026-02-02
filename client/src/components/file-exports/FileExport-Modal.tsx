@@ -15,8 +15,9 @@ import { PDFViewer } from "@react-pdf/renderer";
 import { Button } from "../ui/button";
 import { api_Response, form_field } from "@/features/OnOf_Worker_Procedure";
 import { success } from "zod";
+import { useProcessData } from "@/contexts/ProcessDataContext";
 
-type UpdatedAiResponse = Omit<api_Response, "name"> & {
+export type UpdatedAiResponse = Omit<api_Response, "name"> & {
   user: {
     id: number;
     vorname: string;
@@ -110,10 +111,9 @@ interface FileModalType {
 export function FileModal({ id, onClose, form_type }: FileModalType) {
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const { data, isLoading, error } = useQuery<UpdatedAiResponse, Error>({
-    queryKey: ["exportFile", id],
-    queryFn: () => fetchProcessData(id, form_type),
-  });
+  const { data, isLoading, error } = useProcessData(id, form_type);
+  console.log("=== DATA === ");
+  console.log(data);
 
   if (isLoading) {
     return (

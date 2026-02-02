@@ -143,6 +143,7 @@ const OnOf_Worker_Procedure: React.FC<OffboardingFormProps> = ({
     const res = await fetch(
       `${API_URL}/offboarding/user/${id}?param1=${search.param1}`,
     );
+
     if (!res.ok) {
       throw new Error("response not ok");
     }

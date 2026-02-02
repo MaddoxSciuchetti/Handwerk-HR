@@ -12,6 +12,7 @@ import {
   insertHistoryData,
 } from "@/src/services/on_off_boarding.auth";
 import { generatePresignedUrl, uploadFileToS3 } from "../config/aws";
+import PDFDocument from "pdfkit";
 export const postOffboardingData = async (req: Request, res: Response) => {
   // validate the request
   try {
@@ -206,4 +207,15 @@ export const getFileData = async (req: Request, res: Response) => {
   } catch (error) {
     console.log(error);
   }
+};
+
+export const getProcessData = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id;
+
+    const formData = await getUserFormData(id);
+    console.log("=== FORMDATA ====");
+    console.log(formData);
+    return res.status(200).send({ formData });
+  } catch (error) {}
 };

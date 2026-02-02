@@ -9,6 +9,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { FileModal } from "../file-exports/FileExport-Modal";
 import { createPortal } from "react-dom";
+import { useQuery } from "@tanstack/react-query";
+import {
+  useProcessData,
+  useProcessDataContext,
+} from "@/contexts/ProcessDataContext";
 
 interface ToDoItem {
   item_value: number;
@@ -28,6 +33,21 @@ export function Worker_Item({
   onRemove,
 }: ToDoItem) {
   const [modal, setModal] = useState<boolean>(false);
+
+  // const {
+  //   data: getScore,
+  //   isLoading,
+  //   error,
+  // } = useQuery({
+  //   queryKey: ["getScore", item_value],
+  //   queryFn: () => fetchScoreData,
+  // });
+
+  const {
+    data: processData,
+    isLoading: processLoading,
+    completedTasksCount,
+  } = useProcessData(item_value, form_type);
 
   return (
     <>
@@ -53,7 +73,12 @@ export function Worker_Item({
             Live thread
           </Button>
         </td>
-        <th>8/10</th>
+
+        <th>
+          {processLoading
+            ? "..."
+            : `${completedTasksCount}/${processData?.form?.fields?.length || 0}`}
+        </th>
 
         <td>
           <DropdownMenu>

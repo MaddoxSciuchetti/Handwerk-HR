@@ -7,11 +7,14 @@ import { RouterProvider } from "@tanstack/react-router";
 import queryClient from "./config/query.client";
 import { ChakraProvider } from "@chakra-ui/react";
 import { Provider } from "@/components/ui/provider";
+import { ProcessDataProvider } from "./contexts/ProcessDataContext";
 
 createRoot(document.getElementById("root")!).render(
   <Provider defaultTheme="light">
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <ProcessDataProvider>
+        <RouterProvider router={router} />
+      </ProcessDataProvider>
     </QueryClientProvider>
   </Provider>,
 );

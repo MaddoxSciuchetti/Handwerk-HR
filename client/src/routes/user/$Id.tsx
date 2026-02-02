@@ -9,9 +9,10 @@ export const Route = createFileRoute("/user/$Id")({
 });
 
 function UserPage() {
-  const Id = +Route.useParams();
+  const { Id } = Route.useParams();
+  let id = parseInt(Id);
 
   const search = Route.useSearch();
 
-  return <OnOf_Worker_Procedure id={Id} search={search} />;
+  return <OnOf_Worker_Procedure id={id} search={search} />;
 }

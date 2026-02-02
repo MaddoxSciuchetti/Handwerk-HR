@@ -52,9 +52,9 @@ function Worker_Backround({ id }: Worker_Backround) {
 
         {fetchFiles && (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
-            {fetchFiles.map((file) => (
+            {fetchFiles.map((file, index) => (
               <div
-                key={file.id}
+                key={index}
                 className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition-colors"
                 onClick={() => window.open(file.cloud_url, "_blank")}
               >
