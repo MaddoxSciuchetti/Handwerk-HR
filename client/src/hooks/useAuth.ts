@@ -9,6 +9,7 @@ type User = {
   id: string;
   updatedAt: string;
   verified: boolean;
+  user_permission: "CHEF" | "MITARBEITER";
 };
 
 type Auth = {

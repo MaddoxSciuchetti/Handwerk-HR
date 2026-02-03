@@ -14,6 +14,6 @@ const useSessions = () => {
     throw new Error("userSession Error");
   }
 
-  return { sessions, ...rest };
+  return { sessions: sessions || [], ...rest };
 };
 export default useSessions;

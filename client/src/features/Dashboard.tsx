@@ -1,7 +1,11 @@
+import useAuth from "@/hooks/useAuth";
+
 function Dashboard() {
+  const { user, isError } = useAuth();
+
   return (
     <>
-      <h1>This is the main dashboard:</h1>;<h1>Place holder for Data</h1>
+      <div>worker data</div>
     </>
   );
 }
