@@ -19,7 +19,6 @@ import { Route as UserIdRouteImport } from './routes/user/$Id'
 import { Route as ProfileProfileRouteImport } from './routes/profile/profile'
 import { Route as PasswordResetRouteImport } from './routes/password/reset'
 import { Route as PasswordForgotRouteImport } from './routes/password/forgot'
-import { Route as DashboardEmployeeRouteImport } from './routes/dashboard/employee'
 import { Route as DashboardCeoRouteImport } from './routes/dashboard/ceo'
 import { Route as EmailVerifyCodeRouteImport } from './routes/email/verify/$code'
 
@@ -73,11 +72,6 @@ const PasswordForgotRoute = PasswordForgotRouteImport.update({
   path: '/password/forgot',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardEmployeeRoute = DashboardEmployeeRouteImport.update({
-  id: '/dashboard/employee',
-  path: '/dashboard/employee',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const DashboardCeoRoute = DashboardCeoRouteImport.update({
   id: '/dashboard/ceo',
   path: '/dashboard/ceo',
@@ -97,7 +91,6 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/dashboard/ceo': typeof DashboardCeoRoute
-  '/dashboard/employee': typeof DashboardEmployeeRoute
   '/password/forgot': typeof PasswordForgotRoute
   '/password/reset': typeof PasswordResetRoute
   '/profile/profile': typeof ProfileProfileRoute
@@ -112,7 +105,6 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/dashboard/ceo': typeof DashboardCeoRoute
-  '/dashboard/employee': typeof DashboardEmployeeRoute
   '/password/forgot': typeof PasswordForgotRoute
   '/password/reset': typeof PasswordResetRoute
   '/profile/profile': typeof ProfileProfileRoute
@@ -128,7 +120,6 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/dashboard/ceo': typeof DashboardCeoRoute
-  '/dashboard/employee': typeof DashboardEmployeeRoute
   '/password/forgot': typeof PasswordForgotRoute
   '/password/reset': typeof PasswordResetRoute
   '/profile/profile': typeof ProfileProfileRoute
@@ -145,7 +136,6 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/dashboard/ceo'
-    | '/dashboard/employee'
     | '/password/forgot'
     | '/password/reset'
     | '/profile/profile'
@@ -160,7 +150,6 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/dashboard/ceo'
-    | '/dashboard/employee'
     | '/password/forgot'
     | '/password/reset'
     | '/profile/profile'
@@ -175,7 +164,6 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/dashboard/ceo'
-    | '/dashboard/employee'
     | '/password/forgot'
     | '/password/reset'
     | '/profile/profile'
@@ -191,7 +179,6 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
   DashboardCeoRoute: typeof DashboardCeoRoute
-  DashboardEmployeeRoute: typeof DashboardEmployeeRoute
   PasswordForgotRoute: typeof PasswordForgotRoute
   PasswordResetRoute: typeof PasswordResetRoute
   UserIdRoute: typeof UserIdRoute
@@ -270,13 +257,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PasswordForgotRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard/employee': {
-      id: '/dashboard/employee'
-      path: '/dashboard/employee'
-      fullPath: '/dashboard/employee'
-      preLoaderRoute: typeof DashboardEmployeeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/dashboard/ceo': {
       id: '/dashboard/ceo'
       path: '/dashboard/ceo'
@@ -313,7 +293,6 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
   DashboardCeoRoute: DashboardCeoRoute,
-  DashboardEmployeeRoute: DashboardEmployeeRoute,
   PasswordForgotRoute: PasswordForgotRoute,
   PasswordResetRoute: PasswordResetRoute,
   UserIdRoute: UserIdRoute,

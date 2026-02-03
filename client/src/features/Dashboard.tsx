@@ -5,7 +5,7 @@ function Dashboard() {
 
   return (
     <>
-      <div>worker data</div>
+      <div>employee information not protected route</div>
     </>
   );
 }
