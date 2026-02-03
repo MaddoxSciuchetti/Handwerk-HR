@@ -20,9 +20,11 @@ model employee_forms {
 model form_fields {
   form_field_id Int           @id @default(autoincrement())
   description   String?
+  owner String @default("cmknti1f800028tmmhf5u5627")
   order_index   Int?
   timestamp     DateTime?     @default(now()) @db.Timestamp(6)
   form_inputs   form_inputs[]
+
 }
 
 model form_inputs {
@@ -72,6 +74,7 @@ model User {
   email String @unique @db.Citext
   password String
   verified Boolean @default(false)
+  user_permission UserRole @default(MITARBEITER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -120,6 +123,9 @@ model WorkerFiles {
 
   employee_forms employee_forms @relation(fields: [employee_form_id], references: [id], onDelete: Cascade)
 
+}
 
-
+enum UserRole {
+  MITARBEITER
+  CHEF
 }

@@ -1,4 +1,11 @@
-import { Calendar, Home, Inbox, Search, Settings } from "lucide-react";
+import {
+  Calendar,
+  Home,
+  Inbox,
+  Search,
+  Settings,
+  HandMetal,
+} from "lucide-react";
 
 import {
   Sidebar,
@@ -13,6 +20,8 @@ import {
 } from "@/components/ui/sidebar";
 import { useNavigate } from "react-router-dom";
 import UserMenu from "./UserMenu";
+import useAuth from "@/hooks/useAuth";
+import { useEffect, useMemo, useState } from "react";
 
 // Menu items.
 
@@ -23,13 +32,37 @@ const items = [
     icon: Home,
   },
   {
+    title: "Mitarbeiter",
+    to: "/dashboard/ceo",
+    icon: HandMetal,
+    requiredPermission: "CHEF",
+  },
+  {
     title: "Handwerker",
     to: "/handwerker",
     icon: Inbox,
   },
 ];
 
-export function AppSidebar() {
+export function AppSidebar({}) {
+  const { user, isError } = useAuth();
+
+  const hasPermission = useMemo(() => {
+    return (requiredPermission: string | undefined) => {
+      if (!requiredPermission) return true;
+      if (user?.user_permission !== requiredPermission) return false;
+      return true;
+    };
+  }, [user?.user_permission]);
+
+  const accessibleItems = useMemo(() => {
+    if (!user) return [];
+    return items.filter((item) => hasPermission(item.requiredPermission));
+  }, [hasPermission]);
+
+  if (user === undefined) {
+    return <div>The user is undefined</div>;
+  }
   return (
     <Sidebar className="bg-blue-100 rounded-2xl">
       <SidebarHeader className="mt-5 flex flex-row align-middle">
@@ -43,8 +76,8 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="text-black">
-              {items.map((item) => (
-                <SidebarMenuItem className="text-black" key={item.title}>
+              {accessibleItems.map((item, index) => (
+                <SidebarMenuItem className="text-black" key={index}>
                   <SidebarMenuButton asChild>
                     <a href={item.to}>
                       <item.icon />

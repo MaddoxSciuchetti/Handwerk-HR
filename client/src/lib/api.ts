@@ -1,7 +1,9 @@
 import { File_Request } from "@/components/backround_worker";
 import API from "@/config/apiClient";
+import { TEmployForm } from "@/features/Ceo_Dashboard";
 import { Session } from "react-router-dom";
 import { User } from "shared_prisma_types";
+import z from "zod";
 
 export type RegisterRequest = {
   email: string;
@@ -55,12 +57,13 @@ export const resetPassword = async ({
 }: resetPassword): Promise<resetPassword> =>
   API.post("/auth/password/reset", { verificationCode, password });
 
-type user = {
+export type user = {
   id: string;
   updatedAt: string;
   email: string;
   verified: boolean;
   createdAt: string;
+  user_permission: "CHEF" | "MITARBEITER";
 };
 
 export const getUser = async (): Promise<user> => {
@@ -125,4 +128,38 @@ export const fetchProcessData = async (
   form_type: string,
 ): Promise<any> => {
   return API.get(`offboarding/user/${id}?param1=${form_type}`);
+};
+
+export const verifyChef = async (): Promise<user> => {
+  return API.get(`/user/chefpermission`);
+};
+
+const owners = [
+  "Janik",
+  "Siemon",
+  "Acosta",
+  "Sen",
+  "Conpro IT",
+  "cmknti1f800028tmmhf5u5627",
+] as const;
+
+export const EmployFormSchema = z.array(
+  z.object({
+    description: z.coerce.string(),
+    form_field_id: z.coerce.number(),
+    owner: z.enum(owners),
+    inputs: z.array(
+      z.object({
+        id: z.coerce.number(),
+        employee_form_id: z.coerce.number(),
+        form_field_id: z.coerce.number(),
+        timestamp: z.coerce.date(),
+      }),
+    ),
+  }),
+);
+
+export const fetchChefData = async (): Promise<TEmployForm> => {
+  const response = await API.get("/user/employeeData");
+  return EmployFormSchema.parse(response);
 };

@@ -19,9 +19,11 @@ const Settings = () => {
       {isError && <Text color="red.400">Failed to get sessions.</Text>}
       {isSuccess && (
         <VStack align="flex-start">
-          {sessions.map((session: Sessions_Type) => (
-            <SessionCard key={session.id} session={session} />
-          ))}
+          {sessions &&
+            Array.isArray(sessions) &&
+            sessions.map((session: Sessions_Type) => (
+              <SessionCard key={session.id} session={session} />
+            ))}
         </VStack>
       )}
     </Container>
