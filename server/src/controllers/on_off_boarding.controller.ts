@@ -11,9 +11,12 @@ import {
   getUserFormData,
   insertFileData,
   insertHistoryData,
+  sendEmployeeEmail,
 } from "@/src/services/on_off_boarding.auth";
 import { generatePresignedUrl, uploadFileToS3 } from "../config/aws";
 import PDFDocument from "pdfkit";
+import { OK } from "../constants/http";
+import { emailSchema } from "./auth.Schemas";
 export const postOffboardingData = async (req: Request, res: Response) => {
   // validate the request
   try {
@@ -228,6 +231,19 @@ export const deleteFileData = async (req: Request, res: Response) => {
     const response = deleteFiles(id);
 
     return res.status(200).json({ sucess: true });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const sendReminder = async (req: Request, res: Response) => {
+  try {
+    console.log(req.body);
+    console.log(req.body.email);
+    const email = req.body.email;
+
+    await sendEmployeeEmail(email);
+    return res.status(OK).json({ sucess: "the email has been sent" });
   } catch (error) {
     console.log(error);
   }

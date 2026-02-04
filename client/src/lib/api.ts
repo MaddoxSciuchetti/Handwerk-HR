@@ -1,3 +1,4 @@
+import { sendEmailSchema } from "@/components/admin_data/AdminModal";
 import { File_Request } from "@/components/backround_worker";
 import API from "@/config/apiClient";
 import { TEmployForm } from "@/features/Ceo_Dashboard";
@@ -177,4 +178,11 @@ export const fetchNameData = async (): Promise<OffboardingItem[]> => {
     "/offboarding/fetchData",
   );
   return response;
+};
+
+export const sendReminderWorker = async (
+  data: sendEmailSchema,
+): Promise<unknown> => {
+  console.log(data);
+  return API.post("/offboarding/sendReminder", data);
 };

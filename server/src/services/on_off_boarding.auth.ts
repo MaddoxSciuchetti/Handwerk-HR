@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { datevalidation } from "@/src/utils/datevalidation";
 import { HistorySchemaType } from "../controllers/on_off_boarding.controller";
+import { sendMail } from "../utils/sendMail";
+import appAssert from "../utils/appAssert";
+import { INTERNAL_SERVER_ERROR } from "../constants/http";
+import { getFormReminderTemplate } from "../utils/emailTemplates";
 
 type dataObject = {
   type: string;
@@ -278,4 +282,20 @@ export const deleteFiles = async (id: number) => {
   return await prisma.workerFiles.delete({
     where: { id },
   });
+};
+
+export const sendEmployeeEmail = async (email: string) => {
+  const { data, error } = await sendMail({
+    to: email,
+    ...getFormReminderTemplate(),
+  });
+  appAssert(
+    data?.id,
+    INTERNAL_SERVER_ERROR,
+    `${error?.name} - ${error?.message}`,
+  );
+
+  return {
+    emailId: data.id,
+  };
 };
