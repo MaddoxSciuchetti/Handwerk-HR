@@ -42,28 +42,51 @@ export const getemployee_form = async () => {
       form_field_id: "asc",
     },
   });
-  console.log("GET EMPLOYEES");
-  console.log(onboarding_forms);
 
   const employee_forms = await prisma.form_inputs.findMany({
     select: {
       id: true,
       employee_form_id: true,
       form_field_id: true,
+      status: true,
       timestamp: true,
+      employee_forms: {
+        select: {
+          user_id: true,
+          users: {
+            select: {
+              id: true,
+              vorname: true,
+              nachname: true,
+              email: true,
+            },
+          },
+        },
+      },
     },
   });
 
-  console.log(employee_forms);
+  const individual_worker = await prisma.users.findMany({});
 
   const unifiedData = onboarding_forms.map((form_field) => ({
     form_field_id: form_field.form_field_id,
     description: form_field.description,
     owner: form_field.owner,
-    inputs: employee_forms.filter(
-      (input) => input.form_field_id === form_field.form_field_id,
-    ),
+    inputs: employee_forms
+      .filter((input) => input.form_field_id === form_field.form_field_id)
+      .map((input) => ({
+        id: input.id,
+        employee_form_id: input.employee_form_id,
+        form_field_id: input.form_field_id,
+        status: input.status,
+        timestamp: input.timestamp,
+        employee: input.employee_forms.users,
+      })),
   }));
+
+  console.log("UNIFIED DATA");
+  console.log(JSON.stringify(unifiedData, null, 2));
+  console.log(unifiedData);
 
   return { unifiedData };
 };

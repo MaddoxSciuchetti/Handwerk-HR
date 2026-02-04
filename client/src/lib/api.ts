@@ -1,6 +1,7 @@
 import { File_Request } from "@/components/backround_worker";
 import API from "@/config/apiClient";
 import { TEmployForm } from "@/features/Ceo_Dashboard";
+import { OffboardingItem } from "@/features/OnOf_Home";
 import { Session } from "react-router-dom";
 import { User } from "shared_prisma_types";
 import z from "zod";
@@ -153,7 +154,14 @@ export const EmployFormSchema = z.array(
         id: z.coerce.number(),
         employee_form_id: z.coerce.number(),
         form_field_id: z.coerce.number(),
+        status: z.coerce.string(),
         timestamp: z.coerce.date(),
+        employee: z.object({
+          id: z.number(),
+          vorname: z.string(),
+          nachname: z.string(),
+          email: z.string().nullable(),
+        }),
       }),
     ),
   }),
@@ -162,4 +170,11 @@ export const EmployFormSchema = z.array(
 export const fetchChefData = async (): Promise<TEmployForm> => {
   const response = await API.get("/user/employeeData");
   return EmployFormSchema.parse(response);
+};
+
+export const fetchNameData = async (): Promise<OffboardingItem[]> => {
+  const response = API.get<OffboardingItem[], OffboardingItem[]>(
+    "/offboarding/fetchData",
+  );
+  return response;
 };

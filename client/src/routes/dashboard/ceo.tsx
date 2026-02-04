@@ -10,15 +10,21 @@ export const Route = createFileRoute("/dashboard/ceo")({
 
 function RouteComponent() {
   const { user } = useAuth();
+  console.log("this is the user", user);
 
-  const { data: chefverification } = useQuery<user>({
+  const {
+    data: chefverification,
+    isLoading,
+    isError,
+  } = useQuery<user>({
     queryKey: ["user", user?.id],
     queryFn: () => verifyChef(),
   });
 
+  if (isLoading) return <div>Loading</div>;
+  if (isError) return <div>Unexpected Error occured</div>;
   if (chefverification?.user_permission === "CHEF") {
     return <Ceo_Dashboard />;
-  } else {
-    return <div>Permission denied</div>;
   }
+  return <div>Permission denied</div>;
 }
