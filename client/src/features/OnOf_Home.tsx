@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import Modal from "@/components/modal/Modal";
 import { useNavigate } from "@tanstack/react-router";
 import { FormInputs } from "@/schemas/zodSchema";
+import { fetchNameData } from "@/lib/api";
 
 type FormType = "Onboarding" | "Offboarding";
 
@@ -14,7 +15,7 @@ type EmployeeForm = {
   form_type: FormType;
 };
 
-type OffboardingItem = {
+export type OffboardingItem = {
   employee_forms: EmployeeForm[];
   id: number;
   nachname: string;
@@ -22,18 +23,20 @@ type OffboardingItem = {
 };
 
 function OnOf_Home() {
-  async function fetchNameData(): Promise<OffboardingItem[]> {
-    const response = await (
-      await fetch(`${API_URL}/offboarding/fetchData`)
-    ).json();
-    console.log("this is data send from server", response);
-    return response;
-  }
+  // async function fetchNameData(): Promise<OffboardingItem[]> {
+  //   const response = await (
+  //     await fetch(`${API_URL}/offboarding/fetchData`)
+  //   ).json();
+  //   console.log("this is data send from server", response);
+  //   return response;
+  // }
 
   const { data, error, isSuccess } = useQuery<OffboardingItem[]>({
     queryKey: ["offboarding"],
     queryFn: fetchNameData,
   });
+
+  console.log(data);
 
   const queryClient = useQueryClient();
   const [modal, setModal] = useState<boolean>(false);

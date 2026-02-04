@@ -1,0 +1,104 @@
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { TEmployForm } from "@/features/Ceo_Dashboard";
+import { fetchNameData } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import AdminModal from "./AdminModal";
+
+type TAccordion = {
+  data: TEmployForm;
+};
+
+type EmployeeGroup = {
+  employee: { vorname: string; nachname: string; email: string | null };
+  inputs: Array<{
+    description: string;
+    timestamp: Date;
+    form_field_id: number;
+    status: string;
+  }>;
+};
+
+export function AccordionDemo({ data }: TAccordion) {
+  const [modal, setModalOpen] = useState<boolean>(false);
+
+  const employeeGroups = useMemo(() => {
+    const groups = new Map<string, EmployeeGroup>();
+
+    const finishedTasks = data.filter(
+      (task) => task.inputs[0].status !== "erledigt",
+    );
+
+    finishedTasks.forEach((taskInfo) => {
+      taskInfo.inputs.forEach((input) => {
+        const employeeKey = `${input.employee.vorname} ${input.employee.nachname}`;
+
+        if (!groups.has(employeeKey)) {
+          groups.set(employeeKey, {
+            employee: input.employee,
+            inputs: [],
+          });
+        }
+
+        groups.get(employeeKey)!.inputs.push({
+          description: taskInfo.description,
+          timestamp: input.timestamp,
+          form_field_id: taskInfo.form_field_id,
+          status: input.status,
+        });
+      });
+    });
+    return Array.from(groups.entries());
+  }, [data]);
+
+  console.log("employee groupes");
+  console.log(employeeGroups);
+
+  return (
+    <>
+      <Accordion type="single" collapsible defaultValue="shipping" className="">
+        {employeeGroups.map(([employeeName, group], index) => (
+          <AccordionItem key={employeeName} value={`employee-${index}`}>
+            <AccordionTrigger>
+              Handwerker: {group.employee.vorname} {group.employee.nachname}
+            </AccordionTrigger>
+            <AccordionContent className="flex flex-col justify-center items-center ">
+              <div className="flex flex-col gap-10 w-md">
+                {group.inputs.map((task, taskIndex) => (
+                  <div
+                    key={taskIndex}
+                    className="outline border p-2 mb-2 hover:bg-gray-200 rounded-2xl"
+                    onClick={() => setModalOpen(true)}
+                  >
+                    <p>
+                      <strong>Aufabe:</strong>
+                      {task.description}
+                    </p>
+                    <p>
+                      <strong>Zuletzt bearbeitet:</strong>{" "}
+                      {task.timestamp.toLocaleDateString()}
+                    </p>
+                    <p>
+                      <p>
+                        <strong>Status:</strong>{" "}
+                        {task.status === "null"
+                          ? "Nicht angefangen"
+                          : task.status}
+                      </p>
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
+      {modal && <AdminModal onClose={() => setModalOpen(false)} />}
+    </>
+  );
+}
