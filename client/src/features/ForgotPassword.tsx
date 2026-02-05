@@ -1,27 +1,11 @@
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { sendPasswordResetEmail, signup } from "@/lib/api";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-
-import {
-  Flex,
-  Box,
-  Input,
-  Stack,
-  Button,
-  Heading,
-  Text,
-  Link as ChakraLink,
-  Container,
-} from "@chakra-ui/react";
-
-import { FormLabel, FormControl } from "@chakra-ui/form-control";
-import {
-  Alert,
-  AlertTitle,
-  AlertIcon,
-  AlertDescription,
-} from "@chakra-ui/alert";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CheckCircle } from "lucide-react";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState<string>("");
@@ -38,53 +22,72 @@ const ForgotPassword = () => {
   });
 
   return (
-    <Flex minH="100vh" align="center" justify="center">
-      <Container mx="auto" maxW="md" py={12} px={6} textAlign="center">
-        <Heading fontSize="4xl" mb={8}>
-          Reset your password
-        </Heading>
-        <Box rounded="lg" bg="gray.700" boxShadow="lg" p={8}>
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="mx-auto max-w-md py-12 px-6 text-center">
+        <h1 className="text-4xl font-bold mb-8">Reset your password</h1>
+        <div className="rounded-lg bg-gray-700 shadow-lg p-8">
           {isError && (
-            <Box mb={3} color="red.400">
+            <div className="mb-3 text-red-400">
               {error.message || "An error occurred"}
-            </Box>
+            </div>
           )}
-          <Stack>
+          <div className="space-y-6">
             {isSuccess ? (
-              <Alert status="success" borderRadius={12}>
-                <AlertIcon />
-                Email sent! Check your inbox for further instructions.
+              <Alert
+                variant="default"
+                className="rounded-xl border-green-200 bg-green-50"
+              >
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-green-800">
+                  Email sent! Check your inbox for further instructions.
+                </AlertDescription>
               </Alert>
             ) : (
               <>
-                <FormControl id="email">
-                  <FormLabel>Email address</FormLabel>
+                <div className="space-y-2">
+                  <label
+                    htmlFor="email"
+                    className="text-white text-sm font-medium"
+                  >
+                    Email address
+                  </label>
                   <Input
+                    id="email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     autoFocus
+                    className="text-white bg-gray-600 border-gray-500"
                   />
-                </FormControl>
-                <Button onClick={() => sendPasswordReset(email)}>
+                </div>
+                <Button
+                  onClick={() => sendPasswordReset(email)}
+                  className="w-full"
+                >
                   Reset Password
                 </Button>
               </>
             )}
-            <Text fontSize="sm" color="text.muted">
+            <p className="text-sm text-gray-400">
               Go back to{" "}
-              <ChakraLink onClick={() => navigate({ to: "/login" })}>
+              <button
+                onClick={() => navigate({ to: "/login" })}
+                className="text-white hover:text-gray-300 underline"
+              >
                 Sign in
-              </ChakraLink>
+              </button>
               &nbsp;or&nbsp;
-              <ChakraLink onClick={() => navigate({ to: "/signup" })}>
+              <button
+                onClick={() => navigate({ to: "/signup" })}
+                className="text-white hover:text-gray-300 underline"
+              >
                 Sign up
-              </ChakraLink>
-            </Text>
-          </Stack>
-        </Box>
-      </Container>
-    </Flex>
+              </button>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

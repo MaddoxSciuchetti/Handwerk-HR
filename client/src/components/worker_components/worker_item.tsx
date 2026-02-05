@@ -54,14 +54,7 @@ export function Worker_Item({
       <tr>
         <td className="text-xl">{item}</td>
 
-        <td
-          className={`${
-            form_type === "Onboarding"
-              ? "bg-blue-200 font-bold text-blue-400! p-0 m-0 outline "
-              : "bg-fuchsia-200 font-bold text-pink-400! rounded-2xl p-0 m-0"
-          }`}
-          lang="en"
-        >
+        <td className="outline justify-center items-center " lang="en">
           {form_type}
         </td>
         <td>

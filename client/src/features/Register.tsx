@@ -1,21 +1,9 @@
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { signup } from "@/lib/api";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-
-import {
-  Flex,
-  Box,
-  Input,
-  Stack,
-  Button,
-  Heading,
-  Text,
-  Link as ChakraLink,
-  Container,
-} from "@chakra-ui/react";
-
-import { FormLabel, FormControl } from "@chakra-ui/form-control";
 
 export function SignupForm() {
   const [email, setEmail] = useState<string>("");
@@ -41,44 +29,58 @@ export function SignupForm() {
   });
 
   return (
-    <Flex minH="100vh" align="center" justify="center">
-      <Container mx="auto" maxW="md" py={12} px={6} textAlign="center">
-        <Heading fontSize="4xl" mb={6}>
-          Create an account
-        </Heading>
-        <Box rounded="lg" bg="gray.700" boxShadow="lg" p={8}>
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="mx-auto max-w-md py-12 px-6 text-center">
+        <h1 className="text-4xl font-bold mb-6">Create an account</h1>
+        <div className="rounded-lg bg-gray-700 shadow-lg p-8">
           {isError && (
-            <Box mb={3} color="red.400">
+            <div className="mb-3 text-red-400">
               {error?.message || "An error occurred"}
-            </Box>
+            </div>
           )}
-          <Stack>
-            <FormControl id="email">
-              <FormLabel color={"white"}>Email address</FormLabel>
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <label htmlFor="email" className="text-white text-sm font-medium">
+                Email address
+              </label>
               <Input
-                color="white"
+                id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoFocus
+                className="text-white bg-gray-600 border-gray-500"
               />
-            </FormControl>
-            <FormControl id="password">
-              <FormLabel color={"white"}>Password</FormLabel>
+            </div>
+
+            <div className="space-y-2">
+              <label
+                htmlFor="password"
+                className="text-white text-sm font-medium"
+              >
+                Password
+              </label>
               <Input
-                color="white"
+                id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                className="text-white bg-gray-600 border-gray-500"
               />
-              <Text color="text.muted" fontSize="xs" textAlign="left" mt={2}>
+              <p className="text-gray-400 text-xs text-left mt-2">
                 - Must be at least 6 characters long.
-              </Text>
-            </FormControl>
-            <FormControl id="confirmPassword">
-              <FormLabel color="white">Confirm Password</FormLabel>
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <label
+                htmlFor="confirmPassword"
+                className="text-white text-sm font-medium"
+              >
+                Confirm Password
+              </label>
               <Input
-                color="white"
+                id="confirmPassword"
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
@@ -86,12 +88,14 @@ export function SignupForm() {
                   e.key === "Enter" &&
                   createAccount({ email, password, confirmPassword })
                 }
+                className="text-white bg-gray-600 border-gray-500"
               />
-            </FormControl>
+            </div>
+
             <Button
-              my={2}
+              className="w-full my-2"
               // isLoading={isPending}
-              // isDisabled={
+              // disabled={
               //   !email || password.length < 6 || password !== confirmPassword
               // }
               onClick={() =>
@@ -100,18 +104,19 @@ export function SignupForm() {
             >
               Create Account
             </Button>
-            <Text fontSize="sm" color="text.muted">
+
+            <p className="text-sm text-gray-400">
               Already have an account?{" "}
-              <ChakraLink
-                color="white"
+              <button
                 onClick={() => navigate({ to: "/login" })}
+                className="text-white hover:text-gray-300 underline"
               >
                 Sign in
-              </ChakraLink>
-            </Text>
-          </Stack>
-        </Box>
-      </Container>
-    </Flex>
+              </button>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

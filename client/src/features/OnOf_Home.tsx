@@ -8,6 +8,29 @@ import Modal from "@/components/modal/Modal";
 import { useNavigate } from "@tanstack/react-router";
 import { FormInputs } from "@/schemas/zodSchema";
 import { fetchNameData } from "@/lib/api";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@/components/ui/sidebar";
 
 type FormType = "Onboarding" | "Offboarding";
 
@@ -30,6 +53,7 @@ function OnOf_Home() {
   //   console.log("this is data send from server", response);
   //   return response;
   // }
+  const { toggleSidebar } = useSidebar();
 
   const { data, error, isSuccess } = useQuery<OffboardingItem[]>({
     queryKey: ["offboarding"],
@@ -119,7 +143,13 @@ function OnOf_Home() {
   }, [modal]);
 
   const toggleModal = () => {
-    setModal(!modal);
+    if (!modal) {
+      setModal(true);
+      toggleSidebar();
+    } else {
+      setModal(false);
+      toggleSidebar();
+    }
   };
 
   const getFirstFormType = (item: OffboardingItem) => {
@@ -128,55 +158,96 @@ function OnOf_Home() {
 
   return (
     <>
-      <div
-        className="flex justify-start pt-20 flex-col 
-      min-h-screen items-center border"
-      >
-        <div
-          className="w-full max-w-4xl border rounded-lg
-         max-h-[90vh] overflow-auto flex flex-col items-center"
-        >
-          <div className="flex w-full p-4 ">
-            <Input className="flex gap-2" />
-            <Button variant={"outline"}>Filter</Button>
-            <Button variant={"outline"} onClick={() => toggleModal()}>
-              Neuen Mitarbeiter hinzufügen?
-            </Button>
+      <div className="outline outline-amber-800 w-full max-w-5xl h-[600px] rounded-2xl mx-auto p-6 shadow-gray-500 shadow-lg">
+        <div className="h-full flex flex-col ">
+          <div className="flex items-center gap-4 mb-6">
+            <Input className="" />
+            <div className="flex gap-2">
+              <Button variant={"outline"}>Filter</Button>
+              <Button variant={"outline"} onClick={() => toggleModal()}>
+                Mitarbeiter hinzufügen?
+              </Button>
+            </div>
           </div>
 
-          <table className="w-full">
-            <thead>
-              <tr>
-                <th>Handwerker</th>
-                <th>Status</th>
-                <th>Bearbeiten</th>
-                <th>Offene Aufgaben</th>
-                <th>Aktionen</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="">Handwerker</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Bearbeiten</TableHead>
+                <TableHead>Offene Aufgaben</TableHead>
+                <TableHead>Aktionen</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {data?.map((task: OffboardingItem) => (
                 <Worker_Item
                   key={task.id}
                   item_value={task.id}
-                  // somewhere here the wrong id is being passed.
                   form_type={getFirstFormType(task)}
                   item={task.vorname}
                   onRemove={removeTask}
                   gotopage={handleNavigate}
                 />
               ))}
-            </tbody>
-          </table>
-          {/* fix any here */}
-          <div className="w-full px-4"></div>
+            </TableBody>
+          </Table>
 
-          {modal && (
-            <div className="fixed inset-0 outline ">
-              <Modal toggleModal={toggleModal} onSuccess={onSubmit} />
-            </div>
-          )}
+          {/* <div className="outline outline-blue-600">
+            <table className="">
+              <thead>
+                <tr>
+                  <th>Handwerker</th>
+                  <th>Status</th>
+                  <th>Bearbeiten</th>
+                  <th>Offene Aufgaben</th>
+                  <th>Aktionen</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data?.map((task: OffboardingItem) => (
+                  <Worker_Item
+                    key={task.id}
+                    item_value={task.id}
+                    // somewhere here the wrong id is being passed.
+                    form_type={getFirstFormType(task)}
+                    item={task.vorname}
+                    onRemove={removeTask}
+                    gotopage={handleNavigate}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div> */}
         </div>
+
+        {modal && (
+          <div className="fixed inset-0 z-50 flex">
+            <div
+              onClick={toggleModal}
+              className="fixed inset-0 bg-black/50 cursor-pointer"
+              aria-label="Close modal"
+            />
+            <div className="ml-auto relative z-10">
+              <Sidebar side={"right"} className="bg-gray-100 rounded-2xl w-4xl">
+                <SidebarHeader className="mt-5 flex flex-row align-middle"></SidebarHeader>
+                <SidebarContent>
+                  <Modal
+                    className="p-4 rounded-lg"
+                    toggleModal={toggleModal}
+                    onSuccess={onSubmit}
+                  />
+                  <SidebarGroup>
+                    <SidebarGroupContent>
+                      <SidebarMenu className="text-black"></SidebarMenu>
+                    </SidebarGroupContent>
+                  </SidebarGroup>
+                </SidebarContent>
+              </Sidebar>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

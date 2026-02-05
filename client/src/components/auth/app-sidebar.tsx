@@ -64,10 +64,9 @@ export function AppSidebar({}) {
     return <div>The user is undefined</div>;
   }
   return (
-    <Sidebar className="bg-blue-100 rounded-2xl">
+    <Sidebar className="bg-gray-100 rounded-2xl">
       <SidebarHeader className="mt-5 flex flex-row align-middle">
         <UserMenu />
-        <p className="text-black">User</p>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>

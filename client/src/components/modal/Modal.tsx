@@ -4,26 +4,29 @@ import { useState } from "react";
 import { WorkerDataForm } from "../worker_components/worker_form_creation";
 import { FormInputs } from "@/schemas/zodSchema";
 import { UseMutationResult } from "@tanstack/react-query";
+import { cn } from "@/lib/utils";
 
 interface ModalProps {
   toggleModal?: () => void;
   newStateTask?: (value: string) => void;
   onSuccess: UseMutationResult<any, Error, FormInputs, unknown>;
+  className?: string;
 }
 
-const Modal: React.FC<ModalProps> = ({ toggleModal, onSuccess }) => {
+const Modal: React.FC<ModalProps> = ({
+  toggleModal,
+  onSuccess,
+  className,
+  ...props
+}) => {
   const [selectedOption, setSelectedOption] = useState<
     "Onboarding" | "Offboarding"
   >("Onboarding");
 
   return (
     <>
-      <div className="modal">
-        <div
-          onClick={toggleModal}
-          className="h-screen inset-0 fixed z-4ß bg-black/60"
-        ></div>
-        <div className="absolute text-center items-center z-50 bg-gray-200 rounded-xl top-[50%] left-[50%] h-2/3 w-4xl -translate-x-1/2 -translate-y-1/2">
+      <div className={cn("default-modal-classes", className)} {...props}>
+        <div className="">
           <div>
             <input
               className="border-3 border-blue-500 rounded-full "
@@ -64,7 +67,6 @@ const Modal: React.FC<ModalProps> = ({ toggleModal, onSuccess }) => {
                 success={onSuccess.mutate}
               />
             )}
-            <TiDelete className="x-item" onClick={toggleModal} />
           </div>
         </div>
       </div>

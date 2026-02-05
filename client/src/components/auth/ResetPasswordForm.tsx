@@ -1,23 +1,12 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CheckCircle } from "lucide-react";
 
 import { Link, useNavigate } from "@tanstack/react-router";
 
-import { FormLabel, FormControl } from "@chakra-ui/form-control";
-import {
-  Box,
-  Button,
-  Heading,
-  Input,
-  Stack,
-  Link as ChakraLink,
-} from "@chakra-ui/react";
-import {
-  Alert,
-  AlertTitle,
-  AlertIcon,
-  AlertDescription,
-} from "@chakra-ui/alert";
 import { resetPassword } from "@/lib/api";
 
 const ResetPasswordForm = ({ code }: any) => {
@@ -35,29 +24,43 @@ const ResetPasswordForm = ({ code }: any) => {
   const navigate = useNavigate();
   return (
     <>
-      <Heading fontSize="4xl" mb={8}>
-        Change your password
-      </Heading>
-      <Box rounded="lg" bg="gray.700" boxShadow="lg" p={8}>
+      <h1 className="text-4xl font-bold mb-8">Change your password</h1>
+      <div className="rounded-lg bg-gray-700 shadow-lg p-8">
         {isError && (
-          <Box mb={3} color="red.400">
+          <div className="mb-3 text-red-400">
             {error.message || "An error occurred"}
-          </Box>
+          </div>
         )}
         {isSuccess ? (
-          <Box>
-            <Alert status="success" borderRadius={12} mb={3}>
-              <AlertIcon />
-              Password updated successfully!
+          <div>
+            <Alert
+              variant="default"
+              className="rounded-xl mb-3 border-green-200 bg-green-50"
+            >
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800">
+                Password updated successfully!
+              </AlertDescription>
             </Alert>
 
-            <p onClick={() => navigate({ to: "/login" })}>Sign in</p>
-          </Box>
+            <button
+              onClick={() => navigate({ to: "/login" })}
+              className="text-blue-600 hover:text-blue-800 underline"
+            >
+              Sign in
+            </button>
+          </div>
         ) : (
-          <Stack>
-            <FormControl id="password">
-              <FormLabel>New Password</FormLabel>
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <label
+                htmlFor="password"
+                className="text-white text-sm font-medium"
+              >
+                New Password
+              </label>
               <Input
+                id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -66,10 +69,11 @@ const ResetPasswordForm = ({ code }: any) => {
                   resetUserPassword({ password, verificationCode: code })
                 }
                 autoFocus
+                className="text-white bg-gray-600 border-gray-500"
               />
-            </FormControl>
+            </div>
             <Button
-              my={2}
+              className="w-full my-2"
               onClick={() =>
                 resetUserPassword({
                   password,
@@ -79,9 +83,9 @@ const ResetPasswordForm = ({ code }: any) => {
             >
               Reset Password
             </Button>
-          </Stack>
+          </div>
         )}
-      </Box>
+      </div>
     </>
   );
 };

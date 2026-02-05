@@ -1,6 +1,6 @@
-import { Box, Button, Flex, Text } from "@chakra-ui/react";
 import useDeleteSession from "@/hooks/useDeleteSession";
 import { Sessions_Type } from "@/features/Settings";
+import { Button } from "../ui/button";
 
 type Session = {
   session: Sessions_Type;
@@ -12,32 +12,27 @@ const SessionCard = ({ session }: Session) => {
   const { deleteSession, isPending } = useDeleteSession(id);
 
   return (
-    <Flex p={3} borderWidth="1px" borderRadius="md">
-      <Box flex={1}>
-        <Text fontWeight="bold" fontSize="sm" mb={1}>
+    <div className="flex p-3 border border-gray-200 rounded-md">
+      <div className="flex-1">
+        <p className="font-bold text-sm mb-1">
           {new Date(createdAt).toLocaleString("en-US")}
           {isCurrent && " (current session)"}
-        </Text>
-        <Text color="gray.500" fontSize="xs">
-          {userAgent}
-        </Text>
-      </Box>
+        </p>
+        <p className="text-gray-500 text-xs">{userAgent}</p>
+      </div>
       {!isCurrent && (
         <Button
           size="sm"
           variant="ghost"
-          ml={4}
-          alignSelf="center"
-          fontSize="xl"
-          color="red.400"
+          className="ml-4 self-center text-xl text-red-400 hover:text-red-600"
           title="Delete Session"
           onClick={() => deleteSession()}
-          loading={isPending}
+          disabled={isPending}
         >
           &times;
         </Button>
       )}
-    </Flex>
+    </div>
   );
 };
 export default SessionCard;

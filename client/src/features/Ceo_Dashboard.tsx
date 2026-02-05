@@ -1,4 +1,4 @@
-import { AccordionDemo } from "@/components/admin_data/accordion";
+import { AccordionDemo } from "@/components/admin_data/CAccordion";
 import AdminModal from "@/components/admin_data/AdminModal";
 import { Button } from "@/components/ui/button";
 import { EmployFormSchema, fetchChefData } from "@/lib/api";

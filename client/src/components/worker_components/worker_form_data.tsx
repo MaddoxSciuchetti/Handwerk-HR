@@ -12,10 +12,11 @@ import {
 
 import {
   Accordion,
-  AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion";
+  AccordionContent,
+} from "../ui/accordion";
+
 import { useEffect, useState } from "react";
 import { useGetHistory } from "@/hooks/use-getHistoryData";
 

@@ -4,19 +4,8 @@ import { login } from "@/lib/api";
 import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { isValidEmail } from "@/lib/validEmail";
-import {
-  Flex,
-  Box,
-  Input,
-  Stack,
-  Button,
-  Heading,
-  Text,
-  Link as ChakraLink,
-  Container,
-} from "@chakra-ui/react";
-
-import { FormLabel, FormControl } from "@chakra-ui/form-control";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export function LoginComponent({
   className,
@@ -39,36 +28,42 @@ export function LoginComponent({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Flex minH="100vh" align="center" justify="center">
-        <Container mx="auto" maxW="md" py={12} px={6} textAlign="center">
-          <Heading fontSize="4xl" mb={8}>
-            Sign in to your account
-          </Heading>
-          <Box rounded="lg" bg="gray.700" boxShadow="lg" p={8}>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="mx-auto max-w-md py-12 px-6 text-center">
+          <h1 className="text-4xl font-bold mb-8">Sign in to your account</h1>
+          <div className="rounded-lg bg-gray-700 shadow-lg p-8">
             {isError && (
-              <Box mb={3} color="red.400">
-                Invalid email or password
-              </Box>
+              <div className="mb-3 text-red-400">Invalid email or password</div>
             )}
 
-            <Stack>
-              <FormControl id="email">
-                <FormLabel className="text-amber-50">Email adress</FormLabel>
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label
+                  htmlFor="email"
+                  className="text-amber-50 text-sm font-medium"
+                >
+                  Email address
+                </label>
                 <Input
-                  color="white"
                   id="email"
                   type="email"
                   value={email}
                   placeholder="m@example.com"
                   required
                   onChange={(e) => setEmail(e.target.value)}
+                  className="text-white bg-gray-600 border-gray-500"
                 />
-              </FormControl>
+              </div>
 
-              <FormControl id="email">
-                <FormLabel color={"white"}>Password</FormLabel>
+              <div className="space-y-2">
+                <label
+                  htmlFor="password"
+                  className="text-white text-sm font-medium"
+                >
+                  Password
+                </label>
                 <Input
-                  color="white"
+                  id="password"
                   type="password"
                   onChange={(e) => setPassword(e.target.value)}
                   value={password}
@@ -78,31 +73,38 @@ export function LoginComponent({
                       signin({ email, password });
                     }
                   }}
+                  className="text-white bg-gray-600 border-gray-500"
                 />
-              </FormControl>
+              </div>
 
-              <ChakraLink
-                color={"white"}
+              <button
                 onClick={() => navigate({ to: "/password/forgot" })}
+                className="text-white hover:text-gray-300 underline text-sm"
               >
                 Forgot Password?
-              </ChakraLink>
-              <Button type="submit" onClick={() => signin({ email, password })}>
+              </button>
+
+              <Button
+                type="submit"
+                onClick={() => signin({ email, password })}
+                className="w-full"
+              >
                 Login
               </Button>
-              <Text fontSize="sm" color="text.muted" className="text-amber-50">
+
+              <p className="text-sm text-amber-50">
                 Don&apos;t have an account?{" "}
-                <ChakraLink
-                  color={"white"}
+                <button
                   onClick={() => navigate({ to: "/signup" })}
+                  className="text-white hover:text-gray-300 underline"
                 >
                   Sign up
-                </ChakraLink>
-              </Text>
-            </Stack>
-          </Box>
-        </Container>
-      </Flex>
+                </button>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

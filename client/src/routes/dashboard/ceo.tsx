@@ -9,17 +9,26 @@ export const Route = createFileRoute("/dashboard/ceo")({
 });
 
 function RouteComponent() {
-  const { user } = useAuth();
-  console.log("this is the user", user);
+  const user = useAuth();
 
   const {
     data: chefverification,
     isLoading,
     isError,
   } = useQuery<user>({
-    queryKey: ["user", user?.id],
+    queryKey: ["user", user?.user?.id],
     queryFn: () => verifyChef(),
   });
+
+  if (user.isLoading) {
+    return <div>Authenticating</div>;
+  }
+
+  if (user.isError) {
+    return <div>Authentification failed</div>;
+  }
+
+  console.log("this is the user", user);
 
   if (isLoading) return <div>Loading</div>;
   if (isError) return <div>Unexpected Error occured</div>;

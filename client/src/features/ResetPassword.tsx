@@ -1,19 +1,7 @@
-import {
-  Container,
-  Flex,
-  Link as ChakraLink,
-  VStack,
-  Text,
-} from "@chakra-ui/react";
-
-import {
-  Alert,
-  AlertTitle,
-  AlertIcon,
-  AlertDescription,
-} from "@chakra-ui/alert";
 import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import ResetPasswordForm from "@/components/auth/ResetPasswordForm";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -29,24 +17,29 @@ const ResetPassword = () => {
   const now = Date.now();
   const linkIsValid = code && exp && exp > now;
   return (
-    <Flex minH="100vh" justify="center">
-      <Container mx="auto" maxW="md" py={12} px={6} textAlign="center">
+    <div className="min-h-screen flex justify-center">
+      <div className="mx-auto max-w-md py-12 px-6 text-center">
         {linkIsValid ? (
           <ResetPasswordForm code={code} />
         ) : (
-          <VStack align="center">
-            <Alert status="error" w="fit-content" borderRadius={12}>
-              <AlertIcon />
-              Invalid Link
+          <div className="flex flex-col items-center space-y-4">
+            <Alert variant="destructive" className="w-fit rounded-xl">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>Invalid Link</AlertDescription>
             </Alert>
-            <Text color="gray.400">The link is either invalid or expired.</Text>
-            <ChakraLink onClick={() => navigate({ to: "/password/forgot" })}>
+            <p className="text-gray-400">
+              The link is either invalid or expired.
+            </p>
+            <button
+              onClick={() => navigate({ to: "/password/forgot" })}
+              className="text-blue-600 hover:text-blue-800 underline"
+            >
               Request a new password reset link
-            </ChakraLink>
-          </VStack>
+            </button>
+          </div>
         )}
-      </Container>
-    </Flex>
+      </div>
+    </div>
   );
 };
 

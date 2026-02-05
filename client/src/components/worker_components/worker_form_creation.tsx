@@ -49,7 +49,7 @@ export const WorkerDataForm = ({ type, success }: WorkerDataFormProps) => {
             )} */}
             <label>Nachname</label>
             <input
-              className="w-64 p-2 border-gray-300 border-2 rounded-xl"
+              className="w-64 p-2 border-gray-300 border-2 rounded-xl focus:border-gray-600 outline-none"
               type="text"
               placeholder="Nachname"
               {...register("nachname")}
@@ -58,7 +58,7 @@ export const WorkerDataForm = ({ type, success }: WorkerDataFormProps) => {
 
             <label>Email</label>
             <input
-              className="w-64 p-2 border-gray-300 border-2 rounded-xl"
+              className="w-64 p-2 border-gray-300 border-2 rounded-xl outline-none"
               type="text"
               placeholder="email"
               {...register("email")}
@@ -122,7 +122,7 @@ export const WorkerDataForm = ({ type, success }: WorkerDataFormProps) => {
             <input type="hidden" {...register("type")} value={type} />
           </div>
         </div>
-        <Button type="submit" className="self-center">
+        <Button variant={"outline"} type="submit" className="self-center">
           Hinzufügen
         </Button>
       </form>

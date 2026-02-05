@@ -1,6 +1,7 @@
-import { Center, Heading, Text } from "@chakra-ui/react";
 import useAuth from "@/hooks/useAuth";
-import { AlertIcon, Alert } from "@chakra-ui/alert";
+
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 
 const Profile = () => {
   const { user, isLoading, isError } = useAuth();
@@ -8,45 +9,48 @@ const Profile = () => {
 
   if (isLoading) {
     return (
-      <Center mt={16}>
-        <Heading>Loading user data</Heading>
-      </Center>
+      <div className="flex justify-center mt-16">
+        <h1 className="text-3xl font-bold">Loading user data</h1>
+      </div>
     );
   }
 
   if (isError || !user) {
     return (
-      <Center mt={16}>
-        <Heading>Error loading user</Heading>
-        <Text color="red.500">Please try again later</Text>
-      </Center>
+      <div className="flex flex-col items-center mt-16 space-y-2">
+        <h1 className="text-3xl font-bold">Error loading user</h1>
+        <p className="text-red-500">Please try again later</p>
+      </div>
     );
   }
 
   const { email, verified, createdAt } = user;
 
   return (
-    <Center mt={16} flexDir="column">
-      <Heading mb={4}>My Account</Heading>
+    <div className="flex flex-col items-center mt-16 space-y-4">
+      <h1 className="text-3xl font-bold mb-4">My Account</h1>
       {!verified && (
-        <Alert status="warning" w="fit-content" borderRadius={12} mb={3}>
-          <AlertIcon />
-          Please verify your email
+        <Alert
+          variant="default"
+          className="w-fit rounded-xl mb-3 border-yellow-200 bg-yellow-50"
+        >
+          <AlertTriangle className="h-4 w-4 text-yellow-600" />
+          <AlertDescription className="text-yellow-800">
+            Please verify your email
+          </AlertDescription>
         </Alert>
       )}
-      <Text color="black" mb={2}>
-        Email:{" "}
-        <Text as="span" color="blac">
-          {email}
-        </Text>
-      </Text>
-      <Text color="black">
+      <p className="text-black mb-2">
+        Email: <span className="text-black">{email}</span>
+      </p>
+      <p className="text-black">
         Created on{" "}
-        <Text as="span" color="black">
+        <span className="text-black">
           {new Date(createdAt).toLocaleDateString("en-US")}
-        </Text>
-      </Text>
-    </Center>
+        </span>
+      </p>
+    </div>
   );
 };
+
 export default Profile;

@@ -1,23 +1,23 @@
-import { Box, Button, Center, Spinner } from "@chakra-ui/react";
 import { Navigate, Outlet } from "react-router-dom";
 import useAuth from "@/hooks/useAuth";
 import UserMenu from "./UserMenu";
 import React from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { Button } from "../ui/button";
 
 const AppContainer = () => {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
 
   return isLoading ? (
-    <Center w="100vw" h="90vh" flexDir="column">
-      <Spinner mb={4} />
-    </Center>
+    <div className="w-screen h-[90vh] flex flex-col items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
+    </div>
   ) : user ? (
-    <Box p={4} minH="100vh">
+    <div className="p-4 min-h-screen">
       <UserMenu />
       <Outlet />
-    </Box>
+    </div>
   ) : (
     // insert component for back navigation
     <Button onClick={() => navigate({ to: "/login" })}>Here</Button>

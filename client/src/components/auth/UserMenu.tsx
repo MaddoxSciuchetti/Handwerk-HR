@@ -1,5 +1,13 @@
 import { logout } from "@/lib/api";
-import { Avatar, Menu } from "@chakra-ui/react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 
@@ -15,33 +23,24 @@ const UserMenu = () => {
   });
 
   return (
-    <Menu.Root lazyMount>
-      <Menu.Trigger asChild>
-        <Avatar.Root className="mt-20" cursor="pointer">
-          <Avatar.Image src="#" />
-          <Avatar.Fallback>U</Avatar.Fallback>
-        </Avatar.Root>
-      </Menu.Trigger>
-      <Menu.Positioner>
-        <Menu.Content>
-          <Menu.Item
-            value="profile"
-            onClick={() => navigate({ to: "/profile" })}
-          >
-            Profile
-          </Menu.Item>
-          <Menu.Item
-            value="settings"
-            onClick={() => navigate({ to: "/settings" })}
-          >
-            Settings
-          </Menu.Item>
-          <Menu.Item value="logout" onClick={() => signOut()}>
-            Logout
-          </Menu.Item>
-        </Menu.Content>
-      </Menu.Positioner>
-    </Menu.Root>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Avatar className="cursor-pointer">
+          <AvatarImage src="https://github.com/shadcn.png" />
+          <AvatarFallback>Profile</AvatarFallback>
+        </Avatar>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        <DropdownMenuItem onClick={() => navigate({ to: "/profile" })}>
+          Profile
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>
+          Settings
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => signOut()}>Logout</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
 
