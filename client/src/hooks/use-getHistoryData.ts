@@ -3,7 +3,7 @@ import { useMutation, useQueries, useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import * as React from "react";
 
-type Response = {
+export type Response = {
   id: number;
   form_input_id: number;
   status: string;

@@ -18,7 +18,7 @@ import {
 } from "../ui/accordion";
 
 import { useEffect, useState } from "react";
-import { useGetHistory } from "@/hooks/use-getHistoryData";
+import { Response, useGetHistory } from "@/hooks/use-getHistoryData";
 
 interface FormProps {
   id_original: number;
@@ -55,6 +55,7 @@ const Form: React.FC<FormProps> = ({
     editcomment || "",
   );
 
+  console.log(selectedValue);
   const { historyData, isLoading, error, refetchHistory } =
     useGetHistory(id_original);
 
@@ -62,11 +63,14 @@ const Form: React.FC<FormProps> = ({
     setSelectedValue(select_option || "");
     setEditComment(editcomment || "");
   }, [select_option, editcomment]);
+
+  const formattedData = historyData?.filter((data) => data.timestamp);
+
   return (
     <>
-      <div className="outline justify-center items-center">
+      <div className="justify-center items-center">
         <form
-          className="grid outline"
+          className="flex flex-col  "
           onSubmit={handleSubmit}
           name="valuesform"
         >
@@ -79,83 +83,110 @@ const Form: React.FC<FormProps> = ({
             value={form_field_id}
           />
 
-          <div className="flex flex-row mt-2">
-            <p className="w-full underline">{description}</p>
-            <img
-              className=""
-              src="/public/assets/Edit React Icon.svg"
-              alt="text"
-              onClick={() =>
-                onEdit(
-                  id_original,
-                  description,
-                  editcomment,
-                  select_option,
-                  form_field_id,
-                )
-              }
-            />
-          </div>
-          <p>Verantwortlich: {owner}</p>
-
-          <div className="flex flex-row">
-            <Select
-              value={selectedValue}
-              onValueChange={setSelectedValue}
-              disabled
-            >
-              <SelectTrigger
-                id="status"
-                name="select_option"
-                value={select_option}
-                className="w-full max-w-48"
+          <div className="flex flex-col gap-5">
+            <div className="flex flex-row mt-2">
+              <p className="w-full underline">{description}</p>
+              <img
+                className=""
+                src="/public/assets/Edit React Icon.svg"
+                alt="text"
+                onClick={() =>
+                  onEdit(
+                    id_original,
+                    description,
+                    editcomment,
+                    select_option,
+                    form_field_id,
+                  )
+                }
+              />
+            </div>
+            <div className="flex gap-2 ">
+              <span
+                className={
+                  owner === "Siemon"
+                    ? "rounded-2xl bg-blue-200 px-3 py-1 text-sm"
+                    : owner === "Acosta"
+                      ? "rounded-2xl bg-pink-200 px-3 py-1 text-sm"
+                      : owner === "Janik"
+                        ? "rounded-2xl bg-green-200 px-3 py-1 text-sm"
+                        : owner === "Sen"
+                          ? "rounded-2xl bg-gray-200 px-3 py-1 text-sm"
+                          : owner === "Conpro IT"
+                            ? "rounded-2xl bg-yellow-200 px-3 py-1 text-sm"
+                            : ""
+                }
               >
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup className="bg-amber-50">
-                  <SelectItem id="select1" value="offen">
-                    Offen
-                  </SelectItem>
-                  <SelectItem id="select2" value="in_bearbeitung">
-                    In Bearbeitung
-                  </SelectItem>
-                  <SelectItem id="select3" value="erledigt">
-                    Erledigt
-                  </SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+                {owner}
+              </span>
+              <div>
+                <span
+                  className={
+                    selectedValue === "erledigt"
+                      ? "rounded-2xl bg-green-500 px-3 py-1 text-sm"
+                      : selectedValue === "offen"
+                        ? "rounded-2xl bg-red-200 px-3 py-1 text-sm"
+                        : selectedValue === "in_bearbeitung"
+                          ? "rounded-2xl bg-orange-500 px-3 py-1 text-sm"
+                          : " rounded-2xl bg-red-400 px-3 py-1 text-sm"
+                  }
+                >
+                  {selectedValue === "erledigt" ? (
+                    <span>Erledigt</span>
+                  ) : selectedValue === "in_bearbeitung" ? (
+                    <span>In Bearbeitung</span>
+                  ) : selectedValue === "offen" ? (
+                    <span>Offen</span>
+                  ) : (
+                    <span>Status</span>
+                  )}
+                </span>
+              </div>
+
+              <div className="relative">
+                <span className="rounded-2xl bg-gray-100 px-3 py-1 text-sm cursor-pointer group">
+                  Letzter Kommentar
+                  <div className="absolute bottom-full left-0 mb-2 p-3 bg-white border rounded-lg shadow-lg opacity-0 group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-10 ">
+                    {editcommentValue === "" ? (
+                      <span>Kein Kommentar</span>
+                    ) : (
+                      editcommentValue
+                    )}
+                  </div>
+                </span>
+              </div>
+            </div>
+
+            <Accordion type="single" collapsible className="max-w-6xl ">
+              <AccordionItem value="shipping" className="mb-10 ">
+                <AccordionTrigger className=" -blue-600 border-2 p-2 border-gray-300">
+                  Verlauf
+                </AccordionTrigger>
+                <AccordionContent className="">
+                  {isLoading ? (
+                    <p>Loading History</p>
+                  ) : (
+                    (historyData || []).map((item: Response, index: number) => (
+                      <div key={index} className="">
+                        <div className=" mb-2 mt-1">
+                          <p className="text-left">
+                            <strong>
+                              {new Date(item.timestamp).toLocaleDateString()}
+                            </strong>
+                          </p>
+                        </div>
+                        <div className="flex">
+                          <p>Nutzer: {item.auth_user.email}</p>
+                        </div>
+                        <p>Status: {item.status}</p>
+                        <p>Kommentar: {item.edit}</p>
+                      </div>
+                    ))
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </div>
-
-          <textarea
-            className="outline "
-            placeholder="schreibe deine Notiz"
-            id="edit"
-            name="editcomment"
-            value={editcommentValue}
-            readOnly
-          ></textarea>
-
-          <Accordion type="single" collapsible className="max-w-lg">
-            <AccordionItem value="shipping">
-              <AccordionTrigger>Verlauf</AccordionTrigger>
-              <AccordionContent>
-                {isLoading ? (
-                  <p>Loading History</p>
-                ) : (
-                  (historyData || []).map((item: any, index: any) => (
-                    <div key={index}>
-                      <p>Status: {item.status}</p>
-                      <p>Comment: {item.edit}</p>
-                      <p>Time: {item.timestamp}</p>
-                      <p>Nutzer: {item.auth_user.email}</p>
-                    </div>
-                  ))
-                )}
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
         </form>
       </div>
     </>
