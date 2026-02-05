@@ -12,6 +12,7 @@ import AdminModal from "./AdminModal";
 
 type TAccordion = {
   data: TEmployForm;
+  onTaskClick: () => void;
 };
 
 type EmployeeGroup = {
@@ -24,9 +25,7 @@ type EmployeeGroup = {
   }>;
 };
 
-export function AccordionDemo({ data }: TAccordion) {
-  const [modal, setModalOpen] = useState<boolean>(false);
-
+export function AccordionDemo({ data, onTaskClick }: TAccordion) {
   const employeeGroups = useMemo(() => {
     const groups = new Map<string, EmployeeGroup>();
 
@@ -73,7 +72,7 @@ export function AccordionDemo({ data }: TAccordion) {
                   <div
                     key={taskIndex}
                     className="outline border p-2 mb-2 hover:bg-gray-200 rounded-2xl"
-                    onClick={() => setModalOpen(true)}
+                    onClick={onTaskClick}
                   >
                     <p>
                       <strong>Aufabe:</strong>
@@ -98,7 +97,6 @@ export function AccordionDemo({ data }: TAccordion) {
           </AccordionItem>
         ))}
       </Accordion>
-      {modal && <AdminModal onClose={() => setModalOpen(false)} />}
     </>
   );
 }

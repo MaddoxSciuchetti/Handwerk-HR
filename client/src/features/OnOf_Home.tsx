@@ -158,10 +158,10 @@ function OnOf_Home() {
 
   return (
     <>
-      <div className="outline outline-amber-800 w-full max-w-5xl h-[600px] rounded-2xl mx-auto p-6 shadow-gray-500 shadow-lg">
+      <div className=" w-full max-w-5xl h-150 rounded-2xl mx-auto p-6 shadow-gray-200 shadow-lg">
         <div className="h-full flex flex-col ">
           <div className="flex items-center gap-4 mb-6">
-            <Input className="" />
+            <Input className="" placeholder="Search" />
             <div className="flex gap-2">
               <Button variant={"outline"}>Filter</Button>
               <Button variant={"outline"} onClick={() => toggleModal()}>
@@ -170,14 +170,14 @@ function OnOf_Home() {
             </div>
           </div>
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="">Handwerker</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Bearbeiten</TableHead>
-                <TableHead>Offene Aufgaben</TableHead>
-                <TableHead>Aktionen</TableHead>
+          <Table className=" text-left">
+            <TableHeader className="outline">
+              <TableRow className="text-lg">
+                <TableHead className="text-left  pl-0">Handwerker</TableHead>
+                <TableHead className="text-left  pl-0">Phase</TableHead>
+
+                <TableHead className=" pl-0">Fortschritt</TableHead>
+                <TableHead className=" pl-0">Aktionen</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -202,23 +202,11 @@ function OnOf_Home() {
               className="fixed inset-0 bg-black/50 cursor-pointer"
               aria-label="Close modal"
             />
-            <div className="ml-auto relative z-10">
-              <Sidebar side={"right"} className="bg-gray-100 rounded-2xl w-4xl">
-                <SidebarHeader className="mt-5 flex flex-row align-middle"></SidebarHeader>
-                <SidebarContent>
-                  <Modal
-                    className="p-4 rounded-lg"
-                    toggleModal={toggleModal}
-                    onSuccess={onSubmit}
-                  />
-                  <SidebarGroup>
-                    <SidebarGroupContent>
-                      <SidebarMenu className="text-black"></SidebarMenu>
-                    </SidebarGroupContent>
-                  </SidebarGroup>
-                </SidebarContent>
-              </Sidebar>
-            </div>
+            <Modal
+              className="p-4 rounded-lg"
+              toggleModal={toggleModal}
+              onSuccess={onSubmit}
+            />
           </div>
         )}
       </div>

@@ -22,15 +22,17 @@ interface ToDoItem {
   form_type: string;
   gotopage: (taskId: number, form_type: any) => void;
   onRemove: (value_item: number) => void;
+  className?: string;
 }
 
 export function Worker_Item({
   form_type,
   item_value,
-
   item,
   gotopage,
   onRemove,
+  className,
+  ...props
 }: ToDoItem) {
   const [modal, setModal] = useState<boolean>(false);
 
@@ -51,39 +53,67 @@ export function Worker_Item({
 
   return (
     <>
-      <tr>
-        <td className="text-xl">{item}</td>
+      <tr
+        onClick={() => gotopage(item_value, form_type)}
+        className="hover:bg-gray-50 rounded-2xl cursor-pointer border-seperate border-spacing-y-2 py-5"
+      >
+        <td className="text-sm font-semibold">{item}</td>
 
-        <td className="outline justify-center items-center " lang="en">
+        <td
+          className={
+            form_type === "Onboarding"
+              ? "text-sm underline decoration-2 decoration-sky-400 justify-center items-center py-5"
+              : "text-sm underline decoration-2 decoration-red-400 justify-center items-center py-5"
+          }
+          lang="en"
+        >
           {form_type}
         </td>
-        <td>
-          <Button
-            onClick={() => gotopage(item_value, form_type)}
-            variant="outline"
-            size="sm"
-          >
-            Live thread
-          </Button>
-        </td>
 
-        <th>
-          {processLoading
-            ? "..."
-            : `${completedTasksCount}/${processData?.form?.fields?.length || 0}`}
+        <th className="">
+          <span
+            className={
+              completedTasksCount === null
+                ? "text-red-500"
+                : completedTasksCount <= 5
+                  ? "text-red-600"
+                  : completedTasksCount < 12
+                    ? "text-orange-300"
+                    : completedTasksCount >= 13
+                      ? "text-green-500"
+                      : ""
+            }
+          >
+            {processLoading ? "..." : completedTasksCount}
+          </span>
+          <span className="text-black font-medium">
+            /{processData?.form?.fields?.length || 0}
+          </span>
         </th>
 
         <td>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline">XXX</Button>
+              <img
+                className="hover:scale-110"
+                src="/public/assets/Edit React Icon.svg"
+              />
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-40" align="start">
+            <DropdownMenuContent className={`w-40 bg-gray-100`} align="start">
               <DropdownMenuGroup>
-                <DropdownMenuItem onClick={() => onRemove(item_value)}>
+                <DropdownMenuItem
+                  className="hover:bg-gray-200 cursor-pointer"
+                  onClick={() => onRemove(item_value)}
+                >
                   Löschen
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setModal(true)}>
+                <DropdownMenuItem
+                  className="hover:bg-gray-200 cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setModal(true);
+                  }}
+                >
                   Export
                 </DropdownMenuItem>
               </DropdownMenuGroup>
@@ -91,15 +121,9 @@ export function Worker_Item({
           </DropdownMenu>
         </td>
       </tr>
-      {modal &&
-        createPortal(
-          <FileModal
-            id={item_value}
-            onClose={setModal}
-            form_type={form_type}
-          />,
-          document.body,
-        )}
+      {modal && (
+        <FileModal id={item_value} onClose={setModal} form_type={form_type} />
+      )}
     </>
   );
 }

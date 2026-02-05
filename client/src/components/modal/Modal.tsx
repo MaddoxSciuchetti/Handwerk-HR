@@ -25,11 +25,10 @@ const Modal: React.FC<ModalProps> = ({
 
   return (
     <>
-      <div className={cn("default-modal-classes", className)} {...props}>
-        <div className="">
+      <div className="max-h-min mt-40 mx-auto text-center items-center z-50 bg-gray-200 rounded-xl  w-2xl">
+        <div className="flex items-center gap-10 justify-center mb-6 m-10">
           <div>
             <input
-              className="border-3 border-blue-500 rounded-full "
               id="Onboarding"
               type="radio"
               name="radio"
@@ -42,6 +41,8 @@ const Modal: React.FC<ModalProps> = ({
               }
             />
             <label htmlFor={"Onboarding"}>Onboarding</label>
+          </div>
+          <div>
             <input
               id="Offboarding"
               type="radio"
@@ -55,19 +56,15 @@ const Modal: React.FC<ModalProps> = ({
               }
             />
             <label htmlFor="Offboarding">Offboarding</label>
-            {selectedOption === "Onboarding" && (
-              <WorkerDataForm
-                type={selectedOption}
-                success={onSuccess.mutate}
-              />
-            )}
-            {selectedOption === "Offboarding" && (
-              <WorkerDataForm
-                type={selectedOption}
-                success={onSuccess.mutate}
-              />
-            )}
           </div>
+        </div>
+        <div>
+          {selectedOption === "Onboarding" && (
+            <WorkerDataForm type={selectedOption} success={onSuccess.mutate} />
+          )}
+          {selectedOption === "Offboarding" && (
+            <WorkerDataForm type={selectedOption} success={onSuccess.mutate} />
+          )}
         </div>
       </div>
     </>

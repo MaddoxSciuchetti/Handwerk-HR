@@ -192,18 +192,22 @@ export function FileModal({ id, onClose, form_type }: FileModalType) {
 
   return (
     <>
-      <div>
-        <div
-          onClick={() => onClose(false)}
-          className="h-screen inset-0 fixed z-40 bg-black/60"
-        ></div>
-
-        <div className="absolute text-center items-center z-50 bg-gray-200 rounded-xl top-[20%] left-[50%] h-1/5 w-2xl -translate-x-1/2 -translate-y-1/2">
-          <p>this is the overall content</p>
-          <PDFViewer>
+      <div
+        onClick={() => onClose(false)}
+        className="h-screen inset-0 fixed z-60 bg-black/60"
+      ></div>
+      <div className="fixed z-50 flex items-center justify-center">
+        <div className="bg-gray-200 rounded-xl max-w-2xl w-full mx-4 p-6 flex flex-col h-96">
+          <PDFViewer className="flex-1 mb-4">
             <MyDocument />
           </PDFViewer>
-          <Button onClick={handleExport}>Export file</Button>
+          <Button
+            variant={"outline"}
+            className="hover:bg-gray-300"
+            onClick={handleExport}
+          >
+            Exporieren
+          </Button>
         </div>
       </div>
     </>

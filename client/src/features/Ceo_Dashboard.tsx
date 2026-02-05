@@ -14,14 +14,13 @@ function Ceo_Dashboard() {
     chefdata,
     uniqueUsersByOwner,
     setSelectedUser,
+    setModalOpen,
+    modal,
     selectedUser,
     selectUserData,
     isLoading,
     error,
   } = useCeoDashboard();
-
-  console.log("SELECTED USER DATA");
-  console.log(selectUserData);
 
   if (isLoading) return <div>Loading</div>;
   if (error) console.log(error);
@@ -49,7 +48,10 @@ function Ceo_Dashboard() {
                   className="outline outline-red-500"
                   // onClick={() => setModalOpen(true)}
                 >
-                  <AccordionDemo data={selectUserData} />
+                  <AccordionDemo
+                    data={selectUserData}
+                    onTaskClick={() => setModalOpen(true)}
+                  />
                 </div>
               </div>
             ) : (
@@ -58,6 +60,7 @@ function Ceo_Dashboard() {
           </div>
         </div>
       </div>
+      {modal && <AdminModal onClose={() => setModalOpen(false)} />}
     </>
   );
 }

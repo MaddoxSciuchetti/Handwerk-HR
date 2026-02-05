@@ -2,9 +2,11 @@ import { TEmployForm } from "@/features/Ceo_Dashboard";
 import { fetchChefData } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import useUniqueUser from "./use-unique-user";
 
 function useCeoDashboard() {
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
+  const [modal, setModalOpen] = useState<boolean>(false);
 
   // custom hook implementation
   const {
@@ -16,25 +18,27 @@ function useCeoDashboard() {
     queryFn: fetchChefData,
   });
 
-  const uniqueUsersByOwner = useMemo(() => {
-    if (!chefdata) return [];
-    const ownerToUserMap = new Map<string, TEmployForm[0]>();
-    chefdata.forEach((item) => {
-      if (!ownerToUserMap.has(item.owner)) {
-        ownerToUserMap.set(item.owner, item);
-      }
-    });
-    return Array.from(ownerToUserMap.values());
-  }, [chefdata]);
+  console.log("CHEFDATA");
+  console.log(chefdata);
+
+  const uniqueUsersByOwner = useUniqueUser(chefdata);
+
+  console.log("UNIQUE OWNERS");
+  console.log(uniqueUsersByOwner);
 
   const selectUserData = useMemo(
     () => chefdata?.filter((item) => item.owner === selectedUser) || [],
     [selectedUser, chefdata],
   );
 
+  console.log("SELECT USERDATA");
+  console.log(selectUserData);
+
   return {
     selectedUser,
     setSelectedUser,
+    modal,
+    setModalOpen,
     chefdata,
     uniqueUsersByOwner,
     selectUserData,

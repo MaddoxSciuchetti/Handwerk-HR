@@ -64,26 +64,41 @@ const Form: React.FC<FormProps> = ({
   }, [select_option, editcomment]);
   return (
     <>
-      <div className="flex justify-center items-center w-max bg-amber-50 outline">
+      <div className="outline justify-center items-center">
         <form
-          className="flex flex-col  outline w-md items-center"
+          className="grid outline"
           onSubmit={handleSubmit}
           name="valuesform"
         >
           <input type="hidden" id="id" name="id" value={id_original} />
+          <input type="hidden" name="select_option" value={selectedValue} />
           <input
             type="hidden"
             id="form_field_id"
             name="form_field_id"
             value={form_field_id}
           />
-          <div className="field">
-            <p>{description}</p>
-            <div>
-              <p>Verantwortlich: {owner}</p>
-            </div>
 
-            <input type="hidden" name="select_option" value={selectedValue} />
+          <div className="flex flex-row mt-2">
+            <p className="w-full underline">{description}</p>
+            <img
+              className=""
+              src="/public/assets/Edit React Icon.svg"
+              alt="text"
+              onClick={() =>
+                onEdit(
+                  id_original,
+                  description,
+                  editcomment,
+                  select_option,
+                  form_field_id,
+                )
+              }
+            />
+          </div>
+          <p>Verantwortlich: {owner}</p>
+
+          <div className="flex flex-row">
             <Select
               value={selectedValue}
               onValueChange={setSelectedValue}
@@ -111,33 +126,17 @@ const Form: React.FC<FormProps> = ({
                 </SelectGroup>
               </SelectContent>
             </Select>
-            <div className="field_sub">{/* insert css to style */}</div>
           </div>
 
-          <div className="flex flex-row">
-            <textarea
-              className="outline "
-              placeholder="schreibe deine Notiz"
-              id="edit"
-              name="editcomment"
-              value={editcommentValue}
-              readOnly
-            ></textarea>
-            <img
-              className="w-10 h-1"
-              src="/assets/Edit Outline Icon.png"
-              alt="text"
-              onClick={() =>
-                onEdit(
-                  id_original,
-                  description,
-                  editcomment,
-                  select_option,
-                  form_field_id,
-                )
-              }
-            />
-          </div>
+          <textarea
+            className="outline "
+            placeholder="schreibe deine Notiz"
+            id="edit"
+            name="editcomment"
+            value={editcommentValue}
+            readOnly
+          ></textarea>
+
           <Accordion type="single" collapsible className="max-w-lg">
             <AccordionItem value="shipping">
               <AccordionTrigger>Verlauf</AccordionTrigger>

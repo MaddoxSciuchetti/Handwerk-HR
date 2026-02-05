@@ -3,13 +3,20 @@ import { Button } from "../ui/button";
 import { ErrorMessage } from "@hookform/error-message";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormInputs, formSchema } from "@/schemas/zodSchema";
+import { Input } from "../ui/input";
 
 interface WorkerDataFormProps {
   type: "Onboarding" | "Offboarding";
   success: (data: FormInputs) => void;
+  className?: string;
 }
 
-export const WorkerDataForm = ({ type, success }: WorkerDataFormProps) => {
+export const WorkerDataForm = ({
+  type,
+  success,
+  className,
+  ...props
+}: WorkerDataFormProps) => {
   const {
     register,
     handleSubmit,
@@ -29,52 +36,54 @@ export const WorkerDataForm = ({ type, success }: WorkerDataFormProps) => {
 
   return (
     <>
-      <form
-        onSubmit={handleSubmit(onFormSubmit)}
-        className="flex flex-col max-w-2xl justify-center gap-6 mx-auto"
-      >
-        <div className="flex flex-row gap-6 mx-auto">
-          <div className="flex flex-col gap-4 items-center focus:outline-none">
-            {/* this should always be shown */}
-            <label>Vorname</label>
-            <input
-              className="w-64 p-2 border-gray-300 border-2 rounded-xl"
+      <form onSubmit={handleSubmit(onFormSubmit)} className=" gap-4">
+        <h3 className="text-lg font-medium text-gray-900  pb-2"></h3>
+        <h1 className="text-left pl-10 pb-2">Eingabe Handwerker</h1>
+        <div className="grid grid-cols-2 gap-3 px-10 pb-10 items-end">
+          <div>
+            <Input
+              className=""
               type="text"
               placeholder="Vorname"
               {...register("vorname", { required: "erforderlich" })}
             />
             <ErrorMessage errors={errors} name="Vorname" />
-            {/* {errors.Vorname && errors.Vorname.types && (
+          </div>
+          {/* {errors.Vorname && errors.Vorname.types && (
               <p>{errors.Vorname.types.required}</p>
             )} */}
-            <label>Nachname</label>
-            <input
-              className="w-64 p-2 border-gray-300 border-2 rounded-xl focus:border-gray-600 outline-none"
+
+          <div>
+            <Input
+              className=""
               type="text"
               placeholder="Nachname"
               {...register("nachname")}
             />
             <ErrorMessage errors={errors} name="Nachname" />
+          </div>
 
-            <label>Email</label>
-            <input
-              className="w-64 p-2 border-gray-300 border-2 rounded-xl outline-none"
+          <div>
+            <Input
+              className=""
               type="text"
               placeholder="email"
               {...register("email")}
             />
             <ErrorMessage errors={errors} name="Nachname" />
-
-            <label>Geburtsdatum</label>
-            <input
-              className="w-64 p-2 border-gray-300 border-2 rounded-xl"
+          </div>
+          <div>
+            <Input
+              className=""
               type="text"
               placeholder="DD.MM.YYYY"
               {...register("geburtsdatum")}
             />
-            <label>Adresse</label>
-            <input
-              className="w-64 p-2 border-gray-300 border-2 rounded-xl"
+          </div>
+
+          <div>
+            <Input
+              className=""
               type="text"
               placeholder="Adresse"
               {...register("adresse")}
@@ -82,49 +91,54 @@ export const WorkerDataForm = ({ type, success }: WorkerDataFormProps) => {
             <ErrorMessage errors={errors} name="Adresse" />
           </div>
 
-          <div className="flex flex-col max-w-md gap-4">
-            {/* <Input placeholder="name" /> */}
-            <label>Eintrittsdatum</label>
-            <input
-              className="w-64 p-2 border-gray-300 border-2 rounded-xl"
+          {/* <Input placeholder="name" /> */}
+          <div>
+            <Input
+              className=""
               type="text"
               placeholder="DD.MM.YYYY"
               {...register("eintrittsdatum")}
             />
             <ErrorMessage errors={errors} name="Eintrittsdatum" />
+          </div>
 
-            {/* start of component that should only show in offboarding*/}
+          {/* start of component that should only show in offboarding*/}
 
-            {type === "Offboarding" ? (
-              <>
-                <label>Austrittsdatum</label>
-                <input
-                  className="w-64 p-2 border-gray-300 border-2 rounded-xl"
-                  type="text"
-                  placeholder="DD.MM.YYYY"
-                  {...register("austrittsdatum")}
-                />
-                <ErrorMessage errors={errors} name="Austrittsdatum" />
-              </>
-            ) : (
-              ""
-            )}
+          {type === "Offboarding" ? (
+            <>
+              <Input
+                className=""
+                type="text"
+                placeholder="DD.MM.YYYY"
+                {...register("austrittsdatum")}
+              />
+              <ErrorMessage errors={errors} name="Austrittsdatum" />
+            </>
+          ) : (
+            ""
+          )}
 
-            {/* end of component that should only show in offboarding */}
-            <label>Position</label>
-            <input
-              className="w-64 p-2 border-gray-300 border-2 rounded-xl"
+          {/* end of component that should only show in offboarding */}
+          <div className="">
+            <Input
+              className=""
               type="text"
               placeholder="Position"
               {...register("position")}
             />
             <ErrorMessage errors={errors} name="Position" />
-            <input type="hidden" {...register("type")} value={type} />
           </div>
+
+          <Button
+            variant={"outline"}
+            type="submit"
+            className="hover:bg-gray-300"
+          >
+            Hinzufügen
+          </Button>
+
+          <Input type="hidden" {...register("type")} value={type} />
         </div>
-        <Button variant={"outline"} type="submit" className="self-center">
-          Hinzufügen
-        </Button>
       </form>
     </>
   );

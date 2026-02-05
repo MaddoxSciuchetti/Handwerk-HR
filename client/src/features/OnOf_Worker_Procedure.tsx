@@ -11,6 +11,17 @@ import useAuth from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import Worker_Backround from "@/components/backround_worker";
 
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
 export type form_field = {
   id: number;
   form_field_id: number;
@@ -227,9 +238,10 @@ const OnOf_Worker_Procedure: React.FC<OffboardingFormProps> = ({
 
   return (
     <>
-      <div className="flex flex-col h-full max-w-4xl mx-auto">
-        <div className=" bg-white border-b border-gray-200 p-4 outline w-xl">
+      <div className="flex flex-col fixed w-full max-w-5xl h-150 rounded-2xl mx-auto  shadow-gray-200 shadow-lg overflow-auto p-6 ">
+        <div className="w-max flex justify gap-5">
           <Button
+            variant={"outline"}
             className={activetab === "form" ? "active" : ""}
             onClick={() => setActiveTab("form")}
           >
@@ -246,7 +258,7 @@ const OnOf_Worker_Procedure: React.FC<OffboardingFormProps> = ({
         <div>
           {activetab === "files" && <Worker_Backround id={id} />}
           {activetab === "form" && (
-            <div className=" ">
+            <div className="">
               {modalState.isOpen && modalState.selectedItem && (
                 <PreviewComponent
                   onClose={closeModal}
