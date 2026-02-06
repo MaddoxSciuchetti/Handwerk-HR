@@ -14,10 +14,11 @@ import {
   useProcessData,
   useProcessDataContext,
 } from "@/contexts/ProcessDataContext";
+import { useSidebar } from "../ui/sidebar";
+import { useToggleModal } from "@/hooks/use-toggleModal";
 
 interface ToDoItem {
   item_value: number;
-
   item: string;
   form_type: string;
   gotopage: (taskId: number, form_type: any) => void;
@@ -32,10 +33,13 @@ export function Worker_Item({
   gotopage,
   onRemove,
   className,
+
   ...props
 }: ToDoItem) {
-  const [modal, setModal] = useState<boolean>(false);
+  // const [modal, setModal] = useState<boolean>(false);
 
+  // const { toggleSidebar } = useSidebar();
+  const { modal, setModal, toggleModal } = useToggleModal();
   // const {
   //   data: getScore,
   //   isLoading,
@@ -111,7 +115,7 @@ export function Worker_Item({
                   className="hover:bg-gray-200 cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setModal(true);
+                    toggleModal();
                   }}
                 >
                   Export
@@ -122,7 +126,14 @@ export function Worker_Item({
         </td>
       </tr>
       {modal && (
-        <FileModal id={item_value} onClose={setModal} form_type={form_type} />
+        <div className="fixed inset-0 z-50 flex">
+          <div
+            onClick={toggleModal}
+            className="fixed inset-0 bg-black/50 cursor-pointer"
+            aria-label="Close modal"
+          />
+          <FileModal id={item_value} form_type={form_type} />
+        </div>
       )}
     </>
   );

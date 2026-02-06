@@ -81,7 +81,7 @@ function Worker_Backround({ id }: Worker_Backround) {
     <>
       <div className="text-right ">
         {isLoading ? <div> Loading state </div> : ""}
-        <div className=" flex flex-row justify-end ">
+        <div className=" flex flex-row justify-end">
           <img
             className=" flex flex-end"
             onClick={() => setModalState(true)}
@@ -97,6 +97,8 @@ function Worker_Backround({ id }: Worker_Backround) {
                 className=" rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition-colors outline"
               >
                 <Button
+                  size={"icon-sm"}
+                  variant={"outline"}
                   onClick={(e) => {
                     e.stopPropagation();
                     deleteFiles(file.id);

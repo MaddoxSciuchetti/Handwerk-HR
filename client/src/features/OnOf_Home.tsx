@@ -195,11 +195,7 @@ function OnOf_Home() {
               className="fixed inset-0 bg-black/50 cursor-pointer"
               aria-label="Close modal"
             />
-            <Modal
-              className="p-4 rounded-lg"
-              toggleModal={toggleModal}
-              onSuccess={onSubmit}
-            />
+            <Modal className="p-4 rounded-lg" onSuccess={onSubmit} />
           </div>
         )}
       </div>
