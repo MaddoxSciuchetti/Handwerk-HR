@@ -79,18 +79,22 @@ function Worker_Backround({ id }: Worker_Backround) {
 
   return (
     <>
-      <div className="outline text-right">
+      <div className="text-right ">
         {isLoading ? <div> Loading state </div> : ""}
-        <Button variant={"secondary"} onClick={() => setModalState(true)}>
-          Hinzufügen
-        </Button>
+        <div className=" flex flex-row justify-end ">
+          <img
+            className=" flex flex-end"
+            onClick={() => setModalState(true)}
+            src="/public/assets/Plus React Icon.svg"
+          />
+        </div>
 
         {fetchFiles && (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
             {fetchFiles.map((file, index) => (
               <div
                 key={index}
-                className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition-colors"
+                className=" rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition-colors outline"
               >
                 <Button
                   onClick={(e) => {

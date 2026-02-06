@@ -55,7 +55,6 @@ const Form: React.FC<FormProps> = ({
     editcomment || "",
   );
 
-  console.log(selectedValue);
   const { historyData, isLoading, error, refetchHistory } =
     useGetHistory(id_original);
 
@@ -64,11 +63,11 @@ const Form: React.FC<FormProps> = ({
     setEditComment(editcomment || "");
   }, [select_option, editcomment]);
 
-  const formattedData = historyData?.filter((data) => data.timestamp);
+  console.log(historyData?.map((val) => console.log(val)));
 
   return (
     <>
-      <div className="justify-center items-center">
+      <div className="justify-center items-center hover:scale-101 mt-10">
         <form
           className="flex flex-col  "
           onSubmit={handleSubmit}
@@ -157,7 +156,7 @@ const Form: React.FC<FormProps> = ({
               </div>
             </div>
 
-            <Accordion type="single" collapsible className="max-w-6xl ">
+            <Accordion type="single" collapsible className="max-w-6xl">
               <AccordionItem value="shipping" className="mb-10 ">
                 <AccordionTrigger className=" -blue-600 border-2 p-2 border-gray-300">
                   Verlauf

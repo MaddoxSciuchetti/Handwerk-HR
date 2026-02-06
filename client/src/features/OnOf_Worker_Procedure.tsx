@@ -21,6 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
 
 export type form_field = {
   id: number;
@@ -238,8 +239,9 @@ const OnOf_Worker_Procedure: React.FC<OffboardingFormProps> = ({
 
   return (
     <>
-      <div className="flex flex-col fixed w-full max-w-5xl h-150 rounded-2xl mx-auto  shadow-gray-200 shadow-lg overflow-auto p-6 ">
+      <div className="flex flex-col fixed w-full max-w-5xl h-150 rounded-2xl mx-auto  shadow-gray-200 shadow-lg overflow-auto p-6">
         <div className="w-max flex justify gap-5">
+          <Input className="" placeholder="Search" />
           <Button
             variant={"outline"}
             className={activetab === "form" ? "active" : ""}
