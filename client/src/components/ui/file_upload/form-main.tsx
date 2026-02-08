@@ -101,73 +101,63 @@ export default function FileUpload01({ id, setModal }: FileUploadProps01) {
   };
 
   return (
-    <div className="">
-      <div
-        onClick={() => setModal(false)}
-        className="h-screen inset-0 fixed z-40 bg-black/60"
-      ></div>
+    <>
+      <Card className="max-h-min mt-40 mx-auto text-center items-center z-50 bg-gray-200 rounded-xl  w-2xl">
+        <div className="flex items-center gap-10 justify-center mb-6 m-10">
+          {isLoading ? <div>...</div> : ""}
+          {error ? <div>Try again</div> : ""}
+          <CardContent className="">
+            <div className="p-6 pb-4"></div>
+            {/* <Form /> */}
+            <FileDropzone
+              fileInputRef={fileInputRef}
+              handleBoxClick={handleBoxClick}
+              handleDragOver={handleDragOver}
+              handleDrop={handleDrop}
+              handleFileSelect={handleFileSelect}
+            />
+            <FileList
+              uploadedFiles={uploadedFiles}
+              fileProgresses={fileProgresses}
+              removeFile={removeFile}
+            />
+            <div className="px-6 py-3 border-t border-border bg-muted rounded-b-lg flex justify-between items-center">
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="flex items-center text-muted-foreground hover:text-foreground"
+                    >
+                      <HelpCircle className="h-4 w-4 mr-1" />
+                      Hilfe?
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="py-3 bg-gray-200 text-foreground border">
+                    <div className="space-y-1">
+                      <p className="text-muted-foreground dark:text-muted-background text-xs max-w-[200px]">
+                        Ziehe deine Dateien in das Feld rein oder lade sie
+                        direkt hoch.
+                      </p>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
 
-      <Card className="absolute text-center items-center z-50 bg-gray-200 rounded-xl top-[40%] left-[50%] h-2/5 w-2xl -translate-x-1/2 -translate-y-1/2">
-        {isLoading ? <div>...</div> : ""}
-        {error ? <div>Try again</div> : ""}
-        <CardContent className="">
-          <div className="p-6 pb-4"></div>
-          <Form />
-          <FileDropzone
-            fileInputRef={fileInputRef}
-            handleBoxClick={handleBoxClick}
-            handleDragOver={handleDragOver}
-            handleDrop={handleDrop}
-            handleFileSelect={handleFileSelect}
-          />
-          <FileList
-            uploadedFiles={uploadedFiles}
-            fileProgresses={fileProgresses}
-            removeFile={removeFile}
-          />
-          <div className="px-6 py-3 border-t border-border bg-muted rounded-b-lg flex justify-between items-center">
-            <TooltipProvider delayDuration={0}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="flex items-center text-muted-foreground hover:text-foreground"
-                  >
-                    <HelpCircle className="h-4 w-4 mr-1" />
-                    Hilfe?
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="py-3 bg-background text-foreground border">
-                  <div className="space-y-1">
-                    <p className="text-muted-foreground dark:text-muted-background text-xs max-w-[200px]">
-                      Upload project images by dragging and dropping files or
-                      using the file browser. Supported formats: JPG, PNG, SVG.
-                      Maximum file size: 4MB.
-                    </p>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                className="h-9 px-4 text-sm font-medium"
-                onClick={() => setModal(false)}
-              >
-                Abbrechen
-              </Button>
-              <Button
-                onClick={handleFileSubmit}
-                className="h-9 px-4 text-sm font-medium"
-              >
-                Erstellen
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant={"outline"}
+                  onClick={handleFileSubmit}
+                  className="h-9 px-4 text-sm font-medium hover:text-black"
+                >
+                  Erstellen
+                </Button>
+              </div>
             </div>
-          </div>
-        </CardContent>
+          </CardContent>
+        </div>
       </Card>
-    </div>
+    </>
   );
 }

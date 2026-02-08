@@ -3,6 +3,9 @@ import { File_Request } from "@/components/backround_worker";
 import API from "@/config/apiClient";
 import { TEmployForm } from "@/features/Ceo_Dashboard";
 import { OffboardingItem } from "@/features/OnOf_Home";
+import { api_Response } from "@/features/OnOf_Worker_Procedure";
+import { Mappingform } from "@/schemas/Task";
+import { SuccessResponse } from "@/types/api_response";
 import { Session } from "react-router-dom";
 import { User } from "shared_prisma_types";
 import z from "zod";
@@ -185,4 +188,25 @@ export const sendReminderWorker = async (
 ): Promise<unknown> => {
   console.log(data);
   return API.post("/offboarding/sendReminder", data);
+};
+
+export const editData = async (formData: Mappingform) => {
+  return API.put<SuccessResponse, SuccessResponse>(
+    "offboarding/editdata",
+    formData,
+  );
+};
+
+export const formattedData = async (
+  id: number,
+  param: string,
+): Promise<api_Response> => {
+  const response = await API.get<api_Response, api_Response>(
+    `offboarding/user/${id}?param1=${param}`,
+  );
+  return response;
+};
+
+export const specificEmployeeData = async () => {
+  return API.get(`/user/specificEmployeeData`);
 };

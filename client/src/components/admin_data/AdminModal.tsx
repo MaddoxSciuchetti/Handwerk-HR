@@ -6,7 +6,7 @@ import { useMutation } from "@tanstack/react-query";
 import { sendReminderWorker } from "@/lib/api";
 
 type TCloseModal = {
-  onClose: () => void;
+  onClose?: () => void;
 };
 
 const formSchema = z.object({
@@ -36,12 +36,13 @@ function AdminModal({ onClose }: TCloseModal) {
 
   return (
     <>
-      <div
+      {/* <div
         onClick={onClose}
         className="h-screen inset-0 fixed z-40 bg-black/60"
-      ></div>
-      <div className="absolute text-center items-center z-50 bg-gray-200 rounded-xl top-40 left-[20%] h-100 w-2xl -translate-x-1/2 -translate-y-1/2">
-        <div className="">
+      ></div> */}
+
+      <div className="max-h-min mt-40 mx-auto text-center items-center z-50 bg-gray-200 rounded-xl w-2xl">
+        <div className="flex items-center gap-10 justify-center mb-6 m-10 ">
           <form
             className="flex flex-col w-md outline justify-center "
             onSubmit={handleSubmit(onSubmit)}

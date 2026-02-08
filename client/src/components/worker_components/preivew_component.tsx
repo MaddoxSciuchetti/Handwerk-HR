@@ -10,9 +10,10 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useState } from "react";
+import { Sidebar } from "../ui/sidebar";
 
 type PreviewCompoent = {
-  onClose: () => void;
+  toggleModal: () => void;
   id: number;
   description: string;
   editcomment: string;
@@ -22,7 +23,7 @@ type PreviewCompoent = {
 };
 
 function PreviewComponent({
-  onClose,
+  toggleModal,
   id,
   description,
   editcomment,
@@ -43,60 +44,90 @@ function PreviewComponent({
 
   return (
     <>
-      <div
-        onClick={onClose}
-        className="h-screen inset-0 fixed z-40 bg-black/60"
-      ></div>
+      <div className="max-h-min mt-40 mx-auto text-center items-center z-50 bg-gray-200 rounded-xl w-2xl">
+        <div className="flex items-center gap-10 justify-center mb-6 m-10 ">
+          <form
+            className="flex flex-col gap-5  w-full"
+            onSubmit={handleSubmit}
+            name="valuesform"
+          >
+            <input type="hidden" id="id" name="id" value={id} />
+            <input
+              type="hidden"
+              id="form_field_id"
+              name="form_field_id"
+              value={form_field_id}
+            />
+            <p className="text-left underline">{description}</p>
+            <Textarea
+              defaultValue={editcomment}
+              id="editcomment"
+              name="editcomment"
+              className="w-xl"
+            />
 
-      <form
-        className="flex flex-col outline"
-        onSubmit={handleSubmit}
-        name="valuesform"
-      >
-        <div className="absolute text-center items-center z-50 bg-gray-200 rounded-xl top-[20%] left-[50%] h-1/5 w-2xl -translate-x-1/2 -translate-y-1/2">
-          <input type="hidden" id="id" name="id" value={id} />
-          <input
-            type="hidden"
-            id="form_field_id"
-            name="form_field_id"
-            value={form_field_id}
-          />
-          <p>{description}</p>
-          <Textarea
-            defaultValue={editcomment}
-            id="editcomment"
-            name="editcomment"
-          />
+            <input type="hidden" name="select_option" value={selectedValue} />
 
-          <input type="hidden" name="select_option" value={selectedValue} />
-
-          <Select value={selectedValue} onValueChange={setSelectedValue}>
-            <SelectTrigger
-              id="status"
-              name="select_option"
-              value={select_option}
-              className="w-full max-w-48"
-            >
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup className="bg-amber-50">
-                <SelectItem id="select1" value="offen">
-                  Offen
-                </SelectItem>
-                <SelectItem id="select2" value="in_bearbeitung">
-                  In Bearbeitung
-                </SelectItem>
-                <SelectItem id="select3" value="erledigt">
-                  Erledigt
-                </SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-
-          <Button type="submit">Speichern</Button>
+            <div className="flex flex-row gap-2">
+              <div>
+                <Select value={selectedValue} onValueChange={setSelectedValue}>
+                  <SelectTrigger
+                    id="status"
+                    name="select_option"
+                    value={select_option}
+                    className={
+                      selectedValue === "erledigt"
+                        ? " bg-green-600 px-3 py-1 text-sm w-[17.75rem]"
+                        : selectedValue === "offen"
+                          ? " bg-red-200 px-3 py-1 text-sm w-[17.75rem]"
+                          : selectedValue === "in_bearbeitung"
+                            ? " bg-orange-500 px-3 py-1 text-sm w-[17.75rem]"
+                            : "  bg-red-400 px-3 py-1 text-sm w-[17.75rem]"
+                    }
+                    // className="w-[17.75rem]"
+                  >
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent className="border-none">
+                    <SelectGroup className="bg-white cursor-pointer">
+                      <SelectItem
+                        className="hover:bg-gray-200 cursor-pointer"
+                        id="select1"
+                        value="offen"
+                      >
+                        Offen
+                      </SelectItem>
+                      <SelectItem
+                        className="hover:bg-gray-200 cursor-pointer"
+                        id="select2"
+                        value="in_bearbeitung"
+                      >
+                        In Bearbeitung
+                      </SelectItem>
+                      <SelectItem
+                        className="hover:bg-gray-200 cursor-pointer"
+                        id="select3"
+                        value="erledigt"
+                      >
+                        Erledigt
+                      </SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Button
+                  className="w-[17.75rem] hover:bg-gray-300"
+                  variant={"outline"}
+                  type="submit"
+                >
+                  Speichern
+                </Button>
+              </div>
+            </div>
+          </form>
         </div>
-      </form>
+      </div>
     </>
   );
 }

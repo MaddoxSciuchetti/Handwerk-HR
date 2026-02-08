@@ -46,13 +46,6 @@ export type OffboardingItem = {
 };
 
 function OnOf_Home() {
-  // async function fetchNameData(): Promise<OffboardingItem[]> {
-  //   const response = await (
-  //     await fetch(`${API_URL}/offboarding/fetchData`)
-  //   ).json();
-  //   console.log("this is data send from server", response);
-  //   return response;
-  // }
   const { toggleSidebar } = useSidebar();
 
   const { data, error, isSuccess } = useQuery<OffboardingItem[]>({
@@ -73,9 +66,8 @@ function OnOf_Home() {
     const response = await fetch(`${API_URL}/offboarding/delete/${taskId}`, {
       method: "DELETE",
       headers: {
-        "content-type": "application/json",
+        "Content-Type": "application/json",
       },
-      signal: AbortSignal.timeout(5000),
     });
     if (!response.ok) {
       throw new Error("Failed to delete task");
@@ -202,11 +194,7 @@ function OnOf_Home() {
               className="fixed inset-0 bg-black/50 cursor-pointer"
               aria-label="Close modal"
             />
-            <Modal
-              className="p-4 rounded-lg"
-              toggleModal={toggleModal}
-              onSuccess={onSubmit}
-            />
+            <Modal className="p-4 rounded-lg" onSuccess={onSubmit} />
           </div>
         )}
       </div>

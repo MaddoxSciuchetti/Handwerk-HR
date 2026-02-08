@@ -76,7 +76,7 @@ export const WorkerDataForm = ({
             <Input
               className=""
               type="text"
-              placeholder="DD.MM.YYYY"
+              placeholder="Geburtsdatum DD.MM.YYYY"
               {...register("geburtsdatum")}
             />
           </div>
@@ -96,7 +96,7 @@ export const WorkerDataForm = ({
             <Input
               className=""
               type="text"
-              placeholder="DD.MM.YYYY"
+              placeholder="Eintrittsdatum DD.MM.YYYY"
               {...register("eintrittsdatum")}
             />
             <ErrorMessage errors={errors} name="Eintrittsdatum" />
@@ -109,7 +109,7 @@ export const WorkerDataForm = ({
               <Input
                 className=""
                 type="text"
-                placeholder="DD.MM.YYYY"
+                placeholder="Austrittsdatum DD.MM.YYYY"
                 {...register("austrittsdatum")}
               />
               <ErrorMessage errors={errors} name="Austrittsdatum" />

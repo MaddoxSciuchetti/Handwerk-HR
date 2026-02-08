@@ -5,7 +5,7 @@ import { API_URL } from "../api";
 import Form from "@/components/worker_components/worker_form_data";
 import { Mappingform } from "../schemas/Task";
 
-import { APIResponse } from "../types/api_response";
+import { APIResponse, ErrorResponse } from "../types/api_response";
 import PreviewComponent from "@/components/worker_components/preivew_component";
 import useAuth from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,25 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { tryCatch } from "@/lib/utils";
+import { editData, formattedData } from "@/lib/api";
+import { useToggleModal } from "@/hooks/use-toggleModal";
+import AdminModal from "@/components/admin_data/AdminModal";
+
+// import { ErrorResponse } from "react-router-dom";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
+import EditSidebar from "@/components/ui/maddox_customs/EditSidebar";
 
 export type form_field = {
   id: number;
@@ -34,7 +53,8 @@ export type form_field = {
 export type api_Response = {
   user: {
     id: number;
-    name: string;
+    vorname: string;
+    nachname: string;
   };
   form: {
     id: number;
@@ -60,7 +80,6 @@ const OnOf_Worker_Procedure: React.FC<OffboardingFormProps> = ({
   search,
 }) => {
   const [modalState, setModalState] = useState<{
-    isOpen: boolean;
     selectedItem: {
       id: number;
       description: string;
@@ -69,45 +88,33 @@ const OnOf_Worker_Procedure: React.FC<OffboardingFormProps> = ({
       form_field_id: number;
     } | null;
   }>({
-    isOpen: false,
     selectedItem: null,
   });
 
   const queryClient = useQueryClient();
+  const { modal, setModal, toggleModal } = useToggleModal();
 
   const [activetab, setActiveTab] = useState<string>("form");
 
-  const { user, isError } = useAuth();
+  const { user } = useAuth();
 
-  const { data, error, isLoading } = useQuery<api_Response, Error>({
+  const { data, error, isLoading, isError } = useQuery<api_Response>({
     queryKey: ["somethingelse", id],
     queryFn: () => fetchFormattedData(),
   });
 
+  if (!data) {
+    return <div>Daten Laden</div>;
+  }
+
   async function sendFormData(formData: Mappingform): Promise<APIResponse> {
     const url = `${API_URL}/offboarding/editdata`;
 
-    try {
-      const response = await fetch(url, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-      if (!response.ok) {
-        return { success: false, error: `HTTP ${response.status}` };
-      }
-
-      const result = await response.json();
-
-      return { success: true, affectedRows: result.affectedRows };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "unkown error",
-      };
+    const [result, resultError] = await tryCatch(editData(formData));
+    if (resultError) {
+      return { success: false, error: resultError.message };
     }
+    return { success: true, affectedRows: result.affectedRows };
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -122,10 +129,6 @@ const OnOf_Worker_Procedure: React.FC<OffboardingFormProps> = ({
         console.log("validation errors", result.error);
         return;
       }
-      console.log("=== HandleSubmit ====");
-      console.log("Begin form result", result);
-      console.log(result.data.id);
-
       if (!user) {
         console.log("user not authenticated");
         return;
@@ -136,15 +139,14 @@ const OnOf_Worker_Procedure: React.FC<OffboardingFormProps> = ({
         queryKey: ["formHistory", parseInt(result.data.id)],
       });
 
-      // await getHistoryData(result.data.id);
-
       const response = await sendFormData(result.data);
-      if (response.success) {
+      if (response.success === true) {
         await queryClient.invalidateQueries({
           queryKey: ["somethingelse", id],
         });
 
-        setModalState({ isOpen: false, selectedItem: null });
+        setModalState({ selectedItem: null });
+        toggleModal();
       }
     } catch (error) {
       console.log(error);
@@ -152,27 +154,12 @@ const OnOf_Worker_Procedure: React.FC<OffboardingFormProps> = ({
   }
 
   async function fetchFormattedData(): Promise<api_Response> {
-    const res = await fetch(
-      `${API_URL}/offboarding/user/${id}?param1=${search.param1}`,
-    );
-
-    if (!res.ok) {
-      throw new Error("response not ok");
+    const [response, error] = await tryCatch(formattedData(id, search.param1));
+    if (error) {
+      throw new Error("");
     }
-    console.log("=== Fetch formData === ");
-    const response = await res.json();
-    console.log(response);
 
     return response;
-  }
-
-  if (error) {
-    // component
-    return <div>This is a error {error.message}</div>;
-  }
-  if (isLoading) {
-    // component
-    return <div>Still loading</div>;
   }
 
   async function openEditModal(
@@ -182,8 +169,8 @@ const OnOf_Worker_Procedure: React.FC<OffboardingFormProps> = ({
     select_option: string,
     form_field_id: number,
   ) {
+    toggleModal();
     setModalState({
-      isOpen: true,
       selectedItem: {
         id,
         description,
@@ -196,9 +183,9 @@ const OnOf_Worker_Procedure: React.FC<OffboardingFormProps> = ({
 
   function closeModal() {
     setModalState({
-      isOpen: false,
       selectedItem: null,
     });
+    toggleModal();
   }
 
   type insertHistoryDataType = z.infer<typeof formSchema>;
@@ -238,40 +225,48 @@ const OnOf_Worker_Procedure: React.FC<OffboardingFormProps> = ({
 
   return (
     <>
-      <div className="flex flex-col fixed w-full max-w-5xl h-150 rounded-2xl mx-auto  shadow-gray-200 shadow-lg overflow-auto p-6 ">
+      <div className="flex flex-col fixed w-full max-w-5xl h-150 rounded-2xl mx-auto  shadow-gray-200 shadow-lg overflow-auto p-6">
         <div className="w-max flex justify gap-5">
+          <Input className="" placeholder="Search" />
           <Button
             variant={"outline"}
-            className={activetab === "form" ? "active" : ""}
+            className={activetab === "form" ? "active bg-gray-200" : ""}
             onClick={() => setActiveTab("form")}
           >
             Prozess
           </Button>
           <Button
             variant={"outline"}
-            className={activetab === "files" ? "active" : ""}
+            className={activetab === "files" ? "active bg-gray-200" : ""}
             onClick={() => setActiveTab("files")}
           >
-            Datein
+            Dateien
           </Button>
         </div>
         <div>
           {activetab === "files" && <Worker_Backround id={id} />}
           {activetab === "form" && (
             <div className="">
-              {modalState.isOpen && modalState.selectedItem && (
-                <PreviewComponent
-                  onClose={closeModal}
-                  id={modalState.selectedItem.id}
-                  description={modalState.selectedItem.description}
-                  editcomment={modalState.selectedItem.editcomment}
-                  select_option={modalState.selectedItem.select_option}
-                  form_field_id={modalState.selectedItem.form_field_id}
-                  handleSubmit={handleSubmit}
-                />
+              {modalState.selectedItem && (
+                <div className="fixed inset-0 z-50 flex">
+                  <div
+                    onClick={closeModal}
+                    className="fixed inset-0 bg-black/50 cursor-pointer"
+                    aria-label="Close modal"
+                  />
+                  <PreviewComponent
+                    toggleModal={toggleModal}
+                    id={modalState.selectedItem.id}
+                    description={modalState.selectedItem.description}
+                    editcomment={modalState.selectedItem.editcomment}
+                    select_option={modalState.selectedItem.select_option}
+                    form_field_id={modalState.selectedItem.form_field_id}
+                    handleSubmit={handleSubmit}
+                  />
+                </div>
               )}
 
-              {data?.form.fields.map((field: form_field, index: number) => (
+              {data.form.fields.map((field: form_field, index: number) => (
                 <Form
                   key={index}
                   id_original={field.id}

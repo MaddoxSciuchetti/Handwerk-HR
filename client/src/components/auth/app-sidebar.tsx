@@ -61,7 +61,7 @@ export function AppSidebar({}) {
   }, [hasPermission]);
 
   if (user === undefined) {
-    return <div>The user is undefined</div>;
+    return "";
   }
   return (
     <Sidebar className="bg-gray-100 rounded-2xl">

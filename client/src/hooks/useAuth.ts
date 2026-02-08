@@ -3,7 +3,7 @@ import { getUser } from "../lib/api";
 
 export const AUTH = "auth";
 
-type User = {
+export type User = {
   createdAt: string;
   email: string;
   id: string;

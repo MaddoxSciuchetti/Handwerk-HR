@@ -15,7 +15,7 @@ type TAccordion = {
   onTaskClick: () => void;
 };
 
-type EmployeeGroup = {
+export type EmployeeGroup = {
   employee: { vorname: string; nachname: string; email: string | null };
   inputs: Array<{
     description: string;
@@ -62,16 +62,21 @@ export function AccordionDemo({ data, onTaskClick }: TAccordion) {
     <>
       <Accordion type="single" collapsible defaultValue="shipping" className="">
         {employeeGroups.map(([employeeName, group], index) => (
-          <AccordionItem key={employeeName} value={`employee-${index}`}>
-            <AccordionTrigger>
+          <AccordionItem
+            key={employeeName}
+            value={`employee-${index}`}
+            className=""
+          >
+            <AccordionTrigger className="border p-2">
               Handwerker: {group.employee.vorname} {group.employee.nachname}
             </AccordionTrigger>
-            <AccordionContent className="flex flex-col justify-center items-center ">
-              <div className="flex flex-col gap-10 w-md">
+            <AccordionContent className="flex flex-col justify-center items-center  mt-5">
+              <div className="flex flex-col gap-5 w-full ">
+                Offene Aufgaben:
                 {group.inputs.map((task, taskIndex) => (
                   <div
                     key={taskIndex}
-                    className="outline border p-2 mb-2 hover:bg-gray-200 rounded-2xl"
+                    className="  p-2 mb-2 hover:bg-gray-200 rounded-2xl"
                     onClick={onTaskClick}
                   >
                     <p>

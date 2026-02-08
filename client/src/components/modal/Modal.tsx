@@ -7,18 +7,12 @@ import { UseMutationResult } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 
 interface ModalProps {
-  toggleModal?: () => void;
   newStateTask?: (value: string) => void;
   onSuccess: UseMutationResult<any, Error, FormInputs, unknown>;
   className?: string;
 }
 
-const Modal: React.FC<ModalProps> = ({
-  toggleModal,
-  onSuccess,
-  className,
-  ...props
-}) => {
+const Modal: React.FC<ModalProps> = ({ onSuccess, className, ...props }) => {
   const [selectedOption, setSelectedOption] = useState<
     "Onboarding" | "Offboarding"
   >("Onboarding");

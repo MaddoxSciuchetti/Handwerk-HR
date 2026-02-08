@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
 interface FileModalType {
   id: number;
   form_type: string;
-  onClose: (val: boolean) => void;
+  onClose?: (val: boolean) => void;
 }
 
 export function FileModal({ id, onClose, form_type }: FileModalType) {
@@ -115,19 +115,19 @@ export function FileModal({ id, onClose, form_type }: FileModalType) {
   console.log("=== DATA === ");
   console.log(data);
 
-  if (isLoading) {
-    return (
-      <div>
-        <div
-          onClick={() => onClose(false)}
-          className="h-screen inset-0 fixed z-40 bg-black/60"
-        ></div>
-        <div className="absolute text-center items-center z-50 bg-gray-200 rounded-xl top-[20%] left-[50%] h-1/5 w-2xl -translate-x-1/2 -translate-y-1/2">
-          <p>Loading...</p>
-        </div>
-      </div>
-    );
-  }
+  // if (isLoading) {
+  //   return (
+  //     // <div>
+  //     //   <div
+  //     //     onClick={() => onClose(false)}
+  //     //     className="h-screen inset-0 fixed z-40 bg-black/60"
+  //     //   ></div>
+  //     //   <div className="absolute text-center items-center z-50 bg-gray-200 rounded-xl top-[20%] left-[50%] h-1/5 w-2xl -translate-x-1/2 -translate-y-1/2">
+  //     //     <p>Loading...</p>
+  //     //   </div>
+  //     // </div>
+  //   );
+  // }
 
   const handleExport = async () => {
     setIsGenerating(true);
@@ -192,18 +192,18 @@ export function FileModal({ id, onClose, form_type }: FileModalType) {
 
   return (
     <>
-      <div
+      {/* <div
         onClick={() => onClose(false)}
         className="h-screen inset-0 fixed z-60 bg-black/60"
-      ></div>
-      <div className="fixed z-50 flex items-center justify-center">
-        <div className="bg-gray-200 rounded-xl max-w-2xl w-full mx-4 p-6 flex flex-col h-96">
-          <PDFViewer className="flex-1 mb-4">
+      ></div> */}
+      <div className="relative min-h-50 max-h-150 mt-40 mx-auto text-center items-center z-50 bg-gray-200 rounded-xl  w-2xl">
+        <div className="flex items-center gap-10 justify-center mb-6 m-10">
+          <PDFViewer className="max-w-md flex-1 mb-4 min-h-120">
             <MyDocument />
           </PDFViewer>
           <Button
             variant={"outline"}
-            className="hover:bg-gray-300"
+            className="hover:bg-gray-300 absolute top-135"
             onClick={handleExport}
           >
             Exporieren

@@ -2,15 +2,6 @@ import { verifyEmail } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "@tanstack/react-router";
 
-import {
-  Container,
-  Flex,
-  Link as ChakraLink,
-  Spinner,
-  Text,
-  Alert,
-  VStack,
-} from "@chakra-ui/react";
 function VerifyEmail() {
   const code = useParams({ from: "/email/verify/$code" });
   console.log(code);
@@ -24,34 +15,42 @@ function VerifyEmail() {
   });
 
   return (
-    <Flex minH="100vh" justify="center" mt={12}>
-      <Container mx="auto" maxW="md" py={12} px={6} textAlign="center">
+    <div className="min-h-screen flex justify-center mt-12">
+      <div className="mx-auto max-w-md py-12 px-6 text-center">
         {isPending ? (
-          <Spinner />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto" />
         ) : (
-          <VStack align="center">
-            <Text
-              // status={isSuccess ? "success" : "error"}
-              w="fit-content"
-              borderRadius={12}
+          <div className="flex flex-col items-center space-y-4">
+            <p
+              className={`w-fit rounded-xl px-4 py-2 ${
+                isSuccess
+                  ? "bg-green-100 text-green-800 border border-green-200"
+                  : "bg-red-100 text-red-800 border border-red-200"
+              }`}
             >
               {isSuccess ? "Email Verified!" : "Invalid Link"}
-            </Text>
+            </p>
             {isError && (
-              <Text color="gray.400">
+              <p className="text-gray-400">
                 The link is either invalid or expired.{" "}
-                <ChakraLink onClick={() => navigate({ to: "/" })}>
+                <button
+                  onClick={() => navigate({ to: "/" })}
+                  className="text-blue-500 hover:text-blue-700 underline"
+                >
                   Get a new link
-                </ChakraLink>
-              </Text>
+                </button>
+              </p>
             )}
-            <ChakraLink onClick={() => navigate({ to: "/" })}>
+            <button
+              onClick={() => navigate({ to: "/" })}
+              className="text-blue-500 hover:text-blue-700 underline"
+            >
               Back to home
-            </ChakraLink>
-          </VStack>
+            </button>
+          </div>
         )}
-      </Container>
-    </Flex>
+      </div>
+    </div>
   );
 }
 

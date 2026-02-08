@@ -27,7 +27,7 @@ const Profile = () => {
   const { email, verified, createdAt } = user;
 
   return (
-    <div className="flex flex-col items-center mt-16 space-y-4">
+    <div className="flex flex-col items-center mt-16 space-y-4 ">
       <h1 className="text-3xl font-bold mb-4">My Account</h1>
       {!verified && (
         <Alert

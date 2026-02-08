@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-query";
 import { fetchFileData } from "@/lib/api";
 import { deleteFileData } from "@/lib/api";
+import { useToggleModal } from "@/hooks/use-toggleModal";
 
 interface Worker_Backround {
   id: number;
@@ -77,50 +78,90 @@ function Worker_Backround({ id }: Worker_Backround) {
     },
   });
 
+  const { toggleModal } = useToggleModal();
+
+  const openModal = () => {
+    toggleModal();
+    setModalState(true);
+  };
+
+  const closeModal = () => {
+    toggleModal();
+    setModalState(false);
+  };
+
   return (
     <>
-      <div className="outline text-right">
-        {isLoading ? <div> Loading state </div> : ""}
-        <Button variant={"secondary"} onClick={() => setModalState(true)}>
-          Hinzufügen
-        </Button>
-
-        {fetchFiles && (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
-            {fetchFiles.map((file, index) => (
-              <div
-                key={index}
-                className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition-colors"
-              >
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    deleteFiles(file.id);
-                  }}
-                >
-                  X
-                </Button>
-                <div className="text-center">
-                  <div className="text-2xl mb-2">
-                    {fileIcon(file.content_type)}
-                  </div>
-                  <p
-                    className="text-sm font-medium truncate"
-                    onClick={() => window.open(file.cloud_url, "_blank")}
-                  >
-                    {getFileName(file.cloud_url, file.original_filename)}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {new Date(file.uploaded_at).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-            ))}
+      <div className="text-right ">
+        {isLoading ? (
+          <div className="flex items-center justify-center min-h-100">
+            {" "}
+            Loading state{" "}
           </div>
+        ) : (
+          ""
         )}
+        <div className="flex flex-row justify-end">
+          <img
+            className=" flex flex-end cursor-pointer"
+            onClick={openModal}
+            src="/public/assets/Copy Plus Filled Icon (1).svg"
+          />
+        </div>
 
-        {setModal && <FileUpload01 setModal={setModalState} id={id} />}
+        {!fetchFiles || fetchFiles.length === 0 ? (
+          <div className="flex items-center justify-center min-h-100">
+            Keine Hochgeladenen Dateien
+          </div>
+        ) : (
+          fetchFiles && (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
+              {fetchFiles.map((file, index) => (
+                <div
+                  key={index}
+                  className=" rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition-colors outline"
+                >
+                  <Button
+                    size={"icon-sm"}
+                    variant={"outline"}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteFiles(file.id);
+                    }}
+                  >
+                    X
+                  </Button>
+                  <div className="text-center">
+                    <div className="text-2xl mb-2">
+                      {fileIcon(file.content_type)}
+                    </div>
+                    <p
+                      className="text-sm font-medium truncate"
+                      onClick={() => window.open(file.cloud_url, "_blank")}
+                    >
+                      {getFileName(file.cloud_url, file.original_filename)}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {new Date(file.uploaded_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        )}
       </div>
+
+      {setModal && (
+        <div className="fixed inset-0 z-50 flex">
+          <div
+            onClick={closeModal}
+            className="fixed inset-0 bg-black/50 cursor-pointer"
+            aria-label="Close modal"
+          />
+          <FileUpload01 setModal={setModalState} id={id} />
+        </div>
+      )}
     </>
   );
 }

@@ -17,13 +17,7 @@ function useCeoDashboard() {
     queryKey: ["ceo-dashboard"],
     queryFn: fetchChefData,
   });
-
-  console.log("CHEFDATA");
-  console.log(chefdata);
-
   const uniqueUsersByOwner = useUniqueUser(chefdata);
-
-  console.log("UNIQUE OWNERS");
   console.log(uniqueUsersByOwner);
 
   const selectUserData = useMemo(
@@ -31,9 +25,7 @@ function useCeoDashboard() {
     [selectedUser, chefdata],
   );
 
-  console.log("SELECT USERDATA");
   console.log(selectUserData);
-
   return {
     selectedUser,
     setSelectedUser,

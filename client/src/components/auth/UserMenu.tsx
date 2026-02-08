@@ -30,7 +30,7 @@ const UserMenu = () => {
           <AvatarFallback>Profile</AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
-      <DropdownMenuContent>
+      <DropdownMenuContent className="bg-gray-200">
         <DropdownMenuItem onClick={() => navigate({ to: "/profile" })}>
           Profile
         </DropdownMenuItem>

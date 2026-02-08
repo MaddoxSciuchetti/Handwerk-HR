@@ -1,13 +1,12 @@
 import useAuth from "@/hooks/useAuth";
 
 function Dashboard() {
-  const { user, isError } = useAuth();
+  const { user, isError, isLoading } = useAuth();
 
-  return (
-    <>
-      <div>employee information not protected route</div>
-    </>
-  );
+  if (user === undefined) return <div>Not allowed</div>;
+  if (isLoading) return <div>Is Loading</div>;
+
+  return <></>;
 }
 
 export default Dashboard;
