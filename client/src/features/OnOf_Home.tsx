@@ -19,19 +19,10 @@ import {
     TableRow,
 } from "@/components/ui/table";
 
-import {
-    Sidebar,
-    SidebarContent,
-    SidebarGroup,
-    SidebarGroupContent,
-    SidebarGroupLabel,
-    SidebarHeader,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
-    useSidebar,
-} from "@/components/ui/sidebar";
+import { useSidebar } from "@/components/ui/sidebar";
 import { TEmployForm } from "./Ceo_Dashboard";
+import SearchHeader from "@/components/SearchHeader";
+import HandwerkerTable from "@/components/HandwerkerTable";
 
 type FormType = "Onboarding" | "Offboarding";
 
@@ -54,10 +45,8 @@ function OnOf_Home() {
         queryFn: fetchNameData,
     });
 
-    if (!data) return;
-
     const [search, setSearch] = useState("");
-    const filtered = data.filter((item) =>
+    const filtered = data?.filter((item) =>
         item.vorname.toLowerCase().includes(search.toLowerCase()),
     );
 
@@ -163,54 +152,17 @@ function OnOf_Home() {
         <>
             <div className=" w-full max-w-5xl h-150 rounded-2xl mx-auto p-6 shadow-gray-200 shadow-lg">
                 <div className="h-full flex flex-col ">
-                    <div className="flex items-center gap-4 mb-6">
-                        <Input
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Suche bei Namen"
-                        />
-                        <div className="flex gap-2">
-                            <Button variant={"outline"}>Filter</Button>
-                            <Button
-                                variant={"outline"}
-                                onClick={() => toggleModal()}
-                            >
-                                Mitarbeiter hinzufügen?
-                            </Button>
-                        </div>
-                    </div>
-
-                    <Table className=" text-left">
-                        <TableHeader className="outline">
-                            <TableRow className="text-lg">
-                                <TableHead className="text-left  pl-0">
-                                    Handwerker
-                                </TableHead>
-                                <TableHead className="text-left  pl-0">
-                                    Phase
-                                </TableHead>
-
-                                <TableHead className=" pl-0">
-                                    Fortschritt
-                                </TableHead>
-                                <TableHead className=" pl-0">
-                                    Aktionen
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {filtered?.map((task: OffboardingItem) => (
-                                <Worker_Item
-                                    key={task.id}
-                                    item_value={task.id}
-                                    form_type={getFirstFormType(task)}
-                                    item={task.vorname}
-                                    onRemove={removeTask}
-                                    gotopage={handleNavigate}
-                                />
-                            ))}
-                        </TableBody>
-                    </Table>
+                    <SearchHeader
+                        toggleModal={toggleModal}
+                        search={search}
+                        setSearch={setSearch}
+                    />
+                    <HandwerkerTable
+                        filtered={filtered}
+                        form_type={getFirstFormType}
+                        onRemove={removeTask}
+                        gotopage={handleNavigate}
+                    />
                 </div>
 
                 {modal && (
