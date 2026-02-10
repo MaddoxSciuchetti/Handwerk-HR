@@ -1,33 +1,31 @@
 {
-  "compilerOptions": {
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "target": "es2015",
-    "outDir": "./built",
-    "rootDir": "./",
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "esModuleInterop": true,
-    "allowImportingTsExtensions": true,
-    "allowJs": true,
-    "resolveJsonModule": true,
-    "noImplicitAny": true,
-    "noEmit": true,
-    "types": ["node", "express", "jest"],
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "strictNullChecks": true,
-    "strictFunctionTypes": true,
+    "compilerOptions": {
+        "lib": ["dom", "dom.iterable", "esnext"],
+        "target": "es2015",
+        "outDir": "./built",
+        "rootDir": "./",
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "esModuleInterop": true,
+        "allowJs": true,
+        "resolveJsonModule": true,
+        "noImplicitAny": true,
+        "types": ["node", "express", "jest"],
+        "forceConsistentCasingInFileNames": true,
+        "strict": true,
+        "strictNullChecks": true,
+        "strictFunctionTypes": true,
 
-    "paths": {
-      "@/*": ["./*"]
-    }
-  },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    "createApp.ts"
-  ],
-  "exclude": ["node_modules"]
+        "paths": {
+            "@/*": ["./*"]
+        }
+    },
+    "include": [
+        "next-env.d.ts",
+        "**/*.ts",
+        "**/*.tsx",
+        ".next/types/**/*.ts",
+        "createApp.ts"
+    ],
+    "exclude": ["node_modules"]
 }
