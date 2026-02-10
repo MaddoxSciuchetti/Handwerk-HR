@@ -4,42 +4,15 @@ import z, { success } from "zod";
 import { API_URL } from "../api";
 import Form from "@/components/worker_components/worker_form_data";
 import { Mappingform } from "../schemas/Task";
-
-import { APIResponse, ErrorResponse } from "../types/api_response";
+import { APIResponse } from "../types/api_response";
 import PreviewComponent from "@/components/worker_components/preivew_component";
 import useAuth from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import Worker_Backround from "@/components/backround_worker";
-
-import {
-    Table,
-    TableBody,
-    TableCaption,
-    TableCell,
-    TableFooter,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { tryCatch } from "@/lib/utils";
 import { editData, formattedData } from "@/lib/api";
 import { useToggleModal } from "@/hooks/use-toggleModal";
-import AdminModal from "@/components/admin_data/AdminModal";
-
-// import { ErrorResponse } from "react-router-dom";
-import {
-    Sidebar,
-    SidebarContent,
-    SidebarGroup,
-    SidebarGroupContent,
-    SidebarGroupLabel,
-    SidebarHeader,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
-} from "@/components/ui/sidebar";
-import EditSidebar from "@/components/ui/maddox_customs/EditSidebar";
 
 export type form_field = {
     id: number;
@@ -114,6 +87,16 @@ const OnOf_Worker_Procedure: React.FC<OffboardingFormProps> = ({
             .toLowerCase()
             .includes(descriptionSearch.toLowerCase()),
     );
+
+    const sortedData = [...searchData].sort((a, b) => {
+        if (a.status === "erledigt" && b.status !== "erledigt") {
+            return 1;
+        } else if (a.status !== "erledigt" && b.status === "erledigt") {
+            return -1;
+        } else {
+            return 0;
+        }
+    });
 
     async function sendFormData(formData: Mappingform): Promise<APIResponse> {
         const url = `${API_URL}/offboarding/editdata`;
@@ -297,7 +280,7 @@ const OnOf_Worker_Procedure: React.FC<OffboardingFormProps> = ({
                                 </div>
                             )}
 
-                            {searchData.map(
+                            {sortedData.map(
                                 (field: form_field, index: number) => (
                                     <Form
                                         key={index}

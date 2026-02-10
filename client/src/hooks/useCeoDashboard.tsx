@@ -28,6 +28,36 @@ function useCeoDashboard() {
             [],
         [selectedUser, allEmployeeData],
     );
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+    const cleanData = useMemo(() => {
+        if (!allEmployeeData) return [];
+        const groups = new Map<string, TEmployForm>();
+        allEmployeeData.forEach((item) => {
+            if (!groups.has(item.owner)) {
+                groups.set(item.owner, []);
+            }
+        });
+
+        groups.forEach((_, key) => {
+            const originalInputs = allEmployeeData
+                .filter((item) => item.owner === key)
+                .map((item) => ({
+                    ...item,
+                    inputs: item.inputs.filter(
+                        (input) =>
+                            input.status !== "erledigt" &&
+                            new Date(input.timestamp) < threeDaysAgo,
+                    ),
+                }));
+            groups.set(key, originalInputs);
+        });
+        return Array.from(groups.entries());
+    }, [allEmployeeData, threeDaysAgo]);
+
+    console.log("current BSB Employee Data:");
+    console.log(currentBSBEmployee);
 
     return {
         selectedUser,
@@ -39,6 +69,7 @@ function useCeoDashboard() {
         currentBSBEmployee,
         isLoading,
         error,
+        cleanData,
     };
 }
 

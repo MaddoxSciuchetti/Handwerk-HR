@@ -8,6 +8,7 @@ import z from "zod";
 import useCeoDashboard from "@/hooks/useCeoDashboard";
 
 export type TEmployForm = z.infer<typeof EmployFormSchema>;
+export type TEmployeFormId = z.infer<typeof EmployFormSchema>[number];
 
 function Ceo_Dashboard() {
     const {
@@ -20,6 +21,7 @@ function Ceo_Dashboard() {
         currentBSBEmployee,
         isLoading,
         error,
+        cleanData,
     } = useCeoDashboard();
 
     if (isLoading) return <div>Loading</div>;
@@ -48,13 +50,17 @@ function Ceo_Dashboard() {
                             // onClick={() => setModalOpen(true)}
                             >
                                 <AccordionDemo
+                                    cleanData={cleanData}
+                                    user={selectedUser}
                                     data={currentBSBEmployee}
                                     onTaskClick={() => setModalOpen(true)}
                                 />
                             </div>
                         </div>
                     ) : (
-                        <div>Wähle ein Nutzer um die offenen Fragen zu</div>
+                        <div>
+                            Wähle ein Nutzer um seine Offenen Aufgaben zu sehen
+                        </div>
                     )}
                 </div>
             </div>
@@ -66,7 +72,10 @@ function Ceo_Dashboard() {
                         className="fixed inset-0 bg-black/50 cursor-pointer"
                         aria-label="Close modal"
                     />
-                    <AdminModal onClose={() => setModalOpen(false)} />
+                    <AdminModal
+                        onClose={() => setModalOpen(false)}
+                        selectedUser={selectedUser}
+                    />
                 </div>
             )}
         </>
