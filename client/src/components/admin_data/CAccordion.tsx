@@ -5,10 +5,7 @@ import {
     AccordionTrigger,
 } from "@/components/ui/accordion";
 import { TEmployForm } from "@/features/Ceo_Dashboard";
-import { fetchNameData } from "@/lib/api";
-import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import AdminModal from "./AdminModal";
 
 type TAccordion = {
     data: TEmployForm;
@@ -26,22 +23,21 @@ export type EmployeeGroup = {
 };
 
 export function AccordionDemo({ data, onTaskClick }: TAccordion) {
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+    const offeneAufgaben = data.map((task) => ({
+        ...task,
+        inputs: task.inputs.filter(
+            (input) =>
+                input.status !== "erledigt" &&
+                new Date(input.timestamp) < threeDaysAgo,
+        ),
+    }));
+
     const employeeGroups = useMemo(() => {
         const groups = new Map<string, EmployeeGroup>();
-
-        const threeDaysAgo = new Date();
-        threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-
-        const finishedTasks = data.map((task) => ({
-            ...task,
-            inputs: task.inputs.filter(
-                (input) =>
-                    input.status !== "erledigt" &&
-                    new Date(input.timestamp) < threeDaysAgo,
-            ),
-        }));
-
-        finishedTasks.forEach((taskInfo) => {
+        offeneAufgaben.forEach((taskInfo) => {
             taskInfo.inputs.forEach((input) => {
                 const employeeKey = `${input.employee.id}${input.employee.vorname} ${input.employee.nachname}`;
 
@@ -60,11 +56,12 @@ export function AccordionDemo({ data, onTaskClick }: TAccordion) {
                 });
             });
         });
+        console.log("Employee Groups Map:", groups);
+
         return Array.from(groups.entries());
     }, [data]);
 
-    console.log("employee groupes");
-    console.log(employeeGroups);
+    console.log("Employee Groups Array:", employeeGroups);
 
     return (
         <>
@@ -85,33 +82,42 @@ export function AccordionDemo({ data, onTaskClick }: TAccordion) {
                             {group.employee.nachname}
                         </AccordionTrigger>
                         <AccordionContent className="flex flex-col justify-center items-center  mt-5">
-                            <div className="flex flex-col gap-5 w-full ">
-                                Offene Aufgaben:
-                                {group.inputs.map((task, taskIndex) => (
-                                    <div
-                                        key={taskIndex}
-                                        className="  p-2 mb-2 hover:bg-gray-200 rounded-2xl"
-                                        onClick={onTaskClick}
-                                    >
-                                        <p>
-                                            <strong>Aufabe:</strong>
-                                            {task.description}
-                                        </p>
-                                        <p>
-                                            <strong>Zuletzt bearbeitet:</strong>{" "}
-                                            {task.timestamp.toLocaleDateString()}
-                                        </p>
-                                        <p>
+                            {group.inputs.length === 0 ? (
+                                <p>
+                                    Keine offenen Aufgaben für diesen
+                                    Mitarbeiter.
+                                </p>
+                            ) : (
+                                <div className="flex flex-col gap-5 w-full ">
+                                    Offene Aufgaben:
+                                    {group.inputs.map((task, taskIndex) => (
+                                        <div
+                                            key={taskIndex}
+                                            className="  p-2 mb-2 hover:bg-gray-200 rounded-2xl"
+                                            onClick={onTaskClick}
+                                        >
                                             <p>
-                                                <strong>Status:</strong>{" "}
-                                                {task.status === "null"
-                                                    ? "Nicht angefangen"
-                                                    : task.status}
+                                                <strong>Aufabe:</strong>
+                                                {task.description}
                                             </p>
-                                        </p>
-                                    </div>
-                                ))}
-                            </div>
+                                            <p>
+                                                <strong>
+                                                    Zuletzt bearbeitet:
+                                                </strong>{" "}
+                                                {task.timestamp.toLocaleDateString()}
+                                            </p>
+                                            <p>
+                                                <p>
+                                                    <strong>Status:</strong>{" "}
+                                                    {task.status === "null"
+                                                        ? "Nicht angefangen"
+                                                        : task.status}
+                                                </p>
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </AccordionContent>
                     </AccordionItem>
                 ))}

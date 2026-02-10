@@ -6,140 +6,175 @@ import { FormInputs, formSchema } from "@/schemas/zodSchema";
 import { Input } from "../ui/input";
 
 interface WorkerDataFormProps {
-  type: "Onboarding" | "Offboarding";
-  success: (data: FormInputs) => void;
-  className?: string;
+    setSelectedOption: (value: "Onboarding" | "Offboarding" | null) => void;
+    type: "Onboarding" | "Offboarding";
+    success: (data: FormInputs) => void;
+    className?: string;
 }
 
 export const WorkerDataForm = ({
-  type,
-  success,
-  className,
-  ...props
+    setSelectedOption,
+    type,
+    success,
+    className,
+    ...props
 }: WorkerDataFormProps) => {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<FormInputs>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      type: type,
-    },
-    criteriaMode: "all",
-  });
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+    } = useForm<FormInputs>({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            type: type,
+        },
+        criteriaMode: "all",
+    });
 
-  const onFormSubmit = (data: FormInputs) => {
-    console.log("formdata test", data);
-    success(data);
-  };
+    const onFormSubmit = (data: FormInputs) => {
+        console.log("formdata test", data);
+        success(data);
+    };
 
-  return (
-    <>
-      <form onSubmit={handleSubmit(onFormSubmit)} className=" gap-4">
-        <h3 className="text-lg font-medium text-gray-900  pb-2"></h3>
-        <h1 className="text-left pl-10 pb-2">Eingabe Handwerker</h1>
-        <div className="grid grid-cols-2 gap-3 px-10 pb-10 items-end">
-          <div>
-            <Input
-              className=""
-              type="text"
-              placeholder="Vorname"
-              {...register("vorname", { required: "erforderlich" })}
-            />
-            <ErrorMessage errors={errors} name="Vorname" />
-          </div>
-          {/* {errors.Vorname && errors.Vorname.types && (
-              <p>{errors.Vorname.types.required}</p>
-            )} */}
+    const Inputs = [
+        {
+            name: "vorname" as const,
+            placeholder: "Vorname",
+            required: true,
+        },
+        {
+            name: "nachname" as const,
+            placeholder: "Nachname",
+            required: false,
+        },
+        {
+            name: "email" as const,
+            placeholder: "email",
+            required: false,
+        },
+        {
+            name: "geburtsdatum" as const,
+            placeholder: "Geburtsdatum DD.MM.YYYY",
+            required: false,
+        },
+        {
+            name: "adresse" as const,
+            placeholder: "Adresse",
+            required: false,
+        },
+        {
+            name: "eintrittsdatum" as const,
+            placeholder: "Eintrittsdatum DD.MM.YYYY",
+            required: false,
+        },
+        {
+            name: "position" as const,
+            placeholder: "Position",
+            required: false,
+        },
+    ];
 
-          <div>
-            <Input
-              className=""
-              type="text"
-              placeholder="Nachname"
-              {...register("nachname")}
-            />
-            <ErrorMessage errors={errors} name="Nachname" />
-          </div>
+    const ConditionalInputs = [
+        ...Inputs,
+        ...(type === "Offboarding"
+            ? [
+                  {
+                      name: "austrittsdatum" as const,
+                      placeholder: "Austrittsdatum DD.MM.YYYY",
+                      required: type === "Offboarding" ? true : false,
+                  },
+              ]
+            : []),
+    ];
 
-          <div>
-            <Input
-              className=""
-              type="text"
-              placeholder="email"
-              {...register("email")}
-            />
-            <ErrorMessage errors={errors} name="Nachname" />
-          </div>
-          <div>
-            <Input
-              className=""
-              type="text"
-              placeholder="Geburtsdatum DD.MM.YYYY"
-              {...register("geburtsdatum")}
-            />
-          </div>
+    const ErrorMessages = [
+        {
+            name: "Vorname",
+            message: "Vorname ist erforderlich",
+        },
+        {
+            name: "Nachname",
+            message: "Nachname ist erforderlich",
+        },
+        {
+            name: "email",
+            message: "Die Email ist falsch",
+        },
+        {
+            name: "geburtsdatum",
+            message: "Geburtsdatum ist erforderlich",
+        },
+        {
+            name: "adresse",
+            message: "Adresse ist erforderlich",
+        },
+        {
+            name: "eintrittsdatum",
+            message: "Eintrittsdatum ist erforderlich",
+        },
+        {
+            name: "austrittsdatum",
+            message:
+                type === "Offboarding" ? "Austrittsdatum ist erforderlich" : "",
+        },
+        {
+            name: "position",
+            message: "Position ist erforderlich",
+        },
+    ];
 
-          <div>
-            <Input
-              className=""
-              type="text"
-              placeholder="Adresse"
-              {...register("adresse")}
-            />
-            <ErrorMessage errors={errors} name="Adresse" />
-          </div>
+    return (
+        <>
+            <form
+                onSubmit={handleSubmit(onFormSubmit)}
+                className=" gap-4  flex flex-col"
+            >
+                <Button
+                    className="w-20 hover:bg-gray-300"
+                    variant={"outline"}
+                    onClick={() => setSelectedOption(null)}
+                >
+                    Zurück{" "}
+                </Button>
+                <h1 className="text-left">
+                    Eingabe{" "}
+                    {type === "Onboarding" ? "Onboarding" : "Offboarding"}{" "}
+                </h1>
+                <div className="grid grid-cols-2 gap-3 pb-10 ">
+                    {ConditionalInputs.map((input, index) => (
+                        <div>
+                            <Input
+                                key={index}
+                                placeholder={input.placeholder}
+                                type="text"
+                                {...register(input.name, {
+                                    required: input.required,
+                                })}
+                            />
+                            <ErrorMessage
+                                key={index}
+                                errors={errors}
+                                name={input.name}
+                                render={({ message }) => (
+                                    <p className="text-sm text-red-500">
+                                        {message}
+                                    </p>
+                                )}
+                            />
+                        </div>
+                    ))}
 
-          {/* <Input placeholder="name" /> */}
-          <div>
-            <Input
-              className=""
-              type="text"
-              placeholder="Eintrittsdatum DD.MM.YYYY"
-              {...register("eintrittsdatum")}
-            />
-            <ErrorMessage errors={errors} name="Eintrittsdatum" />
-          </div>
+                    <Button
+                        variant={"outline"}
+                        type="submit"
+                        className="hover:bg-gray-300 "
+                    >
+                        Hinzufügen
+                    </Button>
 
-          {/* start of component that should only show in offboarding*/}
-
-          {type === "Offboarding" ? (
-            <>
-              <Input
-                className=""
-                type="text"
-                placeholder="Austrittsdatum DD.MM.YYYY"
-                {...register("austrittsdatum")}
-              />
-              <ErrorMessage errors={errors} name="Austrittsdatum" />
-            </>
-          ) : (
-            ""
-          )}
-
-          {/* end of component that should only show in offboarding */}
-          <div className="">
-            <Input
-              className=""
-              type="text"
-              placeholder="Position"
-              {...register("position")}
-            />
-            <ErrorMessage errors={errors} name="Position" />
-          </div>
-
-          <Button
-            variant={"outline"}
-            type="submit"
-            className="hover:bg-gray-300"
-          >
-            Hinzufügen
-          </Button>
-
-          <Input type="hidden" {...register("type")} value={type} />
-        </div>
-      </form>
-    </>
-  );
+                    <Input type="hidden" {...register("type")} value={type} />
+                </div>
+            </form>
+        </>
+    );
 };

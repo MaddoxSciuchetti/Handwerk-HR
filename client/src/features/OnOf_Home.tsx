@@ -8,6 +8,7 @@ import { useSidebar } from "@/components/ui/sidebar";
 import SearchHeader from "@/components/SearchHeader";
 import HandwerkerTable from "@/components/HandwerkerTable";
 import { delete_user } from "@/types/api_response";
+import { Form } from "radix-ui";
 
 type FormType = "Onboarding" | "Offboarding";
 
@@ -71,7 +72,7 @@ function OnOf_Home() {
         },
     });
 
-    const handleNavigate = (taskId: number, form_type: string) => {
+    const handleNavigate = (taskId: number, form_type: FormType) => {
         navigate({
             to: "/user/$Id",
             params: { Id: String(taskId) },
