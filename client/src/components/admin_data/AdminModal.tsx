@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 
 type TCloseModal = {
     onClose?: () => void;
+    selectedUser?: string | null;
 };
 
 const formSchema = z.object({
@@ -20,7 +21,7 @@ const formSchema = z.object({
 
 export type sendEmailSchema = z.infer<typeof formSchema>;
 
-function AdminModal({ onClose }: TCloseModal) {
+function AdminModal({ onClose, selectedUser }: TCloseModal) {
     const {
         mutate: sendReminder,
         isError,
@@ -44,15 +45,15 @@ function AdminModal({ onClose }: TCloseModal) {
             <div className="max-h-min mt-40 mx-auto text-center items-center z-50 bg-gray-200 rounded-xl w-2xl">
                 <div className="flex items-center gap-10 justify-center mb-6 m-10 ">
                     <form
-                        className="flex flex-col gap-5 w-md outline justify-center "
+                        className="flex flex-col gap-5 w-md justify-center "
                         onSubmit={handleSubmit(onSubmit)}
                     >
-                        <p>Email Vorlage</p>
+                        <p>Schicke eine Errinnerung</p>
                         <Input placeholder="email" {...register("email")} />
                         {errors.email && <span>{errors.email.message}</span>}
-                        <Input placeholder="subject" {...register("subject")} />
+                        <Input placeholder="Betreff" {...register("subject")} />
                         <Textarea
-                            placeholder="schreibe hier"
+                            placeholder={`Nachricht an ${selectedUser}`}
                             {...register("test")}
                         ></Textarea>
 
@@ -66,6 +67,7 @@ function AdminModal({ onClose }: TCloseModal) {
 
                         <Button
                             type={isSuccess ? "button" : "submit"}
+                            variant={"outline"}
                             onClick={isSuccess ? onClose : undefined}
                             className=""
                         >
