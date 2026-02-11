@@ -3,7 +3,7 @@
         "lib": ["dom", "dom.iterable", "esnext"],
         "target": "es2015",
         "outDir": "./built",
-        "rootDir": "./",
+        "rootDir": ".",
         "module": "esnext",
         "moduleResolution": "bundler",
         "esModuleInterop": true,
@@ -16,7 +16,9 @@
         "strictFunctionTypes": true,
 
         "paths": {
-            "@/*": ["./*"]
+            "@/*": ["./src/*"],
+            "@/lib/*": ["./src/lib/*"],
+            "@/generated/*": ["./generated/*"]
         }
     },
     "include": [
@@ -24,7 +26,7 @@
         "**/*.ts",
         "**/*.tsx",
         ".next/types/**/*.ts",
-        "createApp.ts"
+        "src/createApp.ts"
     ],
     "exclude": ["node_modules"]
 }

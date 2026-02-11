@@ -2,15 +2,15 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 
-import { offboarding_router } from "./src/routes/on_off_boarding.route";
-import authRoutes from "./src/routes/auth.route";
-import sessionRoutes from "./src/routes/session_route";
-import authenticate from "./src/middleware/authenticate";
-import { APP_ORIGIN } from "./src/constants/env";
+import { offboarding_router } from "./routes/on_off_boarding.route";
+import authRoutes from "./routes/auth.route";
+import sessionRoutes from "./routes/session_route";
+import authenticate from "./middleware/authenticate";
+import { APP_ORIGIN } from "./constants/env";
 import cookieParser from "cookie-parser";
-import userRoutes from "./src/routes/user.route";
-import AppError from "./src/utils/AppError";
-import errorHandler from "./src/middleware/errorHandler";
+import userRoutes from "./routes/user.route";
+import AppError from "./utils/AppError";
+import errorHandler from "./middleware/errorHandler";
 
 export function createApp() {
     dotenv.config();
