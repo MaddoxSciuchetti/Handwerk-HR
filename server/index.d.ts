@@ -1,9 +1,13 @@
-import type { Session, User } from "shared_prisma_types/prisma";
+import { Session, User } from "./generated/prisma/client";
+
+type DebugUser = User;
+type DebugSession = Session;
+
 declare global {
     namespace Express {
         interface Request {
-            userId: User["id"];
-            sessionId: Session["id"];
+            userId: DebugUser["id"];
+            sessionId: DebugSession["id"];
         }
     }
 }

@@ -161,7 +161,7 @@ export const postFileData = async (req: Request, res: Response) => {
     if (!files || files.length === 0) {
         return res.status(400).json({ error: "No files uploded" });
     }
-    const uploadFiles = [];
+    const uploadFiles: Array<any> = [];
     for (const file of files) {
         const uploadResult = await uploadFileToS3(file, formId);
 
@@ -180,7 +180,6 @@ export const postFileData = async (req: Request, res: Response) => {
 
             const sanitizedFile = {
                 ...savedfile,
-
                 id: savedfile.id.toString(),
                 employee_form_id: Number(savedfile.employee_form_id),
                 file_size: Number(savedfile.file_size),

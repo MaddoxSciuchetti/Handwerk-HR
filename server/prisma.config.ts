@@ -5,11 +5,11 @@ import { defineConfig, env } from "prisma/config";
 import { POSTGRES_URI } from "./src/constants/env";
 
 export default defineConfig({
-  schema: "prisma/schema.prisma",
-  migrations: {
-    path: "prisma/migrations",
-  },
-  datasource: {
-    url: POSTGRES_URI, // create custom type file later
-  },
+    schema: "./src/prisma/schema.prisma",
+    migrations: {
+        path: "prisma/migrations",
+    },
+    datasource: {
+        url: POSTGRES_URI, // create custom type file later
+    },
 });
