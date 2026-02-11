@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { datevalidation } from "@/src/utils/datevalidation";
+import { datevalidation } from "@/utils/datevalidation";
 import { HistorySchemaType } from "../controllers/on_off_boarding.controller";
 import { sendMail } from "../utils/sendMail";
 import appAssert from "../utils/appAssert";
