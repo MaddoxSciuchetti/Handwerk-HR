@@ -7,9 +7,9 @@
     "scripts": {
         "test": "jest",
         "test:e2e": "jest ----testPathPatterns=./e2e",
-        "build": "tsc --build",
-        "start": "node ./built/server.js",
-        "dev": "tsx ./server.ts"
+        "build": "esbuild src/server.ts --bundle --platform=node --outfile=dist/server.js --format=esm --packages=external",
+        "start": "node dist/server.js",
+        "dev": "tsx src/server.ts"
     },
     "keywords": [],
     "author": "",
@@ -53,5 +53,6 @@
         "tsx": "^4.21.0",
         "typescript": "^5.9.3",
         "zod": "^4.3.5"
-    }
+    },
+    "devDependencies": {}
 }

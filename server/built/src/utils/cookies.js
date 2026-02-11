@@ -6,8 +6,15 @@ const defaults = {
     httpOnly: true,
     secure,
 };
-export const getAccessTokenCookieOptions = () => (Object.assign(Object.assign({}, defaults), { expires: fifteenMinutesFromNow() }));
-export const getRefreshTokenCookieOptions = () => (Object.assign(Object.assign({}, defaults), { expires: thirtyDaysFromNow(), path: REFRESH_PATH }));
+export const getAccessTokenCookieOptions = () => ({
+    ...defaults,
+    expires: fifteenMinutesFromNow(),
+});
+export const getRefreshTokenCookieOptions = () => ({
+    ...defaults,
+    expires: thirtyDaysFromNow(),
+    path: REFRESH_PATH,
+});
 export const setAuthCookies = ({ res, accessToken, refreshToken }) => res
     .cookie("accessToken", accessToken, getAccessTokenCookieOptions())
     .cookie("refreshToken", refreshToken, getRefreshTokenCookieOptions());

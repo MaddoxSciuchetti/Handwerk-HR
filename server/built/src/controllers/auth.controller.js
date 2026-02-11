@@ -1,12 +1,3 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 import catchErrors from "../utils/catchErrors";
 import { createAccount, loginUser, refreshUserAccessToken, resetPassword, sendPasswordResetEmail, verifyEmail, } from "../services/auth.service";
 import { CREATED, OK, UNAUTHORIZED } from "../constants/http";
@@ -15,30 +6,36 @@ import { emailSchema, loginSchema, registerSchema, resetPasswordSchema, verifica
 import { verifyToken } from "../utils/jwt";
 import appAssert from "../utils/appAssert";
 import { prisma } from "@/lib/prisma";
-export const registerHandler = catchErrors((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+export const registerHandler = catchErrors(async (req, res) => {
     //validate request
-    const request = registerSchema.parse(Object.assign(Object.assign({}, req.body), { userAgent: req.headers["user-agent"] }));
+    const request = registerSchema.parse({
+        ...req.body,
+        userAgent: req.headers["user-agent"],
+    });
     // call service
-    const { user, accessToken, refreshToken } = yield createAccount(request);
+    const { user, accessToken, refreshToken } = await createAccount(request);
     // return response
     return setAuthCookies({ res, accessToken, refreshToken })
         .status(CREATED)
         .json(user);
-}));
-export const loginHandler = catchErrors((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+});
+export const loginHandler = catchErrors(async (req, res) => {
     // validate request
-    const request = loginSchema.parse(Object.assign(Object.assign({}, req.body), { userAgent: req.headers["user-agent"] }));
+    const request = loginSchema.parse({
+        ...req.body,
+        userAgent: req.headers["user-agent"],
+    });
     // call service
-    const { accessToken, refreshToken } = yield loginUser(request);
+    const { accessToken, refreshToken } = await loginUser(request);
     return setAuthCookies({ res, accessToken, refreshToken }).status(OK).json({
         message: "Login sucessful",
     });
-}));
-export const logoutHandler = catchErrors((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+});
+export const logoutHandler = catchErrors(async (req, res) => {
     const accessToken = req.cookies.accessToken;
     const { payload } = verifyToken(accessToken || "");
     if (payload) {
-        yield prisma.session.delete({
+        await prisma.session.delete({
             where: {
                 id: payload.sessionId,
             },
@@ -47,12 +44,12 @@ export const logoutHandler = catchErrors((req, res) => __awaiter(void 0, void 0,
     return clearAuthCookies(res).status(OK).json({
         message: "Logout sucessfull",
     });
-}));
-export const refreshHandler = catchErrors((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+});
+export const refreshHandler = catchErrors(async (req, res) => {
     console.log(req.cookies.refreshToken);
     const refreshToken = req.cookies.refreshToken;
     appAssert(refreshToken, UNAUTHORIZED, "Missing refresh token");
-    const { accessToken, newRefreshToken } = yield refreshUserAccessToken(refreshToken);
+    const { accessToken, newRefreshToken } = await refreshUserAccessToken(refreshToken);
     if (newRefreshToken) {
         res.cookie("refreshToken", newRefreshToken, getRefreshTokenCookieOptions());
     }
@@ -62,26 +59,26 @@ export const refreshHandler = catchErrors((req, res) => __awaiter(void 0, void 0
         .json({
         message: "Access token refreshed",
     });
-}));
-export const verifyEmailHandler = catchErrors((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+});
+export const verifyEmailHandler = catchErrors(async (req, res) => {
     console.log(req.params.code);
     const verificationCode = verificationCodeSchema.parse(req.params.code);
-    yield verifyEmail(verificationCode);
+    await verifyEmail(verificationCode);
     return res.status(OK).json({
         message: "Email was sucessfully verified",
     });
-}));
-export const sendPasswordResetHandler = catchErrors((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+});
+export const sendPasswordResetHandler = catchErrors(async (req, res) => {
     const email = emailSchema.parse(req.body.email);
-    yield sendPasswordResetEmail(email);
+    await sendPasswordResetEmail(email);
     return res.status(OK).json({
         message: "Password reset email sent",
     });
-}));
-export const resetPasswordHandler = catchErrors((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+});
+export const resetPasswordHandler = catchErrors(async (req, res) => {
     const request = resetPasswordSchema.parse(req.body);
-    yield resetPassword(request);
+    await resetPassword(request);
     return clearAuthCookies(res)
         .status(OK)
         .json({ message: "Password was reset successfully" });
-}));
+});

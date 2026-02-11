@@ -7,42 +7,14 @@
  *
  * 🛑 Under no circumstances should you import this file directly! 🛑
  *
- * All exports from this file are wrapped under a `Prisma` namespace object in the client.ts file.
+ * All exports from this file are wrapped under a `Prisma` namespace object in the browser.ts file.
  * While this enables partial backward compatibility, it is not part of the stable public API.
  *
  * If you are looking for your Models, Enums, and Input Types, please import them from the respective
  * model files in the `model` directory!
  */
-import * as runtime from "@prisma/client/runtime/client";
-/**
- * Prisma Errors
- */
-export const PrismaClientKnownRequestError = runtime.PrismaClientKnownRequestError;
-export const PrismaClientUnknownRequestError = runtime.PrismaClientUnknownRequestError;
-export const PrismaClientRustPanicError = runtime.PrismaClientRustPanicError;
-export const PrismaClientInitializationError = runtime.PrismaClientInitializationError;
-export const PrismaClientValidationError = runtime.PrismaClientValidationError;
-/**
- * Re-export of sql-template-tag
- */
-export const sql = runtime.sqltag;
-export const empty = runtime.empty;
-export const join = runtime.join;
-export const raw = runtime.raw;
-export const Sql = runtime.Sql;
-/**
- * Decimal.js
- */
+import * as runtime from "@prisma/client/runtime/index-browser";
 export const Decimal = runtime.Decimal;
-export const getExtensionContext = runtime.Extensions.getExtensionContext;
-/**
- * Prisma Client JS version: 7.4.0
- * Query Engine version: ab56fe763f921d033a6c195e7ddeb3e255bdbb57
- */
-export const prismaVersion = {
-    client: "7.4.0",
-    engine: "ab56fe763f921d033a6c195e7ddeb3e255bdbb57"
-};
 export const NullTypes = {
     DbNull: runtime.NullTypes.DbNull,
     JsonNull: runtime.NullTypes.JsonNull,
@@ -77,7 +49,7 @@ export const ModelName = {
     HistoryFormData: 'HistoryFormData',
     WorkerFiles: 'WorkerFiles'
 };
-/**
+/*
  * Enums
  */
 export const TransactionIsolationLevel = runtime.makeStrictEnum({
@@ -174,4 +146,3 @@ export const NullsOrder = {
     first: 'first',
     last: 'last'
 };
-export const defineExtension = runtime.Extensions.defineExtension;

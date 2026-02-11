@@ -1,14 +1,5 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 import { prisma } from "@/lib/prisma";
-import { datevalidation } from "@/src/utils/datevalidation";
+import { datevalidation } from "@/utils/datevalidation";
 import { sendMail } from "../utils/sendMail";
 import appAssert from "../utils/appAssert";
 import { INTERNAL_SERVER_ERROR } from "../constants/http";
@@ -20,8 +11,8 @@ const FORM_INPUTS_OFFBOARDING = [
     18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
 ];
 export const createUser = (data) => {
-    return prisma.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
-        const user = yield tx.users.create({
+    return prisma.$transaction(async (tx) => {
+        const user = await tx.users.create({
             data: {
                 vorname: data.vorname,
                 nachname: data.nachname,
@@ -37,7 +28,7 @@ export const createUser = (data) => {
                 nachname: true,
             },
         });
-        const employee_forms_table = yield tx.employee_forms.create({
+        const employee_forms_table = await tx.employee_forms.create({
             data: {
                 user_id: user.id,
                 form_type: data.type,
@@ -47,7 +38,7 @@ export const createUser = (data) => {
                 form_type: true,
             },
         });
-        yield tx.form_inputs.createMany({
+        await tx.form_inputs.createMany({
             data: employee_forms_table.form_type === "Offboarding"
                 ? FORM_INPUTS_OFFBOARDING.map((field_id) => ({
                     employee_form_id: employee_forms_table.id,
@@ -62,10 +53,10 @@ export const createUser = (data) => {
             user,
             employee_form: employee_forms_table.id,
         };
-    }));
+    });
 };
-export const fetchUser = () => __awaiter(void 0, void 0, void 0, function* () {
-    const user_information = yield prisma.users.findMany({
+export const fetchUser = async () => {
+    const user_information = await prisma.users.findMany({
         where: {
             employee_forms: {
                 some: {
@@ -91,17 +82,17 @@ export const fetchUser = () => __awaiter(void 0, void 0, void 0, function* () {
     return {
         user_information,
     };
-});
-export const deleteUser = (data) => __awaiter(void 0, void 0, void 0, function* () {
-    const delete_user = yield prisma.users.delete({
+};
+export const deleteUser = async (data) => {
+    const delete_user = await prisma.users.delete({
         where: {
             id: data,
         },
     });
     return delete_user;
-});
-export const getUserFormData = (id) => __awaiter(void 0, void 0, void 0, function* () {
-    return yield prisma.users.findUnique({
+};
+export const getUserFormData = async (id) => {
+    return await prisma.users.findUnique({
         where: {
             id: id,
         },
@@ -134,9 +125,9 @@ export const getUserFormData = (id) => __awaiter(void 0, void 0, void 0, functio
             },
         },
     });
-});
-export const editdata = (data) => __awaiter(void 0, void 0, void 0, function* () {
-    return yield prisma.form_inputs.update({
+};
+export const editdata = async (data) => {
+    return await prisma.form_inputs.update({
         where: {
             id: data.id,
         },
@@ -145,9 +136,9 @@ export const editdata = (data) => __awaiter(void 0, void 0, void 0, function* ()
             edit: data.editcomment,
         },
     });
-});
-export const insertHistoryData = (data) => __awaiter(void 0, void 0, void 0, function* () {
-    return yield prisma.historyFormData.createMany({
+};
+export const insertHistoryData = async (data) => {
+    return await prisma.historyFormData.createMany({
         data: {
             status: data.result.select_option,
             edit: data.result.editcomment,
@@ -155,9 +146,9 @@ export const insertHistoryData = (data) => __awaiter(void 0, void 0, void 0, fun
             changed_by: data.user.id,
         },
     });
-});
-export const getHistoryData = (data) => __awaiter(void 0, void 0, void 0, function* () {
-    return yield prisma.historyFormData.findMany({
+};
+export const getHistoryData = async (data) => {
+    return await prisma.historyFormData.findMany({
         where: {
             form_input_id: data,
         },
@@ -174,10 +165,10 @@ export const getHistoryData = (data) => __awaiter(void 0, void 0, void 0, functi
             timestamp: "desc",
         },
     });
-});
-export const insertFileData = (fileData) => __awaiter(void 0, void 0, void 0, function* () {
+};
+export const insertFileData = async (fileData) => {
     try {
-        const employeeForm = yield prisma.employee_forms.findFirst({
+        const employeeForm = await prisma.employee_forms.findFirst({
             where: {
                 user_id: fileData.userId,
             },
@@ -185,7 +176,7 @@ export const insertFileData = (fileData) => __awaiter(void 0, void 0, void 0, fu
         if (!employeeForm) {
             throw new Error(`No employee form found for user ${fileData.userId}`);
         }
-        const savedfile = yield prisma.workerFiles.create({
+        const savedfile = await prisma.workerFiles.create({
             data: {
                 employee_form_id: employeeForm.id,
                 original_filename: fileData.original_filename,
@@ -201,9 +192,9 @@ export const insertFileData = (fileData) => __awaiter(void 0, void 0, void 0, fu
         console.log("error with filedata insert", error);
         throw error;
     }
-});
-export const fetchFileData = (userId) => __awaiter(void 0, void 0, void 0, function* () {
-    const files = yield prisma.workerFiles.findMany({
+};
+export const fetchFileData = async (userId) => {
+    const files = await prisma.workerFiles.findMany({
         where: {
             employee_forms: {
                 user_id: userId,
@@ -218,22 +209,25 @@ export const fetchFileData = (userId) => __awaiter(void 0, void 0, void 0, funct
         },
     });
     return files;
-});
-export const deleteFiles = (id) => __awaiter(void 0, void 0, void 0, function* () {
-    const existingFile = yield prisma.workerFiles.findUnique({
+};
+export const deleteFiles = async (id) => {
+    const existingFile = await prisma.workerFiles.findUnique({
         where: { id },
     });
     if (!existingFile) {
         throw new Error(`File with id ${id} not found`);
     }
-    return yield prisma.workerFiles.delete({
+    return await prisma.workerFiles.delete({
         where: { id },
     });
-});
-export const sendEmployeeEmail = (email) => __awaiter(void 0, void 0, void 0, function* () {
-    const { data, error } = yield sendMail(Object.assign({ to: email }, getFormReminderTemplate()));
-    appAssert(data === null || data === void 0 ? void 0 : data.id, INTERNAL_SERVER_ERROR, `${error === null || error === void 0 ? void 0 : error.name} - ${error === null || error === void 0 ? void 0 : error.message}`);
+};
+export const sendEmployeeEmail = async (email) => {
+    const { data, error } = await sendMail({
+        to: email,
+        ...getFormReminderTemplate(),
+    });
+    appAssert(data?.id, INTERNAL_SERVER_ERROR, `${error?.name} - ${error?.message}`);
     return {
         emailId: data.id,
     };
-});
+};

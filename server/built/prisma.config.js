@@ -4,7 +4,7 @@ import "dotenv/config";
 import { defineConfig } from "prisma/config";
 import { POSTGRES_URI } from "./src/constants/env";
 export default defineConfig({
-    schema: "prisma/schema.prisma",
+    schema: "./src/prisma/schema.prisma",
     migrations: {
         path: "prisma/migrations",
     },

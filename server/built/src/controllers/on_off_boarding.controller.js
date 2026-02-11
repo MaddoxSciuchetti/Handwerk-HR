@@ -1,22 +1,15 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 import z from "zod";
-import { createUser, deleteFiles, deleteUser, editdata, fetchFileData, fetchUser, getHistoryData, getUserFormData, insertFileData, insertHistoryData, sendEmployeeEmail, } from "@/src/services/on_off_boarding.auth";
 import { generatePresignedUrl, uploadFileToS3 } from "../config/aws";
 import { OK } from "../constants/http";
-export const postOffboardingData = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+import { createUser, deleteFiles, deleteUser, editdata, fetchFileData, fetchUser, getHistoryData, getUserFormData, insertFileData, insertHistoryData, sendEmployeeEmail, } from "@/services/on_off_boarding.auth";
+export const postOffboardingData = async (req, res) => {
     // validate the request
     try {
-        const request = Object.assign({}, req.body.data);
+        const request = {
+            ...req.body.data,
+        };
         // business logic
-        const { user } = yield createUser(request);
+        const { user } = await createUser(request);
         return res.status(201).json({ success: user });
     }
     catch (error) {
@@ -24,28 +17,32 @@ export const postOffboardingData = (req, res) => __awaiter(void 0, void 0, void 
         console.log(error);
         return res.status(500).json({ error: "internal error" });
     }
-});
-export const fetchOffboardingData = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const request = Object.assign({}, req.body);
-    const { user_information } = yield fetchUser();
+};
+export const fetchOffboardingData = async (req, res) => {
+    const request = {
+        ...req.body,
+    };
+    const { user_information } = await fetchUser();
     return res.status(201).json(user_information);
-});
-export const offboardingDeletebyId = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+};
+export const offboardingDeletebyId = async (req, res) => {
     const id = +req.params.id;
-    const delete_user = yield deleteUser(id);
+    const delete_user = await deleteUser(id);
     return res.status(204).json(delete_user);
-});
+};
 // formfetch
-export const offboardingGetuserbyId = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+export const offboardingGetuserbyId = async (req, res) => {
     const id = +req.params.id;
     const param1 = req.query.param1;
-    const user = yield getUserFormData(id);
+    const user = await getUserFormData(id);
     if (!user) {
         throw new Error("error occued");
     }
     const form = user.employee_forms.find((f) => f.form_type === param1);
     if (!form) {
-        return res.status(404).json({ message: "Offboarding form is not found" });
+        return res
+            .status(404)
+            .json({ message: "Offboarding form is not found" });
     }
     const response = {
         user: {
@@ -67,19 +64,19 @@ export const offboardingGetuserbyId = (req, res) => __awaiter(void 0, void 0, vo
         },
     };
     return res.status(200).json(response);
-});
+};
 const requestschema = z.object({
     id: z.coerce.number().int().positive(),
     editcomment: z.string(),
     select_option: z.string(),
 });
-export const offboardingEditdata = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+export const offboardingEditdata = async (req, res) => {
     // validate request
     const request = requestschema.parse(req.body);
     // business log
-    const editresponse = yield editdata(request);
+    const editresponse = await editdata(request);
     return res.status(200).json(editresponse);
-});
+};
 export const historySchemaget = z.object({
     id: z.coerce.number(),
 });
@@ -95,30 +92,30 @@ export const historySchema = z.object({
         verified: z.boolean(),
     }),
 });
-export const gethistoryData = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+export const gethistoryData = async (req, res) => {
     const id = req.params.id;
     const parsedId = z.coerce.number().parse(id);
-    const HistoryData = yield getHistoryData(parsedId);
+    const HistoryData = await getHistoryData(parsedId);
     return res.status(200).json(HistoryData);
-});
-export const postHistoryData = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+};
+export const postHistoryData = async (req, res) => {
     const result = historySchema.parse(req.body);
-    const HistoryData = yield insertHistoryData(result);
+    const HistoryData = await insertHistoryData(result);
     return res.status(200).json(HistoryData || []);
-});
-export const postFileData = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+};
+export const postFileData = async (req, res) => {
     console.log("=== Express ===");
     console.log("this is the body of EXpress", req.body);
     const id = req.params.id;
     const formId = Array.isArray(id) ? id[0] : id;
     const files = req.files;
-    console.log("Received file", files === null || files === void 0 ? void 0 : files.length);
+    console.log("Received file", files?.length);
     if (!files || files.length === 0) {
         return res.status(400).json({ error: "No files uploded" });
     }
     const uploadFiles = [];
     for (const file of files) {
-        const uploadResult = yield uploadFileToS3(file, formId);
+        const uploadResult = await uploadFileToS3(file, formId);
         if (uploadResult.success && uploadResult.key && uploadResult.url) {
             const fileData = {
                 userId: parseInt(formId),
@@ -130,8 +127,13 @@ export const postFileData = (req, res) => __awaiter(void 0, void 0, void 0, func
             };
             console.log("=== FileData ===");
             console.log(fileData);
-            const savedfile = yield insertFileData(fileData);
-            const sanitizedFile = Object.assign(Object.assign({}, savedfile), { id: savedfile.id.toString(), employee_form_id: Number(savedfile.employee_form_id), file_size: Number(savedfile.file_size) });
+            const savedfile = await insertFileData(fileData);
+            const sanitizedFile = {
+                ...savedfile,
+                id: savedfile.id.toString(),
+                employee_form_id: Number(savedfile.employee_form_id),
+                file_size: Number(savedfile.file_size),
+            };
             uploadFiles.push(sanitizedFile);
         }
     }
@@ -140,14 +142,17 @@ export const postFileData = (req, res) => __awaiter(void 0, void 0, void 0, func
         files: uploadFiles,
         count: uploadFiles.length,
     });
-});
-export const getFileData = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+};
+export const getFileData = async (req, res) => {
     try {
         const { id } = req.params;
         const parsedId = z.coerce.number().parse(id);
-        const files = yield fetchFileData(parsedId);
-        const presignedUrl = yield Promise.all(files.map((file) => __awaiter(void 0, void 0, void 0, function* () {
-            return (Object.assign(Object.assign({}, file), { id: file.id.toString(), employee_form_id: file.employee_form_id.toString(), cloud_url: yield generatePresignedUrl(file.cloud_key) }));
+        const files = await fetchFileData(parsedId);
+        const presignedUrl = await Promise.all(files.map(async (file) => ({
+            ...file,
+            id: file.id.toString(),
+            employee_form_id: file.employee_form_id.toString(),
+            cloud_url: await generatePresignedUrl(file.cloud_key),
         })));
         console.log(files);
         return res.status(200).json(presignedUrl);
@@ -155,18 +160,18 @@ export const getFileData = (req, res) => __awaiter(void 0, void 0, void 0, funct
     catch (error) {
         console.log(error);
     }
-});
-export const getProcessData = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+};
+export const getProcessData = async (req, res) => {
     try {
         const id = req.params.id;
-        const formData = yield getUserFormData(id);
+        const formData = await getUserFormData(id);
         console.log("=== FORMDATA ====");
         console.log(formData);
         return res.status(200).send({ formData });
     }
     catch (error) { }
-});
-export const deleteFileData = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+};
+export const deleteFileData = async (req, res) => {
     try {
         const id = +req.params.id;
         console.log(id);
@@ -176,16 +181,16 @@ export const deleteFileData = (req, res) => __awaiter(void 0, void 0, void 0, fu
     catch (error) {
         console.log(error);
     }
-});
-export const sendReminder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+};
+export const sendReminder = async (req, res) => {
     try {
         console.log(req.body);
         console.log(req.body.email);
         const email = req.body.email;
-        yield sendEmployeeEmail(email);
+        await sendEmployeeEmail(email);
         return res.status(OK).json({ sucess: "the email has been sent" });
     }
     catch (error) {
         console.log(error);
     }
-});
+};
