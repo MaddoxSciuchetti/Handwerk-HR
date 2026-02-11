@@ -22,7 +22,7 @@ export function LoginComponent({
     } = useMutation({
         mutationFn: login,
         onSuccess: () => {
-            navigate({ to: "/" });
+            navigate({ to: "/handwerker" });
         },
     });
 
