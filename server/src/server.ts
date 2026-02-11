@@ -20,7 +20,12 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+app.use(
+    cors({
+        origin: "https://frontendv2-x54r.onrender.com",
+        credentials: true,
+    }),
+);
 // home page
 app.get("/", (req, res) => {
     res.send("here");
