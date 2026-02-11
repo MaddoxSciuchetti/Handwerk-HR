@@ -10,7 +10,6 @@
         "allowJs": true,
         "resolveJsonModule": true,
         "noImplicitAny": true,
-        "types": ["node", "express", "jest"],
         "forceConsistentCasingInFileNames": true,
         "strict": true,
         "strictNullChecks": true,
