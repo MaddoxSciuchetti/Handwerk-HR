@@ -22,7 +22,7 @@ app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.use(
     cors({
-        origin: "https://frontendv2-x54r.onrender.com",
+        origin: APP_ORIGIN,
         credentials: true,
     }),
 );
