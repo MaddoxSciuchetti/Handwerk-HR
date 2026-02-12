@@ -1,195 +1,221 @@
 import "react";
 
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 
 import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
+    Accordion,
+    AccordionItem,
+    AccordionTrigger,
+    AccordionContent,
 } from "../ui/accordion";
 
 import { useEffect, useState } from "react";
 import { Response, useGetHistory } from "@/hooks/use-getHistoryData";
 
 interface FormProps {
-  id_original: number;
-  description: string;
-  owner: string;
-  editcomment: string;
-  select_option: string;
-  form_field_id: number;
-  handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
-  onEdit: (
-    id: number,
-    description: string,
-    editcomment: string,
-    select_option: string,
-    form_field_id: number,
-  ) => void;
+    id_original: number;
+    description: string;
+    owner: string;
+    editcomment: string;
+    select_option: string;
+    form_field_id: number;
+    handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+    onEdit: (
+        id: number,
+        description: string,
+        editcomment: string,
+        select_option: string,
+        form_field_id: number,
+    ) => void;
 }
 
 const Form: React.FC<FormProps> = ({
-  id_original,
-  description,
-  owner,
-  editcomment,
-  select_option,
-  form_field_id,
-  handleSubmit,
-  onEdit,
-  // historyResult,
+    id_original,
+    description,
+    owner,
+    editcomment,
+    select_option,
+    form_field_id,
+    handleSubmit,
+    onEdit,
+    // historyResult,
 }) => {
-  const [selectedValue, setSelectedValue] = useState<string>(
-    select_option || "",
-  );
-  const [editcommentValue, setEditComment] = useState<string>(
-    editcomment || "",
-  );
+    const [selectedValue, setSelectedValue] = useState<string>(
+        select_option || "",
+    );
+    const [editcommentValue, setEditComment] = useState<string>(
+        editcomment || "",
+    );
 
-  const { historyData, isLoading, error, refetchHistory } =
-    useGetHistory(id_original);
+    const { historyData, isLoading, error, refetchHistory } =
+        useGetHistory(id_original);
 
-  useEffect(() => {
-    setSelectedValue(select_option || "");
-    setEditComment(editcomment || "");
-  }, [select_option, editcomment]);
+    useEffect(() => {
+        setSelectedValue(select_option || "");
+        setEditComment(editcomment || "");
+    }, [select_option, editcomment]);
 
-  console.log(historyData?.map((val) => console.log(val)));
+    console.log(historyData?.map((val) => console.log(val)));
 
-  return (
-    <>
-      <div className="justify-center items-center hover:scale-101 mt-10">
-        <form
-          className="flex flex-col  "
-          onSubmit={handleSubmit}
-          name="valuesform"
-        >
-          <input type="hidden" id="id" name="id" value={id_original} />
-          <input type="hidden" name="select_option" value={selectedValue} />
-          <input
-            type="hidden"
-            id="form_field_id"
-            name="form_field_id"
-            value={form_field_id}
-          />
-
-          <div className="flex flex-col gap-5">
-            <div className="flex flex-row mt-2">
-              <p className="w-full underline">{description}</p>
-              <img
-                className=""
-                src="/public/assets/Edit React Icon.svg"
-                alt="text"
-                onClick={() =>
-                  onEdit(
-                    id_original,
-                    description,
-                    editcomment,
-                    select_option,
-                    form_field_id,
-                  )
-                }
-              />
-            </div>
-            <div className="flex gap-2 ">
-              <span
-                className={
-                  owner === "Siemon"
-                    ? "rounded-2xl bg-blue-200 px-3 py-1 text-sm"
-                    : owner === "Acosta"
-                      ? "rounded-2xl bg-pink-200 px-3 py-1 text-sm"
-                      : owner === "Janik"
-                        ? "rounded-2xl bg-green-200 px-3 py-1 text-sm"
-                        : owner === "Sen"
-                          ? "rounded-2xl bg-gray-200 px-3 py-1 text-sm"
-                          : owner === "Conpro IT"
-                            ? "rounded-2xl bg-yellow-200 px-3 py-1 text-sm"
-                            : ""
-                }
-              >
-                {owner}
-              </span>
-              <div>
-                <span
-                  className={
-                    selectedValue === "erledigt"
-                      ? "rounded-2xl bg-green-500 px-3 py-1 text-sm"
-                      : selectedValue === "offen"
-                        ? "rounded-2xl bg-red-200 px-3 py-1 text-sm"
-                        : selectedValue === "in_bearbeitung"
-                          ? "rounded-2xl bg-orange-500 px-3 py-1 text-sm"
-                          : " rounded-2xl bg-red-400 px-3 py-1 text-sm"
-                  }
+    return (
+        <>
+            <div className="justify-center items-center hover:scale-101 mt-10">
+                <form
+                    className="flex flex-col  "
+                    onSubmit={handleSubmit}
+                    name="valuesform"
                 >
-                  {selectedValue === "erledigt" ? (
-                    <span>Erledigt</span>
-                  ) : selectedValue === "in_bearbeitung" ? (
-                    <span>In Bearbeitung</span>
-                  ) : selectedValue === "offen" ? (
-                    <span>Offen</span>
-                  ) : (
-                    <span>Status</span>
-                  )}
-                </span>
-              </div>
+                    <input
+                        type="hidden"
+                        id="id"
+                        name="id"
+                        value={id_original}
+                    />
+                    <input
+                        type="hidden"
+                        name="select_option"
+                        value={selectedValue}
+                    />
+                    <input
+                        type="hidden"
+                        id="form_field_id"
+                        name="form_field_id"
+                        value={form_field_id}
+                    />
 
-              <div className="relative">
-                <span className="rounded-2xl bg-gray-100 px-3 py-1 text-sm cursor-pointer group">
-                  Letzter Kommentar
-                  <div className="absolute bottom-full left-0 mb-2 p-3 bg-white border rounded-lg shadow-lg opacity-0 group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-10 ">
-                    {editcommentValue === "" ? (
-                      <span>Kein Kommentar</span>
-                    ) : (
-                      editcommentValue
-                    )}
-                  </div>
-                </span>
-              </div>
+                    <div className="flex flex-col gap-5">
+                        <div className="flex flex-row mt-2">
+                            <p className="w-full underline">{description}</p>
+                            <img
+                                className=""
+                                src="/assets/Edit React Icon.svg"
+                                alt="text"
+                                onClick={() =>
+                                    onEdit(
+                                        id_original,
+                                        description,
+                                        editcomment,
+                                        select_option,
+                                        form_field_id,
+                                    )
+                                }
+                            />
+                        </div>
+                        <div className="flex gap-2 ">
+                            <span
+                                className={
+                                    owner === "Siemon"
+                                        ? "rounded-2xl bg-blue-200 px-3 py-1 text-sm"
+                                        : owner === "Acosta"
+                                          ? "rounded-2xl bg-pink-200 px-3 py-1 text-sm"
+                                          : owner === "Janik"
+                                            ? "rounded-2xl bg-green-200 px-3 py-1 text-sm"
+                                            : owner === "Sen"
+                                              ? "rounded-2xl bg-gray-200 px-3 py-1 text-sm"
+                                              : owner === "Conpro IT"
+                                                ? "rounded-2xl bg-yellow-200 px-3 py-1 text-sm"
+                                                : ""
+                                }
+                            >
+                                {owner}
+                            </span>
+                            <div>
+                                <span
+                                    className={
+                                        selectedValue === "erledigt"
+                                            ? "rounded-2xl bg-green-500 px-3 py-1 text-sm"
+                                            : selectedValue === "offen"
+                                              ? "rounded-2xl bg-red-200 px-3 py-1 text-sm"
+                                              : selectedValue ===
+                                                  "in_bearbeitung"
+                                                ? "rounded-2xl bg-orange-500 px-3 py-1 text-sm"
+                                                : " rounded-2xl bg-red-400 px-3 py-1 text-sm"
+                                    }
+                                >
+                                    {selectedValue === "erledigt" ? (
+                                        <span>Erledigt</span>
+                                    ) : selectedValue === "in_bearbeitung" ? (
+                                        <span>In Bearbeitung</span>
+                                    ) : selectedValue === "offen" ? (
+                                        <span>Offen</span>
+                                    ) : (
+                                        <span>Status</span>
+                                    )}
+                                </span>
+                            </div>
+
+                            <div className="relative">
+                                <span className="rounded-2xl bg-gray-100 px-3 py-1 text-sm cursor-pointer group">
+                                    Letzter Kommentar
+                                    <div className="absolute bottom-full left-0 mb-2 p-3 bg-white border rounded-lg shadow-lg opacity-0 group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-10 ">
+                                        {editcommentValue === "" ? (
+                                            <span>Kein Kommentar</span>
+                                        ) : (
+                                            editcommentValue
+                                        )}
+                                    </div>
+                                </span>
+                            </div>
+                        </div>
+
+                        <Accordion
+                            type="single"
+                            collapsible
+                            className="max-w-6xl"
+                        >
+                            <AccordionItem value="shipping" className="mb-10 ">
+                                <AccordionTrigger className=" -blue-600 border-2 p-2 border-gray-300">
+                                    Verlauf
+                                </AccordionTrigger>
+                                <AccordionContent className="">
+                                    {isLoading ? (
+                                        <p>Loading History</p>
+                                    ) : (
+                                        (historyData || []).map(
+                                            (item: Response, index: number) => (
+                                                <div key={index} className="">
+                                                    <div className=" mb-2 mt-1">
+                                                        <p className="text-left">
+                                                            <strong>
+                                                                {new Date(
+                                                                    item.timestamp,
+                                                                ).toLocaleDateString()}
+                                                            </strong>
+                                                        </p>
+                                                    </div>
+                                                    <div className="flex">
+                                                        <p>
+                                                            Nutzer:{" "}
+                                                            {
+                                                                item.auth_user
+                                                                    .email
+                                                            }
+                                                        </p>
+                                                    </div>
+                                                    <p>Status: {item.status}</p>
+                                                    <p>
+                                                        Kommentar: {item.edit}
+                                                    </p>
+                                                </div>
+                                            ),
+                                        )
+                                    )}
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
+                    </div>
+                </form>
             </div>
-
-            <Accordion type="single" collapsible className="max-w-6xl">
-              <AccordionItem value="shipping" className="mb-10 ">
-                <AccordionTrigger className=" -blue-600 border-2 p-2 border-gray-300">
-                  Verlauf
-                </AccordionTrigger>
-                <AccordionContent className="">
-                  {isLoading ? (
-                    <p>Loading History</p>
-                  ) : (
-                    (historyData || []).map((item: Response, index: number) => (
-                      <div key={index} className="">
-                        <div className=" mb-2 mt-1">
-                          <p className="text-left">
-                            <strong>
-                              {new Date(item.timestamp).toLocaleDateString()}
-                            </strong>
-                          </p>
-                        </div>
-                        <div className="flex">
-                          <p>Nutzer: {item.auth_user.email}</p>
-                        </div>
-                        <p>Status: {item.status}</p>
-                        <p>Kommentar: {item.edit}</p>
-                      </div>
-                    ))
-                  )}
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </div>
-        </form>
-      </div>
-    </>
-  );
+        </>
+    );
 };
 
 export default Form;
