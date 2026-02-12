@@ -28,7 +28,7 @@ const UserMenu = () => {
                 <Avatar className="cursor-pointer w-10 h-10">
                     <AvatarImage
                         className="h-full w-full"
-                        src="/public/assets/timo.png"
+                        src="/assets/timo.png"
                     />
                     <AvatarFallback>Profile</AvatarFallback>
                 </Avatar>
