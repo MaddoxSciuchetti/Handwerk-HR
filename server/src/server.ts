@@ -1,7 +1,6 @@
-// import { createApp } from "./createApp.js";
+import dotenv from "dotenv";
 
 import express from "express";
-import dotenv from "dotenv";
 import cors from "cors";
 
 import { offboarding_router } from "./routes/on_off_boarding.route";

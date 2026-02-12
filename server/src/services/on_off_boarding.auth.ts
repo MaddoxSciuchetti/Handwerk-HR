@@ -272,6 +272,8 @@ export const fetchFileData = async (userId: number) => {
             },
         },
     });
+    console.log("DIRECT ACCESS TO DATABASE FILES");
+    console.log(files);
     return files;
 };
 
