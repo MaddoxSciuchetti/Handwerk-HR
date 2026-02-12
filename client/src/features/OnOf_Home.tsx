@@ -9,6 +9,7 @@ import SearchHeader from "@/components/SearchHeader";
 import HandwerkerTable from "@/components/HandwerkerTable";
 import { delete_user } from "@/types/api_response";
 import { Form } from "radix-ui";
+import useAuth from "@/hooks/useAuth";
 
 type FormType = "Onboarding" | "Offboarding";
 
@@ -24,6 +25,7 @@ export type OffboardingItem = {
 };
 
 function OnOf_Home() {
+    const { user, isLoading, isError } = useAuth();
     const navigate = useNavigate({ from: "/" });
     const queryClient = useQueryClient();
     const { toggleSidebar } = useSidebar();
@@ -87,6 +89,16 @@ function OnOf_Home() {
         setModal((prev) => !prev);
         toggleSidebar();
     };
+
+    if (isError || !user) {
+        return (
+            <div className="flex flex-col items-center mt-16 space-y-2">
+                <h1 className="text-3xl font-bold">Error loading user</h1>
+                <p className="text-red-500">Please try again later</p>
+            </div>
+        );
+    }
+
     return (
         <div className="w-full max-w-5xl h-150 rounded-2xl mx-auto p-6 shadow-gray-200 shadow-lg">
             <div className="h-full flex flex-col ">

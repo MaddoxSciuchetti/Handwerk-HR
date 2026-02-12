@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UserdashboardRouteImport } from './routes/userdashboard'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ProfileRouteImport } from './routes/profile'
@@ -22,6 +23,11 @@ import { Route as PasswordForgotRouteImport } from './routes/password/forgot'
 import { Route as DashboardCeoRouteImport } from './routes/dashboard/ceo'
 import { Route as EmailVerifyCodeRouteImport } from './routes/email/verify/$code'
 
+const UserdashboardRoute = UserdashboardRouteImport.update({
+  id: '/userdashboard',
+  path: '/userdashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
@@ -90,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRouteWithChildren
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/userdashboard': typeof UserdashboardRoute
   '/dashboard/ceo': typeof DashboardCeoRoute
   '/password/forgot': typeof PasswordForgotRoute
   '/password/reset': typeof PasswordResetRoute
@@ -104,6 +111,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRouteWithChildren
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/userdashboard': typeof UserdashboardRoute
   '/dashboard/ceo': typeof DashboardCeoRoute
   '/password/forgot': typeof PasswordForgotRoute
   '/password/reset': typeof PasswordResetRoute
@@ -119,6 +127,7 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRouteWithChildren
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/userdashboard': typeof UserdashboardRoute
   '/dashboard/ceo': typeof DashboardCeoRoute
   '/password/forgot': typeof PasswordForgotRoute
   '/password/reset': typeof PasswordResetRoute
@@ -135,6 +144,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/settings'
     | '/signup'
+    | '/userdashboard'
     | '/dashboard/ceo'
     | '/password/forgot'
     | '/password/reset'
@@ -149,6 +159,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/settings'
     | '/signup'
+    | '/userdashboard'
     | '/dashboard/ceo'
     | '/password/forgot'
     | '/password/reset'
@@ -163,6 +174,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/settings'
     | '/signup'
+    | '/userdashboard'
     | '/dashboard/ceo'
     | '/password/forgot'
     | '/password/reset'
@@ -178,6 +190,7 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRouteWithChildren
   SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
+  UserdashboardRoute: typeof UserdashboardRoute
   DashboardCeoRoute: typeof DashboardCeoRoute
   PasswordForgotRoute: typeof PasswordForgotRoute
   PasswordResetRoute: typeof PasswordResetRoute
@@ -187,6 +200,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/userdashboard': {
+      id: '/userdashboard'
+      path: '/userdashboard'
+      fullPath: '/userdashboard'
+      preLoaderRoute: typeof UserdashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signup': {
       id: '/signup'
       path: '/signup'
@@ -292,6 +312,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRouteWithChildren,
   SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
+  UserdashboardRoute: UserdashboardRoute,
   DashboardCeoRoute: DashboardCeoRoute,
   PasswordForgotRoute: PasswordForgotRoute,
   PasswordResetRoute: PasswordResetRoute,
