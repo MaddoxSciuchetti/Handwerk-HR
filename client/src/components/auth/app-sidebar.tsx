@@ -1,22 +1,22 @@
 import {
-  Calendar,
-  Home,
-  Inbox,
-  Search,
-  Settings,
-  HandMetal,
+    Calendar,
+    Home,
+    Inbox,
+    Search,
+    Settings,
+    HandMetal,
 } from "lucide-react";
 
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
+    Sidebar,
+    SidebarContent,
+    SidebarGroup,
+    SidebarGroupContent,
+    SidebarGroupLabel,
+    SidebarHeader,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { useNavigate } from "react-router-dom";
 import UserMenu from "./UserMenu";
@@ -26,69 +26,72 @@ import { useEffect, useMemo, useState } from "react";
 // Menu items.
 
 const items = [
-  {
-    title: "Home",
-    to: "/",
-    icon: Home,
-  },
-  {
-    title: "Mitarbeiter",
-    to: "/dashboard/ceo",
-    icon: HandMetal,
-    requiredPermission: "CHEF",
-  },
-  {
-    title: "Handwerker",
-    to: "/handwerker",
-    icon: Inbox,
-  },
+    {
+        title: "Home",
+        to: "/userdashboard",
+        icon: Home,
+    },
+    {
+        title: "Mitarbeiter",
+        to: "/dashboard/ceo",
+        icon: HandMetal,
+        requiredPermission: "CHEF",
+    },
+    {
+        title: "Handwerker",
+        to: "/handwerker",
+        icon: Inbox,
+    },
 ];
 
 export function AppSidebar({}) {
-  const { user, isError } = useAuth();
+    const { user, isError } = useAuth();
 
-  const hasPermission = useMemo(() => {
-    return (requiredPermission: string | undefined) => {
-      if (!requiredPermission) return true;
-      if (user?.user_permission !== requiredPermission) return false;
-      return true;
-    };
-  }, [user?.user_permission]);
+    const hasPermission = useMemo(() => {
+        return (requiredPermission: string | undefined) => {
+            if (!requiredPermission) return true;
+            if (user?.user_permission !== requiredPermission) return false;
+            return true;
+        };
+    }, [user?.user_permission]);
 
-  const accessibleItems = useMemo(() => {
-    if (!user) return [];
-    return items.filter((item) => hasPermission(item.requiredPermission));
-  }, [hasPermission]);
+    const accessibleItems = useMemo(() => {
+        if (!user) return [];
+        return items.filter((item) => hasPermission(item.requiredPermission));
+    }, [hasPermission]);
 
-  if (user === undefined) {
-    return "";
-  }
-  return (
-    <Sidebar className="bg-gray-100 rounded-2xl">
-      <SidebarHeader className="mt-5 flex flex-row align-middle">
-        <UserMenu />
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-black">
-            Application
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="text-black">
-              {accessibleItems.map((item, index) => (
-                <SidebarMenuItem className="text-black" key={index}>
-                  <SidebarMenuButton asChild>
-                    <a href={item.to}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
-  );
+    if (user === undefined) {
+        return "";
+    }
+    return (
+        <Sidebar className="bg-gray-100 rounded-2xl">
+            <SidebarHeader className="mt-5 flex flex-row align-middle">
+                <UserMenu />
+            </SidebarHeader>
+            <SidebarContent>
+                <SidebarGroup>
+                    <SidebarGroupLabel className="text-black">
+                        Application
+                    </SidebarGroupLabel>
+                    <SidebarGroupContent>
+                        <SidebarMenu className="text-black">
+                            {accessibleItems.map((item, index) => (
+                                <SidebarMenuItem
+                                    className="text-black"
+                                    key={index}
+                                >
+                                    <SidebarMenuButton asChild>
+                                        <a href={item.to}>
+                                            <item.icon />
+                                            <span>{item.title}</span>
+                                        </a>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            ))}
+                        </SidebarMenu>
+                    </SidebarGroupContent>
+                </SidebarGroup>
+            </SidebarContent>
+        </Sidebar>
+    );
 }
