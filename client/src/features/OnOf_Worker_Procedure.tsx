@@ -221,8 +221,8 @@ const OnOf_Worker_Procedure: React.FC<OffboardingFormProps> = ({
 
     return (
         <>
-            <div className="flex flex-col fixed w-full max-w-5xl h-150 rounded-2xl mx-auto  shadow-gray-200 shadow-lg overflow-auto p-6">
-                <div className="w-max flex justify gap-5">
+            <div className="flex flex-col w-full h-150 rounded-2xl mx-auto  shadow-gray-200 shadow-lg overflow-auto p-6 md:max-w-8xl md:h-300">
+                <div className=" flex justify gap-5">
                     <Input
                         value={descriptionSearch}
                         onChange={(e) => setDescriptionSearch(e.target.value)}

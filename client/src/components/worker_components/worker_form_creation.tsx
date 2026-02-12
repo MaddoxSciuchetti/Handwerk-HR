@@ -142,9 +142,8 @@ export const WorkerDataForm = ({
                 </h1>
                 <div className="grid grid-cols-2 gap-3 pb-10 ">
                     {ConditionalInputs.map((input, index) => (
-                        <div>
+                        <div key={index}>
                             <Input
-                                key={index}
                                 placeholder={input.placeholder}
                                 type="text"
                                 {...register(input.name, {
@@ -163,7 +162,6 @@ export const WorkerDataForm = ({
                             />
                         </div>
                     ))}
-
                     <Button
                         variant={"outline"}
                         type="submit"

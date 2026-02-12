@@ -28,12 +28,7 @@ import { useEffect, useMemo, useState } from "react";
 
 const items = [
     {
-        title: "Home",
-        to: "/userdashboard",
-        icon: Home,
-    },
-    {
-        title: "Mitarbeiter",
+        title: "Meine Mitarbeiter",
         to: "/dashboard/ceo",
         icon: HandMetal,
         requiredPermission: "CHEF",
@@ -72,7 +67,7 @@ export function AppSidebar({}) {
             <SidebarContent>
                 <SidebarGroup>
                     <SidebarGroupLabel className="text-black">
-                        Application
+                        BSB Team
                     </SidebarGroupLabel>
                     <SidebarGroupContent>
                         <SidebarMenu className="text-black">

@@ -108,7 +108,7 @@ function OnOf_Home() {
     }
 
     return (
-        <div className="w-full max-w-5xl h-150 rounded-2xl mx-auto p-6 shadow-gray-200 shadow-lg">
+        <div className="w-full h-150 rounded-2xl mx-auto p-6 shadow-gray-200 shadow-lg overflow-auto md:max-w-8xl md:h-300">
             <div className="h-full flex flex-col ">
                 <SearchHeader
                     toggleModal={toggleModal}
