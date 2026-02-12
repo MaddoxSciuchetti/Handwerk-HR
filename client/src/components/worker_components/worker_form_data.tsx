@@ -200,7 +200,28 @@ const Form: React.FC<FormProps> = ({
                                                             }
                                                         </p>
                                                     </div>
-                                                    <p>Status: {item.status}</p>
+                                                    <p>
+                                                        Status:{" "}
+                                                        {selectedValue ===
+                                                        "erledigt" ? (
+                                                            <span>
+                                                                Erledigt
+                                                            </span>
+                                                        ) : selectedValue ===
+                                                          "in_bearbeitung" ? (
+                                                            <span>
+                                                                In Bearbeitung
+                                                            </span>
+                                                        ) : selectedValue ===
+                                                          "offen" ? (
+                                                            <span>Offen</span>
+                                                        ) : (
+                                                            <span>
+                                                                Kein Status
+                                                            </span>
+                                                        )}
+                                                    </p>
+
                                                     <p>
                                                         Kommentar: {item.edit}
                                                     </p>

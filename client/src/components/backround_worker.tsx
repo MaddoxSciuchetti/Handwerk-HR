@@ -93,27 +93,26 @@ function Worker_Backround({ id }: Worker_Backround) {
     return (
         <>
             <div className="text-right ">
-                {isLoading ? (
+                {isLoading || isFetching ? (
                     <div className="flex items-center justify-center min-h-100">
                         {" "}
                         Loading state{" "}
                     </div>
-                ) : (
-                    <div className="flex flex-row justify-end">
-                        <img
-                            className=" flex flex-end cursor-pointer"
-                            onClick={openModal}
-                            src="/public/assets/copy.svg"
-                        />
-                    </div>
-                )}
-
-                {!fetchFiles || fetchFiles.length === 0 ? (
-                    <div className="flex items-center justify-center min-h-100">
-                        Keine Hochgeladenen Dateien
+                ) : !fetchFiles || fetchFiles.length === 0 ? (
+                    <div>
+                        <div className="flex items-center justify-center min-h-100">
+                            Keine Hochgeladenen Dateien
+                        </div>
                     </div>
                 ) : (
-                    fetchFiles && (
+                    <div>
+                        <div className="flex flex-row justify-end pt-5 pr-5">
+                            <img
+                                className=" flex flex-end cursor-pointer"
+                                onClick={openModal}
+                                src="/public/assets/copy.svg"
+                            />
+                        </div>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
                             {fetchFiles.map((file, index) => (
                                 <div
@@ -157,7 +156,7 @@ function Worker_Backround({ id }: Worker_Backround) {
                                 </div>
                             ))}
                         </div>
-                    )
+                    </div>
                 )}
             </div>
 

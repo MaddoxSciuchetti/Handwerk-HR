@@ -157,6 +157,7 @@ export const postFileData = async (req: Request, res: Response) => {
 
     const files = req.files as Express.Multer.File[];
     console.log("Received file", files?.length);
+    console.log(files);
 
     if (!files || files.length === 0) {
         return res.status(400).json({ error: "No files uploded" });
@@ -187,6 +188,7 @@ export const postFileData = async (req: Request, res: Response) => {
             uploadFiles.push(sanitizedFile);
         }
     }
+
     res.json({
         success: true,
         files: uploadFiles,
