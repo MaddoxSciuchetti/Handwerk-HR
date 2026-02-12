@@ -18,7 +18,8 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { useNavigate } from "react-router-dom";
+import { Link } from "@tanstack/react-router";
+
 import UserMenu from "./UserMenu";
 import useAuth from "@/hooks/useAuth";
 import { useEffect, useMemo, useState } from "react";
@@ -81,10 +82,10 @@ export function AppSidebar({}) {
                                     key={index}
                                 >
                                     <SidebarMenuButton asChild>
-                                        <a href={item.to}>
+                                        <Link to={item.to}>
                                             <item.icon />
                                             <span>{item.title}</span>
-                                        </a>
+                                        </Link>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
                             ))}
