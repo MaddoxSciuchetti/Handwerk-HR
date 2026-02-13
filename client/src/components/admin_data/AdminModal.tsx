@@ -49,7 +49,7 @@ function AdminModal({ onClose, selectedUser }: TCloseModal) {
                         onSubmit={handleSubmit(onSubmit)}
                     >
                         <p>Schicke eine Errinnerung</p>
-                        <Input placeholder="email" {...register("email")} />
+                        <Input placeholder="Email" {...register("email")} />
                         {errors.email && <span>{errors.email.message}</span>}
                         <Input placeholder="Betreff" {...register("subject")} />
                         <Textarea

@@ -6,6 +6,14 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import z from "zod";
 import useCeoDashboard from "@/hooks/useCeoDashboard";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export type TEmployForm = z.infer<typeof EmployFormSchema>;
 export type TEmployeFormId = z.infer<typeof EmployFormSchema>[number];
@@ -37,39 +45,52 @@ function Ceo_Dashboard() {
     return (
         <>
             <div className="w-full h-150 rounded-2xl mx-auto p-6 shadow-gray-200 shadow-lg overflow-auto md:max-w-8xl md:h-300">
-                <div className="items-center flex  w-full h-20 gap-3.5">
-                    {uniqueHandwerkerProBSBEmployee.map((user) => (
-                        <Button
-                            variant={"outline"}
-                            key={user.owner}
-                            onClick={() => setSelectedUser(user.owner)}
-                            className={`flex flex-row cursor-pointer ${selectedUser === user.owner ? `underline transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-105 bg-gray-200` : `hover:bg-gray-100`}`}
+                <h1 className="mb-5 text-2xl font-light ml-6 ">
+                    Deine Mitarbeiter und ihre offenen Aufgaben
+                </h1>
+                <div className=" flex w-full content-start">
+                    <Tabs
+                        defaultValue="account"
+                        className="w-xl ml-6 "
+                        value={selectedUser || undefined}
+                        onValueChange={(val) => setSelectedUser(val)}
+                    >
+                        <TabsList
+                            variant={"default"}
+                            className="w-full justify-start px-5 gap-5 border-b-2 border-[0.5px] border-gray-700"
                         >
-                            {user.owner}
-                        </Button>
-                    ))}
-                </div>
-                <div className="flex flex-col relative  w-full h-auto overflow-auto">
-                    {selectedUser ? (
-                        <div>
-                            <div
-
-                            // onClick={() => setModalOpen(true)}
-                            >
+                            {uniqueHandwerkerProBSBEmployee.map(
+                                (user, index) => (
+                                    <TabsTrigger
+                                        value={user.owner}
+                                        key={user.owner}
+                                        className={`text-md flex flex-row  cursor-pointer  ${selectedUser === user.owner ? ` transition delay-150 duration-300 ease-in-out  bg-gray-50` : `hover:bg-gray-50`}`}
+                                    >
+                                        {user.owner}
+                                    </TabsTrigger>
+                                ),
+                            )}
+                        </TabsList>
+                        {selectedUser ? (
+                            <TabsContent value={selectedUser} className="">
                                 <AccordionDemo
                                     cleanData={cleanData}
                                     user={selectedUser}
                                     data={currentBSBEmployee}
                                     onTaskClick={() => setModalOpen(true)}
                                 />
-                            </div>
-                        </div>
-                    ) : (
-                        <div>
-                            Wähle ein Nutzer um seine Offenen Aufgaben zu sehen
-                        </div>
-                    )}
+                            </TabsContent>
+                        ) : (
+                            <h1 className="text-sm font-light">
+                                Kein Nutzer ausgewählt
+                            </h1>
+                        )}
+                        <TabsContent value="password">
+                            Change your password here.
+                        </TabsContent>
+                    </Tabs>
                 </div>
+                <div className="flex flex-col relative  w-full h-auto overflow-auto"></div>
             </div>
 
             {modal && (

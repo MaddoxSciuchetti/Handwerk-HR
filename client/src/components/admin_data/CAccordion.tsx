@@ -67,7 +67,7 @@ export function AccordionDemo({
                 type="single"
                 collapsible
                 defaultValue="shipping"
-                className=""
+                className=" p-5 cursor-pointer border-[0.5px] border-gray-300 rounded-2xl w-full"
             >
                 {employeeGroups.length === 0 ||
                 employeeGroups[0]?.[1].inputs.length === 0 ? (
@@ -77,9 +77,9 @@ export function AccordionDemo({
                         <AccordionItem
                             key={employeeName}
                             value={`employee-${index}`}
-                            className=""
+                            className="cursor-pointer "
                         >
-                            <AccordionTrigger className="border p-2">
+                            <AccordionTrigger className=" p-2">
                                 Handwerker: {group.employee.vorname}{" "}
                                 {group.employee.nachname}
                             </AccordionTrigger>
@@ -87,12 +87,11 @@ export function AccordionDemo({
                                 {group.inputs.length === 0 ? (
                                     <p>{user} hat keine Offenen Aufgaben</p>
                                 ) : (
-                                    <div className="flex flex-col gap-5 w-full ">
-                                        Offene Aufgaben:
+                                    <div className="flex flex-col gap-5 w-full">
                                         {group.inputs.map((task, taskIndex) => (
                                             <div
                                                 key={taskIndex}
-                                                className="  p-2 mb-2 hover:bg-gray-200 rounded-2xl"
+                                                className="  p-2 mb-2 hover:bg-gray-50 rounded-2xl cursor-pointer"
                                                 onClick={onTaskClick}
                                             >
                                                 <p>
