@@ -4,13 +4,21 @@ import ModalMitarbeiter from "@/components/mitarbeiter-übersicht/ModalMitarbeit
 import { useSidebar } from "@/components/ui/sidebar";
 import { useQuery } from "@tanstack/react-query";
 import { specificEmployeeData } from "@/lib/api";
+import { EditIcon } from "lucide-react";
+import ModalEditMitarbeiter from "@/components/mitarbeiter-übersicht/ModalEditMitarbeiter";
 
 function MitarbeiterÜbersicht() {
     const [modal, setModal] = useState<boolean>(false);
+    const [editEmployeeModal, setEditEmplyoeeModal] = useState<boolean>(false);
     const { toggleSidebar } = useSidebar();
 
     const toggleModal = () => {
         setModal((prev) => !prev);
+        toggleSidebar();
+    };
+
+    const toggleEmployeeModal = () => {
+        setEditEmplyoeeModal((prev) => !prev);
         toggleSidebar();
     };
 
@@ -37,11 +45,23 @@ function MitarbeiterÜbersicht() {
 
                 {EmployeeData?.map((value, index) => (
                     <div key={index}>
-                        <div>
+                        <div className="flex">
+                            <EditIcon onClick={toggleEmployeeModal} />
                             {value.vorname} {value.nachname}
                         </div>
                     </div>
                 ))}
+
+                {editEmployeeModal && (
+                    <div className="fixed inset-0 z-50 flex">
+                        <div
+                            onClick={toggleEmployeeModal}
+                            className="fixed inset-0 bg-black/50 cursor-pointer"
+                            aria-label="Close modal"
+                        />
+                        <ModalEditMitarbeiter />
+                    </div>
+                )}
 
                 {modal && (
                     <div className="fixed inset-0 z-50 flex">
