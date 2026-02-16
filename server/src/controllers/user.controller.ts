@@ -9,6 +9,7 @@ import {
     getDescriptionData,
     getemployee_form,
     getUser,
+    queryEmployeeData,
     updateDescriptionData,
 } from "../services/user.protected";
 import { checkChef } from "@/utils/checkChef";
@@ -40,7 +41,7 @@ export const getChefHandler = catchErrors(async (req, res) => {
     return res.status(OK).json(user);
 });
 
-export const getEmployeedata = catchErrors(async (req, res) => {
+export const getUnifiedData = catchErrors(async (req, res) => {
     const id = req.userId;
 
     const user = await getChef(id);
@@ -93,4 +94,10 @@ export const createDescriptionHandler = catchErrors(async (req, res) => {
 
     const newDescription = await createDescription(description, owner, type);
     return res.status(OK).json(newDescription);
+});
+
+export const getEmployeedata = catchErrors(async (req, res) => {
+    const EmployeeData = await queryEmployeeData();
+    console.log(EmployeeData);
+    return res.status(OK).json(EmployeeData);
 });

@@ -1,26 +1,26 @@
 import z from "zod";
 import catchErrors from "../utils/catchErrors";
 import {
-  createAccount,
-  loginUser,
-  refreshUserAccessToken,
-  resetPassword,
-  sendPasswordResetEmail,
-  verifyEmail,
+    createAccount,
+    loginUser,
+    refreshUserAccessToken,
+    resetPassword,
+    sendPasswordResetEmail,
+    verifyEmail,
 } from "../services/auth.service";
 import { CREATED, OK, UNAUTHORIZED } from "../constants/http";
 import {
-  clearAuthCookies,
-  getAccessTokenCookieOptions,
-  getRefreshTokenCookieOptions,
-  setAuthCookies,
+    clearAuthCookies,
+    getAccessTokenCookieOptions,
+    getRefreshTokenCookieOptions,
+    setAuthCookies,
 } from "../utils/cookies";
 import {
-  emailSchema,
-  loginSchema,
-  registerSchema,
-  resetPasswordSchema,
-  verificationCodeSchema,
+    emailSchema,
+    loginSchema,
+    registerSchema,
+    resetPasswordSchema,
+    verificationCodeSchema,
 } from "./auth.Schemas";
 import { verifyToken } from "../utils/jwt";
 
@@ -28,104 +28,107 @@ import appAssert from "../utils/appAssert";
 import { prisma } from "@/lib/prisma";
 
 export const registerHandler = catchErrors(async (req, res) => {
-  //validate request
+    //validate request
 
-  const request = registerSchema.parse({
-    ...req.body,
-    userAgent: req.headers["user-agent"],
-  });
+    const request = registerSchema.parse({
+        ...req.body,
+        userAgent: req.headers["user-agent"],
+    });
 
-  // call service
+    // call service
 
-  const { user, accessToken, refreshToken } = await createAccount(request);
+    const { user, accessToken, refreshToken } = await createAccount(request);
 
-  // return response
-  return setAuthCookies({ res, accessToken, refreshToken })
-    .status(CREATED)
-    .json(user);
+    // setAuthCookies({ res, accessToken, refreshToken })
+    // return response
+    return res.status(CREATED).json(user);
 });
 
 export const loginHandler = catchErrors(async (req, res) => {
-  // validate request
+    // validate request
 
-  const request = loginSchema.parse({
-    ...req.body,
-    userAgent: req.headers["user-agent"],
-  });
+    const request = loginSchema.parse({
+        ...req.body,
+        userAgent: req.headers["user-agent"],
+    });
 
-  // call service
+    // call service
 
-  const { accessToken, refreshToken } = await loginUser(request);
+    const { accessToken, refreshToken } = await loginUser(request);
 
-  return setAuthCookies({ res, accessToken, refreshToken }).status(OK).json({
-    message: "Login sucessful",
-  });
+    return setAuthCookies({ res, accessToken, refreshToken }).status(OK).json({
+        message: "Login sucessful",
+    });
 });
 
 export const logoutHandler = catchErrors(async (req, res) => {
-  const accessToken = req.cookies.accessToken as string | undefined;
-  const { payload } = verifyToken(accessToken || "");
+    const accessToken = req.cookies.accessToken as string | undefined;
+    const { payload } = verifyToken(accessToken || "");
 
-  if (payload) {
-    await prisma.session.delete({
-      where: {
-        id: payload.sessionId,
-      },
+    if (payload) {
+        await prisma.session.delete({
+            where: {
+                id: payload.sessionId,
+            },
+        });
+    }
+
+    return clearAuthCookies(res).status(OK).json({
+        message: "Logout sucessfull",
     });
-  }
-
-  return clearAuthCookies(res).status(OK).json({
-    message: "Logout sucessfull",
-  });
 });
 
 export const refreshHandler = catchErrors(async (req, res) => {
-  console.log(req.cookies.refreshToken);
-  const refreshToken = req.cookies.refreshToken as string | undefined;
-  appAssert(refreshToken, UNAUTHORIZED, "Missing refresh token");
+    console.log(req.cookies.refreshToken);
+    const refreshToken = req.cookies.refreshToken as string | undefined;
+    appAssert(refreshToken, UNAUTHORIZED, "Missing refresh token");
 
-  const { accessToken, newRefreshToken } =
-    await refreshUserAccessToken(refreshToken);
+    const { accessToken, newRefreshToken } =
+        await refreshUserAccessToken(refreshToken);
 
-  if (newRefreshToken) {
-    res.cookie("refreshToken", newRefreshToken, getRefreshTokenCookieOptions());
-  }
+    if (newRefreshToken) {
+        res.cookie(
+            "refreshToken",
+            newRefreshToken,
+            getRefreshTokenCookieOptions(),
+        );
+    }
 
-  return res
-    .status(OK)
-    .cookie("accessToken", accessToken, getAccessTokenCookieOptions())
-    .json({
-      message: "Access token refreshed",
-    });
+    return res
+        .status(OK)
+        .cookie("accessToken", accessToken, getAccessTokenCookieOptions())
+        .json({
+            message: "Access token refreshed",
+        });
 });
 
 export const verifyEmailHandler = catchErrors(async (req, res) => {
-  console.log(req.params.code);
-  const verificationCode = verificationCodeSchema.parse(req.params.code);
+    console.log(req.params.code);
+    const verificationCode = verificationCodeSchema.parse(req.params.code);
 
-  await verifyEmail(verificationCode);
+    await verifyEmail(verificationCode);
 
-  return res.status(OK).json({
-    message: "Email was sucessfully verified",
-  });
+    return res.status(OK).json({
+        message: "Email was sucessfully verified",
+    });
 });
 
 export const sendPasswordResetHandler = catchErrors(async (req, res) => {
-  const email = emailSchema.parse(req.body.email);
+    const email = emailSchema.parse(req.body.email);
 
-  await sendPasswordResetEmail(email);
+    await sendPasswordResetEmail(email);
 
-  return res.status(OK).json({
-    message: "Password reset email sent",
-  });
+    return res.status(OK).json({
+        message: "Password reset email sent",
+    });
 });
 
 export const resetPasswordHandler = catchErrors(async (req, res) => {
-  const request = resetPasswordSchema.parse(req.body);
+    const request = resetPasswordSchema.parse(req.body);
 
-  await resetPassword(request);
+    await resetPassword(request);
 
-  return clearAuthCookies(res)
-    .status(OK)
-    .json({ message: "Password was reset successfully" });
+    return clearAuthCookies(res)
+        .status(OK)
+        .json({ message: "Password was reset successfully" });
 });

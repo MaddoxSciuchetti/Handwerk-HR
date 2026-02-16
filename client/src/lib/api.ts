@@ -216,8 +216,25 @@ export const formattedData = async (
     return response;
 };
 
-export const specificEmployeeData = async () => {
-    return API.get(`/user/specificEmployeeData`);
+export const ZEmployeeData = z.array(
+    z.object({
+        id: z.coerce.string(),
+        vorname: z.string(),
+        nachname: z.string(),
+        email: z.string().nullable(),
+        verified: z.boolean(),
+        createdAt: z.string(),
+        updatedAt: z.string(),
+        user_permission: z.enum(["CHEF", "MITARBEITER"]),
+    }),
+);
+
+export type TEmployeeResponse = z.infer<typeof ZEmployeeData>;
+
+export const specificEmployeeData = async (): Promise<TEmployeeResponse> => {
+    const response = await API.get(`/user/specificEmployeeData`);
+    console.log(response);
+    return ZEmployeeData.parse(response);
 };
 
 export const deleteTaskApi = async (taskId: number): Promise<delete_user> => {
