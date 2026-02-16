@@ -28,7 +28,19 @@ import { useEffect, useMemo, useState } from "react";
 
 const items = [
     {
-        title: "Meine Mitarbeiter",
+        title: "Mitarbeiter Übersicht",
+        to: "/mitarbeiter-uebersicht",
+        icon: Home,
+        requiredPermission: "CHEF",
+    },
+    {
+        title: "Template Konfiguration",
+        to: "/template-konfiguration",
+        icon: Settings,
+        requiredPermission: "CHEF",
+    },
+    {
+        title: "Offene Aufgaben",
         to: "/dashboard/ceo",
         icon: HandMetal,
         requiredPermission: "CHEF",

@@ -11,6 +11,7 @@ import { APP_ORIGIN } from "./constants/env";
 import cookieParser from "cookie-parser";
 import userRoutes from "./routes/user.route";
 import errorHandler from "./middleware/errorHandler";
+import { checkChef } from "./utils/checkChef";
 
 dotenv.config();
 const PORT = process.env.PORT || 3000;
@@ -37,7 +38,7 @@ app.use("/sessions", authenticate, sessionRoutes);
 
 // protected routes
 
-app.use("/user", authenticate, userRoutes);
+app.use("/user", authenticate, checkChef, userRoutes);
 
 // worker
 app.use("/offboarding", offboarding_router);

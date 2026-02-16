@@ -1130,9 +1130,10 @@ export type Employee_formsScalarFieldEnum = (typeof Employee_formsScalarFieldEnu
 export const Form_fieldsScalarFieldEnum = {
   form_field_id: 'form_field_id',
   description: 'description',
-  owner: 'owner',
   order_index: 'order_index',
-  timestamp: 'timestamp'
+  timestamp: 'timestamp',
+  owner: 'owner',
+  template_type: 'template_type'
 } as const
 
 export type Form_fieldsScalarFieldEnum = (typeof Form_fieldsScalarFieldEnum)[keyof typeof Form_fieldsScalarFieldEnum]
@@ -1153,16 +1154,16 @@ export type Form_inputsScalarFieldEnum = (typeof Form_inputsScalarFieldEnum)[key
 
 export const UsersScalarFieldEnum = {
   id: 'id',
-  vorname: 'vorname',
-  nachname: 'nachname',
   email: 'email',
   adresse: 'adresse',
   austrittsdatum: 'austrittsdatum',
   createdAt: 'createdAt',
   eintrittsdatum: 'eintrittsdatum',
   geburtsdatum: 'geburtsdatum',
+  nachname: 'nachname',
   position: 'position',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  vorname: 'vorname'
 } as const
 
 export type UsersScalarFieldEnum = (typeof UsersScalarFieldEnum)[keyof typeof UsersScalarFieldEnum]
@@ -1184,9 +1185,9 @@ export const UserScalarFieldEnum = {
   email: 'email',
   password: 'password',
   verified: 'verified',
-  user_permission: 'user_permission',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  user_permission: 'user_permission'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
@@ -1298,6 +1299,20 @@ export type StringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 
  * Reference to a field of type 'String[]'
  */
 export type ListStringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'String[]'>
+    
+
+
+/**
+ * Reference to a field of type 'TemplateType'
+ */
+export type EnumTemplateTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TemplateType'>
+    
+
+
+/**
+ * Reference to a field of type 'TemplateType[]'
+ */
+export type ListEnumTemplateTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TemplateType[]'>
     
 
 

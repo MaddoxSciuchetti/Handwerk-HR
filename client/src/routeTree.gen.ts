@@ -10,9 +10,11 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UserdashboardRouteImport } from './routes/userdashboard'
+import { Route as TemplateKonfigurationRouteImport } from './routes/template-konfiguration'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as MitarbeiterUebersichtRouteImport } from './routes/mitarbeiter-uebersicht'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as HandwerkerRouteImport } from './routes/handwerker'
 import { Route as IndexRouteImport } from './routes/index'
@@ -28,6 +30,11 @@ const UserdashboardRoute = UserdashboardRouteImport.update({
   path: '/userdashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TemplateKonfigurationRoute = TemplateKonfigurationRouteImport.update({
+  id: '/template-konfiguration',
+  path: '/template-konfiguration',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
@@ -41,6 +48,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MitarbeiterUebersichtRoute = MitarbeiterUebersichtRouteImport.update({
+  id: '/mitarbeiter-uebersicht',
+  path: '/mitarbeiter-uebersicht',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -93,9 +105,11 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/handwerker': typeof HandwerkerRoute
   '/login': typeof LoginRoute
+  '/mitarbeiter-uebersicht': typeof MitarbeiterUebersichtRoute
   '/profile': typeof ProfileRouteWithChildren
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/template-konfiguration': typeof TemplateKonfigurationRoute
   '/userdashboard': typeof UserdashboardRoute
   '/dashboard/ceo': typeof DashboardCeoRoute
   '/password/forgot': typeof PasswordForgotRoute
@@ -108,9 +122,11 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/handwerker': typeof HandwerkerRoute
   '/login': typeof LoginRoute
+  '/mitarbeiter-uebersicht': typeof MitarbeiterUebersichtRoute
   '/profile': typeof ProfileRouteWithChildren
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/template-konfiguration': typeof TemplateKonfigurationRoute
   '/userdashboard': typeof UserdashboardRoute
   '/dashboard/ceo': typeof DashboardCeoRoute
   '/password/forgot': typeof PasswordForgotRoute
@@ -124,9 +140,11 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/handwerker': typeof HandwerkerRoute
   '/login': typeof LoginRoute
+  '/mitarbeiter-uebersicht': typeof MitarbeiterUebersichtRoute
   '/profile': typeof ProfileRouteWithChildren
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/template-konfiguration': typeof TemplateKonfigurationRoute
   '/userdashboard': typeof UserdashboardRoute
   '/dashboard/ceo': typeof DashboardCeoRoute
   '/password/forgot': typeof PasswordForgotRoute
@@ -141,9 +159,11 @@ export interface FileRouteTypes {
     | '/'
     | '/handwerker'
     | '/login'
+    | '/mitarbeiter-uebersicht'
     | '/profile'
     | '/settings'
     | '/signup'
+    | '/template-konfiguration'
     | '/userdashboard'
     | '/dashboard/ceo'
     | '/password/forgot'
@@ -156,9 +176,11 @@ export interface FileRouteTypes {
     | '/'
     | '/handwerker'
     | '/login'
+    | '/mitarbeiter-uebersicht'
     | '/profile'
     | '/settings'
     | '/signup'
+    | '/template-konfiguration'
     | '/userdashboard'
     | '/dashboard/ceo'
     | '/password/forgot'
@@ -171,9 +193,11 @@ export interface FileRouteTypes {
     | '/'
     | '/handwerker'
     | '/login'
+    | '/mitarbeiter-uebersicht'
     | '/profile'
     | '/settings'
     | '/signup'
+    | '/template-konfiguration'
     | '/userdashboard'
     | '/dashboard/ceo'
     | '/password/forgot'
@@ -187,9 +211,11 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   HandwerkerRoute: typeof HandwerkerRoute
   LoginRoute: typeof LoginRoute
+  MitarbeiterUebersichtRoute: typeof MitarbeiterUebersichtRoute
   ProfileRoute: typeof ProfileRouteWithChildren
   SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
+  TemplateKonfigurationRoute: typeof TemplateKonfigurationRoute
   UserdashboardRoute: typeof UserdashboardRoute
   DashboardCeoRoute: typeof DashboardCeoRoute
   PasswordForgotRoute: typeof PasswordForgotRoute
@@ -205,6 +231,13 @@ declare module '@tanstack/react-router' {
       path: '/userdashboard'
       fullPath: '/userdashboard'
       preLoaderRoute: typeof UserdashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/template-konfiguration': {
+      id: '/template-konfiguration'
+      path: '/template-konfiguration'
+      fullPath: '/template-konfiguration'
+      preLoaderRoute: typeof TemplateKonfigurationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signup': {
@@ -226,6 +259,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mitarbeiter-uebersicht': {
+      id: '/mitarbeiter-uebersicht'
+      path: '/mitarbeiter-uebersicht'
+      fullPath: '/mitarbeiter-uebersicht'
+      preLoaderRoute: typeof MitarbeiterUebersichtRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -309,9 +349,11 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   HandwerkerRoute: HandwerkerRoute,
   LoginRoute: LoginRoute,
+  MitarbeiterUebersichtRoute: MitarbeiterUebersichtRoute,
   ProfileRoute: ProfileRouteWithChildren,
   SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
+  TemplateKonfigurationRoute: TemplateKonfigurationRoute,
   UserdashboardRoute: UserdashboardRoute,
   DashboardCeoRoute: DashboardCeoRoute,
   PasswordForgotRoute: PasswordForgotRoute,

@@ -39,25 +39,28 @@ export type Form_fieldsSumAggregateOutputType = {
 export type Form_fieldsMinAggregateOutputType = {
   form_field_id: number | null
   description: string | null
-  owner: string | null
   order_index: number | null
   timestamp: Date | null
+  owner: string | null
+  template_type: $Enums.TemplateType | null
 }
 
 export type Form_fieldsMaxAggregateOutputType = {
   form_field_id: number | null
   description: string | null
-  owner: string | null
   order_index: number | null
   timestamp: Date | null
+  owner: string | null
+  template_type: $Enums.TemplateType | null
 }
 
 export type Form_fieldsCountAggregateOutputType = {
   form_field_id: number
   description: number
-  owner: number
   order_index: number
   timestamp: number
+  owner: number
+  template_type: number
   _all: number
 }
 
@@ -75,25 +78,28 @@ export type Form_fieldsSumAggregateInputType = {
 export type Form_fieldsMinAggregateInputType = {
   form_field_id?: true
   description?: true
-  owner?: true
   order_index?: true
   timestamp?: true
+  owner?: true
+  template_type?: true
 }
 
 export type Form_fieldsMaxAggregateInputType = {
   form_field_id?: true
   description?: true
-  owner?: true
   order_index?: true
   timestamp?: true
+  owner?: true
+  template_type?: true
 }
 
 export type Form_fieldsCountAggregateInputType = {
   form_field_id?: true
   description?: true
-  owner?: true
   order_index?: true
   timestamp?: true
+  owner?: true
+  template_type?: true
   _all?: true
 }
 
@@ -186,9 +192,10 @@ export type form_fieldsGroupByArgs<ExtArgs extends runtime.Types.Extensions.Inte
 export type Form_fieldsGroupByOutputType = {
   form_field_id: number
   description: string | null
-  owner: string
   order_index: number | null
   timestamp: Date | null
+  owner: string
+  template_type: $Enums.TemplateType | null
   _count: Form_fieldsCountAggregateOutputType | null
   _avg: Form_fieldsAvgAggregateOutputType | null
   _sum: Form_fieldsSumAggregateOutputType | null
@@ -217,18 +224,20 @@ export type form_fieldsWhereInput = {
   NOT?: Prisma.form_fieldsWhereInput | Prisma.form_fieldsWhereInput[]
   form_field_id?: Prisma.IntFilter<"form_fields"> | number
   description?: Prisma.StringNullableFilter<"form_fields"> | string | null
-  owner?: Prisma.StringFilter<"form_fields"> | string
   order_index?: Prisma.IntNullableFilter<"form_fields"> | number | null
   timestamp?: Prisma.DateTimeNullableFilter<"form_fields"> | Date | string | null
+  owner?: Prisma.StringFilter<"form_fields"> | string
+  template_type?: Prisma.EnumTemplateTypeNullableFilter<"form_fields"> | $Enums.TemplateType | null
   form_inputs?: Prisma.Form_inputsListRelationFilter
 }
 
 export type form_fieldsOrderByWithRelationInput = {
   form_field_id?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
-  owner?: Prisma.SortOrder
   order_index?: Prisma.SortOrderInput | Prisma.SortOrder
   timestamp?: Prisma.SortOrderInput | Prisma.SortOrder
+  owner?: Prisma.SortOrder
+  template_type?: Prisma.SortOrderInput | Prisma.SortOrder
   form_inputs?: Prisma.form_inputsOrderByRelationAggregateInput
 }
 
@@ -238,18 +247,20 @@ export type form_fieldsWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.form_fieldsWhereInput[]
   NOT?: Prisma.form_fieldsWhereInput | Prisma.form_fieldsWhereInput[]
   description?: Prisma.StringNullableFilter<"form_fields"> | string | null
-  owner?: Prisma.StringFilter<"form_fields"> | string
   order_index?: Prisma.IntNullableFilter<"form_fields"> | number | null
   timestamp?: Prisma.DateTimeNullableFilter<"form_fields"> | Date | string | null
+  owner?: Prisma.StringFilter<"form_fields"> | string
+  template_type?: Prisma.EnumTemplateTypeNullableFilter<"form_fields"> | $Enums.TemplateType | null
   form_inputs?: Prisma.Form_inputsListRelationFilter
 }, "form_field_id">
 
 export type form_fieldsOrderByWithAggregationInput = {
   form_field_id?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
-  owner?: Prisma.SortOrder
   order_index?: Prisma.SortOrderInput | Prisma.SortOrder
   timestamp?: Prisma.SortOrderInput | Prisma.SortOrder
+  owner?: Prisma.SortOrder
+  template_type?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.form_fieldsCountOrderByAggregateInput
   _avg?: Prisma.form_fieldsAvgOrderByAggregateInput
   _max?: Prisma.form_fieldsMaxOrderByAggregateInput
@@ -263,74 +274,83 @@ export type form_fieldsScalarWhereWithAggregatesInput = {
   NOT?: Prisma.form_fieldsScalarWhereWithAggregatesInput | Prisma.form_fieldsScalarWhereWithAggregatesInput[]
   form_field_id?: Prisma.IntWithAggregatesFilter<"form_fields"> | number
   description?: Prisma.StringNullableWithAggregatesFilter<"form_fields"> | string | null
-  owner?: Prisma.StringWithAggregatesFilter<"form_fields"> | string
   order_index?: Prisma.IntNullableWithAggregatesFilter<"form_fields"> | number | null
   timestamp?: Prisma.DateTimeNullableWithAggregatesFilter<"form_fields"> | Date | string | null
+  owner?: Prisma.StringWithAggregatesFilter<"form_fields"> | string
+  template_type?: Prisma.EnumTemplateTypeNullableWithAggregatesFilter<"form_fields"> | $Enums.TemplateType | null
 }
 
 export type form_fieldsCreateInput = {
   description?: string | null
-  owner?: string
   order_index?: number | null
   timestamp?: Date | string | null
+  owner?: string
+  template_type?: $Enums.TemplateType | null
   form_inputs?: Prisma.form_inputsCreateNestedManyWithoutForm_fieldsInput
 }
 
 export type form_fieldsUncheckedCreateInput = {
   form_field_id?: number
   description?: string | null
-  owner?: string
   order_index?: number | null
   timestamp?: Date | string | null
+  owner?: string
+  template_type?: $Enums.TemplateType | null
   form_inputs?: Prisma.form_inputsUncheckedCreateNestedManyWithoutForm_fieldsInput
 }
 
 export type form_fieldsUpdateInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  owner?: Prisma.StringFieldUpdateOperationsInput | string
   order_index?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   timestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  owner?: Prisma.StringFieldUpdateOperationsInput | string
+  template_type?: Prisma.NullableEnumTemplateTypeFieldUpdateOperationsInput | $Enums.TemplateType | null
   form_inputs?: Prisma.form_inputsUpdateManyWithoutForm_fieldsNestedInput
 }
 
 export type form_fieldsUncheckedUpdateInput = {
   form_field_id?: Prisma.IntFieldUpdateOperationsInput | number
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  owner?: Prisma.StringFieldUpdateOperationsInput | string
   order_index?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   timestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  owner?: Prisma.StringFieldUpdateOperationsInput | string
+  template_type?: Prisma.NullableEnumTemplateTypeFieldUpdateOperationsInput | $Enums.TemplateType | null
   form_inputs?: Prisma.form_inputsUncheckedUpdateManyWithoutForm_fieldsNestedInput
 }
 
 export type form_fieldsCreateManyInput = {
   form_field_id?: number
   description?: string | null
-  owner?: string
   order_index?: number | null
   timestamp?: Date | string | null
+  owner?: string
+  template_type?: $Enums.TemplateType | null
 }
 
 export type form_fieldsUpdateManyMutationInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  owner?: Prisma.StringFieldUpdateOperationsInput | string
   order_index?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   timestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  owner?: Prisma.StringFieldUpdateOperationsInput | string
+  template_type?: Prisma.NullableEnumTemplateTypeFieldUpdateOperationsInput | $Enums.TemplateType | null
 }
 
 export type form_fieldsUncheckedUpdateManyInput = {
   form_field_id?: Prisma.IntFieldUpdateOperationsInput | number
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  owner?: Prisma.StringFieldUpdateOperationsInput | string
   order_index?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   timestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  owner?: Prisma.StringFieldUpdateOperationsInput | string
+  template_type?: Prisma.NullableEnumTemplateTypeFieldUpdateOperationsInput | $Enums.TemplateType | null
 }
 
 export type form_fieldsCountOrderByAggregateInput = {
   form_field_id?: Prisma.SortOrder
   description?: Prisma.SortOrder
-  owner?: Prisma.SortOrder
   order_index?: Prisma.SortOrder
   timestamp?: Prisma.SortOrder
+  owner?: Prisma.SortOrder
+  template_type?: Prisma.SortOrder
 }
 
 export type form_fieldsAvgOrderByAggregateInput = {
@@ -341,17 +361,19 @@ export type form_fieldsAvgOrderByAggregateInput = {
 export type form_fieldsMaxOrderByAggregateInput = {
   form_field_id?: Prisma.SortOrder
   description?: Prisma.SortOrder
-  owner?: Prisma.SortOrder
   order_index?: Prisma.SortOrder
   timestamp?: Prisma.SortOrder
+  owner?: Prisma.SortOrder
+  template_type?: Prisma.SortOrder
 }
 
 export type form_fieldsMinOrderByAggregateInput = {
   form_field_id?: Prisma.SortOrder
   description?: Prisma.SortOrder
-  owner?: Prisma.SortOrder
   order_index?: Prisma.SortOrder
   timestamp?: Prisma.SortOrder
+  owner?: Prisma.SortOrder
+  template_type?: Prisma.SortOrder
 }
 
 export type form_fieldsSumOrderByAggregateInput = {
@@ -376,6 +398,10 @@ export type NullableIntFieldUpdateOperationsInput = {
   divide?: number
 }
 
+export type NullableEnumTemplateTypeFieldUpdateOperationsInput = {
+  set?: $Enums.TemplateType | null
+}
+
 export type form_fieldsCreateNestedOneWithoutForm_inputsInput = {
   create?: Prisma.XOR<Prisma.form_fieldsCreateWithoutForm_inputsInput, Prisma.form_fieldsUncheckedCreateWithoutForm_inputsInput>
   connectOrCreate?: Prisma.form_fieldsCreateOrConnectWithoutForm_inputsInput
@@ -392,17 +418,19 @@ export type form_fieldsUpdateOneRequiredWithoutForm_inputsNestedInput = {
 
 export type form_fieldsCreateWithoutForm_inputsInput = {
   description?: string | null
-  owner?: string
   order_index?: number | null
   timestamp?: Date | string | null
+  owner?: string
+  template_type?: $Enums.TemplateType | null
 }
 
 export type form_fieldsUncheckedCreateWithoutForm_inputsInput = {
   form_field_id?: number
   description?: string | null
-  owner?: string
   order_index?: number | null
   timestamp?: Date | string | null
+  owner?: string
+  template_type?: $Enums.TemplateType | null
 }
 
 export type form_fieldsCreateOrConnectWithoutForm_inputsInput = {
@@ -423,17 +451,19 @@ export type form_fieldsUpdateToOneWithWhereWithoutForm_inputsInput = {
 
 export type form_fieldsUpdateWithoutForm_inputsInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  owner?: Prisma.StringFieldUpdateOperationsInput | string
   order_index?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   timestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  owner?: Prisma.StringFieldUpdateOperationsInput | string
+  template_type?: Prisma.NullableEnumTemplateTypeFieldUpdateOperationsInput | $Enums.TemplateType | null
 }
 
 export type form_fieldsUncheckedUpdateWithoutForm_inputsInput = {
   form_field_id?: Prisma.IntFieldUpdateOperationsInput | number
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  owner?: Prisma.StringFieldUpdateOperationsInput | string
   order_index?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   timestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  owner?: Prisma.StringFieldUpdateOperationsInput | string
+  template_type?: Prisma.NullableEnumTemplateTypeFieldUpdateOperationsInput | $Enums.TemplateType | null
 }
 
 
@@ -470,9 +500,10 @@ export type Form_fieldsCountOutputTypeCountForm_inputsArgs<ExtArgs extends runti
 export type form_fieldsSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   form_field_id?: boolean
   description?: boolean
-  owner?: boolean
   order_index?: boolean
   timestamp?: boolean
+  owner?: boolean
+  template_type?: boolean
   form_inputs?: boolean | Prisma.form_fields$form_inputsArgs<ExtArgs>
   _count?: boolean | Prisma.Form_fieldsCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["form_fields"]>
@@ -480,28 +511,31 @@ export type form_fieldsSelect<ExtArgs extends runtime.Types.Extensions.InternalA
 export type form_fieldsSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   form_field_id?: boolean
   description?: boolean
-  owner?: boolean
   order_index?: boolean
   timestamp?: boolean
+  owner?: boolean
+  template_type?: boolean
 }, ExtArgs["result"]["form_fields"]>
 
 export type form_fieldsSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   form_field_id?: boolean
   description?: boolean
-  owner?: boolean
   order_index?: boolean
   timestamp?: boolean
+  owner?: boolean
+  template_type?: boolean
 }, ExtArgs["result"]["form_fields"]>
 
 export type form_fieldsSelectScalar = {
   form_field_id?: boolean
   description?: boolean
-  owner?: boolean
   order_index?: boolean
   timestamp?: boolean
+  owner?: boolean
+  template_type?: boolean
 }
 
-export type form_fieldsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"form_field_id" | "description" | "owner" | "order_index" | "timestamp", ExtArgs["result"]["form_fields"]>
+export type form_fieldsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"form_field_id" | "description" | "order_index" | "timestamp" | "owner" | "template_type", ExtArgs["result"]["form_fields"]>
 export type form_fieldsInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   form_inputs?: boolean | Prisma.form_fields$form_inputsArgs<ExtArgs>
   _count?: boolean | Prisma.Form_fieldsCountOutputTypeDefaultArgs<ExtArgs>
@@ -517,9 +551,10 @@ export type $form_fieldsPayload<ExtArgs extends runtime.Types.Extensions.Interna
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     form_field_id: number
     description: string | null
-    owner: string
     order_index: number | null
     timestamp: Date | null
+    owner: string
+    template_type: $Enums.TemplateType | null
   }, ExtArgs["result"]["form_fields"]>
   composites: {}
 }
@@ -946,9 +981,10 @@ export interface Prisma__form_fieldsClient<T, Null = never, ExtArgs extends runt
 export interface form_fieldsFieldRefs {
   readonly form_field_id: Prisma.FieldRef<"form_fields", 'Int'>
   readonly description: Prisma.FieldRef<"form_fields", 'String'>
-  readonly owner: Prisma.FieldRef<"form_fields", 'String'>
   readonly order_index: Prisma.FieldRef<"form_fields", 'Int'>
   readonly timestamp: Prisma.FieldRef<"form_fields", 'DateTime'>
+  readonly owner: Prisma.FieldRef<"form_fields", 'String'>
+  readonly template_type: Prisma.FieldRef<"form_fields", 'TemplateType'>
 }
     
 

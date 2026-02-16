@@ -16,6 +16,8 @@ import { User } from "shared_prisma_types";
 import z from "zod";
 
 export type RegisterRequest = {
+    firstName?: string;
+    lastName?: string;
     email: string;
     password: string;
     confirmPassword: string;

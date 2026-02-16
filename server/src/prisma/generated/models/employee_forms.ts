@@ -212,9 +212,9 @@ export type employee_formsWhereInput = {
   user_id?: Prisma.IntFilter<"employee_forms"> | number
   timestamp?: Prisma.DateTimeNullableFilter<"employee_forms"> | Date | string | null
   form_type?: Prisma.StringFilter<"employee_forms"> | string
+  worker_files?: Prisma.WorkerFilesListRelationFilter
   users?: Prisma.XOR<Prisma.UsersScalarRelationFilter, Prisma.usersWhereInput>
   form_inputs?: Prisma.Form_inputsListRelationFilter
-  worker_files?: Prisma.WorkerFilesListRelationFilter
 }
 
 export type employee_formsOrderByWithRelationInput = {
@@ -222,9 +222,9 @@ export type employee_formsOrderByWithRelationInput = {
   user_id?: Prisma.SortOrder
   timestamp?: Prisma.SortOrderInput | Prisma.SortOrder
   form_type?: Prisma.SortOrder
+  worker_files?: Prisma.WorkerFilesOrderByRelationAggregateInput
   users?: Prisma.usersOrderByWithRelationInput
   form_inputs?: Prisma.form_inputsOrderByRelationAggregateInput
-  worker_files?: Prisma.WorkerFilesOrderByRelationAggregateInput
 }
 
 export type employee_formsWhereUniqueInput = Prisma.AtLeast<{
@@ -235,9 +235,9 @@ export type employee_formsWhereUniqueInput = Prisma.AtLeast<{
   user_id?: Prisma.IntFilter<"employee_forms"> | number
   timestamp?: Prisma.DateTimeNullableFilter<"employee_forms"> | Date | string | null
   form_type?: Prisma.StringFilter<"employee_forms"> | string
+  worker_files?: Prisma.WorkerFilesListRelationFilter
   users?: Prisma.XOR<Prisma.UsersScalarRelationFilter, Prisma.usersWhereInput>
   form_inputs?: Prisma.Form_inputsListRelationFilter
-  worker_files?: Prisma.WorkerFilesListRelationFilter
 }, "id">
 
 export type employee_formsOrderByWithAggregationInput = {
@@ -265,9 +265,9 @@ export type employee_formsScalarWhereWithAggregatesInput = {
 export type employee_formsCreateInput = {
   timestamp?: Date | string | null
   form_type: string
+  worker_files?: Prisma.WorkerFilesCreateNestedManyWithoutEmployee_formsInput
   users: Prisma.usersCreateNestedOneWithoutEmployee_formsInput
   form_inputs?: Prisma.form_inputsCreateNestedManyWithoutEmployee_formsInput
-  worker_files?: Prisma.WorkerFilesCreateNestedManyWithoutEmployee_formsInput
 }
 
 export type employee_formsUncheckedCreateInput = {
@@ -275,16 +275,16 @@ export type employee_formsUncheckedCreateInput = {
   user_id: number
   timestamp?: Date | string | null
   form_type: string
-  form_inputs?: Prisma.form_inputsUncheckedCreateNestedManyWithoutEmployee_formsInput
   worker_files?: Prisma.WorkerFilesUncheckedCreateNestedManyWithoutEmployee_formsInput
+  form_inputs?: Prisma.form_inputsUncheckedCreateNestedManyWithoutEmployee_formsInput
 }
 
 export type employee_formsUpdateInput = {
   timestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   form_type?: Prisma.StringFieldUpdateOperationsInput | string
+  worker_files?: Prisma.WorkerFilesUpdateManyWithoutEmployee_formsNestedInput
   users?: Prisma.usersUpdateOneRequiredWithoutEmployee_formsNestedInput
   form_inputs?: Prisma.form_inputsUpdateManyWithoutEmployee_formsNestedInput
-  worker_files?: Prisma.WorkerFilesUpdateManyWithoutEmployee_formsNestedInput
 }
 
 export type employee_formsUncheckedUpdateInput = {
@@ -292,8 +292,8 @@ export type employee_formsUncheckedUpdateInput = {
   user_id?: Prisma.IntFieldUpdateOperationsInput | number
   timestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   form_type?: Prisma.StringFieldUpdateOperationsInput | string
-  form_inputs?: Prisma.form_inputsUncheckedUpdateManyWithoutEmployee_formsNestedInput
   worker_files?: Prisma.WorkerFilesUncheckedUpdateManyWithoutEmployee_formsNestedInput
+  form_inputs?: Prisma.form_inputsUncheckedUpdateManyWithoutEmployee_formsNestedInput
 }
 
 export type employee_formsCreateManyInput = {
@@ -450,8 +450,8 @@ export type employee_formsUpdateOneRequiredWithoutWorker_filesNestedInput = {
 export type employee_formsCreateWithoutForm_inputsInput = {
   timestamp?: Date | string | null
   form_type: string
-  users: Prisma.usersCreateNestedOneWithoutEmployee_formsInput
   worker_files?: Prisma.WorkerFilesCreateNestedManyWithoutEmployee_formsInput
+  users: Prisma.usersCreateNestedOneWithoutEmployee_formsInput
 }
 
 export type employee_formsUncheckedCreateWithoutForm_inputsInput = {
@@ -481,8 +481,8 @@ export type employee_formsUpdateToOneWithWhereWithoutForm_inputsInput = {
 export type employee_formsUpdateWithoutForm_inputsInput = {
   timestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   form_type?: Prisma.StringFieldUpdateOperationsInput | string
-  users?: Prisma.usersUpdateOneRequiredWithoutEmployee_formsNestedInput
   worker_files?: Prisma.WorkerFilesUpdateManyWithoutEmployee_formsNestedInput
+  users?: Prisma.usersUpdateOneRequiredWithoutEmployee_formsNestedInput
 }
 
 export type employee_formsUncheckedUpdateWithoutForm_inputsInput = {
@@ -496,16 +496,16 @@ export type employee_formsUncheckedUpdateWithoutForm_inputsInput = {
 export type employee_formsCreateWithoutUsersInput = {
   timestamp?: Date | string | null
   form_type: string
-  form_inputs?: Prisma.form_inputsCreateNestedManyWithoutEmployee_formsInput
   worker_files?: Prisma.WorkerFilesCreateNestedManyWithoutEmployee_formsInput
+  form_inputs?: Prisma.form_inputsCreateNestedManyWithoutEmployee_formsInput
 }
 
 export type employee_formsUncheckedCreateWithoutUsersInput = {
   id?: number
   timestamp?: Date | string | null
   form_type: string
-  form_inputs?: Prisma.form_inputsUncheckedCreateNestedManyWithoutEmployee_formsInput
   worker_files?: Prisma.WorkerFilesUncheckedCreateNestedManyWithoutEmployee_formsInput
+  form_inputs?: Prisma.form_inputsUncheckedCreateNestedManyWithoutEmployee_formsInput
 }
 
 export type employee_formsCreateOrConnectWithoutUsersInput = {
@@ -599,16 +599,16 @@ export type employee_formsCreateManyUsersInput = {
 export type employee_formsUpdateWithoutUsersInput = {
   timestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   form_type?: Prisma.StringFieldUpdateOperationsInput | string
-  form_inputs?: Prisma.form_inputsUpdateManyWithoutEmployee_formsNestedInput
   worker_files?: Prisma.WorkerFilesUpdateManyWithoutEmployee_formsNestedInput
+  form_inputs?: Prisma.form_inputsUpdateManyWithoutEmployee_formsNestedInput
 }
 
 export type employee_formsUncheckedUpdateWithoutUsersInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   timestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   form_type?: Prisma.StringFieldUpdateOperationsInput | string
-  form_inputs?: Prisma.form_inputsUncheckedUpdateManyWithoutEmployee_formsNestedInput
   worker_files?: Prisma.WorkerFilesUncheckedUpdateManyWithoutEmployee_formsNestedInput
+  form_inputs?: Prisma.form_inputsUncheckedUpdateManyWithoutEmployee_formsNestedInput
 }
 
 export type employee_formsUncheckedUpdateManyWithoutUsersInput = {
@@ -623,13 +623,13 @@ export type employee_formsUncheckedUpdateManyWithoutUsersInput = {
  */
 
 export type Employee_formsCountOutputType = {
-  form_inputs: number
   worker_files: number
+  form_inputs: number
 }
 
 export type Employee_formsCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  form_inputs?: boolean | Employee_formsCountOutputTypeCountForm_inputsArgs
   worker_files?: boolean | Employee_formsCountOutputTypeCountWorker_filesArgs
+  form_inputs?: boolean | Employee_formsCountOutputTypeCountForm_inputsArgs
 }
 
 /**
@@ -645,15 +645,15 @@ export type Employee_formsCountOutputTypeDefaultArgs<ExtArgs extends runtime.Typ
 /**
  * Employee_formsCountOutputType without action
  */
-export type Employee_formsCountOutputTypeCountForm_inputsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.form_inputsWhereInput
+export type Employee_formsCountOutputTypeCountWorker_filesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.WorkerFilesWhereInput
 }
 
 /**
  * Employee_formsCountOutputType without action
  */
-export type Employee_formsCountOutputTypeCountWorker_filesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.WorkerFilesWhereInput
+export type Employee_formsCountOutputTypeCountForm_inputsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.form_inputsWhereInput
 }
 
 
@@ -662,9 +662,9 @@ export type employee_formsSelect<ExtArgs extends runtime.Types.Extensions.Intern
   user_id?: boolean
   timestamp?: boolean
   form_type?: boolean
+  worker_files?: boolean | Prisma.employee_forms$worker_filesArgs<ExtArgs>
   users?: boolean | Prisma.usersDefaultArgs<ExtArgs>
   form_inputs?: boolean | Prisma.employee_forms$form_inputsArgs<ExtArgs>
-  worker_files?: boolean | Prisma.employee_forms$worker_filesArgs<ExtArgs>
   _count?: boolean | Prisma.Employee_formsCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["employee_forms"]>
 
@@ -693,9 +693,9 @@ export type employee_formsSelectScalar = {
 
 export type employee_formsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "user_id" | "timestamp" | "form_type", ExtArgs["result"]["employee_forms"]>
 export type employee_formsInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  worker_files?: boolean | Prisma.employee_forms$worker_filesArgs<ExtArgs>
   users?: boolean | Prisma.usersDefaultArgs<ExtArgs>
   form_inputs?: boolean | Prisma.employee_forms$form_inputsArgs<ExtArgs>
-  worker_files?: boolean | Prisma.employee_forms$worker_filesArgs<ExtArgs>
   _count?: boolean | Prisma.Employee_formsCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type employee_formsIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -708,9 +708,9 @@ export type employee_formsIncludeUpdateManyAndReturn<ExtArgs extends runtime.Typ
 export type $employee_formsPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "employee_forms"
   objects: {
+    worker_files: Prisma.$WorkerFilesPayload<ExtArgs>[]
     users: Prisma.$usersPayload<ExtArgs>
     form_inputs: Prisma.$form_inputsPayload<ExtArgs>[]
-    worker_files: Prisma.$WorkerFilesPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -1111,9 +1111,9 @@ readonly fields: employee_formsFieldRefs;
  */
 export interface Prisma__employee_formsClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  worker_files<T extends Prisma.employee_forms$worker_filesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.employee_forms$worker_filesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkerFilesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   users<T extends Prisma.usersDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.usersDefaultArgs<ExtArgs>>): Prisma.Prisma__usersClient<runtime.Types.Result.GetResult<Prisma.$usersPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   form_inputs<T extends Prisma.employee_forms$form_inputsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.employee_forms$form_inputsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$form_inputsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  worker_files<T extends Prisma.employee_forms$worker_filesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.employee_forms$worker_filesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkerFilesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1543,30 +1543,6 @@ export type employee_formsDeleteManyArgs<ExtArgs extends runtime.Types.Extension
 }
 
 /**
- * employee_forms.form_inputs
- */
-export type employee_forms$form_inputsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the form_inputs
-   */
-  select?: Prisma.form_inputsSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the form_inputs
-   */
-  omit?: Prisma.form_inputsOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.form_inputsInclude<ExtArgs> | null
-  where?: Prisma.form_inputsWhereInput
-  orderBy?: Prisma.form_inputsOrderByWithRelationInput | Prisma.form_inputsOrderByWithRelationInput[]
-  cursor?: Prisma.form_inputsWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.Form_inputsScalarFieldEnum | Prisma.Form_inputsScalarFieldEnum[]
-}
-
-/**
  * employee_forms.worker_files
  */
 export type employee_forms$worker_filesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1588,6 +1564,30 @@ export type employee_forms$worker_filesArgs<ExtArgs extends runtime.Types.Extens
   take?: number
   skip?: number
   distinct?: Prisma.WorkerFilesScalarFieldEnum | Prisma.WorkerFilesScalarFieldEnum[]
+}
+
+/**
+ * employee_forms.form_inputs
+ */
+export type employee_forms$form_inputsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the form_inputs
+   */
+  select?: Prisma.form_inputsSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the form_inputs
+   */
+  omit?: Prisma.form_inputsOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.form_inputsInclude<ExtArgs> | null
+  where?: Prisma.form_inputsWhereInput
+  orderBy?: Prisma.form_inputsOrderByWithRelationInput | Prisma.form_inputsOrderByWithRelationInput[]
+  cursor?: Prisma.form_inputsWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.Form_inputsScalarFieldEnum | Prisma.Form_inputsScalarFieldEnum[]
 }
 
 /**

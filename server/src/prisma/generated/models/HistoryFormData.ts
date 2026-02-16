@@ -228,8 +228,8 @@ export type HistoryFormDataWhereInput = {
   edit?: Prisma.StringNullableFilter<"HistoryFormData"> | string | null
   timestamp?: Prisma.DateTimeNullableFilter<"HistoryFormData"> | Date | string | null
   changed_by?: Prisma.StringFilter<"HistoryFormData"> | string
-  form_inputs?: Prisma.XOR<Prisma.Form_inputsScalarRelationFilter, Prisma.form_inputsWhereInput>
   auth_user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  form_inputs?: Prisma.XOR<Prisma.Form_inputsScalarRelationFilter, Prisma.form_inputsWhereInput>
 }
 
 export type HistoryFormDataOrderByWithRelationInput = {
@@ -239,8 +239,8 @@ export type HistoryFormDataOrderByWithRelationInput = {
   edit?: Prisma.SortOrderInput | Prisma.SortOrder
   timestamp?: Prisma.SortOrderInput | Prisma.SortOrder
   changed_by?: Prisma.SortOrder
-  form_inputs?: Prisma.form_inputsOrderByWithRelationInput
   auth_user?: Prisma.UserOrderByWithRelationInput
+  form_inputs?: Prisma.form_inputsOrderByWithRelationInput
 }
 
 export type HistoryFormDataWhereUniqueInput = Prisma.AtLeast<{
@@ -253,8 +253,8 @@ export type HistoryFormDataWhereUniqueInput = Prisma.AtLeast<{
   edit?: Prisma.StringNullableFilter<"HistoryFormData"> | string | null
   timestamp?: Prisma.DateTimeNullableFilter<"HistoryFormData"> | Date | string | null
   changed_by?: Prisma.StringFilter<"HistoryFormData"> | string
-  form_inputs?: Prisma.XOR<Prisma.Form_inputsScalarRelationFilter, Prisma.form_inputsWhereInput>
   auth_user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  form_inputs?: Prisma.XOR<Prisma.Form_inputsScalarRelationFilter, Prisma.form_inputsWhereInput>
 }, "id">
 
 export type HistoryFormDataOrderByWithAggregationInput = {
@@ -287,8 +287,8 @@ export type HistoryFormDataCreateInput = {
   status?: string | null
   edit?: string | null
   timestamp?: Date | string | null
-  form_inputs: Prisma.form_inputsCreateNestedOneWithoutHistoryFormDataInput
   auth_user: Prisma.UserCreateNestedOneWithoutHistoryChangesInput
+  form_inputs: Prisma.form_inputsCreateNestedOneWithoutHistoryFormDataInput
 }
 
 export type HistoryFormDataUncheckedCreateInput = {
@@ -304,8 +304,8 @@ export type HistoryFormDataUpdateInput = {
   status?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   edit?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   timestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  form_inputs?: Prisma.form_inputsUpdateOneRequiredWithoutHistoryFormDataNestedInput
   auth_user?: Prisma.UserUpdateOneRequiredWithoutHistoryChangesNestedInput
+  form_inputs?: Prisma.form_inputsUpdateOneRequiredWithoutHistoryFormDataNestedInput
 }
 
 export type HistoryFormDataUncheckedUpdateInput = {
@@ -637,8 +637,8 @@ export type HistoryFormDataSelect<ExtArgs extends runtime.Types.Extensions.Inter
   edit?: boolean
   timestamp?: boolean
   changed_by?: boolean
-  form_inputs?: boolean | Prisma.form_inputsDefaultArgs<ExtArgs>
   auth_user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  form_inputs?: boolean | Prisma.form_inputsDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["historyFormData"]>
 
 export type HistoryFormDataSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -648,8 +648,8 @@ export type HistoryFormDataSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
   edit?: boolean
   timestamp?: boolean
   changed_by?: boolean
-  form_inputs?: boolean | Prisma.form_inputsDefaultArgs<ExtArgs>
   auth_user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  form_inputs?: boolean | Prisma.form_inputsDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["historyFormData"]>
 
 export type HistoryFormDataSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -659,8 +659,8 @@ export type HistoryFormDataSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
   edit?: boolean
   timestamp?: boolean
   changed_by?: boolean
-  form_inputs?: boolean | Prisma.form_inputsDefaultArgs<ExtArgs>
   auth_user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  form_inputs?: boolean | Prisma.form_inputsDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["historyFormData"]>
 
 export type HistoryFormDataSelectScalar = {
@@ -674,23 +674,23 @@ export type HistoryFormDataSelectScalar = {
 
 export type HistoryFormDataOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "form_input_id" | "status" | "edit" | "timestamp" | "changed_by", ExtArgs["result"]["historyFormData"]>
 export type HistoryFormDataInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  form_inputs?: boolean | Prisma.form_inputsDefaultArgs<ExtArgs>
   auth_user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  form_inputs?: boolean | Prisma.form_inputsDefaultArgs<ExtArgs>
 }
 export type HistoryFormDataIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  form_inputs?: boolean | Prisma.form_inputsDefaultArgs<ExtArgs>
   auth_user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  form_inputs?: boolean | Prisma.form_inputsDefaultArgs<ExtArgs>
 }
 export type HistoryFormDataIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  form_inputs?: boolean | Prisma.form_inputsDefaultArgs<ExtArgs>
   auth_user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  form_inputs?: boolean | Prisma.form_inputsDefaultArgs<ExtArgs>
 }
 
 export type $HistoryFormDataPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "HistoryFormData"
   objects: {
-    form_inputs: Prisma.$form_inputsPayload<ExtArgs>
     auth_user: Prisma.$UserPayload<ExtArgs>
+    form_inputs: Prisma.$form_inputsPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -1093,8 +1093,8 @@ readonly fields: HistoryFormDataFieldRefs;
  */
 export interface Prisma__HistoryFormDataClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  form_inputs<T extends Prisma.form_inputsDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.form_inputsDefaultArgs<ExtArgs>>): Prisma.Prisma__form_inputsClient<runtime.Types.Result.GetResult<Prisma.$form_inputsPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   auth_user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  form_inputs<T extends Prisma.form_inputsDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.form_inputsDefaultArgs<ExtArgs>>): Prisma.Prisma__form_inputsClient<runtime.Types.Result.GetResult<Prisma.$form_inputsPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.

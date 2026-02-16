@@ -1,6 +1,5 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma/client"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -8,80 +7,75 @@ datasource db {
 }
 
 model employee_forms {
-  id          Int           @id @default(autoincrement())
-  user_id     Int
-  timestamp   DateTime?     @default(now()) @db.Timestamp(6)
-  form_type   String 
-  users       users         @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "employee_forms_users")
-  form_inputs form_inputs[]
+  id           Int           @id @default(autoincrement())
+  user_id      Int
+  timestamp    DateTime?     @default(now()) @db.Timestamp(6)
+  form_type    String
   worker_files WorkerFiles[]
+  users        users         @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "employee_forms_users")
+  form_inputs  form_inputs[]
 }
 
 model form_fields {
   form_field_id Int           @id @default(autoincrement())
   description   String?
-  owner String @default("cmknti1f800028tmmhf5u5627")
   order_index   Int?
   timestamp     DateTime?     @default(now()) @db.Timestamp(6)
+  owner         String        @default("cmknti1f800028tmmhf5u5627")
+  template_type TemplateType?  @default(ONBOARDING)
   form_inputs   form_inputs[]
-
 }
 
 model form_inputs {
-  id               Int            @id @default(autoincrement())
+  id               Int               @id @default(autoincrement())
   employee_form_id Int
   form_field_id    Int
-  status           String?        @db.VarChar(55)
+  status           String?           @db.VarChar(55)
   edit             String?
-  timestamp        DateTime?      @default(now()) @db.Timestamp(6)
-  completed Boolean @default(false)
-  employee_forms   employee_forms @relation(fields: [employee_form_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "form_inputs_employee_forms")
-  form_fields      form_fields    @relation(fields: [form_field_id], references: [form_field_id], onDelete: NoAction, onUpdate: NoAction, map: "form_inputs_form_fields")
-  HistoryFormData HistoryFormData[]
+  timestamp        DateTime?         @default(now()) @db.Timestamp(6)
+  completed        Boolean           @default(false)
+  HistoryFormData  HistoryFormData[]
+  employee_forms   employee_forms    @relation(fields: [employee_form_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "form_inputs_employee_forms")
+  form_fields      form_fields       @relation(fields: [form_field_id], references: [form_field_id], onDelete: NoAction, onUpdate: NoAction, map: "form_inputs_form_fields")
 }
 
 model users {
   id             Int              @id @default(autoincrement())
-  vorname        String
-  nachname       String
   email          String?          @unique @db.Citext
   adresse        String
   austrittsdatum DateTime?        @db.Date
   createdAt      DateTime         @default(now()) @db.Timestamp(6)
   eintrittsdatum DateTime         @db.Date
   geburtsdatum   DateTime         @db.Date
+  nachname       String
   position       String
   updatedAt      DateTime         @updatedAt @db.Timestamp(6)
+  vorname        String
   employee_forms employee_forms[]
 }
 
-
 model Session {
-  id String @id @default(cuid())
-  userId String
+  id        String   @id @default(cuid())
+  userId    String
   userAgent String?
   createdAt DateTime @default(now())
-  expiresAt DateTime @default(dbgenerated("NOW() + INTERVAL '30 days'"))
-
-  user User @relation(fields: [userId], references: [id])
+  expiresAt DateTime @default(dbgenerated("(now() + '30 days'::interval)"))
+  user      User     @relation(fields: [userId], references: [id])
 
   @@index([userId])
-
 }
 
 model User {
-  id String @id @default(cuid())
-  email String @unique @db.Citext
-  password String
-  verified Boolean @default(false)
-  user_permission UserRole @default(MITARBEITER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  sessions Session[]
+  id                String             @id @default(cuid())
+  email             String             @unique @db.Citext
+  password          String
+  verified          Boolean            @default(false)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  user_permission   UserRole           @default(MITARBEITER)
+  historyChanges    HistoryFormData[]
+  sessions          Session[]
   verificationCodes VerificationCode[]
-  historyChanges HistoryFormData[]
-
 }
 
 model VerificationCode {
@@ -90,42 +84,40 @@ model VerificationCode {
   type      String
   createdAt DateTime @default(now())
   expiresAt DateTime
-
-  // Relation to User model
-  user User @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 
   @@index([userId])
-
 }
 
 model HistoryFormData {
-  id Int @id @default(autoincrement())
-  form_input_id Int 
-  status           String?        @db.VarChar(55)
-  edit             String?
-  timestamp        DateTime?      @default(now()) @db.Timestamp(6)
-  changed_by String
-  form_inputs form_inputs @relation(fields: [form_input_id], references: [id], onDelete: Cascade)
-  auth_user User @relation(fields: [changed_by], references: [id])
-
-
+  id            Int         @id @default(autoincrement())
+  form_input_id Int
+  status        String?     @db.VarChar(55)
+  edit          String?
+  timestamp     DateTime?   @default(now()) @db.Timestamp(6)
+  changed_by    String
+  auth_user     User        @relation(fields: [changed_by], references: [id])
+  form_inputs   form_inputs @relation(fields: [form_input_id], references: [id], onDelete: Cascade)
 }
 
 model WorkerFiles {
-  id Int @id @default(autoincrement())
-  employee_form_id Int
-  original_filename String @db.VarChar(255)
-  file_size Int 
-  content_type String @db.VarChar(100)
-  cloud_url String @db.VarChar(500)
-  cloud_key String @db.VarChar(500)
-  uploaded_at DateTime @default(now())
-
-  employee_forms employee_forms @relation(fields: [employee_form_id], references: [id], onDelete: Cascade)
-
+  id                Int            @id @default(autoincrement())
+  employee_form_id  Int
+  original_filename String         @db.VarChar(255)
+  file_size         Int
+  content_type      String         @db.VarChar(100)
+  cloud_url         String         @db.VarChar(500)
+  cloud_key         String         @db.VarChar(500)
+  uploaded_at       DateTime       @default(now())
+  employee_forms    employee_forms @relation(fields: [employee_form_id], references: [id], onDelete: Cascade)
 }
 
 enum UserRole {
   MITARBEITER
   CHEF
+}
+
+enum TemplateType {
+  ONBOARDING
+  OFFBOARDING
 }
