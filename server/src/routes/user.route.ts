@@ -6,6 +6,7 @@ import {
     fetchDescriptionHandler,
     getChefHandler,
     getEmployeedata,
+    getUnifiedData,
     getUserHandler,
 } from "../controllers/user.controller";
 
@@ -18,8 +19,11 @@ userRoutes.get("/chefpermission", getChefHandler);
 
 // employee data
 
-// fetch employee tasks specifically
-userRoutes.get("/employeeData", getEmployeedata);
+// fetch employee tasks
+userRoutes.get("/employeeData", getUnifiedData);
+
+// get EmployeeData
+userRoutes.get("/specificEmployeeData", getEmployeedata);
 
 // add a new employee
 // delete a employee

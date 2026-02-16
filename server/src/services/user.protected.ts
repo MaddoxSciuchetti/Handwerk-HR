@@ -138,3 +138,18 @@ export const createDescription = async (
 
     return newDescription;
 };
+
+export const queryEmployeeData = async () => {
+    return await prisma.user.findMany({
+        select: {
+            id: true,
+            vorname: true,
+            nachname: true,
+            email: true,
+            verified: true,
+            createdAt: true,
+            updatedAt: true,
+            user_permission: true,
+        },
+    });
+};
