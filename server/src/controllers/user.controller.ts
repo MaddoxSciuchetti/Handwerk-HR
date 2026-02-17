@@ -5,14 +5,17 @@ import catchErrors from "../utils/catchErrors";
 import {
     createDescription,
     deleteDescriptionData,
+    deleteEmployee,
     getChef,
     getDescriptionData,
     getemployee_form,
     getUser,
     queryEmployeeData,
+    updateAbsenceData,
     updateDescriptionData,
 } from "../services/user.protected";
 import { checkChef } from "@/utils/checkChef";
+import z from "zod";
 
 export const getUserHandler = catchErrors(async (req, res) => {
     const id = req.userId;
@@ -100,4 +103,23 @@ export const getEmployeedata = catchErrors(async (req, res) => {
     const EmployeeData = await queryEmployeeData();
     console.log(EmployeeData);
     return res.status(OK).json(EmployeeData);
+});
+
+export const deleteEmployeeHandler = catchErrors(async (req, res) => {
+    const id = req.params.id as string;
+    console.log(id);
+
+    const deleteEmployeeResult = await deleteEmployee(id);
+
+    return res.status(OK).json(deleteEmployeeResult);
+});
+
+export const editAbsenceData = catchErrors(async (req, res) => {
+    const data = req.body;
+
+    console.log("this is the body data");
+    console.log(data);
+
+    const editAbsenceResult = await updateAbsenceData(data);
+    return res.status(OK).json(editAbsenceResult);
 });

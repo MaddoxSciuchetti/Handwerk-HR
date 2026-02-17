@@ -10,7 +10,11 @@ import ModalEditMitarbeiter from "@/components/mitarbeiter-übersicht/ModalEditM
 function MitarbeiterÜbersicht() {
     const [modal, setModal] = useState<boolean>(false);
     const [editEmployeeModal, setEditEmplyoeeModal] = useState<boolean>(false);
+    const [name, setfirstName] = useState<string>("");
+    const [lastname, setlastName] = useState<string>("");
     const { toggleSidebar } = useSidebar();
+    const fullname = name + lastname;
+    const [idvalue, setIdValue] = useState<string>();
 
     const toggleModal = () => {
         setModal((prev) => !prev);
@@ -46,7 +50,15 @@ function MitarbeiterÜbersicht() {
                 {EmployeeData?.map((value, index) => (
                     <div key={index}>
                         <div className="flex">
-                            <EditIcon onClick={toggleEmployeeModal} />
+                            <EditIcon
+                                onClick={() => {
+                                    (toggleEmployeeModal(),
+                                        setfirstName(value.vorname));
+                                    setlastName(value.nachname);
+                                    setIdValue(value.id);
+                                    console.log(value.id);
+                                }}
+                            />
                             {value.vorname} {value.nachname}
                         </div>
                     </div>
@@ -59,7 +71,11 @@ function MitarbeiterÜbersicht() {
                             className="fixed inset-0 bg-black/50 cursor-pointer"
                             aria-label="Close modal"
                         />
-                        <ModalEditMitarbeiter />
+                        <ModalEditMitarbeiter
+                            fullname={fullname}
+                            toggleEmployeeModal={toggleEmployeeModal}
+                            id={idvalue}
+                        />
                     </div>
                 )}
 

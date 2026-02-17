@@ -92,7 +92,13 @@ export const getemployee_form = async () => {
 };
 
 export const getDescriptionData = async () => {
-    const descriptiondata = await prisma.form_inputs.findMany();
+    const descriptiondata = await prisma.form_fields.findMany({
+        select: {
+            form_field_id: true,
+            description: true,
+            owner: true,
+        },
+    });
 
     return descriptiondata;
 };
@@ -150,6 +156,45 @@ export const queryEmployeeData = async () => {
             createdAt: true,
             updatedAt: true,
             user_permission: true,
+        },
+    });
+};
+
+export const deleteEmployee = async (id: string) => {
+    return await prisma.user.delete({
+        where: {
+            id: id,
+        },
+    });
+};
+
+type AbsenceData = {
+    id: string;
+    absence: string;
+    absencetype: string;
+    absencebegin: Date;
+    absenceEnd: Date;
+    substitute: string;
+};
+export const updateAbsenceData = async (data: AbsenceData) => {
+    return await prisma.employeeStatus.upsert({
+        where: {
+            userId: data.id,
+        },
+        update: {
+            absence: data.absence,
+            absencetype: data.absencetype,
+            absencebegin: new Date(data.absencebegin),
+            absenceEnd: new Date(data.absenceEnd),
+            substitute: data.substitute,
+        },
+        create: {
+            userId: data.id,
+            absence: data.absence,
+            absencetype: data.absencetype,
+            absencebegin: new Date(data.absencebegin),
+            absenceEnd: new Date(data.absenceEnd),
+            substitute: data.substitute,
         },
     });
 };

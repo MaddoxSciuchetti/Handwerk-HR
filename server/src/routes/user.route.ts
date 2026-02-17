@@ -2,6 +2,8 @@ import { Router } from "express";
 import {
     createDescriptionHandler,
     deleteDescriptionHandler,
+    deleteEmployeeHandler,
+    editAbsenceData,
     editDescriptionHandler,
     fetchDescriptionHandler,
     getChefHandler,
@@ -27,8 +29,13 @@ userRoutes.get("/specificEmployeeData", getEmployeedata);
 
 // add a new employee
 // delete a employee
+
+userRoutes.delete("/deleteEmplyoee/:id", deleteEmployeeHandler);
+
 // edit employee
 // // change employee permissoins
+
+userRoutes.put("/editAbsenceData", editAbsenceData);
 
 // deletes the description data
 
@@ -37,6 +44,10 @@ userRoutes.delete("/deleteDescriptionData", deleteDescriptionHandler);
 // fetch the root description data
 
 userRoutes.get("/fetchTaskData", fetchDescriptionHandler);
+
+// get part description data
+
+userRoutes.get("/rawdescription", fetchDescriptionHandler);
 
 // edit the root description data
 

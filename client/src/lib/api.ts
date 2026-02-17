@@ -237,6 +237,21 @@ export const specificEmployeeData = async (): Promise<TEmployeeResponse> => {
     return ZEmployeeData.parse(response);
 };
 
+type AbsenceData = {
+    id: string;
+    absence: string;
+    absencetype?: string;
+    absencebegin?: string;
+    absenceEnd?: string;
+    substitute?: string;
+};
+
+export const editEmployeeAbsence = async (
+    data: AbsenceData,
+): Promise<AbsenceData> => {
+    return API.put<AbsenceData, AbsenceData>("/user/editAbsenceData", data);
+};
+
 export const deleteTaskApi = async (taskId: number): Promise<delete_user> => {
     const response = await API.delete<delete_user, delete_user>(
         `/offboarding/delete/${taskId}`,
@@ -252,6 +267,28 @@ export const postOffboardingData = async (
         {
             data,
         },
+    );
+    return response;
+};
+export const ZDescriptionData = z.array(
+    z.object({
+        form_field_id: z.coerce.number(),
+        description: z.string(),
+        owner: z.string(),
+    }),
+);
+
+export type DescriptionData = z.infer<typeof ZDescriptionData>;
+
+export const fetchRawDescription = async (): Promise<DescriptionData> => {
+    const response = await API.get("/user/rawdescription");
+    console.log(response);
+    return ZDescriptionData.parse(response);
+};
+
+export const deleteEmployeeHandler = async (id: string): Promise<user> => {
+    const response = await API.delete<typeof id, user>(
+        `/user/deleteEmplyoee/${id}`,
     );
     return response;
 };
