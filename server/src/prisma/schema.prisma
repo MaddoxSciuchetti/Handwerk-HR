@@ -77,6 +77,19 @@ model User {
   historyChanges    HistoryFormData[]
   sessions          Session[]
   verificationCodes VerificationCode[]
+  employeeStatus    EmployeeStatus[]
+}
+
+model EmployeeStatus {
+  id        Int      @id @default(autoincrement())
+  userId String @unique
+  absence String? 
+  absencetype String?
+  absencebegin DateTime?
+  absenceEnd DateTime?
+  substitute String?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
 }
 
 model VerificationCode {

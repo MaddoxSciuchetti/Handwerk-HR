@@ -167,3 +167,34 @@ export const deleteEmployee = async (id: string) => {
         },
     });
 };
+
+type AbsenceData = {
+    id: string;
+    absence: string;
+    absencetype: string;
+    absencebegin: Date;
+    absenceEnd: Date;
+    substitute: string;
+};
+export const updateAbsenceData = async (data: AbsenceData) => {
+    return await prisma.employeeStatus.upsert({
+        where: {
+            userId: data.id,
+        },
+        update: {
+            absence: data.absence,
+            absencetype: data.absencetype,
+            absencebegin: new Date(data.absencebegin),
+            absenceEnd: new Date(data.absenceEnd),
+            substitute: data.substitute,
+        },
+        create: {
+            userId: data.id,
+            absence: data.absence,
+            absencetype: data.absencetype,
+            absencebegin: new Date(data.absencebegin),
+            absenceEnd: new Date(data.absenceEnd),
+            substitute: data.substitute,
+        },
+    });
+};

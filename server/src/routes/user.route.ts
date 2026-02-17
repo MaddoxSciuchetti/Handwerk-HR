@@ -3,6 +3,7 @@ import {
     createDescriptionHandler,
     deleteDescriptionHandler,
     deleteEmployeeHandler,
+    editAbsenceData,
     editDescriptionHandler,
     fetchDescriptionHandler,
     getChefHandler,
@@ -33,6 +34,8 @@ userRoutes.delete("/deleteEmplyoee/:id", deleteEmployeeHandler);
 
 // edit employee
 // // change employee permissoins
+
+userRoutes.put("/editAbsenceData", editAbsenceData);
 
 // deletes the description data
 

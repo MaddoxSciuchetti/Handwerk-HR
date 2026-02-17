@@ -11,9 +11,11 @@ import {
     getemployee_form,
     getUser,
     queryEmployeeData,
+    updateAbsenceData,
     updateDescriptionData,
 } from "../services/user.protected";
 import { checkChef } from "@/utils/checkChef";
+import z from "zod";
 
 export const getUserHandler = catchErrors(async (req, res) => {
     const id = req.userId;
@@ -110,4 +112,14 @@ export const deleteEmployeeHandler = catchErrors(async (req, res) => {
     const deleteEmployeeResult = await deleteEmployee(id);
 
     return res.status(OK).json(deleteEmployeeResult);
+});
+
+export const editAbsenceData = catchErrors(async (req, res) => {
+    const data = req.body;
+
+    console.log("this is the body data");
+    console.log(data);
+
+    const editAbsenceResult = await updateAbsenceData(data);
+    return res.status(OK).json(editAbsenceResult);
 });
