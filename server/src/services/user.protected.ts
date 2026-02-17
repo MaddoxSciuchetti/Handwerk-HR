@@ -97,6 +97,7 @@ export const getDescriptionData = async () => {
             form_field_id: true,
             description: true,
             owner: true,
+            template_type: true,
         },
     });
 

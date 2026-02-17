@@ -292,3 +292,32 @@ export const deleteEmployeeHandler = async (id: string): Promise<user> => {
     );
     return response;
 };
+
+export type TDescriptionData = {
+    form_field_id: number;
+    description: string | null;
+    owner: string;
+    template_type: "ONBOARDING" | "OFFBOARDING";
+};
+
+export const fetchTaskData = async (): Promise<TDescriptionData[]> => {
+    const response = await API.get<TDescriptionData[], TDescriptionData[]>(
+        "/user/fetchTaskData",
+    );
+    return response;
+};
+
+export const deleteDescriptionData = async (id: number) => {
+    const response = await API.delete(`/user/deleteDescriptionData/${id}`);
+    return response;
+};
+
+type EditDescriptionData = Omit<TDescriptionData, "template_type">;
+
+export const editTaskData = async (data: EditDescriptionData) => {
+    const response = await API.put<EditDescriptionData, EditDescriptionData>(
+        `/user/editTaskData/${data.form_field_id}`,
+        data,
+    );
+    return response;
+};

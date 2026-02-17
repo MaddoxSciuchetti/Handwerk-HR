@@ -60,11 +60,9 @@ export const getUnifiedData = catchErrors(async (req, res) => {
 });
 
 export const deleteDescriptionHandler = catchErrors(async (req, res) => {
-    const id = req.userId;
+    const id = +req.params.id;
 
-    const { form_field_id } = req.body;
-
-    const deletedData = await deleteDescriptionData(form_field_id);
+    const deletedData = await deleteDescriptionData(id);
 
     return res.status(OK).json(deletedData);
 });

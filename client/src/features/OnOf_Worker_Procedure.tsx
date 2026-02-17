@@ -259,7 +259,6 @@ const OnOf_Worker_Procedure: React.FC<OffboardingFormProps> = ({
                                         aria-label="Close modal"
                                     />
                                     <PreviewComponent
-                                        toggleModal={toggleModal}
                                         id={modalState.selectedItem.id}
                                         description={
                                             modalState.selectedItem.description
