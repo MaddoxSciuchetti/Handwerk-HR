@@ -1,3 +1,4 @@
+import DescriptionRoot from "@/features/DescriptionRoot";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/template-konfiguration")({
@@ -5,5 +6,5 @@ export const Route = createFileRoute("/template-konfiguration")({
 });
 
 function RouteComponent() {
-    return <div>CRUD of the Root layout Document comes here</div>;
+    return <DescriptionRoot />;
 }

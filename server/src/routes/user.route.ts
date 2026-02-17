@@ -39,7 +39,7 @@ userRoutes.put("/editAbsenceData", editAbsenceData);
 
 // deletes the description data
 
-userRoutes.delete("/deleteDescriptionData", deleteDescriptionHandler);
+userRoutes.delete("/deleteDescriptionData/:id", deleteDescriptionHandler);
 
 // fetch the root description data
 
