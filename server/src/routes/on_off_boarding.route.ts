@@ -12,6 +12,7 @@ import {
     getFileData,
     deleteFileData,
     sendReminder,
+    addExtraField,
 } from "../controllers/on_off_boarding.controller";
 
 import { upload } from "../middleware/fileparser";
@@ -37,6 +38,8 @@ offboarding_router.post(
     upload.array("files"),
     postFileData,
 );
+
+offboarding_router.post("/addFormField", addExtraField);
 
 offboarding_router.get("/getFileData/file/:id", getFileData);
 

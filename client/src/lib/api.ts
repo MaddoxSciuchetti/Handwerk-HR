@@ -271,6 +271,16 @@ export const postOffboardingData = async (
     );
     return response;
 };
+
+export const addExtraField = async (data: {
+    description: string;
+    template_type: "ONBOARDING" | "OFFBOARDING";
+    owner: string;
+}): Promise<any> => {
+    const response = await API.post(`/offboarding/addFormField`, data);
+    return response;
+};
+
 export const ZDescriptionData = z.array(
     z.object({
         form_field_id: z.coerce.number(),

@@ -6,6 +6,7 @@ import PDFDocument from "pdfkit";
 import { OK } from "../constants/http";
 import { emailSchema } from "./auth.Schemas";
 import {
+    addExtraFormFieldDB,
     createUser,
     deleteFiles,
     deleteUser,
@@ -31,6 +32,20 @@ export const postOffboardingData = async (req: Request, res: Response) => {
         return res.status(201).json({ success: user });
     } catch (error) {
         // return the response
+        console.log(error);
+        return res.status(500).json({ error: "internal error" });
+    }
+};
+
+export const addExtraField = async (req: Request, res: Response) => {
+    try {
+        const request = {
+            ...req.body,
+        };
+
+        const newField = await addExtraFormFieldDB(request);
+        return res.status(201).json({ success: newField });
+    } catch (error) {
         console.log(error);
         return res.status(500).json({ error: "internal error" });
     }

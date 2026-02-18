@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useToggleModal } from "@/hooks/use-toggleModal";
 import {
     addDescriptionData,
+    addExtraField,
     deleteDescriptionData,
     editTaskData,
     fetchTaskData,
@@ -119,7 +120,8 @@ function DescriptionRoot() {
 
             console.log("validated data", result.data);
 
-            addDescriptionData(result.data);
+            // await addDescriptionData(result.data);
+            await addExtraField(result.data);
         } catch (error) {
             console.log(error);
         }
