@@ -175,8 +175,8 @@ function DescriptionRoot() {
                     <div className="   flex flex-col  ">
                         {tab === "ONBOARDING"
                             ? OnboardingData?.map((item, index) => (
-                                  <div className="hover:scale-101 " key={index}>
-                                      <div className="justify-center items-center hover:scale-101 mt-10">
+                                  <div className="hover:scale-100 " key={index}>
+                                      <div className="justify-center items-center hover:scale-100 mt-10">
                                           <form
                                               className="flex flex-col  "
                                               onSubmit={handleSubmit}
@@ -229,8 +229,8 @@ function DescriptionRoot() {
                                   </div>
                               ))
                             : OffboardingData?.map((item, index) => (
-                                  <div className="hover:scale-101 " key={index}>
-                                      <div className="justify-center items-center hover:scale-101 mt-10">
+                                  <div className="hover:scale-100 " key={index}>
+                                      <div className="justify-center items-center hover:scale-100 mt-10">
                                           <form
                                               className="flex flex-col  "
                                               onSubmit={handleSubmit}

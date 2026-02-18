@@ -54,43 +54,46 @@ function RootModal({
     return (
         <>
             <div className="flex flex-col max-h-100 min-h-120 mt-40 mx-auto text-center items-center z-50 bg-gray-200 rounded-xl  w-2xl">
-                <div className="max-w-xl h-full w-xl my-10">
+                <div className="flex flex-col max-w-xl h-full w-xl my-10 items-start">
+                    <div className="flex flex-row gap-5 ">
+                        <Button
+                            variant={tab === "EDIT" ? "default" : "outline"}
+                            className={
+                                tab === "EDIT"
+                                    ? "bg-gray-500 text-white underline"
+                                    : "bg-gray-200"
+                            }
+                            onClick={() => setTab("EDIT")}
+                        >
+                            Editieren
+                        </Button>
+                        <Button
+                            variant={tab === "ADD" ? "default" : "outline"}
+                            className={
+                                tab === "ADD"
+                                    ? "bg-gray-500 text-white underline"
+                                    : "bg-gray-200"
+                            }
+                            onClick={() => setTab("ADD")}
+                        >
+                            Hinzufügen
+                        </Button>
+                    </div>
                     {tab === "EDIT" ? (
-                        <p className="text-left underline">
+                        <p className="text-left underline mt-5 mb-5">
                             Beschreibung bearbeiten
                         </p>
                     ) : (
-                        <p className="text-left underline">
+                        <p className="text-left underline mt-5 mb-5">
                             Neue Beschreibung hinzufügen
                         </p>
                     )}
-                    <Button
-                        variant={tab === "EDIT" ? "default" : "outline"}
-                        className={
-                            tab === "EDIT"
-                                ? "bg-gray-500 text-white"
-                                : "bg-gray-200"
-                        }
-                        onClick={() => setTab("EDIT")}
-                    >
-                        Edit
-                    </Button>
-                    <Button
-                        variant={tab === "ADD" ? "default" : "outline"}
-                        className={
-                            tab === "ADD"
-                                ? "bg-gray-500 text-white"
-                                : "bg-gray-200"
-                        }
-                        onClick={() => setTab("ADD")}
-                    >
-                        Hinzufügen
-                    </Button>
                     <form
                         onSubmit={
                             tab === "EDIT" ? handleSubmit : handleAddSubmit
                         }
                         name="valuesform"
+                        className="flex flex-col items-start"
                     >
                         <input
                             type="hidden"
@@ -120,45 +123,57 @@ function RootModal({
                             defaultValue={description || ""}
                             id="description"
                             name="description"
-                            className="w-xl"
+                            className="w-xl mb-5"
                         />
-                        <Select
-                            value={selectedValue}
-                            onValueChange={setSelectedValue}
-                        >
-                            <SelectTrigger
-                                id="owner"
-                                name="owner"
-                                value={selectedValue}
 
-                                // className="w-[17.75rem]"
+                        <div className="flex flex-row gap-2">
+                            <Select
+                                value={selectedValue}
+                                onValueChange={setSelectedValue}
                             >
-                                <SelectValue placeholder="Status" />
-                            </SelectTrigger>
-                            <SelectContent className="border-none">
-                                <SelectGroup className="bg-white cursor-pointer">
-                                    {EmployeeData?.map((item) => (
-                                        <SelectItem
-                                            className="hover:bg-gray-200 cursor-pointer"
-                                            id={`select-${item.id}`}
-                                            value={item.id}
-                                            key={item.id}
-                                        >
-                                            {item.vorname} {item.nachname}
-                                        </SelectItem>
-                                    ))}
-                                </SelectGroup>
-                            </SelectContent>
-                        </Select>
-                        {selectedType === "ONBOARDING" && tab === "EDIT" ? (
-                            <Button type="submit" variant={"outline"}>
-                                Änderungen Speichern
-                            </Button>
-                        ) : (
-                            <Button type="submit" variant={"outline"}>
-                                Neue Beschreibung hinzufügen
-                            </Button>
-                        )}
+                                <SelectTrigger
+                                    id="owner"
+                                    name="owner"
+                                    value={selectedValue}
+                                    className="w-[17.75rem]"
+
+                                    // className="w-[17.75rem]"
+                                >
+                                    <SelectValue placeholder="Status" />
+                                </SelectTrigger>
+                                <SelectContent className="border-none">
+                                    <SelectGroup className="bg-white cursor-pointer">
+                                        {EmployeeData?.map((item) => (
+                                            <SelectItem
+                                                className="hover:bg-gray-200 cursor-pointer"
+                                                id={`select-${item.id}`}
+                                                value={item.id}
+                                                key={item.id}
+                                            >
+                                                {item.vorname} {item.nachname}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                            {tab === "EDIT" && tab === "EDIT" ? (
+                                <Button
+                                    type="submit"
+                                    variant={"outline"}
+                                    className="  text-left justify-start cursor-pointer hover:bg-gray-200 w-[17.75rem]"
+                                >
+                                    Speichern
+                                </Button>
+                            ) : (
+                                <Button
+                                    type="submit"
+                                    variant={"outline"}
+                                    className="w-[17.75rem] text-left justify-start cursor-pointer hover:bg-gray-200 "
+                                >
+                                    Neue Beschreibung hinzufügen
+                                </Button>
+                            )}
+                        </div>
                     </form>
                 </div>
             </div>
