@@ -28,27 +28,27 @@ import { useEffect, useMemo, useState } from "react";
 
 const items = [
     {
-        title: "Mitarbeiter Übersicht",
+        title: "Meine Mitarbeiter",
         to: "/mitarbeiter-uebersicht",
         icon: Home,
         requiredPermission: "CHEF",
     },
     {
-        title: "Template Konfiguration",
+        title: "Meine Handwerker",
+        to: "/handwerker",
+        icon: Inbox,
+    },
+    {
+        title: "Vorlage",
         to: "/template-konfiguration",
         icon: Settings,
         requiredPermission: "CHEF",
     },
     {
-        title: "Offene Aufgaben",
+        title: "Monitor",
         to: "/dashboard/ceo",
         icon: HandMetal,
         requiredPermission: "CHEF",
-    },
-    {
-        title: "Handwerker",
-        to: "/handwerker",
-        icon: Inbox,
     },
 ];
 

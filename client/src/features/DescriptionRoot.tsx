@@ -142,113 +142,172 @@ function DescriptionRoot() {
 
     return (
         <>
-            <div>
-                <Button
-                    variant={tab === "ONBOARDING" ? "default" : "outline"}
-                    className={
-                        tab === "ONBOARDING"
-                            ? "bg-gray-500 text-white"
-                            : "bg-gray-200"
-                    }
-                    onClick={() => setTab("ONBOARDING")}
-                >
-                    Onboarding
-                </Button>
-                <Button
-                    variant={tab === "OFFBOARDING" ? "default" : "outline"}
-                    className={
-                        tab === "OFFBOARDING"
-                            ? "bg-gray-500 text-white"
-                            : "bg-gray-200"
-                    }
-                    onClick={() => setTab("OFFBOARDING")}
-                >
-                    Offboarding
-                </Button>
-                <div>
-                    {tab === "ONBOARDING"
-                        ? OnboardingData?.map((item, index) => (
-                              <div key={index}>
-                                  <div className="outline">
-                                      <div>{item.description}</div>
-                                      <div>
-                                          {item.auth_user.vorname}{" "}
-                                          {item.auth_user.nachname}
+            <div className="w-full min-w-300 rounded-2xl mx-auto p-6 shadow-gray-200 shadow-lg overflow-auto md:h-300">
+                <div className="h-full flex flex-col">
+                    <div className="flex gap-10 justify-center w-full min-w-xl ">
+                        <Button
+                            variant={
+                                tab === "ONBOARDING" ? "default" : "outline"
+                            }
+                            className={`w-xl ${
+                                tab === "ONBOARDING"
+                                    ? "bg-gray-500 text-white"
+                                    : "bg-gray-200"
+                            } `}
+                            onClick={() => setTab("ONBOARDING")}
+                        >
+                            Onboarding
+                        </Button>
+                        <Button
+                            variant={
+                                tab === "OFFBOARDING" ? "default" : "outline"
+                            }
+                            className={`w-xl ${
+                                tab === "OFFBOARDING"
+                                    ? "bg-gray-500 text-white"
+                                    : "bg-gray-200"
+                            } `}
+                            onClick={() => setTab("OFFBOARDING")}
+                        >
+                            Offboarding
+                        </Button>
+                    </div>
+                    <div className="   flex flex-col  ">
+                        {tab === "ONBOARDING"
+                            ? OnboardingData?.map((item, index) => (
+                                  <div className="hover:scale-101 " key={index}>
+                                      <div className="justify-center items-center hover:scale-101 mt-10">
+                                          <form
+                                              className="flex flex-col  "
+                                              onSubmit={handleSubmit}
+                                              name="valuesform"
+                                          >
+                                              <div className="flex flex-col gap-5">
+                                                  <div className="flex flex-row mt-2">
+                                                      <img
+                                                          onClick={() =>
+                                                              deleteDescription(
+                                                                  item.form_field_id,
+                                                              )
+                                                          }
+                                                          src="/assets/delete.svg"
+                                                          alt="deleticon"
+                                                          className="items-center"
+                                                      />
+                                                      <p className="w-sm underline">
+                                                          <div className="ml-5">
+                                                              {item.description}
+                                                          </div>
+                                                      </p>
+                                                      <div className="w-full">
+                                                          <span className="rounded-2xl bg-gray-100 px-3 py-1 text-sm cursor-pointer group">
+                                                              {
+                                                                  item.auth_user
+                                                                      .vorname
+                                                              }{" "}
+                                                              {
+                                                                  item.auth_user
+                                                                      .nachname
+                                                              }
+                                                          </span>
+                                                      </div>
+
+                                                      <img
+                                                          src="/assets/editReact.svg"
+                                                          onClick={() =>
+                                                              openEditModal(
+                                                                  item.description,
+                                                                  item.owner,
+                                                                  item.form_field_id,
+                                                              )
+                                                          }
+                                                      />
+                                                  </div>
+                                              </div>
+                                          </form>
                                       </div>
                                   </div>
-                                  <Button
-                                      variant={"outline"}
-                                      onClick={() =>
-                                          deleteDescription(item.form_field_id)
-                                      }
-                                  >
-                                      Delete Description
-                                  </Button>
-                                  <Button
-                                      variant={"outline"}
-                                      onClick={() =>
-                                          openEditModal(
-                                              item.description,
-                                              item.owner,
-                                              item.form_field_id,
-                                          )
-                                      }
-                                  >
-                                      Edit owner
-                                  </Button>
-                              </div>
-                          ))
-                        : OffboardingData?.map((item, index) => (
-                              <div className="outline" key={index}>
-                                  <div>{item.description}</div>
-                                  <div>
-                                      {item.auth_user.vorname}{" "}
-                                      {item.auth_user.nachname}
-                                  </div>
-                                  <Button
-                                      onClick={() =>
-                                          deleteDescription(item.form_field_id)
-                                      }
-                                  >
-                                      Delete Description
-                                  </Button>
-                                  <Button
-                                      variant={"outline"}
-                                      onClick={() =>
-                                          openEditModal(
-                                              item.description,
-                                              item.owner,
-                                              item.form_field_id,
-                                          )
-                                      }
-                                  >
-                                      Edit owner
-                                  </Button>
-                              </div>
-                          ))}
-                </div>
+                              ))
+                            : OffboardingData?.map((item, index) => (
+                                  <div className="hover:scale-101 " key={index}>
+                                      <div className="justify-center items-center hover:scale-101 mt-10">
+                                          <form
+                                              className="flex flex-col  "
+                                              onSubmit={handleSubmit}
+                                              name="valuesform"
+                                          >
+                                              <div className="flex flex-col gap-5">
+                                                  <div className="flex flex-row mt-2">
+                                                      <img
+                                                          onClick={() =>
+                                                              deleteDescription(
+                                                                  item.form_field_id,
+                                                              )
+                                                          }
+                                                          src="/assets/delete.svg"
+                                                          alt="deleticon"
+                                                          className="items-center"
+                                                      />
+                                                      <p className="w-sm underline">
+                                                          <div className="ml-5">
+                                                              {item.description}
+                                                          </div>
+                                                      </p>
+                                                      <div className="w-full">
+                                                          <span className="rounded-2xl bg-gray-100 px-3 py-1 text-sm cursor-pointer group">
+                                                              {
+                                                                  item.auth_user
+                                                                      .vorname
+                                                              }{" "}
+                                                              {
+                                                                  item.auth_user
+                                                                      .nachname
+                                                              }
+                                                          </span>
+                                                      </div>
 
-                {modalState.selectedItem && modal && (
-                    <div className="fixed inset-0 z-50 flex">
-                        <div
-                            onClick={toggleModal}
-                            className="fixed inset-0 bg-black/50 cursor-pointer"
-                            aria-label="Close modal"
-                        />
-                        <RootModal
-                            data={data}
-                            form_field_id={
-                                modalState.selectedItem.form_field_id
-                            }
-                            description={modalState.selectedItem.description}
-                            owner={modalState.selectedItem.owner}
-                            handleSubmit={handleSubmit}
-                            handleAddSubmit={handleAddSubmit}
-                            template_type={tab}
-                            EmployeeData={EmployeeData}
-                        />
+                                                      <img
+                                                          src="/assets/editReact.svg"
+                                                          onClick={() =>
+                                                              openEditModal(
+                                                                  item.description,
+                                                                  item.owner,
+                                                                  item.form_field_id,
+                                                              )
+                                                          }
+                                                      />
+                                                  </div>
+                                              </div>
+                                          </form>
+                                      </div>
+                                  </div>
+                              ))}
                     </div>
-                )}
+
+                    {modalState.selectedItem && modal && (
+                        <div className="fixed inset-0 z-50 flex">
+                            <div
+                                onClick={toggleModal}
+                                className="fixed inset-0 bg-black/50 cursor-pointer"
+                                aria-label="Close modal"
+                            />
+                            <RootModal
+                                data={data}
+                                form_field_id={
+                                    modalState.selectedItem.form_field_id
+                                }
+                                description={
+                                    modalState.selectedItem.description
+                                }
+                                owner={modalState.selectedItem.owner}
+                                handleSubmit={handleSubmit}
+                                handleAddSubmit={handleAddSubmit}
+                                template_type={tab}
+                                EmployeeData={EmployeeData}
+                            />
+                        </div>
+                    )}
+                </div>
             </div>
         </>
     );
