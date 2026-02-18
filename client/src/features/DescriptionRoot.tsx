@@ -2,11 +2,13 @@ import RootModal from "@/components/root_description_layout/RootModal";
 import { Button } from "@/components/ui/button";
 import { useToggleModal } from "@/hooks/use-toggleModal";
 import {
+    addDescriptionData,
     deleteDescriptionData,
     editTaskData,
     fetchTaskData,
     TDescriptionData,
 } from "@/lib/api";
+import { tryCatch } from "@/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import z from "zod";
@@ -63,10 +65,18 @@ function DescriptionRoot() {
         mutationFn: editTaskData,
     });
 
+    const { mutate: addDescripton, error: addError } = useMutation({
+        mutationFn: addDescriptionData,
+    });
+
     const formSchema = z.object({
         form_field_id: z.coerce.number(),
         description: z.string(),
         owner: z.string(),
+    });
+
+    const formSchemaWithType = formSchema.extend({
+        template_type: z.enum(["ONBOARDING", "OFFBOARDING"]),
     });
 
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -89,6 +99,27 @@ function DescriptionRoot() {
                 setModalState({ selectedItem: null });
                 toggleModal();
             }
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    async function handleAddSubmit(event: React.FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+        try {
+            const formData = new FormData(event.currentTarget);
+            const formValues = Object.fromEntries(formData);
+            console.log("raw form values", formValues);
+            const result = formSchemaWithType.safeParse(formValues);
+
+            if (!result.success) {
+                console.log("validation errors", result.error);
+                return;
+            }
+
+            console.log("validated data", result.data);
+
+            addDescriptionData(result.data);
         } catch (error) {
             console.log(error);
         }
@@ -159,6 +190,8 @@ function DescriptionRoot() {
                           ))
                         : OffboardingData?.map((item, index) => (
                               <div className="outline" key={index}>
+                                  <div>{item.description}</div>
+                                  <div>{item.owner}</div>
                                   <Button
                                       onClick={() =>
                                           deleteDescription(item.form_field_id)
@@ -166,8 +199,18 @@ function DescriptionRoot() {
                                   >
                                       Delete Description
                                   </Button>
-                                  <div>{item.description}</div>
-                                  <div>{item.owner}</div>
+                                  <Button
+                                      variant={"outline"}
+                                      onClick={() =>
+                                          openEditModal(
+                                              item.description,
+                                              item.owner,
+                                              item.form_field_id,
+                                          )
+                                      }
+                                  >
+                                      Edit owner
+                                  </Button>
                               </div>
                           ))}
                 </div>
@@ -187,6 +230,8 @@ function DescriptionRoot() {
                             description={modalState.selectedItem.description}
                             owner={modalState.selectedItem.owner}
                             handleSubmit={handleSubmit}
+                            handleAddSubmit={handleAddSubmit}
+                            template_type={tab}
                         />
                     </div>
                 )}

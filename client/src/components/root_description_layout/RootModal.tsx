@@ -18,7 +18,9 @@ type RootModalProps = {
     form_field_id: number;
     description: string | null;
     owner: string;
+    template_type?: "ONBOARDING" | "OFFBOARDING";
     handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+    handleAddSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
 };
 
 function RootModal({
@@ -26,11 +28,17 @@ function RootModal({
     form_field_id,
     description,
     owner,
+    template_type,
     handleSubmit,
+    handleAddSubmit,
 }: RootModalProps) {
     const { lockScroll, unlockScroll } = useBodyScrollLock();
+    const [tab, setTab] = useState<"EDIT" | "ADD">("EDIT");
 
     const [selectedValue, setSelectedValue] = useState(owner || "");
+    const [selectedType, setSelectedType] = useState<
+        "ONBOARDING" | "OFFBOARDING"
+    >(template_type || "ONBOARDING");
 
     const memoizedData = useMemo(() => {
         if (!data) return [];
@@ -56,8 +64,43 @@ function RootModal({
         <>
             <div className="flex flex-col max-h-100 min-h-120 mt-40 mx-auto text-center items-center z-50 bg-gray-200 rounded-xl  w-2xl">
                 <div className="max-w-xl h-full w-xl my-10">
-                    Edit rootdescription
-                    <form onSubmit={handleSubmit} name="valuesform">
+                    {tab === "EDIT" ? (
+                        <p className="text-left underline">
+                            Beschreibung bearbeiten
+                        </p>
+                    ) : (
+                        <p className="text-left underline">
+                            Neue Beschreibung hinzufügen
+                        </p>
+                    )}
+                    <Button
+                        variant={tab === "EDIT" ? "default" : "outline"}
+                        className={
+                            tab === "EDIT"
+                                ? "bg-gray-500 text-white"
+                                : "bg-gray-200"
+                        }
+                        onClick={() => setTab("EDIT")}
+                    >
+                        Edit
+                    </Button>
+                    <Button
+                        variant={tab === "ADD" ? "default" : "outline"}
+                        className={
+                            tab === "ADD"
+                                ? "bg-gray-500 text-white"
+                                : "bg-gray-200"
+                        }
+                        onClick={() => setTab("ADD")}
+                    >
+                        Hinzufügen
+                    </Button>
+                    <form
+                        onSubmit={
+                            tab === "EDIT" ? handleSubmit : handleAddSubmit
+                        }
+                        name="valuesform"
+                    >
                         <input
                             type="hidden"
                             id="form_field_id"
@@ -69,6 +112,21 @@ function RootModal({
                             name="owner"
                             value={selectedValue}
                         />
+
+                        {template_type === "ONBOARDING" && tab === "ADD" ? (
+                            <input
+                                type="hidden"
+                                name="template_type"
+                                value={"ONBOARDING"}
+                            />
+                        ) : (
+                            <input
+                                type="hidden"
+                                name="template_type"
+                                value={"OFFBOARDING"}
+                            />
+                        )}
+
                         <Textarea
                             defaultValue={description || ""}
                             id="description"
@@ -103,9 +161,16 @@ function RootModal({
                                 </SelectGroup>
                             </SelectContent>
                         </Select>
-                        <Button type="submit" variant={"outline"}>
-                            Änderungen Speichern
-                        </Button>
+
+                        {selectedType === "ONBOARDING" && tab === "EDIT" ? (
+                            <Button type="submit" variant={"outline"}>
+                                Änderungen Speichern
+                            </Button>
+                        ) : (
+                            <Button type="submit" variant={"outline"}>
+                                Neue Beschreibung hinzufügen
+                            </Button>
+                        )}
                     </form>
                 </div>
             </div>

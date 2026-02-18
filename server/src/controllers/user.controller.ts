@@ -76,21 +76,20 @@ export const fetchDescriptionHandler = catchErrors(async (req, res) => {
 });
 
 export const editDescriptionHandler = catchErrors(async (req, res) => {
-    const id = req.userId;
+    const id = +req.params.id;
 
-    const { form_field_id, owner } = req.body;
+    const { form_field_id, owner, description, template_type } = req.body;
 
     const updatedDescription = await updateDescriptionData(
         form_field_id,
         owner,
+        description,
     );
 
     return res.status(OK).json(updatedDescription);
 });
 
 export const createDescriptionHandler = catchErrors(async (req, res) => {
-    const id = req.userId;
-
     const { description, owner, type } = req.body;
 
     const newDescription = await createDescription(description, owner, type);

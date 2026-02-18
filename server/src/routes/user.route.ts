@@ -37,21 +37,14 @@ userRoutes.delete("/deleteEmplyoee/:id", deleteEmployeeHandler);
 
 userRoutes.put("/editAbsenceData", editAbsenceData);
 
-// deletes the description data
-
 userRoutes.delete("/deleteDescriptionData/:id", deleteDescriptionHandler);
-
-// fetch the root description data
-
 userRoutes.get("/fetchTaskData", fetchDescriptionHandler);
 
 // get part description data
-
 userRoutes.get("/rawdescription", fetchDescriptionHandler);
 
 // edit the root description data
-
-userRoutes.put("/editTaskData", editDescriptionHandler);
+userRoutes.put("/editTaskData/:id", editDescriptionHandler);
 
 // create a new description data
 

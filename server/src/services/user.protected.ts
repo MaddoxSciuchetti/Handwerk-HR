@@ -107,6 +107,7 @@ export const getDescriptionData = async () => {
 export const updateDescriptionData = async (
     form_field_id: number,
     owner: string,
+    description: string,
 ) => {
     const updatedDescription = await prisma.form_fields.update({
         where: {
@@ -114,6 +115,7 @@ export const updateDescriptionData = async (
         },
         data: {
             owner: owner,
+            description: description,
         },
     });
 

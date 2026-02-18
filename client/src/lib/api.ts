@@ -11,6 +11,7 @@ import {
     SuccessResponse,
     TOffboardingItemUser,
 } from "@/types/api_response";
+import { da } from "date-fns/locale";
 import { Session } from "react-router-dom";
 import { User } from "shared_prisma_types";
 import z from "zod";
@@ -319,5 +320,12 @@ export const editTaskData = async (data: EditDescriptionData) => {
         `/user/editTaskData/${data.form_field_id}`,
         data,
     );
+    return response;
+};
+
+export const addDescriptionData = async (
+    data: Omit<TDescriptionData, "form_field_id">,
+) => {
+    const response = await API.post(`/user/createTaskData`, data);
     return response;
 };
