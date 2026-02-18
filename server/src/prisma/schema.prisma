@@ -23,6 +23,7 @@ model form_fields {
   timestamp     DateTime?     @default(now()) @db.Timestamp(6)
   owner         String        @default("cmknti1f800028tmmhf5u5627")
   template_type TemplateType?  @default(ONBOARDING)
+  auth_user     User          @relation(fields: [owner], references: [id])
   form_inputs   form_inputs[]
 }
 
@@ -78,6 +79,7 @@ model User {
   sessions          Session[]
   verificationCodes VerificationCode[]
   employeeStatus    EmployeeStatus[]
+  owned_fields      form_fields[]
 }
 
 model EmployeeStatus {
