@@ -29,15 +29,17 @@ export const getChef = async (id: string) => {
 
 export const getemployee_form = async () => {
     const onboarding_forms = await prisma.form_fields.findMany({
-        where: {
-            owner: {
-                in: ["Janik", "Siemon", "Acosta", "Sen", "Conpro IT"],
-            },
-        },
         select: {
             form_field_id: true,
             description: true,
             owner: true,
+            auth_user: {
+                select: {
+                    id: true,
+                    vorname: true,
+                    nachname: true,
+                },
+            },
         },
         orderBy: {
             form_field_id: "asc",
@@ -73,6 +75,9 @@ export const getemployee_form = async () => {
         form_field_id: form_field.form_field_id,
         description: form_field.description,
         owner: form_field.owner,
+        auth_id: form_field.auth_user.id,
+        fullname:
+            form_field.auth_user.vorname + " " + form_field.auth_user.nachname,
         inputs: employee_forms
             .filter((input) => input.form_field_id === form_field.form_field_id)
             .map((input) => ({

@@ -62,11 +62,11 @@ function Ceo_Dashboard() {
                             {uniqueHandwerkerProBSBEmployee.map(
                                 (user, index) => (
                                     <TabsTrigger
-                                        value={user.owner}
-                                        key={user.owner}
-                                        className={`text-md flex flex-row  cursor-pointer  ${selectedUser === user.owner ? ` transition delay-150 duration-300 ease-in-out  bg-gray-50` : `hover:bg-gray-50`}`}
+                                        value={user?.auth_id}
+                                        key={user.auth_id}
+                                        className={`text-md flex flex-row  cursor-pointer  ${selectedUser === user.auth_id ? ` transition delay-150 duration-300 ease-in-out  bg-gray-50` : `hover:bg-gray-50`}`}
                                     >
-                                        {user.owner}
+                                        {user.fullname}
                                     </TabsTrigger>
                                 ),
                             )}
