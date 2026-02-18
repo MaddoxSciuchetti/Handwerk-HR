@@ -62,11 +62,17 @@ function Ceo_Dashboard() {
                             {uniqueHandwerkerProBSBEmployee.map(
                                 (user, index) => (
                                     <TabsTrigger
-                                        value={user?.auth_id}
-                                        key={user.auth_id}
-                                        className={`text-md flex flex-row  cursor-pointer  ${selectedUser === user.auth_id ? ` transition delay-150 duration-300 ease-in-out  bg-gray-50` : `hover:bg-gray-50`}`}
+                                        value={user?.owner}
+                                        key={user.owner}
+                                        className={`text-md flex flex-row  cursor-pointer  ${selectedUser === user.owner ? ` transition delay-150 duration-300 ease-in-out  bg-gray-50` : `hover:bg-gray-50`}`}
                                     >
-                                        {user.fullname}
+                                        {user.original_owner}
+                                        {user.is_substitute && (
+                                            <span className="text-xs text-orange-500  ml-1">
+                                                (Vertretung:{" "}
+                                                {user.substitute_name})
+                                            </span>
+                                        )}
                                     </TabsTrigger>
                                 ),
                             )}

@@ -156,6 +156,10 @@ export const EmployFormSchema = z.array(
         owner: z.string(),
         fullname: z.string(),
         auth_id: z.string(),
+        is_substitute: z.boolean(),
+        substitute_id: z.string().nullable(),
+        original_owner: z.string(),
+        substitute_name: z.string().nullable(),
         inputs: z.array(
             z.object({
                 id: z.coerce.number(),
