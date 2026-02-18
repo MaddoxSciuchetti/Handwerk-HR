@@ -11,45 +11,49 @@ import {
     getUnifiedData,
     getUserHandler,
 } from "../controllers/user.controller";
+import { checkChef } from "@/utils/checkChef";
 
 const userRoutes = Router();
 
 // prefix /user
 
 userRoutes.get("/", getUserHandler);
-userRoutes.get("/chefpermission", getChefHandler);
+userRoutes.get("/chefpermission", checkChef, getChefHandler);
 
 // employee data
 
 // fetch employee tasks
-userRoutes.get("/employeeData", getUnifiedData);
+userRoutes.get("/employeeData", checkChef, getUnifiedData);
 
 // get EmployeeData
-userRoutes.get("/specificEmployeeData", getEmployeedata);
+userRoutes.get("/specificEmployeeData", checkChef, getEmployeedata);
 
 // add a new employee
 // delete a employee
 
-userRoutes.delete("/deleteEmplyoee/:id", deleteEmployeeHandler);
+userRoutes.delete("/deleteEmplyoee/:id", checkChef, deleteEmployeeHandler);
 
 // edit employee
 // // change employee permissoins
 
-userRoutes.put("/editAbsenceData", editAbsenceData);
+userRoutes.put("/editAbsenceData", checkChef, editAbsenceData);
 
-userRoutes.delete("/deleteDescriptionData/:id", deleteDescriptionHandler);
-userRoutes.get("/fetchTaskData", fetchDescriptionHandler);
+userRoutes.delete(
+    "/deleteDescriptionData/:id",
+    checkChef,
+    deleteDescriptionHandler,
+);
+userRoutes.get("/fetchTaskData", checkChef, fetchDescriptionHandler);
 
 // get part description data
-userRoutes.get("/rawdescription", fetchDescriptionHandler);
+userRoutes.get("/rawdescription", checkChef, fetchDescriptionHandler);
 
 // edit the root description data
-userRoutes.put("/editTaskData/:id", editDescriptionHandler);
+userRoutes.put("/editTaskData/:id", checkChef, editDescriptionHandler);
 
 // create a new description data
 
-userRoutes.post("/createTaskData", createDescriptionHandler);
-
+userRoutes.post("/createTaskData", checkChef, createDescriptionHandler);
 // file paths for employee
 
 export default userRoutes;

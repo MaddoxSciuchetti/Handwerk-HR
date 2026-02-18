@@ -38,7 +38,7 @@ app.use("/sessions", authenticate, sessionRoutes);
 
 // protected routes
 
-app.use("/user", authenticate, checkChef, userRoutes);
+app.use("/user", authenticate, userRoutes);
 
 // worker
 app.use("/offboarding", offboarding_router);

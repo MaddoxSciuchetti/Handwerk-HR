@@ -68,6 +68,7 @@ export const createAccount = async (data: createAccountParams) => {
 
     // create verification code
 
+    console.log("just before creating verification code");
     const verificationCode = await prisma.verificationCode.create({
         data: {
             userId,
