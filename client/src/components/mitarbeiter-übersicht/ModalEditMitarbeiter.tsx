@@ -25,6 +25,15 @@ import {
 } from "@/lib/api";
 import { subISOWeekYears } from "date-fns";
 import { set } from "zod";
+import useEmployeeData from "@/hooks/use-employeeData";
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "../ui/select";
 
 type ModalEditMitarbeiterProps = {
     fullname: string;
@@ -79,6 +88,13 @@ function ModalEditMitarbeiter({
             console.log(ErrorAbsence);
         },
     });
+
+    const {
+        EmployeeData,
+        isLoading: isLoadingEmployee,
+        ErrorEmployee,
+        isError: isErrorEmployee,
+    } = useEmployeeData();
 
     console.log("descriptiond data");
     console.log(descriptionData);
@@ -141,14 +157,37 @@ function ModalEditMitarbeiter({
 
                         <Label>Vetretung</Label>
 
-                        <select
+                        <Select
                             value={substitute}
-                            onChange={(e) => setSubstitute(e.target.value)}
+                            onValueChange={(value) => setSubstitute(value)}
                         >
-                            <option>Max Mustermann</option>
-                            <option>Maria Musterfrau</option>
-                            <option>Keine Vertretung</option>
-                        </select>
+                            <SelectTrigger
+                                id="substitute"
+                                name="substitute"
+                                value={substitute}
+
+                                // className="w-[17.75rem]"
+                            >
+                                <SelectValue placeholder="Vertretung" />
+                            </SelectTrigger>
+                            <SelectContent className="border-none">
+                                <SelectGroup className="bg-white cursor-pointer">
+                                    {EmployeeData?.map((item) => (
+                                        <SelectItem
+                                            className="hover:bg-gray-200 cursor-pointer"
+                                            id={`select-${item.id}`}
+                                            value={item.id}
+                                            key={item.id}
+                                            onClick={() =>
+                                                setSubstitute(item.id)
+                                            }
+                                        >
+                                            {item.vorname} {item.nachname}
+                                        </SelectItem>
+                                    ))}
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
 
                         <Button
                             onClick={() =>

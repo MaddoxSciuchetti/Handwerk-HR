@@ -35,6 +35,8 @@ interface FormProps {
         select_option: string,
         form_field_id: number,
     ) => void;
+    owner_id: number;
+    is_substitute: boolean;
 }
 
 const Form: React.FC<FormProps> = ({
@@ -46,6 +48,8 @@ const Form: React.FC<FormProps> = ({
     form_field_id,
     handleSubmit,
     onEdit,
+    owner_id,
+    is_substitute,
     // historyResult,
 }) => {
     const [selectedValue, setSelectedValue] = useState<string>(
@@ -110,22 +114,10 @@ const Form: React.FC<FormProps> = ({
                             />
                         </div>
                         <div className="flex gap-2 ">
-                            <span
-                                className={
-                                    owner === "Siemon"
-                                        ? "rounded-2xl bg-blue-200 px-3 py-1 text-sm"
-                                        : owner === "Acosta"
-                                          ? "rounded-2xl bg-pink-200 px-3 py-1 text-sm"
-                                          : owner === "Janik"
-                                            ? "rounded-2xl bg-green-200 px-3 py-1 text-sm"
-                                            : owner === "Sen"
-                                              ? "rounded-2xl bg-gray-200 px-3 py-1 text-sm"
-                                              : owner === "Conpro IT"
-                                                ? "rounded-2xl bg-yellow-200 px-3 py-1 text-sm"
-                                                : ""
-                                }
-                            >
-                                {owner}
+                            <span className="text-red-400 text-sm font-semibold">
+                                {is_substitute
+                                    ? `Ersatzperson ${owner}`
+                                    : `Verantwortlich: ${owner}`}
                             </span>
                             <div>
                                 <span

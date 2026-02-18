@@ -1,4 +1,4 @@
-import { TDescriptionData } from "@/lib/api";
+import { TDescriptionData, TEmployeeResponse } from "@/lib/api";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import {
@@ -21,6 +21,7 @@ type RootModalProps = {
     template_type?: "ONBOARDING" | "OFFBOARDING";
     handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
     handleAddSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+    EmployeeData: TEmployeeResponse | undefined;
 };
 
 function RootModal({
@@ -31,26 +32,16 @@ function RootModal({
     template_type,
     handleSubmit,
     handleAddSubmit,
+    EmployeeData,
 }: RootModalProps) {
     const { lockScroll, unlockScroll } = useBodyScrollLock();
     const [tab, setTab] = useState<"EDIT" | "ADD">("EDIT");
 
+    // needs to be dynamic based on the actual existing employees
     const [selectedValue, setSelectedValue] = useState(owner || "");
     const [selectedType, setSelectedType] = useState<
         "ONBOARDING" | "OFFBOARDING"
     >(template_type || "ONBOARDING");
-
-    const memoizedData = useMemo(() => {
-        if (!data) return [];
-        const map = new Map<string, TDescriptionData>();
-        data.forEach((item) => {
-            if (!map.has(item.owner)) {
-                map.set(item.owner, item);
-            }
-        });
-
-        return Array.from(map.values());
-    }, [data]);
 
     useEffect(() => {
         lockScroll();
@@ -112,7 +103,6 @@ function RootModal({
                             name="owner"
                             value={selectedValue}
                         />
-
                         {template_type === "ONBOARDING" && tab === "ADD" ? (
                             <input
                                 type="hidden"
@@ -126,7 +116,6 @@ function RootModal({
                                 value={"OFFBOARDING"}
                             />
                         )}
-
                         <Textarea
                             defaultValue={description || ""}
                             id="description"
@@ -148,20 +137,19 @@ function RootModal({
                             </SelectTrigger>
                             <SelectContent className="border-none">
                                 <SelectGroup className="bg-white cursor-pointer">
-                                    {memoizedData.map((item, index) => (
+                                    {EmployeeData?.map((item) => (
                                         <SelectItem
                                             className="hover:bg-gray-200 cursor-pointer"
-                                            id={`select-${item.form_field_id}`}
-                                            value={item.owner}
-                                            key={item.form_field_id}
+                                            id={`select-${item.id}`}
+                                            value={item.id}
+                                            key={item.id}
                                         >
-                                            {item.owner}
+                                            {item.vorname} {item.nachname}
                                         </SelectItem>
                                     ))}
                                 </SelectGroup>
                             </SelectContent>
                         </Select>
-
                         {selectedType === "ONBOARDING" && tab === "EDIT" ? (
                             <Button type="submit" variant={"outline"}>
                                 Änderungen Speichern

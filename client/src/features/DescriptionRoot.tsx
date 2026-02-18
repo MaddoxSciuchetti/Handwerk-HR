@@ -1,5 +1,6 @@
 import RootModal from "@/components/root_description_layout/RootModal";
 import { Button } from "@/components/ui/button";
+import useEmployeeData from "@/hooks/use-employeeData";
 import { useToggleModal } from "@/hooks/use-toggleModal";
 import {
     addDescriptionData,
@@ -8,6 +9,7 @@ import {
     editTaskData,
     fetchTaskData,
     TDescriptionData,
+    TDescriptionResponse,
 } from "@/lib/api";
 import { tryCatch } from "@/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -53,7 +55,7 @@ function DescriptionRoot() {
         toggleModal();
     }
 
-    const { data, error } = useQuery<TDescriptionData[]>({
+    const { data, error } = useQuery<TDescriptionResponse[]>({
         queryKey: ["description_root"],
         queryFn: fetchTaskData,
     });
@@ -127,6 +129,9 @@ function DescriptionRoot() {
         }
     }
 
+    const { EmployeeData, isLoading, ErrorEmployee, isError } =
+        useEmployeeData();
+
     const [tab, setTab] = useState<"ONBOARDING" | "OFFBOARDING">("ONBOARDING");
     const OnboardingData = data?.filter(
         (value) => value.template_type === "ONBOARDING",
@@ -166,7 +171,10 @@ function DescriptionRoot() {
                               <div key={index}>
                                   <div className="outline">
                                       <div>{item.description}</div>
-                                      <div>{item.owner}</div>
+                                      <div>
+                                          {item.auth_user.vorname}{" "}
+                                          {item.auth_user.nachname}
+                                      </div>
                                   </div>
                                   <Button
                                       variant={"outline"}
@@ -193,7 +201,10 @@ function DescriptionRoot() {
                         : OffboardingData?.map((item, index) => (
                               <div className="outline" key={index}>
                                   <div>{item.description}</div>
-                                  <div>{item.owner}</div>
+                                  <div>
+                                      {item.auth_user.vorname}{" "}
+                                      {item.auth_user.nachname}
+                                  </div>
                                   <Button
                                       onClick={() =>
                                           deleteDescription(item.form_field_id)
@@ -234,6 +245,7 @@ function DescriptionRoot() {
                             handleSubmit={handleSubmit}
                             handleAddSubmit={handleAddSubmit}
                             template_type={tab}
+                            EmployeeData={EmployeeData}
                         />
                     </div>
                 )}

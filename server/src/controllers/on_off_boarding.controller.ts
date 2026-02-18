@@ -19,6 +19,7 @@ import {
     insertHistoryData,
     sendEmployeeEmail,
 } from "@/services/on_off_boarding.auth";
+import resolveOwner from "@/utils/resolverOwner";
 export const postOffboardingData = async (req: Request, res: Response) => {
     // validate the request
     try {
@@ -95,14 +96,19 @@ export const offboardingGetuserbyId = async (req: Request, res: Response) => {
         form: {
             id: form.id,
             type: form.form_type,
-            fields: form.form_inputs.map((input) => ({
-                id: input.id,
-                form_field_id: input.form_field_id,
-                description: input.form_fields.description,
-                owner: input.form_fields.owner,
-                status: input.status,
-                edit: input.edit,
-            })),
+            fields: form.form_inputs.map((input) => {
+                const resolvedOwner = resolveOwner(input.form_fields.auth_user);
+                return {
+                    id: input.id,
+                    form_field_id: input.form_field_id,
+                    description: input.form_fields.description,
+                    owner: resolvedOwner.vorname + " " + resolvedOwner.nachname,
+                    owner_id: resolvedOwner.id,
+                    is_substitute: resolvedOwner.isSubstitute,
+                    status: input.status,
+                    edit: input.edit,
+                };
+            }),
         },
     };
 

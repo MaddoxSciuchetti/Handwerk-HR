@@ -99,6 +99,13 @@ export const getDescriptionData = async () => {
             description: true,
             owner: true,
             template_type: true,
+            auth_user: {
+                select: {
+                    id: true,
+                    vorname: true,
+                    nachname: true,
+                },
+            },
         },
     });
 

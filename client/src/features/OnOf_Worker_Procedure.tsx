@@ -19,6 +19,8 @@ export type form_field = {
     form_field_id: number;
     description: string;
     owner: string;
+    owner_id: number;
+    is_substitute: boolean;
     status: string;
     edit: string;
 };
@@ -87,6 +89,8 @@ const OnOf_Worker_Procedure: React.FC<OffboardingFormProps> = ({
             .toLowerCase()
             .includes(descriptionSearch.toLowerCase()),
     );
+    console.log("SEARCH DATA");
+    console.log(searchData);
 
     const sortedData = [...searchData].sort((a, b) => {
         if (a.status === "erledigt" && b.status !== "erledigt") {
@@ -288,6 +292,8 @@ const OnOf_Worker_Procedure: React.FC<OffboardingFormProps> = ({
                                         select_option={field.status}
                                         description={field.description}
                                         owner={field.owner}
+                                        owner_id={field.owner_id}
+                                        is_substitute={field.is_substitute}
                                         form_field_id={data.form.id}
                                         onEdit={(
                                             id,
