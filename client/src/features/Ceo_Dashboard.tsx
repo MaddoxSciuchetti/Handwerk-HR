@@ -68,7 +68,7 @@ function Ceo_Dashboard() {
                                     >
                                         {user.original_owner}
                                         {user.is_substitute && (
-                                            <span className="text-xs text-orange-500  ml-1">
+                                            <span className="text-xs text-gray-400  ml-1">
                                                 (Vertretung:{" "}
                                                 {user.substitute_name})
                                             </span>

@@ -19,6 +19,7 @@ interface ToDoItem {
     gotopage: (taskId: number, form_type: any) => void;
     onRemove: (value_item: number) => void;
     className?: string;
+    item1?: string;
 }
 
 export function Worker_Item({
@@ -28,6 +29,7 @@ export function Worker_Item({
     gotopage,
     onRemove,
     className,
+    item1,
 
     ...props
 }: ToDoItem) {
@@ -48,7 +50,9 @@ export function Worker_Item({
                 onClick={() => gotopage(item_value, form_type)}
                 className="hover:bg-gray-50 rounded-2xl cursor-pointer border-seperate border-spacing-y-2 py-5"
             >
-                <td className="text-sm font-semibold">{item}</td>
+                <td className="text-sm font-semibold">
+                    {item} {item1}
+                </td>
 
                 <td
                     className={

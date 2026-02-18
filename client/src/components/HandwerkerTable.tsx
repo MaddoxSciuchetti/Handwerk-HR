@@ -46,6 +46,7 @@ function HandwerkerTable({
                             item_value={task.id}
                             form_type={form_type(task)}
                             item={task.vorname}
+                            item1={task.nachname}
                             onRemove={onRemove}
                             gotopage={gotopage}
                         />
