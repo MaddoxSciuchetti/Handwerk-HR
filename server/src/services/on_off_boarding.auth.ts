@@ -64,17 +64,21 @@ export const createUser = (data: dataObject): Promise<returnObject> => {
             },
         });
 
+        const templateType =
+            employee_forms_table.form_type === "Offboarding"
+                ? "OFFBOARDING"
+                : "ONBOARDING";
+
+        const formFields = await tx.form_fields.findMany({
+            where: { template_type: templateType },
+            select: { form_field_id: true },
+        });
+
         await tx.form_inputs.createMany({
-            data:
-                employee_forms_table.form_type === "Offboarding"
-                    ? FORM_INPUTS_OFFBOARDING.map((field_id) => ({
-                          employee_form_id: employee_forms_table.id,
-                          form_field_id: field_id,
-                      }))
-                    : FORM_INPUTS_ONBOARDING.map((field_id) => ({
-                          employee_form_id: employee_forms_table.id,
-                          form_field_id: field_id,
-                      })),
+            data: formFields.map((field: { form_field_id: number }) => ({
+                employee_form_id: employee_forms_table.id,
+                form_field_id: field.form_field_id,
+            })),
         });
 
         return {

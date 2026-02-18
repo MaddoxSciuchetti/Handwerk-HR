@@ -68,7 +68,7 @@ function OnOf_Home() {
         },
         onError: (error) => {
             throw new Error(
-                "Fehler beim Hinzufügen des Mitarbeiters: " + error,
+                "Fehler beim Hinzufügen des Mitarbeiters: " + error.message,
             );
         },
     });
