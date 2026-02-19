@@ -28,7 +28,7 @@ import { useEffect, useMemo, useState } from "react";
 
 const items = [
     {
-        title: "Meine Mitarbeiter",
+        title: "Mein Mitarbeiter",
         to: "/mitarbeiter-uebersicht",
         icon: Home,
         requiredPermission: "CHEF",

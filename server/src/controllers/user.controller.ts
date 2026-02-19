@@ -109,9 +109,10 @@ export const getEmployeedata = catchErrors(async (req, res) => {
 
 export const deleteEmployeeHandler = catchErrors(async (req, res) => {
     const id = req.params.id as string;
+    const chefId = req.userId;
     console.log(id);
 
-    const deleteEmployeeResult = await deleteEmployee(id);
+    const deleteEmployeeResult = await deleteEmployee(id, chefId);
 
     return res.status(OK).json(deleteEmployeeResult);
 });
