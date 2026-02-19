@@ -34,6 +34,8 @@ import bcrypt from "bcrypt";
 import AppErrorCode from "../constants/appErrorCode";
 
 export type createAccountParams = {
+    firstName: string;
+    lastName: string;
     email: string;
     password: string;
     userAgent?: string;
@@ -58,6 +60,8 @@ export const createAccount = async (data: createAccountParams) => {
         data: {
             email: data.email,
             password: hashedpassword,
+            vorname: data.firstName,
+            nachname: data.lastName,
         },
         omit: {
             password: true,

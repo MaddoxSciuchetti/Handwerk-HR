@@ -45,6 +45,7 @@ export const login = async (data: LoginRequest): Promise<LoginResponse> => {
 export const signup = async (
     data: RegisterRequest,
 ): Promise<RegisterResponse> => {
+    console.log("why testUser", data);
     return API.post<RegisterRequest, RegisterResponse>("/auth/register", data);
 };
 
@@ -149,20 +150,17 @@ export const verifyChef = async (): Promise<user> => {
     return API.get(`/user/chefpermission`);
 };
 
-const owners = [
-    "Janik",
-    "Siemon",
-    "Acosta",
-    "Sen",
-    "Conpro IT",
-    "cmknti1f800028tmmhf5u5627",
-] as const;
-
 export const EmployFormSchema = z.array(
     z.object({
         description: z.coerce.string(),
         form_field_id: z.coerce.number(),
-        owner: z.enum(owners),
+        owner: z.string(),
+        fullname: z.string(),
+        auth_id: z.string(),
+        is_substitute: z.boolean(),
+        substitute_id: z.string().nullable(),
+        original_owner: z.string(),
+        substitute_name: z.string().nullable(),
         inputs: z.array(
             z.object({
                 id: z.coerce.number(),

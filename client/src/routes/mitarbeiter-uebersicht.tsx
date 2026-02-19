@@ -9,10 +9,6 @@ function RouteComponent() {
     return (
         <>
             <div className="flex">
-                <div>
-                    1. Mitarbeiter Erstellung 2. Mitarbeiter Krank stellen 3. Am
-                    Ende irgendwie Verbinden
-                </div>
                 <MitarbeiterÜbersicht />
             </div>
         </>

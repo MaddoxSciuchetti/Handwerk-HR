@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import resolveOwner from "@/utils/resolverOwner";
 import { id } from "zod/v4/locales";
 
 export const getUser = async (id: string) => {
@@ -29,15 +30,36 @@ export const getChef = async (id: string) => {
 
 export const getemployee_form = async () => {
     const onboarding_forms = await prisma.form_fields.findMany({
-        where: {
-            owner: {
-                in: ["Janik", "Siemon", "Acosta", "Sen", "Conpro IT"],
-            },
-        },
         select: {
             form_field_id: true,
             description: true,
             owner: true,
+            auth_user: {
+                select: {
+                    id: true,
+                    vorname: true,
+                    nachname: true,
+                    employeeStatus: {
+                        where: {
+                            absenceEnd: { gte: new Date() },
+                        },
+                        orderBy: { absenceEnd: "desc" },
+                        take: 1,
+                        select: {
+                            absence: true,
+                            absencebegin: true,
+                            absenceEnd: true,
+                            sub_user: {
+                                select: {
+                                    id: true,
+                                    vorname: true,
+                                    nachname: true,
+                                },
+                            },
+                        },
+                    },
+                },
+            },
         },
         orderBy: {
             form_field_id: "asc",
@@ -67,23 +89,37 @@ export const getemployee_form = async () => {
         },
     });
 
-    const individual_worker = await prisma.users.findMany({});
-
-    const unifiedData = onboarding_forms.map((form_field) => ({
-        form_field_id: form_field.form_field_id,
-        description: form_field.description,
-        owner: form_field.owner,
-        inputs: employee_forms
-            .filter((input) => input.form_field_id === form_field.form_field_id)
-            .map((input) => ({
-                id: input.id,
-                employee_form_id: input.employee_form_id,
-                form_field_id: input.form_field_id,
-                status: input.status,
-                timestamp: input.timestamp,
-                employee: input.employee_forms.users,
-            })),
-    }));
+    const unifiedData = onboarding_forms.map((form_field) => {
+        const resolved = resolveOwner(form_field.auth_user);
+        return {
+            form_field_id: form_field.form_field_id,
+            description: form_field.description,
+            owner: form_field.auth_user.id,
+            auth_id: form_field.auth_user.id,
+            fullname: resolved.vorname + " " + resolved.nachname,
+            substitute_name: resolved.isSubstitute
+                ? resolved.vorname + " " + resolved.nachname
+                : null,
+            is_substitute: resolved.isSubstitute,
+            original_owner:
+                form_field.auth_user.vorname +
+                " " +
+                form_field.auth_user.nachname,
+            substitute_id: resolved.isSubstitute ? resolved.id : null,
+            inputs: employee_forms
+                .filter(
+                    (input) => input.form_field_id === form_field.form_field_id,
+                )
+                .map((input) => ({
+                    id: input.id,
+                    employee_form_id: input.employee_form_id,
+                    form_field_id: input.form_field_id,
+                    status: input.status,
+                    timestamp: input.timestamp,
+                    employee: input.employee_forms.users,
+                })),
+        };
+    });
 
     console.log("UNIFIED DATA");
     console.log(JSON.stringify(unifiedData, null, 2));

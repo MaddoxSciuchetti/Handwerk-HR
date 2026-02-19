@@ -87,7 +87,7 @@ function PreviewComponent({
                                                   ? " bg-red-200 px-3 py-1 text-sm w-[17.75rem]"
                                                   : selectedValue ===
                                                       "in_bearbeitung"
-                                                    ? " bg-orange-500 px-3 py-1 text-sm w-[17.75rem]"
+                                                    ? " bg-yellow-500 px-3 py-1 text-sm w-[17.75rem]"
                                                     : "  bg-red-400 px-3 py-1 text-sm w-[17.75rem]"
                                         }
                                         // className="w-[17.75rem]"

@@ -71,7 +71,7 @@ export function AccordionDemo({
             >
                 {employeeGroups.length === 0 ||
                 employeeGroups[0]?.[1].inputs.length === 0 ? (
-                    <p>{user} hat keine Offenen Aufgaben</p>
+                    <p>Nutzer hat keine Offenen Aufgaben</p>
                 ) : (
                     employeeGroups.map(([employeeName, group], index) => (
                         <AccordionItem
@@ -85,7 +85,7 @@ export function AccordionDemo({
                             </AccordionTrigger>
                             <AccordionContent className="flex flex-col justify-center items-center  mt-5">
                                 {group.inputs.length === 0 ? (
-                                    <p>{user} hat keine Offenen Aufgaben</p>
+                                    <p>Nutzer hat keine Offenen Aufgaben</p>
                                 ) : (
                                     <div className="flex flex-col gap-5 w-full">
                                         {group.inputs.map((task, taskIndex) => (

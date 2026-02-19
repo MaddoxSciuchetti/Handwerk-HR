@@ -116,7 +116,7 @@ const Form: React.FC<FormProps> = ({
                         <div className="flex gap-2 ">
                             <span className="text-red-400 text-sm font-semibold">
                                 {is_substitute
-                                    ? `Ersatzperson ${owner}`
+                                    ? `Ersatzperson ${owner} von franziskus`
                                     : `Verantwortlich: ${owner}`}
                             </span>
                             <div>
@@ -128,7 +128,7 @@ const Form: React.FC<FormProps> = ({
                                               ? "rounded-2xl bg-red-200 px-3 py-1 text-sm"
                                               : selectedValue ===
                                                   "in_bearbeitung"
-                                                ? "rounded-2xl bg-orange-500 px-3 py-1 text-sm"
+                                                ? "rounded-2xl bg-yellow-500 px-3 py-1 text-sm"
                                                 : " rounded-2xl bg-red-400 px-3 py-1 text-sm"
                                     }
                                 >

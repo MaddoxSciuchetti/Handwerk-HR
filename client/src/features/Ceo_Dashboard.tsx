@@ -62,11 +62,17 @@ function Ceo_Dashboard() {
                             {uniqueHandwerkerProBSBEmployee.map(
                                 (user, index) => (
                                     <TabsTrigger
-                                        value={user.owner}
+                                        value={user?.owner}
                                         key={user.owner}
                                         className={`text-md flex flex-row  cursor-pointer  ${selectedUser === user.owner ? ` transition delay-150 duration-300 ease-in-out  bg-gray-50` : `hover:bg-gray-50`}`}
                                     >
-                                        {user.owner}
+                                        {user.original_owner}
+                                        {user.is_substitute && (
+                                            <span className="text-xs text-gray-400  ml-1">
+                                                (Vertretung:{" "}
+                                                {user.substitute_name})
+                                            </span>
+                                        )}
                                     </TabsTrigger>
                                 ),
                             )}

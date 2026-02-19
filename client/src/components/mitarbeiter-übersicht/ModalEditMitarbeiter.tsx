@@ -105,12 +105,13 @@ function ModalEditMitarbeiter({
     return (
         <>
             <div className="flex flex-col max-h-100 min-h-140 mt-40 mx-auto text-center items-center z-50 bg-gray-200 rounded-xl  w-2xl">
-                <div className="max-w-xl h-full w-xl my-10">
+                <div className="max-w-xl h-full w-xl my-10 flex flex-col">
                     <Button
+                        className="w-40 self-end mb-4 cursor-pointer"
                         variant={"outline"}
                         onClick={() => DeleteEmployee(id)}
                     >
-                        Delete Mitarbeiter
+                        Mitarbeiter Löschen
                     </Button>
                     <div className="flex flex-col gap-5">
                         <Label htmlFor="firstname">
@@ -118,14 +119,14 @@ function ModalEditMitarbeiter({
                         </Label>
 
                         <select
+                            defaultValue={"ja"}
                             value={absence}
                             onChange={(e) => setAbsence(e.target.value)}
                         >
                             <option>ja</option>
-                            <option>nein</option>
                         </select>
 
-                        <Label>Art der Abwesenheit</Label>
+                        <Label>Grund der Abwesenheit</Label>
                         <select
                             value={absencetype}
                             onChange={(e) => setAbsenceType(e.target.value)}
@@ -135,27 +136,23 @@ function ModalEditMitarbeiter({
                             <option>Andere</option>
                         </select>
 
-                        <Label>Anfang der Abwesenheit</Label>
-
                         <Input
                             type="text"
                             id="firstname"
-                            placeholder="Datum"
+                            placeholder="Absenheitsbeginn"
                             value={absencebegin}
                             onChange={(e) => setAbsenceBegin(e.target.value)}
                         />
 
-                        <Label>Voraussichtliches Ende der Abwesenheit</Label>
-
                         <Input
                             type="text"
                             id="firstname"
-                            placeholder="Enddatum"
+                            placeholder="Absenheitsende"
                             value={absenceEnd}
                             onChange={(e) => setAbsenceEnd(e.target.value)}
                         />
 
-                        <Label>Vetretung</Label>
+                        <Label>Soll vertreten werden von</Label>
 
                         <Select
                             value={substitute}

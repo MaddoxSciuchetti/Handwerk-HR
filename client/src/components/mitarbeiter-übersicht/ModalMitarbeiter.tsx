@@ -33,9 +33,9 @@ function ModalMitarbeiter() {
         <>
             <div className="flex flex-col max-h-100 min-h-120 mt-40 mx-auto text-center items-center z-50 bg-gray-200 rounded-xl  w-2xl">
                 <div className="max-w-xl h-full w-xl my-10">
-                    <p>
-                        Eine Email wird an den Mitarbeiter geschickt mit der
-                        Bitte sich einzuloggen
+                    <p className="mb-5">
+                        Ein Mitarbeiter erhält eine E-Mail mit der Bitte, sich
+                        einzuloggen.
                     </p>
                     <div className="flex flex-col space-y-4">
                         <Input
@@ -52,7 +52,6 @@ function ModalMitarbeiter() {
                             value={lastName}
                             onChange={(e) => setLastName(e.target.value)}
                         />
-                        <p>Wichtig für Aktuelle Creation</p>
                         <div className="space-y-2">
                             <Input
                                 id="email"

@@ -19,7 +19,7 @@ function useCeoDashboard() {
     });
     const uniqueHandwerkerProBSBEmployee =
         useHandwerkerProBSBEmployee(allEmployeeData);
-    console.log("unique users by owner");
+    console.log("unique users by auth_id");
     console.log(uniqueHandwerkerProBSBEmployee);
 
     const currentBSBEmployee = useMemo(
