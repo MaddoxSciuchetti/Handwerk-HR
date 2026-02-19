@@ -91,7 +91,7 @@ function DescriptionRoot() {
         })
         .omit({ form_field_id: true });
 
-    async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    async function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
         event.preventDefault();
         try {
             const formData = new FormData(event.currentTarget);
@@ -116,7 +116,7 @@ function DescriptionRoot() {
         }
     }
 
-    async function handleAddSubmit(event: React.FormEvent<HTMLFormElement>) {
+    async function handleAddSubmit(event: React.SubmitEvent<HTMLFormElement>) {
         event.preventDefault();
         try {
             const formData = new FormData(event.currentTarget);

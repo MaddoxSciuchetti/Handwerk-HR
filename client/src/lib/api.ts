@@ -215,6 +215,18 @@ export const formattedData = async (
     return response;
 };
 
+export const EmployeeStatus = z.array(
+    z.object({
+        id: z.coerce.string(),
+        userId: z.coerce.string(),
+        absence: z.coerce.string(),
+        absencetype: z.coerce.string().nullable(),
+        absencebegin: z.coerce.date().nullable(),
+        absenceEnd: z.coerce.date().nullable(),
+        substitute: z.coerce.string().nullable(),
+    }),
+);
+
 export const ZEmployeeData = z.array(
     z.object({
         id: z.coerce.string(),
@@ -225,6 +237,7 @@ export const ZEmployeeData = z.array(
         createdAt: z.string(),
         updatedAt: z.string(),
         user_permission: z.enum(["CHEF", "MITARBEITER"]),
+        employeeStatus: EmployeeStatus.nullable(),
     }),
 );
 

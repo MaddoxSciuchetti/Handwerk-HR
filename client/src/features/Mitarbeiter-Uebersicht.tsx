@@ -3,7 +3,7 @@ import { useState } from "react";
 import ModalMitarbeiter from "@/components/mitarbeiter-übersicht/ModalMitarbeiter";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useQuery } from "@tanstack/react-query";
-import { specificEmployeeData } from "@/lib/api";
+import { specificEmployeeData, TEmployeeResponse } from "@/lib/api";
 import { EditIcon } from "lucide-react";
 import ModalEditMitarbeiter from "@/components/mitarbeiter-übersicht/ModalEditMitarbeiter";
 import { Input } from "@/components/ui/input";
@@ -42,10 +42,12 @@ function MitarbeiterÜbersicht() {
         isLoading,
         error,
         isError,
-    } = useQuery({
+    } = useQuery<TEmployeeResponse>({
         queryKey: ["EmployeeDataSpecifics"],
         queryFn: specificEmployeeData,
     });
+
+    console.log(EmployeeData);
 
     if (isError) return <div>{error?.message}</div>;
 
@@ -95,6 +97,20 @@ function MitarbeiterÜbersicht() {
                                 >
                                     <td className="text-sm font-semibold py-5">
                                         {value.vorname} {value.nachname}
+                                    </td>
+                                    <td>
+                                        {value.employeeStatus?.map(
+                                            (value, index) => (
+                                                <div key={index}>
+                                                    <p>
+                                                        {value.absenceEnd ===
+                                                        null
+                                                            ? "N/A"
+                                                            : value.absenceEnd.getDate()}
+                                                    </p>
+                                                </div>
+                                            ),
+                                        )}
                                     </td>
                                     <td>
                                         <EditIcon

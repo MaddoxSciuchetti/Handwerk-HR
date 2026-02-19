@@ -92,7 +92,7 @@ model EmployeeStatus {
   absenceEnd DateTime?
   substitute String?
   user      User     @relation("absent_user", fields: [userId], references: [id], onDelete: Cascade)
-   sub_user     User?     @relation("substitute_user", fields: [substitute], references: [id])
+  sub_user     User?     @relation("substitute_user", fields: [substitute], references: [id])
   @@index([userId])
 }
 

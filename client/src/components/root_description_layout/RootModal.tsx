@@ -19,8 +19,8 @@ type RootModalProps = {
     description: string | null | undefined;
     owner: string | null | undefined;
     template_type?: "ONBOARDING" | "OFFBOARDING";
-    handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
-    handleAddSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+    handleSubmit: (e: React.SubmitEvent<HTMLFormElement>) => void;
+    handleAddSubmit: (e: React.SubmitEvent<HTMLFormElement>) => void;
     EmployeeData: TEmployeeResponse | undefined;
     dataAvailableOnboarding?: boolean | undefined;
     dataAvailableOffboarding?: boolean | undefined;

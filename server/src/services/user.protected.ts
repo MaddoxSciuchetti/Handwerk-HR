@@ -202,6 +202,7 @@ export const queryEmployeeData = async () => {
             createdAt: true,
             updatedAt: true,
             user_permission: true,
+            employeeStatus: true,
         },
     });
 };
