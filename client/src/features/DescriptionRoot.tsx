@@ -19,11 +19,18 @@ import z from "zod";
 function DescriptionRoot() {
     const [modal, setModal] = useState(false);
 
+    const [dataAvailableOnboarding, setDataAvailableOnboarding] = useState<
+        boolean | undefined
+    >();
+    const [dataAvailableOffboarding, setDataAvailableOffboarding] = useState<
+        boolean | undefined
+    >();
+
     const [modalState, setModalState] = useState<{
         selectedItem: {
-            form_field_id: number;
-            description: string | null;
-            owner: string;
+            form_field_id: number | null | undefined;
+            description: string | null | undefined;
+            owner: string | null | undefined;
         } | null;
     }>({
         selectedItem: null,
@@ -34,9 +41,9 @@ function DescriptionRoot() {
     };
 
     async function openEditModal(
-        description: string | null,
-        owner: string,
-        form_field_id: number,
+        description?: string | null,
+        owner?: string,
+        form_field_id?: number,
     ) {
         toggleModal();
         setModalState({
@@ -78,9 +85,11 @@ function DescriptionRoot() {
         owner: z.string(),
     });
 
-    const formSchemaWithType = formSchema.extend({
-        template_type: z.enum(["ONBOARDING", "OFFBOARDING"]),
-    });
+    const formSchemaWithType = formSchema
+        .extend({
+            template_type: z.enum(["ONBOARDING", "OFFBOARDING"]),
+        })
+        .omit({ form_field_id: true });
 
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -140,19 +149,23 @@ function DescriptionRoot() {
         (value) => value.template_type === "OFFBOARDING",
     );
 
+    if (OnboardingData === undefined || OffboardingData === undefined) {
+        return <div>Loading...</div>;
+    }
+
     return (
         <>
             <div className="w-full min-w-300 rounded-2xl mx-auto p-6 shadow-gray-200 shadow-lg overflow-auto md:h-300">
                 <div className="h-full flex flex-col">
-                    <div className="flex gap-10 justify-center w-full min-w-xl ">
+                    <div className="flex gap-2 justify-center w-full min-w-xl ">
                         <Button
                             variant={
                                 tab === "ONBOARDING" ? "default" : "outline"
                             }
-                            className={`w-xl ${
+                            className={`w-2xl ${
                                 tab === "ONBOARDING"
-                                    ? "bg-gray-500 text-white"
-                                    : "bg-gray-200"
+                                    ? "bg-gray-500 text-white cursor-pointer"
+                                    : "bg-gray-200 cursor-pointer"
                             } `}
                             onClick={() => setTab("ONBOARDING")}
                         >
@@ -162,126 +175,158 @@ function DescriptionRoot() {
                             variant={
                                 tab === "OFFBOARDING" ? "default" : "outline"
                             }
-                            className={`w-xl ${
+                            className={`w-2xl ${
                                 tab === "OFFBOARDING"
-                                    ? "bg-gray-500 text-white"
-                                    : "bg-gray-200"
+                                    ? "bg-gray-500 text-white cursor-pointer"
+                                    : "bg-gray-200 cursor-pointer"
                             } `}
                             onClick={() => setTab("OFFBOARDING")}
                         >
                             Offboarding
                         </Button>
                     </div>
+
                     <div className="   flex flex-col  ">
-                        {tab === "ONBOARDING"
-                            ? OnboardingData?.map((item, index) => (
-                                  <div className="hover:scale-100 " key={index}>
-                                      <div className="justify-center items-center hover:scale-100 mt-10">
-                                          <form
-                                              className="flex flex-col  "
-                                              onSubmit={handleSubmit}
-                                              name="valuesform"
-                                          >
-                                              <div className="flex flex-col gap-5">
-                                                  <div className="flex flex-row mt-2">
-                                                      <img
-                                                          onClick={() =>
-                                                              deleteDescription(
-                                                                  item.form_field_id,
-                                                              )
-                                                          }
-                                                          src="/assets/delete.svg"
-                                                          alt="deleticon"
-                                                          className="items-center"
-                                                      />
-                                                      <p className="w-sm underline">
-                                                          <div className="ml-5">
-                                                              {item.description}
-                                                          </div>
-                                                      </p>
-                                                      <div className="w-full">
-                                                          <span className="rounded-2xl bg-gray-100 px-3 py-1 text-sm cursor-pointer group">
-                                                              {
-                                                                  item.auth_user
-                                                                      .vorname
-                                                              }{" "}
-                                                              {
-                                                                  item.auth_user
-                                                                      .nachname
-                                                              }
-                                                          </span>
-                                                      </div>
+                        {tab === "ONBOARDING" ? (
+                            OnboardingData?.length > 0 ? (
+                                OnboardingData?.map((item, index) => (
+                                    <div
+                                        className="hover:scale-100 "
+                                        key={index}
+                                    >
+                                        <div className="justify-center items-center hover:scale-100 mt-10">
+                                            <form
+                                                className="flex flex-col  "
+                                                onSubmit={handleSubmit}
+                                                name="valuesform"
+                                            >
+                                                <div className="flex flex-col gap-5">
+                                                    <div className="flex flex-row mt-2">
+                                                        <img
+                                                            onClick={() =>
+                                                                deleteDescription(
+                                                                    item.form_field_id,
+                                                                )
+                                                            }
+                                                            src="/assets/delete.svg"
+                                                            alt="deleticon"
+                                                            className="items-center"
+                                                        />
+                                                        <div className="ml-5">
+                                                            <p className="w-sm underline">
+                                                                {
+                                                                    item.description
+                                                                }
+                                                            </p>
+                                                        </div>
+                                                        <div className="w-full">
+                                                            <span className="rounded-2xl bg-gray-100 px-3 py-1 text-sm cursor-pointer group">
+                                                                {
+                                                                    item
+                                                                        .auth_user
+                                                                        .vorname
+                                                                }{" "}
+                                                                {
+                                                                    item
+                                                                        .auth_user
+                                                                        .nachname
+                                                                }
+                                                            </span>
+                                                        </div>
 
-                                                      <img
-                                                          src="/assets/editReact.svg"
-                                                          onClick={() =>
-                                                              openEditModal(
-                                                                  item.description,
-                                                                  item.owner,
-                                                                  item.form_field_id,
-                                                              )
-                                                          }
-                                                      />
-                                                  </div>
-                                              </div>
-                                          </form>
-                                      </div>
-                                  </div>
-                              ))
-                            : OffboardingData?.map((item, index) => (
-                                  <div className="hover:scale-100 " key={index}>
-                                      <div className="justify-center items-center hover:scale-100 mt-10">
-                                          <form
-                                              className="flex flex-col  "
-                                              onSubmit={handleSubmit}
-                                              name="valuesform"
-                                          >
-                                              <div className="flex flex-col gap-5">
-                                                  <div className="flex flex-row mt-2">
-                                                      <img
-                                                          onClick={() =>
-                                                              deleteDescription(
-                                                                  item.form_field_id,
-                                                              )
-                                                          }
-                                                          src="/assets/delete.svg"
-                                                          alt="deleticon"
-                                                          className="items-center"
-                                                      />
-                                                      <p className="w-sm underline">
-                                                          <div className="ml-5">
-                                                              {item.description}
-                                                          </div>
-                                                      </p>
-                                                      <div className="w-full">
-                                                          <span className="rounded-2xl bg-gray-100 px-3 py-1 text-sm cursor-pointer group">
-                                                              {
-                                                                  item.auth_user
-                                                                      .vorname
-                                                              }{" "}
-                                                              {
-                                                                  item.auth_user
-                                                                      .nachname
-                                                              }
-                                                          </span>
-                                                      </div>
+                                                        <img
+                                                            src="/assets/editReact.svg"
+                                                            onClick={() =>
+                                                                openEditModal(
+                                                                    item.description,
+                                                                    item.owner,
+                                                                    item.form_field_id,
+                                                                )
+                                                            }
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <Button
+                                    variant={"outline"}
+                                    onClick={() => {
+                                        openEditModal();
+                                        setDataAvailableOnboarding(true);
+                                    }}
+                                >
+                                    Aufgabe Hinzufügen
+                                </Button>
+                            )
+                        ) : OffboardingData?.length > 0 ? (
+                            OffboardingData?.map((item, index) => (
+                                <div className="hover:scale-100 " key={index}>
+                                    <div className="justify-center items-center hover:scale-100 mt-10">
+                                        <form
+                                            className="flex flex-col  "
+                                            onSubmit={handleSubmit}
+                                            name="valuesform"
+                                        >
+                                            <div className="flex flex-col gap-5">
+                                                <div className="flex flex-row mt-2">
+                                                    <img
+                                                        onClick={() =>
+                                                            deleteDescription(
+                                                                item.form_field_id,
+                                                            )
+                                                        }
+                                                        src="/assets/delete.svg"
+                                                        alt="deleticon"
+                                                        className="items-center"
+                                                    />
+                                                    <div className="ml-5">
+                                                        <p className="w-sm underline">
+                                                            {item.description}
+                                                        </p>
+                                                    </div>
+                                                    <div className="w-full">
+                                                        <span className="rounded-2xl bg-gray-100 px-3 py-1 text-sm cursor-pointer group">
+                                                            {
+                                                                item.auth_user
+                                                                    .vorname
+                                                            }{" "}
+                                                            {
+                                                                item.auth_user
+                                                                    .nachname
+                                                            }
+                                                        </span>
+                                                    </div>
 
-                                                      <img
-                                                          src="/assets/editReact.svg"
-                                                          onClick={() =>
-                                                              openEditModal(
-                                                                  item.description,
-                                                                  item.owner,
-                                                                  item.form_field_id,
-                                                              )
-                                                          }
-                                                      />
-                                                  </div>
-                                              </div>
-                                          </form>
-                                      </div>
-                                  </div>
-                              ))}
+                                                    <img
+                                                        src="/assets/editReact.svg"
+                                                        onClick={() =>
+                                                            openEditModal(
+                                                                item.description,
+                                                                item.owner,
+                                                                item.form_field_id,
+                                                            )
+                                                        }
+                                                    />
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <Button
+                                variant={"outline"}
+                                onClick={() => {
+                                    openEditModal();
+                                    setDataAvailableOffboarding(true);
+                                }}
+                            >
+                                Aufgabe Hinzufügen
+                            </Button>
+                        )}
                     </div>
 
                     {modalState.selectedItem && modal && (
@@ -304,6 +349,20 @@ function DescriptionRoot() {
                                 handleAddSubmit={handleAddSubmit}
                                 template_type={tab}
                                 EmployeeData={EmployeeData}
+                                dataAvailableOnboarding={
+                                    dataAvailableOnboarding
+                                }
+                                dataAvailableOffboarding={
+                                    dataAvailableOffboarding
+                                }
+                                setDataAvailableOnboarding={
+                                    setDataAvailableOnboarding
+                                }
+                                setDataAvailableOffboarding={
+                                    setDataAvailableOffboarding
+                                }
+                                OnboardingData={OnboardingData}
+                                OffboardingData={OffboardingData}
                             />
                         </div>
                     )}

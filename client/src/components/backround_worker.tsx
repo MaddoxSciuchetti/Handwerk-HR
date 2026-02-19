@@ -90,6 +90,10 @@ function Worker_Backround({ id }: Worker_Backround) {
         setModalState(false);
     };
 
+    const handleZipExport = () => {
+        // Implementiere hier die Logik für den Zip-Export
+    };
+
     return (
         <>
             <div className="text-right ">
@@ -113,6 +117,13 @@ function Worker_Backround({ id }: Worker_Backround) {
                                 src="/assets/copy.svg"
                                 alt="Upload File"
                             />
+
+                            <p
+                                onClick={() => handleZipExport()}
+                                className="ml-4 cursor-pointer  p-1"
+                            >
+                                Zip export
+                            </p>
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
                             {fetchFiles.map((file, index) => (

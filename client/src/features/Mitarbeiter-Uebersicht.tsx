@@ -52,8 +52,8 @@ function MitarbeiterÜbersicht() {
     return (
         <>
             {" "}
-            <div className="w-full min-w-300 rounded-2xl mx-auto p-6 shadow-gray-200 shadow-lg overflow-auto md:h-300">
-                <div className="h-full flex flex-col ">
+            <div className="w-full min-w-340 rounded-2xl mx-auto p-6 shadow-gray-200 shadow-lg overflow-auto md:h-300">
+                <div className="h-full flex flex-col">
                     {isLoading && (
                         <div className="flex justify-center mt-16">
                             <h1 className="text-3xl font-bold">

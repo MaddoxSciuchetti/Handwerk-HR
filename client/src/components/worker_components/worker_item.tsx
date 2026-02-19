@@ -70,7 +70,7 @@ export function Worker_Item({
                         className={
                             completedTasksCount === null
                                 ? "text-red-500"
-                                : completedTasksCount <= 5
+                                : completedTasksCount == 2
                                   ? "text-red-600"
                                   : completedTasksCount < 12
                                     ? "text-orange-300"

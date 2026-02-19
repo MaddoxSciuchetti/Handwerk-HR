@@ -107,7 +107,7 @@ function ModalEditMitarbeiter({
             <div className="flex flex-col max-h-100 min-h-140 mt-40 mx-auto text-center items-center z-50 bg-gray-200 rounded-xl  w-2xl">
                 <div className="max-w-xl h-full w-xl my-10 flex flex-col">
                     <Button
-                        className="w-40 self-end mb-4"
+                        className="w-40 self-end mb-4 cursor-pointer"
                         variant={"outline"}
                         onClick={() => DeleteEmployee(id)}
                     >

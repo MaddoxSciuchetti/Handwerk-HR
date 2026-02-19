@@ -235,16 +235,20 @@ const OnOf_Worker_Procedure: React.FC<OffboardingFormProps> = ({
                     <Button
                         variant={"outline"}
                         className={
-                            activetab === "form" ? "active bg-gray-200" : ""
+                            activetab === "form"
+                                ? "active bg-gray-200 cursor-pointer"
+                                : ""
                         }
                         onClick={() => setActiveTab("form")}
                     >
-                        Prozess
+                        Aufgaben
                     </Button>
                     <Button
                         variant={"outline"}
                         className={
-                            activetab === "files" ? "active bg-gray-200" : ""
+                            activetab === "files"
+                                ? "active bg-gray-200 cursor-pointer"
+                                : ""
                         }
                         onClick={() => setActiveTab("files")}
                     >
