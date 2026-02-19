@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import ModalMitarbeiter from "@/components/mitarbeiter-übersicht/ModalMitarbeiter";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useQuery } from "@tanstack/react-query";
@@ -47,9 +47,11 @@ function MitarbeiterÜbersicht() {
         queryFn: specificEmployeeData,
     });
 
+    console.log("EMPLOYEE DATA");
     console.log(EmployeeData);
 
     if (isError) return <div>{error?.message}</div>;
+    if (!EmployeeData) return <div>No employee data found.</div>;
 
     return (
         <>
@@ -78,6 +80,9 @@ function MitarbeiterÜbersicht() {
                                 <TableHead className="text-left  pl-0">
                                     Meine Mitarbeiter
                                 </TableHead>
+                                <TableHead className="text-left">
+                                    Status
+                                </TableHead>
                                 <TableHead className=" pl-0">
                                     Aktionen
                                 </TableHead>
@@ -98,20 +103,54 @@ function MitarbeiterÜbersicht() {
                                     <td className="text-sm font-semibold py-5">
                                         {value.vorname} {value.nachname}
                                     </td>
-                                    <td>
-                                        {value.employeeStatus?.map(
-                                            (value, index) => (
-                                                <div key={index}>
-                                                    <p>
-                                                        {value.absenceEnd ===
-                                                        null
-                                                            ? "N/A"
-                                                            : value.absenceEnd.getDate()}
-                                                    </p>
+                                    {(value.employeeStatus?.length ?? 0) > 0 ? (
+                                        value.employeeStatus?.map((status) => (
+                                            <td key={status.id} className="">
+                                                <div className="flex flex-col">
+                                                    {status.substitute ? (
+                                                        <p className="text-sm text-red-500 w-full">
+                                                            Abwesend vom
+                                                        </p>
+                                                    ) : (
+                                                        <p className="text-sm text-green-500 w-full">
+                                                            Anwesend
+                                                        </p>
+                                                    )}
+                                                    <div className="flex gap-1 text-sm">
+                                                        {status.absencebegin?.toLocaleDateString(
+                                                            "de-DE",
+                                                            {
+                                                                day: "2-digit",
+                                                                month: "2-digit",
+                                                                year: "2-digit",
+                                                            },
+                                                        )}
+                                                        <p>bis</p>
+                                                        {status.absenceEnd?.toLocaleDateString(
+                                                            "de-DE",
+                                                            {
+                                                                day: "2-digit",
+                                                                month: "2-digit",
+                                                                year: "2-digit",
+                                                            },
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            ),
-                                        )}
-                                    </td>
+                                            </td>
+                                        ))
+                                    ) : (
+                                        <td
+                                            key={`preent-${value.id}`}
+                                            className=""
+                                        >
+                                            <div className="flex flex-col">
+                                                <p className="text-sm text-green-500 w-full">
+                                                    Anwesend
+                                                </p>
+                                            </div>
+                                        </td>
+                                    )}
+
                                     <td>
                                         <EditIcon
                                             className="flex-end"
