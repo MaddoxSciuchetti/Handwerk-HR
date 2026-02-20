@@ -49,6 +49,8 @@ export const getemployee_form = async () => {
                             absence: true,
                             absencebegin: true,
                             absenceEnd: true,
+                            absencetype: true,
+                            substitute: true,
                             sub_user: {
                                 select: {
                                     id: true,
@@ -86,6 +88,15 @@ export const getemployee_form = async () => {
                     },
                 },
             },
+            HistoryFormData: {
+                select: {
+                    timestamp: true,
+                },
+                orderBy: {
+                    timestamp: "desc",
+                },
+                take: 1,
+            },
         },
     });
 
@@ -116,6 +127,8 @@ export const getemployee_form = async () => {
                     form_field_id: input.form_field_id,
                     status: input.status,
                     timestamp: input.timestamp,
+                    timeStampLastChange:
+                        input.HistoryFormData[0]?.timestamp || input.timestamp,
                     employee: input.employee_forms.users,
                 })),
         };
@@ -233,6 +246,7 @@ export const deleteEmployee = async (id: string, chefId: string) => {
                 owner: chefId,
             },
         }),
+
         prisma.historyFormData.updateMany({
             where: { changed_by: id },
             data: { changed_by: chefId },

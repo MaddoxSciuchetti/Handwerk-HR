@@ -3,12 +3,11 @@ import { fetchChefData } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import useHandwerkerProBSBEmployee from "./use-unique-user";
+import { threeDaysAgo } from "@/lib/utils";
 
 function useCeoDashboard() {
     const [selectedUser, setSelectedUser] = useState<string | null>(null);
     const [modal, setModalOpen] = useState<boolean>(false);
-
-    // custom hook implementation
     const {
         data: allEmployeeData,
         isLoading,
@@ -17,19 +16,9 @@ function useCeoDashboard() {
         queryKey: ["ceo-dashboard"],
         queryFn: fetchChefData,
     });
-    const uniqueHandwerkerProBSBEmployee =
-        useHandwerkerProBSBEmployee(allEmployeeData);
-    console.log("unique users by auth_id");
-    console.log(uniqueHandwerkerProBSBEmployee);
 
-    const currentBSBEmployee = useMemo(
-        () =>
-            allEmployeeData?.filter((item) => item.owner === selectedUser) ||
-            [],
-        [selectedUser, allEmployeeData],
-    );
-    const threeDaysAgo = new Date();
-    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+    console.log("all employee data:");
+    console.log(allEmployeeData);
 
     const cleanData = useMemo(() => {
         if (!allEmployeeData) return [];
@@ -46,9 +35,8 @@ function useCeoDashboard() {
                 .map((item) => ({
                     ...item,
                     inputs: item.inputs.filter(
-                        (input) =>
-                            input.status !== "erledigt" &&
-                            new Date(input.timestamp) < threeDaysAgo,
+                        (input) => input.status !== "erledigt",
+                        // new Date(input.timestamp) < threeDaysAgo,
                     ),
                 }));
             groups.set(key, originalInputs);
@@ -56,17 +44,15 @@ function useCeoDashboard() {
         return Array.from(groups.entries());
     }, [allEmployeeData, threeDaysAgo]);
 
-    console.log("current BSB Employee Data:");
-    console.log(currentBSBEmployee);
+    console.log("cleaned data:");
+    console.log(cleanData);
 
     return {
+        allEmployeeData,
         selectedUser,
         setSelectedUser,
         modal,
         setModalOpen,
-        allEmployeeData,
-        uniqueHandwerkerProBSBEmployee,
-        currentBSBEmployee,
         isLoading,
         error,
         cleanData,

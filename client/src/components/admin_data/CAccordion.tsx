@@ -38,6 +38,7 @@ export function AccordionDemo({
                     task.inputs.map((input) => ({
                         description: task.description,
                         timestamp: input.timestamp,
+                        timeStampLastChange: input.timeStampLastChange,
                         form_field_id: task.form_field_id,
                         status: input.status,
                         employee: input.employee,
@@ -60,6 +61,9 @@ export function AccordionDemo({
             })
             .filter(([, group]) => group.inputs.length > 0);
     }, [cleanData, user]);
+
+    console.log("employee groups:");
+    console.log(employeeGroups);
 
     return (
         <>
@@ -102,7 +106,7 @@ export function AccordionDemo({
                                                     <strong>
                                                         Zuletzt bearbeitet:
                                                     </strong>{" "}
-                                                    {task.timestamp.toLocaleDateString()}
+                                                    {task.timeStampLastChange.toLocaleDateString()}
                                                 </p>
                                                 <p>
                                                     <p>

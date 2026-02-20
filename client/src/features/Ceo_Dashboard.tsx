@@ -14,6 +14,7 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import useHandwerkerProBSBEmployee from "@/hooks/use-unique-user";
 
 export type TEmployForm = z.infer<typeof EmployFormSchema>;
 export type TEmployeFormId = z.infer<typeof EmployFormSchema>[number];
@@ -21,16 +22,31 @@ export type TEmployeFormId = z.infer<typeof EmployFormSchema>[number];
 function Ceo_Dashboard() {
     const {
         allEmployeeData,
-        uniqueHandwerkerProBSBEmployee,
         setSelectedUser,
         setModalOpen,
         modal,
         selectedUser,
-        currentBSBEmployee,
         isLoading,
         error,
         cleanData,
     } = useCeoDashboard();
+
+    console.log("clean data");
+    console.log(cleanData);
+
+    const uniqueHandwerkerProBSBEmployee =
+        useHandwerkerProBSBEmployee(allEmployeeData);
+    console.log("unique users by auth_id");
+    console.log(uniqueHandwerkerProBSBEmployee);
+
+    const currentBSBEmployee = useMemo(
+        () =>
+            allEmployeeData?.filter((item) => item.owner === selectedUser) ||
+            [],
+        [selectedUser, allEmployeeData],
+    );
+    console.log("current BSB Employee Data:");
+    console.log(currentBSBEmployee);
 
     if (isLoading) return <div>Loading</div>;
     if (error) console.log(error);

@@ -28,7 +28,7 @@ interface FormProps {
     editcomment: string;
     select_option: string;
     form_field_id: number;
-    handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+    handleSubmit: (e: React.SubmitEvent<HTMLFormElement>) => void;
     onEdit: (
         id: number,
         description: string,
