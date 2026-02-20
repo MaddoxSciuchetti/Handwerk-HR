@@ -2,17 +2,14 @@ import useAuth from "@/hooks/useAuth";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 
 const Profile = () => {
     const { user, isLoading, isError } = useAuth();
     console.log("this should be the email", user?.email);
 
     if (isLoading) {
-        return (
-            <div className="flex justify-center mt-16">
-                <h1 className="text-3xl font-bold">Loading user data</h1>
-            </div>
-        );
+        return <Spinner className="size-8" />;
     }
 
     if (isError || !user) {

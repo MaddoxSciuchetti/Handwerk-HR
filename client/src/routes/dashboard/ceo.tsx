@@ -1,3 +1,4 @@
+import { Spinner } from "@/components/ui/spinner";
 import Ceo_Dashboard from "@/features/Ceo_Dashboard";
 import useAuth from "@/hooks/useAuth";
 import { fetchChefData, user, verifyChef } from "@/lib/api";
@@ -21,11 +22,7 @@ function RouteComponent() {
     });
 
     if (isLoading) {
-        return (
-            <div className="flex justify-center mt-16">
-                <h1 className="text-3xl font-bold">Loading user data</h1>
-            </div>
-        );
+        return <Spinner className="size-8" />;
     }
 
     if (isError || !user) {

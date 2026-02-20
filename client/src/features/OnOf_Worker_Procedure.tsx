@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { tryCatch } from "@/lib/utils";
 import { editData, formattedData } from "@/lib/api";
 import { useToggleModal } from "@/hooks/use-toggleModal";
+import { Spinner } from "@/components/ui/spinner";
 
 export type form_field = {
     id: number;
@@ -81,6 +82,7 @@ const OnOf_Worker_Procedure: React.FC<OffboardingFormProps> = ({
         queryFn: () => fetchFormattedData(),
     });
 
+    if (isLoading) return <Spinner className="size-8" />;
     if (!data) {
         return <div>Daten Laden</div>;
     }

@@ -19,6 +19,7 @@ import {
 
 import { useEffect, useState } from "react";
 import { Response, useGetHistory } from "@/hooks/use-getHistoryData";
+import { Spinner } from "../ui/spinner";
 
 interface FormProps {
     id_original: number;
@@ -171,7 +172,7 @@ const Form: React.FC<FormProps> = ({
                                 </AccordionTrigger>
                                 <AccordionContent className="">
                                     {isLoading ? (
-                                        <p>Loading History</p>
+                                        <Spinner className="size-8" />
                                     ) : (
                                         (historyData || []).map(
                                             (item: Response, index: number) => (

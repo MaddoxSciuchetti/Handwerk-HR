@@ -11,6 +11,7 @@ import { fetchCloudUrl, fetchFileData } from "@/lib/api";
 import { deleteFileData } from "@/lib/api";
 import { useToggleModal } from "@/hooks/use-toggleModal";
 import JSZip from "jszip";
+import { Spinner } from "./ui/spinner";
 
 interface Worker_Backround {
     id: number;
@@ -115,25 +116,26 @@ function Worker_Backround({ id }: Worker_Backround) {
                 {isLoading || isFetching ? (
                     <div className="flex items-center justify-center min-h-100">
                         {" "}
-                        Loading state{" "}
+                        <Spinner className="size-8" />
                     </div>
                 ) : !fetchFiles || fetchFiles.length === 0 ? (
                     <>
                         <div>
                             <div className="flex flex-row justify-end pt-5 pr-5">
                                 <img
-                                    className=" flex flex-end cursor-pointer"
+                                    className=" flex flex-end cursor-pointer outline rounded-sm p-1"
                                     onClick={openModal}
                                     src="/assets/copy.svg"
                                     alt="Upload File"
                                 />
 
-                                <p
-                                    onClick={() => handleZipExport}
-                                    className="ml-4 cursor-pointer  p-1"
+                                <Button
+                                    variant={"outline"}
+                                    onClick={() => handleZipExport()}
+                                    className="ml-4 cursor-pointer p-1"
                                 >
                                     Zip export
-                                </p>
+                                </Button>
                             </div>
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
                                 {fetchFiles?.map((file, index) => (
@@ -187,18 +189,19 @@ function Worker_Backround({ id }: Worker_Backround) {
                     <div>
                         <div className="flex flex-row justify-end pt-5 pr-5">
                             <img
-                                className=" flex flex-end cursor-pointer"
+                                className=" flex flex-end cursor-pointer outline rounded-sm p-1"
                                 onClick={openModal}
                                 src="/assets/copy.svg"
                                 alt="Upload File"
                             />
 
-                            <p
+                            <Button
+                                variant={"outline"}
                                 onClick={() => handleZipExport()}
                                 className="ml-4 cursor-pointer  p-1"
                             >
                                 Zip export
-                            </p>
+                            </Button>
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
                             {fetchFiles.map((file, index) => (

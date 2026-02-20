@@ -9,6 +9,7 @@ import SearchHeader from "@/components/SearchHeader";
 import HandwerkerTable from "@/components/HandwerkerTable";
 import { delete_user } from "@/types/api_response";
 import useAuth from "@/hooks/useAuth";
+import { Spinner } from "@/components/ui/spinner";
 
 type FormType = "Onboarding" | "Offboarding";
 
@@ -92,7 +93,7 @@ function OnOf_Home() {
     if (isLoading) {
         return (
             <div className="flex justify-center mt-16">
-                <h1 className="text-3xl font-bold">Loading user data</h1>
+                <Spinner className="size-8" />
             </div>
         );
     }

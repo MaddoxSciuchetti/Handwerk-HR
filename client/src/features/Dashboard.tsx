@@ -1,10 +1,11 @@
+import { Spinner } from "@/components/ui/spinner";
 import useAuth from "@/hooks/useAuth";
 
 function Dashboard() {
     const { user, isError, isLoading } = useAuth();
 
     if (user === undefined) return <div>Not allowed</div>;
-    if (isLoading) return <div>Is Loading</div>;
+    if (isLoading) return <Spinner className="size-8" />;
 
     return (
         <>

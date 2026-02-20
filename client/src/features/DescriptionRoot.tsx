@@ -1,5 +1,6 @@
 import RootModal from "@/components/root_description_layout/RootModal";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import useEmployeeData from "@/hooks/use-employeeData";
 import { useToggleModal } from "@/hooks/use-toggleModal";
 import {
@@ -150,7 +151,7 @@ function DescriptionRoot() {
     );
 
     if (OnboardingData === undefined || OffboardingData === undefined) {
-        return <div>Loading...</div>;
+        return <Spinner className="size-8" />;
     }
 
     return (
