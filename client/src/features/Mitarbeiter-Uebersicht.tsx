@@ -28,9 +28,6 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useProcessData } from "@/contexts/ProcessDataContext";
-import { useToggleModal } from "@/hooks/use-toggleModal";
-import { set } from "zod";
 
 function MitarbeiterÜbersicht() {
     const [modal, setModal] = useState<boolean>(false);

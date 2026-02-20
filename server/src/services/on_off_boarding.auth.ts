@@ -188,7 +188,10 @@ export const getUserFormData = async (id: any) => {
                                             employeeStatus: {
                                                 select: {
                                                     absence: true,
+                                                    absencetype: true,
+                                                    absencebegin: true,
                                                     absenceEnd: true,
+                                                    substitute: true,
                                                     sub_user: {
                                                         select: {
                                                             id: true,

@@ -61,20 +61,6 @@ function ModalEditMitarbeiter({
     const [absenceEnd, setAbsenceEnd] = useState<string>();
     const [substitute, setSubstitute] = useState<string>();
 
-    // const {
-    //     mutate: DeleteEmployee,
-    //     error,
-    //     isError: isErrorMutation,
-    // } = useMutation({
-    //     mutationFn: deleteEmployeeHandler,
-    //     onSuccess: () => {
-    //         toggleEmployeeModal;
-    //     },
-    //     onError: () => {
-    //         console.log(error);
-    //     },
-    // });
-
     const {
         mutate: EmployeeAbsence,
         error: ErrorAbsence,
@@ -106,13 +92,6 @@ function ModalEditMitarbeiter({
         <>
             <div className="flex flex-col max-h-100 min-h-140 mt-40 mx-auto text-center items-center z-50 bg-gray-200 rounded-xl  w-2xl">
                 <div className="max-w-xl h-full w-xl my-10 flex flex-col">
-                    {/* <Button
-                        className="w-40 self-end mb-4 cursor-pointer"
-                        variant={"outline"}
-                        onClick={() => DeleteEmployee(id)}
-                    >
-                        Mitarbeiter Löschen
-                    </Button> */}
                     <div className="flex flex-col gap-5">
                         <Label htmlFor="firstname">
                             Abwesenheit eintragen für {fullname}

@@ -1,9 +1,28 @@
-const resolveOwner = (auth_user: any) => {
+type TAuthUser = {
+    employeeStatus: {
+        absence: string | null;
+        absencetype: string | null;
+        absencebegin: Date | null;
+        absenceEnd: Date | null;
+        substitute: string | null;
+        sub_user: {
+            id: string;
+            nachname: string;
+            vorname: string;
+        } | null;
+    }[];
+    id: string;
+    nachname: string;
+    vorname: string;
+};
+
+const resolveOwner = (auth_user: TAuthUser) => {
     const status = auth_user.employeeStatus?.[0];
     const isAbsent =
-        status?.absence &&
+        status?.absencebegin &&
         status?.absenceEnd &&
-        new Date(status.absenceEnd) > new Date();
+        new Date() >= new Date(status.absencebegin) &&
+        new Date() <= new Date(status.absenceEnd);
 
     if (isAbsent && status.sub_user) {
         return {

@@ -23,7 +23,8 @@ import { Response, useGetHistory } from "@/hooks/use-getHistoryData";
 interface FormProps {
     id_original: number;
     description: string;
-    owner: string;
+    officialOwner: string;
+    substituteOwner: string;
     editcomment: string;
     select_option: string;
     form_field_id: number;
@@ -42,7 +43,8 @@ interface FormProps {
 const Form: React.FC<FormProps> = ({
     id_original,
     description,
-    owner,
+    officialOwner,
+    substituteOwner,
     editcomment,
     select_option,
     form_field_id,
@@ -116,8 +118,8 @@ const Form: React.FC<FormProps> = ({
                         <div className="flex gap-2 ">
                             <span className="text-red-400 text-sm font-semibold">
                                 {is_substitute
-                                    ? `Ersatzperson ${owner} von franziskus`
-                                    : `Verantwortlich: ${owner}`}
+                                    ? `Ersatzperson ${substituteOwner} Verantwortlich: ${officialOwner}`
+                                    : `Verantwortlich: ${officialOwner}`}
                             </span>
                             <div>
                                 <span

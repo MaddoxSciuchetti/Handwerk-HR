@@ -102,7 +102,12 @@ export const offboardingGetuserbyId = async (req: Request, res: Response) => {
                     id: input.id,
                     form_field_id: input.form_field_id,
                     description: input.form_fields.description,
-                    owner: resolvedOwner.vorname + " " + resolvedOwner.nachname,
+                    officialOwner:
+                        input.form_fields.auth_user.vorname +
+                        " " +
+                        input.form_fields.auth_user.nachname,
+                    substituteOwner:
+                        resolvedOwner.vorname + " " + resolvedOwner.nachname,
                     owner_id: resolvedOwner.id,
                     is_substitute: resolvedOwner.isSubstitute,
                     status: input.status,
