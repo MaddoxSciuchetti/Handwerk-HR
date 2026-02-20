@@ -280,3 +280,13 @@ export const sendReminder = async (req: Request, res: Response) => {
         console.log(error);
     }
 };
+
+export const getCloudUrl = async (req: Request, res: Response) => {
+    const cloud_key = decodeURIComponent(req.query.cloud_key as string);
+    console.log("=== Cloud Key ===");
+    console.log(cloud_key);
+    const fullUrl = `https://your-bucket.s3.amazonaws.com/${cloud_key}`;
+    const response = await fetch(fullUrl);
+    const buffer = await response.arrayBuffer();
+    res.send(Buffer.from(buffer));
+};
