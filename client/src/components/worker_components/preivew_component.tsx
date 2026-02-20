@@ -18,7 +18,7 @@ type PreviewCompoent = {
     editcomment: string;
     select_option: string;
     form_field_id: number;
-    handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+    handleSubmit: (e: React.SubmitEvent<HTMLFormElement>) => void;
 };
 
 function PreviewComponent({
@@ -62,6 +62,13 @@ function PreviewComponent({
                             id="editcomment"
                             name="editcomment"
                             className="w-xl"
+                        />
+
+                        <input
+                            type="hidden"
+                            id="date"
+                            name="date"
+                            value={new Date().toLocaleDateString()}
                         />
 
                         <input

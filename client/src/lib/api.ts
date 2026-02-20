@@ -168,6 +168,7 @@ export const EmployFormSchema = z.array(
                 form_field_id: z.coerce.number(),
                 status: z.coerce.string(),
                 timestamp: z.coerce.date(),
+                timeStampLastChange: z.coerce.date(),
                 employee: z.object({
                     id: z.number(),
                     vorname: z.string(),

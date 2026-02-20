@@ -113,7 +113,7 @@ const OnOf_Worker_Procedure: React.FC<OffboardingFormProps> = ({
         return { success: true, affectedRows: result.affectedRows };
     }
 
-    async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    async function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
         event.preventDefault();
         try {
             const formData = new FormData(event.currentTarget);
@@ -129,6 +129,8 @@ const OnOf_Worker_Procedure: React.FC<OffboardingFormProps> = ({
                 console.log("user not authenticated");
                 return;
             }
+            console.log("validated form data:");
+            console.log(result.data);
 
             await insertHistoryData(result.data, user);
             queryClient.invalidateQueries({
