@@ -137,7 +137,20 @@ function MitarbeiterÜbersicht() {
                                     }}
                                 >
                                     <td className="text-sm font-semibold py-5">
-                                        {value.vorname} {value.nachname}
+                                        {value.user_permission === "CHEF" ? (
+                                            <p>
+                                                <span className="text-blue-400">
+                                                    Ich:
+                                                </span>{" "}
+                                                {""}
+                                                {value.vorname} {value.nachname}
+                                            </p>
+                                        ) : (
+                                            <p>
+                                                {value.vorname}
+                                                {value.nachname}
+                                            </p>
+                                        )}
                                     </td>
                                     {(value.employeeStatus?.length ?? 0) > 0 ? (
                                         value.employeeStatus?.map((status) => (
@@ -261,17 +274,33 @@ function MitarbeiterÜbersicht() {
                                                 align="start"
                                             >
                                                 <DropdownMenuGroup>
-                                                    <DropdownMenuItem
-                                                        className="hover:bg-gray-200 cursor-pointer"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            DeleteEmployee(
-                                                                value.id,
-                                                            );
-                                                        }}
-                                                    >
-                                                        Löschen
-                                                    </DropdownMenuItem>
+                                                    {value.user_permission ===
+                                                    "CHEF" ? (
+                                                        <DropdownMenuItem
+                                                            disabled
+                                                            className="hover:bg-gray-200 cursor-pointer"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                DeleteEmployee(
+                                                                    value.id,
+                                                                );
+                                                            }}
+                                                        >
+                                                            Löschen
+                                                        </DropdownMenuItem>
+                                                    ) : (
+                                                        <DropdownMenuItem
+                                                            className="hover:bg-gray-200 cursor-pointer"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                DeleteEmployee(
+                                                                    value.id,
+                                                                );
+                                                            }}
+                                                        >
+                                                            Löschen
+                                                        </DropdownMenuItem>
+                                                    )}
                                                 </DropdownMenuGroup>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
