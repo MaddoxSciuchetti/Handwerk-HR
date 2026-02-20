@@ -28,6 +28,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Spinner } from "@/components/ui/spinner";
 
 function MitarbeiterÜbersicht() {
     const [modal, setModal] = useState<boolean>(false);
@@ -62,6 +63,7 @@ function MitarbeiterÜbersicht() {
         mutate: DeleteEmployee,
         error: errorMutation,
         isError: isErrorMutation,
+        isPending,
     } = useMutation({
         mutationFn: deleteEmployeeHandler,
         onSuccess: () => {
@@ -88,22 +90,16 @@ function MitarbeiterÜbersicht() {
         }
     };
 
+    if (isPending) return <Spinner className="size-8" />;
     if (isError) return <div>{error?.message}</div>;
     if (!EmployeeData) return <div>No employee data found.</div>;
-    // if (!idvalue) return <div>There is no id</div>;
 
     return (
         <>
             {" "}
             <div className="w-full min-w-340 rounded-2xl mx-auto p-6 shadow-gray-200 shadow-lg overflow-auto md:h-300">
                 <div className="h-full flex flex-col">
-                    {isLoading && (
-                        <div className="flex justify-center mt-16">
-                            <h1 className="text-3xl font-bold">
-                                Loading user data
-                            </h1>
-                        </div>
-                    )}
+                    {isLoading && <Spinner className="size-8" />}
                     <div className="flex gap-5">
                         <Input />
                         <div className="flex gap-2">

@@ -133,6 +133,14 @@ export const fetchFileData = async (id: number): Promise<File_Request[]> => {
     return response;
 };
 
+export const fetchCloudUrl = async (cloud_key: string): Promise<string> => {
+    const response = await API.get<string, string>(
+        `/offboarding/getCloudUrl?cloud_key=${encodeURIComponent(cloud_key)}`,
+        { responseType: "blob" },
+    );
+    return response;
+};
+
 export const deleteFileData = async (
     id: number,
 ): Promise<{ message: string }> => {

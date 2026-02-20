@@ -34,6 +34,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "../ui/select";
+import { Spinner } from "../ui/spinner";
 
 type ModalEditMitarbeiterProps = {
     fullname: string;
@@ -82,110 +83,102 @@ function ModalEditMitarbeiter({
         isError: isErrorEmployee,
     } = useEmployeeData();
 
+    console.log("employee data");
+    console.log(EmployeeData);
     console.log("descriptiond data");
     console.log(descriptionData);
-    if (isLoading) return <div>Is Loading</div>;
     if (isError) return <div>No error</div>;
     if (!id) return <div>There is no id</div>;
 
     return (
         <>
             <div className="flex flex-col max-h-100 min-h-140 mt-40 mx-auto text-center items-center z-50 bg-gray-200 rounded-xl  w-2xl">
-                <div className="max-w-xl h-full w-xl my-10 flex flex-col">
-                    <div className="flex flex-col gap-5">
-                        <Label htmlFor="firstname">
-                            Abwesenheit eintragen für {fullname}
-                        </Label>
-
-                        <select
-                            defaultValue={"ja"}
-                            value={absence}
-                            onChange={(e) => setAbsence(e.target.value)}
-                        >
-                            <option>ja</option>
-                        </select>
-
-                        <Label>Grund der Abwesenheit</Label>
-                        <select
-                            value={absencetype}
-                            onChange={(e) => setAbsenceType(e.target.value)}
-                        >
-                            <option>Krank</option>
-                            <option>Urlaub</option>
-                            <option>Andere</option>
-                        </select>
-
-                        <Input
-                            type="text"
-                            id="firstname"
-                            placeholder="Absenheitsbeginn"
-                            value={absencebegin}
-                            onChange={(e) => setAbsenceBegin(e.target.value)}
-                        />
-
-                        <Input
-                            type="text"
-                            id="firstname"
-                            placeholder="Absenheitsende"
-                            value={absenceEnd}
-                            onChange={(e) => setAbsenceEnd(e.target.value)}
-                        />
-
-                        <Label>Soll vertreten werden von</Label>
-
-                        <Select
-                            value={substitute}
-                            onValueChange={(value) => setSubstitute(value)}
-                        >
-                            <SelectTrigger
-                                id="substitute"
-                                name="substitute"
-                                value={substitute}
-
-                                // className="w-[17.75rem]"
+                {isLoading ? (
+                    <Spinner className="size-8" />
+                ) : (
+                    <div className="max-w-xl h-full w-xl my-10 flex flex-col">
+                        <div className="flex flex-col gap-5">
+                            <h1>Abwesenheit eintragen für {fullname}</h1>
+                            <Label>Grund der Abwesenheit</Label>
+                            <select
+                                value={absencetype}
+                                onChange={(e) => setAbsenceType(e.target.value)}
                             >
-                                <SelectValue placeholder="Vertretung" />
-                            </SelectTrigger>
-                            <SelectContent className="border-none">
-                                <SelectGroup className="bg-white cursor-pointer">
-                                    {EmployeeData?.map((item) => (
-                                        <SelectItem
-                                            className="hover:bg-gray-200 cursor-pointer"
-                                            id={`select-${item.id}`}
-                                            value={item.id}
-                                            key={item.id}
-                                            onClick={() =>
-                                                setSubstitute(item.id)
-                                            }
-                                        >
-                                            {item.vorname} {item.nachname}
-                                        </SelectItem>
-                                    ))}
-                                </SelectGroup>
-                            </SelectContent>
-                        </Select>
+                                <option>Krank</option>
+                                <option>Urlaub</option>
+                                <option>Andere</option>
+                            </select>
 
-                        <Button
-                            onClick={() =>
-                                EmployeeAbsence({
-                                    id,
-                                    absence,
-                                    absencetype,
-                                    absencebegin,
-                                    absenceEnd,
-                                    substitute,
-                                })
-                            }
-                            variant={"outline"}
-                        >
-                            Speichern
-                        </Button>
+                            <Input
+                                type="text"
+                                id="firstname"
+                                placeholder="Absenheitsbeginn"
+                                value={absencebegin}
+                                onChange={(e) =>
+                                    setAbsenceBegin(e.target.value)
+                                }
+                            />
+
+                            <Input
+                                type="text"
+                                id="firstname"
+                                placeholder="Absenheitsende"
+                                value={absenceEnd}
+                                onChange={(e) => setAbsenceEnd(e.target.value)}
+                            />
+
+                            <Label>Soll vertreten werden von</Label>
+
+                            <Select
+                                value={substitute}
+                                onValueChange={(value) => setSubstitute(value)}
+                            >
+                                <SelectTrigger
+                                    id="substitute"
+                                    name="substitute"
+                                    value={substitute}
+
+                                    // className="w-[17.75rem]"
+                                >
+                                    <SelectValue placeholder="Vertretung" />
+                                </SelectTrigger>
+                                <SelectContent className="border-none">
+                                    <SelectGroup className="bg-white cursor-pointer">
+                                        {EmployeeData?.map((item) => (
+                                            <SelectItem
+                                                className="hover:bg-gray-200 cursor-pointer"
+                                                id={`select-${item.id}`}
+                                                value={item.id}
+                                                key={item.id}
+                                                onClick={() =>
+                                                    setSubstitute(item.id)
+                                                }
+                                            >
+                                                {item.vorname} {item.nachname}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+
+                            <Button
+                                onClick={() =>
+                                    EmployeeAbsence({
+                                        id,
+                                        absence,
+                                        absencetype,
+                                        absencebegin,
+                                        absenceEnd,
+                                        substitute,
+                                    })
+                                }
+                                variant={"outline"}
+                            >
+                                Speichern
+                            </Button>
+                        </div>
                     </div>
-
-                    {descriptionData?.map((value, index) => (
-                        <div key={index}></div>
-                    ))}
-                </div>
+                )}
             </div>
         </>
     );
