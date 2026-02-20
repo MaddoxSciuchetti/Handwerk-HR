@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import z, { success } from "zod";
 import { API_URL } from "../api";
 import Form from "@/components/worker_components/worker_form_data";
@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import Worker_Backround from "@/components/backround_worker";
 import { Input } from "@/components/ui/input";
 import { tryCatch } from "@/lib/utils";
-import { editData, formattedData } from "@/lib/api";
+import { editData, formattedData, getUser } from "@/lib/api";
 import { useToggleModal } from "@/hooks/use-toggleModal";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -69,6 +69,8 @@ const OnOf_Worker_Procedure: React.FC<OffboardingFormProps> = ({
     });
 
     const [descriptionSearch, setDescriptionSearch] = useState<string>("");
+    const [currentUser, setCurrentUser] = useState<number | null>(null);
+    const [showMyItems, setShowMyItems] = useState(false);
 
     const queryClient = useQueryClient();
     const { modal, setModal, toggleModal } = useToggleModal();
@@ -86,24 +88,6 @@ const OnOf_Worker_Procedure: React.FC<OffboardingFormProps> = ({
     if (!data) {
         return <div>Daten Laden</div>;
     }
-
-    const searchData = data.form.fields.filter((field) =>
-        field.description
-            .toLowerCase()
-            .includes(descriptionSearch.toLowerCase()),
-    );
-    console.log("SEARCH DATA");
-    console.log(searchData);
-
-    const sortedData = [...searchData].sort((a, b) => {
-        if (a.status === "erledigt" && b.status !== "erledigt") {
-            return 1;
-        } else if (a.status !== "erledigt" && b.status === "erledigt") {
-            return -1;
-        } else {
-            return 0;
-        }
-    });
 
     async function sendFormData(formData: Mappingform): Promise<APIResponse> {
         const url = `${API_URL}/offboarding/editdata`;
@@ -200,6 +184,52 @@ const OnOf_Worker_Procedure: React.FC<OffboardingFormProps> = ({
         verified: boolean;
     };
 
+    const getFilterAndSortedData = () => {
+        let filteredData = data.form.fields;
+
+        if (descriptionSearch) {
+            filteredData = filteredData.filter((field) =>
+                field.description
+                    .toLowerCase()
+                    .includes(descriptionSearch.toLowerCase()),
+            );
+        }
+
+        if (showMyItems && currentUser) {
+            filteredData = filteredData.filter((field) => {
+                console.log("THIS IS THE FIELD IF");
+                console.log(field.owner_id);
+                return field.owner_id === currentUser;
+            });
+        }
+
+        const sortedData = [...filteredData].sort((a, b) => {
+            if (a.status === "erledigt" && b.status !== "erledigt") {
+                return 1;
+            } else if (a.status !== "erledigt" && b.status === "erledigt") {
+                return -1;
+            } else {
+                return 0;
+            }
+        });
+
+        return sortedData;
+    };
+
+    const handleMeFilter = async () => {
+        if (!showMyItems) {
+            const response = await getUser();
+            console.log("THIS IS THE RESPONSE ID");
+            console.log(response.id);
+            setCurrentUser(response.id);
+            setShowMyItems(true);
+        } else {
+            setShowMyItems(false);
+        }
+    };
+
+    const displayData = getFilterAndSortedData();
+
     async function insertHistoryData(
         result: insertHistoryDataType,
         user: user_verified,
@@ -292,7 +322,24 @@ const OnOf_Worker_Procedure: React.FC<OffboardingFormProps> = ({
                                 </div>
                             )}
 
-                            {sortedData.map(
+                            <div>
+                                <span>
+                                    <p
+                                        onClick={() => handleMeFilter()}
+                                        className={
+                                            showMyItems
+                                                ? "active cursor-pointer rounded-2xl bg-gray-300 w-50 text-sm mt-5 text-center px-5 py-2"
+                                                : "cursor-pointer rounded-2xl bg-gray-300 w-50 text-sm mt-5 text-center px-5 py-2"
+                                        }
+                                    >
+                                        {showMyItems
+                                            ? "Alle Aufgaben"
+                                            : "Meine Aufgaben"}
+                                    </p>
+                                </span>
+                            </div>
+
+                            {displayData.map(
                                 (field: form_field, index: number) => (
                                     <Form
                                         key={index}

@@ -74,7 +74,7 @@ export const resetPassword = async ({
     API.post("/auth/password/reset", { verificationCode, password });
 
 export type user = {
-    id: string;
+    id: number;
     updatedAt: string;
     email: string;
     verified: boolean;

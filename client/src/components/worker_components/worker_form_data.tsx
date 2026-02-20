@@ -117,11 +117,21 @@ const Form: React.FC<FormProps> = ({
                             />
                         </div>
                         <div className="flex gap-2 ">
-                            <span className="text-red-400 text-sm font-semibold">
-                                {is_substitute
-                                    ? `Ersatzperson ${substituteOwner} Verantwortlich: ${officialOwner}`
-                                    : `Verantwortlich: ${officialOwner}`}
-                            </span>
+                            {is_substitute ? (
+                                <>
+                                    <p className="rounded-2xl bg-orange-400 px-3 py-1 text-sm">
+                                        Ersatz: {substituteOwner}
+                                    </p>
+                                    <p className="rounded-2xl bg-gray-300 px-3 py-1 text-sm text-gray-600">
+                                        {officialOwner}
+                                    </p>
+                                </>
+                            ) : (
+                                <p className="rounded-2xl bg-blue-400 px-3 py-1 text-sm  ">
+                                    {officialOwner}
+                                </p>
+                            )}
+
                             <div>
                                 <span
                                     className={

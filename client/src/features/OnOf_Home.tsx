@@ -10,6 +10,7 @@ import HandwerkerTable from "@/components/HandwerkerTable";
 import { delete_user } from "@/types/api_response";
 import useAuth from "@/hooks/useAuth";
 import { Spinner } from "@/components/ui/spinner";
+import { Button } from "@/components/ui/button";
 
 type FormType = "Onboarding" | "Offboarding";
 
@@ -31,6 +32,7 @@ function OnOf_Home() {
     const { toggleSidebar } = useSidebar();
     const [modal, setModal] = useState<boolean>(false);
     const [search, setSearch] = useState("");
+    const [ownerSearch, setOwnerSearch] = useState();
 
     const { data, error, isSuccess } = useQuery<OffboardingItem[]>({
         queryKey: ["offboarding"],

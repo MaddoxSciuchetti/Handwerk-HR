@@ -5,8 +5,11 @@ import {
     SidebarInset,
     SidebarProvider,
     SidebarTrigger,
+    useSidebar,
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/auth/app-sidebar";
+import { useState } from "react";
+import FeatureModal from "@/components/modal/FeatureModal";
 
 export const Route = createRootRoute({
     component: RootLayout,
@@ -14,7 +17,6 @@ export const Route = createRootRoute({
 
 function RootLayout() {
     const location = useLocation();
-
     const isLoginPage = location.pathname === "/login";
     const isSignUp = location.pathname === "/signup";
     const isVerfiy = location.pathname === "/verify-email";
@@ -29,9 +31,25 @@ function RootLayout() {
     }
 
     return (
-        // But use this structure:
         <SidebarProvider>
-            <AppSidebar />
+            <SidebarLayout />
+        </SidebarProvider>
+    );
+}
+
+// Separate component that uses the sidebar hook
+function SidebarLayout() {
+    const [modal, setModal] = useState<boolean>(false);
+    const { toggleSidebar } = useSidebar(); // Now this is inside SidebarProvider!
+
+    const handleOpenModal = () => {
+        setModal((prev) => !prev);
+        toggleSidebar();
+    };
+
+    return (
+        <>
+            <AppSidebar openModal={handleOpenModal} />
             <SidebarInset className="flex flex-col">
                 <header className="flex h-16 shrink-0 items-center gap-2 px-4">
                     <SidebarTrigger className="-ml-1" />
@@ -42,6 +60,18 @@ function RootLayout() {
                     </div>
                 </main>
             </SidebarInset>
-        </SidebarProvider>
+
+            {/* Modal renders here */}
+            {modal && (
+                <div className="fixed inset-0 z-50 flex">
+                    <div
+                        onClick={handleOpenModal}
+                        className="fixed inset-0 bg-black/50 cursor-pointer"
+                        aria-label="Close modal"
+                    />
+                    <FeatureModal />
+                </div>
+            )}
+        </>
     );
 }

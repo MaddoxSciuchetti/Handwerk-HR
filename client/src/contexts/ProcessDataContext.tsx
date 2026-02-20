@@ -4,64 +4,71 @@ import { fetchProcessData } from "@/lib/api";
 import { UpdatedAiResponse } from "@/components/file-exports/FileExport-Modal";
 
 interface ProcessDataContextType {
-  getProcessData: (
-    id: number,
-    form_type: string,
-  ) => {
-    data: UpdatedAiResponse | undefined;
-    isLoading: boolean;
-    error: Error | null;
-    completedTasksCount: number | null;
-  };
+    getProcessData: (
+        id: number,
+        form_type: string,
+    ) => {
+        data: UpdatedAiResponse | undefined;
+        isLoading: boolean;
+        error: Error | null;
+        completedTasksCount: number | null;
+        totalTasks: number | null;
+    };
 }
 
 const ProcessDataContext = createContext<ProcessDataContextType | undefined>(
-  undefined,
+    undefined,
 );
 
 interface ProcessDataProviderProps {
-  children: ReactNode;
+    children: ReactNode;
 }
 
 export const ProcessDataProvider = ({ children }: ProcessDataProviderProps) => {
-  const getProcessData = (id: number, form_type: string) => {
-    const queryResult = useQuery<UpdatedAiResponse, Error>({
-      queryKey: ["processData", id, form_type],
-      queryFn: () => fetchProcessData(id, form_type),
-    });
+    const getProcessData = (id: number, form_type: string) => {
+        const queryResult = useQuery<UpdatedAiResponse, Error>({
+            queryKey: ["processData", id, form_type],
+            queryFn: () => fetchProcessData(id, form_type),
+        });
 
-    console.log(queryResult.data);
+        console.log(queryResult.data);
 
-    const completedTasksCount = queryResult.data?.form?.fields
-      ? queryResult.data.form.fields.filter(
-          (field) => field.status === "erledigt",
-        ).length
-      : null;
+        const completedTasksCount = queryResult.data?.form?.fields
+            ? queryResult.data.form.fields.filter(
+                  (field) => field.status === "erledigt",
+              ).length
+            : null;
 
-    return {
-      ...queryResult,
-      completedTasksCount,
+        const totalTasks = queryResult.data?.form?.fields
+            ? queryResult.data.form.fields.filter((field) => field.status)
+                  .length
+            : null;
+
+        return {
+            ...queryResult,
+            completedTasksCount,
+            totalTasks,
+        };
     };
-  };
 
-  return (
-    <ProcessDataContext.Provider value={{ getProcessData }}>
-      {children}
-    </ProcessDataContext.Provider>
-  );
+    return (
+        <ProcessDataContext.Provider value={{ getProcessData }}>
+            {children}
+        </ProcessDataContext.Provider>
+    );
 };
 
 export const useProcessDataContext = () => {
-  const context = useContext(ProcessDataContext);
-  if (context === undefined) {
-    throw new Error(
-      "useProcessDataContext must be used within a ProcessDataProvider",
-    );
-  }
-  return context;
+    const context = useContext(ProcessDataContext);
+    if (context === undefined) {
+        throw new Error(
+            "useProcessDataContext must be used within a ProcessDataProvider",
+        );
+    }
+    return context;
 };
 
 export const useProcessData = (id: number, form_type: string) => {
-  const { getProcessData } = useProcessDataContext();
-  return getProcessData(id, form_type);
+    const { getProcessData } = useProcessDataContext();
+    return getProcessData(id, form_type);
 };

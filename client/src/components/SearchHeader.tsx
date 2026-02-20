@@ -15,6 +15,7 @@ function SearchHeader({ search, setSearch, toggleModal }: SearchHeaderProps) {
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Suche bei Namen"
             />
+
             <div className="flex gap-2">
                 <Button variant={"outline"} onClick={() => toggleModal()}>
                     Mitarbeiter hinzufügen?

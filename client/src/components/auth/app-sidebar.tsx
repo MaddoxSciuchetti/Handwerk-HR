@@ -10,6 +10,7 @@ import {
 import {
     Sidebar,
     SidebarContent,
+    SidebarFooter,
     SidebarGroup,
     SidebarGroupContent,
     SidebarGroupLabel,
@@ -23,6 +24,7 @@ import { Link } from "@tanstack/react-router";
 import UserMenu from "./UserMenu";
 import useAuth from "@/hooks/useAuth";
 import { useEffect, useMemo, useState } from "react";
+import { Button } from "../ui/button";
 
 // Menu items.
 
@@ -52,7 +54,7 @@ const items = [
     },
 ];
 
-export function AppSidebar({}) {
+export function AppSidebar({ openModal }: { openModal: () => void }) {
     const { user, isError } = useAuth();
 
     const hasPermission = useMemo(() => {
@@ -72,34 +74,43 @@ export function AppSidebar({}) {
         return "";
     }
     return (
-        <Sidebar className="bg-gray-100 rounded-2xl">
-            <SidebarHeader className="mt-5 flex flex-row align-middle">
-                <UserMenu />
-            </SidebarHeader>
-            <SidebarContent>
-                <SidebarGroup>
-                    <SidebarGroupLabel className="text-black">
-                        BSB Team
-                    </SidebarGroupLabel>
-                    <SidebarGroupContent>
-                        <SidebarMenu className="text-black">
-                            {accessibleItems.map((item, index) => (
-                                <SidebarMenuItem
-                                    className="text-black"
-                                    key={index}
-                                >
-                                    <SidebarMenuButton asChild>
-                                        <Link to={item.to}>
-                                            <item.icon />
-                                            <span>{item.title}</span>
-                                        </Link>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
-                            ))}
-                        </SidebarMenu>
-                    </SidebarGroupContent>
-                </SidebarGroup>
-            </SidebarContent>
-        </Sidebar>
+        <>
+            <Sidebar className="bg-gray-100 rounded-2xl">
+                <SidebarHeader className="mt-5 flex flex-row align-middle">
+                    <UserMenu />
+                </SidebarHeader>
+                <SidebarContent>
+                    <SidebarGroup>
+                        <SidebarGroupLabel className="text-black">
+                            BSB Team
+                        </SidebarGroupLabel>
+                        <SidebarGroupContent>
+                            <SidebarMenu className="text-black">
+                                {accessibleItems.map((item, index) => (
+                                    <SidebarMenuItem
+                                        className="text-black"
+                                        key={index}
+                                    >
+                                        <SidebarMenuButton asChild>
+                                            <Link to={item.to}>
+                                                <item.icon />
+                                                <span>{item.title}</span>
+                                            </Link>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                ))}
+                            </SidebarMenu>
+                        </SidebarGroupContent>
+                    </SidebarGroup>
+                </SidebarContent>
+                <Button
+                    onClick={() => openModal()}
+                    variant={"outline"}
+                    className="mb-6 cursor-pointer mx-1 bg-blue-300"
+                >
+                    Feature Reqest{" "}
+                </Button>
+            </Sidebar>
+        </>
     );
 }

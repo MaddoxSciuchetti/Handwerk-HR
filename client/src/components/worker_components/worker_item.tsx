@@ -42,7 +42,19 @@ export function Worker_Item({
         data: processData,
         isLoading: processLoading,
         completedTasksCount,
+        totalTasks,
     } = useProcessData(item_value, form_type);
+
+    const calculatePercent = (completedTasks: number, total: number) => {
+        const percent = (completedTasks / total) * 100;
+        console.log("this is the percent calculation");
+        console.log(percent);
+        if (percent < 20) return "text-red-500";
+        if (percent > 20 && percent <= 99) return "text-yellow-300";
+        if (percent === 100) return "text-green-500";
+    };
+
+    const color = calculatePercent(completedTasksCount!!, totalTasks!!);
 
     return (
         <>
@@ -66,19 +78,7 @@ export function Worker_Item({
                 </td>
 
                 <th className="">
-                    <span
-                        className={
-                            completedTasksCount === null
-                                ? "text-red-500"
-                                : completedTasksCount == 2
-                                  ? "text-red-600"
-                                  : completedTasksCount < 12
-                                    ? "text-orange-300"
-                                    : completedTasksCount >= 13
-                                      ? "text-green-500"
-                                      : ""
-                        }
-                    >
+                    <span className={color}>
                         {processLoading ? "..." : completedTasksCount}
                     </span>
                     <span className="text-black font-medium">
@@ -108,7 +108,7 @@ export function Worker_Item({
                                 >
                                     Löschen
                                 </DropdownMenuItem>
-                                <DropdownMenuItem
+                                {/* <DropdownMenuItem
                                     className="hover:bg-gray-200 cursor-pointer"
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -116,7 +116,7 @@ export function Worker_Item({
                                     }}
                                 >
                                     Export
-                                </DropdownMenuItem>
+                                </DropdownMenuItem> */}
                             </DropdownMenuGroup>
                         </DropdownMenuContent>
                     </DropdownMenu>
