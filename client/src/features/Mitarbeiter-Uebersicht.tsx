@@ -75,6 +75,19 @@ function MitarbeiterÜbersicht() {
     console.log("EMPLOYEE DATA");
     console.log(EmployeeData);
 
+    const dateObject = new Date(Date.now());
+    const calculateData = (
+        firstDate: Date,
+        secondDate: Date,
+        dateObject: Date,
+    ) => {
+        if (firstDate && secondDate <= dateObject) {
+            return false;
+        } else {
+            return true;
+        }
+    };
+
     if (isError) return <div>{error?.message}</div>;
     if (!EmployeeData) return <div>No employee data found.</div>;
     // if (!idvalue) return <div>There is no id</div>;
@@ -134,34 +147,46 @@ function MitarbeiterÜbersicht() {
                                         value.employeeStatus?.map((status) => (
                                             <td key={status.id} className="">
                                                 <div className="flex flex-col">
-                                                    {status.substitute ? (
-                                                        <p className="text-sm text-red-500 w-full">
-                                                            Abwesend vom
-                                                        </p>
+                                                    {calculateData(
+                                                        new Date(
+                                                            status.absencebegin ||
+                                                                "",
+                                                        ),
+                                                        new Date(
+                                                            status.absenceEnd ||
+                                                                "",
+                                                        ),
+                                                        dateObject,
+                                                    ) && status.substitute ? (
+                                                        <>
+                                                            <p className="text-sm text-red-500 w-full">
+                                                                Abwesend vom
+                                                            </p>
+                                                            <div className="flex gap-1 text-sm">
+                                                                {status.absencebegin?.toLocaleDateString(
+                                                                    "de-DE",
+                                                                    {
+                                                                        day: "2-digit",
+                                                                        month: "2-digit",
+                                                                        year: "2-digit",
+                                                                    },
+                                                                )}
+                                                                <p>bis</p>
+                                                                {status.absenceEnd?.toLocaleDateString(
+                                                                    "de-DE",
+                                                                    {
+                                                                        day: "2-digit",
+                                                                        month: "2-digit",
+                                                                        year: "2-digit",
+                                                                    },
+                                                                )}
+                                                            </div>
+                                                        </>
                                                     ) : (
                                                         <p className="text-sm text-green-500 w-full">
                                                             Anwesend
                                                         </p>
                                                     )}
-                                                    <div className="flex gap-1 text-sm">
-                                                        {status.absencebegin?.toLocaleDateString(
-                                                            "de-DE",
-                                                            {
-                                                                day: "2-digit",
-                                                                month: "2-digit",
-                                                                year: "2-digit",
-                                                            },
-                                                        )}
-                                                        <p>bis</p>
-                                                        {status.absenceEnd?.toLocaleDateString(
-                                                            "de-DE",
-                                                            {
-                                                                day: "2-digit",
-                                                                month: "2-digit",
-                                                                year: "2-digit",
-                                                            },
-                                                        )}
-                                                    </div>
                                                 </div>
                                             </td>
                                         ))
@@ -187,18 +212,36 @@ function MitarbeiterÜbersicht() {
                                                         className="flex gap-1 "
                                                         key={index}
                                                     >
-                                                        <span>
-                                                            {
-                                                                value.sub_user
-                                                                    ?.vorname
-                                                            }
-                                                        </span>
-                                                        <span>
-                                                            {
-                                                                value.sub_user
-                                                                    ?.nachname
-                                                            }
-                                                        </span>
+                                                        {calculateData(
+                                                            new Date(
+                                                                value.absencebegin ||
+                                                                    "",
+                                                            ),
+                                                            new Date(
+                                                                value.absenceEnd ||
+                                                                    "",
+                                                            ),
+                                                            dateObject,
+                                                        ) ? (
+                                                            <div>
+                                                                <span>
+                                                                    {
+                                                                        value
+                                                                            .sub_user
+                                                                            ?.vorname
+                                                                    }
+                                                                </span>{" "}
+                                                                <span>
+                                                                    {
+                                                                        value
+                                                                            .sub_user
+                                                                            ?.nachname
+                                                                    }
+                                                                </span>
+                                                            </div>
+                                                        ) : (
+                                                            <span>n/a</span>
+                                                        )}
                                                     </div>
                                                 ),
                                             )
