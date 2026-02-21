@@ -3,10 +3,86 @@ import useAuth from "@/hooks/useAuth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
+import { Button } from "@/components/ui/button";
+import { useRef, useState } from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { getProfileFoto, uploadProfileFoto } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
+
+export type TFile = {
+    file: File[];
+};
 
 const Profile = () => {
     const { user, isLoading, isError } = useAuth();
     console.log("this should be the email", user?.email);
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+    const [fileProgresses, setFileProgresses] = useState<
+        Record<string, number>
+    >({});
+
+    const {
+        register,
+        handleSubmit,
+        setValue,
+        watch,
+        formState: { errors },
+    } = useForm<TFile>();
+    const onSubmit: SubmitHandler<TFile> = (data) => uploadProfileFoto(data);
+
+    const { data, isPending } = useQuery<string>({
+        queryKey: ["profilepic"],
+        queryFn: getProfileFoto,
+    });
+
+    const handleFileSelect = (files: FileList | null) => {
+        if (!files) return;
+
+        const newFiles = Array.from(files);
+        setUploadedFiles((prev) => [...prev, ...newFiles]);
+        setValue("file", [...uploadedFiles, ...newFiles]);
+
+        newFiles.forEach((file) => {
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 10;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                }
+                setFileProgresses((prev) => ({
+                    ...prev,
+                    [file.name]: Math.min(progress, 100),
+                }));
+            }, 300);
+        });
+    };
+
+    const handleBoxClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        handleFileSelect(e.dataTransfer.files);
+    };
+
+    const removeFile = (filename: string) => {
+        setUploadedFiles((prev) =>
+            prev.filter((file) => file.name !== filename),
+        );
+        setFileProgresses((prev) => {
+            const newProgresses = { ...prev };
+            delete newProgresses[filename];
+            return newProgresses;
+        });
+    };
 
     if (isLoading) {
         return <Spinner className="size-8" />;
@@ -40,6 +116,29 @@ const Profile = () => {
             <p className="text-black mb-2">
                 Email: <span className="text-black">{email}</span>
             </p>
+
+            <p>Upload your profile picture:</p>
+            <form>
+                <div
+                    className="cursor-pointer w-20 h-20 rounded-full outline overflow-hidden"
+                    onClick={handleBoxClick}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                >
+                    <img src={user.presignedUrl} alt="something" />
+                </div>
+
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="hidden"
+                    accept="image/*"
+                    onChange={(e) => {
+                        handleFileSelect(e.target.files);
+                        handleSubmit(onSubmit)();
+                    }}
+                />
+            </form>
             <p className="text-black">
                 Created on{" "}
                 <span className="text-black">

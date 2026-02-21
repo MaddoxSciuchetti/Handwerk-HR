@@ -69,6 +69,7 @@ model User {
   id                String             @id @default(cuid())
   vorname String  @db.VarChar(55) @default("TestVorname")
   nachname String @db.VarChar(55) @default("TestVorname")
+  cloud_url String         @default("something")@db.VarChar(500) 
   email             String             @unique @db.Citext
   password          String
   verified          Boolean            @default(false)

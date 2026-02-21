@@ -7,26 +7,30 @@ import {
     deleteDescriptionData,
     deleteEmployee,
     getChef,
+    getdbProfileFoto,
     getDescriptionData,
     getemployee_form,
     getUser,
+    insertProfilePicture,
     queryEmployeeData,
     updateAbsenceData,
     updateDescriptionData,
 } from "../services/user.protected";
 import { checkChef } from "@/utils/checkChef";
 import z from "zod";
+import { generatePresignedUrl, uploadFileToS3 } from "@/config/aws";
 
 export const getUserHandler = catchErrors(async (req, res) => {
     const id = req.userId;
 
     const user = await getUser(id);
-
-    console.log("=== AUTHENTICATED USER ====");
+    console.log("USER USR");
     console.log(user);
+    const key = new URL(user?.cloud_url!).pathname.slice(1);
+    const presignedUrl = await generatePresignedUrl(key);
 
     appAssert(user, NOT_FOUND, "User not found");
-    return res.status(OK).json(user);
+    return res.status(OK).json({ ...user, presignedUrl });
 });
 
 export const getChefHandler = catchErrors(async (req, res) => {
@@ -125,4 +129,33 @@ export const editAbsenceData = catchErrors(async (req, res) => {
 
     const editAbsenceResult = await updateAbsenceData(data);
     return res.status(OK).json(editAbsenceResult);
+});
+
+export const postProfileFoto = catchErrors(async (req, res) => {
+    const id = req.userId;
+    const file = req.file as Express.Multer.File;
+
+    const uploadFiles: Array<any> = [];
+
+    const uploadResult = await uploadFileToS3(file, id, "upload/profilepic");
+    if (!uploadResult.success) {
+        return res.status(500).json({ error: "Upload failed" });
+    }
+
+    await insertProfilePicture({ cloud_url: uploadResult.url! }, id);
+
+    return res.status(OK).json({ sucess: "image stored" });
+});
+
+export const getProfileFoto = catchErrors(async (req, res) => {
+    const id = req.userId;
+
+    const profilePic = await getdbProfileFoto(id);
+    if (!profilePic) {
+        return { error: "please upload profile pic" };
+    }
+    const key = new URL(profilePic.cloud_url).pathname.slice(1);
+    const presignedUrl = await generatePresignedUrl(key);
+
+    return res.status(OK).json(presignedUrl);
 });

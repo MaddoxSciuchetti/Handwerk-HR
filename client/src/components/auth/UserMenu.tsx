@@ -1,4 +1,4 @@
-import { logout } from "@/lib/api";
+import { getProfileFoto, logout } from "@/lib/api";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -8,10 +8,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
+import useAuth from "@/hooks/useAuth";
 
 const UserMenu = () => {
+    const { user, isLoading, isError } = useAuth();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const { mutate: signOut } = useMutation({
@@ -28,7 +30,7 @@ const UserMenu = () => {
                 <Avatar className="cursor-pointer w-10 h-10">
                     <AvatarImage
                         className="h-full w-full"
-                        src="/assets/timo.png"
+                        src={user?.presignedUrl}
                     />
                     <AvatarFallback>Profile</AvatarFallback>
                 </Avatar>

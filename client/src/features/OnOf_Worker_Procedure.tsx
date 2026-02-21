@@ -6,7 +6,7 @@ import Form from "@/components/worker_components/worker_form_data";
 import { Mappingform } from "../schemas/Task";
 import { APIResponse } from "../types/api_response";
 import PreviewComponent from "@/components/worker_components/preivew_component";
-import useAuth from "@/hooks/useAuth";
+import useAuth, { User } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import Worker_Backround from "@/components/backround_worker";
 import { Input } from "@/components/ui/input";
@@ -232,7 +232,8 @@ const OnOf_Worker_Procedure: React.FC<OffboardingFormProps> = ({
 
     async function insertHistoryData(
         result: insertHistoryDataType,
-        user: user_verified,
+        user: User,
+        // this change possibly caused some errors somewhere else
     ) {
         try {
             const response = await fetch(

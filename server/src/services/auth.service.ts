@@ -85,6 +85,7 @@ export const createAccount = async (data: createAccountParams) => {
 
     const url = `${APP_ORIGIN}/email/verify/${verificationCode.id}`;
 
+    // integrate resend
     const { error } = await sendMail({
         to: user.email,
         ...getVerifyEmailTemplate(url),
@@ -307,6 +308,7 @@ export const sendPasswordResetEmail = async (email: string) => {
 
     const url = `${APP_ORIGIN}/password/reset?code=${verificationCode.id}&exp=${expiresAt.getTime()}`;
 
+    // integrate email here too
     const { data, error } = await sendMail({
         to: email,
         ...getPasswordResetTemplate(url),

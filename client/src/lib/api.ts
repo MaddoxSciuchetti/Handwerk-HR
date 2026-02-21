@@ -5,6 +5,7 @@ import API from "@/config/apiClient";
 import { TEmployForm } from "@/features/Ceo_Dashboard";
 import { OffboardingItem } from "@/features/OnOf_Home";
 import { api_Response } from "@/features/OnOf_Worker_Procedure";
+import { TFile } from "@/features/Profile";
 import { Mappingform } from "@/schemas/Task";
 import { FormInputs } from "@/schemas/zodSchema";
 import {
@@ -83,8 +84,8 @@ export type user = {
     user_permission: "CHEF" | "MITARBEITER";
 };
 
-export const getUser = async (): Promise<user> => {
-    return API.get<user, user>("/user");
+export const getUser = async (): Promise<User> => {
+    return API.get<User, User>("/user");
 };
 
 export type Session_API = {
@@ -390,5 +391,22 @@ export const featureRequest = async (data: TFeatureForm) => {
         `/offboarding/FeatureRequest`,
         form,
     );
+    return response;
+};
+
+export const uploadProfileFoto = async (data: TFile) => {
+    const form = new FormData();
+    form.append("file", data.file[0]);
+    console.log("received something");
+    console.log(form);
+    const response = await API.post<TFile, TFile>(
+        "/user/uploadProfileFoto",
+        form,
+    );
+    return response;
+};
+
+export const getProfileFoto = async (): Promise<string> => {
+    const response = API.get<string, string>("/user/getProfileFoto");
     return response;
 };

@@ -8,16 +8,24 @@ import {
     fetchDescriptionHandler,
     getChefHandler,
     getEmployeedata,
+    getProfileFoto,
     getUnifiedData,
     getUserHandler,
+    postProfileFoto,
 } from "../controllers/user.controller";
 import { checkChef } from "@/utils/checkChef";
+import { upload } from "@/middleware/fileparser";
 
 const userRoutes = Router();
 
 // prefix /user
 
 userRoutes.get("/", getUserHandler);
+
+userRoutes.post("/uploadProfileFoto", upload.single("file"), postProfileFoto);
+
+userRoutes.get("/getProfileFoto", getProfileFoto);
+
 userRoutes.get("/chefpermission", checkChef, getChefHandler);
 
 // employee data

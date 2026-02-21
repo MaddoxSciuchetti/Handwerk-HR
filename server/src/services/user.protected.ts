@@ -287,3 +287,33 @@ export const updateAbsenceData = async (data: AbsenceData) => {
         },
     });
 };
+
+type fileData = {
+    cloud_url: string;
+};
+
+export const insertProfilePicture = async (file: fileData, id: string) => {
+    return await prisma.user.update({
+        data: {
+            cloud_url: file.cloud_url,
+        },
+        where: {
+            id: id,
+        },
+        select: {
+            cloud_url: true,
+            id: true,
+        },
+    });
+};
+
+export const getdbProfileFoto = async (id: string) => {
+    return await prisma.user.findUnique({
+        where: {
+            id: id,
+        },
+        select: {
+            cloud_url: true,
+        },
+    });
+};

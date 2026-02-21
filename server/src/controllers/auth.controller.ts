@@ -39,6 +39,8 @@ export const registerHandler = catchErrors(async (req, res) => {
 
     const { user, accessToken, refreshToken } = await createAccount(request);
 
+    // send email to person -> with their credentials
+
     // setAuthCookies({ res, accessToken, refreshToken })
     // return response
     return res.status(CREATED).json(user);

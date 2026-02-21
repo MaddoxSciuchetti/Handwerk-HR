@@ -4,36 +4,39 @@ import { getUser } from "../lib/api";
 export const AUTH = "auth";
 
 export type User = {
-  createdAt: string;
-  email: string;
-  id: string;
-  updatedAt: string;
-  verified: boolean;
-  user_permission: "CHEF" | "MITARBEITER";
+    id: string;
+    email: string;
+    verified: boolean;
+    user_permission: "CHEF" | "MITARBEITER";
+    createdAt: Date;
+    updatedAt: Date;
+    vorname: string;
+    nachname: string;
+    presignedUrl?: string;
 };
 
 type Auth = {
-  user: User | undefined;
-  isLoading: boolean;
-  isError: boolean;
+    user: User | undefined;
+    isLoading: boolean;
+    isError: boolean;
 };
 
 const useAuth = (opts: Record<string, any> = {}): Auth => {
-  const {
-    data: user,
-    isLoading,
-    isError,
-  } = useQuery<User>({
-    queryKey: [AUTH],
-    queryFn: getUser,
-    staleTime: Infinity,
-  });
+    const {
+        data: user,
+        isLoading,
+        isError,
+    } = useQuery<User>({
+        queryKey: [AUTH],
+        queryFn: getUser,
+        staleTime: Infinity,
+    });
 
-  return {
-    user,
-    isLoading,
-    isError,
-  };
+    return {
+        user,
+        isLoading,
+        isError,
+    };
 };
 
 export default useAuth;
