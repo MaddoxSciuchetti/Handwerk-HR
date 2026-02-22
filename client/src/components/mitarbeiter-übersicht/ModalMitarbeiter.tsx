@@ -1,16 +1,16 @@
 import { useState } from "react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { signup } from "@/lib/api";
 
-function ModalMitarbeiter() {
+function ModalMitarbeiter({ toggleModal }: { toggleModal: () => void }) {
     const [firstName, setFirstName] = useState<string>("");
     const [lastName, setLastName] = useState<string>("");
     const [email, setEmail] = useState<string>("");
     const [password, setPassword] = useState<string>("");
     const [confirmPassword, setConfirmPassword] = useState<string>("");
-
+    const queryClient = useQueryClient();
     const {
         mutate: createEmployee,
         error,
@@ -19,7 +19,12 @@ function ModalMitarbeiter() {
         isSuccess,
     } = useMutation({
         mutationFn: signup,
-        onSuccess: () => console.log("success"),
+        onSuccess: () => {
+            (toggleModal(),
+                queryClient.invalidateQueries({
+                    queryKey: ["EmployeeDataSpecifics"],
+                }));
+        },
         onError: () => {
             console.log(
                 isError ? `this is error ${error.message}` : "nothing received",

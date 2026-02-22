@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useMemo, useState } from "react";
 import ModalMitarbeiter from "@/components/mitarbeiter-übersicht/ModalMitarbeiter";
 import { useSidebar } from "@/components/ui/sidebar";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     deleteEmployeeHandler,
     specificEmployeeData,
@@ -49,6 +49,8 @@ function MitarbeiterÜbersicht() {
         toggleSidebar();
     };
 
+    const queryClient = useQueryClient();
+
     const {
         data: EmployeeData,
         isLoading,
@@ -67,6 +69,9 @@ function MitarbeiterÜbersicht() {
     } = useMutation({
         mutationFn: deleteEmployeeHandler,
         onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: ["EmployeeDataSpecifics"],
+            });
             toggleEmployeeModal;
         },
         onError: () => {
@@ -331,7 +336,7 @@ function MitarbeiterÜbersicht() {
                                 className="fixed inset-0 bg-black/50 cursor-pointer"
                                 aria-label="Close modal"
                             />
-                            <ModalMitarbeiter />
+                            <ModalMitarbeiter toggleModal={toggleModal} />
                         </div>
                     )}
                 </div>
