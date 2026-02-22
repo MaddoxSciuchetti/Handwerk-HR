@@ -313,7 +313,7 @@ export const sendPasswordResetEmail = async (email: string) => {
 
     // send verifcation email
 
-    const url = `${APP_ORIGIN}/password/reset?code=${verificationCode.id}&exp=${expiresAt.getTime()}`;
+    const url = `${FRONTENDURL}/password/reset?code=${verificationCode.id}&exp=${expiresAt.getTime()}`;
 
     // integrate email here too
     const { data, error } = await sendMail({
