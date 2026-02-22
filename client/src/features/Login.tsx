@@ -111,6 +111,7 @@ export function LoginComponent({
                                 <p className="text-sm text-amber-50">
                                     Don&apos;t have an account?{" "}
                                     <button
+                                        disabled
                                         onClick={() =>
                                             navigate({ to: "/signup" })
                                         }

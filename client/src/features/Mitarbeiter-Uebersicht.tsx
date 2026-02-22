@@ -65,6 +65,7 @@ function MitarbeiterÜbersicht() {
         mutate: DeleteEmployee,
         error: errorMutation,
         isError: isErrorMutation,
+
         isPending,
     } = useMutation({
         mutationFn: deleteEmployeeHandler,
@@ -97,7 +98,7 @@ function MitarbeiterÜbersicht() {
 
     if (isPending) return <Spinner className="size-8" />;
     if (isError) return <div>{error?.message}</div>;
-    if (!EmployeeData) return <div>No employee data found.</div>;
+    if (!EmployeeData) return <Spinner className="sze-8" />;
 
     return (
         <>
