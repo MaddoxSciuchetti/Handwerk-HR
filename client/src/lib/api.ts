@@ -407,6 +407,6 @@ export const uploadProfileFoto = async (data: TFile) => {
 };
 
 export const getProfileFoto = async (): Promise<string> => {
-    const response = API.get<string, string>("/user/getProfileFoto");
+    const response = await API.get<string, string>("/user/getProfileFoto");
     return response;
 };

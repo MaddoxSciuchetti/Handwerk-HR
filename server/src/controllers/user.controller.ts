@@ -27,11 +27,8 @@ export const getUserHandler = catchErrors(async (req, res) => {
     console.log("USER USR");
     console.log(user);
 
-    const key = new URL(user?.cloud_url!).pathname.slice(1);
-    const presignedUrl = await generatePresignedUrl(key);
-
     appAssert(user, NOT_FOUND, "User not found");
-    return res.status(OK).json({ ...user, presignedUrl });
+    return res.status(OK).json(user);
 });
 
 export const getChefHandler = catchErrors(async (req, res) => {
@@ -154,7 +151,7 @@ export const getProfileFoto = catchErrors(async (req, res) => {
     if (!profilePic) {
         return { error: "please upload profile pic" };
     }
-    const key = new URL(profilePic.cloud_url).pathname.slice(1);
+    const key = new URL(profilePic?.cloud_url!).pathname.slice(1);
     const presignedUrl = await generatePresignedUrl(key);
 
     return res.status(OK).json(presignedUrl);

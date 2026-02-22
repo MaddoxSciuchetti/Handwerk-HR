@@ -20,6 +20,7 @@ export const generatePresignedUrl = async (
     const command = new GetObjectCommand({
         Bucket: process.env.AWS_S3_BUCKET!,
         Key: cloudKey,
+        ResponseCacheControl: "no-store, no-cache, must-revalidate",
     });
 
     return await getSignedUrl(s3Client, command, {

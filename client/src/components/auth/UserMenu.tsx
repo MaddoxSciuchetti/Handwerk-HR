@@ -14,8 +14,14 @@ import useAuth from "@/hooks/useAuth";
 
 const UserMenu = () => {
     const { user, isLoading, isError } = useAuth();
-    const navigate = useNavigate();
     const queryClient = useQueryClient();
+
+    const { data, isPending } = useQuery<string>({
+        queryKey: ["profilepic"],
+        queryFn: getProfileFoto,
+    });
+
+    const navigate = useNavigate();
     const { mutate: signOut } = useMutation({
         mutationFn: logout,
         onSettled: () => {
@@ -28,10 +34,7 @@ const UserMenu = () => {
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Avatar className="cursor-pointer w-10 h-10">
-                    <AvatarImage
-                        className="h-full w-full"
-                        src={user?.presignedUrl}
-                    />
+                    <img className="h-full w-full" src={data} />
                     <AvatarFallback>Profile</AvatarFallback>
                 </Avatar>
             </DropdownMenuTrigger>

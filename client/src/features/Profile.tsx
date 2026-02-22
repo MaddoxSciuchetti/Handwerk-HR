@@ -1,13 +1,14 @@
-import useAuth from "@/hooks/useAuth";
+import useAuth, { AUTH } from "@/hooks/useAuth";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { getProfileFoto, uploadProfileFoto } from "@/lib/api";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { uuid } from "zod";
 
 export type TFile = {
     file: File[];
@@ -23,6 +24,10 @@ const Profile = () => {
         Record<string, number>
     >({});
 
+    const [imgVersion, setImgVersion] = useState(0);
+
+    const queryClient = useQueryClient();
+
     const {
         register,
         handleSubmit,
@@ -30,7 +35,18 @@ const Profile = () => {
         watch,
         formState: { errors },
     } = useForm<TFile>();
-    const onSubmit: SubmitHandler<TFile> = (data) => uploadProfileFoto(data);
+
+    const uploadMutation = useMutation({
+        mutationFn: uploadProfileFoto,
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: ["profilepic"] });
+            console.log("invalidated and refetched");
+        },
+    });
+
+    const onSubmit: SubmitHandler<TFile> = (data) => {
+        uploadMutation.mutate(data);
+    };
 
     const { data, isPending } = useQuery<string>({
         queryKey: ["profilepic"],
@@ -42,7 +58,7 @@ const Profile = () => {
 
         const newFiles = Array.from(files);
         setUploadedFiles((prev) => [...prev, ...newFiles]);
-        setValue("file", [...uploadedFiles, ...newFiles]);
+        setValue("file", newFiles); // sneaked up error here review later
 
         newFiles.forEach((file) => {
             let progress = 0;
@@ -125,11 +141,16 @@ const Profile = () => {
                     onDragOver={handleDragOver}
                     onDrop={handleDrop}
                 >
-                    <img
-                        src={user.presignedUrl}
-                        className="w-full h-full"
-                        alt="image"
-                    />
+                    {isPending ? (
+                        "not there"
+                    ) : (
+                        <img
+                            key={`${data}+${uuid()}`}
+                            src={data}
+                            className="w-full h-full"
+                            alt="image"
+                        />
+                    )}
                 </div>
 
                 <input
