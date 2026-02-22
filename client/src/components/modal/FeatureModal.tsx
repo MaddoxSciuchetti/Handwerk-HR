@@ -19,7 +19,7 @@ import { featureRequest } from "@/lib/api";
 export type TFeatureForm = {
     importance: string;
     textarea: string;
-    file: File[];
+    file?: File[];
 };
 
 function FeatureModal() {
@@ -122,6 +122,7 @@ function FeatureModal() {
                             <span>This field is required</span>
                         )}
 
+                        <p className="text-left">Optional</p>
                         <CardContent className="w-full rounded-2xl">
                             {/* <Form /> */}
                             <div className="w-full mx-auto ">

@@ -382,11 +382,15 @@ export const addDescriptionData = async (
 
 export const featureRequest = async (data: TFeatureForm) => {
     const form = new FormData();
-    form.append("importance", data.importance);
-    form.append("text", data.textarea);
-    if (data.file[0]) {
+    if (data.file === undefined) {
+        form.append("importance", data.importance);
+        form.append("text", data.textarea);
+    } else {
         data.file.forEach((file) => form.append("files", file));
+        form.append("importance", data.importance);
+        form.append("text", data.textarea);
     }
+
     const response = await API.post<TFeatureForm, TFeatureForm>(
         `/offboarding/FeatureRequest`,
         form,
