@@ -112,7 +112,7 @@ function ModalEditMitarbeiter({
                             <Input
                                 type="text"
                                 id="firstname"
-                                placeholder="Absenheitsbeginn"
+                                placeholder="Absenheitsbeginn Format YYYY-MM-DD"
                                 value={absencebegin}
                                 onChange={(e) =>
                                     setAbsenceBegin(e.target.value)
@@ -122,7 +122,7 @@ function ModalEditMitarbeiter({
                             <Input
                                 type="text"
                                 id="firstname"
-                                placeholder="Absenheitsende"
+                                placeholder="Absenheitsende Format YYYY-MM-DD"
                                 value={absenceEnd}
                                 onChange={(e) => setAbsenceEnd(e.target.value)}
                             />
