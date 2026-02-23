@@ -3,6 +3,11 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcrypt";
 import { POSTGRES_URI } from "@/constants/env";
 
+if (process.env.NODE_ENV === "production") {
+    console.log("Skipping seed (production environment)");
+    process.exit(0);
+}
+
 const adapter = new PrismaPg({ connectionString: POSTGRES_URI });
 const prisma = new PrismaClient({ adapter });
 
