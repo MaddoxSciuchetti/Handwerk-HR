@@ -1,7 +1,10 @@
 import { PrismaClient, UserRole } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcrypt";
+import { POSTGRES_URI } from "@/constants/env";
 
-const prisma = new PrismaClient();
+const adapter = new PrismaPg({ connectionString: POSTGRES_URI });
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
     console.log("🌱 Starting database seed for User model...");
@@ -9,10 +12,9 @@ async function main() {
     const adminEmail = "admin@example.com";
     const hashedPassword = await bcrypt.hash("Admin123!", 10);
 
-    // Upsert ensures that if the user already exists, it won't be duplicated
     const adminUser = await prisma.user.upsert({
         where: { email: adminEmail },
-        update: {}, // you can add 'update' data here if desired
+        update: {},
         create: {
             vorname: "Admin",
             nachname: "User",
