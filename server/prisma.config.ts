@@ -7,7 +7,7 @@ import { POSTGRES_URI } from "./src/constants/env";
 export default defineConfig({
     schema: "./src/prisma/schema.prisma",
     migrations: {
-        path: "prisma/migrations",
+        path: "src/prisma/migrations",
     },
     datasource: {
         url: POSTGRES_URI, // create custom type file later

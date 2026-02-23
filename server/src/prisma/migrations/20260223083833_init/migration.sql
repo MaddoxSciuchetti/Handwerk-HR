@@ -1,4 +1,6 @@
 -- CreateEnum
+CREATE EXTENSION IF NOT EXISTS citext;
+
 CREATE TYPE "UserRole" AS ENUM ('MITARBEITER', 'CHEF');
 
 -- CreateEnum
