@@ -49,9 +49,12 @@ export type createAccountParams = {
 export const createAccount = async (data: createAccountParams) => {
     //verify existing user does not exists
 
+    console.log("mitarbeiter daten");
+    console.log(data);
+
     const existingUser = await prisma.user.findUnique({
         where: {
-            email: data.email,
+            email: data.email.toLocaleLowerCase(),
         },
     });
 
@@ -63,7 +66,7 @@ export const createAccount = async (data: createAccountParams) => {
 
     const user = await prisma.user.create({
         data: {
-            email: data.email,
+            email: data.email.toLocaleLowerCase(),
             password: hashedpassword,
             vorname: data.firstName,
             nachname: data.lastName,
