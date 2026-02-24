@@ -2,7 +2,7 @@ import { sendEmailSchema } from "@/components/admin_data/AdminModal";
 import { File_Request } from "@/components/backround_worker";
 import { TFeatureForm } from "@/components/modal/FeatureModal";
 import API from "@/config/apiClient";
-import { TEmployForm } from "@/features/Ceo_Dashboard";
+import { TEmployForm } from "@/features/CeoDashboard";
 import { OffboardingItem } from "@/features/OnOf_Home";
 import { api_Response } from "@/features/OnOf_Worker_Procedure";
 import { TFile } from "@/features/Profile";
