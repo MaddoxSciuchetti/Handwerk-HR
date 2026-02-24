@@ -1,6 +1,6 @@
 import SearchHeader from '@/components/SearchHeader';
 import HandwerkerTable from '@/components/HandwerkerTable';
-import useAuth from '@/hooks/useAuth';
+import useAuth from '@/hooks/use-Auth';
 import HomeModal from '@/components/home/HomeModal';
 import useHome from '@/hooks/use-home';
 import LoadingAlert from '@/components/alerts/LoadingAlert';

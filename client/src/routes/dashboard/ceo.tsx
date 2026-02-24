@@ -2,7 +2,7 @@ import ErrorAlert from '@/components/alerts/ErrorAlert';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import PermissionDenied from '@/components/alerts/PermissionDenied';
 import CeoDashboard from '@/features/CeoDashboard';
-import useAuth from '@/hooks/useAuth';
+import useAuth from '@/hooks/use-Auth';
 import { createFileRoute } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/dashboard/ceo')({

@@ -1,7 +1,7 @@
-import { FormInputs } from '@/schemas/zodSchema';
+import { FormInputs } from '@/zod-schemas/zodSchema';
 import { UseMutationResult } from '@tanstack/react-query';
 import Modal from '@/components/modal/Modal';
-import { TOffboardingItemUser } from '@/types/api_response';
+import { TOffboardingItemUser } from '@/types/api';
 
 type HomeModalProps = {
   modal: boolean;

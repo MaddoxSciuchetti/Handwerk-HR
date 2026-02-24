@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/table';
 
 import { Worker_Item } from './worker_components/worker_item';
-import { OffboardingItem } from '@/types/OnOfHome';
+import { OffboardingItem } from '@/types/onof_home';
 import { getFirstFormType } from '@/lib/formtype';
 
 type HandwerkerTableProps = {

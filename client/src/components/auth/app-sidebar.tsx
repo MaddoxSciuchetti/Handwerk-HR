@@ -1,121 +1,113 @@
 import {
-    Calendar,
-    Home,
-    Inbox,
-    Search,
-    Settings,
-    HandMetal,
-} from "lucide-react";
+  Calendar,
+  Home,
+  Inbox,
+  Search,
+  Settings,
+  HandMetal,
+} from 'lucide-react';
 
 import {
-    Sidebar,
-    SidebarContent,
-    SidebarFooter,
-    SidebarGroup,
-    SidebarGroupContent,
-    SidebarGroupLabel,
-    SidebarHeader,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
-} from "@/components/ui/sidebar";
-import { Link } from "@tanstack/react-router";
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from '@/components/ui/sidebar';
+import { Link } from '@tanstack/react-router';
 
-import UserMenu from "./UserMenu";
-import useAuth from "@/hooks/useAuth";
-import { useEffect, useMemo, useState } from "react";
-import { Button } from "../ui/button";
+import UserMenu from './UserMenu';
+import useAuth from '@/hooks/use-Auth';
+import { useEffect, useMemo, useState } from 'react';
+import { Button } from '../ui/button';
 
 // Menu items.
 
 const items = [
-    {
-        title: "Mein Mitarbeiter",
-        to: "/mitarbeiter-uebersicht",
-        icon: Home,
-        requiredPermission: "CHEF",
-    },
-    {
-        title: "Meine Handwerker",
-        to: "/handwerker",
-        icon: Inbox,
-    },
-    {
-        title: "Vorlage",
-        to: "/template-konfiguration",
-        icon: Settings,
-        requiredPermission: "CHEF",
-    },
-    {
-        title: "Mitarbeiter Monitor",
-        to: "/dashboard/ceo",
-        icon: HandMetal,
-        requiredPermission: "CHEF",
-    },
+  {
+    title: 'Mein Mitarbeiter',
+    to: '/mitarbeiter-uebersicht',
+    icon: Home,
+    requiredPermission: 'CHEF',
+  },
+  {
+    title: 'Meine Handwerker',
+    to: '/handwerker',
+    icon: Inbox,
+  },
+  {
+    title: 'Vorlage',
+    to: '/template-konfiguration',
+    icon: Settings,
+    requiredPermission: 'CHEF',
+  },
+  {
+    title: 'Mitarbeiter Monitor',
+    to: '/dashboard/ceo',
+    icon: HandMetal,
+    requiredPermission: 'CHEF',
+  },
 ];
 
 export function AppSidebar({ openModal }: { openModal: () => void }) {
-    const { user, isError } = useAuth();
+  const { user, isError } = useAuth();
 
-    const hasPermission = useMemo(() => {
-        return (requiredPermission: string | undefined) => {
-            if (!requiredPermission) return true;
-            if (user?.user_permission !== requiredPermission) return false;
-            return true;
-        };
-    }, [user?.user_permission]);
+  const hasPermission = useMemo(() => {
+    return (requiredPermission: string | undefined) => {
+      if (!requiredPermission) return true;
+      if (user?.user_permission !== requiredPermission) return false;
+      return true;
+    };
+  }, [user?.user_permission]);
 
-    const accessibleItems = useMemo(() => {
-        if (!user) return [];
-        return items.filter((item) => hasPermission(item.requiredPermission));
-    }, [hasPermission]);
+  const accessibleItems = useMemo(() => {
+    if (!user) return [];
+    return items.filter((item) => hasPermission(item.requiredPermission));
+  }, [hasPermission]);
 
-    if (user === undefined) {
-        return "";
-    }
-    return (
-        <>
-            <Sidebar className="bg-gray-100 rounded-2xl">
-                <SidebarHeader className="mt-5 flex flex-row align-middle">
-                    <UserMenu />
-                </SidebarHeader>
-                <SidebarContent>
-                    <SidebarGroup>
-                        <SidebarGroupLabel className="text-black">
-                            BSB Team
-                        </SidebarGroupLabel>
-                        <SidebarGroupContent>
-                            <SidebarMenu className="text-black">
-                                {accessibleItems.map((item, index) => (
-                                    <SidebarMenuItem
-                                        className="text-black"
-                                        key={index}
-                                    >
-                                        <SidebarMenuButton
-                                            asChild
-                                            className="mt-2"
-                                        >
-                                            <Link to={item.to}>
-                                                <item.icon />
-                                                <span className="">
-                                                    {item.title}
-                                                </span>
-                                            </Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                ))}
-                            </SidebarMenu>
-                        </SidebarGroupContent>
-                    </SidebarGroup>
-                </SidebarContent>
-                <Button
-                    onClick={() => openModal()}
-                    variant={"outline"}
-                    className="mb-1 cursor-pointer mx-1 bg-blue-100"
-                >
-                    Feature Reqest{" "}
-                </Button>
-            </Sidebar>
-        </>
-    );
+  if (user === undefined) {
+    return '';
+  }
+  return (
+    <>
+      <Sidebar className="bg-gray-100 rounded-2xl">
+        <SidebarHeader className="mt-5 flex flex-row align-middle">
+          <UserMenu />
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-black">
+              BSB Team
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu className="text-black">
+                {accessibleItems.map((item, index) => (
+                  <SidebarMenuItem className="text-black" key={index}>
+                    <SidebarMenuButton asChild className="mt-2">
+                      <Link to={item.to}>
+                        <item.icon />
+                        <span className="">{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+        <Button
+          onClick={() => openModal()}
+          variant={'outline'}
+          className="mb-1 cursor-pointer mx-1 bg-blue-100"
+        >
+          Feature Reqest{' '}
+        </Button>
+      </Sidebar>
+    </>
+  );
 }

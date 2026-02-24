@@ -1,0 +1,94 @@
+import { User } from 'shared_prisma_types';
+
+export type APIResponse = SuccessResponse | ErrorResponse;
+
+export type SuccessResponse = {
+  success: true;
+  affectedRows: number;
+};
+
+export type ErrorResponse = {
+  success: false;
+  error: string;
+};
+
+export type delete_user = {
+  id: number;
+  vorname: string;
+  nachname: string;
+  email: string | null;
+  adresse: string;
+  austrittsdatum: Date | null;
+  createdAt: Date;
+  eintrittsdatum: Date;
+  geburtsdatum: Date;
+  position: string;
+  updatedAt: Date;
+};
+
+export type TOffboardingItemUser = {
+  success: {
+    id: number;
+    vorname: string;
+    nachname: string;
+  };
+};
+
+export type TDescriptionData = {
+  form_field_id: number;
+  description: string | null;
+  owner: string;
+  template_type: 'ONBOARDING' | 'OFFBOARDING';
+};
+
+export type TDescriptionResponse = TDescriptionData & {
+  auth_user: {
+    id: number;
+    vorname: string;
+    nachname: string;
+  };
+};
+
+export type AbsenceData = {
+  id: string;
+  absence?: string;
+  absencetype: string;
+  absencebegin: string;
+  absenceEnd: string;
+  substitute: string;
+};
+
+export type FileResponse = {
+  employee_form_id: number;
+  original_filename: string;
+  file_size: number;
+  content_type: string;
+  cloud_url: string;
+  cloud_key: string;
+};
+
+export type Session_API = {
+  id: string;
+  userAgent: string;
+  createdAt: string;
+  isCurrent: boolean;
+};
+
+export type RegisterRequest = {
+  firstName?: string;
+  lastName?: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  userAgent?: string;
+};
+
+export type RegisterResponse = {
+  user: User;
+  accessToken: string;
+  refreshToken: string;
+};
+
+export type LoginRequest = Omit<RegisterRequest, 'confirmPassword'>;
+
+export type LoginResponse = Omit<RegisterResponse, 'user'>;

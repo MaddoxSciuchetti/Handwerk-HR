@@ -2,9 +2,9 @@ import { useForm } from 'react-hook-form';
 import { Button } from '../ui/button';
 import { ErrorMessage } from '@hookform/error-message';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { FormInputs, formSchema } from '@/schemas/zodSchema';
+import { FormInputs, formSchema } from '@/zod-schemas/zodSchema';
 import { Input } from '../ui/input';
-import { FormType } from '@/types/OnOfHome';
+import { FormType } from '@/types/onof_home';
 
 interface WorkerDataFormProps {
   setSelectedOption: (value: FormType | null) => void;

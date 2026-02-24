@@ -1,5 +1,5 @@
 import { Spinner } from '@/components/ui/spinner';
-import useAuth from '@/hooks/useAuth';
+import useAuth from '@/hooks/use-Auth';
 
 function Dashboard() {
   const { user, isError, isLoading } = useAuth();

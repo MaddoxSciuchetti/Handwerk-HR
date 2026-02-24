@@ -1,6 +1,6 @@
 // import { Container, Heading, Spinner, Text, VStack } from "@chakra-ui/react";
-import useSessions from "@/hooks/useSessions";
-import SessionCard from "@/components/auth/SessionCard";
+import useSessions from '@/hooks/use-Sessions';
+import SessionCard from '@/components/auth/SessionCard';
 
 export type Sessions_Type = {
   createdAt: string;

@@ -3,39 +3,33 @@ import { File_Request } from '@/components/backround_worker';
 import { TFeatureForm } from '@/components/modal/FeatureModal';
 import API from '@/config/apiClient';
 import { TEmployForm } from '@/features/CeoDashboard';
-import { OffboardingItem } from '@/types/OnOfHome';
+import { OffboardingItem } from '@/types/onof_home';
 import { api_Response } from '@/features/OnOf_Worker_Procedure';
 import { TFile } from '@/features/Profile';
-import { Mappingform } from '@/schemas/Task';
-import { FormInputs } from '@/schemas/zodSchema';
+import { Mappingform } from '@/types/form-data';
+import { FormInputs } from '@/zod-schemas/zodSchema';
 import {
+  AbsenceData,
   delete_user,
+  FileResponse,
+  LoginRequest,
+  LoginResponse,
+  RegisterRequest,
+  RegisterResponse,
+  Session_API,
   SuccessResponse,
+  TDescriptionData,
+  TDescriptionResponse,
   TOffboardingItemUser,
-} from '@/types/api_response';
-import { da } from 'date-fns/locale';
-import { Session } from 'react-router-dom';
+} from '@/types/api';
 import { User } from 'shared_prisma_types';
 import z from 'zod';
-
-export type RegisterRequest = {
-  firstName?: string;
-  lastName?: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  userAgent?: string;
-};
-
-export type RegisterResponse = {
-  user: User;
-  accessToken: string;
-  refreshToken: string;
-};
-
-export type LoginRequest = Omit<RegisterRequest, 'confirmPassword'>;
-
-export type LoginResponse = Omit<RegisterResponse, 'user'>;
+import {
+  EmployFormSchema,
+  TEmployeeResponse,
+  ZDescriptionData,
+  ZEmployeeData,
+} from '@/zod-schemas/schema';
 
 export type Verify = {
   code: string;
@@ -62,16 +56,16 @@ export const verifyEmail = async (
 export const sendPasswordResetEmail = async (email: string) =>
   API.post('/auth/password/forgot', { email });
 
-export type resetPassword = {
-  verificationCode: string;
-  password: string;
-};
+// export type resetPassword = {
+//   verificationCode: string;
+//   password: string;
+// };
 
-export const resetPassword = async ({
-  verificationCode,
-  password,
-}: resetPassword): Promise<resetPassword> =>
-  API.post('/auth/password/reset', { verificationCode, password });
+// export const resetPassword = async ({
+//   verificationCode,
+//   password,
+// }: resetPassword): Promise<resetPassword> =>
+//   API.post('/auth/password/reset', { verificationCode, password });
 
 export type user = {
   id: number;
@@ -86,13 +80,6 @@ export const getUser = async (): Promise<User> => {
   return API.get<User, User>('/user');
 };
 
-export type Session_API = {
-  id: string;
-  userAgent: string;
-  createdAt: string;
-  isCurrent: boolean;
-};
-
 export const getSessions = async (): Promise<Session_API> =>
   API.get('/sessions');
 export const deleteSession = async (id: string): Promise<void> =>
@@ -101,15 +88,6 @@ export const deleteSession = async (id: string): Promise<void> =>
 export const getHistoryData = async (id: number): Promise<any> => {
   const response = await API.get(`/offboarding/getHistoryData/${id}`);
   return response;
-};
-
-type FileResponse = {
-  employee_form_id: number;
-  original_filename: string;
-  file_size: number;
-  content_type: string;
-  cloud_url: string;
-  cloud_key: string;
 };
 
 export const postFile = async (
@@ -158,36 +136,6 @@ export const verifyChef = async (): Promise<user> => {
   return API.get(`/user/chefpermission`);
 };
 
-export const EmployFormSchema = z.array(
-  z.object({
-    description: z.coerce.string(),
-    form_field_id: z.coerce.number(),
-    owner: z.string(),
-    fullname: z.string(),
-    auth_id: z.string(),
-    is_substitute: z.boolean(),
-    substitute_id: z.string().nullable(),
-    original_owner: z.string(),
-    substitute_name: z.string().nullable(),
-    inputs: z.array(
-      z.object({
-        id: z.coerce.number(),
-        employee_form_id: z.coerce.number(),
-        form_field_id: z.coerce.number(),
-        status: z.coerce.string(),
-        timestamp: z.coerce.date(),
-        timeStampLastChange: z.coerce.date(),
-        employee: z.object({
-          id: z.number(),
-          vorname: z.string(),
-          nachname: z.string(),
-          email: z.string().nullable(),
-        }),
-      })
-    ),
-  })
-);
-
 export const fetchChefData = async (): Promise<TEmployForm> => {
   const response = await API.get('/user/employeeData');
   return EmployFormSchema.parse(response);
@@ -224,56 +172,11 @@ export const formattedData = async (
   return response;
 };
 
-export const SubUser = z.object({
-  id: z.coerce.string(),
-  vorname: z.string(),
-  nachname: z.string(),
-});
-
-export const EmployeeStatus = z.array(
-  z.object({
-    id: z.coerce.string(),
-    userId: z.coerce.string(),
-    absence: z.coerce.string(),
-    absencetype: z.coerce.string().nullable(),
-    absencebegin: z.coerce.date().nullable(),
-    absenceEnd: z.coerce.date().nullable(),
-    substitute: z.coerce.string().nullable(),
-    sub_user: SubUser.nullable(),
-  })
-);
-
-export const ZEmployeeData = z.array(
-  z.object({
-    id: z.coerce.string(),
-    vorname: z.string(),
-    nachname: z.string(),
-    email: z.string().nullable(),
-    verified: z.boolean(),
-    createdAt: z.string(),
-    updatedAt: z.string(),
-    user_permission: z.enum(['CHEF', 'MITARBEITER']),
-    employeeStatus: EmployeeStatus.nullable(),
-  })
-);
-
-export type TEmployeeResponse = z.infer<typeof ZEmployeeData>;
-
 export const specificEmployeeData = async (): Promise<TEmployeeResponse> => {
   const response = await API.get(`/user/specificEmployeeData`);
   console.log(response);
   return ZEmployeeData.parse(response);
 };
-
-export type AbsenceData = {
-  id: string;
-  absence?: string;
-  absencetype: string;
-  absencebegin: string;
-  absenceEnd: string;
-  substitute: string;
-};
-
 export const editEmployeeAbsence = async (
   data: AbsenceData
 ): Promise<AbsenceData> => {
@@ -308,14 +211,6 @@ export const addExtraField = async (data: {
   return response;
 };
 
-export const ZDescriptionData = z.array(
-  z.object({
-    form_field_id: z.coerce.number(),
-    description: z.string(),
-    owner: z.string(),
-  })
-);
-
 export type DescriptionData = z.infer<typeof ZDescriptionData>;
 
 export const fetchRawDescription = async (): Promise<DescriptionData> => {
@@ -330,21 +225,6 @@ export const deleteEmployeeHandler = async (id: string): Promise<user> => {
     `/user/deleteEmplyoee/${id}`
   );
   return response;
-};
-
-export type TDescriptionData = {
-  form_field_id: number;
-  description: string | null;
-  owner: string;
-  template_type: 'ONBOARDING' | 'OFFBOARDING';
-};
-
-export type TDescriptionResponse = TDescriptionData & {
-  auth_user: {
-    id: number;
-    vorname: string;
-    nachname: string;
-  };
 };
 
 export const fetchTaskData = async (): Promise<TDescriptionResponse[]> => {

@@ -1,5 +1,5 @@
-import { cn } from "@/lib/utils";
-import { UploadedFileItem } from "./file-item";
+import { cn } from '@/types/utils';
+import { UploadedFileItem } from './file-item';
 
 interface UploadedFileListProps {
   uploadedFiles: File[];
@@ -17,7 +17,7 @@ export function FileList({
   }
 
   return (
-    <div className={cn("px-6 pb-5 space-y-3 mt-4")}>
+    <div className={cn('px-6 pb-5 space-y-3 mt-4')}>
       {uploadedFiles.map((file, index) => (
         <UploadedFileItem
           key={file.name + index}

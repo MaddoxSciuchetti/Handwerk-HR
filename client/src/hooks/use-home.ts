@@ -1,7 +1,7 @@
 import { useSidebar } from '@/components/ui/sidebar';
-import { FormType, OffboardingItem } from '@/types/OnOfHome';
+import { FormType, OffboardingItem } from '@/types/onof_home';
 import { deleteTaskApi, fetchNameData, postOffboardingData } from '@/lib/api';
-import { FormInputs } from '@/schemas/zodSchema';
+import { FormInputs } from '@/zod-schemas/zodSchema';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';

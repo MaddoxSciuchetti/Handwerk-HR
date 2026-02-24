@@ -1,9 +1,9 @@
-import { Navigate, Outlet } from "react-router-dom";
-import useAuth from "@/hooks/useAuth";
-import UserMenu from "./UserMenu";
-import React from "react";
-import { useNavigate } from "@tanstack/react-router";
-import { Button } from "../ui/button";
+import { Navigate, Outlet } from 'react-router-dom';
+import useAuth from '@/hooks/use-Auth';
+import UserMenu from './UserMenu';
+import React from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import { Button } from '../ui/button';
 
 const AppContainer = () => {
   const { user, isLoading } = useAuth();
@@ -20,7 +20,7 @@ const AppContainer = () => {
     </div>
   ) : (
     // insert component for back navigation
-    <Button onClick={() => navigate({ to: "/login" })}>Here</Button>
+    <Button onClick={() => navigate({ to: '/login' })}>Here</Button>
   );
 };
 export default AppContainer;

@@ -1,6 +1,6 @@
-import useDeleteSession from "@/hooks/useDeleteSession";
-import { Sessions_Type } from "@/features/Settings";
-import { Button } from "../ui/button";
+import useDeleteSession from '@/hooks/use-DeleteSession';
+import { Sessions_Type } from '@/features/Settings';
+import { Button } from '../ui/button';
 
 type Session = {
   session: Sessions_Type;
@@ -15,8 +15,8 @@ const SessionCard = ({ session }: Session) => {
     <div className="flex p-3 border border-gray-200 rounded-md">
       <div className="flex-1">
         <p className="font-bold text-sm mb-1">
-          {new Date(createdAt).toLocaleString("en-US")}
-          {isCurrent && " (current session)"}
+          {new Date(createdAt).toLocaleString('en-US')}
+          {isCurrent && ' (current session)'}
         </p>
         <p className="text-gray-500 text-xs">{userAgent}</p>
       </div>
