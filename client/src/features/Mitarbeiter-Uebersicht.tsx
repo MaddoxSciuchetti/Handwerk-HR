@@ -36,7 +36,7 @@ function MitarbeiterÜbersicht() {
     const [name, setfirstName] = useState<string>("");
     const [lastname, setlastName] = useState<string>("");
     const { toggleSidebar } = useSidebar();
-    const fullname = name + lastname;
+    const fullname = `${name} ${lastname}`;
     const [idvalue, setIdValue] = useState<string>();
 
     const toggleModal = () => {

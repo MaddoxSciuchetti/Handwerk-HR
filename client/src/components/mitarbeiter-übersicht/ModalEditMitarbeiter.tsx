@@ -1,30 +1,16 @@
-import { useState } from "react";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Button } from "@/components/ui/button";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuGroup,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuPortal,
-    DropdownMenuSeparator,
-    DropdownMenuShortcut,
-    DropdownMenuSub,
-    DropdownMenuSubContent,
-    DropdownMenuSubTrigger,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import {
+    AbsenceData,
     deleteEmployeeHandler,
     DescriptionData,
     editEmployeeAbsence,
     fetchRawDescription,
 } from "@/lib/api";
 import { subISOWeekYears } from "date-fns";
-import { set } from "zod";
+import z from "zod";
 import useEmployeeData from "@/hooks/use-employeeData";
 import {
     Select,
@@ -35,6 +21,11 @@ import {
     SelectValue,
 } from "../ui/select";
 import { Spinner } from "../ui/spinner";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ErrorMessage } from "@hookform/error-message";
+import { DateSchema } from "@/schemas/schema";
 
 type ModalEditMitarbeiterProps = {
     fullname: string;
@@ -42,39 +33,23 @@ type ModalEditMitarbeiterProps = {
     id: string | undefined;
 };
 
+const AbsenceSchema = z.object({
+    id: z.string(),
+    absence: z.string().optional(),
+    absencetype: z
+        .string()
+        .min(1, { message: "Art der Abwesenheit ist erforderlich" }),
+    absencebegin: DateSchema,
+    absenceEnd: DateSchema,
+    substitute: z.string({ message: "Bitte wähle von der Option" }),
+});
+
 function ModalEditMitarbeiter({
     fullname,
     toggleEmployeeModal,
     id,
 }: ModalEditMitarbeiterProps) {
-    const {
-        data: descriptionData,
-        isLoading,
-        isError,
-    } = useQuery<DescriptionData>({
-        queryKey: ["descriptionData"],
-        queryFn: fetchRawDescription,
-    });
-
-    const [absence, setAbsence] = useState<string>("");
-    const [absencetype, setAbsenceType] = useState<string>();
-    const [absencebegin, setAbsenceBegin] = useState<string>();
-    const [absenceEnd, setAbsenceEnd] = useState<string>();
-    const [substitute, setSubstitute] = useState<string>();
-
-    const {
-        mutate: EmployeeAbsence,
-        error: ErrorAbsence,
-        isError: isErrorAbsence,
-    } = useMutation({
-        mutationFn: editEmployeeAbsence,
-        onSuccess: () => {
-            console.log("this was a success");
-        },
-        onError: () => {
-            console.log(ErrorAbsence);
-        },
-    });
+    const queryClient = useQueryClient();
 
     const {
         EmployeeData,
@@ -83,99 +58,166 @@ function ModalEditMitarbeiter({
         isError: isErrorEmployee,
     } = useEmployeeData();
 
-    console.log("employee data");
-    console.log(EmployeeData);
-    console.log("descriptiond data");
-    console.log(descriptionData);
-    if (isError) return <div>No error</div>;
+    const EmployeeAbsence = useMutation({
+        mutationFn: editEmployeeAbsence,
+        onSuccess: () => {
+            toggleEmployeeModal();
+            queryClient.invalidateQueries({
+                queryKey: ["EmployeeDataSpecifics"],
+            });
+            console.log("sucessfully submitted");
+        },
+    });
+
+    const {
+        register,
+        handleSubmit,
+        control,
+        formState: { errors },
+    } = useForm<AbsenceData>({
+        resolver: zodResolver(AbsenceSchema),
+        criteriaMode: "all",
+    });
+
+    const onSubmit: SubmitHandler<AbsenceData> = (data) => {
+        console.log("hello");
+        console.log(data);
+        EmployeeAbsence.mutate(data);
+    };
+
     if (!id) return <div>There is no id</div>;
+    if (isErrorEmployee) return <div>No error</div>;
 
     return (
         <>
-            <div className="flex flex-col max-h-100 min-h-140 mt-40 mx-auto text-center items-center z-50 bg-gray-200 rounded-xl  w-2xl">
-                {isLoading ? (
+            <div className="flex flex-col max-h-150 min-h-150 border border-amber-400 mt-40 mx-auto text-center items-center z-50 bg-gray-200 rounded-xl  w-xl">
+                {isLoadingEmployee ? (
                     <Spinner className="size-8" />
                 ) : (
-                    <div className="max-w-xl h-full w-xl my-10 flex flex-col">
-                        <div className="flex flex-col gap-5">
-                            <h1>Abwesenheit eintragen für {fullname}</h1>
-                            <Label>Grund der Abwesenheit</Label>
-                            <select
-                                value={absencetype}
-                                onChange={(e) => setAbsenceType(e.target.value)}
+                    <div className="max-w-xl max-h-140 w-xl flex flex-col">
+                        <div className="flex w-85 mx-auto flex-col ">
+                            <form
+                                onSubmit={handleSubmit(onSubmit)}
+                                className="flex flex-col gap-4 py-10"
                             >
-                                <option>Krank</option>
-                                <option>Urlaub</option>
-                                <option>Andere</option>
-                            </select>
+                                <Input
+                                    type="hidden"
+                                    value={id}
+                                    {...register("id")}
+                                />
+                                <h1>Abwesenheit eintragen für {fullname}</h1>
+                                <Label>Grund der Abwesenheit</Label>
+                                <select {...register("absencetype")}>
+                                    <option value="" disabled selected>
+                                        Grund
+                                    </option>
+                                    <option>Krank</option>
+                                    <option>Urlaub</option>
+                                    <option>Andere</option>
+                                </select>
 
-                            <Input
-                                type="text"
-                                id="firstname"
-                                placeholder="Absenheitsbeginn Format YYYY-MM-DD"
-                                value={absencebegin}
-                                onChange={(e) =>
-                                    setAbsenceBegin(e.target.value)
-                                }
-                            />
+                                <ErrorMessage
+                                    errors={errors}
+                                    name={"absencetype"}
+                                    render={({ message }) => (
+                                        <p className="text-red-400 text-sm">
+                                            {message}
+                                        </p>
+                                    )}
+                                />
+                                <Label>Abwesenheitsbegin</Label>
 
-                            <Input
-                                type="text"
-                                id="firstname"
-                                placeholder="Absenheitsende Format YYYY-MM-DD"
-                                value={absenceEnd}
-                                onChange={(e) => setAbsenceEnd(e.target.value)}
-                            />
+                                <Input
+                                    type="text"
+                                    id="firstname"
+                                    placeholder="DD.MM.YYYY"
+                                    {...register("absencebegin")}
+                                />
 
-                            <Label>Soll vertreten werden von</Label>
+                                <ErrorMessage
+                                    errors={errors}
+                                    name={"absencebegin"}
+                                    render={({ message }) => (
+                                        <p className="text-red-400 text-sm">
+                                            {message}
+                                        </p>
+                                    )}
+                                />
 
-                            <Select
-                                value={substitute}
-                                onValueChange={(value) => setSubstitute(value)}
-                            >
-                                <SelectTrigger
-                                    id="substitute"
+                                <Label>Abwesenheitsende</Label>
+                                <Input
+                                    type="text"
+                                    id="firstname"
+                                    placeholder="DD.MM.YYYY"
+                                    {...register("absenceEnd")}
+                                />
+
+                                <ErrorMessage
+                                    errors={errors}
+                                    name={"absencebegin"}
+                                    render={({ message }) => (
+                                        <p className="text-red-400 text-sm">
+                                            {message}
+                                        </p>
+                                    )}
+                                />
+
+                                <Label>Soll vertreten werden von</Label>
+                                <Controller
                                     name="substitute"
-                                    value={substitute}
-
-                                    // className="w-[17.75rem]"
-                                >
-                                    <SelectValue placeholder="Vertretung" />
-                                </SelectTrigger>
-                                <SelectContent className="border-none">
-                                    <SelectGroup className="bg-white cursor-pointer">
-                                        {EmployeeData?.map((item) => (
-                                            <SelectItem
-                                                className="hover:bg-gray-200 cursor-pointer"
-                                                id={`select-${item.id}`}
-                                                value={item.id}
-                                                key={item.id}
-                                                onClick={() =>
-                                                    setSubstitute(item.id)
-                                                }
+                                    control={control}
+                                    render={({ field }) => (
+                                        <Select
+                                            onValueChange={field.onChange}
+                                            value={field.value}
+                                        >
+                                            {" "}
+                                            {/* field.value not Field.value */}
+                                            <SelectTrigger
+                                                id="substitute"
+                                                name="substitute"
                                             >
-                                                {item.vorname} {item.nachname}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
+                                                <SelectValue placeholder="Vertretung" />
+                                            </SelectTrigger>
+                                            <SelectContent className="border-none">
+                                                <SelectGroup className="bg-white cursor-pointer">
+                                                    {EmployeeData?.map(
+                                                        (item) => (
+                                                            <SelectItem
+                                                                className="hover:bg-gray-200 cursor-pointer"
+                                                                id={`select-${item.id}`}
+                                                                value={item.id}
+                                                                key={item.id}
+                                                            >
+                                                                {item.vorname}{" "}
+                                                                {item.nachname}
+                                                            </SelectItem>
+                                                        ),
+                                                    )}
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
+                                    )}
+                                />
 
-                            <Button
-                                onClick={() =>
-                                    EmployeeAbsence({
-                                        id,
-                                        absence,
-                                        absencetype,
-                                        absencebegin,
-                                        absenceEnd,
-                                        substitute,
-                                    })
-                                }
-                                variant={"outline"}
-                            >
-                                Speichern
-                            </Button>
+                                <ErrorMessage
+                                    errors={errors}
+                                    name={"substitute"}
+                                    render={({ message }) => (
+                                        <p className="text-red-400 text-sm">
+                                            {message}
+                                        </p>
+                                    )}
+                                />
+
+                                <Button
+                                    className="cursor-pointer"
+                                    variant={"outline"}
+                                    type="submit"
+                                >
+                                    Speichern
+                                </Button>
+                            </form>
                         </div>
                     </div>
                 )}

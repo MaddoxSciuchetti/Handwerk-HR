@@ -267,19 +267,18 @@ export const specificEmployeeData = async (): Promise<TEmployeeResponse> => {
     return ZEmployeeData.parse(response);
 };
 
-type AbsenceData = {
+export type AbsenceData = {
     id: string;
-    absence: string;
-    absencetype?: string;
-    absencebegin?: string;
-    absenceEnd?: string;
-    substitute?: string;
+    absence?: string;
+    absencetype: string;
+    absencebegin: string;
+    absenceEnd: string;
+    substitute: string;
 };
 
 export const editEmployeeAbsence = async (
     data: AbsenceData,
 ): Promise<AbsenceData> => {
-    console.log("data in api", data);
     return API.put<AbsenceData, AbsenceData>("/user/editAbsenceData", data);
 };
 
