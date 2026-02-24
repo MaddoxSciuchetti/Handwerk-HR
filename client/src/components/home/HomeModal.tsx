@@ -1,11 +1,17 @@
 import { FormInputs } from '@/schemas/zodSchema';
 import { UseMutationResult } from '@tanstack/react-query';
 import Modal from '@/components/modal/Modal';
+import { TOffboardingItemUser } from '@/types/api_response';
 
 type HomeModalProps = {
   modal: boolean;
   toggleModal: () => void;
-  createEmployeeMutation: UseMutationResult<any, Error, FormInputs, unknown>;
+  createEmployeeMutation: UseMutationResult<
+    TOffboardingItemUser,
+    Error,
+    FormInputs,
+    unknown
+  >;
 };
 
 const HomeModal = ({
