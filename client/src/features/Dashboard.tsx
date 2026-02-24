@@ -1,17 +1,18 @@
-import { Spinner } from "@/components/ui/spinner";
-import useAuth from "@/hooks/useAuth";
+import { Spinner } from '@/components/ui/spinner';
+import useAuth from '@/hooks/useAuth';
 
 function Dashboard() {
-    const { user, isError, isLoading } = useAuth();
+  const { user, isError, isLoading } = useAuth();
 
-    if (user === undefined) return <div>Not allowed</div>;
-    if (isLoading) return <Spinner className="size-8" />;
+  if (user === undefined) return <div>Not allowed</div>;
+  if (!isError) return <div>{isError}</div>;
+  if (isLoading) return <Spinner className="size-8" />;
 
-    return (
-        <>
-            <div>In Bearbeitung, noch nicht fertig</div>
-        </>
-    );
+  return (
+    <>
+      <div>In Bearbeitung, noch nicht fertig</div>
+    </>
+  );
 }
 
 export default Dashboard;
