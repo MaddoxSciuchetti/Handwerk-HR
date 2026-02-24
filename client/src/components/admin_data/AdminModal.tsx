@@ -53,7 +53,7 @@ function AdminModal({ onClose, selectedUser }: TCloseModal) {
                         {errors.email && <span>{errors.email.message}</span>}
                         <Input placeholder="Betreff" {...register("subject")} />
                         <Textarea
-                            placeholder={`Nachricht an ${selectedUser}`}
+                            // placeholder={`Nachricht an ${selectedUser}`}
                             {...register("test")}
                         ></Textarea>
 
