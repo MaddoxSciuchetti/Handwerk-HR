@@ -239,7 +239,7 @@ export const deleteDescriptionData = async (id: number) => {
   return response;
 };
 
-type EditDescriptionData = Omit<TDescriptionData, 'template_type'>;
+export type EditDescriptionData = Omit<TDescriptionData, 'template_type'>;
 
 export const editTaskData = async (data: EditDescriptionData) => {
   const response = await API.put<EditDescriptionData, EditDescriptionData>(

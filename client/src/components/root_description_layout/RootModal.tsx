@@ -28,16 +28,12 @@ type RootModalProps = {
   handleSubmit: (e: SubmitEvent<HTMLFormElement>) => void;
   handleAddSubmit: (e: SubmitEvent<HTMLFormElement>) => void;
   EmployeeData: TEmployeeResponse | undefined;
-  dataAvailableOnboarding?: boolean | undefined;
-  dataAvailableOffboarding?: boolean | undefined;
-  setDataAvailableOnboarding: Dispatch<SetStateAction<boolean | undefined>>;
-  setDataAvailableOffboarding: Dispatch<SetStateAction<boolean | undefined>>;
-
   OnboardingData?: TDescriptionData[] | undefined;
   OffboardingData?: TDescriptionData[] | undefined;
 };
 
 function RootModal({
+  data,
   form_field_id,
   description,
   owner,
@@ -45,8 +41,6 @@ function RootModal({
   handleSubmit,
   handleAddSubmit,
   EmployeeData,
-  dataAvailableOnboarding,
-  dataAvailableOffboarding,
 }: RootModalProps) {
   const { lockScroll, unlockScroll } = useBodyScrollLock();
   const [tab, setTab] = useState<'EDIT' | 'ADD'>('EDIT');
@@ -69,7 +63,7 @@ function RootModal({
     <>
       <div className="flex flex-col max-h-100 min-h-120 mt-40 mx-auto text-center items-center z-50 bg-gray-200 rounded-xl  w-2xl">
         <div className="flex flex-col max-w-xl h-full w-xl my-10 items-start">
-          {dataAvailableOffboarding && template_type === 'OFFBOARDING' ? (
+          {data && template_type === 'OFFBOARDING' ? (
             <>
               <form
                 onSubmit={handleAddSubmit}
@@ -139,7 +133,7 @@ function RootModal({
                 </div>
               </form>
             </>
-          ) : dataAvailableOnboarding && template_type === 'ONBOARDING' ? (
+          ) : data && template_type === 'ONBOARDING' ? (
             <>
               <form
                 onSubmit={handleAddSubmit}
