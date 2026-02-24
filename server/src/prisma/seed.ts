@@ -1,9 +1,9 @@
 import { PrismaClient, UserRole } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcrypt";
-import { POSTGRES_URI } from "@/constants/env";
+import { NODE_ENV, POSTGRES_URI } from "@/constants/env";
 
-if (process.env.NODE_ENV === "production") {
+if (NODE_ENV === "production") {
     console.log("Skipping seed (production environment)");
     process.exit(0);
 }

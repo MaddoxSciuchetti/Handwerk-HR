@@ -48,12 +48,12 @@ const UserMenu = () => {
                 >
                     Profile
                 </DropdownMenuItem>
-                <DropdownMenuItem
+                {/* <DropdownMenuItem
                     className="cursor-pointer"
                     onClick={() => navigate({ to: "/settings" })}
                 >
-                    Settings
-                </DropdownMenuItem>
+                    Einstellungen
+                </DropdownMenuItem> */}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                     className="cursor-pointer"

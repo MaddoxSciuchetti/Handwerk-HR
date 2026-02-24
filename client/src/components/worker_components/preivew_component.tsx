@@ -89,13 +89,13 @@ function PreviewComponent({
                                         value={select_option}
                                         className={
                                             selectedValue === "erledigt"
-                                                ? " bg-green-600 px-3 py-1 text-sm w-[17.75rem]"
+                                                ? " bg-green-200 px-3 py-1 text-sm w-[17.75rem]"
                                                 : selectedValue === "offen"
                                                   ? " bg-red-200 px-3 py-1 text-sm w-[17.75rem]"
                                                   : selectedValue ===
                                                       "in_bearbeitung"
-                                                    ? " bg-yellow-500 px-3 py-1 text-sm w-[17.75rem]"
-                                                    : "  bg-red-400 px-3 py-1 text-sm w-[17.75rem]"
+                                                    ? " bg-yellow-200 px-3 py-1 text-sm w-[17.75rem]"
+                                                    : "  bg-red-200 px-3 py-1 text-sm w-[17.75rem]"
                                         }
                                         // className="w-[17.75rem]"
                                     >
@@ -130,7 +130,7 @@ function PreviewComponent({
                             </div>
                             <div>
                                 <Button
-                                    className="w-[17.75rem] hover:bg-gray-300"
+                                    className="w-[17.75rem] cursor-pointer hover:bg-gray-300"
                                     variant={"outline"}
                                     type="submit"
                                 >
