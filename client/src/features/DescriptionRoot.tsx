@@ -216,9 +216,9 @@ function DescriptionRoot() {
                                                                     item.form_field_id,
                                                                 )
                                                             }
-                                                            src="/assets/delete.svg"
+                                                            src="/assets/x_delete.svg"
                                                             alt="deleticon"
-                                                            className="items-center"
+                                                            className="items-center cursor-pointer"
                                                         />
                                                         <div className="ml-5">
                                                             <p className="w-sm underline">

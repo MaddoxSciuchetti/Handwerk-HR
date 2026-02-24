@@ -329,8 +329,8 @@ const OnOf_Worker_Procedure: React.FC<OffboardingFormProps> = ({
                                         onClick={() => handleMeFilter()}
                                         className={
                                             showMyItems
-                                                ? "active cursor-pointer rounded-2xl bg-gray-300 w-50 text-sm mt-5 text-center px-5 py-2"
-                                                : "cursor-pointer rounded-2xl bg-gray-300 w-50 text-sm mt-5 text-center px-5 py-2"
+                                                ? "active cursor-pointer rounded-2xl bg-gray-100 w-40 text-sm mt-5 text-center px-2 py-1"
+                                                : "cursor-pointer rounded-2xl bg-blue-100 w-40 text-sm mt-5 text-center px-2 py-1"
                                         }
                                     >
                                         {showMyItems

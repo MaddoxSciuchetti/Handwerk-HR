@@ -106,7 +106,7 @@ export function AppSidebar({ openModal }: { openModal: () => void }) {
                 <Button
                     onClick={() => openModal()}
                     variant={"outline"}
-                    className="mb-1 cursor-pointer mx-1 bg-blue-200"
+                    className="mb-1 cursor-pointer mx-1 bg-blue-100"
                 >
                     Feature Reqest{" "}
                 </Button>
