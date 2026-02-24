@@ -1,4 +1,4 @@
-const IsSuccess = () => {
+const SuccessAlert = () => {
   return (
     <>
       <div className="outline">
@@ -8,4 +8,4 @@ const IsSuccess = () => {
   );
 };
 
-export default IsSuccess;
+export default SuccessAlert;

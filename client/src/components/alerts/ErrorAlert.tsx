@@ -2,7 +2,7 @@ type IsErrorProps = {
   message?: string;
 };
 
-const IsError = ({ message }: IsErrorProps) => {
+const ErrorAlert = ({ message }: IsErrorProps) => {
   return (
     <>
       <div className="flex flex-col items-center mt-16 space-y-2">
@@ -14,4 +14,4 @@ const IsError = ({ message }: IsErrorProps) => {
   );
 };
 
-export default IsError;
+export default ErrorAlert;

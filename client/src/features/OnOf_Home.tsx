@@ -3,9 +3,9 @@ import HandwerkerTable from '@/components/HandwerkerTable';
 import useAuth from '@/hooks/useAuth';
 import HomeModal from '@/components/home/HomeModal';
 import useHome from '@/hooks/use-home';
-import IsLoading from '@/components/alerts/IsLoading';
-import IsError from '@/components/alerts/IsError';
-import IsSuccess from '@/components/alerts/IsSuccess';
+import LoadingAlert from '@/components/alerts/LoadingAlert';
+import ErrorAlert from '@/components/alerts/ErrorAlert';
+import SuccessAlert from '@/components/alerts/SuccessAlert';
 
 function OnOf_Home() {
   const { user, isLoading, isError } = useAuth();
@@ -23,15 +23,15 @@ function OnOf_Home() {
   } = useHome();
 
   if (isLoading) {
-    return <IsLoading />;
+    return <LoadingAlert />;
   }
 
   if (isError || !user) {
-    return <IsError />;
+    return <ErrorAlert />;
   }
 
-  if (error) return <IsError message={error.message} />;
-  if (isEmpty) return <IsSuccess />;
+  if (error) return <ErrorAlert message={error.message} />;
+  if (isEmpty) return <SuccessAlert />;
 
   return (
     <div className="rounded-2xl overflow-x-auto w-full h-full p-6 shadow-gray-200 shadow-lg overflow-auto">

@@ -1,6 +1,6 @@
 import { Spinner } from '../ui/spinner';
 
-const IsLoading = () => {
+const LoadingAlert = () => {
   return (
     <>
       <div className="outline h-svh w-screen">
@@ -12,4 +12,4 @@ const IsLoading = () => {
   );
 };
 
-export default IsLoading;
+export default LoadingAlert;

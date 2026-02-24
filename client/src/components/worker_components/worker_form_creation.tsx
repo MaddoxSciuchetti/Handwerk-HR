@@ -4,20 +4,18 @@ import { ErrorMessage } from '@hookform/error-message';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FormInputs, formSchema } from '@/schemas/zodSchema';
 import { Input } from '../ui/input';
+import { FormType } from '@/types/OnOfHome';
 
 interface WorkerDataFormProps {
-  setSelectedOption: (value: 'Onboarding' | 'Offboarding' | null) => void;
-  type: 'Onboarding' | 'Offboarding';
+  setSelectedOption: (value: FormType | null) => void;
+  type: FormType;
   success: (data: FormInputs) => void;
-  className?: string;
 }
 
 export const WorkerDataForm = ({
   setSelectedOption,
   type,
   success,
-  className,
-  ...props
 }: WorkerDataFormProps) => {
   const {
     register,
@@ -31,8 +29,7 @@ export const WorkerDataForm = ({
     criteriaMode: 'all',
   });
 
-  const onFormSubmit = (data: FormInputs) => {
-    console.log('formdata test', data);
+  const SubmitWorkerForm = (data: FormInputs) => {
     success(data);
   };
 
@@ -90,7 +87,7 @@ export const WorkerDataForm = ({
   return (
     <>
       <form
-        onSubmit={handleSubmit(onFormSubmit)}
+        onSubmit={handleSubmit(SubmitWorkerForm)}
         className=" gap-4  flex flex-col"
       >
         <Button
@@ -123,16 +120,16 @@ export const WorkerDataForm = ({
               />
             </div>
           ))}
-          <Button
-            variant={'outline'}
-            type="submit"
-            className="hover:bg-gray-300 "
-          >
-            Hinzufügen
-          </Button>
 
           <Input type="hidden" {...register('type')} value={type} />
         </div>
+        <Button
+          variant={'outline'}
+          type="submit"
+          className="hover:bg-gray-300 "
+        >
+          Hinzufügen
+        </Button>
       </form>
     </>
   );

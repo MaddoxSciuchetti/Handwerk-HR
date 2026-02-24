@@ -1,168 +1,145 @@
-import { useForm, SubmitHandler } from "react-hook-form";
-import { Input } from "../ui/input";
-import { Textarea } from "../ui/textarea";
-import { Label } from "../ui/label";
-import { Button } from "../ui/button";
-import { useRef, useState } from "react";
-import { CardContent } from "../ui/card";
-import { FileDropzone } from "../ui/file_upload/dropzone";
-import { FileList } from "../ui/file_upload/file-list";
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from "../ui/tooltip";
-import { HelpCircle } from "lucide-react";
-import { featureRequest } from "@/lib/api";
+import { useForm, SubmitHandler } from 'react-hook-form';
+import { Textarea } from '../ui/textarea';
+import { Label } from '../ui/label';
+import { Button } from '../ui/button';
+import { useRef, useState } from 'react';
+import { CardContent } from '../ui/card';
+import { FileDropzone } from '../ui/file_upload/dropzone';
+import { FileList } from '../ui/file_upload/file-list';
+import { featureRequest } from '@/lib/api';
 
 export type TFeatureForm = {
-    importance: string;
-    textarea: string;
-    file?: File[];
+  importance: string;
+  textarea: string;
+  file?: File[];
 };
 
 function FeatureModal() {
-    const {
-        register,
-        handleSubmit,
-        setValue,
-        watch,
-        formState: { errors },
-    } = useForm<TFeatureForm>();
-    const onSubmit: SubmitHandler<TFeatureForm> = (data) =>
-        featureRequest(data);
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm<TFeatureForm>();
+  const onSubmit: SubmitHandler<TFeatureForm> = (data) => featureRequest(data);
 
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-    const [fileProgresses, setFileProgresses] = useState<
-        Record<string, number>
-    >({});
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [fileProgresses, setFileProgresses] = useState<Record<string, number>>(
+    {}
+  );
 
-    // const handleFileSubmit = async () => {
-    //     if (uploadedFiles.length > 0) {
-    //         onSubmit(uploadedFiles);
-    //     }
-    // };
+  const handleFileSelect = (files: FileList | null) => {
+    if (!files) return;
 
-    const handleFileSelect = (files: FileList | null) => {
-        if (!files) return;
+    const newFiles = Array.from(files);
+    setUploadedFiles((prev) => [...prev, ...newFiles]);
+    setValue('file', [...uploadedFiles, ...newFiles]);
 
-        const newFiles = Array.from(files);
-        setUploadedFiles((prev) => [...prev, ...newFiles]);
-        setValue("file", [...uploadedFiles, ...newFiles]);
+    newFiles.forEach((file) => {
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += Math.random() * 10;
+        if (progress >= 100) {
+          progress = 100;
+          clearInterval(interval);
+        }
+        setFileProgresses((prev) => ({
+          ...prev,
+          [file.name]: Math.min(progress, 100),
+        }));
+      }, 300);
+    });
+  };
 
-        newFiles.forEach((file) => {
-            let progress = 0;
-            const interval = setInterval(() => {
-                progress += Math.random() * 10;
-                if (progress >= 100) {
-                    progress = 100;
-                    clearInterval(interval);
-                }
-                setFileProgresses((prev) => ({
-                    ...prev,
-                    [file.name]: Math.min(progress, 100),
-                }));
-            }, 300);
-        });
-    };
+  const handleBoxClick = () => {
+    fileInputRef.current?.click();
+  };
 
-    const handleBoxClick = () => {
-        fileInputRef.current?.click();
-    };
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
 
-    const handleDragOver = (e: React.DragEvent) => {
-        e.preventDefault();
-    };
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    handleFileSelect(e.dataTransfer.files);
+  };
 
-    const handleDrop = (e: React.DragEvent) => {
-        e.preventDefault();
-        handleFileSelect(e.dataTransfer.files);
-    };
+  const removeFile = (filename: string) => {
+    setUploadedFiles((prev) => prev.filter((file) => file.name !== filename));
+    setFileProgresses((prev) => {
+      const newProgresses = { ...prev };
+      delete newProgresses[filename];
+      return newProgresses;
+    });
+  };
 
-    const removeFile = (filename: string) => {
-        setUploadedFiles((prev) =>
-            prev.filter((file) => file.name !== filename),
-        );
-        setFileProgresses((prev) => {
-            const newProgresses = { ...prev };
-            delete newProgresses[filename];
-            return newProgresses;
-        });
-    };
+  return (
+    <div className="fixed inset-0 flex max-h-100 min-h-180 mt-40 mx-auto text-center items-center z-50 bg-gray-200 rounded-xl  w-2xl">
+      <div className="h-full w-full my-10 p-10">
+        <h1 className=" text-lg mb-5">Feature request</h1>
+        <div className="flex flex-col w-full ">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex flex-col gap-5"
+          >
+            <Label className=" text-md">Wie wichtig ist es?</Label>
+            <select
+              className=" w-full"
+              {...register('importance', { required: true })}
+            >
+              <option>Nice to have</option>
+              <option>Low</option>
+              <option>Medium</option>
+              <option>High</option>
+              <option>Kritisch</option>
+            </select>
 
-    return (
-        <div className="fixed inset-0 flex max-h-100 min-h-180 mt-40 mx-auto text-center items-center z-50 bg-gray-200 rounded-xl  w-2xl">
-            <div className="h-full w-full my-10 p-10">
-                <h1 className=" text-lg mb-5">Feature request</h1>
-                <div className="flex flex-col w-full ">
-                    <form
-                        onSubmit={handleSubmit(onSubmit)}
-                        className="flex flex-col gap-5"
-                    >
-                        <Label className=" text-md">Wie wichtig ist es?</Label>
-                        <select
-                            className=" w-full"
-                            {...register("importance", { required: true })}
-                        >
-                            <option>Nice to have</option>
-                            <option>Low</option>
-                            <option>Medium</option>
-                            <option>High</option>
-                            <option>Kritisch</option>
-                        </select>
+            <Textarea
+              className=""
+              {...register('textarea')}
+              placeholder="Beschreibe das Problem oder das gewünschte Feature"
+            ></Textarea>
+            {errors.importance && <span>This field is required</span>}
 
-                        <Textarea
-                            className=""
-                            {...register("textarea")}
-                            placeholder="Beschreibe das Problem oder das gewünschte Feature"
-                        ></Textarea>
-                        {errors.importance && (
-                            <span>This field is required</span>
-                        )}
+            <p className="text-left">Optional</p>
+            <CardContent className="w-full rounded-2xl">
+              {/* <Form /> */}
+              <div className="w-full mx-auto ">
+                <FileDropzone
+                  {...register('file')}
+                  fileInputRef={fileInputRef}
+                  handleBoxClick={handleBoxClick}
+                  handleDragOver={handleDragOver}
+                  handleDrop={handleDrop}
+                  handleFileSelect={handleFileSelect}
+                />
+                <FileList
+                  uploadedFiles={uploadedFiles}
+                  fileProgresses={fileProgresses}
+                  removeFile={removeFile}
+                />
+              </div>
 
-                        <p className="text-left">Optional</p>
-                        <CardContent className="w-full rounded-2xl">
-                            {/* <Form /> */}
-                            <div className="w-full mx-auto ">
-                                <FileDropzone
-                                    {...register("file")}
-                                    fileInputRef={fileInputRef}
-                                    handleBoxClick={handleBoxClick}
-                                    handleDragOver={handleDragOver}
-                                    handleDrop={handleDrop}
-                                    handleFileSelect={handleFileSelect}
-                                />
-                                <FileList
-                                    uploadedFiles={uploadedFiles}
-                                    fileProgresses={fileProgresses}
-                                    removeFile={removeFile}
-                                />
-                            </div>
-
-                            {/* <Button
+              {/* <Button
                                     variant={"outline"}
                                     onClick={handleFileSubmit}
                                     className="h-9 px-4 text-sm font-medium hover:text-black"
                                 >
                                     Erstellen
                                 </Button> */}
-                        </CardContent>
+            </CardContent>
 
-                        {/* placeholder für uploaeds */}
+            {/* placeholder für uploaeds */}
 
-                        <Button
-                            className="hover:text-black cursor-pointer"
-                            type="submit"
-                        >
-                            Senden
-                        </Button>
-                    </form>
-                </div>
-            </div>
+            <Button className="hover:text-black cursor-pointer" type="submit">
+              Senden
+            </Button>
+          </form>
         </div>
-    );
+      </div>
+    </div>
+  );
 }
 
 export default FeatureModal;
