@@ -261,10 +261,16 @@ type AbsenceData = {
     id: string;
     absence: string;
     absencetype: string;
-    absencebegin: Date;
-    absenceEnd: Date;
+    absencebegin: string;
+    absenceEnd: string;
     substitute: string;
 };
+
+const parseGermanDate = (germanDate: string): Date => {
+    const [day, month, year] = germanDate.split(".").map(Number);
+    return new Date(year, month - 1, day);
+};
+
 export const updateAbsenceData = async (data: AbsenceData) => {
     return await prisma.employeeStatus.upsert({
         where: {
@@ -273,16 +279,16 @@ export const updateAbsenceData = async (data: AbsenceData) => {
         update: {
             absence: data.absence,
             absencetype: data.absencetype,
-            absencebegin: new Date(data.absencebegin),
-            absenceEnd: new Date(data.absenceEnd),
+            absencebegin: parseGermanDate(data.absencebegin),
+            absenceEnd: parseGermanDate(data.absenceEnd),
             substitute: data.substitute,
         },
         create: {
             userId: data.id,
             absence: data.absence,
             absencetype: data.absencetype,
-            absencebegin: new Date(data.absencebegin),
-            absenceEnd: new Date(data.absenceEnd),
+            absencebegin: parseGermanDate(data.absencebegin),
+            absenceEnd: parseGermanDate(data.absenceEnd),
             substitute: data.substitute,
         },
     });
