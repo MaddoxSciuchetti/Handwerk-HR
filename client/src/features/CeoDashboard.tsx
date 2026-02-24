@@ -1,18 +1,18 @@
-import { EmployFormSchema, fetchChefData } from "@/lib/api";
+import { EmployFormSchema } from "@/lib/api";
 import z from "zod";
 import useCeoDashboard from "@/hooks/useCeoDashboard";
 import { Tabs } from "@/components/ui/tabs";
 import useHandwerkerProBSBEmployee from "@/hooks/use-unique-user";
 import { Spinner } from "@/components/ui/spinner";
-import CeoTabs from "@/components/ceo-dasboard/CTabsList";
-import Modal from "@/components/ceo-dasboard/Modal";
-import CeoTabsContent from "@/components/ceo-dasboard/CTabsContent";
 import useCurrentBSBEmployee from "@/hooks/use-currentBSBEmployee";
+import EmployeeTabsContent from "@/components/ceo-dashboard/EmployeeTabsContent";
+import CeoTabs from "@/components/ceo-dashboard/CTabsList";
+import Modal from "@/components/ceo-dashboard/CModal";
 
 export type TEmployForm = z.infer<typeof EmployFormSchema>;
 export type TEmployeFormId = z.infer<typeof EmployFormSchema>[number];
 
-function Ceo_Dashboard() {
+function CeoDashboard() {
     const {
         allEmployeeData,
         setSelectedUser,
@@ -57,7 +57,7 @@ function Ceo_Dashboard() {
                                 selectedUser={selectedUser}
                             />
                             {selectedUser ? (
-                                <CeoTabsContent
+                                <EmployeeTabsContent
                                     selectedUser={selectedUser}
                                     cleanData={cleanData}
                                     currentBSBEmployee={currentBSBEmployee}
@@ -82,4 +82,4 @@ function Ceo_Dashboard() {
     );
 }
 
-export default Ceo_Dashboard;
+export default CeoDashboard;

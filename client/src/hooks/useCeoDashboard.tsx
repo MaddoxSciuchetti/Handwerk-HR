@@ -1,4 +1,4 @@
-import { TEmployForm } from "@/features/Ceo_Dashboard";
+import { TEmployForm } from "@/features/CeoDashboard";
 import { fetchChefData } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";

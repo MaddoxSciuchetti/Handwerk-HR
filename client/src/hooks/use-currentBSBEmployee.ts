@@ -1,4 +1,4 @@
-import { TEmployForm } from "@/features/Ceo_Dashboard";
+import { TEmployForm } from "@/features/CeoDashboard";
 import { useMemo } from "react";
 
 function useCurrentBSBEmployee(
