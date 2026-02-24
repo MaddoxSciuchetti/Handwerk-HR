@@ -1,5 +1,11 @@
 Decisions made in this project:
 
+Render Deployement, Neon Database Provider, Godaddy website hosting
+React framework for development
+Tailwind for fast utitliy styling inline
+
+Express backend -> understand http server structure
+
 Notes from clean code:
 
 test the core business functionality

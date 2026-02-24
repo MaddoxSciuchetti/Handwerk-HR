@@ -20,6 +20,8 @@ import {
 import { useEffect, useState } from "react";
 import { Response, useGetHistory } from "@/hooks/use-getHistoryData";
 import { Spinner } from "../ui/spinner";
+import { useQuery } from "@tanstack/react-query";
+import { getProfileFoto } from "@/lib/api";
 
 interface FormProps {
     id_original: number;
@@ -62,6 +64,11 @@ const Form: React.FC<FormProps> = ({
         editcomment || "",
     );
 
+    const { data, isPending } = useQuery<string>({
+        queryKey: ["profilepic"],
+        queryFn: getProfileFoto,
+    });
+
     const { historyData, isLoading, error, refetchHistory } =
         useGetHistory(id_original);
 
@@ -102,7 +109,7 @@ const Form: React.FC<FormProps> = ({
                         <div className="flex flex-row mt-2">
                             <p className="w-full underline">{description}</p>
                             <img
-                                className=""
+                                className="cursor-pointer"
                                 src="/assets/editReact.svg"
                                 alt="text"
                                 onClick={() =>
@@ -118,31 +125,47 @@ const Form: React.FC<FormProps> = ({
                         </div>
                         <div className="flex gap-2 ">
                             {is_substitute ? (
-                                <>
-                                    <p className="rounded-2xl bg-orange-400 px-3 py-1 text-sm">
-                                        Ersatz: {substituteOwner}
-                                    </p>
-                                    <p className="rounded-2xl bg-gray-300 px-3 py-1 text-sm text-gray-600">
-                                        {officialOwner}
-                                    </p>
-                                </>
+                                <div className="flex flex-row gap-1">
+                                    <div className="relative">
+                                        <span className="rounded-2xl bg-orange-200 px-3 py-1 text-sm cursor-pointer group">
+                                            {substituteOwner}
+                                            <div className="absolute bottom-full left-0 mb-2 p-3 bg-white border rounded-lg shadow-lg opacity-0 group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-10 ">
+                                                Ersatz
+                                            </div>
+                                        </span>
+                                    </div>
+
+                                    <div className="relative">
+                                        <span className="rounded-2xl bg-gray-100 px-3 py-1 text-sm cursor-pointer group">
+                                            {officialOwner}
+                                            <div className="absolute bottom-full left-0 mb-2 p-3 bg-white border rounded-lg shadow-lg opacity-0 group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-10 ">
+                                                Verantwortlich
+                                            </div>
+                                        </span>
+                                    </div>
+                                </div>
                             ) : (
-                                <p className="rounded-2xl bg-blue-400 px-3 py-1 text-sm  ">
-                                    {officialOwner}
-                                </p>
+                                <div className="relative">
+                                    <span className="rounded-2xl bg-gray-100 px-3 py-1 text-sm cursor-pointer group">
+                                        {officialOwner}
+                                        <div className="absolute bottom-full left-0 mb-2 p-3 bg-white border rounded-lg shadow-lg opacity-0 group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-10 ">
+                                            Verantwortlich
+                                        </div>
+                                    </span>
+                                </div>
                             )}
 
                             <div>
                                 <span
                                     className={
                                         selectedValue === "erledigt"
-                                            ? "rounded-2xl bg-green-500 px-3 py-1 text-sm"
+                                            ? "rounded-2xl bg-green-200 px-3 py-1 text-sm"
                                             : selectedValue === "offen"
                                               ? "rounded-2xl bg-red-200 px-3 py-1 text-sm"
                                               : selectedValue ===
                                                   "in_bearbeitung"
-                                                ? "rounded-2xl bg-yellow-500 px-3 py-1 text-sm"
-                                                : " rounded-2xl bg-red-400 px-3 py-1 text-sm"
+                                                ? "rounded-2xl bg-yellow-200 px-3 py-1 text-sm"
+                                                : " rounded-2xl bg-red-200 px-3 py-1 text-sm"
                                     }
                                 >
                                     {selectedValue === "erledigt" ? (
@@ -178,11 +201,14 @@ const Form: React.FC<FormProps> = ({
                         >
                             <AccordionItem value="shipping" className="mb-10 ">
                                 <AccordionTrigger className=" -blue-600 border-2 p-2 border-gray-300">
-                                    Verlauf
+                                    Bearbeitungsverlauf
                                 </AccordionTrigger>
                                 <AccordionContent className="">
-                                    {isLoading ? (
-                                        <Spinner className="size-8" />
+                                    {historyData?.length === 0 ? (
+                                        <p className="mt-5">
+                                            Es wurden noch keine Änderungen
+                                            vorgenommen
+                                        </p>
                                     ) : (
                                         (historyData || []).map(
                                             (item: Response, index: number) => (
@@ -204,6 +230,10 @@ const Form: React.FC<FormProps> = ({
                                                                     .email
                                                             }
                                                         </p>
+                                                        <img
+                                                            className="ml-1 w-5 h-5 "
+                                                            src={data}
+                                                        />
                                                     </div>
                                                     <p>
                                                         Status:{" "}

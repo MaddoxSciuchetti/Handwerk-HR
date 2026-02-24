@@ -91,10 +91,15 @@ export function AppSidebar({ openModal }: { openModal: () => void }) {
                                         className="text-black"
                                         key={index}
                                     >
-                                        <SidebarMenuButton asChild>
+                                        <SidebarMenuButton
+                                            asChild
+                                            className="mt-2"
+                                        >
                                             <Link to={item.to}>
                                                 <item.icon />
-                                                <span>{item.title}</span>
+                                                <span className="">
+                                                    {item.title}
+                                                </span>
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
@@ -106,7 +111,7 @@ export function AppSidebar({ openModal }: { openModal: () => void }) {
                 <Button
                     onClick={() => openModal()}
                     variant={"outline"}
-                    className="mb-1 cursor-pointer mx-1 bg-blue-200"
+                    className="mb-1 cursor-pointer mx-1 bg-blue-100"
                 >
                     Feature Reqest{" "}
                 </Button>

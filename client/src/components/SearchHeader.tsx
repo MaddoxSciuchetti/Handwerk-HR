@@ -21,7 +21,7 @@ function SearchHeader({ search, setSearch, toggleModal }: SearchHeaderProps) {
                     onClick={() => toggleModal()}
                     className="cursor-pointer"
                 >
-                    Mitarbeiter hinzufügen
+                    Handwerker hinzufügen
                 </Button>
             </div>
         </div>

@@ -61,59 +61,55 @@ function Ceo_Dashboard() {
                         <h1 className="mb-5 text-2xl font-light ml-6 ">
                             Deine Mitarbeiter und ihre offenen Aufgaben
                         </h1>
-                        <div className=" flex w-full content-start">
-                            <Tabs
-                                defaultValue="account"
-                                className="w-xl ml-6 "
-                                value={selectedUser || undefined}
-                                onValueChange={(val) => setSelectedUser(val)}
+                        <Tabs
+                            defaultValue="account"
+                            className="ml-6"
+                            value={selectedUser || undefined}
+                            onValueChange={(val) => setSelectedUser(val)}
+                        >
+                            <TabsList
+                                variant={"default"}
+                                className="w-full max-w-xs justify-start flex-wrap px-5 gap-5 border-b-2 border-[0.5px] border-gray-700"
                             >
-                                <TabsList
-                                    variant={"default"}
-                                    className="w-full justify-start px-5 gap-5 border-b-2 border-[0.5px] border-gray-700"
-                                >
-                                    {uniqueHandwerkerProBSBEmployee.map(
-                                        (user, index) => (
-                                            <TabsTrigger
-                                                value={user?.owner}
-                                                key={user.owner}
-                                                className={`text-md flex flex-row  cursor-pointer  ${selectedUser === user.owner ? ` transition delay-150 duration-300 ease-in-out  bg-gray-50` : `hover:bg-gray-50`}`}
-                                            >
-                                                {user.original_owner}
-                                                {user.is_substitute && (
-                                                    <span className="text-xs text-gray-400  ml-1">
-                                                        (Vertretung:{" "}
-                                                        {user.substitute_name})
-                                                    </span>
-                                                )}
-                                            </TabsTrigger>
-                                        ),
-                                    )}
-                                </TabsList>
-                                {selectedUser ? (
-                                    <TabsContent
-                                        value={selectedUser}
-                                        className=""
-                                    >
-                                        <AccordionDemo
-                                            cleanData={cleanData}
-                                            user={selectedUser}
-                                            data={currentBSBEmployee}
-                                            onTaskClick={() =>
-                                                setModalOpen(true)
-                                            }
-                                        />
-                                    </TabsContent>
-                                ) : (
-                                    <h1 className="text-sm font-light">
-                                        Kein Nutzer ausgewählt
-                                    </h1>
+                                {uniqueHandwerkerProBSBEmployee.map(
+                                    (user, index) => (
+                                        <TabsTrigger
+                                            value={user?.owner}
+                                            key={user.owner}
+                                            className={`text-md flex flex-row  cursor-pointer  ${selectedUser === user.owner ? ` transition delay-150 duration-300 ease-in-out  bg-gray-100` : `hover:bg-gray-50`}`}
+                                        >
+                                            {user.original_owner}
+                                            {user.is_substitute && (
+                                                <span className="text-xs text-gray-400  ml-1">
+                                                    (Vertretung:{" "}
+                                                    {user.substitute_name})
+                                                </span>
+                                            )}
+                                        </TabsTrigger>
+                                    ),
                                 )}
-                                <TabsContent value="password">
-                                    Change your password here.
+                            </TabsList>
+                            {selectedUser ? (
+                                <TabsContent
+                                    value={selectedUser}
+                                    className="mt-10"
+                                >
+                                    <AccordionDemo
+                                        cleanData={cleanData}
+                                        user={selectedUser}
+                                        data={currentBSBEmployee}
+                                        onTaskClick={() => setModalOpen(true)}
+                                    />
                                 </TabsContent>
-                            </Tabs>
-                        </div>
+                            ) : (
+                                <h1 className="text-sm font-light">
+                                    Kein Nutzer ausgewählt
+                                </h1>
+                            )}
+                            <TabsContent value="password">
+                                Change your password here.
+                            </TabsContent>
+                        </Tabs>
                         <div className="flex flex-col relative  w-full h-auto overflow-auto"></div>
                     </div>
 
