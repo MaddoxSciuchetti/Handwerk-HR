@@ -1,8 +1,7 @@
-import { TEmployForm } from "@/features/Ceo_Dashboard";
+import { TEmployForm } from "@/features/CeoDashboard";
 import { fetchChefData } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import useHandwerkerProBSBEmployee from "./use-unique-user";
 import { threeDaysAgo } from "@/lib/utils";
 
 function useCeoDashboard() {
@@ -16,9 +15,6 @@ function useCeoDashboard() {
         queryKey: ["ceo-dashboard"],
         queryFn: fetchChefData,
     });
-
-    console.log("all employee data:");
-    console.log(allEmployeeData);
 
     const cleanData = useMemo(() => {
         if (!allEmployeeData) return [];
@@ -36,16 +32,12 @@ function useCeoDashboard() {
                     ...item,
                     inputs: item.inputs.filter(
                         (input) => input.status !== "erledigt",
-                        // new Date(input.timestamp) < threeDaysAgo,
                     ),
                 }));
             groups.set(key, originalInputs);
         });
         return Array.from(groups.entries());
     }, [allEmployeeData, threeDaysAgo]);
-
-    console.log("cleaned data:");
-    console.log(cleanData);
 
     return {
         allEmployeeData,

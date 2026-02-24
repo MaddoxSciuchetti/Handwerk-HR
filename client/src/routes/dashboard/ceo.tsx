@@ -1,5 +1,5 @@
 import { Spinner } from "@/components/ui/spinner";
-import Ceo_Dashboard from "@/features/Ceo_Dashboard";
+import CeoDashboard from "@/features/CeoDashboard";
 import useAuth from "@/hooks/useAuth";
 import { fetchChefData, user, verifyChef } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
@@ -35,7 +35,7 @@ function RouteComponent() {
     }
     if (chefverification?.user_permission === "CHEF") {
         console.log("VERIED VERFIED ");
-        return <Ceo_Dashboard />;
+        return <CeoDashboard />;
     }
     return <div>Permission denied</div>;
 }
