@@ -123,7 +123,7 @@ function ModalMitarbeiter({ toggleModal }: { toggleModal: () => void }) {
                                 </div>
                             ))}
                             <Button
-                                className="w-full my-2 "
+                                className="w-full my-2 cursor-pointer "
                                 variant={"outline"}
                                 type="submit"
                             >

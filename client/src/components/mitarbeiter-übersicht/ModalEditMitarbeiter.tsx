@@ -26,6 +26,7 @@ import { Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ErrorMessage } from "@hookform/error-message";
 import { DateSchema } from "@/schemas/schema";
+import { useState } from "react";
 
 type ModalEditMitarbeiterProps = {
     fullname: string;
@@ -50,7 +51,7 @@ function ModalEditMitarbeiter({
     id,
 }: ModalEditMitarbeiterProps) {
     const queryClient = useQueryClient();
-
+    const [success, setSuccess] = useState<boolean>();
     const {
         EmployeeData,
         isLoading: isLoadingEmployee,
@@ -61,6 +62,7 @@ function ModalEditMitarbeiter({
     const EmployeeAbsence = useMutation({
         mutationFn: editEmployeeAbsence,
         onSuccess: () => {
+            setSuccess(true);
             toggleEmployeeModal();
             queryClient.invalidateQueries({
                 queryKey: ["EmployeeDataSpecifics"],
@@ -209,6 +211,14 @@ function ModalEditMitarbeiter({
                                         </p>
                                     )}
                                 />
+
+                                {success ? (
+                                    <p className="text-green-400">
+                                        Abwesenheit geädert
+                                    </p>
+                                ) : (
+                                    ""
+                                )}
 
                                 <Button
                                     className="cursor-pointer"
