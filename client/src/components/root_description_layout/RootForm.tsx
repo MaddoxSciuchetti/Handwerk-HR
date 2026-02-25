@@ -1,6 +1,6 @@
 import { Textarea } from '../ui/textarea';
 import { Button } from '../ui/button';
-import { Dispatch, SetStateAction, useEffect } from 'react';
+import { Dispatch, SetStateAction } from 'react';
 import { TEmployeeResponse } from '@/zod-schemas/schema';
 import EmployeeSelect from './EmployeeSelect';
 import { SubmitHandler, useForm } from 'react-hook-form';
@@ -11,13 +11,18 @@ import z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ErrorMessage } from '@hookform/error-message';
 
-const templateConfigurationSchema = z.object({
-  form_field_id: z.number().optional(),
+const baseSchema = z.object({
   description: z
     .string()
     .min(6, { message: 'Bitte füge eine Längere Beschreibung hinzu' }),
   template_type: z.enum(['ONBOARDING', 'OFFBOARDING']),
   owner: z.string({ message: 'Bitte wählen ein Mitarbeiter aus' }),
+});
+
+const addSchema = baseSchema;
+
+const editSchema = baseSchema.extend({
+  form_field_id: z.number(),
 });
 
 type RootFormProps = {
@@ -48,10 +53,12 @@ type RootFormProps = {
 };
 
 export type HandleAddSubmit = {
-  form_field_id?: number;
   description: string;
   template_type: 'ONBOARDING' | 'OFFBOARDING';
   owner: string;
+};
+export type HandleEditSubmit = HandleAddSubmit & {
+  form_field_id: number;
 };
 
 const RootForm = ({
@@ -65,19 +72,28 @@ const RootForm = ({
   form_field_id,
   mode,
 }: RootFormProps) => {
+  const schema = mode === 'EDIT' ? editSchema : addSchema;
+
   const {
     register,
     handleSubmit,
     control,
     setValue,
     formState: { errors },
-  } = useForm<HandleAddSubmit>({
-    resolver: zodResolver(templateConfigurationSchema),
+  } = useForm<HandleAddSubmit | HandleEditSubmit>({
+    resolver: zodResolver(schema),
     criteriaMode: 'all',
   });
 
-  const onSubmit: SubmitHandler<HandleAddSubmit> = (data) =>
-    mode === 'EDIT' ? console.log(data) : console.log(data);
+  const onSubmit: SubmitHandler<HandleAddSubmit | HandleEditSubmit> = (
+    data
+  ) => {
+    if (mode === 'EDIT') {
+      editDescriptionMutation(data as HandleEditSubmit);
+    } else {
+      handleAddSubmitMutation(data as HandleAddSubmit);
+    }
+  };
 
   return (
     <form
