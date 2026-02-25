@@ -2,10 +2,12 @@ import { editTaskData } from '@/lib/api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { useSidebar } from '@/components/ui/sidebar';
 
 function useEditDescription() {
   const queryClient = useQueryClient();
   const [modal, setModal] = useState(false);
+  const { toggleSidebar } = useSidebar();
   const [modalState, setModalState] = useState<{
     selectedItem: {
       form_field_id: number | null | undefined;
@@ -18,6 +20,7 @@ function useEditDescription() {
 
   const toggleModal = () => {
     setModal((prev) => !prev);
+    toggleSidebar();
   };
 
   async function openDescriptionModal(
