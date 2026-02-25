@@ -1,10 +1,9 @@
 import { TDescriptionResponse } from '@/types/api';
-import { Button } from './ui/button';
 import { Dispatch, SetStateAction } from 'react';
 
 type DescriptionListProps = {
   items: TDescriptionResponse[];
-  deleteDescription: (val: any) => void;
+  deleteDescription: (val: number) => void;
   openDescriptionModal: (
     description?: string | null,
     owner?: string,
@@ -19,7 +18,6 @@ const DescriptionList = ({
   items,
   deleteDescription,
   openDescriptionModal,
-  mode,
   setMode,
 }: DescriptionListProps) => {
   return items?.map((item, index) => (

@@ -3,10 +3,11 @@ import { Button } from '../ui/button';
 import { Dispatch, SetStateAction, SubmitEvent } from 'react';
 import { TEmployeeResponse } from '@/zod-schemas/schema';
 import EmployeeSelect from './EmployeeSelect';
+import { SubmitHandler } from '@/types/rootDescription';
 
 type RootFormProps = {
-  handleAddSubmit: (e: SubmitEvent<HTMLFormElement>) => void;
-  handleSubmit: (e: SubmitEvent<HTMLFormElement>) => void;
+  handleAddSubmit: SubmitHandler;
+  handleSubmit: SubmitHandler;
   selectedValue: string;
   description: string | null | undefined;
   setSelectedValue: Dispatch<SetStateAction<string>>;

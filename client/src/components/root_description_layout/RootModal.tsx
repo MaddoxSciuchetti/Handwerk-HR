@@ -1,16 +1,17 @@
-import { Dispatch, SetStateAction, SubmitEvent } from 'react';
+import { Dispatch, SetStateAction } from 'react';
 import { TDescriptionData } from '@/types/api';
 import { TEmployeeResponse } from '@/zod-schemas/schema';
 import useRootForm from '@/hooks/use-Root-Form';
 import RootForm from './RootForm';
+import { SubmitHandler } from '@/types/rootDescription';
 
 type RootModalProps = {
   form_field_id: number | null | undefined;
   description: string | null | undefined;
   owner: string | null | undefined;
   template_type?: 'ONBOARDING' | 'OFFBOARDING';
-  handleSubmit: (e: SubmitEvent<HTMLFormElement>) => void;
-  handleAddSubmit: (e: SubmitEvent<HTMLFormElement>) => void;
+  handleSubmit: SubmitHandler;
+  handleAddSubmit: SubmitHandler;
   EmployeeData: TEmployeeResponse | undefined;
   OnboardingData?: TDescriptionData[] | undefined;
   OffboardingData?: TDescriptionData[] | undefined;
