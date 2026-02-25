@@ -29,13 +29,14 @@ const DescriptionList = ({
           alt="deleticon"
           className="items-center cursor-pointer"
         />
-        <p className="underline ">{item.description}</p>
-        <span className="rounded-2xl bg-gray-100 px-3 py-1 text-sm cursor-pointer group">
-          {item.auth_user.vorname} {item.auth_user.nachname}
-        </span>
+        <p className="underline w-20">{item.description}</p>
       </div>
       <div className="grow" />
-      <div className="flex">
+      <div className="flex gap-5 w-70 ">
+        <span className="rounded-2xl bg-gray-100 py-1 w-40 text-center text-sm cursor-pointer group">
+          {item.auth_user.vorname} {item.auth_user.nachname}
+        </span>
+        <div className="grow" />
         <img
           className="cursor-pointer"
           src="/assets/editReact.svg"
