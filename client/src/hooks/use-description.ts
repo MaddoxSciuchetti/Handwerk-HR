@@ -14,15 +14,16 @@ import { useQueryClient } from '@tanstack/react-query';
 
 function useDescription() {
   const queryClient = useQueryClient();
+  const [mode, setMode] = useState<'EDIT' | 'ADD'>();
   const [tab, setTab] = useState<'ONBOARDING' | 'OFFBOARDING'>('ONBOARDING');
   const { EmployeeData } = useEmployeeData();
-  const { data, OnboardingData, OffboardingData } = useFetchTask();
+  const { OnboardingData, OffboardingData } = useFetchTask();
   const { toggleSidebar } = useSidebar();
   const { deleteDescription } = useDeleteDescription();
   const {
     modal,
     setModal,
-    openEditModal,
+    openDescriptionModal,
     editDescription,
     modalState,
     toggleModal,
@@ -68,10 +69,11 @@ function useDescription() {
   };
 
   return {
+    mode,
+    setMode,
     modal,
     modalState,
-    openEditModal,
-    data,
+    openDescriptionModal,
     deleteDescription,
     handleSubmit,
     handleAddSubmit,

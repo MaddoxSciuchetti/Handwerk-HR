@@ -16,7 +16,6 @@ function useFetchTask() {
   );
 
   return {
-    data,
     OnboardingData,
     OffboardingData,
   };

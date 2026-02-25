@@ -20,7 +20,7 @@ function useEditDescription() {
     setModal((prev) => !prev);
   };
 
-  async function openEditModal(
+  async function openDescriptionModal(
     description?: string | null,
     owner?: string,
     form_field_id?: number
@@ -50,7 +50,7 @@ function useEditDescription() {
   return {
     modal,
     setModal,
-    openEditModal,
+    openDescriptionModal,
     editDescription,
     modalState,
     toggleModal,

@@ -11,13 +11,14 @@ function DescriptionRoot() {
   const {
     modal,
     modalState,
-    openEditModal,
-    data,
+    openDescriptionModal,
     deleteDescription,
     handleSubmit,
     handleAddSubmit,
     tab,
     setTab,
+    mode,
+    setMode,
     OnboardingData,
     OffboardingData,
     handleOpenModal,
@@ -31,7 +32,7 @@ function DescriptionRoot() {
   return (
     <div className="rounded-2xl overflow-x-auto w-full h-full p-6 shadow-gray-200 shadow-lg overflow-auto">
       <div className="h-full w-full flex flex-col">
-        <div className="flex gap-2  justify-center  ">
+        <div className="flex gap-2  justify-center">
           {TABS.map(({ value, label }) => (
             <Button
               key={value}
@@ -47,19 +48,29 @@ function DescriptionRoot() {
           ))}
         </div>
 
+        <img
+          className="w-7 cursor-pointer"
+          src="assets/copy.svg"
+          onClick={() => {
+            openDescriptionModal();
+            setMode('ADD');
+          }}
+          alt="add description"
+        />
+
         <div className="flex flex-col">
           <DescriptionList
             items={tab === 'ONBOARDING' ? OnboardingData : OffboardingData}
-            handleSubmit={handleSubmit}
             deleteDescription={deleteDescription}
-            openEditModal={openEditModal}
+            openDescriptionModal={openDescriptionModal}
+            mode={mode}
+            setMode={setMode}
           />
         </div>
 
         {modalState.selectedItem && modal && (
           <ModalOverlay handleToggle={handleOpenModal}>
             <RootModal
-              data={data}
               form_field_id={modalState.selectedItem.form_field_id}
               description={modalState.selectedItem.description}
               owner={modalState.selectedItem.owner}
@@ -69,6 +80,8 @@ function DescriptionRoot() {
               EmployeeData={EmployeeData}
               OnboardingData={OnboardingData}
               OffboardingData={OffboardingData}
+              mode={mode}
+              setMode={setMode}
             />
           </ModalOverlay>
         )}
