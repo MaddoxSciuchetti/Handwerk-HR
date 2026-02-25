@@ -21,29 +21,34 @@ const DescriptionList = ({
   setMode,
 }: DescriptionListProps) => {
   return items?.map((item, index) => (
-    <div className="flex flex-row mt-2 " key={index}>
-      <img
-        onClick={() => deleteDescription(item.form_field_id)}
-        src="/assets/x_delete.svg"
-        alt="deleticon"
-        className="items-center cursor-pointer"
-      />
-      <p className="w-sm underline">{item.description}</p>
-      <span className="rounded-2xl bg-gray-100 px-3 py-1 text-sm cursor-pointer group">
-        {item.auth_user.vorname} {item.auth_user.nachname}
-      </span>
-      <img
-        className="cursor-pointer"
-        src="/assets/editReact.svg"
-        onClick={() => {
-          openDescriptionModal(
-            item.description,
-            item.owner,
-            item.form_field_id
-          );
-          setMode('EDIT');
-        }}
-      />
+    <div className="flex flex-row  w-full items-center mt-5" key={index}>
+      <div className="flex items-center gap-5">
+        <img
+          onClick={() => deleteDescription(item.form_field_id)}
+          src="/assets/x_delete.svg"
+          alt="deleticon"
+          className="items-center cursor-pointer"
+        />
+        <p className="underline ">{item.description}</p>
+        <span className="rounded-2xl bg-gray-100 px-3 py-1 text-sm cursor-pointer group">
+          {item.auth_user.vorname} {item.auth_user.nachname}
+        </span>
+      </div>
+      <div className="grow" />
+      <div className="flex">
+        <img
+          className="cursor-pointer"
+          src="/assets/editReact.svg"
+          onClick={() => {
+            openDescriptionModal(
+              item.description,
+              item.owner,
+              item.form_field_id
+            );
+            setMode('EDIT');
+          }}
+        />
+      </div>
     </div>
   ));
 };
