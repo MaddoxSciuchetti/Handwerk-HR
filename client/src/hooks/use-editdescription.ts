@@ -1,11 +1,13 @@
-import { editTaskData } from '@/lib/api';
+import { editTaskData, EditDescriptionData } from '@/lib/api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { useSidebar } from '@/components/ui/sidebar';
 
 function useEditDescription() {
   const queryClient = useQueryClient();
   const [modal, setModal] = useState(false);
+  const { toggleSidebar } = useSidebar();
   const [modalState, setModalState] = useState<{
     selectedItem: {
       form_field_id: number | null | undefined;
@@ -18,9 +20,10 @@ function useEditDescription() {
 
   const toggleModal = () => {
     setModal((prev) => !prev);
+    toggleSidebar();
   };
 
-  async function openEditModal(
+  async function openDescriptionModal(
     description?: string | null,
     owner?: string,
     form_field_id?: number
@@ -35,7 +38,11 @@ function useEditDescription() {
     });
   }
 
-  const { mutate: editDescription } = useMutation({
+  const { mutate: editDescriptionMutation } = useMutation<
+    EditDescriptionData,
+    Error,
+    EditDescriptionData
+  >({
     mutationFn: editTaskData,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['description_root'] });
@@ -50,8 +57,8 @@ function useEditDescription() {
   return {
     modal,
     setModal,
-    openEditModal,
-    editDescription,
+    openDescriptionModal,
+    editDescriptionMutation,
     modalState,
     toggleModal,
   };

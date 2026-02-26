@@ -14,6 +14,7 @@ import {
   FileResponse,
   LoginRequest,
   LoginResponse,
+  newField,
   RegisterRequest,
   RegisterResponse,
   Session_API,
@@ -206,8 +207,11 @@ export const addExtraField = async (data: {
   description: string;
   template_type: 'ONBOARDING' | 'OFFBOARDING';
   owner: string;
-}): Promise<any> => {
-  const response = await API.post(`/offboarding/addFormField`, data);
+}): Promise<newField> => {
+  const response = await API.post<newField, newField>(
+    `/offboarding/addFormField`,
+    data
+  );
   return response;
 };
 
@@ -239,7 +243,11 @@ export const deleteDescriptionData = async (id: number) => {
   return response;
 };
 
-export type EditDescriptionData = Omit<TDescriptionData, 'template_type'>;
+export type EditDescriptionData = {
+  form_field_id: number | undefined;
+  description: string | null;
+  owner: string;
+};
 
 export const editTaskData = async (data: EditDescriptionData) => {
   const response = await API.put<EditDescriptionData, EditDescriptionData>(

@@ -3,7 +3,6 @@ import { Label } from '../ui/label';
 import { Button } from '@/components/ui/button';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  AbsenceData,
   deleteEmployeeHandler,
   DescriptionData,
   editEmployeeAbsence,
@@ -27,6 +26,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { ErrorMessage } from '@hookform/error-message';
 import { DateSchema } from '@/zod-schemas/schema';
 import { useState } from 'react';
+import { AbsenceData } from '@/types/api';
 
 type ModalEditMitarbeiterProps = {
   fullname: string;
@@ -55,7 +55,6 @@ function ModalEditMitarbeiter({
   const {
     EmployeeData,
     isLoading: isLoadingEmployee,
-    ErrorEmployee,
     isError: isErrorEmployee,
   } = useEmployeeData();
 
