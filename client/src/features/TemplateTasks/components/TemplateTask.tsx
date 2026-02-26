@@ -1,13 +1,13 @@
-import DescriptionList from '@/components/DescriptionList';
 import ModalOverlay from '@/components/modal/ModalOverlay';
-import RootModal from '@/components/root_description_layout/RootModal';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import useDescription from '@/hooks/use-description';
+import useDescription from '@/features/TemplateTasks/hooks/use-GetDescription';
 import { TABS } from '@/lib/constants';
 import { cn } from '@/types/utils';
+import Tasks from './Tasks';
+import TemplateModal from './TemplateModal';
 
-function DescriptionRoot() {
+function TemplateTasks() {
   const {
     editDescriptionMutation,
     handleAddSubmitMutation,
@@ -56,7 +56,7 @@ function DescriptionRoot() {
         />
       </div>
 
-      <DescriptionList
+      <Tasks
         items={tab === 'ONBOARDING' ? OnboardingData : OffboardingData}
         deleteDescription={deleteDescription}
         openDescriptionModal={openDescriptionModal}
@@ -66,7 +66,7 @@ function DescriptionRoot() {
 
       {modalState.selectedItem && modal && (
         <ModalOverlay handleToggle={handleOpenModal}>
-          <RootModal
+          <TemplateModal
             editDescriptionMutation={editDescriptionMutation}
             handleAddSubmitMutation={handleAddSubmitMutation}
             form_field_id={modalState.selectedItem.form_field_id}
@@ -85,4 +85,4 @@ function DescriptionRoot() {
   );
 }
 
-export default DescriptionRoot;
+export default TemplateTasks;

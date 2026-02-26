@@ -5,14 +5,15 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../ui/select';
+} from '../../../components/ui/select';
 import { Dispatch, SetStateAction } from 'react';
 import { TEmployeeResponse } from '@/zod-schemas/schema';
 import { Control, Controller, FieldErrors } from 'react-hook-form';
-import { HandleAddSubmit } from './RootForm';
-import { ErrorMessage } from '@hookform/error-message';
 
-type EmployeeSelectProps = {
+import { ErrorMessage } from '@hookform/error-message';
+import { HandleAddSubmit } from '../types/taskForm.types';
+
+type OwnerSelectProps = {
   control: Control<HandleAddSubmit, any, HandleAddSubmit>;
   selectedValue: string;
   setSelectedValue: Dispatch<SetStateAction<string>>;
@@ -20,13 +21,7 @@ type EmployeeSelectProps = {
   errors: FieldErrors<HandleAddSubmit>;
 };
 
-const EmployeeSelect = ({
-  errors,
-  control,
-  selectedValue,
-  setSelectedValue,
-  EmployeeData,
-}: EmployeeSelectProps) => {
+const OwnerSelect = ({ errors, control, EmployeeData }: OwnerSelectProps) => {
   return (
     <>
       <div className="">
@@ -67,4 +62,4 @@ const EmployeeSelect = ({
   );
 };
 
-export default EmployeeSelect;
+export default OwnerSelect;

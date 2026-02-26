@@ -1,47 +1,18 @@
-import { Textarea } from '../ui/textarea';
-import { Button } from '../ui/button';
+import { Textarea } from '../../../components/ui/textarea';
+import { Button } from '../../../components/ui/button';
 import { Dispatch, SetStateAction } from 'react';
 import { TEmployeeResponse } from '@/zod-schemas/schema';
-import EmployeeSelect from './EmployeeSelect';
-import { SubmitHandler, useForm } from 'react-hook-form';
-import { UseMutateFunction } from '@tanstack/react-query';
-import { EditDescriptionData } from '@/lib/api';
-import { newField } from '@/types/api';
-import z from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
+
 import { ErrorMessage } from '@hookform/error-message';
+import { addSchema, editSchema } from '../schemas/taskForm.schema';
 
-const baseSchema = z.object({
-  description: z
-    .string()
-    .min(6, { message: 'Bitte füge eine Längere Beschreibung hinzu' }),
-  template_type: z.enum(['ONBOARDING', 'OFFBOARDING']),
-  owner: z.string({ message: 'Bitte wählen ein Mitarbeiter aus' }),
-});
+import { TAddDescription, TEditDesription } from '../types/mutation.types';
+import useSubmitForm from '../hooks/use-Form';
+import OwnerSelect from './OwnerSelect';
 
-const addSchema = baseSchema;
-
-const editSchema = baseSchema.extend({
-  form_field_id: z.number(),
-});
-
-type RootFormProps = {
-  editDescriptionMutation: UseMutateFunction<
-    EditDescriptionData,
-    Error,
-    EditDescriptionData,
-    unknown
-  >;
-  handleAddSubmitMutation: UseMutateFunction<
-    newField,
-    Error,
-    {
-      description: string;
-      template_type: 'ONBOARDING' | 'OFFBOARDING';
-      owner: string;
-    },
-    unknown
-  >;
+type TemplateFormProps = {
+  editDescriptionMutation: TEditDesription;
+  handleAddSubmitMutation: TAddDescription;
   selectedValue: string;
   description: string | null | undefined;
   setSelectedValue: Dispatch<SetStateAction<string>>;
@@ -52,16 +23,7 @@ type RootFormProps = {
   setMode: Dispatch<SetStateAction<'EDIT' | 'ADD' | undefined>>;
 };
 
-export type HandleAddSubmit = {
-  description: string;
-  template_type: 'ONBOARDING' | 'OFFBOARDING';
-  owner: string;
-};
-export type HandleEditSubmit = HandleAddSubmit & {
-  form_field_id: number;
-};
-
-const RootForm = ({
+const TemplateForm = ({
   editDescriptionMutation,
   handleAddSubmitMutation,
   selectedValue,
@@ -71,29 +33,15 @@ const RootForm = ({
   template_type,
   form_field_id,
   mode,
-}: RootFormProps) => {
+}: TemplateFormProps) => {
   const schema = mode === 'EDIT' ? editSchema : addSchema;
 
-  const {
-    register,
-    handleSubmit,
-    control,
-    setValue,
-    formState: { errors },
-  } = useForm<HandleAddSubmit | HandleEditSubmit>({
-    resolver: zodResolver(schema),
-    criteriaMode: 'all',
-  });
-
-  const onSubmit: SubmitHandler<HandleAddSubmit | HandleEditSubmit> = (
-    data
-  ) => {
-    if (mode === 'EDIT') {
-      editDescriptionMutation(data as HandleEditSubmit);
-    } else {
-      handleAddSubmitMutation(data as HandleAddSubmit);
-    }
-  };
+  const { register, handleSubmit, control, onSubmit, errors } = useSubmitForm(
+    mode,
+    schema,
+    editDescriptionMutation,
+    handleAddSubmitMutation
+  );
 
   return (
     <form
@@ -136,7 +84,7 @@ const RootForm = ({
         )}
       />
       <div className="flex flex-row gap-2">
-        <EmployeeSelect
+        <OwnerSelect
           control={control}
           errors={errors}
           selectedValue={selectedValue}
@@ -155,4 +103,4 @@ const RootForm = ({
   );
 };
 
-export default RootForm;
+export default TemplateForm;

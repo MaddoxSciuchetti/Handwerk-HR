@@ -1,7 +1,7 @@
 import { TDescriptionResponse } from '@/types/api';
 import { Dispatch, SetStateAction } from 'react';
 
-type DescriptionListProps = {
+type TasksProps = {
   items: TDescriptionResponse[];
   deleteDescription: (val: number) => void;
   openDescriptionModal: (
@@ -14,12 +14,12 @@ type DescriptionListProps = {
   setMode: Dispatch<SetStateAction<'EDIT' | 'ADD' | undefined>>;
 };
 
-const DescriptionList = ({
+const Tasks = ({
   items,
   deleteDescription,
   openDescriptionModal,
   setMode,
-}: DescriptionListProps) => {
+}: TasksProps) => {
   return items?.map((item, index) => (
     <div className="flex flex-row  w-full items-center mt-5" key={index}>
       <div className="flex items-center gap-5">
@@ -54,4 +54,4 @@ const DescriptionList = ({
   ));
 };
 
-export default DescriptionList;
+export default Tasks;

@@ -1,5 +1,5 @@
-import { deleteDescriptionData } from '@/lib/api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { deleteDescriptionData } from '../api';
 
 function useDeleteDescription() {
   const queryClient = useQueryClient();

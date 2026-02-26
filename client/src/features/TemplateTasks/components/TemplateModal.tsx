@@ -1,34 +1,13 @@
 import { Dispatch, SetStateAction } from 'react';
-import {
-  newField,
-  TCreateTaskMutation,
-  TDescriptionData,
-  TEditMutation,
-} from '@/types/api';
+import { TDescriptionData } from '@/types/api';
 import { TEmployeeResponse } from '@/zod-schemas/schema';
 import useRootForm from '@/hooks/use-Root-Form';
-import RootForm from './RootForm';
-import { SubmitHandlerProps } from '@/types/rootDescription';
-import { UseMutateFunction } from '@tanstack/react-query';
-import { EditDescriptionData } from '@/lib/api';
+import { TAddDescription, TEditDesription } from '../types/mutation.types';
+import TemplateForm from './TemplateForm';
 
-type RootModalProps = {
-  editDescriptionMutation: UseMutateFunction<
-    EditDescriptionData,
-    Error,
-    EditDescriptionData,
-    unknown
-  >;
-  handleAddSubmitMutation: UseMutateFunction<
-    newField,
-    Error,
-    {
-      description: string;
-      template_type: 'ONBOARDING' | 'OFFBOARDING';
-      owner: string;
-    },
-    unknown
-  >;
+type TemplateModalProps = {
+  editDescriptionMutation: TEditDesription;
+  handleAddSubmitMutation: TAddDescription;
   form_field_id: number | null | undefined;
   description: string | null | undefined;
   owner: string | null | undefined;
@@ -40,7 +19,7 @@ type RootModalProps = {
   setMode: Dispatch<SetStateAction<'EDIT' | 'ADD' | undefined>>;
 };
 
-function RootModal({
+function TemplateModal({
   editDescriptionMutation,
   handleAddSubmitMutation,
   form_field_id,
@@ -50,14 +29,14 @@ function RootModal({
   EmployeeData,
   mode,
   setMode,
-}: RootModalProps) {
+}: TemplateModalProps) {
   const { selectedValue, setSelectedValue } = useRootForm(owner);
 
   return (
     <>
       <div className="flex flex-col max-h-100 min-h-120 mt-40 mx-auto text-center items-center z-50 bg-gray-200 rounded-xl  w-2xl">
         <div className="flex flex-col max-w-xl h-full w-xl my-10 items-start">
-          <RootForm
+          <TemplateForm
             editDescriptionMutation={editDescriptionMutation}
             handleAddSubmitMutation={handleAddSubmitMutation}
             selectedValue={selectedValue}
@@ -74,4 +53,4 @@ function RootModal({
     </>
   );
 }
-export default RootModal;
+export default TemplateModal;

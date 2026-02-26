@@ -203,18 +203,6 @@ export const postOffboardingData = async (
   return response;
 };
 
-export const addExtraField = async (data: {
-  description: string;
-  template_type: 'ONBOARDING' | 'OFFBOARDING';
-  owner: string;
-}): Promise<newField> => {
-  const response = await API.post<newField, newField>(
-    `/offboarding/addFormField`,
-    data
-  );
-  return response;
-};
-
 export type DescriptionData = z.infer<typeof ZDescriptionData>;
 
 export const fetchRawDescription = async (): Promise<DescriptionData> => {
@@ -235,11 +223,6 @@ export const fetchTaskData = async (): Promise<TDescriptionResponse[]> => {
   const response = await API.get<TDescriptionData[], TDescriptionResponse[]>(
     '/user/fetchTaskData'
   );
-  return response;
-};
-
-export const deleteDescriptionData = async (id: number) => {
-  const response = await API.delete(`/user/deleteDescriptionData/${id}`);
   return response;
 };
 
