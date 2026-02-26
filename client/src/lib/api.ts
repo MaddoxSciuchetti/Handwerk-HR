@@ -2,21 +2,16 @@ import { sendEmailSchema } from '@/components/admin_data/AdminModal';
 import { File_Request } from '@/components/backround_worker';
 import { TFeatureForm } from '@/components/modal/FeatureModal';
 import API from '@/config/apiClient';
-
-import { OffboardingItem } from '@/types/onof_home';
-import { api_Response } from '@/features/OnOf_Worker_Procedure';
+import { api_Response } from '@/features/task-management/components/TaskManagement';
 import { TFile } from '@/features/Profile';
 import { Mappingform } from '@/types/form-data';
-import { FormInputs } from '@/zod-schemas/zodSchema';
 import {
   AbsenceData,
-  delete_user,
   FileResponse,
   Session_API,
   SuccessResponse,
   TDescriptionData,
   TDescriptionResponse,
-  TOffboardingItemUser,
 } from '@/types/api';
 import { User } from 'shared_prisma_types';
 import z from 'zod';
@@ -97,13 +92,6 @@ export const verifyChef = async (): Promise<user> => {
   return API.get(`/user/chefpermission`);
 };
 
-export const fetchNameData = async (): Promise<OffboardingItem[]> => {
-  const response = API.get<OffboardingItem[], OffboardingItem[]>(
-    '/offboarding/fetchData'
-  );
-  return response;
-};
-
 export const sendReminderWorker = async (
   data: sendEmailSchema
 ): Promise<unknown> => {
@@ -137,25 +125,6 @@ export const editEmployeeAbsence = async (
   data: AbsenceData
 ): Promise<AbsenceData> => {
   return API.put<AbsenceData, AbsenceData>('/user/editAbsenceData', data);
-};
-
-export const deleteTaskApi = async (taskId: number): Promise<delete_user> => {
-  const response = await API.delete<delete_user, delete_user>(
-    `/offboarding/delete/${taskId}`
-  );
-  return response;
-};
-
-export const postOffboardingData = async (
-  data: FormInputs
-): Promise<TOffboardingItemUser> => {
-  const response = await API.post<TOffboardingItemUser, TOffboardingItemUser>(
-    '/offboarding/postoffboardingdata',
-    {
-      data,
-    }
-  );
-  return response;
 };
 
 export type DescriptionData = z.infer<typeof ZDescriptionData>;

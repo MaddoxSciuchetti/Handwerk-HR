@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { WorkerDataForm } from '../worker_components/worker_form_creation';
+import { WorkerForm } from './WorkerForm';
 import { FormInputs } from '@/zod-schemas/zodSchema';
 import { UseMutationResult } from '@tanstack/react-query';
 import { TOffboardingItemUser } from '@/types/api';
-import RadioSelect from '../RadioSelect';
+import RadioSelect from './RadioSelect';
 import { FormType } from '@/types/onof_home';
 import { cn } from '@/types/utils';
 
@@ -17,7 +17,7 @@ type ModalProps = {
   className?: string;
 };
 
-const Modal = ({ createEmployeeMutation, className }: ModalProps) => {
+const ModalContent = ({ createEmployeeMutation, className }: ModalProps) => {
   const [selectedOption, setSelectedOption] = useState<FormType | null>(null);
 
   return (
@@ -34,7 +34,7 @@ const Modal = ({ createEmployeeMutation, className }: ModalProps) => {
             setSelectedOption={setSelectedOption}
           />
         ) : (
-          <WorkerDataForm
+          <WorkerForm
             setSelectedOption={setSelectedOption}
             type={selectedOption}
             success={createEmployeeMutation.mutate}
@@ -45,4 +45,4 @@ const Modal = ({ createEmployeeMutation, className }: ModalProps) => {
   );
 };
 
-export default Modal;
+export default ModalContent;

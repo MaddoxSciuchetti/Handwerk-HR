@@ -1,5 +1,5 @@
+import TaskManagement from '@/features/task-management/components/TaskManagement';
 import { createFileRoute } from '@tanstack/react-router';
-import OnOf_Worker_Procedure from '@/features/OnOf_Worker_Procedure';
 
 export const Route = createFileRoute('/user/$Id')({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -14,5 +14,5 @@ function UserPage() {
 
   const search = Route.useSearch();
 
-  return <OnOf_Worker_Procedure id={id} search={search} />;
+  return <TaskManagement id={id} search={search} />;
 }

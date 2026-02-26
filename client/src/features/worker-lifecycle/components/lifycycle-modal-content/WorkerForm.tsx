@@ -1,22 +1,22 @@
 import { useForm } from 'react-hook-form';
-import { Button } from '../ui/button';
+import { Button } from '../../../../components/ui/button';
 import { ErrorMessage } from '@hookform/error-message';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FormInputs, formSchema } from '@/zod-schemas/zodSchema';
-import { Input } from '../ui/input';
+import { Input } from '../../../../components/ui/input';
 import { FormType } from '@/types/onof_home';
 
-interface WorkerDataFormProps {
+interface WorkerFormProps {
   setSelectedOption: (value: FormType | null) => void;
   type: FormType;
   success: (data: FormInputs) => void;
 }
 
-export const WorkerDataForm = ({
+export const WorkerForm = ({
   setSelectedOption,
   type,
   success,
-}: WorkerDataFormProps) => {
+}: WorkerFormProps) => {
   const {
     register,
     handleSubmit,

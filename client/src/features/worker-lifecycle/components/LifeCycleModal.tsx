@@ -1,9 +1,10 @@
 import { FormInputs } from '@/zod-schemas/zodSchema';
 import { UseMutationResult } from '@tanstack/react-query';
-import Modal from '@/components/modal/Modal';
-import { TOffboardingItemUser } from '@/types/api';
+import ModalOverlay from '@/components/modal/ModalOverlay';
+import ModalContent from './lifycycle-modal-content/ModalContent';
+import { TOffboardingItemUser } from '../types';
 
-type HomeModalProps = {
+type LifeCycleModalProps = {
   modal: boolean;
   toggleModal: () => void;
   createEmployeeMutation: UseMutationResult<
@@ -14,28 +15,23 @@ type HomeModalProps = {
   >;
 };
 
-const HomeModal = ({
+const LifeCycleModal = ({
   toggleModal,
   createEmployeeMutation,
   modal,
-}: HomeModalProps) => {
+}: LifeCycleModalProps) => {
   return (
     <>
       {modal && (
-        <div className="fixed inset-0 z-50 flex">
-          <div
-            onClick={toggleModal}
-            className="fixed inset-0 bg-black/50 cursor-pointer"
-            aria-label="Close modal"
-          />
-          <Modal
+        <ModalOverlay handleToggle={toggleModal}>
+          <ModalContent
             className="p-4 rounded-lg"
             createEmployeeMutation={createEmployeeMutation}
           />
-        </div>
+        </ModalOverlay>
       )}
     </>
   );
 };
 
-export default HomeModal;
+export default LifeCycleModal;

@@ -6,22 +6,18 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-import { Worker_Item } from './worker_components/worker_item';
-import { OffboardingItem } from '@/types/onof_home';
+import { Worker_Item } from '../../../components/worker_components/worker_item';
 import { getFirstFormType } from '@/lib/formtype';
+import { OffboardingItem } from '../types';
 
-type HandwerkerTableProps = {
+type LifeCycleTableProps = {
   filtered: OffboardingItem[] | undefined;
   item_value?: number;
   onRemove: (taskId: number) => void;
   gotopage: (taskId: number, form_type: any) => void;
 };
 
-function HandwerkerTable({
-  filtered,
-  onRemove,
-  gotopage,
-}: HandwerkerTableProps) {
+function LifeCycleTable({ filtered, onRemove, gotopage }: LifeCycleTableProps) {
   return (
     <>
       <div className="rounded-2xl overflow-x-auto w-full h-full  overflow-auto">
@@ -31,7 +27,6 @@ function HandwerkerTable({
               <TableRow className="text-lg">
                 <TableHead className="text-left  pl-0">Handwerker</TableHead>
                 <TableHead className="text-left  pl-0">Phase</TableHead>
-
                 <TableHead className=" pl-0">Fortschritt</TableHead>
                 <TableHead className=" pl-0">Aktionen</TableHead>
               </TableRow>
@@ -56,4 +51,4 @@ function HandwerkerTable({
   );
 }
 
-export default HandwerkerTable;
+export default LifeCycleTable;

@@ -1,4 +1,4 @@
-import Onboarding from '@/features/worker-onboarding/components/Onboarding';
+import WorkerLifeCycle from '@/features/worker-lifecycle/components/WorkerLifecycle';
 import { createFileRoute } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/handwerker')({
@@ -6,5 +6,5 @@ export const Route = createFileRoute('/handwerker')({
 });
 
 function RouteComponent() {
-  return <Onboarding />;
+  return <WorkerLifeCycle />;
 }

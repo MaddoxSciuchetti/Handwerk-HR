@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useMemo, useState } from 'react';
 import z, { success } from 'zod';
-import { API_URL } from '../api';
+import { API_URL } from '../../../api';
 import Form from '@/components/worker_components/worker_form_data';
-import { Mappingform } from '../types/form-data';
-import { APIResponse } from '../types/api';
+import { Mappingform } from '../../../types/form-data';
+import { APIResponse } from '../../../types/api';
 import PreviewComponent from '@/components/worker_components/preivew_component';
 import useAuth, { User } from '@/hooks/use-Auth';
 import { Button } from '@/components/ui/button';
@@ -52,10 +52,7 @@ type OffboardingFormProps = {
   search: { param1: string }; // match validateSearch
 };
 
-const OnOf_Worker_Procedure: React.FC<OffboardingFormProps> = ({
-  id,
-  search,
-}) => {
+const TaskManagement: React.FC<OffboardingFormProps> = ({ id, search }) => {
   const [modalState, setModalState] = useState<{
     selectedItem: {
       id: number;
@@ -358,4 +355,4 @@ const OnOf_Worker_Procedure: React.FC<OffboardingFormProps> = ({
   );
 };
 
-export default OnOf_Worker_Procedure;
+export default TaskManagement;

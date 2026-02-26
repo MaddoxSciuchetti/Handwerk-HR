@@ -1,7 +1,7 @@
-import { fetchFileData, fetchProcessData } from "@/lib/api";
-import { useQuery } from "@tanstack/react-query";
-import React, { useEffect, useState } from "react";
-import { File_Request, fileIcon, getFileName } from "../backround_worker";
+import { fetchFileData, fetchProcessData } from '@/lib/api';
+import { useQuery } from '@tanstack/react-query';
+import React, { useEffect, useState } from 'react';
+import { File_Request, fileIcon, getFileName } from '../backround_worker';
 import {
   Document,
   Page,
@@ -9,15 +9,18 @@ import {
   View,
   StyleSheet,
   pdf,
-} from "@react-pdf/renderer";
-import { PDFViewer } from "@react-pdf/renderer";
+} from '@react-pdf/renderer';
+import { PDFViewer } from '@react-pdf/renderer';
 
-import { Button } from "../ui/button";
-import { api_Response, form_field } from "@/features/OnOf_Worker_Procedure";
-import { success } from "zod";
-import { useProcessData } from "@/contexts/ProcessDataContext";
+import { Button } from '../ui/button';
+import {
+  api_Response,
+  form_field,
+} from '@/features/task-management/components/TaskManagement';
+import { success } from 'zod';
+import { useProcessData } from '@/contexts/ProcessDataContext';
 
-export type UpdatedAiResponse = Omit<api_Response, "name"> & {
+export type UpdatedAiResponse = Omit<api_Response, 'name'> & {
   user: {
     id: number;
     vorname: string;
@@ -27,9 +30,9 @@ export type UpdatedAiResponse = Omit<api_Response, "name"> & {
 
 const styles = StyleSheet.create({
   page: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: '#FFFFFF',
     padding: 30,
-    fontFamily: "Helvetica",
+    fontFamily: 'Helvetica',
     fontSize: 12,
   },
   header: {
@@ -37,20 +40,20 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontWeight: "bold",
-    textAlign: "center",
+    fontWeight: 'bold',
+    textAlign: 'center',
     marginBottom: 5,
   },
   subtitle: {
     fontSize: 16,
-    textAlign: "center",
-    color: "#333333",
+    textAlign: 'center',
+    color: '#333333',
     marginBottom: 10,
   },
   info: {
     fontSize: 12,
-    textAlign: "center",
-    color: "#666666",
+    textAlign: 'center',
+    color: '#666666',
     marginBottom: 5,
   },
   content: {
@@ -60,45 +63,45 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     padding: 15,
     borderWidth: 1, // Fix for border style error
-    borderStyle: "solid", // Define border style explicitly
-    borderColor: "#cccccc", // Set the color for the border
+    borderStyle: 'solid', // Define border style explicitly
+    borderColor: '#cccccc', // Set the color for the border
     borderRadius: 8,
-    backgroundColor: "#f9f9f9",
+    backgroundColor: '#f9f9f9',
   },
   fieldTitle: {
     fontSize: 14,
-    fontWeight: "bold",
-    color: "#444444",
+    fontWeight: 'bold',
+    color: '#444444',
   },
   fieldText: {
     fontSize: 12,
     marginTop: 5,
     lineHeight: 1.6,
-    color: "#333333",
+    color: '#333333',
   },
   fieldStatus: {
     fontSize: 12,
     marginTop: 5,
-    fontWeight: "bold",
-    color: "#0056b3",
-    backgroundColor: "#e0f7fa",
-    padding: "3 6",
+    fontWeight: 'bold',
+    color: '#0056b3',
+    backgroundColor: '#e0f7fa',
+    padding: '3 6',
     borderRadius: 5,
     maxWidth: 100,
   },
   footer: {
-    position: "absolute",
+    position: 'absolute',
     bottom: 20,
     left: 30,
     right: 30,
     borderTop: 1,
-    borderTopColor: "#cccccc",
+    borderTopColor: '#cccccc',
     paddingTop: 10,
   },
   footerText: {
-    textAlign: "center",
+    textAlign: 'center',
     fontSize: 10,
-    color: "#666666",
+    color: '#666666',
   },
 });
 
@@ -112,7 +115,7 @@ export function FileModal({ id, onClose, form_type }: FileModalType) {
   const [isGenerating, setIsGenerating] = useState(false);
 
   const { data, isLoading, error } = useProcessData(id, form_type);
-  console.log("=== DATA === ");
+  console.log('=== DATA === ');
   console.log(data);
 
   // if (isLoading) {
@@ -134,16 +137,16 @@ export function FileModal({ id, onClose, form_type }: FileModalType) {
     try {
       const blob = await pdf(<MyDocument />).toBlob();
       const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
+      const link = document.createElement('a');
       link.href = url;
-      link.download = `form-${id}-${new Date().toISOString().split("T")[0]}.pdf`;
+      link.download = `form-${id}-${new Date().toISOString().split('T')[0]}.pdf`;
 
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("export faild", error);
+      console.error('export faild', error);
     } finally {
       setIsGenerating(false);
     }
@@ -155,7 +158,7 @@ export function FileModal({ id, onClose, form_type }: FileModalType) {
 
   const isoDate = new Date().toISOString();
 
-  console.log("=== DATA ===");
+  console.log('=== DATA ===');
   console.log(data);
   const MyDocument = () => (
     <Document>
@@ -202,7 +205,7 @@ export function FileModal({ id, onClose, form_type }: FileModalType) {
             <MyDocument />
           </PDFViewer>
           <Button
-            variant={"outline"}
+            variant={'outline'}
             className="hover:bg-gray-300 absolute top-135"
             onClick={handleExport}
           >
