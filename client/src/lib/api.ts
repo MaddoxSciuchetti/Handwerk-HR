@@ -2,7 +2,7 @@ import { sendEmailSchema } from '@/components/admin_data/AdminModal';
 import { File_Request } from '@/components/backround_worker';
 import { TFeatureForm } from '@/components/modal/FeatureModal';
 import API from '@/config/apiClient';
-import { TFile } from '@/features/Profile';
+import { TFile } from '@/features/user-profile/components/Profile';
 import { Mappingform } from '@/types/form-data';
 import {
   AbsenceData,
@@ -169,22 +169,5 @@ export const featureRequest = async (data: TFeatureForm) => {
     `/offboarding/FeatureRequest`,
     form
   );
-  return response;
-};
-
-export const uploadProfileFoto = async (data: TFile) => {
-  const form = new FormData();
-  form.append('file', data.file[0]);
-  console.log('received something');
-  console.log(form);
-  const response = await API.post<TFile, TFile>(
-    '/user/uploadProfileFoto',
-    form
-  );
-  return response;
-};
-
-export const getProfileFoto = async (): Promise<string> => {
-  const response = await API.get<string, string>('/user/getProfileFoto');
   return response;
 };

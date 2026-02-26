@@ -22,7 +22,7 @@ import {
 import { Link } from '@tanstack/react-router';
 
 import UserMenu from './UserMenu';
-import useAuth from '@/hooks/use-Auth';
+import useAuth from '@/features/user-profile/hooks/use-Auth';
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '../ui/button';
 
@@ -68,7 +68,7 @@ export function AppSidebar({ openModal }: { openModal: () => void }) {
   const accessibleItems = useMemo(() => {
     if (!user) return [];
     return items.filter((item) => hasPermission(item.requiredPermission));
-  }, [hasPermission]);
+  }, [hasPermission, user]);
 
   if (user === undefined) {
     return '';
@@ -105,7 +105,7 @@ export function AppSidebar({ openModal }: { openModal: () => void }) {
           variant={'outline'}
           className="mb-1 cursor-pointer mx-1 bg-blue-100"
         >
-          Feature Reqest{' '}
+          Feature Request{' '}
         </Button>
       </Sidebar>
     </>

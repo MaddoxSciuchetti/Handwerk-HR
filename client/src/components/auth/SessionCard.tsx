@@ -1,5 +1,5 @@
 import useDeleteSession from '@/hooks/use-DeleteSession';
-import { Sessions_Type } from '@/features/Settings';
+import { Sessions_Type } from '@/features/user-profile/components/Settings';
 import { Button } from '../ui/button';
 
 type Session = {

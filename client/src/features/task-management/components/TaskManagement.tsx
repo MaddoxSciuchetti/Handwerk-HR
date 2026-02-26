@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import useAuth from '@/hooks/use-Auth';
+import useAuth from '@/features/user-profile/hooks/use-Auth';
 import Worker_Backround from '@/components/backround_worker';
 import { useToggleModal } from '@/hooks/use-toggleModal';
 import { Spinner } from '@/components/ui/spinner';

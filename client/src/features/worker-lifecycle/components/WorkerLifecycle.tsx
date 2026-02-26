@@ -1,5 +1,5 @@
 import SearchHeader from '@/components/SearchHeader';
-import useAuth from '@/hooks/use-Auth';
+import useAuth from '@/features/user-profile/hooks/use-Auth';
 import useHome from '@/features/worker-lifecycle/hooks/use-home';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import ErrorAlert from '@/components/alerts/ErrorAlert';

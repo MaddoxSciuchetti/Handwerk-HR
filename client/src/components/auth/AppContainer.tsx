@@ -1,5 +1,5 @@
 import { Navigate, Outlet } from 'react-router-dom';
-import useAuth from '@/hooks/use-Auth';
+import useAuth from '@/features/user-profile/hooks/use-Auth';
 import UserMenu from './UserMenu';
 import React from 'react';
 import { useNavigate } from '@tanstack/react-router';

@@ -1,4 +1,3 @@
-import { getProfileFoto, logout } from '@/lib/api';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +9,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import useAuth from '@/hooks/use-Auth';
+import useAuth from '@/features/user-profile/hooks/use-Auth';
+import { getProfileFoto } from '@/features/user-profile/api';
+import { logout } from '@/lib/api';
 
 const UserMenu = () => {
   const { user, isLoading, isError } = useAuth();
