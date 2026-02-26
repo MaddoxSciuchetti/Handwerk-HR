@@ -171,6 +171,8 @@ export const gethistoryData = async (req: Request, res: Response) => {
 
 export const postHistoryData = async (req: Request, res: Response) => {
     const result = historySchema.parse(req.body);
+    console.log("MOST IMPORTANT RESSULT");
+    console.log(result);
 
     const HistoryData = await insertHistoryData(result);
 
