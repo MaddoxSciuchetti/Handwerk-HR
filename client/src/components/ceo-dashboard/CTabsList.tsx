@@ -13,7 +13,7 @@ function CeoTabs({
   return (
     <TabsList
       variant={'default'}
-      className="w-full justify-start p px-5 gap-5 border-b-2 border-[0.5px] border-gray-700"
+      className="w-full justify-start p px-5 gap-5 border "
     >
       {uniqueHandwerkerProBSBEmployee.map((user) => (
         <TabsTrigger

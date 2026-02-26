@@ -57,16 +57,16 @@ export const verifyEmail = async (
 export const sendPasswordResetEmail = async (email: string) =>
   API.post('/auth/password/forgot', { email });
 
-// export type resetPassword = {
-//   verificationCode: string;
-//   password: string;
-// };
+export type resetPassword = {
+  verificationCode: string;
+  password: string;
+};
 
-// export const resetPassword = async ({
-//   verificationCode,
-//   password,
-// }: resetPassword): Promise<resetPassword> =>
-//   API.post('/auth/password/reset', { verificationCode, password });
+export const resetPassword = async ({
+  verificationCode,
+  password,
+}: resetPassword): Promise<resetPassword> =>
+  API.post('/auth/password/reset', { verificationCode, password });
 
 export type user = {
   id: number;

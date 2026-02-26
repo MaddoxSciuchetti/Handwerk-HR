@@ -1,16 +1,16 @@
-import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle } from "lucide-react";
+import { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { CheckCircle } from 'lucide-react';
 
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from '@tanstack/react-router';
 
-import { resetPassword } from "@/lib/api";
+import { resetPassword } from '@/lib/api';
 
 const ResetPasswordForm = ({ code }: any) => {
-  const [password, setPassword] = useState("");
+  const [password, setPassword] = useState('');
   const {
     mutate: resetUserPassword,
     isPending,
@@ -28,7 +28,7 @@ const ResetPasswordForm = ({ code }: any) => {
       <div className="rounded-lg bg-gray-700 shadow-lg p-8">
         {isError && (
           <div className="mb-3 text-red-400">
-            {error.message || "An error occurred"}
+            {error.message || 'An error occurred'}
           </div>
         )}
         {isSuccess ? (
@@ -44,7 +44,7 @@ const ResetPasswordForm = ({ code }: any) => {
             </Alert>
 
             <button
-              onClick={() => navigate({ to: "/login" })}
+              onClick={() => navigate({ to: '/login' })}
               className="text-blue-600 hover:text-blue-800 underline"
             >
               Sign in
@@ -65,7 +65,7 @@ const ResetPasswordForm = ({ code }: any) => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onKeyDown={(e) =>
-                  e.key === "Enter" &&
+                  e.key === 'Enter' &&
                   resetUserPassword({ password, verificationCode: code })
                 }
                 autoFocus
