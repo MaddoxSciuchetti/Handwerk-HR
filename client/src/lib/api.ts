@@ -2,13 +2,10 @@ import { sendEmailSchema } from '@/components/admin_data/AdminModal';
 import { File_Request } from '@/components/backround_worker';
 import { TFeatureForm } from '@/components/modal/FeatureModal';
 import API from '@/config/apiClient';
-import { TFile } from '@/features/user-profile/components/Profile';
-import { Mappingform } from '@/types/form-data';
 import {
   AbsenceData,
   FileResponse,
   Session_API,
-  SuccessResponse,
   TDescriptionData,
   TDescriptionResponse,
 } from '@/types/api';
@@ -115,14 +112,6 @@ export const fetchRawDescription = async (): Promise<DescriptionData> => {
   const response = await API.get('/user/rawdescription');
   console.log(response);
   return ZDescriptionData.parse(response);
-};
-
-export const deleteEmployeeHandler = async (id: string): Promise<user> => {
-  console.log('id in api', id);
-  const response = await API.delete<typeof id, user>(
-    `/user/deleteEmplyoee/${id}`
-  );
-  return response;
 };
 
 export const fetchTaskData = async (): Promise<TDescriptionResponse[]> => {

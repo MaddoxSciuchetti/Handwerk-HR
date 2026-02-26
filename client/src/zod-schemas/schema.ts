@@ -48,6 +48,7 @@ export const ZEmployeeData = z.array(
 );
 
 export type TEmployeeResponse = z.infer<typeof ZEmployeeData>;
+export type TEmployee = z.infer<typeof ZEmployeeData.element>;
 
 export const ZDescriptionData = z.array(
   z.object({

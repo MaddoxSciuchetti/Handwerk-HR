@@ -1,14 +1,8 @@
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
+import { Input } from '../../../../components/ui/input';
+import { Label } from '../../../../components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  deleteEmployeeHandler,
-  DescriptionData,
-  editEmployeeAbsence,
-  fetchRawDescription,
-} from '@/lib/api';
-import { subISOWeekYears } from 'date-fns';
+import { editEmployeeAbsence } from '@/lib/api';
 import z from 'zod';
 import useEmployeeData from '@/hooks/use-employeeData';
 import {
@@ -18,8 +12,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../ui/select';
-import { Spinner } from '../ui/spinner';
+} from '../../../../components/ui/select';
+import { Spinner } from '../../../../components/ui/spinner';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -86,7 +80,6 @@ function ModalEditMitarbeiter({
     EmployeeAbsence.mutate(data);
   };
 
-  if (!id) return <div>There is no id</div>;
   if (isErrorEmployee) return <div>No error</div>;
 
   return (
