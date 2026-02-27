@@ -1,14 +1,12 @@
 import { TableBody } from '@/components/ui/table';
-import EditDropdown from './EditDropdown';
-import { calculateData, dateObject } from '../../utils/calculateDate.utils';
-import Substitute from './EmployeeSubstitute';
-import EmployeeStatus from './EmployeeStatus';
-import EmployeeSubstitute from './EmployeeSubstitute';
-import EmployeeName from './EmployeeName';
-import { TEmployeeResponse } from '@/zod-schemas/schema';
 import { Dispatch, SetStateAction } from 'react';
 import { UseMutateFunction } from '@tanstack/react-query';
 import { user } from '@/lib/api';
+import { TEmployeeResponse } from '../../schemas/schema';
+import EmployeeName from './EmployeeName';
+import EmployeeStatus from './EmployeeStatus';
+import EmployeeSubstitute from './EmployeeSubstitute';
+import EditDropdown from './EditDropdown';
 
 type TableBodyProps = {
   EmployeeData: TEmployeeResponse;
