@@ -33,10 +33,13 @@ const ModalMitarbeiterForm = ({
       >
         {CreateMitarbeiterInputs.map((value, index) => (
           <FormFields
-            value={value}
+            type={value.type}
+            placeholder={value.placeholder}
+            name={value.name}
             errors={errors}
             register={register}
             index={index}
+            required={value.required}
           />
         ))}
         <Button

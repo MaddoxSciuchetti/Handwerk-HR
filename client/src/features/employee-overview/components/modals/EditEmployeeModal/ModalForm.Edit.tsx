@@ -3,9 +3,9 @@ import { Button } from '@/components/ui/button';
 import useEditEmployee from '@/features/employee-overview/hooks/use-editEmployee';
 import { TEmployeeResponse } from '@/features/employee-overview/schemas/schema';
 import EmployeeSelect from './EmployeeSelect';
-import LabeledInput from './LabeledInput';
 import { absenceReason } from '@/features/employee-overview/consts/SelectInput';
 import { useMemo } from 'react';
+import FormFields from '../FormFields';
 
 type ModalFormProps = {
   id: string | undefined;
@@ -47,7 +47,7 @@ const ModalFormEdit = ({
           label={'Grund der Abwesenheit'}
           errors={errors}
         />
-        <LabeledInput
+        <FormFields
           label={'Abwesenheitsbeginn'}
           placeholder={'DD.MM.YYYY'}
           register={register}
@@ -55,7 +55,7 @@ const ModalFormEdit = ({
           errors={errors}
         />
 
-        <LabeledInput
+        <FormFields
           label={'Abwesenheitsende'}
           placeholder={'DD.MM.YYYY'}
           register={register}
