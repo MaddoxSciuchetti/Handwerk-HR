@@ -1,3 +1,4 @@
+import { DateSchema } from '@/zod-schemas/schema';
 import z from 'zod';
 
 export const SubUser = z.object({
@@ -51,6 +52,17 @@ export const CreateWorkerSchema = z
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',
   });
+
+export const AbsenceSchema = z.object({
+  id: z.string(),
+  absence: z.string().optional(),
+  absencetype: z
+    .string({ message: 'Art der Abwesenheit ist erforderlich' })
+    .min(1, { message: 'Art der Abwesenheit ist erforderlich' }),
+  absencebegin: DateSchema,
+  absenceEnd: DateSchema,
+  substitute: z.string({ message: 'Bitte wähle von der Option' }),
+});
 
 export type TWorkerSchema = z.infer<typeof CreateWorkerSchema>;
 

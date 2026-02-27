@@ -1,8 +1,8 @@
 import { Input } from '@/components/ui/input';
 import { ErrorMessage } from '@hookform/error-message';
 import { FieldErrors, UseFormRegister } from 'react-hook-form';
-import { TWorkerSchema } from './CreateEmployeeModal/ModalMitarbeiter';
 import { TCreateMitarbeiter } from '../../consts/CreateMitarbeiterInputs';
+import { TWorkerSchema } from '../../schemas/schema';
 
 type FormFieldsProps = {
   value: TCreateMitarbeiter;
