@@ -5,9 +5,11 @@ import useGetEmployees from '../hooks/use-getEmployees';
 import Header from './Table/Header';
 import EmployeeTableBody from './Table/TableBody';
 import EmployeeTableHeader from './Table/EmployeeTableHeader';
-import ModalCompound from './modals/Modal';
 import ErrorAlert from '@/components/alerts/ErrorAlert';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
+import ModalOverlay from '@/components/modal/ModalOverlay';
+import ModalEditMitarbeiter from './modals/EditEmployeeModal/EmployeeModal';
+import ModalMitarbeiter from './modals/CreateEmployeeModal/EmployeeModal';
 
 function EmployeeOverview() {
   const {
@@ -54,14 +56,20 @@ function EmployeeOverview() {
           />
         </Table>
       </div>
-      <ModalCompound
-        editEmployeeModal={editEmployeeModal}
-        toggleEmployeeModal={toggleEmployeeModal}
-        fullname={fullname}
-        idvalue={idvalue}
-        modal={modal}
-        toggleModal={toggleModal}
-      />
+      {editEmployeeModal && (
+        <ModalOverlay handleToggle={toggleEmployeeModal}>
+          <ModalEditMitarbeiter
+            fullname={fullname}
+            toggleEmployeeModal={toggleEmployeeModal}
+            id={idvalue}
+          />
+        </ModalOverlay>
+      )}
+      {modal && (
+        <ModalOverlay handleToggle={toggleModal}>
+          <ModalMitarbeiter toggleModal={toggleModal} />
+        </ModalOverlay>
+      )}
     </div>
   );
 }
