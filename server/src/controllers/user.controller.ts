@@ -121,7 +121,7 @@ export const deleteEmployeeHandler = catchErrors(async (req, res) => {
 export const editAbsenceData = catchErrors(async (req, res) => {
     const data = req.body;
 
-    console.log("this is the body data");
+    console.log("IMPOrtANT");
     console.log(data);
 
     const editAbsenceResult = await updateAbsenceData(data);
