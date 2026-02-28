@@ -1,5 +1,5 @@
 import { TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { TEmployForm } from '../types/employeeform.type';
+import { TEmployForm } from '../../types/employeeform.type';
 
 type CeoTabProps = {
   uniqueHandwerkerProBSBEmployee: TEmployForm;

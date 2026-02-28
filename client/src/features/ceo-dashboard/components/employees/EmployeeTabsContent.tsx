@@ -1,6 +1,6 @@
 import { TabsContent } from '@/components/ui/tabs';
 import { SetStateAction } from 'react';
-import { TEmployForm } from '../types/employeeform.type';
+import { TEmployForm } from '../../types/employeeform.type';
 import { EmployeeTabsData } from './EmployeeTabsData';
 
 type CeoTabsContentProps = {
