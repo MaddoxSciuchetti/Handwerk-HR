@@ -5,7 +5,7 @@ type PageHeaderProps = {
   openCreate: () => void;
 };
 
-const PageHeader = ({ openCreate }: PageHeaderProps) => {
+function PageHeader({ openCreate }: PageHeaderProps) {
   return (
     <>
       <div className="flex gap-5">
@@ -22,6 +22,6 @@ const PageHeader = ({ openCreate }: PageHeaderProps) => {
       </div>
     </>
   );
-};
+}
 
 export default PageHeader;
