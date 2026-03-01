@@ -3,6 +3,7 @@ import useEmployeeGroups from '@/features/ceo-dashboard/hooks/use-employeeGroups
 type EmployeeGroup = ReturnType<
   typeof useEmployeeGroups
 >['employeeGroups'][number][1];
+
 type TDataContent = {
   group: EmployeeGroup;
   onTaskClick: () => void;

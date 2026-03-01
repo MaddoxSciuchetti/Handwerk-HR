@@ -5,7 +5,7 @@ import { TEmployeeResponse } from '@/features/employee-overview/schemas/schema';
 import EmployeeSelect from './EmployeeSelect';
 import { absenceReason } from '@/features/employee-overview/consts/SelectInput';
 import { useMemo } from 'react';
-import FormFields from '../FormFields';
+import FormFields from '../../../../../components/form/FormFields';
 
 type ModalFormProps = {
   id: string | undefined;

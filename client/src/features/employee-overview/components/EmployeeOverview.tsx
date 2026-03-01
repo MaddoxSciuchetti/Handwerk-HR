@@ -1,7 +1,7 @@
 import { Table } from '@/components/ui/table';
 import useDeleteEmployee from '../hooks/use-deleteEmployee';
 import useGetEmployees from '../hooks/use-getEmployees';
-import Header from './table/Header';
+
 import EmployeeTableBody from './table/TableBody';
 import EmployeeTableHeader from './table/EmployeeTableHeader';
 import ErrorAlert from '@/components/alerts/ErrorAlert';
@@ -10,6 +10,7 @@ import ModalOverlay from '@/components/modal/ModalOverlay';
 import ModalEditMitarbeiter from './modals/EditEmployeeModal/EmployeeModal';
 import ModalMitarbeiter from './modals/CreateEmployeeModal/EmployeeModal';
 import { useEmployeeModal } from '../hooks/use-employeeModal';
+import PageHeader from './table/PageHeader';
 
 function EmployeeOverview() {
   const { EmployeeData, isLoading, error, isError } = useGetEmployees();
@@ -45,7 +46,7 @@ function EmployeeOverview() {
   return (
     <div className="rounded-2xl overflow-x-auto w-full h-full p-6 shadow-gray-200 shadow-lg overflow-auto">
       <div className="h-full w-full flex flex-col">
-        <Header openCreate={openCreate} />
+        <PageHeader openCreate={openCreate} />
         <Table className=" text-left mt-5">
           <EmployeeTableHeader />
           <EmployeeTableBody

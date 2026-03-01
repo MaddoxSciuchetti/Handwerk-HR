@@ -2,7 +2,7 @@ import { Button } from '../../../components/ui/button';
 import { Textarea } from '../../../components/ui/textarea';
 import useAdminModal from '../hooks/use-adminModal';
 import { TCloseModal } from '../types/adminModal.type';
-import FormFields from '@/features/employee-overview/components/modals/FormFields';
+import FormFields from '@/components/form/FormFields';
 import ErrorAlert from '@/components/alerts/ErrorAlert';
 
 function ReminderModal({ onClose }: TCloseModal) {
@@ -41,7 +41,6 @@ function ReminderModal({ onClose }: TCloseModal) {
             type={isSuccess ? 'button' : 'submit'}
             variant={'outline'}
             onClick={isSuccess ? onClose : undefined}
-            className=""
           >
             {isSuccess ? (
               <span className="text-green-700">Schliessen</span>

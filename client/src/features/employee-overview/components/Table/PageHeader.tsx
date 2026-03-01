@@ -1,11 +1,11 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-type HeaderProps = {
+type PageHeaderProps = {
   openCreate: () => void;
 };
 
-const Header = ({ openCreate }: HeaderProps) => {
+const PageHeader = ({ openCreate }: PageHeaderProps) => {
   return (
     <>
       <div className="flex gap-5">
@@ -24,4 +24,4 @@ const Header = ({ openCreate }: HeaderProps) => {
   );
 };
 
-export default Header;
+export default PageHeader;

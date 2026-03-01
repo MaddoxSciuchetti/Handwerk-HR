@@ -6,7 +6,7 @@ import {
   UseFormRegister,
 } from 'react-hook-form';
 import { CreateMitarbeiterInputs } from '../../../consts/CreateMitarbeiterInputs';
-import FormFields from '../FormFields';
+import FormFields from '../../../../../components/form/FormFields';
 import { TWorkerSchema } from '@/features/employee-overview/schemas/schema';
 
 type ModalMitarbeiterFormProps = {
