@@ -1,10 +1,10 @@
 import API from '@/config/apiClient';
+import { AddWorker } from '@/zod-schemas/zodSchema';
 import {
   delete_user,
   OffboardingItem,
   TOffboardingItemUser,
 } from '../types/index.types';
-import { FormInputs } from '@/zod-schemas/zodSchema';
 
 export const fetchNameData = async (): Promise<OffboardingItem[]> => {
   const response = API.get<OffboardingItem[], OffboardingItem[]>(
@@ -21,7 +21,7 @@ export const deleteTaskApi = async (taskId: number): Promise<delete_user> => {
 };
 
 export const postOffboardingData = async (
-  data: FormInputs
+  data: AddWorker
 ): Promise<TOffboardingItemUser> => {
   const response = await API.post<TOffboardingItemUser, TOffboardingItemUser>(
     '/offboarding/postoffboardingdata',

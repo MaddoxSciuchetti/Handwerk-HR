@@ -1,5 +1,5 @@
+import { getSessions } from '@/features/auth/api/auth.api';
 import { useQuery } from '@tanstack/react-query';
-import { getSessions } from '../apis/index.apis';
 
 export const SESSIONS = 'sessions';
 

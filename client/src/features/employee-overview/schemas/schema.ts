@@ -1,4 +1,4 @@
-import { DateSchema } from '@/zod-schemas/schema';
+import { dateSchema } from '@/zod-schemas/schema';
 import z from 'zod';
 
 export const SubUser = z.object({
@@ -59,8 +59,8 @@ export const AbsenceSchema = z.object({
   absencetype: z
     .string({ message: 'Art der Abwesenheit ist erforderlich' })
     .min(1, { message: 'Art der Abwesenheit ist erforderlich' }),
-  absencebegin: DateSchema,
-  absenceEnd: DateSchema,
+  absencebegin: dateSchema,
+  absenceEnd: dateSchema,
   substitute: z.string({ message: 'Bitte wähle von der Option' }),
 });
 

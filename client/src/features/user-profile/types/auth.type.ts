@@ -1,3 +1,16 @@
+// export type User = {
+//   id: string;
+//   email: string;
+//   verified: boolean;
+//   user_permission: 'CHEF' | 'MITARBEITER';
+//   createdAt: Date;
+//   updatedAt: Date;
+//   vorname: string;
+//   nachname: string;
+//   presignedUrl?: string;
+// };
+
+// Prefix EmployeeUser
 export type User = {
   id: string;
   email: string;
@@ -7,7 +20,8 @@ export type User = {
   updatedAt: Date;
   vorname: string;
   nachname: string;
-  presignedUrl?: string;
+  cloud_url: string; // ← Add this field
+  presignedUrl?: string; // ← Keep this if you add it later
 };
 
 export type Auth = {

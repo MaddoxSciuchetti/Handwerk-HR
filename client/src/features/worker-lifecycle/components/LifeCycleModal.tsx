@@ -1,8 +1,8 @@
-import { FormInputs } from '@/zod-schemas/zodSchema';
-import { UseMutationResult } from '@tanstack/react-query';
 import ModalOverlay from '@/components/modal/ModalOverlay';
-import ModalContent from './lifycycle-modal-content/ModalContent';
+import { AddWorker } from '@/zod-schemas/zodSchema';
+import { UseMutationResult } from '@tanstack/react-query';
 import { TOffboardingItemUser } from '../types/index.types';
+import ModalContent from './lifycycle-modal-content/ModalContent';
 
 type LifeCycleModalProps = {
   modal: boolean;
@@ -10,7 +10,7 @@ type LifeCycleModalProps = {
   createEmployeeMutation: UseMutationResult<
     TOffboardingItemUser,
     Error,
-    FormInputs,
+    AddWorker,
     unknown
   >;
 };

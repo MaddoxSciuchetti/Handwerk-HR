@@ -1,8 +1,6 @@
 import { TFeatureForm } from '@/components/layout/sidebar/FeatureModal';
 import API from '@/config/apiClient';
-import { FileResponse, TDescriptionData } from '@/types/api.types';
-import { ZDescriptionData } from '@/zod-schemas/schema';
-import z from 'zod';
+import { FileResponse } from '@/types/api.types';
 
 export const logout = async () => API.get('/auth/logout');
 
@@ -21,30 +19,10 @@ export const postFile = async (
 ): Promise<FileResponse> => {
   const formData = new FormData();
   files.forEach((file) => formData.append('files', file));
-  const response = await API.post<any, FileResponse>(
+  const response = await API.post<FileResponse, FileResponse>(
     `/offboarding/editdata/file/${id}`,
-
     formData
   );
-  return response;
-};
-
-// export const verifyChef = async (): Promise<user> => {
-//   return API.get(`/user/chefpermission`);
-// };
-export type DescriptionData = z.infer<typeof ZDescriptionData>;
-
-export const fetchRawDescription = async (): Promise<DescriptionData> => {
-  const response = await API.get('/user/rawdescription');
-  console.log(response);
-  return ZDescriptionData.parse(response);
-};
-
-export const addDescriptionData = async (
-  data: Omit<TDescriptionData, 'form_field_id'>
-) => {
-  console.log('data in api', data);
-  const response = await API.post(`/user/createTaskData`, data);
   return response;
 };
 
@@ -65,3 +43,22 @@ export const featureRequest = async (data: TFeatureForm) => {
   );
   return response;
 };
+
+// export const verifyChef = async (): Promise<user> => {
+//   return API.get(`/user/chefpermission`);
+// };
+// export type DescriptionData = z.infer<typeof ZDescriptionData>;
+
+// export const fetchRawDescription = async (): Promise<DescriptionData> => {
+//   const response = await API.get('/user/rawdescription');
+//   console.log(response);
+//   return ZDescriptionData.parse(response);
+// };
+
+// export const addDescriptionData = async (
+//   data: Omit<TDescriptionData, 'form_field_id'>
+// ) => {
+//   console.log('data in api', data);
+//   const response = await API.post(`/user/createTaskData`, data);
+//   return response;
+// };

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { EmployeeData } from '../api/index.api';
-import { TEmployForm } from '../types/employeeform.types';
+import { TEmployeeForm } from '../types/employeeform.types';
 
 function useEmployeeData() {
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
@@ -10,14 +10,14 @@ function useEmployeeData() {
     data: allEmployeeData,
     isLoading,
     error,
-  } = useQuery<TEmployForm>({
+  } = useQuery<TEmployeeForm>({
     queryKey: ['ceo-dashboard'],
     queryFn: EmployeeData,
   });
 
   const cleanData = useMemo(() => {
     if (!allEmployeeData) return [];
-    const groups = new Map<string, TEmployForm>();
+    const groups = new Map<string, TEmployeeForm>();
     allEmployeeData.forEach((item) => {
       if (!groups.has(item.owner)) {
         groups.set(item.owner, []);

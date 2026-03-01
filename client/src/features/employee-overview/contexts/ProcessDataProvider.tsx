@@ -1,4 +1,4 @@
-import { api_Response } from '@/types/api.types';
+import { TApiResponse } from '@/types/api.types';
 import { useQuery } from '@tanstack/react-query';
 import { fetchProcessData } from '../api/employee-overview.api';
 import { ProcessDataProviderProps } from '../types/context.types';
@@ -6,7 +6,7 @@ import { ProcessDataContext } from './ProcessDataContext';
 
 export const ProcessDataProvider = ({ children }: ProcessDataProviderProps) => {
   const getProcessData = (id: number, form_type: string) => {
-    const queryResult = useQuery<api_Response>({
+    const queryResult = useQuery<TApiResponse>({
       queryKey: ['processData', id, form_type],
       queryFn: () => fetchProcessData(id, form_type),
     });

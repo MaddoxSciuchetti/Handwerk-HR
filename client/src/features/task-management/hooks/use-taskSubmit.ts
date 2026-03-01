@@ -1,5 +1,5 @@
+import { User } from '@/features/user-profile/types/auth.type';
 import { useQueryClient } from '@tanstack/react-query';
-import { User } from 'shared_prisma_types';
 import { editData, insertHistoryData } from '../api/index.api';
 import { formSchema } from '../schemas/index.schema';
 

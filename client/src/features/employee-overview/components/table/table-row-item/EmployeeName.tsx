@@ -1,4 +1,4 @@
-import { TEmployee } from '../../schemas/schema';
+import { TEmployee } from '@/features/employee-overview/schemas/schema';
 
 type EmployeeNameProps = {
   value: TEmployee;

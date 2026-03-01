@@ -7,10 +7,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 
-import {
-  Response,
-  useGetHistory,
-} from '@/features/task-management/hooks/use-getHistoryData';
+import { useGetHistory } from '@/features/task-management/hooks/use-getHistoryData';
 import { getProfileFoto } from '@/features/user-profile/api/index.api';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
@@ -31,7 +28,6 @@ interface FormProps {
     select_option: string,
     form_field_id: number
   ) => void;
-  owner_id: number;
   is_substitute: boolean;
 }
 
@@ -45,7 +41,6 @@ const WorkerForm: React.FC<FormProps> = ({
   form_field_id,
   handleSubmit,
   onEdit,
-  owner_id,
   is_substitute,
   // historyResult,
 }) => {
@@ -61,8 +56,7 @@ const WorkerForm: React.FC<FormProps> = ({
     queryFn: getProfileFoto,
   });
 
-  const { historyData, isLoading, error, refetchHistory } =
-    useGetHistory(id_original);
+  const { historyData } = useGetHistory(id_original);
 
   useEffect(() => {
     setSelectedValue(select_option || '');
@@ -187,17 +181,19 @@ const WorkerForm: React.FC<FormProps> = ({
                       Es wurden noch keine Änderungen vorgenommen
                     </p>
                   ) : (
-                    (historyData || []).map((item: Response, index: number) => (
+                    (historyData || []).map((item, index) => (
                       <div key={index} className="">
                         <div className=" mb-2 mt-1">
                           <p className="text-left">
                             <strong>
-                              {new Date(item.timestamp).toLocaleDateString()}
+                              {new Date(
+                                item.timestamp || 0
+                              ).toLocaleDateString()}
                             </strong>
                           </p>
                         </div>
                         <div className="flex">
-                          <p>Nutzer: {item.auth_user.email}</p>
+                          <p>Nutzer: {item.auth_user?.email}</p>
                           <img className="ml-1 w-5 h-5 " src={data} />
                         </div>
                         <p>

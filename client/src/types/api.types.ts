@@ -45,7 +45,7 @@ export type Session_API = {
   isCurrent: boolean;
 };
 
-export type newField = {
+export type TNewFormField = {
   timestamp: Date | null;
   form_field_id: number;
   description: string | null;
@@ -90,19 +90,19 @@ export type TEditMutation = UseMutationResult<
   unknown
 >;
 
-export type form_field = {
+export type TFormField = {
   id: number;
   form_field_id: number;
   description: string;
   officialOwner: string;
   substituteOwner: string;
-  owner_id: number;
+  owner_id: string;
   is_substitute: boolean;
   status: string;
   edit: string;
 };
 
-export type api_Response = {
+export type TApiResponse = {
   user: {
     id: number;
     vorname: string;
@@ -111,7 +111,7 @@ export type api_Response = {
   form: {
     id: number;
     type: string;
-    fields: form_field[];
+    fields: TFormField[];
   };
 };
 

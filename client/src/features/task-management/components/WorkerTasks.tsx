@@ -1,11 +1,11 @@
 import ErrorAlert from '@/components/alerts/ErrorAlert';
-import { api_Response, form_field } from '@/types/api.types';
+import { TApiResponse, TFormField } from '@/types/api.types';
 import { SubmitEvent } from 'react';
 import WorkerForm from './WorkerForm';
 
 type WorkerTasksProps = {
-  displayData: form_field[];
-  data: api_Response | undefined;
+  displayData: TFormField[];
+  data: TApiResponse | undefined;
   openEditModal: (
     id: number,
     description: string,
@@ -25,7 +25,7 @@ const WorkerTasks = ({
   if (!data) return <ErrorAlert />;
   return (
     <>
-      {displayData.map((field: form_field, index: number) => (
+      {displayData.map((field: TFormField, index: number) => (
         <WorkerForm
           key={index}
           id_original={field.id}
@@ -34,7 +34,6 @@ const WorkerTasks = ({
           description={field.description}
           officialOwner={field.officialOwner}
           substituteOwner={field.substituteOwner}
-          owner_id={field.owner_id}
           is_substitute={field.is_substitute}
           form_field_id={data.form.id}
           onEdit={(id, description, editcomment, select_option, form_field) =>
@@ -47,7 +46,6 @@ const WorkerTasks = ({
             )
           }
           handleSubmit={handleSubmit}
-          // historyResult={historyResult}
         />
       ))}
     </>

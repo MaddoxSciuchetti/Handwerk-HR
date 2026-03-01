@@ -1,6 +1,6 @@
+import { TEmployeeResponse } from '@/features/employee-overview/schemas/schema';
 import useRootForm from '@/hooks/use-Root-Form';
 import { TDescriptionData } from '@/types/api.types';
-import { TEmployeeResponse } from '@/zod-schemas/schema';
 import { Dispatch, SetStateAction } from 'react';
 import { TAddDescription, TEditDesription } from '../types/mutation.types';
 import TemplateForm from './TemplateForm';

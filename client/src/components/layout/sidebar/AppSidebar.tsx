@@ -18,8 +18,6 @@ import { useMemo } from 'react';
 import { Button } from '../../ui/button';
 import UserMenu from './UserMenu';
 
-// Menu items.
-
 const items = [
   {
     title: 'Mein Mitarbeiter',

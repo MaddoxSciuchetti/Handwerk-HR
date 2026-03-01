@@ -1,5 +1,5 @@
 import { useSidebar } from '@/components/ui/sidebar';
-import { FormInputs } from '@/zod-schemas/zodSchema';
+import { AddWorker } from '@/zod-schemas/zodSchema';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
@@ -37,7 +37,7 @@ function useHome() {
   });
 
   const createEmployeeMutation = useMutation({
-    mutationFn: async (data: FormInputs) => {
+    mutationFn: async (data: AddWorker) => {
       const response = await postOffboardingData(data);
       return response;
     },

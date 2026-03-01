@@ -1,8 +1,8 @@
 import API from '@/config/apiClient';
 import {
-  newField,
   TDescriptionData,
   TDescriptionResponse,
+  TNewFormField,
 } from '@/types/api.types';
 import { EditDescriptionData } from '../types/taskForm.types';
 
@@ -15,8 +15,8 @@ export const addExtraField = async (data: {
   description: string;
   template_type: 'ONBOARDING' | 'OFFBOARDING';
   owner: string;
-}): Promise<newField> => {
-  const response = await API.post<newField, newField>(
+}): Promise<TNewFormField> => {
+  const response = await API.post<TNewFormField, TNewFormField>(
     `/offboarding/addFormField`,
     data
   );

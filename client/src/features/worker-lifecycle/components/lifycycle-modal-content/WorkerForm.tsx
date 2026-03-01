@@ -1,4 +1,4 @@
-import { FormInputs, formSchema } from '@/zod-schemas/zodSchema';
+import { AddWorker, addWorkerSchema } from '@/zod-schemas/zodSchema';
 import { ErrorMessage } from '@hookform/error-message';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -9,7 +9,7 @@ import { FormType } from '../../types/index.types';
 interface WorkerFormProps {
   setSelectedOption: (value: FormType | null) => void;
   type: FormType;
-  success: (data: FormInputs) => void;
+  success: (data: AddWorker) => void;
 }
 
 export const WorkerForm = ({
@@ -21,15 +21,15 @@ export const WorkerForm = ({
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<FormInputs>({
-    resolver: zodResolver(formSchema),
+  } = useForm<AddWorker>({
+    resolver: zodResolver(addWorkerSchema),
     defaultValues: {
       type: type,
     },
     criteriaMode: 'all',
   });
 
-  const SubmitWorkerForm = (data: FormInputs) => {
+  const SubmitWorkerForm = (data: AddWorker) => {
     success(data);
   };
 

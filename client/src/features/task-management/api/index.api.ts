@@ -1,18 +1,19 @@
 import API from '@/config/apiClient';
+import { User } from '@/features/user-profile/types/auth.type';
 import {
-  api_Response,
   insertHistoryDataType,
   SuccessResponse,
+  TApiResponse,
 } from '@/types/api.types';
-import { Mappingform } from '@/types/form-data.types';
-import { User } from 'shared_prisma_types';
+import { DescriptionForm } from '@/types/form-data.types';
 import { File_Request } from '../components/WorkerFileUploads';
+import { THistoryData } from '../types/index.types';
 
 export const formattedData = async (
   id: number,
   param: string
-): Promise<api_Response> => {
-  const response = await API.get<api_Response, api_Response>(
+): Promise<TApiResponse> => {
+  const response = await API.get<TApiResponse, TApiResponse>(
     `offboarding/user/${id}?param1=${param}`
   );
   return response;
@@ -29,7 +30,7 @@ export const insertHistoryData = async (
   return response;
 };
 
-export const editData = async (formData: Mappingform) => {
+export const editData = async (formData: DescriptionForm) => {
   const response = await API.put<SuccessResponse, SuccessResponse>(
     'offboarding/editdata',
     formData
@@ -38,8 +39,10 @@ export const editData = async (formData: Mappingform) => {
   return response;
 };
 
-export const getHistoryData = async (id: number): Promise<any> => {
-  const response = await API.get(`/offboarding/getHistoryData/${id}`);
+export const getHistoryData = async (id: number): Promise<THistoryData[]> => {
+  const response = await API.get<THistoryData[], THistoryData[]>(
+    `/offboarding/getHistoryData/${id}`
+  );
   return response;
 };
 

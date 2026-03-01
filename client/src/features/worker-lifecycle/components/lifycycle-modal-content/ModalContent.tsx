@@ -1,5 +1,5 @@
 import { cn } from '@/types/utils.types';
-import { FormInputs } from '@/zod-schemas/zodSchema';
+import { AddWorker } from '@/zod-schemas/zodSchema';
 import { UseMutationResult } from '@tanstack/react-query';
 import { useState } from 'react';
 import { FormType, TOffboardingItemUser } from '../../types/index.types';
@@ -10,7 +10,7 @@ type ModalProps = {
   createEmployeeMutation: UseMutationResult<
     TOffboardingItemUser,
     Error,
-    FormInputs,
+    AddWorker,
     unknown
   >;
   className?: string;
