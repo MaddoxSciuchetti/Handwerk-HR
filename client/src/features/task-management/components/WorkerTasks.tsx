@@ -1,7 +1,7 @@
 import ErrorAlert from '@/components/alerts/ErrorAlert';
-import { api_Response, form_field } from '../types/index.type';
-import Form from '@/components/worker_components/worker_form_data';
 import { SubmitEvent } from 'react';
+import { api_Response, form_field } from '../types/index.type';
+import WorkerForm from './WorkerForm';
 
 type WorkerTasksProps = {
   displayData: form_field[];
@@ -26,7 +26,7 @@ const WorkerTasks = ({
   return (
     <>
       {displayData.map((field: form_field, index: number) => (
-        <Form
+        <WorkerForm
           key={index}
           id_original={field.id}
           editcomment={field.edit}

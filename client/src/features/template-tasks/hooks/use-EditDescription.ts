@@ -1,8 +1,8 @@
-import { editTaskData, EditDescriptionData } from '@/lib/api';
+import { EditDescriptionData, editTaskData } from '@/apis/index.apis';
+import { useSidebar } from '@/components/ui/sidebar';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { useSidebar } from '@/components/ui/sidebar';
 
 function useEditDescription() {
   const queryClient = useQueryClient();

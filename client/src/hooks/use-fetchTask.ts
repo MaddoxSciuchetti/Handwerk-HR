@@ -1,5 +1,5 @@
-import { fetchTaskData } from '@/lib/api';
-import { TDescriptionResponse } from '@/types/api';
+import { fetchTaskData } from '@/apis/index.apis';
+import { TDescriptionResponse } from '@/types/api.types';
 import { useQuery } from '@tanstack/react-query';
 
 function useFetchTask() {

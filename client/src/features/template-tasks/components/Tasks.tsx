@@ -1,4 +1,4 @@
-import { TDescriptionResponse } from '@/types/api';
+import { TDescriptionResponse } from '@/types/api.types';
 import { Dispatch, SetStateAction } from 'react';
 
 type TasksProps = {

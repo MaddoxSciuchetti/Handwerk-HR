@@ -1,11 +1,10 @@
-import { useState } from 'react';
-import { WorkerForm } from './WorkerForm';
+import { cn } from '@/types/utils';
 import { FormInputs } from '@/zod-schemas/zodSchema';
 import { UseMutationResult } from '@tanstack/react-query';
-import { TOffboardingItemUser } from '@/types/api';
+import { useState } from 'react';
+import { FormType, TOffboardingItemUser } from '../../types/index.types';
 import RadioSelect from './RadioSelect';
-import { FormType } from '@/types/onof_home';
-import { cn } from '@/types/utils';
+import { WorkerForm } from './WorkerForm';
 
 type ModalProps = {
   createEmployeeMutation: UseMutationResult<

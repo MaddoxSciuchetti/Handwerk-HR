@@ -4,9 +4,9 @@ import { Spinner } from '@/components/ui/spinner';
 
 import { TABS } from '@/lib/constants';
 import { cn } from '@/types/utils';
+import useDescription from '../hooks/use-GetDescription';
 import Tasks from './Tasks';
 import TemplateModal from './TemplateModal';
-import useDescription from '../hooks/use-GetDescription';
 
 function TemplateTasks() {
   const {

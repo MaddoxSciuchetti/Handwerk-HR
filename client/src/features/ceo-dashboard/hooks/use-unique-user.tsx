@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { TEmployForm } from '../types/employeeform.type';
+import { TEmployForm } from '../types/employeeform.types';
 
 function useHandwerkerProBSBEmployee(allEmployeeData: TEmployForm | undefined) {
   return useMemo(() => {

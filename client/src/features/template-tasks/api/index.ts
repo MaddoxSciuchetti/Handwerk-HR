@@ -1,5 +1,5 @@
 import API from '@/config/apiClient';
-import { newField } from '@/types/api';
+import { newField } from '@/types/api.types';
 
 export const deleteDescriptionData = async (id: number) => {
   const response = await API.delete(`/user/deleteDescriptionData/${id}`);

@@ -1,7 +1,5 @@
-import { getHistoryData } from "@/lib/api";
-import { useMutation, useQueries, useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
-import * as React from "react";
+import { getHistoryData } from '@/apis/index.apis';
+import { useQuery } from '@tanstack/react-query';
 
 export type Response = {
   id: number;
@@ -19,7 +17,7 @@ export type Response = {
 
 export const useGetHistory = (id: number) => {
   const { data, isLoading, error, refetch } = useQuery<Response[]>({
-    queryKey: ["formHistory", id],
+    queryKey: ['formHistory', id],
     queryFn: () => getHistoryData(id),
     enabled: !!id,
   });

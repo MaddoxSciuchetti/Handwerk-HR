@@ -1,4 +1,4 @@
-import { getUser } from '@/lib/api';
+import { getUser } from '@/apis/index.apis';
 import { useState } from 'react';
 import { api_Response } from '../types/index.type';
 

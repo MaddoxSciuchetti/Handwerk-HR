@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { deleteSession } from '../lib/api';
+import { deleteSession } from '../apis/index.apis';
 import { SESSIONS } from './use-Sessions';
 
 type Cache = {

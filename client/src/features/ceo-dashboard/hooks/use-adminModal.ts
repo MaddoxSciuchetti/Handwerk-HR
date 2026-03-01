@@ -1,8 +1,8 @@
-import { useMutation } from '@tanstack/react-query';
-import { sendReminderWorker } from '@/lib/api';
-import { SubmitHandler, useForm } from 'react-hook-form';
+import { sendReminderWorker } from '@/apis/index.apis';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { formSchema, sendEmailSchema } from '../types/adminModal.type';
+import { useMutation } from '@tanstack/react-query';
+import { SubmitHandler, useForm } from 'react-hook-form';
+import { formSchema, sendEmailSchema } from '../types/adminModal.types';
 
 function useAdminModal() {
   const {

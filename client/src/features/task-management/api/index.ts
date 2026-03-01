@@ -1,8 +1,8 @@
 import API from '@/config/apiClient';
-import { api_Response, insertHistoryDataType } from '../types/index.type';
+import { SuccessResponse } from '@/types/api.types';
+import { Mappingform } from '@/types/form-data.types';
 import { User } from 'shared_prisma_types';
-import { SuccessResponse } from '@/types/api';
-import { Mappingform } from '@/types/form-data';
+import { api_Response, insertHistoryDataType } from '../types/index.type';
 
 export const formattedData = async (
   id: number,
@@ -18,8 +18,6 @@ export const insertHistoryData = async (
   result: insertHistoryDataType,
   user: User
 ) => {
-  console.log('testing');
-  console.log(result, user);
   const response = await API.post(`offboarding/editHisoryData`, {
     result,
     user,

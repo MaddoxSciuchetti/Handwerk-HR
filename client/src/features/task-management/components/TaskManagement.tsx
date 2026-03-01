@@ -1,17 +1,17 @@
-import React, { useState } from 'react';
-import useAuth from '@/features/user-profile/hooks/use-Auth';
-import Worker_Backround from '@/components/backround_worker';
-import { useToggleModal } from '@/hooks/use-toggleModal';
 import { Spinner } from '@/components/ui/spinner';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
+import useAuth from '@/features/user-profile/hooks/use-Auth';
+import { useToggleModal } from '@/hooks/use-toggleModal';
+import React, { useState } from 'react';
+import useEditModal from '../hooks/use-editModal';
 import useTaskData from '../hooks/use-fetchTasks';
 import useFilteredData from '../hooks/use-filteredData';
-import useEditModal from '../hooks/use-editModal';
 import useTaskSubmit from '../hooks/use-taskSubmit';
+import FilteredTasks from './FilteredTasks';
 import TaskHeader from './TaskHeader';
 import TaskModal from './TaskModal';
-import FilteredTasks from './FilteredTasks';
+import WorkerFileUploads from './WorkerFileUploads';
 import WorkerTasks from './WorkerTasks';
-import { Tabs, TabsContent } from '@/components/ui/tabs';
 
 type OffboardingFormProps = {
   id: number;
@@ -68,7 +68,7 @@ const TaskManagement: React.FC<OffboardingFormProps> = ({ id, search }) => {
             />
           </TabsContent>
           <TabsContent value="files">
-            <Worker_Backround id={id} />
+            <WorkerFileUploads id={id} />
           </TabsContent>
         </Tabs>
       </>

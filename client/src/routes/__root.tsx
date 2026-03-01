@@ -1,16 +1,15 @@
 // src/routes/__root.tsx
-import { createRootRoute, Outlet, useLocation } from '@tanstack/react-router';
+import { AppSidebar } from '@/components/layout/sidebar/AppSidebar';
+import FeatureModal from '@/components/layout/sidebar/FeatureModal';
+import ModalOverlay from '@/components/modal/ModalOverlay';
 import {
-  Sidebar,
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { AppSidebar } from '@/components/auth/app-sidebar';
+import { createRootRoute, Outlet, useLocation } from '@tanstack/react-router';
 import { useState } from 'react';
-import FeatureModal from '@/components/modal/FeatureModal';
-import ModalOverlay from '@/components/modal/ModalOverlay';
 
 export const Route = createRootRoute({
   component: RootLayout,

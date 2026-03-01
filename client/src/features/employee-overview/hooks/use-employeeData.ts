@@ -1,4 +1,4 @@
-import { specificEmployeeData } from '@/features/employee-overview/api';
+import { specificEmployeeData } from '@/features/employee-overview/api/employee-overview.api';
 import { useQuery } from '@tanstack/react-query';
 
 function useEmployeeData() {

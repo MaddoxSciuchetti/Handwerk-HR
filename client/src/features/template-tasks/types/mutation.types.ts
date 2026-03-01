@@ -1,5 +1,5 @@
-import { EditDescriptionData } from '@/lib/api';
-import { newField } from '@/types/api';
+import { EditDescriptionData } from '@/apis/index.apis';
+import { newField } from '@/types/api.types';
 import { UseMutateFunction } from '@tanstack/react-query';
 
 export type TEditDesription = UseMutateFunction<

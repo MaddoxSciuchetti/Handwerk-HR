@@ -2,15 +2,15 @@ import { Table } from '@/components/ui/table';
 import useDeleteEmployee from '../hooks/use-deleteEmployee';
 import useGetEmployees from '../hooks/use-getEmployees';
 
-import EmployeeTableHeader from './table_tmp/EmployeeTableHeader';
 import ErrorAlert from '@/components/alerts/ErrorAlert';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import ModalOverlay from '@/components/modal/ModalOverlay';
-import ModalEditMitarbeiter from './modals/EditEmployeeModal/EmployeeModal';
-import ModalMitarbeiter from './modals/CreateEmployeeModal/EmployeeModal';
 import { useEmployeeModal } from '../hooks/use-employeeModal';
-import PageHeader from './table_tmp/PageHeader';
-import EmployeeTableBody from './table_tmp/TableBody';
+import ModalMitarbeiter from './modals/create-employee-modal/EmployeeModal';
+import ModalEditMitarbeiter from './modals/edit-employee-modal/EmployeeModal';
+import EmployeeTableHeader from './table/EmployeeTableHeader';
+import PageHeader from './table/PageHeader';
+import EmployeeTableBody from './table/TableBody';
 
 function EmployeeOverview() {
   const { EmployeeData, isLoading, error, isError } = useGetEmployees();

@@ -6,8 +6,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-import { Worker_Item } from '../../../components/worker_components/worker_item';
 import { getFirstFormType } from '@/lib/formtype';
+import { Worker_Item } from '../../task-management/components/WorkerItem';
 import { OffboardingItem } from '../types/index.types';
 
 type LifeCycleTableProps = {

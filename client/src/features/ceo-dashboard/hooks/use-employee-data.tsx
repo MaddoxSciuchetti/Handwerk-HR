@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
-import { threeDaysAgo } from '@/types/utils';
-import { TEmployForm } from '../types/employeeform.type';
 import { EmployeeData } from '../api/index.api';
+import { TEmployForm } from '../types/employeeform.types';
 
 function useEmployeeData() {
   const [selectedUser, setSelectedUser] = useState<string | null>(null);

@@ -1,10 +1,10 @@
-import { editEmployeeAbsence } from '@/lib/api';
-import { AbsenceData } from '@/types/api';
+import { editEmployeeAbsence } from '@/apis/index.apis';
+import { AbsenceData } from '@/types/api.types';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { AbsenceSchema } from '../schemas/schema';
-import { zodResolver } from '@hookform/resolvers/zod';
 
 function useEditEmployee(toggleEmployeeModal: () => void) {
   const queryClient = useQueryClient();

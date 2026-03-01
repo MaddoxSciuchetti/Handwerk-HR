@@ -1,11 +1,11 @@
-import { cn } from '@/types/utils';
-import { useNavigate } from '@tanstack/react-router';
-import { ComponentProps, useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
-import { login } from '../api';
+import { cn } from '@/types/utils';
+import { useMutation } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
+import { ComponentProps, useState } from 'react';
+import { login } from '../api/auth.api';
 
 export function LoginComponent({ className, ...props }: ComponentProps<'div'>) {
   const navigate = useNavigate();

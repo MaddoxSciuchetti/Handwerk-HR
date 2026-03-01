@@ -1,12 +1,12 @@
 import { TabsContent } from '@/components/ui/tabs';
 import { SetStateAction } from 'react';
-import { TEmployForm } from '../../types/employeeform.type';
+import { TEmployeeForm } from '../../types/employeeform.types';
 import { EmployeeTabsData } from './EmployeeTabsData';
 
 type CeoTabsContentProps = {
   selectedUser: string;
-  cleanData: Array<[string, TEmployForm]>;
-  currentBSBEmployee: TEmployForm;
+  cleanData: Array<[string, TEmployeeForm]>;
+  currentBSBEmployee: TEmployeeForm;
   setModalOpen: (value: SetStateAction<boolean>) => void;
 };
 

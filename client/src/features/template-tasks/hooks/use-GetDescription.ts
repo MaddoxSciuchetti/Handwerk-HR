@@ -1,12 +1,12 @@
 import { useSidebar } from '@/components/ui/sidebar';
+import { newField } from '@/types/api.types';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import useEmployeeData from '../../employee-overview/hooks/use-employeeData';
 import { toast } from 'sonner';
 import useFetchTask from '../../../hooks/use-fetchTask';
-import useDeleteDescription from './use-DeleteDescription';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { newField } from '@/types/api';
+import useEmployeeData from '../../employee-overview/hooks/use-employeeData';
 import { addExtraField } from '../api';
+import useDeleteDescription from './use-DeleteDescription';
 import useEditDescription from './use-EditDescription';
 
 function useDescription() {

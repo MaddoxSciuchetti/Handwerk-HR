@@ -1,5 +1,5 @@
 import ModalOverlay from '@/components/modal/ModalOverlay';
-import PreviewComponent from '@/components/worker_components/preivew_component';
+import PreviewComponent from '@/features/task-management/components/PreviewComponent';
 import { SubmitEvent } from 'react';
 
 type TaskModalProps = {
