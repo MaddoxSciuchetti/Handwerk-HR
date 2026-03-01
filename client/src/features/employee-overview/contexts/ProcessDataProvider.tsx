@@ -1,4 +1,4 @@
-import { api_Response } from '@/features/task-management/types/index.type';
+import { api_Response } from '@/types/api.types';
 import { useQuery } from '@tanstack/react-query';
 import { fetchProcessData } from '../api/employee-overview.api';
 import { ProcessDataProviderProps } from '../types/context.types';

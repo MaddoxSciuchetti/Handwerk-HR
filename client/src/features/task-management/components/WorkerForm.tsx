@@ -7,8 +7,11 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 
-import { getProfileFoto } from '@/features/user-profile/api';
-import { Response, useGetHistory } from '@/hooks/use-getHistoryData';
+import {
+  Response,
+  useGetHistory,
+} from '@/features/task-management/hooks/use-getHistoryData';
+import { getProfileFoto } from '@/features/user-profile/api/index.api';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 

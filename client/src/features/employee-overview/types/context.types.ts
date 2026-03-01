@@ -1,4 +1,4 @@
-import { api_Response } from '@/features/task-management/types/index.type';
+import { api_Response } from '@/types/api.types';
 import { ReactNode } from 'react';
 
 export type UpdatedAiResponse = Omit<api_Response, 'name'> & {

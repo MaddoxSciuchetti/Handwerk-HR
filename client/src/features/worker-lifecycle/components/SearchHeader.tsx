@@ -1,5 +1,6 @@
-import { Button } from './ui/button';
-import { Input } from './ui/input';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+
 type SearchHeaderProps = {
   search: string;
   setSearch: (value: string) => void;

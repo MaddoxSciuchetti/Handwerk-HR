@@ -1,6 +1,6 @@
-import { getUser } from '@/apis/index.apis';
+import { getUser } from '@/features/auth/api/auth.api';
+import { api_Response } from '@/types/api.types';
 import { useState } from 'react';
-import { api_Response } from '../types/index.type';
 
 function useFilteredData(data: api_Response | undefined) {
   const [descriptionSearch, setDescriptionSearch] = useState<string>('');

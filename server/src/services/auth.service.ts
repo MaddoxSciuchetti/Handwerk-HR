@@ -1,9 +1,6 @@
-import {
-    APP_ORIGIN,
-    FRONTENDURL,
-    JWT_REFRESH_SECRET,
-    JWT_SECRET,
-} from "../constants/env";
+import { prisma } from "@/lib/prisma";
+import bcrypt from "bcrypt";
+import { FRONTENDURL } from "../constants/env";
 import {
     CONFLICT,
     INTERNAL_SERVER_ERROR,
@@ -13,6 +10,7 @@ import {
 } from "../constants/http";
 import VerificationCodeType from "../constants/verificationCodeTypes";
 import appAssert from "../utils/appAssert";
+import { hashValue } from "../utils/bcrypt";
 import {
     fiveMinutesAgo,
     ONE_DAY_MS,
@@ -20,23 +18,17 @@ import {
     oneYearFromNow,
     thirtyDaysFromNow,
 } from "../utils/date";
-import jwt from "jsonwebtoken";
+import {
+    getPasswordResetTemplate,
+    getVerifyEmailTemplate,
+} from "../utils/emailTemplates";
 import {
     RefreshTokenPayload,
     refreshTokenSignOptions,
     signToken,
     verifyToken,
 } from "../utils/jwt";
-import {
-    getPasswordResetTemplate,
-    getVerifyEmailTemplate,
-} from "../utils/emailTemplates";
 import { sendMail } from "../utils/sendMail";
-import { hashValue } from "../utils/bcrypt";
-import { prisma } from "@/lib/prisma";
-import { userInfo } from "node:os";
-import bcrypt from "bcrypt";
-import AppErrorCode from "../constants/appErrorCode";
 
 export type createAccountParams = {
     firstName: string;

@@ -1,5 +1,5 @@
-import { getHistoryData } from '@/apis/index.apis';
 import { useQuery } from '@tanstack/react-query';
+import { getHistoryData } from '../api/index.api';
 
 export type Response = {
   id: number;

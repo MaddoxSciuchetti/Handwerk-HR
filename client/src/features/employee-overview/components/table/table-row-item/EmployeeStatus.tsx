@@ -1,5 +1,8 @@
-import { TEmployee } from '../../schemas/schema';
-import { calculateData, dateObject } from '../../utils/calculateDate.utils';
+import { TEmployee } from '@/features/employee-overview/schemas/schema';
+import {
+  calculateData,
+  dateObject,
+} from '@/features/employee-overview/utils/calculateDate.utils';
 
 type EmployeeStatusProps = {
   value: TEmployee;

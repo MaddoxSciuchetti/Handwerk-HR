@@ -1,8 +1,3 @@
-import {
-  deleteFileData,
-  fetchCloudUrl,
-  fetchFileData,
-} from '@/apis/index.apis';
 import { useToggleModal } from '@/hooks/use-toggleModal';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import JSZip from 'jszip';
@@ -10,6 +5,7 @@ import { useState } from 'react';
 import { Button } from '../../../components/ui/button';
 import FileUpload01 from '../../../components/ui/file_upload/form-main';
 import { Spinner } from '../../../components/ui/spinner';
+import { deleteFileData, fetchCloudUrl, fetchFileData } from '../api/index.api';
 
 interface Worker_Backround {
   id: number;

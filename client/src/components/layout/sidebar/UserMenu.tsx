@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 import { logout } from '@/apis/index.apis';
-import { getProfileFoto } from '@/features/user-profile/api';
+import { getProfileFoto } from '@/features/user-profile/api/index.api';
 import useAuth from '@/features/user-profile/hooks/use-Auth';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
@@ -45,12 +45,6 @@ const UserMenu = () => {
         >
           Profile
         </DropdownMenuItem>
-        {/* <DropdownMenuItem
-                    className="cursor-pointer"
-                    onClick={() => navigate({ to: "/settings" })}
-                >
-                    Einstellungen
-                </DropdownMenuItem> */}
         <DropdownMenuSeparator />
         <DropdownMenuItem className="cursor-pointer" onClick={() => signOut()}>
           Logout

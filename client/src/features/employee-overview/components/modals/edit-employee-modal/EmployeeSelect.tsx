@@ -1,4 +1,4 @@
-import { AbsenceData } from '@/types/api.types';
+import { AbsenceData } from '@/features/employee-overview/types/index.types';
 import { ErrorMessage } from '@hookform/error-message';
 import { Control, Controller, FieldErrors } from 'react-hook-form';
 import { Label } from '../../../../../components/ui/label';

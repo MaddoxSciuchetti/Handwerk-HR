@@ -1,4 +1,6 @@
 import API from '@/config/apiClient';
+import { Session_API } from '@/types/api.types';
+import { User } from 'shared_prisma_types';
 import {
   LoginRequest,
   LoginResponse,
@@ -11,10 +13,13 @@ import {
 export const sendPasswordResetEmail = async (email: string) =>
   API.post('/auth/password/forgot', { email });
 
+export const getUser = async (): Promise<User> => {
+  return API.get<User, User>('/user');
+};
+
 export const login = async (data: LoginRequest): Promise<LoginResponse> => {
   return API.post<LoginRequest, LoginResponse>('/auth/login', data);
 };
-
 export const signup = async (
   data: RegisterRequest
 ): Promise<RegisterResponse> => {
@@ -27,6 +32,11 @@ export const verifyEmail = async (
 ): Promise<string> => {
   return API.get<Verify, string>(`/auth/email/verify/${verificationCode.code}`);
 };
+
+export const getSessions = async (): Promise<Session_API> =>
+  API.get('/sessions');
+export const deleteSession = async (id: string): Promise<void> =>
+  API.delete(`/sessions/${id}`);
 
 export const resetPassword = async ({
   verificationCode,

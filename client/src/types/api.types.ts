@@ -1,4 +1,6 @@
+import { formSchema } from '@/features/task-management/schemas/index.schema';
 import { UseMutationResult } from '@tanstack/react-query';
+import z from 'zod';
 
 export type APIResponse = SuccessResponse | ErrorResponse;
 
@@ -25,15 +27,6 @@ export type TDescriptionResponse = TDescriptionData & {
     vorname: string;
     nachname: string;
   };
-};
-
-export type AbsenceData = {
-  id: string;
-  absence?: string;
-  absencetype: string;
-  absencebegin: string;
-  absenceEnd: string;
-  substitute: string;
 };
 
 export type FileResponse = {
@@ -96,3 +89,30 @@ export type TEditMutation = UseMutationResult<
   TMutationRequest,
   unknown
 >;
+
+export type form_field = {
+  id: number;
+  form_field_id: number;
+  description: string;
+  officialOwner: string;
+  substituteOwner: string;
+  owner_id: number;
+  is_substitute: boolean;
+  status: string;
+  edit: string;
+};
+
+export type api_Response = {
+  user: {
+    id: number;
+    vorname: string;
+    nachname: string;
+  };
+  form: {
+    id: number;
+    type: string;
+    fields: form_field[];
+  };
+};
+
+export type insertHistoryDataType = z.infer<typeof formSchema>;

@@ -5,7 +5,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useProcessData } from '@/features/employee-overview/contexts/ProcessDataProvider';
+import { useProcessData } from '@/features/employee-overview/hooks/use-processData';
 import { useToggleModal } from '@/hooks/use-toggleModal';
 
 interface ToDoItem {

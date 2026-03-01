@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { editData, insertHistoryData } from '../api';
-import { formSchema } from '../schemas/index.schema';
 import { User } from 'shared_prisma_types';
+import { editData, insertHistoryData } from '../api/index.api';
+import { formSchema } from '../schemas/index.schema';
 
 function useTaskSubmit(
   id: number,

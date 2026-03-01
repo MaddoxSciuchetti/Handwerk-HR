@@ -1,6 +1,6 @@
 import ErrorAlert from '@/components/alerts/ErrorAlert';
+import { api_Response, form_field } from '@/types/api.types';
 import { SubmitEvent } from 'react';
-import { api_Response, form_field } from '../types/index.type';
 import WorkerForm from './WorkerForm';
 
 type WorkerTasksProps = {
