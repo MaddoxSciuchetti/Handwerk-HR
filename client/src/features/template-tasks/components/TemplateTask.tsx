@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 
 import { TABS } from '@/lib/constants';
-import { cn } from '@/types/utils';
+import { cn } from '@/types/utils.types';
 import useDescription from '../hooks/use-GetDescription';
 import Tasks from './Tasks';
 import TemplateModal from './TemplateModal';

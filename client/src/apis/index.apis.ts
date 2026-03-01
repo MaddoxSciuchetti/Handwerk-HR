@@ -7,7 +7,6 @@ import {
   FileResponse,
   Session_API,
   TDescriptionData,
-  TDescriptionResponse,
 } from '@/types/api.types';
 import { ZDescriptionData } from '@/zod-schemas/schema';
 import { User } from 'shared_prisma_types';
@@ -96,13 +95,6 @@ export const fetchRawDescription = async (): Promise<DescriptionData> => {
   const response = await API.get('/user/rawdescription');
   console.log(response);
   return ZDescriptionData.parse(response);
-};
-
-export const fetchTaskData = async (): Promise<TDescriptionResponse[]> => {
-  const response = await API.get<TDescriptionData[], TDescriptionResponse[]>(
-    '/user/fetchTaskData'
-  );
-  return response;
 };
 
 export type EditDescriptionData = {

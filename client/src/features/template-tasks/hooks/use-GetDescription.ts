@@ -3,11 +3,11 @@ import { newField } from '@/types/api.types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import useFetchTask from '../../../hooks/use-fetchTask';
 import useEmployeeData from '../../employee-overview/hooks/use-employeeData';
 import { addExtraField } from '../api';
 import useDeleteDescription from './use-DeleteDescription';
 import useEditDescription from './use-EditDescription';
+import useFetchTask from './use-fetchTask';
 
 function useDescription() {
   const queryClient = useQueryClient();

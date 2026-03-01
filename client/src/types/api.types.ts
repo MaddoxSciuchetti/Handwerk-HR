@@ -1,5 +1,4 @@
 import { UseMutationResult } from '@tanstack/react-query';
-import { User } from 'shared_prisma_types';
 
 export type APIResponse = SuccessResponse | ErrorResponse;
 

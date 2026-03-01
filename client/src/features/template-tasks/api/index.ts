@@ -1,5 +1,9 @@
 import API from '@/config/apiClient';
-import { newField } from '@/types/api.types';
+import {
+  newField,
+  TDescriptionData,
+  TDescriptionResponse,
+} from '@/types/api.types';
 
 export const deleteDescriptionData = async (id: number) => {
   const response = await API.delete(`/user/deleteDescriptionData/${id}`);
@@ -14,6 +18,13 @@ export const addExtraField = async (data: {
   const response = await API.post<newField, newField>(
     `/offboarding/addFormField`,
     data
+  );
+  return response;
+};
+
+export const fetchTaskData = async (): Promise<TDescriptionResponse[]> => {
+  const response = await API.get<TDescriptionData[], TDescriptionResponse[]>(
+    '/user/fetchTaskData'
   );
   return response;
 };

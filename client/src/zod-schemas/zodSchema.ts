@@ -39,14 +39,14 @@ export const formSchema = z.discriminatedUnion('type', [
 
 export type FormInputs = z.infer<typeof formSchema>;
 
-export const formSchemaDesecription = z.object({
-  form_field_id: z.coerce.number(),
-  description: z.string(),
-  owner: z.string(),
-});
+// export const formSchemaDesecription = z.object({
+//   form_field_id: z.coerce.number(),
+//   description: z.string(),
+//   owner: z.string(),
+// });
 
-export const formSchemaWithType = formSchemaDesecription
-  .extend({
-    template_type: z.enum(['ONBOARDING', 'OFFBOARDING']),
-  })
-  .omit({ form_field_id: true });
+// export const formSchemaWithType = formSchemaDesecription
+//   .extend({
+//     template_type: z.enum(['ONBOARDING', 'OFFBOARDING']),
+//   })
+//   .omit({ form_field_id: true });

@@ -1,4 +1,4 @@
-import { cn } from '@/types/utils';
+import { cn } from '@/types/utils.types';
 import { FormInputs } from '@/zod-schemas/zodSchema';
 import { UseMutationResult } from '@tanstack/react-query';
 import { useState } from 'react';

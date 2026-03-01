@@ -1,6 +1,6 @@
-export interface Mappingform {
+export type Mappingform = {
   form_field_id: string;
   editcomment: string;
   select_option: string;
   id: string;
-}
+};
