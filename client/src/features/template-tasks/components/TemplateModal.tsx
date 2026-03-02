@@ -1,18 +1,21 @@
-import { TEmployeeResponse } from '@/features/employee-overview/schemas/schema';
+import { EmployeeDataArray } from '@/features/employee-overview/schemas/schema';
 import useRootForm from '@/hooks/use-Root-Form';
 import { DescriptionData } from '@/types/api.types';
 import { Dispatch, SetStateAction } from 'react';
-import { TAddDescription, TEditDesription } from '../types/mutation.types';
+import {
+  AddDescriptionMutation,
+  EditDescriptionMutation,
+} from '../types/mutation.types';
 import TemplateForm from './TemplateForm';
 
 type TemplateModalProps = {
-  editDescriptionMutation: TEditDesription;
-  handleAddSubmitMutation: TAddDescription;
+  editDescriptionMutation: EditDescriptionMutation;
+  handleAddSubmitMutation: AddDescriptionMutation;
   form_field_id: number | null | undefined;
   description: string | null | undefined;
   owner: string | null | undefined;
   template_type?: 'ONBOARDING' | 'OFFBOARDING';
-  EmployeeData: TEmployeeResponse | undefined;
+  EmployeeData: EmployeeDataArray | undefined;
   OnboardingData?: DescriptionData[] | undefined;
   OffboardingData?: DescriptionData[] | undefined;
   mode: 'EDIT' | 'ADD' | undefined;

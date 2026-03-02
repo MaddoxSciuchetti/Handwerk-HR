@@ -4,14 +4,14 @@ export type EmployeeForm = {
   form_type: FormType;
 };
 
-export type OffboardingItem = {
+export type WorkerItem = {
   employee_forms: EmployeeForm[];
   id: number;
   nachname: string;
   vorname: string;
 };
 
-export type delete_user = {
+export type DeleteUser = {
   id: number;
   vorname: string;
   nachname: string;
@@ -25,7 +25,7 @@ export type delete_user = {
   updatedAt: Date;
 };
 
-export type TOffboardingItemUser = {
+export type ItemUser = {
   success: {
     id: number;
     vorname: string;

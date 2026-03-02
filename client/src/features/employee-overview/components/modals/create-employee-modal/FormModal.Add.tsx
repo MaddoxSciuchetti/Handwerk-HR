@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { TWorkerSchema } from '@/features/employee-overview/schemas/schema';
+import { CreateWorker } from '@/features/employee-overview/schemas/schema';
 import {
   FieldErrors,
   SubmitHandler,
@@ -10,10 +10,10 @@ import FormFields from '../../../../../components/form/FormFields';
 import { CreateMitarbeiterInputs } from '../../../consts/CreateMitarbeiterInputs';
 
 type FormModalAddProps = {
-  handleSubmit: UseFormHandleSubmit<TWorkerSchema>;
-  register: UseFormRegister<TWorkerSchema>;
-  errors: FieldErrors<TWorkerSchema>;
-  onFormSubmit: SubmitHandler<TWorkerSchema>;
+  handleSubmit: UseFormHandleSubmit<CreateWorker>;
+  register: UseFormRegister<CreateWorker>;
+  errors: FieldErrors<CreateWorker>;
+  onFormSubmit: SubmitHandler<CreateWorker>;
 };
 
 const FormModalAdd = ({

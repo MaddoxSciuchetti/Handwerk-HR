@@ -1,4 +1,3 @@
-import { user } from '@/apis/index.apis';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -7,12 +6,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+import { User } from '@/features/user-profile/types/auth.type';
 import { UseMutateFunction } from '@tanstack/react-query';
-import { TEmployee } from '../../../schemas/schema';
+import { EmployeeDataObject } from '../../../schemas/schema';
 
 type EditDropdownProps = {
-  value: TEmployee;
-  DeleteEmployee: UseMutateFunction<user, Error, string, unknown>;
+  value: EmployeeDataObject;
+  DeleteEmployee: UseMutateFunction<User, Error, string, unknown>;
 };
 
 const EditDropdown = ({ value, DeleteEmployee }: EditDropdownProps) => {

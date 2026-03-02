@@ -1,6 +1,8 @@
+import z from 'zod';
 import { TAuth_User } from '../hooks/use-getHistoryData';
+import { formSchema } from '../schemas/index.schema';
 
-export type THistoryData = {
+export type HistoryData = {
   id: number;
   timestamp: Date | null;
   status: string | null;
@@ -25,3 +27,5 @@ export type File_Request = {
     user_id: number;
   };
 };
+
+export type InsertHistoryData = z.infer<typeof formSchema>;

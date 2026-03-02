@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
-import { EmployeeData } from '../api/index.api';
+import { getEmployeeWorkerData } from '../api/index.api';
 import { EmployeeWorker } from '../types/employeeform.types';
 
 function useEmployeeData() {
@@ -12,7 +12,7 @@ function useEmployeeData() {
     error,
   } = useQuery<EmployeeWorker>({
     queryKey: ['ceo-dashboard'],
-    queryFn: EmployeeData,
+    queryFn: getEmployeeWorkerData,
   });
 
   const cleanData = useMemo(() => {

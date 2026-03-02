@@ -135,7 +135,7 @@ export default function FileUpload01({ id, setModal }: FileUploadProps01) {
                   </TooltipTrigger>
                   <TooltipContent className="py-3 bg-gray-200 text-foreground border">
                     <div className="space-y-1">
-                      <p className="text-muted-foreground dark:text-muted-background text-xs max-w-[200px]">
+                      <p className="text-muted-foreground dark:text-muted-background text-xs max-w-50">
                         Ziehe deine Dateien in das Feld rein oder lade sie
                         direkt hoch.
                       </p>

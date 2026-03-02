@@ -1,14 +1,16 @@
-import { HandleAddSubmit, HandleEditSubmit } from '../types/taskForm.types';
-import { SubmitHandler, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { TAddDescription, TEditDesription } from '../types/mutation.types';
-import { error } from 'node:console';
+import { SubmitHandler, useForm } from 'react-hook-form';
+import {
+  AddDescriptionMutation,
+  EditDescriptionMutation,
+} from '../types/mutation.types';
+import { HandleAddSubmit, HandleEditSubmit } from '../types/taskForm.types';
 
 function useSubmitForm(
   mode: 'EDIT' | 'ADD' | undefined,
   schema: any,
-  editDescriptionMutation: TEditDesription,
-  handleAddSubmitMutation: TAddDescription
+  editDescriptionMutation: EditDescriptionMutation,
+  handleAddSubmitMutation: AddDescriptionMutation
 ) {
   const {
     register,

@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from '../../../components/ui/select';
 
-import { TEmployeeResponse } from '@/features/employee-overview/schemas/schema';
+import { EmployeeDataArray } from '@/features/employee-overview/schemas/schema';
 import { ErrorMessage } from '@hookform/error-message';
 import { HandleAddSubmit } from '../types/taskForm.types';
 
@@ -17,7 +17,7 @@ type OwnerSelectProps = {
   control: Control<HandleAddSubmit, any, HandleAddSubmit>;
   selectedValue: string;
   setSelectedValue: Dispatch<SetStateAction<string>>;
-  EmployeeData: TEmployeeResponse | undefined;
+  EmployeeData: EmployeeDataArray | undefined;
   errors: FieldErrors<HandleAddSubmit>;
 };
 

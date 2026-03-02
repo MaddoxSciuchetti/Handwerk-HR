@@ -5,8 +5,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useProcessData } from '@/features/employee-overview/hooks/use-processData';
-import { useToggleModal } from '@/hooks/use-toggleModal';
+import useFetchProcessData from '@/features/employee-overview/hooks/use-fetchProcessData';
 
 interface ToDoItem {
   item_value: number;
@@ -26,14 +25,12 @@ export function Worker_Item({
   onRemove,
   item1,
 }: ToDoItem) {
-  const { modal, setModal, toggleModal } = useToggleModal();
-
   const {
     data: processData,
     isLoading: processLoading,
     completedTasksCount,
     totalTasks,
-  } = useProcessData(item_value, form_type);
+  } = useFetchProcessData(item_value, form_type);
 
   const calculatePercent = (completedTasks: number, total: number) => {
     const percent = (completedTasks / total) * 100;

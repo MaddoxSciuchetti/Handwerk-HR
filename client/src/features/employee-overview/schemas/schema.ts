@@ -1,13 +1,13 @@
 import { dateSchema } from '@/schemas/schema';
 import z from 'zod';
 
-export const SubUser = z.object({
+export const subUserSchema = z.object({
   id: z.coerce.string(),
   vorname: z.string(),
   nachname: z.string(),
 });
 
-export const EmployeeStatus = z.array(
+export const employeeStatusSchema = z.array(
   z.object({
     id: z.coerce.string(),
     userId: z.coerce.string(),
@@ -16,11 +16,11 @@ export const EmployeeStatus = z.array(
     absencebegin: z.coerce.date().nullable(),
     absenceEnd: z.coerce.date().nullable(),
     substitute: z.coerce.string().nullable(),
-    sub_user: SubUser.nullable(),
+    sub_user: subUserSchema.nullable(),
   })
 );
 
-export const ZEmployeeData = z.array(
+export const employeeDataSchema = z.array(
   z.object({
     id: z.coerce.string(),
     vorname: z.string(),
@@ -30,11 +30,11 @@ export const ZEmployeeData = z.array(
     createdAt: z.string(),
     updatedAt: z.string(),
     user_permission: z.enum(['CHEF', 'MITARBEITER']),
-    employeeStatus: EmployeeStatus.nullable(),
+    employeeStatus: employeeStatusSchema.nullable(),
   })
 );
 
-export const CreateWorkerSchema = z
+export const createWorkerSchema = z
   .object({
     firstName: z.string().min(3, { message: 'Vorname ist erforderlich' }),
     lastName: z.string().min(3, { message: 'Nachname ist erforderlich' }),
@@ -53,7 +53,7 @@ export const CreateWorkerSchema = z
     message: 'Passwords do not match',
   });
 
-export const AbsenceSchema = z.object({
+export const absenceSchema = z.object({
   id: z.string(),
   absence: z.string().optional(),
   absencetype: z
@@ -64,7 +64,7 @@ export const AbsenceSchema = z.object({
   substitute: z.string({ message: 'Bitte wähle von der Option' }),
 });
 
-export type TWorkerSchema = z.infer<typeof CreateWorkerSchema>;
+export type CreateWorker = z.infer<typeof createWorkerSchema>;
 
-export type TEmployeeResponse = z.infer<typeof ZEmployeeData>;
-export type TEmployee = z.infer<typeof ZEmployeeData.element>;
+export type EmployeeDataArray = z.infer<typeof employeeDataSchema>;
+export type EmployeeDataObject = z.infer<typeof employeeDataSchema.element>;

@@ -2,13 +2,13 @@ import { AddWorker } from '@/features/worker-lifecycle/schemas/zod.schemas';
 import { cn } from '@/lib/trycatch';
 import { UseMutationResult } from '@tanstack/react-query';
 import { useState } from 'react';
-import { FormType, TOffboardingItemUser } from '../../types/index.types';
+import { FormType, ItemUser } from '../../types/index.types';
 import RadioSelect from './RadioSelect';
 import { WorkerForm } from './WorkerForm';
 
 type ModalProps = {
   createEmployeeMutation: UseMutationResult<
-    TOffboardingItemUser,
+    ItemUser,
     Error,
     AddWorker,
     unknown

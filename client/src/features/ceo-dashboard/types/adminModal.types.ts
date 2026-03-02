@@ -6,4 +6,4 @@ export type TCloseModal = {
   selectedUser?: string | null;
 };
 
-export type TSendReminderSchema = z.infer<typeof sendReminderSchema>;
+export type SendReminder = z.infer<typeof sendReminderSchema>;

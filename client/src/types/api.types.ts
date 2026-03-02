@@ -1,6 +1,3 @@
-import { formSchema } from '@/features/task-management/schemas/index.schema';
-import z from 'zod';
-
 export type APIResponse = SuccessResponse | ErrorResponse;
 
 export type SuccessResponse = {
@@ -119,5 +116,3 @@ export type DescriptionFieldResponse = {
 //   TMutationRequest,
 //   unknown
 // >;
-
-export type insertHistoryDataType = z.infer<typeof formSchema>;

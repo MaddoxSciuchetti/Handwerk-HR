@@ -1,23 +1,23 @@
-import { user } from '@/apis/index.apis';
 import API from '@/config/apiClient';
 
+import { User } from '@/features/user-profile/types/auth.type';
 import { DescriptionFieldResponse } from '@/types/api.types';
-import { TEmployeeResponse, ZEmployeeData } from '../schemas/schema';
+import { EmployeeDataArray, employeeDataSchema } from '../schemas/schema';
 import { AbsenceData } from '../types/index.types';
 
-export const deleteEmployeeHandler = async (id: string): Promise<user> => {
-  const response = await API.delete<typeof id, user>(
+export const deleteEmployeeHandler = async (id: string): Promise<User> => {
+  const response = await API.delete<typeof id, User>(
     `/user/deleteEmplyoee/${id}`
   );
   return response;
 };
 
-export const specificEmployeeData = async (): Promise<TEmployeeResponse> => {
+export const specificEmployeeData = async (): Promise<EmployeeDataArray> => {
   const response = await API.get(`/user/specificEmployeeData`);
-  return ZEmployeeData.parse(response);
+  return employeeDataSchema.parse(response);
 };
 
-export const fetchProcessData = async (
+export const fetchDescriptionData = async (
   id: number,
   form_type: string
 ): Promise<DescriptionFieldResponse> => {

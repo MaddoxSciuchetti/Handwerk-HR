@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { specificEmployeeData } from '../api/employee-overview.api';
-import { TEmployeeResponse } from '../schemas/schema';
+import { EmployeeDataArray } from '../schemas/schema';
 
 function useGetEmployees() {
   const {
@@ -8,7 +8,7 @@ function useGetEmployees() {
     isLoading,
     error,
     isError,
-  } = useQuery<TEmployeeResponse>({
+  } = useQuery<EmployeeDataArray>({
     queryKey: ['EmployeeDataSpecifics'],
     queryFn: specificEmployeeData,
   });

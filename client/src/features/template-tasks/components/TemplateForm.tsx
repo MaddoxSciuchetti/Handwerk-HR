@@ -5,18 +5,21 @@ import { Textarea } from '../../../components/ui/textarea';
 import { ErrorMessage } from '@hookform/error-message';
 import { addSchema, editSchema } from '../schemas/taskForm.schema';
 
-import { TEmployeeResponse } from '@/features/employee-overview/schemas/schema';
+import { EmployeeDataArray } from '@/features/employee-overview/schemas/schema';
 import useSubmitForm from '../hooks/use-Form';
-import { TAddDescription, TEditDesription } from '../types/mutation.types';
+import {
+  AddDescriptionMutation,
+  EditDescriptionMutation,
+} from '../types/mutation.types';
 import OwnerSelect from './OwnerSelect';
 
 type TemplateFormProps = {
-  editDescriptionMutation: TEditDesription;
-  handleAddSubmitMutation: TAddDescription;
+  editDescriptionMutation: EditDescriptionMutation;
+  handleAddSubmitMutation: AddDescriptionMutation;
   selectedValue: string;
   description: string | null | undefined;
   setSelectedValue: Dispatch<SetStateAction<string>>;
-  EmployeeData: TEmployeeResponse | undefined;
+  EmployeeData: EmployeeDataArray | undefined;
   template_type: 'OFFBOARDING' | 'ONBOARDING' | undefined;
   form_field_id: number | null | undefined;
   mode: 'EDIT' | 'ADD' | undefined;

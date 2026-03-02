@@ -2,7 +2,7 @@ import { signup } from '@/features/auth/api/auth.api';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { CreateWorkerSchema, TWorkerSchema } from '../schemas/schema';
+import { CreateWorker, createWorkerSchema } from '../schemas/schema';
 
 function useCreateEmployee(toggleModal: () => void) {
   const queryClient = useQueryClient();
@@ -21,12 +21,12 @@ function useCreateEmployee(toggleModal: () => void) {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<TWorkerSchema>({
-    resolver: zodResolver(CreateWorkerSchema),
+  } = useForm<CreateWorker>({
+    resolver: zodResolver(createWorkerSchema),
     criteriaMode: 'all',
   });
 
-  const onFormSubmit: SubmitHandler<TWorkerSchema> = (data: TWorkerSchema) => {
+  const onFormSubmit: SubmitHandler<CreateWorker> = (data: CreateWorker) => {
     createEmployee.mutate(data);
     console.log('formdata test', data);
   };

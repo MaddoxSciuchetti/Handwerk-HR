@@ -2,15 +2,6 @@ import { TFeatureForm } from '@/components/layout/sidebar/FeatureModal';
 import API from '@/config/apiClient';
 import { FileResponse } from '@/types/api.types';
 
-// export type user = {
-//   id: number;
-//   updatedAt: string;
-//   email: string;
-//   verified: boolean;
-//   createdAt: string;
-//   user_permission: 'CHEF' | 'MITARBEITER';
-// };
-
 export const logout = async () => API.get('/auth/logout');
 
 export const postFile = async (
@@ -43,22 +34,3 @@ export const featureRequest = async (data: TFeatureForm) => {
   );
   return response;
 };
-
-// export const verifyChef = async (): Promise<user> => {
-//   return API.get(`/user/chefpermission`);
-// };
-// export type DescriptionData = z.infer<typeof ZDescriptionData>;
-
-// export const fetchRawDescription = async (): Promise<DescriptionData> => {
-//   const response = await API.get('/user/rawdescription');
-//   console.log(response);
-//   return ZDescriptionData.parse(response);
-// };
-
-// export const addDescriptionData = async (
-//   data: Omit<TDescriptionData, 'form_field_id'>
-// ) => {
-//   console.log('data in api', data);
-//   const response = await API.post(`/user/createTaskData`, data);
-//   return response;
-// };

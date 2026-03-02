@@ -3,10 +3,13 @@ import { User } from '@/features/user-profile/types/auth.type';
 import {
   DescriptionFieldResponse,
   EditDescriptionForm,
-  insertHistoryDataType,
   SuccessResponse,
 } from '@/types/api.types';
-import { File_Request, THistoryData } from '../types/index.types';
+import {
+  File_Request,
+  HistoryData,
+  InsertHistoryData,
+} from '../types/index.types';
 
 export const formattedData = async (
   id: number,
@@ -20,7 +23,7 @@ export const formattedData = async (
 };
 
 export const insertHistoryData = async (
-  result: insertHistoryDataType,
+  result: InsertHistoryData,
   user: User
 ) => {
   const response = await API.post(`offboarding/editHisoryData`, {
@@ -39,15 +42,15 @@ export const editData = async (formData: EditDescriptionForm) => {
   return response;
 };
 
-export const getHistoryData = async (id: number): Promise<THistoryData[]> => {
-  const response = await API.get<THistoryData[], THistoryData[]>(
+export const getHistoryData = async (id: number): Promise<HistoryData[]> => {
+  const response = await API.get<HistoryData[], HistoryData[]>(
     `/offboarding/getHistoryData/${id}`
   );
   return response;
 };
 
 export const fetchFileData = async (id: number): Promise<File_Request[]> => {
-  const response = API.get<any, File_Request[]>(
+  const response = API.get<File_Request[], File_Request[]>(
     `/offboarding/getFileData/file/${id}`
   );
   return response;
@@ -63,6 +66,6 @@ export const fetchCloudUrl = async (cloud_key: string): Promise<string> => {
 
 export const deleteFileData = async (
   id: number
-): Promise<{ message: string }> => {
+): Promise<Pick<SuccessResponse, 'success'>> => {
   return API.delete(`offboarding/deleteFileData/${id}`);
 };

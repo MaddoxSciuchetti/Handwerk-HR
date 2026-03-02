@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { getHistoryData } from '../api/index.api';
-import { THistoryData } from '../types/index.types';
+import { HistoryData } from '../types/index.types';
 
 export type TAuth_User = {
   id: string;
@@ -9,7 +9,7 @@ export type TAuth_User = {
 };
 
 export const useGetHistory = (id: number) => {
-  const { data, isLoading, error, refetch } = useQuery<THistoryData[]>({
+  const { data, isLoading, error, refetch } = useQuery<HistoryData[]>({
     queryKey: ['formHistory', id],
     queryFn: () => getHistoryData(id),
     enabled: !!id,
