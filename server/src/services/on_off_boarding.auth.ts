@@ -1,10 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { datevalidation } from "@/utils/datevalidation";
-import { HistorySchemaType } from "../controllers/on_off_boarding.controller";
-import { sendMail } from "../utils/sendMail";
-import appAssert from "../utils/appAssert";
 import { INTERNAL_SERVER_ERROR } from "../constants/http";
+import { HistorySchemaType } from "../controllers/on_off_boarding.controller";
+import appAssert from "../utils/appAssert";
 import { getFormReminderTemplate } from "../utils/emailTemplates";
+import { sendMail } from "../utils/sendMail";
 
 type dataObject = {
     type: string;
@@ -229,10 +229,6 @@ export const editdata = async (data: Data) => {
             edit: data.editcomment,
         },
     });
-};
-
-type historySchemaget = {
-    id: number;
 };
 
 type historySchema = {

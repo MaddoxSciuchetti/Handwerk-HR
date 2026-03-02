@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import resolveOwner from "@/utils/resolverOwner";
-import { id } from "zod/v4/locales";
 
 export const getUser = async (id: string) => {
     const user = await prisma.user.findUnique({

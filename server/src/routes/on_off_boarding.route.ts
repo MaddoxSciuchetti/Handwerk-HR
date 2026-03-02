@@ -1,28 +1,27 @@
 import express from "express";
 import {
-    postOffboardingData,
-    fetchOffboardingData,
-    offboardingGetuserbyId,
-    offboardingEditdata,
-    offboardingDeletebyId,
-    postHistoryData,
-    gethistoryData,
-    postFileData,
-    getProcessData,
-    getFileData,
-    deleteFileData,
-    sendReminder,
     addExtraField,
+    createUserEmployee,
+    deleteFileData,
+    fetchOffboardingData,
     getCloudUrl,
+    getFileData,
+    gethistoryData,
+    getProcessData,
+    offboardingDeletebyId,
+    offboardingEditdata,
+    offboardingGetuserbyId,
     postFeature,
+    postFileData,
+    postHistoryData,
+    sendReminder,
 } from "../controllers/on_off_boarding.controller";
 
 import { upload } from "../middleware/fileparser";
-import { GetObjectLockConfiguration$ } from "@aws-sdk/client-s3";
 
 const offboarding_router = express.Router();
 
-offboarding_router.post("/postoffboardingdata", postOffboardingData);
+offboarding_router.post("/postoffboardingdata", createUserEmployee);
 
 offboarding_router.get("/fetchData", fetchOffboardingData);
 

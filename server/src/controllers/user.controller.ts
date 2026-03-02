@@ -1,7 +1,5 @@
-import { prisma } from "@/lib/prisma";
+import { generatePresignedUrl, uploadFileToS3 } from "@/config/aws";
 import { NOT_FOUND, OK } from "../constants/http";
-import appAssert from "../utils/appAssert";
-import catchErrors from "../utils/catchErrors";
 import {
     createDescription,
     deleteDescriptionData,
@@ -16,17 +14,13 @@ import {
     updateAbsenceData,
     updateDescriptionData,
 } from "../services/user.protected";
-import { checkChef } from "@/utils/checkChef";
-import z from "zod";
-import { generatePresignedUrl, uploadFileToS3 } from "@/config/aws";
+import appAssert from "../utils/appAssert";
+import catchErrors from "../utils/catchErrors";
 
 export const getUserHandler = catchErrors(async (req, res) => {
     const id = req.userId;
 
     const user = await getUser(id);
-    console.log("USER USR");
-    console.log(user);
-
     appAssert(user, NOT_FOUND, "User not found");
     return res.status(OK).json(user);
 });

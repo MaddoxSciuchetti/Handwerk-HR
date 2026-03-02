@@ -1,12 +1,8 @@
 import type { Request, Response } from "express-serve-static-core";
-import z from "zod";
 import { google } from "googleapis";
 import { Readable } from "stream";
+import z from "zod";
 
-import { generatePresignedUrl, uploadFileToS3 } from "../config/aws";
-import PDFDocument from "pdfkit";
-import { OK } from "../constants/http";
-import { emailSchema } from "./auth.Schemas";
 import {
     addExtraFormFieldDB,
     createUser,
@@ -22,7 +18,9 @@ import {
     sendEmployeeEmail,
 } from "@/services/on_off_boarding.auth";
 import resolveOwner from "@/utils/resolverOwner";
-export const postOffboardingData = async (req: Request, res: Response) => {
+import { generatePresignedUrl, uploadFileToS3 } from "../config/aws";
+import { INTERNAL_SERVER_ERROR, OK } from "../constants/http";
+export const createUserEmployee = async (req: Request, res: Response) => {
     // validate the request
     try {
         const request = {
@@ -180,8 +178,6 @@ export const postHistoryData = async (req: Request, res: Response) => {
 };
 
 export const postFileData = async (req: Request, res: Response) => {
-    console.log("=== Express ===");
-    console.log("this is the body of EXpress", req.body);
     const id = req.params.id;
     const formId = Array.isArray(id) ? id[0] : id;
 
@@ -263,9 +259,7 @@ export const getProcessData = async (req: Request, res: Response) => {
 export const deleteFileData = async (req: Request, res: Response) => {
     try {
         const id = +req.params.id;
-        console.log(id);
         const response = deleteFiles(id);
-
         return res.status(200).json({ sucess: true });
     } catch (error) {
         console.log(error);
@@ -274,21 +268,18 @@ export const deleteFileData = async (req: Request, res: Response) => {
 
 export const sendReminder = async (req: Request, res: Response) => {
     try {
-        console.log(req.body);
-        console.log(req.body.email);
         const email = req.body.email;
 
         await sendEmployeeEmail(email);
-        return res.status(OK).json({ sucess: "the email has been sent" });
+        return res.status(OK).json({ success: true });
     } catch (error) {
         console.log(error);
+        return res.status(INTERNAL_SERVER_ERROR).json({ success: false });
     }
 };
 
 export const getCloudUrl = async (req: Request, res: Response) => {
     const cloud_key = decodeURIComponent(req.query.cloud_key as string);
-    console.log("=== Cloud Key ===");
-    console.log(cloud_key);
     const fullUrl = `https://your-bucket.s3.amazonaws.com/${cloud_key}`;
     const response = await fetch(fullUrl);
     const buffer = await response.arrayBuffer();

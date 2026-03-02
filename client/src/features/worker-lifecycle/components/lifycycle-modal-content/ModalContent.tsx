@@ -22,7 +22,7 @@ const ModalContent = ({ createEmployeeMutation, className }: ModalProps) => {
   return (
     <div
       className={cn(
-        'flex flex-col max-h-100 min-h-120 mt-40 mx-auto text-center items-center z-50 bg-gray-200 rounded-xl  w-2xl',
+        'flex flex-col max-h-100 min-h-120 mt-40 mx-auto text-center items-center z-50 bg-muted rounded-xl  w-2xl',
         className
       )}
     >

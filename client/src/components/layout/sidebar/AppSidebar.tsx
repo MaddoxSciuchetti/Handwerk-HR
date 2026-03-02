@@ -79,17 +79,17 @@ export function AppSidebar({
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel className="text-black">
-              BSB Team
-            </SidebarGroupLabel>
+            <SidebarGroupLabel className="">BSB Team</SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu className="text-black">
+              <SidebarMenu className="">
                 {accessibleItems.map((item, index) => (
-                  <SidebarMenuItem className="text-black" key={index}>
+                  <SidebarMenuItem className="" key={index}>
                     <SidebarMenuButton asChild className="mt-2">
                       <Link to={item.to}>
                         <item.icon />
-                        <span className="">{item.title}</span>
+                        <span className="text-muted-foreground">
+                          {item.title}
+                        </span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -101,11 +101,13 @@ export function AppSidebar({
         <Button
           onClick={() => openModal()}
           variant={'outline'}
-          className="mb-1 cursor-pointer mx-1 bg-blue-100"
+          className="mb-1 cursor-pointer mx-1 bg-muted"
         >
           Feature Request{' '}
         </Button>
-        <Button onClick={toggle}>Dark Mode</Button>
+        <Button variant="outline" className="bg-muted" onClick={toggle}>
+          Dark Mode
+        </Button>
       </Sidebar>
     </>
   );

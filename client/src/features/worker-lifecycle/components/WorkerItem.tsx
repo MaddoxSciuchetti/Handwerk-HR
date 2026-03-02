@@ -44,56 +44,57 @@ export function Worker_Item({
   const color = calculatePercent(completedTasksCount!, totalTasks!);
 
   return (
-    <>
-      <tr
-        onClick={() => gotopage(item_value, form_type)}
-        className="hover:bg-gray-50 rounded-2xl cursor-pointer   py-5"
+    <tr
+      onClick={() => gotopage(item_value, form_type)}
+      className="hover:bg-muted-foreground rounded-2xl cursor-pointer   py-5"
+    >
+      <td className="text-sm font-semibold">
+        {item} {item1}
+      </td>
+
+      <td
+        className={
+          form_type === 'Onboarding'
+            ? 'text-sm underline decoration-2 decoration-sky-400 justify-center items-center py-5'
+            : 'text-sm underline decoration-2 decoration-red-400 justify-center items-center py-5'
+        }
+        lang="en"
       >
-        <td className="text-sm font-semibold">
-          {item} {item1}
-        </td>
+        {form_type}
+      </td>
 
-        <td
-          className={
-            form_type === 'Onboarding'
-              ? 'text-sm underline decoration-2 decoration-sky-400 justify-center items-center py-5'
-              : 'text-sm underline decoration-2 decoration-red-400 justify-center items-center py-5'
-          }
-          lang="en"
-        >
-          {form_type}
-        </td>
+      <th className="">
+        <span className={color}>
+          {processLoading ? '...' : completedTasksCount}
+        </span>
+        <span className="text-black font-medium">
+          /{processData?.form?.fields?.length || 0}
+        </span>
+      </th>
 
-        <th className="">
-          <span className={color}>
-            {processLoading ? '...' : completedTasksCount}
-          </span>
-          <span className="text-black font-medium">
-            /{processData?.form?.fields?.length || 0}
-          </span>
-        </th>
-
-        <td>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <img className="hover:scale-110" src="/assets/editReact.svg" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className={`w-40 bg-gray-100`} align="start">
-              <DropdownMenuGroup>
-                <DropdownMenuItem
-                  className="hover:bg-gray-200 cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onRemove(item_value);
-                  }}
-                >
-                  Löschen
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </td>
-      </tr>
-    </>
+      <td>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <img
+              className="hover:scale-110 bg-muted-foreground"
+              src="/assets/editReact.svg"
+            />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className={`w-40 bg-gray-100`} align="start">
+            <DropdownMenuGroup>
+              <DropdownMenuItem
+                className="hover:bg-gray-200 cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemove(item_value);
+                }}
+              >
+                Löschen
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </td>
+    </tr>
   );
 }
