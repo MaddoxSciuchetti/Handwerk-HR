@@ -1,0 +1,118 @@
+import { formSchema } from '@/features/task-management/schemas/index.schema';
+import { UseMutationResult } from '@tanstack/react-query';
+import z from 'zod';
+
+export type APIResponse = SuccessResponse | ErrorResponse;
+
+export type SuccessResponse = {
+  success: true;
+  affectedRows: number;
+};
+
+export type ErrorResponse = {
+  success: false;
+  error: string;
+};
+
+export type TDescriptionData = {
+  form_field_id: number;
+  description: string | null;
+  owner: string;
+  template_type: 'ONBOARDING' | 'OFFBOARDING';
+};
+
+export type TDescriptionResponse = TDescriptionData & {
+  auth_user: {
+    id: number;
+    vorname: string;
+    nachname: string;
+  };
+};
+
+export type FileResponse = {
+  employee_form_id: number;
+  original_filename: string;
+  file_size: number;
+  content_type: string;
+  cloud_url: string;
+  cloud_key: string;
+};
+
+export type Session_API = {
+  id: string;
+  userAgent: string;
+  createdAt: string;
+  isCurrent: boolean;
+};
+
+export type TNewFormField = {
+  timestamp: Date | null;
+  form_field_id: number;
+  description: string | null;
+  order_index: number | null;
+  owner: string;
+  template_type: 'ONBOARDING' | 'OFFBOARDING' | null;
+};
+
+export type TMutationRequest = {
+  form_field_id?: number;
+  description: string;
+  template_type: 'ONBOARDING' | 'OFFBOARDING';
+  owner: string;
+};
+
+export type TCreateMutationResponse = {
+  timestamp: Date | null;
+  form_field_id: number;
+  description: string | null;
+  order_index: number | null;
+  owner: string;
+  template_type: 'ONBOARDING' | 'OFFBOARDING' | null;
+};
+
+export type TCreateTaskMutation = UseMutationResult<
+  TCreateMutationResponse,
+  Error,
+  TMutationRequest,
+  unknown
+>;
+
+export type TEditMutationResponse = {
+  form_field_id: number;
+  description: string | null;
+  owner: string;
+};
+
+export type TEditMutation = UseMutationResult<
+  TEditMutationResponse,
+  Error,
+  TMutationRequest,
+  unknown
+>;
+
+export type TFormField = {
+  id: number;
+  form_field_id: number;
+  description: string;
+  officialOwner: string;
+  substituteOwner: string;
+  owner_id: string;
+  is_substitute: boolean;
+  status: string;
+  edit: string;
+};
+
+export type TApiResponse = {
+  user: {
+    id: number;
+    vorname: string;
+    nachname: string;
+  };
+  form: {
+    id: number;
+    type: string;
+    fields: TFormField[];
+  };
+};
+
+export type insertHistoryDataType = z.infer<typeof formSchema>;

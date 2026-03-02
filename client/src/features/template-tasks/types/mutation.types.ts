@@ -1,6 +1,6 @@
-import { EditDescriptionData } from '@/lib/api';
-import { newField } from '@/types/api';
+import { TNewFormField } from '@/types/api.types';
 import { UseMutateFunction } from '@tanstack/react-query';
+import { EditDescriptionData } from './taskForm.types';
 
 export type TEditDesription = UseMutateFunction<
   EditDescriptionData,
@@ -10,7 +10,7 @@ export type TEditDesription = UseMutateFunction<
 >;
 
 export type TAddDescription = UseMutateFunction<
-  newField,
+  TNewFormField,
   Error,
   {
     description: string;

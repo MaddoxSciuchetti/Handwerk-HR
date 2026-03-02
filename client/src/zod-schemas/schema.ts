@@ -1,6 +1,6 @@
 import z from 'zod';
 
-export const DateSchema = z
+export const dateSchema = z
   .string()
   .min(1, { message: 'Falsches Format' })
   .regex(/^\d{2}\.\d{2}\.\d{4}$/, 'Format: DD.MM.YYYY')
@@ -14,7 +14,7 @@ export const DateSchema = z
     );
   }, 'Ungültiges Datum');
 
-export const ZDescriptionData = z.array(
+export const descriptionSchema = z.array(
   z.object({
     form_field_id: z.coerce.number(),
     description: z.string(),

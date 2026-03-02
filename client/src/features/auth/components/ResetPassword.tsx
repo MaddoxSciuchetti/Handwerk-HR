@@ -1,7 +1,7 @@
-import { useNavigate, useSearch } from '@tanstack/react-router';
-import ResetPasswordForm from '@/components/auth/ResetPasswordForm';
-import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import ResetPasswordForm from '@/features/auth/components/ResetPasswordForm';
+import { useNavigate, useSearch } from '@tanstack/react-router';
+import { AlertCircle } from 'lucide-react';
 
 const ResetPassword = () => {
   const navigate = useNavigate();

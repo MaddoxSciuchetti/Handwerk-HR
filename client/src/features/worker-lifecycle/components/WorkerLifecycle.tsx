@@ -1,11 +1,11 @@
-import SearchHeader from '@/components/SearchHeader';
-import useAuth from '@/features/user-profile/hooks/use-Auth';
-import useHome from '@/features/worker-lifecycle/hooks/use-home';
-import LoadingAlert from '@/components/alerts/LoadingAlert';
 import ErrorAlert from '@/components/alerts/ErrorAlert';
+import LoadingAlert from '@/components/alerts/LoadingAlert';
 import SuccessAlert from '@/components/alerts/SuccessAlert';
-import LifeCycleTable from '@/features/worker-lifecycle/components/LifeCycleTable';
+import useAuth from '@/features/user-profile/hooks/use-Auth';
 import LifeCycleModal from '@/features/worker-lifecycle/components/LifeCycleModal';
+import LifeCycleTable from '@/features/worker-lifecycle/components/LifeCycleTable';
+import useHome from '@/features/worker-lifecycle/hooks/use-home';
+import SearchHeader from './SearchHeader';
 
 function WorkerLifeCycle() {
   const { user, isLoading, isError } = useAuth();

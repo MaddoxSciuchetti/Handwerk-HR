@@ -1,13 +1,13 @@
-import { Textarea } from '../../../components/ui/textarea';
-import { Button } from '../../../components/ui/button';
 import { Dispatch, SetStateAction } from 'react';
-import { TEmployeeResponse } from '@/zod-schemas/schema';
+import { Button } from '../../../components/ui/button';
+import { Textarea } from '../../../components/ui/textarea';
 
 import { ErrorMessage } from '@hookform/error-message';
 import { addSchema, editSchema } from '../schemas/taskForm.schema';
 
-import { TAddDescription, TEditDesription } from '../types/mutation.types';
+import { TEmployeeResponse } from '@/features/employee-overview/schemas/schema';
 import useSubmitForm from '../hooks/use-Form';
+import { TAddDescription, TEditDesription } from '../types/mutation.types';
 import OwnerSelect from './OwnerSelect';
 
 type TemplateFormProps = {

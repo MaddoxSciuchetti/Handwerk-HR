@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { deleteEmployeeHandler } from '../api';
+import { deleteEmployeeHandler } from '../api/employee-overview.api';
 import { useEmployeeModal } from './use-employeeModal';
 
 function useDeleteEmployee() {

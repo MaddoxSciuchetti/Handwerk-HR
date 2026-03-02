@@ -19,7 +19,6 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as HandwerkerRouteImport } from './routes/handwerker'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UserIdRouteImport } from './routes/user/$Id'
-import { Route as ProfileProfileRouteImport } from './routes/profile/profile'
 import { Route as PasswordResetRouteImport } from './routes/password/reset'
 import { Route as PasswordForgotRouteImport } from './routes/password/forgot'
 import { Route as DashboardCeoRouteImport } from './routes/dashboard/ceo'
@@ -75,11 +74,6 @@ const UserIdRoute = UserIdRouteImport.update({
   path: '/user/$Id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProfileProfileRoute = ProfileProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => ProfileRoute,
-} as any)
 const PasswordResetRoute = PasswordResetRouteImport.update({
   id: '/password/reset',
   path: '/password/reset',
@@ -106,7 +100,7 @@ export interface FileRoutesByFullPath {
   '/handwerker': typeof HandwerkerRoute
   '/login': typeof LoginRoute
   '/mitarbeiter-uebersicht': typeof MitarbeiterUebersichtRoute
-  '/profile': typeof ProfileRouteWithChildren
+  '/profile': typeof ProfileRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/template-konfiguration': typeof TemplateKonfigurationRoute
@@ -114,7 +108,6 @@ export interface FileRoutesByFullPath {
   '/dashboard/ceo': typeof DashboardCeoRoute
   '/password/forgot': typeof PasswordForgotRoute
   '/password/reset': typeof PasswordResetRoute
-  '/profile/profile': typeof ProfileProfileRoute
   '/user/$Id': typeof UserIdRoute
   '/email/verify/$code': typeof EmailVerifyCodeRoute
 }
@@ -123,7 +116,7 @@ export interface FileRoutesByTo {
   '/handwerker': typeof HandwerkerRoute
   '/login': typeof LoginRoute
   '/mitarbeiter-uebersicht': typeof MitarbeiterUebersichtRoute
-  '/profile': typeof ProfileRouteWithChildren
+  '/profile': typeof ProfileRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/template-konfiguration': typeof TemplateKonfigurationRoute
@@ -131,7 +124,6 @@ export interface FileRoutesByTo {
   '/dashboard/ceo': typeof DashboardCeoRoute
   '/password/forgot': typeof PasswordForgotRoute
   '/password/reset': typeof PasswordResetRoute
-  '/profile/profile': typeof ProfileProfileRoute
   '/user/$Id': typeof UserIdRoute
   '/email/verify/$code': typeof EmailVerifyCodeRoute
 }
@@ -141,7 +133,7 @@ export interface FileRoutesById {
   '/handwerker': typeof HandwerkerRoute
   '/login': typeof LoginRoute
   '/mitarbeiter-uebersicht': typeof MitarbeiterUebersichtRoute
-  '/profile': typeof ProfileRouteWithChildren
+  '/profile': typeof ProfileRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/template-konfiguration': typeof TemplateKonfigurationRoute
@@ -149,7 +141,6 @@ export interface FileRoutesById {
   '/dashboard/ceo': typeof DashboardCeoRoute
   '/password/forgot': typeof PasswordForgotRoute
   '/password/reset': typeof PasswordResetRoute
-  '/profile/profile': typeof ProfileProfileRoute
   '/user/$Id': typeof UserIdRoute
   '/email/verify/$code': typeof EmailVerifyCodeRoute
 }
@@ -168,7 +159,6 @@ export interface FileRouteTypes {
     | '/dashboard/ceo'
     | '/password/forgot'
     | '/password/reset'
-    | '/profile/profile'
     | '/user/$Id'
     | '/email/verify/$code'
   fileRoutesByTo: FileRoutesByTo
@@ -185,7 +175,6 @@ export interface FileRouteTypes {
     | '/dashboard/ceo'
     | '/password/forgot'
     | '/password/reset'
-    | '/profile/profile'
     | '/user/$Id'
     | '/email/verify/$code'
   id:
@@ -202,7 +191,6 @@ export interface FileRouteTypes {
     | '/dashboard/ceo'
     | '/password/forgot'
     | '/password/reset'
-    | '/profile/profile'
     | '/user/$Id'
     | '/email/verify/$code'
   fileRoutesById: FileRoutesById
@@ -212,7 +200,7 @@ export interface RootRouteChildren {
   HandwerkerRoute: typeof HandwerkerRoute
   LoginRoute: typeof LoginRoute
   MitarbeiterUebersichtRoute: typeof MitarbeiterUebersichtRoute
-  ProfileRoute: typeof ProfileRouteWithChildren
+  ProfileRoute: typeof ProfileRoute
   SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
   TemplateKonfigurationRoute: typeof TemplateKonfigurationRoute
@@ -296,13 +284,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UserIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/profile/profile': {
-      id: '/profile/profile'
-      path: '/profile'
-      fullPath: '/profile/profile'
-      preLoaderRoute: typeof ProfileProfileRouteImport
-      parentRoute: typeof ProfileRoute
-    }
     '/password/reset': {
       id: '/password/reset'
       path: '/password/reset'
@@ -334,23 +315,12 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface ProfileRouteChildren {
-  ProfileProfileRoute: typeof ProfileProfileRoute
-}
-
-const ProfileRouteChildren: ProfileRouteChildren = {
-  ProfileProfileRoute: ProfileProfileRoute,
-}
-
-const ProfileRouteWithChildren =
-  ProfileRoute._addFileChildren(ProfileRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   HandwerkerRoute: HandwerkerRoute,
   LoginRoute: LoginRoute,
   MitarbeiterUebersichtRoute: MitarbeiterUebersichtRoute,
-  ProfileRoute: ProfileRouteWithChildren,
+  ProfileRoute: ProfileRoute,
   SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
   TemplateKonfigurationRoute: TemplateKonfigurationRoute,

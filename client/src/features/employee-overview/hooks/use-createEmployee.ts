@@ -1,8 +1,8 @@
-import { signup } from '@/features/auth/api';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { CreateWorkerSchema, TWorkerSchema } from '../schemas/schema';
-import { SubmitHandler, useForm } from 'react-hook-form';
+import { signup } from '@/features/auth/api/auth.api';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { SubmitHandler, useForm } from 'react-hook-form';
+import { CreateWorkerSchema, TWorkerSchema } from '../schemas/schema';
 
 function useCreateEmployee(toggleModal: () => void) {
   const queryClient = useQueryClient();

@@ -1,11 +1,11 @@
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { useState } from 'react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle } from 'lucide-react';
-import { sendPasswordResetEmail } from '../api';
+import { useState } from 'react';
+import { sendPasswordResetEmail } from '../api/auth.api';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState<string>('');

@@ -1,4 +1,4 @@
-import TaskManagement from '@/features/task-management/components/TaskManagement';
+import TaskManagement from '@/features/task-management/components/tasks/TaskManagement';
 import { createFileRoute } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/user/$Id')({

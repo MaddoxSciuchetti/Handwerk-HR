@@ -1,4 +1,4 @@
-import { cn } from '@/types/utils';
+import { cn } from '@/types/utils.types';
 import { UploadedFileItem } from './file-item';
 
 interface UploadedFileListProps {

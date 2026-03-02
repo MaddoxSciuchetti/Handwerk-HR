@@ -1,10 +1,10 @@
-import { getUser } from '@/lib/api';
+import { getUser } from '@/features/auth/api/auth.api';
+import { TApiResponse } from '@/types/api.types';
 import { useState } from 'react';
-import { api_Response } from '../types/index.type';
 
-function useFilteredData(data: api_Response | undefined) {
+function useFilteredData(data: TApiResponse | undefined) {
   const [descriptionSearch, setDescriptionSearch] = useState<string>('');
-  const [currentUser, setCurrentUser] = useState<number | null>(null);
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [showMyItems, setShowMyItems] = useState(false);
 
   const getFilterAndSortedData = () => {
@@ -20,8 +20,6 @@ function useFilteredData(data: api_Response | undefined) {
 
     if (showMyItems && currentUser) {
       filteredData = filteredData.filter((field) => {
-        console.log('THIS IS THE FIELD IF');
-        console.log(field.owner_id);
         return field.owner_id === currentUser;
       });
     }
@@ -42,8 +40,6 @@ function useFilteredData(data: api_Response | undefined) {
   const handleMeFilter = async () => {
     if (!showMyItems) {
       const response = await getUser();
-      console.log('THIS IS THE RESPONSE ID');
-      console.log(response.id);
       setCurrentUser(response.id);
       setShowMyItems(true);
     } else {

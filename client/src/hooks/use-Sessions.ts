@@ -1,7 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
-import { getSessions } from "../lib/api";
+import { getSessions } from '@/features/auth/api/auth.api';
+import { useQuery } from '@tanstack/react-query';
 
-export const SESSIONS = "sessions";
+export const SESSIONS = 'sessions';
 
 const useSessions = () => {
   const { data, ...rest } = useQuery({
@@ -11,7 +11,7 @@ const useSessions = () => {
 
   const sessions = data ?? [];
   if (!sessions) {
-    throw new Error("userSession Error");
+    throw new Error('userSession Error');
   }
 
   return { sessions: sessions || [], ...rest };

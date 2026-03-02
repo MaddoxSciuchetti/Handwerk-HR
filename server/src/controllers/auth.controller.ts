@@ -1,5 +1,4 @@
-import z from "zod";
-import catchErrors from "../utils/catchErrors";
+import { CREATED, OK, UNAUTHORIZED } from "../constants/http";
 import {
     createAccount,
     loginUser,
@@ -8,13 +7,14 @@ import {
     sendPasswordResetEmail,
     verifyEmail,
 } from "../services/auth.service";
-import { CREATED, OK, UNAUTHORIZED } from "../constants/http";
+import catchErrors from "../utils/catchErrors";
 import {
     clearAuthCookies,
     getAccessTokenCookieOptions,
     getRefreshTokenCookieOptions,
     setAuthCookies,
 } from "../utils/cookies";
+import { verifyToken } from "../utils/jwt";
 import {
     emailSchema,
     loginSchema,
@@ -22,10 +22,9 @@ import {
     resetPasswordSchema,
     verificationCodeSchema,
 } from "./auth.Schemas";
-import { verifyToken } from "../utils/jwt";
 
-import appAssert from "../utils/appAssert";
 import { prisma } from "@/lib/prisma";
+import appAssert from "../utils/appAssert";
 
 export const registerHandler = catchErrors(async (req, res) => {
     //validate request

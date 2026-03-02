@@ -1,8 +1,5 @@
-import { useSidebar } from '@/components/ui/sidebar';
-
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
-import { specificEmployeeData } from '../api';
+import { specificEmployeeData } from '../api/employee-overview.api';
 import { TEmployeeResponse } from '../schemas/schema';
 
 function useGetEmployees() {

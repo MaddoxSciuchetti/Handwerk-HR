@@ -6,9 +6,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-import { Worker_Item } from '../../../components/worker_components/worker_item';
 import { getFirstFormType } from '@/lib/formtype';
 import { OffboardingItem } from '../types/index.types';
+import { Worker_Item } from './WorkerItem';
 
 type LifeCycleTableProps = {
   filtered: OffboardingItem[] | undefined;

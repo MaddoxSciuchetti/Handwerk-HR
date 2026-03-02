@@ -1,3 +1,5 @@
+import { Dispatch, SetStateAction } from 'react';
+import { Control, Controller, FieldErrors } from 'react-hook-form';
 import {
   Select,
   SelectContent,
@@ -6,10 +8,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../../components/ui/select';
-import { Dispatch, SetStateAction } from 'react';
-import { TEmployeeResponse } from '@/zod-schemas/schema';
-import { Control, Controller, FieldErrors } from 'react-hook-form';
 
+import { TEmployeeResponse } from '@/features/employee-overview/schemas/schema';
 import { ErrorMessage } from '@hookform/error-message';
 import { HandleAddSubmit } from '../types/taskForm.types';
 

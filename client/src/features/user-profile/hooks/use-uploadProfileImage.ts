@@ -1,7 +1,7 @@
-import { useRef, useState } from 'react';
-import { SubmitHandler, useForm, UseFormSetValue } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { getProfileFoto, uploadProfileFoto } from '../api';
+import { useRef, useState } from 'react';
+import { SubmitHandler, useForm } from 'react-hook-form';
+import { getProfileFoto, uploadProfileFoto } from '../api/index.api';
 import { TFile } from '../types';
 
 function useUploadProfieImage() {

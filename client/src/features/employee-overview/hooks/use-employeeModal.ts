@@ -1,4 +1,4 @@
-import { EmployeeModalContext } from '@/features/context/EmployeeModalContext';
+import { EmployeeModalContext } from '@/context/Context';
 import { useContext } from 'react';
 
 export function useEmployeeModal() {

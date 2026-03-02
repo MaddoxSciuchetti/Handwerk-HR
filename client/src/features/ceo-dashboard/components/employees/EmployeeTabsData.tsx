@@ -4,8 +4,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { TAccordion } from '../../types/employeeData.type';
 import useEmployeeGroups from '../../hooks/use-employeeGroups';
+import { TAccordion } from '../../types/employeeData.types';
 import DataContent from './accordion/DataContent';
 
 export function EmployeeTabsData({ onTaskClick, user, cleanData }: TAccordion) {

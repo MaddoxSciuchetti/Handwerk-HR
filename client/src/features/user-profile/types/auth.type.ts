@@ -7,7 +7,8 @@ export type User = {
   updatedAt: Date;
   vorname: string;
   nachname: string;
-  presignedUrl?: string;
+  cloud_url: string; // ← Add this field
+  presignedUrl?: string; // ← Keep this if you add it later
 };
 
 export type Auth = {

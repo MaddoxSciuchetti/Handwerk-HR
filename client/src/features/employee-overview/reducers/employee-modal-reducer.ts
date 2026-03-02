@@ -1,4 +1,4 @@
-import { ModalAction, ModalState } from '../types/reducer.type';
+import { ModalAction, ModalState } from '../types/reducer.types';
 
 export function modalReducer(
   state: ModalState,

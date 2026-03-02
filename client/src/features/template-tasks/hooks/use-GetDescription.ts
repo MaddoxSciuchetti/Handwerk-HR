@@ -1,13 +1,13 @@
 import { useSidebar } from '@/components/ui/sidebar';
-import { useState } from 'react';
-import useEmployeeData from '../../employee-overview/hooks/use-employeeData';
-import { toast } from 'sonner';
-import useFetchTask from '../../../hooks/use-fetchTask';
-import useDeleteDescription from './use-DeleteDescription';
+import { TNewFormField } from '@/types/api.types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { newField } from '@/types/api';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import useEmployeeData from '../../employee-overview/hooks/use-employeeData';
 import { addExtraField } from '../api';
+import useDeleteDescription from './use-DeleteDescription';
 import useEditDescription from './use-EditDescription';
+import useFetchTask from './use-fetchTask';
 
 function useDescription() {
   const queryClient = useQueryClient();
@@ -27,7 +27,7 @@ function useDescription() {
   } = useEditDescription();
 
   const { mutate: handleAddSubmitMutation } = useMutation<
-    newField,
+    TNewFormField,
     Error,
     {
       description: string;

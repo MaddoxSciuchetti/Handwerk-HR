@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
-import { TEmployForm } from '../types/employeeform.type';
+import { TEmployeeForm } from '../types/employeeform.types';
 
 function useCurrentBSBEmployee(
-  allEmployeeData: TEmployForm | undefined,
+  allEmployeeData: TEmployeeForm | undefined,
   selectedUser: string | null
 ) {
   const currentBSBEmployee = useMemo(

@@ -1,10 +1,9 @@
+import { TApiResponse } from '@/types/api.types';
 import { useQuery } from '@tanstack/react-query';
-import { api_Response } from '../types/index.type';
-import { formattedData } from '../api';
+import { formattedData } from '../api/index.api';
 
 function useTaskData(id: number, search: { param1: string }) {
-  console.log('id in submit:', id, typeof id);
-  const { data, error, isLoading, isError } = useQuery<api_Response>({
+  const { data, error, isLoading, isError } = useQuery<TApiResponse>({
     queryKey: ['somethingelse', id],
     queryFn: () => formattedData(id, search.param1),
   });
