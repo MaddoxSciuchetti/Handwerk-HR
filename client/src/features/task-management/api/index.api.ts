@@ -1,20 +1,21 @@
 import API from '@/config/apiClient';
 import { User } from '@/features/user-profile/types/auth.type';
 import {
+  DescriptionFieldResponse,
+  EditDescriptionForm,
   insertHistoryDataType,
   SuccessResponse,
-  TApiResponse,
 } from '@/types/api.types';
-import { DescriptionForm } from '@/types/form-data.types';
 import { File_Request, THistoryData } from '../types/index.types';
 
 export const formattedData = async (
   id: number,
   param: string
-): Promise<TApiResponse> => {
-  const response = await API.get<TApiResponse, TApiResponse>(
-    `offboarding/user/${id}?param1=${param}`
-  );
+): Promise<DescriptionFieldResponse> => {
+  const response = await API.get<
+    DescriptionFieldResponse,
+    DescriptionFieldResponse
+  >(`offboarding/user/${id}?param1=${param}`);
   return response;
 };
 
@@ -29,7 +30,7 @@ export const insertHistoryData = async (
   return response;
 };
 
-export const editData = async (formData: DescriptionForm) => {
+export const editData = async (formData: EditDescriptionForm) => {
   const response = await API.put<SuccessResponse, SuccessResponse>(
     'offboarding/editdata',
     formData

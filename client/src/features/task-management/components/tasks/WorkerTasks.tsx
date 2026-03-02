@@ -1,11 +1,14 @@
 import ErrorAlert from '@/components/alerts/ErrorAlert';
-import type { TApiResponse, TFormField } from '@/types/api.types';
+import type {
+  DescriptionField,
+  DescriptionFieldResponse,
+} from '@/types/api.types';
 import type { SubmitEvent } from 'react';
 import WorkerForm from './WorkerForm';
 
 interface WorkerTasksProps {
-  displayData: TFormField[];
-  data: TApiResponse | undefined;
+  displayData: DescriptionField[];
+  data: DescriptionFieldResponse | undefined;
   openEditModal: (
     id: number,
     description: string,
@@ -25,7 +28,7 @@ const WorkerTasks = ({
   if (!data) return <ErrorAlert />;
   return (
     <>
-      {displayData.map((field: TFormField, index: number) => (
+      {displayData.map((field: DescriptionField, index: number) => (
         <WorkerForm
           key={index}
           id_original={field.id}

@@ -1,7 +1,7 @@
 import { user } from '@/apis/index.apis';
 import API from '@/config/apiClient';
 
-import { TApiResponse } from '@/types/api.types';
+import { DescriptionFieldResponse } from '@/types/api.types';
 import { TEmployeeResponse, ZEmployeeData } from '../schemas/schema';
 import { AbsenceData } from '../types/index.types';
 
@@ -20,7 +20,7 @@ export const specificEmployeeData = async (): Promise<TEmployeeResponse> => {
 export const fetchProcessData = async (
   id: number,
   form_type: string
-): Promise<TApiResponse> => {
+): Promise<DescriptionFieldResponse> => {
   return API.get(`offboarding/user/${id}?param1=${form_type}`);
 };
 

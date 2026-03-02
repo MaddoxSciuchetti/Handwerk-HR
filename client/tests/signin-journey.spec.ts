@@ -29,8 +29,7 @@ test.describe.serial('Signup journey', () => {
       sharedPage.getByRole('heading', { name: /Sign in to your account/i })
     ).toBeVisible();
 
-    // Filling in the sign in information
-
+    // Fill out signin information
     await sharedPage.getByLabel(/Email address/i).fill('admin@example.com');
     await sharedPage.getByLabel(/Password/i).fill('Admin123!');
     await sharedPage.getByRole('button', { name: /Login/i }).click();

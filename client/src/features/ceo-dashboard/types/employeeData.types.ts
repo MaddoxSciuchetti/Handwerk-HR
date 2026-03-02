@@ -1,10 +1,10 @@
-import { TEmployeeForm } from './employeeform.types';
+import { EmployeeWorker } from './employeeform.types';
 
 export type TAccordion = {
-  data: TEmployeeForm;
+  data: EmployeeWorker;
   onTaskClick: () => void;
   user: string;
-  cleanData: Array<[string, TEmployeeForm]>;
+  cleanData: Array<[string, EmployeeWorker]>;
 };
 
 export type EmployeeGroup = {

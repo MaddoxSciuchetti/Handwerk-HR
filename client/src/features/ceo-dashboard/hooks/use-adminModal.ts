@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { sendReminderWorker } from '../api/index.api';
-import { SendReminderSchema } from '../schemas/employeeform.schemas';
+import { sendReminderSchema } from '../schemas/employeeform.schemas';
 import { TSendReminderSchema } from '../types/adminModal.types';
 
 function useAdminModal() {
@@ -23,7 +23,7 @@ function useAdminModal() {
     handleSubmit,
     formState: { errors },
   } = useForm<TSendReminderSchema>({
-    resolver: zodResolver(SendReminderSchema),
+    resolver: zodResolver(sendReminderSchema),
   });
 
   return { isError, isSuccess, onSubmit, register, handleSubmit, errors };

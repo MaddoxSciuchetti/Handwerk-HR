@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { cn } from '@/types/utils.types';
+import { cn } from '@/lib/trycatch';
 
 function Table({ className, ...props }: React.ComponentProps<'table'>) {
   return (

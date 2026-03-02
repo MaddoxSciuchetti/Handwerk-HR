@@ -1,4 +1,7 @@
-import { AddWorker, addWorkerSchema } from '@/zod-schemas/zodSchema';
+import {
+  AddWorker,
+  addWorkerSchema,
+} from '@/features/worker-lifecycle/schemas/zod.schemas';
 import { ErrorMessage } from '@hookform/error-message';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';

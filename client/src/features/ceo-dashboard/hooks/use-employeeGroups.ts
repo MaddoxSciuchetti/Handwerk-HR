@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
-import { TEmployeeForm } from '../types/employeeform.types';
+import { EmployeeWorker } from '../types/employeeform.types';
 
 function useEmployeeGroups(
   user: string,
-  cleanData: Array<[string, TEmployeeForm]>
+  cleanData: Array<[string, EmployeeWorker]>
 ) {
   const employeeGroups = useMemo(() => {
     return cleanData

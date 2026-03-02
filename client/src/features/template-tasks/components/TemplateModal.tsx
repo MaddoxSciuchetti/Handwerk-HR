@@ -1,6 +1,6 @@
 import { TEmployeeResponse } from '@/features/employee-overview/schemas/schema';
 import useRootForm from '@/hooks/use-Root-Form';
-import { TDescriptionData } from '@/types/api.types';
+import { DescriptionData } from '@/types/api.types';
 import { Dispatch, SetStateAction } from 'react';
 import { TAddDescription, TEditDesription } from '../types/mutation.types';
 import TemplateForm from './TemplateForm';
@@ -13,8 +13,8 @@ type TemplateModalProps = {
   owner: string | null | undefined;
   template_type?: 'ONBOARDING' | 'OFFBOARDING';
   EmployeeData: TEmployeeResponse | undefined;
-  OnboardingData?: TDescriptionData[] | undefined;
-  OffboardingData?: TDescriptionData[] | undefined;
+  OnboardingData?: DescriptionData[] | undefined;
+  OffboardingData?: DescriptionData[] | undefined;
   mode: 'EDIT' | 'ADD' | undefined;
   setMode: Dispatch<SetStateAction<'EDIT' | 'ADD' | undefined>>;
 };

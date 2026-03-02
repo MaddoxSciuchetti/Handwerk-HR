@@ -1,9 +1,9 @@
-import { TDescriptionResponse } from '@/types/api.types';
+import { DescriptionResponse } from '@/types/api.types';
 import { useQuery } from '@tanstack/react-query';
 import { fetchTaskData } from '../api';
 
 function useFetchTask() {
-  const { data } = useQuery<TDescriptionResponse[]>({
+  const { data } = useQuery<DescriptionResponse[]>({
     queryKey: ['description_root'],
     queryFn: fetchTaskData,
   });

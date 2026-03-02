@@ -1,7 +1,7 @@
-import { TApiResponse } from '@/types/api.types';
+import { DescriptionFieldResponse } from '@/types/api.types';
 import { ReactNode } from 'react';
 
-export type UpdatedAiResponse = Omit<TApiResponse, 'name'> & {
+export type UpdatedAiResponse = Omit<DescriptionFieldResponse, 'name'> & {
   user: {
     id: number;
     vorname: string;

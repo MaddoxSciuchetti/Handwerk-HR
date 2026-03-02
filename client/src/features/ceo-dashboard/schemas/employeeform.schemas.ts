@@ -1,6 +1,6 @@
 import z from 'zod';
 
-export const EmployeexWorkerData = z.array(
+export const employeeWorkerSchema = z.array(
   z.object({
     description: z.coerce.string(),
     form_field_id: z.coerce.number(),
@@ -30,7 +30,7 @@ export const EmployeexWorkerData = z.array(
   })
 );
 
-export const SendReminderSchema = z.object({
+export const sendReminderSchema = z.object({
   email: z.email(),
   subject: z.string({ message: 'Füge ein Betreff hinzu' }).min(1),
   test: z.string(),

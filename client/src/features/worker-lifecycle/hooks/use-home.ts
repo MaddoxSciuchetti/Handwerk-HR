@@ -1,5 +1,5 @@
 import { useSidebar } from '@/components/ui/sidebar';
-import { AddWorker } from '@/zod-schemas/zodSchema';
+import { AddWorker } from '@/features/worker-lifecycle/schemas/zod.schemas';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';

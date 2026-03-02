@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { cn } from '@/types/utils.types';
+import { cn } from '@/lib/trycatch';
 
 function Card({ className, ...props }: React.ComponentProps<'div'>) {
   return (

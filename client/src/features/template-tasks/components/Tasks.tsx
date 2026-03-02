@@ -1,8 +1,8 @@
-import { TDescriptionResponse } from '@/types/api.types';
+import { DescriptionResponse } from '@/types/api.types';
 import { Dispatch, SetStateAction } from 'react';
 
 type TasksProps = {
-  items: TDescriptionResponse[];
+  items: DescriptionResponse[];
   deleteDescription: (val: number) => void;
   openDescriptionModal: (
     description?: string | null,

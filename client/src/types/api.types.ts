@@ -1,5 +1,4 @@
 import { formSchema } from '@/features/task-management/schemas/index.schema';
-import { UseMutationResult } from '@tanstack/react-query';
 import z from 'zod';
 
 export type APIResponse = SuccessResponse | ErrorResponse;
@@ -14,19 +13,25 @@ export type ErrorResponse = {
   error: string;
 };
 
-export type TDescriptionData = {
+export type DescriptionData = {
   form_field_id: number;
   description: string | null;
   owner: string;
   template_type: 'ONBOARDING' | 'OFFBOARDING';
 };
-
-export type TDescriptionResponse = TDescriptionData & {
+export type DescriptionResponse = DescriptionData & {
   auth_user: {
     id: number;
     vorname: string;
     nachname: string;
   };
+};
+
+export type EditDescriptionForm = {
+  form_field_id: string;
+  editcomment: string;
+  select_option: string;
+  id: string;
 };
 
 export type FileResponse = {
@@ -45,7 +50,7 @@ export type Session_API = {
   isCurrent: boolean;
 };
 
-export type TNewFormField = {
+export type NewDescriptionField = {
   timestamp: Date | null;
   form_field_id: number;
   description: string | null;
@@ -54,43 +59,7 @@ export type TNewFormField = {
   template_type: 'ONBOARDING' | 'OFFBOARDING' | null;
 };
 
-export type TMutationRequest = {
-  form_field_id?: number;
-  description: string;
-  template_type: 'ONBOARDING' | 'OFFBOARDING';
-  owner: string;
-};
-
-export type TCreateMutationResponse = {
-  timestamp: Date | null;
-  form_field_id: number;
-  description: string | null;
-  order_index: number | null;
-  owner: string;
-  template_type: 'ONBOARDING' | 'OFFBOARDING' | null;
-};
-
-export type TCreateTaskMutation = UseMutationResult<
-  TCreateMutationResponse,
-  Error,
-  TMutationRequest,
-  unknown
->;
-
-export type TEditMutationResponse = {
-  form_field_id: number;
-  description: string | null;
-  owner: string;
-};
-
-export type TEditMutation = UseMutationResult<
-  TEditMutationResponse,
-  Error,
-  TMutationRequest,
-  unknown
->;
-
-export type TFormField = {
+export type DescriptionField = {
   id: number;
   form_field_id: number;
   description: string;
@@ -102,7 +71,7 @@ export type TFormField = {
   edit: string;
 };
 
-export type TApiResponse = {
+export type DescriptionFieldResponse = {
   user: {
     id: number;
     vorname: string;
@@ -111,8 +80,44 @@ export type TApiResponse = {
   form: {
     id: number;
     type: string;
-    fields: TFormField[];
+    fields: DescriptionField[];
   };
 };
+
+// export type TMutationRequest = {
+//   form_field_id?: number;
+//   description: string;
+//   template_type: 'ONBOARDING' | 'OFFBOARDING';
+//   owner: string;
+// };
+
+// export type TCreateMutationResponse = {
+//   timestamp: Date | null;
+//   form_field_id: number;
+//   description: string | null;
+//   order_index: number | null;
+//   owner: string;
+//   template_type: 'ONBOARDING' | 'OFFBOARDING' | null;
+// };
+
+// export type TCreateTaskMutation = UseMutationResult<
+//   TCreateMutationResponse,
+//   Error,
+//   TMutationRequest,
+//   unknown
+// >;
+
+// export type TEditMutationResponse = {
+//   form_field_id: number;
+//   description: string | null;
+//   owner: string;
+// };
+
+// export type TEditMutation = UseMutationResult<
+//   TEditMutationResponse,
+//   Error,
+//   TMutationRequest,
+//   unknown
+// >;
 
 export type insertHistoryDataType = z.infer<typeof formSchema>;

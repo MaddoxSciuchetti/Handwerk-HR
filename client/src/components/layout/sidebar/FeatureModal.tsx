@@ -1,5 +1,5 @@
 import { featureRequest } from '@/apis/index.apis';
-import { useRef, useState } from 'react';
+import { DragEvent, useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Button } from '../../ui/button';
 import { CardContent } from '../../ui/card';
@@ -56,11 +56,11 @@ function FeatureModal() {
     fileInputRef.current?.click();
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: DragEvent) => {
     e.preventDefault();
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = (e: DragEvent) => {
     e.preventDefault();
     handleFileSelect(e.dataTransfer.files);
   };

@@ -13,11 +13,3 @@ export const dateSchema = z
       dateObj.getFullYear() === year
     );
   }, 'Ungültiges Datum');
-
-export const descriptionSchema = z.array(
-  z.object({
-    form_field_id: z.coerce.number(),
-    description: z.string(),
-    owner: z.string(),
-  })
-);

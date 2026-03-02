@@ -1,8 +1,8 @@
 import { getUser } from '@/features/auth/api/auth.api';
-import { TApiResponse } from '@/types/api.types';
+import { DescriptionFieldResponse } from '@/types/api.types';
 import { useState } from 'react';
 
-function useFilteredData(data: TApiResponse | undefined) {
+function useFilteredData(data: DescriptionFieldResponse | undefined) {
   const [descriptionSearch, setDescriptionSearch] = useState<string>('');
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [showMyItems, setShowMyItems] = useState(false);

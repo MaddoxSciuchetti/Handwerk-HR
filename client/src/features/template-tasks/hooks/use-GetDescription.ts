@@ -1,5 +1,5 @@
 import { useSidebar } from '@/components/ui/sidebar';
-import { TNewFormField } from '@/types/api.types';
+import { NewDescriptionField } from '@/types/api.types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -27,7 +27,7 @@ function useDescription() {
   } = useEditDescription();
 
   const { mutate: handleAddSubmitMutation } = useMutation<
-    TNewFormField,
+    NewDescriptionField,
     Error,
     {
       description: string;

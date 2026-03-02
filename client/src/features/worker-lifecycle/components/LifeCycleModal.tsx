@@ -1,5 +1,5 @@
 import ModalOverlay from '@/components/modal/ModalOverlay';
-import { AddWorker } from '@/zod-schemas/zodSchema';
+import { AddWorker } from '@/features/worker-lifecycle/schemas/zod.schemas';
 import { UseMutationResult } from '@tanstack/react-query';
 import { TOffboardingItemUser } from '../types/index.types';
 import ModalContent from './lifycycle-modal-content/ModalContent';

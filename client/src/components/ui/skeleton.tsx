@@ -1,4 +1,4 @@
-import { cn } from '@/types/utils.types';
+import { cn } from '@/lib/trycatch';
 
 function Skeleton({ className, ...props }: React.ComponentProps<'div'>) {
   return (

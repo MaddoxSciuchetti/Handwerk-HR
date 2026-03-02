@@ -9,12 +9,10 @@ import {
 
 import { logout } from '@/apis/index.apis';
 import { getProfileFoto } from '@/features/user-profile/api/index.api';
-import useAuth from '@/features/user-profile/hooks/use-Auth';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 
 const UserMenu = () => {
-  const { user, isLoading, isError } = useAuth();
   const queryClient = useQueryClient();
 
   const { data, isPending } = useQuery<string>({

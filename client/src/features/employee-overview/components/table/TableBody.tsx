@@ -1,9 +1,9 @@
-import { user } from '@/apis/index.apis';
 import { TableBody } from '@/components/ui/table';
 import { UseMutateFunction } from '@tanstack/react-query';
 import { useEmployeeModal } from '../../hooks/use-employeeModal';
 import { TEmployeeResponse } from '../../schemas/schema';
 
+import { User } from '@/features/user-profile/types/auth.type';
 import EditDropdown from './table-row-item/EditDropdown';
 import EmployeeName from './table-row-item/EmployeeName';
 import EmployeeStatus from './table-row-item/EmployeeStatus';
@@ -11,7 +11,7 @@ import EmployeeSubstitute from './table-row-item/EmployeeSubstitute';
 
 type TableBodyProps = {
   EmployeeData: TEmployeeResponse;
-  DeleteEmployee: UseMutateFunction<user, Error, string, unknown>;
+  DeleteEmployee: UseMutateFunction<User, Error, string, unknown>;
 };
 
 const EmployeeTableBody = ({

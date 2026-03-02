@@ -1,4 +1,4 @@
-import { dateSchema } from '@/zod-schemas/schema';
+import { dateSchema } from '@/schemas/schema';
 import z from 'zod';
 
 export const SubUser = z.object({

@@ -1,8 +1,8 @@
 import API from '@/config/apiClient';
 import {
-  TDescriptionData,
-  TDescriptionResponse,
-  TNewFormField,
+  DescriptionData,
+  DescriptionResponse,
+  NewDescriptionField,
 } from '@/types/api.types';
 import { EditDescriptionData } from '../types/taskForm.types';
 
@@ -15,16 +15,16 @@ export const addExtraField = async (data: {
   description: string;
   template_type: 'ONBOARDING' | 'OFFBOARDING';
   owner: string;
-}): Promise<TNewFormField> => {
-  const response = await API.post<TNewFormField, TNewFormField>(
+}): Promise<NewDescriptionField> => {
+  const response = await API.post<NewDescriptionField, NewDescriptionField>(
     `/offboarding/addFormField`,
     data
   );
   return response;
 };
 
-export const fetchTaskData = async (): Promise<TDescriptionResponse[]> => {
-  const response = await API.get<TDescriptionData[], TDescriptionResponse[]>(
+export const fetchTaskData = async (): Promise<DescriptionResponse[]> => {
+  const response = await API.get<DescriptionData[], DescriptionResponse[]>(
     '/user/fetchTaskData'
   );
   return response;

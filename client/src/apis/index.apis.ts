@@ -2,16 +2,16 @@ import { TFeatureForm } from '@/components/layout/sidebar/FeatureModal';
 import API from '@/config/apiClient';
 import { FileResponse } from '@/types/api.types';
 
-export const logout = async () => API.get('/auth/logout');
+// export type user = {
+//   id: number;
+//   updatedAt: string;
+//   email: string;
+//   verified: boolean;
+//   createdAt: string;
+//   user_permission: 'CHEF' | 'MITARBEITER';
+// };
 
-export type user = {
-  id: number;
-  updatedAt: string;
-  email: string;
-  verified: boolean;
-  createdAt: string;
-  user_permission: 'CHEF' | 'MITARBEITER';
-};
+export const logout = async () => API.get('/auth/logout');
 
 export const postFile = async (
   files: File[],

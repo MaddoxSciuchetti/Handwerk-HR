@@ -1,5 +1,5 @@
 import z from 'zod';
-import { dateSchema } from './schema';
+import { dateSchema } from '../../../schemas/schema';
 
 export const addWorkerBaseSchema = z.object({
   vorname: z.string().min(1, 'erforderlich'),
@@ -36,9 +36,3 @@ export const formDescriptionSchema = z.object({
   description: z.string(),
   owner: z.string(),
 });
-
-// export const formSchemaWithType = formDescriptionSchema
-//   .extend({
-//     template_type: z.enum(['ONBOARDING', 'OFFBOARDING']),
-//   })
-//   .omit({ form_field_id: true });

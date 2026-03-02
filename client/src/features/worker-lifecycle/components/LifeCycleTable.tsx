@@ -6,7 +6,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-import { getFirstFormType } from '@/lib/formtype';
+import { getFirstFormType } from '@/features/worker-lifecycle/utils/formtype';
 import { OffboardingItem } from '../types/index.types';
 import { Worker_Item } from './WorkerItem';
 
