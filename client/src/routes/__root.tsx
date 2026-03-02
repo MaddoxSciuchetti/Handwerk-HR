@@ -2,7 +2,7 @@
 import Layout from '@/components/layout/Layout';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { ThemeProvider } from '@/context/theme-provider/ThemeContext';
-import { createRootRoute, useLocation } from '@tanstack/react-router';
+import { createRootRoute, Outlet, useLocation } from '@tanstack/react-router';
 
 export const Route = createRootRoute({
   component: RootLayout,
@@ -10,35 +10,31 @@ export const Route = createRootRoute({
 
 function RootLayout() {
   const location = useLocation();
-  const isLoginPage = location.pathname === '/login';
-  const isSignUp = location.pathname === '/signup';
-  const isVerfiy = location.pathname === '/verify-email';
-  const isForgotPassword = location.pathname === '/password/forgot';
-  const isResetPassword = location.pathname === '/password/reset';
-  const isHomePage = location.pathname === '/';
+  const verifyPages = new Set([
+    '/login',
+    '/signup',
+    '/verify-email',
+    '/passwort/forgot',
+    'passwort/reset',
+    '/',
+  ]);
+  const isbeforeDoorman = verifyPages.has(location.pathname);
 
-  if (
-    isLoginPage ||
-    isSignUp ||
-    isVerfiy ||
-    isHomePage ||
-    isResetPassword ||
-    isForgotPassword
-  ) {
+  if (isbeforeDoorman) {
     return (
       <main className="min-h-screen">
         <ThemeProvider>
-          <Layout />
+          <Outlet />
         </ThemeProvider>
       </main>
     );
   }
 
   return (
-    <SidebarProvider>
-      <ThemeProvider>
+    <ThemeProvider>
+      <SidebarProvider>
         <Layout />
-      </ThemeProvider>
-    </SidebarProvider>
+      </SidebarProvider>
+    </ThemeProvider>
   );
 }

@@ -1,5 +1,3 @@
-import { HandMetal, Home, Inbox, Settings } from 'lucide-react';
-
 import {
   Sidebar,
   SidebarContent,
@@ -13,46 +11,14 @@ import {
 } from '@/components/ui/sidebar';
 import { Link } from '@tanstack/react-router';
 
+import { LAYOUTITEMS } from '@/constants/layout';
 import useAuth from '@/features/user-profile/hooks/use-Auth';
-import { useThemeProvider } from '@/hooks/use-themeProvider';
 import { useMemo } from 'react';
 import { Button } from '../../ui/button';
 import UserMenu from './UserMenu';
 
-const items = [
-  {
-    title: 'Mein Mitarbeiter',
-    to: '/mitarbeiter-uebersicht',
-    icon: Home,
-    requiredPermission: 'CHEF',
-  },
-  {
-    title: 'Meine Handwerker',
-    to: '/handwerker',
-    icon: Inbox,
-  },
-  {
-    title: 'Vorlage',
-    to: '/template-konfiguration',
-    icon: Settings,
-    requiredPermission: 'CHEF',
-  },
-  {
-    title: 'Mitarbeiter Monitor',
-    to: '/dashboard/ceo',
-    icon: HandMetal,
-    requiredPermission: 'CHEF',
-  },
-];
-
-export function AppSidebar({
-  openModal,
-  toggle,
-}: {
-  openModal: () => void;
-  toggle: () => void;
-}) {
-  const { user, isError } = useAuth();
+export function AppSidebar({ openModal }: { openModal: () => void }) {
+  const { user } = useAuth();
 
   const hasPermission = useMemo(() => {
     return (requiredPermission: string | undefined) => {
@@ -61,11 +27,12 @@ export function AppSidebar({
       return true;
     };
   }, [user?.user_permission]);
-  const { theme } = useThemeProvider();
 
   const accessibleItems = useMemo(() => {
     if (!user) return [];
-    return items.filter((item) => hasPermission(item.requiredPermission));
+    return LAYOUTITEMS.filter((value) =>
+      hasPermission(value.requiredPermission)
+    );
   }, [hasPermission, user]);
 
   if (user === undefined) {
@@ -105,7 +72,7 @@ export function AppSidebar({
         >
           Feature Request{' '}
         </Button>
-        <Button onClick={toggle}>Dark Mode</Button>
+        {/* <Button onClick={toggle}>Dark Mode</Button> */}
       </Sidebar>
     </>
   );

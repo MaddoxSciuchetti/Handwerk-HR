@@ -9,7 +9,7 @@ import FeatureModal from './sidebar/FeatureModal';
 function Layout() {
   const [modal, setModal] = useState<boolean>(false);
   const { toggleSidebar } = useSidebar();
-  const { theme, toggle } = useThemeProvider();
+  const { theme } = useThemeProvider();
 
   const handleOpenModal = () => {
     setModal((prev) => !prev);
@@ -26,7 +26,7 @@ function Layout() {
 
   return (
     <>
-      <AppSidebar openModal={handleOpenModal} toggle={toggle} />
+      <AppSidebar openModal={handleOpenModal} />
       <SidebarInset className="flex flex-col h-svh md:w-max-svw">
         <header className="flex h-16 shrink-0 items-center gap-2 px-4">
           <SidebarTrigger className="-ml-1" />

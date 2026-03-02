@@ -7,7 +7,7 @@ import useEmployeeData from '../../employee-overview/hooks/use-employeeData';
 import { addExtraField } from '../api';
 import useDeleteDescription from './use-DeleteDescription';
 import useEditDescription from './use-EditDescription';
-import useFetchTask from './use-fetchTask';
+import useFetchTask from './use-FetchTask';
 
 function useDescription() {
   const queryClient = useQueryClient();
