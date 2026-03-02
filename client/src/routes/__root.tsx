@@ -1,15 +1,8 @@
 // src/routes/__root.tsx
-import { AppSidebar } from '@/components/layout/sidebar/AppSidebar';
-import FeatureModal from '@/components/layout/sidebar/FeatureModal';
-import ModalOverlay from '@/components/modal/ModalOverlay';
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-  useSidebar,
-} from '@/components/ui/sidebar';
-import { createRootRoute, Outlet, useLocation } from '@tanstack/react-router';
-import { useState } from 'react';
+import Layout from '@/components/layout/Layout';
+import { SidebarProvider } from '@/components/ui/sidebar';
+import { ThemeProvider } from '@/context/theme-provider/ThemeContext';
+import { createRootRoute, useLocation } from '@tanstack/react-router';
 
 export const Route = createRootRoute({
   component: RootLayout,
@@ -34,45 +27,18 @@ function RootLayout() {
   ) {
     return (
       <main className="min-h-screen">
-        <Outlet />
+        <ThemeProvider>
+          <Layout />
+        </ThemeProvider>
       </main>
     );
   }
 
   return (
     <SidebarProvider>
-      <SidebarLayout />
+      <ThemeProvider>
+        <Layout />
+      </ThemeProvider>
     </SidebarProvider>
-  );
-}
-
-function SidebarLayout() {
-  const [modal, setModal] = useState<boolean>(false);
-  const { toggleSidebar } = useSidebar();
-
-  const handleOpenModal = () => {
-    setModal((prev) => !prev);
-    toggleSidebar();
-  };
-
-  return (
-    <>
-      <AppSidebar openModal={handleOpenModal} />
-      <SidebarInset className="flex flex-col h-svh md:w-max-svw">
-        <header className="flex h-16 shrink-0 items-center gap-2 px-4">
-          <SidebarTrigger className="-ml-1" />
-        </header>
-        <main className="flex flex-col lg:items-center grow lg:min-w-96 gap-4 p-4">
-          <div className="grow w-full min-w-0  h-full overflow-hidden">
-            <Outlet />
-          </div>
-        </main>
-      </SidebarInset>
-      {modal && (
-        <ModalOverlay handleToggle={handleOpenModal}>
-          <FeatureModal />
-        </ModalOverlay>
-      )}
-    </>
   );
 }

@@ -14,6 +14,7 @@ import {
 import { Link } from '@tanstack/react-router';
 
 import useAuth from '@/features/user-profile/hooks/use-Auth';
+import { useThemeProvider } from '@/hooks/use-themeProvider';
 import { useMemo } from 'react';
 import { Button } from '../../ui/button';
 import UserMenu from './UserMenu';
@@ -44,7 +45,13 @@ const items = [
   },
 ];
 
-export function AppSidebar({ openModal }: { openModal: () => void }) {
+export function AppSidebar({
+  openModal,
+  toggle,
+}: {
+  openModal: () => void;
+  toggle: () => void;
+}) {
   const { user, isError } = useAuth();
 
   const hasPermission = useMemo(() => {
@@ -54,6 +61,7 @@ export function AppSidebar({ openModal }: { openModal: () => void }) {
       return true;
     };
   }, [user?.user_permission]);
+  const { theme } = useThemeProvider();
 
   const accessibleItems = useMemo(() => {
     if (!user) return [];
@@ -65,7 +73,7 @@ export function AppSidebar({ openModal }: { openModal: () => void }) {
   }
   return (
     <>
-      <Sidebar className="bg-gray-100 rounded-2xl">
+      <Sidebar className="bg-sidebar">
         <SidebarHeader className="mt-5 flex flex-row align-middle">
           <UserMenu />
         </SidebarHeader>
@@ -97,6 +105,7 @@ export function AppSidebar({ openModal }: { openModal: () => void }) {
         >
           Feature Request{' '}
         </Button>
+        <Button onClick={toggle}>Dark Mode</Button>
       </Sidebar>
     </>
   );
