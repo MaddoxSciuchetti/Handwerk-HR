@@ -1,5 +1,12 @@
 import { CREATED, OK, UNAUTHORIZED } from "../constants/http";
 import {
+    emailSchema,
+    loginSchema,
+    registerSchema,
+    resetPasswordSchema,
+    verificationCodeSchema,
+} from "../schemas/auth.Schemas";
+import {
     createAccount,
     loginUser,
     modifyPassword,
@@ -15,70 +22,30 @@ import {
     setAuthCookies,
 } from "../utils/cookies";
 import { verifyToken } from "../utils/jwt";
-import {
-    emailSchema,
-    loginSchema,
-    registerSchema,
-    resetPasswordSchema,
-    verificationCodeSchema,
-} from "./auth.Schemas";
 
 import { prisma } from "@/lib/prisma";
 import appAssert from "../utils/appAssert";
 
 export const register = catchErrors(async (req, res) => {
-    //validate request
-
     const request = registerSchema.parse({
         ...req.body,
         userAgent: req.headers["user-agent"],
     });
-
-    // call service
-
     const { user, accessToken, refreshToken } = await createAccount(request);
-
-    // send email to person -> with their credentials
-
-    // setAuthCookies({ res, accessToken, refreshToken })
-    // return response
     return res.status(CREATED).json(user);
 });
 
 export const login = catchErrors(async (req, res) => {
-    // validate request
-
     const request = loginSchema.parse({
         ...req.body,
         userAgent: req.headers["user-agent"],
     });
-
-    // call service
-
     const { accessToken, refreshToken } = await loginUser(request);
 
     return setAuthCookies({ res, accessToken, refreshToken }).status(OK).json({
         message: "Login sucessful",
     });
 });
-
-export const logout = catchErrors(async (req, res) => {
-    const accessToken = req.cookies.accessToken as string | undefined;
-    const { payload } = verifyToken(accessToken || "");
-
-    if (payload) {
-        await prisma.session.delete({
-            where: {
-                id: payload.sessionId,
-            },
-        });
-    }
-
-    return clearAuthCookies(res).status(OK).json({
-        message: "Logout sucessfull",
-    });
-});
-
 export const refresh = catchErrors(async (req, res) => {
     console.log(req.cookies.refreshToken);
     const refreshToken = req.cookies.refreshToken as string | undefined;
@@ -101,6 +68,23 @@ export const refresh = catchErrors(async (req, res) => {
         .json({
             message: "Access token refreshed",
         });
+});
+
+export const logout = catchErrors(async (req, res) => {
+    const accessToken = req.cookies.accessToken as string | undefined;
+    const { payload } = verifyToken(accessToken || "");
+
+    if (payload) {
+        await prisma.session.delete({
+            where: {
+                id: payload.sessionId,
+            },
+        });
+    }
+
+    return clearAuthCookies(res).status(OK).json({
+        message: "Logout sucessfull",
+    });
 });
 
 export const verifyEmail = catchErrors(async (req, res) => {

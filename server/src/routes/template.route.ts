@@ -1,9 +1,9 @@
-import { createTemplateTask } from "@/controllers/on_off_boarding.controller";
 import {
+    createTemplateTask,
     deleteTemplateTask,
     getTask,
     updateTemplateTask,
-} from "@/controllers/user.controller";
+} from "@/controllers/template.controller";
 import { checkChef } from "@/utils/checkChef";
 import express from "express";
 

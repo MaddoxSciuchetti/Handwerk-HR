@@ -1,4 +1,5 @@
 import express from "express";
+
 import {
     createWorker,
     createWorkerFile,
@@ -11,8 +12,7 @@ import {
     getWorkerHistory,
     updateWorker,
     updateWorkerHistory,
-} from "../controllers/on_off_boarding.controller";
-
+} from "@/controllers/worker.controller";
 import catchErrors from "@/utils/catchErrors";
 import { upload } from "../middleware/fileparser";
 

@@ -3,7 +3,7 @@ import {
     editAbsenceData,
     getEmployee,
     getEmployeeWorkerData,
-} from "@/controllers/user.controller";
+} from "@/controllers/employee.controller";
 import { checkChef } from "@/utils/checkChef";
 import express from "express";
 

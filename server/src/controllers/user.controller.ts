@@ -4,15 +4,8 @@ import {
     createDescription,
     getChef,
     insertProfilePhoto,
-    modifyTemplateTask,
-    queryEmployee,
-    queryEmployeeWorkerData,
     queryProfilePhoto,
-    queryTask,
     queryUser,
-    removeEmployee,
-    removeTemplateTask,
-    updateAbsenceData,
 } from "../services/user.protected";
 import appAssert from "../utils/appAssert";
 import catchErrors from "../utils/catchErrors";
@@ -40,41 +33,6 @@ export const getChefHandler = catchErrors(async (req, res) => {
     return res.status(OK).json(user);
 });
 
-export const getEmployeeWorkerData = catchErrors(async (req, res) => {
-    const { unifiedData } = await queryEmployeeWorkerData();
-    return res.status(OK).json(unifiedData);
-});
-
-export const deleteTemplateTask = catchErrors(async (req, res) => {
-    const id = +req.params.id;
-
-    const deletedData = await removeTemplateTask(id);
-
-    return res.status(OK).json(deletedData);
-});
-
-export const getTask = catchErrors(async (req, res) => {
-    const id = req.userId;
-
-    const descriptionData = await queryTask();
-
-    return res.status(OK).json(descriptionData);
-});
-
-export const updateTemplateTask = catchErrors(async (req, res) => {
-    const id = +req.params.id;
-
-    const { form_field_id, owner, description, template_type } = req.body;
-
-    const updatedDescription = await modifyTemplateTask(
-        form_field_id,
-        owner,
-        description,
-    );
-
-    return res.status(OK).json(updatedDescription);
-});
-
 export const createDescriptionHandler = catchErrors(async (req, res) => {
     const { description, owner, template_type } = req.body;
     console.log(template_type);
@@ -86,33 +44,6 @@ export const createDescriptionHandler = catchErrors(async (req, res) => {
     );
     return res.status(OK).json(newDescription);
 });
-
-export const getEmployee = catchErrors(async (req, res) => {
-    const EmployeeData = await queryEmployee();
-    console.log(EmployeeData);
-    return res.status(OK).json(EmployeeData);
-});
-
-export const deleteEmplyoee = catchErrors(async (req, res) => {
-    const id = req.params.id as string;
-    const chefId = req.userId;
-    console.log(id);
-
-    const deleteEmployeeResult = await removeEmployee(id, chefId);
-
-    return res.status(OK).json(deleteEmployeeResult);
-});
-
-export const editAbsenceData = catchErrors(async (req, res) => {
-    const data = req.body;
-
-    console.log("IMPOrtANT");
-    console.log(data);
-
-    const editAbsenceResult = await updateAbsenceData(data);
-    return res.status(OK).json(editAbsenceResult);
-});
-
 export const uploadProfilePhoto = catchErrors(async (req, res) => {
     const id = req.userId;
     const file = req.file as Express.Multer.File;
