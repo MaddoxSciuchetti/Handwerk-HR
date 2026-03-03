@@ -4,14 +4,14 @@ import { FileResponse } from '@/types/api.types';
 
 export const logout = async () => API.get('/auth/logout');
 
-export const postFile = async (
+export const createWorkerFile = async (
   files: File[],
   id: number
 ): Promise<FileResponse> => {
   const formData = new FormData();
   files.forEach((file) => formData.append('files', file));
   const response = await API.post<FileResponse, FileResponse>(
-    `/worker/editdata/file/${id}`,
+    `/worker/createWorkerFile/${id}`,
     formData
   );
   return response;

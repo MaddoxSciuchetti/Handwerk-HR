@@ -257,7 +257,7 @@ export const queryWorkerHistory = async (data: number) => {
     });
 };
 
-export const insertFileData = async (fileData: {
+export const insertWorkerFile = async (fileData: {
     userId: number;
     original_filename: string;
     file_size: number;
@@ -295,7 +295,7 @@ export const insertFileData = async (fileData: {
     }
 };
 
-export const fetchFileData = async (userId: number) => {
+export const queryWorkerFiles = async (userId: number) => {
     const files = await prisma.workerFiles.findMany({
         where: {
             employee_forms: {
@@ -310,12 +310,11 @@ export const fetchFileData = async (userId: number) => {
             },
         },
     });
-    console.log("DIRECT ACCESS TO DATABASE FILES");
-    console.log(files);
+
     return files;
 };
 
-export const deleteFiles = async (id: number) => {
+export const removeWorkerFile = async (id: number) => {
     const existingFile = await prisma.workerFiles.findUnique({
         where: { id },
     });

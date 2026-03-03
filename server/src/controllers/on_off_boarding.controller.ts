@@ -9,16 +9,16 @@ import {
 } from "@/schemas/zod.controller";
 import {
     addExtraFormFieldDB,
-    deleteFiles,
-    fetchFileData,
-    insertFileData,
     insertWorker,
+    insertWorkerFile,
     insertWorkerHistory,
     modifyWorker,
     queryWorkerById,
     queryWorkerData,
+    queryWorkerFiles,
     queryWorkerHistory,
     removeWorker,
+    removeWorkerFile,
     sendEmployeeEmail,
 } from "@/services/on_off_boarding.auth";
 import resolveOwner from "@/utils/resolverOwner";
@@ -145,14 +145,11 @@ export const updateWorkerHistory = async (req: Request, res: Response) => {
     return res.status(200).json(result || []);
 };
 
-export const postFileData = async (req: Request, res: Response) => {
+export const createWorkerFile = async (req: Request, res: Response) => {
     const id = req.params.id;
     const formId = Array.isArray(id) ? id[0] : id;
 
     const files = req.files as Express.Multer.File[];
-    console.log("Received file", files?.length);
-    console.log(files);
-
     if (!files || files.length === 0) {
         return res.status(400).json({ error: "No files uploded" });
     }
@@ -171,7 +168,7 @@ export const postFileData = async (req: Request, res: Response) => {
             };
             console.log("=== FileData ===");
             console.log(fileData);
-            const savedfile = await insertFileData(fileData);
+            const savedfile = await insertWorkerFile(fileData);
 
             const sanitizedFile = {
                 ...savedfile,
@@ -190,12 +187,12 @@ export const postFileData = async (req: Request, res: Response) => {
     });
 };
 
-export const getFileData = async (req: Request, res: Response) => {
+export const getWorkerFiles = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
 
         const parsedId = z.coerce.number().parse(id);
-        const files = await fetchFileData(parsedId);
+        const files = await queryWorkerFiles(parsedId);
 
         const presignedUrl = await Promise.all(
             files.map(async (file) => ({
@@ -224,10 +221,10 @@ export const getProcessData = async (req: Request, res: Response) => {
     } catch (error) {}
 };
 
-export const deleteFileData = async (req: Request, res: Response) => {
+export const deleteWorkerFile = async (req: Request, res: Response) => {
     try {
         const id = +req.params.id;
-        const response = deleteFiles(id);
+        const response = removeWorkerFile(id);
         return res.status(200).json({ sucess: true });
     } catch (error) {
         console.log(error);

@@ -2,16 +2,16 @@ import express from "express";
 import {
     addExtraField,
     createWorker,
-    deleteFileData,
+    createWorkerFile,
     deleteWorker,
+    deleteWorkerFile,
     getCloudUrl,
-    getFileData,
     getProcessData,
     getWorkerById,
     getWorkerData,
+    getWorkerFiles,
     getWorkerHistory,
     postFeature,
-    postFileData,
     sendReminder,
     updateWorker,
     updateWorkerHistory,
@@ -22,6 +22,7 @@ import { upload } from "../middleware/fileparser";
 
 const worker = express.Router();
 
+//worker crud operations
 worker.post("/addWorker", createWorker);
 
 worker.get("/getWorkerData", getWorkerData);
@@ -32,21 +33,22 @@ worker.get("/getWorker/:id", getWorkerById);
 
 worker.put("/updateWorker", catchErrors(updateWorker));
 
-// above worker CRUD operations
+// worker history Data
 
 worker.get("/getWorkerHistory/:id", getWorkerHistory);
 
 worker.post("/updateWorkerHistory", updateWorkerHistory);
 
-worker.post("/editdata/file/:id", upload.array("files"), postFileData);
+// worker file Data
+
+worker.post("/createWorkerFile/:id", upload.array("files"), createWorkerFile);
+
+worker.get("/getWorkerFiles/:id", getWorkerFiles);
+
+worker.delete("/deleteWorkerFile/:id", deleteWorkerFile);
 
 worker.post("/addFormField", addExtraField);
-
-worker.get("/getFileData/file/:id", getFileData);
-
 worker.get("/fetchProcessdata/:id", getProcessData);
-
-worker.delete("/deleteFileData/:id", deleteFileData);
 
 worker.post("/sendReminder", sendReminder);
 

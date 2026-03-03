@@ -49,9 +49,9 @@ export const getWorkerHistory = async (id: number): Promise<HistoryData[]> => {
   return response;
 };
 
-export const fetchFileData = async (id: number): Promise<File_Request[]> => {
+export const getWorkerFiles = async (id: number): Promise<File_Request[]> => {
   const response = API.get<File_Request[], File_Request[]>(
-    `worker/getFileData/file/${id}`
+    `worker/getWorkerFiles/${id}`
   );
   return response;
 };
@@ -64,8 +64,8 @@ export const fetchCloudUrl = async (cloud_key: string): Promise<string> => {
   return response;
 };
 
-export const deleteFileData = async (
+export const deleteWorkerFile = async (
   id: number
 ): Promise<Pick<SuccessResponse, 'success'>> => {
-  return API.delete(`worker/deleteFileData/${id}`);
+  return API.delete(`worker/deleteWorkerFile/${id}`);
 };
