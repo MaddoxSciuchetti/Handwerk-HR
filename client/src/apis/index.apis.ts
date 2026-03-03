@@ -29,7 +29,7 @@ export const sendFeatureRequest = async (data: TFeatureForm) => {
   }
 
   const response = await API.post<TFeatureForm, TFeatureForm>(
-    `/user/featurerequest`,
+    `/index/featurerequest`,
     form
   );
   return response;

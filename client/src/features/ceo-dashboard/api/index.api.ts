@@ -12,5 +12,5 @@ export const getEmployeeWorkerData = async (): Promise<EmployeeWorkerData> => {
 export const sendReminderWorker = async (
   data: SendReminder
 ): Promise<Pick<SuccessResponse, 'success'>> => {
-  return API.post('/user/sendReminder', data);
+  return API.post('/index/sendReminder', data);
 };
