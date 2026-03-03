@@ -6,17 +6,15 @@ export const updateWorkerSchema = z.object({
     select_option: z.string(),
 });
 
+export const userSchema = z.object({
+    id: z.string(),
+    email: z.string(),
+    verified: z.boolean(),
+});
+
 export const insertWorkerHistorySchema = z.object({
-    result: z.object({
-        id: z.coerce.number(),
-        editcomment: z.string(),
-        select_option: z.string(),
-    }),
-    user: z.object({
-        id: z.string(),
-        email: z.string(),
-        verified: z.boolean(),
-    }),
+    result: updateWorkerSchema,
+    user: userSchema,
 });
 
 export type InsertWorkerHistory = z.infer<typeof insertWorkerHistorySchema>;
