@@ -3,25 +3,12 @@ import { google } from "googleapis";
 import { Readable } from "stream";
 import z from "zod";
 
-import { sendEmployeeEmail } from "@/services/on_off_boarding.auth";
+import { sendEmployeeEmail } from "@/services/index.service";
 import { INTERNAL_SERVER_ERROR, OK } from "../constants/http";
-
-// formfetch
 
 export const historySchemaget = z.object({
     id: z.coerce.number(),
 });
-
-// export const getProcessData = async (req: Request, res: Response) => {
-//     try {
-//         const id = req.params.id;
-
-//         const formData = await queryWorkerById(id);
-//         console.log("=== FORMDATA ====");
-//         console.log(formData);
-//         return res.status(200).send({ formData });
-//     } catch (error) {}
-// };
 
 export const sendReminder = async (req: Request, res: Response) => {
     try {

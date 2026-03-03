@@ -1,7 +1,3 @@
-import {
-    postFeature,
-    sendReminder,
-} from "@/controllers/on_off_boarding.controller";
 import { upload } from "@/middleware/fileparser";
 import { Router } from "express";
 import {
@@ -18,8 +14,5 @@ userRoutes.get("/", getUser);
 
 userRoutes.post("/profile/photo", upload.single("file"), uploadProfilePhoto);
 userRoutes.get("/profile/photo", getProfilePhoto);
-
-userRoutes.post("/sendReminder", sendReminder);
-userRoutes.post("/featurerequest", upload.array("files"), postFeature);
 
 export { userRoutes };
