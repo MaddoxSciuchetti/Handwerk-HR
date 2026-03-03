@@ -23,9 +23,6 @@ export const getChefHandler = catchErrors(async (req, res) => {
 
     const user = await getChef(id);
 
-    console.log(" === REAL USER ===");
-    console.log(user);
-
     if (user?.user_permission !== "CHEF") {
         return res.status(OK).json({ error: "User not found" });
     }

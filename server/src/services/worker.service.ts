@@ -1,9 +1,15 @@
 import { prisma } from "@/lib/prisma";
-import { InsertWorkerHistory } from "@/schemas/zod.controller";
-import { Data, dataObject, returnObject } from "@/types/worker.types";
+import { InsertWorkerHistory } from "@/schemas/worker.schemas";
+import {
+    InsertWorker,
+    InsertWorkerResponse,
+    WorkerForm,
+} from "@/types/worker.types";
 import { datevalidation } from "@/utils/datevalidation";
 
-export const insertWorker = (data: dataObject): Promise<returnObject> => {
+export const insertWorker = (
+    data: InsertWorker,
+): Promise<InsertWorkerResponse> => {
     return prisma.$transaction(async (tx: any) => {
         const worker = await tx.users.create({
             data: {
@@ -152,7 +158,7 @@ export const queryWorkerById = async (id: any) => {
     });
 };
 
-export const modifyWorker = async (data: Data) => {
+export const modifyWorker = async (data: WorkerForm) => {
     return await prisma.form_inputs.update({
         where: {
             id: data.id,

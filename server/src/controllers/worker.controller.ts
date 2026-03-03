@@ -1,8 +1,8 @@
 import { generatePresignedUrl, uploadFileToS3 } from "@/config/aws";
 import {
-    InsertWorkerHistorySchema,
+    insertWorkerHistorySchema,
     updateWorkerSchema,
-} from "@/schemas/zod.controller";
+} from "@/schemas/worker.schemas";
 import {
     insertWorker,
     insertWorkerFile,
@@ -113,7 +113,7 @@ export const getWorkerHistory = async (req: Request, res: Response) => {
 };
 
 export const updateWorkerHistory = async (req: Request, res: Response) => {
-    const data = InsertWorkerHistorySchema.parse(req.body);
+    const data = insertWorkerHistorySchema.parse(req.body);
 
     const result = await insertWorkerHistory(data);
 

@@ -1,4 +1,4 @@
-export type dataObject = {
+export type InsertWorker = {
     type: string;
     vorname: string;
     nachname: string;
@@ -9,7 +9,7 @@ export type dataObject = {
     position: string;
 };
 
-export type returnObject = {
+export type InsertWorkerResponse = {
     worker: {
         id: number;
         vorname: string;
@@ -17,7 +17,7 @@ export type returnObject = {
     };
     employee_form: number;
 };
-export type Data = {
+export type WorkerForm = {
     id: number;
     editcomment: string;
     select_option: string;

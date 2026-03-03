@@ -1,11 +1,5 @@
 import { CREATED, OK, UNAUTHORIZED } from "../constants/http";
-import {
-    emailSchema,
-    loginSchema,
-    registerSchema,
-    resetPasswordSchema,
-    verificationCodeSchema,
-} from "../schemas/auth.Schemas";
+
 import {
     createAccount,
     loginUser,
@@ -24,6 +18,13 @@ import {
 import { verifyToken } from "../utils/jwt";
 
 import { prisma } from "@/lib/prisma";
+import {
+    emailSchema,
+    loginSchema,
+    registerSchema,
+    resetPasswordSchema,
+    verificationCodeSchema,
+} from "@/schemas/auth.Schemas";
 import appAssert from "../utils/appAssert";
 
 export const register = catchErrors(async (req, res) => {

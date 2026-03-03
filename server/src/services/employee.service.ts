@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { AbsenceData } from "@/types/absence";
+import { AbsenceData } from "@/types/employee.types";
 import { parseGermanDate } from "@/utils/dateParser";
 import resolveOwner from "@/utils/resolverOwner";
 

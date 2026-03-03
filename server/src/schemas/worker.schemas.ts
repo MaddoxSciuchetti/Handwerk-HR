@@ -6,7 +6,7 @@ export const updateWorkerSchema = z.object({
     select_option: z.string(),
 });
 
-export const InsertWorkerHistorySchema = z.object({
+export const insertWorkerHistorySchema = z.object({
     result: z.object({
         id: z.coerce.number(),
         editcomment: z.string(),
@@ -19,4 +19,4 @@ export const InsertWorkerHistorySchema = z.object({
     }),
 });
 
-export type InsertWorkerHistory = z.infer<typeof InsertWorkerHistorySchema>;
+export type InsertWorkerHistory = z.infer<typeof insertWorkerHistorySchema>;
