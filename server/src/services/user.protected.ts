@@ -27,7 +27,7 @@ export const getChef = async (id: string) => {
     return user;
 };
 
-export const getemployee_form = async () => {
+export const queryEmployeeWorkerData = async () => {
     const onboarding_forms = await prisma.form_fields.findMany({
         select: {
             form_field_id: true,
@@ -133,10 +133,6 @@ export const getemployee_form = async () => {
         };
     });
 
-    console.log("UNIFIED DATA");
-    console.log(JSON.stringify(unifiedData, null, 2));
-    console.log(unifiedData);
-
     return { unifiedData };
 };
 
@@ -203,7 +199,7 @@ export const createDescription = async (
     return newDescription;
 };
 
-export const queryEmployeeData = async () => {
+export const queryEmployee = async () => {
     return await prisma.user.findMany({
         select: {
             id: true,
@@ -235,7 +231,7 @@ export const queryEmployeeData = async () => {
     });
 };
 
-export const deleteEmployee = async (id: string, chefId: string) => {
+export const removeEmployee = async (id: string, chefId: string) => {
     return await prisma.$transaction([
         prisma.form_fields.updateMany({
             where: {

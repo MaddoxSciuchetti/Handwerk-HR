@@ -9,13 +9,13 @@ import { Router } from "express";
 import {
     createDescriptionHandler,
     deleteDescriptionHandler,
-    deleteEmployeeHandler,
+    deleteEmplyoee,
     editAbsenceData,
     editDescriptionHandler,
     fetchDescriptionHandler,
-    getEmployeedata,
+    getEmployee,
+    getEmployeeWorkerData,
     getProfilePhoto,
-    getUnifiedData,
     getUser,
     uploadProfilePhoto,
 } from "../controllers/user.controller";
@@ -34,11 +34,16 @@ userRoutes.get("/profile/photo", getProfilePhoto);
 
 // userRoutes.get("/chefpermission", checkChef, getChefHandler);
 
-userRoutes.get("/employeeData", checkChef, getUnifiedData);
+// crud operations with users (that are employee)
+userRoutes.get(
+    "/employee/getEmployeeWorkerData",
+    checkChef,
+    getEmployeeWorkerData,
+);
 
-userRoutes.get("/specificEmployeeData", checkChef, getEmployeedata);
+userRoutes.get("/employee/specificEmployeeData", checkChef, getEmployee);
 
-userRoutes.delete("/deleteEmplyoee/:id", checkChef, deleteEmployeeHandler);
+userRoutes.delete("/deleteEmplyoee/:id", checkChef, deleteEmplyoee);
 
 userRoutes.put("/editAbsenceData", checkChef, editAbsenceData);
 

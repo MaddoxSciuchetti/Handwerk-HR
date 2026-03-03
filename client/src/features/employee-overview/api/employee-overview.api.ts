@@ -13,7 +13,7 @@ export const deleteEmployeeHandler = async (id: string): Promise<User> => {
 };
 
 export const specificEmployeeData = async (): Promise<EmployeeDataArray> => {
-  const response = await API.get(`/user/specificEmployeeData`);
+  const response = await API.get(`/user/employee/specificEmployeeData`);
   return employeeDataSchema.parse(response);
 };
 

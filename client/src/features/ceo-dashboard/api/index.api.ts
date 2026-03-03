@@ -5,7 +5,7 @@ import { SendReminder } from '../types/adminModal.types';
 import { EmployeeWorker as EmployeeWorkerData } from '../types/employeeform.types';
 
 export const getEmployeeWorkerData = async (): Promise<EmployeeWorkerData> => {
-  const response = await API.get('/user/employeeData');
+  const response = await API.get('/user/employee/getEmployeeWorkerData');
   return employeeWorkerSchema.parse(response);
 };
 

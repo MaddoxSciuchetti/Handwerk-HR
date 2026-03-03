@@ -3,14 +3,14 @@ import { NOT_FOUND, OK } from "../constants/http";
 import {
     createDescription,
     deleteDescriptionData,
-    deleteEmployee,
     getChef,
     getDescriptionData,
-    getemployee_form,
     insertProfilePhoto,
-    queryEmployeeData,
+    queryEmployee,
+    queryEmployeeWorkerData,
     queryProfilePhoto,
     queryUser,
+    removeEmployee,
     updateAbsenceData,
     updateDescriptionData,
 } from "../services/user.protected";
@@ -40,17 +40,8 @@ export const getChefHandler = catchErrors(async (req, res) => {
     return res.status(OK).json(user);
 });
 
-export const getUnifiedData = catchErrors(async (req, res) => {
-    const id = req.userId;
-
-    const user = await getChef(id);
-    if (user?.user_permission !== "CHEF") {
-        return res.status(OK).json({ error: "User not found" });
-    }
-
-    const { unifiedData } = await getemployee_form();
-    console.log(unifiedData);
-
+export const getEmployeeWorkerData = catchErrors(async (req, res) => {
+    const { unifiedData } = await queryEmployeeWorkerData();
     return res.status(OK).json(unifiedData);
 });
 
@@ -96,18 +87,18 @@ export const createDescriptionHandler = catchErrors(async (req, res) => {
     return res.status(OK).json(newDescription);
 });
 
-export const getEmployeedata = catchErrors(async (req, res) => {
-    const EmployeeData = await queryEmployeeData();
+export const getEmployee = catchErrors(async (req, res) => {
+    const EmployeeData = await queryEmployee();
     console.log(EmployeeData);
     return res.status(OK).json(EmployeeData);
 });
 
-export const deleteEmployeeHandler = catchErrors(async (req, res) => {
+export const deleteEmplyoee = catchErrors(async (req, res) => {
     const id = req.params.id as string;
     const chefId = req.userId;
     console.log(id);
 
-    const deleteEmployeeResult = await deleteEmployee(id, chefId);
+    const deleteEmployeeResult = await removeEmployee(id, chefId);
 
     return res.status(OK).json(deleteEmployeeResult);
 });
