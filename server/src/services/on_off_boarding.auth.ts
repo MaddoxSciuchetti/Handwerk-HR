@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
+import { InsertWorkerHistory } from "@/schemas/zod.controller";
 import { datevalidation } from "@/utils/datevalidation";
 import { INTERNAL_SERVER_ERROR } from "../constants/http";
-import { HistorySchemaType } from "../controllers/on_off_boarding.controller";
 import appAssert from "../utils/appAssert";
 import { getFormReminderTemplate } from "../utils/emailTemplates";
 import { sendMail } from "../utils/sendMail";
@@ -214,7 +214,7 @@ type Data = {
     select_option: string;
 };
 
-export const editdata = async (data: Data) => {
+export const modifyWorker = async (data: Data) => {
     return await prisma.form_inputs.update({
         where: {
             id: data.id,
@@ -226,12 +226,7 @@ export const editdata = async (data: Data) => {
     });
 };
 
-type historySchema = {
-    editcomment: string;
-    select_option: string;
-};
-
-export const insertHistoryData = async (data: HistorySchemaType) => {
+export const insertWorkerHistory = async (data: InsertWorkerHistory) => {
     return await prisma.historyFormData.createMany({
         data: {
             status: data.result.select_option,
@@ -242,7 +237,7 @@ export const insertHistoryData = async (data: HistorySchemaType) => {
     });
 };
 
-export const getHistoryData = async (data: number) => {
+export const queryWorkerHistory = async (data: number) => {
     return await prisma.historyFormData.findMany({
         where: {
             form_input_id: data,

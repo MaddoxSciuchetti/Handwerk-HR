@@ -7,7 +7,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 
-import { useGetHistory } from '@/features/task-management/hooks/use-getHistoryData';
+import { useGetWorkerHistory } from '@/features/task-management/hooks/use-getWorkerHistory';
 import { getProfileFoto } from '@/features/user-profile/api/index.api';
 import { useQuery } from '@tanstack/react-query';
 import { FC, SubmitEvent, useEffect, useState } from 'react';
@@ -56,7 +56,7 @@ const WorkerForm: FC<FormProps> = ({
     queryFn: getProfileFoto,
   });
 
-  const { historyData } = useGetHistory(id_original);
+  const { historyData } = useGetWorkerHistory(id_original);
 
   useEffect(() => {
     setSelectedValue(select_option || '');

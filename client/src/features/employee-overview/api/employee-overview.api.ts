@@ -21,7 +21,7 @@ export const fetchDescriptionData = async (
   id: number,
   form_type: string
 ): Promise<DescriptionFieldResponse> => {
-  return API.get(`offboarding/user/${id}?param1=${form_type}`);
+  return API.get(`worker/user/${id}?param1=${form_type}`);
 };
 
 export const editEmployeeAbsence = async (

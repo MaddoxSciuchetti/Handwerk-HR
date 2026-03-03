@@ -11,7 +11,7 @@ export const postFile = async (
   const formData = new FormData();
   files.forEach((file) => formData.append('files', file));
   const response = await API.post<FileResponse, FileResponse>(
-    `/offboarding/editdata/file/${id}`,
+    `/worker/editdata/file/${id}`,
     formData
   );
   return response;
@@ -29,7 +29,7 @@ export const featureRequest = async (data: TFeatureForm) => {
   }
 
   const response = await API.post<TFeatureForm, TFeatureForm>(
-    `/offboarding/FeatureRequest`,
+    `/worker/FeatureRequest`,
     form
   );
   return response;

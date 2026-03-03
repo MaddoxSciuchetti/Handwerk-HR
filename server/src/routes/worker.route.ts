@@ -6,17 +6,18 @@ import {
     deleteWorker,
     getCloudUrl,
     getFileData,
-    gethistoryData,
     getProcessData,
     getWorkerById,
     getWorkerData,
-    offboardingEditdata,
+    getWorkerHistory,
     postFeature,
     postFileData,
-    postHistoryData,
     sendReminder,
+    updateWorker,
+    updateWorkerHistory,
 } from "../controllers/on_off_boarding.controller";
 
+import catchErrors from "@/utils/catchErrors";
 import { upload } from "../middleware/fileparser";
 
 const worker = express.Router();
@@ -29,11 +30,13 @@ worker.delete("/deleteWorker/:id", deleteWorker);
 
 worker.get("/getWorker/:id", getWorkerById);
 
-worker.put("/editdata", offboardingEditdata);
+worker.put("/updateWorker", catchErrors(updateWorker));
 
-worker.get("/getHistoryData/:id", gethistoryData);
+// above worker CRUD operations
 
-worker.post("/editHisoryData", postHistoryData);
+worker.get("/getWorkerHistory/:id", getWorkerHistory);
+
+worker.post("/updateWorkerHistory", updateWorkerHistory);
 
 worker.post("/editdata/file/:id", upload.array("files"), postFileData);
 

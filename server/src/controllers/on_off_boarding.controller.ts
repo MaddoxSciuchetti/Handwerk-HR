@@ -4,16 +4,20 @@ import { Readable } from "stream";
 import z from "zod";
 
 import {
+    InsertWorkerHistorySchema,
+    updateWorkerSchema,
+} from "@/schemas/zod.controller";
+import {
     addExtraFormFieldDB,
     deleteFiles,
-    editdata,
     fetchFileData,
-    getHistoryData,
     insertFileData,
-    insertHistoryData,
     insertWorker,
+    insertWorkerHistory,
+    modifyWorker,
     queryWorkerById,
     queryWorkerData,
+    queryWorkerHistory,
     removeWorker,
     sendEmployeeEmail,
 } from "@/services/on_off_boarding.auth";
@@ -113,61 +117,32 @@ export const getWorkerById = async (req: Request, res: Response) => {
     return res.status(200).json(response);
 };
 
-const requestschema = z.object({
-    id: z.coerce.number().int().positive(),
-    editcomment: z.string(),
-    select_option: z.string(),
-});
-
-export const offboardingEditdata = async (req: Request, res: Response) => {
-    // validate request
-
-    const request = requestschema.parse(req.body);
-
-    // business log
-
-    const editresponse = await editdata(request);
-
-    return res.status(200).json(editresponse);
+export const updateWorker = async (req: Request, res: Response) => {
+    const request = updateWorkerSchema.parse(req.body);
+    const modifyWorkerResponse = await modifyWorker(request);
+    return res.status(200).json(modifyWorkerResponse);
 };
 
 export const historySchemaget = z.object({
     id: z.coerce.number(),
 });
 
-export const historySchema = z.object({
-    result: z.object({
-        id: z.coerce.number(),
-        editcomment: z.string(),
-        select_option: z.string(),
-    }),
-    user: z.object({
-        id: z.string(),
-        email: z.string(),
-        verified: z.boolean(),
-    }),
-});
-
-export type HistorySchemaType = z.infer<typeof historySchema>;
-
-export const gethistoryData = async (req: Request, res: Response) => {
+export const getWorkerHistory = async (req: Request, res: Response) => {
     const id = req.params.id;
 
     const parsedId = z.coerce.number().parse(id);
 
-    const HistoryData = await getHistoryData(parsedId);
+    const HistoryData = await queryWorkerHistory(parsedId);
 
     return res.status(200).json(HistoryData);
 };
 
-export const postHistoryData = async (req: Request, res: Response) => {
-    const result = historySchema.parse(req.body);
-    console.log("MOST IMPORTANT RESSULT");
-    console.log(result);
+export const updateWorkerHistory = async (req: Request, res: Response) => {
+    const data = InsertWorkerHistorySchema.parse(req.body);
 
-    const HistoryData = await insertHistoryData(result);
+    const result = await insertWorkerHistory(data);
 
-    return res.status(200).json(HistoryData || []);
+    return res.status(200).json(result || []);
 };
 
 export const postFileData = async (req: Request, res: Response) => {

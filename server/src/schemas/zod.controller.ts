@@ -1,0 +1,22 @@
+import z from "zod";
+
+export const updateWorkerSchema = z.object({
+    id: z.coerce.number().int().positive(),
+    editcomment: z.string(),
+    select_option: z.string(),
+});
+
+export const InsertWorkerHistorySchema = z.object({
+    result: z.object({
+        id: z.coerce.number(),
+        editcomment: z.string(),
+        select_option: z.string(),
+    }),
+    user: z.object({
+        id: z.string(),
+        email: z.string(),
+        verified: z.boolean(),
+    }),
+});
+
+export type InsertWorkerHistory = z.infer<typeof InsertWorkerHistorySchema>;
