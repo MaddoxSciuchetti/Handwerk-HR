@@ -1,17 +1,9 @@
 import { deleteSession } from '@/features/auth/api/auth.api';
+import { SessionCache } from '@/types/api.types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { SESSIONS } from './use-Sessions';
 
-type Cache = {
-  createdAt: string;
-  id: string;
-  isCurrent: boolean;
-  userAgent: string;
-};
-
-type SessionCache = Cache[];
-
-const useDeleteSession = (sessionId: string) => {
+function useDeleteSession(sessionId: string) {
   const queryClient = useQueryClient();
   const { mutate, ...rest } = useMutation({
     mutationFn: () => deleteSession(sessionId),
@@ -26,6 +18,6 @@ const useDeleteSession = (sessionId: string) => {
   const updatedCache = queryClient.getQueryData([SESSIONS]);
 
   return { deleteSession: mutate, ...rest };
-};
+}
 
 export default useDeleteSession;

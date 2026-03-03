@@ -81,38 +81,11 @@ export type DescriptionFieldResponse = {
   };
 };
 
-// export type TMutationRequest = {
-//   form_field_id?: number;
-//   description: string;
-//   template_type: 'ONBOARDING' | 'OFFBOARDING';
-//   owner: string;
-// };
+export type Cache = {
+  createdAt: string;
+  id: string;
+  isCurrent: boolean;
+  userAgent: string;
+};
 
-// export type TCreateMutationResponse = {
-//   timestamp: Date | null;
-//   form_field_id: number;
-//   description: string | null;
-//   order_index: number | null;
-//   owner: string;
-//   template_type: 'ONBOARDING' | 'OFFBOARDING' | null;
-// };
-
-// export type TCreateTaskMutation = UseMutationResult<
-//   TCreateMutationResponse,
-//   Error,
-//   TMutationRequest,
-//   unknown
-// >;
-
-// export type TEditMutationResponse = {
-//   form_field_id: number;
-//   description: string | null;
-//   owner: string;
-// };
-
-// export type TEditMutation = UseMutationResult<
-//   TEditMutationResponse,
-//   Error,
-//   TMutationRequest,
-//   unknown
-// >;
+export type SessionCache = Cache[];
