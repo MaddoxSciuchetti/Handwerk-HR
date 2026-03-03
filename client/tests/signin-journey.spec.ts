@@ -34,8 +34,8 @@ test.describe.serial('Signup journey', () => {
     await sharedPage.getByLabel(/Password/i).fill('Admin123!');
     await sharedPage.getByRole('button', { name: /Login/i }).click();
 
-    await sharedPage.waitForURL('/handwerker');
-    await expect(sharedPage).toHaveURL('/handwerker');
+    await sharedPage.waitForURL('/employee-overview');
+    await expect(sharedPage).toHaveURL('/employee-overview');
     await expect(
       sharedPage.locator(':has-text("Handwerker")').first()
     ).toBeVisible();
