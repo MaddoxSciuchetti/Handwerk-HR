@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { getProfileFoto, uploadProfileFoto } from '../api/index.api';
+import { getProfilePhoto, uploadProfileFoto } from '../api/index.api';
 import { TFile } from '../types';
 
 function useUploadProfieImage() {
@@ -26,7 +26,7 @@ function useUploadProfieImage() {
 
   const { data, isPending } = useQuery<string>({
     queryKey: ['profilepic'],
-    queryFn: getProfileFoto,
+    queryFn: getProfilePhoto,
   });
 
   const onSubmit: SubmitHandler<TFile> = (data) => {

@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/accordion';
 
 import { useGetWorkerHistory } from '@/features/task-management/hooks/use-getWorkerHistory';
-import { getProfileFoto } from '@/features/user-profile/api/index.api';
+import { getProfilePhoto } from '@/features/user-profile/api/index.api';
 import { useQuery } from '@tanstack/react-query';
 import { FC, SubmitEvent, useEffect, useState } from 'react';
 
@@ -53,7 +53,7 @@ const WorkerForm: FC<FormProps> = ({
 
   const { data, isPending } = useQuery<string>({
     queryKey: ['profilepic'],
-    queryFn: getProfileFoto,
+    queryFn: getProfilePhoto,
   });
 
   const { historyData } = useGetWorkerHistory(id_original);

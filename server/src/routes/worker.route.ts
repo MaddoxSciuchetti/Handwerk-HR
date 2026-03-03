@@ -42,10 +42,4 @@ worker.get("/getWorkerFiles/:id", getWorkerFiles);
 
 worker.delete("/deleteWorkerFile/:id", deleteWorkerFile);
 
-//
-
-// worker.get("/fetchProcessdata/:id", getProcessData);
-
-// worker.get("/getCloudUrl", getCloudUrl);
-
 export { worker };

@@ -13,25 +13,26 @@ import {
     editAbsenceData,
     editDescriptionHandler,
     fetchDescriptionHandler,
-    getChefHandler,
     getEmployeedata,
-    getProfileFoto,
+    getProfilePhoto,
     getUnifiedData,
-    getUserHandler,
-    postProfileFoto,
+    getUser,
+    uploadProfilePhoto,
 } from "../controllers/user.controller";
 
 const userRoutes = Router();
 
 // prefix /user
 
-userRoutes.get("/", getUserHandler);
+userRoutes.get("/", getUser);
 
-userRoutes.post("/uploadProfileFoto", upload.single("file"), postProfileFoto);
+// profile
 
-userRoutes.get("/getProfileFoto", getProfileFoto);
+userRoutes.post("/profile/photo", upload.single("file"), uploadProfilePhoto);
 
-userRoutes.get("/chefpermission", checkChef, getChefHandler);
+userRoutes.get("/profile/photo", getProfilePhoto);
+
+// userRoutes.get("/chefpermission", checkChef, getChefHandler);
 
 userRoutes.get("/employeeData", checkChef, getUnifiedData);
 

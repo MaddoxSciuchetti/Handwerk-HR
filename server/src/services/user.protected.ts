@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import resolveOwner from "@/utils/resolverOwner";
 
-export const getUser = async (id: string) => {
+export const queryUser = async (id: string) => {
     const user = await prisma.user.findUnique({
         where: {
             id: id,
@@ -297,7 +297,7 @@ type fileData = {
     cloud_url: string;
 };
 
-export const insertProfilePicture = async (file: fileData, id: string) => {
+export const insertProfilePhoto = async (file: fileData, id: string) => {
     return await prisma.user.update({
         data: {
             cloud_url: file.cloud_url,
@@ -312,7 +312,7 @@ export const insertProfilePicture = async (file: fileData, id: string) => {
     });
 };
 
-export const getdbProfileFoto = async (id: string) => {
+export const queryProfilePhoto = async (id: string) => {
     return await prisma.user.findUnique({
         where: {
             id: id,

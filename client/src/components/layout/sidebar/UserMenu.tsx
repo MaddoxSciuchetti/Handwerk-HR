@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 import { logout } from '@/apis/index.apis';
-import { getProfileFoto } from '@/features/user-profile/api/index.api';
+import { getProfilePhoto } from '@/features/user-profile/api/index.api';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 
@@ -17,7 +17,7 @@ const UserMenu = () => {
 
   const { data, isPending } = useQuery<string>({
     queryKey: ['profilepic'],
-    queryFn: getProfileFoto,
+    queryFn: getProfilePhoto,
   });
 
   const navigate = useNavigate();

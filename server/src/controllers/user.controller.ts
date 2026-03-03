@@ -5,22 +5,22 @@ import {
     deleteDescriptionData,
     deleteEmployee,
     getChef,
-    getdbProfileFoto,
     getDescriptionData,
     getemployee_form,
-    getUser,
-    insertProfilePicture,
+    insertProfilePhoto,
     queryEmployeeData,
+    queryProfilePhoto,
+    queryUser,
     updateAbsenceData,
     updateDescriptionData,
 } from "../services/user.protected";
 import appAssert from "../utils/appAssert";
 import catchErrors from "../utils/catchErrors";
 
-export const getUserHandler = catchErrors(async (req, res) => {
+export const getUser = catchErrors(async (req, res) => {
     const id = req.userId;
 
-    const user = await getUser(id);
+    const user = await queryUser(id);
     appAssert(user, NOT_FOUND, "User not found");
     return res.status(OK).json(user);
 });
@@ -122,7 +122,7 @@ export const editAbsenceData = catchErrors(async (req, res) => {
     return res.status(OK).json(editAbsenceResult);
 });
 
-export const postProfileFoto = catchErrors(async (req, res) => {
+export const uploadProfilePhoto = catchErrors(async (req, res) => {
     const id = req.userId;
     const file = req.file as Express.Multer.File;
 
@@ -133,15 +133,15 @@ export const postProfileFoto = catchErrors(async (req, res) => {
         return res.status(500).json({ error: "Upload failed" });
     }
 
-    await insertProfilePicture({ cloud_url: uploadResult.url! }, id);
+    await insertProfilePhoto({ cloud_url: uploadResult.url! }, id);
 
     return res.status(OK).json({ sucess: "image stored" });
 });
 
-export const getProfileFoto = catchErrors(async (req, res) => {
+export const getProfilePhoto = catchErrors(async (req, res) => {
     const id = req.userId;
 
-    const profilePic = await getdbProfileFoto(id);
+    const profilePic = await queryProfilePhoto(id);
     if (!profilePic) {
         return { error: "please upload profile pic" };
     }
