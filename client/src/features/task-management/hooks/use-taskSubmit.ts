@@ -1,7 +1,7 @@
 import { User } from '@/features/user-profile/types/auth.type';
 import { useQueryClient } from '@tanstack/react-query';
 import { SubmitEvent } from 'react';
-import { editData, insertHistoryData } from '../api/index.api';
+import { updateWorkerData, updateWorkerHistory } from '../api/index.api';
 import { formSchema } from '../schemas/index.schema';
 
 function useTaskSubmit(
@@ -27,14 +27,14 @@ function useTaskSubmit(
       return;
     }
 
-    await insertHistoryData(result.data, user);
+    await updateWorkerHistory(result.data, user);
     queryClient.invalidateQueries({
       queryKey: ['formHistory', parseInt(result.data.id)],
     });
-    await editData(result.data);
+    await updateWorkerData(result.data);
 
     await queryClient.invalidateQueries({
-      queryKey: ['somethingelse', id],
+      queryKey: ['worker', id],
     });
 
     closeModal();

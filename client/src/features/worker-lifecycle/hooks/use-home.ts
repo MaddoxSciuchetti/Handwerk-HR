@@ -3,7 +3,7 @@ import { AddWorker } from '@/features/worker-lifecycle/schemas/zod.schemas';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
-import { addWorker, deleteTaskApi, fetchNameData } from '../api';
+import { addWorker, deleteWorkerById, getWorkerData } from '../api';
 import { FormType, WorkerItem } from '../types/index.types';
 
 function useHome() {
@@ -19,8 +19,8 @@ function useHome() {
   };
 
   const { data, error, isSuccess } = useQuery<WorkerItem[]>({
-    queryKey: ['offboarding'],
-    queryFn: fetchNameData,
+    queryKey: ['allWorkerData'],
+    queryFn: getWorkerData,
   });
 
   const isEmpty = isSuccess && data?.length === 0;
@@ -30,13 +30,13 @@ function useHome() {
   );
 
   const deleteTaskMutation = useMutation({
-    mutationFn: deleteTaskApi,
+    mutationFn: deleteWorkerById,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['offboarding'] });
+      queryClient.invalidateQueries({ queryKey: ['allWorkerData'] });
     },
   });
 
-  const createEmployeeMutation = useMutation({
+  const addWorkerMutation = useMutation({
     mutationFn: async (data: AddWorker) => {
       const response = await addWorker(data);
       return response;
@@ -44,7 +44,7 @@ function useHome() {
     onSuccess: async (response) => {
       if (response.success) {
         await queryClient.invalidateQueries({
-          queryKey: ['offboarding'],
+          queryKey: ['allWorkerData'],
           refetchType: 'all',
         });
         toggleModal();
@@ -69,7 +69,7 @@ function useHome() {
     isEmpty,
     filtered,
     deleteTaskMutation,
-    createEmployeeMutation,
+    createEmployeeMutation: addWorkerMutation,
     handleNavigate,
     modal,
     setSearch,

@@ -13,7 +13,7 @@ import { Link } from '@tanstack/react-router';
 
 import { LAYOUTITEMS } from '@/constants/layout';
 import useAuth from '@/features/user-profile/hooks/use-Auth';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Button } from '../../ui/button';
 import UserMenu from './UserMenu';
 
@@ -28,12 +28,18 @@ export function AppSidebar({ openModal }: { openModal: () => void }) {
     };
   }, [user?.user_permission]);
 
+  const isItem = useRef<HTMLButtonElement | null>(null);
+
   const accessibleItems = useMemo(() => {
     if (!user) return [];
     return LAYOUTITEMS.filter((value) =>
       hasPermission(value.requiredPermission)
     );
   }, [hasPermission, user]);
+
+  useEffect(() => {
+    isItem.current?.focus();
+  }, [user]);
 
   if (user === undefined) {
     return '';
@@ -49,18 +55,25 @@ export function AppSidebar({ openModal }: { openModal: () => void }) {
             <SidebarGroupLabel className="">BSB Team</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu className="">
-                {accessibleItems.map((item, index) => (
-                  <SidebarMenuItem className="" key={index}>
-                    <SidebarMenuButton asChild className="mt-2">
-                      <Link to={item.to}>
-                        <item.icon />
-                        <span className="text-muted-foreground">
-                          {item.title}
-                        </span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {accessibleItems.map((item, index) => {
+                  const isTarget = item.to === '/worker-lifycycle';
+                  return (
+                    <SidebarMenuItem className="" key={index}>
+                      <SidebarMenuButton
+                        ref={isTarget ? isItem : undefined}
+                        asChild
+                        className="mt-2"
+                      >
+                        <Link to={item.to}>
+                          <item.icon />
+                          <span className="text-muted-foreground">
+                            {item.title}
+                          </span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -68,7 +81,7 @@ export function AppSidebar({ openModal }: { openModal: () => void }) {
         <Button
           onClick={() => openModal()}
           variant={'outline'}
-          className="mb-1 cursor-pointer mx-1 bg-muted"
+          className="mb-1 cursor-pointer mx-1 bg-muted outline border"
         >
           Feature Request{' '}
         </Button>

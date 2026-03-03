@@ -7,8 +7,8 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 
-import { useGetHistory } from '@/features/task-management/hooks/use-getHistoryData';
-import { getProfileFoto } from '@/features/user-profile/api/index.api';
+import { useGetWorkerHistory } from '@/features/task-management/hooks/use-getWorkerHistory';
+import { getProfilePhoto } from '@/features/user-profile/api/index.api';
 import { useQuery } from '@tanstack/react-query';
 import { FC, SubmitEvent, useEffect, useState } from 'react';
 
@@ -53,10 +53,10 @@ const WorkerForm: FC<FormProps> = ({
 
   const { data, isPending } = useQuery<string>({
     queryKey: ['profilepic'],
-    queryFn: getProfileFoto,
+    queryFn: getProfilePhoto,
   });
 
-  const { historyData } = useGetHistory(id_original);
+  const { historyData } = useGetWorkerHistory(id_original);
 
   useEffect(() => {
     setSelectedValue(select_option || '');

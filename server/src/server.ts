@@ -1,18 +1,20 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import express from "express";
 import cors from "cors";
+import express from "express";
 
-import { offboarding_router } from "./routes/on_off_boarding.route";
-import authRoutes from "./routes/auth.route";
-import sessionRoutes from "./routes/session_route";
-import authenticate from "./middleware/authenticate";
-import { APP_ORIGIN } from "./constants/env";
 import cookieParser from "cookie-parser";
-import userRoutes from "./routes/user.route";
+import { APP_ORIGIN } from "./constants/env";
+import authenticate from "./middleware/authenticate";
 import errorHandler from "./middleware/errorHandler";
-import { checkChef } from "./utils/checkChef";
+import authRoutes from "./routes/auth.route";
+import { employeeRoutes } from "./routes/employee.route";
+import { indexRoutes } from "./routes/index.route";
+import sessionRoutes from "./routes/session.route";
+import { templateRoutes } from "./routes/template.route";
+import { userRoutes } from "./routes/user.route";
+import { worker } from "./routes/worker.route";
 
 const PORT = process.env.PORT || 3000;
 
@@ -68,9 +70,13 @@ app.use("/sessions", authenticate, sessionRoutes);
 // protected routes
 
 app.use("/user", authenticate, userRoutes);
+app.use("/template", authenticate, templateRoutes);
+app.use("/employee", authenticate, employeeRoutes);
+
+app.use("/index", authenticate, indexRoutes);
 
 // worker
-app.use("/offboarding", offboarding_router);
+app.use("/worker", worker);
 
 app.use(errorHandler);
 

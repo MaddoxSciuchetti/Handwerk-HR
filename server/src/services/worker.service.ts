@@ -1,34 +1,17 @@
 import { prisma } from "@/lib/prisma";
+import { InsertWorkerHistory } from "@/schemas/worker.schemas";
+import {
+    InsertWorker,
+    InsertWorkerResponse,
+    WorkerForm,
+} from "@/types/worker.types";
 import { datevalidation } from "@/utils/datevalidation";
-import { INTERNAL_SERVER_ERROR } from "../constants/http";
-import { HistorySchemaType } from "../controllers/on_off_boarding.controller";
-import appAssert from "../utils/appAssert";
-import { getFormReminderTemplate } from "../utils/emailTemplates";
-import { sendMail } from "../utils/sendMail";
 
-type dataObject = {
-    type: string;
-    vorname: string;
-    nachname: string;
-    email: string;
-    geburtsdatum: string;
-    adresse: string;
-    eintrittsdatum: string;
-    position: string;
-};
-
-type returnObject = {
-    user: {
-        id: number;
-        vorname: string;
-        nachname: string;
-    };
-    employee_form: number;
-};
-
-export const createUser = (data: dataObject): Promise<returnObject> => {
+export const insertWorker = (
+    data: InsertWorker,
+): Promise<InsertWorkerResponse> => {
     return prisma.$transaction(async (tx: any) => {
-        const user = await tx.users.create({
+        const worker = await tx.users.create({
             data: {
                 vorname: data.vorname,
                 nachname: data.nachname,
@@ -47,7 +30,7 @@ export const createUser = (data: dataObject): Promise<returnObject> => {
 
         const employee_forms_table = await tx.employee_forms.create({
             data: {
-                user_id: user.id,
+                user_id: worker.id,
                 form_type: data.type,
             },
             select: {
@@ -74,47 +57,14 @@ export const createUser = (data: dataObject): Promise<returnObject> => {
         });
 
         return {
-            user,
+            worker,
             employee_form: employee_forms_table.id,
         };
     });
 };
 
-export const addExtraFormFieldDB = async (data: {
-    description: string;
-    template_type: "ONBOARDING" | "OFFBOARDING";
-    owner: string;
-}) => {
-    return prisma.$transaction(async (tx) => {
-        const newField = await tx.form_fields.create({
-            data: {
-                description: data.description,
-                template_type: data.template_type,
-                owner: data.owner,
-            },
-        });
-        const formType =
-            data.template_type === "OFFBOARDING" ? "Offboarding" : "Onboarding";
-
-        const existingForms = await tx.employee_forms.findMany({
-            where: { form_type: formType },
-            select: { id: true },
-        });
-        if (existingForms.length > 0) {
-            await tx.form_inputs.createMany({
-                data: existingForms.map((form) => ({
-                    employee_form_id: form.id,
-                    form_field_id: newField.form_field_id,
-                })),
-            });
-        }
-
-        return newField;
-    });
-};
-
-export const fetchUser = async () => {
-    const user_information = await prisma.users.findMany({
+export const queryWorkerData = async () => {
+    const worker = await prisma.users.findMany({
         where: {
             employee_forms: {
                 some: {
@@ -134,27 +84,22 @@ export const fetchUser = async () => {
             },
         },
     });
-
-    user_information.forEach((user) => {
-        console.log(user.employee_forms);
-    });
-
     return {
-        user_information,
+        worker: worker,
     };
 };
 
-export const deleteUser = async (data: number) => {
-    const delete_user = await prisma.users.delete({
+export const removeWorker = async (data: number) => {
+    const worker = await prisma.users.delete({
         where: {
             id: data,
         },
     });
 
-    return delete_user;
+    return worker;
 };
 
-export const getUserFormData = async (id: any) => {
+export const queryWorkerById = async (id: any) => {
     return await prisma.users.findUnique({
         where: {
             id: id,
@@ -213,13 +158,7 @@ export const getUserFormData = async (id: any) => {
     });
 };
 
-type Data = {
-    id: number;
-    editcomment: string;
-    select_option: string;
-};
-
-export const editdata = async (data: Data) => {
+export const modifyWorker = async (data: WorkerForm) => {
     return await prisma.form_inputs.update({
         where: {
             id: data.id,
@@ -231,23 +170,7 @@ export const editdata = async (data: Data) => {
     });
 };
 
-type historySchema = {
-    editcomment: string;
-    select_option: string;
-};
-
-export const insertHistoryData = async (data: HistorySchemaType) => {
-    return await prisma.historyFormData.createMany({
-        data: {
-            status: data.result.select_option,
-            edit: data.result.editcomment,
-            form_input_id: data.result.id,
-            changed_by: data.user.id,
-        },
-    });
-};
-
-export const getHistoryData = async (data: number) => {
+export const queryWorkerHistory = async (data: number) => {
     return await prisma.historyFormData.findMany({
         where: {
             form_input_id: data,
@@ -267,7 +190,18 @@ export const getHistoryData = async (data: number) => {
     });
 };
 
-export const insertFileData = async (fileData: {
+export const insertWorkerHistory = async (data: InsertWorkerHistory) => {
+    return await prisma.historyFormData.createMany({
+        data: {
+            status: data.result.select_option,
+            edit: data.result.editcomment,
+            form_input_id: data.result.id,
+            changed_by: data.user.id,
+        },
+    });
+};
+
+export const insertWorkerFile = async (fileData: {
     userId: number;
     original_filename: string;
     file_size: number;
@@ -305,7 +239,7 @@ export const insertFileData = async (fileData: {
     }
 };
 
-export const fetchFileData = async (userId: number) => {
+export const queryWorkerFiles = async (userId: number) => {
     const files = await prisma.workerFiles.findMany({
         where: {
             employee_forms: {
@@ -320,12 +254,11 @@ export const fetchFileData = async (userId: number) => {
             },
         },
     });
-    console.log("DIRECT ACCESS TO DATABASE FILES");
-    console.log(files);
+
     return files;
 };
 
-export const deleteFiles = async (id: number) => {
+export const removeWorkerFile = async (id: number) => {
     const existingFile = await prisma.workerFiles.findUnique({
         where: { id },
     });
@@ -335,20 +268,4 @@ export const deleteFiles = async (id: number) => {
     return await prisma.workerFiles.delete({
         where: { id },
     });
-};
-
-export const sendEmployeeEmail = async (email: string) => {
-    const { data, error } = await sendMail({
-        to: email,
-        ...getFormReminderTemplate(),
-    });
-    appAssert(
-        data?.id,
-        INTERNAL_SERVER_ERROR,
-        `${error?.name} - ${error?.message}`,
-    );
-
-    return {
-        emailId: data.id,
-    };
 };

@@ -2,8 +2,8 @@ import API from '@/config/apiClient';
 import { User } from '@/features/user-profile/types/auth.type';
 import {
   DescriptionFieldResponse,
-  EditDescriptionForm,
   SuccessResponse,
+  EditDescriptionForm as UpdateWorkerDescription,
 } from '@/types/api.types';
 import {
   File_Request,
@@ -11,61 +11,61 @@ import {
   InsertHistoryData,
 } from '../types/index.types';
 
-export const formattedData = async (
+export const getWorkerById = async (
   id: number,
   param: string
 ): Promise<DescriptionFieldResponse> => {
   const response = await API.get<
     DescriptionFieldResponse,
     DescriptionFieldResponse
-  >(`offboarding/user/${id}?param1=${param}`);
+  >(`worker/getWorker/${id}?param1=${param}`);
   return response;
 };
 
-export const insertHistoryData = async (
+export const updateWorkerHistory = async (
   result: InsertHistoryData,
   user: User
 ) => {
-  const response = await API.post(`offboarding/editHisoryData`, {
+  const response = await API.post(`worker/updateWorkerHistory`, {
     result,
     user,
   });
   return response;
 };
 
-export const editData = async (formData: EditDescriptionForm) => {
+export const updateWorkerData = async (formData: UpdateWorkerDescription) => {
   const response = await API.put<SuccessResponse, SuccessResponse>(
-    'offboarding/editdata',
+    'worker/updateWorker',
     formData
   );
 
   return response;
 };
 
-export const getHistoryData = async (id: number): Promise<HistoryData[]> => {
+export const getWorkerHistory = async (id: number): Promise<HistoryData[]> => {
   const response = await API.get<HistoryData[], HistoryData[]>(
-    `/offboarding/getHistoryData/${id}`
+    `worker/getWorkerHistory/${id}`
   );
   return response;
 };
 
-export const fetchFileData = async (id: number): Promise<File_Request[]> => {
+export const getWorkerFiles = async (id: number): Promise<File_Request[]> => {
   const response = API.get<File_Request[], File_Request[]>(
-    `/offboarding/getFileData/file/${id}`
+    `worker/getWorkerFiles/${id}`
   );
   return response;
 };
 
 export const fetchCloudUrl = async (cloud_key: string): Promise<string> => {
   const response = await API.get<string, string>(
-    `/offboarding/getCloudUrl?cloud_key=${encodeURIComponent(cloud_key)}`,
+    `worker/getCloudUrl?cloud_key=${encodeURIComponent(cloud_key)}`,
     { responseType: 'blob' }
   );
   return response;
 };
 
-export const deleteFileData = async (
+export const deleteWorkerFile = async (
   id: number
 ): Promise<Pick<SuccessResponse, 'success'>> => {
-  return API.delete(`offboarding/deleteFileData/${id}`);
+  return API.delete(`worker/deleteWorkerFile/${id}`);
 };

@@ -6,9 +6,9 @@ import { Button } from '../../../../../components/ui/button';
 import FileUpload01 from '../../../../../components/ui/file_upload/form-main';
 import { Spinner } from '../../../../../components/ui/spinner';
 import {
-  deleteFileData,
+  deleteWorkerFile,
   fetchCloudUrl,
-  fetchFileData,
+  getWorkerFiles,
 } from '../../../api/index.api';
 import { File_Request } from '../../../types/index.types';
 import { fileIcon, getFileName } from '../../../utils/fileHandling';
@@ -27,13 +27,13 @@ function WorkerFileUploads({ id }: WorkerFileUploadsProps) {
     isFetching,
   } = useQuery<File_Request[]>({
     queryKey: ['historyData', id],
-    queryFn: () => fetchFileData(id),
+    queryFn: () => getWorkerFiles(id),
   });
 
   const queryClient = useQueryClient();
 
   const { mutate: deleteFiles } = useMutation({
-    mutationFn: (fileId: number) => deleteFileData(fileId),
+    mutationFn: (fileId: number) => deleteWorkerFile(fileId),
     onMutate: async (fileId) => {
       await queryClient.cancelQueries({ queryKey: ['historyData', id] });
 

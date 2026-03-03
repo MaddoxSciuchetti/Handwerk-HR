@@ -26,7 +26,6 @@ export const login = async (data: LoginRequest): Promise<LoginResponse> => {
 export const signup = async (
   data: RegisterRequest
 ): Promise<RegisterResponse> => {
-  console.log('why testUser', data);
   return API.post<RegisterRequest, RegisterResponse>('/auth/register', data);
 };
 

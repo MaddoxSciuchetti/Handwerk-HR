@@ -1,4 +1,4 @@
-import { featureRequest } from '@/apis/index.apis';
+import { sendFeatureRequest } from '@/apis/index.apis';
 import { DragEvent, useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Button } from '../../ui/button';
@@ -21,7 +21,8 @@ function FeatureModal() {
     setValue,
     formState: { errors },
   } = useForm<TFeatureForm>();
-  const onSubmit: SubmitHandler<TFeatureForm> = (data) => featureRequest(data);
+  const onSubmit: SubmitHandler<TFeatureForm> = (data) =>
+    sendFeatureRequest(data);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);

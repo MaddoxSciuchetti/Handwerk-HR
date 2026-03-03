@@ -1,4 +1,4 @@
-import { postFile } from '@/apis/index.apis';
+import { createWorkerFile } from '@/apis/index.apis';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -33,7 +33,7 @@ export default function FileUpload01({ id, setModal }: FileUploadProps01) {
     isPending: isLoading,
     error,
   } = useMutation({
-    mutationFn: (files: File[]) => postFile(files, id),
+    mutationFn: (files: File[]) => createWorkerFile(files, id),
     onSuccess: () => {
       console.log('Upload successful, invalidting');
       queryClient.invalidateQueries({

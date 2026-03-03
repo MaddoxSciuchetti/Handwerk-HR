@@ -236,7 +236,7 @@ export const refreshUserAccessToken = async (refreshToken: string) => {
     };
 };
 
-export const verifyEmail = async (code: string) => {
+export const validationEmailCode = async (code: string) => {
     const validCode = await prisma.verificationCode.findFirst({
         where: {
             id: code,
@@ -333,7 +333,7 @@ type ResetPasswordParams = {
     verificationCode: string;
 };
 
-export const resetPassword = async ({
+export const modifyPassword = async ({
     password,
     verificationCode,
 }: ResetPasswordParams) => {

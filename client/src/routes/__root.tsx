@@ -10,7 +10,7 @@ export const Route = createRootRoute({
 
 function RootLayout() {
   const location = useLocation();
-  const verifyPages = new Set([
+  const isVerifiedPage = new Set([
     '/login',
     '/signup',
     '/verify-email',
@@ -18,9 +18,10 @@ function RootLayout() {
     '/password/reset',
     '/',
   ]);
-  const isbeforeDoorman = verifyPages.has(location.pathname);
 
-  if (isbeforeDoorman) {
+  const isDoorman = isVerifiedPage.has(location.pathname);
+
+  if (isDoorman) {
     return (
       <main className="min-h-screen">
         <ThemeProvider>

@@ -1,11 +1,12 @@
 import { CREATED, OK, UNAUTHORIZED } from "../constants/http";
+
 import {
     createAccount,
     loginUser,
+    modifyPassword,
     refreshUserAccessToken,
-    resetPassword,
     sendPasswordResetEmail,
-    verifyEmail,
+    validationEmailCode,
 } from "../services/auth.service";
 import catchErrors from "../utils/catchErrors";
 import {
@@ -15,71 +16,38 @@ import {
     setAuthCookies,
 } from "../utils/cookies";
 import { verifyToken } from "../utils/jwt";
+
+import { prisma } from "@/lib/prisma";
 import {
     emailSchema,
     loginSchema,
     registerSchema,
     resetPasswordSchema,
     verificationCodeSchema,
-} from "./auth.Schemas";
-
-import { prisma } from "@/lib/prisma";
+} from "@/schemas/auth.Schemas";
 import appAssert from "../utils/appAssert";
 
-export const registerHandler = catchErrors(async (req, res) => {
-    //validate request
-
+export const register = catchErrors(async (req, res) => {
     const request = registerSchema.parse({
         ...req.body,
         userAgent: req.headers["user-agent"],
     });
-
-    // call service
-
     const { user, accessToken, refreshToken } = await createAccount(request);
-
-    // send email to person -> with their credentials
-
-    // setAuthCookies({ res, accessToken, refreshToken })
-    // return response
     return res.status(CREATED).json(user);
 });
 
-export const loginHandler = catchErrors(async (req, res) => {
-    // validate request
-
+export const login = catchErrors(async (req, res) => {
     const request = loginSchema.parse({
         ...req.body,
         userAgent: req.headers["user-agent"],
     });
-
-    // call service
-
     const { accessToken, refreshToken } = await loginUser(request);
 
     return setAuthCookies({ res, accessToken, refreshToken }).status(OK).json({
         message: "Login sucessful",
     });
 });
-
-export const logoutHandler = catchErrors(async (req, res) => {
-    const accessToken = req.cookies.accessToken as string | undefined;
-    const { payload } = verifyToken(accessToken || "");
-
-    if (payload) {
-        await prisma.session.delete({
-            where: {
-                id: payload.sessionId,
-            },
-        });
-    }
-
-    return clearAuthCookies(res).status(OK).json({
-        message: "Logout sucessfull",
-    });
-});
-
-export const refreshHandler = catchErrors(async (req, res) => {
+export const refresh = catchErrors(async (req, res) => {
     console.log(req.cookies.refreshToken);
     const refreshToken = req.cookies.refreshToken as string | undefined;
     appAssert(refreshToken, UNAUTHORIZED, "Missing refresh token");
@@ -103,18 +71,35 @@ export const refreshHandler = catchErrors(async (req, res) => {
         });
 });
 
-export const verifyEmailHandler = catchErrors(async (req, res) => {
+export const logout = catchErrors(async (req, res) => {
+    const accessToken = req.cookies.accessToken as string | undefined;
+    const { payload } = verifyToken(accessToken || "");
+
+    if (payload) {
+        await prisma.session.delete({
+            where: {
+                id: payload.sessionId,
+            },
+        });
+    }
+
+    return clearAuthCookies(res).status(OK).json({
+        message: "Logout sucessfull",
+    });
+});
+
+export const verifyEmail = catchErrors(async (req, res) => {
     console.log(req.params.code);
     const verificationCode = verificationCodeSchema.parse(req.params.code);
 
-    await verifyEmail(verificationCode);
+    await validationEmailCode(verificationCode);
 
     return res.status(OK).json({
         message: "Email was sucessfully verified",
     });
 });
 
-export const sendPasswordResetHandler = catchErrors(async (req, res) => {
+export const sendPassword = catchErrors(async (req, res) => {
     const email = emailSchema.parse(req.body.email);
 
     await sendPasswordResetEmail(email);
@@ -124,10 +109,10 @@ export const sendPasswordResetHandler = catchErrors(async (req, res) => {
     });
 });
 
-export const resetPasswordHandler = catchErrors(async (req, res) => {
+export const resetPassword = catchErrors(async (req, res) => {
     const request = resetPasswordSchema.parse(req.body);
 
-    await resetPassword(request);
+    await modifyPassword(request);
 
     return clearAuthCookies(res)
         .status(OK)

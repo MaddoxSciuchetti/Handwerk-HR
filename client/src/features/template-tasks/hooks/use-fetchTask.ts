@@ -1,11 +1,11 @@
 import { DescriptionResponse } from '@/types/api.types';
 import { useQuery } from '@tanstack/react-query';
-import { fetchTaskData } from '../api';
+import { getTemplateTask } from '../api';
 
 function useFetchTask() {
   const { data } = useQuery<DescriptionResponse[]>({
     queryKey: ['description_root'],
-    queryFn: fetchTaskData,
+    queryFn: getTemplateTask,
   });
 
   const OnboardingData = data?.filter(

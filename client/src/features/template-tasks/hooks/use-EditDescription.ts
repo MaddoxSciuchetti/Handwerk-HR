@@ -2,7 +2,7 @@ import { useSidebar } from '@/components/ui/sidebar';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { editTaskData } from '../api';
+import { updateTemplateTask } from '../api';
 import { EditDescriptionData } from '../types/taskForm.types';
 
 function useEditDescription() {
@@ -44,7 +44,7 @@ function useEditDescription() {
     Error,
     EditDescriptionData
   >({
-    mutationFn: editTaskData,
+    mutationFn: updateTemplateTask,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['description_root'] });
       setModalState({ selectedItem: null });

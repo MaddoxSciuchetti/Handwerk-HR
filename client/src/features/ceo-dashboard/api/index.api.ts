@@ -5,12 +5,12 @@ import { SendReminder } from '../types/adminModal.types';
 import { EmployeeWorker as EmployeeWorkerData } from '../types/employeeform.types';
 
 export const getEmployeeWorkerData = async (): Promise<EmployeeWorkerData> => {
-  const response = await API.get('/user/employeeData');
+  const response = await API.get('/employee/getEmployeeWorkerData');
   return employeeWorkerSchema.parse(response);
 };
 
 export const sendReminderWorker = async (
   data: SendReminder
 ): Promise<Pick<SuccessResponse, 'success'>> => {
-  return API.post('/offboarding/sendReminder', data);
+  return API.post('/index/sendReminder', data);
 };

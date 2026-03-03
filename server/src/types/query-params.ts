@@ -1,3 +1,3 @@
-export interface CreateUserQueryParams {
-    loginAfterCreate?: boolean;
-}
+// export interface CreateUserQueryParams {
+//     loginAfterCreate?: boolean;
+// }
