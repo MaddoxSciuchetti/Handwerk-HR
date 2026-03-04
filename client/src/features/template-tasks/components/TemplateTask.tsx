@@ -1,3 +1,4 @@
+import CenteredDiv from '@/components/alerts/layout-wrapper/CenteredDiv';
 import ModalOverlay from '@/components/modal/ModalOverlay';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -26,7 +27,11 @@ function TemplateTasks() {
   } = useDescription();
 
   if (OnboardingData === undefined || OffboardingData === undefined) {
-    return <Spinner className="size-8" />;
+    return (
+      <CenteredDiv>
+        <Spinner className="w-8" />
+      </CenteredDiv>
+    );
   }
 
   return (

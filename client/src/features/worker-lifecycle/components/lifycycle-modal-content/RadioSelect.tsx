@@ -22,7 +22,7 @@ const RadioSelect = ({
   return (
     <>
       <RadioGroup
-        className="h-full flex flex-row items-center"
+        className="h-full flex flex-row items-center "
         onValueChange={(value) =>
           setSelectedOption(value as 'Onboarding' | 'Offboarding')
         }
@@ -30,7 +30,7 @@ const RadioSelect = ({
       >
         <FieldLabel
           htmlFor="plus-plan"
-          className={`${selectedOption === 'Onboarding' ? ' bg-gray-300 scale-105' : ''} cursor-pointer rounded-lg p-3 hover:bg-gray-300 hover:scale-105`}
+          className={`${selectedOption === 'Onboarding' ? ' bg-gray-300 scale-105' : ''} cursor-pointer rounded-xl p-3 hover:bg-gray-300 hover:scale-105`}
         >
           <Field orientation="horizontal">
             <FieldContent className="text-left">
@@ -42,7 +42,7 @@ const RadioSelect = ({
         </FieldLabel>
         <FieldLabel
           htmlFor="pro-plan"
-          className={`${selectedOption === 'Offboarding' ? 'active bg-gray-300 scale-105' : ''} cursor-pointer rounded-lg p-3 hover:bg-gray-300 hover:scale-105`}
+          className={`${selectedOption === 'Offboarding' ? 'active bg-gray-300 scale-105' : ''} cursor-pointer rounded-xl p-3 hover:bg-gray-300 hover:scale-105`}
         >
           <Field orientation="horizontal">
             <FieldContent className="text-left">

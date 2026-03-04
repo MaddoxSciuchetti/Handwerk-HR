@@ -1,4 +1,3 @@
-// import { Container, Heading, Spinner, Text, VStack } from "@chakra-ui/react";
 import SessionCard from '@/features/auth/components/SessionCard';
 import useSessions from '@/hooks/use-Sessions';
 

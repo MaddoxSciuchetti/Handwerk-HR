@@ -1,0 +1,1 @@
+export type USER_PERMISSION = 'CHEF' | 'MITARBEITER';

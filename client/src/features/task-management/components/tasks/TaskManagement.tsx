@@ -1,3 +1,4 @@
+import CenteredDiv from '@/components/alerts/layout-wrapper/CenteredDiv';
 import { Spinner } from '@/components/ui/spinner';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import useAuth from '@/features/user-profile/hooks/use-Auth';
@@ -37,7 +38,12 @@ const TaskManagement: React.FC<OffboardingFormProps> = ({ id, search }) => {
 
   const { handleSubmit } = useTaskSubmit(numericId, user, closeModal);
 
-  if (isLoading) return <Spinner />;
+  if (isLoading)
+    return (
+      <CenteredDiv>
+        <Spinner className="w-8" />
+      </CenteredDiv>
+    );
   if (!data) return <div>Daten Laden</div>;
 
   return (
