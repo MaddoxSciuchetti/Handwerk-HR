@@ -1,30 +1,38 @@
 import { useMutation } from '@tanstack/react-query';
-import { useState } from 'react';
-import { toast } from 'sonner';
-import sendAgentMessage from '../apis/agent.apis';
+import { useRef, useState } from 'react';
+import { sendAgentMessage } from '../apis/agent.apis';
 import { SENDAGENT } from '../consts/angent.consts';
+import { AgentResponse } from '../types/agent.types';
 
 function useSendAgentMessage() {
   const [message, setMessage] = useState<string>('');
+  const [agentreply, setAgentReply] = useState<AgentResponse>();
+  const inputRef = useRef<HTMLInputElement>(null);
+  console.log(agentreply);
 
-  const sendAgentMessageMutation = useMutation<string, Error, string>({
+  const sendAgentMessageMutation = useMutation<AgentResponse, Error, string>({
     mutationKey: [SENDAGENT],
-    mutationFn: () => sendAgentMessage(message),
-
-    onSuccess: () => {
+    mutationFn: sendAgentMessage,
+    onSuccess: (data) => {
+      setAgentReply(data);
       console.log('sucess');
-      toast('Event has occured', {
-        description: 'hello',
-        action: {
-          label: 'Uno',
-          onClick: () => console.log('undo'),
-        },
-      });
-      console.log('toast does not work');
     },
   });
+  const handleClick = () => {
+    const message = inputRef.current?.value;
+    if (!message?.trim()) return;
+    setMessage('');
+    sendAgentMessageMutation.mutate(message);
+  };
 
-  return { sendAgentMessageMutation, message, setMessage };
+  return {
+    sendAgentMessageMutation,
+    message,
+    setMessage,
+    handleClick,
+    agentreply,
+    inputRef,
+  };
 }
 
 export default useSendAgentMessage;

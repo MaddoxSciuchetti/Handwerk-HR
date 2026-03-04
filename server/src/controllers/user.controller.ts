@@ -1,4 +1,7 @@
 import { generatePresignedUrl, uploadFileToS3 } from "@/config/aws";
+import runQuery from "@/utils/runQuery";
+import { Request, Response } from "express";
+import OpenAI from "openai";
 import { INTERNAL_SERVER_ERROR, NOT_FOUND, OK } from "../constants/http";
 import {
     createDescription,
@@ -9,6 +12,8 @@ import {
 } from "../services/user.protected";
 import appAssert from "../utils/appAssert";
 import catchErrors from "../utils/catchErrors";
+
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export const getUser = catchErrors(async (req, res) => {
     const id = req.userId;
@@ -70,11 +75,60 @@ export const getProfilePhoto = catchErrors(async (req, res) => {
     return res.status(OK).json(presignedUrl);
 });
 
-export const postAgentMessage = async (req, res) => {
+export const postAgentMessage = async (req: Request, res: Response) => {
     try {
-        const data = req.body.value;
-        console.log(data);
-        return res.status(OK).json({ sucess: true });
+        const message = req.body.agentMessage;
+        console.log(message);
+        const response = await client.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+                {
+                    role: "system",
+                    content: `You are a database assistant for a handyman onboarding/offboarding app.
+                            
+                Extract the user's intent and return ONLY a valid JSON object with this structure:
+                {
+                "action": "count" | "list" | "get",
+                "entity": "workers" | "forms" | "form_inputs",
+                "filter": {
+                    "form_type": "ONBOARDING" | "OFFBOARDING" | null,
+                    "completed": true | false | null,
+                    "user_id": number | null
+                }
+                }
+
+                Rules:
+                - "workers" refers to the users table (actual handymen being onboarded/offboarded)
+                - "forms" refers to employee_forms
+                - "form_inputs" refers to individual form steps/fields
+                - Return ONLY the JSON, no explanation.`,
+                },
+                { role: "user", content: message },
+            ],
+            response_format: { type: "json_object" },
+        });
+
+        const intent = JSON.parse(response.choices[0].message.content ?? "");
+
+        const data = await runQuery(intent);
+
+        const finalResponse = await client.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+                {
+                    role: "system",
+                    content:
+                        "Format this database result into a friendly response for a chef managing handymen.",
+                },
+                { role: "user", content: message },
+                { role: "assistant", content: JSON.stringify(data) },
+            ],
+        });
+
+        const reply = finalResponse.choices[0].message.content;
+        console.log(reply);
+
+        return res.status(OK).json({ reply: reply });
     } catch (error) {
         console.log(error);
         return res.status(INTERNAL_SERVER_ERROR).json({ success: false });
