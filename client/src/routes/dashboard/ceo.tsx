@@ -1,4 +1,5 @@
 import ErrorAlert from '@/components/alerts/ErrorAlert';
+import CenteredDiv from '@/components/alerts/layout-wrapper/CenteredDiv';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import PermissionDenied from '@/components/alerts/PermissionDenied';
 import CeoDashboard from '@/features/ceo-dashboard/components/CeoDashboard';
@@ -12,7 +13,12 @@ export const Route = createFileRoute('/dashboard/ceo')({
 function RouteComponent() {
   const { user, isLoading, isError } = useAuth();
 
-  if (isLoading) return <LoadingAlert />;
+  if (isLoading)
+    return (
+      <CenteredDiv>
+        <LoadingAlert />
+      </CenteredDiv>
+    );
 
   if (isError || !user) return <ErrorAlert />;
 

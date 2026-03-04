@@ -3,6 +3,7 @@ import useDeleteEmployee from '../hooks/use-deleteEmployee';
 import useGetEmployees from '../hooks/use-getEmployees';
 
 import ErrorAlert from '@/components/alerts/ErrorAlert';
+import CenteredDiv from '@/components/alerts/layout-wrapper/CenteredDiv';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import ModalOverlay from '@/components/modal/ModalOverlay';
 import { useEmployeeModal } from '../hooks/use-employeeModal';
@@ -38,8 +39,20 @@ function EmployeeOverview() {
     }
   };
 
-  if (isLoading) return <LoadingAlert />;
-  if (isPending) return <LoadingAlert />;
+  if (isLoading)
+    return (
+      <CenteredDiv>
+        <LoadingAlert />
+      </CenteredDiv>
+    );
+
+  if (isPending)
+    return (
+      <CenteredDiv>
+        <LoadingAlert />
+      </CenteredDiv>
+    );
+
   if (isError) return <ErrorAlert message={error?.message} />;
   if (!EmployeeData) return <ErrorAlert message="no employees found" />;
 

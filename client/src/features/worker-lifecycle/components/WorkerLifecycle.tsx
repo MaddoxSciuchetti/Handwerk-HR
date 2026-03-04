@@ -1,4 +1,5 @@
 import ErrorAlert from '@/components/alerts/ErrorAlert';
+import CenteredDiv from '@/components/alerts/layout-wrapper/CenteredDiv';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import SuccessAlert from '@/components/alerts/SuccessAlert';
 import useAuth from '@/features/user-profile/hooks/use-Auth';
@@ -22,7 +23,13 @@ function WorkerLifeCycle() {
     toggleModal,
   } = useHome();
 
-  if (isLoading) return <LoadingAlert />;
+  if (isLoading)
+    return (
+      <CenteredDiv>
+        <LoadingAlert />
+      </CenteredDiv>
+    );
+
   if (isError || !user) return <ErrorAlert />;
   if (error) return <ErrorAlert message={error.message} />;
   if (isEmpty) return <SuccessAlert />;

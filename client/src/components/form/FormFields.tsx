@@ -1,13 +1,14 @@
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/trycatch';
 import { ErrorMessage } from '@hookform/error-message';
+import { ComponentProps } from 'react';
 import {
   FieldErrors,
   FieldValues,
   Path,
   UseFormRegister,
 } from 'react-hook-form';
-import { Label } from '@/components/ui/label';
-import { ComponentProps } from 'react';
 
 type FormFieldsProps<TFieldValues extends FieldValues> = Omit<
   ComponentProps<'input'>,
@@ -27,12 +28,17 @@ const FormFields = <TFieldValues extends FieldValues>({
   register,
   label,
   name,
+  className,
   ...props
 }: FormFieldsProps<TFieldValues>) => {
   return (
     <>
       {label && <Label>{label}</Label>}
-      <Input {...props} {...register(name)} />
+      <Input
+        className={cn('rounded-xl', className)}
+        {...props}
+        {...register(name)}
+      />
       <ErrorMessage
         errors={errors}
         name={name as any}
