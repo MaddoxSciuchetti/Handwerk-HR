@@ -9,7 +9,7 @@ import {
 
 import { useGetWorkerHistory } from '@/features/task-management/hooks/use-getWorkerHistory';
 import { useQuery } from '@tanstack/react-query';
-import { SubmitEvent, useEffect, useState } from 'react';
+import { SubmitEvent } from 'react';
 import { workerQueries } from '../../query-options/query.options';
 
 interface FormProps {
@@ -43,20 +43,9 @@ function WorkerForm({
   onEdit,
   is_substitute,
 }: FormProps) {
-  const [selectedValue, setSelectedValue] = useState<string>(
-    select_option || ''
-  );
-  const [editcommentValue, setEditComment] = useState<string>(
-    editcomment || ''
-  );
   const { historyData } = useGetWorkerHistory(id_original);
 
   const { data } = useQuery(workerQueries.getFoto());
-
-  useEffect(() => {
-    setSelectedValue(select_option || '');
-    setEditComment(editcomment || '');
-  }, [select_option, editcomment]);
 
   return (
     <div className="justify-center items-center hover:scale-101 mt-10">
@@ -66,7 +55,7 @@ function WorkerForm({
         name="valuesform"
       >
         <input type="hidden" id="id" name="id" value={id_original} />
-        <input type="hidden" name="select_option" value={selectedValue} />
+        <input type="hidden" name="select_option" value={select_option} />
         <input
           type="hidden"
           id="form_field_id"
@@ -127,20 +116,20 @@ function WorkerForm({
             <div>
               <span
                 className={
-                  selectedValue === 'erledigt'
+                  select_option === 'erledigt'
                     ? 'rounded-2xl bg-green-200 px-3 py-1 text-sm'
-                    : selectedValue === 'offen'
+                    : select_option === 'offen'
                       ? 'rounded-2xl bg-red-200 px-3 py-1 text-sm'
-                      : selectedValue === 'in_bearbeitung'
+                      : select_option === 'in_bearbeitung'
                         ? 'rounded-2xl bg-yellow-200 px-3 py-1 text-sm'
                         : ' rounded-2xl bg-red-200 px-3 py-1 text-sm'
                 }
               >
-                {selectedValue === 'erledigt' ? (
+                {select_option === 'erledigt' ? (
                   <span>Erledigt</span>
-                ) : selectedValue === 'in_bearbeitung' ? (
+                ) : select_option === 'in_bearbeitung' ? (
                   <span>In Bearbeitung</span>
-                ) : selectedValue === 'offen' ? (
+                ) : select_option === 'offen' ? (
                   <span>Offen</span>
                 ) : (
                   <span>Status</span>
@@ -152,10 +141,10 @@ function WorkerForm({
               <span className="rounded-2xl bg-gray-100 px-3 py-1 text-sm cursor-pointer group">
                 Letzter Kommentar
                 <div className="absolute bottom-full left-0 mb-2 p-3 bg-white border rounded-lg shadow-lg opacity-0 group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-10 ">
-                  {editcommentValue === '' ? (
+                  {editcomment === '' ? (
                     <span>Kein Kommentar</span>
                   ) : (
-                    editcommentValue
+                    editcomment
                   )}
                 </div>
               </span>
@@ -188,11 +177,11 @@ function WorkerForm({
                       </div>
                       <p>
                         Status:{' '}
-                        {selectedValue === 'erledigt' ? (
+                        {select_option === 'erledigt' ? (
                           <span>Erledigt</span>
-                        ) : selectedValue === 'in_bearbeitung' ? (
+                        ) : select_option === 'in_bearbeitung' ? (
                           <span>In Bearbeitung</span>
-                        ) : selectedValue === 'offen' ? (
+                        ) : select_option === 'offen' ? (
                           <span>Offen</span>
                         ) : (
                           <span>Kein Status</span>
