@@ -1,4 +1,4 @@
-import ChatLayout from '@/features/agent-ai/components/ChatLayout';
+import ChatMain from '@/features/agent-ai/components/ChatMain';
 import { createFileRoute } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/agent-ai')({
@@ -6,5 +6,5 @@ export const Route = createFileRoute('/agent-ai')({
 });
 
 function RouteComponent() {
-  return <ChatLayout />;
+  return <ChatMain />;
 }

@@ -1,17 +1,12 @@
-import ErrorAlert from '@/components/alerts/ErrorAlert';
 import AsyncWrapper from '@/components/alerts/layout-wrapper/AsyncWrapper';
 import useAuth from '@/features/user-profile/hooks/use-Auth';
 import useSendAgentMessage from '../hooks/use-SendAgentMessage';
 import ChatDisplay from './chat/ChatDisplay';
-import InputBar from './chat/InputBar';
+import ChatInput from './chat/ChatInput';
 
-type ChatLayoutProps = {};
-
-const ChatLayout = ({}: ChatLayoutProps) => {
+const ChatMain = () => {
   const { user, isError, isLoading } = useAuth();
   const { agentreply, handleClick, inputRef } = useSendAgentMessage();
-
-  if (agentreply === null) return <ErrorAlert />;
 
   return (
     <>
@@ -23,7 +18,7 @@ const ChatLayout = ({}: ChatLayoutProps) => {
       >
         <div className="h-full">
           <ChatDisplay agentreply={agentreply}>
-            <InputBar handleClick={handleClick} inputRef={inputRef} />
+            <ChatInput handleClick={handleClick} inputRef={inputRef} />
           </ChatDisplay>
         </div>
       </AsyncWrapper>
@@ -31,4 +26,4 @@ const ChatLayout = ({}: ChatLayoutProps) => {
   );
 };
 
-export default ChatLayout;
+export default ChatMain;

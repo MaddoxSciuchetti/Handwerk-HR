@@ -5,9 +5,8 @@ import { SENDAGENT } from '../consts/angent.consts';
 import { AgentResponse } from '../types/agent.types';
 
 function useSendAgentMessage() {
-  const [agentreply, setAgentReply] = useState<AgentResponse>();
+  const [agentreply, setAgentReply] = useState<AgentResponse | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  console.log(agentreply);
 
   const sendAgentMessageMutation = useMutation<AgentResponse, Error, string>({
     mutationKey: [SENDAGENT],
