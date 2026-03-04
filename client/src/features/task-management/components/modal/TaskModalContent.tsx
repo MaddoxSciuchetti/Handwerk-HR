@@ -60,7 +60,7 @@ function ModalContent({
               defaultValue={editcomment}
               id="editcomment"
               name="editcomment"
-              className="w-xl"
+              className="w-xl rounded-xl"
             />
 
             <input
@@ -81,18 +81,18 @@ function ModalContent({
                     value={select_option}
                     className={
                       selectedValue === 'erledigt'
-                        ? ' bg-green-200 px-3 py-1 text-sm w-71'
+                        ? ' bg-green-200 px-3 py-1 text-sm w-71 rounded-xl'
                         : selectedValue === 'offen'
-                          ? ' bg-red-200 px-3 py-1 text-sm w-71'
+                          ? ' bg-red-200 px-3 py-1 text-sm w-71 rounded-xl'
                           : selectedValue === 'in_bearbeitung'
-                            ? ' bg-yellow-200 px-3 py-1 text-sm w-71'
-                            : '  bg-red-200 px-3 py-1 text-sm w-71'
+                            ? ' bg-yellow-200 px-3 py-1 text-sm w-71 rounded-xl'
+                            : '  bg-red-200 px-3 py-1 text-sm w-71 rounded-xl'
                     }
                     // className="w-[17.75rem]"
                   >
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
-                  <SelectContent className="border-none">
+                  <SelectContent className="border-none ">
                     <SelectGroup className="bg-white cursor-pointer">
                       <SelectItem
                         className="hover:bg-gray-200 cursor-pointer"
@@ -121,7 +121,7 @@ function ModalContent({
               </div>
               <div>
                 <Button
-                  className="w-71 cursor-pointer hover:bg-gray-300"
+                  className="w-71 cursor-pointer hover:bg-gray-300 rounded-xl"
                   variant={'outline'}
                   type="submit"
                 >
