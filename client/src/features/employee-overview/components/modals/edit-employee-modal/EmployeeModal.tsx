@@ -23,7 +23,7 @@ function ModalEditMitarbeiter({
 
   return (
     <>
-      <div className="flex flex-col max-h-150 min-h-150 border border-amber-400 mt-40 mx-auto text-center items-center z-50 bg-gray-200 rounded-xl  w-xl">
+      <div className="flex flex-col max-h-150 min-h-150 border mt-40 mx-auto text-center items-center z-50 bg-gray-200 rounded-xl  w-xl">
         {isLoadingEmployee ? (
           <Spinner className="size-8" />
         ) : (

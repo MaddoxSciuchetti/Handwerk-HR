@@ -46,13 +46,15 @@ export function AppSidebar({ openModal }: { openModal: () => void }) {
   }
   return (
     <>
-      <Sidebar className="bg-sidebar">
-        <SidebarHeader className="mt-5 flex flex-row align-middle">
+      <Sidebar className=" p-5">
+        <SidebarHeader className="flex flex-row items-center">
           <UserMenu />
+          <SidebarGroupLabel className="flex text-xl items-center font-light ">
+            BSB Team
+          </SidebarGroupLabel>
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel className="">BSB Team</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu className="">
                 {accessibleItems.map((item, index) => {
@@ -60,13 +62,14 @@ export function AppSidebar({ openModal }: { openModal: () => void }) {
                   return (
                     <SidebarMenuItem className="" key={index}>
                       <SidebarMenuButton
+                        variant={'outline'}
                         ref={isTarget ? isItem : undefined}
                         asChild
-                        className="mt-2"
+                        className="mt-2 outline  hover:bg-gray-200 rounded-xl py-5"
                       >
                         <Link to={item.to}>
                           <item.icon />
-                          <span className="text-muted-foreground">
+                          <span className="text-muted-foreground text-md">
                             {item.title}
                           </span>
                         </Link>
@@ -81,7 +84,7 @@ export function AppSidebar({ openModal }: { openModal: () => void }) {
         <Button
           onClick={() => openModal()}
           variant={'outline'}
-          className="mb-1 cursor-pointer mx-1 bg-muted outline border"
+          className="mb-1 cursor-pointer mx-1 bg-muted hover:bg-gray-200 rounded-xl"
         >
           Feature Request{' '}
         </Button>
