@@ -12,7 +12,7 @@ type ChatInputProps = {
 const ChatInput = ({ handleClick, inputRef, isPending }: ChatInputProps) => {
   return (
     <>
-      <div className="flex justify-between border-2 w-170 mb-5 p-2 items-center rounded-4xl">
+      <div className="flex justify-between border-2 mb-5 p-2 items-center rounded-4xl">
         <Search inputRef={inputRef} handleClick={handleClick} />
         <Button
           disabled={isPending}

@@ -1,18 +1,13 @@
 import { ReactNode } from 'react';
-import { AgentResponse } from '../../types/agent.types';
 
 type ChatDisplayProps = {
   children: ReactNode;
-  agentreply: AgentResponse | null;
 };
 
-const ChatDisplay = ({ children, agentreply }: ChatDisplayProps) => {
+const ChatDisplay = ({ children }: ChatDisplayProps) => {
   return (
     <div className="flex items-end justify-center h-full border-2">
-      <div className="flex flex-col justify-end border-2 h-full">
-        <p>{agentreply?.reply}</p>
-        {children}
-      </div>
+      <div className="flex flex-col border h-full w-170">{children}</div>
     </div>
   );
 };
