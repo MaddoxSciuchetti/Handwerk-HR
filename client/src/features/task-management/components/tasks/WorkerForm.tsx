@@ -2,7 +2,7 @@ import 'react';
 
 import { useGetWorkerHistory } from '@/features/task-management/hooks/use-getWorkerHistory';
 import { useQuery } from '@tanstack/react-query';
-import { SubmitEvent, useEffect, useState } from 'react';
+import { SubmitEvent } from 'react';
 import { workerQueries } from '../../query-options/query.options';
 import TaskHistory from '../task-history/TaskHistory';
 import StatusBadge from './StatusBadge';
@@ -41,17 +41,17 @@ function WorkerForm({
   const { historyData } = useGetWorkerHistory(id_original);
   const { data } = useQuery(workerQueries.getFoto());
 
-  const [selectedValue, setSelectedValue] = useState<string>(
-    select_option || ''
-  );
-  const [editcommentValue, setEditComment] = useState<string>(
-    editcomment || ''
-  );
+  // const [selectedValue, setSelectedValue] = useState<string>(
+  //   select_option || ''
+  // );
+  // const [editcommentValue, setEditComment] = useState<string>(
+  //   editcomment || ''
+  // );
 
-  useEffect(() => {
-    setSelectedValue(select_option || '');
-    setEditComment(editcomment || '');
-  }, [select_option, editcomment]);
+  // useEffect(() => {
+  //   // setSelectedValue(select_option || '');
+  //   // setEditComment(editcomment || '');
+  // }, [select_option, editcomment]);
 
   return (
     <div className="justify-center items-center hover:scale-101 mt-10">
@@ -111,21 +111,21 @@ function WorkerForm({
             <div>
               <StatusBadge
                 badgeDescription={
-                  selectedValue === 'erledigt'
+                  select_option === 'erledigt'
                     ? 'Erledigt'
-                    : selectedValue === 'in_bearbeitung'
+                    : select_option === 'in_bearbeitung'
                       ? 'In Bearbeitung'
-                      : selectedValue === 'offen'
+                      : select_option === 'offen'
                         ? 'Offen'
                         : 'Status'
                 }
                 tooltip="Status"
                 className={
-                  selectedValue === 'erledigt'
+                  select_option === 'erledigt'
                     ? 'rounded-2xl bg-green-200 px-3 py-1 text-sm'
-                    : selectedValue === 'offen'
+                    : select_option === 'offen'
                       ? 'rounded-2xl bg-red-200 px-3 py-1 text-sm'
-                      : selectedValue === 'in_bearbeitung'
+                      : select_option === 'in_bearbeitung'
                         ? 'rounded-2xl bg-yellow-200 px-3 py-1 text-sm'
                         : ' rounded-2xl bg-red-200 px-3 py-1 text-sm'
                 }
@@ -133,7 +133,7 @@ function WorkerForm({
             </div>
             <StatusBadge
               badgeDescription={'Letzer Kommentar'}
-              tooltip={editcommentValue === '' ? 'Kein Kommentar' : editcomment}
+              tooltip={editcomment === '' ? 'Kein Kommentar' : editcomment}
             />
           </div>
 
