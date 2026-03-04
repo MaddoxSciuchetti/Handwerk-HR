@@ -7,7 +7,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '../../../../components/ui/button';
-import { Input } from '../../../../components/ui/input';
 import { Inputs } from '../../consts/form.consts';
 import { FormType } from '../../types/index.types';
 
@@ -39,18 +38,17 @@ export const WorkerForm = ({
   };
 
   const useMemoizedInputs = useMemo(() => {
-    return [
-      ...Inputs,
-      ...(type === 'Offboarding'
+    const offboardingInputs =
+      type === 'Offboarding'
         ? [
             {
               name: 'austrittsdatum' as const,
               placeholder: 'Austrittsdatum DD.MM.YYYY',
-              required: type === 'Offboarding' ? true : false,
+              required: type === 'Offboarding',
             },
           ]
-        : []),
-    ];
+        : [];
+    return [...Inputs, ...offboardingInputs];
   }, [type]);
 
   return (
@@ -67,11 +65,9 @@ export const WorkerForm = ({
         >
           Zurück{' '}
         </Button>
-        <h1 className="text-left">
-          Eingabe {type === 'Onboarding' ? 'Onboarding' : 'Offboarding'}{' '}
-        </h1>
+        <h1 className="text-left">Eingabe {type}</h1>
         <div className="grid grid-cols-2 gap-3 pb-10 ">
-          {useMemoizedInputs.map((input, index) => (
+          {useMemoizedInputs.map((input) => (
             <div key={input.name}>
               <FormFields
                 errors={errors}
@@ -82,7 +78,7 @@ export const WorkerForm = ({
             </div>
           ))}
 
-          <Input type="hidden" value={type} />
+          {/* <Input type="hidden" {...register('type')} value={type} /> */}
         </div>
         <Button
           variant={'outline'}
