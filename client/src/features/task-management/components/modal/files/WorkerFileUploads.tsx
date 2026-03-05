@@ -1,10 +1,9 @@
 import useDeleteWorkerFiles from '@/features/task-management/hooks/use-deleteWorkerFiles';
 import useGetWorkerFiles from '@/features/task-management/hooks/use-getWorkerFiles';
+import handleZipExport from '@/features/task-management/utils/handleZipExport';
 import { useToggleModal } from '@/hooks/use-toggleModal';
-import JSZip from 'jszip';
 import { Button } from '../../../../../components/ui/button';
 import { Spinner } from '../../../../../components/ui/spinner';
-import { fetchCloudUrl } from '../../../api/index.api';
 import { fileIcon, getFileName } from '../../../utils/fileHandling';
 import FileUpload01 from './file_upload/form-main';
 
@@ -15,26 +14,7 @@ type WorkerFileUploadsProps = {
 function WorkerFileUploads({ id }: WorkerFileUploadsProps) {
   const { fetchFiles, isFetching, isLoading } = useGetWorkerFiles(id);
   const { deleteFiles } = useDeleteWorkerFiles(id);
-
   const { toggleModal, modal, setModal } = useToggleModal();
-
-  const handleZipExport = async () => {
-    const zip = new JSZip();
-
-    const fetchPromises = fetchFiles?.map(async (value) => {
-      const blob = await fetchCloudUrl(value.cloud_key);
-      const fileName = value.original_filename.split('/').pop() ?? 'file';
-      zip.file(fileName, blob);
-    });
-
-    await Promise.all(fetchPromises ?? []);
-
-    const zipBlob = await zip.generateAsync({ type: 'blob' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(zipBlob);
-    link.download = 'archive.zip';
-    link.click();
-  };
 
   return (
     <>
@@ -57,7 +37,7 @@ function WorkerFileUploads({ id }: WorkerFileUploadsProps) {
 
                 <Button
                   variant={'outline'}
-                  onClick={() => handleZipExport()}
+                  onClick={() => handleZipExport(fetchFiles)}
                   className="ml-4 cursor-pointer p-1"
                 >
                   Zip export
@@ -113,7 +93,7 @@ function WorkerFileUploads({ id }: WorkerFileUploadsProps) {
 
               <Button
                 variant={'outline'}
-                onClick={() => handleZipExport()}
+                onClick={() => handleZipExport(fetchFiles)}
                 className="ml-4 cursor-pointer  p-1"
               >
                 Zip export
