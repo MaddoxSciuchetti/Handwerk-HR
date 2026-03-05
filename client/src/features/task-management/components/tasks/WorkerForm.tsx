@@ -1,11 +1,11 @@
-import 'react';
-
+import { Input } from '@/components/ui/input';
 import { useGetWorkerHistory } from '@/features/task-management/hooks/use-getWorkerHistory';
 import { useQuery } from '@tanstack/react-query';
 import { SubmitEvent } from 'react';
 import { workerQueries } from '../../query-options/query.options';
+import { STATUS_MAP } from '../../utils/selectOptionTernary';
 import TaskHistory from '../task-history/TaskHistory';
-import StatusBadge from './StatusBadge';
+import StatusBadgeBar from './StatusBadgeBar';
 
 interface FormProps {
   id_original: number;
@@ -41,17 +41,10 @@ function WorkerForm({
   const { historyData } = useGetWorkerHistory(id_original);
   const { data } = useQuery(workerQueries.getFoto());
 
-  // const [selectedValue, setSelectedValue] = useState<string>(
-  //   select_option || ''
-  // );
-  // const [editcommentValue, setEditComment] = useState<string>(
-  //   editcomment || ''
-  // );
-
-  // useEffect(() => {
-  //   // setSelectedValue(select_option || '');
-  //   // setEditComment(editcomment || '');
-  // }, [select_option, editcomment]);
+  const status = STATUS_MAP[select_option] ?? {
+    label: 'Status',
+    className: 'bg-red-200',
+  };
 
   return (
     <div className="justify-center items-center hover:scale-101 mt-10">
@@ -60,9 +53,9 @@ function WorkerForm({
         onSubmit={handleSubmit}
         name="valuesform"
       >
-        <input type="hidden" id="id" name="id" value={id_original} />
-        <input type="hidden" name="select_option" value={select_option} />
-        <input
+        <Input type="hidden" id="id" name="id" value={id_original} />
+        <Input type="hidden" name="select_option" value={select_option} />
+        <Input
           type="hidden"
           id="form_field_id"
           name="form_field_id"
@@ -87,56 +80,13 @@ function WorkerForm({
               }
             />
           </div>
-
-          <div className="flex gap-2 ">
-            {is_substitute ? (
-              <div className="flex flex-row gap-1">
-                <StatusBadge
-                  badgeDescription={substituteOwner}
-                  tooltip={'Ersatz'}
-                  className="bg-orange-200"
-                />
-                <StatusBadge
-                  badgeDescription={officialOwner}
-                  tooltip={'Verantwortlich'}
-                />
-              </div>
-            ) : (
-              <StatusBadge
-                badgeDescription={officialOwner}
-                tooltip={'Verantwortlich'}
-              />
-            )}
-
-            <div>
-              <StatusBadge
-                badgeDescription={
-                  select_option === 'erledigt'
-                    ? 'Erledigt'
-                    : select_option === 'in_bearbeitung'
-                      ? 'In Bearbeitung'
-                      : select_option === 'offen'
-                        ? 'Offen'
-                        : 'Status'
-                }
-                tooltip="Status"
-                className={
-                  select_option === 'erledigt'
-                    ? 'rounded-2xl bg-green-200 px-3 py-1 text-sm'
-                    : select_option === 'offen'
-                      ? 'rounded-2xl bg-red-200 px-3 py-1 text-sm'
-                      : select_option === 'in_bearbeitung'
-                        ? 'rounded-2xl bg-yellow-200 px-3 py-1 text-sm'
-                        : ' rounded-2xl bg-red-200 px-3 py-1 text-sm'
-                }
-              />
-            </div>
-            <StatusBadge
-              badgeDescription={'Letzer Kommentar'}
-              tooltip={editcomment === '' ? 'Kein Kommentar' : editcomment}
-            />
-          </div>
-
+          <StatusBadgeBar
+            is_substitute={is_substitute}
+            substituteOwner={substituteOwner}
+            officialOwner={officialOwner}
+            status={status}
+            editcomment={editcomment}
+          />
           <TaskHistory historyData={historyData} data={data} />
         </div>
       </form>
