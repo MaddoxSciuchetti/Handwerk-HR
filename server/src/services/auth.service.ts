@@ -41,9 +41,6 @@ export type createAccountParams = {
 export const createAccount = async (data: createAccountParams) => {
     //verify existing user does not exists
 
-    console.log("mitarbeiter daten");
-    console.log(data);
-
     const existingUser = await prisma.user.findUnique({
         where: {
             email: data.email.toLocaleLowerCase(),
