@@ -1,18 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { getWorkerFiles } from '../api/index.api';
-import { File_Request } from '../types/index.types';
+import { workerQueries } from '../query-options/queries/worker.queries';
 
 function useGetWorkerFiles(id: number) {
-  const {
-    data: fetchFiles,
-    isLoading,
-    isFetching,
-  } = useQuery<File_Request[]>({
-    queryKey: ['historyData', id],
-    queryFn: () => getWorkerFiles(id),
-  });
+  const { data: fetchFiles, isPending } = useQuery(workerQueries.getFiles(id));
 
-  return { fetchFiles, isLoading, isFetching };
+  return { fetchFiles, isPending };
 }
 
 export default useGetWorkerFiles;

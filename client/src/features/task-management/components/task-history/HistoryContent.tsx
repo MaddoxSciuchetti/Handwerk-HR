@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useGetWorkerHistory } from '../../hooks/use-getWorkerHistory';
 
-import { workerQueries } from '../../query-options/queries/query.queries';
+import { workerQueries } from '../../query-options/queries/worker.queries';
 import { STATUS_MAP } from '../../utils/selectOptionTernary';
 
 type HistoryContentProps = {

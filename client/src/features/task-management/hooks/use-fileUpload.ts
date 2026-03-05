@@ -1,6 +1,7 @@
 import { createWorkerFile } from '@/apis/index.apis';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { HistoryData } from '../consts/query-key.consts';
 
 function useFileUpload(id: number, setModal: (val: boolean) => void) {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
@@ -18,7 +19,7 @@ function useFileUpload(id: number, setModal: (val: boolean) => void) {
     onSuccess: () => {
       console.log('Upload successful, invalidting');
       queryClient.invalidateQueries({
-        queryKey: ['historyData', id],
+        queryKey: [HistoryData, id],
       });
 
       setModal(false);

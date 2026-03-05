@@ -1,6 +1,6 @@
 import CenteredDiv from '@/components/alerts/layout-wrapper/CenteredDiv';
 import ModalOverlay from '@/components/modal/ModalOverlay';
-import useDeleteWorkerFiles from '@/features/task-management/hooks/use-deleteWorkerFiles';
+import useDeleteWorkerFile from '@/features/task-management/hooks/use-deleteWorkerFile';
 import useGetWorkerFiles from '@/features/task-management/hooks/use-getWorkerFiles';
 import handleZipExport from '@/features/task-management/utils/handleZipExport';
 import { useToggleModal } from '@/hooks/use-toggleModal';
@@ -15,10 +15,17 @@ type WorkerFileUploadsProps = {
 
 function WorkerFileUploads({ id }: WorkerFileUploadsProps) {
   const { fetchFiles, isFetching, isLoading } = useGetWorkerFiles(id);
-  const { deleteFiles } = useDeleteWorkerFiles(id);
+  const { deleteFiles, options } = useDeleteWorkerFile(id);
   const { toggleModal, modal, setModal } = useToggleModal();
 
   if (isLoading || isFetching)
+    return (
+      <CenteredDiv>
+        <Spinner />
+      </CenteredDiv>
+    );
+
+  if (options.isPending)
     return (
       <CenteredDiv>
         <Spinner />
