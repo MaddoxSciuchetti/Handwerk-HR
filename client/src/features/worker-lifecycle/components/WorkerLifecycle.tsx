@@ -1,7 +1,6 @@
 import ErrorAlert from '@/components/alerts/ErrorAlert';
 import CenteredDiv from '@/components/alerts/layout-wrapper/CenteredDiv';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
-import SuccessAlert from '@/components/alerts/SuccessAlert';
 import useAuth from '@/features/user-profile/hooks/use-Auth';
 import LifeCycleModal from '@/features/worker-lifecycle/components/LifeCycleModal';
 import LifeCycleTable from '@/features/worker-lifecycle/components/LifeCycleTable';
@@ -32,7 +31,6 @@ function WorkerLifeCycle() {
 
   // if (isError || !user) return <ErrorAlert />;
   if (error) return <ErrorAlert message={error.message} />;
-  if (isEmpty) return <SuccessAlert />;
 
   return (
     <div className="rounded-2xl overflow-x-auto w-full h-full p-6 shadow-gray-200 shadow-lg overflow-auto">
