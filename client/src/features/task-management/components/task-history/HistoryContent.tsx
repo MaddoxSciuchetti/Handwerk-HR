@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useGetWorkerHistory } from '../../hooks/use-getWorkerHistory';
 
-import { workerQueries } from '../../query-options/queries/worker.queries';
+import { userQueries } from '@/query-options/queries/shared.queries';
 import { STATUS_MAP } from '../../utils/selectOptionTernary';
 
 type HistoryContentProps = {
@@ -10,7 +10,7 @@ type HistoryContentProps = {
 
 const HistoryContent = ({ id_original }: HistoryContentProps) => {
   const { historyData } = useGetWorkerHistory(id_original);
-  const { data } = useQuery(workerQueries.getFoto());
+  const { data } = useQuery(userQueries.getFoto());
 
   return (
     <>

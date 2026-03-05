@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 import { logout } from '@/apis/index.apis';
+import { PROFILEPICTURE } from '@/features/task-management/consts/query-key.consts';
 import { getProfilePhoto } from '@/features/user-profile/api/index.api';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
@@ -15,8 +16,8 @@ import { useNavigate } from '@tanstack/react-router';
 const UserMenu = () => {
   const queryClient = useQueryClient();
 
-  const { data, isPending } = useQuery<string>({
-    queryKey: ['profilepic'],
+  const { data } = useQuery<string>({
+    queryKey: [PROFILEPICTURE],
     queryFn: getProfilePhoto,
   });
 

@@ -1,3 +1,4 @@
+import { PROFILEPICTURE } from '@/constants/querykey.consts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
@@ -25,7 +26,7 @@ function useUploadProfieImage() {
   });
 
   const { data, isPending } = useQuery<string>({
-    queryKey: ['profilepic'],
+    queryKey: [PROFILEPICTURE],
     queryFn: getProfilePhoto,
   });
 
