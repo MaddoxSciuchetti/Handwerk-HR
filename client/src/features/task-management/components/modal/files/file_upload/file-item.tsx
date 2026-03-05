@@ -32,7 +32,6 @@ export function UploadedFileItem({
             className="w-full h-full object-cover"
           />
         </div>
-
         <div className="flex-1 pr-1">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
