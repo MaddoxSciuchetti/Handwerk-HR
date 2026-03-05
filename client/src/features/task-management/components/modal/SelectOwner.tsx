@@ -7,6 +7,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Dispatch, SetStateAction } from 'react';
+import { STATUS_MAP } from '../../utils/selectOptionTernary';
 
 type SelectOwnerProps = {
   setSelectedValue: Dispatch<SetStateAction<string>>;
@@ -26,16 +27,7 @@ const SelectOwner = ({
           id="status"
           name="select_option"
           value={select_option}
-          className={
-            selectedValue === 'erledigt'
-              ? ' bg-green-200 px-3 py-1 text-sm w-71 rounded-xl'
-              : selectedValue === 'offen'
-                ? ' bg-red-200 px-3 py-1 text-sm w-71 rounded-xl'
-                : selectedValue === 'in_bearbeitung'
-                  ? ' bg-yellow-200 px-3 py-1 text-sm w-71 rounded-xl'
-                  : '  bg-red-200 px-3 py-1 text-sm w-71 rounded-xl'
-          }
-          // className="w-[17.75rem]"
+          className={`px-3 py-1 text-sm w-71 rounded-xl ${STATUS_MAP[selectedValue]?.className ?? 'bg-red-200'}`}
         >
           <SelectValue placeholder="Status" />
         </SelectTrigger>
