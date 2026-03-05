@@ -21,7 +21,7 @@ export function LoginComponent({ className, ...props }: ComponentProps<'div'>) {
   } = useMutation({
     mutationFn: login,
     onSuccess: () => {
-      navigate({ to: '/employee-overview' });
+      navigate({ to: '/worker-lifycycle' });
     },
   });
 

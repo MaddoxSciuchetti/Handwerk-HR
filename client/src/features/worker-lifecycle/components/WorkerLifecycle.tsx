@@ -30,27 +30,29 @@ function WorkerLifeCycle() {
       </CenteredDiv>
     );
 
-  if (isError || !user) return <ErrorAlert />;
+  // if (isError || !user) return <ErrorAlert />;
   if (error) return <ErrorAlert message={error.message} />;
   if (isEmpty) return <SuccessAlert />;
 
   return (
     <div className="rounded-2xl overflow-x-auto w-full h-full p-6 shadow-gray-200 shadow-lg overflow-auto">
-      <SearchHeader
-        toggleModal={toggleModal}
-        search={search}
-        setSearch={setSearch}
-      />
-      <LifeCycleTable
-        filtered={filtered}
-        onRemove={deleteTaskMutation.mutate}
-        gotopage={handleNavigate}
-      />
-      <LifeCycleModal
-        modal={modal}
-        toggleModal={toggleModal}
-        createEmployeeMutation={createEmployeeMutation}
-      />
+      <div className="h-full w-full flex flex-col">
+        <SearchHeader
+          toggleModal={toggleModal}
+          search={search}
+          setSearch={setSearch}
+        />
+        <LifeCycleTable
+          filtered={filtered}
+          onRemove={deleteTaskMutation.mutate}
+          gotopage={handleNavigate}
+        />
+        <LifeCycleModal
+          modal={modal}
+          toggleModal={toggleModal}
+          createEmployeeMutation={createEmployeeMutation}
+        />
+      </div>
     </div>
   );
 }

@@ -41,9 +41,6 @@ export type createAccountParams = {
 export const createAccount = async (data: createAccountParams) => {
     //verify existing user does not exists
 
-    console.log("mitarbeiter daten");
-    console.log(data);
-
     const existingUser = await prisma.user.findUnique({
         where: {
             email: data.email.toLocaleLowerCase(),
@@ -62,8 +59,7 @@ export const createAccount = async (data: createAccountParams) => {
             password: hashedpassword,
             vorname: data.firstName,
             nachname: data.lastName,
-            cloud_url:
-                "https://bsb-file-storage.s3.eu-north-1.amazonaws.com/upload/profilepic/cmknti1f800028tmmhf5u5627/1771746653414-",
+            cloud_url: "",
         },
         omit: {
             password: true,

@@ -1,10 +1,10 @@
 import { sendFeatureRequest } from '@/apis/index.apis';
 import { DragEvent, useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
+import { FileDropzone } from '../../../features/task-management/components/modal/files/file_upload/dropzone';
+import { FileList } from '../../../features/task-management/components/modal/files/file_upload/file-list';
 import { Button } from '../../ui/button';
 import { CardContent } from '../../ui/card';
-import { FileDropzone } from '../../ui/file_upload/dropzone';
-import { FileList } from '../../ui/file_upload/file-list';
 import { Label } from '../../ui/label';
 import { Textarea } from '../../ui/textarea';
 

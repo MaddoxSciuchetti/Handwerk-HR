@@ -60,7 +60,7 @@ function EmployeeOverview() {
     <div className="rounded-2xl overflow-x-auto w-full h-full p-6 shadow-gray-200 shadow-lg overflow-auto">
       <div className="h-full w-full flex flex-col">
         <PageHeader openCreate={openCreate} />
-        <Table className=" text-left mt-5 border-seperate border-spacing-y-2">
+        <Table className="text-left mt-5 border-seperate border-spacing-y-2">
           <EmployeeTableHeader />
           <EmployeeTableBody
             EmployeeData={EmployeeData}

@@ -1,3 +1,4 @@
+import { Input } from '@/components/ui/input';
 import { DragEvent, RefObject } from 'react';
 import { uuid } from 'zod';
 
@@ -20,6 +21,7 @@ const UploadImageForm = ({
   fileInputRef,
   handleFileSelect,
 }: UploadImageFormProps) => {
+  console.log(data, 'data object');
   return (
     <>
       <form>
@@ -34,13 +36,17 @@ const UploadImageForm = ({
           ) : (
             <img
               key={`${data}+${uuid()}`}
-              src={data}
+              src={
+                data === undefined
+                  ? 'https://thumbs.dreamstime.com/b/default-profile-picture-avatar-photo-placeholder-vector-illustration-default-profile-picture-avatar-photo-placeholder-vector-189495158.jpg'
+                  : data
+              }
               className="w-full h-full"
-              alt="image"
+              alt="Upload your Profile"
             />
           )}
         </div>
-        <input
+        <Input
           type="file"
           ref={fileInputRef}
           className="hidden"
