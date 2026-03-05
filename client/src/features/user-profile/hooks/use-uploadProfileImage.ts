@@ -1,6 +1,6 @@
 import { PROFILEPICTURE } from '@/constants/querykey.consts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRef, useState } from 'react';
+import { DragEvent, useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { getProfilePhoto, uploadProfileFoto } from '../api/index.api';
 import { TFile } from '../types';
@@ -20,8 +20,7 @@ function useUploadProfieImage() {
   const uploadMutation = useMutation({
     mutationFn: uploadProfileFoto,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['profilepic'] });
-      console.log('invalidated and refetched');
+      await queryClient.invalidateQueries({ queryKey: [PROFILEPICTURE] });
     },
   });
 
@@ -47,11 +46,11 @@ function useUploadProfieImage() {
     fileInputRef.current?.click();
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: DragEvent) => {
     e.preventDefault();
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = (e: DragEvent) => {
     e.preventDefault();
     handleFileSelect(e.dataTransfer.files);
   };
