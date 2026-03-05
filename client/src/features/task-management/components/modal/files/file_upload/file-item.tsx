@@ -1,6 +1,6 @@
-import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
-import { useEffect } from "react";
+import { Button } from '@/components/ui/button';
+import { Trash2 } from 'lucide-react';
+import { useEffect } from 'react';
 
 interface UploadedFileItemProps {
   file: File;
@@ -32,7 +32,6 @@ export function UploadedFileItem({
             className="w-full h-full object-cover"
           />
         </div>
-
         <div className="flex-1 pr-1">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">

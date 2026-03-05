@@ -1,21 +1,13 @@
-import { signup } from '@/features/auth/api/auth.api';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { SubmitHandler, useForm } from 'react-hook-form';
+import { employeeMutations } from '../query-options/mutations/employee.mutations';
 import { CreateWorker, createWorkerSchema } from '../schemas/schema';
 
 function useCreateEmployee(toggleModal: () => void) {
-  const queryClient = useQueryClient();
-
-  const createEmployee = useMutation({
-    mutationFn: signup,
-    onSuccess: () => {
-      toggleModal();
-      queryClient.invalidateQueries({
-        queryKey: ['EmployeeDataSpecifics'],
-      });
-    },
-  });
+  const { mutate: createEmployee } = useMutation(
+    employeeMutations.createEmployee()
+  );
 
   const {
     register,
@@ -27,8 +19,11 @@ function useCreateEmployee(toggleModal: () => void) {
   });
 
   const onFormSubmit: SubmitHandler<CreateWorker> = (data: CreateWorker) => {
-    createEmployee.mutate(data);
-    console.log('formdata test', data);
+    createEmployee(data, {
+      onSuccess: () => {
+        toggleModal();
+      },
+    });
   };
 
   return {

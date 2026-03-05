@@ -1,5 +1,5 @@
-import { useSidebar } from "@/components/ui/sidebar";
-import { useState } from "react";
+import { useSidebar } from '@/components/ui/sidebar';
+import { useState } from 'react';
 
 export function useToggleModal() {
   const { toggleSidebar } = useSidebar();
