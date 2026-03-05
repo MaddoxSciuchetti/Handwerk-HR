@@ -28,7 +28,7 @@ const HistoryContent = ({ id_original }: HistoryContentProps) => {
                     <p>Nutzer: {item.auth_user?.email}</p>
                     <img className="ml-1 w-5 h-5 " src={data} />
                   </div>
-                  Status:
+                  Status: {''}
                   {STATUS_MAP[item.status ?? '']?.label ?? 'Kein Status'}
                   <p>Kommentar: {item.edit} </p>
                 </div>

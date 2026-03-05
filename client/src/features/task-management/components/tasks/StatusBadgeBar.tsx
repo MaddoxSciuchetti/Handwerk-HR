@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { STATUS_MAP } from '../../utils/selectOptionTernary';
 import StatusBadge from './StatusBadge';
 
@@ -20,6 +21,15 @@ const StatusBadgeBar = ({
     label: 'Status',
     className: 'bg-red-200',
   };
+
+  const [editcommentValue, setEditComment] = useState<string>(
+    editcomment || ''
+  );
+
+  useEffect(() => {
+    setEditComment(editcomment || '');
+  }, [editcomment]);
+
   return (
     <>
       <div className="flex gap-2 ">
@@ -49,7 +59,7 @@ const StatusBadgeBar = ({
         />
         <StatusBadge
           badgeDescription={'Letzter Kommentar'}
-          tooltip={editcomment === '' ? 'Kein Kommentar' : editcomment}
+          tooltip={editcommentValue === '' ? 'Kein Kommentar' : editcomment}
         />
       </div>
     </>
