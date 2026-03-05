@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
-import { getEmployeeWorkerData } from '../api/index.api';
+import { adminQueries } from '../query-options/queries/admin.queries';
 import { EmployeeWorker } from '../types/employeeform.types';
 
 function useEmployeeData() {
@@ -10,10 +10,7 @@ function useEmployeeData() {
     data: allEmployeeData,
     isLoading,
     error,
-  } = useQuery<EmployeeWorker>({
-    queryKey: ['ceo-dashboard'],
-    queryFn: getEmployeeWorkerData,
-  });
+  } = useQuery<EmployeeWorker>(adminQueries.EmployeeWorker());
 
   const cleanData = useMemo(() => {
     if (!allEmployeeData) return [];
