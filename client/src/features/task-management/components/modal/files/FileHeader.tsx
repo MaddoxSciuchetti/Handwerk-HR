@@ -16,7 +16,7 @@ const FileHeader = ({
     <>
       <div className="flex flex-row justify-end pt-5 pr-5">
         <img
-          className=" flex flex-end cursor-pointer outline rounded-sm p-1"
+          className=" flex flex-end cursor-pointer outline outline-gray-200 p-1 rounded-xl"
           onClick={toggleModal}
           src="/assets/copy.svg"
           alt="Upload File"
@@ -25,7 +25,7 @@ const FileHeader = ({
         <Button
           variant={'outline'}
           onClick={() => handleZipExport(fetchFiles)}
-          className="ml-4 cursor-pointer p-1"
+          className="ml-4 cursor-pointer p-1 rounded-xl "
         >
           Zip export
         </Button>

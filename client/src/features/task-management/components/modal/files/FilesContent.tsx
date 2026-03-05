@@ -25,23 +25,24 @@ const FilesContent = ({ fetchFiles, deleteFiles }: FilesContentProps) => {
           return (
             <div
               key={index}
-              className="flex flex-col rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition-colors border-2"
+              className="flex flex-col rounded-xl p-3 transition-colors outline-1 outline-gray-200"
             >
               <div className="flex justify-end">
                 <Button
                   size={'icon-sm'}
-                  variant={'outline'}
+                  variant={'default'}
                   onClick={(e) => {
                     e.stopPropagation();
                     deleteFiles(file.id);
                   }}
+                  className="rounded-xl text-gray-500 hover:text-black cursor-pointer"
                 >
                   X
                 </Button>
               </div>
               <div className="flex justify-center">
                 <img
-                  className="outline w-15 h-15 object-cover rounded"
+                  className="outline outline-gray-200 w-15 h-15 object-cover rounded-xl"
                   src={file.cloud_url}
                   alt="not showing"
                 />
@@ -52,7 +53,7 @@ const FilesContent = ({ fetchFiles, deleteFiles }: FilesContentProps) => {
                   {fileIcon(file.content_type)}
                 </div>
                 <p
-                  className="text-sm font-medium truncate"
+                  className="text-sm font-medium truncate cursor-pointer"
                   onClick={() => window.open(file.cloud_url, '_blank')}
                 >
                   {getFileName(file.cloud_url, file.original_filename)}
