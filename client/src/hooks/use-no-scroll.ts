@@ -43,5 +43,5 @@ export const useBodyScrollLock = () => {
     };
   }, [lockScroll, unlockScroll]);
 
-  return {};
+  return { lockScroll, unlockScroll };
 };
