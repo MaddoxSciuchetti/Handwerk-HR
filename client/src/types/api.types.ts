@@ -1,8 +1,7 @@
-export type APIResponse = SuccessResponse | ErrorResponse;
-
-export type SuccessResponse = {
+export type SuccessResponse<T> = {
   success: true;
-  affectedRows: number;
+  message: string;
+  data: T;
 };
 
 export type ErrorResponse = {

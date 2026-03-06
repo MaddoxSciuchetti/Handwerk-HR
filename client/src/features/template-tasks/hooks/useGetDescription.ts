@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { createTemplateTask } from '../api';
+import { DESCRIPTION_ROOT } from '../consts/query-key.consts';
 import useDeleteDescription from './useDeleteDescription';
 import useEditDescription from './useEditDescription';
 import useFetchTask from './useFetchTask';
@@ -38,7 +39,7 @@ function useGetDescription() {
     mutationFn: createTemplateTask,
     onSuccess: () => {
       toast.success('the field has been added');
-      queryClient.invalidateQueries({ queryKey: ['description_root'] });
+      queryClient.invalidateQueries({ queryKey: [DESCRIPTION_ROOT] });
       toggleModal();
     },
     onError: () => {

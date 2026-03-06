@@ -1,0 +1,2 @@
+export const OFFBOARDING = 'OFFBOARDING';
+export const ONBOARDING = 'ONBOARDING';

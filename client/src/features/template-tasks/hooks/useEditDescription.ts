@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { updateTemplateTask } from '../api';
+import { DESCRIPTION_ROOT } from '../consts/query-key.consts';
 import { EditDescriptionData } from '../types/taskForm.types';
 
 function useEditDescription() {
@@ -46,7 +47,7 @@ function useEditDescription() {
   >({
     mutationFn: updateTemplateTask,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['description_root'] });
+      queryClient.invalidateQueries({ queryKey: [DESCRIPTION_ROOT] });
       setModalState({ selectedItem: null });
       toggleModal();
     },
