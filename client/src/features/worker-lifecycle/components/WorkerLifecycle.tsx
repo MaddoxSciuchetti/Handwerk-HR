@@ -1,10 +1,10 @@
 import ErrorAlert from '@/components/alerts/ErrorAlert';
 import CenteredDiv from '@/components/alerts/layout-wrapper/CenteredDiv';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
-import useAuth from '@/features/user-profile/hooks/use-Auth';
+import useAuth from '@/features/user-profile/hooks/useAuth';
 import LifeCycleModal from '@/features/worker-lifecycle/components/LifeCycleModal';
 import LifeCycleTable from '@/features/worker-lifecycle/components/LifeCycleTable';
-import useHome from '@/features/worker-lifecycle/hooks/use-home';
+import useHome from '@/features/worker-lifecycle/hooks/useHome';
 import SearchHeader from './SearchHeader';
 
 function WorkerLifeCycle() {

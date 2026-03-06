@@ -19,6 +19,7 @@ export const createWorkerFile = async (
 
 export const sendFeatureRequest = async (data: TFeatureForm) => {
   const form = new FormData();
+  console.log(data);
   if (data.file === undefined) {
     form.append('importance', data.importance);
     form.append('text', data.textarea);

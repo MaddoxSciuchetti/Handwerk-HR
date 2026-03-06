@@ -1,4 +1,4 @@
-import useCreateEmployee from '@/features/employee-overview/hooks/use-createEmployee';
+import useCreateEmployee from '@/features/employee-overview/hooks/useCreateEmployee';
 import FormModalAdd from './FormModal.Add';
 
 function ModalMitarbeiter({ toggleModal }: { toggleModal: () => void }) {

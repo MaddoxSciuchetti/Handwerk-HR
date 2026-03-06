@@ -1,6 +1,6 @@
 import { TableBody } from '@/components/ui/table';
 import { UseMutateFunction } from '@tanstack/react-query';
-import { useEmployeeModal } from '../../hooks/use-employeeModal';
+import { useEmployeeModal } from '../../hooks/useEmployeeModal';
 import { EmployeeDataArray } from '../../schemas/schema';
 
 import { User } from '@/features/user-profile/types/auth.type';

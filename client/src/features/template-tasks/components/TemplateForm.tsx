@@ -6,7 +6,7 @@ import { ErrorMessage } from '@hookform/error-message';
 import { addSchema, editSchema } from '../schemas/taskForm.schema';
 
 import { EmployeeDataArray } from '@/features/employee-overview/schemas/schema';
-import useSubmitForm from '../hooks/use-Form';
+import useSubmitForm from '../hooks/useSubmitForm';
 import {
   AddDescriptionMutation,
   EditDescriptionMutation,
@@ -52,17 +52,14 @@ const TemplateForm = ({
       name="valuesform"
       className="flex flex-col items-start"
     >
-      <p className="font-light text-black">
-        {mode === 'EDIT' ? (
-          `${template_type === 'ONBOARDING' ? 'Onboarding' : 'Offboarding'} Aufgabe bearbeiten`
-        ) : (
-          <p>
-            Füge Aufgabe fürs {''}
-            {template_type === 'ONBOARDING' ? 'Onboarding' : 'Offboarding'}{' '}
-            hinzu
-          </p>
-        )}
-      </p>
+      {mode === 'EDIT' ? (
+        `${template_type === 'ONBOARDING' ? 'Onboarding' : 'Offboarding'} Aufgabe bearbeiten`
+      ) : (
+        <p>
+          Füge Aufgabe fürs {''}
+          {template_type === 'ONBOARDING' ? 'Onboarding' : 'Offboarding'} hinzu
+        </p>
+      )}
 
       <input
         {...register('template_type')}

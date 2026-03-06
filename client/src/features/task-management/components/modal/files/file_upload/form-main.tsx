@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import useFileSelect from '@/features/task-management/hooks/use-fileSelect';
-import useFileUpload from '@/features/task-management/hooks/use-fileUpload';
+import useFileSelect from '@/features/task-management/hooks/useFileSelect';
+import useFileUpload from '@/features/task-management/hooks/useFileUpload';
 import { FileDropzone } from './dropzone';
 import { FileList } from './file-list';
 

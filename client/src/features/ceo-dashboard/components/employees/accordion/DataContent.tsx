@@ -1,4 +1,4 @@
-import useEmployeeGroups from '@/features/ceo-dashboard/hooks/use-employeeGroups';
+import useEmployeeGroups from '@/features/ceo-dashboard/hooks/useEmployeeGroups';
 
 type EmployeeGroup = ReturnType<
   typeof useEmployeeGroups

@@ -2,7 +2,7 @@ import ErrorAlert from '@/components/alerts/ErrorAlert';
 import FormFields from '@/components/form/FormFields';
 import { Button } from '../../../components/ui/button';
 import { Textarea } from '../../../components/ui/textarea';
-import useAdminModal from '../hooks/use-adminModal';
+import useAdminModal from '../hooks/useAdminModal';
 import { TCloseModal } from '../types/adminModal.types';
 
 function ReminderModal({ onClose }: TCloseModal) {

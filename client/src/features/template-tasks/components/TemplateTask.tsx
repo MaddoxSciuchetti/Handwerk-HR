@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/trycatch';
 import { TABS } from '../consts/index.consts';
-import useDescription from '../hooks/use-GetDescription';
+import useGetDescription from '../hooks/useGetDescription';
 import Tasks from './Tasks';
 import TemplateModal from './TemplateModal';
 
@@ -24,7 +24,7 @@ function TemplateTasks() {
     OffboardingData,
     handleOpenModal,
     EmployeeData,
-  } = useDescription();
+  } = useGetDescription();
 
   if (OnboardingData === undefined || OffboardingData === undefined) {
     return (

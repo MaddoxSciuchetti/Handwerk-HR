@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useBodyScrollLock } from './use-no-scroll';
+import { useBodyScrollLock } from './useBodyScrollLock';
 
 function useRootForm(owner: string | null | undefined) {
   const { lockScroll, unlockScroll } = useBodyScrollLock();

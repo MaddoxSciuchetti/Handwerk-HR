@@ -1,5 +1,5 @@
 import { EmployeeDataArray } from '@/features/employee-overview/schemas/schema';
-import useRootForm from '@/hooks/use-rootForm';
+import useRootForm from '@/hooks/useRootForm';
 import { DescriptionData } from '@/types/api.types';
 import { Dispatch, SetStateAction } from 'react';
 import {

@@ -1,7 +1,7 @@
 import { deleteSession } from '@/features/auth/api/auth.api';
 import { SessionCache } from '@/types/api.types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { SESSIONS } from './use-Sessions';
+import { SESSIONS } from './useSessions';
 
 function useDeleteSession(sessionId: string) {
   const queryClient = useQueryClient();

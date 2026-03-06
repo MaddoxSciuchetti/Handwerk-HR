@@ -1,8 +1,8 @@
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { employeeMutations } from '../query-options/mutations/employee.mutations';
-import { CreateWorker, createWorkerSchema } from '../schemas/schema';
+import { employeeFormOptions } from '../react-hook-form/employee.options';
+import { CreateWorker } from '../schemas/schema';
 
 function useCreateEmployee(toggleModal: () => void) {
   const { mutate: createEmployee } = useMutation(
@@ -13,10 +13,7 @@ function useCreateEmployee(toggleModal: () => void) {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<CreateWorker>({
-    resolver: zodResolver(createWorkerSchema),
-    criteriaMode: 'all',
-  });
+  } = useForm<CreateWorker>(employeeFormOptions.createEmployee);
 
   const onFormSubmit: SubmitHandler<CreateWorker> = (data: CreateWorker) => {
     createEmployee(data, {

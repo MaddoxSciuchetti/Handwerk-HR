@@ -1,12 +1,8 @@
-import { DescriptionFieldResponse } from '@/types/api.types';
 import { useQuery } from '@tanstack/react-query';
-import { fetchDescriptionData } from '../api/employee-overview.api';
+import { employeeQueries } from '../query-options/queries/employee.queries';
 
 function useFetchProcessData(id: number, form_type: string) {
-  const queryResult = useQuery<DescriptionFieldResponse>({
-    queryKey: ['processData', id, form_type],
-    queryFn: () => fetchDescriptionData(id, form_type),
-  });
+  const queryResult = useQuery(employeeQueries.fetchDescription(id, form_type));
 
   const completedTasksCount = queryResult.data?.form?.fields
     ? queryResult.data.form.fields.filter(

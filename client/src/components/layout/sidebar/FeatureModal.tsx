@@ -1,6 +1,7 @@
 import { sendFeatureRequest } from '@/apis/index.apis';
 import { DragEvent, useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { FileDropzone } from '../../../features/task-management/components/modal/files/file_upload/dropzone';
 import { FileList } from '../../../features/task-management/components/modal/files/file_upload/file-list';
 import { Button } from '../../ui/button';
@@ -14,15 +15,20 @@ export type TFeatureForm = {
   file?: File[];
 };
 
-function FeatureModal() {
+function FeatureModal({ handleToggle }: { handleToggle: () => void }) {
   const {
     register,
     handleSubmit,
     setValue,
     formState: { errors },
   } = useForm<TFeatureForm>();
-  const onSubmit: SubmitHandler<TFeatureForm> = (data) =>
+  const onSubmit: SubmitHandler<TFeatureForm> = (data) => {
     sendFeatureRequest(data);
+    toast.success('Erfolgreich abgeschickt');
+    setTimeout(() => {
+      handleToggle();
+    }, 1000);
+  };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
@@ -121,17 +127,7 @@ function FeatureModal() {
                   removeFile={removeFile}
                 />
               </div>
-
-              {/* <Button
-                                    variant={"outline"}
-                                    onClick={handleFileSubmit}
-                                    className="h-9 px-4 text-sm font-medium hover:text-black"
-                                >
-                                    Erstellen
-                                </Button> */}
             </CardContent>
-
-            {/* placeholder für uploaeds */}
 
             <Button className="hover:text-black cursor-pointer" type="submit">
               Senden

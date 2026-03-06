@@ -1,6 +1,4 @@
-import CenteredDiv from '@/components/alerts/layout-wrapper/CenteredDiv';
-import useEmployeeData from '@/features/employee-overview/hooks/use-employeeData';
-import { Spinner } from '../../../../../components/ui/spinner';
+import useGetEmployees from '@/features/employee-overview/hooks/useGetEmployees';
 import FormModalEdit from './FormModal.Edit';
 
 type ModalEditMitarbeiterProps = {
@@ -14,19 +12,7 @@ function ModalEditMitarbeiter({
   toggleEmployeeModal,
   id,
 }: ModalEditMitarbeiterProps) {
-  const {
-    EmployeeData,
-    isLoading: isLoadingEmployee,
-    isError: isErrorEmployee,
-  } = useEmployeeData();
-
-  if (isLoadingEmployee)
-    return (
-      <CenteredDiv>
-        <Spinner className="w-8" />
-      </CenteredDiv>
-    );
-  if (isErrorEmployee) return <div>No error</div>;
+  const { EmployeeData } = useGetEmployees();
 
   return (
     <>

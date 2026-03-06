@@ -1,4 +1,4 @@
-import { useThemeProvider } from '@/hooks/use-themeProvider';
+import { useThemeProvider } from '@/hooks/useThemeProvider';
 import { Outlet } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import ModalOverlay from '../modal/ModalOverlay';
@@ -41,7 +41,7 @@ function Layout() {
       </SidebarInset>
       {modal && (
         <ModalOverlay handleToggle={handleOpenModal}>
-          <FeatureModal />
+          <FeatureModal handleToggle={handleOpenModal} />
         </ModalOverlay>
       )}
     </>
