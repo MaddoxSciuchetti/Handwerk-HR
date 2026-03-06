@@ -48,14 +48,16 @@ export const deleteWorker = async (req: Request, res: Response) => {
 
 export const getWorkerById = async (req: Request, res: Response) => {
     const id = +req.params.id;
-    const param1 = req.query.param1;
+    const lifecycleType = req.query.lifecycleType;
 
     const worker = await queryWorkerById(id);
     if (!worker) {
         throw new Error("error occued");
     }
 
-    const form = worker.employee_forms.find((f: any) => f.form_type === param1);
+    const form = worker.employee_forms.find(
+        (f: any) => f.form_type === lifecycleType,
+    );
 
     if (!form) {
         return res
