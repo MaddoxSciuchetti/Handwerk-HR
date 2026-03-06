@@ -1,4 +1,10 @@
 // src/routes/__root.tsx
+import { ErrorBoundary } from 'react-error-boundary';
+
+import ErrorAlert from '@/components/alerts/ErrorAlert';
+import { Suspense } from 'react';
+
+import LoadingAlert from '@/components/alerts/LoadingAlert';
 import Layout from '@/components/layout/Layout';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { ThemeProvider } from '@/context/theme-provider/ThemeContext';
@@ -34,7 +40,11 @@ function RootLayout() {
   return (
     <ThemeProvider>
       <SidebarProvider>
-        <Layout />
+        <ErrorBoundary fallback={<ErrorAlert />}>
+          <Suspense fallback={<LoadingAlert />}>
+            <Layout />
+          </Suspense>
+        </ErrorBoundary>
       </SidebarProvider>
     </ThemeProvider>
   );
