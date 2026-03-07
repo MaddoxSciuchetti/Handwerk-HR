@@ -1,14 +1,9 @@
 import { OFFBOARDING, ONBOARDING } from '@/constants/form.consts';
-import { DescriptionResponse } from '@/types/api.types';
 import { useQuery } from '@tanstack/react-query';
-import { getTemplateTask } from '../api';
-import { DESCRIPTION_ROOT } from '../consts/query-key.consts';
+import { templateQueries } from '../query-options/queries/template.queries';
 
 function useFetchTask() {
-  const { data } = useQuery<DescriptionResponse[]>({
-    queryKey: [DESCRIPTION_ROOT],
-    queryFn: getTemplateTask,
-  });
+  const { data } = useQuery(templateQueries.getTask());
 
   const OnboardingData = data?.filter(
     (value) => value.template_type === ONBOARDING

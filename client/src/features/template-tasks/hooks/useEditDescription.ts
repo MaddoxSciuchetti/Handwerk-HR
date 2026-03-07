@@ -12,7 +12,7 @@ function useEditDescription(toggleModal: () => void) {
   }>({
     selectedItem: null,
   });
-
+  // how to shorten this code? params ?
   async function openDescriptionModal(
     description?: string | null,
     owner?: string,
