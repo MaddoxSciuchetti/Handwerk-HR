@@ -13,3 +13,6 @@ export const addSchema = baseSchema;
 export const editSchema = baseSchema.extend({
   form_field_id: z.number(),
 });
+
+export type AddSchema = z.infer<typeof editSchema>;
+export type EditSchema = z.infer<typeof addSchema>;
