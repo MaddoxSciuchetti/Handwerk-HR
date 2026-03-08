@@ -1,5 +1,4 @@
 import CenteredDiv from '@/components/alerts/layout-wrapper/CenteredDiv';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
@@ -8,6 +7,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { signup } from '../api/auth.api';
 import DoorManCard from './resuable/doorManCard';
+import DoorManFooter from './resuable/DoorManFooter';
 
 export function SignupForm() {
   const [email, setEmail] = useState<string>('');
@@ -132,36 +132,11 @@ export function SignupForm() {
             className="text-white bg-gray-600 border-gray-500"
           />
         </div>
-
-        <Button
-          className="w-full my-2 text-white "
-          variant={'outline'}
-          onClick={() =>
-            createAccount({
-              email,
-              firstName,
-              lastName,
-              password,
-              confirmPassword,
-            })
-          }
-        >
-          Create Account
-        </Button>
-
-        <p className="text-sm text-gray-400">
-          Already have an account?{' '}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate({ to: '/login' });
-            }}
-            className="text-white hover:text-gray-300 underline cursor-pointer"
-          >
-            Sign in
-          </button>
-        </p>
+        <DoorManFooter
+          description={`Already have an account? ${''}`}
+          action="Signin"
+          nav={() => navigate({ to: `/login` })}
+        />
       </div>
     </DoorManCard>
   );

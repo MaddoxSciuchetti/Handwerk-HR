@@ -9,6 +9,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { login } from '../api/auth.api';
 import DoorManCard from './resuable/doorManCard';
+import DoorManFooter from './resuable/DoorManFooter';
 
 export function LoginComponent() {
   const navigate = useNavigate();
@@ -48,7 +49,7 @@ export function LoginComponent() {
               htmlFor="email"
               className="text-amber-50 text-sm font-medium"
             >
-              Email address
+              Email Address
             </Label>
             <Input
               id="email"
@@ -103,20 +104,11 @@ export function LoginComponent() {
             Login
           </Button>
 
-          <div className="flex items-center justify-center gap-1 text-sm text-amber-50">
-            Don&apos;t have an account?{' '}
-            <Button
-              type="button"
-              variant="link"
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate({ to: '/signup' });
-              }}
-              className="cursor-pointer h-auto p-0 text-white hover:text-gray-300"
-            >
-              Sign up
-            </Button>
-          </div>
+          <DoorManFooter
+            description={`Don't have an account? ${''}`}
+            action="Sign up"
+            nav={() => navigate({ to: `/signup` })}
+          />
         </div>
       </div>
     </DoorManCard>
