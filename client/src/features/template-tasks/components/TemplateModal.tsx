@@ -1,4 +1,4 @@
-import ModalSchell from '@/features/employee-overview/components/reusable/ModalSchell';
+import SmallWrapper from '@/components/modal/modalSizes/SmallWrapper';
 import useRootForm from '@/hooks/useRootForm';
 import { DescriptionData } from '@/types/api.types';
 import { Dispatch, SetStateAction } from 'react';
@@ -46,7 +46,7 @@ function TemplateModal({
   const { selectedValue, setSelectedValue } = useRootForm(owner);
 
   return (
-    <ModalSchell>
+    <SmallWrapper className="min-h-60 max-h-60">
       <TemplateForm
         setModalState={setModalState}
         toggleModal={toggleModal}
@@ -60,7 +60,7 @@ function TemplateModal({
         template_type={template_type}
         form_field_id={mode === 'EDIT' ? form_field_id : undefined}
       />
-    </ModalSchell>
+    </SmallWrapper>
   );
 }
 export default TemplateModal;

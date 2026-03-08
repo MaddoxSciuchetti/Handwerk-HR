@@ -21,13 +21,13 @@ const SelectOwner = ({
   select_option,
 }: SelectOwnerProps) => {
   return (
-    <>
+    <div className="min-w-0 flex-1">
       <Select value={selectedValue} onValueChange={setSelectedValue}>
         <SelectTrigger
           id="status"
           name="select_option"
           value={select_option}
-          className={`px-3 py-1 text-sm w-71 rounded-xl ${STATUS_MAP[selectedValue]?.className ?? 'bg-red-200'}`}
+          className={`w-full min-w-0 rounded-xl px-3 py-1 text-sm ${STATUS_MAP[selectedValue]?.className ?? 'bg-red-200'}`}
         >
           <SelectValue placeholder="Status" />
         </SelectTrigger>
@@ -57,7 +57,7 @@ const SelectOwner = ({
           </SelectGroup>
         </SelectContent>
       </Select>
-    </>
+    </div>
   );
 };
 

@@ -102,17 +102,19 @@ const TemplateForm = ({
           <p className="text-red-400 text-sm mb-5">{message}</p>
         )}
       />
-      <div className="flex w-full flex-col gap-2">
-        <OwnerSelect
-          control={control}
-          errors={errors}
-          selectedValue={selectedValue}
-          setSelectedValue={setSelectedValue}
-        />
+      <div className="flex w-full min-w-0 flex-row items-start gap-2">
+        <div className="min-w-0 flex-1">
+          <OwnerSelect
+            control={control}
+            errors={errors}
+            selectedValue={selectedValue}
+            setSelectedValue={setSelectedValue}
+          />
+        </div>
         <Button
           type="submit"
           variant={'outline'}
-          className="w-full cursor-pointer justify-start rounded-xl text-left hover:bg-gray-200"
+          className="flex-1 cursor-pointer justify-start rounded-xl text-left hover:bg-gray-200"
         >
           {mode === 'EDIT' ? 'Speichern ' : 'Neue Beschreibung hinzufügen'}
         </Button>

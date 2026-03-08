@@ -1,5 +1,5 @@
 import useGetEmployees from '@/features/employee-overview/hooks/useGetEmployees';
-import ModalSchell from '../../reusable/ModalSchell';
+import SmallWrapper from '../../../../../components/modal/modalSizes/SmallWrapper';
 import FormModalEdit from './FormModal.Edit';
 
 type ModalEditMitarbeiterProps = {
@@ -16,14 +16,14 @@ function ModalEditMitarbeiter({
   const { EmployeeData } = useGetEmployees();
 
   return (
-    <ModalSchell>
+    <SmallWrapper>
       <FormModalEdit
         id={id}
         fullname={fullname}
         EmployeeData={EmployeeData}
         toggleEmployeeModal={toggleEmployeeModal}
       />
-    </ModalSchell>
+    </SmallWrapper>
   );
 }
 

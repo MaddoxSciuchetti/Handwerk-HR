@@ -1,5 +1,5 @@
 import { sendFeatureRequest } from '@/apis/index.apis';
-import ModalSchell from '@/features/employee-overview/components/reusable/ModalSchell';
+import SmallWrapper from '@/components/modal/modalSizes/SmallWrapper';
 import { DragEvent, useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -83,7 +83,7 @@ function FeatureModal({ handleToggle }: { handleToggle: () => void }) {
   };
 
   return (
-    <ModalSchell>
+    <SmallWrapper>
       <div className="h-full w-full">
         <h1 className=" text-lg mb-5">Feature request</h1>
         <div className="flex flex-col w-full ">
@@ -136,7 +136,7 @@ function FeatureModal({ handleToggle }: { handleToggle: () => void }) {
           </form>
         </div>
       </div>
-    </ModalSchell>
+    </SmallWrapper>
   );
 }
 

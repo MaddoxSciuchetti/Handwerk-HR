@@ -1,6 +1,6 @@
 import ErrorAlert from '@/components/alerts/ErrorAlert';
 import FormFields from '@/components/form/FormFields';
-import ModalSchell from '@/features/employee-overview/components/reusable/ModalSchell';
+import SmallWrapper from '@/components/modal/modalSizes/SmallWrapper';
 import { Button } from '../../../components/ui/button';
 import { Textarea } from '../../../components/ui/textarea';
 import useAdminModal from '../hooks/useAdminModal';
@@ -11,7 +11,7 @@ function ReminderModal({ onClose }: TCloseModal) {
     useAdminModal();
 
   return (
-    <ModalSchell>
+    <SmallWrapper>
       <form
         className="flex flex-col gap-5 w-full justify-center "
         onSubmit={handleSubmit(onSubmit)}
@@ -57,7 +57,7 @@ function ReminderModal({ onClose }: TCloseModal) {
           )}
         </Button>
       </form>
-    </ModalSchell>
+    </SmallWrapper>
   );
 }
 
