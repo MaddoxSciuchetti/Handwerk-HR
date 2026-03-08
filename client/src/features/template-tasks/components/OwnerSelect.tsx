@@ -33,7 +33,7 @@ const OwnerSelect = ({ errors, control }: OwnerSelectProps) => {
               <SelectTrigger
                 id="owner"
                 name="owner"
-                className="w-71 rounded-xl"
+                className="w-full rounded-xl"
               >
                 <SelectValue placeholder="Mitarbeiter" />
               </SelectTrigger>

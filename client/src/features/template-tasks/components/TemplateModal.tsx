@@ -1,3 +1,4 @@
+import ModalSchell from '@/features/employee-overview/components/reusable/ModalSchell';
 import useRootForm from '@/hooks/useRootForm';
 import { DescriptionData } from '@/types/api.types';
 import { Dispatch, SetStateAction } from 'react';
@@ -45,25 +46,21 @@ function TemplateModal({
   const { selectedValue, setSelectedValue } = useRootForm(owner);
 
   return (
-    <>
-      <div className="flex flex-col max-h-100 min-h-120 mt-40 mx-auto text-center items-center z-50 bg-gray-200 rounded-xl  w-2xl">
-        <div className="flex flex-col max-w-xl h-full w-xl my-10 items-start">
-          <TemplateForm
-            setModalState={setModalState}
-            toggleModal={toggleModal}
-            editDescriptionMutation={editDescriptionMutation}
-            handleAddSubmitMutation={handleAddSubmitMutation}
-            selectedValue={selectedValue}
-            description={description}
-            setSelectedValue={setSelectedValue}
-            mode={mode}
-            setMode={setMode}
-            template_type={template_type}
-            form_field_id={mode === 'EDIT' ? form_field_id : undefined}
-          />
-        </div>
-      </div>
-    </>
+    <ModalSchell>
+      <TemplateForm
+        setModalState={setModalState}
+        toggleModal={toggleModal}
+        editDescriptionMutation={editDescriptionMutation}
+        handleAddSubmitMutation={handleAddSubmitMutation}
+        selectedValue={selectedValue}
+        description={description}
+        setSelectedValue={setSelectedValue}
+        mode={mode}
+        setMode={setMode}
+        template_type={template_type}
+        form_field_id={mode === 'EDIT' ? form_field_id : undefined}
+      />
+    </ModalSchell>
   );
 }
 export default TemplateModal;

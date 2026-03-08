@@ -61,7 +61,7 @@ const TemplateForm = ({
     <form
       onSubmit={handleSubmit(onSubmit)}
       name="valuesform"
-      className="flex flex-col items-start"
+      className="flex w-full flex-col items-start"
     >
       {mode === 'EDIT' ? (
         `${template_type === 'ONBOARDING' ? 'Onboarding' : 'Offboarding'} Aufgabe bearbeiten`
@@ -92,7 +92,7 @@ const TemplateForm = ({
         defaultValue={description || ''}
         id="description"
         name="description"
-        className="w-xl mb-5 rounded-xl mt-5"
+        className="mt-5 mb-5 w-full max-w-full rounded-xl"
       />
 
       <ErrorMessage
@@ -102,7 +102,7 @@ const TemplateForm = ({
           <p className="text-red-400 text-sm mb-5">{message}</p>
         )}
       />
-      <div className="flex flex-row gap-2">
+      <div className="flex w-full flex-col gap-2">
         <OwnerSelect
           control={control}
           errors={errors}
@@ -112,7 +112,7 @@ const TemplateForm = ({
         <Button
           type="submit"
           variant={'outline'}
-          className="rounded-xl text-left justify-start cursor-pointer hover:bg-gray-200 w-71"
+          className="w-full cursor-pointer justify-start rounded-xl text-left hover:bg-gray-200"
         >
           {mode === 'EDIT' ? 'Speichern ' : 'Neue Beschreibung hinzufügen'}
         </Button>
