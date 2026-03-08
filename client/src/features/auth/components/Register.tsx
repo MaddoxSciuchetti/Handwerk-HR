@@ -157,7 +157,7 @@ export function SignupForm() {
               e.stopPropagation();
               navigate({ to: '/login' });
             }}
-            className="text-white hover:text-gray-300 underline"
+            className="text-white hover:text-gray-300 underline cursor-pointer"
           >
             Sign in
           </button>
