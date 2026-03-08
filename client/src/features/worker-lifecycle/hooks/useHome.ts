@@ -27,7 +27,7 @@ function useHome() {
     item.vorname.toLowerCase().includes(search.toLowerCase())
   );
 
-  const deleteTaskMutation = useMutation(
+  const { mutate: deleteTaskMutation } = useMutation(
     workerLifecycleMutations.deleteWorker()
   );
 

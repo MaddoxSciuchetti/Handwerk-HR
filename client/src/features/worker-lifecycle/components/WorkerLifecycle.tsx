@@ -41,7 +41,7 @@ function WorkerLifeCycle() {
         />
         <LifeCycleTable
           filtered={filtered}
-          onRemove={deleteTaskMutation.mutate}
+          onRemove={deleteTaskMutation}
           gotopage={handleNavigate}
         />
         <LifeCycleModal
