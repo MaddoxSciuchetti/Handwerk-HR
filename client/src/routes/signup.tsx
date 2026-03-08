@@ -1,16 +1,10 @@
-import { createFileRoute } from '@tanstack/react-router';
 import { SignupForm } from '@/features/auth/components/Register';
+import { createFileRoute } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/signup')({
   component: Signup,
 });
 
 export default function Signup() {
-  return (
-    <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
-      <div className="w-full max-w-sm">
-        <SignupForm />
-      </div>
-    </div>
-  );
+  return <SignupForm />;
 }

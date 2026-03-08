@@ -9,17 +9,21 @@ import { useForm } from 'react-hook-form';
 import { Button } from '../../../../components/ui/button';
 import { Inputs } from '../../consts/form.consts';
 import { FormType } from '../../types/index.types';
+import { AddWorkerMutation } from '../../types/mutation.types';
 
 interface WorkerFormProps {
   setSelectedOption: (value: FormType | null) => void;
   type: FormType;
-  success: (data: AddWorker) => void;
+  toggleModal: () => void;
+  success: AddWorkerMutation;
+  className?: string;
 }
 
 export const WorkerForm = ({
   setSelectedOption,
   type,
   success,
+  toggleModal,
 }: WorkerFormProps) => {
   const {
     register,
@@ -34,7 +38,11 @@ export const WorkerForm = ({
   });
 
   const submitWorkerForm = (data: AddWorker) => {
-    success(data);
+    success(data, {
+      onSuccess: () => {
+        toggleModal();
+      },
+    });
   };
 
   const useMemoizedInputs = useMemo(() => {

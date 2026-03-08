@@ -3,11 +3,26 @@ import {
   DescriptionData,
   DescriptionResponse,
   NewDescriptionField,
+  SuccessResponse,
 } from '@/types/api.types';
 import { EditDescriptionData } from '../types/taskForm.types';
 
-export const deleteTemplateTask = async (id: number) => {
-  const response = await API.delete(`/template/task/${id}`);
+export type DeleteTaskResponse = {
+  description: string | null;
+  order_index: number | null;
+  timestamp: Date | null;
+  template_type: 'ONBOARDING' | 'OFFBOARDING';
+  form_field_id: number;
+  owner: string;
+};
+
+export const deleteTemplateTask = async (
+  id: number
+): Promise<SuccessResponse<string>> => {
+  const response = await API.delete<
+    SuccessResponse<string>,
+    SuccessResponse<string>
+  >(`/template/task/${id}`);
   return response;
 };
 

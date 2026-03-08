@@ -1,4 +1,4 @@
-import { UNAUTHORIZED } from '@/constants/http';
+import { UNAUTHORIZED } from '@/constants/http.consts';
 import axios, { AxiosError } from 'axios';
 import queryClient from './query.client';
 

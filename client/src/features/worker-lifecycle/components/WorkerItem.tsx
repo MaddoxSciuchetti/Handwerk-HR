@@ -6,13 +6,15 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import useFetchProcessData from '@/features/employee-overview/hooks/useFetchProcessData';
+import { UseMutateFunction } from '@tanstack/react-query';
+import { DeleteUser } from '../types/index.types';
 
 interface ToDoItem {
   item_value: number;
   item: string;
   form_type: string;
   gotopage: (taskId: number, form_type: any) => void;
-  onRemove: (value_item: number) => void;
+  onRemove: UseMutateFunction<DeleteUser, Error, number, unknown>;
   className?: string;
   item1?: string;
 }

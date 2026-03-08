@@ -39,6 +39,7 @@ const getOAuthClient = () => {
 export const postFeature = async (req: Request, res: Response) => {
     const { importance, text } = req.body;
     const files = req.files as Express.Multer.File[];
+
     const fileUrls: string[] = [];
 
     const auth = getOAuthClient();

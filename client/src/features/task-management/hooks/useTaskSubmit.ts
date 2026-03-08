@@ -20,11 +20,9 @@ function useTaskSubmit(
     const result = formSchema.safeParse(formValues);
 
     if (!result.success) {
-      console.log('validation errors', result.error);
       return;
     }
     if (!user) {
-      console.log('user not authenticated');
       return;
     }
 

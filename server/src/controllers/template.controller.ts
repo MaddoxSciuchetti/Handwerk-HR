@@ -14,7 +14,7 @@ export const deleteTemplateTask = catchErrors(async (req, res) => {
 
     const deletedData = await removeTemplateTask(id);
 
-    return res.status(OK).json(deletedData);
+    return res.status(OK).json({ message: "Message has been deleted" });
 });
 
 export const getTask = catchErrors(async (req, res) => {

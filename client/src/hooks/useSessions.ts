@@ -1,13 +1,10 @@
-import { getSessions } from '@/features/auth/api/auth.api';
+import { sessionQueries } from '@/query-options/queries/shared.queries';
 import { useQuery } from '@tanstack/react-query';
 
 export const SESSIONS = 'sessions';
 
 const useSessions = () => {
-  const { data, ...rest } = useQuery({
-    queryKey: [SESSIONS],
-    queryFn: getSessions,
-  });
+  const { data, ...rest } = useQuery(sessionQueries.getSession());
 
   const sessions = data ?? [];
   if (!sessions) {

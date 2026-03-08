@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from '../../../components/ui/select';
 
-import { EmployeeDataArray } from '@/features/employee-overview/schemas/schema';
+import useGetEmployees from '@/features/employee-overview/hooks/useGetEmployees';
 import { ErrorMessage } from '@hookform/error-message';
 import { HandleAddSubmit } from '../types/taskForm.types';
 
@@ -17,11 +17,11 @@ type OwnerSelectProps = {
   control: Control<HandleAddSubmit, any, HandleAddSubmit>;
   selectedValue: string;
   setSelectedValue: Dispatch<SetStateAction<string>>;
-  EmployeeData: EmployeeDataArray | undefined;
   errors: FieldErrors<HandleAddSubmit>;
 };
 
-const OwnerSelect = ({ errors, control, EmployeeData }: OwnerSelectProps) => {
+const OwnerSelect = ({ errors, control }: OwnerSelectProps) => {
+  const { EmployeeData } = useGetEmployees();
   return (
     <>
       <div className="">
@@ -33,7 +33,7 @@ const OwnerSelect = ({ errors, control, EmployeeData }: OwnerSelectProps) => {
               <SelectTrigger
                 id="owner"
                 name="owner"
-                className="w-71 rounded-xl"
+                className="w-full rounded-xl"
               >
                 <SelectValue placeholder="Mitarbeiter" />
               </SelectTrigger>

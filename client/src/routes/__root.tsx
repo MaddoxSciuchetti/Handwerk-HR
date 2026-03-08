@@ -30,7 +30,7 @@ function RootLayout() {
 
   if (isDoorman) {
     return (
-      <main className="min-h-screen">
+      <main className="h-dvh overflow-hidden">
         <ThemeProvider>
           <Outlet />
         </ThemeProvider>

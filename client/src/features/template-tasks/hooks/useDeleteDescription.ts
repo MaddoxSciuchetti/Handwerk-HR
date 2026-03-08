@@ -1,15 +1,8 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { deleteTemplateTask } from '../api';
+import { useMutation } from '@tanstack/react-query';
+import { templateMutations } from '../query-options/mutations/template.mutations';
 
 function useDeleteDescription() {
-  const queryClient = useQueryClient();
-
-  const { mutate: deleteDescription } = useMutation({
-    mutationFn: deleteTemplateTask,
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ['description_root'] }),
-  });
-
+  const { mutate: deleteDescription } = useMutation(templateMutations.delete());
   return {
     deleteDescription,
   };

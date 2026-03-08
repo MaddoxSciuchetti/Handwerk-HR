@@ -10,13 +10,12 @@ import SearchHeader from './SearchHeader';
 function WorkerLifeCycle() {
   const { user, isLoading, isError } = useAuth();
   const {
-    isEmpty,
     deleteTaskMutation,
     error,
     filtered,
     handleNavigate,
     modal,
-    createEmployeeMutation,
+    addWorkerMutation,
     search,
     setSearch,
     toggleModal,
@@ -42,13 +41,13 @@ function WorkerLifeCycle() {
         />
         <LifeCycleTable
           filtered={filtered}
-          onRemove={deleteTaskMutation.mutate}
+          onRemove={deleteTaskMutation}
           gotopage={handleNavigate}
         />
         <LifeCycleModal
           modal={modal}
           toggleModal={toggleModal}
-          createEmployeeMutation={createEmployeeMutation}
+          addWorkerMutation={addWorkerMutation}
         />
       </div>
     </div>

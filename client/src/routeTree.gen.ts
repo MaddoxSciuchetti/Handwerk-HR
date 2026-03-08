@@ -13,6 +13,7 @@ import { Route as WorkerLifycycleRouteImport } from './routes/worker-lifycycle'
 import { Route as TemplateRouteImport } from './routes/template'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as ResuableRouteImport } from './routes/resuable'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as EmployeeOverviewRouteImport } from './routes/employee-overview'
@@ -41,6 +42,11 @@ const SignupRoute = SignupRouteImport.update({
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResuableRoute = ResuableRouteImport.update({
+  id: '/resuable',
+  path: '/resuable',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileRoute = ProfileRouteImport.update({
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/employee-overview': typeof EmployeeOverviewRoute
   '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
+  '/resuable': typeof ResuableRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/template': typeof TemplateRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/employee-overview': typeof EmployeeOverviewRoute
   '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
+  '/resuable': typeof ResuableRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/template': typeof TemplateRoute
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/employee-overview': typeof EmployeeOverviewRoute
   '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
+  '/resuable': typeof ResuableRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/template': typeof TemplateRoute
@@ -142,6 +151,7 @@ export interface FileRouteTypes {
     | '/employee-overview'
     | '/login'
     | '/profile'
+    | '/resuable'
     | '/settings'
     | '/signup'
     | '/template'
@@ -157,6 +167,7 @@ export interface FileRouteTypes {
     | '/employee-overview'
     | '/login'
     | '/profile'
+    | '/resuable'
     | '/settings'
     | '/signup'
     | '/template'
@@ -172,6 +183,7 @@ export interface FileRouteTypes {
     | '/employee-overview'
     | '/login'
     | '/profile'
+    | '/resuable'
     | '/settings'
     | '/signup'
     | '/template'
@@ -188,6 +200,7 @@ export interface RootRouteChildren {
   EmployeeOverviewRoute: typeof EmployeeOverviewRoute
   LoginRoute: typeof LoginRoute
   ProfileRoute: typeof ProfileRoute
+  ResuableRoute: typeof ResuableRoute
   SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
   TemplateRoute: typeof TemplateRoute
@@ -227,6 +240,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/resuable': {
+      id: '/resuable'
+      path: '/resuable'
+      fullPath: '/resuable'
+      preLoaderRoute: typeof ResuableRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile': {
@@ -300,6 +320,7 @@ const rootRouteChildren: RootRouteChildren = {
   EmployeeOverviewRoute: EmployeeOverviewRoute,
   LoginRoute: LoginRoute,
   ProfileRoute: ProfileRoute,
+  ResuableRoute: ResuableRoute,
   SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
   TemplateRoute: TemplateRoute,

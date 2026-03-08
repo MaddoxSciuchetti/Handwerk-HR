@@ -1,5 +1,4 @@
 import ErrorAlert from '@/components/alerts/ErrorAlert';
-import CenteredDiv from '@/components/alerts/layout-wrapper/CenteredDiv';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import useAuth from '@/features/user-profile/hooks/useAuth';
 import useUploadProfieImage from '../hooks/useUploadProfieImage';
@@ -20,12 +19,7 @@ const Profile = () => {
     isPending,
   } = useUploadProfieImage();
 
-  if (isLoading)
-    return (
-      <CenteredDiv>
-        <LoadingAlert />
-      </CenteredDiv>
-    );
+  if (isLoading) return <LoadingAlert />;
 
   if (isError || !user) {
     return <ErrorAlert />;

@@ -1,15 +1,10 @@
-import useEmployeeGroups from '@/features/ceo-dashboard/hooks/useEmployeeGroups';
+import { EmployeeGroup } from '@/features/ceo-dashboard/types/employeeData.types';
 
-type EmployeeGroup = ReturnType<
-  typeof useEmployeeGroups
->['employeeGroups'][number][1];
-
-type TDataContent = {
+export type DataContentProps = {
   group: EmployeeGroup;
   onTaskClick: () => void;
 };
-
-function DataContent({ group, onTaskClick }: TDataContent) {
+function DataContent({ group, onTaskClick }: DataContentProps) {
   return (
     <>
       {group.inputs.length === 0 ? (

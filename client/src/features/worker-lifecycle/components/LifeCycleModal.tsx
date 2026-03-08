@@ -1,23 +1,16 @@
 import ModalOverlay from '@/components/modal/ModalOverlay';
-import { AddWorker } from '@/features/worker-lifecycle/schemas/zod.schemas';
-import { UseMutationResult } from '@tanstack/react-query';
-import { ItemUser } from '../types/index.types';
+import { AddWorkerMutation } from '../types/mutation.types';
 import ModalContent from './lifycycle-modal-content/ModalContent';
 
 type LifeCycleModalProps = {
   modal: boolean;
   toggleModal: () => void;
-  createEmployeeMutation: UseMutationResult<
-    ItemUser,
-    Error,
-    AddWorker,
-    unknown
-  >;
+  addWorkerMutation: AddWorkerMutation;
 };
 
 const LifeCycleModal = ({
   toggleModal,
-  createEmployeeMutation,
+  addWorkerMutation,
   modal,
 }: LifeCycleModalProps) => {
   return (
@@ -26,7 +19,8 @@ const LifeCycleModal = ({
         <ModalOverlay handleToggle={toggleModal}>
           <ModalContent
             className="p-4 rounded-lg bg-white"
-            createEmployeeMutation={createEmployeeMutation}
+            addWorkerMutation={addWorkerMutation}
+            toggleModal={toggleModal}
           />
         </ModalOverlay>
       )}

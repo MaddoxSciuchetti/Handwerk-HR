@@ -22,7 +22,7 @@ const RadioSelect = ({
   return (
     <>
       <RadioGroup
-        className="h-full flex flex-row items-center "
+        className="h-full flex flex-row items-center"
         onValueChange={(value) =>
           setSelectedOption(value as 'Onboarding' | 'Offboarding')
         }

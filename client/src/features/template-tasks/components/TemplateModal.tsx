@@ -1,4 +1,4 @@
-import { EmployeeDataArray } from '@/features/employee-overview/schemas/schema';
+import SmallWrapper from '@/components/modal/modalSizes/SmallWrapper';
 import useRootForm from '@/hooks/useRootForm';
 import { DescriptionData } from '@/types/api.types';
 import { Dispatch, SetStateAction } from 'react';
@@ -15,11 +15,20 @@ type TemplateModalProps = {
   description: string | null | undefined;
   owner: string | null | undefined;
   template_type?: 'ONBOARDING' | 'OFFBOARDING';
-  EmployeeData: EmployeeDataArray | undefined;
   OnboardingData?: DescriptionData[] | undefined;
   OffboardingData?: DescriptionData[] | undefined;
   mode: 'EDIT' | 'ADD' | undefined;
   setMode: Dispatch<SetStateAction<'EDIT' | 'ADD' | undefined>>;
+  toggleModal: () => void;
+  setModalState: Dispatch<
+    SetStateAction<{
+      selectedItem: {
+        form_field_id: number | null | undefined;
+        description: string | null | undefined;
+        owner: string | null | undefined;
+      } | null;
+    }>
+  >;
 };
 
 function TemplateModal({
@@ -29,31 +38,29 @@ function TemplateModal({
   description,
   owner,
   template_type,
-  EmployeeData,
   mode,
   setMode,
+  toggleModal,
+  setModalState,
 }: TemplateModalProps) {
   const { selectedValue, setSelectedValue } = useRootForm(owner);
 
   return (
-    <>
-      <div className="flex flex-col max-h-100 min-h-120 mt-40 mx-auto text-center items-center z-50 bg-gray-200 rounded-xl  w-2xl">
-        <div className="flex flex-col max-w-xl h-full w-xl my-10 items-start">
-          <TemplateForm
-            editDescriptionMutation={editDescriptionMutation}
-            handleAddSubmitMutation={handleAddSubmitMutation}
-            selectedValue={selectedValue}
-            description={description}
-            setSelectedValue={setSelectedValue}
-            EmployeeData={EmployeeData}
-            mode={mode}
-            setMode={setMode}
-            template_type={template_type}
-            form_field_id={mode === 'EDIT' ? form_field_id : undefined}
-          />
-        </div>
-      </div>
-    </>
+    <SmallWrapper className="min-h-60 max-h-60">
+      <TemplateForm
+        setModalState={setModalState}
+        toggleModal={toggleModal}
+        editDescriptionMutation={editDescriptionMutation}
+        handleAddSubmitMutation={handleAddSubmitMutation}
+        selectedValue={selectedValue}
+        description={description}
+        setSelectedValue={setSelectedValue}
+        mode={mode}
+        setMode={setMode}
+        template_type={template_type}
+        form_field_id={mode === 'EDIT' ? form_field_id : undefined}
+      />
+    </SmallWrapper>
   );
 }
 export default TemplateModal;

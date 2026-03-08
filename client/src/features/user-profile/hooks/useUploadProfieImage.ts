@@ -1,33 +1,17 @@
-import { PROFILEPICTURE } from '@/constants/querykey.consts';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { DragEvent, useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { getProfilePhoto, uploadProfileFoto } from '../api/index.api';
+import { userProfileMutations } from '../query-options/mutations/user-profile.mutations';
+import { userProfileQueries } from '../query-options/queries/user-profile.queries';
 import { TFile } from '../types';
 
 function useUploadProfieImage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [fileProgresses, setFileProgresses] = useState<Record<string, number>>(
-    {}
-  );
-  const queryClient = useQueryClient();
-  const {
-    handleSubmit,
-    setValue,
-    formState: { errors },
-  } = useForm<TFile>();
-  const uploadMutation = useMutation({
-    mutationFn: uploadProfileFoto,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: [PROFILEPICTURE] });
-    },
-  });
+  const { handleSubmit, setValue } = useForm<TFile>();
+  const uploadMutation = useMutation(userProfileMutations.uploadFoto());
 
-  const { data, isPending } = useQuery<string>({
-    queryKey: [PROFILEPICTURE],
-    queryFn: getProfilePhoto,
-  });
+  const { data, isPending } = useQuery(userProfileQueries.ProfileFoto());
 
   const onSubmit: SubmitHandler<TFile> = (data) => {
     uploadMutation.mutate(data);
@@ -62,7 +46,6 @@ function useUploadProfieImage() {
     handleFileSelect,
     fileInputRef,
     uploadedFiles,
-    fileProgresses,
     data,
     isPending,
   };

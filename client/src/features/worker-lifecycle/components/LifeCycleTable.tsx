@@ -7,13 +7,14 @@ import {
 } from '@/components/ui/table';
 
 import { getFirstFormType } from '@/features/worker-lifecycle/utils/formtype';
-import { WorkerItem } from '../types/index.types';
+import { UseMutateFunction } from '@tanstack/react-query';
+import { DeleteUser, WorkerItem } from '../types/index.types';
 import { Worker_Item } from './WorkerItem';
 
 type LifeCycleTableProps = {
   filtered: WorkerItem[] | undefined;
   item_value?: number;
-  onRemove: (taskId: number) => void;
+  onRemove: UseMutateFunction<DeleteUser, Error, number, unknown>;
   gotopage: (taskId: number, form_type: any) => void;
 };
 

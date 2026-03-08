@@ -1,30 +1,23 @@
 import { useSidebar } from '@/components/ui/sidebar';
-import useGetEmployees from '@/features/employee-overview/hooks/useGetEmployees';
 import { NewDescriptionField } from '@/types/api.types';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
-import { toast } from 'sonner';
-import { createTemplateTask } from '../api';
-import useDeleteDescription from './useDeleteDescription';
+import { templateMutations } from '../query-options/mutations/template.mutations';
 import useEditDescription from './useEditDescription';
-import useFetchTask from './useFetchTask';
 
 function useGetDescription() {
-  const queryClient = useQueryClient();
   const [mode, setMode] = useState<'EDIT' | 'ADD'>();
   const [tab, setTab] = useState<'ONBOARDING' | 'OFFBOARDING'>('ONBOARDING');
-  const { EmployeeData } = useGetEmployees();
-  const { OnboardingData, OffboardingData } = useFetchTask();
   const { toggleSidebar } = useSidebar();
-  const { deleteDescription } = useDeleteDescription();
-  const {
-    modal,
-    setModal,
-    openDescriptionModal,
-    editDescriptionMutation,
-    modalState,
-    toggleModal,
-  } = useEditDescription();
+  const [modal, setModal] = useState(false);
+
+  const toggleModal = () => {
+    setModal((prev) => !prev);
+    toggleSidebar();
+  };
+
+  const { openDescriptionModal, editDescriptionMutation, modalState } =
+    useEditDescription(toggleModal);
 
   const { mutate: handleAddSubmitMutation } = useMutation<
     NewDescriptionField,
@@ -34,22 +27,7 @@ function useGetDescription() {
       template_type: 'ONBOARDING' | 'OFFBOARDING';
       owner: string;
     }
-  >({
-    mutationFn: createTemplateTask,
-    onSuccess: () => {
-      toast.success('the field has been added');
-      queryClient.invalidateQueries({ queryKey: ['description_root'] });
-      toggleModal();
-    },
-    onError: () => {
-      toast.error('the field could not be added');
-    },
-  });
-
-  const handleOpenModal = () => {
-    setModal((prev) => !prev);
-    toggleSidebar();
-  };
+  >(templateMutations.create());
 
   return {
     editDescriptionMutation,
@@ -59,13 +37,9 @@ function useGetDescription() {
     modal,
     modalState,
     openDescriptionModal,
-    deleteDescription,
     tab,
     setTab,
-    OnboardingData,
-    OffboardingData,
-    handleOpenModal,
-    EmployeeData,
+    toggleModal,
   };
 }
 
