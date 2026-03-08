@@ -42,7 +42,7 @@ function VerifyEmail() {
             </p>
           )}
           <button onClick={() => navigate({ to: '/' })} className="text-white ">
-            Back to home
+            Jetzt Einloggen
           </button>
         </div>
       </div>
