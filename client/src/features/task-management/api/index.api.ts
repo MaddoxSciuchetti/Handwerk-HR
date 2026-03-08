@@ -18,7 +18,7 @@ export const getWorkerById = async (
   const response = await API.get<
     DescriptionFieldResponse,
     DescriptionFieldResponse
-  >(`worker/getWorker/${id}?param1=${param}`);
+  >(`worker/getWorker/${id}?lifecycleType=${param}`);
   return response;
 };
 

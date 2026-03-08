@@ -1,8 +1,7 @@
 import ErrorAlert from '@/components/alerts/ErrorAlert';
-import CenteredDiv from '@/components/alerts/layout-wrapper/CenteredDiv';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
-import useAuth from '@/features/user-profile/hooks/use-Auth';
-import useUploadProfieImage from '../hooks/use-uploadProfileImage';
+import useAuth from '@/features/user-profile/hooks/useAuth';
+import useUploadProfieImage from '../hooks/useUploadProfieImage';
 import ProfileBio from './ProfileBio';
 import ProfileHeader from './ProfileHeader';
 import UploadImageForm from './UploadImageForm';
@@ -20,12 +19,7 @@ const Profile = () => {
     isPending,
   } = useUploadProfieImage();
 
-  if (isLoading)
-    return (
-      <CenteredDiv>
-        <LoadingAlert />
-      </CenteredDiv>
-    );
+  if (isLoading) return <LoadingAlert />;
 
   if (isError || !user) {
     return <ErrorAlert />;

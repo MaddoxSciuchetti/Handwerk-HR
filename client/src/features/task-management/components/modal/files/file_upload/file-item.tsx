@@ -21,10 +21,10 @@ export function UploadedFileItem({
 
   return (
     <div
-      className="border border-border rounded-lg p-2 flex flex-col"
+      className="flex w-full min-w-0 flex-col rounded-lg border border-border p-2"
       key={file.name}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex min-w-0 items-center gap-2">
         <div className="w-18 h-14 bg-muted rounded-sm flex items-center justify-center self-start row-span-2 overflow-hidden">
           <img
             src={imageUrl}
@@ -32,10 +32,10 @@ export function UploadedFileItem({
             className="w-full h-full object-cover"
           />
         </div>
-        <div className="flex-1 pr-1">
+        <div className="min-w-0 flex-1 pr-1">
           <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-foreground truncate max-w-[250px]">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="max-w-full truncate text-sm text-foreground">
                 {file.name}
               </span>
               <span className="text-sm text-muted-foreground whitespace-nowrap">

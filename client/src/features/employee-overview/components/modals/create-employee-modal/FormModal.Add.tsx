@@ -33,6 +33,7 @@ const FormModalAdd = ({
       >
         {CreateMitarbeiterInputs.map((value) => (
           <FormFields
+            key={value.name}
             type={value.type}
             placeholder={value.placeholder}
             name={value.name}

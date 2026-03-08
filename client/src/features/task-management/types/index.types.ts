@@ -1,5 +1,5 @@
 import z from 'zod';
-import { TAuth_User } from '../hooks/use-getWorkerHistory';
+import { TAuth_User } from '../hooks/useGetWorkerHistory';
 import { formSchema } from '../schemas/index.schema';
 
 export type HistoryData = {

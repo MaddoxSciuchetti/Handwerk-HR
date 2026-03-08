@@ -4,7 +4,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import useEmployeeGroups from '../../hooks/use-employeeGroups';
+import useEmployeeGroups from '../../hooks/useEmployeeGroups';
 import { TAccordion } from '../../types/employeeData.types';
 import DataContent from './accordion/DataContent';
 

@@ -1,9 +1,9 @@
 import { DescriptionResponse } from '@/types/api.types';
 import { Dispatch, SetStateAction } from 'react';
+import useDeleteDescription from '../hooks/useDeleteDescription';
 
 type TasksProps = {
   items: DescriptionResponse[];
-  deleteDescription: (val: number) => void;
   openDescriptionModal: (
     description?: string | null,
     owner?: string,
@@ -14,12 +14,8 @@ type TasksProps = {
   setMode: Dispatch<SetStateAction<'EDIT' | 'ADD' | undefined>>;
 };
 
-const Tasks = ({
-  items,
-  deleteDescription,
-  openDescriptionModal,
-  setMode,
-}: TasksProps) => {
+const Tasks = ({ items, openDescriptionModal, setMode }: TasksProps) => {
+  const { deleteDescription } = useDeleteDescription();
   return items?.map((item, index) => (
     <div className="flex flex-row  w-full items-center mt-5" key={index}>
       <div className="flex items-center gap-5">

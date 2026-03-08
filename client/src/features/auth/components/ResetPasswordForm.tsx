@@ -7,12 +7,12 @@ import { useState } from 'react';
 
 import { resetPassword } from '@/features/auth/api/auth.api';
 import { useNavigate } from '@tanstack/react-router';
+import DoorManCard from './resuable/DoorManCard';
 
-const ResetPasswordForm = ({ code }: any) => {
+const ResetPasswordForm = ({ code }: { code: string }) => {
   const [password, setPassword] = useState('');
   const {
     mutate: resetUserPassword,
-    isPending,
     isSuccess,
     isError,
     error,
@@ -22,16 +22,15 @@ const ResetPasswordForm = ({ code }: any) => {
 
   const navigate = useNavigate();
   return (
-    <>
-      <h1 className="text-4xl font-bold mb-8">Change your password</h1>
-      <div className="rounded-lg bg-gray-700 shadow-lg p-8">
+    <DoorManCard>
+      <div className="text-center">
         {isError && (
           <div className="mb-3 text-red-400">
             {error.message || 'An error occurred'}
           </div>
         )}
         {isSuccess ? (
-          <div>
+          <div className="space-y-3">
             <Alert
               variant="default"
               className="rounded-xl mb-3 border-green-200 bg-green-50"
@@ -44,13 +43,13 @@ const ResetPasswordForm = ({ code }: any) => {
 
             <button
               onClick={() => navigate({ to: '/login' })}
-              className="text-blue-600 hover:text-blue-800 underline"
+              className="text-white cursor-pointer"
             >
               Sign in
             </button>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4 text-left">
             <div className="space-y-2">
               <label
                 htmlFor="password"
@@ -72,7 +71,8 @@ const ResetPasswordForm = ({ code }: any) => {
               />
             </div>
             <Button
-              className="w-full my-2"
+              variant={'outline'}
+              className="w-full cursor-pointer text-white"
               onClick={() =>
                 resetUserPassword({
                   password,
@@ -85,7 +85,7 @@ const ResetPasswordForm = ({ code }: any) => {
           </div>
         )}
       </div>
-    </>
+    </DoorManCard>
   );
 };
 export default ResetPasswordForm;

@@ -7,19 +7,19 @@ import { HISTORYDATA } from '../../consts/query-key.consts';
 import { File_Request } from '../../types/index.types';
 
 export const workerMutations = {
-  deleteWorker: (id: number) => {
+  deleteWorker: (workerId: number) => {
     return mutationOptions<Pick<SuccessResponse, 'success'>, Error, number>({
       mutationFn: (fileId: number) => deleteWorkerFile(fileId),
       onMutate: async (fileId) => {
-        await queryClient.cancelQueries({ queryKey: [HISTORYDATA, id] });
+        await queryClient.cancelQueries({ queryKey: [HISTORYDATA, workerId] });
 
         queryClient.setQueryData<File_Request[]>(
-          [HISTORYDATA, id],
+          [HISTORYDATA, workerId],
           (old) => old?.filter((file) => file.id !== fileId) || []
         );
       },
       onError: () => {
-        queryClient.invalidateQueries({ queryKey: [HISTORYDATA, id] });
+        queryClient.invalidateQueries({ queryKey: [HISTORYDATA, workerId] });
         console.log('this is the invalidation number');
       },
     });

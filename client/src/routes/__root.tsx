@@ -1,8 +1,15 @@
 // src/routes/__root.tsx
+import { ErrorBoundary } from 'react-error-boundary';
+
+import ErrorAlert from '@/components/alerts/ErrorAlert';
+import { Suspense } from 'react';
+
+import LoadingAlert from '@/components/alerts/LoadingAlert';
 import Layout from '@/components/layout/Layout';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { ThemeProvider } from '@/context/theme-provider/ThemeContext';
 import { createRootRoute, Outlet, useLocation } from '@tanstack/react-router';
+import { Toaster } from 'sonner';
 
 export const Route = createRootRoute({
   component: RootLayout,
@@ -19,11 +26,12 @@ function RootLayout() {
     '/',
   ]);
 
-  const isDoorman = isVerifiedPage.has(location.pathname);
+  const isEmailVerifyPage = location.pathname.startsWith('/email/verify/');
+  const isDoorman = isVerifiedPage.has(location.pathname) || isEmailVerifyPage;
 
   if (isDoorman) {
     return (
-      <main className="min-h-screen">
+      <main className="h-dvh overflow-hidden">
         <ThemeProvider>
           <Outlet />
         </ThemeProvider>
@@ -34,7 +42,12 @@ function RootLayout() {
   return (
     <ThemeProvider>
       <SidebarProvider>
-        <Layout />
+        <ErrorBoundary fallback={<ErrorAlert />}>
+          <Suspense fallback={<LoadingAlert />}>
+            <Toaster position="top-center" />
+            <Layout />
+          </Suspense>
+        </ErrorBoundary>
       </SidebarProvider>
     </ThemeProvider>
   );

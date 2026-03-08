@@ -1,22 +1,21 @@
 import ErrorAlert from '@/components/alerts/ErrorAlert';
 import CenteredDiv from '@/components/alerts/layout-wrapper/CenteredDiv';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
-import useAuth from '@/features/user-profile/hooks/use-Auth';
+import useAuth from '@/features/user-profile/hooks/useAuth';
 import LifeCycleModal from '@/features/worker-lifecycle/components/LifeCycleModal';
 import LifeCycleTable from '@/features/worker-lifecycle/components/LifeCycleTable';
-import useHome from '@/features/worker-lifecycle/hooks/use-home';
+import useHome from '@/features/worker-lifecycle/hooks/useHome';
 import SearchHeader from './SearchHeader';
 
 function WorkerLifeCycle() {
   const { user, isLoading, isError } = useAuth();
   const {
-    isEmpty,
     deleteTaskMutation,
     error,
     filtered,
     handleNavigate,
     modal,
-    createEmployeeMutation,
+    addWorkerMutation,
     search,
     setSearch,
     toggleModal,
@@ -29,7 +28,7 @@ function WorkerLifeCycle() {
       </CenteredDiv>
     );
 
-  // if (isError || !user) return <ErrorAlert />;
+  if (isError || !user) return <ErrorAlert />;
   if (error) return <ErrorAlert message={error.message} />;
 
   return (
@@ -42,13 +41,13 @@ function WorkerLifeCycle() {
         />
         <LifeCycleTable
           filtered={filtered}
-          onRemove={deleteTaskMutation.mutate}
+          onRemove={deleteTaskMutation}
           gotopage={handleNavigate}
         />
         <LifeCycleModal
           modal={modal}
           toggleModal={toggleModal}
-          createEmployeeMutation={createEmployeeMutation}
+          addWorkerMutation={addWorkerMutation}
         />
       </div>
     </div>

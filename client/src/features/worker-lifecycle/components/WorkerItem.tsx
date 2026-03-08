@@ -5,14 +5,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import useFetchProcessData from '@/features/employee-overview/hooks/use-fetchProcessData';
+import useFetchProcessData from '@/features/employee-overview/hooks/useFetchProcessData';
+import { UseMutateFunction } from '@tanstack/react-query';
+import { DeleteUser } from '../types/index.types';
 
 interface ToDoItem {
   item_value: number;
   item: string;
   form_type: string;
   gotopage: (taskId: number, form_type: any) => void;
-  onRemove: (value_item: number) => void;
+  onRemove: UseMutateFunction<DeleteUser, Error, number, unknown>;
   className?: string;
   item1?: string;
 }
@@ -42,7 +44,7 @@ export function Worker_Item({
   };
 
   const color = calculatePercent(completedTasksCount!, totalTasks!);
-
+  console.log('lifecycle type in worker-lifycycle', item_value, form_type);
   return (
     <tr
       onClick={() => gotopage(item_value, form_type)}

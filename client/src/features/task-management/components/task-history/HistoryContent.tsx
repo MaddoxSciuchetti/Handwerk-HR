@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useGetWorkerHistory } from '../../hooks/use-getWorkerHistory';
+import { useGetWorkerHistory } from '../../hooks/useGetWorkerHistory';
 
 import { userQueries } from '@/query-options/queries/shared.queries';
 import { STATUS_MAP } from '../../utils/selectOptionTernary';
@@ -20,7 +20,7 @@ const HistoryContent = ({ id_original }: HistoryContentProps) => {
         (historyData || []).map((item) => {
           return (
             <>
-              <div className="flex flex-col gap-2 mt-2">
+              <div key={item.id} className="flex flex-col gap-2 mt-2">
                 <div className=" flex flex-col">
                   <p className="text-left font-bold">
                     {new Date(item.timestamp || 0).toLocaleDateString()}

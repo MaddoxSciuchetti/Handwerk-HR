@@ -1,5 +1,5 @@
 import SessionCard from '@/features/auth/components/SessionCard';
-import useSessions from '@/hooks/use-Sessions';
+import useSessions from '@/hooks/useSessions';
 
 export type Sessions_Type = {
   createdAt: string;

@@ -1,6 +1,8 @@
 import { sendFeatureRequest } from '@/apis/index.apis';
+import SmallWrapper from '@/components/modal/modalSizes/SmallWrapper';
 import { DragEvent, useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { FileDropzone } from '../../../features/task-management/components/modal/files/file_upload/dropzone';
 import { FileList } from '../../../features/task-management/components/modal/files/file_upload/file-list';
 import { Button } from '../../ui/button';
@@ -14,15 +16,20 @@ export type TFeatureForm = {
   file?: File[];
 };
 
-function FeatureModal() {
+function FeatureModal({ handleToggle }: { handleToggle: () => void }) {
   const {
     register,
     handleSubmit,
     setValue,
     formState: { errors },
   } = useForm<TFeatureForm>();
-  const onSubmit: SubmitHandler<TFeatureForm> = (data) =>
+  const onSubmit: SubmitHandler<TFeatureForm> = (data) => {
     sendFeatureRequest(data);
+    toast.success('Erfolgreich abgeschickt');
+    setTimeout(() => {
+      handleToggle();
+    }, 1000);
+  };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
@@ -76,8 +83,8 @@ function FeatureModal() {
   };
 
   return (
-    <div className="fixed inset-0 flex max-h-100 min-h-180 mt-40 mx-auto text-center items-center z-50 bg-gray-200 rounded-xl  w-2xl">
-      <div className="h-full w-full my-10 p-10">
+    <SmallWrapper>
+      <div className="h-full w-full">
         <h1 className=" text-lg mb-5">Feature request</h1>
         <div className="flex flex-col w-full ">
           <form
@@ -121,17 +128,7 @@ function FeatureModal() {
                   removeFile={removeFile}
                 />
               </div>
-
-              {/* <Button
-                                    variant={"outline"}
-                                    onClick={handleFileSubmit}
-                                    className="h-9 px-4 text-sm font-medium hover:text-black"
-                                >
-                                    Erstellen
-                                </Button> */}
             </CardContent>
-
-            {/* placeholder für uploaeds */}
 
             <Button className="hover:text-black cursor-pointer" type="submit">
               Senden
@@ -139,7 +136,7 @@ function FeatureModal() {
           </form>
         </div>
       </div>
-    </div>
+    </SmallWrapper>
   );
 }
 

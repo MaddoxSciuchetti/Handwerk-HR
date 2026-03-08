@@ -3,7 +3,7 @@ import CenteredDiv from '@/components/alerts/layout-wrapper/CenteredDiv';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import PermissionDenied from '@/components/alerts/PermissionDenied';
 import CeoDashboard from '@/features/ceo-dashboard/components/CeoDashboard';
-import useAuth from '@/features/user-profile/hooks/use-Auth';
+import useAuth from '@/features/user-profile/hooks/useAuth';
 import { createFileRoute } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/dashboard/ceo')({

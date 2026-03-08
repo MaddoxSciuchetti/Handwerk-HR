@@ -1,13 +1,13 @@
 import CenteredDiv from '@/components/alerts/layout-wrapper/CenteredDiv';
 import { Spinner } from '@/components/ui/spinner';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import useAuth from '@/features/user-profile/hooks/use-Auth';
-import { useToggleModal } from '@/hooks/use-toggleModal';
+import useAuth from '@/features/user-profile/hooks/useAuth';
+import { useToggleModal } from '@/hooks/useToggleModal';
 import React, { useState } from 'react';
-import useEditModal from '../../hooks/use-editModal';
-import useTaskData from '../../hooks/use-fetchTasks';
-import useFilteredData from '../../hooks/use-filteredData';
-import useTaskSubmit from '../../hooks/use-taskSubmit';
+import useEditModal from '../../hooks/useEditModal';
+import useFilteredData from '../../hooks/useFilteredData';
+import useTaskData from '../../hooks/useTaskData';
+import useTaskSubmit from '../../hooks/useTaskSubmit';
 import WorkerFileUploads from '../modal/files/WorkerFileUploads';
 import TaskModal from '../modal/TaskModal';
 import FilteredTasks from './FilteredTasks';
@@ -15,17 +15,20 @@ import TaskHeader from './TaskHeader';
 import WorkerTasks from './WorkerTasks';
 
 type OffboardingFormProps = {
-  id: number;
-  search: { param1: string }; // match validateSearch
+  workerId: number;
+  lifecycleType: string; // match validateSearch
 };
 
-const TaskManagement: React.FC<OffboardingFormProps> = ({ id, search }) => {
+const TaskManagement: React.FC<OffboardingFormProps> = ({
+  workerId,
+  lifecycleType,
+}) => {
   const { user } = useAuth();
   const [activetab, setActiveTab] = useState<string>('form');
   const { toggleModal } = useToggleModal();
-  const numericId = parseInt(String(id));
+  const numericId = parseInt(String(workerId));
 
-  const { data, isLoading } = useTaskData(numericId, search);
+  const { data, isLoading } = useTaskData(numericId, lifecycleType);
   const {
     descriptionSearch,
     setDescriptionSearch,
@@ -74,7 +77,7 @@ const TaskManagement: React.FC<OffboardingFormProps> = ({ id, search }) => {
             />
           </TabsContent>
           <TabsContent value="files">
-            <WorkerFileUploads id={id} />
+            <WorkerFileUploads workerId={workerId} />
           </TabsContent>
         </Tabs>
       </>

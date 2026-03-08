@@ -5,8 +5,7 @@ import { Textarea } from '../../../components/ui/textarea';
 import { ErrorMessage } from '@hookform/error-message';
 import { addSchema, editSchema } from '../schemas/taskForm.schema';
 
-import { EmployeeDataArray } from '@/features/employee-overview/schemas/schema';
-import useSubmitForm from '../hooks/use-Form';
+import useSubmitForm from '../hooks/useSubmitForm';
 import {
   AddDescriptionMutation,
   EditDescriptionMutation,
@@ -19,11 +18,20 @@ type TemplateFormProps = {
   selectedValue: string;
   description: string | null | undefined;
   setSelectedValue: Dispatch<SetStateAction<string>>;
-  EmployeeData: EmployeeDataArray | undefined;
   template_type: 'OFFBOARDING' | 'ONBOARDING' | undefined;
   form_field_id: number | null | undefined;
   mode: 'EDIT' | 'ADD' | undefined;
   setMode: Dispatch<SetStateAction<'EDIT' | 'ADD' | undefined>>;
+  toggleModal: () => void;
+  setModalState: Dispatch<
+    SetStateAction<{
+      selectedItem: {
+        form_field_id: number | null | undefined;
+        description: string | null | undefined;
+        owner: string | null | undefined;
+      } | null;
+    }>
+  >;
 };
 
 const TemplateForm = ({
@@ -32,10 +40,11 @@ const TemplateForm = ({
   selectedValue,
   description,
   setSelectedValue,
-  EmployeeData,
   template_type,
   form_field_id,
   mode,
+  toggleModal,
+  setModalState,
 }: TemplateFormProps) => {
   const schema = mode === 'EDIT' ? editSchema : addSchema;
 
@@ -43,26 +52,25 @@ const TemplateForm = ({
     mode,
     schema,
     editDescriptionMutation,
-    handleAddSubmitMutation
+    handleAddSubmitMutation,
+    toggleModal,
+    setModalState
   );
 
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
       name="valuesform"
-      className="flex flex-col items-start"
+      className="flex w-full flex-col items-start"
     >
-      <p className="font-light text-black">
-        {mode === 'EDIT' ? (
-          `${template_type === 'ONBOARDING' ? 'Onboarding' : 'Offboarding'} Aufgabe bearbeiten`
-        ) : (
-          <p>
-            Füge Aufgabe fürs {''}
-            {template_type === 'ONBOARDING' ? 'Onboarding' : 'Offboarding'}{' '}
-            hinzu
-          </p>
-        )}
-      </p>
+      {mode === 'EDIT' ? (
+        `${template_type === 'ONBOARDING' ? 'Onboarding' : 'Offboarding'} Aufgabe bearbeiten`
+      ) : (
+        <p>
+          Füge Aufgabe fürs {''}
+          {template_type === 'ONBOARDING' ? 'Onboarding' : 'Offboarding'} hinzu
+        </p>
+      )}
 
       <input
         {...register('template_type')}
@@ -84,7 +92,7 @@ const TemplateForm = ({
         defaultValue={description || ''}
         id="description"
         name="description"
-        className="w-xl mb-5 rounded-xl mt-5"
+        className="mt-5 mb-5 w-full max-w-full rounded-xl"
       />
 
       <ErrorMessage
@@ -94,18 +102,19 @@ const TemplateForm = ({
           <p className="text-red-400 text-sm mb-5">{message}</p>
         )}
       />
-      <div className="flex flex-row gap-2">
-        <OwnerSelect
-          control={control}
-          errors={errors}
-          selectedValue={selectedValue}
-          setSelectedValue={setSelectedValue}
-          EmployeeData={EmployeeData}
-        />
+      <div className="flex w-full min-w-0 flex-row items-start gap-2">
+        <div className="min-w-0 flex-1">
+          <OwnerSelect
+            control={control}
+            errors={errors}
+            selectedValue={selectedValue}
+            setSelectedValue={setSelectedValue}
+          />
+        </div>
         <Button
           type="submit"
           variant={'outline'}
-          className="rounded-xl text-left justify-start cursor-pointer hover:bg-gray-200 w-71"
+          className="flex-1 cursor-pointer justify-start rounded-xl text-left hover:bg-gray-200"
         >
           {mode === 'EDIT' ? 'Speichern ' : 'Neue Beschreibung hinzufügen'}
         </Button>

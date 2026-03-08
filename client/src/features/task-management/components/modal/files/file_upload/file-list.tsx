@@ -17,7 +17,7 @@ export function FileList({
   }
 
   return (
-    <div className={cn('px-6 pb-5 space-y-3 mt-4')}>
+    <div className={cn('mt-4 w-full min-w-0 space-y-3 pb-5')}>
       {uploadedFiles.map((file, index) => (
         <UploadedFileItem
           key={file.name + index}

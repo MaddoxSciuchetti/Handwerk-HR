@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { absenceReason } from '@/features/employee-overview/consts/SelectInput';
-import useEditEmployee from '@/features/employee-overview/hooks/use-editEmployee';
+import useEditEmployee from '@/features/employee-overview/hooks/useEditEmployee';
 import { EmployeeDataArray } from '@/features/employee-overview/schemas/schema';
 import { useMemo } from 'react';
 import FormFields from '../../../../../components/form/FormFields';
@@ -20,7 +20,7 @@ const FormModalEdit = ({
   EmployeeData,
   toggleEmployeeModal,
 }: FormModalEditProps) => {
-  const { success, register, handleSubmit, control, errors, onSubmit } =
+  const { register, handleSubmit, control, errors, onSubmit } =
     useEditEmployee(toggleEmployeeModal);
 
   const employeeOptions = useMemo(
@@ -33,12 +33,11 @@ const FormModalEdit = ({
   );
   return (
     <>
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="flex flex-col gap-4 py-10"
-      >
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 ">
         <Input type="hidden" value={id} {...register('id')} />
-        <h1>Abwesenheit eintragen für {fullname}</h1>
+        <h1 className="text-left w-full">
+          Abwesenheit eintragen für: {fullname}
+        </h1>
         <EmployeeSelect
           name="absencetype"
           control={control}
@@ -70,7 +69,6 @@ const FormModalEdit = ({
           label={'Soll vertreten werden von'}
           errors={errors}
         />
-        {success ? <p className="text-green-400">Abwesenheit geädert</p> : ''}
 
         <Button className="cursor-pointer" variant={'outline'} type="submit">
           Speichern

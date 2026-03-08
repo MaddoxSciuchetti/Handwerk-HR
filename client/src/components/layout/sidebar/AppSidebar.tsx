@@ -11,8 +11,8 @@ import {
 } from '@/components/ui/sidebar';
 import { Link } from '@tanstack/react-router';
 
-import { LAYOUTITEMS } from '@/constants/layout';
-import useAuth from '@/features/user-profile/hooks/use-Auth';
+import { LAYOUTITEMS } from '@/constants/layout.consts';
+import useAuth from '@/features/user-profile/hooks/useAuth';
 import { useEffect, useMemo, useRef } from 'react';
 import { Button } from '../../ui/button';
 import UserMenu from './UserMenu';

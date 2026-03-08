@@ -1,16 +1,20 @@
+import SmallWrapper from '@/components/modal/modalSizes/SmallWrapper';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import useFileSelect from '@/features/task-management/hooks/use-fileSelect';
-import useFileUpload from '@/features/task-management/hooks/use-fileUpload';
+import { CardContent } from '@/components/ui/card';
+import useFileSelect from '@/features/task-management/hooks/useFileSelect';
+import useFileUpload from '@/features/task-management/hooks/useFileUpload';
 import { FileDropzone } from './dropzone';
 import { FileList } from './file-list';
 
 interface FileUploadProps01 {
-  id: number;
+  workerId: number;
   setModal: (val: boolean) => void;
 }
 
-export default function FileUpload01({ id, setModal }: FileUploadProps01) {
+export default function FileUpload01({
+  workerId,
+  setModal,
+}: FileUploadProps01) {
   const {
     uploadedFiles,
     setUploadedFiles,
@@ -19,7 +23,7 @@ export default function FileUpload01({ id, setModal }: FileUploadProps01) {
     error,
     isLoading,
     handleFileSubmit,
-  } = useFileUpload(id, setModal);
+  } = useFileUpload(workerId, setModal);
 
   const {
     fileInputRef,
@@ -32,11 +36,11 @@ export default function FileUpload01({ id, setModal }: FileUploadProps01) {
 
   return (
     <>
-      <Card className="max-h-min mt-40 mx-auto text-center items-center z-50 bg-gray-200 rounded-xl  w-2xl">
-        <div className="flex items-center gap-10 justify-center mb-6 m-10">
+      <SmallWrapper>
+        <div className="mb-6 flex w-full min-w-0 items-center justify-center">
           {isLoading ? <div>...</div> : ''}
           {error ? <div>Try again</div> : ''}
-          <CardContent className="w-120">
+          <CardContent className="flex w-full min-w-0 flex-col p-0">
             <FileDropzone
               fileInputRef={fileInputRef}
               handleBoxClick={handleBoxClick}
@@ -52,13 +56,13 @@ export default function FileUpload01({ id, setModal }: FileUploadProps01) {
             <Button
               variant={'outline'}
               onClick={handleFileSubmit}
-              className="h-9 px-4 text-sm font-medium hover:text-black cursor-pointer mt-5"
+              className="h-9 px-4 text-sm font-medium justify-center hover:text-black cursor-pointer mt-5"
             >
               Erstellen
             </Button>
           </CardContent>
         </div>
-      </Card>
+      </SmallWrapper>
     </>
   );
 }

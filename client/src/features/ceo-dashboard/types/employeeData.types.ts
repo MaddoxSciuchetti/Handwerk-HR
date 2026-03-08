@@ -1,3 +1,4 @@
+import useEmployeeGroups from '../hooks/useEmployeeGroups';
 import { EmployeeWorker } from './employeeform.types';
 
 export type TAccordion = {
@@ -7,7 +8,7 @@ export type TAccordion = {
   cleanData: Array<[string, EmployeeWorker]>;
 };
 
-export type EmployeeGroup = {
+export type EmployeeOpenTasks = {
   employee: { vorname: string; nachname: string; email: string | null };
   inputs: Array<{
     description: string;
@@ -16,3 +17,7 @@ export type EmployeeGroup = {
     status: string;
   }>;
 };
+
+export type EmployeeGroup = ReturnType<
+  typeof useEmployeeGroups
+>['employeeGroups'][number][1];

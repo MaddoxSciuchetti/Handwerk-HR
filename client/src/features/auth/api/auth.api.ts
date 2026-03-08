@@ -1,7 +1,6 @@
 import API from '@/config/apiClient';
 
-import { Session_API } from '@/types/api.types';
-// import { User } from 'shared_prisma_types';
+import { Session_API, SuccessResponse } from '@/types/api.types';
 
 import { User } from '@/features/user-profile/types/auth.type';
 import {
@@ -13,7 +12,9 @@ import {
   Verify,
 } from '../types/auth.types';
 
-export const sendPasswordResetEmail = async (email: string) =>
+export const sendPasswordResetEmail = async (
+  email: string
+): Promise<SuccessResponse<string>> =>
   API.post('/auth/password/forgot', { email });
 
 export const getUser = async (): Promise<User> => {

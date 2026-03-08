@@ -1,19 +1,34 @@
+import { DescriptionFieldResponse } from '@/types/api.types';
 import { queryOptions } from '@tanstack/react-query';
-import { getWorkerFiles, getWorkerHistory } from '../../api/index.api';
-import { FORMHISTORY, HISTORYDATA } from '../../consts/query-key.consts';
+import {
+  getWorkerById,
+  getWorkerFiles,
+  getWorkerHistory,
+} from '../../api/index.api';
+import {
+  FORMHISTORY,
+  HISTORYDATA,
+  WORKERBYID,
+} from '../../consts/query-key.consts';
 import { File_Request, HistoryData } from '../../types/index.types';
 
 export const workerQueries = {
-  getFiles: (id: number) =>
+  getFiles: (workerId: number) =>
     queryOptions<File_Request[], Error, File_Request[]>({
-      queryKey: [HISTORYDATA, id] as const,
-      queryFn: () => getWorkerFiles(id),
+      queryKey: [HISTORYDATA, workerId] as const,
+      queryFn: () => getWorkerFiles(workerId),
     }),
 
-  getHistory: (id: number) =>
+  getHistory: (workerId: number) =>
     queryOptions<HistoryData[], Error>({
-      queryKey: [FORMHISTORY, id] as const,
-      queryFn: () => getWorkerHistory(id),
-      enabled: !!id,
+      queryKey: [FORMHISTORY, workerId] as const,
+      queryFn: () => getWorkerHistory(workerId),
+      enabled: !!workerId,
+    }),
+
+  taskData: (workerId: number, lifecycleType: string) =>
+    queryOptions<DescriptionFieldResponse, Error>({
+      queryKey: [WORKERBYID, workerId],
+      queryFn: () => getWorkerById(workerId, lifecycleType),
     }),
 };
