@@ -1,4 +1,5 @@
 import CenteredDiv from '@/components/alerts/layout-wrapper/CenteredDiv';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
@@ -132,6 +133,21 @@ export function SignupForm() {
             className="text-white bg-gray-600 border-gray-500"
           />
         </div>
+        <Button
+          className="w-full my-2 text-white "
+          variant={'outline'}
+          onClick={() =>
+            createAccount({
+              email,
+              firstName,
+              lastName,
+              password,
+              confirmPassword,
+            })
+          }
+        >
+          Create Account
+        </Button>
         <DoorManFooter
           description={`Already have an account? ${''}`}
           action="Signin"
