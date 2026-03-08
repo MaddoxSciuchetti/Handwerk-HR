@@ -33,12 +33,11 @@ const FormModalEdit = ({
   );
   return (
     <>
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="flex flex-col gap-4 py-10"
-      >
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 ">
         <Input type="hidden" value={id} {...register('id')} />
-        <h1>Abwesenheit eintragen für {fullname}</h1>
+        <h1 className="text-left w-full">
+          Abwesenheit eintragen für: {fullname}
+        </h1>
         <EmployeeSelect
           name="absencetype"
           control={control}

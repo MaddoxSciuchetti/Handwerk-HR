@@ -8,7 +8,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { login } from '../api/auth.api';
-import DoorManCard from './resuable/doorManCard';
+import DoorManCard from './resuable/DoorManCard';
 import DoorManFooter from './resuable/DoorManFooter';
 
 export function LoginComponent() {

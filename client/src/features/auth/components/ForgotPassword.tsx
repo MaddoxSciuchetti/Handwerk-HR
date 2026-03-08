@@ -6,7 +6,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { CheckCircle } from 'lucide-react';
 import { useState } from 'react';
 import { authMutations } from '../query-options/mutations/auth.mutations';
-import DoorManCard from './resuable/doorManCard';
+import DoorManCard from './resuable/DoorManCard';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState<string>('');

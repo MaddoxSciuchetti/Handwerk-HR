@@ -2,7 +2,7 @@ import LoadingAlert from '@/components/alerts/LoadingAlert';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { verifyEmail } from '../api/auth.api';
-import DoorManCard from './resuable/doorManCard';
+import DoorManCard from './resuable/DoorManCard';
 
 function VerifyEmail() {
   const code = useParams({ from: '/email/verify/$code' });

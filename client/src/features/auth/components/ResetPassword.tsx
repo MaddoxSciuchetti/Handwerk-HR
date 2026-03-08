@@ -3,7 +3,7 @@ import ResetPasswordForm from '@/features/auth/components/ResetPasswordForm';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { AlertCircle } from 'lucide-react';
 import { currentDate } from '../utils/dateNow';
-import DoorManCard from './resuable/doorManCard';
+import DoorManCard from './resuable/DoorManCard';
 
 const ResetPassword = () => {
   const navigate = useNavigate();

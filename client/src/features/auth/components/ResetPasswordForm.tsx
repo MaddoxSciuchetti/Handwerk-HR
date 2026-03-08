@@ -7,7 +7,7 @@ import { useState } from 'react';
 
 import { resetPassword } from '@/features/auth/api/auth.api';
 import { useNavigate } from '@tanstack/react-router';
-import DoorManCard from './resuable/doorManCard';
+import DoorManCard from './resuable/DoorManCard';
 
 const ResetPasswordForm = ({ code }: { code: string }) => {
   const [password, setPassword] = useState('');
