@@ -6,7 +6,6 @@ import DoorManCard from './resuable/DoorManCard';
 
 function VerifyEmail() {
   const code = useParams({ from: '/email/verify/$code' });
-  console.log(code);
 
   const navigate = useNavigate();
   const { isPending, isSuccess, isError } = useQuery({
@@ -36,16 +35,13 @@ function VerifyEmail() {
               The link is either invalid or expired.{' '}
               <button
                 onClick={() => navigate({ to: '/' })}
-                className="text-blue-500 hover:text-blue-700 underline"
+                className="text-white underline"
               >
                 Get a new link
               </button>
             </p>
           )}
-          <button
-            onClick={() => navigate({ to: '/' })}
-            className="text-blue-500 hover:text-blue-700 underline"
-          >
+          <button onClick={() => navigate({ to: '/' })} className="text-white ">
             Back to home
           </button>
         </div>

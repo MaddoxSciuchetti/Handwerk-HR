@@ -26,7 +26,8 @@ function RootLayout() {
     '/',
   ]);
 
-  const isDoorman = isVerifiedPage.has(location.pathname);
+  const isEmailVerifyPage = location.pathname.startsWith('/email/verify/');
+  const isDoorman = isVerifiedPage.has(location.pathname) || isEmailVerifyPage;
 
   if (isDoorman) {
     return (
