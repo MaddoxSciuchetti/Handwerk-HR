@@ -14,6 +14,8 @@ type FormModalAddProps = {
   register: UseFormRegister<CreateWorker>;
   errors: FieldErrors<CreateWorker>;
   onFormSubmit: SubmitHandler<CreateWorker>;
+  isError: boolean;
+  error: { message?: string } | null;
 };
 
 const FormModalAdd = ({
@@ -21,9 +23,16 @@ const FormModalAdd = ({
   register,
   onFormSubmit,
   errors,
+  isError,
+  error,
 }: FormModalAddProps) => {
   return (
     <>
+      {isError && (
+        <div className="mb-3 text-red-400">
+          {error?.message || 'An error occurred'}
+        </div>
+      )}
       <p className="mb-5">
         Ein Mitarbeiter erhält eine E-Mail mit der Bitte, sich einzuloggen.
       </p>
