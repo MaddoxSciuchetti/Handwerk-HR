@@ -74,27 +74,6 @@ export function Worker_Item({
           onRemove={onRemove}
           imgsrc="/assets/editReact.svg"
         />
-        {/* <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <img
-              className="hover:scale-110 bg-muted-foreground"
-              src="/assets/editReact.svg"
-            />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className={`w-40 bg-gray-100`} align="start">
-            <DropdownMenuGroup>
-              <DropdownMenuItem
-                className="hover:bg-gray-200 cursor-pointer"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onRemove(item_value);
-                }}
-              >
-                Löschen
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu> */}
       </td>
     </tr>
   );

@@ -1,7 +1,6 @@
 import CenteredDiv from '@/components/alerts/layout-wrapper/CenteredDiv';
+import SingleFormField from '@/components/form/SingleFormField';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
@@ -51,57 +50,43 @@ export function SignupForm() {
       )}
       <div className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="email" className="text-white text-sm font-medium">
-            Email Address
-          </Label>
-          <Input
+          <SingleFormField
+            label="Email Address"
             id="email"
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoFocus
-            className="text-white bg-gray-600 border-gray-500"
+            setValue={setEmail}
           />
         </div>
         <div className="flex gap-3">
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-white text-sm font-medium">
-              Vorname
-            </Label>
-            <Input
+            <SingleFormField
+              label="Vorname"
               id="firstName"
-              type="firstName"
+              type="text"
               value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              autoFocus
-              className="text-white bg-gray-600 border-gray-500"
+              setValue={setFirstName}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-white text-sm font-medium">
-              Nachname
-            </Label>
-            <Input
+            <SingleFormField
               id="lastName"
-              type="lastName"
+              type="text"
+              label="Nachname"
               value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              autoFocus
-              className="text-white bg-gray-600 border-gray-500"
+              setValue={setLastName}
             />
           </div>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="password" className="text-white text-sm font-medium">
-            Password
-          </Label>
-          <Input
+          <SingleFormField
+            label="Password"
             id="password"
             type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="text-white bg-gray-600 border-gray-500"
+            setValue={setPassword}
+            // action={() => signin({ email, password })}
           />
           <p className="text-gray-400 text-xs text-left mt-2">
             - Must be at least 6 characters long.
@@ -109,19 +94,13 @@ export function SignupForm() {
         </div>
 
         <div className="space-y-2">
-          <Label
-            htmlFor="confirmPassword"
-            className="text-white text-sm font-medium"
-          >
-            Confirm Password
-          </Label>
-          <Input
+          <SingleFormField
+            label="Confirm Password"
             id="confirmPassword"
             type="password"
             value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            onKeyDown={(e) =>
-              e.key === 'Enter' &&
+            setValue={setConfirmPassword}
+            action={() =>
               createAccount({
                 email,
                 firstName,
@@ -130,7 +109,6 @@ export function SignupForm() {
                 confirmPassword,
               })
             }
-            className="text-white bg-gray-600 border-gray-500"
           />
         </div>
         <Button

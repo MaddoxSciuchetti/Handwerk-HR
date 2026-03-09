@@ -1,8 +1,7 @@
 import CenteredDiv from '@/components/alerts/layout-wrapper/CenteredDiv';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
+import SingleFormField from '@/components/form/SingleFormField';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
@@ -45,42 +44,24 @@ export function LoginComponent() {
       <div className="flex flex-col">
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label
-              htmlFor="email"
-              className="text-amber-50 text-sm font-medium"
-            >
-              Email Address
-            </Label>
-            <Input
+            <SingleFormField
+              label="Email Address"
               id="email"
               type="email"
               value={email}
-              placeholder="m@example.com"
-              required
-              onChange={(e) => setEmail(e.target.value)}
-              className="text-white bg-gray-600 border-gray-500"
+              setValue={setEmail}
+              action={() => signin({ email, password })}
             />
           </div>
 
           <div className="space-y-2">
-            <Label
-              htmlFor="password"
-              className="text-white text-sm font-medium"
-            >
-              Password
-            </Label>
-            <Input
+            <SingleFormField
+              label="Password"
               id="password"
               type="password"
-              onChange={(e) => setPassword(e.target.value)}
               value={password}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  signin({ email, password });
-                }
-              }}
-              className="text-white bg-gray-600 border-gray-500"
+              setValue={setPassword}
+              action={() => signin({ email, password })}
             />
           </div>
         </div>

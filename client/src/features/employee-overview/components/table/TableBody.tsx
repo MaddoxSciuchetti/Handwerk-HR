@@ -46,7 +46,6 @@ const EmployeeTableBody = ({
                 disabled={value.user_permission === 'CHEF'}
                 value={value.id}
               />
-              {/* <EditDropdown value={value} DeleteEmployee={DeleteEmployee} /> */}
             </td>
           </tr>
         ))}
