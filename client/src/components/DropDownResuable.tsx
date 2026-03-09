@@ -32,7 +32,6 @@ const DropDownResuable = <T,>({
               className="hover:bg-gray-200 cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
-                // onRemove(value);
                 action();
               }}
             >
