@@ -70,8 +70,8 @@ export function Worker_Item({
 
       <td>
         <DropDownResuable
-          value={item_value}
-          onRemove={onRemove}
+          description="Löschen"
+          action={() => onRemove(item_value)}
           imgsrc="/assets/editReact.svg"
         />
       </td>

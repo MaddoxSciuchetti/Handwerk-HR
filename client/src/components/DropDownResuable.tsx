@@ -9,15 +9,15 @@ import {
 type DropDownResuableProps<T> = {
   imgsrc: string;
   disabled?: boolean;
-  onRemove: (value: T) => void;
-  value: T;
+  description: string;
+  action: () => void;
 };
 
 const DropDownResuable = <T,>({
+  description,
   imgsrc,
   disabled,
-  onRemove,
-  value,
+  action,
 }: DropDownResuableProps<T>) => {
   return (
     <>
@@ -32,10 +32,11 @@ const DropDownResuable = <T,>({
               className="hover:bg-gray-200 cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
-                onRemove(value);
+                // onRemove(value);
+                action();
               }}
             >
-              Löschen
+              {description}
             </DropdownMenuItem>
           </DropdownMenuGroup>
         </DropdownMenuContent>

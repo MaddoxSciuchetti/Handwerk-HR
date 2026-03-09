@@ -41,10 +41,10 @@ const EmployeeTableBody = ({
             </td>
             <td className="rounded-r-xl">
               <DropDownResuable
-                onRemove={DeleteEmployee}
+                description="Löschen"
                 imgsrc="/assets/editReact.svg"
                 disabled={value.user_permission === 'CHEF'}
-                value={value.id}
+                action={() => DeleteEmployee(value.id)}
               />
             </td>
           </tr>
