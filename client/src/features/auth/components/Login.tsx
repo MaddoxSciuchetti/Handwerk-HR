@@ -1,19 +1,34 @@
 import CenteredDiv from '@/components/alerts/layout-wrapper/CenteredDiv';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
-import SingleFormField from '@/components/form/SingleFormField';
+import FormFields from '@/components/form/FormFields';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { useState } from 'react';
+import { SubmitHandler, useForm } from 'react-hook-form';
+import {
+  LoginFormValues,
+  loginSchema,
+} from '../../../../../server/src/schemas/auth.schemas';
 import { login } from '../api/auth.api';
 import DoorManCard from './resuable/DoorManCard';
 import DoorManFooter from './resuable/DoorManFooter';
 
 export function LoginComponent() {
   const navigate = useNavigate();
-  const [password, setPassword] = useState<string>('');
-  const [email, setEmail] = useState<string>('');
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
 
   const {
     mutate: signin,
@@ -25,6 +40,10 @@ export function LoginComponent() {
       navigate({ to: '/worker-lifycycle' });
     },
   });
+
+  const onSubmit: SubmitHandler<LoginFormValues> = (data) => {
+    signin(data);
+  };
 
   if (isPending)
     return (
@@ -41,33 +60,37 @@ export function LoginComponent() {
 
   return (
     <DoorManCard>
-      <div className="flex flex-col">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
         <div className="space-y-4">
           <div className="space-y-2">
-            <SingleFormField
+            <FormFields
+              errors={errors}
+              register={register}
+              name="email"
               label="Email Address"
               id="email"
               type="email"
-              value={email}
-              setValue={setEmail}
-              action={() => signin({ email, password })}
+              required
+              placeholder="m@example.com"
             />
           </div>
 
           <div className="space-y-2">
-            <SingleFormField
+            <FormFields
+              errors={errors}
+              register={register}
+              name="password"
               label="Password"
               id="password"
               type="password"
-              value={password}
-              setValue={setPassword}
-              action={() => signin({ email, password })}
+              required
             />
           </div>
         </div>
 
         <div className="mt-4">
           <Button
+            type="button"
             onClick={() => navigate({ to: '/password/forgot' })}
             className="text-white hover:text-gray-300 underline text-sm"
           >
@@ -79,7 +102,6 @@ export function LoginComponent() {
           <Button
             variant={'outline'}
             type="submit"
-            onClick={() => signin({ email, password })}
             className="w-full text-white cursor-pointer"
           >
             Login
@@ -91,7 +113,7 @@ export function LoginComponent() {
             nav={() => navigate({ to: `/signup` })}
           />
         </div>
-      </div>
+      </form>
     </DoorManCard>
   );
 }

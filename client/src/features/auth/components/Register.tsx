@@ -1,21 +1,36 @@
 import CenteredDiv from '@/components/alerts/layout-wrapper/CenteredDiv';
-import SingleFormField from '@/components/form/SingleFormField';
+import FormFields from '@/components/form/FormFields';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { useState } from 'react';
+import { SubmitHandler, useForm } from 'react-hook-form';
+import {
+  RegisterFormValues,
+  registerSchema,
+} from '../../../../../server/src/schemas/auth.schemas';
 import { signup } from '../api/auth.api';
 import DoorManCard from './resuable/DoorManCard';
 import DoorManFooter from './resuable/DoorManFooter';
 
 export function SignupForm() {
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
-  const [firstName, setFirstName] = useState<string>('');
-  const [lastName, setLastName] = useState<string>('');
-  const [confirmPassword, setConfirmPassword] = useState<string>('');
   const navigate = useNavigate();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      email: '',
+      firstName: '',
+      lastName: '',
+      password: '',
+      confirmPassword: '',
+    },
+  });
 
   const {
     mutate: createAccount,
@@ -34,6 +49,10 @@ export function SignupForm() {
     },
   });
 
+  const onSubmit: SubmitHandler<RegisterFormValues> = (data) => {
+    createAccount(data);
+  };
+
   if (isPending)
     return (
       <CenteredDiv>
@@ -48,45 +67,52 @@ export function SignupForm() {
           {error?.message || 'An error occurred'}
         </div>
       )}
-      <div className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-2">
-          <SingleFormField
+          <FormFields
+            errors={errors}
+            register={register}
+            name="email"
             label="Email Address"
             id="email"
             type="email"
-            value={email}
-            setValue={setEmail}
+            required
           />
         </div>
         <div className="flex gap-3">
-          <div className="space-y-2">
-            <SingleFormField
+          <div className="space-y-2 flex-1">
+            <FormFields
+              errors={errors}
+              register={register}
+              name="firstName"
               label="Vorname"
               id="firstName"
               type="text"
-              value={firstName}
-              setValue={setFirstName}
+              required
             />
           </div>
-          <div className="space-y-2">
-            <SingleFormField
+          <div className="space-y-2 flex-1">
+            <FormFields
+              errors={errors}
+              register={register}
+              name="lastName"
               id="lastName"
               type="text"
               label="Nachname"
-              value={lastName}
-              setValue={setLastName}
+              required
             />
           </div>
         </div>
 
         <div className="space-y-2">
-          <SingleFormField
+          <FormFields
+            errors={errors}
+            register={register}
+            name="password"
             label="Password"
             id="password"
             type="password"
-            value={password}
-            setValue={setPassword}
-            // action={() => signin({ email, password })}
+            required
           />
           <p className="text-gray-400 text-xs text-left mt-2">
             - Must be at least 6 characters long.
@@ -94,35 +120,20 @@ export function SignupForm() {
         </div>
 
         <div className="space-y-2">
-          <SingleFormField
+          <FormFields
+            errors={errors}
+            register={register}
+            name="confirmPassword"
             label="Confirm Password"
             id="confirmPassword"
             type="password"
-            value={confirmPassword}
-            setValue={setConfirmPassword}
-            action={() =>
-              createAccount({
-                email,
-                firstName,
-                lastName,
-                password,
-                confirmPassword,
-              })
-            }
+            required
           />
         </div>
         <Button
+          type="submit"
           className="w-full my-2 text-white "
           variant={'outline'}
-          onClick={() =>
-            createAccount({
-              email,
-              firstName,
-              lastName,
-              password,
-              confirmPassword,
-            })
-          }
         >
           Create Account
         </Button>
@@ -131,7 +142,7 @@ export function SignupForm() {
           action="Signin"
           nav={() => navigate({ to: `/login` })}
         />
-      </div>
+      </form>
     </DoorManCard>
   );
 }
