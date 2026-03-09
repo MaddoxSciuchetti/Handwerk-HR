@@ -1,10 +1,4 @@
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import DropDownResuable from '@/components/DropDownResuable';
 import useFetchProcessData from '@/features/employee-overview/hooks/useFetchProcessData';
 import { UseMutateFunction } from '@tanstack/react-query';
 import { DeleteUser } from '../types/index.types';
@@ -75,7 +69,12 @@ export function Worker_Item({
       </th>
 
       <td>
-        <DropdownMenu>
+        <DropDownResuable
+          value={item_value}
+          onRemove={onRemove}
+          imgsrc="/assets/editReact.svg"
+        />
+        {/* <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <img
               className="hover:scale-110 bg-muted-foreground"
@@ -95,7 +94,7 @@ export function Worker_Item({
               </DropdownMenuItem>
             </DropdownMenuGroup>
           </DropdownMenuContent>
-        </DropdownMenu>
+        </DropdownMenu> */}
       </td>
     </tr>
   );

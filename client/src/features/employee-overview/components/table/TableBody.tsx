@@ -3,8 +3,8 @@ import { UseMutateFunction } from '@tanstack/react-query';
 import { useEmployeeModal } from '../../hooks/useEmployeeModal';
 import { EmployeeDataArray } from '../../schemas/schema';
 
+import DropDownResuable from '@/components/DropDownResuable';
 import { User } from '@/features/user-profile/types/auth.type';
-import EditDropdown from './table-row-item/EditDropdown';
 import EmployeeName from './table-row-item/EmployeeName';
 import EmployeeStatus from './table-row-item/EmployeeStatus';
 import EmployeeSubstitute from './table-row-item/EmployeeSubstitute';
@@ -40,7 +40,13 @@ const EmployeeTableBody = ({
               <EmployeeSubstitute value={value} />
             </td>
             <td className="rounded-r-xl">
-              <EditDropdown value={value} DeleteEmployee={DeleteEmployee} />
+              <DropDownResuable
+                onRemove={DeleteEmployee}
+                imgsrc="/assets/editReact.svg"
+                disabled={value.user_permission === 'CHEF'}
+                value={value.id}
+              />
+              {/* <EditDropdown value={value} DeleteEmployee={DeleteEmployee} /> */}
             </td>
           </tr>
         ))}
