@@ -4,12 +4,12 @@ import useGetEmployees from '../hooks/useGetEmployees';
 
 import CenteredDiv from '@/components/alerts/layout-wrapper/CenteredDiv';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
+import SearchHeaderResuable from '@/components/layout/headers/SearchHeaderResuable';
 import ModalOverlay from '@/components/modal/ModalOverlay';
 import { useEmployeeModal } from '../hooks/useEmployeeModal';
 import ModalMitarbeiter from './modals/create-employee-modal/EmployeeModal';
 import ModalEditMitarbeiter from './modals/edit-employee-modal/EmployeeModal';
 import EmployeeTableHeader from './table/EmployeeTableHeader';
-import PageHeader from './table/PageHeader';
 import EmployeeTableBody from './table/TableBody';
 
 function EmployeeOverview() {
@@ -48,7 +48,10 @@ function EmployeeOverview() {
   return (
     <div className="rounded-2xl overflow-x-auto w-full h-full p-6 shadow-gray-200 shadow-lg overflow-auto">
       <div className="h-full w-full flex flex-col">
-        <PageHeader openCreate={openCreate} />
+        <SearchHeaderResuable
+          toggleModal={openCreate}
+          description=" Mitarbeiter Hinzufügen"
+        />
         <Table className="text-left mt-5 border-seperate border-spacing-y-2">
           <EmployeeTableHeader />
           <EmployeeTableBody

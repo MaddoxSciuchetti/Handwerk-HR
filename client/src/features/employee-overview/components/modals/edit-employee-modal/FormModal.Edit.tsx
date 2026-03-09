@@ -38,14 +38,6 @@ const FormModalEdit = ({
         <h1 className="text-left w-full">
           Abwesenheit eintragen für: {fullname}
         </h1>
-        {/* <EmployeeSelect
-          name="absencetype"
-          control={control}
-          options={absenceReason}
-          placeholder="Grund"
-          label={'Grund der Abwesenheit'}
-          errors={errors}
-        /> */}
         <FormSelectOptions
           name="absencetype"
           control={control}
@@ -69,14 +61,6 @@ const FormModalEdit = ({
           name="absenceEnd"
           errors={errors}
         />
-        {/* <EmployeeSelect
-          name={'substitute'}
-          control={control}
-          options={employeeOptions}
-          placeholder={'Mitarbeiter'}
-          label={'Soll vertreten werden von'}
-          errors={errors}
-        /> */}
         <FormSelectOptions
           name="substitute"
           control={control}
