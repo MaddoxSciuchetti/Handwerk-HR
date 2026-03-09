@@ -32,8 +32,11 @@ const FormModalEdit = ({
     [EmployeeData]
   );
   return (
-    <>
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 ">
+    <div className="flex-1 w-full min-h-0 overflow-y-auto overflow-x-hidden pr-1">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="flex w-full min-w-0 flex-col gap-4"
+      >
         <Input type="hidden" value={id} {...register('id')} />
         <h1 className="text-left w-full">
           Abwesenheit eintragen für: {fullname}
@@ -74,7 +77,7 @@ const FormModalEdit = ({
           Speichern
         </Button>
       </form>
-    </>
+    </div>
   );
 };
 

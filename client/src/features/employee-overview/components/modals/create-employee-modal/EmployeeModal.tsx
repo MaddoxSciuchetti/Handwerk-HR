@@ -6,7 +6,7 @@ function ModalMitarbeiter({ toggleModal }: { toggleModal: () => void }) {
   const { register, handleSubmit, onFormSubmit, errors, isError, error } =
     useCreateEmployee(toggleModal);
   return (
-    <SmallWrapper>
+    <SmallWrapper className="items-stretch justify-start overflow-hidden ">
       <FormModalAdd
         handleSubmit={handleSubmit}
         register={register}
