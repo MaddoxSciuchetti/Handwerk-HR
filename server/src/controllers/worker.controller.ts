@@ -25,6 +25,8 @@ export const createWorker = async (req: Request, res: Response) => {
             ...req.body.data,
         };
 
+        console.log(request);
+
         const { worker } = await insertWorker(request);
         return res.status(201).json({ success: worker });
     } catch (error) {
