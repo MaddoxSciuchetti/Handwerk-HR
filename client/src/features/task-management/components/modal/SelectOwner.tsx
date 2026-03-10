@@ -27,7 +27,7 @@ const SelectOwner = ({
           id="status"
           name="select_option"
           value={select_option}
-          className={`w-full min-w-0 rounded-xl px-3 py-1 text-sm ${STATUS_MAP[selectedValue]?.className ?? 'bg-red-200'}`}
+          className={`w-full min-w-0 rounded-xl px-3 py-1 text-sm ${STATUS_MAP[selectedValue]?.className ?? 'bg-(--status-error-bg) text-(--status-error-foreground)'}`}
         >
           <SelectValue placeholder="Status" />
         </SelectTrigger>

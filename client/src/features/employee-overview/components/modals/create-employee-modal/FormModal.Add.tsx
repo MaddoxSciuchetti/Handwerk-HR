@@ -29,7 +29,7 @@ const FormModalAdd = ({
   return (
     <div className="flex-1 w-full min-h-0 overflow-y-auto overflow-x-hidden pr-1">
       {isError && (
-        <div className="mb-3 text-red-400">
+        <div className="mb-3 text-destructive">
           {error?.message || 'An error occurred'}
         </div>
       )}

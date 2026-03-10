@@ -37,6 +37,14 @@
   /* Destructive (errors, delete actions) */
   --destructive: hsl(0 84.2% 60.2%);
   --destructive-foreground: hsl(0 0% 100%);
+  --status-success-bg: hsl(142 69% 90%);
+  --status-success-foreground: hsl(142 54% 25%);
+  --status-warning-bg: hsl(45 95% 88%);
+  --status-warning-foreground: hsl(34 70% 30%);
+  --status-error-bg: hsl(0 84% 92%);
+  --status-error-foreground: hsl(0 65% 35%);
+  --status-info-bg: hsl(217 90% 92%);
+  --status-info-foreground: hsl(217 65% 34%);
 
   /* Utility */
   --border: hsl(220 13% 91%);
@@ -88,6 +96,14 @@
 
   --destructive: hsl(0 62.8% 30.6%);
   --destructive-foreground: hsl(0 0% 98%);
+  --status-success-bg: hsl(142 40% 22%);
+  --status-success-foreground: hsl(142 40% 88%);
+  --status-warning-bg: hsl(40 35% 24%);
+  --status-warning-foreground: hsl(45 90% 86%);
+  --status-error-bg: hsl(0 45% 24%);
+  --status-error-foreground: hsl(0 90% 88%);
+  --status-info-bg: hsl(217 35% 24%);
+  --status-info-foreground: hsl(217 85% 88%);
 
   --border: hsl(240 3.7% 15.9%);
   --input: hsl(240 3.7% 15.9%);

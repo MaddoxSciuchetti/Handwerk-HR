@@ -39,7 +39,7 @@ function ReminderModal({ onClose }: TCloseModal) {
         ></Textarea>
 
         {isSuccess && (
-          <div className="text-green-600">
+          <div className="text-(--status-success-foreground)">
             <p>Email gesendet</p>
           </div>
         )}
@@ -51,7 +51,9 @@ function ReminderModal({ onClose }: TCloseModal) {
           onClick={isSuccess ? onClose : undefined}
         >
           {isSuccess ? (
-            <span className="text-green-700 cursor-pointer">Schliessen</span>
+            <span className="cursor-pointer text-(--status-success-foreground)">
+              Schliessen
+            </span>
           ) : (
             <span>Senden</span>
           )}

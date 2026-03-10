@@ -9,7 +9,7 @@
 
 //   return isLoading ? (
 //     <div className="w-screen h-[90vh] flex flex-col items-center justify-center">
-//       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
+//       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground mb-4"></div>
 //     </div>
 //   ) : user ? (
 //     <div className="p-4 min-h-screen">

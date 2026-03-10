@@ -15,7 +15,7 @@ const TaskHistory = ({ id_original }: TaskHistoryProps) => {
     <>
       <Accordion type="single" collapsible className="max-w-6xl">
         <AccordionItem value="shipping" className="mb-10 ">
-          <AccordionTrigger className=" -blue-600 border-2 p-2 border-gray-300">
+          <AccordionTrigger className="border-border border-2 p-2">
             Bearbeitungsverlauf
           </AccordionTrigger>
           <AccordionContent className="mt-5">

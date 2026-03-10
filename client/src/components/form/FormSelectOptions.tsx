@@ -66,7 +66,7 @@ const FormSelectOptions = <T extends FieldValues>({
         errors={errors}
         name={name as any}
         render={({ message }) => (
-          <p className="text-red-400 text-left text-sm mt-5">{message}</p>
+          <p className="mt-5 text-left text-sm text-destructive">{message}</p>
         )}
       />
     </>

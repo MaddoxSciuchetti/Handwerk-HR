@@ -16,7 +16,7 @@ const FileHeader = ({
     <>
       <div className="flex flex-row justify-end pt-5 pr-5">
         <img
-          className=" flex flex-end cursor-pointer outline outline-gray-200 p-1 rounded-xl"
+          className="flex flex-end cursor-pointer rounded-xl p-1 outline outline-border"
           onClick={toggleModal}
           src="/assets/copy.svg"
           alt="Upload File"

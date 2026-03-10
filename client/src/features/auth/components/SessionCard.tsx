@@ -24,7 +24,7 @@ const SessionCard = ({ session }: Session) => {
         <Button
           size="sm"
           variant="ghost"
-          className="ml-4 self-center text-xl text-red-400 hover:text-red-600"
+          className="ml-4 self-center text-xl text-destructive hover:text-destructive/80"
           title="Delete Session"
           onClick={() => deleteSession()}
           disabled={isPending}

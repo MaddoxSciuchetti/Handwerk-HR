@@ -99,7 +99,7 @@ const TemplateForm = ({
         errors={errors}
         name={'description'}
         render={({ message }) => (
-          <p className="text-red-400 text-sm mb-5">{message}</p>
+          <p className="mb-5 text-sm text-destructive">{message}</p>
         )}
       />
       <div className="flex w-full min-w-0 flex-row items-start gap-2">

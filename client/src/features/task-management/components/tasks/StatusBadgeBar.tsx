@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { STATUS_MAP } from '../../utils/selectOptionTernary';
 import StatusBadge from './StatusBadge';
 
@@ -19,16 +18,10 @@ const StatusBadgeBar = ({
 }: StatusBadgeBarProps) => {
   const status = STATUS_MAP[select_option] ?? {
     label: 'Status',
-    className: 'bg-red-200',
+    className: 'bg-(--status-error-bg) text-(--status-error-foreground)',
   };
 
-  const [editcommentValue, setEditComment] = useState<string>(
-    editcomment || ''
-  );
-
-  useEffect(() => {
-    setEditComment(editcomment || '');
-  }, [editcomment]);
+  const editCommentValue = editcomment || '';
 
   return (
     <>
@@ -38,7 +31,7 @@ const StatusBadgeBar = ({
             <StatusBadge
               badgeDescription={substituteOwner}
               tooltip={'Ersatz'}
-              className="bg-orange-200"
+              className="bg-(--status-warning-bg) text-(--status-warning-foreground)"
             />
             <StatusBadge
               badgeDescription={officialOwner}
@@ -59,7 +52,9 @@ const StatusBadgeBar = ({
         />
         <StatusBadge
           badgeDescription={'Letzter Kommentar'}
-          tooltip={editcommentValue === '' ? 'Kein Kommentar' : editcomment}
+          tooltip={
+            editCommentValue === '' ? 'Kein Kommentar' : editCommentValue
+          }
         />
       </div>
     </>
