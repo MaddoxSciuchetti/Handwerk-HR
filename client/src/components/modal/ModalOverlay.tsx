@@ -10,7 +10,7 @@ const ModalOverlay = ({ handleToggle, children }: ModalOverlayProps) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
         onClick={handleToggle}
-        className="fixed inset-0 bg-black/50 cursor-pointer"
+        className="fixed inset-0 cursor-pointer bg-(--modal-overlay)"
         aria-label="Close modal"
       />
       {children}

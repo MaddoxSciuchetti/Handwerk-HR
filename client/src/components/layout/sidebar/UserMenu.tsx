@@ -3,7 +3,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
@@ -12,15 +11,17 @@ import { Input } from '@/components/ui/input';
 import { PROFILEPICTURE } from '@/constants/querykey.consts';
 import { getProfilePhoto } from '@/features/user-profile/api/index.api';
 import { userProfileMutations } from '@/features/user-profile/query-options/mutations/user-profile.mutations';
+import { useThemeProvider } from '@/hooks/useThemeProvider';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { Upload } from 'lucide-react';
+import { Moon, Sun, Upload } from 'lucide-react';
 import { useRef } from 'react';
 
 const UserMenu = () => {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const { theme, toggle } = useThemeProvider();
 
   const { data } = useQuery<string>({
     queryKey: [PROFILEPICTURE],
@@ -57,18 +58,28 @@ const UserMenu = () => {
         align="end"
         sideOffset={8}
         collisionPadding={16}
-        className="w-35 rounded-xl border border-gray-300 bg-gray-100 p-1.5 shadow-md"
+        className="w-40 rounded-xl border border-border bg-(--dropdown-surface) p-1.5 text-popover-foreground shadow-md [&>[data-slot=dropdown-menu-item]:last-child]:mt-1.5 [&>[data-slot=dropdown-menu-item]:last-child]:border-t [&>[data-slot=dropdown-menu-item]:last-child]:border-border [&>[data-slot=dropdown-menu-item]:last-child]:pt-2"
       >
         <DropdownMenuItem
-          className="cursor-pointer rounded-lg text-sm font-medium text-gray-900 focus:bg-gray-200"
+          className="cursor-pointer rounded-lg text-sm font-medium focus:bg-accent focus:text-accent-foreground"
           onClick={() => fileInputRef.current?.click()}
         >
           Profile Foto
-          <Upload className="ml-2 h-4 w-4 text-gray-500" />
+          <Upload className="ml-2 h-4 w-4 text-muted-foreground" />
         </DropdownMenuItem>
-        <DropdownMenuSeparator className="my-1.5 bg-gray-300" />
         <DropdownMenuItem
-          className="cursor-pointer rounded-lg text-sm font-medium text-gray-900 focus:bg-gray-200"
+          className="cursor-pointer rounded-lg text-sm font-medium focus:bg-accent focus:text-accent-foreground"
+          onClick={toggle}
+        >
+          {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+          {theme === 'dark' ? (
+            <Sun className="ml-2 h-4 w-4 text-muted-foreground" />
+          ) : (
+            <Moon className="ml-2 h-4 w-4 text-muted-foreground" />
+          )}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="cursor-pointer rounded-lg text-sm font-medium focus:bg-accent focus:text-accent-foreground"
           onClick={() => signOut()}
         >
           Logout

@@ -12,8 +12,11 @@
   --card-foreground: hsl(240 5.9% 10%);
 
   /* Popover */
-  --popover: hsl(0 0% 100%);
+  --popover: hsl(220 20% 97%);
   --popover-foreground: hsl(240 5.9% 10%);
+  --dropdown-surface: hsl(220 20% 97%);
+  --modal-surface: hsl(0 0% 100%);
+  --modal-overlay: hsl(240 10% 3.9% / 0.55);
 
   /* Primary (main actions, buttons) */
   --primary: hsl(224.3 76.3% 48%);
@@ -65,8 +68,11 @@
   --card: hsl(240 4% 14%);
   --card-foreground: hsl(0 0% 98%);
 
-  --popover: hsl(240 4% 14%);
+  --popover: hsl(240 4.5% 16.5%);
   --popover-foreground: hsl(0 0% 98%);
+  --dropdown-surface: hsl(240 4.5% 16.5%);
+  --modal-surface: hsl(240 4.5% 16.5%);
+  --modal-overlay: hsl(240 10% 3.9% / 0.72);
 
   --primary: hsl(224.3 76.3% 48%);
   --primary-foreground: hsl(0 0% 100%);
