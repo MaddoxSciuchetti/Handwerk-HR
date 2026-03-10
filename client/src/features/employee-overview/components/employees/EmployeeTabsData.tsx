@@ -11,6 +11,17 @@ import DataContent from './accordion/DataContent';
 export function EmployeeTabsData({ onTaskClick, user, cleanData }: TAccordion) {
   const { employeeGroups } = useEmployeeGroups(user, cleanData);
 
+  if (
+    employeeGroups.length === 0 || employeeGroups[0]?.[1].inputs.length === 0
+      ? true
+      : false
+  )
+    return (
+      <div className="text-left text-muted-foreground">
+        Keine offenen Aufgaben
+      </div>
+    );
+
   return (
     <>
       <Accordion
@@ -19,25 +30,20 @@ export function EmployeeTabsData({ onTaskClick, user, cleanData }: TAccordion) {
         defaultValue="shipping"
         className="w-full cursor-pointer rounded-2xl border border-border"
       >
-        {employeeGroups.length === 0 ||
-        employeeGroups[0]?.[1].inputs.length === 0 ? (
-          <p>Nutzer hat keine Offenen Aufgaben</p>
-        ) : (
-          employeeGroups.map(([employeeName, group], index) => (
-            <AccordionItem
-              key={employeeName}
-              value={`employee-${index}`}
-              className="cursor-pointer rounded-xl border border-border px-3 last:mb-0"
-            >
-              <AccordionTrigger className="">
-                Handwerker: {group.employee.vorname} {group.employee.nachname}
-              </AccordionTrigger>
-              <AccordionContent className="mt-2 flex flex-col items-center justify-center pb-3">
-                <DataContent group={group} onTaskClick={onTaskClick} />
-              </AccordionContent>
-            </AccordionItem>
-          ))
-        )}
+        {employeeGroups.map(([employeeName, group], index) => (
+          <AccordionItem
+            key={employeeName}
+            value={`employee-${index}`}
+            className="cursor-pointer rounded-xl border border-border px-3 last:mb-0"
+          >
+            <AccordionTrigger className="">
+              Handwerker: {group.employee.vorname} {group.employee.nachname}
+            </AccordionTrigger>
+            <AccordionContent className="mt-2 flex flex-col items-center justify-center pb-3">
+              <DataContent group={group} onTaskClick={onTaskClick} />
+            </AccordionContent>
+          </AccordionItem>
+        ))}
       </Accordion>
     </>
   );
