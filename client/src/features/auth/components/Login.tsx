@@ -7,11 +7,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import {
-  LoginFormValues,
-  loginSchema,
-} from '../../../../../server/src/schemas/auth.schemas';
 import { login } from '../api/auth.api';
+import { LoginFormValues, loginSchema } from '../schemas/auth.schemas';
 import DoorManCard from './resuable/DoorManCard';
 import DoorManFooter from './resuable/DoorManFooter';
 
