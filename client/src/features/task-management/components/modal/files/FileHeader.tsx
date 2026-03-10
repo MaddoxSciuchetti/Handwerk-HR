@@ -15,18 +15,19 @@ const FileHeader = ({
 }: FileHeaderProps) => {
   return (
     <>
-      <div className="flex flex-row justify-end pt-5 pr-5 items-center">
+      <div className="flex flex-row  pt-5 pr-5 items-center">
         <PlusSquare
-          className="flex flex-end cursor-pointer rounded-xl w-8 h-8 bg-(--dropdown-surface) p-1 transition-colors hover:bg-(--hover-bg)"
+          className="flex flex-end cursor-pointer rounded-xl w-10 h-9  transition-colors "
           onClick={toggleModal}
         />
 
         <Button
+          size={'sm'}
           variant={'outline'}
           onClick={() => handleZipExport(fetchFiles)}
-          className="ml-4 cursor-pointer p-1 rounded-xl "
+          className="ml-4  cursor-pointer px-2 py-4 rounded-xl "
         >
-          Zip export
+          Exportieren
         </Button>
       </div>
     </>
