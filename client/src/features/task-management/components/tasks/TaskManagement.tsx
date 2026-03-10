@@ -50,7 +50,7 @@ const TaskManagement: React.FC<OffboardingFormProps> = ({
   if (!data) return <div>Daten Laden</div>;
 
   return (
-    <div className="flex flex-col w-full h-150 rounded-2xl mx-auto  shadow-gray-200 shadow-lg overflow-auto p-6 md:max-w-8xl md:h-300">
+    <div className="mx-auto flex h-150 w-full flex-col overflow-auto rounded-2xl bg-card p-6 shadow-lg shadow-border/40 md:h-300 md:max-w-8xl">
       <>
         <Tabs defaultValue="form" className="">
           <TaskHeader
