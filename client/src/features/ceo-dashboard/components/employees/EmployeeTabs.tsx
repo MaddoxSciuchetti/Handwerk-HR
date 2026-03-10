@@ -15,20 +15,23 @@ function EmployeeTabs({
       variant={'default'}
       className="w-full justify-start p px-5 gap-5 border "
     >
-      {uniqueHandwerkerProBSBEmployee.map((user) => (
-        <TabsTrigger
-          value={user?.owner}
-          key={user.owner}
-          className={`text-md flex flex-row font-light cursor-pointer  ${selectedUser === user.owner ? ` transition delay-150 duration-300 ease-in-out  bg-gray-100` : `hover:bg-gray-50`}`}
-        >
-          {user.original_owner}
-          {user.is_substitute && (
-            <span className="text-xs text-gray-400  ml-1">
-              (Vertretung: {user.substitute_name})
-            </span>
-          )}
-        </TabsTrigger>
-      ))}
+      {uniqueHandwerkerProBSBEmployee.map((user) => {
+        console.log('the real owner ', user.owner);
+        return (
+          <TabsTrigger
+            value={user?.owner}
+            key={user.owner}
+            className={`text-md flex flex-row font-light cursor-pointer  ${selectedUser === user.owner ? ` transition delay-150 duration-300 ease-in-out  bg-gray-100` : `hover:bg-gray-50`}`}
+          >
+            {user.original_owner}
+            {user.is_substitute && (
+              <span className="text-xs text-gray-400  ml-1">
+                (Vertretung: {user.substitute_name})
+              </span>
+            )}
+          </TabsTrigger>
+        );
+      })}
     </TabsList>
   );
 }

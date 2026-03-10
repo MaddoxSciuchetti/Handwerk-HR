@@ -8,7 +8,7 @@ export type EmployeeModalContextType = {
   openCreate: () => void;
   openEdit: (employeeId: string, fullname: string) => void;
   closeModal: () => void;
-  employeeCreate: () => void;
+  employeeCreate: (owner: string) => void;
 };
 
 export function EmployeeModalProvider({ children }: { children: ReactNode }) {
@@ -22,8 +22,8 @@ export function EmployeeModalProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'OPEN_EDIT', employeeId, fullname });
   };
 
-  const employeeCreate = () => {
-    dispatch({ type: 'EMPLOYEE_CREATE' });
+  const employeeCreate = (owner: string) => {
+    dispatch({ type: 'EMPLOYEE_CREATE', owner });
   };
 
   const closeModal = () => {

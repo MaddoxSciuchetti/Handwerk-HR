@@ -1,4 +1,4 @@
-import { TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { SetStateAction } from 'react';
 import { EmployeeWorker } from '../../types/employeeform.types';
 import { EmployeeTabsData } from './EmployeeTabsData';
@@ -17,14 +17,16 @@ function EmployeeTabsContent({
   setModalOpen,
 }: CeoTabsContentProps) {
   return (
-    <TabsContent value={selectedUser} className="mt-10">
-      <EmployeeTabsData
-        cleanData={cleanData}
-        user={selectedUser}
-        data={currentBSBEmployee}
-        onTaskClick={() => setModalOpen(true)}
-      />
-    </TabsContent>
+    <Tabs>
+      <TabsContent value={selectedUser} className="mt-10">
+        <EmployeeTabsData
+          cleanData={cleanData}
+          user={selectedUser}
+          data={currentBSBEmployee}
+          onTaskClick={() => setModalOpen(true)}
+        />
+      </TabsContent>
+    </Tabs>
   );
 }
 

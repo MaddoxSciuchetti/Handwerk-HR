@@ -6,7 +6,6 @@ import CenteredDiv from '@/components/alerts/layout-wrapper/CenteredDiv';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import SearchHeaderResuable from '@/components/layout/headers/SearchHeaderResuable';
 import ModalOverlay from '@/components/modal/ModalOverlay';
-import useEmployeeData from '@/features/ceo-dashboard/hooks/useEmployeeData';
 import { useEmployeeModal } from '../hooks/useEmployeeModal';
 import ModalMitarbeiter from './modals/create-employee-modal/EmployeeModal';
 import ModalEditMitarbeiter from './modals/edit-employee-modal/EmployeeModal';
@@ -18,17 +17,6 @@ function EmployeeOverview() {
   const { EmployeeData } = useGetEmployees();
   const { modalState, openCreate, closeModal } = useEmployeeModal();
   const { DeleteEmployee, isPending } = useDeleteEmployee();
-
-  const {
-    allEmployeeData,
-    setSelectedUser,
-    setModalOpen,
-    modal,
-    selectedUser,
-    isLoading,
-    error,
-    cleanData,
-  } = useEmployeeData();
 
   const renderModal = () => {
     switch (modalState.kind) {
@@ -52,7 +40,10 @@ function EmployeeOverview() {
       case 'employeecreate':
         return (
           <ModalOverlay handleToggle={closeModal}>
-            <ViewEmployeeModal toggleModal={closeModal} />
+            <ViewEmployeeModal
+              toggleModal={closeModal}
+              selectedOwner={modalState.owner}
+            />
           </ModalOverlay>
         );
     }

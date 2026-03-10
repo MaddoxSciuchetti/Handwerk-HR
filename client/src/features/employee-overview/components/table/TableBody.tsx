@@ -23,37 +23,39 @@ const EmployeeTableBody = ({
   return (
     <>
       <TableBody className="text-left mt-5">
-        {EmployeeData?.map((value) => (
-          <tr
-            className="  py-5"
-            key={value.id}
-            onClick={(e) => {
-              e.stopPropagation();
-              openEdit(value.id, `${value.vorname}${value.nachname}`);
-            }}
-          >
-            <td className="text-sm font-semibold py-5 rounded-l-xl">
-              <EmployeeName value={value} />
-            </td>
-            <td>
-              <EmployeeOpenTasks />
-            </td>
-            <td className="">
-              <EmployeeStatus value={value} />
-            </td>
-            <td className="">
-              <EmployeeSubstitute value={value} />
-            </td>
-            <td className="rounded-r-xl">
-              <DropDownResuable
-                description="Löschen"
-                imgsrc="/assets/editReact.svg"
-                disabled={value.user_permission === 'CHEF'}
-                action={() => DeleteEmployee(value.id)}
-              />
-            </td>
-          </tr>
-        ))}
+        {EmployeeData?.map((value) => {
+          return (
+            <tr
+              className="  py-5"
+              key={value.id}
+              onClick={(e) => {
+                e.stopPropagation();
+                openEdit(value.id, `${value.vorname}${value.nachname}`);
+              }}
+            >
+              <td className="text-sm font-semibold py-5 rounded-l-xl">
+                <EmployeeName value={value} />
+              </td>
+              <td>
+                <EmployeeOpenTasks owner={value.id} />
+              </td>
+              <td className="">
+                <EmployeeStatus value={value} />
+              </td>
+              <td className="">
+                <EmployeeSubstitute value={value} />
+              </td>
+              <td className="rounded-r-xl">
+                <DropDownResuable
+                  description="Löschen"
+                  imgsrc="/assets/editReact.svg"
+                  disabled={value.user_permission === 'CHEF'}
+                  action={() => DeleteEmployee(value.id)}
+                />
+              </td>
+            </tr>
+          );
+        })}
       </TableBody>
     </>
   );

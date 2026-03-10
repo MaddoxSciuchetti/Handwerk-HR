@@ -6,34 +6,59 @@ function useEmployeeGroups(
   cleanData: Array<[string, EmployeeWorker]>
 ) {
   const employeeGroups = useMemo(() => {
-    return cleanData
-      .filter(([owner]) => owner === user)
-      .map(([owner, items]) => {
-        const flatInputs = items.flatMap((task) =>
-          task.inputs.map((input) => ({
-            description: task.description,
-            timestamp: input.timestamp,
-            timeStampLastChange: input.timeStampLastChange,
-            form_field_id: task.form_field_id,
-            status: input.status,
+    const ownerItems = cleanData.find(([owner]) => owner === user)?.[1] ?? [];
+
+    const groupedByHandwerker = new Map<
+      number,
+      {
+        employee: {
+          id: number;
+          vorname: string;
+          nachname: string;
+          email: string | null;
+        };
+        inputs: Array<{
+          description: string;
+          timestamp: Date;
+          timeStampLastChange: Date;
+          form_field_id: number;
+          status: string;
+        }>;
+      }
+    >();
+
+    ownerItems.forEach((task) => {
+      task.inputs.forEach((input) => {
+        const current = groupedByHandwerker.get(input.employee.id);
+
+        if (!current) {
+          groupedByHandwerker.set(input.employee.id, {
             employee: input.employee,
-          }))
-        );
+            inputs: [
+              {
+                description: task.description,
+                timestamp: input.timestamp,
+                timeStampLastChange: input.timeStampLastChange,
+                form_field_id: task.form_field_id,
+                status: input.status,
+              },
+            ],
+          });
+          return;
+        }
 
-        const firstEmployee = flatInputs[0]?.employee;
+        current.inputs.push({
+          description: task.description,
+          timestamp: input.timestamp,
+          timeStampLastChange: input.timeStampLastChange,
+          form_field_id: task.form_field_id,
+          status: input.status,
+        });
+      });
+    });
 
-        return [
-          owner,
-          {
-            employee: firstEmployee ?? {
-              vorname: owner,
-              nachname: '',
-              email: null,
-            },
-            inputs: flatInputs.map(({ employee, ...rest }) => rest),
-          },
-        ] as const;
-      })
+    return Array.from(groupedByHandwerker.entries())
+      .map(([employeeId, group]) => [String(employeeId), group] as const)
       .filter(([, group]) => group.inputs.length > 0);
   }, [cleanData, user]);
 
