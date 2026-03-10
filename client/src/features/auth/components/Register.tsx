@@ -71,10 +71,10 @@ export function SignupForm() {
             register={register}
             name="email"
             label="Email Address"
-            labelClassName="text-white text-sm font-medium"
+            labelClassName="text-foreground text-sm font-medium"
             id="email"
             type="email"
-            className="text-white bg-gray-600 border-gray-500"
+            className="border-input bg-background text-foreground"
           />
         </div>
         <div className="flex gap-3">
@@ -84,10 +84,10 @@ export function SignupForm() {
               register={register}
               name="firstName"
               label="Vorname"
-              labelClassName="text-white text-sm font-medium"
+              labelClassName="text-foreground text-sm font-medium"
               id="firstName"
               type="text"
-              className="text-white bg-gray-600 border-gray-500"
+              className="border-input bg-background text-foreground"
             />
           </div>
           <div className="space-y-2 flex-1">
@@ -98,8 +98,8 @@ export function SignupForm() {
               id="lastName"
               type="text"
               label="Nachname"
-              labelClassName="text-white text-sm font-medium"
-              className="text-white bg-gray-600 border-gray-500"
+              labelClassName="text-foreground text-sm font-medium"
+              className="border-input bg-background text-foreground"
             />
           </div>
         </div>
@@ -110,12 +110,12 @@ export function SignupForm() {
             register={register}
             name="password"
             label="Password"
-            labelClassName="text-white text-sm font-medium"
+            labelClassName="text-foreground text-sm font-medium"
             id="password"
             type="password"
-            className="text-white bg-gray-600 border-gray-500"
+            className="border-input bg-background text-foreground"
           />
-          <p className="text-gray-400 text-xs text-left mt-2">
+          <p className="mt-2 text-left text-xs text-muted-foreground">
             - Must be at least 6 characters long.
           </p>
         </div>
@@ -126,17 +126,13 @@ export function SignupForm() {
             register={register}
             name="confirmPassword"
             label="Confirm Password"
-            labelClassName="text-white text-sm font-medium"
+            labelClassName="text-foreground text-sm font-medium"
             id="confirmPassword"
             type="password"
-            className="text-white bg-gray-600 border-gray-500"
+            className="border-input bg-background text-foreground"
           />
         </div>
-        <Button
-          type="submit"
-          className="w-full my-2 text-white "
-          variant={'outline'}
-        >
+        <Button type="submit" className="my-2 w-full" variant={'outline'}>
           Create Account
         </Button>
         <DoorManFooter

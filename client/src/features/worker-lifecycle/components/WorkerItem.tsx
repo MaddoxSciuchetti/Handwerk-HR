@@ -41,7 +41,7 @@ export function Worker_Item({
   const color = calculatePercent(completedTasksCount!, totalTasks!);
   console.log('lifecycle type in worker-lifycycle', item_value, form_type);
   return (
-    <tr className="group hover:bg-muted-foreground rounded-2xl py-5">
+    <tr className="group rounded-2xl py-5 transition-colors hover:bg-muted/50">
       <td className="text-sm font-semibold">
         <div className="flex items-center gap-3">
           <span>
@@ -74,7 +74,7 @@ export function Worker_Item({
         <span className={color}>
           {processLoading ? '...' : completedTasksCount}
         </span>
-        <span className="text-black font-medium">
+        <span className="font-medium text-foreground">
           /{processData?.form?.fields?.length || 0}
         </span>
       </th>

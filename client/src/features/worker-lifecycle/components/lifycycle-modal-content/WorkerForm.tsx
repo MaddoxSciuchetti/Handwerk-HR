@@ -66,7 +66,7 @@ export const WorkerForm = ({
         className=" gap-4  flex flex-col"
       >
         <Button
-          className="w-20 hover:bg-gray-300 rounded-xl cursor-pointer"
+          className="w-20 cursor-pointer rounded-xl transition-colors hover:bg-accent hover:text-accent-foreground"
           variant={'outline'}
           onClick={() => setSelectedOption(null)}
           type="button"
@@ -91,7 +91,7 @@ export const WorkerForm = ({
         <Button
           variant={'outline'}
           type="submit"
-          className="hover:bg-gray-300 rounded-xl cursor-pointer"
+          className="cursor-pointer rounded-xl transition-colors hover:bg-accent hover:text-accent-foreground"
         >
           Hinzufügen
         </Button>

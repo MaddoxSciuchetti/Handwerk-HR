@@ -25,11 +25,14 @@ const DropDownResuable = <T,>({
         <DropdownMenuTrigger asChild>
           <img className="hover:scale-110" src={imgsrc} />
         </DropdownMenuTrigger>
-        <DropdownMenuContent className={`w-40 bg-gray-100`} align="start">
+        <DropdownMenuContent
+          className="w-40 bg-popover text-popover-foreground"
+          align="start"
+        >
           <DropdownMenuGroup>
             <DropdownMenuItem
               disabled={disabled}
-              className="hover:bg-gray-200 cursor-pointer"
+              className="cursor-pointer hover:bg-accent hover:text-accent-foreground"
               onClick={(e) => {
                 e.stopPropagation();
                 action();

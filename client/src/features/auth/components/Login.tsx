@@ -65,11 +65,11 @@ export function LoginComponent() {
               register={register}
               name="email"
               label="Email Address"
-              labelClassName="text-white text-sm font-medium"
+              labelClassName="text-foreground text-sm font-medium"
               id="email"
               type="email"
               placeholder="m@example.com"
-              className="text-white bg-gray-600 border-gray-500"
+              className="border-input bg-background text-foreground"
             />
           </div>
 
@@ -79,10 +79,10 @@ export function LoginComponent() {
               register={register}
               name="password"
               label="Password"
-              labelClassName="text-white text-sm font-medium"
+              labelClassName="text-foreground text-sm font-medium"
               id="password"
               type="password"
-              className="text-white bg-gray-600 border-gray-500"
+              className="border-input bg-background text-foreground"
             />
           </div>
         </div>
@@ -91,7 +91,7 @@ export function LoginComponent() {
           <Button
             type="button"
             onClick={() => navigate({ to: '/password/forgot' })}
-            className="text-white hover:text-gray-300 underline text-sm"
+            className="text-foreground underline text-sm hover:text-accent-foreground"
           >
             Forgot Password?
           </Button>
@@ -101,7 +101,7 @@ export function LoginComponent() {
           <Button
             variant={'outline'}
             type="submit"
-            className="w-full text-white cursor-pointer"
+            className="w-full cursor-pointer"
           >
             Login
           </Button>

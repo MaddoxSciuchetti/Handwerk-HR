@@ -19,8 +19,8 @@ const VerificationCheck = ({ user }: VerificationCheckProps) => {
           </AlertDescription>
         </Alert>
       )}
-      <p className="text-black mb-2">
-        Email: <span className="text-black">{user.email}</span>
+      <p className="mb-2 text-foreground">
+        Email: <span className="text-foreground">{user.email}</span>
       </p>
     </>
   );

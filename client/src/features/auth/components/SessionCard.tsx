@@ -12,13 +12,13 @@ const SessionCard = ({ session }: Session) => {
   const { deleteSession, isPending } = useDeleteSession(id);
 
   return (
-    <div className="flex p-3 border border-gray-200 rounded-md">
+    <div className="flex rounded-md border border-border p-3">
       <div className="flex-1">
         <p className="font-bold text-sm mb-1">
           {new Date(createdAt).toLocaleString('en-US')}
           {isCurrent && ' (current session)'}
         </p>
-        <p className="text-gray-500 text-xs">{userAgent}</p>
+        <p className="text-xs text-muted-foreground">{userAgent}</p>
       </div>
       {!isCurrent && (
         <Button

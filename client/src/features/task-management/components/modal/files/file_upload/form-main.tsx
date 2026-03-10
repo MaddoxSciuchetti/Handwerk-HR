@@ -56,7 +56,7 @@ export default function FileUpload01({
             <Button
               variant={'outline'}
               onClick={handleFileSubmit}
-              className="h-9 px-4 text-sm font-medium justify-center hover:text-black cursor-pointer mt-5"
+              className="mt-5 h-9 cursor-pointer justify-center px-4 text-sm font-medium hover:text-foreground"
             >
               Erstellen
             </Button>

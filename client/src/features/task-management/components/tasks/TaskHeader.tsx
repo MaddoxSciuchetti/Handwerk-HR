@@ -21,16 +21,10 @@ const TaskHeader = ({
         placeholder="Search"
       />
       <TabsList variant={'default'} className="">
-        <TabsTrigger
-          className="data-[state=active]:bg-gray-200 cursor-pointer"
-          value="form"
-        >
+        <TabsTrigger className="cursor-pointer" value="form">
           Aufgaben
         </TabsTrigger>
-        <TabsTrigger
-          className="data-[state=active]:bg-gray-200 cursor-pointer"
-          value="files"
-        >
+        <TabsTrigger className="cursor-pointer" value="files">
           Dateien
         </TabsTrigger>
       </TabsList>

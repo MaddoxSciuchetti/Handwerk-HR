@@ -41,7 +41,10 @@ const ForgotPassword = () => {
         ) : (
           <>
             <div className="space-y-2 text-left">
-              <label htmlFor="email" className="text-white text-sm font-medium">
+              <label
+                htmlFor="email"
+                className="text-foreground text-sm font-medium"
+              >
                 Email address
               </label>
               <Input
@@ -50,31 +53,31 @@ const ForgotPassword = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoFocus
-                className="text-white bg-gray-600 border-gray-500"
+                className="border-input bg-background text-foreground"
               />
             </div>
             <Button
               onClick={() => sendPasswordReset(email)}
               variant={'outline'}
-              className="w-full cursor-pointer text-white "
+              className="w-full cursor-pointer"
             >
               Reset Password
             </Button>
           </>
         )}
 
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-muted-foreground">
           Go back to{' '}
           <button
             onClick={() => navigate({ to: '/login' })}
-            className="text-white hover:text-gray-300 underline"
+            className="text-foreground underline hover:text-accent-foreground"
           >
             Sign in
           </button>
           &nbsp;or&nbsp;
           <button
             onClick={() => navigate({ to: '/signup' })}
-            className="text-white hover:text-gray-300 underline"
+            className="text-foreground underline hover:text-accent-foreground"
           >
             Sign up
           </button>

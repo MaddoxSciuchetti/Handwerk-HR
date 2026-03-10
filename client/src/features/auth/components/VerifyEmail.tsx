@@ -31,17 +31,20 @@ function VerifyEmail() {
             {isSuccess ? 'Email Verified!' : 'Invalid Link'}
           </p>
           {isError && (
-            <p className="text-gray-400">
+            <p className="text-muted-foreground">
               The link is either invalid or expired.{' '}
               <button
                 onClick={() => navigate({ to: '/' })}
-                className="text-white underline"
+                className="text-foreground underline hover:text-accent-foreground"
               >
                 Get a new link
               </button>
             </p>
           )}
-          <button onClick={() => navigate({ to: '/' })} className="text-white ">
+          <button
+            onClick={() => navigate({ to: '/' })}
+            className="text-foreground hover:text-accent-foreground"
+          >
             Jetzt Einloggen
           </button>
         </div>

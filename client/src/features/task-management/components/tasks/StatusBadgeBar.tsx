@@ -49,7 +49,7 @@ const StatusBadgeBar = ({
           <StatusBadge
             badgeDescription={officialOwner}
             tooltip={'Verantwortlich'}
-            className={'bg-gray-200'}
+            className={'bg-muted text-muted-foreground'}
           />
         )}
         <StatusBadge

@@ -27,10 +27,12 @@ const ResetPassword = () => {
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>Invalid Link</AlertDescription>
         </Alert>
-        <p className="text-gray-400">The link is either invalid or expired.</p>
+        <p className="text-muted-foreground">
+          The link is either invalid or expired.
+        </p>
         <button
           onClick={() => navigate({ to: '/password/forgot' })}
-          className="text-blue-600 hover:text-blue-800 underline"
+          className="text-primary underline hover:text-primary/80"
         >
           Request a new password reset link
         </button>
