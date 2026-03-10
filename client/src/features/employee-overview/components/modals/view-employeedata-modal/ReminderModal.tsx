@@ -1,10 +1,10 @@
 import ErrorAlert from '@/components/alerts/ErrorAlert';
 import FormFields from '@/components/form/FormFields';
 import SmallWrapper from '@/components/modal/modalSizes/SmallWrapper';
-import { Button } from '../../../components/ui/button';
-import { Textarea } from '../../../components/ui/textarea';
-import useAdminModal from '../hooks/useAdminModal';
-import { TCloseModal } from '../types/adminModal.types';
+import { Button } from '../../../../../components/ui/button';
+import { Textarea } from '../../../../../components/ui/textarea';
+import useAdminModal from '../../../hooks/useAdminModal';
+import { TCloseModal } from '../../../types/adminModal.types';
 
 function ReminderModal({ onClose }: TCloseModal) {
   const { isError, isSuccess, onSubmit, register, handleSubmit, errors } =

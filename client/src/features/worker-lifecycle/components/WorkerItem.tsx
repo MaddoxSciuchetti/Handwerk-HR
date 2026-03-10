@@ -1,4 +1,5 @@
 import DropDownResuable from '@/components/DropDownResuable';
+import { Button } from '@/components/ui/button';
 import useFetchProcessData from '@/features/employee-overview/hooks/useFetchProcessData';
 import { UseMutateFunction } from '@tanstack/react-query';
 import { DeleteUser } from '../types/index.types';
@@ -40,12 +41,22 @@ export function Worker_Item({
   const color = calculatePercent(completedTasksCount!, totalTasks!);
   console.log('lifecycle type in worker-lifycycle', item_value, form_type);
   return (
-    <tr
-      onClick={() => gotopage(item_value, form_type)}
-      className="hover:bg-muted-foreground rounded-2xl cursor-pointer   py-5"
-    >
+    <tr className="group hover:bg-muted-foreground rounded-2xl py-5">
       <td className="text-sm font-semibold">
-        {item} {item1}
+        <div className="flex items-center gap-3">
+          <span>
+            {item} {item1}
+          </span>
+          <Button
+            type="button"
+            size={'sm'}
+            variant="outline"
+            className="cursor-pointer pointer-events-none opacity-0 transition-opacity duration-150 group-hover:pointer-events-auto group-hover:opacity-100"
+            onClick={() => gotopage(item_value, form_type)}
+          >
+            Anschauen
+          </Button>
+        </div>
       </td>
 
       <td

@@ -9,6 +9,7 @@ import ModalOverlay from '@/components/modal/ModalOverlay';
 import { useEmployeeModal } from '../hooks/useEmployeeModal';
 import ModalMitarbeiter from './modals/create-employee-modal/EmployeeModal';
 import ModalEditMitarbeiter from './modals/edit-employee-modal/EmployeeModal';
+import ViewEmployeeModal from './modals/view-employeedata-modal/ViewEmployeeModal';
 import EmployeeTableHeader from './table/EmployeeTableHeader';
 import EmployeeTableBody from './table/TableBody';
 
@@ -33,6 +34,13 @@ function EmployeeOverview() {
         return (
           <ModalOverlay handleToggle={closeModal}>
             <ModalMitarbeiter toggleModal={closeModal} />
+          </ModalOverlay>
+        );
+
+      case 'employeecreate':
+        return (
+          <ModalOverlay handleToggle={closeModal}>
+            <ViewEmployeeModal selectedOwner={modalState.owner} />
           </ModalOverlay>
         );
     }

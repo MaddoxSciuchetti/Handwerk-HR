@@ -1,4 +1,4 @@
-import { EmployeeGroup } from '@/features/ceo-dashboard/types/employeeData.types';
+import { EmployeeGroup } from '@/features/employee-overview/types/employeeData.types';
 
 export type DataContentProps = {
   group: EmployeeGroup;

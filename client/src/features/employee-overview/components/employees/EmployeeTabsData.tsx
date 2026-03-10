@@ -17,7 +17,7 @@ export function EmployeeTabsData({ onTaskClick, user, cleanData }: TAccordion) {
         type="single"
         collapsible
         defaultValue="shipping"
-        className=" p-5 cursor-pointer border-[0.5px] border-gray-300 rounded-2xl w-full"
+        className="w-full cursor-pointer rounded-2xl border-[0.5px] border-gray-300 "
       >
         {employeeGroups.length === 0 ||
         employeeGroups[0]?.[1].inputs.length === 0 ? (
@@ -27,12 +27,12 @@ export function EmployeeTabsData({ onTaskClick, user, cleanData }: TAccordion) {
             <AccordionItem
               key={employeeName}
               value={`employee-${index}`}
-              className="cursor-pointer "
+              className=" cursor-pointer rounded-xl border border-gray-200 px-3 last:mb-0"
             >
-              <AccordionTrigger className=" p-2">
+              <AccordionTrigger className="">
                 Handwerker: {group.employee.vorname} {group.employee.nachname}
               </AccordionTrigger>
-              <AccordionContent className="flex flex-col justify-center items-center  mt-5">
+              <AccordionContent className="mt-2 flex flex-col items-center justify-center pb-3">
                 <DataContent group={group} onTaskClick={onTaskClick} />
               </AccordionContent>
             </AccordionItem>
