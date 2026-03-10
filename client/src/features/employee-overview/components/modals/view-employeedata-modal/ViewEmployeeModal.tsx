@@ -2,9 +2,9 @@ import CenteredDiv from '@/components/alerts/layout-wrapper/CenteredDiv';
 import ModalOverlay from '@/components/modal/ModalOverlay';
 import SmallWrapper from '@/components/modal/modalSizes/SmallWrapper';
 import { Spinner } from '@/components/ui/spinner';
-import { EmployeeTabsData } from '@/features/ceo-dashboard/components/employees/EmployeeTabsData';
-import useEmployeeData from '@/features/ceo-dashboard/hooks/useEmployeeData';
+import { EmployeeTabsData } from '@/features/employee-overview/components/employees/EmployeeTabsData';
 import ReminderModal from '@/features/employee-overview/components/modals/view-employeedata-modal/ReminderModal';
+import useEmployeeData from '@/features/employee-overview/hooks/useEmployeeData';
 
 type ViewEmployeeModalProps = {
   toggleModal: () => void;

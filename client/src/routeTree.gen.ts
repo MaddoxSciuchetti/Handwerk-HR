@@ -20,7 +20,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as UserIdRouteImport } from './routes/user/$Id'
 import { Route as PasswordResetRouteImport } from './routes/password/reset'
 import { Route as PasswordForgotRouteImport } from './routes/password/forgot'
-import { Route as DashboardCeoRouteImport } from './routes/dashboard/ceo'
 import { Route as EmailVerifyCodeRouteImport } from './routes/email/verify/$code'
 
 const WorkerLifycycleRoute = WorkerLifycycleRouteImport.update({
@@ -78,11 +77,6 @@ const PasswordForgotRoute = PasswordForgotRouteImport.update({
   path: '/password/forgot',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardCeoRoute = DashboardCeoRouteImport.update({
-  id: '/dashboard/ceo',
-  path: '/dashboard/ceo',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const EmailVerifyCodeRoute = EmailVerifyCodeRouteImport.update({
   id: '/email/verify/$code',
   path: '/email/verify/$code',
@@ -98,7 +92,6 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/template': typeof TemplateRoute
   '/worker-lifycycle': typeof WorkerLifycycleRoute
-  '/dashboard/ceo': typeof DashboardCeoRoute
   '/password/forgot': typeof PasswordForgotRoute
   '/password/reset': typeof PasswordResetRoute
   '/user/$Id': typeof UserIdRoute
@@ -113,7 +106,6 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/template': typeof TemplateRoute
   '/worker-lifycycle': typeof WorkerLifycycleRoute
-  '/dashboard/ceo': typeof DashboardCeoRoute
   '/password/forgot': typeof PasswordForgotRoute
   '/password/reset': typeof PasswordResetRoute
   '/user/$Id': typeof UserIdRoute
@@ -129,7 +121,6 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/template': typeof TemplateRoute
   '/worker-lifycycle': typeof WorkerLifycycleRoute
-  '/dashboard/ceo': typeof DashboardCeoRoute
   '/password/forgot': typeof PasswordForgotRoute
   '/password/reset': typeof PasswordResetRoute
   '/user/$Id': typeof UserIdRoute
@@ -146,7 +137,6 @@ export interface FileRouteTypes {
     | '/signup'
     | '/template'
     | '/worker-lifycycle'
-    | '/dashboard/ceo'
     | '/password/forgot'
     | '/password/reset'
     | '/user/$Id'
@@ -161,7 +151,6 @@ export interface FileRouteTypes {
     | '/signup'
     | '/template'
     | '/worker-lifycycle'
-    | '/dashboard/ceo'
     | '/password/forgot'
     | '/password/reset'
     | '/user/$Id'
@@ -176,7 +165,6 @@ export interface FileRouteTypes {
     | '/signup'
     | '/template'
     | '/worker-lifycycle'
-    | '/dashboard/ceo'
     | '/password/forgot'
     | '/password/reset'
     | '/user/$Id'
@@ -192,7 +180,6 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   TemplateRoute: typeof TemplateRoute
   WorkerLifycycleRoute: typeof WorkerLifycycleRoute
-  DashboardCeoRoute: typeof DashboardCeoRoute
   PasswordForgotRoute: typeof PasswordForgotRoute
   PasswordResetRoute: typeof PasswordResetRoute
   UserIdRoute: typeof UserIdRoute
@@ -278,13 +265,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PasswordForgotRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard/ceo': {
-      id: '/dashboard/ceo'
-      path: '/dashboard/ceo'
-      fullPath: '/dashboard/ceo'
-      preLoaderRoute: typeof DashboardCeoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/email/verify/$code': {
       id: '/email/verify/$code'
       path: '/email/verify/$code'
@@ -304,7 +284,6 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   TemplateRoute: TemplateRoute,
   WorkerLifycycleRoute: WorkerLifycycleRoute,
-  DashboardCeoRoute: DashboardCeoRoute,
   PasswordForgotRoute: PasswordForgotRoute,
   PasswordResetRoute: PasswordResetRoute,
   UserIdRoute: UserIdRoute,

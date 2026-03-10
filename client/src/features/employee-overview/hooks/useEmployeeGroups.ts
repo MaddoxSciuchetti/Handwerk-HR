@@ -1,5 +1,5 @@
-import { EmployeeWorker } from '@/features/employee-overview/types/employeeform.types';
 import { useMemo } from 'react';
+import { EmployeeWorker } from '../types/employeeform.types';
 
 function useEmployeeGroups(
   user: string,
