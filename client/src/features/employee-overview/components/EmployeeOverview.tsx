@@ -14,7 +14,8 @@ import EmployeeTableBody from './table/TableBody';
 
 function EmployeeOverview() {
   const { EmployeeData } = useGetEmployees();
-  const { modalState, openCreate, closeModal } = useEmployeeModal();
+  const { modalState, openCreate, closeModal, employeeCreate } =
+    useEmployeeModal();
   const { DeleteEmployee, isPending } = useDeleteEmployee();
 
   const renderModal = () => {
@@ -30,6 +31,13 @@ function EmployeeOverview() {
           </ModalOverlay>
         );
       case 'create':
+        return (
+          <ModalOverlay handleToggle={closeModal}>
+            <ModalMitarbeiter toggleModal={closeModal} />
+          </ModalOverlay>
+        );
+
+      case 'employeecreate':
         return (
           <ModalOverlay handleToggle={closeModal}>
             <ModalMitarbeiter toggleModal={closeModal} />
