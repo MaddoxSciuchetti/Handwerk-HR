@@ -15,12 +15,12 @@ const StatusBadge = ({
     <div className="relative">
       <span
         className={cn(
-          `rounded-2xl px-3 py-1 text-sm cursor-pointer group`,
+          'group cursor-pointer rounded-2xl px-3 py-1 text-sm text-foreground',
           className
         )}
       >
         {badgeDescription}
-        <div className="absolute bottom-full left-0 mb-2 p-3 bg-white border rounded-lg shadow-lg opacity-0 group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-10 ">
+        <div className="invisible absolute bottom-full left-0 z-10 mb-2 whitespace-nowrap rounded-lg border border-border bg-(--dropdown-surface) p-3 text-popover-foreground opacity-0 shadow-lg transition-all duration-200 group-hover:visible group-hover:opacity-100">
           {tooltip}
         </div>
       </span>

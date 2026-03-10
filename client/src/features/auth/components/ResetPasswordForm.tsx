@@ -25,7 +25,7 @@ const ResetPasswordForm = ({ code }: { code: string }) => {
     <DoorManCard>
       <div className="text-center">
         {isError && (
-          <div className="mb-3 text-red-400">
+          <div className="mb-3 text-destructive">
             {error.message || 'An error occurred'}
           </div>
         )}
@@ -33,17 +33,17 @@ const ResetPasswordForm = ({ code }: { code: string }) => {
           <div className="space-y-3">
             <Alert
               variant="default"
-              className="rounded-xl mb-3 border-green-200 bg-green-50"
+              className="mb-3 rounded-xl border border-(--status-success-foreground) bg-(--status-success-bg)"
             >
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <AlertDescription className="text-green-800">
+              <CheckCircle className="h-4 w-4 text-(--status-success-foreground)" />
+              <AlertDescription className="text-(--status-success-foreground)">
                 Password updated successfully!
               </AlertDescription>
             </Alert>
 
             <button
               onClick={() => navigate({ to: '/login' })}
-              className="text-white cursor-pointer"
+              className="cursor-pointer text-foreground"
             >
               Sign in
             </button>
@@ -53,7 +53,7 @@ const ResetPasswordForm = ({ code }: { code: string }) => {
             <div className="space-y-2">
               <label
                 htmlFor="password"
-                className="text-white text-sm font-medium"
+                className="text-foreground text-sm font-medium"
               >
                 New Password
               </label>
@@ -67,12 +67,12 @@ const ResetPasswordForm = ({ code }: { code: string }) => {
                   resetUserPassword({ password, verificationCode: code })
                 }
                 autoFocus
-                className="text-white bg-gray-600 border-gray-500"
+                className="border-input bg-background text-foreground"
               />
             </div>
             <Button
               variant={'outline'}
-              className="w-full cursor-pointer text-white"
+              className="w-full cursor-pointer"
               onClick={() =>
                 resetUserPassword({
                   password,

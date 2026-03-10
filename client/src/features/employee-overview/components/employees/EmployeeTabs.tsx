@@ -21,11 +21,11 @@ function EmployeeTabs({
           <TabsTrigger
             value={user?.owner}
             key={user.owner}
-            className={`text-md flex flex-row font-light cursor-pointer  ${selectedUser === user.owner ? ` transition delay-150 duration-300 ease-in-out  bg-gray-100` : `hover:bg-gray-50`}`}
+            className={`text-md flex cursor-pointer flex-row font-light transition-colors ${selectedUser === user.owner ? 'bg-accent text-accent-foreground' : 'hover:bg-accent hover:text-accent-foreground'}`}
           >
             {user.original_owner}
             {user.is_substitute && (
-              <span className="text-xs text-gray-400  ml-1">
+              <span className="ml-1 text-xs text-muted-foreground">
                 (Vertretung: {user.substitute_name})
               </span>
             )}

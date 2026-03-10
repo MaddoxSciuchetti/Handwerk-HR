@@ -9,7 +9,7 @@ const EmployeeName = ({ value }: EmployeeNameProps) => {
     <>
       {value.user_permission === 'CHEF' ? (
         <p>
-          <span className="text-blue-400">Ich:</span> {''}
+          <span className="text-(--status-info-foreground)">Ich:</span> {''}
           {value.vorname} {value.nachname}
         </p>
       ) : (

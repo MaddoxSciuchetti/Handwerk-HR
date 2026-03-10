@@ -36,11 +36,10 @@ export default function FileUpload01({
 
   return (
     <>
-      <SmallWrapper>
-        <div className="mb-6 flex w-full min-w-0 items-center justify-center">
-          {isLoading ? <div>...</div> : ''}
+      <SmallWrapper className="min-h-80 max-h-80">
+        <div className="flex flex-col w-full min-w-0 items-center justify-center ">
           {error ? <div>Try again</div> : ''}
-          <CardContent className="flex w-full min-w-0 flex-col p-0">
+          <CardContent className="flex w-full min-w-0 flex-col">
             <FileDropzone
               fileInputRef={fileInputRef}
               handleBoxClick={handleBoxClick}
@@ -56,9 +55,9 @@ export default function FileUpload01({
             <Button
               variant={'outline'}
               onClick={handleFileSubmit}
-              className="h-9 px-4 text-sm font-medium justify-center hover:text-black cursor-pointer mt-5"
+              className={`${isLoading ? 'opacity-50' : ''} mt-5  cursor-pointer justify-center px-4 text-sm font-medium hover:text-foreground`}
             >
-              Erstellen
+              {isLoading ? 'Hochladen...' : 'Hochladen'}
             </Button>
           </CardContent>
         </div>

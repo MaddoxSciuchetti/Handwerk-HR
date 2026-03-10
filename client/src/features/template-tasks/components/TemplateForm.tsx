@@ -99,7 +99,7 @@ const TemplateForm = ({
         errors={errors}
         name={'description'}
         render={({ message }) => (
-          <p className="text-red-400 text-sm mb-5">{message}</p>
+          <p className="mb-5 text-sm text-destructive">{message}</p>
         )}
       />
       <div className="flex w-full min-w-0 flex-row items-start gap-2">
@@ -114,7 +114,7 @@ const TemplateForm = ({
         <Button
           type="submit"
           variant={'outline'}
-          className="flex-1 cursor-pointer justify-start rounded-xl text-left hover:bg-gray-200"
+          className="flex-1 cursor-pointer justify-start rounded-xl text-left transition-colors hover:bg-accent hover:text-accent-foreground"
         >
           {mode === 'EDIT' ? 'Speichern ' : 'Neue Beschreibung hinzufügen'}
         </Button>

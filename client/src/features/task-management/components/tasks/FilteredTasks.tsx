@@ -11,8 +11,8 @@ const FilteredTasks = ({ showMyItems, handleMeFilter }: FilteredTasksProps) => {
           onClick={() => handleMeFilter()}
           className={
             showMyItems
-              ? 'active cursor-pointer rounded-2xl bg-gray-100 w-40 text-sm mt-5 text-center px-2 py-1'
-              : 'cursor-pointer rounded-2xl bg-blue-100 w-40 text-sm mt-5 text-center px-2 py-1'
+              ? 'active mt-5 w-40 cursor-pointer rounded-2xl border border-border bg-(--dropdown-surface) px-2 py-1 text-center text-sm text-foreground'
+              : 'mt-5 w-40 cursor-pointer rounded-2xl border border-border bg-muted px-2 py-1 text-center text-sm text-muted-foreground transition-colors hover:bg-(--hover-bg) hover:text-(--hover-foreground)'
           }
         >
           {showMyItems ? 'Alle Aufgaben' : 'Meine Aufgaben'}

@@ -33,15 +33,15 @@ export function Worker_Item({
     const percent = (completedTasks / total) * 100;
     console.log('this is the percent calculation');
     console.log(percent);
-    if (percent < 20) return 'text-red-500';
-    if (percent > 20 && percent <= 99) return 'text-yellow-300';
-    if (percent === 100) return 'text-green-500';
+    if (percent < 20) return 'text-(--chart-5)';
+    if (percent >= 20 && percent < 100) return 'text-orange-500';
+    if (percent === 100) return 'text-(--chart-2)';
   };
 
   const color = calculatePercent(completedTasksCount!, totalTasks!);
   console.log('lifecycle type in worker-lifycycle', item_value, form_type);
   return (
-    <tr className="group hover:bg-muted-foreground rounded-2xl py-5">
+    <tr className="group rounded-2xl py-5 transition-colors hover:bg-muted/50">
       <td className="text-sm font-semibold">
         <div className="flex items-center gap-3">
           <span>
@@ -62,8 +62,8 @@ export function Worker_Item({
       <td
         className={
           form_type === 'Onboarding'
-            ? 'text-sm underline decoration-2 decoration-sky-400 justify-center items-center py-5'
-            : 'text-sm underline decoration-2 decoration-red-400 justify-center items-center py-5'
+            ? 'text-sm underline text-(--chart-1) justify-center items-center py-5'
+            : 'text-sm underline text-(--chart-5) justify-center items-center py-5'
         }
         lang="en"
       >
@@ -74,7 +74,7 @@ export function Worker_Item({
         <span className={color}>
           {processLoading ? '...' : completedTasksCount}
         </span>
-        <span className="text-black font-medium">
+        <span className="font-medium text-foreground">
           /{processData?.form?.fields?.length || 0}
         </span>
       </th>
@@ -83,7 +83,6 @@ export function Worker_Item({
         <DropDownResuable
           description="Löschen"
           action={() => onRemove(item_value)}
-          imgsrc="/assets/editReact.svg"
         />
       </td>
     </tr>

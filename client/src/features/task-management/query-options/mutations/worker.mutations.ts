@@ -8,7 +8,7 @@ import { File_Request } from '../../types/index.types';
 
 export const workerMutations = {
   deleteWorker: (workerId: number) => {
-    return mutationOptions<Pick<SuccessResponse, 'success'>, Error, number>({
+    return mutationOptions<SuccessResponse<string>, Error, number>({
       mutationFn: (fileId: number) => deleteWorkerFile(fileId),
       onMutate: async (fileId) => {
         await queryClient.cancelQueries({ queryKey: [HISTORYDATA, workerId] });

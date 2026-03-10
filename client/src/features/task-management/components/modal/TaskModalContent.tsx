@@ -59,7 +59,7 @@ function ModalContent({
             select_option={select_option}
           />
           <Button
-            className="w-full flex-1 cursor-pointer rounded-xl hover:bg-gray-300"
+            className="w-full flex-1 cursor-pointer rounded-xl transition-colors hover:bg-accent hover:text-accent-foreground"
             variant={'outline'}
             type="submit"
           >

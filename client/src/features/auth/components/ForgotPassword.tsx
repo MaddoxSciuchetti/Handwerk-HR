@@ -23,7 +23,7 @@ const ForgotPassword = () => {
     <DoorManCard>
       <div className="flex flex-col text-center space-y-4">
         {isError && (
-          <div className="text-red-400">
+          <div className="text-destructive">
             {error.message || 'An error occurred'}
           </div>
         )}
@@ -31,17 +31,20 @@ const ForgotPassword = () => {
         {isSuccess ? (
           <Alert
             variant="default"
-            className="rounded-xl border-green-200 bg-green-50"
+            className="rounded-xl border border-(--status-success-foreground) bg-(--status-success-bg)"
           >
-            <CheckCircle className="h-4 w-4 text-green-600" />
-            <AlertDescription className="text-green-800">
+            <CheckCircle className="h-4 w-4 text-(--status-success-foreground)" />
+            <AlertDescription className="text-(--status-success-foreground)">
               Email sent! Check your inbox for further instructions.
             </AlertDescription>
           </Alert>
         ) : (
           <>
             <div className="space-y-2 text-left">
-              <label htmlFor="email" className="text-white text-sm font-medium">
+              <label
+                htmlFor="email"
+                className="text-foreground text-sm font-medium"
+              >
                 Email address
               </label>
               <Input
@@ -50,31 +53,31 @@ const ForgotPassword = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoFocus
-                className="text-white bg-gray-600 border-gray-500"
+                className="border-input bg-background text-foreground"
               />
             </div>
             <Button
               onClick={() => sendPasswordReset(email)}
               variant={'outline'}
-              className="w-full cursor-pointer text-white "
+              className="w-full cursor-pointer"
             >
               Reset Password
             </Button>
           </>
         )}
 
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-muted-foreground">
           Go back to{' '}
           <button
             onClick={() => navigate({ to: '/login' })}
-            className="text-white hover:text-gray-300 underline"
+            className="text-foreground underline hover:text-accent-foreground"
           >
             Sign in
           </button>
           &nbsp;or&nbsp;
           <button
             onClick={() => navigate({ to: '/signup' })}
-            className="text-white hover:text-gray-300 underline"
+            className="text-foreground underline hover:text-accent-foreground"
           >
             Sign up
           </button>

@@ -11,16 +11,16 @@ const VerificationCheck = ({ user }: VerificationCheckProps) => {
       {!user.verified && (
         <Alert
           variant="default"
-          className="w-fit rounded-xl mb-3 border-yellow-200 bg-yellow-50"
+          className="mb-3 w-fit rounded-xl border border-(--status-warning-foreground) bg-(--status-warning-bg)"
         >
-          <AlertTriangle className="h-4 w-4 text-yellow-600" />
-          <AlertDescription className="text-yellow-800">
+          <AlertTriangle className="h-4 w-4 text-(--status-warning-foreground)" />
+          <AlertDescription className="text-(--status-warning-foreground)">
             Verifiziere deine email
           </AlertDescription>
         </Alert>
       )}
-      <p className="text-black mb-2">
-        Email: <span className="text-black">{user.email}</span>
+      <p className="mb-2 text-foreground">
+        Email: <span className="text-foreground">{user.email}</span>
       </p>
     </>
   );

@@ -42,7 +42,7 @@ const EmployeeTableBody = ({
       <TableBody className="text-left mt-5">
         {EmployeeData?.map((value) => {
           return (
-            <tr className="group py-5" key={value.id}>
+            <tr className="group py-5 transition-colors " key={value.id}>
               <td className="text-sm font-semibold py-5 rounded-l-xl">
                 <div className="flex items-center gap-3">
                   <EmployeeName value={value} />
@@ -75,7 +75,6 @@ const EmployeeTableBody = ({
               <td className="rounded-r-xl">
                 <DropDownResuable
                   description="Löschen"
-                  imgsrc="/assets/editReact.svg"
                   disabled={value.user_permission === 'CHEF'}
                   action={() => DeleteEmployee(value.id)}
                 />

@@ -130,7 +130,7 @@ function FeatureModal({ handleToggle }: { handleToggle: () => void }) {
               </div>
             </CardContent>
 
-            <Button className="hover:text-black cursor-pointer" type="submit">
+            <Button className="cursor-pointer" type="submit">
               Senden
             </Button>
           </form>

@@ -45,11 +45,11 @@ const FormSelectOptions = <T extends FieldValues>({
             <SelectTrigger id={name} name={name} className="w-full rounded-xl">
               <SelectValue placeholder={placeholder} />
             </SelectTrigger>
-            <SelectContent className="border-none">
-              <SelectGroup className="bg-white cursor-pointer">
+            <SelectContent className="border border-border bg-popover text-popover-foreground">
+              <SelectGroup className="cursor-pointer">
                 {data?.map((item) => (
                   <SelectItem
-                    className="hover:bg-gray-200 cursor-pointer"
+                    className="cursor-pointer"
                     id={`select-${item.value}`}
                     value={item.value}
                     key={item.value}
@@ -66,7 +66,7 @@ const FormSelectOptions = <T extends FieldValues>({
         errors={errors}
         name={name as any}
         render={({ message }) => (
-          <p className="text-red-400 text-left text-sm mt-5">{message}</p>
+          <p className="mt-5 text-left text-sm text-destructive">{message}</p>
         )}
       />
     </>

@@ -35,7 +35,7 @@ const SingleFormField = <T extends string | number>({
             action?.();
           }
         }}
-        className="text-white bg-gray-600 border-gray-500"
+        className="border-input bg-background text-foreground"
       />
     </>
   );

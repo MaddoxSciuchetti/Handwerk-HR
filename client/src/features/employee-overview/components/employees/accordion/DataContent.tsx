@@ -14,7 +14,7 @@ function DataContent({ group, onTaskClick }: DataContentProps) {
           {group.inputs.map((task, taskIndex) => (
             <div
               key={taskIndex}
-              className="  p-2 mb-2 hover:bg-gray-50 rounded-2xl cursor-pointer"
+              className="mb-2 cursor-pointer rounded-2xl p-2 transition-colors hover:bg-accent hover:text-accent-foreground"
               onClick={onTaskClick}
             >
               <p>

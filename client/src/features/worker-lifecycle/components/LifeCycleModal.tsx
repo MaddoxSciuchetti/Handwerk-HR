@@ -18,7 +18,6 @@ const LifeCycleModal = ({
       {modal && (
         <ModalOverlay handleToggle={toggleModal}>
           <ModalContent
-            className="p-4 rounded-lg bg-white"
             addWorkerMutation={addWorkerMutation}
             toggleModal={toggleModal}
           />
