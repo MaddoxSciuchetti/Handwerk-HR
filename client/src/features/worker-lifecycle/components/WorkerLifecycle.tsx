@@ -32,7 +32,7 @@ function WorkerLifeCycle() {
   if (error) return <ErrorAlert message={error.message} />;
 
   return (
-    <div className="h-full w-full overflow-auto rounded-2xl bg-card p-6 shadow-lg shadow-border/40">
+    <div className="mx-auto flex h-full w-5xl flex-col overflow-auto rounded-2xl bg-card p-6 md:max-w-8xl">
       <div className="h-full w-full flex flex-col">
         <SearchHeaderResuable
           toggleModal={toggleModal}

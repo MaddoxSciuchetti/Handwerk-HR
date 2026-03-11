@@ -31,7 +31,7 @@ function TemplateTasks() {
   }
 
   return (
-    <div className="flex h-full w-full flex-col overflow-auto rounded-2xl bg-card p-6 shadow-lg shadow-border/40">
+    <div className="mx-auto flex h-full w-5xl flex-col overflow-auto rounded-2xl bg-card p-6 md:max-w-8xl">
       <TabsHeader
         tab={tab}
         setTab={setTab}
