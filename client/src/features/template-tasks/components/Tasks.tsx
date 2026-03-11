@@ -24,7 +24,7 @@ const Tasks = ({ items, openDescriptionModal, setMode }: TasksProps) => {
       <ul className="divide-y divide-border">
         {items?.map((item) => (
           <li
-            className="group flex items-center overflow-x-hidden justify-between gap-4 px-4 py-3 transition-colors hover:bg-(--hover-bg)"
+            className="group flex items-center overflow-x-hidden justify-between gap-4 px-4 py-3 transition-colors hover:bg-(--secondary)"
             key={item.form_field_id}
           >
             <div className="flex-1 min-w-0">
@@ -34,7 +34,7 @@ const Tasks = ({ items, openDescriptionModal, setMode }: TasksProps) => {
             </div>
 
             <div className="flex items-center gap-3">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5 rounded-full  bg-(--muted) px-2.5 py-1 text-xs font-medium text-muted-foreground">
                 {item.auth_user.vorname} {item.auth_user.nachname}
               </span>
 
