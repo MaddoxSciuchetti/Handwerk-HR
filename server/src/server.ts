@@ -13,6 +13,7 @@ import { employeeRoutes } from "./routes/employee.route";
 import { indexRoutes } from "./routes/index.route";
 import sessionRoutes from "./routes/session.route";
 import { templateRoutes } from "./routes/template.route";
+import testRoutes from "./routes/test.route";
 import { userRoutes } from "./routes/user.route";
 import { worker } from "./routes/worker.route";
 
@@ -61,6 +62,10 @@ app.use((req, res, next) => {
 app.get("/", (req, res) => {
     res.send("here");
 });
+
+// testing route
+
+app.use("/test", testRoutes);
 
 // auth routes
 
