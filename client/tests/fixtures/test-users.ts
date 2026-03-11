@@ -9,16 +9,22 @@ export function createTestUsers(
 ): TestUsers {
   return [
     {
+      vorname: 'Emma',
+      nachname: 'Schmidt',
       email: `emma.schmidt-${browserName}-${timestamp}@test.com`,
       password: 'maddox',
       confirmpassword: 'maddox',
     },
     {
+      vorname: 'Emma',
+      nachname: 'Schmidt',
       email: `emma.schmidt-${browserName}-${timestamp}@test.com`,
       password: 'maddox',
       confirmpassword: 'maddox',
     },
     {
+      vorname: 'Emma',
+      nachname: 'Schmidt',
       email: `emma.schmidt-${browserName}-${timestamp}@test.com`,
       password: 'maddox',
       confirmpassword: 'maddox',

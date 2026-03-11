@@ -37,7 +37,7 @@ export function SignupForm() {
   } = useMutation({
     mutationFn: signup,
     onSuccess: () => {
-      navigate({ to: '/worker-lifycycle' });
+      navigate({ to: '/login' });
     },
     onError: () => {
       console.log(

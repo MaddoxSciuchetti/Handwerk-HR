@@ -24,6 +24,7 @@ function RootLayout() {
     '/password/forgot',
     '/password/reset',
     '/',
+    '/home',
   ]);
 
   const isEmailVerifyPage = location.pathname.startsWith('/email/verify/');

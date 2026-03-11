@@ -1,7 +1,7 @@
 import { expect, Page, test } from '@playwright/test';
 import { TestUsers } from './helpers';
 
-test.describe.serial('Signup journey', () => {
+test.describe.serial('Signin journey', () => {
   let sharedPage: Page;
   const timestamp = Date.now();
   let browserName: string;

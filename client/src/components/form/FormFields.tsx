@@ -31,13 +31,19 @@ const FormFields = <TFieldValues extends FieldValues>({
   labelClassName,
   name,
   className,
+  id,
   ...props
 }: FormFieldsProps<TFieldValues>) => {
   return (
     <div className="flex min-w-0 flex-col gap-1">
-      {label && <Label className={cn(labelClassName)}>{label}</Label>}
+      {label && (
+        <Label htmlFor={id} className={cn(labelClassName)}>
+          {label}
+        </Label>
+      )}
       <Input
         className={cn('rounded-xl', className)}
+        id={id}
         {...props}
         {...register(name)}
       />
