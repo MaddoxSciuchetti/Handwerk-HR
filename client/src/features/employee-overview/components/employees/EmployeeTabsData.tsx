@@ -4,18 +4,15 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { cn } from '@/lib/trycatch';
+import { CalendarDays, ChevronRight } from 'lucide-react';
 import useEmployeeGroups from '../../hooks/useEmployeeGroups';
 import { TAccordion } from '../../types/employeeData.types';
-import DataContent from './accordion/DataContent';
 
 export function EmployeeTabsData({ onTaskClick, user, cleanData }: TAccordion) {
-  const { employeeGroups } = useEmployeeGroups(user, cleanData);
+  const { employeeGroups, hasNoOpenTasks } = useEmployeeGroups(user, cleanData);
 
-  if (
-    employeeGroups.length === 0 || employeeGroups[0]?.[1].inputs.length === 0
-      ? true
-      : false
-  )
+  if (hasNoOpenTasks)
     return (
       <div className="text-left text-muted-foreground">
         Keine offenen Aufgaben
@@ -24,27 +21,67 @@ export function EmployeeTabsData({ onTaskClick, user, cleanData }: TAccordion) {
 
   return (
     <>
-      <Accordion
-        type="single"
-        collapsible
-        defaultValue="shipping"
-        className="w-full cursor-pointer space-y-3"
-      >
-        {employeeGroups.map(([employeeName, group], index) => (
+      <Accordion type="single" collapsible className="space-y-2">
+        {employeeGroups.map(([employeeId, group]) => (
           <AccordionItem
-            key={employeeName}
-            value={`employee-${index}`}
-            className="cursor-pointer rounded-xl border-b-0 px-3"
+            key={employeeId}
+            value={employeeId}
+            className={cn(
+              'overflow-hidden rounded-xl border border-b transition-colors last:border-b',
+              'border-border data-[state=open]:border-foreground/50'
+            )}
           >
-            <AccordionTrigger className="">
-              Handwerker: {group.employee.vorname} {group.employee.nachname}
+            <AccordionTrigger className="group px-4 py-3 hover:no-underline">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
+
+                <span className="truncate text-base font-medium text-foreground">
+                  {group.employee.vorname} {group.employee.nachname}
+                </span>
+              </div>
             </AccordionTrigger>
-            <AccordionContent className="mt-2 flex flex-col items-center justify-center pb-3">
-              <DataContent group={group} onTaskClick={onTaskClick} />
+
+            <AccordionContent className="border-t p-0">
+              <div className="divide-y">
+                {group.inputs.map((task) => {
+                  const statusLabel =
+                    task.status === 'null' ? 'Nicht angefangen' : task.status;
+
+                  return (
+                    <button
+                      type="button"
+                      key={`${task.form_field_id}-${task.timestamp.toISOString()}`}
+                      onClick={onTaskClick}
+                      className="flex w-full items-start gap-4 px-4 py-3 text-left transition-colors hover:bg-muted/40"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-foreground">
+                          {task.description}
+                        </p>
+                        <div className="mt-1.5 flex items-center gap-3">
+                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <CalendarDays className="h-3 w-3" />
+                            {task.timeStampLastChange.toLocaleDateString(
+                              'de-DE'
+                            )}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {statusLabel}
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </AccordionContent>
           </AccordionItem>
         ))}
       </Accordion>
+
+      <p className="mt-4  pt-3 text-xs text-muted-foreground">
+        Klicke auf eine Aufgabe, um Details zu öffnen
+      </p>
     </>
   );
 }

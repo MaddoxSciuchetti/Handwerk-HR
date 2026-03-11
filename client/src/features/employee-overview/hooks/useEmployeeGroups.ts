@@ -62,8 +62,20 @@ function useEmployeeGroups(
       .filter(([, group]) => group.inputs.length > 0);
   }, [cleanData, user]);
 
+  const totalOpenTasks = useMemo(
+    () =>
+      employeeGroups.reduce(
+        (total, [, group]) => total + group.inputs.length,
+        0
+      ),
+    [employeeGroups]
+  );
+  const hasNoOpenTasks = totalOpenTasks === 0;
+
   return {
     employeeGroups,
+    totalOpenTasks,
+    hasNoOpenTasks,
   };
 }
 
