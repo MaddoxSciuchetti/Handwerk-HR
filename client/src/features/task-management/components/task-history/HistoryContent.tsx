@@ -1,7 +1,7 @@
 import { useGetWorkerHistory } from '../../hooks/useGetWorkerHistory';
 
 import { cn } from '@/lib/trycatch';
-import { ArrowUpCircle, CheckCircle2, Circle } from 'lucide-react';
+import { StatusIcon } from '../../consts/status.consts';
 import { STATUS_MAP } from '../../utils/selectOptionTernary';
 type HistoryContentProps = {
   id_original: number;
@@ -16,17 +16,6 @@ const HistoryContent = ({ id_original }: HistoryContentProps) => {
         Es wurden noch keine Änderungen vorgenommen
       </p>
     );
-
-  const StatusIcon = ({ status }: { status: string }) => {
-    switch (status) {
-      case 'erledigt':
-        return <CheckCircle2 className="h-4 w-4 text-emerald-600" />;
-      case 'in_bearbeitung':
-        return <ArrowUpCircle className="h-4 w-4 text-amber-600" />;
-      default:
-        return <Circle className="h-4 w-4 text-(--status-error-foreground)" />;
-    }
-  };
 
   return (
     <>
@@ -48,7 +37,7 @@ const HistoryContent = ({ id_original }: HistoryContentProps) => {
                     <StatusIcon status={entry.status ?? 'offen'} />
                   </div>
 
-                  <div className="bg-muted/30 rounded-lg p-3">
+                  <div className="bg-(--dropdown-surface) rounded-lg p-3">
                     <div className="flex itemsd-center justify-between mb-1">
                       <span className="text-xs font-medium text-muted-foreground">
                         {new Date(entry.timestamp || 0).toLocaleDateString()}

@@ -34,7 +34,7 @@ function WorkerForm({
   is_substitute,
 }: FormProps) {
   return (
-    <div className="justify-center items-center hover:scale-101 mt-10">
+    <div className="justify-center items-center w-full mt-10">
       <div className="flex flex-col gap-5">
         <WorkerFormHeader
           description={description}
