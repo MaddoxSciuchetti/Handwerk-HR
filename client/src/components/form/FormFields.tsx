@@ -34,7 +34,7 @@ const FormFields = <TFieldValues extends FieldValues>({
   ...props
 }: FormFieldsProps<TFieldValues>) => {
   return (
-    <>
+    <div className="flex min-w-0 flex-col gap-1">
       {label && <Label className={cn(labelClassName)}>{label}</Label>}
       <Input
         className={cn('rounded-xl', className)}
@@ -45,10 +45,10 @@ const FormFields = <TFieldValues extends FieldValues>({
         errors={errors}
         name={name as unknown as never}
         render={({ message }) => (
-          <p className="text-sm text-destructive">{message}</p>
+          <p className="text-sm text-(--destructive)">{message}</p>
         )}
       />
-    </>
+    </div>
   );
 };
 

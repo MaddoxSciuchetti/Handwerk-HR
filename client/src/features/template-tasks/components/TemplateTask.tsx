@@ -26,6 +26,9 @@ function TemplateTasks() {
     openDescriptionModal,
   } = useEditDescription(toggleModal);
 
+  const onboardingLength = OnboardingData?.length || 0;
+  const offboardingLength = OffboardingData?.length || 0;
+
   if (OnboardingData === undefined || OffboardingData === undefined) {
     return <LoadingAlert />;
   }
@@ -44,6 +47,15 @@ function TemplateTasks() {
         mode={mode}
         setMode={setMode}
       />
+      {tab === 'OFFBOARDING' ? (
+        <p className="font-light text-xs text-(--muted-foreground) mt-4">
+          {offboardingLength} Aufgaben in Offboarding template
+        </p>
+      ) : (
+        <p className="font-light text-xs text-(--muted-foreground) mt-4">
+          {onboardingLength} Aufgaben in Onboarding template
+        </p>
+      )}
       {modalState.selectedItem && modal && (
         <ModalOverlay handleToggle={toggleModal}>
           <TemplateModal
