@@ -31,7 +31,9 @@ export const employeeWorkerSchema = z.array(
 );
 
 export const sendReminderSchema = z.object({
-  email: z.email(),
-  subject: z.string({ message: 'Füge ein Betreff hinzu' }).min(1),
+  email: z.email({ message: 'Ungültige Email Adresse' }),
+  subject: z
+    .string({ message: 'Füge ein Betreff hinzu' })
+    .min(1, { message: 'Füge ein Betreff hinzu' }),
   test: z.string(),
 });
