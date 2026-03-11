@@ -19,28 +19,44 @@ const TabsHeader = ({
 }: TabsHeaderProps) => {
   return (
     <>
-      <div className="flex gap-2 justify-start items-center ">
-        {TABS.map(({ value, label }) => (
-          <Button
-            key={value}
-            variant={'outline'}
-            className={cn(
-              'cursor-pointer rounded-xl font-light transition-colors hover:bg-(--hover-bg) hover:text-(--hover-foreground)',
-              tab === value && 'bg-accent text-accent-foreground'
-            )}
-            onClick={() => setTab(value)}
-          >
-            {label}
-          </Button>
-        ))}
-        <PlusSquare
-          className="w-7 cursor-pointer"
-          onClick={() => {
-            openDescriptionModal();
-            setMode('ADD');
-          }}
-        />
+      {/* <div className="flex gap-2 justify-start items-center "> */}
+      <div className="mb-6 flex items-center justify-between">
+        <div className="inline-flex rounded-lg border border-border bg-muted/40 p-1">
+          {TABS.map(({ value, label }) => (
+            <Button
+              key={value}
+              type="button"
+              size={'sm'}
+              variant={'ghost'}
+              className={cn(
+                'rounded-md px-4 py-1.5 text-sm font-medium transition-colors',
+                tab === value
+                  ? 'bg-(--dropdown-surface) text-foreground shadow-sm'
+                  : 'bg-transparent text-muted-foreground hover:bg-(--hover-bg) hover:text-(--hover-foreground)'
+              )}
+              onClick={() => setTab(value)}
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
+
+        <Button
+          size="sm"
+          className="gap-1.5 cursor-pointer bg-accent"
+          variant={'outline'}
+        >
+          <PlusSquare
+            className="w-7 cursor-pointer"
+            onClick={() => {
+              openDescriptionModal();
+              setMode('ADD');
+            }}
+          />
+          Add Task
+        </Button>
       </div>
+      {/* </div> */}
     </>
   );
 };
