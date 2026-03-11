@@ -43,8 +43,9 @@ const Tasks = ({ items, openDescriptionModal, setMode }: TasksProps) => {
                   type="button"
                   size="icon-sm"
                   variant="ghost"
-                  className="cursor-pointer rounded-md text-muted-foreground hover:text-(--foreground)"
-                  onClick={() => {
+                  className="cursor-pointer rounded-md text-muted-foreground hover:text-(--muted-foreground)"
+                  onClick={(e) => {
+                    e.stopPropagation();
                     openDescriptionModal(
                       item.description,
                       item.owner,
@@ -61,7 +62,10 @@ const Tasks = ({ items, openDescriptionModal, setMode }: TasksProps) => {
                   size="icon-sm"
                   variant="ghost"
                   className="cursor-pointer rounded-md text-muted-foreground hover:text-(--destructive) "
-                  onClick={() => deleteDescription(item.form_field_id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteDescription(item.form_field_id);
+                  }}
                 >
                   <TrashIcon className="h-4 w-4 " />
                 </Button>
