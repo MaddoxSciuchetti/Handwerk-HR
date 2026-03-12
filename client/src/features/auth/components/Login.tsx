@@ -1,8 +1,7 @@
-import CenteredDiv from '@/components/alerts/layout-wrapper/CenteredDiv';
+import ErrorAlert from '@/components/alerts/ErrorAlert';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import FormFields from '@/components/form/FormFields';
 import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
@@ -42,18 +41,8 @@ export function LoginComponent() {
     signin(data);
   };
 
-  if (isPending)
-    return (
-      <CenteredDiv>
-        <LoadingAlert />
-      </CenteredDiv>
-    );
-  if (isError)
-    return (
-      <CenteredDiv>
-        <Spinner className="w-8" />
-      </CenteredDiv>
-    );
+  if (isPending) return <LoadingAlert />;
+  if (isError) return <ErrorAlert />;
 
   return (
     <DoorManCard>
