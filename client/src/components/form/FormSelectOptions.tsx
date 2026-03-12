@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
+import { cn } from '@/lib/trycatch';
 
 type FormSelectOptionsProps<T extends FieldValues> = {
   control: Control<T>;
@@ -24,6 +25,8 @@ type FormSelectOptionsProps<T extends FieldValues> = {
   name: Path<T>;
   placeholder: string;
   label?: string;
+  triggerClassName?: string;
+  defaultValue?: string;
 };
 
 const FormSelectOptions = <T extends FieldValues>({
@@ -33,6 +36,8 @@ const FormSelectOptions = <T extends FieldValues>({
   name,
   placeholder,
   label,
+  triggerClassName,
+  defaultValue,
 }: FormSelectOptionsProps<T>) => {
   return (
     <>
@@ -40,9 +45,17 @@ const FormSelectOptions = <T extends FieldValues>({
       <Controller
         name={name}
         control={control}
+        defaultValue={defaultValue as T[Path<T>]}
         render={({ field }) => (
-          <Select value={field.value} onValueChange={field.onChange}>
-            <SelectTrigger id={name} name={name} className="w-full rounded-xl">
+          <Select
+            value={(field.value as string | undefined) ?? ''}
+            onValueChange={field.onChange}
+          >
+            <SelectTrigger
+              id={name}
+              name={name}
+              className={cn('w-full rounded-xl', triggerClassName)}
+            >
               <SelectValue placeholder={placeholder} />
             </SelectTrigger>
             <SelectContent className="border border-border bg-popover bg-(--popover) text-popover-foreground">

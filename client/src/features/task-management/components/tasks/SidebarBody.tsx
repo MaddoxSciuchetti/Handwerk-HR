@@ -1,11 +1,11 @@
 import { DescriptionField } from '@/types/api.types';
-import { SubmitEvent } from 'react';
+import { InsertHistoryData } from '../../types/index.types';
 import HistoryContent from './task-sidebar/task-history/HistoryContent';
 import StatusInformation from './task-sidebar/task-status-information/StatusInformation';
 
 type SidebarBodyProps = {
   selectedTask: DescriptionField;
-  handleSubmit: (event: SubmitEvent<HTMLFormElement>) => Promise<void>;
+  handleSubmit: (values: InsertHistoryData) => Promise<void>;
 };
 
 const SidebarBody = ({ selectedTask, handleSubmit }: SidebarBodyProps) => {

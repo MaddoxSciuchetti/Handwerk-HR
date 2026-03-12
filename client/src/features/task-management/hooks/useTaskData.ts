@@ -5,7 +5,7 @@ function useTaskData(id: number, lifecycleType: string) {
   const { data, error, isLoading, isError } = useQuery(
     workerQueries.taskData(id, lifecycleType)
   );
-  console.log('lifecycle', lifecycleType);
+
   return {
     data,
     error,

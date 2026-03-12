@@ -1,10 +1,20 @@
 import { createWorkerFile } from '@/apis/index.apis';
 import queryClient from '@/config/query.client';
+import { User } from '@/features/user-profile/types/auth.type';
 import { FileResponse, SuccessResponse } from '@/types/api.types';
 import { mutationOptions } from '@tanstack/react-query';
-import { deleteWorkerFile } from '../../api/index.api';
-import { HISTORYDATA } from '../../consts/query-key.consts';
-import { File_Request } from '../../types/index.types';
+import {
+  deleteWorkerFile,
+  updateWorkerData,
+  updateWorkerHistory,
+} from '../../api/index.api';
+import { FORMHISTORY, HISTORYDATA, WORKERBYID } from '../../consts/query-key.consts';
+import { File_Request, InsertHistoryData } from '../../types/index.types';
+
+type UpdateTaskHistoryVariables = {
+  formValues: InsertHistoryData;
+  user: User;
+};
 
 export const workerMutations = {
   deleteWorker: (workerId: number) => {
@@ -35,6 +45,33 @@ export const workerMutations = {
       },
       onError: (error) => {
         console.log(error);
+      },
+    });
+  },
+
+  updateTaskHistory: () => {
+    return mutationOptions<void, Error, UpdateTaskHistoryVariables>({
+      mutationFn: async ({ formValues, user }) => {
+        await updateWorkerHistory(formValues, user);
+      },
+      onSuccess: async (_, { formValues }) => {
+        await queryClient.invalidateQueries({
+          queryKey: [FORMHISTORY, parseInt(formValues.id, 10)],
+        });
+      },
+    });
+  },
+
+  updateTaskData: (workerId: number, closeSidebar: () => void) => {
+    return mutationOptions<void, Error, InsertHistoryData>({
+      mutationFn: async (formValues) => {
+        await updateWorkerData(formValues);
+      },
+      onSuccess: async () => {
+        await queryClient.invalidateQueries({
+          queryKey: [WORKERBYID, workerId],
+        });
+        closeSidebar();
       },
     });
   },

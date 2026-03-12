@@ -1,13 +1,13 @@
 import { cn } from '@/lib/trycatch';
 import { DescriptionField } from '@/types/api.types';
-import { SubmitEvent } from 'react';
+import { InsertHistoryData } from '../../../types/index.types';
 import SidebarBody from '../SidebarBody';
 import SidebarHeader from './SidebarHeader';
 
 type TaskSidebarProps = {
   selectedTask: DescriptionField | null;
   setSelectedTaskId: (value: number | null) => void;
-  handleSubmit: (event: SubmitEvent<HTMLFormElement>) => Promise<void>;
+  handleSubmit: (values: InsertHistoryData) => Promise<void>;
 };
 
 const TaskSidebar = ({
