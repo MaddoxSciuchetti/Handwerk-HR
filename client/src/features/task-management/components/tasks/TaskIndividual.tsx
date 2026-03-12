@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/trycatch';
 import { DescriptionField } from '@/types/api.types';
 import { STATUS_MAP } from '../../utils/selectOptionTernary';
@@ -23,7 +24,7 @@ const TaskIndividual = ({
             STATUS_MAP.offen;
           return (
             <li key={task.id}>
-              <button
+              <Button
                 onClick={() => handleSelectTask(task.id)}
                 className={cn(
                   'text-left px-4 py-3 rounded-lg transition-all flex items-center gap-4 group w-full',
@@ -70,7 +71,7 @@ const TaskIndividual = ({
                     ? task.substituteOwner
                     : task.officialOwner}
                 </span>
-              </button>
+              </Button>
             </li>
           );
         })}

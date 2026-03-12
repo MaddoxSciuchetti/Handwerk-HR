@@ -13,7 +13,6 @@ type CeoTabsContentProps = {
 function EmployeeTabsContent({
   selectedUser,
   cleanData,
-  currentBSBEmployee,
   setModalOpen,
 }: CeoTabsContentProps) {
   return (
@@ -22,7 +21,6 @@ function EmployeeTabsContent({
         <EmployeeTabsData
           cleanData={cleanData}
           user={selectedUser}
-          data={currentBSBEmployee}
           onTaskClick={() => setModalOpen(true)}
         />
       </TabsContent>
