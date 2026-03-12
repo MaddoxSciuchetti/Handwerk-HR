@@ -15,7 +15,6 @@ function WorkerLifeCycle() {
     filtered,
     handleNavigate,
     modal,
-    addWorkerMutation,
     search,
     setSearch,
     toggleModal,
@@ -45,11 +44,7 @@ function WorkerLifeCycle() {
           onRemove={deleteTaskMutation}
           gotopage={handleNavigate}
         />
-        <LifeCycleModal
-          modal={modal}
-          toggleModal={toggleModal}
-          addWorkerMutation={addWorkerMutation}
-        />
+        <LifeCycleModal modal={modal} toggleModal={toggleModal} />
       </div>
     </div>
   );

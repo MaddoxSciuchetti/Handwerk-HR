@@ -1,17 +1,15 @@
 import MediumWrapper from '@/components/modal/modalSizes/MediumWrapper';
 import { useState } from 'react';
 import { FormType } from '../../types/index.types';
-import { AddWorkerMutation } from '../../types/mutation.types';
 import RadioSelect from './RadioSelect';
 import { WorkerForm } from './WorkerForm';
 
 type ModalProps = {
   toggleModal: () => void;
-  addWorkerMutation: AddWorkerMutation;
   className?: string;
 };
 
-const ModalContent = ({ addWorkerMutation, toggleModal }: ModalProps) => {
+const ModalContent = ({ toggleModal }: ModalProps) => {
   const [selectedOption, setSelectedOption] = useState<FormType | null>(null);
 
   return (
@@ -26,7 +24,6 @@ const ModalContent = ({ addWorkerMutation, toggleModal }: ModalProps) => {
           <WorkerForm
             setSelectedOption={setSelectedOption}
             type={selectedOption}
-            success={addWorkerMutation}
             toggleModal={toggleModal}
           />
         )}
