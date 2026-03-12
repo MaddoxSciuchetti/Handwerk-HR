@@ -1,11 +1,12 @@
 import z from 'zod';
 import { TAuth_User } from '../hooks/useGetWorkerHistory';
 import { formSchema } from '../schemas/index.schema';
+import { TaskStatus } from '../utils/selectOptionTernary';
 
 export type HistoryData = {
   id: number;
   timestamp: Date | null;
-  status: string | null;
+  status: TaskStatus;
   edit: string | null;
   form_input_id: number;
   changed_by: string | null;

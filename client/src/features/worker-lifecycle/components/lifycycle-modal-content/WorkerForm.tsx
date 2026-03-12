@@ -4,27 +4,32 @@ import {
   addWorkerSchema,
 } from '@/features/worker-lifecycle/schemas/zod.schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '../../../../components/ui/button';
 import { Inputs } from '../../consts/form.consts';
+import { workerLifecycleMutations } from '../../query-options/mutations/worker-lifycycle.mutations';
 import { FormType } from '../../types/index.types';
-import { AddWorkerMutation } from '../../types/mutation.types';
 
 interface WorkerFormProps {
   setSelectedOption: (value: FormType | null) => void;
   type: FormType;
   toggleModal: () => void;
-  success: AddWorkerMutation;
   className?: string;
 }
 
 export const WorkerForm = ({
   setSelectedOption,
   type,
-  success,
   toggleModal,
 }: WorkerFormProps) => {
+  const {
+    mutate: addWorkerMutation,
+    isError,
+    error,
+  } = useMutation(workerLifecycleMutations.addWorker());
+
   const {
     register,
     handleSubmit,
@@ -38,7 +43,7 @@ export const WorkerForm = ({
   });
 
   const submitWorkerForm = (data: AddWorker) => {
-    success(data, {
+    addWorkerMutation(data, {
       onSuccess: () => {
         toggleModal();
       },
@@ -65,6 +70,11 @@ export const WorkerForm = ({
         onSubmit={handleSubmit(submitWorkerForm)}
         className=" gap-4  flex flex-col"
       >
+        {isError && (
+          <div className="mb-3 text-(--destructive)">
+            {error?.message || 'An error occurred'}
+          </div>
+        )}
         <Button
           className="w-20 cursor-pointer rounded-xl transition-colors hover:bg-accent hover:text-accent-foreground"
           variant={'outline'}

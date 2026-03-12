@@ -7,12 +7,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Dispatch, SetStateAction } from 'react';
-import { STATUS_MAP } from '../../utils/selectOptionTernary';
+import { STATUS_MAP, TaskStatus } from '../../utils/selectOptionTernary';
 
 type SelectOwnerProps = {
-  setSelectedValue: Dispatch<SetStateAction<string>>;
-  selectedValue: string;
-  select_option: string;
+  setSelectedValue: Dispatch<SetStateAction<TaskStatus>>;
+  selectedValue: TaskStatus;
+  select_option: TaskStatus;
 };
 
 const SelectOwner = ({
@@ -22,7 +22,10 @@ const SelectOwner = ({
 }: SelectOwnerProps) => {
   return (
     <div className="min-w-0 flex-1">
-      <Select value={selectedValue} onValueChange={setSelectedValue}>
+      <Select
+        value={selectedValue}
+        onValueChange={(value) => setSelectedValue(value as TaskStatus)}
+      >
         <SelectTrigger
           id="status"
           name="select_option"

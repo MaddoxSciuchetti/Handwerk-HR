@@ -1,24 +1,22 @@
 import { expect, test } from '@playwright/test';
 import { createTestUsers } from './fixtures/test-users';
+import { LoginCredentials, SignupTestUser } from './helpers';
 
 const API_BASE_URL = 'http://localhost:3000';
-
-type SigninFixtureUser = {
-  vorname: string;
-  nachname: string;
-  email: string;
-  password: string;
-  confirmpassword: string;
-};
 
 test.describe('Signin journey', () => {
   test.setTimeout(60_000);
 
-  let testUser: SigninFixtureUser;
+  let testUser: SignupTestUser;
+  let loginCredentials: LoginCredentials;
 
   test.beforeAll(async ({ request, browserName }) => {
     const timestamp = Date.now();
     [testUser] = createTestUsers(browserName, timestamp);
+    loginCredentials = {
+      email: testUser.email,
+      password: testUser.password,
+    };
 
     const registerResponse = await request.post(
       `${API_BASE_URL}/auth/register`,
@@ -38,7 +36,7 @@ test.describe('Signin journey', () => {
   });
 
   test.afterAll(async ({ request }) => {
-    await request.delete(`${API_BASE_URL}/test-users`, {
+    await request.delete(`${API_BASE_URL}/test/cleanupEmail`, {
       data: { email: testUser.email },
       failOnStatusCode: false,
     });
@@ -50,12 +48,14 @@ test.describe('Signin journey', () => {
     await page.goto('/login');
     await expect(page).toHaveURL(/\/login$/);
 
-    await page.getByLabel(/Email Address/i).fill(testUser.email);
-    await page.getByLabel(/^Password$/i).fill(testUser.password);
+    await page.getByLabel(/Email Address/i).fill(loginCredentials.email);
+    await page.getByLabel(/^Password$/i).fill(loginCredentials.password);
     await page.getByRole('button', { name: /^Login$/i }).click();
 
     await page.waitForURL('**/worker-lifycycle');
     await expect(page).toHaveURL(/\/worker-lifycycle$/);
-    await expect(page.getByText(testUser.email, { exact: true })).toBeVisible();
+    await expect(
+      page.getByText(loginCredentials.email, { exact: true })
+    ).toBeVisible();
   });
 });

@@ -3,6 +3,6 @@ import { Router } from "express";
 
 const testRoutes = Router();
 
-testRoutes.post("/cleanupEmail", deleteTestEmail);
+testRoutes.delete("/cleanupEmail", deleteTestEmail);
 
 export default testRoutes;

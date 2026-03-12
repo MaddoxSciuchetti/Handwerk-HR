@@ -31,10 +31,6 @@ function useHome() {
     workerLifecycleMutations.deleteWorker()
   );
 
-  const { mutate: addWorkerMutation } = useMutation(
-    workerLifecycleMutations.addWorker()
-  );
-
   const handleNavigate = (taskId: number, form_type: FormType) => {
     navigate({
       to: '/user/$Id',
@@ -47,7 +43,6 @@ function useHome() {
     isEmpty,
     filtered,
     deleteTaskMutation,
-    addWorkerMutation,
     handleNavigate,
     modal,
     setSearch,

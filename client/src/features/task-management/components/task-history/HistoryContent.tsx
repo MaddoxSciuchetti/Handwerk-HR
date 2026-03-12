@@ -25,6 +25,7 @@ const HistoryContent = ({ id_original }: HistoryContentProps) => {
 
           <div className="space-y-4">
             {historyData?.map((entry) => {
+              console.log(entry.status);
               const status = STATUS_MAP[entry.status ?? ''] ?? {
                 label: 'Kein Status',
                 className:

@@ -1,4 +1,4 @@
-import { TestUsers } from '../helpers';
+import { SignupTestUser } from '../helpers';
 
 //  * Test user data factory
 //  * Creates unique test users per browser and timestamp to avoid conflicts
@@ -6,28 +6,14 @@ import { TestUsers } from '../helpers';
 export function createTestUsers(
   browserName: string,
   timestamp: number
-): TestUsers {
-  return [
-    {
-      vorname: 'Emma',
-      nachname: 'Schmidt',
-      email: `emma.schmidt-${browserName}-${timestamp}@test.com`,
-      password: 'maddox',
-      confirmpassword: 'maddox',
-    },
-    {
-      vorname: 'Emma',
-      nachname: 'Schmidt',
-      email: `emma.schmidt-${browserName}-${timestamp}@test.com`,
-      password: 'maddox',
-      confirmpassword: 'maddox',
-    },
-    {
-      vorname: 'Emma',
-      nachname: 'Schmidt',
-      email: `emma.schmidt-${browserName}-${timestamp}@test.com`,
-      password: 'maddox',
-      confirmpassword: 'maddox',
-    },
-  ];
+): SignupTestUser[] {
+  const baseUser: SignupTestUser = {
+    vorname: 'Emma',
+    nachname: 'Schmidt',
+    email: `emma.schmidt-${browserName}-${timestamp}@test.com`,
+    password: 'maddox',
+    confirmpassword: 'maddox',
+  };
+
+  return [baseUser, { ...baseUser }, { ...baseUser }];
 }

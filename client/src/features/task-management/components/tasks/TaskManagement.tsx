@@ -2,17 +2,15 @@ import CenteredDiv from '@/components/alerts/layout-wrapper/CenteredDiv';
 import { Spinner } from '@/components/ui/spinner';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import useAuth from '@/features/user-profile/hooks/useAuth';
-import { useToggleModal } from '@/hooks/useToggleModal';
 import React, { useState } from 'react';
-import useEditModal from '../../hooks/useEditModal';
 import useFilteredData from '../../hooks/useFilteredData';
 import useTaskData from '../../hooks/useTaskData';
 import useTaskSubmit from '../../hooks/useTaskSubmit';
 import WorkerFileUploads from '../modal/files/WorkerFileUploads';
-import TaskModal from '../modal/TaskModal';
 import FilteredTasks from './FilteredTasks';
+import NewWorkerTask from './NewWorkerTask';
 import TaskHeader from './TaskHeader';
-import WorkerTasks from './WorkerTasks';
+import TaskSidebar from './task-sidebar/TaskSidebar';
 
 type OffboardingFormProps = {
   workerId: number;
@@ -25,7 +23,7 @@ const TaskManagement: React.FC<OffboardingFormProps> = ({
 }) => {
   const { user } = useAuth();
   const [activetab, setActiveTab] = useState<string>('form');
-  const { toggleModal } = useToggleModal();
+  const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const numericId = parseInt(String(workerId));
   const { data, isLoading } = useTaskData(numericId, lifecycleType);
   const {
@@ -35,8 +33,10 @@ const TaskManagement: React.FC<OffboardingFormProps> = ({
     handleMeFilter,
     displayData,
   } = useFilteredData(data);
-  const { modalState, openEditModal, closeModal } = useEditModal(toggleModal);
-  const { handleSubmit } = useTaskSubmit(numericId, user, closeModal);
+  const closeSidebar = () => setSelectedTaskId(null);
+  const { handleSubmit } = useTaskSubmit(numericId, user, closeSidebar);
+  const selectedTask =
+    displayData.find((field) => field.id === selectedTaskId) ?? null;
 
   if (isLoading)
     return (
@@ -57,19 +57,18 @@ const TaskManagement: React.FC<OffboardingFormProps> = ({
             setActiveTab={setActiveTab}
           />
           <TabsContent value="form">
-            <TaskModal
-              modalState={modalState}
-              closeModal={closeModal}
-              handleSubmit={handleSubmit}
-            />
             <FilteredTasks
               showMyItems={showMyItems}
               handleMeFilter={handleMeFilter}
             />
-            <WorkerTasks
-              displayData={displayData}
-              data={data}
-              openEditModal={openEditModal}
+            <NewWorkerTask
+              tasks={displayData}
+              selectedTaskId={selectedTaskId}
+              handleSelectTask={setSelectedTaskId}
+            />
+            <TaskSidebar
+              selectedTask={selectedTask}
+              setSelectedTaskId={setSelectedTaskId}
               handleSubmit={handleSubmit}
             />
           </TabsContent>

@@ -1,6 +1,7 @@
 import ModalOverlay from '@/components/modal/ModalOverlay';
 import ModalContent from '@/features/task-management/components/modal/TaskModalContent';
 import { SubmitEvent } from 'react';
+import { TaskStatus } from '../../utils/selectOptionTernary';
 
 type TaskModalProps = {
   modalState: {
@@ -8,7 +9,7 @@ type TaskModalProps = {
       id: number;
       description: string;
       editcomment: string;
-      select_option: string;
+      select_option: TaskStatus;
       form_field_id: number;
     } | null;
   };

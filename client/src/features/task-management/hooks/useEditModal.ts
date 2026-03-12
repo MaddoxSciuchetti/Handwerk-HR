@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { TaskStatus } from '../utils/selectOptionTernary';
 
 function useEditModal(toggleModal: () => void) {
   const [modalState, setModalState] = useState<{
@@ -6,7 +7,7 @@ function useEditModal(toggleModal: () => void) {
       id: number;
       description: string;
       editcomment: string;
-      select_option: string;
+      select_option: TaskStatus;
       form_field_id: number;
     } | null;
   }>({
@@ -17,7 +18,7 @@ function useEditModal(toggleModal: () => void) {
     id: number,
     description: string,
     editcomment: string,
-    select_option: string,
+    select_option: TaskStatus,
     form_field_id: number
   ) {
     toggleModal();
