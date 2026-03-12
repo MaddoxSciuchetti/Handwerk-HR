@@ -15,7 +15,10 @@ export type RegisterResponse = {
   refreshToken: string;
 };
 
-export type LoginRequest = Omit<RegisterRequest, 'confirmPassword'>;
+export type LoginRequest = Omit<
+  RegisterRequest,
+  'confirmPassword' | 'firstName' | 'lastName'
+>;
 
 export type LoginResponse = Omit<RegisterResponse, 'user'>;
 

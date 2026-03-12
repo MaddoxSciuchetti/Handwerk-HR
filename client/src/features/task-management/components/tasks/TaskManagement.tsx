@@ -1,34 +1,22 @@
-import CenteredDiv from '@/components/alerts/layout-wrapper/CenteredDiv';
-import { Spinner } from '@/components/ui/spinner';
+import ErrorAlert from '@/components/alerts/ErrorAlert';
+import LoadingAlert from '@/components/alerts/LoadingAlert';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import useAuth from '@/features/user-profile/hooks/useAuth';
-import { useToggleModal } from '@/hooks/useToggleModal';
-import React, { useState } from 'react';
-import useEditModal from '../../hooks/useEditModal';
 import useFilteredData from '../../hooks/useFilteredData';
 import useTaskData from '../../hooks/useTaskData';
 import useTaskSubmit from '../../hooks/useTaskSubmit';
-import WorkerFileUploads from '../modal/files/WorkerFileUploads';
-import TaskModal from '../modal/TaskModal';
-import FilteredTasks from './FilteredTasks';
-import TaskHeader from './TaskHeader';
-import WorkerTasks from './WorkerTasks';
+import WorkerFileUploads from '../files/WorkerFileUploads';
+import FilterByUser from '../header/filters/Filter.ByUser';
+import WorkerHeader from '../header/WorkerHeader';
+import TaskSidebar from './task-sidebar/TaskSidebar';
+import TaskIndividual from './TaskIndividual';
 
-type OffboardingFormProps = {
+type TaskManagementProps = {
   workerId: number;
-  lifecycleType: string; // match validateSearch
+  lifecycleType: string;
 };
 
-const TaskManagement: React.FC<OffboardingFormProps> = ({
-  workerId,
-  lifecycleType,
-}) => {
-  const { user } = useAuth();
-  const [activetab, setActiveTab] = useState<string>('form');
-  const { toggleModal } = useToggleModal();
-  const numericId = parseInt(String(workerId));
-
-  const { data, isLoading } = useTaskData(numericId, lifecycleType);
+const TaskManagement = ({ workerId, lifecycleType }: TaskManagementProps) => {
+  const { data, isLoading } = useTaskData(workerId, lifecycleType);
   const {
     descriptionSearch,
     setDescriptionSearch,
@@ -37,42 +25,36 @@ const TaskManagement: React.FC<OffboardingFormProps> = ({
     displayData,
   } = useFilteredData(data);
 
-  const { modalState, openEditModal, closeModal } = useEditModal(toggleModal);
+  const { handleSubmit, selectedTaskId, setSelectedTaskId } =
+    useTaskSubmit(workerId);
 
-  const { handleSubmit } = useTaskSubmit(numericId, user, closeModal);
+  const selectedTask =
+    displayData.find((field) => field.id === selectedTaskId) ?? null;
 
-  if (isLoading)
-    return (
-      <CenteredDiv>
-        <Spinner className="w-8" />
-      </CenteredDiv>
-    );
-  if (!data) return <div>Daten Laden</div>;
+  if (isLoading) return <LoadingAlert />;
+  if (!data) return <ErrorAlert />;
 
   return (
-    <div className="flex flex-col w-full h-150 rounded-2xl mx-auto  shadow-gray-200 shadow-lg overflow-auto p-6 md:max-w-8xl md:h-300">
+    <div className="flex flex-col w-5xl h-150 rounded-2xl mx-auto  overflow-auto p-6 md:max-w-8xl md:h-300">
       <>
         <Tabs defaultValue="form" className="">
-          <TaskHeader
+          <WorkerHeader
             descriptionSearch={descriptionSearch}
             setDescriptionSearch={setDescriptionSearch}
-            activetab={activetab}
-            setActiveTab={setActiveTab}
           />
           <TabsContent value="form">
-            <TaskModal
-              modalState={modalState}
-              closeModal={closeModal}
-              handleSubmit={handleSubmit}
-            />
-            <FilteredTasks
+            <FilterByUser
               showMyItems={showMyItems}
               handleMeFilter={handleMeFilter}
             />
-            <WorkerTasks
-              displayData={displayData}
-              data={data}
-              openEditModal={openEditModal}
+            <TaskIndividual
+              tasks={displayData}
+              selectedTaskId={selectedTaskId}
+              handleSelectTask={setSelectedTaskId}
+            />
+            <TaskSidebar
+              selectedTask={selectedTask}
+              setSelectedTaskId={setSelectedTaskId}
               handleSubmit={handleSubmit}
             />
           </TabsContent>

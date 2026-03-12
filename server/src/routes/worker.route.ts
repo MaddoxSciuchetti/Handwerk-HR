@@ -19,7 +19,7 @@ import { upload } from "../middleware/fileparser";
 const worker = express.Router();
 
 //worker crud operations
-worker.post("/addWorker", createWorker);
+worker.post("/addWorker", catchErrors(createWorker));
 worker.get("/getWorkerData", getWorkerData);
 worker.delete("/deleteWorker/:id", deleteWorker);
 worker.get("/getWorker/:id", getWorkerById);

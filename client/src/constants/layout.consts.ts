@@ -1,4 +1,4 @@
-import { HandMetal, Home, Inbox, Settings } from 'lucide-react';
+import { Home, Inbox, Settings } from 'lucide-react';
 
 export const LAYOUTITEMS = [
   {
@@ -16,12 +16,6 @@ export const LAYOUTITEMS = [
     title: 'Vorlage',
     to: '/template',
     icon: Settings,
-    requiredPermission: 'CHEF',
-  },
-  {
-    title: 'Mitarbeiter Monitor',
-    to: '/dashboard/ceo',
-    icon: HandMetal,
     requiredPermission: 'CHEF',
   },
 ];

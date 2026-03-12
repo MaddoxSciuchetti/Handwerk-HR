@@ -1,46 +1,32 @@
-import { User } from '@/features/user-profile/types/auth.type';
-import { useQueryClient } from '@tanstack/react-query';
-import { SubmitEvent } from 'react';
-import { updateWorkerData, updateWorkerHistory } from '../api/index.api';
-import { FORMHISTORY, WORKERBYID } from '../consts/query-key.consts';
-import { formSchema } from '../schemas/index.schema';
+import useAuth from '@/features/user-profile/hooks/useAuth';
+import { useMutation } from '@tanstack/react-query';
+import { useState } from 'react';
+import { workerMutations } from '../query-options/mutations/worker.mutations';
+import { InsertHistoryData } from '../types/index.types';
 
-function useTaskSubmit(
-  id: number,
-  user: User | undefined,
-  closeModal: () => void
-) {
-  const queryClient = useQueryClient();
+function useTaskSubmit(id: number) {
+  const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
+  const closeSidebar = () => setSelectedTaskId(null);
+  const { user } = useAuth();
+  const { mutateAsync: updateTaskHistory } = useMutation(
+    workerMutations.updateTaskHistory()
+  );
+  const { mutateAsync: updateTaskData } = useMutation(
+    workerMutations.updateTaskData(id, closeSidebar)
+  );
 
-  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const formValues = Object.fromEntries(formData);
-
-    const result = formSchema.safeParse(formValues);
-
-    if (!result.success) {
-      return;
-    }
+  async function handleSubmit(formValues: InsertHistoryData) {
     if (!user) {
       return;
     }
-
-    await updateWorkerHistory(result.data, user);
-    await queryClient.invalidateQueries({
-      queryKey: [FORMHISTORY, parseInt(result.data.id)],
-    });
-    await updateWorkerData(result.data);
-
-    await queryClient.invalidateQueries({
-      queryKey: [WORKERBYID, id],
-    });
-
-    closeModal();
+    await updateTaskHistory({ formValues, user });
+    await updateTaskData(formValues);
   }
 
   return {
     handleSubmit,
+    setSelectedTaskId,
+    selectedTaskId,
   };
 }
 

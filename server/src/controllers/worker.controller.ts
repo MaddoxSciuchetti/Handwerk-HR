@@ -1,4 +1,6 @@
 import { generatePresignedUrl, uploadFileToS3 } from "@/config/aws";
+import { CONFLICT } from "@/constants/http";
+import { prisma } from "@/lib/prisma";
 import {
     insertWorkerHistorySchema,
     updateWorkerSchema,
@@ -15,22 +17,27 @@ import {
     removeWorker,
     removeWorkerFile,
 } from "@/services/worker.service";
+import appAssert from "@/utils/appAssert";
 import resolveOwner from "@/utils/resolverOwner";
 import { Request, Response } from "express";
 import z from "zod";
 
 export const createWorker = async (req: Request, res: Response) => {
-    try {
-        const request = {
-            ...req.body.data,
-        };
+    const request = {
+        ...req.body.data,
+    };
 
-        const { worker } = await insertWorker(request);
-        return res.status(201).json({ success: worker });
-    } catch (error) {
-        console.log(error);
-        return res.status(500).json({ error: "internal error" });
-    }
+    // verify existing worker does not exists
+    const existingWorker = await prisma.users.findUnique({
+        where: {
+            email: request.email.toLocaleLowerCase(),
+        },
+    });
+
+    appAssert(!existingWorker, CONFLICT, "Email wird bereits verwendet");
+
+    const { worker } = await insertWorker(request);
+    return res.status(201).json({ success: worker });
 };
 
 export const getWorkerData = async (req: Request, res: Response) => {

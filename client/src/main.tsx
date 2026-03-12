@@ -6,7 +6,7 @@ import { router } from './router';
 
 import { RouterProvider } from '@tanstack/react-router';
 import queryClient from './config/query.client';
-import { ThemeProvider } from './context/theme-provider/ThemeContext';
+import { ThemeProvider } from './context/theme-provider/ThemeProvider';
 import './styles/theme.css';
 
 createRoot(document.getElementById('root')!).render(

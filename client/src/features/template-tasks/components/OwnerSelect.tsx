@@ -1,16 +1,9 @@
 import { Dispatch, SetStateAction } from 'react';
-import { Control, Controller, FieldErrors } from 'react-hook-form';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../../../components/ui/select';
+import { Control, FieldErrors } from 'react-hook-form';
 
-import useGetEmployees from '@/features/employee-overview/hooks/useGetEmployees';
-import { ErrorMessage } from '@hookform/error-message';
+import FormSelectOptions from '@/components/form/FormSelectOptions';
+import { employeeQueries } from '@/features/employee-overview/query-options/queries/employee.queries';
+import { useQuery } from '@tanstack/react-query';
 import { HandleAddSubmit } from '../types/taskForm.types';
 
 type OwnerSelectProps = {
@@ -21,47 +14,20 @@ type OwnerSelectProps = {
 };
 
 const OwnerSelect = ({ errors, control }: OwnerSelectProps) => {
-  const { EmployeeData } = useGetEmployees();
+  const { data: employees = [] } = useQuery(employeeQueries.getEmployees());
+
   return (
     <>
-      <div className="">
-        <Controller
-          name="owner"
-          control={control}
-          render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger
-                id="owner"
-                name="owner"
-                className="w-full rounded-xl"
-              >
-                <SelectValue placeholder="Mitarbeiter" />
-              </SelectTrigger>
-              <SelectContent className="border-none">
-                <SelectGroup className="bg-white cursor-pointer">
-                  {EmployeeData?.map((item) => (
-                    <SelectItem
-                      className="hover:bg-gray-200 cursor-pointer"
-                      id={`select-${item.id}`}
-                      value={item.id}
-                      key={item.id}
-                    >
-                      {item.vorname} {item.nachname}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          )}
-        />
-        <ErrorMessage
-          errors={errors}
-          name={'owner'}
-          render={({ message }) => (
-            <p className="text-red-400 text-left text-sm mt-5">{message}</p>
-          )}
-        />
-      </div>
+      <FormSelectOptions
+        name="owner"
+        control={control}
+        errors={errors}
+        placeholder="Mitarbeiter"
+        data={employees.map((e) => ({
+          value: e.id,
+          label: `${e.vorname} ${e.nachname}`,
+        }))}
+      />
     </>
   );
 };

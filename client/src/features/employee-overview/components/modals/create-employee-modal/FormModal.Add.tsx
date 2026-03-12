@@ -14,6 +14,8 @@ type FormModalAddProps = {
   register: UseFormRegister<CreateWorker>;
   errors: FieldErrors<CreateWorker>;
   onFormSubmit: SubmitHandler<CreateWorker>;
+  isError: boolean;
+  error: { message?: string } | null;
 };
 
 const FormModalAdd = ({
@@ -21,17 +23,39 @@ const FormModalAdd = ({
   register,
   onFormSubmit,
   errors,
+  isError,
+  error,
 }: FormModalAddProps) => {
+  const firstRowInputs = CreateMitarbeiterInputs.slice(0, 2);
+  const remainingInputs = CreateMitarbeiterInputs.slice(2);
+
   return (
-    <>
-      <p className="mb-5">
-        Ein Mitarbeiter erhält eine E-Mail mit der Bitte, sich einzuloggen.
-      </p>
+    <div className="flex-1 w-full min-h-0 overflow-y-auto overflow-x-hidden pr-1">
+      {isError && (
+        <div className="mb-3 text-destructive">
+          {error?.message || 'An error occurred'}
+        </div>
+      )}
+      <p className="mb-5 font-light">Neuen Mitarbeiter hinzufügen</p>
       <form
         onSubmit={handleSubmit(onFormSubmit)}
-        className="flex flex-col gap-5 w-full"
+        noValidate
+        className="flex w-full min-w-0 flex-col gap-5"
       >
-        {CreateMitarbeiterInputs.map((value) => (
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+          {firstRowInputs.map((value) => (
+            <FormFields
+              key={value.name}
+              type={value.type}
+              placeholder={value.placeholder}
+              name={value.name}
+              errors={errors}
+              register={register}
+            />
+          ))}
+        </div>
+
+        {remainingInputs.map((value) => (
           <FormFields
             key={value.name}
             type={value.type}
@@ -39,7 +63,6 @@ const FormModalAdd = ({
             name={value.name}
             errors={errors}
             register={register}
-            required={value.required}
           />
         ))}
         <Button
@@ -50,7 +73,7 @@ const FormModalAdd = ({
           Nutzer Erstellen
         </Button>
       </form>
-    </>
+    </div>
   );
 };
 

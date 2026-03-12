@@ -6,8 +6,8 @@ type DoorManFooterProps = {
 
 const DoorManFooter = ({ description, action, nav }: DoorManFooterProps) => {
   return (
-    <div className="flex items-center justify-center gap-1 text-sm text-amber-50">
-      <p className="text-sm text-gray-400">
+    <div className="flex items-center justify-center gap-1 text-sm text-foreground">
+      <p className="text-sm text-muted-foreground">
         {description}
         <button
           type="button"
@@ -15,7 +15,7 @@ const DoorManFooter = ({ description, action, nav }: DoorManFooterProps) => {
             e.stopPropagation();
             nav();
           }}
-          className="text-white hover:text-gray-300 underline cursor-pointer"
+          className="cursor-pointer text-foreground underline hover:text-accent-foreground"
         >
           {action}
         </button>

@@ -34,10 +34,10 @@ export const updateWorkerHistory = async (
 };
 
 export const updateWorkerData = async (formData: UpdateWorkerDescription) => {
-  const response = await API.put<SuccessResponse, SuccessResponse>(
-    'worker/updateWorker',
-    formData
-  );
+  const response = await API.put<
+    SuccessResponse<string>,
+    SuccessResponse<string>
+  >('worker/updateWorker', formData);
 
   return response;
 };
@@ -66,6 +66,6 @@ export const fetchCloudUrl = async (cloud_key: string): Promise<string> => {
 
 export const deleteWorkerFile = async (
   id: number
-): Promise<Pick<SuccessResponse, 'success'>> => {
+): Promise<SuccessResponse<string>> => {
   return API.delete(`worker/deleteWorkerFile/${id}`);
 };

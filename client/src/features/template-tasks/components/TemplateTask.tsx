@@ -1,11 +1,10 @@
 import LoadingAlert from '@/components/alerts/LoadingAlert';
+import SearchHeaderResuable from '@/components/layout/headers/SearchHeaderResuable';
 import ModalOverlay from '@/components/modal/ModalOverlay';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/trycatch';
-import { TABS } from '../consts/index.consts';
 import useEditDescription from '../hooks/useEditDescription';
 import useFetchTask from '../hooks/useFetchTask';
 import useGetDescription from '../hooks/useGetDescription';
+import TabsHeader from './TabsHeader';
 import Tasks from './Tasks';
 import TemplateModal from './TemplateModal';
 
@@ -19,7 +18,14 @@ function TemplateTasks() {
     setMode,
     toggleModal,
   } = useGetDescription();
-  const { OnboardingData, OffboardingData } = useFetchTask();
+  const {
+    filteredByType,
+    taskLengthByTemplateType,
+    tasksByTemplateType,
+    isLoading,
+    search,
+    setSearch,
+  } = useFetchTask();
 
   const {
     editDescriptionMutation,
@@ -28,44 +34,36 @@ function TemplateTasks() {
     openDescriptionModal,
   } = useEditDescription(toggleModal);
 
-  if (OnboardingData === undefined || OffboardingData === undefined) {
+  if (isLoading) {
     return <LoadingAlert />;
   }
 
   return (
-    <div className="flex flex-col rounded-2xl overflow-x-auto w-full h-full p-6 shadow-gray-200 shadow-lg overflow-auto">
-      <div className="flex gap-2 justify-start">
-        {TABS.map(({ value, label }) => (
-          <Button
-            key={value}
-            variant={'outline'}
-            className={cn(
-              'cursor-pointer rounded-xl bg-white font-light',
-              tab === value ? 'bg-gray-200' : 'bg-white'
-            )}
-            onClick={() => setTab(value)}
-          >
-            {label}
-          </Button>
-        ))}
-        <img
-          className="w-7 cursor-pointer"
-          src="assets/copy.svg"
-          onClick={() => {
-            openDescriptionModal();
-            setMode('ADD');
-          }}
-          alt="add description"
-        />
-      </div>
-
+    <div className="mx-auto flex h-full w-5xl flex-col overflow-auto rounded-2xl bg-card p-6 md:max-w-8xl">
+      <SearchHeaderResuable
+        search={search}
+        setSearch={setSearch}
+        description="Add Task"
+        toggleModal={openDescriptionModal}
+        action={() => setMode('ADD')}
+      />
+      <TabsHeader tab={tab} setTab={setTab} />
       <Tasks
-        items={tab === 'ONBOARDING' ? OnboardingData : OffboardingData}
+        items={filteredByType[tab]}
         openDescriptionModal={openDescriptionModal}
         mode={mode}
         setMode={setMode}
       />
-
+      {tab === 'OFFBOARDING' ? (
+        <p className="font-light text-xs text-(--muted-foreground) mt-4">
+          {taskLengthByTemplateType.OFFBOARDING} Aufgaben in Offboarding
+          template
+        </p>
+      ) : (
+        <p className="font-light text-xs text-(--muted-foreground) mt-4">
+          {taskLengthByTemplateType.ONBOARDING} Aufgaben in Onboarding template
+        </p>
+      )}
       {modalState.selectedItem && modal && (
         <ModalOverlay handleToggle={toggleModal}>
           <TemplateModal
@@ -77,8 +75,8 @@ function TemplateTasks() {
             description={modalState.selectedItem.description}
             owner={modalState.selectedItem.owner}
             template_type={tab}
-            OnboardingData={OnboardingData}
-            OffboardingData={OffboardingData}
+            OnboardingData={tasksByTemplateType.ONBOARDING}
+            OffboardingData={tasksByTemplateType.OFFBOARDING}
             mode={mode}
             setMode={setMode}
           />

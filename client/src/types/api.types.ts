@@ -1,3 +1,5 @@
+import { TaskStatus } from '@/features/task-management/utils/selectOptionTernary';
+
 export type SuccessResponse<T> = {
   success: true;
   message: string;
@@ -63,7 +65,7 @@ export type DescriptionField = {
   substituteOwner: string;
   owner_id: string;
   is_substitute: boolean;
-  status: string;
+  status: TaskStatus;
   edit: string;
 };
 

@@ -1,3 +1,4 @@
+import FormSelectOptions from '@/components/form/FormSelectOptions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { absenceReason } from '@/features/employee-overview/consts/SelectInput';
@@ -5,7 +6,6 @@ import useEditEmployee from '@/features/employee-overview/hooks/useEditEmployee'
 import { EmployeeDataArray } from '@/features/employee-overview/schemas/schema';
 import { useMemo } from 'react';
 import FormFields from '../../../../../components/form/FormFields';
-import EmployeeSelect from './EmployeeSelect';
 
 type FormModalEditProps = {
   id: string | undefined;
@@ -32,19 +32,22 @@ const FormModalEdit = ({
     [EmployeeData]
   );
   return (
-    <>
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 ">
+    <div className="flex-1 w-full min-h-0 overflow-y-auto overflow-x-hidden pr-1">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="flex w-full min-w-0 flex-col gap-4"
+      >
         <Input type="hidden" value={id} {...register('id')} />
         <h1 className="text-left w-full">
           Abwesenheit eintragen für: {fullname}
         </h1>
-        <EmployeeSelect
+        <FormSelectOptions
           name="absencetype"
           control={control}
-          options={absenceReason}
-          placeholder="Grund"
-          label={'Grund der Abwesenheit'}
+          data={absenceReason}
+          placeholder={'Grund'}
           errors={errors}
+          label={'Grund der Abwesenheit'}
         />
         <FormFields
           label={'Abwesenheitsbeginn'}
@@ -61,20 +64,20 @@ const FormModalEdit = ({
           name="absenceEnd"
           errors={errors}
         />
-        <EmployeeSelect
-          name={'substitute'}
+        <FormSelectOptions
+          name="substitute"
           control={control}
-          options={employeeOptions}
+          data={employeeOptions}
           placeholder={'Mitarbeiter'}
-          label={'Soll vertreten werden von'}
           errors={errors}
+          label={'Soll vertreten werden von'}
         />
 
         <Button className="cursor-pointer" variant={'outline'} type="submit">
           Speichern
         </Button>
       </form>
-    </>
+    </div>
   );
 };
 

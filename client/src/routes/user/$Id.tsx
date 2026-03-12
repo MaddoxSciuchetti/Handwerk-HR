@@ -11,9 +11,10 @@ export const Route = createFileRoute('/user/$Id')({
 function UserPage() {
   const { Id } = Route.useParams();
   let workerId = parseInt(Id);
+  const numericId = parseInt(String(workerId));
 
   const { lifecycleType } = Route.useSearch();
   console.log('this is the lifycycle ', lifecycleType);
 
-  return <TaskManagement workerId={workerId} lifecycleType={lifecycleType} />;
+  return <TaskManagement workerId={numericId} lifecycleType={lifecycleType} />;
 }

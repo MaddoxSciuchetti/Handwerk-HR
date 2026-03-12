@@ -16,7 +16,7 @@ function ModalEditMitarbeiter({
   const { EmployeeData } = useGetEmployees();
 
   return (
-    <SmallWrapper>
+    <SmallWrapper className="items-stretch justify-start overflow-hidden">
       <FormModalEdit
         id={id}
         fullname={fullname}

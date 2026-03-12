@@ -1,5 +1,6 @@
 import { dateSchema } from '@/schemas/schema';
 import z from 'zod';
+import { VALIDATION_MESSAGES } from '../consts/validationMessages';
 
 export const subUserSchema = z.object({
   id: z.coerce.string(),
@@ -36,32 +37,47 @@ export const employeeDataSchema = z.array(
 
 export const createWorkerSchema = z
   .object({
-    firstName: z.string().min(3, { message: 'Vorname ist erforderlich' }),
-    lastName: z.string().min(3, { message: 'Nachname ist erforderlich' }),
+    firstName: z
+      .string()
+      .min(1, { message: VALIDATION_MESSAGES.required('Vorname') })
+      .min(3, { message: VALIDATION_MESSAGES.minLength('Vorname', 3) }),
+    lastName: z
+      .string()
+      .min(1, { message: VALIDATION_MESSAGES.required('Nachname') })
+      .min(3, { message: VALIDATION_MESSAGES.minLength('Nachname', 3) }),
     email: z
       .string()
-      .min(3, { message: 'Bitte gebe eine email an' })
+      .min(1, { message: VALIDATION_MESSAGES.required('E-Mail') })
       .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, {
-        message: 'Die Email ist falsch',
+        message: VALIDATION_MESSAGES.invalidEmail,
       }),
-    password: z.string().min(6, { message: 'Bitte gebe ein Passwort ein' }),
+    password: z
+      .string()
+      .min(1, { message: VALIDATION_MESSAGES.required('Passwort') })
+      .min(6, { message: VALIDATION_MESSAGES.minLength('Passwort', 6) }),
     confirmPassword: z
       .string()
-      .min(6, { message: 'Bitte gebe ein Passwort ein' }),
+      .min(1, { message: VALIDATION_MESSAGES.required('Passwort bestätigen') })
+      .min(6, {
+        message: VALIDATION_MESSAGES.minLength('Passwort bestätigen', 6),
+      }),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: 'Passwords do not match',
+    message: VALIDATION_MESSAGES.valuesMustMatch(
+      'Passwort',
+      'Passwort bestätigen'
+    ),
   });
 
 export const absenceSchema = z.object({
   id: z.string(),
   absence: z.string().optional(),
   absencetype: z
-    .string({ message: 'Art der Abwesenheit ist erforderlich' })
-    .min(1, { message: 'Art der Abwesenheit ist erforderlich' }),
+    .string({ message: VALIDATION_MESSAGES.required('Art der Abwesenheit') })
+    .min(1, { message: VALIDATION_MESSAGES.required('Art der Abwesenheit') }),
   absencebegin: dateSchema,
   absenceEnd: dateSchema,
-  substitute: z.string({ message: 'Bitte wähle von der Option' }),
+  substitute: z.string({ message: VALIDATION_MESSAGES.optionRequired }),
 });
 
 export type CreateWorker = z.infer<typeof createWorkerSchema>;

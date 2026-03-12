@@ -1,10 +1,6 @@
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import '@/App.css';
+import DropDownResuable from '@/components/DropDownResuable';
+import { Button } from '@/components/ui/button';
 import useFetchProcessData from '@/features/employee-overview/hooks/useFetchProcessData';
 import { UseMutateFunction } from '@tanstack/react-query';
 import { DeleteUser } from '../types/index.types';
@@ -38,27 +34,37 @@ export function Worker_Item({
     const percent = (completedTasks / total) * 100;
     console.log('this is the percent calculation');
     console.log(percent);
-    if (percent < 20) return 'text-red-500';
-    if (percent > 20 && percent <= 99) return 'text-yellow-300';
-    if (percent === 100) return 'text-green-500';
+    if (percent < 20) return 'text-(--chart-5)';
+    if (percent >= 20 && percent < 100) return 'text-(--chart-3)';
+    if (percent === 100) return 'text-(--chart-2)';
   };
 
   const color = calculatePercent(completedTasksCount!, totalTasks!);
-  console.log('lifecycle type in worker-lifycycle', item_value, form_type);
+
   return (
-    <tr
-      onClick={() => gotopage(item_value, form_type)}
-      className="hover:bg-muted-foreground rounded-2xl cursor-pointer   py-5"
-    >
+    <tr className="group rounded-2xl py-5 transition-colors  ">
       <td className="text-sm font-semibold">
-        {item} {item1}
+        <div className="flex items-center gap-3">
+          <span>
+            {item} {item1}
+          </span>
+          <Button
+            type="button"
+            size={'sm'}
+            variant="outline"
+            className="cursor-pointer pointer-events-none opacity-0 transition-opacity duration-150 group-hover:pointer-events-auto group-hover:opacity-100"
+            onClick={() => gotopage(item_value, form_type)}
+          >
+            Anschauen
+          </Button>
+        </div>
       </td>
 
       <td
         className={
           form_type === 'Onboarding'
-            ? 'text-sm underline decoration-2 decoration-sky-400 justify-center items-center py-5'
-            : 'text-sm underline decoration-2 decoration-red-400 justify-center items-center py-5'
+            ? 'text-sm underline text-(--ring) justify-center items-center py-5'
+            : 'text-sm underline text-(--destructive) justify-center items-center py-5'
         }
         lang="en"
       >
@@ -69,33 +75,16 @@ export function Worker_Item({
         <span className={color}>
           {processLoading ? '...' : completedTasksCount}
         </span>
-        <span className="text-black font-medium">
+        <span className="font-medium text-foreground">
           /{processData?.form?.fields?.length || 0}
         </span>
       </th>
 
       <td>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <img
-              className="hover:scale-110 bg-muted-foreground"
-              src="/assets/editReact.svg"
-            />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className={`w-40 bg-gray-100`} align="start">
-            <DropdownMenuGroup>
-              <DropdownMenuItem
-                className="hover:bg-gray-200 cursor-pointer"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onRemove(item_value);
-                }}
-              >
-                Löschen
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <DropDownResuable
+          description="Löschen"
+          action={() => onRemove(item_value)}
+        />
       </td>
     </tr>
   );

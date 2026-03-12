@@ -4,7 +4,7 @@ type LifeCycleModalProps = { children: ReactNode };
 
 const MediumWrapper = ({ children }: LifeCycleModalProps) => {
   return (
-    <div className="z-50 mx-auto flex min-h-120 max-h-100 w-2xl flex-col items-center justify-center rounded-lg bg-white p-4 text-center">
+    <div className="z-50 mx-auto flex min-h-120 max-h-100 w-2xl flex-col items-center justify-center rounded-lg border border-border bg-(--modal-surface) p-4 text-center text-foreground shadow-lg">
       {children}
     </div>
   );

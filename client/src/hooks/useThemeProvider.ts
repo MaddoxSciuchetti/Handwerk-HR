@@ -1,4 +1,4 @@
-import { CreateDarkModecontext } from '@/context/theme-provider/Context';
+import { CreateDarkModecontext } from '@/context/theme-provider/themecontext';
 import { useContext } from 'react';
 
 export function useThemeProvider() {

@@ -1,43 +1,61 @@
-import { expect, Page, test } from '@playwright/test';
-import { TestUsers } from './helpers';
+import { expect, test } from '@playwright/test';
+import { createTestUsers } from './fixtures/test-users';
+import { LoginCredentials, SignupTestUser } from './helpers';
 
-test.describe.serial('Signup journey', () => {
-  let sharedPage: Page;
-  const timestamp = Date.now();
-  let browserName: string;
+const API_BASE_URL = 'http://localhost:3000';
 
-  let testUsers: TestUsers[];
+test.describe('Signin journey', () => {
+  test.setTimeout(60_000);
 
-  test.beforeAll(async ({ browser, browserName: bn }) => {
-    browserName = bn;
-    const context = await browser.newContext();
-    sharedPage = await context.newPage();
+  let testUser: SignupTestUser;
+  let loginCredentials: LoginCredentials;
+
+  test.beforeAll(async ({ request, browserName }) => {
+    const timestamp = Date.now();
+    [testUser] = createTestUsers(browserName, timestamp);
+    loginCredentials = {
+      email: testUser.email,
+      password: testUser.password,
+    };
+
+    const registerResponse = await request.post(
+      `${API_BASE_URL}/auth/register`,
+      {
+        data: {
+          email: testUser.email,
+          firstName: testUser.vorname,
+          lastName: testUser.nachname,
+          password: testUser.password,
+          confirmPassword: testUser.confirmpassword,
+        },
+        failOnStatusCode: false,
+      }
+    );
+
+    expect(registerResponse.ok()).toBeTruthy();
   });
 
-  test('should sign in as admin', async () => {
-    await sharedPage.goto('/login');
+  test.afterAll(async ({ request }) => {
+    await request.delete(`${API_BASE_URL}/test/cleanupEmail`, {
+      data: { email: testUser.email },
+      failOnStatusCode: false,
+    });
   });
 
-  //   test.afterAll(async () => {
-  //     await sharedPage.close();
-  //   });
+  test('should sign in with fixture user and show email in sidebar', async ({
+    page,
+  }) => {
+    await page.goto('/login');
+    await expect(page).toHaveURL(/\/login$/);
 
-  test('shoud login', async () => {
-    await sharedPage.goto('/login');
+    await page.getByLabel(/Email Address/i).fill(loginCredentials.email);
+    await page.getByLabel(/^Password$/i).fill(loginCredentials.password);
+    await page.getByRole('button', { name: /^Login$/i }).click();
 
+    await page.waitForURL('**/worker-lifycycle');
+    await expect(page).toHaveURL(/\/worker-lifycycle$/);
     await expect(
-      sharedPage.getByRole('heading', { name: /Sign in to your account/i })
-    ).toBeVisible();
-
-    // Fill out signin information
-    await sharedPage.getByLabel(/Email address/i).fill('admin@example.com');
-    await sharedPage.getByLabel(/Password/i).fill('Admin123!');
-    await sharedPage.getByRole('button', { name: /Login/i }).click();
-
-    await sharedPage.waitForURL('/employee-overview');
-    await expect(sharedPage).toHaveURL('/employee-overview');
-    await expect(
-      sharedPage.locator(':has-text("Handwerker")').first()
+      page.getByText(loginCredentials.email, { exact: true })
     ).toBeVisible();
   });
 });

@@ -3,8 +3,8 @@ import SmallWrapper from '@/components/modal/modalSizes/SmallWrapper';
 import { DragEvent, useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { FileDropzone } from '../../../features/task-management/components/modal/files/file_upload/dropzone';
-import { FileList } from '../../../features/task-management/components/modal/files/file_upload/file-list';
+import { FileDropzone } from '../../../features/task-management/components/files/file_upload/Dropzone';
+import { FileList } from '../../../features/task-management/components/files/file_upload/FileList';
 import { Button } from '../../ui/button';
 import { CardContent } from '../../ui/card';
 import { Label } from '../../ui/label';
@@ -130,7 +130,7 @@ function FeatureModal({ handleToggle }: { handleToggle: () => void }) {
               </div>
             </CardContent>
 
-            <Button className="hover:text-black cursor-pointer" type="submit">
+            <Button className="cursor-pointer" type="submit">
               Senden
             </Button>
           </form>

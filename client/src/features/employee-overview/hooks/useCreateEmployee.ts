@@ -5,9 +5,11 @@ import { employeeFormOptions } from '../react-hook-form/employee.options';
 import { CreateWorker } from '../schemas/schema';
 
 function useCreateEmployee(toggleModal: () => void) {
-  const { mutate: createEmployee } = useMutation(
-    employeeMutations.createEmployee()
-  );
+  const {
+    mutate: createEmployee,
+    isError,
+    error,
+  } = useMutation(employeeMutations.createEmployee());
 
   const {
     register,
@@ -28,6 +30,8 @@ function useCreateEmployee(toggleModal: () => void) {
     handleSubmit,
     onFormSubmit,
     errors,
+    isError,
+    error,
   };
 }
 

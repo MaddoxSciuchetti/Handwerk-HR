@@ -7,7 +7,7 @@ import { Suspense } from 'react';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import Layout from '@/components/layout/Layout';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import { ThemeProvider } from '@/context/theme-provider/ThemeContext';
+import { ThemeProvider } from '@/context/theme-provider/ThemeProvider';
 import { createRootRoute, Outlet, useLocation } from '@tanstack/react-router';
 import { Toaster } from 'sonner';
 
@@ -24,6 +24,7 @@ function RootLayout() {
     '/password/forgot',
     '/password/reset',
     '/',
+    '/home',
   ]);
 
   const isEmailVerifyPage = location.pathname.startsWith('/email/verify/');
