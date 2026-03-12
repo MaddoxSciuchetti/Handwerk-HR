@@ -4,12 +4,12 @@ import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { workerLifecycleMutations } from '../query-options/mutations/worker-lifycycle.mutations';
 import { workerLifecycleQueries } from '../query-options/queries/worker-lifycycle.queries';
-import { FormType, WorkerItem } from '../types/index.types';
+import { FormType } from '../types/index.types';
 
 function useHome() {
   const [search, setSearch] = useState('');
-  const { toggleSidebar } = useSidebar();
   const [modal, setModal] = useState<boolean>(false);
+  const { toggleSidebar } = useSidebar();
   const navigate = useNavigate({ from: '/' });
 
   const toggleModal = () => {
@@ -17,7 +17,7 @@ function useHome() {
     toggleSidebar();
   };
 
-  const { data, error, isSuccess } = useQuery<WorkerItem[]>(
+  const { data, error, isSuccess } = useQuery(
     workerLifecycleQueries.workerData()
   );
 

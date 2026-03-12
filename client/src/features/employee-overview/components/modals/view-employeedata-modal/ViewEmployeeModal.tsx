@@ -1,7 +1,6 @@
-import CenteredDiv from '@/components/alerts/layout-wrapper/CenteredDiv';
+import LoadingAlert from '@/components/alerts/LoadingAlert';
 import SmallWrapper from '@/components/modal/modalSizes/SmallWrapper';
 import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
 import { EmployeeTabsData } from '@/features/employee-overview/components/employees/EmployeeTabsData';
 import ReminderWindow from '@/features/employee-overview/components/modals/view-employeedata-modal/ReminderWindow';
 import useEmployeeData from '@/features/employee-overview/hooks/useEmployeeData';
@@ -16,12 +15,7 @@ const ViewEmployeeModal = ({ selectedOwner }: ViewEmployeeModalProps) => {
   const { isLoading, cleanData } = useEmployeeData();
   const [isReminderStep, setIsReminderStep] = useState(false);
 
-  if (isLoading)
-    return (
-      <CenteredDiv>
-        <Spinner className="w-8" />
-      </CenteredDiv>
-    );
+  if (isLoading) return <LoadingAlert />;
 
   return (
     <SmallWrapper className="items-stretch justify-start overflow-hidden">
