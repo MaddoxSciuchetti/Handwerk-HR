@@ -4,6 +4,7 @@ import type {
   DescriptionFieldResponse,
 } from '@/types/api.types';
 import type { SubmitEvent } from 'react';
+import { TaskStatus } from '../../utils/selectOptionTernary';
 import WorkerForm from './WorkerForm';
 
 interface WorkerTasksProps {
@@ -13,7 +14,7 @@ interface WorkerTasksProps {
     id: number,
     description: string,
     editcomment: string,
-    select_option: string,
+    select_option: TaskStatus,
     form_field_id: number
   ) => Promise<void>;
   handleSubmit: (event: SubmitEvent<HTMLFormElement>) => Promise<void>;

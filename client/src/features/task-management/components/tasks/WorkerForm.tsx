@@ -1,4 +1,5 @@
 import { SubmitEvent } from 'react';
+import { TaskStatus } from '../../utils/selectOptionTernary';
 import TaskHistory from '../task-history/TaskHistory';
 import StatusBadgeBar from './StatusBadgeBar';
 import WorkerFormHeader from './WorkerFormHeader';
@@ -9,14 +10,14 @@ interface FormProps {
   officialOwner: string;
   substituteOwner: string;
   editcomment: string;
-  select_option: string;
+  select_option: TaskStatus;
   form_field_id: number;
   handleSubmit: (e: SubmitEvent<HTMLFormElement>) => void;
   onEdit: (
     id: number,
     description: string,
     editcomment: string,
-    select_option: string,
+    select_option: TaskStatus,
     form_field_id: number
   ) => void;
   is_substitute: boolean;
