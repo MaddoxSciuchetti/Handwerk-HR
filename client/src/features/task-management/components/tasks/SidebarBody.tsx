@@ -22,7 +22,7 @@ const SidebarBody = ({ selectedTask, handleSubmit }: SidebarBodyProps) => {
             handleSubmit={handleSubmit}
           />
         </div>
-        <div className="px-2 pb-5">
+        <div className="px-6 pb-5">
           <HistoryContent id_original={selectedTask.id} />
         </div>
       </div>

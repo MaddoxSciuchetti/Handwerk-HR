@@ -10,22 +10,18 @@ type HistoryContentProps = {
 const HistoryContent = ({ id_original }: HistoryContentProps) => {
   const { historyData } = useGetWorkerHistory(id_original);
 
-  if (historyData?.length === 0)
-    return (
-      <p className="mt-5 text-muted-foreground">
-        Es wurden noch keine Änderungen vorgenommen
-      </p>
-    );
-
   return (
-    <>
-      <div className="px-4 pb-4">
+    <div className="pb-4">
+      {historyData?.length === 0 ? (
+        <p className="mt-5 text-muted-foreground">
+          Es wurden noch keine Änderungen vorgenommen
+        </p>
+      ) : (
         <div className="relative pl-6">
           <div className="absolute left-[7px] top-2 bottom-2 w-px bg-(--border)" />
 
           <div className="space-y-4">
             {historyData?.map((entry) => {
-              console.log(entry.status);
               const status = STATUS_MAP[entry.status ?? ''] ?? {
                 label: 'Kein Status',
                 className:
@@ -66,8 +62,8 @@ const HistoryContent = ({ id_original }: HistoryContentProps) => {
             })}
           </div>
         </div>
-      </div>
-    </>
+      )}
+    </div>
   );
 };
 
