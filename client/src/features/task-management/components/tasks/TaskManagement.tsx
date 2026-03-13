@@ -4,6 +4,7 @@ import { Tabs, TabsContent } from '@/components/ui/tabs';
 import useFilteredData from '../../hooks/useFilteredData';
 import useTaskData from '../../hooks/useTaskData';
 import useTaskSubmit from '../../hooks/useTaskSubmit';
+import { LifecycleType } from '../../types/index.types';
 import WorkerFileUploads from '../files/WorkerFileUploads';
 import FilterByUser from '../header/filters/Filter.ByUser';
 import WorkerHeader from '../header/WorkerHeader';
@@ -12,7 +13,7 @@ import TaskIndividual from './TaskIndividual';
 
 type TaskManagementProps = {
   workerId: number;
-  lifecycleType: string;
+  lifecycleType: LifecycleType;
 };
 
 const TaskManagement = ({ workerId, lifecycleType }: TaskManagementProps) => {
@@ -32,10 +33,11 @@ const TaskManagement = ({ workerId, lifecycleType }: TaskManagementProps) => {
     displayData.find((field) => field.id === selectedTaskId) ?? null;
 
   if (isLoading) return <LoadingAlert />;
-  if (!data) return <ErrorAlert />;
+  if (!data)
+    return <ErrorAlert message="The tasks could not load, reload page" />;
 
   return (
-    <div className="flex flex-col w-5xl h-150 rounded-2xl mx-auto  overflow-auto p-6 md:max-w-8xl md:h-300">
+    <div className="flex flex-col w-5xl rounded-2xl mx-auto overflow-hidden p-6 h-[calc(100dvh-8rem)] max-h-[calc(100dvh-8rem)] md:max-w-8xl">
       <>
         <Tabs defaultValue="form" className="">
           <WorkerHeader

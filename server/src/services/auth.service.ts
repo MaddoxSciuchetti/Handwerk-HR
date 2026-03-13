@@ -39,11 +39,13 @@ export type createAccountParams = {
 };
 
 export const createAccount = async (data: createAccountParams) => {
+    const normalizedEmail = data.email.trim().toLowerCase();
+
     //verify existing user does not exists
 
     const existingUser = await prisma.user.findUnique({
         where: {
-            email: data.email.toLocaleLowerCase(),
+            email: normalizedEmail,
         },
     });
 
@@ -55,7 +57,7 @@ export const createAccount = async (data: createAccountParams) => {
 
     const user = await prisma.user.create({
         data: {
-            email: data.email.toLocaleLowerCase(),
+            email: normalizedEmail,
             password: hashedpassword,
             vorname: data.firstName,
             nachname: data.lastName,
@@ -138,10 +140,12 @@ export const loginUser = async ({
     password,
     userAgent,
 }: LoginParams) => {
+    const normalizedEmail = email.trim().toLowerCase();
+
     // get the user by email
     const user = await prisma.user.findUnique({
         where: {
-            email: email,
+            email: normalizedEmail,
         },
     });
 
@@ -267,9 +271,11 @@ export const validationEmailCode = async (code: string) => {
 };
 
 export const sendPasswordResetEmail = async (email: string) => {
+    const normalizedEmail = email.trim().toLowerCase();
+
     const user = await prisma.user.findFirst({
         where: {
-            email: email,
+            email: normalizedEmail,
         },
     });
     appAssert(user, NOT_FOUND, "User not found");

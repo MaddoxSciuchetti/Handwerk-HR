@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { workerQueries } from '../query-options/queries/worker.queries';
+import { LifecycleType } from '../types/index.types';
 
-function useTaskData(id: number, lifecycleType: string) {
+function useTaskData(workerId: number, lifecycleType: LifecycleType) {
   const { data, error, isLoading, isError } = useQuery(
-    workerQueries.taskData(id, lifecycleType)
+    workerQueries.taskData(workerId, lifecycleType)
   );
 
   return {

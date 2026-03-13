@@ -1,9 +1,10 @@
 import TaskManagement from '@/features/task-management/components/tasks/TaskManagement';
+import { LifecycleType } from '@/features/task-management/types/index.types';
 import { createFileRoute } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/user/$Id')({
   validateSearch: (search: Record<string, unknown>) => ({
-    lifecycleType: (search.lifecycleType as string) || '',
+    lifecycleType: (search.lifecycleType as LifecycleType) || '',
   }),
   component: UserPage,
 });
@@ -14,7 +15,6 @@ function UserPage() {
   const numericId = parseInt(String(workerId));
 
   const { lifecycleType } = Route.useSearch();
-  console.log('this is the lifycycle ', lifecycleType);
 
   return <TaskManagement workerId={numericId} lifecycleType={lifecycleType} />;
 }

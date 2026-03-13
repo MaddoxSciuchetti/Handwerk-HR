@@ -10,7 +10,11 @@ import {
   HISTORYDATA,
   WORKERBYID,
 } from '../../consts/query-key.consts';
-import { File_Request, HistoryData } from '../../types/index.types';
+import {
+  File_Request,
+  HistoryData,
+  LifecycleType,
+} from '../../types/index.types';
 
 export const workerQueries = {
   getFiles: (workerId: number) =>
@@ -26,7 +30,7 @@ export const workerQueries = {
       enabled: !!workerId,
     }),
 
-  taskData: (workerId: number, lifecycleType: string) =>
+  taskData: (workerId: number, lifecycleType: LifecycleType) =>
     queryOptions<DescriptionFieldResponse, Error>({
       queryKey: [WORKERBYID, workerId],
       queryFn: () => getWorkerById(workerId, lifecycleType),

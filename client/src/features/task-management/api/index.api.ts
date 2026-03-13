@@ -9,16 +9,17 @@ import {
   File_Request,
   HistoryData,
   InsertHistoryData,
+  LifecycleType,
 } from '../types/index.types';
 
 export const getWorkerById = async (
-  id: number,
-  param: string
+  workerId: number,
+  lifecycleType: LifecycleType
 ): Promise<DescriptionFieldResponse> => {
   const response = await API.get<
     DescriptionFieldResponse,
     DescriptionFieldResponse
-  >(`worker/getWorker/${id}?lifecycleType=${param}`);
+  >(`worker/getWorker/${workerId}?lifecycleType=${lifecycleType}`);
   return response;
 };
 
