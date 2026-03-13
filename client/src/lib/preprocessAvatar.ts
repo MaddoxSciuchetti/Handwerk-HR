@@ -17,7 +17,17 @@ export const preprocessAvatar = (file: File): Promise<File> =>
       canvas.height = AVATAR_SIZE;
 
       const ctx = canvas.getContext('2d')!;
-      ctx.drawImage(img, offsetX, offsetY, size, size, 0, 0, AVATAR_SIZE, AVATAR_SIZE);
+      ctx.drawImage(
+        img,
+        offsetX,
+        offsetY,
+        size,
+        size,
+        0,
+        0,
+        AVATAR_SIZE,
+        AVATAR_SIZE
+      );
 
       canvas.toBlob(
         (blob) => {
@@ -25,7 +35,7 @@ export const preprocessAvatar = (file: File): Promise<File> =>
           resolve(new File([blob], 'avatar.jpg', { type: 'image/jpeg' }));
         },
         'image/jpeg',
-        0.9,
+        0.9
       );
     };
 

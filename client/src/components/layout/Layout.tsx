@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import ModalOverlay from '../modal/ModalOverlay';
 import { SidebarInset, SidebarTrigger, useSidebar } from '../ui/sidebar';
 import { AppSidebar } from './sidebar/AppSidebar';
-import FeatureModal from './sidebar/FeatureModal';
+import FeatureModal from './sidebar/feature-modal/FeatureModal';
 
 function Layout() {
   const [modal, setModal] = useState<boolean>(false);

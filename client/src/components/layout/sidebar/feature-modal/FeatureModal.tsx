@@ -1,14 +1,14 @@
 import { sendFeatureRequest } from '@/apis/index.apis';
 import SmallWrapper from '@/components/modal/modalSizes/SmallWrapper';
+import { Button } from '@/components/ui/button';
+import { CardContent } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { FileDropzone } from '@/features/task-management/components/files/file_upload/Dropzone';
+import { FileList } from '@/features/task-management/components/files/file_upload/FileList';
 import { DragEvent, useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { FileDropzone } from '../../../features/task-management/components/files/file_upload/Dropzone';
-import { FileList } from '../../../features/task-management/components/files/file_upload/FileList';
-import { Button } from '../../ui/button';
-import { CardContent } from '../../ui/card';
-import { Label } from '../../ui/label';
-import { Textarea } from '../../ui/textarea';
 
 export type TFeatureForm = {
   importance: string;
