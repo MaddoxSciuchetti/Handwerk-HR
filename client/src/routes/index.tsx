@@ -1,6 +1,6 @@
-import HomePage from '@/features/home-page/components/HomePage';
 import { createFileRoute } from '@tanstack/react-router';
+import LoginForm from './login';
 
 export const Route = createFileRoute('/')({
-  component: HomePage,
+  component: LoginForm,
 });
