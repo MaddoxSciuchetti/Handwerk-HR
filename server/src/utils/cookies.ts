@@ -1,7 +1,7 @@
 import { CookieOptions, Response } from "express";
 import { fifteenMinutesFromNow, thirtyDaysFromNow } from "./date";
 
-export const REFRESH_PATH = "/auth/refresh";
+export const REFRESH_PATH = "/";
 const isDevelopment = process.env.NODE_ENV === "development";
 const isHttpsEnvironment = !isDevelopment;
 
@@ -20,7 +20,6 @@ export const getAccessTokenCookieOptions = (): CookieOptions => ({
 export const getRefreshTokenCookieOptions = (): CookieOptions => ({
     ...defaults,
     expires: thirtyDaysFromNow(),
-
     path: "/", // ← added
 });
 
