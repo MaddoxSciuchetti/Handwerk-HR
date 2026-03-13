@@ -15,12 +15,12 @@ type WorkerFileUploadsProps = {
 };
 
 function WorkerFileUploads({ workerId }: WorkerFileUploadsProps) {
-  const { fetchFiles } = useGetWorkerFiles(workerId);
-  const { deleteFiles, options } = useDeleteWorkerFile(workerId);
+  const { fetchFiles, isLoading, isError } = useGetWorkerFiles(workerId);
+  const { deleteFiles } = useDeleteWorkerFile(workerId);
   const { toggleModal, modal, setModal } = useToggleModal();
 
-  if (options.isPending) return <LoadingAlert />;
-  if (options.isError) return <ErrorAlert />;
+  if (isLoading) return <LoadingAlert />;
+  if (isError) return <ErrorAlert />;
 
   return (
     <>
