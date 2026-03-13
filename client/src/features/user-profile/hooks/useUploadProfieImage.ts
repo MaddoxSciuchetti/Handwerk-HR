@@ -8,6 +8,7 @@ import { TFile } from '../types';
 function useUploadProfieImage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const { handleSubmit, setValue } = useForm<TFile>();
   const uploadMutation = useMutation(userProfileMutations.uploadFoto());
 
@@ -18,13 +19,18 @@ function useUploadProfieImage() {
   };
 
   const handleFileSelect = (files: FileList | null) => {
-    if (!files) return;
-    console.log(files);
-    const newFiles = Array.from(files);
-    setUploadedFiles((prev) => [...prev, ...newFiles]);
-    setValue('file', newFiles);
+    if (!files || files.length === 0) return;
+    setPendingFile(files[0]);
+  };
+
+  const handleCropSave = (croppedFile: File) => {
+    setPendingFile(null);
+    setUploadedFiles([croppedFile]);
+    setValue('file', [croppedFile]);
     handleSubmit(onSubmit)();
   };
+
+  const handleCropCancel = () => setPendingFile(null);
 
   const handleBoxClick = () => {
     fileInputRef.current?.click();
@@ -44,6 +50,9 @@ function useUploadProfieImage() {
     handleDragOver,
     handleDrop,
     handleFileSelect,
+    handleCropSave,
+    handleCropCancel,
+    pendingFile,
     fileInputRef,
     uploadedFiles,
     data,
