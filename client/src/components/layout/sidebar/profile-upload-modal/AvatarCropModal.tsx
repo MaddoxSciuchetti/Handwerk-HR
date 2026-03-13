@@ -1,5 +1,5 @@
-import { useAvatarBackgroundLayer } from '@/components/layout/sidebar/profile-upload-modal/useAvatarBackgroundLayer';
-import { useAvatarCropSave } from '@/components/layout/sidebar/profile-upload-modal/useAvatarCropSave';
+import { useAvatarBackgroundLayer } from '@/components/layout/sidebar/hooks/useAvatarBackgroundLayer';
+import { useAvatarCropSave } from '@/components/layout/sidebar/hooks/useAvatarCropSave';
 import { getModalStyle } from '@/components/layout/sidebar/styles/avatarCrop.styles';
 import {
   moveDrag,

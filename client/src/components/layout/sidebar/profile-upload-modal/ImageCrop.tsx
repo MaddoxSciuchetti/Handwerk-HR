@@ -4,12 +4,12 @@ import {
   cropMaskStyle,
   getBackgroundImageStyle,
   getForegroundImageStyle,
-} from './styles/avatarCrop.styles';
+} from '../styles/avatarCrop.styles';
 import {
   moveDrag as moveDragFn,
   onImgLoad as onImgLoadFn,
   startDrag as startDragFn,
-} from './utils/avatarCrop.utils';
+} from '../utils/avatarCrop.utils';
 
 type ImageCropProps = {
   imagePos: { x: number; y: number };
