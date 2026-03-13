@@ -6,7 +6,7 @@ const isDevelopment = process.env.NODE_ENV === "development";
 const isHttpsEnvironment = !isDevelopment;
 
 const defaults: CookieOptions = {
-    sameSite: isHttpsEnvironment ? "none" : "lax",
+    sameSite: isHttpsEnvironment ? "lax" : "lax",
     httpOnly: true,
     secure: isHttpsEnvironment,
 };
@@ -14,12 +14,14 @@ const defaults: CookieOptions = {
 export const getAccessTokenCookieOptions = (): CookieOptions => ({
     ...defaults,
     expires: fifteenMinutesFromNow(),
+    path: "/", // ← added
 });
 
 export const getRefreshTokenCookieOptions = (): CookieOptions => ({
     ...defaults,
     expires: thirtyDaysFromNow(),
-    path: REFRESH_PATH,
+
+    path: "/", // ← added
 });
 
 type Params = {
