@@ -13,6 +13,16 @@ export const deleteTestEmail = catchErrors(async (req, res) => {
     return res.status(200).json({ message: "Test email deleted" });
 });
 
+export const deleteTestWorker = catchErrors(async (req, res) => {
+    const { email } = req.body;
+
+    await prisma.users.delete({
+        where: { email },
+    });
+
+    return res.status(200).json({ message: "Test worker deleted" });
+});
+
 export const getTestEmails = catchErrors(async (req, res) => {
     const recipient =
         typeof req.query.recipient === "string"
