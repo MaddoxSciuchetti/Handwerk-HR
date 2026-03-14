@@ -2,7 +2,7 @@ import { Home, Inbox, Settings } from 'lucide-react';
 
 export const LAYOUTITEMS = [
   {
-    title: 'Mein Mitarbeiter',
+    title: 'Meine Mitarbeiter',
     to: '/employee-overview',
     icon: Home,
     requiredPermission: 'CHEF',
