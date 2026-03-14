@@ -20,9 +20,7 @@ const EmployeeStatus = ({ value }: EmployeeStatusProps) => {
               dateObject
             ) && status.substitute ? (
               <>
-                <p className="w-full text-sm text-(--status-error-foreground)">
-                  Abwesend vom
-                </p>
+                <p className="w-full text-sm text-(--chart-5)">Abwesend vom</p>
                 <div className="flex gap-1 text-sm">
                   {status.absencebegin?.toLocaleDateString('de-DE', {
                     day: '2-digit',
@@ -38,17 +36,13 @@ const EmployeeStatus = ({ value }: EmployeeStatusProps) => {
                 </div>
               </>
             ) : (
-              <p className="w-full text-sm text-(--status-success-foreground)">
-                Anwesend
-              </p>
+              <p className="w-full text-sm text-(--chart-2)">Anwesend</p>
             )}
           </div>
         ))
       ) : (
         <div className="flex flex-col" key={`preent-${value.id}`}>
-          <p className="w-full text-sm text-(--status-success-foreground)">
-            Anwesend
-          </p>
+          <p className="w-full text-sm text-(--chart-2)">Anwesend</p>
         </div>
       )}
     </>
