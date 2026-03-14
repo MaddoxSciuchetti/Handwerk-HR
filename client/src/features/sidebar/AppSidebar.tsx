@@ -8,7 +8,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { Link } from '@tanstack/react-router';
+import { Link, useLocation } from '@tanstack/react-router';
 
 import ErrorAlert from '@/components/alerts/ErrorAlert';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ import useHasPermission from './hooks/useHasPermission';
 
 export function AppSidebar({ openModal }: { openModal: () => void }) {
   const { user, fullName, accessibleItems } = useHasPermission();
+  const { pathname } = useLocation();
 
   if (user === undefined) return <ErrorAlert />;
 
@@ -41,16 +42,32 @@ export function AppSidebar({ openModal }: { openModal: () => void }) {
             <SidebarGroupContent>
               <SidebarMenu className="">
                 {accessibleItems.map((item, index) => {
+                  const isActive =
+                    pathname === item.to || pathname.startsWith(`${item.to}/`);
+
                   return (
                     <SidebarMenuItem className="" key={index}>
                       <SidebarMenuButton
                         variant={'outline'}
                         asChild
-                        className="mt-2 rounded-xl py-5 transition-colors hover:bg-(--hover-bg) hover:text-(--hover-foreground)"
+                        className="mt-2 rounded-xl py-5 transition-colors"
                       >
-                        <Link to={item.to}>
+                        <Link
+                          to={item.to}
+                          className={
+                            isActive
+                              ? 'bg-(--muted) text-(--foreground) hover:bg-(--muted)'
+                              : 'hover:bg-(--hover-bg) hover:text-(--hover-foreground)'
+                          }
+                        >
                           <item.icon />
-                          <span className="text-muted-foreground text-md">
+                          <span
+                            className={
+                              isActive
+                                ? 'text-(--foreground) text-md font-medium'
+                                : 'text-muted-foreground text-md'
+                            }
+                          >
                             {item.title}
                           </span>
                         </Link>
