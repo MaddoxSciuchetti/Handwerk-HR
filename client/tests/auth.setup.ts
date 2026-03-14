@@ -1,4 +1,5 @@
 import { expect, test as setup } from '@playwright/test';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -24,5 +25,6 @@ setup('authenticate chef user', async ({ page }) => {
   await page.waitForURL('**/worker-lifycycle');
   await expect(page).toHaveURL(/\/worker-lifycycle$/);
 
+  fs.mkdirSync(path.dirname(authStatePath), { recursive: true });
   await page.context().storageState({ path: authStatePath });
 });

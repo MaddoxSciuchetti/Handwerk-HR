@@ -12,6 +12,7 @@ const authStatePath = path.resolve(__dirname, 'playwright/.auth/chef.json');
 
 export default defineConfig({
   testDir: './tests',
+  tsconfig: './tsconfig.playwright.json',
   workers: 1,
   reporter: 'html',
   use: {

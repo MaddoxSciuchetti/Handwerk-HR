@@ -9,7 +9,7 @@
 
     "jsx": "preserve",
     "moduleResolution": "bundler",
-    "types": ["vite/client"],
+    "types": ["vite/client", "node"],
     "skipLibCheck": true,
     "module": "esnext",
     "strict": true,
@@ -17,5 +17,5 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["./src/**/*"]
+  "include": ["./src/**/*", "./tests/**/*", "./playwright.config.ts"]
 }

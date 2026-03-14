@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
-import { API_BASE_URL } from './constants.ts';
-import { OutboxEmail } from './types.ts';
+import { API_BASE_URL } from './constants';
+import { OutboxEmail } from './types';
 
 test.describe('Create employee journey', () => {
   test.setTimeout(90_000);

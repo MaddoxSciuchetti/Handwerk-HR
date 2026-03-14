@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
-import { API_BASE_URL } from './constants.ts';
-import { LoginCredentials, SignupTestUser } from './types.ts';
+import { API_BASE_URL } from './constants';
+import { LoginCredentials, SignupTestUser } from './types';
 
 test.describe('Signup journey', () => {
   test.setTimeout(60_000);

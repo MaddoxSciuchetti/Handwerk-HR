@@ -46,6 +46,7 @@ function StatusInformation({
     control,
     name: 'select_option',
   }) as TaskStatus;
+
   const statusClassName =
     STATUS_MAP[selectedStatus]?.className ??
     'bg-(--status-error-bg) text-(--status-error-foreground)';

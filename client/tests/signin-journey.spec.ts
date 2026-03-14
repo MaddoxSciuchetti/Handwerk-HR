@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
-import { API_BASE_URL } from './constants.ts';
+import { API_BASE_URL } from './constants';
 import { createTestUsers } from './fixtures/test-users';
-import { LoginCredentials, SignupTestUser } from './types.ts';
+import { LoginCredentials, SignupTestUser } from './types';
 
 test.describe('Signin journey', () => {
   test.setTimeout(60_000);
