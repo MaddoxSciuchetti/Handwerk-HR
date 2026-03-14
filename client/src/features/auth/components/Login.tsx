@@ -1,5 +1,3 @@
-import ErrorAlert from '@/components/alerts/ErrorAlert';
-import LoadingAlert from '@/components/alerts/LoadingAlert';
 import FormFields from '@/components/form/FormFields';
 import { Button } from '@/components/ui/button';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,6 +8,12 @@ import { login } from '../api/auth.api';
 import { LoginFormValues, loginSchema } from '../schemas/auth.schemas';
 import DoorManCard from './resuable/DoorManCard';
 import DoorManFooter from './resuable/DoorManFooter';
+
+type LoginApiError = {
+  status?: number;
+  errorCode?: string;
+  message?: string;
+};
 
 export function LoginComponent() {
   const navigate = useNavigate();
@@ -28,9 +32,9 @@ export function LoginComponent() {
 
   const {
     mutate: signin,
-    isError,
+    error,
     isPending,
-  } = useMutation({
+  } = useMutation<unknown, LoginApiError, LoginFormValues>({
     mutationFn: login,
     onSuccess: () => {
       navigate({ to: '/worker-lifycycle' });
@@ -41,12 +45,18 @@ export function LoginComponent() {
     signin(data);
   };
 
-  if (isPending) return <LoadingAlert />;
-  if (isError) return <ErrorAlert />;
+  const authErrorMessage =
+    error?.message || 'Nutzer nicht gefunden oder Zugangsdaten sind falsch.';
 
   return (
     <DoorManCard>
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
+        {error && (
+          <p className="mb-4 rounded-md border border-(--destructive) bg-(--destructive)/10 px-3 py-2 text-sm text-(--destructive)">
+            {authErrorMessage}
+          </p>
+        )}
+
         <div className="space-y-4">
           <div className="space-y-2">
             <FormFields
@@ -91,6 +101,7 @@ export function LoginComponent() {
             variant={'outline'}
             type="submit"
             className="w-full cursor-pointer"
+            disabled={isPending}
           >
             {isPending ? 'Logging in...' : 'Login'}
           </Button>

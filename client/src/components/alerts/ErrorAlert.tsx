@@ -1,3 +1,6 @@
+import { Button } from '@/components/ui/button';
+import { Link } from '@tanstack/react-router';
+
 type IsErrorProps = {
   title?: string;
   suggestion?: string;
@@ -5,8 +8,8 @@ type IsErrorProps = {
 };
 
 const ErrorAlert = ({
-  title = 'Error loading user',
-  suggestion = 'Reload the page',
+  title = 'Fehler beim Laden',
+  suggestion = 'Versuche es erneut, indem du dich neu einloggst.',
   message,
 }: IsErrorProps) => {
   return (
@@ -15,6 +18,9 @@ const ErrorAlert = ({
         <h1 className="text-3xl font-bold">{title}</h1>
         <p className="text-destructive">{suggestion}</p>
         <p>{message}</p>
+        <Button asChild className="mt-2" variant="outline" type="button">
+          <Link to="/login">Zurück zum Login</Link>
+        </Button>
       </div>
     </>
   );
