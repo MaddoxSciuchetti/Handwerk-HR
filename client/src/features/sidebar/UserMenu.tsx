@@ -86,7 +86,7 @@ const UserMenu = () => {
               className="cursor-pointer rounded-lg text-sm font-medium focus:bg-accent focus:text-accent-foreground "
               onClick={toggle}
             >
-              {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+              {theme === 'dark' ? 'Hell' : 'Dunkel'}
               {theme === 'dark' ? (
                 <Sun className="ml-2 h-4 w-4 text-muted-foreground" />
               ) : (
