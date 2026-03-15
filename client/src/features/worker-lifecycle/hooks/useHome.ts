@@ -31,11 +31,19 @@ function useHome() {
     workerLifecycleMutations.deleteWorker()
   );
 
-  const handleNavigate = (taskId: number, form_type: FormType) => {
+  const handleNavigate = (
+    taskId: number,
+    form_type: FormType,
+    workerName: string
+  ) => {
     navigate({
       to: '/user/$Id',
       params: { Id: String(taskId) },
-      search: { lifecycleType: form_type },
+      search: {
+        lifecycleType: form_type,
+        workerName,
+        prevPage: 'Worker Lifecycle',
+      },
     });
   };
 

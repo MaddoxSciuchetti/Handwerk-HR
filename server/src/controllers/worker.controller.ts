@@ -116,9 +116,24 @@ export const getWorkerHistory = async (req: Request, res: Response) => {
 
     const parsedId = z.coerce.number().parse(id);
 
-    const HistoryData = await queryWorkerHistory(parsedId);
+    const historyData = await queryWorkerHistory(parsedId);
 
-    return res.status(200).json(HistoryData);
+    const historyWithPresignedUrls = await Promise.all(
+        historyData.map(async (entry) => {
+            if (!entry.auth_user?.cloud_url) return entry;
+
+            const key = new URL(entry.auth_user.cloud_url).pathname.slice(1);
+            return {
+                ...entry,
+                auth_user: {
+                    ...entry.auth_user,
+                    cloud_url: await generatePresignedUrl(key),
+                },
+            };
+        }),
+    );
+
+    return res.status(200).json(historyWithPresignedUrls);
 };
 
 export const updateWorkerHistory = async (req: Request, res: Response) => {
@@ -203,9 +218,10 @@ export const getCloudUrl = async (req: Request, res: Response) => {
 export const deleteWorkerFile = async (req: Request, res: Response) => {
     try {
         const id = +req.params.id;
-        const response = removeWorkerFile(id);
+        await removeWorkerFile(id);
         return res.status(200).json({ sucess: true });
     } catch (error) {
         console.log(error);
+        return res.status(404).json({ error: "File not found" });
     }
 };

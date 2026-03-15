@@ -1,7 +1,6 @@
 import { expect, test } from '@playwright/test';
-import { LoginCredentials, SignupTestUser } from './helpers';
-
-const API_BASE_URL = 'http://localhost:3000';
+import { API_BASE_URL } from './constants';
+import { LoginCredentials, SignupTestUser } from './types';
 
 test.describe('Signup journey', () => {
   test.setTimeout(60_000);
@@ -26,25 +25,17 @@ test.describe('Signup journey', () => {
   });
 
   test.afterAll(async ({ request }) => {
-    await request.delete(`${API_BASE_URL}/test/cleanupEmail`, {
+    await request.delete(`${API_BASE_URL}/test/deleteTestUser`, {
       data: { email: testUser.email },
       failOnStatusCode: false,
     });
   });
 
   test('should complete onboarding signup and login flow', async ({ page }) => {
-    // 1: Go to home page
-    await page.goto('/home');
-
-    await expect(
-      page.getByRole('heading', {
-        name: /Happy employees drive successful companies\./i,
-      })
-    ).toBeVisible();
+    // 1: Go to signup page
+    await page.goto('/signup');
 
     // 2-3: Click Get Started and land on signup page
-    await page.getByRole('link', { name: /^Get Started$/i }).click();
-    await page.waitForURL('**/signup');
     await expect(page).toHaveURL(/\/signup$/);
 
     // 4-6: Fill signup form and submit

@@ -3,7 +3,7 @@ import { cn } from '@/lib/trycatch';
 type TaskStatusBarProps = {
   isSelected: boolean;
   index: number;
-  statusConfig: { className: string };
+  statusConfig: { className: string; dotClassName?: string };
   task: {
     description: string;
     is_substitute: boolean;
@@ -23,7 +23,9 @@ const TaskStatusBar = ({
       <span
         className={cn(
           'text-sm w-5 shrink-0',
-          isSelected ? 'text-foreground/60' : 'text-muted-foreground'
+          isSelected
+            ? 'text-(--foreground) opacity-60'
+            : 'text-(--muted-foreground)'
         )}
       >
         {String(index + 1).padStart(2, '0')}
@@ -32,26 +34,40 @@ const TaskStatusBar = ({
       <span
         className={cn(
           'h-2 w-2 rounded-full shrink-0 transition-all',
-          statusConfig.className,
+          statusConfig.dotClassName ?? statusConfig.className,
           isSelected && 'h-2.5 w-2.5'
         )}
       />
       <span
         className={cn(
           'flex-1 text-sm truncate font-semibold',
-          isSelected ? 'text-foreground font-semibold' : 'text-foreground'
+          isSelected
+            ? 'text-(--foreground) font-semibold'
+            : 'text-(--foreground)'
         )}
       >
         {task.description}
       </span>
-      <span
-        className={cn(
-          'text-sm shrink-0',
-          isSelected ? 'text-foreground/70' : 'text-muted-foreground'
+      <div className="flex shrink-0 items-center gap-2">
+        <span
+          className={cn(
+            'text-sm bg-(--muted) px-2 py-1 rounded-full',
+            task.is_substitute
+              ? 'text-(--muted-foreground) opacity-50'
+              : isSelected
+                ? 'text-(--foreground) opacity-70'
+                : 'text-(--muted-foreground)'
+          )}
+        >
+          {task.officialOwner}
+        </span>
+
+        {task.is_substitute && (
+          <span className="text-sm bg-(--muted) px-2 py-1 rounded-full font-semibold text-(--foreground)">
+            {task.substituteOwner}
+          </span>
         )}
-      >
-        {task.is_substitute ? task.substituteOwner : task.officialOwner}
-      </span>
+      </div>
     </>
   );
 };

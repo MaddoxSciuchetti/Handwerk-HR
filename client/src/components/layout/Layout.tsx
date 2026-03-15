@@ -1,10 +1,11 @@
+import { AppSidebar } from '@/features/sidebar/AppSidebar';
+import FeatureModal from '@/features/sidebar/feature-modal/FeatureModal';
 import { useThemeProvider } from '@/hooks/useThemeProvider';
 import { Outlet } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import ModalOverlay from '../modal/ModalOverlay';
 import { SidebarInset, SidebarTrigger, useSidebar } from '../ui/sidebar';
-import { AppSidebar } from './sidebar/AppSidebar';
-import FeatureModal from './sidebar/FeatureModal';
+import PagePath from './headers/PagePath';
 
 function Layout() {
   const [modal, setModal] = useState<boolean>(false);
@@ -30,6 +31,7 @@ function Layout() {
       <SidebarInset className="flex flex-col h-svh md:w-max-svw">
         <header className="flex h-16 shrink-0 items-center gap-2 px-4">
           <SidebarTrigger className="-ml-1" />
+          <PagePath />
         </header>
         <main
           className={`bg- flex flex-col lg:items-center grow lg:min-w-96 gap-4 p-4`}

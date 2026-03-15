@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "lib": ["esnext"],
+    "module": "esnext",
+    "moduleResolution": "bundler"
+  },
+  "include": [
+    "tests/**/*.spec.ts",
+    "tests/auth.setup.ts",
+    "playwright.config.ts"
+  ]
+}

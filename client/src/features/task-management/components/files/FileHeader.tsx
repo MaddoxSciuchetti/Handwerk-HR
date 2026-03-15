@@ -17,6 +17,7 @@ const FileHeader = ({
     <>
       <div className="flex flex-row  pt-5 pr-5 items-center">
         <PlusSquare
+          data-testid="open-file-upload"
           className="flex flex-end cursor-pointer rounded-xl w-10 h-9  transition-colors "
           onClick={toggleModal}
         />

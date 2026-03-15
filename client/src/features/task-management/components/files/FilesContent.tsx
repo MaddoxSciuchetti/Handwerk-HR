@@ -31,6 +31,7 @@ const FilesContent = ({ fetchFiles, deleteFiles }: FilesContentProps) => {
                 <Button
                   size={'icon-sm'}
                   variant={'ghost'}
+                  aria-label={`${getFileName(file.cloud_url, file.original_filename)} löschen`}
                   onClick={(e) => {
                     e.stopPropagation();
                     deleteFiles(file.id);

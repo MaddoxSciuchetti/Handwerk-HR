@@ -6,18 +6,37 @@ import { useToggleModal } from '@/hooks/useToggleModal';
 
 import ErrorAlert from '@/components/alerts/ErrorAlert';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
+import { getFileName } from '@/features/task-management/utils/fileHandling';
+import { useMemo } from 'react';
 import FileUploadForm from './file_upload/FileUploadForm';
 import FileHeader from './FileHeader';
 import FilesContent from './FilesContent';
 
 type WorkerFileUploadsProps = {
   workerId: number;
+  fileDescriptionSearch: string;
 };
 
-function WorkerFileUploads({ workerId }: WorkerFileUploadsProps) {
+function WorkerFileUploads({
+  workerId,
+  fileDescriptionSearch,
+}: WorkerFileUploadsProps) {
   const { fetchFiles, isLoading, isError } = useGetWorkerFiles(workerId);
   const { deleteFiles } = useDeleteWorkerFile(workerId);
   const { toggleModal, modal, setModal } = useToggleModal();
+
+  const filteredFiles = useMemo(() => {
+    if (!fetchFiles) return [];
+
+    const query = fileDescriptionSearch.trim().toLowerCase();
+    if (!query) return fetchFiles;
+
+    return fetchFiles.filter((file) =>
+      getFileName(file.cloud_url, file.original_filename)
+        .toLowerCase()
+        .includes(query)
+    );
+  }, [fetchFiles, fileDescriptionSearch]);
 
   if (isLoading) return <LoadingAlert />;
   if (isError) return <ErrorAlert />;
@@ -30,8 +49,8 @@ function WorkerFileUploads({ workerId }: WorkerFileUploadsProps) {
           handleZipExport={handleZipExport}
           fetchFiles={fetchFiles}
         />
-        <FilesContent fetchFiles={fetchFiles} deleteFiles={deleteFiles} />
-        {!fetchFiles || fetchFiles.length === 0 ? (
+        <FilesContent fetchFiles={filteredFiles} deleteFiles={deleteFiles} />
+        {!filteredFiles || filteredFiles.length === 0 ? (
           <div className="flex items-center justify-center min-h-100">
             Keine Hochgeladenen Dateien
           </div>

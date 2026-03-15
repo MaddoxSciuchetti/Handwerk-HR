@@ -32,3 +32,5 @@ export type File_Request = {
 export type LifecycleType = 'Onboarding' | 'Offboarding';
 
 export type InsertHistoryData = z.infer<typeof formSchema>;
+
+export type WorkerTab = 'form' | 'files';

@@ -6,24 +6,38 @@ const emailSchema = z
   .email({ message: 'Invalid email address' })
   .max(255, { message: 'Email must be at most 255 characters' });
 
-const passwordSchema = z
+const loginPasswordSchema = z
   .string()
+  .trim()
   .min(1, { message: 'Password is required' })
-  .min(6, { message: 'Password must be at least 6 characters' })
   .max(255, { message: 'Password must be at most 255 characters' });
+
+const registerPasswordSchema = loginPasswordSchema
+  .min(6, { message: 'Password must be at least 6 characters' })
+  .regex(/[A-Z]/, {
+    message: 'Password must contain at least 1 uppercase letter (A-Z)',
+  })
+  .regex(/[a-z]/, {
+    message: 'Password must contain at least 1 lowercase letter (a-z)',
+  })
+  .regex(/\d/, { message: 'Password must contain at least 1 number (0-9)' })
+  .regex(/[!@#$%^&*]/, {
+    message: 'Password must contain at least 1 special character (!@#$%^&*)',
+  });
 
 export const loginSchema = z.object({
   email: emailSchema,
-  password: passwordSchema,
+  password: loginPasswordSchema,
   userAgent: z.string().optional(),
 });
 
 export const registerSchema = loginSchema
   .extend({
+    password: registerPasswordSchema,
     confirmPassword: z
       .string()
+      .trim()
       .min(1, { message: 'Confirm password is required' })
-      .min(6, { message: 'Confirm password must be at least 6 characters' })
       .max(255, { message: 'Confirm password must be at most 255 characters' }),
     firstName: z
       .string()

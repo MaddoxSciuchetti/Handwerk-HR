@@ -1,5 +1,6 @@
 import ErrorAlert from '@/components/alerts/ErrorAlert';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
+import { AvatarCropModal } from '@/features/sidebar/profile-upload-modal/AvatarCropModal';
 import useAuth from '@/features/user-profile/hooks/useAuth';
 import useUploadProfieImage from '../hooks/useUploadProfieImage';
 import ProfileBio from './ProfileBio';
@@ -14,6 +15,9 @@ const Profile = () => {
     handleDragOver,
     handleDrop,
     handleFileSelect,
+    handleCropSave,
+    handleCropCancel,
+    pendingFile,
     fileInputRef,
     data,
     isPending,
@@ -39,6 +43,13 @@ const Profile = () => {
         handleFileSelect={handleFileSelect}
       />
       <ProfileBio user={user} />
+      {pendingFile && (
+        <AvatarCropModal
+          file={pendingFile}
+          onSave={handleCropSave}
+          onCancel={handleCropCancel}
+        />
+      )}
     </div>
   );
 };

@@ -3,20 +3,22 @@ import { TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dispatch, SetStateAction } from 'react';
 
 type WorkerHeaderProps = {
-  descriptionSearch: string;
-  setDescriptionSearch: Dispatch<SetStateAction<string>>;
+  searchValue: string;
+  setSearchValue: Dispatch<SetStateAction<string>>;
+  searchPlaceholder?: string;
 };
 
 const WorkerHeader = ({
-  descriptionSearch,
-  setDescriptionSearch,
+  searchValue,
+  setSearchValue,
+  searchPlaceholder = 'Search',
 }: WorkerHeaderProps) => {
   return (
-    <div className="flex justify gap-5">
+    <div className="flex items-end justify-between gap-5">
       <Input
-        value={descriptionSearch}
-        onChange={(e) => setDescriptionSearch(e.target.value)}
-        placeholder="Search"
+        value={searchValue}
+        onChange={(e) => setSearchValue(e.target.value)}
+        placeholder={searchPlaceholder}
       />
       <TabsList variant={'default'} className="bg-(--dropdown-surface)">
         <TabsTrigger className="cursor-pointer" value="form">

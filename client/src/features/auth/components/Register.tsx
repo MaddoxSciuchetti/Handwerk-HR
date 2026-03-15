@@ -5,9 +5,10 @@ import { Spinner } from '@/components/ui/spinner';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { SubmitHandler, useForm } from 'react-hook-form';
+import { SubmitHandler, useForm, useWatch } from 'react-hook-form';
 import { signup } from '../api/auth.api';
 import { RegisterFormValues, registerSchema } from '../schemas/auth.schemas';
+import PasswordValidationBar from './password_validation/PasswordValidationBar';
 import DoorManCard from './resuable/DoorManCard';
 import DoorManFooter from './resuable/DoorManFooter';
 
@@ -17,6 +18,7 @@ export function SignupForm() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -49,6 +51,8 @@ export function SignupForm() {
   const onSubmit: SubmitHandler<RegisterFormValues> = (data) => {
     createAccount(data);
   };
+
+  const passwordValue = useWatch({ control, name: 'password' }) || '';
 
   if (isPending)
     return (
@@ -115,9 +119,7 @@ export function SignupForm() {
             type="password"
             className="border-input bg-background text-foreground"
           />
-          <p className="mt-2 text-left text-xs text-muted-foreground">
-            - Must be at least 6 characters long.
-          </p>
+          <PasswordValidationBar password={passwordValue} minLength={6} />
         </div>
 
         <div className="space-y-2">

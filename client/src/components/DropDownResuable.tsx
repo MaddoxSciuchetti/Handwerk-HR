@@ -1,11 +1,8 @@
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Edit } from 'lucide-react';
+import ModalOverlay from '@/components/modal/ModalOverlay';
+import SmallWrapper from '@/components/modal/modalSizes/SmallWrapper';
+import { Button } from '@/components/ui/button';
+import { TrashIcon } from 'lucide-react';
+import { useState } from 'react';
 
 type DropDownResuableProps = {
   disabled?: boolean;
@@ -18,32 +15,64 @@ const DropDownResuable = ({
   disabled,
   action,
 }: DropDownResuableProps) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const confirmDelete = () => {
+    action();
+    closeModal();
+  };
+
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Edit />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent
-          className="w-40 rounded-xl border border-border bg-(--dropdown-surface) p-1.5 text-popover-foreground shadow-md"
-          align="start"
-          sideOffset={8}
-          collisionPadding={16}
-        >
-          <DropdownMenuGroup>
-            <DropdownMenuItem
-              disabled={disabled}
-              className="cursor-pointer rounded-lg text-sm font-medium focus:bg-accent focus:text-accent-foreground"
-              onClick={(e) => {
-                e.stopPropagation();
-                action();
-              }}
-            >
-              {description}
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <Button
+        type="button"
+        size="icon-sm"
+        variant="ghost"
+        disabled={disabled}
+        className="cursor-pointer rounded-md text-muted-foreground hover:text-(--destructive) disabled:cursor-not-allowed disabled:opacity-50"
+        onClick={(event) => {
+          event.stopPropagation();
+          if (!disabled) {
+            setIsModalOpen(true);
+          }
+        }}
+        aria-label={`${description} öffnen`}
+      >
+        <TrashIcon className="h-4 w-4" />
+      </Button>
+
+      {isModalOpen && (
+        <ModalOverlay handleToggle={closeModal}>
+          <SmallWrapper className="h-auto min-h-0 max-h-none w-full max-w-sm p-5">
+            <div className="flex w-full flex-col gap-4 text-left">
+              <p className="text-sm font-semibold text-foreground">
+                Bist du sicher?
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Dieser Eintrag wird dauerhaft gelöscht.
+              </p>
+              <div className="flex items-center justify-center gap-2">
+                <Button type="button" variant="outline" onClick={closeModal}>
+                  Abbrechen
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  aria-label="Löschen bestätigen"
+                  className="bg-(--destructive) text-(--destructive-foreground) hover:bg-(--destructive)"
+                  onClick={confirmDelete}
+                >
+                  Ja, löschen
+                </Button>
+              </div>
+            </div>
+          </SmallWrapper>
+        </ModalOverlay>
+      )}
     </>
   );
 };

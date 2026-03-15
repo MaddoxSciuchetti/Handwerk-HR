@@ -53,10 +53,12 @@ export const createWorkerSchema = z
       }),
     password: z
       .string()
+      .trim()
       .min(1, { message: VALIDATION_MESSAGES.required('Passwort') })
       .min(6, { message: VALIDATION_MESSAGES.minLength('Passwort', 6) }),
     confirmPassword: z
       .string()
+      .trim()
       .min(1, { message: VALIDATION_MESSAGES.required('Passwort bestätigen') })
       .min(6, {
         message: VALIDATION_MESSAGES.minLength('Passwort bestätigen', 6),

@@ -35,7 +35,19 @@ const HistoryContent = ({ id_original }: HistoryContentProps) => {
                   </div>
 
                   <div className="bg-(--dropdown-surface) rounded-lg p-3">
-                    <div className="flex itemsd-center justify-between mb-1">
+                    <div className="mb-2 flex items-center gap-2">
+                      {entry.auth_user?.cloud_url && (
+                        <img
+                          src={entry.auth_user.cloud_url}
+                          alt={entry.auth_user.email}
+                          className="h-8 w-8 rounded-xl object-cover"
+                        />
+                      )}
+                      <span className="text-sm text-foreground">
+                        {entry.auth_user?.email ?? 'Unbekannt'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
                       <span className="text-xs font-medium text-muted-foreground">
                         {new Date(entry.timestamp || 0).toLocaleDateString()}
                       </span>
@@ -48,9 +60,6 @@ const HistoryContent = ({ id_original }: HistoryContentProps) => {
                         {status.label}
                       </span>
                     </div>
-                    <p className="text-sm text-foreground">
-                      Nutzer: {entry.auth_user?.email ?? 'Unbekannt'}
-                    </p>
                     {entry.edit && (
                       <p className="mt-1 text-sm text-muted-foreground">
                         &quot;{entry.edit}&quot;

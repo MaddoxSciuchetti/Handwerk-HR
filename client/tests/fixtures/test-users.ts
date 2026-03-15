@@ -1,4 +1,4 @@
-import { SignupTestUser } from '../helpers';
+import { SignupTestUser } from '../types';
 
 //  * Test user data factory
 //  * Creates unique test users per browser and timestamp to avoid conflicts

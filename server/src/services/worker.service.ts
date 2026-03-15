@@ -181,6 +181,7 @@ export const queryWorkerHistory = async (data: number) => {
                     id: true,
                     email: true,
                     verified: true,
+                    cloud_url: true,
                 },
             },
         },
@@ -265,7 +266,7 @@ export const removeWorkerFile = async (id: number) => {
     if (!existingFile) {
         throw new Error(`File with id ${id} not found`);
     }
-    return await prisma.workerFiles.delete({
+    return await prisma.workerFiles.deleteMany({
         where: { id },
     });
 };

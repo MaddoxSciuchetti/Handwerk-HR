@@ -1,8 +1,7 @@
 import { expect, test } from '@playwright/test';
+import { API_BASE_URL } from './constants';
 import { createTestUsers } from './fixtures/test-users';
-import { LoginCredentials, SignupTestUser } from './helpers';
-
-const API_BASE_URL = 'http://localhost:3000';
+import { LoginCredentials, SignupTestUser } from './types';
 
 test.describe('Signin journey', () => {
   test.setTimeout(60_000);
@@ -36,7 +35,7 @@ test.describe('Signin journey', () => {
   });
 
   test.afterAll(async ({ request }) => {
-    await request.delete(`${API_BASE_URL}/test/cleanupEmail`, {
+    await request.delete(`${API_BASE_URL}/test/deleteTestUser`, {
       data: { email: testUser.email },
       failOnStatusCode: false,
     });

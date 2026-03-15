@@ -1,7 +1,8 @@
 import '@/App.css';
+import DropDownResuable from '@/components/DropDownResuable';
 import { Button } from '@/components/ui/button';
 import { DescriptionResponse } from '@/types/api.types';
-import { Edit, TrashIcon } from 'lucide-react';
+import { Edit } from 'lucide-react';
 import { Dispatch, SetStateAction } from 'react';
 import useDeleteDescription from '../hooks/useDeleteDescription';
 
@@ -57,18 +58,10 @@ const Tasks = ({ items, openDescriptionModal, setMode }: TasksProps) => {
                   <Edit className="h-4 w-4" />
                 </Button>
 
-                <Button
-                  type="button"
-                  size="icon-sm"
-                  variant="ghost"
-                  className="cursor-pointer rounded-md text-muted-foreground hover:text-(--destructive) "
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    deleteDescription(item.form_field_id);
-                  }}
-                >
-                  <TrashIcon className="h-4 w-4 " />
-                </Button>
+                <DropDownResuable
+                  description="Vorlage-Aufgabe löschen"
+                  action={() => deleteDescription(item.form_field_id)}
+                />
               </div>
             </div>
           </li>
