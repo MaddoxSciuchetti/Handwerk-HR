@@ -1,5 +1,4 @@
 import { expect, test } from '@playwright/test';
-import { API_BASE_URL } from './constants';
 
 test.describe('Create template journey', () => {
   test.setTimeout(90_000);
@@ -7,13 +6,6 @@ test.describe('Create template journey', () => {
   const task = {
     description: `Test Task ${timestamp}`,
   };
-
-  test.afterAll(async ({ request }) => {
-    await request.delete(`${API_BASE_URL}/test/deleteTestTask`, {
-      data: { description: task.description },
-      failOnStatusCode: false,
-    });
-  });
 
   test('creates a task template, shows it in the template overview, and allows creating a task from the template', async ({
     page,
@@ -46,6 +38,26 @@ test.describe('Create template journey', () => {
     await page
       .getByRole('button', { name: /Neue Beschreibung hinzufügen/i })
       .click();
-    await expect(page.getByText(task.description)).toBeVisible();
+
+    const createdTaskRow = page
+      .locator('li', { hasText: task.description })
+      .first();
+    await expect(createdTaskRow).toBeVisible();
+
+    await createdTaskRow.hover();
+
+    const deleteTrigger = createdTaskRow.getByRole('button', {
+      name: /Vorlage-Aufgabe löschen/i,
+    });
+    await expect(deleteTrigger).toBeVisible();
+    await deleteTrigger.click();
+
+    const confirmDeleteButton = page.getByRole('button', {
+      name: /Ja,\s*löschen/i,
+    });
+    await expect(confirmDeleteButton).toBeVisible();
+    await confirmDeleteButton.click();
+
+    await expect(page.getByText(task.description)).not.toBeVisible();
   });
 });
