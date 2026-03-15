@@ -3,9 +3,9 @@ import FeatureModal from '@/features/sidebar/feature-modal/FeatureModal';
 import { useThemeProvider } from '@/hooks/useThemeProvider';
 import { Outlet } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
-import PagePath from './headers/PagePath';
 import ModalOverlay from '../modal/ModalOverlay';
 import { SidebarInset, SidebarTrigger, useSidebar } from '../ui/sidebar';
+import PagePath from './headers/PagePath';
 
 function Layout() {
   const [modal, setModal] = useState<boolean>(false);

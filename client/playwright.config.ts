@@ -14,6 +14,8 @@ const authenticatedJourneyMatch =
 
 export default defineConfig({
   testDir: './tests',
+  testMatch: ['**/*.spec.ts', '**/auth.setup.ts'],
+  testIgnore: ['**/unit/**'],
   tsconfig: './tsconfig.playwright.json',
   workers: 3,
   reporter: 'html',

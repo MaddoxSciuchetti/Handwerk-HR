@@ -1,3 +1,5 @@
+import { getStrength } from '../../utils/passwordValidation';
+
 type PasswordValidationBarProps = {
   password?: string;
   minLength?: number;
@@ -21,38 +23,8 @@ function PasswordValidationBar({
     hasSpecial,
   ].filter(Boolean).length;
 
-  // Milestone-based progress: 0%, 20%, 40%, 60%, 80%, 100%
   const progressPercent = (fulfilledRules / 5) * 100;
-
-  const getStrength = () => {
-    if (password.length === 0) {
-      return {
-        width: '0%',
-        barClass: 'bg-(--muted)',
-      };
-    }
-
-    if (fulfilledRules <= 2) {
-      return {
-        width: `${progressPercent}%`,
-        barClass: 'bg-(--destructive)',
-      };
-    }
-
-    if (fulfilledRules < 5) {
-      return {
-        width: `${progressPercent}%`,
-        barClass: 'bg-orange-500',
-      };
-    }
-
-    return {
-      width: '100%',
-      barClass: 'bg-green-600',
-    };
-  };
-
-  const strength = getStrength();
+  const strength = getStrength(password, progressPercent, fulfilledRules);
 
   return (
     <div className="mt-2 w-full">

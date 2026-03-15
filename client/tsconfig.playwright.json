@@ -6,5 +6,9 @@
     "module": "esnext",
     "moduleResolution": "bundler"
   },
-  "include": ["tests/**/*", "playwright.config.ts"]
+  "include": [
+    "tests/**/*.spec.ts",
+    "tests/auth.setup.ts",
+    "playwright.config.ts"
+  ]
 }

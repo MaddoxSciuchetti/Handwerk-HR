@@ -94,8 +94,8 @@ function FeatureModal({ handleToggle }: { handleToggle: () => void }) {
   };
 
   return (
-    <SmallWrapper className={errors.textarea ? 'h-128' : undefined}>
-      <div className="h-full w-full">
+    <SmallWrapper className="h-auto min-h-0 max-h-[85vh] overflow-y-auto">
+      <div className="w-full">
         <h1 className=" text-lg mb-5"> Was würdest du ändern? </h1>
         <div className="flex flex-col w-full ">
           <form

@@ -35,33 +35,31 @@ export default function FileUploadForm({
   } = useFileSelect(setUploadedFiles, setFileProgresses);
 
   return (
-    <>
-      <SmallWrapper className="min-h-80 max-h-80">
-        <div className="flex flex-col w-full min-w-0 items-center justify-center ">
-          {error ? <div>Try again</div> : ''}
-          <CardContent className="flex w-full min-w-0 flex-col">
-            <FileDropzone
-              fileInputRef={fileInputRef}
-              handleBoxClick={handleBoxClick}
-              handleDragOver={handleDragOver}
-              handleDrop={handleDrop}
-              handleFileSelect={handleFileSelect}
-            />
-            <FileList
-              uploadedFiles={uploadedFiles}
-              fileProgresses={fileProgresses}
-              removeFile={removeFile}
-            />
-            <Button
-              variant={'outline'}
-              onClick={handleFileSubmit}
-              className={`${isLoading ? 'opacity-50' : ''} mt-5  cursor-pointer justify-center px-4 text-sm font-medium hover:text-foreground`}
-            >
-              {isLoading ? 'Hochladen...' : 'Hochladen'}
-            </Button>
-          </CardContent>
-        </div>
-      </SmallWrapper>
-    </>
+    <SmallWrapper className="h-auto min-h-0 max-h-[85vh] overflow-y-auto">
+      <div className="flex w-full min-w-0 flex-col">
+        {error ? <div>Try again</div> : ''}
+        <CardContent className="flex w-full min-w-0 flex-col">
+          <FileDropzone
+            fileInputRef={fileInputRef}
+            handleBoxClick={handleBoxClick}
+            handleDragOver={handleDragOver}
+            handleDrop={handleDrop}
+            handleFileSelect={handleFileSelect}
+          />
+          <FileList
+            uploadedFiles={uploadedFiles}
+            fileProgresses={fileProgresses}
+            removeFile={removeFile}
+          />
+          <Button
+            variant={'outline'}
+            onClick={handleFileSubmit}
+            className={`${isLoading ? 'opacity-50' : ''} mt-5  cursor-pointer justify-center px-4 text-sm font-medium hover:text-foreground`}
+          >
+            {isLoading ? 'Hochladen...' : 'Hochladen'}
+          </Button>
+        </CardContent>
+      </div>
+    </SmallWrapper>
   );
 }

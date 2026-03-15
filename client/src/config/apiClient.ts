@@ -1,9 +1,10 @@
 import { UNAUTHORIZED } from '@/constants/http.consts';
-import axios, { AxiosError } from 'axios';
+import axios, { AxiosError, AxiosRequestConfig } from 'axios';
+import { API_URL } from './env';
 import queryClient from './query.client';
 
 const options = {
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: API_URL,
   withCredentials: true,
 };
 const TokenRefreshClient = axios.create(options);
@@ -12,7 +13,7 @@ TokenRefreshClient.interceptors.response.use((response) => response.data);
 const isInvalidAccessToken = (status: number, data: ApiErrorResponse) =>
   status === UNAUTHORIZED && data?.errorCode === 'InvalidAccessToken';
 
-const handleTokenRefresh = async (config: any) => {
+const handleTokenRefresh = async (config: AxiosRequestConfig) => {
   try {
     await TokenRefreshClient.get('/auth/refresh');
     return TokenRefreshClient(config);

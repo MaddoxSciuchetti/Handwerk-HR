@@ -1,39 +1,9 @@
-import { LAYOUTITEMS } from '@/constants/layout.consts';
 import { useLocation } from '@tanstack/react-router';
-
-const toTitleCase = (value: string) =>
-  value
-    .split('-')
-    .filter(Boolean)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-
-const getSidebarItemLabel = (pathname: string) => {
-  const match = LAYOUTITEMS.find(
-    (item) => pathname === item.to || pathname.startsWith(`${item.to}/`)
-  );
-  return match?.title ?? '';
-};
-
-const getWorkerLifecycleLabel = () => {
-  const workerLifecycleItem = LAYOUTITEMS.find(
-    (item) => item.to === '/worker-lifycycle'
-  );
-
-  return workerLifecycleItem?.title ?? 'Meine Handwerker';
-};
-
-const getCurrentPageLabel = (
-  pathname: string,
-  workerName: string,
-  sidebarLabel: string
-) => {
-  if (sidebarLabel) return sidebarLabel;
-  if (pathname.startsWith('/user/') && workerName) return workerName;
-
-  const lastSegment = pathname.split('/').filter(Boolean).at(-1) ?? 'home';
-  return toTitleCase(lastSegment);
-};
+import {
+  getCurrentPageLabel,
+  getSidebarItemLabel,
+  getWorkerLifecycleLabel,
+} from '../utils/header.utils';
 
 const PagePath = () => {
   const { pathname, search } = useLocation();
@@ -41,9 +11,10 @@ const PagePath = () => {
 
   const previousPage = params.get('prevPage') ?? '';
   const workerName = params.get('workerName') ?? '';
+  const isUserPath = pathname.startsWith('/user/');
   const sidebarLabel = getSidebarItemLabel(pathname);
-  const currentPage = getCurrentPageLabel(pathname, workerName, sidebarLabel);
-  const previousPageLabel = pathname.startsWith('/user/')
+  const currentPage = getCurrentPageLabel(isUserPath, workerName, sidebarLabel);
+  const previousPageLabel = isUserPath
     ? getWorkerLifecycleLabel()
     : sidebarLabel || previousPage;
 
