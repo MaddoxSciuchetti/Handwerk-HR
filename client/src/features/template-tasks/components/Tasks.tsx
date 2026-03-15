@@ -1,6 +1,6 @@
 import '@/App.css';
+import DropDownResuable from '@/components/DropDownResuable';
 import { Button } from '@/components/ui/button';
-import TemplateDeleteConfirmTrigger from '@/features/task-management/components/tasks/TemplateDeleteConfirmTrigger';
 import { DescriptionResponse } from '@/types/api.types';
 import { Edit } from 'lucide-react';
 import { Dispatch, SetStateAction } from 'react';
@@ -58,8 +58,9 @@ const Tasks = ({ items, openDescriptionModal, setMode }: TasksProps) => {
                   <Edit className="h-4 w-4" />
                 </Button>
 
-                <TemplateDeleteConfirmTrigger
-                  onConfirm={() => deleteDescription(item.form_field_id)}
+                <DropDownResuable
+                  description="Vorlage-Aufgabe löschen"
+                  action={() => deleteDescription(item.form_field_id)}
                 />
               </div>
             </div>
