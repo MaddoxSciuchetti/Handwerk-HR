@@ -40,3 +40,13 @@ export const clearTestEmails = catchErrors(async (req, res) => {
 
     return res.status(200).json({ message: "Test emails cleared" });
 });
+
+export const deleteTestTask = catchErrors(async (req, res) => {
+    const { description } = req.body;
+
+    await prisma.form_fields.deleteMany({
+        where: { description },
+    });
+
+    return res.status(200).json({ message: "Test task deleted" });
+});
