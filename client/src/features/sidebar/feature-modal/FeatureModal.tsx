@@ -1,28 +1,32 @@
 import { sendFeatureRequest } from '@/apis/index.apis';
+import FormSelectOptions from '@/components/form/FormSelectOptions';
 import SmallWrapper from '@/components/modal/modalSizes/SmallWrapper';
 import { Button } from '@/components/ui/button';
 import { CardContent } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { FileDropzone } from '@/features/task-management/components/files/file_upload/Dropzone';
 import { FileList } from '@/features/task-management/components/files/file_upload/FileList';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { DragEvent, useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-
-export type TFeatureForm = {
-  importance: string;
-  textarea: string;
-  file?: File[];
-};
+import { importanceOptions } from '../consts/sidebar.consts';
+import { featureSchema, TFeatureForm } from '../schemas/sidebar.schemas';
 
 function FeatureModal({ handleToggle }: { handleToggle: () => void }) {
   const {
     register,
+    control,
     handleSubmit,
     setValue,
     formState: { errors },
-  } = useForm<TFeatureForm>();
+  } = useForm<TFeatureForm>({
+    resolver: zodResolver(featureSchema),
+    defaultValues: {
+      importance: importanceOptions.items[0].value,
+      textarea: '',
+    },
+  });
   const onSubmit: SubmitHandler<TFeatureForm> = (data) => {
     sendFeatureRequest(data);
     toast.success('Erfolgreich abgeschickt');
@@ -41,8 +45,11 @@ function FeatureModal({ handleToggle }: { handleToggle: () => void }) {
     if (!files) return;
 
     const newFiles = Array.from(files);
-    setUploadedFiles((prev) => [...prev, ...newFiles]);
-    setValue('file', [...uploadedFiles, ...newFiles]);
+    setUploadedFiles((prev) => {
+      const nextFiles = [...prev, ...newFiles];
+      setValue('file', nextFiles);
+      return nextFiles;
+    });
 
     newFiles.forEach((file) => {
       let progress = 0;
@@ -74,7 +81,11 @@ function FeatureModal({ handleToggle }: { handleToggle: () => void }) {
   };
 
   const removeFile = (filename: string) => {
-    setUploadedFiles((prev) => prev.filter((file) => file.name !== filename));
+    setUploadedFiles((prev) => {
+      const nextFiles = prev.filter((file) => file.name !== filename);
+      setValue('file', nextFiles);
+      return nextFiles;
+    });
     setFileProgresses((prev) => {
       const newProgresses = { ...prev };
       delete newProgresses[filename];
@@ -83,37 +94,42 @@ function FeatureModal({ handleToggle }: { handleToggle: () => void }) {
   };
 
   return (
-    <SmallWrapper>
+    <SmallWrapper className={errors.textarea ? 'h-128' : undefined}>
       <div className="h-full w-full">
-        <h1 className=" text-lg mb-5">Feature request</h1>
+        <h1 className=" text-lg mb-5"> Was würdest du ändern? </h1>
         <div className="flex flex-col w-full ">
           <form
             onSubmit={handleSubmit(onSubmit)}
             className="flex flex-col gap-5"
           >
-            <Label className=" text-md">Wie wichtig ist es?</Label>
-            <select
-              className=" w-full"
-              {...register('importance', { required: true })}
-            >
-              <option>Nice to have</option>
-              <option>Low</option>
-              <option>Medium</option>
-              <option>High</option>
-              <option>Kritisch</option>
-            </select>
+            <FormSelectOptions
+              control={control}
+              errors={errors}
+              name="importance"
+              label="Wichtigkeitsgrad"
+              placeholder="Wichtigkeitsgrad"
+              defaultValue={importanceOptions.items[0].value}
+              data={importanceOptions.items.map((option) => ({
+                value: option.value,
+                label: option.label,
+              }))}
+            />
 
             <Textarea
               className=""
               {...register('textarea')}
               placeholder="Beschreibe das Problem oder das gewünschte Feature"
             ></Textarea>
-            {errors.importance && <span>This field is required</span>}
+            {errors.textarea?.message && (
+              <p className="text-left text-sm text-(--destructive)">
+                {errors.textarea.message}
+              </p>
+            )}
 
             <p className="text-left">Optional</p>
             <CardContent className="w-full rounded-2xl">
               {/* <Form /> */}
-              <div className="w-full mx-auto ">
+              <div className="w-full mx-auto">
                 <FileDropzone
                   {...register('file')}
                   fileInputRef={fileInputRef}

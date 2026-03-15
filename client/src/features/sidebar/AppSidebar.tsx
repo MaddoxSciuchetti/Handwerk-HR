@@ -84,7 +84,7 @@ export function AppSidebar({ openModal }: { openModal: () => void }) {
           variant={'outline'}
           className="mx-1 mb-1 cursor-pointer rounded-xl bg-muted transition-colors hover:bg-(--hover-bg) hover:text-(--hover-foreground)"
         >
-          Feature Request{' '}
+          Was würdest du ändern?{' '}
         </Button>
       </Sidebar>
     </>
