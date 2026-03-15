@@ -23,7 +23,6 @@ function PasswordValidationBar({
     hasSpecial,
   ].filter(Boolean).length;
 
-  // Milestone-based progress: 0%, 20%, 40%, 60%, 80%, 100%
   const progressPercent = (fulfilledRules / 5) * 100;
   const strength = getStrength(password, progressPercent, fulfilledRules);
 
