@@ -9,7 +9,7 @@
 
     "jsx": "preserve",
     "moduleResolution": "bundler",
-    "types": ["vite/client", "node"],
+    "types": ["vite/client", "node", "vitest/globals"],
     "skipLibCheck": true,
     "module": "esnext",
     "strict": true,
