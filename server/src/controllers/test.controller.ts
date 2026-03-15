@@ -13,16 +13,6 @@ export const deleteTestEmail = catchErrors(async (req, res) => {
     return res.status(200).json({ message: "Test email deleted" });
 });
 
-export const deleteTestWorker = catchErrors(async (req, res) => {
-    const { email } = req.body;
-
-    await prisma.users.delete({
-        where: { email },
-    });
-
-    return res.status(200).json({ message: "Test worker deleted" });
-});
-
 export const getTestEmails = catchErrors(async (req, res) => {
     const recipient =
         typeof req.query.recipient === "string"
@@ -39,14 +29,4 @@ export const clearTestEmails = catchErrors(async (req, res) => {
     clearSentEmails(recipient);
 
     return res.status(200).json({ message: "Test emails cleared" });
-});
-
-export const deleteTestTask = catchErrors(async (req, res) => {
-    const { description } = req.body;
-
-    await prisma.form_fields.deleteMany({
-        where: { description },
-    });
-
-    return res.status(200).json({ message: "Test task deleted" });
 });

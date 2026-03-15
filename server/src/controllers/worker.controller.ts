@@ -218,9 +218,10 @@ export const getCloudUrl = async (req: Request, res: Response) => {
 export const deleteWorkerFile = async (req: Request, res: Response) => {
     try {
         const id = +req.params.id;
-        const response = removeWorkerFile(id);
+        await removeWorkerFile(id);
         return res.status(200).json({ sucess: true });
     } catch (error) {
         console.log(error);
+        return res.status(404).json({ error: "File not found" });
     }
 };
