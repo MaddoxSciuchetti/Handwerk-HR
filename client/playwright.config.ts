@@ -10,12 +10,12 @@ dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 const authStatePath = path.resolve(__dirname, 'playwright/.auth/chef.json');
 const authenticatedJourneyMatch =
-  /(?:create-employee-journey|create-worker-journey)\.spec\.ts/;
+  /(?:create-employee-journey|create-worker-journey|create-template-journey)\.spec\.ts/;
 
 export default defineConfig({
   testDir: './tests',
   tsconfig: './tsconfig.playwright.json',
-  workers: 1,
+  workers: 3,
   reporter: 'html',
   use: {
     baseURL: 'http://localhost:5173',
@@ -35,6 +35,7 @@ export default defineConfig({
         '**/auth.setup.ts',
         '**/create-employee-journey.spec.ts',
         '**/create-worker-journey.spec.ts',
+        '**/create-template-journey.spec.ts',
       ],
     },
     {
@@ -44,6 +45,7 @@ export default defineConfig({
         '**/auth.setup.ts',
         '**/create-employee-journey.spec.ts',
         '**/create-worker-journey.spec.ts',
+        '**/create-template-journey.spec.ts',
       ],
     },
     {
@@ -53,6 +55,7 @@ export default defineConfig({
         '**/auth.setup.ts',
         '**/create-employee-journey.spec.ts',
         '**/create-worker-journey.spec.ts',
+        '**/create-template-journey.spec.ts',
       ],
     },
     {

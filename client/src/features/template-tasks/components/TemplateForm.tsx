@@ -88,6 +88,7 @@ const TemplateForm = ({
         />
       )}
       <Textarea
+        data-testid="description"
         {...register('description')}
         defaultValue={description || ''}
         id="description"
