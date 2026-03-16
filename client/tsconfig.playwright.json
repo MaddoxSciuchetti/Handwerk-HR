@@ -7,8 +7,8 @@
     "moduleResolution": "bundler"
   },
   "include": [
-    "tests/**/*.spec.ts",
-    "tests/auth.setup.ts",
+    "test-e2e/**/*.spec.ts",
+    "test-e2e/auth.setup.ts",
     "playwright.config.ts"
   ]
 }

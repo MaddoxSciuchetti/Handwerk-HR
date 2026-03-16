@@ -13,7 +13,7 @@ const authenticatedJourneyMatch =
   /(?:create-employee-journey|create-worker-journey|create-template-journey)\.spec\.ts/;
 
 export default defineConfig({
-  testDir: './tests',
+  testDir: './test-e2e',
   testMatch: ['**/*.spec.ts', '**/auth.setup.ts'],
   testIgnore: ['**/unit/**'],
   tsconfig: './tsconfig.playwright.json',

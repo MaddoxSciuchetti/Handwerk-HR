@@ -31,9 +31,6 @@ export const deleteEmplyoee = catchErrors(async (req, res) => {
 export const editAbsenceData = catchErrors(async (req, res) => {
     const data = req.body;
 
-    console.log("IMPOrtANT");
-    console.log(data);
-
     const editAbsenceResult = await updateAbsenceData(data);
     return res.status(OK).json(editAbsenceResult);
 });
