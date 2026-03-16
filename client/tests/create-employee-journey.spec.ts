@@ -44,7 +44,7 @@ test.describe('Create employee journey', () => {
     await page.getByRole('button', { name: /Nutzer Erstellen/i }).click();
 
     await expect(
-      page.getByRole('button', { name: /Nutzer Erstellen/i })
+      page.getByText(/Neuen Mitarbeiter hinzufügen/i)
     ).not.toBeVisible({ timeout: 15_000 });
 
     const searchInput = page.getByPlaceholder('Suche bei Namen');
