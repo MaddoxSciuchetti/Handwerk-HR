@@ -46,6 +46,8 @@ model users {
   email          String?          @unique @db.Citext
   adresse        String
   austrittsdatum DateTime?        @db.Date
+  archivedAt     DateTime?        @db.Timestamp(6)
+  archivedBy     String?
   createdAt      DateTime         @default(now()) @db.Timestamp(6)
   eintrittsdatum DateTime         @db.Date
   geburtsdatum   DateTime         @db.Date
@@ -53,7 +55,10 @@ model users {
   position       String
   updatedAt      DateTime         @updatedAt @db.Timestamp(6)
   vorname        String
+  archivedByUser User?            @relation("WorkerArchivedBy", fields: [archivedBy], references: [id], onDelete: SetNull)
   employee_forms employee_forms[]
+
+  @@index([archivedAt])
 }
 
 model Session {
@@ -83,6 +88,7 @@ model User {
   owned_fields      form_fields[]
   employeeStatus    EmployeeStatus[]   @relation("absent_user")
   substituteFor     EmployeeStatus[]   @relation("substitute_user")
+  archivedWorkers   users[]            @relation("WorkerArchivedBy")
 }
 
 model EmployeeStatus {

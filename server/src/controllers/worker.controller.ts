@@ -6,6 +6,7 @@ import {
     updateWorkerSchema,
 } from "@/schemas/worker.schemas";
 import {
+    archiveWorker,
     insertWorker,
     insertWorkerFile,
     insertWorkerHistory,
@@ -16,6 +17,7 @@ import {
     queryWorkerHistory,
     removeWorker,
     removeWorkerFile,
+    unarchiveWorker,
 } from "@/services/worker.service";
 import { notifyEmployeesAboutWorkerCreated } from "@/services/worker.notification.service";
 import appAssert from "@/utils/appAssert";
@@ -48,8 +50,24 @@ export const createWorker = async (req: Request, res: Response) => {
 };
 
 export const getWorkerData = async (req: Request, res: Response) => {
-    const { worker } = await queryWorkerData();
+    const mode = req.query.mode === "archived" ? "archived" : "active";
+    const { worker } = await queryWorkerData(mode);
     return res.status(201).json(worker);
+};
+
+export const archiveWorkerById = async (req: Request, res: Response) => {
+    const id = +req.params.id;
+    const archivedBy = req.userId;
+
+    const worker = await archiveWorker(id, archivedBy);
+    return res.status(200).json({ success: worker });
+};
+
+export const unarchiveWorkerById = async (req: Request, res: Response) => {
+    const id = +req.params.id;
+
+    const worker = await unarchiveWorker(id);
+    return res.status(200).json({ success: worker });
 };
 
 export const deleteWorker = async (req: Request, res: Response) => {

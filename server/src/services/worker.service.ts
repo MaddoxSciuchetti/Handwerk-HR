@@ -7,6 +7,8 @@ import {
 } from "@/types/worker.types";
 import { datevalidation } from "@/utils/datevalidation";
 
+export type WorkerListMode = "active" | "archived";
+
 export const insertWorker = (
     data: InsertWorker,
 ): Promise<InsertWorkerResponse> => {
@@ -63,9 +65,10 @@ export const insertWorker = (
     });
 };
 
-export const queryWorkerData = async () => {
+export const queryWorkerData = async (mode: WorkerListMode = "active") => {
     const worker = await prisma.users.findMany({
         where: {
+            archivedAt: mode === "archived" ? { not: null } : null,
             employee_forms: {
                 some: {
                     form_type: { in: ["Onboarding", "Offboarding"] },
@@ -76,6 +79,14 @@ export const queryWorkerData = async () => {
             id: true,
             vorname: true,
             nachname: true,
+            archivedAt: true,
+            archivedBy: true,
+            archivedByUser: {
+                select: {
+                    vorname: true,
+                    nachname: true,
+                },
+            },
             employee_forms: {
                 select: {
                     form_type: true,
@@ -85,7 +96,12 @@ export const queryWorkerData = async () => {
         },
     });
     return {
-        worker: worker,
+        worker: worker.map((item) => ({
+            ...item,
+            archivedByName: item.archivedByUser
+                ? `${item.archivedByUser.vorname} ${item.archivedByUser.nachname}`
+                : null,
+        })),
     };
 };
 
@@ -97,6 +113,40 @@ export const removeWorker = async (data: number) => {
     });
 
     return worker;
+};
+
+export const archiveWorker = async (workerId: number, archivedBy: string) => {
+    return await prisma.users.update({
+        where: { id: workerId },
+        data: {
+            archivedAt: new Date(),
+            archivedBy,
+        },
+        select: {
+            id: true,
+            vorname: true,
+            nachname: true,
+            archivedAt: true,
+            archivedBy: true,
+        },
+    });
+};
+
+export const unarchiveWorker = async (workerId: number) => {
+    return await prisma.users.update({
+        where: { id: workerId },
+        data: {
+            archivedAt: null,
+            archivedBy: null,
+        },
+        select: {
+            id: true,
+            vorname: true,
+            nachname: true,
+            archivedAt: true,
+            archivedBy: true,
+        },
+    });
 };
 
 export const queryWorkerById = async (id: any) => {

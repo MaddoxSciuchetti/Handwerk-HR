@@ -1,13 +1,13 @@
 import { queryOptions } from '@tanstack/react-query';
 import { getWorkerData } from '../../api';
 import { ALL_WORKER_DATA } from '../../consts/query-key.consts';
-import { WorkerItem } from '../../types/index.types';
+import { WorkerItem, WorkerListMode } from '../../types/index.types';
 
 export const workerLifecycleQueries = {
-  workerData: () => {
+  workerData: (mode: WorkerListMode = 'active') => {
     return queryOptions<WorkerItem[]>({
-      queryKey: [ALL_WORKER_DATA],
-      queryFn: getWorkerData,
+      queryKey: [ALL_WORKER_DATA, mode],
+      queryFn: () => getWorkerData(mode),
     });
   },
 };

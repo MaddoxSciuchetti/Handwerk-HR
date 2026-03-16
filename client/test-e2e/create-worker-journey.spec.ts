@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { Buffer } from 'buffer';
 import { createWorkerFixture } from './fixtures/test-workers';
 import {
   clickViewButton,
@@ -86,10 +87,16 @@ test.describe('Onboarding worker view journey', () => {
     await expect(createdWorkerRow).toBeVisible({ timeout: 15_000 });
 
     const actionsTrigger = createdWorkerRow.getByRole('button', {
-      name: /Löschen öffnen/i,
+      name: /Aktionen öffnen/i,
     });
     await expect(actionsTrigger).toBeVisible();
     await actionsTrigger.click();
+
+    const deleteMenuItem = page.getByRole('menuitem', {
+      name: /^Löschen$/i,
+    });
+    await expect(deleteMenuItem).toBeVisible();
+    await deleteMenuItem.click();
 
     const confirmDeleteButton = page.getByRole('button', {
       name: /Löschen bestätigen/i,

@@ -81,7 +81,7 @@ app.use("/employee", authenticate, employeeRoutes);
 app.use("/index", authenticate, indexRoutes);
 
 // worker
-app.use("/worker", worker);
+app.use("/worker", authenticate, worker);
 
 app.use(errorHandler);
 

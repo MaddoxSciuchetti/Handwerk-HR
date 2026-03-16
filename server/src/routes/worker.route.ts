@@ -1,6 +1,7 @@
 import express from "express";
 
 import {
+    archiveWorkerById,
     createWorker,
     createWorkerFile,
     deleteWorker,
@@ -10,6 +11,7 @@ import {
     getWorkerData,
     getWorkerFiles,
     getWorkerHistory,
+    unarchiveWorkerById,
     updateWorker,
     updateWorkerHistory,
 } from "@/controllers/worker.controller";
@@ -21,6 +23,8 @@ const worker = express.Router();
 //worker crud operations
 worker.post("/addWorker", catchErrors(createWorker));
 worker.get("/getWorkerData", getWorkerData);
+worker.put("/archiveWorker/:id", archiveWorkerById);
+worker.put("/unarchiveWorker/:id", unarchiveWorkerById);
 worker.delete("/deleteWorker/:id", deleteWorker);
 worker.get("/getWorker/:id", getWorkerById);
 worker.put("/updateWorker", catchErrors(updateWorker));

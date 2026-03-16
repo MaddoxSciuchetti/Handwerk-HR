@@ -1,7 +1,7 @@
-import { PrismaClient, UserRole } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-import bcrypt from "bcrypt";
 import { NODE_ENV, POSTGRES_URI } from "@/constants/env";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient, UserRole } from "@prisma/client";
+import bcrypt from "bcrypt";
 
 if (NODE_ENV === "production") {
     console.log("Skipping seed (production environment)");

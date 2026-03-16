@@ -86,3 +86,5 @@ export type CreateWorker = z.infer<typeof createWorkerSchema>;
 
 export type EmployeeDataArray = z.infer<typeof employeeDataSchema>;
 export type EmployeeDataObject = z.infer<typeof employeeDataSchema.element>;
+export type EmployeeStatusArray = z.infer<typeof employeeStatusSchema>;
+export type EmployeeStatusObject = z.infer<typeof employeeStatusSchema.element>;

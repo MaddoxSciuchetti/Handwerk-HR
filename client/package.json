@@ -10,8 +10,11 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test:unit": "vitest run",
-    "test:unit:watch": "vitest",
+    "test:unit": "vitest run \"test-unit\"",
+    "test:unit:watch": "vitest \"test-unit\"",
+    "test:integration": "vitest run \"test-integration\"",
+    "test:integration:watch": "vitest \"test-integration\"",
+    "test:all": "vitest run",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed"
