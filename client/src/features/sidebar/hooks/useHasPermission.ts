@@ -3,7 +3,7 @@ import useAuth from '@/features/user-profile/hooks/useAuth';
 import { useMemo } from 'react';
 
 function useHasPermission() {
-  const { user } = useAuth();
+  const { user, isLoading, isError } = useAuth();
   const fullName = `${user?.vorname ?? ''} ${user?.nachname ?? ''}`.trim();
 
   const hasPermission = useMemo(() => {
@@ -23,6 +23,8 @@ function useHasPermission() {
 
   return {
     user,
+    isLoading,
+    isError,
     fullName,
     accessibleItems,
   };
