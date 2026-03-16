@@ -1,0 +1,99 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - region "Notifications alt+T"
+  - generic [ref=e5]:
+    - generic [ref=e7]:
+      - img "profile image" [ref=e10] [cursor=pointer]
+      - generic [ref=e11]:
+        - paragraph [ref=e12]: Admin User
+        - paragraph [ref=e13]: admin@example.com
+    - list [ref=e17]:
+      - listitem [ref=e18]:
+        - link "Meine Mitarbeiter" [ref=e19]:
+          - /url: /employee-overview
+          - img [ref=e20]
+          - generic [ref=e23]: Meine Mitarbeiter
+      - listitem [ref=e24]:
+        - link "Meine Handwerker" [ref=e25]:
+          - /url: /worker-lifycycle
+          - img [ref=e26]
+          - generic [ref=e29]: Meine Handwerker
+      - listitem [ref=e30]:
+        - link "Vorlage" [ref=e31]:
+          - /url: /template
+          - img [ref=e32]
+          - generic [ref=e35]: Vorlage
+    - button "Was würdest du ändern?" [ref=e36] [cursor=pointer]
+  - main [ref=e37]:
+    - generic [ref=e38]:
+      - button "Toggle Sidebar" [ref=e39] [cursor=pointer]:
+        - img
+        - generic [ref=e40]: Toggle Sidebar
+      - generic [ref=e42]: Meine Handwerker
+    - main [ref=e43]:
+      - generic [ref=e46]:
+        - generic [ref=e47]:
+          - textbox "Suche bei Namen" [ref=e48]
+          - button "Handwerker hinzufügen" [ref=e50] [cursor=pointer]
+        - generic [ref=e51]:
+          - button "Aktiv" [ref=e52]
+          - button "Archiv" [ref=e53]
+        - table [ref=e57]:
+          - rowgroup [ref=e58]:
+            - row "Handwerker Phase Fortschritt Aktionen" [ref=e59]:
+              - columnheader "Handwerker" [ref=e60]
+              - columnheader "Phase" [ref=e61]
+              - columnheader "Fortschritt" [ref=e62]
+              - columnheader "Aktionen" [ref=e63]
+          - rowgroup [ref=e64]:
+            - row "Maddox Sciuchetti Anschauen Onboarding 0/0 Aktionen öffnen" [ref=e65]:
+              - cell "Maddox Sciuchetti Anschauen" [ref=e66]:
+                - generic [ref=e67]:
+                  - generic [ref=e68]: Maddox Sciuchetti
+                  - button "Anschauen"
+              - cell "Onboarding" [ref=e69]
+              - rowheader "0/0" [ref=e70]:
+                - text: "0"
+                - generic [ref=e71]: /0
+              - cell "Aktionen öffnen" [ref=e72]:
+                - button "Aktionen öffnen" [ref=e73] [cursor=pointer]:
+                  - img
+            - row "Onboarding Worker1773687467711-chromium-9-483511 Anschauen Onboarding 0/0 Aktionen öffnen" [ref=e74]:
+              - cell "Onboarding Worker1773687467711-chromium-9-483511 Anschauen" [ref=e75]:
+                - generic [ref=e76]:
+                  - generic [ref=e77]: Onboarding Worker1773687467711-chromium-9-483511
+                  - button "Anschauen"
+              - cell "Onboarding" [ref=e78]
+              - rowheader "0/0" [ref=e79]:
+                - text: "0"
+                - generic [ref=e80]: /0
+              - cell "Aktionen öffnen" [ref=e81]:
+                - button "Aktionen öffnen" [ref=e82] [cursor=pointer]:
+                  - img
+            - row "Onboarding Worker1773687474464-firefox-10-222591 Anschauen Onboarding 0/0 Aktionen öffnen" [ref=e83]:
+              - cell "Onboarding Worker1773687474464-firefox-10-222591 Anschauen" [ref=e84]:
+                - generic [ref=e85]:
+                  - generic [ref=e86]: Onboarding Worker1773687474464-firefox-10-222591
+                  - button "Anschauen"
+              - cell "Onboarding" [ref=e87]
+              - rowheader "0/0" [ref=e88]:
+                - text: "0"
+                - generic [ref=e89]: /0
+              - cell "Aktionen öffnen" [ref=e90]:
+                - button "Aktionen öffnen" [ref=e91] [cursor=pointer]:
+                  - img
+            - row "Onboarding Worker1773687480634-webkit-12-244663 Anschauen Onboarding 0/0 Aktionen öffnen" [ref=e92]:
+              - cell "Onboarding Worker1773687480634-webkit-12-244663 Anschauen" [ref=e93]:
+                - generic [ref=e94]:
+                  - generic [ref=e95]: Onboarding Worker1773687480634-webkit-12-244663
+                  - button "Anschauen"
+              - cell "Onboarding" [ref=e96]
+              - rowheader "0/0" [ref=e97]:
+                - text: "0"
+                - generic [ref=e98]: /0
+              - cell "Aktionen öffnen" [ref=e99]:
+                - button "Aktionen öffnen" [ref=e100] [cursor=pointer]:
+                  - img
+```

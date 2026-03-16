@@ -9,7 +9,12 @@ export type WorkerItem = {
   id: number;
   nachname: string;
   vorname: string;
+  archivedAt: string | null;
+  archivedBy: string | null;
+  archivedByName: string | null;
 };
+
+export type WorkerListMode = 'active' | 'archived';
 
 export type DeleteUser = {
   id: number;

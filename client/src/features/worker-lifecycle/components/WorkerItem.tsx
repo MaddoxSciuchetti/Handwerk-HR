@@ -3,7 +3,12 @@ import DropDownResuable from '@/components/DropDownResuable';
 import { Button } from '@/components/ui/button';
 import useFetchProcessData from '@/features/employee-overview/hooks/useFetchProcessData';
 import { UseMutateFunction } from '@tanstack/react-query';
-import { DeleteUser, FormType } from '../types/index.types';
+import {
+  DeleteUser,
+  FormType,
+  ItemUser,
+  WorkerListMode,
+} from '../types/index.types';
 
 interface ToDoItem {
   item_value: number;
@@ -11,6 +16,9 @@ interface ToDoItem {
   form_type: FormType;
   gotopage: (taskId: number, form_type: FormType, workerName: string) => void;
   onRemove: UseMutateFunction<DeleteUser, Error, number, unknown>;
+  onArchive: UseMutateFunction<ItemUser, Error, number, unknown>;
+  onUnarchive: UseMutateFunction<ItemUser, Error, number, unknown>;
+  mode: WorkerListMode;
   className?: string;
   item1?: string;
 }
@@ -21,6 +29,9 @@ export function Worker_Item({
   item,
   gotopage,
   onRemove,
+  onArchive,
+  onUnarchive,
+  mode,
   item1,
 }: ToDoItem) {
   const {
@@ -84,7 +95,16 @@ export function Worker_Item({
 
       <td>
         <DropDownResuable
-          description="Löschen"
+          description="Aktionen"
+          triggerIcon="edit"
+          secondaryAction={{
+            label: mode === 'active' ? 'Archivieren' : 'Wiederherstellen',
+            action: () =>
+              mode === 'active'
+                ? onArchive(item_value)
+                : onUnarchive(item_value),
+          }}
+          actionLabel="Löschen"
           action={() => onRemove(item_value)}
         />
       </td>

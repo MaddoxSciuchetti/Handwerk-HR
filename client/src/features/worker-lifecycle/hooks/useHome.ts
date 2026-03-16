@@ -4,11 +4,12 @@ import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { workerLifecycleMutations } from '../query-options/mutations/worker-lifycycle.mutations';
 import { workerLifecycleQueries } from '../query-options/queries/worker-lifycycle.queries';
-import { FormType } from '../types/index.types';
+import { FormType, WorkerListMode } from '../types/index.types';
 
 function useHome() {
   const [search, setSearch] = useState('');
   const [modal, setModal] = useState<boolean>(false);
+  const [mode, setMode] = useState<WorkerListMode>('active');
   const { toggleSidebar } = useSidebar();
   const navigate = useNavigate({ from: '/' });
 
@@ -18,17 +19,31 @@ function useHome() {
   };
 
   const { data, error, isSuccess } = useQuery(
-    workerLifecycleQueries.workerData()
+    workerLifecycleQueries.workerData(mode)
   );
 
   const isEmpty = isSuccess && data?.length === 0;
 
-  const filtered = data?.filter((item) =>
-    item.vorname.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = data?.filter((item) => {
+    const matchesSearch = item.vorname
+      .toLowerCase()
+      .includes(search.toLowerCase());
+    const matchesMode =
+      mode === 'archived' ? item.archivedAt !== null : item.archivedAt === null;
+
+    return matchesSearch && matchesMode;
+  });
 
   const { mutate: deleteTaskMutation } = useMutation(
     workerLifecycleMutations.deleteWorker()
+  );
+
+  const { mutate: archiveWorkerMutation } = useMutation(
+    workerLifecycleMutations.archiveWorker()
+  );
+
+  const { mutate: unarchiveWorkerMutation } = useMutation(
+    workerLifecycleMutations.unarchiveWorker()
   );
 
   const handleNavigate = (
@@ -53,10 +68,14 @@ function useHome() {
     deleteTaskMutation,
     handleNavigate,
     modal,
+    mode,
+    setMode,
     setSearch,
     search,
     error,
     toggleModal,
+    archiveWorkerMutation,
+    unarchiveWorkerMutation,
   };
 }
 export default useHome;
