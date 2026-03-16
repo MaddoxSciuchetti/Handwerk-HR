@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { Button } from '../../../../components/ui/button';
 import { Inputs } from '../../consts/form.consts';
 import { workerLifecycleMutations } from '../../query-options/mutations/worker-lifycycle.mutations';
@@ -25,9 +26,10 @@ export const WorkerForm = ({
   toggleModal,
 }: WorkerFormProps) => {
   const {
-    mutate: addWorkerMutation,
+    mutateAsync: addWorkerMutation,
     isError,
     error,
+    isPending,
   } = useMutation(workerLifecycleMutations.addWorker());
 
   const {
@@ -42,12 +44,10 @@ export const WorkerForm = ({
     criteriaMode: 'all',
   });
 
-  const submitWorkerForm = (data: AddWorker) => {
-    addWorkerMutation(data, {
-      onSuccess: () => {
-        toggleModal();
-      },
-    });
+  const submitWorkerForm = async (data: AddWorker) => {
+    await addWorkerMutation(data);
+    toast.success('Mitarbeiter erstellt und Benachrichtigungen versendet');
+    toggleModal();
   };
 
   const useMemoizedInputs = useMemo(() => {
@@ -101,9 +101,10 @@ export const WorkerForm = ({
         <Button
           variant={'outline'}
           type="submit"
+          disabled={isPending}
           className="cursor-pointer rounded-xl transition-colors hover:bg-accent hover:text-accent-foreground"
         >
-          Hinzufügen
+          {isPending ? 'Wird erstellt...' : 'Hinzufügen'}
         </Button>
       </form>
     </>

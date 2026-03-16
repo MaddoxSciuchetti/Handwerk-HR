@@ -30,15 +30,15 @@ export function Worker_Item({
   } = useFetchProcessData(item_value, form_type);
 
   const calculatePercent = (completedTasks: number, total: number) => {
-    if (total <= 0) return 'text-(--chart-5)';
+    if (total <= 0) return 'text-(--lifecycle-progress-zero-text)';
 
     const percent = (completedTasks / total) * 100;
 
-    if (percent < 20) return 'text-(--chart-5)';
+    if (percent < 20) return 'text-(--lifecycle-progress-zero-text)';
     if (percent >= 20 && percent < 100) return 'text-(--chart-3)';
     if (percent === 100) return 'text-(--chart-2)';
 
-    return 'text-(--chart-5)';
+    return 'text-(--lifecycle-progress-zero-text)';
   };
 
   const completedCount = completedTasksCount ?? 0;
@@ -69,8 +69,8 @@ export function Worker_Item({
       <td
         className={
           form_type === 'Onboarding'
-            ? 'text-sm underline text-(--chart-1) justify-center items-center py-5'
-            : 'text-sm underline text-(--chart-5) justify-center items-center py-5'
+            ? 'text-sm underline text-(--lifecycle-onboarding-text) justify-center items-center py-5'
+            : 'text-sm underline text-(--lifecycle-offboarding-text) justify-center items-center py-5'
         }
         lang="en"
       >

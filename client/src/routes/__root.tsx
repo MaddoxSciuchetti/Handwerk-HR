@@ -44,7 +44,7 @@ function RootLayout() {
     <ThemeProvider>
       <SidebarProvider>
         <ErrorBoundary fallback={<ErrorAlert />}>
-          <Suspense fallback={<LoadingAlert />}>
+          <Suspense fallback={<LoadingAlert fullScreen />}>
             <Toaster position="top-center" />
             <Layout />
           </Suspense>

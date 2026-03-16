@@ -14,12 +14,12 @@ import EmployeeTableHeader from './table/EmployeeTableHeader';
 import EmployeeTableBody from './table/TableBody';
 
 function EmployeeOverview() {
-  const { EmployeeData } = useGetEmployees();
+  const { EmployeeData, isLoading } = useGetEmployees();
   const { modalState, openCreate, closeModal } = useEmployeeModal();
   const { DeleteEmployee, isPending } = useDeleteEmployee();
   const [search, setSearch] = useState('');
 
-  const filteredEmployees = EmployeeData?.filter((employee) =>
+  const filteredEmployees = (EmployeeData ?? []).filter((employee) =>
     employee.vorname.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -51,7 +51,7 @@ function EmployeeOverview() {
     }
   };
 
-  if (isPending) return <LoadingAlert />;
+  if (isLoading || isPending) return <LoadingAlert />;
 
   return (
     <div className="mx-auto flex h-full w-5xl flex-col overflow-auto rounded-2xl bg-card p-6 md:max-w-8xl">

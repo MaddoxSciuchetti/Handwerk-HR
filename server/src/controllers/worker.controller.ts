@@ -17,6 +17,7 @@ import {
     removeWorker,
     removeWorkerFile,
 } from "@/services/worker.service";
+import { notifyEmployeesAboutWorkerCreated } from "@/services/worker.notification.service";
 import appAssert from "@/utils/appAssert";
 import resolveOwner from "@/utils/resolverOwner";
 import { Request, Response } from "express";
@@ -37,6 +38,12 @@ export const createWorker = async (req: Request, res: Response) => {
     appAssert(!existingWorker, CONFLICT, "Email wird bereits verwendet");
 
     const { worker } = await insertWorker(request);
+
+    await notifyEmployeesAboutWorkerCreated({
+        workerName: `${worker.vorname} ${worker.nachname}`,
+        lifecycleType: request.type,
+    });
+
     return res.status(201).json({ success: worker });
 };
 
