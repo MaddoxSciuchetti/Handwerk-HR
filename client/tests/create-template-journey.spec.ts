@@ -37,6 +37,7 @@ test.describe('Create template journey', () => {
     await page
       .getByRole('button', { name: /Neue Beschreibung hinzufügen/i })
       .click();
+    await expect(modalForm).not.toBeVisible();
 
     const createdTaskRow = page
       .locator('li', { hasText: task.description })

@@ -13,13 +13,16 @@ import { Link, useLocation } from '@tanstack/react-router';
 import ErrorAlert from '@/components/alerts/ErrorAlert';
 import { Button } from '@/components/ui/button';
 import UserMenu from './UserMenu';
+import { SidebarSkeleton } from './components/SidebarSkeleton';
 import useHasPermission from './hooks/useHasPermission';
 
 export function AppSidebar({ openModal }: { openModal: () => void }) {
-  const { user, fullName, accessibleItems } = useHasPermission();
+  const { user, isLoading, isError, fullName, accessibleItems } =
+    useHasPermission();
   const { pathname } = useLocation();
 
-  if (user === undefined) return <ErrorAlert />;
+  if (isLoading) return <SidebarSkeleton />;
+  if (isError || !user) return <ErrorAlert />;
 
   return (
     <>

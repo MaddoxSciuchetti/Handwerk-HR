@@ -49,6 +49,9 @@
   --status-error-foreground: hsl(0 65% 35%);
   --status-info-bg: hsl(217 90% 92%);
   --status-info-foreground: hsl(217 65% 34%);
+  --lifecycle-onboarding-text: hsl(216 78% 34%);
+  --lifecycle-offboarding-text: hsl(350 76% 30%);
+  --lifecycle-progress-zero-text: hsl(352 70% 28%);
 
   /* Utility */
   --border: hsl(220 13% 91%);
@@ -112,6 +115,9 @@
   --status-error-foreground: hsl(0 90% 88%);
   --status-info-bg: hsl(217 35% 24%);
   --status-info-foreground: hsl(217 85% 88%);
+  --lifecycle-onboarding-text: hsl(216 88% 76%);
+  --lifecycle-offboarding-text: hsl(350 86% 80%);
+  --lifecycle-progress-zero-text: hsl(352 90% 82%);
 
   --border: hsl(240 3.7% 15.9%);
   --input: hsl(240 3.7% 15.9%);

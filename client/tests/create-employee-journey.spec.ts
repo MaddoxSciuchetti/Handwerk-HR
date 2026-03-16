@@ -44,7 +44,7 @@ test.describe('Create employee journey', () => {
     await page.getByRole('button', { name: /Nutzer Erstellen/i }).click();
 
     await expect(
-      page.getByRole('button', { name: /Nutzer Erstellen/i })
+      page.getByText(/Neuen Mitarbeiter hinzufügen/i)
     ).not.toBeVisible({ timeout: 15_000 });
 
     const searchInput = page.getByPlaceholder('Suche bei Namen');
@@ -67,7 +67,9 @@ test.describe('Create employee journey', () => {
         }
 
         const body = (await response.json()) as { emails: OutboxEmail[] };
-        return body.emails.length;
+        return body.emails.filter((email) =>
+          email.subject.includes('Verfiziere dein Konto')
+        ).length;
       })
       .toBe(1);
 
@@ -76,12 +78,15 @@ test.describe('Create employee journey', () => {
     );
 
     const body = (await emailResponse.json()) as { emails: OutboxEmail[] };
-    const verificationEmail = body.emails[0];
+    const verificationEmail = body.emails.find((email) =>
+      email.subject.includes('Verfiziere dein Konto')
+    );
 
-    expect(verificationEmail.to).toBe(employee.email);
-    expect(verificationEmail.subject).toContain('Verfiziere dein Konto');
-    expect(verificationEmail.html).toContain('/email/verify/');
-    expect(verificationEmail.html).toContain(employee.password);
+    expect(verificationEmail).toBeDefined();
+    expect(verificationEmail?.to).toBe(employee.email);
+    expect(verificationEmail?.subject).toContain('Verfiziere dein Konto');
+    expect(verificationEmail?.html).toContain('/email/verify/');
+    expect(verificationEmail?.html).toContain(employee.password);
 
     const employeeRow = page
       .locator('tr', {

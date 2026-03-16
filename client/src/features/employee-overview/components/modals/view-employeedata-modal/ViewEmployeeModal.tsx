@@ -34,7 +34,7 @@ const ViewEmployeeModal = ({ selectedOwner }: ViewEmployeeModalProps) => {
             </Button>
           )}
           <h2 className="text-lg font-medium">
-            {isReminderStep ? 'Erinnerung senden' : 'Aufgaben'}
+            {isReminderStep ? <p>Erinnerung senden</p> : <p>Aufgaben</p>}
           </h2>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto pr-1">
