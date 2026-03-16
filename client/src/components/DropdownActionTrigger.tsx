@@ -71,6 +71,7 @@ function DropdownActionTrigger({
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
+        className="bg-(--muted)"
         onClick={(event) => event.stopPropagation()}
       >
         {secondaryAction ? (
