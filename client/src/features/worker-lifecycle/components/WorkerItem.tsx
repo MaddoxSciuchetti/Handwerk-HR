@@ -1,8 +1,10 @@
 import '@/App.css';
-import DropDownResuable from '@/components/DropDownResuable';
+import DeleteConfirmModal from '@/components/DeleteConfirmModal';
+import DropdownActionTrigger from '@/components/DropdownActionTrigger';
 import { Button } from '@/components/ui/button';
 import useFetchProcessData from '@/features/employee-overview/hooks/useFetchProcessData';
 import { UseMutateFunction } from '@tanstack/react-query';
+import { useState } from 'react';
 import {
   DeleteUser,
   FormType,
@@ -40,6 +42,7 @@ export function Worker_Item({
     totalTasks,
   } = useFetchProcessData(item_value, form_type);
 
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const calculatePercent = (completedTasks: number, total: number) => {
     if (total <= 0) return 'text-(--lifecycle-progress-zero-text)';
 
@@ -94,18 +97,33 @@ export function Worker_Item({
       </th>
 
       <td>
-        <DropDownResuable
+        <DropdownActionTrigger
           description="Aktionen"
+          disabled={false}
           triggerIcon="edit"
-          secondaryAction={{
-            label: mode === 'active' ? 'Archivieren' : 'Wiederherstellen',
-            action: () =>
-              mode === 'active'
-                ? onArchive(item_value)
-                : onUnarchive(item_value),
+          actions={[
+            {
+              label: mode === 'active' ? 'Archivieren' : 'Wiederherstellen',
+              action: () =>
+                mode === 'active'
+                  ? onArchive(item_value)
+                  : onUnarchive(item_value),
+              variant: 'default',
+            },
+            {
+              label: 'Löschen',
+              action: () => setIsDeleteModalOpen(true),
+              variant: 'destructive',
+            },
+          ]}
+        />
+        <DeleteConfirmModal
+          isOpen={isDeleteModalOpen}
+          onCancel={() => setIsDeleteModalOpen(false)}
+          onConfirm={() => {
+            onRemove(item_value);
+            setIsDeleteModalOpen(false);
           }}
-          actionLabel="Löschen"
-          action={() => onRemove(item_value)}
         />
       </td>
     </tr>

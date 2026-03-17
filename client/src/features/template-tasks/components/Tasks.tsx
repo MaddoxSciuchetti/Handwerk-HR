@@ -1,5 +1,6 @@
 import '@/App.css';
-import DropDownResuable from '@/components/DropDownResuable';
+
+import TrashWithModal from '@/components/DropDownWithModal';
 import { Button } from '@/components/ui/button';
 import { DescriptionResponse } from '@/types/api.types';
 import { Edit } from 'lucide-react';
@@ -58,9 +59,10 @@ const Tasks = ({ items, openDescriptionModal, setMode }: TasksProps) => {
                   <Edit className="h-4 w-4" />
                 </Button>
 
-                <DropDownResuable
+                {/* Removed DropDownWithModal, use only TrashWithModal for delete */}
+                <TrashWithModal
                   description="Vorlage-Aufgabe löschen"
-                  action={() => deleteDescription(item.form_field_id)}
+                  onConfirm={() => deleteDescription(item.form_field_id)}
                 />
               </div>
             </div>
