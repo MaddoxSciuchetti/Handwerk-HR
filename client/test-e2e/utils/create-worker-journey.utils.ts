@@ -1,17 +1,13 @@
 import { Locator, Page, expect } from '@playwright/test';
 import { WorkerFixture } from '../types';
 
-const escapeRegExp = (value: string) =>
-  value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
 export const getWorkerRow = (page: Page, fullName: string): Locator =>
   page
     .getByRole('row')
-    .filter({
-      has: page.getByRole('cell', {
-        name: new RegExp(`${escapeRegExp(fullName)}\\s*Anschauen`),
-      }),
-    })
+    // Keep this selector resilient: icons/buttons added to the name cell can
+    // change the combined accessible text, so match by independent semantics.
+    .filter({ hasText: fullName })
+    .filter({ has: page.getByRole('button', { name: /Anschauen/i }) })
     .filter({ has: page.getByRole('cell', { name: /^\s*Onboarding\s*$/ }) });
 
 export const clickViewButton = async (page: Page, workerRow: Locator) => {
