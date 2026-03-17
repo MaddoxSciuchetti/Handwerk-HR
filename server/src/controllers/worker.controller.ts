@@ -102,6 +102,12 @@ export const getWorkerById = async (req: Request, res: Response) => {
             id: worker.id,
             vorname: worker.vorname,
             nachname: worker.nachname,
+            email: worker.email,
+            geburtsdatum: worker.geburtsdatum,
+            adresse: worker.adresse,
+            eintrittsdatum: worker.eintrittsdatum,
+            austrittsdatum: worker.austrittsdatum,
+            position: worker.position,
         },
         form: {
             id: form.id,
