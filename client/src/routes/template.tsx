@@ -1,10 +1,16 @@
 import TemplateTasks from '@/features/template-tasks/components/TemplateTask';
+import { userProfileQueries } from '@/features/user-profile/query-options/queries/user-profile.queries';
+import { tryCatch } from '@/lib/trycatch';
 import { RouterContext } from '@/router';
 import { createFileRoute, redirect } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/template')({
-  beforeLoad: ({ context }: { context: RouterContext }) => {
-    if (context.auth.user?.user_permission !== 'CHEF') {
+  beforeLoad: async ({ context }: { context: RouterContext }) => {
+    const [user] = await tryCatch(
+      context.queryClient.ensureQueryData(userProfileQueries.User())
+    );
+
+    if (!user || user.user_permission !== 'CHEF') {
       throw redirect({ to: '/login' });
     }
   },

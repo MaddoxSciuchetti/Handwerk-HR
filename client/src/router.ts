@@ -1,24 +1,28 @@
 // src/router.ts
-import { createRouter } from '@tanstack/react-router';
-import { User } from './features/user-profile/types/auth.type';
+import queryClient from '@/config/query.client';
+import { QueryClient } from '@tanstack/react-query';
+import { createRouter, RouterProvider } from '@tanstack/react-router';
 import { routeTree } from './routeTree.gen';
 
 export interface RouterContext {
-  auth: {
-    isAuthenticated: boolean;
-    user: User | null;
-  };
+  queryClient: QueryClient;
 }
 
 export const router = createRouter({
   routeTree,
   context: {
-    auth: {
-      isAuthenticated: false,
-      user: null,
-    },
+    queryClient,
   } as RouterContext,
 });
+
+export function AppRouter() {
+  return RouterProvider({
+    router,
+    context: {
+      queryClient,
+    },
+  });
+}
 
 declare module '@tanstack/react-router' {
   interface Register {
