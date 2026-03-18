@@ -4,22 +4,16 @@ import { Readable } from "stream";
 import z from "zod";
 
 import { sendEmployeeEmail } from "@/services/index.service";
-import { INTERNAL_SERVER_ERROR, OK } from "../constants/http";
+import { OK } from "../constants/http";
 
 export const historySchemaget = z.object({
     id: z.coerce.number(),
 });
 
 export const sendReminder = async (req: Request, res: Response) => {
-    try {
-        const email = req.body.email;
-
-        await sendEmployeeEmail(email);
-        return res.status(OK).json({ success: true });
-    } catch (error) {
-        console.log(error);
-        return res.status(INTERNAL_SERVER_ERROR).json({ success: false });
-    }
+    const email = req.body.email;
+    await sendEmployeeEmail(email);
+    return res.status(OK).json({ success: true });
 };
 
 const getOAuthClient = () => {
