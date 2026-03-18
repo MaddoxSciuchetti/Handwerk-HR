@@ -28,6 +28,7 @@ const SearchHeaderResuable = <T extends string | number>({
         <div className="flex gap-2 ">
           <Button
             variant={'outline'}
+            aria-label="search-header-button"
             onClick={(e) => {
               e.stopPropagation();
               action?.();
