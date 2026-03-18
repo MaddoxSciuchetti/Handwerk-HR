@@ -8,10 +8,15 @@ import LoadingAlert from '@/components/alerts/LoadingAlert';
 import Layout from '@/components/layout/Layout';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { ThemeProvider } from '@/context/theme-provider/ThemeProvider';
-import { createRootRoute, Outlet, useLocation } from '@tanstack/react-router';
+import { RouterContext } from '@/router';
+import {
+  createRootRouteWithContext,
+  Outlet,
+  useLocation,
+} from '@tanstack/react-router';
 import { Toaster } from 'sonner';
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<RouterContext>()({
   component: RootLayout,
 });
 

@@ -1,7 +1,13 @@
 import TemplateTasks from '@/features/template-tasks/components/TemplateTask';
-import { createFileRoute } from '@tanstack/react-router';
+import { RouterContext } from '@/router';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/template')({
+  beforeLoad: ({ context }: { context: RouterContext }) => {
+    if (context.auth.user?.user_permission !== 'CHEF') {
+      throw redirect({ to: '/login' });
+    }
+  },
   component: RouteComponent,
 });
 
