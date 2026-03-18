@@ -3,19 +3,19 @@ import { useEmployeeModal } from '@/features/employee-overview/hooks/useEmployee
 
 type EmployeeOpenTasksProps = {
   employee: string;
-  openTaskCount: number;
+  openTaskCountsByEmployee: number;
 };
 
 const EmployeeOpenTasks = ({
   employee,
-  openTaskCount,
+  openTaskCountsByEmployee,
 }: EmployeeOpenTasksProps) => {
   const { openEmployeeReminder: employeeCreate } = useEmployeeModal();
 
   return (
     <>
       <div className="flex items-center gap-3">
-        <p>{openTaskCount} Offene Aufgaben</p>
+        <p>{openTaskCountsByEmployee} Offene Aufgaben</p>
         <Button
           type="button"
           size="sm"

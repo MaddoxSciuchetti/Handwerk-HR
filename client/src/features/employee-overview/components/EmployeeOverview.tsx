@@ -60,7 +60,7 @@ function EmployeeOverview() {
           search={search}
           setSearch={setSearch}
           openModal={openCreateEmployee}
-          description=" Mitarbeiter Hinzufügen"
+          description="Mitarbeiter Hinzufügen"
         />
         <Table className="text-left mt-5 border-seperate border-spacing-y-2">
           <EmployeeTableHeader />

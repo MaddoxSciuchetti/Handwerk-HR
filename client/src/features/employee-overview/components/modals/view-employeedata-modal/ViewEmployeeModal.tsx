@@ -12,7 +12,7 @@ type ViewEmployeeModalProps = {
 };
 
 const ViewEmployeeModal = ({ selectedOwner }: ViewEmployeeModalProps) => {
-  const { isLoading, cleanData } = useEmployeeData();
+  const { isLoading, tasksByEmployee } = useEmployeeData();
   const [isReminderStep, setIsReminderStep] = useState(false);
 
   if (isLoading) return <LoadingAlert />;
@@ -43,7 +43,7 @@ const ViewEmployeeModal = ({ selectedOwner }: ViewEmployeeModalProps) => {
           ) : (
             <EmployeeTabsData
               user={selectedOwner}
-              cleanData={cleanData}
+              tasksByEmployee={tasksByEmployee}
               onTaskClick={() => setIsReminderStep(true)}
             />
           )}

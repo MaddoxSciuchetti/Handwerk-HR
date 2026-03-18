@@ -4,7 +4,7 @@ import { EmployeeWorker } from './employeeform.types';
 export type TAccordion = {
   onTaskClick: () => void;
   user: string;
-  cleanData: Array<[string, EmployeeWorker]>;
+  tasksByEmployee: Array<[string, EmployeeWorker]>;
 };
 
 export type EmployeeOpenTasks = {

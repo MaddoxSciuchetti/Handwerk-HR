@@ -3,10 +3,11 @@ import { EmployeeWorker } from '../types/employeeform.types';
 
 function useEmployeeGroups(
   user: string,
-  cleanData: Array<[string, EmployeeWorker]>
+  tasksByEmployee: Array<[string, EmployeeWorker]>
 ) {
   const employeeGroups = useMemo(() => {
-    const ownerItems = cleanData.find(([owner]) => owner === user)?.[1] ?? [];
+    const ownerItems =
+      tasksByEmployee.find(([owner]) => owner === user)?.[1] ?? [];
 
     const groupedByHandwerker = new Map<
       number,
@@ -60,7 +61,7 @@ function useEmployeeGroups(
     return Array.from(groupedByHandwerker.entries())
       .map(([employeeId, group]) => [String(employeeId), group] as const)
       .filter(([, group]) => group.inputs.length > 0);
-  }, [cleanData, user]);
+  }, [tasksByEmployee, user]);
 
   const totalOpenTasks = useMemo(
     () =>

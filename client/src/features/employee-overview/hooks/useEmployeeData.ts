@@ -1,12 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { adminQueries } from '../query-options/queries/admin.queries';
 import { EmployeeWorker } from '../types/employeeform.types';
 
 function useEmployeeData() {
-  const [selectedUser, setSelectedUser] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const { data, isLoading, error } = useQuery<EmployeeWorker>(
+  const { data, isLoading } = useQuery<EmployeeWorker>(
     adminQueries.EmployeeWorker()
   );
 
@@ -27,7 +25,7 @@ function useEmployeeData() {
     return Array.from(groups.entries());
   }, [data]);
 
-  const openTaskCountsByOwner = useMemo(() => {
+  const openTaskCountsByEmployee = useMemo(() => {
     return new Map(
       tasksByEmployee.map(([owner, items]) => {
         const totalOpenTasks = items.reduce(
@@ -40,15 +38,9 @@ function useEmployeeData() {
   }, [tasksByEmployee]);
 
   return {
-    data,
-    selectedUser,
-    setSelectedUser,
-    modal: isModalOpen,
-    setModalOpen: setIsModalOpen,
     isLoading,
-    error,
-    cleanData: tasksByEmployee,
-    openTaskCountsByOwner,
+    tasksByEmployee,
+    openTaskCountsByEmployee,
   };
 }
 

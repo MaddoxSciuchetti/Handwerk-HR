@@ -24,7 +24,7 @@ const EmployeeTableBody = ({
   handleDeleteEmployee,
 }: TableBodyProps) => {
   const { openEditEmployee } = useEmployeeModal();
-  const { openTaskCountsByOwner } = useEmployeeData();
+  const { openTaskCountsByEmployee } = useEmployeeData();
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const closeDeleteModalHandler = () => setIsDeleteModalOpen(false);
@@ -58,7 +58,9 @@ const EmployeeTableBody = ({
               <td>
                 <EmployeeOpenTasks
                   employee={employee.id}
-                  openTaskCount={openTaskCountsByOwner.get(employee.id) ?? 0}
+                  openTaskCountsByEmployee={
+                    openTaskCountsByEmployee.get(employee.id) ?? 0
+                  }
                 />
               </td>
               <td className="">
