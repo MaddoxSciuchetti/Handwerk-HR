@@ -23,10 +23,10 @@ function EmployeeTabs({
             key={user.owner}
             className={`text-md flex cursor-pointer flex-row font-light transition-colors ${selectedUser === user.owner ? 'bg-accent text-accent-foreground' : 'hover:bg-accent hover:text-accent-foreground'}`}
           >
-            {user.original_owner}
-            {user.is_substitute && (
+            {user.ownerName}
+            {user.isSubstitute && (
               <span className="ml-1 text-xs text-muted-foreground">
-                (Vertretung: {user.substitute_name})
+                (Vertretung: {user.substituteName})
               </span>
             )}
           </TabsTrigger>

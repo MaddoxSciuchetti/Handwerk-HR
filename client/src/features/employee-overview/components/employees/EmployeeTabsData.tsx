@@ -60,7 +60,7 @@ export function EmployeeTabsData({ onTaskClick, user, cleanData }: TAccordion) {
                         <div className="mt-1.5 flex items-center gap-3">
                           <span className="flex items-center gap-1 text-xs text-muted-foreground">
                             <CalendarDays className="h-3 w-3" />
-                            {task.timeStampLastChange.toLocaleDateString(
+                            {task.lastChangedAt.toLocaleDateString(
                               'de-DE'
                             )}
                           </span>

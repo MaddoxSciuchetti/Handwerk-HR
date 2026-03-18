@@ -20,7 +20,7 @@ function useEmployeeGroups(
         inputs: Array<{
           description: string;
           timestamp: Date;
-          timeStampLastChange: Date;
+          lastChangedAt: Date;
           form_field_id: number;
           status: string;
         }>;
@@ -38,7 +38,7 @@ function useEmployeeGroups(
               {
                 description: task.description,
                 timestamp: input.timestamp,
-                timeStampLastChange: input.timeStampLastChange,
+                lastChangedAt: input.lastChangedAt,
                 form_field_id: task.form_field_id,
                 status: input.status,
               },
@@ -50,7 +50,7 @@ function useEmployeeGroups(
         current.inputs.push({
           description: task.description,
           timestamp: input.timestamp,
-          timeStampLastChange: input.timeStampLastChange,
+          lastChangedAt: input.lastChangedAt,
           form_field_id: task.form_field_id,
           status: input.status,
         });

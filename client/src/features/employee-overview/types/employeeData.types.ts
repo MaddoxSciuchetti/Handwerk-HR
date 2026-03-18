@@ -12,6 +12,7 @@ export type EmployeeOpenTasks = {
   inputs: Array<{
     description: string;
     timestamp: Date;
+    lastChangedAt: Date;
     form_field_id: number;
     status: string;
   }>;

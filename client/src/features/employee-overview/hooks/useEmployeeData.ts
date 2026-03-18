@@ -6,37 +6,30 @@ import { EmployeeWorker } from '../types/employeeform.types';
 function useEmployeeData() {
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const {
-    data: allEmployeeData,
-    isLoading,
-    error,
-  } = useQuery<EmployeeWorker>(adminQueries.EmployeeWorker());
+  const { data, isLoading, error } = useQuery<EmployeeWorker>(
+    adminQueries.EmployeeWorker()
+  );
 
-  const cleanData = useMemo(() => {
-    if (!allEmployeeData) return [];
+  const tasksByEmployee = useMemo(() => {
+    if (!data) return [];
     const groups = new Map<string, EmployeeWorker>();
 
-    allEmployeeData.forEach((item) => {
-      if (!groups.has(item.owner)) {
-        groups.set(item.owner, []);
-      }
-    });
+    for (const item of data) {
+      const filtered = {
+        ...item,
+        inputs: item.inputs.filter((i) => i.status !== 'erledigt'),
+      };
+      const group = groups.get(item.owner) ?? [];
+      group.push(filtered);
+      groups.set(item.owner, group);
+    }
 
-    groups.forEach((_, key) => {
-      const originalInputs = allEmployeeData
-        .filter((item) => item.owner === key)
-        .map((item) => ({
-          ...item,
-          inputs: item.inputs.filter((input) => input.status !== 'erledigt'),
-        }));
-      groups.set(key, originalInputs);
-    });
     return Array.from(groups.entries());
-  }, [allEmployeeData]);
+  }, [data]);
 
   const openTaskCountsByOwner = useMemo(() => {
     return new Map(
-      cleanData.map(([owner, items]) => {
+      tasksByEmployee.map(([owner, items]) => {
         const totalOpenTasks = items.reduce(
           (count, item) => count + item.inputs.length,
           0
@@ -44,17 +37,17 @@ function useEmployeeData() {
         return [owner, totalOpenTasks] as const;
       })
     );
-  }, [cleanData]);
+  }, [tasksByEmployee]);
 
   return {
-    allEmployeeData,
+    data,
     selectedUser,
     setSelectedUser,
     modal: isModalOpen,
     setModalOpen: setIsModalOpen,
     isLoading,
     error,
-    cleanData,
+    cleanData: tasksByEmployee,
     openTaskCountsByOwner,
   };
 }
