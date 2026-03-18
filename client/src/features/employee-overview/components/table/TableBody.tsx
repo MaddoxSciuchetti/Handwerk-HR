@@ -4,9 +4,11 @@ import useEmployeeData from '../../hooks/useEmployeeData';
 import { useEmployeeModal } from '../../hooks/useEmployeeModal';
 import { EmployeeDataArray } from '../../schemas/schema';
 
-import TrashWithModal from '@/components/TrashWithModal';
+import DeleteConfirmModal from '@/components/DeleteConfirmModal';
+import TrashButton from '@/components/TrashButton';
 import { Button } from '@/components/ui/button';
 import { User } from '@/features/user-profile/types/auth.type';
+import { useState } from 'react';
 import EmployeeName from './table-row-item/EmployeeName';
 import EmployeeOpenTasks from './table-row-item/EmployeeOpenTasks';
 import EmployeeStatus from './table-row-item/EmployeeStatus';
@@ -23,6 +25,14 @@ const EmployeeTableBody = ({
 }: TableBodyProps) => {
   const { openEditEmployee } = useEmployeeModal();
   const { openTaskCountsByOwner } = useEmployeeData();
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const closeModal = () => setIsModalOpen(false);
+  // const handleConfirm = () => {
+  //   onConfirm();
+  //   closeModal();
+  // };
 
   return (
     <>
@@ -63,10 +73,18 @@ const EmployeeTableBody = ({
                 <EmployeeSubstitute employee={employee} />
               </td>
               <td className="rounded-r-xl">
-                <TrashWithModal
-                  description="Löschen"
+                <TrashButton
                   disabled={employee.user_permission === 'CHEF'}
-                  onConfirm={() => handleDeleteEmployee(employee.id)}
+                  description={'Löschen'}
+                  onClick={() => setIsModalOpen(true)}
+                />
+                <DeleteConfirmModal
+                  isOpen={isModalOpen}
+                  onCancel={closeModal}
+                  onConfirm={() => {
+                    handleDeleteEmployee(employee.id);
+                    closeModal();
+                  }}
                 />
               </td>
             </tr>
