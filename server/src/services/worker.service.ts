@@ -158,6 +158,12 @@ export const queryWorkerById = async (id: any) => {
             id: true,
             vorname: true,
             nachname: true,
+            email: true,
+            geburtsdatum: true,
+            adresse: true,
+            eintrittsdatum: true,
+            austrittsdatum: true,
+            position: true,
             employee_forms: {
                 select: {
                     id: true,

@@ -32,7 +32,7 @@ test.describe('Create employee journey', () => {
     await page.goto('/employee-overview');
     await expect(page).toHaveURL(/\/employee-overview$/);
 
-    await page.getByRole('button', { name: /Mitarbeiter Hinzufügen/i }).click();
+    await page.getByRole('button', { name: /Mitarbeiter hinzufügen/i }).click();
 
     await page.getByPlaceholder('Vorname').fill(employee.firstName);
     await page.getByPlaceholder('Nachname').fill(employee.lastName);

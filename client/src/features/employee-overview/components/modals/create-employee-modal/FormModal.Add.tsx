@@ -69,6 +69,7 @@ const FormModalAdd = ({
           className="w-full my-2 cursor-pointer "
           variant={'outline'}
           type="submit"
+          aria-label="Nutzer Erstellen"
         >
           Nutzer Erstellen
         </Button>

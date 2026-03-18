@@ -70,10 +70,16 @@ export type DescriptionField = {
 };
 
 export type DescriptionFieldResponse = {
-  user: {
+  worker: {
     id: number;
     vorname: string;
     nachname: string;
+    email: string | null;
+    geburtsdatum: string | null;
+    adresse: string | null;
+    eintrittsdatum: string | null;
+    austrittsdatum: string | null;
+    position: string | null;
   };
   form: {
     id: number;

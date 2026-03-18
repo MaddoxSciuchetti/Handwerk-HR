@@ -1,4 +1,3 @@
-
 import EmployeeOverview from '@/features/employee-overview/components/EmployeeOverview';
 import { EmployeeModalProvider } from '@/features/employee-overview/context/ModalProvider';
 import { screen, within } from '@testing-library/react';
@@ -63,7 +62,7 @@ describe('Employee overview modal', () => {
     ).not.toBeInTheDocument();
 
     await user.click(
-      screen.getByRole('button', { name: /Mitarbeiter Hinzufügen/i })
+      screen.getByRole('button', { name: /search-header-button/i })
     );
 
     expect(
@@ -134,6 +133,4 @@ describe('Employee overview modal', () => {
       screen.getByRole('button', { name: /Löschen bestätigen/i })
     ).toBeInTheDocument();
   });
-
-  
 });

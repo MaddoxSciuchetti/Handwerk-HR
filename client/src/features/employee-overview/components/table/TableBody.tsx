@@ -4,7 +4,7 @@ import useEmployeeData from '../../hooks/useEmployeeData';
 import { useEmployeeModal } from '../../hooks/useEmployeeModal';
 import { EmployeeDataArray } from '../../schemas/schema';
 
-import DropDownResuable from '@/components/DropDownResuable';
+import TrashWithModal from '@/components/TrashWithModal';
 import { Button } from '@/components/ui/button';
 import { User } from '@/features/user-profile/types/auth.type';
 import EmployeeName from './table-row-item/EmployeeName';
@@ -60,11 +60,11 @@ const EmployeeTableBody = ({
                 <EmployeeSubstitute value={value} />
               </td>
               <td className="rounded-r-xl">
-                <DropDownResuable
-                  description="Löschen"
-                  disabled={value.user_permission === 'CHEF'}
-                  action={() => DeleteEmployee(value.id)}
-                />
+                  <TrashWithModal
+                    description="Löschen"
+                    disabled={value.user_permission === 'CHEF'}
+                    onConfirm={() => DeleteEmployee(value.id)}
+                  />
               </td>
             </tr>
           );

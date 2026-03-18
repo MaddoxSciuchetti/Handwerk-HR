@@ -7,11 +7,15 @@ import { Suspense } from 'react';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import Layout from '@/components/layout/Layout';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import { ThemeProvider } from '@/context/theme-provider/ThemeProvider';
-import { createRootRoute, Outlet, useLocation } from '@tanstack/react-router';
+import { RouterContext } from '@/router';
+import {
+  createRootRouteWithContext,
+  Outlet,
+  useLocation,
+} from '@tanstack/react-router';
 import { Toaster } from 'sonner';
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<RouterContext>()({
   component: RootLayout,
 });
 
@@ -33,23 +37,19 @@ function RootLayout() {
   if (isDoorman) {
     return (
       <main className="h-dvh overflow-hidden">
-        <ThemeProvider>
-          <Outlet />
-        </ThemeProvider>
+        <Outlet />
       </main>
     );
   }
 
   return (
-    <ThemeProvider>
-      <SidebarProvider>
-        <ErrorBoundary fallback={<ErrorAlert />}>
-          <Suspense fallback={<LoadingAlert fullScreen />}>
-            <Toaster position="top-center" />
-            <Layout />
-          </Suspense>
-        </ErrorBoundary>
-      </SidebarProvider>
-    </ThemeProvider>
+    <SidebarProvider>
+      <ErrorBoundary fallback={<ErrorAlert />}>
+        <Suspense fallback={<LoadingAlert fullScreen />}>
+          <Toaster position="top-center" />
+          <Layout />
+        </Suspense>
+      </ErrorBoundary>
+    </SidebarProvider>
   );
 }

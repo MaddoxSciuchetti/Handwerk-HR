@@ -37,3 +37,34 @@ export type ItemUser = {
     nachname: string;
   };
 };
+
+export type WorkerOverviewField = {
+  id: number;
+  form_field_id: number;
+  description: string;
+  officialOwner: string;
+  substituteOwner: string;
+  owner_id: number;
+  is_substitute: boolean;
+  status: string;
+  edit: string | null;
+};
+
+export type WorkerOverviewResponse = {
+  worker: {
+    id: number;
+    vorname: string;
+    nachname: string;
+    email: string | null;
+    geburtsdatum: string | null;
+    adresse: string | null;
+    eintrittsdatum: string | null;
+    austrittsdatum: string | null;
+    position: string | null;
+  };
+  form: {
+    id: number;
+    type: FormType;
+    fields: WorkerOverviewField[];
+  };
+};
