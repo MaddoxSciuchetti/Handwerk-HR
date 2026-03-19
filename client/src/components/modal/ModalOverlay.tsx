@@ -42,7 +42,7 @@ const ModalOverlay = ({
         aria-hidden="true"
       />
 
-      <div className="relative z-10">
+      <div className="relative z-10 w-full max-w-md">
         <button
           onClick={handleToggle}
           aria-label="Modal schließen"
