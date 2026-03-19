@@ -20,7 +20,7 @@ const SearchHeaderResuable = <T extends string | number>({
   const buttonLabel = description.trim();
 
   return (
-    <search className="flex gap-5">
+    <search aria-label="Aufgaben suchen" className="flex gap-5">
       <Label htmlFor="employee-search" className="sr-only">
         Suche bei Namen
       </Label>
@@ -33,7 +33,7 @@ const SearchHeaderResuable = <T extends string | number>({
       />
       <Button
         variant={'outline'}
-        aria-label={buttonLabel}
+        data-testid={buttonLabel}
         onClick={(e) => {
           e.stopPropagation();
           action?.();

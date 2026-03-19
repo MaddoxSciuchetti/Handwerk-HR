@@ -16,6 +16,9 @@ const TabsHeader = ({ tab, setTab }: TabsHeaderProps) => {
         <div className="inline-flex rounded-lg border border-border/70 bg-(--secondary) p-1">
           {TABS.map(({ value, label }) => (
             <Button
+              role="tab"
+              aria-selected={tab === value}
+              aria-conrols={`tabpanel-${value}`}
               key={value}
               type="button"
               size={'sm'}
