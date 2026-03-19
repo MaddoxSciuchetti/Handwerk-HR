@@ -38,7 +38,7 @@ const TaskForm = <T extends FieldValues>({
   descriptionFormName,
 }: TaskFormProps<T>) => {
   return (
-    <form onSubmit={submit}>
+    <form onSubmit={submit} className="flex w-full flex-col items-start ">
       <p>{`${template_header} Aufgabe ${templateHeaderAdjective}`}</p>
 
       <Textarea
@@ -47,7 +47,7 @@ const TaskForm = <T extends FieldValues>({
         defaultValue={description || ''}
         id="description"
         name="description"
-        className="mt-5 mb-5 w-full max-w-full rounded-xl"
+        className="mt-5 mb-5 w-full max-w-md rounded-xl"
       />
       <ErrorMessage
         errors={errors}
@@ -56,14 +56,18 @@ const TaskForm = <T extends FieldValues>({
           <p className="mb-5 text-sm text-destructive">{message}</p>
         )}
       />
-      <OwnerSelect control={control} errors={errors} />
-      <Button
-        type="submit"
-        variant={'outline'}
-        className="flex-1 cursor-pointer justify-start rounded-xl text-left transition-colors hover:bg-accent hover:text-accent-foreground"
-      >
-        {buttonsaveText}
-      </Button>
+      <div className="flex w-full min-w-0 flex-row items-start gap-2">
+        <div className="min-w-0 flex-1">
+          <OwnerSelect control={control} errors={errors} />
+        </div>
+        <Button
+          type="submit"
+          variant={'outline'}
+          className="flex-1 cursor-pointer justify-start rounded-xl text-left transition-colors hover:bg-accent hover:text-accent-foreground"
+        >
+          {buttonsaveText}
+        </Button>
+      </div>
     </form>
   );
 };

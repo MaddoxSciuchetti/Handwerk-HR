@@ -11,7 +11,7 @@ const AddTemplateModal = ({}: AddTemplateModalProps) => {
     useAddNewTask(tab);
   return (
     <>
-      <SmallWrapper>
+      <SmallWrapper className="min-h-60 max-h-60">
         <TaskForm
           template_header={tab === 'ONBOARDING' ? 'Onboarding' : 'Offboarding'}
           templateHeaderAdjective="hinzufügen"

@@ -31,7 +31,7 @@ const EditTemplateModal = ({}: EditTemplateModalProps) => {
     closeTask();
   };
   return (
-    <SmallWrapper>
+    <SmallWrapper className="min-h-60 max-h-60 max-w-md">
       <TaskForm
         template_header={tab === 'ONBOARDING' ? 'Onboarding' : 'Offboarding'}
         templateHeaderAdjective="editieren"
