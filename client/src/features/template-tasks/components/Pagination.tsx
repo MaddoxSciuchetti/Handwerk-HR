@@ -21,31 +21,26 @@ const Pagination = ({
 
   const handlePageUpdate = (
     number: number,
-    e: MouseEvent<HTMLAnchorElement>
+    e: MouseEvent<HTMLButtonElement>
   ) => {
     e.preventDefault();
     setCurrentPage(number);
   };
 
   return (
-    <nav>
-      <ul className="flex gap-2 ">
-        {pageNumbers.map((number) => (
-          <li
-            key={number}
-            className={`page-item ${currentPage === number ? 'text-(--muted-foreground) underline' : 'text-(--foreground)'}`}
-          >
-            <a
-              onClick={(e) => handlePageUpdate(number, e)}
-              href="!#"
-              className="page-link"
-            >
-              {number}
-            </a>
-          </li>
-        ))}
-      </ul>
-    </nav>
+    <ul className="flex gap-2 ">
+      {pageNumbers.map((number) => (
+        <button
+          key={number}
+          onClick={(e) => handlePageUpdate(number, e)}
+          aria-label={`Seite ${number}`}
+          aria-current={currentPage === number ? 'page' : undefined}
+          className={`page-item ${currentPage === number ? 'text-(--muted-foreground) underline' : 'text-(--foreground)'}`}
+        >
+          {number}
+        </button>
+      ))}
+    </ul>
   );
 };
 

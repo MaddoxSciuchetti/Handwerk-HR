@@ -30,7 +30,10 @@ const Tasks = ({ items, openDescriptionModal, setMode }: TasksProps) => {
             key={item.form_field_id}
           >
             <div className="flex-1 min-w-0">
-              <p className="truncate text-sm font-medium text-foreground">
+              <p
+                className="truncate text-sm font-medium text-foreground"
+                title={item.description!}
+              >
                 {item.description}
               </p>
             </div>
@@ -40,7 +43,7 @@ const Tasks = ({ items, openDescriptionModal, setMode }: TasksProps) => {
                 {item.auth_user.vorname} {item.auth_user.nachname}
               </span>
 
-              <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+              <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus:within:opacity-100">
                 <Button
                   type="button"
                   size="icon-sm"
@@ -56,7 +59,7 @@ const Tasks = ({ items, openDescriptionModal, setMode }: TasksProps) => {
                     setMode('EDIT');
                   }}
                 >
-                  <Edit className="h-4 w-4" />
+                  <Edit aria-hidden="true" className="h-4 w-4" />
                 </Button>
 
                 {/* Removed DropDownWithModal, use only TrashWithModal for delete */}
