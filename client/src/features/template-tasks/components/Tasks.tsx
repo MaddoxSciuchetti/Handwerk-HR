@@ -4,23 +4,21 @@ import TrashWithModal from '@/components/DropDownWithModal';
 import { Button } from '@/components/ui/button';
 import { DescriptionResponse } from '@/types/api.types';
 import { Edit } from 'lucide-react';
-import { Dispatch, SetStateAction } from 'react';
 import useDeleteDescription from '../hooks/useDeleteDescription';
+import useTemplateModalContext from '../hooks/useTemplateModalContext';
 
 type TasksProps = {
   items: DescriptionResponse[];
-  openDescriptionModal: (
-    description?: string | null,
-    owner?: string,
-    form_field_id?: number
-  ) => Promise<void>;
-
-  mode: 'EDIT' | 'ADD' | undefined;
-  setMode: Dispatch<SetStateAction<'EDIT' | 'ADD' | undefined>>;
+  openEditTask: (
+    form_field_id: number,
+    description: string,
+    owner: string
+  ) => void;
 };
 
-const Tasks = ({ items, openDescriptionModal, setMode }: TasksProps) => {
+const Tasks = ({ items }: TasksProps) => {
   const { deleteDescription } = useDeleteDescription();
+  const { openEditTask } = useTemplateModalContext();
   return (
     <div className="rounded-lg min-h-150 max-h-150 overflow-hidden">
       <ul className="divide-y divide-border mt-3 border rounded-2xl ">
@@ -51,18 +49,15 @@ const Tasks = ({ items, openDescriptionModal, setMode }: TasksProps) => {
                   className="cursor-pointer rounded-md text-muted-foreground hover:text-(--muted-foreground)"
                   onClick={(e) => {
                     e.stopPropagation();
-                    openDescriptionModal(
-                      item.description,
-                      item.owner,
-                      item.form_field_id
+                    openEditTask(
+                      item.form_field_id,
+                      item.description!,
+                      item.owner
                     );
-                    setMode('EDIT');
                   }}
                 >
                   <Edit aria-hidden="true" className="h-4 w-4" />
                 </Button>
-
-                {/* Removed DropDownWithModal, use only TrashWithModal for delete */}
                 <TrashWithModal
                   description="Vorlage-Aufgabe löschen"
                   onConfirm={() => deleteDescription(item.form_field_id)}

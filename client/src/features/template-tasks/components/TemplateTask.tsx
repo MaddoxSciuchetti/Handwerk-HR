@@ -3,22 +3,15 @@ import SearchHeaderResuable from '@/components/layout/headers/SearchHeaderResuab
 import ModalOverlay from '@/components/modal/ModalOverlay';
 import useEditDescription from '../hooks/useEditDescription';
 import useFetchTask from '../hooks/useFetchTask';
-import usePostTask from '../hooks/usePostTask';
+import useTemplateModalContext from '../hooks/useTemplateModalContext';
+import AddTemplateModal from './AddTemplateModal';
+import EditTemplateModal from './EditTemplateModal';
 import Pagination from './Pagination';
 import TabsHeader from './TabsHeader';
 import Tasks from './Tasks';
-import TemplateModal from './TemplateModal';
 
 function TemplateTasks() {
-  const {
-    handleAddSubmitMutation,
-    modal,
-    tab,
-    setTab,
-    mode,
-    setMode,
-    toggleModal,
-  } = usePostTask();
+  const { tab, setTab } = useEditDescription();
   const {
     filteredByType,
     taskLengthByTemplateType,
@@ -32,12 +25,25 @@ function TemplateTasks() {
     paginatedType,
   } = useFetchTask();
 
-  const {
-    editDescriptionMutation,
-    modalState,
-    setModalState,
-    openDescriptionModal,
-  } = useEditDescription(toggleModal);
+  const { modalState, closeTask, openCreateTask, openEditTask } =
+    useTemplateModalContext();
+
+  const renderModal = () => {
+    switch (modalState.kind) {
+      case 'open-create':
+        return (
+          <ModalOverlay handleToggle={closeTask}>
+            <AddTemplateModal tab={tab} />
+          </ModalOverlay>
+        );
+      case 'open-edit':
+        return (
+          <ModalOverlay handleToggle={closeTask}>
+            <EditTemplateModal tab={tab} />
+          </ModalOverlay>
+        );
+    }
+  };
   if (isLoading) {
     return <LoadingAlert />;
   }
@@ -52,16 +58,10 @@ function TemplateTasks() {
         search={search}
         setSearch={setSearch}
         description="Add Task"
-        openModal={openDescriptionModal}
-        action={() => setMode('ADD')}
+        openModal={openCreateTask}
       />
       <TabsHeader tab={tab} setTab={setTab} />
-      <Tasks
-        items={paginatedType[tab]}
-        openDescriptionModal={openDescriptionModal}
-        mode={mode}
-        setMode={setMode}
-      />
+      <Tasks items={paginatedType[tab]} openEditTask={openEditTask} />
       <div className="flex justify-between mt-2 items-center">
         <Pagination
           postsPerPage={postsPerPage}
@@ -81,24 +81,7 @@ function TemplateTasks() {
           </p>
         )}
       </div>
-      {modalState.selectedItem && modal && (
-        <ModalOverlay handleToggle={toggleModal}>
-          <TemplateModal
-            setModalState={setModalState}
-            toggleModal={toggleModal}
-            editDescriptionMutation={editDescriptionMutation}
-            handleAddSubmitMutation={handleAddSubmitMutation}
-            form_field_id={modalState.selectedItem.form_field_id}
-            description={modalState.selectedItem.description}
-            owner={modalState.selectedItem.owner}
-            template_type={tab}
-            OnboardingData={tasksByTemplateType.ONBOARDING}
-            OffboardingData={tasksByTemplateType.OFFBOARDING}
-            mode={mode}
-            setMode={setMode}
-          />
-        </ModalOverlay>
-      )}
+      {renderModal()}
     </div>
   );
 }

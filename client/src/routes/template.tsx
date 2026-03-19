@@ -1,4 +1,5 @@
 import TemplateTasks from '@/features/template-tasks/components/TemplateTask';
+import { TaskContextProvider } from '@/features/template-tasks/TaskContextProvider';
 import { userProfileQueries } from '@/features/user-profile/query-options/queries/user-profile.queries';
 import { tryCatch } from '@/lib/trycatch';
 import { RouterContext } from '@/router';
@@ -18,5 +19,9 @@ export const Route = createFileRoute('/template')({
 });
 
 function RouteComponent() {
-  return <TemplateTasks />;
+  return (
+    <TaskContextProvider>
+      <TemplateTasks />
+    </TaskContextProvider>
+  );
 }

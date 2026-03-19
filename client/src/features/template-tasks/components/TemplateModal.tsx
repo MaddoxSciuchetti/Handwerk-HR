@@ -11,9 +11,9 @@ import TemplateForm from './TemplateForm';
 type TemplateModalProps = {
   editDescriptionMutation: EditDescriptionMutation;
   handleAddSubmitMutation: AddDescriptionMutation;
-  form_field_id: number | null | undefined;
-  description: string | null | undefined;
-  owner: string | null | undefined;
+  form_field_id?: number | null | undefined;
+  description?: string | null | undefined;
+  owner?: string | null | undefined;
   template_type?: 'ONBOARDING' | 'OFFBOARDING';
   OnboardingData?: DescriptionData[] | undefined;
   OffboardingData?: DescriptionData[] | undefined;

@@ -1,5 +1,4 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Dispatch, SetStateAction } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import {
@@ -7,22 +6,13 @@ import {
   EditDescriptionMutation,
 } from '../types/mutation.types';
 import { HandleAddSubmit, HandleEditSubmit } from '../types/taskForm.types';
+import useTemplateModalContext from './useTemplateModalContext';
 
 function useSubmitForm(
   mode: 'EDIT' | 'ADD' | undefined,
   schema: any,
   editDescriptionMutation: EditDescriptionMutation,
-  handleAddSubmitMutation: AddDescriptionMutation,
-  toggleModal: () => void,
-  setModalState: Dispatch<
-    SetStateAction<{
-      selectedItem: {
-        form_field_id: number | null | undefined;
-        description: string | null | undefined;
-        owner: string | null | undefined;
-      } | null;
-    }>
-  >
+  handleAddSubmitMutation: AddDescriptionMutation
 ) {
   const {
     register,
@@ -34,14 +24,15 @@ function useSubmitForm(
     criteriaMode: 'all',
   });
 
+  const { closeTask } = useTemplateModalContext();
+
   const onSubmit: SubmitHandler<HandleAddSubmit | HandleEditSubmit> = (
     data
   ) => {
     if (mode === 'EDIT') {
       editDescriptionMutation(data as HandleEditSubmit, {
         onSuccess: () => {
-          setModalState({ selectedItem: null });
-          toggleModal();
+          closeTask();
         },
         onError: () => {
           toast.error('Etwas ist schief gelaufen');
@@ -51,7 +42,6 @@ function useSubmitForm(
       handleAddSubmitMutation(data as HandleAddSubmit, {
         onSuccess: () => {
           toast.success('the field has been added');
-          toggleModal();
         },
         onError: () => {
           toast.error('the field could not be added');
