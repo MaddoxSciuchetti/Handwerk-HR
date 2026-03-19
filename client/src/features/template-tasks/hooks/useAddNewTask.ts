@@ -8,8 +8,9 @@ import { addSchema } from '../schemas/taskForm.schema';
 import { HandleAddSubmit } from '../types/taskForm.types';
 import useTemplateModalContext from './useTemplateModalContext';
 
-function useAddNewTask() {
+function useAddNewTask(tab: 'ONBOARDING' | 'OFFBOARDING') {
   const { closeTask } = useTemplateModalContext();
+
   const { mutate: handleAddSubmitMutation } = useMutation<
     NewDescriptionField,
     Error,
@@ -26,6 +27,9 @@ function useAddNewTask() {
     control,
     formState: { errors },
   } = useForm<HandleAddSubmit>({
+    defaultValues: {
+      template_type: tab,
+    },
     resolver: zodResolver(addSchema),
     criteriaMode: 'all',
   });

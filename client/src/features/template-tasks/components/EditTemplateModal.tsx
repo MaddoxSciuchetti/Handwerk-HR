@@ -9,15 +9,19 @@ import TaskForm from './shared/TaskForm';
 
 type EditTemplateModalProps = {};
 const EditTemplateModal = ({}: EditTemplateModalProps) => {
-  const { closeTask, modalState } = useTemplateModalContext();
+  const { closeTask, modalState, tab } = useTemplateModalContext();
   const { editDescriptionMutation } = useEditDescription();
-  const { tab } = useTemplateModalContext();
+  const isModalStateEdit = modalState.kind === 'open-edit';
   const {
     register,
     handleSubmit,
     control,
     formState: { errors },
   } = useForm<HandleEditSubmit>({
+    defaultValues: {
+      form_field_id: isModalStateEdit ? modalState.form_field_id : undefined,
+      template_type: isModalStateEdit ? tab : undefined,
+    },
     resolver: zodResolver(editSchema),
     criteriaMode: 'all',
   });
@@ -29,7 +33,7 @@ const EditTemplateModal = ({}: EditTemplateModalProps) => {
   return (
     <SmallWrapper>
       <TaskForm
-        template_header={tab === 'ONBOARDING' ? 'Onboarden' : 'Offboden'}
+        template_header={tab === 'ONBOARDING' ? 'Onboarding' : 'Offboarding'}
         templateHeaderAdjective="editieren"
         buttonsaveText="Speichern"
         register={register}

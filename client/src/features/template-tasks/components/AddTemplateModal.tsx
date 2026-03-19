@@ -7,13 +7,13 @@ type AddTemplateModalProps = {};
 
 const AddTemplateModal = ({}: AddTemplateModalProps) => {
   const { tab } = useTemplateModalContext();
-  const { register, handleSubmit, control, errors, onSubmit } = useAddNewTask();
-
+  const { register, handleSubmit, control, errors, onSubmit } =
+    useAddNewTask(tab);
   return (
     <>
       <SmallWrapper>
         <TaskForm
-          template_header="Onboarding"
+          template_header={tab === 'ONBOARDING' ? 'Onboarding' : 'Offboarding'}
           templateHeaderAdjective="hinzufügen"
           buttonsaveText="New hinzufügen"
           register={register}

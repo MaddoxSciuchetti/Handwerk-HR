@@ -35,33 +35,11 @@ const TaskForm = <T extends FieldValues>({
   control,
   submit,
   description,
-  tab,
   descriptionFormName,
-  templateTypeName,
-  formfieldName,
-  formfieldValue,
 }: TaskFormProps<T>) => {
   return (
     <form onSubmit={submit}>
       <p>{`${template_header} Aufgabe ${templateHeaderAdjective}`}</p>
-      <p>{`Füge Aufgabe fürs ${template_header}`}</p>
-
-      <input
-        {...register(templateTypeName)}
-        type="hidden"
-        name="template_type"
-        value={tab}
-      />
-
-      {formfieldName && (
-        <input
-          {...register(formfieldName, { valueAsNumber: true })}
-          type="hidden"
-          id="form_field_id"
-          name="form_field_id"
-          value={formfieldValue || ''}
-        />
-      )}
 
       <Textarea
         data-testid="description"
