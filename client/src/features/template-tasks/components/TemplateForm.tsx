@@ -10,7 +10,7 @@ import {
   AddDescriptionMutation,
   EditDescriptionMutation,
 } from '../types/mutation.types';
-import OwnerSelect from './OwnerSelect';
+import OwnerSelect from './shared/OwnerSelect';
 
 type TemplateFormProps = {
   editDescriptionMutation: EditDescriptionMutation;

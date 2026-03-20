@@ -3,7 +3,7 @@ import { Control, FieldErrors, FieldValues } from 'react-hook-form';
 import FormSelectOptions from '@/components/form/FormSelectOptions';
 import { employeeQueries } from '@/features/employee-overview/query-options/queries/employee.queries';
 import { useQuery } from '@tanstack/react-query';
-import { HandleAddSubmit } from '../types/taskForm.types';
+import { HandleAddSubmit } from '../../types/taskForm.types';
 
 type OwnerSelectProps<T extends FieldValues> = {
   control: Control<T, any, T>;

@@ -8,7 +8,7 @@ import {
   Path,
   UseFormRegister,
 } from 'react-hook-form';
-import OwnerSelect from '../OwnerSelect';
+import OwnerSelect from './OwnerSelect';
 
 type TaskFormProps<T extends FieldValues> = {
   template_header: string;
