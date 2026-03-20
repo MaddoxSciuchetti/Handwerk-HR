@@ -3,9 +3,7 @@ import useAddNewTask from '../hooks/useAddNewTask';
 import useTemplateModalContext from '../hooks/useTemplateModalContext';
 import TaskForm from './shared/TaskForm';
 
-type AddTemplateModalProps = {};
-
-const AddTemplateModal = ({}: AddTemplateModalProps) => {
+const AddTemplateModal = () => {
   const { tab } = useTemplateModalContext();
   const { register, handleSubmit, control, errors, onSubmit } =
     useAddNewTask(tab);

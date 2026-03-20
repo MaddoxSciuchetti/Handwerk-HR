@@ -5,7 +5,7 @@ import useFetchTask from '../hooks/useFetchTask';
 import useTemplateModalContext from '../hooks/useTemplateModalContext';
 import AddTemplateModal from './AddTemplateModal';
 import EditTemplateModal from './EditTemplateModal';
-import Pagination from './Pagination';
+import TabsFooter from './TabsFooter';
 import TabsHeader from './TabsHeader';
 import Tasks from './Tasks';
 
@@ -13,7 +13,6 @@ function TemplateTasks() {
   const {
     filteredByType,
     taskLengthByTemplateType,
-    tasksByTemplateType,
     isLoading,
     search,
     setSearch,
@@ -60,25 +59,14 @@ function TemplateTasks() {
       />
       <TabsHeader tab={tab} setTab={setTab} />
       <Tasks items={paginatedType[tab]} openEditTask={openEditTask} />
-      <div className="flex justify-between mt-2 items-center">
-        <Pagination
-          postsPerPage={postsPerPage}
-          totalPosts={filteredByType[tab].length}
-          setCurrentPage={setCurrentPage}
-          currentPage={currentPage}
-        />
-        {tab === 'OFFBOARDING' ? (
-          <p className="font-light text-xs text-(--muted-foreground)">
-            {taskLengthByTemplateType.OFFBOARDING} Aufgaben in Offboarding
-            template
-          </p>
-        ) : (
-          <p className="font-light text-xs text-(--muted-foreground)">
-            {taskLengthByTemplateType.ONBOARDING} Aufgaben in Onboarding
-            template
-          </p>
-        )}
-      </div>
+      <TabsFooter
+        currentPage={currentPage}
+        tab={tab}
+        postsPerPage={postsPerPage}
+        taskLengthByTemplateType={taskLengthByTemplateType}
+        setCurrentPage={setCurrentPage}
+        totalPosts={filteredByType[tab].length}
+      />
       {renderModal()}
     </div>
   );
