@@ -326,3 +326,10 @@ export const removeWorkerFile = async (id: number) => {
         where: { id },
     });
 };
+
+export const insertDataPoint = async(key: string, value: any, workerId: number) => {
+    await prisma.users.update({
+        where: { id: workerId },
+        data: { [key]: value },
+    });
+}

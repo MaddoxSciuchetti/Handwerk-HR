@@ -12,6 +12,7 @@ import {
     getWorkerFiles,
     getWorkerHistory,
     unarchiveWorkerById,
+    updateDataPoint,
     updateWorker,
     updateWorkerHistory,
 } from "@/controllers/worker.controller";
@@ -28,6 +29,7 @@ worker.put("/unarchiveWorker/:id", unarchiveWorkerById);
 worker.delete("/deleteWorker/:id", deleteWorker);
 worker.get("/getWorker/:id", getWorkerById);
 worker.put("/updateWorker", catchErrors(updateWorker));
+worker.put("/singleWorkerDataPoint", catchErrors(updateDataPoint));
 
 // worker history Data
 

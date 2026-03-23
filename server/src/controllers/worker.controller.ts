@@ -5,8 +5,10 @@ import {
     insertWorkerHistorySchema,
     updateWorkerSchema,
 } from "@/schemas/worker.schemas";
+import { notifyEmployeesAboutWorkerCreated } from "@/services/worker.notification.service";
 import {
     archiveWorker,
+    insertDataPoint,
     insertWorker,
     insertWorkerFile,
     insertWorkerHistory,
@@ -19,7 +21,6 @@ import {
     removeWorkerFile,
     unarchiveWorker,
 } from "@/services/worker.service";
-import { notifyEmployeesAboutWorkerCreated } from "@/services/worker.notification.service";
 import appAssert from "@/utils/appAssert";
 import resolveOwner from "@/utils/resolverOwner";
 import { Request, Response } from "express";
@@ -255,4 +256,12 @@ export const deleteWorkerFile = async (req: Request, res: Response) => {
         console.log(error);
         return res.status(404).json({ error: "File not found" });
     }
+};
+
+export const updateDataPoint = async (req: Request, res: Response) => {
+    const { workerId, ...rest } = req.body;
+    const key = Object.keys(rest)[0];
+    const value = rest[key];
+    const data = await insertDataPoint(key, value, workerId);
+    return res.status(200).json(data);
 };
