@@ -5,23 +5,23 @@ import {
 } from '@/features/employee-overview/utils/calculateDate.utils';
 
 type SubstituteProps = {
-  value: EmployeeDataObject;
+  employee: EmployeeDataObject;
 };
 
-const EmployeeSubstitute = ({ value }: SubstituteProps) => {
+const EmployeeSubstitute = ({ employee }: SubstituteProps) => {
   return (
     <>
-      {(value.employeeStatus?.length ?? 0) > 0 ? (
-        value.employeeStatus?.map((value, index) => (
+      {(employee.employeeStatus?.length ?? 0) > 0 ? (
+        employee.employeeStatus?.map((status, index) => (
           <div className="flex gap-1 " key={index}>
             {calculateData(
-              new Date(value.absencebegin || ''),
-              new Date(value.absenceEnd || ''),
+              new Date(status.absencebegin || ''),
+              new Date(status.absenceEnd || ''),
               dateObject
             ) ? (
               <div>
-                <span>{value.sub_user?.vorname}</span>{' '}
-                <span>{value.sub_user?.nachname}</span>
+                <span>{status.sub_user?.vorname}</span>{' '}
+                <span>{status.sub_user?.nachname}</span>
               </div>
             ) : (
               <span>n/a</span>

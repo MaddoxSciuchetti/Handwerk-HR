@@ -1,21 +1,21 @@
 import { EmployeeDataObject } from '@/features/employee-overview/schemas/schema';
 
 type EmployeeNameProps = {
-  value: EmployeeDataObject;
+  employee: EmployeeDataObject;
 };
 
-const EmployeeName = ({ value }: EmployeeNameProps) => {
+const EmployeeName = ({ employee }: EmployeeNameProps) => {
   return (
     <>
-      {value.user_permission === 'CHEF' ? (
+      {employee.user_permission === 'CHEF' ? (
         <p>
           <span className="text-(--status-info-foreground)">Ich:</span> {''}
-          {value.vorname} {value.nachname}
+          {employee.vorname} {employee.nachname}
         </p>
       ) : (
         <p>
-          {value.vorname}
-          {value.nachname}
+          {employee.vorname}
+          {employee.nachname}
         </p>
       )}
     </>

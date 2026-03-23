@@ -1,25 +1,28 @@
-import { Dispatch, SetStateAction } from 'react';
-import { Control, FieldErrors } from 'react-hook-form';
+import { Control, FieldErrors, FieldValues } from 'react-hook-form';
 
 import FormSelectOptions from '@/components/form/FormSelectOptions';
 import { employeeQueries } from '@/features/employee-overview/query-options/queries/employee.queries';
 import { useQuery } from '@tanstack/react-query';
-import { HandleAddSubmit } from '../types/taskForm.types';
+import { HandleAddSubmit } from '../../types/taskForm.types';
 
-type OwnerSelectProps = {
-  control: Control<HandleAddSubmit, any, HandleAddSubmit>;
-  selectedValue: string;
-  setSelectedValue: Dispatch<SetStateAction<string>>;
+type OwnerSelectProps<T extends FieldValues> = {
+  control: Control<T, any, T>;
   errors: FieldErrors<HandleAddSubmit>;
+  defaultvalue?: string;
 };
 
-const OwnerSelect = ({ errors, control }: OwnerSelectProps) => {
+const OwnerSelect = <T extends FieldValues>({
+  errors,
+  control,
+  defaultvalue,
+}: OwnerSelectProps<T>) => {
   const { data: employees = [] } = useQuery(employeeQueries.getEmployees());
 
   return (
     <>
       <FormSelectOptions
-        name="owner"
+        defaultValue={defaultvalue}
+        name={'owner' as unknown as never}
         control={control}
         errors={errors}
         placeholder="Mitarbeiter"

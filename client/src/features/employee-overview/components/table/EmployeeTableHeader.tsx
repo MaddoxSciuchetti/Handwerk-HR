@@ -2,17 +2,25 @@ import { TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const EmployeeTableHeader = () => {
   return (
-    <>
-      <TableHeader className="text-left mb-5">
-        <TableRow className="text-lg">
-          <TableHead className="text-left  pl-0">Meine Mitarbeiter</TableHead>
-          <TableHead className="text-left  pl-0">Offene Aufgaben</TableHead>
-          <TableHead className="text-left">Status</TableHead>
-          <TableHead>Vertetung</TableHead>
-          <TableHead className=" pl-0">Aktionen</TableHead>
-        </TableRow>
-      </TableHeader>
-    </>
+    <TableHeader className="text-left mb-5">
+      <TableRow className="text-lg">
+        <TableHead scope="col" className="text-left  pl-0">
+          Meine Mitarbeiter
+        </TableHead>
+        <TableHead scope="col" className="text-left  pl-0">
+          Offene Aufgaben
+        </TableHead>
+        <TableHead scope="col" className="text-left pl-0">
+          Status
+        </TableHead>
+        <TableHead scope="col" className="pl-0">
+          Vertretung
+        </TableHead>
+        <TableHead scope="col" className=" pl-0">
+          Aktionen
+        </TableHead>
+      </TableRow>
+    </TableHeader>
   );
 };
 

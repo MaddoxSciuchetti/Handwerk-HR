@@ -7,6 +7,11 @@ function useFetchTask() {
   const { data = [], isPending } = useQuery(templateQueries.getTask());
   const [search, setSearch] = useState('');
   const normalizedSearch = search.trim().toLowerCase();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [postsPerPage] = useState(10);
+
+  const indexOfLastPost = currentPage * postsPerPage;
+  const indexOfFirstPost = indexOfLastPost - postsPerPage;
 
   const tasksByTemplateType = useMemo(
     () => ({
@@ -15,6 +20,8 @@ function useFetchTask() {
     }),
     [data]
   );
+
+  console.log(data.filter((value) => value.template_type));
 
   const filteredByType = useMemo(
     () => ({
@@ -28,12 +35,26 @@ function useFetchTask() {
     [tasksByTemplateType, normalizedSearch]
   );
 
+  const paginatedType = useMemo(
+    () => ({
+      ONBOARDING: filteredByType.ONBOARDING.slice(
+        indexOfFirstPost,
+        indexOfLastPost
+      ),
+      OFFBOARDING: filteredByType.OFFBOARDING.slice(
+        indexOfFirstPost,
+        indexOfLastPost
+      ),
+    }),
+    [indexOfFirstPost, indexOfLastPost, filteredByType]
+  );
+
   const taskLengthByTemplateType = useMemo(
     () => ({
-      ONBOARDING: tasksByTemplateType.ONBOARDING.length,
-      OFFBOARDING: tasksByTemplateType.OFFBOARDING.length,
+      ONBOARDING: paginatedType.ONBOARDING.length,
+      OFFBOARDING: paginatedType.OFFBOARDING.length,
     }),
-    [tasksByTemplateType]
+    [paginatedType]
   );
 
   return {
@@ -43,6 +64,11 @@ function useFetchTask() {
     taskLengthByTemplateType,
     search,
     setSearch,
+    currentPage,
+    setCurrentPage,
+    paginatedType,
+
+    postsPerPage,
   };
 }
 

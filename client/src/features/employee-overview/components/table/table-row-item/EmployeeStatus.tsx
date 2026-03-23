@@ -5,14 +5,14 @@ import {
 } from '@/features/employee-overview/utils/calculateDate.utils';
 
 type EmployeeStatusProps = {
-  value: EmployeeDataObject;
+  employee: EmployeeDataObject;
 };
 
-const EmployeeStatus = ({ value }: EmployeeStatusProps) => {
+const EmployeeStatus = ({ employee }: EmployeeStatusProps) => {
   return (
     <>
-      {(value.employeeStatus?.length ?? 0) > 0 ? (
-        value.employeeStatus?.map((status) => (
+      {(employee.employeeStatus?.length ?? 0) > 0 ? (
+        employee.employeeStatus?.map((status) => (
           <div className="flex flex-col" key={status.id}>
             {calculateData(
               new Date(status.absencebegin || ''),
@@ -41,7 +41,7 @@ const EmployeeStatus = ({ value }: EmployeeStatusProps) => {
           </div>
         ))
       ) : (
-        <div className="flex flex-col" key={`preent-${value.id}`}>
+        <div className="flex flex-col" key={`preent-${employee.id}`}>
           <p className="w-full text-sm text-(--chart-2)">Anwesend</p>
         </div>
       )}

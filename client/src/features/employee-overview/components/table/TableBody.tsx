@@ -1,74 +1,34 @@
 import { TableBody } from '@/components/ui/table';
+import { User } from '@/features/user-profile/types/auth.type';
 import { UseMutateFunction } from '@tanstack/react-query';
 import useEmployeeData from '../../hooks/useEmployeeData';
 import { useEmployeeModal } from '../../hooks/useEmployeeModal';
 import { EmployeeDataArray } from '../../schemas/schema';
-
-import TrashWithModal from '@/components/TrashWithModal';
-import { Button } from '@/components/ui/button';
-import { User } from '@/features/user-profile/types/auth.type';
-import EmployeeName from './table-row-item/EmployeeName';
-import EmployeeOpenTasks from './table-row-item/EmployeeOpenTasks';
-import EmployeeStatus from './table-row-item/EmployeeStatus';
-import EmployeeSubstitute from './table-row-item/EmployeeSubstitute';
+import { EmployeeRow } from './EmployeeTableRow';
 
 type TableBodyProps = {
-  EmployeeData: EmployeeDataArray;
-  DeleteEmployee: UseMutateFunction<User, Error, string, unknown>;
+  filteredEmployeesByFirstName: EmployeeDataArray;
+  handleDeleteEmployee: UseMutateFunction<User, Error, string, unknown>;
 };
-
 const EmployeeTableBody = ({
-  EmployeeData,
-  DeleteEmployee,
+  filteredEmployeesByFirstName,
+  handleDeleteEmployee,
 }: TableBodyProps) => {
-  const { openEdit } = useEmployeeModal();
-  const { openTaskCountsByOwner } = useEmployeeData();
+  const { openEditEmployee } = useEmployeeModal();
+  const { openTaskCountsByEmployee } = useEmployeeData();
 
   return (
     <>
       <TableBody className="text-left mt-5">
-        {EmployeeData?.map((value) => {
-          return (
-            <tr className="group py-5 transition-colors" key={value.id}>
-              <td className="text-sm font-semibold py-5 rounded-l-xl">
-                <div className="flex items-center gap-3">
-                  <EmployeeName value={value} />
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="cursor-pointer pointer-events-none opacity-0 transition-opacity duration-150 group-hover:pointer-events-auto group-hover:opacity-100"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openEdit(value.id, `${value.vorname}${value.nachname}`);
-                    }}
-                  >
-                    Abwesenheit eintragen
-                  </Button>
-                </div>
-              </td>
-              <td>
-                <EmployeeOpenTasks
-                  owner={value.id}
-                  openTaskCount={openTaskCountsByOwner.get(value.id) ?? 0}
-                />
-              </td>
-              <td className="">
-                <EmployeeStatus value={value} />
-              </td>
-              <td className="">
-                <EmployeeSubstitute value={value} />
-              </td>
-              <td className="rounded-r-xl">
-                  <TrashWithModal
-                    description="Löschen"
-                    disabled={value.user_permission === 'CHEF'}
-                    onConfirm={() => DeleteEmployee(value.id)}
-                  />
-              </td>
-            </tr>
-          );
-        })}
+        {filteredEmployeesByFirstName?.map((employee) => (
+          <EmployeeRow
+            key={employee.id}
+            employee={employee}
+            handleDeleteEmployee={handleDeleteEmployee}
+            openTaskCountsByEmployee={openTaskCountsByEmployee}
+            openEditEmployee={openEditEmployee}
+          />
+        ))}
       </TableBody>
     </>
   );

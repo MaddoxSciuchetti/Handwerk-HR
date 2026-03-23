@@ -3,10 +3,11 @@ import { EmployeeWorker } from '../types/employeeform.types';
 
 function useEmployeeGroups(
   user: string,
-  cleanData: Array<[string, EmployeeWorker]>
+  tasksByEmployee: Array<[string, EmployeeWorker]>
 ) {
   const employeeGroups = useMemo(() => {
-    const ownerItems = cleanData.find(([owner]) => owner === user)?.[1] ?? [];
+    const ownerItems =
+      tasksByEmployee.find(([owner]) => owner === user)?.[1] ?? [];
 
     const groupedByHandwerker = new Map<
       number,
@@ -20,7 +21,7 @@ function useEmployeeGroups(
         inputs: Array<{
           description: string;
           timestamp: Date;
-          timeStampLastChange: Date;
+          lastChangedAt: Date;
           form_field_id: number;
           status: string;
         }>;
@@ -38,7 +39,7 @@ function useEmployeeGroups(
               {
                 description: task.description,
                 timestamp: input.timestamp,
-                timeStampLastChange: input.timeStampLastChange,
+                lastChangedAt: input.lastChangedAt,
                 form_field_id: task.form_field_id,
                 status: input.status,
               },
@@ -50,7 +51,7 @@ function useEmployeeGroups(
         current.inputs.push({
           description: task.description,
           timestamp: input.timestamp,
-          timeStampLastChange: input.timeStampLastChange,
+          lastChangedAt: input.lastChangedAt,
           form_field_id: task.form_field_id,
           status: input.status,
         });
@@ -60,7 +61,7 @@ function useEmployeeGroups(
     return Array.from(groupedByHandwerker.entries())
       .map(([employeeId, group]) => [String(employeeId), group] as const)
       .filter(([, group]) => group.inputs.length > 0);
-  }, [cleanData, user]);
+  }, [tasksByEmployee, user]);
 
   const totalOpenTasks = useMemo(
     () =>

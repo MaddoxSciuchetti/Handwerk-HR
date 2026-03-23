@@ -15,7 +15,10 @@ export const workerLifecycleMutations = {
     return mutationOptions<DeleteUser, Error, number>({
       mutationFn: deleteWorkerById,
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: [ALL_WORKER_DATA] });
+        queryClient.invalidateQueries({
+          queryKey: [ALL_WORKER_DATA],
+          refetchType: 'all',
+        });
       },
     });
   },

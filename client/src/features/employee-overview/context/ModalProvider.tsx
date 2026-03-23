@@ -5,34 +5,40 @@ import { EmployeeModalContext } from './modalcontext';
 
 export type EmployeeModalContextType = {
   modalState: ModalState;
-  openCreate: () => void;
-  openEdit: (employeeId: string, fullname: string) => void;
-  closeModal: () => void;
-  employeeCreate: (owner: string) => void;
+  openCreateEmployee: () => void;
+  openEditEmployee: (employeeId: string, fullname: string) => void;
+  closeEmployee: () => void;
+  openEmployeeReminder: (owner: string) => void;
 };
 
 export function EmployeeModalProvider({ children }: { children: ReactNode }) {
   const [modalState, dispatch] = useReducer(modalReducer, { kind: 'closed' });
 
-  const openCreate = () => {
+  const openCreateEmployee = () => {
     dispatch({ type: 'OPEN_CREATE' });
   };
 
-  const openEdit = (employeeId: string, fullname: string) => {
+  const openEditEmployee = (employeeId: string, fullname: string) => {
     dispatch({ type: 'OPEN_EDIT', employeeId, fullname });
   };
 
-  const employeeCreate = (owner: string) => {
+  const openEmployeeReminder = (owner: string) => {
     dispatch({ type: 'EMPLOYEE_CREATE', owner });
   };
 
-  const closeModal = () => {
+  const closeEmployee = () => {
     dispatch({ type: 'CLOSE' });
   };
 
   return (
     <EmployeeModalContext.Provider
-      value={{ modalState, openCreate, openEdit, closeModal, employeeCreate }}
+      value={{
+        modalState,
+        openCreateEmployee,
+        openEditEmployee,
+        closeEmployee,
+        openEmployeeReminder,
+      }}
     >
       {children}
     </EmployeeModalContext.Provider>

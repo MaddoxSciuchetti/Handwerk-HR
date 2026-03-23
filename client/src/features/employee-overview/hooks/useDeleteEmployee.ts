@@ -3,7 +3,7 @@ import { employeeMutations } from '../query-options/mutations/employee.mutations
 import { useEmployeeModal } from './useEmployeeModal';
 
 function useDeleteEmployee() {
-  const { closeModal } = useEmployeeModal();
+  const { closeEmployee } = useEmployeeModal();
 
   const {
     mutate: triggerDelete,
@@ -11,13 +11,13 @@ function useDeleteEmployee() {
     isPending,
   } = useMutation(employeeMutations.deleteEmployee());
 
-  const DeleteEmployee = (id: string) => {
+  const handleDeleteEmployee = (id: string) => {
     triggerDelete(id, {
-      onSuccess: () => closeModal(),
+      onSuccess: () => closeEmployee(),
     });
   };
   return {
-    DeleteEmployee,
+    handleDeleteEmployee,
     isErrorMutation,
     isPending,
   };

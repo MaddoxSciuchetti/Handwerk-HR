@@ -1,10 +1,7 @@
 type TAuthUser = {
     employeeStatus: {
-        absence: string | null;
-        absencetype: string | null;
         absencebegin: Date | null;
         absenceEnd: Date | null;
-        substitute: string | null;
         sub_user: {
             id: string;
             nachname: string;

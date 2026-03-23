@@ -9,6 +9,8 @@ type LoadingAlertProps = {
 const LoadingAlert = ({ fullScreen = false, className }: LoadingAlertProps) => {
   return (
     <div
+      role="status"
+      aria-live="polite"
       className={cn(
         'flex w-full items-center justify-center',
         fullScreen ? 'min-h-svh' : 'min-h-[calc(100svh-4rem)]',

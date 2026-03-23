@@ -10,8 +10,15 @@ import { CalendarDays, ChevronRight } from 'lucide-react';
 import useEmployeeGroups from '../../hooks/useEmployeeGroups';
 import { TAccordion } from '../../types/employeeData.types';
 
-export function EmployeeTabsData({ onTaskClick, user, cleanData }: TAccordion) {
-  const { employeeGroups, hasNoOpenTasks } = useEmployeeGroups(user, cleanData);
+export function EmployeeTabsData({
+  onTaskClick,
+  user,
+  tasksByEmployee,
+}: TAccordion) {
+  const { employeeGroups, hasNoOpenTasks } = useEmployeeGroups(
+    user,
+    tasksByEmployee
+  );
 
   if (hasNoOpenTasks)
     return (
@@ -60,9 +67,7 @@ export function EmployeeTabsData({ onTaskClick, user, cleanData }: TAccordion) {
                         <div className="mt-1.5 flex items-center gap-3">
                           <span className="flex items-center gap-1 text-xs text-muted-foreground">
                             <CalendarDays className="h-3 w-3" />
-                            {task.timeStampLastChange.toLocaleDateString(
-                              'de-DE'
-                            )}
+                            {task.lastChangedAt.toLocaleDateString('de-DE')}
                           </span>
                           <span className="text-xs text-muted-foreground">
                             {statusLabel}

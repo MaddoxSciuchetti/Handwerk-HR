@@ -18,7 +18,8 @@ test.describe('Create template journey', () => {
     await expect(addTaskButton.first()).toBeVisible();
     await addTaskButton.first().click();
 
-    const modalForm = page.locator('form[name="valuesform"]');
+    const modalDialog = page.getByRole('dialog', { name: 'Modal' });
+    const modalForm = modalDialog.locator('form');
     await expect(modalForm).toBeVisible();
 
     const descriptionInput = page.getByTestId('description');
@@ -31,21 +32,28 @@ test.describe('Create template journey', () => {
     await expect(ownerSelectTrigger).toBeVisible();
     await ownerSelectTrigger.click();
 
-    // Root cause: a global first() select-item can hit the wrong Radix portal
-    // entry or a stale node. Only choose currently visible owner options.
-    const firstEmployeeOption = page
-      .locator('[data-slot="select-item"]:visible')
-      .first();
+    const ownerOptionsList = page.getByRole('listbox').last();
+    await expect(ownerOptionsList).toBeVisible();
+
+    const firstEmployeeOption = ownerOptionsList.getByRole('option').first();
     await expect(firstEmployeeOption).toBeVisible();
+    const selectedOwner = (await firstEmployeeOption.textContent())?.trim();
     await firstEmployeeOption.click();
+    if (selectedOwner) {
+      await expect(ownerSelectTrigger).toContainText(selectedOwner);
+    }
 
     const submitButton = modalForm.getByRole('button', {
-      name: /^Neue Beschreibung hinzufügen$/i,
+      name: /New hinzufügen/i,
     });
     await expect(submitButton).toBeVisible();
 
     await submitButton.click();
-    await expect(modalForm).not.toBeVisible();
+    await expect(modalDialog).toBeHidden({ timeout: 15_000 });
+
+    const searchInput = page.getByRole('textbox', { name: 'Suche bei Namen' });
+    await expect(searchInput).toBeVisible();
+    await searchInput.fill(description);
 
     const createdTaskRow = page.locator('li', { hasText: description }).first();
     await expect(createdTaskRow).toBeVisible();

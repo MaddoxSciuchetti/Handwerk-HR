@@ -32,7 +32,7 @@ function WorkerLifeCycle() {
     <div className="mx-auto flex h-full w-5xl flex-col overflow-auto rounded-2xl bg-card p-6 md:max-w-8xl">
       <div className="h-full w-full flex flex-col">
         <SearchHeaderResuable
-          toggleModal={toggleModal}
+          openModal={toggleModal}
           search={search}
           setSearch={setSearch}
           description="Handwerker hinzufügen"

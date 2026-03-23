@@ -1,2 +1,2 @@
-export const OFFBOARDING = 'OFFBOARDING';
 export const ONBOARDING = 'ONBOARDING';
+export const OFFBOARDING = 'OFFBOARDING';

@@ -8,13 +8,12 @@ import {
 import catchErrors from "@/utils/catchErrors";
 
 export const getEmployeeWorkerData = catchErrors(async (req, res) => {
-    const { unifiedData } = await queryEmployeeWorkerData();
-    return res.status(OK).json(unifiedData);
+    const data = await queryEmployeeWorkerData();
+    return res.status(OK).json(data);
 });
 
 export const getEmployee = catchErrors(async (req, res) => {
     const EmployeeData = await queryEmployee();
-    console.log(EmployeeData);
     return res.status(OK).json(EmployeeData);
 });
 

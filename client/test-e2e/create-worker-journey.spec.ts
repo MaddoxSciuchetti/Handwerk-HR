@@ -79,7 +79,7 @@ test.describe('Onboarding worker view journey', () => {
       timeout: 15_000,
     });
 
-    await page.goBack();
+    await page.goto('/worker-lifycycle');
     await expect(page).toHaveURL(/\/worker-lifycycle$/);
 
     const createdWorkerRow = getWorkerRow(page, worker.fullName);

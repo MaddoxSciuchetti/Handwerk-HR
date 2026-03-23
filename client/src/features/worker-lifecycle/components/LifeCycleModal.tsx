@@ -10,7 +10,7 @@ const LifeCycleModal = ({ toggleModal, modal }: LifeCycleModalProps) => {
   return (
     <>
       {modal && (
-        <ModalOverlay handleToggle={toggleModal}>
+        <ModalOverlay size={'max-w-2xl'} handleToggle={toggleModal}>
           <ModalContent toggleModal={toggleModal} />
         </ModalOverlay>
       )}

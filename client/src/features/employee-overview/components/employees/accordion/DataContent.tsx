@@ -20,7 +20,7 @@ function DataContent({ group, onTaskClick }: DataContentProps) {
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                 <p className="flex-1 text-sm font-medium">{task.description}</p>
                 <p className="text-xs text-muted-foreground">
-                  {task.timeStampLastChange.toLocaleDateString()}
+                  {task.lastChangedAt.toLocaleDateString()}
                 </p>
               </div>
             </div>

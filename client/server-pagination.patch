@@ -1,0 +1,499 @@
+diff --git a/client/src/features/template-tasks/TaskContextProvider.tsx b/client/src/features/template-tasks/TaskContextProvider.tsx
+index cb4d90a..e4cfa94 100644
+--- a/client/src/features/template-tasks/TaskContextProvider.tsx
++++ b/client/src/features/template-tasks/TaskContextProvider.tsx
+@@ -19,15 +19,24 @@ export type TemplateModalContextProps = {
+   closeTask: () => void;
+   tab: 'ONBOARDING' | 'OFFBOARDING';
+   setTab: Dispatch<SetStateAction<'ONBOARDING' | 'OFFBOARDING'>>;
++  currentPage: number;
++  setCurrentPage: Dispatch<SetStateAction<number>>;
++  setNewTab: (newTab: 'ONBOARDING' | 'OFFBOARDING') => void;
+ };
+ 
+ export function TaskContextProvider({ children }: { children: ReactNode }) {
+   const [modalState, dispatch] = useReducer(modalReducer, { kind: 'closed' });
++  const [currentPage, setCurrentPage] = useState(1);
+   const [tab, setTab] = useState<'ONBOARDING' | 'OFFBOARDING'>('ONBOARDING');
+   const openCreateTask = () => {
+     dispatch({ type: 'OPEN_CREATE' });
+   };
+ 
++  const setNewTab = (newTab: 'ONBOARDING' | 'OFFBOARDING') => {
++    setTab(newTab);
++    setCurrentPage(1);
++  };
++
+   const openEditTask = (
+     form_field_id: number,
+     description: string,
+@@ -49,6 +58,9 @@ export function TaskContextProvider({ children }: { children: ReactNode }) {
+         closeTask,
+         tab,
+         setTab,
++        currentPage,
++        setCurrentPage,
++        setNewTab,
+       }}
+     >
+       {children}
+diff --git a/client/src/features/template-tasks/api/index.ts b/client/src/features/template-tasks/api/index.ts
+index 3962077..585bf4b 100644
+--- a/client/src/features/template-tasks/api/index.ts
++++ b/client/src/features/template-tasks/api/index.ts
+@@ -1,9 +1,8 @@
+ import API from '@/config/apiClient';
+ import {
+-  DescriptionData,
+-  DescriptionResponse,
+   NewDescriptionField,
+   SuccessResponse,
++  TemplatePaginationResponse,
+ } from '@/types/api.types';
+ import { EditDescriptionData } from '../types/taskForm.types';
+ 
+@@ -38,9 +37,15 @@ export const createTemplateTask = async (data: {
+   return response;
+ };
+ 
+-export const getTemplateTask = async (): Promise<DescriptionResponse[]> => {
+-  const response = await API.get<DescriptionData[], DescriptionResponse[]>(
+-    '/template/getTask'
++export const getTemplateTask = async (
++  currentPage: number,
++  tab: 'ONBOARDING' | 'OFFBOARDING'
++): Promise<TemplatePaginationResponse> => {
++  const response = await API.get<
++    TemplatePaginationResponse,
++    TemplatePaginationResponse
++  >(
++    `/template/getTask?currentPage=${currentPage}&pageSize=10&currentTab=${tab}`
+   );
+   return response;
+ };
+diff --git a/client/src/features/template-tasks/components/EditTemplateModal.tsx b/client/src/features/template-tasks/components/EditTemplateModal.tsx
+index 6dfe569..3c84455 100644
+--- a/client/src/features/template-tasks/components/EditTemplateModal.tsx
++++ b/client/src/features/template-tasks/components/EditTemplateModal.tsx
+@@ -7,8 +7,7 @@ import { editSchema } from '../schemas/taskForm.schema';
+ import { HandleEditSubmit } from '../types/taskForm.types';
+ import TaskForm from './shared/TaskForm';
+ 
+-type EditTemplateModalProps = {};
+-const EditTemplateModal = ({}: EditTemplateModalProps) => {
++const EditTemplateModal = () => {
+   const { closeTask, modalState, tab } = useTemplateModalContext();
+   const { editDescriptionMutation } = useEditDescription();
+   const isModalStateEdit = modalState.kind === 'open-edit';
+diff --git a/client/src/features/template-tasks/components/Pagination.tsx b/client/src/features/template-tasks/components/Pagination.tsx
+index 7b5c7ec..00b021c 100644
+--- a/client/src/features/template-tasks/components/Pagination.tsx
++++ b/client/src/features/template-tasks/components/Pagination.tsx
+@@ -1,24 +1,16 @@
+ import { Dispatch, MouseEvent, SetStateAction } from 'react';
+ 
+ type PaginationProps = {
+-  postsPerPage: number;
+-  totalPosts: number;
+   setCurrentPage: Dispatch<SetStateAction<number>>;
+   currentPage: number;
++  totalPages: number[];
+ };
+ 
+ const Pagination = ({
+-  postsPerPage,
+-  totalPosts,
+   setCurrentPage,
+   currentPage,
++  totalPages,
+ }: PaginationProps) => {
+-  const pageNumbers = [];
+-
+-  for (let i = 1; i <= Math.ceil(totalPosts / postsPerPage); i++) {
+-    pageNumbers.push(i);
+-  }
+-
+   const handlePageUpdate = (
+     number: number,
+     e: MouseEvent<HTMLButtonElement>
+@@ -29,7 +21,7 @@ const Pagination = ({
+ 
+   return (
+     <ul className="flex gap-2 ">
+-      {pageNumbers.map((number) => (
++      {totalPages.map((number) => (
+         <button
+           key={number}
+           onClick={(e) => handlePageUpdate(number, e)}
+diff --git a/client/src/features/template-tasks/components/TabsFooter.tsx b/client/src/features/template-tasks/components/TabsFooter.tsx
+index a1a2c6e..0ab6e09 100644
+--- a/client/src/features/template-tasks/components/TabsFooter.tsx
++++ b/client/src/features/template-tasks/components/TabsFooter.tsx
+@@ -2,40 +2,35 @@ import { Dispatch, SetStateAction } from 'react';
+ import Pagination from './Pagination';
+ 
+ type TabsFooterProps = {
+-  postsPerPage: number;
+-  totalPosts: number;
+   tab: 'ONBOARDING' | 'OFFBOARDING';
+   setCurrentPage: Dispatch<SetStateAction<number>>;
+   currentPage: number;
+-  taskLengthByTemplateType: { ONBOARDING: number; OFFBOARDING: number };
++  taskLengthByTemplateType: number;
++  totalPages: number[];
+ };
+ 
+ const TabsFooter = ({
+-  postsPerPage,
+-  totalPosts,
+   tab,
+   setCurrentPage,
+   currentPage,
+   taskLengthByTemplateType,
++  totalPages,
+ }: TabsFooterProps) => {
+   return (
+     <>
+       <div className="flex justify-between mt-2 items-center">
+         <Pagination
+-          postsPerPage={postsPerPage}
+-          totalPosts={totalPosts}
++          totalPages={totalPages}
+           setCurrentPage={setCurrentPage}
+           currentPage={currentPage}
+         />
+         {tab === 'OFFBOARDING' ? (
+           <p className="font-light text-xs text-(--muted-foreground)">
+-            {taskLengthByTemplateType.OFFBOARDING} Aufgaben in Offboarding
+-            template
++            {taskLengthByTemplateType} Aufgaben in Offboarding template
+           </p>
+         ) : (
+           <p className="font-light text-xs text-(--muted-foreground)">
+-            {taskLengthByTemplateType.ONBOARDING} Aufgaben in Onboarding
+-            template
++            {taskLengthByTemplateType} Aufgaben in Onboarding template
+           </p>
+         )}
+       </div>
+diff --git a/client/src/features/template-tasks/components/TabsHeader.tsx b/client/src/features/template-tasks/components/TabsHeader.tsx
+index 5e106e5..e2686a0 100644
+--- a/client/src/features/template-tasks/components/TabsHeader.tsx
++++ b/client/src/features/template-tasks/components/TabsHeader.tsx
+@@ -1,16 +1,14 @@
+ import '@/App.css';
+ import { Button } from '@/components/ui/button';
+ import { cn } from '@/lib/trycatch';
+-import { Dispatch, SetStateAction } from 'react';
+ import { TABS } from '../consts/index.consts';
+ 
+ type TabsHeaderProps = {
+   tab: 'ONBOARDING' | 'OFFBOARDING';
+-  setTab: Dispatch<SetStateAction<'ONBOARDING' | 'OFFBOARDING'>>;
++  setTab: (newTab: 'ONBOARDING' | 'OFFBOARDING') => void;
+ };
+ 
+ const TabsHeader = ({ tab, setTab }: TabsHeaderProps) => {
+-  console.log(tab);
+   return (
+     <>
+       <div className="mb-6 flex items-center justify-between mt-5">
+diff --git a/client/src/features/template-tasks/components/Tasks.tsx b/client/src/features/template-tasks/components/Tasks.tsx
+index 56df0d9..57f469a 100644
+--- a/client/src/features/template-tasks/components/Tasks.tsx
++++ b/client/src/features/template-tasks/components/Tasks.tsx
+@@ -2,13 +2,13 @@ import '@/App.css';
+ 
+ import TrashWithModal from '@/components/DropDownWithModal';
+ import { Button } from '@/components/ui/button';
+-import { DescriptionResponse } from '@/types/api.types';
++import { Products } from '@/types/api.types';
+ import { Edit } from 'lucide-react';
+ import useDeleteDescription from '../hooks/useDeleteDescription';
+ import useTemplateModalContext from '../hooks/useTemplateModalContext';
+ 
+ type TasksProps = {
+-  items: DescriptionResponse[];
++  items: Products[];
+   openEditTask: (
+     form_field_id: number,
+     description: string,
+diff --git a/client/src/features/template-tasks/components/TemplateTask.tsx b/client/src/features/template-tasks/components/TemplateTask.tsx
+index 1d74f1f..ed54cb1 100644
+--- a/client/src/features/template-tasks/components/TemplateTask.tsx
++++ b/client/src/features/template-tasks/components/TemplateTask.tsx
+@@ -10,6 +10,14 @@ import TabsHeader from './TabsHeader';
+ import Tasks from './Tasks';
+ 
+ function TemplateTasks() {
++  const {
++    modalState,
++    closeTask,
++    openCreateTask,
++    openEditTask,
++    tab,
++    setNewTab,
++  } = useTemplateModalContext();
+   const {
+     filteredByType,
+     taskLengthByTemplateType,
+@@ -18,12 +26,8 @@ function TemplateTasks() {
+     setSearch,
+     currentPage,
+     setCurrentPage,
+-    postsPerPage,
+-    paginatedType,
+-  } = useFetchTask();
+-
+-  const { modalState, closeTask, openCreateTask, openEditTask, tab, setTab } =
+-    useTemplateModalContext();
++    totalPages,
++  } = useFetchTask(tab);
+ 
+   const renderModal = () => {
+     switch (modalState.kind) {
+@@ -57,15 +61,14 @@ function TemplateTasks() {
+         description="Add Task"
+         openModal={openCreateTask}
+       />
+-      <TabsHeader tab={tab} setTab={setTab} />
+-      <Tasks items={paginatedType[tab]} openEditTask={openEditTask} />
++      <TabsHeader tab={tab} setTab={setNewTab} />
++      <Tasks items={filteredByType} openEditTask={openEditTask} />
+       <TabsFooter
++        totalPages={totalPages}
+         currentPage={currentPage}
+         tab={tab}
+-        postsPerPage={postsPerPage}
+         taskLengthByTemplateType={taskLengthByTemplateType}
+         setCurrentPage={setCurrentPage}
+-        totalPosts={filteredByType[tab].length}
+       />
+       {renderModal()}
+     </div>
+diff --git a/client/src/features/template-tasks/hooks/useFetchTask.ts b/client/src/features/template-tasks/hooks/useFetchTask.ts
+index dfba83e..75b156b 100644
+--- a/client/src/features/template-tasks/hooks/useFetchTask.ts
++++ b/client/src/features/template-tasks/hooks/useFetchTask.ts
+@@ -1,72 +1,46 @@
+-import { OFFBOARDING, ONBOARDING } from '@/constants/form.consts';
+ import { useQuery } from '@tanstack/react-query';
+ import { useMemo, useState } from 'react';
+ import { templateQueries } from '../query-options/queries/template.queries';
++import useTemplateModalContext from './useTemplateModalContext';
+ 
+-function useFetchTask() {
+-  const { data = [], isPending } = useQuery(templateQueries.getTask());
++function useFetchTask(tab: 'ONBOARDING' | 'OFFBOARDING') {
+   const [search, setSearch] = useState('');
+   const normalizedSearch = search.trim().toLowerCase();
+-  const [currentPage, setCurrentPage] = useState(1);
++  const { currentPage, setCurrentPage } = useTemplateModalContext();
+   const [postsPerPage] = useState(10);
+-
+-  const indexOfLastPost = currentPage * postsPerPage;
+-  const indexOfFirstPost = indexOfLastPost - postsPerPage;
+-
+-  const tasksByTemplateType = useMemo(
+-    () => ({
+-      ONBOARDING: data.filter((value) => value.template_type === ONBOARDING),
+-      OFFBOARDING: data.filter((value) => value.template_type === OFFBOARDING),
+-    }),
+-    [data]
++  const { data, isPending } = useQuery(
++    templateQueries.getTask(currentPage, tab)
+   );
+ 
+-  console.log(data.filter((value) => value.template_type));
++  const products = useMemo(() => {
++    const intialdata = data?.products ?? [];
++    return intialdata;
++  }, [data]);
++
++  const totalPages = data?.pageNumbers ?? [0];
+ 
+   const filteredByType = useMemo(
+-    () => ({
+-      ONBOARDING: tasksByTemplateType.ONBOARDING.filter((item) =>
+-        item.description?.toLowerCase().includes(normalizedSearch)
+-      ),
+-      OFFBOARDING: tasksByTemplateType.OFFBOARDING.filter((item) =>
++    () =>
++      products.filter((item) =>
+         item.description?.toLowerCase().includes(normalizedSearch)
+       ),
+-    }),
+-    [tasksByTemplateType, normalizedSearch]
+-  );
+-
+-  const paginatedType = useMemo(
+-    () => ({
+-      ONBOARDING: filteredByType.ONBOARDING.slice(
+-        indexOfFirstPost,
+-        indexOfLastPost
+-      ),
+-      OFFBOARDING: filteredByType.OFFBOARDING.slice(
+-        indexOfFirstPost,
+-        indexOfLastPost
+-      ),
+-    }),
+-    [indexOfFirstPost, indexOfLastPost, filteredByType]
++    [products, normalizedSearch]
+   );
+ 
+   const taskLengthByTemplateType = useMemo(
+-    () => ({
+-      ONBOARDING: paginatedType.ONBOARDING.length,
+-      OFFBOARDING: paginatedType.OFFBOARDING.length,
+-    }),
+-    [paginatedType]
++    () => filteredByType.length,
++    [filteredByType]
+   );
+ 
+   return {
+     isLoading: isPending,
+-    tasksByTemplateType,
+     filteredByType,
+     taskLengthByTemplateType,
+     search,
+     setSearch,
+     currentPage,
+     setCurrentPage,
+-    paginatedType,
++    totalPages,
+ 
+     postsPerPage,
+   };
+diff --git a/client/src/features/template-tasks/query-options/mutations/template.mutations.ts b/client/src/features/template-tasks/query-options/mutations/template.mutations.ts
+index 562fb5e..6d2d122 100644
+--- a/client/src/features/template-tasks/query-options/mutations/template.mutations.ts
++++ b/client/src/features/template-tasks/query-options/mutations/template.mutations.ts
+@@ -14,7 +14,9 @@ export const templateMutations = {
+     return mutationOptions<SuccessResponse<string>, Error, number>({
+       mutationFn: deleteTemplateTask,
+       onSuccess: () =>
+-        queryClient.invalidateQueries({ queryKey: [DESCRIPTION_ROOT] }),
++        queryClient.invalidateQueries({
++          queryKey: [DESCRIPTION_ROOT],
++        }),
+     });
+   },
+ 
+@@ -22,7 +24,9 @@ export const templateMutations = {
+     return mutationOptions<EditDescriptionData, Error, EditDescriptionData>({
+       mutationFn: updateTemplateTask,
+       onSuccess: () => {
+-        queryClient.invalidateQueries({ queryKey: [DESCRIPTION_ROOT] });
++        queryClient.invalidateQueries({
++          queryKey: [DESCRIPTION_ROOT],
++        });
+       },
+     });
+   },
+@@ -39,7 +43,9 @@ export const templateMutations = {
+     >({
+       mutationFn: createTemplateTask,
+       onSuccess: () => {
+-        queryClient.invalidateQueries({ queryKey: [DESCRIPTION_ROOT] });
++        queryClient.invalidateQueries({
++          queryKey: [DESCRIPTION_ROOT],
++        });
+       },
+     });
+   },
+diff --git a/client/src/features/template-tasks/query-options/queries/template.queries.ts b/client/src/features/template-tasks/query-options/queries/template.queries.ts
+index 3ea97bc..3fcf2b4 100644
+--- a/client/src/features/template-tasks/query-options/queries/template.queries.ts
++++ b/client/src/features/template-tasks/query-options/queries/template.queries.ts
+@@ -1,13 +1,13 @@
+-import { DescriptionResponse } from '@/types/api.types';
++import { TemplatePaginationResponse } from '@/types/api.types';
+ import { queryOptions } from '@tanstack/react-query';
+ import { getTemplateTask } from '../../api';
+ import { DESCRIPTION_ROOT } from '../../consts/query-key.consts';
+ 
+ export const templateQueries = {
+-  getTask: () => {
+-    return queryOptions<DescriptionResponse[]>({
+-      queryKey: [DESCRIPTION_ROOT],
+-      queryFn: getTemplateTask,
++  getTask: (currentPage: number, tab: 'ONBOARDING' | 'OFFBOARDING') => {
++    return queryOptions<TemplatePaginationResponse, Error>({
++      queryKey: [DESCRIPTION_ROOT, currentPage, tab],
++      queryFn: () => getTemplateTask(currentPage, tab),
+     });
+   },
+ };
+diff --git a/client/src/types/api.types.ts b/client/src/types/api.types.ts
+index 9f4a178..9208fed 100644
+--- a/client/src/types/api.types.ts
++++ b/client/src/types/api.types.ts
+@@ -11,6 +11,26 @@ export type ErrorResponse = {
+   error: string;
+ };
+ 
++export type Products = {
++  form_field_id: number;
++  description: string | null;
++  owner: string;
++  template_type: 'ONBOARDING' | 'OFFBOARDING';
++  auth_user: {
++    id: number;
++    vorname: string;
++    nachname: string;
++  };
++};
++
++export type TotalPages = {
++  totalPages: number;
++};
++export type TemplatePaginationResponse = {
++  products: Products[];
++  pageNumbers: number[];
++};
++
+ export type DescriptionData = {
+   form_field_id: number;
+   description: string | null;
+@@ -23,6 +43,7 @@ export type DescriptionResponse = DescriptionData & {
+     vorname: string;
+     nachname: string;
+   };
++  totalPages: number;
+ };
+ 
+ export type EditDescriptionForm = {
+diff --git a/server/src/controllers/template.controller.ts b/server/src/controllers/template.controller.ts
+index fac6a11..f63ed86 100644
+--- a/server/src/controllers/template.controller.ts
++++ b/server/src/controllers/template.controller.ts
+@@ -18,11 +18,26 @@ export const deleteTemplateTask = catchErrors(async (req, res) => {
+ });
+ 
+ export const getTask = catchErrors(async (req, res) => {
+-    const id = req.userId;
++    const currentPage = +req.query.currentPage!;
++    const pageSize = +req.query.pageSize!;
++    const currentTab = req.query.currentTab;
++    const lastIndex = currentPage * pageSize;
++    const firstIndex = lastIndex - pageSize;
+ 
+     const descriptionData = await queryTask();
++    const filtered = descriptionData.filter(
++        (value) => value.template_type === currentTab,
++    );
++
++    const descriptionLength = filtered.length;
++    const paginatedData = filtered.slice(firstIndex, lastIndex);
++
++    const pageNumbers: number[] = [];
++    for (let i = 1; i <= Math.ceil(descriptionLength / pageSize); i++) {
++        pageNumbers.push(i);
++    }
+ 
+-    return res.status(OK).json(descriptionData);
++    return res.status(OK).json({ products: paginatedData, pageNumbers });
+ });
+ 
+ export const createTemplateTask = async (req: Request, res: Response) => {

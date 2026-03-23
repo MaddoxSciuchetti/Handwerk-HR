@@ -12,7 +12,7 @@ type ViewEmployeeModalProps = {
 };
 
 const ViewEmployeeModal = ({ selectedOwner }: ViewEmployeeModalProps) => {
-  const { isLoading, cleanData } = useEmployeeData();
+  const { isLoading, tasksByEmployee } = useEmployeeData();
   const [isReminderStep, setIsReminderStep] = useState(false);
 
   if (isLoading) return <LoadingAlert />;
@@ -28,7 +28,7 @@ const ViewEmployeeModal = ({ selectedOwner }: ViewEmployeeModalProps) => {
               size="icon"
               onClick={() => setIsReminderStep(false)}
               className="h-7 w-7 text-muted-foreground hover:text-foreground"
-              aria-label="Zurueck zu Aufgaben"
+              aria-label="Zurück zu Aufgaben"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -43,7 +43,7 @@ const ViewEmployeeModal = ({ selectedOwner }: ViewEmployeeModalProps) => {
           ) : (
             <EmployeeTabsData
               user={selectedOwner}
-              cleanData={cleanData}
+              tasksByEmployee={tasksByEmployee}
               onTaskClick={() => setIsReminderStep(true)}
             />
           )}

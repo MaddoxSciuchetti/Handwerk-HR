@@ -4,7 +4,7 @@ import { EmployeeWorker } from './employeeform.types';
 export type TAccordion = {
   onTaskClick: () => void;
   user: string;
-  cleanData: Array<[string, EmployeeWorker]>;
+  tasksByEmployee: Array<[string, EmployeeWorker]>;
 };
 
 export type EmployeeOpenTasks = {
@@ -12,6 +12,7 @@ export type EmployeeOpenTasks = {
   inputs: Array<{
     description: string;
     timestamp: Date;
+    lastChangedAt: Date;
     form_field_id: number;
     status: string;
   }>;

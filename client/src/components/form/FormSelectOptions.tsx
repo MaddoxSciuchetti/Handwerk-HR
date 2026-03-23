@@ -6,6 +6,7 @@ import {
   Path,
 } from 'react-hook-form';
 
+import { cn } from '@/lib/trycatch';
 import { ErrorMessage } from '@hookform/error-message';
 import { Label } from '../ui/label';
 import {
@@ -16,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
-import { cn } from '@/lib/trycatch';
 
 type FormSelectOptionsProps<T extends FieldValues> = {
   control: Control<T>;
