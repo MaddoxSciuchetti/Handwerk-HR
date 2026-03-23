@@ -1,9 +1,15 @@
 import ModalOverlay from '@/components/modal/ModalOverlay';
 import MediumWrapper from '@/components/modal/modalSizes/MediumWrapper';
+import { workerMutations } from '@/features/task-management/query-options/mutations/worker.mutations';
+import { useMutation } from '@tanstack/react-query';
 import { Check, X } from 'lucide-react';
 import { MouseEvent, useState } from 'react';
-import { workerInfos } from '../consts/worker-info.consts';
+import { WorkerInfoItem, workerInfos } from '../consts/worker-info.consts';
 import useWorkerInfo from '../hooks/useWorkerInfo';
+import {
+  addWorkerBaseSchema,
+  OffboardingValidation,
+} from '../schemas/zod.schemas';
 import { FormType } from '../types/index.types';
 import WorkerInfoHeader from './WorkerInfoHeader';
 
@@ -25,17 +31,27 @@ const WorkerInfoModal = ({
     workerId,
     lifecycleType
   );
+  const { mutate } = useMutation(workerMutations.updateDataPoint(workerId));
 
   const [uniqueInput, setUniqueInput] = useState<number>();
   const [inputState, setInputState] = useState<boolean>();
   const [inputValue, setInputValue] = useState<string>();
 
-  const handleSubmit = (label: string) => {
+  const handleSubmit = (item: WorkerInfoItem) => {
     if (!workerInfo || !inputValue) return;
-    const item = workerInfos(workerInfo).filter(
-      (value) => value.label === label
-    );
-    console.log(item);
+    const schema =
+      item.schemaKey === 'austrittsdatum'
+        ? OffboardingValidation.pick({ [item.schemaKey]: true } as any)
+        : addWorkerBaseSchema.pick({ [item.schemaKey!]: true } as any);
+
+    const result = schema.safeParse({ [item.schemaKey!]: inputValue });
+
+    console.log(result.data);
+    if (!result.success) {
+      console.log(result.error.format());
+      return;
+    }
+    mutate(result.data);
   };
 
   if (!isOpen) {
@@ -60,7 +76,7 @@ const WorkerInfoModal = ({
                   >
                     {item.label}
                   </span>
-                  {uniqueInput === idx && inputState ? (
+                  {uniqueInput === idx && inputState && item.form ? (
                     <span className="flex">
                       <input
                         placeholder={`${item.value}`}
@@ -77,7 +93,7 @@ const WorkerInfoModal = ({
                       />
                       <Check
                         className="cursor-pointer"
-                        onClick={() => handleSubmit(item.label)}
+                        onClick={() => handleSubmit(item)}
                       />
                     </span>
                   ) : (
