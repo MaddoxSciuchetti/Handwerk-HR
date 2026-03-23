@@ -3,7 +3,7 @@ import { formatDate } from '../utils/dateCalculation';
 
 export type WorkerInfoItem = {
   label: string;
-  value: string | number | null;
+  value: string | number;
   className?: string;
 };
 
@@ -23,17 +23,17 @@ export const workerInfos = (
   {
     label: 'E-Mail',
     className: 'text-muted-foreground',
-    value: workerInfo.worker.email,
+    value: workerInfo.worker.email || '',
   },
   {
     label: 'Position',
     className: 'text-muted-foreground',
-    value: workerInfo.worker.position,
+    value: workerInfo.worker.position || '',
   },
   {
     label: 'Adresse',
     className: 'text-muted-foreground',
-    value: workerInfo.worker.adresse,
+    value: workerInfo.worker.adresse || '',
   },
   {
     label: 'Eintrittsdatum',
