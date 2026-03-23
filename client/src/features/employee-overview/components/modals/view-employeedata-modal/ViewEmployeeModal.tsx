@@ -28,7 +28,7 @@ const ViewEmployeeModal = ({ selectedOwner }: ViewEmployeeModalProps) => {
               size="icon"
               onClick={() => setIsReminderStep(false)}
               className="h-7 w-7 text-muted-foreground hover:text-foreground"
-              aria-label="Zurueck zu Aufgaben"
+              aria-label="Zurück zu Aufgaben"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>

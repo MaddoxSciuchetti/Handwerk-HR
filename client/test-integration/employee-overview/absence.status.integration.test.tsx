@@ -11,7 +11,7 @@ import { absentStatus, buildEmployee } from '../utils';
 
 vi.mock('@/features/employee-overview/hooks/useEmployeeData', () => ({
   default: () => ({
-    openTaskCountsByOwner: new Map<string, number>(),
+    openTaskCountsByEmployee: new Map<string, number>(),
   }),
 }));
 

@@ -62,7 +62,7 @@ describe('Employee overview modal', () => {
     ).not.toBeInTheDocument();
 
     await user.click(
-      screen.getByRole('button', { name: /search-header-button/i })
+      screen.getByRole('button', { name: /Mitarbeiter Hinzufügen/i })
     );
 
     expect(
