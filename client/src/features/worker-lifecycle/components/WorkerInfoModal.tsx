@@ -45,10 +45,8 @@ const WorkerInfoModal = ({
         : addWorkerBaseSchema.pick({ [item.schemaKey!]: true } as any);
 
     const result = schema.safeParse({ [item.schemaKey!]: inputValue });
-
-    console.log(result.data);
     if (!result.success) {
-      console.log(result.error.format());
+      console.log(result.error);
       return;
     }
     mutate(result.data);
@@ -80,7 +78,6 @@ const WorkerInfoModal = ({
                     <span className="flex">
                       <input
                         placeholder={`${item.value}`}
-                        value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
                         className=""
                         onClick={(e: MouseEvent<HTMLInputElement>) =>

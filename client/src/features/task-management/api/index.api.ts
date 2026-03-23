@@ -73,7 +73,10 @@ export const deleteWorkerFile = async (
   return API.delete(`worker/deleteWorkerFile/${id}`);
 };
 
-export const updateData = async (data: z.infer<typeof addWorkerBaseSchema>, workerId: number) => {
+export const updateData = async (
+  data: z.infer<typeof addWorkerBaseSchema>,
+  workerId: number
+) => {
   await API.put<
     typeof addWorkerBaseSchema,
     string,
