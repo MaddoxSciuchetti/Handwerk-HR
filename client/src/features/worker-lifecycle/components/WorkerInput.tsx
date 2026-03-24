@@ -53,6 +53,8 @@ const WorkerInput = ({
       {uniqueInput === idx && inputState && item.form ? (
         <span className="flex">
           <input
+            autoFocus
+            className="border-0 focus:outline-none"
             placeholder={`${item.value}`}
             onChange={(e) => setInputValue(e.target.value)}
             onClick={(e: MouseEvent<HTMLInputElement>) => e.stopPropagation()}
