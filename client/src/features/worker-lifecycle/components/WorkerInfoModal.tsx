@@ -1,3 +1,4 @@
+import LoadingAlert from '@/components/alerts/LoadingAlert';
 import ModalOverlay from '@/components/modal/ModalOverlay';
 import MediumWrapper from '@/components/modal/modalSizes/MediumWrapper';
 import { useState } from 'react';
@@ -41,8 +42,12 @@ const WorkerInfoModal = ({
           className="flex w-full flex-col gap-3 p-8 text-left"
           onClick={() => setInputState(false)}
         >
-          <WorkerInfoHeader isLoading={isLoading} isError={isError} />
-          {workerInfo ? (
+          <WorkerInfoHeader isError={isError} />
+          {isLoading ? (
+            <div className="flex w-full min-h-104 items-center justify-center">
+              <LoadingAlert className="min-h-0" />
+            </div>
+          ) : workerInfo ? (
             <div className="w-full">
               {workerInfos(workerInfo)
                 .filter(
