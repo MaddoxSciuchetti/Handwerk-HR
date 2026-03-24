@@ -1,13 +1,15 @@
 import { workerMutations } from '@/features/task-management/query-options/mutations/worker.mutations';
+import { UpdatePayload } from '@/features/task-management/types/index.types';
 import { DescriptionFieldResponse } from '@/types/api.types';
 import { useMutation } from '@tanstack/react-query';
-import { Dispatch, MouseEvent, SetStateAction, useState } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
 import { WorkerInfoItem } from '../consts/worker-info.consts';
 import {
   addWorkerBaseSchema,
   OffboardingValidation,
 } from '../schemas/zod.schemas';
 import ActiveField from './ActiveField';
+import NonActiveField from './NonActiveField';
 
 type WorkerInputProps = {
   item: WorkerInfoItem;
@@ -64,18 +66,15 @@ const WorkerInput = ({
           item={item}
         />
       ) : (
-        <span
-          className="truncate"
-          key={`${item.label}-value`}
-          onClick={(e: MouseEvent<HTMLSpanElement>) => {
-            e.stopPropagation();
-            setInputState(true);
-            setUniqueInput(idx);
-            setInputValue('');
-          }}
-        >
-          {isPending ? String(variables[item.schemaKey!]) : (item.value ?? '-')}
-        </span>
+        <NonActiveField
+          item={item}
+          setInputState={setInputState}
+          setUniqueInput={setUniqueInput}
+          setInputValue={setInputValue}
+          isPending={isPending}
+          variables={variables as UpdatePayload}
+          idx={idx}
+        />
       )}
     </>
   );
