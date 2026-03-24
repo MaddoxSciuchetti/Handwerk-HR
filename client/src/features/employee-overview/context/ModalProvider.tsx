@@ -1,3 +1,4 @@
+import { FormType } from '@/features/worker-lifecycle/types/index.types';
 import { ReactNode, useReducer } from 'react';
 import { modalReducer } from '../reducers/employee-modal-reducer';
 import { ModalState } from '../types/reducer.types';
@@ -9,6 +10,7 @@ export type EmployeeModalContextType = {
   openEditEmployee: (employeeId: string, fullname: string) => void;
   closeEmployee: () => void;
   openEmployeeReminder: (owner: string) => void;
+  openInfoModal: (workerId: number, lifecycleType: FormType) => void;
 };
 
 export function EmployeeModalProvider({ children }: { children: ReactNode }) {
@@ -30,6 +32,10 @@ export function EmployeeModalProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'CLOSE' });
   };
 
+  const openInfoModal = (workerId: number, lifecycleType: FormType) => {
+    dispatch({ type: 'OPEN_EMPLOYEE_INFO', workerId, lifecycleType });
+  };
+
   return (
     <EmployeeModalContext.Provider
       value={{
@@ -38,6 +44,7 @@ export function EmployeeModalProvider({ children }: { children: ReactNode }) {
         openEditEmployee,
         closeEmployee,
         openEmployeeReminder,
+        openInfoModal,
       }}
     >
       {children}
