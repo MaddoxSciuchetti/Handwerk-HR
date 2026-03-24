@@ -9,6 +9,7 @@ export type EmployeeModalContextType = {
   openEditEmployee: (employeeId: string, fullname: string) => void;
   closeEmployee: () => void;
   openEmployeeReminder: (owner: string) => void;
+  openInfoModal: (employeeId: string) => void;
 };
 
 export function EmployeeModalProvider({ children }: { children: ReactNode }) {
@@ -30,6 +31,10 @@ export function EmployeeModalProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'CLOSE' });
   };
 
+  const openInfoModal = (employeeId: string) => {
+    dispatch({ type: 'OPEN_EMPLOYEE_INFO', employeeId });
+  };
+
   return (
     <EmployeeModalContext.Provider
       value={{
@@ -38,6 +43,7 @@ export function EmployeeModalProvider({ children }: { children: ReactNode }) {
         openEditEmployee,
         closeEmployee,
         openEmployeeReminder,
+        openInfoModal,
       }}
     >
       {children}

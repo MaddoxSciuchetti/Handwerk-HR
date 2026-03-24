@@ -3,7 +3,9 @@ import TrashButton from '@/components/TrashButton';
 import { Button } from '@/components/ui/button';
 import { User } from '@/features/user-profile/types/auth.type';
 import { UseMutateFunction } from '@tanstack/react-query';
+import { Info } from 'lucide-react';
 import { useState } from 'react';
+import { useEmployeeModal } from '../../hooks/useEmployeeModal';
 import { EmployeeDataArray } from '../../schemas/schema';
 import EmployeeName from './table-row-item/EmployeeName';
 import EmployeeOpenTasks from './table-row-item/EmployeeOpenTasks';
@@ -25,12 +27,19 @@ export const EmployeeRow = ({
 }: EmployeeRowProps) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const closeDeleteModalHandler = () => setIsDeleteModalOpen(false);
+  const { openInfoModal } = useEmployeeModal();
 
   return (
     <tr className="group py-5 transition-colors">
       <td className="text-sm font-semibold py-5 rounded-l-xl">
         <div className="flex items-center gap-3">
           <EmployeeName employee={employee} />
+          <Button
+            className="cursor-pointer"
+            onClick={() => openInfoModal(employee.id)}
+          >
+            <Info />
+          </Button>
           <Button
             type="button"
             size="sm"

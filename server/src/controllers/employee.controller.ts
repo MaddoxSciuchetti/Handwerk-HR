@@ -1,6 +1,7 @@
 import { OK } from "@/constants/http";
 import {
     queryEmployee,
+    queryEmployeeById,
     queryEmployeeWorkerData,
     removeEmployee,
     updateAbsenceData,
@@ -15,6 +16,18 @@ export const getEmployeeWorkerData = catchErrors(async (req, res) => {
 export const getEmployee = catchErrors(async (req, res) => {
     const EmployeeData = await queryEmployee();
     return res.status(OK).json(EmployeeData);
+});
+
+export const getEmployeeById = catchErrors(async (req, res) => {
+    const { id } =
+        typeof req.params.id === "string"
+            ? { id: req.params.id }
+            : { id: req.params.id?.[0] };
+    const employee = await queryEmployeeById(id);
+    if (!employee) {
+        return res.status(404).json({ message: "Employee not found" });
+    }
+    return res.status(OK).json(employee);
 });
 
 export const deleteEmplyoee = catchErrors(async (req, res) => {

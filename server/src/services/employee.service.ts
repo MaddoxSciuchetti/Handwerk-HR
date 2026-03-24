@@ -139,6 +139,38 @@ export const removeEmployee = async (id: string, chefId: string) => {
     ]);
 };
 
+export const queryEmployeeById = async (id: string) => {
+    return await prisma.user.findUnique({
+        where: { id },
+        select: {
+            id: true,
+            vorname: true,
+            nachname: true,
+            email: true,
+            verified: true,
+            user_permission: true,
+            createdAt: true,
+            employeeStatus: {
+                take: 1,
+                select: {
+                    absence: true,
+                    absencetype: true,
+                    absencebegin: true,
+                    absenceEnd: true,
+                    substitute: true,
+                    sub_user: {
+                        select: {
+                            id: true,
+                            vorname: true,
+                            nachname: true,
+                        },
+                    },
+                },
+            },
+        },
+    });
+};
+
 export const updateAbsenceData = async (data: AbsenceData) => {
     return await prisma.employeeStatus.upsert({
         where: {

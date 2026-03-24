@@ -1,7 +1,7 @@
 import API from '@/config/apiClient';
 
 import { User } from '@/features/user-profile/types/auth.type';
-import { DescriptionFieldResponse } from '@/types/api.types';
+import { DescriptionFieldResponse, EmployeeInfoResponse } from '@/types/api.types';
 import { EmployeeDataArray, employeeDataSchema } from '../schemas/schema';
 import { AbsenceData } from '../types/index.types';
 
@@ -28,4 +28,8 @@ export const editEmployeeAbsence = async (
   data: AbsenceData
 ): Promise<AbsenceData> => {
   return API.put<AbsenceData, AbsenceData>('/employee/editAbsenceData', data);
+};
+
+export const getEmployeeById = async (id: string): Promise<EmployeeInfoResponse> => {
+  return API.get(`/employee/getEmployeeById/${id}`);
 };

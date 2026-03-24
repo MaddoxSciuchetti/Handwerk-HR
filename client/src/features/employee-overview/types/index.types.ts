@@ -15,3 +15,8 @@ export type AbsenceData = {
   absenceEnd: string;
   substitute: string;
 };
+
+export type EmployeeInfoItem = {
+  label: string;
+  value: string;
+};

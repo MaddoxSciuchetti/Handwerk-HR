@@ -10,3 +10,12 @@ export const calculateData = (
     return true;
   }
 };
+
+export const formatDate = (value: string | null | undefined) => {
+  if (!value) return '—';
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+
+  return date.toLocaleDateString('de-DE');
+};

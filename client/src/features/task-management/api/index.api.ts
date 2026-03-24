@@ -10,6 +10,7 @@ import {
   HistoryData,
   InsertHistoryData,
   LifecycleType,
+  UpdatePayload,
 } from '../types/index.types';
 
 export const getWorkerById = async (
@@ -69,4 +70,8 @@ export const deleteWorkerFile = async (
   id: number
 ): Promise<SuccessResponse<string>> => {
   return API.delete(`worker/deleteWorkerFile/${id}`);
+};
+
+export const updateData = async (data: UpdatePayload, workerId: number) => {
+  return await API.put('/worker/singleWorkerDataPoint', { ...data, workerId });
 };

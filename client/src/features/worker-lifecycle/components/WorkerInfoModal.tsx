@@ -1,9 +1,13 @@
+import LoadingAlert from '@/components/alerts/LoadingAlert';
 import ModalOverlay from '@/components/modal/ModalOverlay';
-import SmallWrapper from '@/components/modal/modalSizes/SmallWrapper';
-import { Button } from '@/components/ui/button';
+import MediumWrapper from '@/components/modal/modalSizes/MediumWrapper';
+import { useState } from 'react';
 import { workerInfos } from '../consts/worker-info.consts';
 import useWorkerInfo from '../hooks/useWorkerInfo';
 import { FormType } from '../types/index.types';
+import WorkerDescription from './WorkerDescription';
+import WorkerInfoHeader from './WorkerInfoHeader';
+import WorkerInput from './WorkerInput';
 
 type WorkerInfoModalProps = {
   isOpen: boolean;
@@ -24,51 +28,57 @@ const WorkerInfoModal = ({
     lifecycleType
   );
 
+  const [inputState, setInputState] = useState<boolean>();
+  const [uniqueInput, setUniqueInput] = useState<number>();
+
   if (!isOpen) {
     return null;
   }
 
   return (
-    <ModalOverlay handleToggle={onClose}>
-      <SmallWrapper className="h-auto min-h-0 max-h-none w-full max-w-md p-5">
-        <div className="flex w-full flex-col gap-3 text-left">
-          <h2 className="text-sm font-semibold text-foreground">
-            Handwerker Informationen
-          </h2>
-
+    <ModalOverlay size={'max-w-2xl'} handleToggle={onClose}>
+      <MediumWrapper width="w-full max-w-2xl" height="h-auto min-h-120">
+        <div
+          className="flex w-full flex-col gap-3 p-8 text-left"
+          onClick={() => setInputState(false)}
+        >
+          <WorkerInfoHeader isError={isError} />
           {isLoading ? (
-            <p className="text-xs text-muted-foreground">Lädt...</p>
-          ) : null}
-
-          {isError ? (
-            <p className="text-xs text-(--destructive)">
-              Informationen konnten nicht geladen werden.
-            </p>
-          ) : null}
-
-          {workerInfo ? (
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              {workerInfos(workerInfo).map((item) => (
-                <>
-                  <span
-                    key={`${item.label}-label`}
-                    className={item.className ?? 'text-muted-foreground'}
+            <div className="flex w-full min-h-104 items-center justify-center">
+              <LoadingAlert className="min-h-0" />
+            </div>
+          ) : workerInfo ? (
+            <div className="w-full">
+              {workerInfos(workerInfo)
+                .filter(
+                  (value) =>
+                    !(
+                      lifecycleType === 'Onboarding' &&
+                      value.schemaKey === 'austrittsdatum'
+                    )
+                )
+                .map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="group flex items-center justify-between gap-4 py-3.5"
                   >
-                    {item.label}
-                  </span>
-                  <span key={`${item.label}-value`}>{item.value ?? '-'}</span>
-                </>
-              ))}
+                    <WorkerDescription item={item} />
+                    <WorkerInput
+                      item={item}
+                      idx={idx}
+                      workerInfo={workerInfo}
+                      workerId={workerId}
+                      inputState={inputState}
+                      setInputState={setInputState}
+                      uniqueInput={uniqueInput}
+                      setUniqueInput={setUniqueInput}
+                    />
+                  </div>
+                ))}
             </div>
           ) : null}
-
-          <div className="mt-2 flex justify-end">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Schließen
-            </Button>
-          </div>
         </div>
-      </SmallWrapper>
+      </MediumWrapper>
     </ModalOverlay>
   );
 };

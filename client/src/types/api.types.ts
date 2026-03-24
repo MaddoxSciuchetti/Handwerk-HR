@@ -96,3 +96,25 @@ export type Cache = {
 };
 
 export type SessionCache = Cache[];
+
+export type EmployeeInfoResponse = {
+  id: string;
+  vorname: string;
+  nachname: string;
+  email: string;
+  verified: boolean;
+  user_permission: 'CHEF' | 'MITARBEITER';
+  createdAt: string;
+  employeeStatus: {
+    absence: string | null;
+    absencetype: string | null;
+    absencebegin: string | null;
+    absenceEnd: string | null;
+    substitute: string | null;
+    sub_user: {
+      id: string;
+      vorname: string;
+      nachname: string;
+    } | null;
+  }[];
+};

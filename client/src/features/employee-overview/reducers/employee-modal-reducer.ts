@@ -17,6 +17,11 @@ export function modalReducer(
       return { kind: 'closed' };
     case 'EMPLOYEE_CREATE':
       return { kind: 'employeecreate', owner: action.owner };
+    case 'OPEN_EMPLOYEE_INFO':
+      return {
+        kind: 'employeeinfo',
+        employeeId: action.employeeId,
+      };
     default:
       return state;
   }

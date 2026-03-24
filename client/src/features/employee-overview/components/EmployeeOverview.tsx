@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { useEmployeeModal } from '../hooks/useEmployeeModal';
 import ModalMitarbeiter from './modals/create-employee-modal/EmployeeModal';
 import ModalEditMitarbeiter from './modals/edit-employee-modal/EmployeeModal';
+import EmployeeInfoModal from './modals/employee-info-modal/EmployeeInfoModal';
 import ViewEmployeeModal from './modals/view-employeedata-modal/ViewEmployeeModal';
 import EmployeeTableHeader from './table/EmployeeTableHeader';
 import EmployeeTableBody from './table/TableBody';
@@ -46,6 +47,13 @@ function EmployeeOverview() {
         return (
           <ModalOverlay handleToggle={closeEmployee}>
             <ViewEmployeeModal selectedOwner={modalState.owner} />
+          </ModalOverlay>
+        );
+
+      case 'employeeinfo':
+        return (
+          <ModalOverlay handleToggle={closeEmployee}>
+            <EmployeeInfoModal employeeId={modalState.employeeId} />;
           </ModalOverlay>
         );
     }
