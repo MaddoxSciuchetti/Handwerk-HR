@@ -16,6 +16,8 @@ type WorkerInputProps = {
   workerId: number;
   inputState: boolean | undefined;
   setInputState: Dispatch<SetStateAction<boolean | undefined>>;
+  uniqueInput: number | undefined;
+  setUniqueInput: Dispatch<SetStateAction<number | undefined>>;
 };
 
 const WorkerInput = ({
@@ -25,8 +27,9 @@ const WorkerInput = ({
   workerId,
   inputState,
   setInputState,
+  uniqueInput,
+  setUniqueInput,
 }: WorkerInputProps) => {
-  const [uniqueInput, setUniqueInput] = useState<number>();
   const [inputValue, setInputValue] = useState<string>();
   const { mutate } = useMutation(workerMutations.updateDataPoint(workerId));
 
@@ -44,6 +47,7 @@ const WorkerInput = ({
     }
     mutate(result.data);
   };
+
   return (
     <>
       {uniqueInput === idx && inputState && item.form ? (
@@ -70,6 +74,7 @@ const WorkerInput = ({
             e.stopPropagation();
             setInputState(true);
             setUniqueInput(idx);
+            setInputValue('');
           }}
         >
           {item.value ?? '-'}

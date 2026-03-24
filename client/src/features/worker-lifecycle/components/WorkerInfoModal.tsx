@@ -28,6 +28,7 @@ const WorkerInfoModal = ({
   );
 
   const [inputState, setInputState] = useState<boolean>();
+  const [uniqueInput, setUniqueInput] = useState<number>();
 
   if (!isOpen) {
     return null;
@@ -53,6 +54,8 @@ const WorkerInfoModal = ({
                     workerId={workerId}
                     inputState={inputState}
                     setInputState={setInputState}
+                    uniqueInput={uniqueInput}
+                    setUniqueInput={setUniqueInput}
                   />
                 </>
               ))}
