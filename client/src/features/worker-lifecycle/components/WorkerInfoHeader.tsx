@@ -8,7 +8,7 @@ type WorkerInfoHeaderProps = {
 const WorkerInfoHeader = ({ isLoading, isError }: WorkerInfoHeaderProps) => {
   return (
     <>
-      <h2 className="text-sm font-semibold text-foreground">
+      <h2 className="text-sm font-semibold text-foreground mb-6 tracking-tight">
         Handwerker Informationen
       </h2>
 

@@ -36,16 +36,19 @@ const WorkerInfoModal = ({
 
   return (
     <ModalOverlay size={'max-w-2xl'} handleToggle={onClose}>
-      <MediumWrapper width="w-full max-w-xl" height="min-h-auto h-150">
+      <MediumWrapper width="w-full max-w-2xl" height="h-auto min-h-120">
         <div
-          className="flex w-full flex-col gap-3 p-10 text-left"
+          className="flex w-full flex-col gap-3 p-8 text-left"
           onClick={() => setInputState(false)}
         >
           <WorkerInfoHeader isLoading={isLoading} isError={isError} />
           {workerInfo ? (
-            <div className="grid grid-cols-2 gap-2 text-md ">
+            <div className="w-full">
               {workerInfos(workerInfo).map((item, idx) => (
-                <>
+                <div
+                  key={idx}
+                  className="group flex items-center justify-between gap-4 py-3.5"
+                >
                   <WorkerDescription item={item} />
                   <WorkerInput
                     item={item}
@@ -57,7 +60,7 @@ const WorkerInfoModal = ({
                     uniqueInput={uniqueInput}
                     setUniqueInput={setUniqueInput}
                   />
-                </>
+                </div>
               ))}
             </div>
           ) : null}

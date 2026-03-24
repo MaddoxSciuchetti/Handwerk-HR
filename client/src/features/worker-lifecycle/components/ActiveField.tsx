@@ -22,12 +22,12 @@ const ActiveField = ({
   isPending,
 }: ActiveFieldProps) => {
   return (
-    <>
-      <span className="flex">
+    <div className="w-full">
+      <span className="grid w-full grid-cols-[1fr_auto] items-center gap-1">
         <input
           autoFocus
           className={cn(
-            'flex-1 min-w-0 text-sm bg-transparent outline-none border-b border-foreground/30',
+            'w-full min-w-0 text-sm bg-transparent outline-none border-b border-foreground/30',
             'focus:border-foreground/70 transition-colors duration-150 pb-0.5',
             ' placeholder:text-muted-foreground/50'
           )}
@@ -35,21 +35,23 @@ const ActiveField = ({
           onChange={(e) => setInputValue(e.target.value)}
           onClick={(e: MouseEvent<HTMLInputElement>) => e.stopPropagation()}
         />
-        <button
-          onClick={() => setInputState(false)}
-          className="cursor-pointer hover:text-(--destructive) p-1 text-muted-foreground transition-colors"
-          aria-label="Abbrechen"
-        >
-          <X size={20} strokeWidth={1.75} />
-        </button>
-        <button
-          className="cursor-pointer hover:text-(--chart-2)"
-          onClick={() => handleSubmit(item)}
-        >
-          <Check size={20} strokeWidth={1.75} />
-        </button>
+        <span className="flex items-center justify-end gap-1">
+          <button
+            onClick={() => setInputState(false)}
+            className="cursor-pointer p-1 text-muted-foreground transition-colors hover:text-(--destructive)"
+            aria-label="Abbrechen"
+          >
+            <X size={20} strokeWidth={1.75} />
+          </button>
+          <button
+            className="cursor-pointer p-1 text-muted-foreground transition-colors hover:text-(--chart-2)"
+            onClick={() => handleSubmit(item)}
+          >
+            <Check size={20} strokeWidth={1.75} />
+          </button>
+        </span>
       </span>
-    </>
+    </div>
   );
 };
 
