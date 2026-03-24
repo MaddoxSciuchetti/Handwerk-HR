@@ -73,5 +73,5 @@ export const deleteWorkerFile = async (
 };
 
 export const updateData = async (data: UpdatePayload, workerId: number) => {
-  await API.put('/worker/singleWorkerDataPoint', { ...data, workerId });
+  return await API.put('/worker/singleWorkerDataPoint', { ...data, workerId });
 };

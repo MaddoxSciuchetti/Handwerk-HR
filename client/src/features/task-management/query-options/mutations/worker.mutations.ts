@@ -87,15 +87,20 @@ export const workerMutations = {
   },
 
   updateDataPoint: (workerId: number) => {
-    return mutationOptions<void, unknown, UpdatePayload>({
-      mutationFn: async (data) => {
-        await updateData(data, workerId);
-      },
-      onSuccess: async () => {
-        await queryClient.invalidateQueries({
-          queryKey: [ALL_WORKER_DATA],
-        });
-      },
-    });
+    return mutationOptions<void, unknown, UpdatePayload, { previous: unknown }>(
+      {
+        mutationFn: async (data) => {
+          await updateData(data, workerId);
+        },
+        onSettled: () => {
+          queryClient.invalidateQueries({ queryKey: [ALL_WORKER_DATA] });
+        },
+        onSuccess: async () => {
+          await queryClient.invalidateQueries({
+            queryKey: [ALL_WORKER_DATA],
+          });
+        },
+      }
+    );
   },
 };

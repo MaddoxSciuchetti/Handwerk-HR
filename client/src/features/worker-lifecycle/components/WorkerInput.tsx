@@ -31,7 +31,9 @@ const WorkerInput = ({
   setUniqueInput,
 }: WorkerInputProps) => {
   const [inputValue, setInputValue] = useState<string>();
-  const { mutate } = useMutation(workerMutations.updateDataPoint(workerId));
+  const { mutate, isPending, variables } = useMutation(
+    workerMutations.updateDataPoint(workerId)
+  );
 
   const handleSubmit = (item: WorkerInfoItem) => {
     if (!workerInfo || !inputValue) return;
@@ -83,7 +85,7 @@ const WorkerInput = ({
             setInputValue('');
           }}
         >
-          {item.value ?? '-'}
+          {isPending ? String(variables[item.schemaKey!]) : (item.value ?? '-')}
         </span>
       )}
     </>

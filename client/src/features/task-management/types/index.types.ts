@@ -30,9 +30,11 @@ export type File_Request = {
   };
 };
 
-export type UpdatePayload =
-  | Partial<z.infer<typeof addWorkerBaseSchema>>
-  | { austrittsdatum: string };
+export type UpdatePayload = Partial<
+  z.infer<typeof addWorkerBaseSchema> & {
+    austrittsdatum: string;
+  }
+>;
 
 export type LifecycleType = 'Onboarding' | 'Offboarding';
 
