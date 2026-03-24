@@ -1,3 +1,4 @@
+import { UpdatePayload } from '@/features/task-management/types/index.types';
 import { cn } from '@/lib/trycatch';
 import { Check, X } from 'lucide-react';
 import { Dispatch, MouseEvent, SetStateAction } from 'react';
@@ -8,6 +9,8 @@ type ActiveFieldProps = {
   setInputValue: Dispatch<SetStateAction<string | undefined>>;
   handleSubmit: (item: WorkerInfoItem) => void;
   item: WorkerInfoItem;
+  variables: UpdatePayload;
+  isPending: boolean;
 };
 
 const ActiveField = ({
@@ -15,6 +18,8 @@ const ActiveField = ({
   setInputValue,
   handleSubmit,
   item,
+  variables,
+  isPending,
 }: ActiveFieldProps) => {
   return (
     <>
@@ -26,7 +31,7 @@ const ActiveField = ({
             'focus:border-foreground/70 transition-colors duration-150 pb-0.5',
             ' placeholder:text-muted-foreground/50'
           )}
-          placeholder={`${item.value}`}
+          placeholder={`${isPending ? String(variables[item.schemaKey!]) : item.value}`}
           onChange={(e) => setInputValue(e.target.value)}
           onClick={(e: MouseEvent<HTMLInputElement>) => e.stopPropagation()}
         />
