@@ -1,3 +1,4 @@
+import { addWorkerBaseSchema } from '@/features/worker-lifecycle/schemas/zod.schemas';
 import z from 'zod';
 import { TAuth_User } from '../hooks/useGetWorkerHistory';
 import { formSchema } from '../schemas/index.schema';
@@ -28,6 +29,10 @@ export type File_Request = {
     user_id: number;
   };
 };
+
+export type UpdatePayload =
+  | Partial<z.infer<typeof addWorkerBaseSchema>>
+  | { austrittsdatum: string };
 
 export type LifecycleType = 'Onboarding' | 'Offboarding';
 

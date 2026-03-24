@@ -2,10 +2,8 @@ import { createWorkerFile } from '@/apis/index.apis';
 import queryClient from '@/config/query.client';
 import { User } from '@/features/user-profile/types/auth.type';
 import { ALL_WORKER_DATA } from '@/features/worker-lifecycle/consts/query-key.consts';
-import { addWorkerBaseSchema } from '@/features/worker-lifecycle/schemas/zod.schemas';
 import { FileResponse, SuccessResponse } from '@/types/api.types';
 import { mutationOptions } from '@tanstack/react-query';
-import z from 'zod';
 import {
   deleteWorkerFile,
   updateData,
@@ -17,7 +15,11 @@ import {
   HISTORYDATA,
   WORKERBYID,
 } from '../../consts/query-key.consts';
-import { File_Request, InsertHistoryData } from '../../types/index.types';
+import {
+  File_Request,
+  InsertHistoryData,
+  UpdatePayload,
+} from '../../types/index.types';
 
 type UpdateTaskHistoryVariables = {
   formValues: InsertHistoryData;
@@ -85,7 +87,7 @@ export const workerMutations = {
   },
 
   updateDataPoint: (workerId: number) => {
-    return mutationOptions<void, unknown, z.infer<typeof addWorkerBaseSchema>>({
+    return mutationOptions<void, unknown, UpdatePayload>({
       mutationFn: async (data) => {
         await updateData(data, workerId);
       },

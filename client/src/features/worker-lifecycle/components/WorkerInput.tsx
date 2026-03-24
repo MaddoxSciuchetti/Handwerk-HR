@@ -35,10 +35,14 @@ const WorkerInput = ({
 
   const handleSubmit = (item: WorkerInfoItem) => {
     if (!workerInfo || !inputValue) return;
+    const key = item.schemaKey!;
     const schema =
-      item.schemaKey === 'austrittsdatum'
-        ? OffboardingValidation.pick({ [item.schemaKey]: true } as any)
-        : addWorkerBaseSchema.pick({ [item.schemaKey!]: true } as any);
+      key === 'austrittsdatum'
+        ? OffboardingValidation.pick({ [key]: true } as Record<
+            'austrittsdatum',
+            true
+          >)
+        : addWorkerBaseSchema.pick({ [key]: true } as Record<typeof key, true>);
 
     const result = schema.safeParse({ [item.schemaKey!]: inputValue });
     if (!result.success) {

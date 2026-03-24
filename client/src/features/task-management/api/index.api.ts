@@ -1,17 +1,16 @@
 import API from '@/config/apiClient';
 import { User } from '@/features/user-profile/types/auth.type';
-import { addWorkerBaseSchema } from '@/features/worker-lifecycle/schemas/zod.schemas';
 import {
   DescriptionFieldResponse,
   SuccessResponse,
   EditDescriptionForm as UpdateWorkerDescription,
 } from '@/types/api.types';
-import z from 'zod';
 import {
   File_Request,
   HistoryData,
   InsertHistoryData,
   LifecycleType,
+  UpdatePayload,
 } from '../types/index.types';
 
 export const getWorkerById = async (
@@ -73,13 +72,6 @@ export const deleteWorkerFile = async (
   return API.delete(`worker/deleteWorkerFile/${id}`);
 };
 
-export const updateData = async (
-  data: z.infer<typeof addWorkerBaseSchema>,
-  workerId: number
-) => {
-  await API.put<
-    typeof addWorkerBaseSchema,
-    string,
-    z.infer<typeof addWorkerBaseSchema> & { workerId: number }
-  >('/worker/singleWorkerDataPoint', { ...data, workerId });
+export const updateData = async (data: UpdatePayload, workerId: number) => {
+  await API.put('/worker/singleWorkerDataPoint', { ...data, workerId });
 };
