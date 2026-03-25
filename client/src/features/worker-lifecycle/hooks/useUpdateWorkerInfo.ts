@@ -24,6 +24,8 @@ function useUpdateWorkerInfo(item: WorkerInfoItem, workerId: number) {
     workerMutations.updateDataPoint(workerId)
   );
 
+  const errorMessage = key ? errors[key]?.message : undefined;
+
   return {
     key,
     schema,
@@ -35,6 +37,7 @@ function useUpdateWorkerInfo(item: WorkerInfoItem, workerId: number) {
     isPending,
     variables,
     inputValue,
+    errorMessage,
   };
 }
 

@@ -27,7 +27,7 @@ const WorkerInput = ({
   const {
     key,
     handleFormSubmit,
-    errors,
+    errorMessage,
     setValue,
     mutate,
     isPending,
@@ -41,10 +41,12 @@ const WorkerInput = ({
     setInputValue(value);
     setValue(key, value, { shouldValidate: true, shouldDirty: true });
   };
-
-  const errorMessage = key
-    ? (errors[key]?.message as string | undefined)
-    : undefined;
+  const handleSubmit = () => {
+    if (!key) return;
+    handleFormSubmit((data) => {
+      mutate(data as UpdatePayload);
+    })();
+  };
 
   return (
     <div className="w-full">
@@ -53,13 +55,7 @@ const WorkerInput = ({
           inputValue={inputValue}
           setIsInputActive={setIsInputActive}
           handleInputChange={handleInputChange}
-          handleSubmit={() => {
-            if (!key) return;
-
-            handleFormSubmit((data) => {
-              mutate(data as UpdatePayload);
-            })();
-          }}
+          handleSubmit={handleSubmit}
           item={item}
           variables={variables as UpdatePayload}
         />
