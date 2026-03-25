@@ -2,14 +2,9 @@ import '@/App.css';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import DropdownActionTrigger from '@/components/DropdownActionTrigger';
 import useFetchProcessData from '@/features/employee-overview/hooks/useFetchProcessData';
-import { UseMutateFunction } from '@tanstack/react-query';
 import { useState } from 'react';
-import {
-  DeleteUser,
-  FormType,
-  ItemUser,
-  WorkerListMode,
-} from '../types/index.types';
+import useWorkerMutations from '../hooks/useWorkerMutaitons';
+import { FormType, WorkerListMode } from '../types/index.types';
 import WorkerInfoModal from './WorkerInfoModal';
 import WorkerItemInfo from './WorkerItemInfo';
 
@@ -17,9 +12,6 @@ interface ToDoItem {
   item_value: number;
   form_type: FormType;
   gotopage: (taskId: number, form_type: FormType, workerName: string) => void;
-  onRemove: UseMutateFunction<DeleteUser, Error, number, unknown>;
-  onArchive: UseMutateFunction<ItemUser, Error, number, unknown>;
-  onUnarchive: UseMutateFunction<ItemUser, Error, number, unknown>;
   mode: WorkerListMode;
   className?: string;
   nachname?: string;
@@ -32,9 +24,6 @@ export function Worker_Item({
   form_type,
   item_value,
   gotopage,
-  onRemove,
-  onArchive,
-  onUnarchive,
   mode,
 }: ToDoItem) {
   const {
@@ -42,6 +31,9 @@ export function Worker_Item({
     completedTasksCount,
     totalTasks,
   } = useFetchProcessData(item_value, form_type);
+
+  const { archiveWorkerMutation, deleteTaskMutation, unarchiveWorkerMutation } =
+    useWorkerMutations();
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
@@ -99,8 +91,8 @@ export function Worker_Item({
               label: mode === 'active' ? 'Archivieren' : 'Wiederherstellen',
               action: () =>
                 mode === 'active'
-                  ? onArchive(item_value)
-                  : onUnarchive(item_value),
+                  ? archiveWorkerMutation(item_value)
+                  : unarchiveWorkerMutation(item_value),
               variant: 'default',
             },
             {
@@ -114,7 +106,7 @@ export function Worker_Item({
           isOpen={isDeleteModalOpen}
           onCancel={() => setIsDeleteModalOpen(false)}
           onConfirm={() => {
-            onRemove(item_value);
+            deleteTaskMutation(item_value);
             setIsDeleteModalOpen(false);
           }}
         />

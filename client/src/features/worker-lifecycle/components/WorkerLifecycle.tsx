@@ -10,8 +10,6 @@ import ActiveArchiveHeader from './ActiveArchiveHeader';
 function WorkerLifeCycle() {
   const { user, isLoading, isError } = useAuth();
   const {
-    archiveWorkerMutation,
-    deleteTaskMutation,
     error,
     filtered,
     handleNavigate,
@@ -21,7 +19,6 @@ function WorkerLifeCycle() {
     setSearch,
     setMode,
     toggleModal,
-    unarchiveWorkerMutation,
   } = useHome();
 
   if (isLoading) return <LoadingAlert />;
@@ -40,9 +37,6 @@ function WorkerLifeCycle() {
         <ActiveArchiveHeader mode={mode} setMode={setMode} />
         <LifeCycleTable
           filtered={filtered}
-          onRemove={deleteTaskMutation}
-          onArchive={archiveWorkerMutation}
-          onUnarchive={unarchiveWorkerMutation}
           mode={mode}
           gotopage={handleNavigate}
         />

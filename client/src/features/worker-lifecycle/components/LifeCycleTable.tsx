@@ -7,34 +7,16 @@ import {
 } from '@/components/ui/table';
 
 import { getFirstFormType } from '@/features/worker-lifecycle/utils/formtype';
-import { UseMutateFunction } from '@tanstack/react-query';
-import {
-  DeleteUser,
-  FormType,
-  ItemUser,
-  WorkerItem,
-  WorkerListMode,
-} from '../types/index.types';
+import { FormType, WorkerItem, WorkerListMode } from '../types/index.types';
 import { Worker_Item } from './WorkerItem';
 
 type LifeCycleTableProps = {
   filtered: WorkerItem[] | undefined;
-  item_value?: number;
-  onRemove: UseMutateFunction<DeleteUser, Error, number, unknown>;
-  onArchive: UseMutateFunction<ItemUser, Error, number, unknown>;
-  onUnarchive: UseMutateFunction<ItemUser, Error, number, unknown>;
   mode: WorkerListMode;
   gotopage: (taskId: number, form_type: FormType, workerName: string) => void;
 };
 
-function LifeCycleTable({
-  filtered,
-  onRemove,
-  onArchive,
-  onUnarchive,
-  mode,
-  gotopage,
-}: LifeCycleTableProps) {
+function LifeCycleTable({ filtered, mode, gotopage }: LifeCycleTableProps) {
   return (
     <>
       <div className="rounded-2xl overflow-x-auto w-full h-full  overflow-auto">
@@ -57,9 +39,6 @@ function LifeCycleTable({
                     form_type={getFirstFormType(task)}
                     vorname={task.vorname}
                     nachname={task.nachname}
-                    onRemove={onRemove}
-                    onArchive={onArchive}
-                    onUnarchive={onUnarchive}
                     mode={mode}
                     gotopage={gotopage}
                   />

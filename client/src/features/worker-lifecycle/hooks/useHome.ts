@@ -1,8 +1,7 @@
 import { useSidebar } from '@/components/ui/sidebar';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
-import { workerLifecycleMutations } from '../query-options/mutations/worker-lifycycle.mutations';
 import { workerLifecycleQueries } from '../query-options/queries/worker-lifycycle.queries';
 import { FormType, WorkerListMode } from '../types/index.types';
 
@@ -34,18 +33,6 @@ function useHome() {
     return matchesSearch && matchesMode;
   });
 
-  const { mutate: deleteTaskMutation } = useMutation(
-    workerLifecycleMutations.deleteWorker()
-  );
-
-  const { mutate: archiveWorkerMutation } = useMutation(
-    workerLifecycleMutations.archiveWorker()
-  );
-
-  const { mutate: unarchiveWorkerMutation } = useMutation(
-    workerLifecycleMutations.unarchiveWorker()
-  );
-
   const handleNavigate = (
     taskId: number,
     form_type: FormType,
@@ -65,7 +52,6 @@ function useHome() {
   return {
     isEmpty,
     filtered,
-    deleteTaskMutation,
     handleNavigate,
     modal,
     mode,
@@ -74,8 +60,6 @@ function useHome() {
     search,
     error,
     toggleModal,
-    archiveWorkerMutation,
-    unarchiveWorkerMutation,
   };
 }
 export default useHome;
