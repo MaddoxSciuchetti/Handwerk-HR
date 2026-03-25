@@ -44,7 +44,6 @@ const WorkerInfos = ({
                     <WorkerInput
                       item={item}
                       idx={idx}
-                      workerInfo={workerInfo}
                       workerId={workerId}
                       isInputActive={isInputActive}
                       setIsInputActive={setIsInputActive}

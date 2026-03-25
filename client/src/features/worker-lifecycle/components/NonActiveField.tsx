@@ -11,7 +11,7 @@ type NonActiveFieldProps = {
   item: WorkerInfoItem;
   setIsInputActive: Dispatch<SetStateAction<boolean | undefined>>;
   setUniqueInput: Dispatch<SetStateAction<number | undefined>>;
-  setInputValue: Dispatch<SetStateAction<string | undefined>>;
+  setInputValue: (value: string) => void;
   isPending: boolean;
   variables: UpdatePayload;
   idx: number;

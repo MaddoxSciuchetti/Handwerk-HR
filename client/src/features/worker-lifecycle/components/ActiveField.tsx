@@ -8,7 +8,7 @@ import { getPlaceholderValue } from '../utils/workerInputDisplay';
 type ActiveFieldProps = {
   setIsInputActive: Dispatch<SetStateAction<boolean | undefined>>;
   setInputValue: (value: string) => void;
-  handleSubmit: (item: WorkerInfoItem) => void;
+  handleSubmit: () => void;
   item: WorkerInfoItem;
   variables: UpdatePayload;
   inputValue: string | undefined;
@@ -49,7 +49,7 @@ const ActiveField = ({
           </button>
           <button
             className="cursor-pointer p-1 text-muted-foreground transition-colors hover:text-(--chart-2)"
-            onClick={() => handleSubmit(item)}
+            onClick={handleSubmit}
           >
             <Check size={20} strokeWidth={1.75} />
           </button>
