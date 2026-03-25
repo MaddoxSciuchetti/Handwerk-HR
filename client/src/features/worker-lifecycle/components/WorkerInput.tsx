@@ -17,7 +17,7 @@ type WorkerInputProps = {
   workerInfo: DescriptionFieldResponse | undefined;
   workerId: number;
   inputState: boolean | undefined;
-  setInputState: Dispatch<SetStateAction<boolean | undefined>>;
+  setIsInputActive: Dispatch<SetStateAction<boolean | undefined>>;
   uniqueInput: number | undefined;
   setUniqueInput: Dispatch<SetStateAction<number | undefined>>;
 };
@@ -28,7 +28,7 @@ const WorkerInput = ({
   workerInfo,
   workerId,
   inputState,
-  setInputState,
+  setIsInputActive,
   uniqueInput,
   setUniqueInput,
 }: WorkerInputProps) => {
@@ -61,7 +61,7 @@ const WorkerInput = ({
       {uniqueInput === idx && inputState && item.form ? (
         <ActiveField
           inputValue={inputValue}
-          setInputState={setInputState}
+          setIsInputActive={setIsInputActive}
           setInputValue={setInputValue}
           handleSubmit={handleSubmit}
           item={item}
@@ -71,7 +71,7 @@ const WorkerInput = ({
       ) : (
         <NonActiveField
           item={item}
-          setInputState={setInputState}
+          setIsInputActive={setIsInputActive}
           setUniqueInput={setUniqueInput}
           setInputValue={setInputValue}
           isPending={isPending}

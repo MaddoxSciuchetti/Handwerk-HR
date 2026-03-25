@@ -28,7 +28,7 @@ const WorkerInfoModal = ({
     lifecycleType
   );
 
-  const [inputState, setInputState] = useState<boolean>();
+  const [isInputActive, setIsInputActive] = useState<boolean>();
   const [uniqueInput, setUniqueInput] = useState<number>();
 
   if (!isOpen) {
@@ -40,7 +40,7 @@ const WorkerInfoModal = ({
       <MediumWrapper width="w-full max-w-2xl" height="h-auto min-h-120">
         <div
           className="flex w-full flex-col gap-3 p-8 text-left"
-          onClick={() => setInputState(false)}
+          onClick={() => setIsInputActive(false)}
         >
           <WorkerInfoHeader isError={isError} />
           {isLoading ? (
@@ -68,8 +68,8 @@ const WorkerInfoModal = ({
                       idx={idx}
                       workerInfo={workerInfo}
                       workerId={workerId}
-                      inputState={inputState}
-                      setInputState={setInputState}
+                      inputState={isInputActive}
+                      setIsInputActive={setIsInputActive}
                       uniqueInput={uniqueInput}
                       setUniqueInput={setUniqueInput}
                     />

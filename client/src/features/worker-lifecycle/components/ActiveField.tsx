@@ -5,7 +5,7 @@ import { Dispatch, MouseEvent, SetStateAction } from 'react';
 import { WorkerInfoItem } from '../consts/worker-info.consts';
 
 type ActiveFieldProps = {
-  setInputState: Dispatch<SetStateAction<boolean | undefined>>;
+  setIsInputActive: Dispatch<SetStateAction<boolean | undefined>>;
   setInputValue: Dispatch<SetStateAction<string | undefined>>;
   handleSubmit: (item: WorkerInfoItem) => void;
   item: WorkerInfoItem;
@@ -15,7 +15,7 @@ type ActiveFieldProps = {
 };
 
 const ActiveField = ({
-  setInputState,
+  setIsInputActive,
   setInputValue,
   handleSubmit,
   item,
@@ -40,7 +40,7 @@ const ActiveField = ({
         />
         <span className="flex items-center justify-end gap-1">
           <button
-            onClick={() => setInputState(false)}
+            onClick={() => setIsInputActive(false)}
             className="cursor-pointer p-1 text-muted-foreground transition-colors hover:text-(--destructive)"
             aria-label="Abbrechen"
           >

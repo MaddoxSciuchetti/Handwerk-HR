@@ -4,7 +4,7 @@ import { WorkerInfoItem } from '../consts/worker-info.consts';
 
 type NonActiveFieldProps = {
   item: WorkerInfoItem;
-  setInputState: Dispatch<SetStateAction<boolean | undefined>>;
+  setIsInputActive: Dispatch<SetStateAction<boolean | undefined>>;
   setUniqueInput: Dispatch<SetStateAction<number | undefined>>;
   setInputValue: Dispatch<SetStateAction<string | undefined>>;
   isPending: boolean;
@@ -14,7 +14,7 @@ type NonActiveFieldProps = {
 
 const NonActiveField = ({
   item,
-  setInputState,
+  setIsInputActive,
   setUniqueInput,
   setInputValue,
   isPending,
@@ -29,7 +29,7 @@ const NonActiveField = ({
           key={`${item.label}-value`}
           onClick={(e: MouseEvent<HTMLSpanElement>) => {
             e.stopPropagation();
-            setInputState(true);
+            setIsInputActive(true);
             setUniqueInput(idx);
             setInputValue(String(item.value));
           }}
