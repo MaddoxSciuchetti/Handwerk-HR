@@ -1,5 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import { CreateWorkerTask, InsertWorkerHistory } from "@/schemas/worker.schemas";
+import {
+    CreateWorkerTask,
+    InsertWorkerHistory,
+} from "@/schemas/worker.schemas";
 import {
     InsertWorker,
     InsertWorkerResponse,
