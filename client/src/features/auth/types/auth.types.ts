@@ -35,3 +35,13 @@ export type ResetPassword = {
   verificationCode: string;
   password: string;
 };
+
+export type InviteDetails = {
+  orgName: string;
+  email: string;
+};
+
+export type AcceptInviteResponse = {
+  user: { id: string; email: string; firstName: string; lastName: string };
+  organizationId: string;
+};

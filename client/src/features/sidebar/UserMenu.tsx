@@ -94,6 +94,12 @@ const UserMenu = () => {
               )}
             </DropdownMenuItem>
             <DropdownMenuItem
+              className="cursor-pointer rounded-lg text-sm font-medium focus:bg-accent focus:text-accent-foreground"
+              onClick={() => navigate({ to: '/org-settings' })}
+            >
+              Unternehmens Einstellungen
+            </DropdownMenuItem>
+            <DropdownMenuItem
               className="cursor-pointer rounded-lg text-sm font-medium focus:bg-accent focus:text-accent-foreground "
               onClick={() => signOut()}
             >

@@ -93,3 +93,28 @@ export const registerOrgSchema = registerOrgStep1Schema.and(
 export type RegisterOrgStep1Values = z.infer<typeof registerOrgStep1Schema>;
 export type RegisterOrgStep2Values = z.infer<typeof registerOrgStep2Schema>;
 export type RegisterOrgFormValues = z.infer<typeof registerOrgSchema>;
+
+// ─── Accept Invite ────────────────────────────────────────────────────────────
+
+export const acceptInviteSchema = z
+  .object({
+    firstName: z
+      .string()
+      .min(1, { message: 'First name is required' })
+      .max(255),
+    lastName: z
+      .string()
+      .min(1, { message: 'Last name is required' })
+      .max(255),
+    password: registerPasswordSchema,
+    confirmPassword: z
+      .string()
+      .min(1, { message: 'Confirm password is required' })
+      .max(255),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Password and confirm password must match',
+    path: ['confirmPassword'],
+  });
+
+export type AcceptInviteFormValues = z.infer<typeof acceptInviteSchema>;
