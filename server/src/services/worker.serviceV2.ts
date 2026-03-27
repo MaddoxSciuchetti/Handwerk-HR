@@ -152,49 +152,35 @@ export async function getWorkerData(params: GetWorkersInput) {
             : {}),
     };
 
-    const [workers, total] = await Promise.all([
-        prisma.worker.findMany({
-            where,
-            skip: (page - 1) * limit,
-            take: limit,
-            orderBy: { createdAt: "desc" },
-            include: {
-                // Correct relation name from schema: Worker.engagements WorkerEngagement[]
-                engagements: {
-                    orderBy: { startDate: "desc" },
-                    take: 1,
-                    include: {
-                        engagementStatus: true,
-                        responsibleUser: {
-                            select: {
-                                id: true,
-                                firstName: true,
-                                lastName: true,
-                                email: true,
-                            },
+    return prisma.worker.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        include: {
+            engagements: {
+                orderBy: { startDate: "desc" },
+                take: 1,
+                include: {
+                    engagementStatus: true,
+                    responsibleUser: {
+                        select: {
+                            id: true,
+                            firstName: true,
+                            lastName: true,
+                            email: true,
                         },
                     },
                 },
-                createdBy: {
-                    select: {
-                        id: true,
-                        firstName: true,
-                        lastName: true,
-                        email: true,
-                    },
+            },
+            createdBy: {
+                select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    email: true,
                 },
             },
-        }),
-        prisma.worker.count({ where }),
-    ]);
-
-    return {
-        workers,
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-    };
+        },
+    });
 }
 
 // ─── Get Worker By ID ──────────────────────────────────────────────────────────
