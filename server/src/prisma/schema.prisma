@@ -7,6 +7,125 @@ datasource db {
 
 }
 
+// New Phyiscal Data Model
+
+// ENUMS
+
+
+enum UserStatus {
+  active
+  inactive
+  suspended
+}
+
+enum OrganizationSize {
+  size_1_10     @map("1-10")
+  size_11_50    @map("11-50")
+  size_51_200   @map("51-200")
+  size_201_500  @map("201-500")
+  size_500_plus @map("500+")
+}
+
+enum OrganizationStatus {
+  active
+  suspended
+  deleted
+}
+
+enum MemberStatus {
+  active
+  inactive
+  suspended
+}
+
+enum VerificationCodeType {
+  email_verify
+  password_reset
+}
+
+enum InvitationStatus {
+  pending
+  accepted
+  expired
+  revoked
+}
+
+enum WorkerStatus {
+  active
+  inactive
+  archived
+}
+
+enum DocumentFileType {
+  contract
+  id
+  certificate
+  other
+}
+
+enum EngagementType {
+  onboarding
+  offboarding
+  transfer
+}
+
+enum EngagementTemplateType {
+  onboarding
+  offboarding
+  transfer
+}
+
+enum IssuePriority {
+  urgent
+  high
+  medium
+  low
+  no_priority
+}
+
+enum DefaultPriority {
+  urgent
+  high
+  medium
+  low
+}
+
+enum DefaultIssueStatus {
+  backlog
+  todo
+}
+
+enum NotificationType {
+  issue_assigned
+  comment_added
+  status_changed
+  engagement_updated
+}
+
+enum SubscriptionPlan {
+  free
+  pro
+  enterprise
+}
+
+enum SubscriptionStatus {
+  active
+  past_due
+  cancelled
+  trialing
+}
+
+enum InvoiceStatus {
+  draft
+  open
+  paid
+  void
+  uncollectible
+}
+
+
+
+// Old Physical Data Model
 model employee_forms {
   id           Int           @id @default(autoincrement())
   user_id      Int

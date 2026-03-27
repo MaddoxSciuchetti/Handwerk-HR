@@ -148,10 +148,6 @@ export const loginUser = async ({
             email: normalizedEmail,
         },
     });
-
-    console.log(user);
-
-    console.log(user?.password);
     appAssert(user, UNAUTHORIZED, "Invalid email or password");
     const isinValid = await bcrypt.compare(password, user.password);
     appAssert(isinValid, UNAUTHORIZED, "Invalid password");
