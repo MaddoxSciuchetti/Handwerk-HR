@@ -7,16 +7,14 @@ import SearchHeaderResuable from '@/components/layout/headers/SearchHeaderResuab
 import ModalOverlay from '@/components/modal/ModalOverlay';
 import { useState } from 'react';
 import { useEmployeeModal } from '../hooks/useEmployeeModal';
-import ModalMitarbeiter from './modals/create-employee-modal/EmployeeModal';
 import ModalEditMitarbeiter from './modals/edit-employee-modal/EmployeeModal';
 import EmployeeInfoModal from './modals/employee-info-modal/EmployeeInfoModal';
-import ViewEmployeeModal from './modals/view-employeedata-modal/ViewEmployeeModal';
 import EmployeeTableHeader from './table/EmployeeTableHeader';
 import EmployeeTableBody from './table/TableBody';
 
 function OrgUsersOverview() {
   const { OrgUsers, isLoading } = useGetOrgUsers();
-  const { modalState, openCreateEmployee, closeEmployee } = useEmployeeModal();
+  const { modalState, closeEmployee } = useEmployeeModal();
   const { handleDeleteEmployee, isPending } = useDeleteEmployee();
   const [search, setSearch] = useState('');
 
@@ -36,24 +34,11 @@ function OrgUsersOverview() {
             />
           </ModalOverlay>
         );
-      case 'create':
-        return (
-          <ModalOverlay handleToggle={closeEmployee}>
-            <ModalMitarbeiter toggleModal={closeEmployee} />
-          </ModalOverlay>
-        );
 
-      case 'employeecreate':
+      case 'info':
         return (
           <ModalOverlay handleToggle={closeEmployee}>
-            <ViewEmployeeModal selectedOwner={modalState.owner} />
-          </ModalOverlay>
-        );
-
-      case 'employeeinfo':
-        return (
-          <ModalOverlay handleToggle={closeEmployee}>
-            <EmployeeInfoModal employeeId={modalState.employeeId} />;
+            <EmployeeInfoModal employeeId={modalState.employeeId} />
           </ModalOverlay>
         );
     }
@@ -64,12 +49,7 @@ function OrgUsersOverview() {
   return (
     <div className="mx-auto flex h-full w-5xl flex-col overflow-auto rounded-2xl bg-card p-6 md:max-w-8xl">
       <div className="h-full w-full flex flex-col">
-        <SearchHeaderResuable
-          search={search}
-          setSearch={setSearch}
-          openModal={openCreateEmployee}
-          description="Mitarbeiter Hinzufügen"
-        />
+        <SearchHeaderResuable search={search} setSearch={setSearch} />
         <Table className="text-left mt-5 border-seperate border-spacing-y-2">
           <EmployeeTableHeader />
           <EmployeeTableBody

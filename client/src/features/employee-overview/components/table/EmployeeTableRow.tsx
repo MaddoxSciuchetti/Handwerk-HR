@@ -27,7 +27,7 @@ export const EmployeeRow = ({
 }: EmployeeRowProps) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const closeDeleteModalHandler = () => setIsDeleteModalOpen(false);
-  const { openInfoModal } = useEmployeeModal();
+  const { openEmployeeInfo } = useEmployeeModal();
 
   return (
     <tr className="group py-5 transition-colors">
@@ -36,7 +36,7 @@ export const EmployeeRow = ({
           <EmployeeName employee={employee} />
           <Button
             className="cursor-pointer"
-            onClick={() => openInfoModal(employee.id)}
+            onClick={() => openEmployeeInfo(employee.id)}
           >
             <Info />
           </Button>
