@@ -1,11 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { UseFormProps } from 'react-hook-form';
 import {
+  AbsenceFormData,
   absenceSchema,
   CreateWorker,
   createWorkerSchema,
 } from '../schemas/schema';
-import { AbsenceData } from '../types/index.types';
 
 export const employeeFormOptions = {
   createEmployee: {
@@ -16,5 +16,5 @@ export const employeeFormOptions = {
   editEmployeeAbsence: {
     resolver: zodResolver(absenceSchema),
     criteriaMode: 'all',
-  } satisfies UseFormProps<AbsenceData>,
+  } satisfies UseFormProps<AbsenceFormData>,
 };

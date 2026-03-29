@@ -6,15 +6,15 @@ import LoadingAlert from '@/components/alerts/LoadingAlert';
 import SearchHeaderResuable from '@/components/layout/headers/SearchHeaderResuable';
 import ModalOverlay from '@/components/modal/ModalOverlay';
 import { useState } from 'react';
-import { useEmployeeModal } from '../hooks/useEmployeeModal';
-import ModalEditMitarbeiter from './modals/edit-employee-modal/EmployeeModal';
-import EmployeeInfoModal from './modals/employee-info-modal/EmployeeInfoModal';
+import { useOrgUsersModal } from '../hooks/useOrgUsersModal';
+import EditOrgUser from './modals/edit-employee-modal/EmployeeModal';
+import UserInfo from './modals/employee-info-modal/EmployeeInfoModal';
 import EmployeeTableHeader from './table/EmployeeTableHeader';
 import EmployeeTableBody from './table/TableBody';
 
 function OrgUsersOverview() {
   const { OrgUsers, isLoading } = useGetOrgUsers();
-  const { modalState, closeEmployee } = useEmployeeModal();
+  const { modalState, closeEmployee } = useOrgUsersModal();
   const { handleDeleteEmployee, isPending } = useDeleteEmployee();
   const [search, setSearch] = useState('');
 
@@ -27,7 +27,7 @@ function OrgUsersOverview() {
       case 'edit':
         return (
           <ModalOverlay handleToggle={closeEmployee}>
-            <ModalEditMitarbeiter
+            <EditOrgUser
               fullname={modalState.fullname}
               id={modalState.employeeId}
               toggleEmployeeModal={closeEmployee}
@@ -38,7 +38,7 @@ function OrgUsersOverview() {
       case 'info':
         return (
           <ModalOverlay handleToggle={closeEmployee}>
-            <EmployeeInfoModal employeeId={modalState.employeeId} />
+            <UserInfo employeeId={modalState.employeeId} />
           </ModalOverlay>
         );
     }

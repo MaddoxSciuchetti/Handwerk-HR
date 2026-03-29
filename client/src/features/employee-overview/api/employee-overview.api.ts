@@ -5,8 +5,11 @@ import {
   DescriptionFieldResponse,
   EmployeeInfoResponse,
 } from '@/types/api.types';
-import { OrgUsersArray, OrgUsersSchema } from '../schemas/schema';
-import { AbsenceData } from '../types/index.types';
+import {
+  AbsenceFormData,
+  OrgUsersArray,
+  OrgUsersSchema,
+} from '../schemas/schema';
 
 export const deleteEmployeeHandler = async (id: string): Promise<User> => {
   const response = await API.delete<typeof id, User>(
@@ -28,9 +31,12 @@ export const fetchDescriptionData = async (
 };
 
 export const editEmployeeAbsence = async (
-  data: AbsenceData
-): Promise<AbsenceData> => {
-  return API.put<AbsenceData, AbsenceData>('/employee/editAbsenceData', data);
+  data: AbsenceFormData
+): Promise<AbsenceFormData> => {
+  return API.put<AbsenceFormData, AbsenceFormData>(
+    '/employee/editAbsenceData',
+    data
+  );
 };
 
 export const getEmployeeById = async (

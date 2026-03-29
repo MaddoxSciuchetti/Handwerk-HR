@@ -8,7 +8,7 @@ import {
   editEmployeeAbsence,
 } from '../../api/employee-overview.api';
 import { EMPLOYEE_SPECIFICS } from '../../consts/query-keys';
-import { AbsenceData } from '../../types/index.types';
+import { AbsenceFormData } from '../../schemas/schema';
 
 import { CreateAccountParams } from '../../../../../../server/src/services/auth.serviceV2';
 
@@ -36,7 +36,7 @@ export const employeeMutations = {
   },
 
   editEmployee: () => {
-    return mutationOptions<AbsenceData, Error, AbsenceData>({
+    return mutationOptions<AbsenceFormData, Error, AbsenceFormData>({
       mutationFn: editEmployeeAbsence,
       onSuccess: () => {
         queryClient.invalidateQueries({

@@ -5,7 +5,8 @@ import { User } from '@/features/user-profile/types/auth.type';
 import { UseMutateFunction } from '@tanstack/react-query';
 import { Info } from 'lucide-react';
 import { useState } from 'react';
-import { useEmployeeModal } from '../../hooks/useEmployeeModal';
+
+import { useOrgUsersModal } from '../../hooks/useOrgUsersModal';
 import { OrgUsersArray } from '../../schemas/schema';
 import EmployeeName from './table-row-item/EmployeeName';
 import EmployeeOpenTasks from './table-row-item/EmployeeOpenTasks';
@@ -27,7 +28,7 @@ export const EmployeeRow = ({
 }: EmployeeRowProps) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const closeDeleteModalHandler = () => setIsDeleteModalOpen(false);
-  const { openEmployeeInfo } = useEmployeeModal();
+  const { openEmployeeInfo } = useOrgUsersModal();
 
   return (
     <tr className="group py-5 transition-colors">
@@ -49,7 +50,7 @@ export const EmployeeRow = ({
               e.stopPropagation();
               openEditEmployee(
                 employee.id,
-                `${employee.vorname}${employee.nachname}`
+                `${employee.firstName}${employee.lastName}`
               );
             }}
           >
@@ -59,7 +60,6 @@ export const EmployeeRow = ({
       </td>
       <td>
         <EmployeeOpenTasks
-          employee={employee.id}
           openTaskCountsByEmployee={
             openTaskCountsByEmployee.get(employee.id) ?? 0
           }
