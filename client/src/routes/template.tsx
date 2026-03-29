@@ -3,7 +3,7 @@ import { TaskContextProvider } from '@/features/template-tasks/TaskContextProvid
 import { userProfileQueries } from '@/features/user-profile/query-options/queries/user-profile.queries';
 import { tryCatch } from '@/lib/trycatch';
 import { RouterContext } from '@/router';
-import { createFileRoute, redirect } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/template')({
   beforeLoad: async ({ context }: { context: RouterContext }) => {
@@ -11,9 +11,9 @@ export const Route = createFileRoute('/template')({
       context.queryClient.ensureQueryData(userProfileQueries.User())
     );
 
-    if (!user || user.user_permission !== 'CHEF') {
-      throw redirect({ to: '/login' });
-    }
+    // if (!user || user.user_permission !== 'CHEF') {
+    //   throw redirect({ to: '/login' });
+    // }
   },
   component: RouteComponent,
 });
