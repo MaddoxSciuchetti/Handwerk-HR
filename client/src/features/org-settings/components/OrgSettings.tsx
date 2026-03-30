@@ -2,22 +2,8 @@ import OrgUsersOverview from '@/features/employee-overview/components/OrgUsersOv
 import { EmployeeModalProvider } from '@/features/employee-overview/context/ModalProvider';
 import type { OrgSettingsTabId } from '@/features/org-settings/consts/org-settings-tabs';
 import TemplateTasks from '@/features/template-tasks/components/TemplateTask';
+import { EntityStatusSettings } from './EntityStatusSettings';
 import { OrgInviteSection } from './OrgInviteSection';
-
-function StatusPlaceholder({
-  title,
-  description,
-}: {
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-border bg-card p-6">
-      <h2 className="text-lg font-medium text-foreground">{title}</h2>
-      <p className="mt-2 text-sm text-muted-foreground">{description}</p>
-    </div>
-  );
-}
 
 type OrgSettingsProps = {
   tab: OrgSettingsTabId;
@@ -46,15 +32,17 @@ const OrgSettings = ({ tab }: OrgSettingsProps) => {
         )}
         {tab === 'templates' && <TemplateTasks />}
         {tab === 'project-status' && (
-          <StatusPlaceholder
-            title="Status für Projekte"
-            description="Hier legen Sie die Status für normale Projekte fest. Die Bearbeitung wird in einer späteren Version ergänzt."
+          <EntityStatusSettings
+            entityType="engagement"
+            title="Projekt-Status"
+            description="Status definieren den Ablauf Ihrer Worker-Engagements (z. B. Onboarding). Namen- und Farbänderungen wirken überall sofort; ein Status kann nur gelöscht werden, wenn er nirgends mehr verwendet wird und nicht der letzte verbleibende Status ist."
           />
         )}
         {tab === 'issue-status' && (
-          <StatusPlaceholder
-            title="Status für Issues"
-            description="Hier legen Sie die Status für Issues fest. Die Bearbeitung wird in einer späteren Version ergänzt."
+          <EntityStatusSettings
+            entityType="issue"
+            title="Issue-Status"
+            description="Status für Aufgaben innerhalb eines Engagements. Änderungen gelten für alle Issues; Löschen nur ohne Zuordnungen und nur solange mindestens ein weiterer Status existiert."
           />
         )}
       </div>

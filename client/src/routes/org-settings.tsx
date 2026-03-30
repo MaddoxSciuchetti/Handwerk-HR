@@ -1,4 +1,4 @@
-import OrgSettings from '@/features/org-settings/components/StatusPlaceholder';
+import OrgSettings from '@/features/org-settings/components/OrgSettings';
 import { parseOrgSettingsTabId } from '@/features/org-settings/consts/org-settings-tabs';
 import { createFileRoute } from '@tanstack/react-router';
 

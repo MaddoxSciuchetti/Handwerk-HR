@@ -85,7 +85,6 @@ app.use("/index", authenticate, indexRoutes);
 // worker
 app.use("/worker", authenticate, worker);
 
-// org (invite)
 app.use("/org", orgRoutes);
 app.use("/invites", inviteRoutes);
 
