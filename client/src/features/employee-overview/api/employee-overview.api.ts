@@ -13,7 +13,7 @@ import {
 
 export const deleteEmployeeHandler = async (id: string): Promise<User> => {
   const response = await API.delete<typeof id, User>(
-    `/employee/deleteEmplyoee/${id}`
+    `/employee/v2/deleteEmplyoee/${id}`
   );
   return response;
 };
