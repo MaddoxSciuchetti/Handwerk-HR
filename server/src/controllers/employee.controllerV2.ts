@@ -40,6 +40,7 @@ export const getEmployee = catchErrors(async (req, res) => {
 export const getEmployeeById = catchErrors(async (req, res) => {
     const id = req.params.id as string;
     const orgId = req.orgId;
+    console.log("did this work");
 
     const employee = await queryEmployeeById(id, orgId);
     appAssert(employee, NOT_FOUND, "Employee not found");
