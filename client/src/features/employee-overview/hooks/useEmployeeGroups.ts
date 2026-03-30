@@ -6,14 +6,13 @@ function useEmployeeGroups(
   tasksByEmployee: Array<[string, EmployeeWorker]>
 ) {
   const employeeGroups = useMemo(() => {
-    const ownerItems =
-      tasksByEmployee.find(([owner]) => owner === user)?.[1] ?? [];
+    const ownerItems = tasksByEmployee.find(([ownerId]) => ownerId === user)?.[1] ?? [];
 
-    const groupedByHandwerker = new Map<
-      number,
+    const groupedByWorker = new Map<
+      string,
       {
         employee: {
-          id: number;
+          id: string;
           vorname: string;
           nachname: string;
           email: string | null;
@@ -28,38 +27,32 @@ function useEmployeeGroups(
       }
     >();
 
-    ownerItems.forEach((task) => {
-      task.inputs.forEach((input) => {
-        const current = groupedByHandwerker.get(input.employee.id);
+    ownerItems.forEach((engagement) => {
+      const workerId = engagement.worker.id;
+      const current = groupedByWorker.get(workerId) ?? {
+        employee: {
+          id: workerId,
+          vorname: engagement.worker.firstName,
+          nachname: engagement.worker.lastName,
+          email: engagement.worker.email,
+        },
+        inputs: [],
+      };
 
-        if (!current) {
-          groupedByHandwerker.set(input.employee.id, {
-            employee: input.employee,
-            inputs: [
-              {
-                description: task.description,
-                timestamp: input.timestamp,
-                lastChangedAt: input.lastChangedAt,
-                form_field_id: task.form_field_id,
-                status: input.status,
-              },
-            ],
-          });
-          return;
-        }
-
+      engagement.issues.forEach((issue, index) => {
         current.inputs.push({
-          description: task.description,
-          timestamp: input.timestamp,
-          lastChangedAt: input.lastChangedAt,
-          form_field_id: task.form_field_id,
-          status: input.status,
+          description: issue.title,
+          timestamp: issue.createdAt,
+          lastChangedAt: issue.updatedAt,
+          form_field_id: index + 1,
+          status: issue.issueStatus.name,
         });
       });
+
+      groupedByWorker.set(workerId, current);
     });
 
-    return Array.from(groupedByHandwerker.entries())
-      .map(([employeeId, group]) => [String(employeeId), group] as const)
+    return Array.from(groupedByWorker.entries())
       .filter(([, group]) => group.inputs.length > 0);
   }, [tasksByEmployee, user]);
 
