@@ -2,11 +2,11 @@ import ErrorAlert from '@/components/alerts/ErrorAlert';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import ModalOverlay from '@/components/modal/ModalOverlay';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { useEffect, useState } from 'react';
 import useFilteredData from '../../hooks/useFilteredData';
 import useTaskData from '../../hooks/useTaskData';
+import useTasks from '../../hooks/useTasks';
 import useTaskSubmit from '../../hooks/useTaskSubmit';
-import { LifecycleType, WorkerTab } from '../../types/index.types';
+import { LifecycleType } from '../../types/index.types';
 import WorkerFileUploads from '../files/WorkerFileUploads';
 import FilterByUser from '../header/filters/Filter.ByUser';
 import WorkerHeader from '../header/WorkerHeader';
@@ -22,27 +22,8 @@ type TaskManagementProps = {
 };
 
 const TaskManagement = ({ workerId, lifecycleType }: TaskManagementProps) => {
-  const [activeTab, setActiveTab] = useState<WorkerTab>('form');
-  const [fileDescriptionSearch, setFileDescriptionSearch] = useState('');
-  const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
-  const [createIssueOpen, setCreateIssueOpen] = useState(false);
-  const [applyTemplateOpen, setApplyTemplateOpen] = useState(false);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (createIssueOpen || isAddTaskModalOpen || applyTemplateOpen) return;
-      if (!e.metaKey || e.key.toLowerCase() !== 'c' || e.repeat) return;
-      const t = e.target;
-      if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement)
-        return;
-      if (t instanceof HTMLElement && t.isContentEditable) return;
-      e.preventDefault();
-      setCreateIssueOpen(true);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [createIssueOpen, isAddTaskModalOpen, applyTemplateOpen]);
-
+  const { activeTab, setActiveTab, fileDescriptionSearch, setFileDescriptionSearch, isAddTaskModalOpen, setIsAddTaskModalOpen, createIssueOpen, setCreateIssueOpen, applyTemplateOpen, setApplyTemplateOpen } = useTasks();
   const { data, isLoading } = useTaskData(workerId, lifecycleType);
   const {
     descriptionSearch,
@@ -83,6 +64,7 @@ const TaskManagement = ({ workerId, lifecycleType }: TaskManagementProps) => {
             }
           }}
         >
+          <button onClick={() => setCreateIssueOpen(true)}>Create Issue</button>
           <WorkerHeader
             searchValue={searchValue}
             setSearchValue={setSearchValue}
