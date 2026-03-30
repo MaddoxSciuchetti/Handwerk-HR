@@ -3,10 +3,10 @@ import useDeleteEmployee from '../hooks/useDeleteEmployee';
 import useGetOrgUsers from '../hooks/useGetEmployees';
 
 import LoadingAlert from '@/components/alerts/LoadingAlert';
-import SearchHeaderResuable from '@/components/layout/headers/SearchHeaderResuable';
 import ModalOverlay from '@/components/modal/ModalOverlay';
 import { useState } from 'react';
 import { useOrgUsersModal } from '../hooks/useOrgUsersModal';
+import EmployeeSearchHeader from './EmployeeSearchHeader';
 import EditOrgUser from './modals/edit-employee-modal/EmployeeModal';
 import UserInfo from './modals/employee-info-modal/EmployeeInfoModal';
 import ViewEmployeeModal from './modals/view-employeedata-modal/ViewEmployeeModal';
@@ -57,7 +57,7 @@ function OrgUsersOverview() {
   return (
     <div className="mx-auto flex h-full w-5xl flex-col overflow-auto rounded-2xl bg-card p-6 md:max-w-8xl">
       <div className="h-full w-full flex flex-col">
-        <SearchHeaderResuable search={search} setSearch={setSearch} />
+        <EmployeeSearchHeader search={search} setSearch={setSearch} />
         <Table className="text-left mt-5 border-seperate border-spacing-y-2">
           <EmployeeTableHeader />
           <EmployeeTableBody
