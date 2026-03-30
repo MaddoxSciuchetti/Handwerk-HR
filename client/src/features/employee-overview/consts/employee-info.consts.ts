@@ -6,31 +6,31 @@ import { getAbsenceInfo } from '../utils/getAbsenceInfo';
 export const employeeInfos = (e: EmployeeInfoResponse): EmployeeInfoItem[] => {
   const absence = getAbsenceInfo(e);
   return [
-    { label: 'Vorname', value: e.vorname },
-    { label: 'Nachname', value: e.nachname },
+    { label: 'Vorname', value: e.firstName },
+    { label: 'Nachname', value: e.lastName },
     { label: 'E-Mail', value: e.email },
     {
       label: 'Aktueller Status',
-      value: absence?.substitute ? 'Abwesend' : 'Anwesend',
+      value: e.isAbsent ? 'Abwesend' : 'Anwesend',
     },
-    { label: 'Abwesenheitsart', value: absence?.absencetype ?? '—' },
+    { label: 'Abwesenheitsart', value: absence?.absenceType ?? '—' },
     {
       label: 'Abwesend von bis',
-      value: absence?.substitute
-        ? `${formatDate(absence.absencebegin)} - ${formatDate(absence.absenceEnd)}`
+      value: absence
+        ? `${formatDate(absence.startDate)} - ${formatDate(absence.endDate)}`
         : '—',
     },
     {
       label: 'Vertretung',
-      value: absence?.sub_user
-        ? `${absence.sub_user.vorname} ${absence.sub_user.nachname}`
+      value: absence?.substitute
+        ? `${absence.substitute.firstName} ${absence.substitute.lastName}`
         : '—',
     },
     {
       label: 'Rolle',
-      value: e.user_permission === 'CHEF' ? 'Administrator' : 'Mitarbeiter',
+      value: e.organizationMembers[0]?.role.name ?? '—',
     },
     { label: 'Erstellt', value: formatDate(e.createdAt) },
-    { label: 'Verifiziert', value: e.verified ? 'Ja' : 'Nein' },
+    { label: 'Verifiziert', value: e.isEmailVerified ? 'Ja' : 'Nein' },
   ];
 };

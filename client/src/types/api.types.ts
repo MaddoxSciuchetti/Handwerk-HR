@@ -97,24 +97,35 @@ export type Cache = {
 
 export type SessionCache = Cache[];
 
+export type AbsenceRecord = {
+  id: string;
+  absenceType: 'SICK' | 'VACATION' | 'PARENTAL_LEAVE' | 'UNPAID' | 'OTHER';
+  startDate: string;
+  endDate: string;
+  substitute: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  } | null;
+};
+
 export type EmployeeInfoResponse = {
   id: string;
-  vorname: string;
-  nachname: string;
+  firstName: string;
+  lastName: string;
+  displayName: string | null;
   email: string;
-  verified: boolean;
-  user_permission: 'CHEF' | 'MITARBEITER';
+  avatarUrl: string | null;
+  isEmailVerified: boolean;
+  isAbsent: boolean;
+  status: 'active' | 'inactive' | 'suspended';
   createdAt: string;
-  employeeStatus: {
-    absence: string | null;
-    absencetype: string | null;
-    absencebegin: string | null;
-    absenceEnd: string | null;
-    substitute: string | null;
-    sub_user: {
+  updatedAt: string;
+  organizationMembers: {
+    role: {
       id: string;
-      vorname: string;
-      nachname: string;
-    } | null;
+      name: string;
+    };
   }[];
+  absences: AbsenceRecord[];
 };
