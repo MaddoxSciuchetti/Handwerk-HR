@@ -73,7 +73,7 @@ export const EmployeeRow = ({
       </td>
       <td className="rounded-r-xl">
         <TrashButton
-          disabled={employee.user_permission === 'CHEF'}
+          // disabled={employee.user_permission === 'CHEF'}
           description={'Löschen'}
           onClick={() => setIsDeleteModalOpen(true)}
         />
