@@ -1,6 +1,12 @@
 import { LAYOUTITEMS } from '@/constants/layout.consts';
 
 export const getSidebarItemLabel = (pathname: string) => {
+  if (
+    pathname === '/employee-overview' ||
+    pathname.startsWith('/template')
+  ) {
+    return 'Einstellungen';
+  }
   const match = LAYOUTITEMS.find(
     (item) => pathname === item.to || pathname.startsWith(`${item.to}/`)
   );

@@ -57,6 +57,11 @@ export function AppSidebar({ openModal }: { openModal: () => void }) {
                       >
                         <Link
                           to={item.to}
+                          search={
+                            item.to === '/org-settings'
+                              ? { tab: 'employees' }
+                              : undefined
+                          }
                           className={
                             isActive
                               ? 'bg-[var(--muted)] text-[var(--foreground)] hover:bg-[var(--muted)]'

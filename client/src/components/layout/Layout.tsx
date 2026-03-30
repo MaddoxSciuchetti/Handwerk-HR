@@ -1,7 +1,8 @@
+import { SettingsSidebar } from '@/features/org-settings/components/SettingsSidebar';
 import { AppSidebar } from '@/features/sidebar/AppSidebar';
 import FeatureModal from '@/features/sidebar/feature-modal/FeatureModal';
 import { useThemeProvider } from '@/hooks/useThemeProvider';
-import { Outlet } from '@tanstack/react-router';
+import { Outlet, useRouterState } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import ModalOverlay from '../modal/ModalOverlay';
 import { SidebarInset, SidebarTrigger, useSidebar } from '../ui/sidebar';
@@ -11,6 +12,9 @@ function Layout() {
   const [modal, setModal] = useState<boolean>(false);
   const { toggleSidebar } = useSidebar();
   const { theme } = useThemeProvider();
+  const isOrgSettings = useRouterState({
+    select: (s) => s.location.pathname === '/org-settings',
+  });
 
   const handleOpenModal = () => {
     setModal((prev) => !prev);
@@ -27,7 +31,11 @@ function Layout() {
 
   return (
     <>
-      <AppSidebar openModal={handleOpenModal} />
+      {isOrgSettings ? (
+        <SettingsSidebar />
+      ) : (
+        <AppSidebar openModal={handleOpenModal} />
+      )}
       <SidebarInset className="flex flex-col h-svh md:w-max-svw">
         <header className="flex h-16 shrink-0 items-center gap-2 px-4">
           <SidebarTrigger className="-ml-1" />
