@@ -24,10 +24,9 @@ export const specificEmployeeData = async (): Promise<OrgUsersArray> => {
 };
 
 export const fetchDescriptionData = async (
-  id: string,
-  form_type: string
+  id: string
 ): Promise<DescriptionFieldResponse> => {
-  return API.get(`worker/getWorker/${id}?lifecycleType=${form_type}`);
+  return API.get(`worker/${id}`);
 };
 
 export const editEmployeeAbsence = async (

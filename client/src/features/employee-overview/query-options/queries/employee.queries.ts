@@ -19,10 +19,10 @@ export const employeeQueries = {
     });
   },
 
-  fetchDescription: (id: string, form_type: string) => {
+  fetchDescription: (id: string) => {
     return queryOptions<DescriptionFieldResponse, Error>({
-      queryKey: [PROCESS_DATA, id, form_type],
-      queryFn: () => fetchDescriptionData(id, form_type),
+      queryKey: [PROCESS_DATA, id],
+      queryFn: () => fetchDescriptionData(id),
     });
   },
 

@@ -35,7 +35,7 @@ export function Worker_Item({
     isLoading: processLoading,
     completedTasksCount,
     totalTasks,
-  } = useFetchProcessData(item_value, form_type);
+  } = useFetchProcessData(item_value);
 
   const { archiveWorkerMutation, deleteTaskMutation, unarchiveWorkerMutation } =
     useWorkerMutations();

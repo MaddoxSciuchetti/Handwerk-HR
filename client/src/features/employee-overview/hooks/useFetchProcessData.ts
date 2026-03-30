@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { employeeQueries } from '../query-options/queries/employee.queries';
 
-function useFetchProcessData(id: string, form_type: string) {
-  const queryResult = useQuery(employeeQueries.fetchDescription(id, form_type));
+function useFetchProcessData(id: string) {
+  const queryResult = useQuery(employeeQueries.fetchDescription(id));
 
   const completedTasksCount = queryResult.data?.form?.fields
     ? queryResult.data.form.fields.filter(
