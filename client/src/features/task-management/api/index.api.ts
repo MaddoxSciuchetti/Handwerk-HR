@@ -12,6 +12,7 @@ import {
   UpdatePayload,
 } from '../types/index.types';
 import { WorkerDetailResponse } from '@/features/worker-lifecycle/types/index.types';
+import type { IssueAuditRow } from '../utils/mapIssueAuditToHistory';
 
 export const getWorkerById = async (
   workerId: string,
@@ -108,4 +109,31 @@ export const createWorkerIssue = async (
   body: CreateWorkerIssuePayload
 ) => {
   return API.post(`worker/${workerId}/issues`, body);
+};
+
+export type UpdateWorkerIssueBody = {
+  workerEngagementId: string;
+  title?: string;
+  description?: string;
+  assigneeUserId?: string | null;
+  statusId?: string;
+  priority?: 'urgent' | 'high' | 'medium' | 'low' | 'no_priority';
+};
+
+export const updateWorkerIssue = async (
+  workerId: string,
+  issueId: string,
+  body: UpdateWorkerIssueBody
+) => {
+  return API.put(`worker/${workerId}/issues/${issueId}`, body);
+};
+
+export const getIssueAuditLogs = async (
+  workerId: string,
+  issueId: string
+): Promise<IssueAuditRow[]> => {
+  const res = (await API.get(
+    `worker/${workerId}/issues/${issueId}/audit-logs`
+  )) as { success: boolean; data: IssueAuditRow[] };
+  return res.data ?? [];
 };

@@ -5,12 +5,14 @@ import SidebarBody from '../SidebarBody';
 import SidebarHeader from './SidebarHeader';
 
 type TaskSidebarProps = {
+  workerId: string;
   selectedTask: DescriptionField | null;
   setSelectedTaskId: (value: string | number | null) => void;
   handleSubmit: (values: InsertHistoryData) => Promise<void>;
 };
 
 const TaskSidebar = ({
+  workerId,
   selectedTask,
   setSelectedTaskId,
   handleSubmit,
@@ -29,6 +31,7 @@ const TaskSidebar = ({
             setSelectedTaskId={setSelectedTaskId}
           />
           <SidebarBody
+            workerId={workerId}
             selectedTask={selectedTask}
             handleSubmit={handleSubmit}
           />

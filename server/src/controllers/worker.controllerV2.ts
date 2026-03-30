@@ -277,11 +277,29 @@ export async function updateIssue(req: Request, res: Response) {
         const issueId = param(req, "issueId");
         const result = await workerService.updateIssue({
             issueId,
+            actorUserId: req.userId!,
             ...req.body,
         });
         return res.status(200).json({ success: true, data: result });
     } catch (error: any) {
         console.error("updateIssue error:", error);
+        return res.status(500).json({ success: false, message: error.message });
+    }
+}
+
+export async function getIssueAuditLogs(req: Request, res: Response) {
+    try {
+        const organizationId = req.orgId;
+        const workerId = param(req, "workerId");
+        const issueId = param(req, "issueId");
+        const data = await workerService.getIssueAuditLogs({
+            workerId,
+            issueId,
+            organizationId,
+        });
+        return res.status(200).json({ success: true, data });
+    } catch (error: any) {
+        console.error("getIssueAuditLogs error:", error);
         return res.status(500).json({ success: false, message: error.message });
     }
 }

@@ -17,7 +17,7 @@ import type {
 } from "@/types/worker.types";
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { WorkerStatus } from "@prisma/client";
+import { Prisma, WorkerStatus } from "@prisma/client";
 const s3 = new S3Client({ region: process.env.AWS_REGION });
 const PRESIGN_EXPIRES = 3600;
 
@@ -451,33 +451,47 @@ export async function createIssue(params: CreateIssueInput) {
     });
     if (!engagement) throw new Error("WorkerEngagement not found");
 
-    return prisma.issue.create({
-        data: {
-            workerEngagementId,
-            createdByUserId,
-            statusId,
-            title,
-            assigneeUserId,
-            templateItemId,
-            description,
-            priority: priority ?? "no_priority",
-            dueDate,
-        },
-        include: {
-            issueStatus: true,
-            assignee: {
-                select: {
-                    id: true,
-                    firstName: true,
-                    lastName: true,
-                    email: true,
+    return prisma.$transaction(async (tx) => {
+        const issue = await tx.issue.create({
+            data: {
+                workerEngagementId,
+                createdByUserId,
+                statusId,
+                title,
+                assigneeUserId,
+                templateItemId,
+                description,
+                priority: priority ?? "no_priority",
+                dueDate,
+            },
+            include: {
+                issueStatus: true,
+                assignee: {
+                    select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true,
+                        email: true,
+                    },
+                },
+                createdBy: {
+                    select: { id: true, firstName: true, lastName: true },
+                },
+                templateItem: true,
+            },
+        });
+        await tx.issueAuditLog.create({
+            data: {
+                issueId: issue.id,
+                actorUserId: createdByUserId,
+                action: "issue.created",
+                newValue: {
+                    title: issue.title,
+                    statusId: issue.statusId,
                 },
             },
-            createdBy: {
-                select: { id: true, firstName: true, lastName: true },
-            },
-            templateItem: true,
-        },
+        });
+        return issue;
     });
 }
 
@@ -495,24 +509,114 @@ export async function getIssueStatusesForWorker(params: {
 }
 
 export async function updateIssue(params: UpdateIssueInput) {
-    const { issueId, workerEngagementId, ...updateData } = params;
+    const {
+        issueId,
+        workerEngagementId,
+        actorUserId,
+        title,
+        description,
+        assigneeUserId,
+        statusId,
+        priority,
+        dueDate,
+    } = params;
 
     const existing = await prisma.issue.findFirst({
         where: { id: issueId, workerEngagementId },
     });
     if (!existing) throw new Error("Issue not found");
 
-    return prisma.issue.update({
-        where: { id: issueId },
-        data: updateData,
+    const data: Record<string, unknown> = {};
+    if (title !== undefined) data.title = title;
+    if (description !== undefined) data.description = description;
+    if (assigneeUserId !== undefined) data.assigneeUserId = assigneeUserId;
+    if (statusId !== undefined) data.statusId = statusId;
+    if (priority !== undefined) data.priority = priority;
+    if (dueDate !== undefined) data.dueDate = dueDate;
+
+    const keys = Object.keys(data);
+    if (keys.length === 0) {
+        return prisma.issue.findFirst({
+            where: { id: issueId },
+            include: {
+                issueStatus: true,
+                assignee: {
+                    select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true,
+                        email: true,
+                    },
+                },
+            },
+        });
+    }
+
+    const oldValue: Record<string, unknown> = {};
+    for (const k of keys) {
+        oldValue[k] = (existing as unknown as Record<string, unknown>)[k];
+    }
+
+    return prisma.$transaction(async (tx) => {
+        const updated = await tx.issue.update({
+            where: { id: issueId },
+            data,
+            include: {
+                issueStatus: true,
+                assignee: {
+                    select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true,
+                        email: true,
+                    },
+                },
+            },
+        });
+        const newValue: Record<string, unknown> = {};
+        for (const k of keys) {
+            newValue[k] = (updated as unknown as Record<string, unknown>)[k];
+        }
+        await tx.issueAuditLog.create({
+            data: {
+                issueId,
+                actorUserId,
+                action: "issue.updated",
+                oldValue: oldValue as Prisma.InputJsonValue,
+                newValue: newValue as Prisma.InputJsonValue,
+            },
+        });
+        return updated;
+    });
+}
+
+export async function getIssueAuditLogs(params: {
+    workerId: string;
+    issueId: string;
+    organizationId: string;
+}) {
+    const { workerId, issueId, organizationId } = params;
+    await assertOwnership(workerId, organizationId);
+    const issue = await prisma.issue.findFirst({
+        where: {
+            id: issueId,
+            workerEngagement: { workerId },
+        },
+        select: { id: true },
+    });
+    if (!issue) throw new Error("Issue not found");
+
+    return prisma.issueAuditLog.findMany({
+        where: { issueId },
+        orderBy: { createdAt: "desc" },
         include: {
-            issueStatus: true,
-            assignee: {
+            actorUser: {
                 select: {
                     id: true,
+                    email: true,
                     firstName: true,
                     lastName: true,
-                    email: true,
+                    avatarUrl: true,
                 },
             },
         },

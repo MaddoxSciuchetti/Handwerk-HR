@@ -12,10 +12,13 @@ import {
   updateData,
   updateWorkerData,
   updateWorkerHistory,
+  updateWorkerIssue,
+  type UpdateWorkerIssueBody,
 } from '../../api/index.api';
 import {
   FORMHISTORY,
   HISTORYDATA,
+  ISSUE_AUDIT,
   WORKERBYID,
 } from '../../consts/query-key.consts';
 import {
@@ -134,6 +137,26 @@ export const workerMutations = {
       onSuccess: async () => {
         await queryClient.invalidateQueries({
           queryKey: [WORKERBYID, workerId],
+        });
+      },
+    });
+  },
+
+  updateWorkerIssue: (workerId: string) => {
+    return mutationOptions<
+      void,
+      Error,
+      { issueId: string; body: UpdateWorkerIssueBody }
+    >({
+      mutationFn: async ({ issueId, body }) => {
+        await updateWorkerIssue(workerId, issueId, body);
+      },
+      onSuccess: async (_, { issueId }) => {
+        await queryClient.invalidateQueries({
+          queryKey: [WORKERBYID, workerId],
+        });
+        await queryClient.invalidateQueries({
+          queryKey: [ISSUE_AUDIT, workerId, issueId],
         });
       },
     });

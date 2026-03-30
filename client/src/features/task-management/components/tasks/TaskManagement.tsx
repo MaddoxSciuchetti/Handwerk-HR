@@ -52,7 +52,8 @@ const TaskManagement = ({ workerId, lifecycleType }: TaskManagementProps) => {
 
   const { handleSubmit, selectedTaskId, setSelectedTaskId } = useTaskSubmit(
     workerId,
-    lifecycleType
+    lifecycleType,
+    String(data?.form?.id ?? '')
   );
 
   const selectedTask =
@@ -97,6 +98,7 @@ const TaskManagement = ({ workerId, lifecycleType }: TaskManagementProps) => {
               handleSelectTask={setSelectedTaskId}
             />
             <TaskSidebar
+              workerId={workerId}
               selectedTask={selectedTask}
               setSelectedTaskId={setSelectedTaskId}
               handleSubmit={handleSubmit}

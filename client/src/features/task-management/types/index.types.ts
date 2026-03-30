@@ -1,12 +1,18 @@
 
 import z from 'zod';
-import { TAuth_User } from '../hooks/useGetWorkerHistory';
 import { createWorkerSchema } from '@/features/worker-lifecycle/schemas/zod.schemas';
 import { formSchema } from '../schemas/index.schema';
 import { TaskStatus } from '../utils/selectOptionTernary';
 
+export type TAuth_User = {
+  id: string;
+  email: string;
+  verified: boolean;
+  cloud_url: string;
+};
+
 export type HistoryData = {
-  id: number;
+  id: string | number;
   timestamp: Date | null;
   status: TaskStatus;
   edit: string | null;

@@ -2,16 +2,19 @@ import type { WorkerDetailResponse } from '@/features/worker-lifecycle/types/ind
 import { DescriptionFieldResponse } from '@/types/api.types';
 import { queryOptions } from '@tanstack/react-query';
 import {
+  getIssueAuditLogs,
   getWorkerById,
   getWorkerFiles,
   getWorkerHistory,
   getWorkerIssueStatuses,
   type IssueStatusOption,
 } from '../../api/index.api';
+import type { IssueAuditRow } from '../../utils/mapIssueAuditToHistory';
 import { workerDetailToDescriptionFieldResponse } from '../../utils/workerDetailToTaskView';
 import {
   FORMHISTORY,
   HISTORYDATA,
+  ISSUE_AUDIT,
   WORKERBYID,
   WORKER_ISSUE_STATUSES,
 } from '../../consts/query-key.consts';
@@ -67,5 +70,12 @@ export const workerQueries = {
       queryKey: [WORKER_ISSUE_STATUSES, workerId] as const,
       queryFn: () => getWorkerIssueStatuses(workerId),
       enabled: !!workerId,
+    }),
+
+  issueAuditLogs: (workerId: string, issueId: string) =>
+    queryOptions<IssueAuditRow[], Error>({
+      queryKey: [ISSUE_AUDIT, workerId, issueId] as const,
+      queryFn: () => getIssueAuditLogs(workerId, issueId),
+      enabled: !!workerId && !!issueId,
     }),
 };

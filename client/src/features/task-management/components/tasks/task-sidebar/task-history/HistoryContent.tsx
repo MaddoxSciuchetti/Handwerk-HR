@@ -1,14 +1,15 @@
-import { useGetWorkerHistory } from '../../../../hooks/useGetWorkerHistory';
+import { useTaskHistory } from '../../../../hooks/useTaskHistory';
 
 import { cn } from '@/lib/trycatch';
 import { StatusIcon } from '../../../../consts/status.consts';
 import { STATUS_MAP } from '../../../../utils/selectOptionTernary';
 type HistoryContentProps = {
+  workerId: string;
   id_original: string | number;
 };
 
-const HistoryContent = ({ id_original }: HistoryContentProps) => {
-  const { historyData } = useGetWorkerHistory(id_original);
+const HistoryContent = ({ workerId, id_original }: HistoryContentProps) => {
+  const { historyData } = useTaskHistory(workerId, id_original);
 
   return (
     <div className="pb-4">

@@ -8,10 +8,11 @@ import { Clock } from 'lucide-react';
 import HistoryContent from './HistoryContent';
 
 type TaskHistoryProps = {
-  id_original: number;
+  workerId: string;
+  id_original: string | number;
 };
 
-const TaskHistory = ({ id_original }: TaskHistoryProps) => {
+const TaskHistory = ({ workerId, id_original }: TaskHistoryProps) => {
   return (
     <>
       <Accordion type="single" collapsible className="max-w-6xl">
@@ -23,7 +24,7 @@ const TaskHistory = ({ id_original }: TaskHistoryProps) => {
             </div>
           </AccordionTrigger>
           <AccordionContent className="mt-5">
-            <HistoryContent id_original={id_original} />
+            <HistoryContent workerId={workerId} id_original={id_original} />
           </AccordionContent>
         </AccordionItem>
       </Accordion>

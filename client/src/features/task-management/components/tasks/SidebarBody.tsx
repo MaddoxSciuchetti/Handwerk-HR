@@ -4,11 +4,16 @@ import HistoryContent from './task-sidebar/task-history/HistoryContent';
 import StatusInformation from './task-sidebar/task-status-information/StatusInformation';
 
 type SidebarBodyProps = {
+  workerId: string;
   selectedTask: DescriptionField;
   handleSubmit: (values: InsertHistoryData) => Promise<void>;
 };
 
-const SidebarBody = ({ selectedTask, handleSubmit }: SidebarBodyProps) => {
+const SidebarBody = ({
+  workerId,
+  selectedTask,
+  handleSubmit,
+}: SidebarBodyProps) => {
   return (
     <>
       <div className="flex-1 overflow-y-auto">
@@ -23,7 +28,7 @@ const SidebarBody = ({ selectedTask, handleSubmit }: SidebarBodyProps) => {
           />
         </div>
         <div className="px-6 pb-5">
-          <HistoryContent id_original={selectedTask.id} />
+          <HistoryContent workerId={workerId} id_original={selectedTask.id} />
         </div>
       </div>
     </>
