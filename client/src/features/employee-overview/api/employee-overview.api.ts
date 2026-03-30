@@ -34,7 +34,7 @@ export const editEmployeeAbsence = async (
   data: AbsenceFormData
 ): Promise<AbsenceFormData> => {
   return API.put<AbsenceFormData, AbsenceFormData>(
-    '/employee/editAbsenceData',
+    '/employee/v2/editAbsenceData',
     data
   );
 };

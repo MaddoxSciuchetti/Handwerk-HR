@@ -1,4 +1,4 @@
-import { dateSchema } from '@/schemas/schema';
+import { DateValidation } from '@/schemas/schema';
 import z from 'zod';
 import { VALIDATION_MESSAGES } from '../consts/validationMessages';
 
@@ -121,8 +121,8 @@ export const absenceSchema = z.object({
     ['SICK', 'VACATION', 'PARENTAL_LEAVE', 'UNPAID', 'OTHER'],
     { message: VALIDATION_MESSAGES.required('Art der Abwesenheit') }
   ),
-  startDate: dateSchema,
-  endDate: dateSchema,
+  startDate: DateValidation,
+  endDate: DateValidation,
   substituteId: z
     .string({
       message: VALIDATION_MESSAGES.optionRequired,

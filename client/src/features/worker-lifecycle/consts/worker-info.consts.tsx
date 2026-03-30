@@ -1,11 +1,11 @@
 import { DescriptionFieldResponse } from '@/types/api.types';
-import { workerBaseSchema } from '../schemas/zod.schemas';
+import { baseWorkerSchema } from '../schemas/zod.schemas';
 
 export type WorkerInfoItem = {
   label: string;
   value: string | number;
   className?: string;
-  schemaKey?: keyof typeof workerBaseSchema.shape | 'exitDate';
+  schemaKey?: keyof typeof baseWorkerSchema.shape | 'exitDate';
   form: boolean;
 };
 

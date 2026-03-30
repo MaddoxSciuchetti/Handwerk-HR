@@ -1,15 +1,23 @@
 export const absenceReason = [
   {
     label: 'Krank',
-    value: 'krank',
+    value: 'SICK',
   },
 
   {
     label: 'Urlaub',
-    value: 'urlaub',
+    value: 'VACATION',
+  },
+  {
+    label: 'Elternzeit',
+    value: 'PARENTAL_LEAVE',
+  },
+  {
+    label: 'Unbezahlt',
+    value: 'UNPAID',
   },
   {
     label: 'Andere',
-    value: 'andere',
+    value: 'OTHER',
   },
 ];
