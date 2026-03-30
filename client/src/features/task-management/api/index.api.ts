@@ -1,7 +1,6 @@
 import API from '@/config/apiClient';
 import { User } from '@/features/user-profile/types/auth.type';
 import {
-  DescriptionFieldResponse,
   SuccessResponse,
   EditDescriptionForm as UpdateWorkerDescription,
 } from '@/types/api.types';
@@ -10,19 +9,14 @@ import {
   File_Request,
   HistoryData,
   InsertHistoryData,
-  LifecycleType,
   UpdatePayload,
 } from '../types/index.types';
+import { WorkerDetailResponse } from '@/features/worker-lifecycle/types/index.types';
 
 export const getWorkerById = async (
   workerId: string,
-  lifecycleType: LifecycleType
-): Promise<DescriptionFieldResponse> => {
-  const response = await API.get<
-    DescriptionFieldResponse,
-    DescriptionFieldResponse
-  >(`worker/getWorker/${workerId}?lifecycleType=${lifecycleType}`);
-  return response;
+): Promise<WorkerDetailResponse> => {
+  return API.get<WorkerDetailResponse, WorkerDetailResponse>(`worker/${workerId}`);
 };
 
 export const updateWorkerHistory = async (

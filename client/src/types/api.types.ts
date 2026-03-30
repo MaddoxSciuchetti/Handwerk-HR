@@ -58,7 +58,7 @@ export type NewDescriptionField = {
 };
 
 export type DescriptionField = {
-  id: number;
+  id: string | number;
   form_field_id: number;
   description: string;
   officialOwner: string;
@@ -71,7 +71,7 @@ export type DescriptionField = {
 
 export type DescriptionFieldResponse = {
   worker: {
-    id: number;
+    id: string | number;
     vorname: string;
     nachname: string;
     email: string | null;
@@ -82,7 +82,7 @@ export type DescriptionFieldResponse = {
     position: string | null;
   };
   form: {
-    id: number;
+    id: string | number;
     type: string;
     fields: DescriptionField[];
   };

@@ -118,7 +118,6 @@ export function Worker_Item({
         <WorkerInfoModal
           isOpen={isInfoModalOpen}
           workerId={item_value}
-          lifecycleType={form_type}
           onClose={() => setIsInfoModalOpen(false)}
         />
       </td>

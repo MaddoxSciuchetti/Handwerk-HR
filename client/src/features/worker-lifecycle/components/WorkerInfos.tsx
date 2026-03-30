@@ -1,13 +1,11 @@
-import { LifecycleType } from '@/features/task-management/types/index.types';
-import { DescriptionFieldResponse } from '@/types/api.types';
 import { Dispatch, SetStateAction } from 'react';
 import { workerInfos } from '../consts/worker-info.consts';
+import { WorkerDetailResponse } from '../types/index.types';
 import WorkerDescription from './WorkerDescription';
 import WorkerInput from './WorkerInput';
 
 type WorkerInfosProps = {
-  workerInfo: DescriptionFieldResponse;
-  lifecycleType: LifecycleType;
+  workerInfo: WorkerDetailResponse;
   workerId: string;
   isInputActive: boolean | undefined;
   setIsInputActive: Dispatch<SetStateAction<boolean | undefined>>;
@@ -17,17 +15,13 @@ type WorkerInfosProps = {
 
 const WorkerInfos = ({
   workerInfo,
-  lifecycleType,
   workerId,
   isInputActive,
   setIsInputActive,
   uniqueInput,
   setUniqueInput,
 }: WorkerInfosProps) => {
-  const workers = workerInfos(workerInfo).filter(
-    (value) =>
-      !(lifecycleType === 'onboarding' && value.schemaKey === 'exitDate')
-  );
+  const workers = workerInfos(workerInfo);
   return (
     <>
       <div className="w-full">

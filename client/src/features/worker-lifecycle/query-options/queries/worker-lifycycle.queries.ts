@@ -1,10 +1,12 @@
 import { getWorkerById } from '@/features/task-management/api/index.api';
-import { LifecycleType } from '@/features/task-management/types/index.types';
-import { DescriptionFieldResponse } from '@/types/api.types';
 import { queryOptions } from '@tanstack/react-query';
 import { getWorkerData } from '../../api';
 import { ALL_WORKER_DATA } from '../../consts/query-key.consts';
-import { WorkerRecord, WorkerRecordMode } from '../../types/index.types';
+import {
+  WorkerDetailResponse,
+  WorkerRecord,
+  WorkerRecordMode,
+} from '../../types/index.types';
 
 export const workerLifecycleQueries = {
   workerData: (mode: WorkerRecordMode = 'active') => {
@@ -13,10 +15,10 @@ export const workerLifecycleQueries = {
       queryFn: () => getWorkerData(mode),
     });
   },
-  workerById: (workerId: string, lifecycleType: LifecycleType) => {
-    return queryOptions<DescriptionFieldResponse>({
-      queryKey: [ALL_WORKER_DATA, 'detail', workerId, lifecycleType],
-      queryFn: () => getWorkerById(workerId, lifecycleType),
+  workerById: (workerId: string) => {
+    return queryOptions<WorkerDetailResponse>({
+      queryKey: [ALL_WORKER_DATA, 'detail', workerId],
+      queryFn: () => getWorkerById(workerId),
     });
   },
 };

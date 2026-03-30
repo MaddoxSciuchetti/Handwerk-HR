@@ -35,6 +35,30 @@ export type WorkerRecord = {
   engagements: WorkerEngagement[];
 };
 
+export type WorkerDetailResponse = {
+  success: boolean;
+  data: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    birthday: string | null;
+    position: string | null;
+    street: string | null;
+    city: string | null;
+    state: string | null;
+    postalCode: string | null;
+    country: string | null;
+    entryDate: string | null;
+    exitDate: string | null;
+    engagements: Array<
+      WorkerEngagement & {
+        issues?: Array<{ id: string }>;
+      }
+    >;
+  };
+};
+
 export type WorkerRecordMode = 'active' | 'archived';
 
 export type WorkerOverviewField = {
