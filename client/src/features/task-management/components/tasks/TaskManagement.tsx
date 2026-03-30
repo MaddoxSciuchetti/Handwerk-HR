@@ -2,7 +2,7 @@ import ErrorAlert from '@/components/alerts/ErrorAlert';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import ModalOverlay from '@/components/modal/ModalOverlay';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import useFilteredData from '../../hooks/useFilteredData';
 import useTaskData from '../../hooks/useTaskData';
 import useTaskSubmit from '../../hooks/useTaskSubmit';
@@ -11,11 +11,12 @@ import WorkerFileUploads from '../files/WorkerFileUploads';
 import FilterByUser from '../header/filters/Filter.ByUser';
 import WorkerHeader from '../header/WorkerHeader';
 import AddWorkerTaskModal from './AddWorkerTaskModal';
+import CreateIssueShortcutModal from './CreateIssueShortcutModal';
 import TaskSidebar from './task-sidebar/TaskSidebar';
 import TaskIndividual from './TaskIndividual';
 
 type TaskManagementProps = {
-  workerId: number;
+  workerId: string;
   lifecycleType: LifecycleType;
 };
 
@@ -23,6 +24,22 @@ const TaskManagement = ({ workerId, lifecycleType }: TaskManagementProps) => {
   const [activeTab, setActiveTab] = useState<WorkerTab>('form');
   const [fileDescriptionSearch, setFileDescriptionSearch] = useState('');
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
+  const [createIssueOpen, setCreateIssueOpen] = useState(false);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (createIssueOpen || isAddTaskModalOpen) return;
+      if (!e.metaKey || e.key.toLowerCase() !== 'c' || e.repeat) return;
+      const t = e.target;
+      if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement)
+        return;
+      if (t instanceof HTMLElement && t.isContentEditable) return;
+      e.preventDefault();
+      setCreateIssueOpen(true);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [createIssueOpen, isAddTaskModalOpen]);
 
   const { data, isLoading } = useTaskData(workerId, lifecycleType);
   const {
@@ -33,8 +50,10 @@ const TaskManagement = ({ workerId, lifecycleType }: TaskManagementProps) => {
     displayData,
   } = useFilteredData(data);
 
-  const { handleSubmit, selectedTaskId, setSelectedTaskId } =
-    useTaskSubmit(workerId);
+  const { handleSubmit, selectedTaskId, setSelectedTaskId } = useTaskSubmit(
+    workerId,
+    lifecycleType
+  );
 
   const selectedTask =
     displayData.find((field) => field.id === selectedTaskId) ?? null;
@@ -97,6 +116,16 @@ const TaskManagement = ({ workerId, lifecycleType }: TaskManagementProps) => {
               workerId={workerId}
               lifecycleType={lifecycleType}
               onClose={() => setIsAddTaskModalOpen(false)}
+            />
+          </ModalOverlay>
+        )}
+
+        {createIssueOpen && (
+          <ModalOverlay handleToggle={() => setCreateIssueOpen(false)}>
+            <CreateIssueShortcutModal
+              workerId={workerId}
+              lifecycleType={lifecycleType}
+              onClose={() => setCreateIssueOpen(false)}
             />
           </ModalOverlay>
         )}

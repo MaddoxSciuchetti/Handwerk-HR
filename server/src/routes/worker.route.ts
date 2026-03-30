@@ -71,6 +71,10 @@ worker.delete(
 );
 
 // Issues
+worker.get(
+    "/:workerId/issue-statuses",
+    workerController.getIssueStatusesForWorker,
+);
 worker.post("/:workerId/issues", workerController.createIssue);
 worker.put("/:workerId/issues/:issueId", workerController.updateIssue);
 worker.delete("/:workerId/issues/:issueId", workerController.deleteIssue);

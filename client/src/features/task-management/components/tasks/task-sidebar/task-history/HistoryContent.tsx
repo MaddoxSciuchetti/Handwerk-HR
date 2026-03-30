@@ -4,7 +4,7 @@ import { cn } from '@/lib/trycatch';
 import { StatusIcon } from '../../../../consts/status.consts';
 import { STATUS_MAP } from '../../../../utils/selectOptionTernary';
 type HistoryContentProps = {
-  id_original: number;
+  id_original: string | number;
 };
 
 const HistoryContent = ({ id_original }: HistoryContentProps) => {

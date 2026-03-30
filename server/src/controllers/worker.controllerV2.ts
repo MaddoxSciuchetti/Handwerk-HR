@@ -257,6 +257,21 @@ export async function createIssue(req: Request, res: Response) {
     }
 }
 
+export async function getIssueStatusesForWorker(req: Request, res: Response) {
+    try {
+        const organizationId = req.orgId;
+        const workerId = param(req, "workerId");
+        const data = await workerService.getIssueStatusesForWorker({
+            workerId,
+            organizationId,
+        });
+        return res.status(200).json({ success: true, data });
+    } catch (error: any) {
+        console.error("getIssueStatusesForWorker error:", error);
+        return res.status(500).json({ success: false, message: error.message });
+    }
+}
+
 export async function updateIssue(req: Request, res: Response) {
     try {
         const issueId = param(req, "issueId");

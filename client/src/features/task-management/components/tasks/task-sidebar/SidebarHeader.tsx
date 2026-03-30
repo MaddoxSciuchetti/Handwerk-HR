@@ -3,7 +3,7 @@ import { Calendar, User, X } from 'lucide-react';
 
 type SidebarHeaderProps = {
   selectedTask: DescriptionField;
-  setSelectedTaskId: (value: number | null) => void;
+  setSelectedTaskId: (value: string | number | null) => void;
 };
 
 const SidebarHeader = ({

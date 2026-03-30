@@ -10,7 +10,7 @@ import { InsertHistoryData } from '../../../../types/index.types';
 import { STATUS_MAP, TaskStatus } from '../../../../utils/selectOptionTernary';
 
 type StatusInformationProps = {
-  id: number;
+  id: string | number;
   editcomment: string;
   select_option: TaskStatus;
   form_field_id: number;

@@ -36,13 +36,27 @@ export const getProfilePhoto = catchErrors(async (req, res) => {
     const id = req.userId;
 
     const profilePic = await queryProfilePhoto(id);
-    if (!profilePic) {
+    if (!profilePic?.avatarUrl) {
         return res
             .status(NOT_FOUND)
             .json({ error: "Please upload a profile picture" });
     }
 
-    const key = new URL(profilePic.avatarUrl!).pathname.slice(1);
+    let key: string;
+    try {
+        key = new URL(profilePic.avatarUrl).pathname.slice(1);
+    } catch {
+        return res
+            .status(NOT_FOUND)
+            .json({ error: "Please upload a profile picture" });
+    }
+
+    if (!key) {
+        return res
+            .status(NOT_FOUND)
+            .json({ error: "Please upload a profile picture" });
+    }
+
     const presignedUrl = await generatePresignedUrl(key);
 
     return res.status(OK).json(presignedUrl);

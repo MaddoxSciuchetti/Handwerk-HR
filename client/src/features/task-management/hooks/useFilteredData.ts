@@ -8,7 +8,7 @@ function useFilteredData(data: DescriptionFieldResponse | undefined) {
   const [showMyItems, setShowMyItems] = useState(false);
 
   const getFilterAndSortedData = () => {
-    let filteredData = data?.form.fields ?? [];
+    let filteredData = data?.form?.fields ?? [];
 
     if (descriptionSearch) {
       filteredData = filteredData.filter((field) =>

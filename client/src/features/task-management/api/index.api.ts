@@ -72,8 +72,40 @@ export const updateData = async (data: UpdatePayload, workerId: string) => {
 };
 
 export const createWorkerTask = async (
-  workerId: number,
+  workerId: string | number,
   data: CreateWorkerTaskPayload
 ) => {
   return await API.post(`/worker/createWorkerTask/${workerId}`, data);
+};
+
+export type IssueStatusOption = {
+  id: string;
+  name: string;
+  color: string | null;
+};
+
+export type CreateWorkerIssuePayload = {
+  workerEngagementId: string;
+  createdByUserId: string;
+  statusId: string;
+  title: string;
+  assigneeUserId?: string;
+  description?: string;
+  priority?: 'urgent' | 'high' | 'medium' | 'low' | 'no_priority';
+};
+
+export const getWorkerIssueStatuses = async (
+  workerId: string
+): Promise<IssueStatusOption[]> => {
+  const res = (await API.get(
+    `worker/${workerId}/issue-statuses`
+  )) as { success: boolean; data: IssueStatusOption[] };
+  return res.data ?? [];
+};
+
+export const createWorkerIssue = async (
+  workerId: string,
+  body: CreateWorkerIssuePayload
+) => {
+  return API.post(`worker/${workerId}/issues`, body);
 };

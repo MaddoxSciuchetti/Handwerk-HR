@@ -481,6 +481,19 @@ export async function createIssue(params: CreateIssueInput) {
     });
 }
 
+export async function getIssueStatusesForWorker(params: {
+    workerId: string;
+    organizationId: string;
+}) {
+    const { workerId, organizationId } = params;
+    await assertOwnership(workerId, organizationId);
+    return prisma.organizationStatus.findMany({
+        where: { organizationId, entityType: "issue" },
+        orderBy: { orderIndex: "asc" },
+        select: { id: true, name: true, color: true },
+    });
+}
+
 export async function updateIssue(params: UpdateIssueInput) {
     const { issueId, workerEngagementId, ...updateData } = params;
 

@@ -6,8 +6,8 @@ import TaskStatusBar from './TaskStatusBar';
 
 type TaskIndividualProps = {
   tasks: DescriptionField[];
-  selectedTaskId: number | null;
-  handleSelectTask: (id: number) => void;
+  selectedTaskId: string | number | null;
+  handleSelectTask: (id: string | number) => void;
 };
 
 const TaskIndividual = ({

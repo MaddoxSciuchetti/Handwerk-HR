@@ -13,7 +13,7 @@ import FileHeader from './FileHeader';
 import FilesContent from './FilesContent';
 
 type WorkerFileUploadsProps = {
-  workerId: number;
+  workerId: string | number;
   fileDescriptionSearch: string;
 };
 

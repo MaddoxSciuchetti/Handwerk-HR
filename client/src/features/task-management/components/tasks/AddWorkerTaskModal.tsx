@@ -9,7 +9,7 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 import { workerMutations } from '../../query-options/mutations/worker.mutations';
 
 type AddWorkerTaskModalProps = {
-  workerId: number;
+  workerId: string;
   lifecycleType: LifecycleType;
   onClose: () => void;
 };
@@ -23,7 +23,7 @@ const AddWorkerTaskModal = ({
     lifecycleType === 'offboarding' ? 'OFFBOARDING' : 'ONBOARDING';
 
   const { mutate: createWorkerTaskMutation } = useMutation(
-    workerMutations.createWorkerTask(workerId)
+    workerMutations.createWorkerTask(workerId, lifecycleType)
   );
 
   const {

@@ -6,7 +6,7 @@ import SidebarHeader from './SidebarHeader';
 
 type TaskSidebarProps = {
   selectedTask: DescriptionField | null;
-  setSelectedTaskId: (value: number | null) => void;
+  setSelectedTaskId: (value: string | number | null) => void;
   handleSubmit: (values: InsertHistoryData) => Promise<void>;
 };
 

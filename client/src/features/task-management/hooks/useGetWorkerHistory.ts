@@ -8,7 +8,7 @@ export type TAuth_User = {
   cloud_url: string;
 };
 
-export const useGetWorkerHistory = (id: number) => {
+export const useGetWorkerHistory = (id: string | number) => {
   const { data, isLoading, error, refetch } = useQuery(
     workerQueries.getHistory(id)
   );

@@ -5,8 +5,10 @@ import { ALL_WORKER_DATA } from '@/features/worker-lifecycle/consts/query-key.co
 import { FileResponse, SuccessResponse } from '@/types/api.types';
 import { mutationOptions } from '@tanstack/react-query';
 import {
+  createWorkerIssue,
   createWorkerTask,
   deleteWorkerFile,
+  type CreateWorkerIssuePayload,
   updateData,
   updateWorkerData,
   updateWorkerHistory,
@@ -20,6 +22,7 @@ import {
   CreateWorkerTaskPayload,
   File_Request,
   InsertHistoryData,
+  LifecycleType,
   UpdatePayload,
 } from '../../types/index.types';
 
@@ -29,7 +32,7 @@ type UpdateTaskHistoryVariables = {
 };
 
 export const workerMutations = {
-  deleteWorker: (workerId: number) => {
+  deleteWorker: (workerId: string | number) => {
     return mutationOptions<SuccessResponse<string>, Error, number>({
       mutationFn: (fileId: number) => deleteWorkerFile(fileId),
       onMutate: async (fileId) => {
@@ -47,9 +50,9 @@ export const workerMutations = {
     });
   },
 
-  createFile: (id: number) => {
+  createFile: (id: string | number) => {
     return mutationOptions<FileResponse, Error, File[]>({
-      mutationFn: (files: File[]) => createWorkerFile(files, id),
+      mutationFn: (files: File[]) => createWorkerFile(files, id as number),
       onSuccess: () => {
         queryClient.invalidateQueries({
           queryKey: [HISTORYDATA, id],
@@ -74,14 +77,18 @@ export const workerMutations = {
     });
   },
 
-  updateTaskData: (workerId: number, closeSidebar: () => void) => {
+  updateTaskData: (
+    workerId: string,
+    lifecycleType: LifecycleType,
+    closeSidebar: () => void
+  ) => {
     return mutationOptions<void, Error, InsertHistoryData>({
       mutationFn: async (formValues) => {
         await updateWorkerData(formValues);
       },
       onSuccess: async () => {
         await queryClient.invalidateQueries({
-          queryKey: [WORKERBYID, workerId],
+          queryKey: [WORKERBYID, workerId, lifecycleType],
         });
         closeSidebar();
       },
@@ -106,10 +113,23 @@ export const workerMutations = {
     );
   },
 
-  createWorkerTask: (workerId: number) => {
+  createWorkerTask: (workerId: string | number, lifecycleType: LifecycleType) => {
     return mutationOptions<void, Error, CreateWorkerTaskPayload>({
       mutationFn: async (data) => {
         await createWorkerTask(workerId, data);
+      },
+      onSuccess: async () => {
+        await queryClient.invalidateQueries({
+          queryKey: [WORKERBYID, workerId, lifecycleType],
+        });
+      },
+    });
+  },
+
+  createWorkerIssue: (workerId: string) => {
+    return mutationOptions<void, Error, CreateWorkerIssuePayload>({
+      mutationFn: async (body) => {
+        await createWorkerIssue(workerId, body);
       },
       onSuccess: async () => {
         await queryClient.invalidateQueries({

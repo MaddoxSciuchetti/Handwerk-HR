@@ -7,7 +7,7 @@ import { FileDropzone } from './Dropzone';
 import { FileList } from './FileList';
 
 interface FileUploadFormProps {
-  workerId: number;
+  workerId: string | number;
   setModal: (val: boolean) => void;
 }
 

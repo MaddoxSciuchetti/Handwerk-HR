@@ -11,7 +11,7 @@ function useHome() {
   const [modal, setModal] = useState<boolean>(false);
   const [mode, setMode] = useState<WorkerRecordMode>('active');
   const { toggleSidebar } = useSidebar();
-  const navigate = useNavigate({ from: '/' });
+  const navigate = useNavigate();
 
   const toggleModal = () => {
     setModal((prev) => !prev);
