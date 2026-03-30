@@ -38,7 +38,6 @@ function StatusModal({
 }) {
   const qc = useQueryClient();
   const [name, setName] = useState(initial?.name ?? '');
-  const [color, setColor] = useState(initial?.color ?? '#6b7280');
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: [ORG_STATUSES] });
@@ -51,13 +50,12 @@ function StatusModal({
       if (initial) {
         await updateOrgStatus(initial.id, {
           name,
-          color: color || null,
         });
       } else {
         await createOrgStatus({
           entityType,
           name,
-          color: color || null,
+          color: null,
         });
       }
     },
@@ -89,24 +87,6 @@ function StatusModal({
             onChange={(e) => setName(e.target.value)}
             className="mt-1"
           />
-        </div>
-        <div>
-          <Label htmlFor="st-color">Farbe</Label>
-          <div className="mt-1 flex items-center gap-2">
-            <input
-              id="st-color"
-              type="color"
-              value={color?.startsWith('#') ? color : '#6b7280'}
-              onChange={(e) => setColor(e.target.value)}
-              className="h-9 w-14 cursor-pointer rounded border border-border bg-transparent"
-            />
-            <Input
-              value={color}
-              onChange={(e) => setColor(e.target.value)}
-              placeholder="#hex"
-              className="font-mono text-sm"
-            />
-          </div>
         </div>
       </div>
       <div className="mt-6 flex justify-end gap-2">
@@ -191,12 +171,7 @@ export function EntityStatusSettings({
                 key={row.id}
                 className="flex items-center gap-3 px-4 py-3.5"
               >
-                <div
-                  className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border/60"
-                  style={{
-                    backgroundColor: row.color ?? 'var(--muted)',
-                  }}
-                />
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border bg-muted" />
                 <div className="min-w-0 flex-1">
                   <p className="font-medium text-foreground">{row.name}</p>
                   {row.usageCount > 0 ? (

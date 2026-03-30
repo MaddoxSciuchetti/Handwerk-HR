@@ -20,13 +20,32 @@ export function parseOrgSettingsTabId(raw: unknown): OrgSettingsTabId {
   return 'employees';
 }
 
-export const ORG_SETTINGS_NAV: {
+export type OrgSettingsNavItem = {
   id: OrgSettingsTabId;
   label: string;
   icon: LucideIcon;
+};
+
+export const ORG_SETTINGS_NAV_GROUPS: {
+  heading: string;
+  items: OrgSettingsNavItem[];
 }[] = [
-  { id: 'employees', label: 'Mitarbeiter', icon: Users },
-  { id: 'templates', label: 'Vorlagen', icon: LayoutTemplate },
-  { id: 'project-status', label: 'Projekt-Status', icon: FolderKanban },
-  { id: 'issue-status', label: 'Issue-Status', icon: CircleDot },
+  {
+    heading: 'Organisation',
+    items: [
+      { id: 'employees', label: 'Mitarbeiter', icon: Users },
+      { id: 'templates', label: 'Vorlagen', icon: LayoutTemplate },
+    ],
+  },
+  {
+    heading: 'Projekte & Issues',
+    items: [
+      { id: 'project-status', label: 'Projekt-Status', icon: FolderKanban },
+      { id: 'issue-status', label: 'Issue-Status', icon: CircleDot },
+    ],
+  },
 ];
+
+/** Flat list for route matching and lookups */
+export const ORG_SETTINGS_NAV: OrgSettingsNavItem[] =
+  ORG_SETTINGS_NAV_GROUPS.flatMap((g) => g.items);

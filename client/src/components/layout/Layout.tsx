@@ -7,13 +7,14 @@ import { useEffect, useState } from 'react';
 import ModalOverlay from '../modal/ModalOverlay';
 import { SidebarInset, SidebarTrigger, useSidebar } from '../ui/sidebar';
 import PagePath from './headers/PagePath';
+import { isSettingsLayoutPath } from './utils/header.utils';
 
 function Layout() {
   const [modal, setModal] = useState<boolean>(false);
   const { toggleSidebar } = useSidebar();
   const { theme } = useThemeProvider();
   const isOrgSettings = useRouterState({
-    select: (s) => s.location.pathname === '/org-settings',
+    select: (s) => isSettingsLayoutPath(s.location.pathname),
   });
 
   const handleOpenModal = () => {
@@ -41,9 +42,7 @@ function Layout() {
           <SidebarTrigger className="-ml-1" />
           <PagePath />
         </header>
-        <main
-          className={`bg- flex flex-col lg:items-center grow lg:min-w-96 gap-4 p-4`}
-        >
+        <main className="flex grow flex-col gap-4 bg-background p-4 lg:min-w-96 lg:items-center">
           <div className={`grow w-full min-w-0  h-full overflow-hidden`}>
             <Outlet />
           </div>

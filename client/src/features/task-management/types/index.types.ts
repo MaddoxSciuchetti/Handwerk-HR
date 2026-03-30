@@ -1,6 +1,5 @@
-
-import z from 'zod';
-import { createWorkerSchema } from '@/features/worker-lifecycle/schemas/zod.schemas';
+import type { z } from 'zod';
+import { baseWorkerSchema } from '@/features/worker-lifecycle/schemas/zod.schemas';
 import { formSchema } from '../schemas/index.schema';
 import { TaskStatus } from '../utils/selectOptionTernary';
 
@@ -37,11 +36,12 @@ export type File_Request = {
   };
 };
 
-export type UpdatePayload = Partial<
-  z.infer<typeof createWorkerSchema> & {
-    austrittsdatum: string;
-  }
->;
+/** Single-field PATCH body for `PATCH /worker/:workerId/data-points` (modal edits). */
+export type WorkerDataPointKey =
+  | keyof z.infer<typeof baseWorkerSchema>
+  | 'exitDate';
+
+export type UpdatePayload = Partial<Record<WorkerDataPointKey, string>>;
 
 export type LifecycleType = 'onboarding' | 'offboarding';
 

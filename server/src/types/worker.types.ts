@@ -174,10 +174,13 @@ export interface UploadWorkerDocumentInput {
 
 // ─── Data Point ───────────────────────────────────────────────────────────────
 
+/** Worker columns + `responsibleUserId` (updates latest engagement). */
+export type WorkerDataPointField = keyof UpdateWorkerInput | "responsibleUserId";
+
 export interface UpdateDataPointInput {
     workerId: string;
     organizationId: string;
-    field: keyof UpdateWorkerInput; // constrained to real Worker fields
+    field: WorkerDataPointField;
     value: string | number | boolean | Date | null;
 }
 

@@ -19,7 +19,7 @@ function useHome() {
   };
 
   const { data, error, isSuccess, isPending, isError } = useQuery(
-    workerLifecycleQueries.workerData(mode)
+    workerLifecycleQueries.workerData()
   );
 
   const isEmpty = isSuccess && data?.length === 0;

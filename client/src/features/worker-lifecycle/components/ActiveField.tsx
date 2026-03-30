@@ -25,7 +25,7 @@ const ActiveField = ({
             'focus:border-foreground/70 transition-colors duration-150 pb-0.5',
             ' placeholder:text-muted-foreground/50'
           )}
-          value={inputValue}
+          value={inputValue ?? ''}
           onChange={(e) => handleInputChange(e.target.value)}
           onClick={(e: MouseEvent<HTMLInputElement>) => e.stopPropagation()}
         />

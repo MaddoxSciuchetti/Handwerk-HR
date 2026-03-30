@@ -9,7 +9,8 @@ import {
   File_Request,
   HistoryData,
   InsertHistoryData,
-  UpdatePayload,
+  type UpdatePayload,
+  type WorkerDataPointKey,
 } from '../types/index.types';
 import { WorkerDetailResponse } from '@/features/worker-lifecycle/types/index.types';
 import type { IssueAuditRow } from '../utils/mapIssueAuditToHistory';
@@ -68,8 +69,20 @@ export const deleteWorkerFile = async (
   return API.delete(`worker/deleteWorkerFile/${id}`);
 };
 
-export const updateData = async (data: UpdatePayload, workerId: string) => {
-  return await API.put('/worker/singleWorkerDataPoint', { ...data, workerId });
+export const updateData = async (
+  data: UpdatePayload,
+  workerId: string
+): Promise<void> => {
+  const entry = Object.entries(data).find(
+    ([key, v]) =>
+      key !== 'engagementType' &&
+      v !== undefined &&
+      v !== null &&
+      String(v).length > 0
+  ) as [WorkerDataPointKey, string] | undefined;
+  if (!entry) return;
+  const [field, value] = entry;
+  await API.patch(`worker/${workerId}/data-points`, { field, value });
 };
 
 export const createWorkerTask = async (

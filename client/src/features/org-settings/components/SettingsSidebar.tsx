@@ -10,7 +10,11 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { LAYOUTITEMS } from '@/constants/layout.consts';
-import { ORG_SETTINGS_NAV } from '@/features/org-settings/consts/org-settings-tabs';
+import {
+  ORG_SETTINGS_NAV,
+  ORG_SETTINGS_NAV_GROUPS,
+} from '@/features/org-settings/consts/org-settings-tabs';
+import { cn } from '@/lib/utils';
 import { Link, useRouterState } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
 
@@ -21,7 +25,9 @@ const backTarget =
 export function SettingsSidebar() {
   const activeTab = useRouterState({
     select: (s) => {
-      if (s.location.pathname !== '/org-settings') return 'employees';
+      const { pathname } = s.location;
+      if (pathname.startsWith('/template')) return 'templates';
+      if (pathname !== '/org-settings') return 'employees';
       const tab = (s.location.search as { tab?: string }).tab;
       const match = ORG_SETTINGS_NAV.find((n) => n.id === tab);
       return match?.id ?? 'employees';
@@ -43,49 +49,56 @@ export function SettingsSidebar() {
             </Link>
           </Button>
         </div>
-        <SidebarGroup className="mt-4">
-          <SidebarGroupLabel className="px-2 text-xs text-muted-foreground">
-            Einstellungen
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {ORG_SETTINGS_NAV.map((item) => {
-                const isActive = activeTab === item.id;
-                const Icon = item.icon;
-                return (
-                  <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton
-                      variant="outline"
-                      asChild
-                      className="mt-2 rounded-xl py-5 transition-colors"
-                    >
-                      <Link
-                        to="/org-settings"
-                        search={{ tab: item.id }}
-                        className={
-                          isActive
-                            ? 'bg-[var(--muted)] text-[var(--foreground)] hover:bg-[var(--muted)]'
-                            : 'hover:bg-[var(--hover-bg)] hover:text-[var(--hover-foreground)]'
-                        }
+        {ORG_SETTINGS_NAV_GROUPS.map((group, index) => (
+          <SidebarGroup
+            key={group.heading}
+            className={cn(
+              index === 0 ? 'mt-4' : 'mt-6 border-t border-border pt-4'
+            )}
+          >
+            <SidebarGroupLabel className="px-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              {group.heading}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.items.map((item) => {
+                  const isActive = activeTab === item.id;
+                  const Icon = item.icon;
+                  return (
+                    <SidebarMenuItem key={item.id}>
+                      <SidebarMenuButton
+                        variant="outline"
+                        asChild
+                        className="mt-2 rounded-xl py-5 transition-colors"
                       >
-                        <Icon className="size-[1.15rem] shrink-0" />
-                        <span
+                        <Link
+                          to="/org-settings"
+                          search={{ tab: item.id }}
                           className={
                             isActive
-                              ? 'text-md font-medium text-[var(--foreground)]'
-                              : 'text-md text-muted-foreground'
+                              ? 'bg-muted text-foreground hover:bg-muted'
+                              : 'hover:bg-accent hover:text-accent-foreground'
                           }
                         >
-                          {item.label}
-                        </span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+                          <Icon className="size-[1.15rem] shrink-0" />
+                          <span
+                            className={
+                              isActive
+                                ? 'text-md font-medium text-foreground'
+                                : 'text-md text-muted-foreground'
+                            }
+                          >
+                            {item.label}
+                          </span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
     </Sidebar>
   );

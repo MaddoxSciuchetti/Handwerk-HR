@@ -2,10 +2,11 @@ import { UpdatePayload } from '@/features/task-management/types/index.types';
 import { WorkerInfoItem } from '../consts/worker-info.consts';
 import { formatDate } from './dateCalculation';
 
+/** Must match `schemaKey` on items in `workerInfos` (Zod: birthday, entryDate, exitDate). */
 export const isDateField = (workerItem: WorkerInfoItem) =>
-  workerItem.schemaKey === 'geburtsdatum' ||
-  workerItem.schemaKey === 'eintrittsdatum' ||
-  workerItem.schemaKey === 'austrittsdatum';
+  workerItem.schemaKey === 'birthday' ||
+  workerItem.schemaKey === 'entryDate' ||
+  workerItem.schemaKey === 'exitDate';
 
 export const getPendingValue = (
   workerItem: WorkerInfoItem,

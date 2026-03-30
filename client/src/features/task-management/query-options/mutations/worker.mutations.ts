@@ -112,6 +112,9 @@ export const workerMutations = {
           await queryClient.invalidateQueries({
             queryKey: [ALL_WORKER_DATA],
           });
+          await queryClient.invalidateQueries({
+            queryKey: [ALL_WORKER_DATA, 'detail', workerId],
+          });
         },
       }
     );

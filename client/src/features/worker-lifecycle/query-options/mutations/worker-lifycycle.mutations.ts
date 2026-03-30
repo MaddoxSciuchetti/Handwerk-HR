@@ -12,7 +12,7 @@ import { WorkerRecord } from '../../types/index.types';
 
 export const workerLifecycleMutations = {
   deleteWorker: () => {
-    return mutationOptions<WorkerRecord, Error, string>({
+    return mutationOptions<void, Error, string>({
       mutationFn: deleteWorkerById,
       onSuccess: () => {
         queryClient.invalidateQueries({
@@ -39,7 +39,7 @@ export const workerLifecycleMutations = {
   },
 
   archiveWorker: () => {
-    return mutationOptions<WorkerRecord, Error, string>({
+    return mutationOptions<void, Error, string>({
       mutationFn: archiveWorkerById,
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: [ALL_WORKER_DATA] });
@@ -48,7 +48,7 @@ export const workerLifecycleMutations = {
   },
 
   unarchiveWorker: () => {
-    return mutationOptions<WorkerRecord, Error, string>({
+    return mutationOptions<void, Error, string>({
       mutationFn: unarchiveWorkerById,
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: [ALL_WORKER_DATA] });

@@ -355,15 +355,50 @@ export async function deleteWorker(params: DeleteWorkerInput) {
 }
 
 // ─── Update Data Point ──────────────────────────────────────────────────────────
-// Patches a single typed field on Worker
+// Patches one Worker column, or `responsibleUserId` on the latest engagement.
+
+const WORKER_DATE_FIELDS = new Set([
+    "birthday",
+    "entryDate",
+    "exitDate",
+]);
+
+function coerceWorkerDataPointValue(
+    field: string,
+    value: string | number | boolean | Date | null,
+): string | number | boolean | Date | null {
+    if (value === null || value === undefined) return null;
+    if (value instanceof Date) return value;
+    if (WORKER_DATE_FIELDS.has(field) && typeof value === "string") {
+        const d = new Date(value);
+        return Number.isNaN(d.getTime()) ? value : d;
+    }
+    return value;
+}
 
 export async function updateDataPoint(params: UpdateDataPointInput) {
     const { workerId, organizationId, field, value } = params;
     await assertOwnership(workerId, organizationId);
 
+    if (field === "responsibleUserId") {
+        const engagement = await prisma.workerEngagement.findFirst({
+            where: { workerId },
+            orderBy: { startDate: "desc" },
+        });
+        if (!engagement) {
+            throw new Error("Kein Engagement für diesen Handwerker gefunden");
+        }
+        return prisma.workerEngagement.update({
+            where: { id: engagement.id },
+            data: { responsibleUserId: String(value) },
+        });
+    }
+
+    const coerced = coerceWorkerDataPointValue(field, value);
+
     return prisma.worker.update({
         where: { id: workerId },
-        data: { [field]: value },
+        data: { [field]: coerced } as Prisma.WorkerUpdateInput,
     });
 }
 
