@@ -59,7 +59,7 @@ export function AppSidebar({ openModal }: { openModal: () => void }) {
                           to={item.to}
                           search={
                             item.to === '/org-settings'
-                              ? { tab: 'employees' }
+                              ? { currentTab: 'employees' }
                               : undefined
                           }
                           className={

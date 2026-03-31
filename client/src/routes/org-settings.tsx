@@ -4,12 +4,12 @@ import { createFileRoute } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/org-settings')({
   validateSearch: (search: Record<string, unknown>) => ({
-    tab: parseOrgSettingsTabId(search.tab),
+    currentTab: parseOrgSettingsTabId(search.currentTab),
   }),
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  const { tab } = Route.useSearch();
-  return <OrgSettings tab={tab} />;
+  const { currentTab } = Route.useSearch();
+  return <OrgSettings currentTab={currentTab} />;
 }

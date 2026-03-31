@@ -39,9 +39,10 @@ export function SettingsSidebar() {
       <SidebarContent>
         <div className="border-b border-border px-1 pb-4">
           <Button
+            size={"sm"}
             variant="outline"
             asChild
-            className="h-auto w-full justify-start gap-2 rounded-xl py-3.5 text-left font-medium"
+            className="h-auto w-full justify-start gap-2 rounded-xl py-1 text-left font-medium hover:(--muted-foreground)"
           >
             <Link to={backTarget}>
               <ArrowLeft className="size-5 shrink-0" />
@@ -73,9 +74,9 @@ export function SettingsSidebar() {
                       >
                         <Link
                           to="/org-settings"
-                          search={{ tab: item.id }}
+                          search={{ currentTab: item.id }}
                           className={
-                            isActive
+                            isActive  
                               ? 'bg-muted text-foreground hover:bg-muted'
                               : 'hover:bg-accent hover:text-accent-foreground'
                           }
