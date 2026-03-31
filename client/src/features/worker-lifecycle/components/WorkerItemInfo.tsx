@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { LifecycleType } from '@/features/task-management/types/index.types';
 import { Info } from 'lucide-react';
 import { Dispatch, SetStateAction } from 'react';
+import { WorkerRecord } from '../types/index.types';
 
 type WorkerItemInfoProps = {
   setIsInfoModalOpen: Dispatch<SetStateAction<boolean>>;
@@ -10,21 +11,19 @@ type WorkerItemInfoProps = {
     form_type: LifecycleType,
     workerName: string
   ) => void;
-  item_value: string;
+  workerId: string;
   form_type: LifecycleType;
-  vorname: string;
-  nachname: string | undefined;
+  worker: WorkerRecord;
 };
 
 const WorkerItemInfo = ({
   setIsInfoModalOpen,
   gotopage,
-  item_value,
+  workerId,
   form_type,
-  vorname,
-  nachname,
+  worker,
 }: WorkerItemInfoProps) => {
-  const fullName = `${vorname} ${nachname ?? ''}`.trim();
+  const fullName = `${worker.firstName} ${worker.lastName ?? ''}`.trim();
 
   return (
     <div className="flex min-w-0 flex-nowrap items-center justify-center gap-2">
@@ -52,7 +51,7 @@ const WorkerItemInfo = ({
         className="h-8 shrink-0 px-2.5 text-xs opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100"
         onClick={(e) => {
           e.stopPropagation();
-          gotopage(item_value, form_type, fullName);
+          gotopage(workerId, form_type, fullName);
         }}
       >
         Ansehen
