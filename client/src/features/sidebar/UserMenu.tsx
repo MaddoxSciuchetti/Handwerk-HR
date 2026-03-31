@@ -96,7 +96,10 @@ const UserMenu = () => {
             <DropdownMenuItem
               className="cursor-pointer rounded-lg text-sm font-medium focus:bg-accent focus:text-accent-foreground"
               onClick={() =>
-                navigate({ to: '/org-settings', search: { tab: 'employees' } })
+                navigate({
+                  to: '/org-settings',
+                  search: { currentTab: 'employees' },
+                })
               }
             >
               Unternehmens Einstellungen

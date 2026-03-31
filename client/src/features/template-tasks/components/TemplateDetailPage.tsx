@@ -62,7 +62,7 @@ const TemplateDetailPage = ({ templateId }: TemplateDetailPageProps) => {
       <div className="mx-auto flex w-5xl flex-col gap-4 p-6 md:max-w-8xl">
         <p className="text-sm text-destructive">Vorlage konnte nicht geladen werden.</p>
         <Button variant="outline" asChild>
-          <Link to="/org-settings" search={{ tab: 'templates' }}>
+          <Link to="/org-settings" search={{ currentTab: 'templates' }}>
             Zurück
           </Link>
         </Button>
@@ -79,7 +79,7 @@ const TemplateDetailPage = ({ templateId }: TemplateDetailPageProps) => {
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <Button variant="ghost" size="sm" className="mb-2 -ml-2" asChild>
-            <Link to="/org-settings" search={{ tab: 'templates' }}>
+            <Link to="/org-settings" search={{ currentTab: 'templates' }}>
               ← Zurück zu Vorlagen
             </Link>
           </Button>

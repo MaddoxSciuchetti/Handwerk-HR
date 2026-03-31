@@ -11,8 +11,8 @@ import {
 } from '@/components/ui/sidebar';
 import { LAYOUTITEMS } from '@/constants/layout.consts';
 import {
-  ORG_SETTINGS_NAV,
   ORG_SETTINGS_NAV_GROUPS,
+  parseOrgSettingsTabId,
 } from '@/features/org-settings/consts/org-settings-tabs';
 import { cn } from '@/lib/utils';
 import { Link, useRouterState } from '@tanstack/react-router';
@@ -25,12 +25,14 @@ const backTarget =
 export function SettingsSidebar() {
   const activeTab = useRouterState({
     select: (s) => {
-      const { pathname } = s.location;
+      const { pathname, search } = s.location;
       if (pathname.startsWith('/template')) return 'templates';
       if (pathname !== '/org-settings') return 'employees';
-      const tab = (s.location.search as { tab?: string }).tab;
-      const match = ORG_SETTINGS_NAV.find((n) => n.id === tab);
-      return match?.id ?? 'employees';
+      const raw =
+        search && typeof search === 'object' && 'currentTab' in search
+          ? (search as { currentTab?: unknown }).currentTab
+          : undefined;
+      return parseOrgSettingsTabId(raw);
     },
   });
 
@@ -77,16 +79,16 @@ export function SettingsSidebar() {
                           search={{ currentTab: item.id }}
                           className={
                             isActive  
-                              ? 'bg-muted text-foreground hover:bg-muted'
-                              : 'hover:bg-accent hover:text-accent-foreground'
+                              ? 'bg-[var(--muted)] text-[var(--foreground)] hover:bg-[var(--muted)]'
+                              : 'hover:bg-[var(--hover-bg)] hover:text-[var(--hover-foreground)]'
                           }
                         >
                           <Icon className="size-[1.15rem] shrink-0" />
                           <span
                             className={
                               isActive
-                                ? 'text-md font-medium text-foreground'
-                                : 'text-md text-muted-foreground'
+                                ? 'text-[var(--foreground)] text-md font-medium'
+                                : 'text-muted-foreground text-md'
                             }
                           >
                             {item.label}
