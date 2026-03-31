@@ -7,7 +7,7 @@ import usePagination from '../hooks/usePagination';
 import { templateV2Queries } from '../query-options/queries/templateV2.queries';
 import CreateTemplateModalV2 from './CreateTemplateModalV2';
 import Pagination from './Pagination';
-import TemplateV2List from './TemplateV2List';
+import TemplateList from './TemplateList';
 
 function TemplateTasks() {
   const { data = [], isPending } = useQuery(templateV2Queries.list());
@@ -43,7 +43,7 @@ function TemplateTasks() {
         />
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <TemplateV2List paginatedTemplates={paginatedTemplates} />
+        <TemplateList paginatedTemplates={paginatedTemplates} />
       </div>
       <div className="shrink-0 border-t border-border bg-card pt-4">
         <div className="flex items-center justify-between">

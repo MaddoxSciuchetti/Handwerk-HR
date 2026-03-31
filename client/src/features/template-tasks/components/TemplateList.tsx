@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import type { IssueTemplateListItem } from '../api/templateV2.api';
 
-type TemplateV2ListProps = {
+type TemplateListProps = {
   paginatedTemplates: IssueTemplateListItem[];
 };
 
@@ -12,7 +12,7 @@ function descriptionSnippet(description: string | null, maxLength = 110) {
   return `${trimmed.slice(0, maxLength)}…`;
 }
 
-const TemplateV2List = ({ paginatedTemplates }: TemplateV2ListProps) => {
+const TemplateList = ({ paginatedTemplates }: TemplateListProps) => {
   return (
     <ul className="mt-2 divide-y divide-border rounded-xl border border-border">
       {paginatedTemplates.length === 0 ? (
@@ -49,4 +49,4 @@ const TemplateV2List = ({ paginatedTemplates }: TemplateV2ListProps) => {
   );
 };
 
-export default TemplateV2List;
+export default TemplateList;
