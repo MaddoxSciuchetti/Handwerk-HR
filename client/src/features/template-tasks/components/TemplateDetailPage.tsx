@@ -1,7 +1,6 @@
+import ErrorStateAlert from '@/components/alerts/ErrorStateAlert';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import ModalOverlay from '@/components/modal/ModalOverlay';
-import { Button } from '@/components/ui/button';
-import { Link } from '@tanstack/react-router';
 import useTemplateIssues from '../hooks/useTemplateIssues';
 import CreateIssueModal from './CreateIssueModal';
 import TemplateItem from './TemplateItem';
@@ -33,15 +32,16 @@ const TemplateDetailPage = ({ templateId }: TemplateDetailPageProps) => {
   if (isPending) return <LoadingAlert />;
   if (isError || !data) {
     return (
-      <div className="mx-auto flex w-5xl flex-col gap-4 p-6 md:max-w-8xl">
-        <p className="text-sm text-destructive">
-          Vorlage konnte nicht geladen werden.
-        </p>
-        <Button variant="outline" asChild>
-          <Link to="/org-settings" search={{ currentTab: 'templates' }}>
-            Zurück
-          </Link>
-        </Button>
+      <div className="mx-auto w-5xl p-6 md:max-w-8xl">
+        <ErrorStateAlert
+          title="Laden fehlgeschlagen"
+          message="Vorlage konnte nicht geladen werden."
+          action={{
+            label: 'Zurück',
+            to: '/org-settings',
+            search: { currentTab: 'templates' },
+          }}
+        />
       </div>
     );
   }
