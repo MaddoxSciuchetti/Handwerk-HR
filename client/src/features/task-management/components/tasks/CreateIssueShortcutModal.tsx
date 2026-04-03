@@ -1,12 +1,5 @@
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import useAuth from '@/features/user-profile/hooks/useAuth';
 import { useMutation } from '@tanstack/react-query';
@@ -15,16 +8,7 @@ import useIssues from '../../hooks/useIssues';
 import { workerMutations } from '../../query-options/mutations/worker.mutations';
 import { LifecycleType } from '../../types/index.types';
 import { findEngagementForLifecycle } from '../../utils/workerDetailToTaskView';
-
-const PRIORITIES = [
-  { value: 'urgent' as const, label: 'Dringend' },
-  { value: 'high' as const, label: 'Hoch' },
-  { value: 'medium' as const, label: 'Mittel' },
-  { value: 'low' as const, label: 'Niedrig' },
-  { value: 'no_priority' as const, label: 'Keine' },
-];
-
-type PriorityValue = (typeof PRIORITIES)[number]['value'];
+import IssueSelects from './IssueSelects';
 
 type CreateIssueShortcutModalProps = {
   workerId: string;
@@ -87,68 +71,24 @@ export default function CreateIssueShortcutModal({
       ) : (
         <>
           <div className="space-y-4">
-            <div>
-              <Label htmlFor="issue-desc">Beschreibung</Label>
-              <Textarea
-                id="issue-desc"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="mt-1 min-h-[88px]"
-                placeholder="Was ist das Issue?"
-              />
-            </div>
-            <div>
-              <Label>Status</Label>
-              <Select value={statusId} onValueChange={setStatusId}>
-                <SelectTrigger className="mt-1 w-full">
-                  <SelectValue placeholder="Status wählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  {statuses.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Priorität</Label>
-              <Select
-                value={priority}
-                onValueChange={(v) => setPriority(v as PriorityValue)}
-              >
-                <SelectTrigger className="mt-1 w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PRIORITIES.map((p) => (
-                    <SelectItem key={p.value} value={p.value}>
-                      {p.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Verantwortlich (Lead)</Label>
-              <Select
-                value={assigneeUserId || '_none'}
-                onValueChange={(v) => setAssigneeUserId(v === '_none' ? '' : v)}
-              >
-                <SelectTrigger className="mt-1 w-full">
-                  <SelectValue placeholder="Person wählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="_none">—</SelectItem>
-                  {employees.map((emp) => (
-                    <SelectItem key={emp.id} value={emp.id}>
-                      {emp.firstName} {emp.lastName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <Label htmlFor="issue-desc">Beschreibung</Label>
+            <Textarea
+              id="issue-desc"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="mt-1 min-h-[88px]"
+              placeholder="Was ist das Issue?"
+            />
+            <IssueSelects
+              statusId={statusId}
+              setStatusId={setStatusId}
+              statuses={statuses}
+              priority={priority}
+              setPriority={setPriority}
+              assigneeUserId={assigneeUserId}
+              setAssigneeUserId={setAssigneeUserId}
+              employees={employees}
+            />
           </div>
           <Button
             className="mt-6 w-full"

@@ -1,5 +1,5 @@
-import type { z } from 'zod';
 import { baseWorkerSchema } from '@/features/worker-lifecycle/schemas/zod.schemas';
+import type { z } from 'zod';
 import { formSchema } from '../schemas/index.schema';
 import { TaskStatus } from '../utils/selectOptionTernary';
 
@@ -54,3 +54,34 @@ export type CreateWorkerTaskPayload = {
 export type InsertHistoryData = z.infer<typeof formSchema>;
 
 export type WorkerTab = 'form' | 'files';
+
+export type Employees = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  displayName: string | null;
+  email: string;
+  avatarUrl: string | null;
+  isEmailVerified: boolean;
+  isAbsent: boolean;
+  status: 'active' | 'inactive' | 'suspended';
+  createdAt: Date;
+  updatedAt: Date;
+  organizationMembers: {
+    role: {
+      id: string;
+      name: string;
+    };
+  }[];
+  absences: {
+    id: string;
+    absenceType: 'SICK' | 'VACATION' | 'PARENTAL_LEAVE' | 'UNPAID' | 'OTHER';
+    startDate: Date;
+    endDate: Date;
+    substitute: {
+      id: string;
+      firstName: string;
+      lastName: string;
+    } | null;
+  }[];
+}[];
