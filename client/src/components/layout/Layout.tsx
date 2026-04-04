@@ -1,11 +1,12 @@
 import { SettingsSidebar } from '@/features/org-settings/components/SettingsSidebar';
-import { AppSidebar } from '@/features/sidebar/AppSidebar';
 import FeatureModal from '@/features/sidebar/feature-modal/FeatureModal';
 import { useThemeProvider } from '@/hooks/useThemeProvider';
 import { Outlet, useRouterState } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
+import '../../../globals.css';
 import ModalOverlay from '../modal/ModalOverlay';
 import { SidebarInset, SidebarTrigger, useSidebar } from '../ui/sidebar';
+import Sidebar from '../ui/sidebar/sidebar';
 import PagePath from './headers/PagePath';
 import { isSettingsLayoutPath } from './utils/header.utils';
 
@@ -35,9 +36,12 @@ function Layout() {
       {isOrgSettings ? (
         <SettingsSidebar />
       ) : (
-        <AppSidebar openModal={handleOpenModal} />
+        <>
+          <Sidebar />
+          {/* <AppSidebar openModal={handleOpenModal} /> */}
+        </>
       )}
-      <SidebarInset className="flex flex-col h-svh md:w-max-svw">
+      <SidebarInset className="flex flex-col h-svh md:w-max-svw ml-1 mb-1  rounded-l-xl mt-1">
         <header className="flex h-16 shrink-0 items-center gap-2 px-4">
           <SidebarTrigger className="-ml-1" />
           <PagePath />

@@ -1,4 +1,3 @@
-import '@/App.css';
 import { Link } from '@tanstack/react-router';
 
 const HomePage = () => {

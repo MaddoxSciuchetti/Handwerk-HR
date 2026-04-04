@@ -1,5 +1,3 @@
-import '@/App.css';
-
 import TrashWithModal from '@/components/DropDownWithModal';
 import { Button } from '@/components/ui/button';
 import { DescriptionResponse } from '@/types/api.types';

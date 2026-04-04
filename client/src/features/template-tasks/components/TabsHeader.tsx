@@ -1,4 +1,3 @@
-import '@/App.css';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/trycatch';
 import { Dispatch, SetStateAction } from 'react';

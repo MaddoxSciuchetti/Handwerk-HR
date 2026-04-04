@@ -1,8 +1,8 @@
-import '@/App.css';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import DropdownActionTrigger from '@/components/DropdownActionTrigger';
 import useFetchProcessData from '@/features/employee-overview/hooks/useFetchProcessData';
 import { LifecycleType } from '@/features/task-management/types/index.types';
+import '../../../../globals.css';
 import useWorkerItemData from '../hooks/useWorkerItemData';
 import useWorkerMutations from '../hooks/useWorkerMutaitons';
 import { EngagementStatus, WorkerRecord } from '../types/index.types';

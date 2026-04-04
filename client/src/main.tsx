@@ -1,7 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { createRoot } from 'react-dom/client';
-import './App.css';
-import './index.css';
+import '../globals.css';
 
 import queryClient from './config/query.client';
 import { ThemeProvider } from './context/theme-provider/ThemeProvider';
