@@ -5,7 +5,7 @@ const EmployeeTableHeader = () => {
     <TableHeader className="text-left mb-5">
       <TableRow className="text-lg">
         <TableHead scope="col" className="text-left  pl-0">
-          Meine Mitarbeiter
+          
         </TableHead>
         <TableHead scope="col" className="text-left  pl-0">
           Offene Aufgaben

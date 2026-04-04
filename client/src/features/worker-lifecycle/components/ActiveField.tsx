@@ -25,20 +25,20 @@ const ActiveField = ({
             'focus:border-foreground/70 transition-colors duration-150 pb-0.5',
             ' placeholder:text-muted-foreground/50'
           )}
-          value={inputValue}
+          value={inputValue ?? ''}
           onChange={(e) => handleInputChange(e.target.value)}
           onClick={(e: MouseEvent<HTMLInputElement>) => e.stopPropagation()}
         />
         <span className="flex items-center justify-end gap-1">
           <button
             onClick={() => setIsInputActive(false)}
-            className="cursor-pointer p-1 text-muted-foreground transition-colors hover:text-(--destructive)"
+            className="cursor-pointer p-1 text-muted-foreground transition-colors hover:text-[var(--destructive)]"
             aria-label="Abbrechen"
           >
             <X size={20} strokeWidth={1.75} />
           </button>
           <button
-            className="cursor-pointer p-1 text-muted-foreground transition-colors hover:text-(--chart-2)"
+            className="cursor-pointer p-1 text-muted-foreground transition-colors hover:text-[var(--chart-2)]"
             onClick={handleSubmit}
           >
             <Check size={20} strokeWidth={1.75} />

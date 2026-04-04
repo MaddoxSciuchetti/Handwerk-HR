@@ -7,7 +7,7 @@ const SmallWrapper = ({ children, className }: SmappWrapperProps) => {
   return (
     <div
       className={cn(
-        'z-50 mx-auto flex h-120 w-full max-w-md flex-col items-center justify-center rounded-xl border border-border bg-(--modal-surface) p-6 text-foreground shadow-lg',
+        'z-50 mx-auto flex h-120 w-full max-w-md flex-col items-center justify-center rounded-xl border border-border bg-[var(--modal-surface)] p-6 text-foreground shadow-lg',
         className
       )}
     >

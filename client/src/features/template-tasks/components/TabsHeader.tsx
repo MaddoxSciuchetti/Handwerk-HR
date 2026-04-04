@@ -1,4 +1,3 @@
-import '@/App.css';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/trycatch';
 import { Dispatch, SetStateAction } from 'react';
@@ -13,7 +12,7 @@ const TabsHeader = ({ tab, setTab }: TabsHeaderProps) => {
   return (
     <>
       <div className="mb-6 flex items-center justify-between mt-5">
-        <div className="inline-flex rounded-lg border border-border/70 bg-(--secondary) p-1">
+        <div className="inline-flex rounded-lg border border-border/70 bg-[var(--secondary)] p-1">
           {TABS.map(({ value, label }) => (
             <Button
               role="tab"
@@ -26,8 +25,8 @@ const TabsHeader = ({ tab, setTab }: TabsHeaderProps) => {
               className={cn(
                 'rounded-md px-4 py-1.5 text-sm font-medium transition-colors',
                 tab === value
-                  ? 'bg-(--background) text-foreground shadow-sm'
-                  : 'bg-transparent text-muted-foreground hover:bg-(--hover-bg) hover:text-(--hover-foreground)'
+                  ? 'bg-[var(--background)] text-foreground shadow-sm'
+                  : 'bg-transparent text-muted-foreground hover:bg-[var(--hover-bg)] hover:text-[var(--hover-foreground)]'
               )}
               onClick={() => setTab(value)}
             >

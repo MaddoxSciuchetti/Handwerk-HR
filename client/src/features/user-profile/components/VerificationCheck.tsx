@@ -11,10 +11,10 @@ const VerificationCheck = ({ user }: VerificationCheckProps) => {
       {!user.verified && (
         <Alert
           variant="default"
-          className="mb-3 w-fit rounded-xl border border-(--status-warning-foreground) bg-(--status-warning-bg)"
+          className="mb-3 w-fit rounded-xl border border-[var(--status-warning-foreground)] bg-[var(--status-warning-bg)]"
         >
-          <AlertTriangle className="h-4 w-4 text-(--status-warning-foreground)" />
-          <AlertDescription className="text-(--status-warning-foreground)">
+          <AlertTriangle className="h-4 w-4 text-[var(--status-warning-foreground)]" />
+          <AlertDescription className="text-[var(--status-warning-foreground)]">
             Verifiziere deine email
           </AlertDescription>
         </Alert>

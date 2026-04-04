@@ -1,11 +1,11 @@
-import { EmployeeDataObject } from '@/features/employee-overview/schemas/schema';
+import { OrgUsersObject } from '@/features/employee-overview/schemas/schema';
 import {
   calculateData,
   dateObject,
 } from '@/features/employee-overview/utils/calculateDate.utils';
 
 type SubstituteProps = {
-  employee: EmployeeDataObject;
+  employee: OrgUsersObject;
 };
 
 const EmployeeSubstitute = ({ employee }: SubstituteProps) => {

@@ -15,7 +15,7 @@ const isInvalidAccessToken = (status: number, data: ApiErrorResponse) =>
 
 const handleTokenRefresh = async (config: AxiosRequestConfig) => {
   try {
-    await TokenRefreshClient.get('/auth/refresh');
+    await TokenRefreshClient.get('/auth/v2/refresh');
     return TokenRefreshClient(config);
   } catch {
     queryClient.clear();

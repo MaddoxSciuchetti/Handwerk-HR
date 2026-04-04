@@ -51,7 +51,7 @@ const FormFields = <TFieldValues extends FieldValues>({
         errors={errors}
         name={name as unknown as never}
         render={({ message }) => (
-          <p className="text-sm text-(--destructive)">{message}</p>
+          <p className="text-sm text-[var(--destructive)]">{message}</p>
         )}
       />
     </div>

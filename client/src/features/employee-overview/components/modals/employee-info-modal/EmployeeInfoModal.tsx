@@ -5,7 +5,7 @@ import { employeeInfos } from '@/features/employee-overview/consts/employee-info
 import useEmployeeInfo from '@/features/employee-overview/hooks/useEmployeeInfo';
 import { EmployeeInfoItem } from '@/features/employee-overview/types/index.types';
 
-const EmployeeInfoModal = ({ employeeId }: { employeeId: string }) => {
+const UserInfo = ({ employeeId }: { employeeId: string }) => {
   const { employeeInfo, isLoading, isError } = useEmployeeInfo(
     employeeId,
     true
@@ -49,4 +49,4 @@ const EmployeeInfoModal = ({ employeeId }: { employeeId: string }) => {
   );
 };
 
-export default EmployeeInfoModal;
+export default UserInfo;

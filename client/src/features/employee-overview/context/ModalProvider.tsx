@@ -5,45 +5,39 @@ import { EmployeeModalContext } from './modalcontext';
 
 export type EmployeeModalContextType = {
   modalState: ModalState;
-  openCreateEmployee: () => void;
   openEditEmployee: (employeeId: string, fullname: string) => void;
+  openEmployeeInfo: (employeeId: string) => void;
+  openViewEmployee: (selectedOwner: string) => void;
   closeEmployee: () => void;
-  openEmployeeReminder: (owner: string) => void;
-  openInfoModal: (employeeId: string) => void;
 };
 
 export function EmployeeModalProvider({ children }: { children: ReactNode }) {
   const [modalState, dispatch] = useReducer(modalReducer, { kind: 'closed' });
 
-  const openCreateEmployee = () => {
-    dispatch({ type: 'OPEN_CREATE' });
-  };
-
   const openEditEmployee = (employeeId: string, fullname: string) => {
     dispatch({ type: 'OPEN_EDIT', employeeId, fullname });
   };
 
-  const openEmployeeReminder = (owner: string) => {
-    dispatch({ type: 'EMPLOYEE_CREATE', owner });
+  const openEmployeeInfo = (employeeId: string) => {
+    dispatch({ type: 'OPEN_INFO', employeeId });
+  };
+
+  const openViewEmployee = (selectedOwner: string) => {
+    dispatch({ type: 'OPEN_VIEW', selectedOwner });
   };
 
   const closeEmployee = () => {
     dispatch({ type: 'CLOSE' });
   };
 
-  const openInfoModal = (employeeId: string) => {
-    dispatch({ type: 'OPEN_EMPLOYEE_INFO', employeeId });
-  };
-
   return (
     <EmployeeModalContext.Provider
       value={{
         modalState,
-        openCreateEmployee,
         openEditEmployee,
+        openEmployeeInfo,
+        openViewEmployee,
         closeEmployee,
-        openEmployeeReminder,
-        openInfoModal,
       }}
     >
       {children}

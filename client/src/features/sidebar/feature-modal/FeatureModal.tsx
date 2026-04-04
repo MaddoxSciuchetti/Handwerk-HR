@@ -121,7 +121,7 @@ function FeatureModal({ handleToggle }: { handleToggle: () => void }) {
               placeholder="Erzähle uns von deinem Feedback oder deiner Idee"
             ></Textarea>
             {errors.textarea?.message && (
-              <p className="text-left text-sm text-(--destructive)">
+              <p className="text-left text-sm text-[var(--destructive)]">
                 {errors.textarea.message}
               </p>
             )}

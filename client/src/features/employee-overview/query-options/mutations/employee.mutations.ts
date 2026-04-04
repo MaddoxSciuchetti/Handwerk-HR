@@ -1,9 +1,6 @@
 import queryClient from '@/config/query.client';
 import { signup } from '@/features/auth/api/auth.api';
-import {
-  RegisterRequest,
-  RegisterResponse,
-} from '@/features/auth/types/auth.types';
+import { CreateAccountResponse } from '@/features/auth/types/auth.types';
 import { User } from '@/features/user-profile/types/auth.type';
 import { mutationOptions } from '@tanstack/react-query';
 import {
@@ -11,11 +8,13 @@ import {
   editEmployeeAbsence,
 } from '../../api/employee-overview.api';
 import { EMPLOYEE_SPECIFICS } from '../../consts/query-keys';
-import { AbsenceData } from '../../types/index.types';
+import { AbsenceFormData } from '../../schemas/schema';
+
+import { CreateAccountParams } from '../../../../../../server/src/services/auth.serviceV2';
 
 export const employeeMutations = {
   createEmployee: () => {
-    return mutationOptions<RegisterResponse, Error, RegisterRequest>({
+    return mutationOptions<CreateAccountResponse, Error, CreateAccountParams>({
       mutationFn: signup,
       onSuccess: () => {
         queryClient.invalidateQueries({
@@ -37,7 +36,7 @@ export const employeeMutations = {
   },
 
   editEmployee: () => {
-    return mutationOptions<AbsenceData, Error, AbsenceData>({
+    return mutationOptions<AbsenceFormData, Error, AbsenceFormData>({
       mutationFn: editEmployeeAbsence,
       onSuccess: () => {
         queryClient.invalidateQueries({

@@ -24,8 +24,8 @@ function VerifyEmail() {
           <p
             className={`w-fit rounded-xl px-4 py-2 ${
               isSuccess
-                ? 'border border-(--status-success-foreground) bg-(--status-success-bg) text-(--status-success-foreground)'
-                : 'border border-(--status-error-foreground) bg-(--status-error-bg) text-(--status-error-foreground)'
+                ? 'border border-[var(--status-success-foreground)] bg-[var(--status-success-bg)] text-[var(--status-success-foreground)]'
+                : 'border border-[var(--status-error-foreground)] bg-[var(--status-error-bg)] text-[var(--status-error-foreground)]'
             }`}
           >
             {isSuccess ? 'Email Verified!' : 'Invalid Link'}

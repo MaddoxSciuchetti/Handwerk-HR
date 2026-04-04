@@ -11,8 +11,8 @@ const FilterByUser = ({ showMyItems, handleMeFilter }: FilteredTasksProps) => {
           onClick={() => handleMeFilter()}
           className={
             showMyItems
-              ? 'active mt-5 w-40 cursor-pointer rounded-2xl border border-border bg-(--dropdown-surface) px-2 py-1 text-center text-sm text-foreground'
-              : 'mt-5 w-40 cursor-pointer rounded-2xl border border-border bg-muted px-2 py-1 text-center text-sm text-muted-foreground transition-colors hover:bg-(--hover-bg) hover:text-(--hover-foreground)'
+              ? 'active mt-5 w-40 cursor-pointer rounded-2xl border border-border bg-[var(--dropdown-surface)] px-2 py-1 text-center text-sm text-foreground'
+              : 'mt-5 w-40 cursor-pointer rounded-2xl border border-border bg-muted px-2 py-1 text-center text-sm text-muted-foreground transition-colors hover:bg-[var(--hover-bg)] hover:text-[var(--hover-foreground)]'
           }
         >
           {showMyItems ? 'Alle Aufgaben' : 'Meine Aufgaben'}

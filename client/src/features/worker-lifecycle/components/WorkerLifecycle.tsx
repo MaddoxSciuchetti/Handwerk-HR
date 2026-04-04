@@ -14,16 +14,15 @@ function WorkerLifeCycle() {
     filtered,
     handleNavigate,
     modal,
-    mode,
+    engagementStatus,
     search,
     setSearch,
-    setMode,
+    setEngagementStatus,
     toggleModal,
   } = useHome();
 
   if (isLoading) return <LoadingAlert />;
   if (isError || !user) return <ErrorAlert />;
-  if (error) return <ErrorAlert message={error.message} />;
 
   return (
     <div className="mx-auto flex h-full w-5xl flex-col overflow-auto rounded-2xl bg-card p-6 md:max-w-8xl">
@@ -34,10 +33,14 @@ function WorkerLifeCycle() {
           setSearch={setSearch}
           description="Handwerker hinzufügen"
         />
-        <ActiveArchiveHeader mode={mode} setMode={setMode} />
+        <ActiveArchiveHeader
+          engagementStatus={engagementStatus}
+          setEngagementStatus={setEngagementStatus}
+        />
         <LifeCycleTable
+          error={error}
           filtered={filtered}
-          mode={mode}
+          engagementStatus={engagementStatus}
           gotopage={handleNavigate}
         />
         <LifeCycleModal modal={modal} toggleModal={toggleModal} />

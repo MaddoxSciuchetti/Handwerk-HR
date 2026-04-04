@@ -1,5 +1,14 @@
+@import 'tailwindcss';
+
 @layer base {
+  body {
+    background-color: var(--blue-100);
+  }
+  /* ─────────────────────────────────────
+     ROOT — Light mode
+  ───────────────────────────────────── */
   :root {
+    /* Shadcn base tokens */
     --background: oklch(1 0 0);
     --foreground: oklch(0.145 0 0);
     --card: oklch(1 0 0);
@@ -19,11 +28,6 @@
     --border: oklch(0.922 0 0);
     --input: oklch(0.922 0 0);
     --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.646 0.222 41.116);
-    --chart-2: oklch(0.6 0.118 184.704);
-    --chart-3: oklch(0.398 0.07 227.392);
-    --chart-4: oklch(0.828 0.189 84.429);
-    --chart-5: oklch(0.769 0.188 70.08);
     --radius: 0.625rem;
     --sidebar: oklch(0.985 0 0);
     --sidebar-foreground: oklch(0.145 0 0);
@@ -33,8 +37,195 @@
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
+
+    /* ── Primitives / Blue ── */
+    --blue-50: #eff6ff;
+    --blue-100: #dbeafe;
+    --blue-200: #bfdbfe;
+    --blue-300: #93c5fd;
+    --blue-400: #60a5fa;
+    --blue-500: #3b82f6;
+    --blue-600: #2563eb;
+    --blue-700: #1d4ed8;
+    --blue-800: #1e40af;
+    --blue-900: #1e3a8a;
+    --blue-950: #172554;
+
+    /* ── Primitives / Neutral ── */
+    --neutral-0: #ffffff;
+    --neutral-50: #f8fafc;
+    --neutral-100: #f1f5f9;
+    --neutral-200: #e2e8f0;
+    --neutral-300: #cbd5e1;
+    --neutral-400: #94a3b8;
+    --neutral-500: #64748b;
+    --neutral-600: #475569;
+    --neutral-700: #334155;
+    --neutral-800: #1e293b;
+    --neutral-900: #0f172a;
+    --neutral-950: #020617;
+
+    /* ── Primitives / Red ── */
+    --red-50: #fef2f2;
+    --red-100: #fee2e2;
+    --red-200: #fecaca;
+    --red-300: #fca5a5;
+    --red-400: #f87171;
+    --red-500: #ef4444;
+    --red-600: #dc2626;
+    --red-700: #b91c1c;
+    --red-800: #991b1b;
+    --red-900: #7f1d1d;
+    --red-950: #450a0a;
+
+    /* ── Primitives / Green ── */
+    --green-50: #f0fdf4;
+    --green-100: #dcfce7;
+    --green-200: #bbf7d0;
+    --green-300: #86efac;
+    --green-400: #4ade80;
+    --green-500: #22c55e;
+    --green-600: #16a34a;
+    --green-700: #15803d;
+    --green-800: #166534;
+    --green-900: #14532d;
+    --green-950: #052e16;
+
+    /* ── Primitives / Amber ── */
+    --amber-50: #fffbeb;
+    --amber-100: #fef3c7;
+    --amber-200: #fde68a;
+    --amber-300: #fcd34d;
+    --amber-400: #fbbf24;
+    --amber-500: #f59e0b;
+    --amber-600: #d97706;
+    --amber-700: #b45309;
+    --amber-800: #92400e;
+    --amber-900: #78350f;
+    --amber-950: #451a03;
+
+    /* ── Tokens / Surface ── */
+    --surface-page: var(--neutral-0);
+    --surface-subtle: var(--neutral-50);
+    --surface-card: var(--neutral-100);
+    --surface-overlay: var(--neutral-200);
+
+    /* ── Tokens / Text ── */
+    --text-primary: var(--neutral-900);
+    --text-secondary: var(--neutral-500);
+    --text-disabled: var(--neutral-400);
+    --text-inverse: var(--neutral-0);
+    --text-brand: var(--blue-600);
+    --text-danger: var(--red-700);
+    --text-success: var(--green-700);
+    --text-warning: var(--amber-700);
+
+    /* ── Tokens / Interactive / Primary ── */
+    --interactive-primary-bg: var(--blue-600);
+    --interactive-primary-hover: var(--blue-700);
+    --interactive-primary-active: var(--blue-800);
+    --interactive-primary-text: var(--neutral-0);
+
+    /* ── Tokens / Interactive / Secondary ── */
+    --interactive-secondary-bg: var(--blue-50);
+    --interactive-secondary-hover: var(--blue-100);
+    --interactive-secondary-text: var(--blue-700);
+
+    /* ── Tokens / Interactive / Ghost ── */
+    --interactive-ghost-border: var(--blue-300);
+    --interactive-ghost-text: var(--blue-600);
+    --interactive-ghost-bg-hover: var(--blue-50);
+
+    /* ── Tokens / Interactive / Disabled ── */
+    --interactive-disabled-bg: var(--neutral-100);
+    --interactive-disabled-text: var(--neutral-400);
+    --interactive-disabled-border: var(--neutral-200);
+
+    /* ── Tokens / Interactive / Focus ── */
+    --interactive-focus-ring: var(--blue-500);
+
+    /* ── Tokens / Interactive / Danger ── */
+    --interactive-danger-bg: var(--red-600);
+    --interactive-danger-hover: var(--red-700);
+    --interactive-danger-active: var(--red-800);
+    --interactive-danger-text: var(--neutral-0);
+
+    /* ── Tokens / Border ── */
+    --border-subtle: var(--neutral-100);
+    --border-default: var(--neutral-200);
+    --border-strong: var(--neutral-400);
+    --border-brand: var(--blue-400);
+
+    /* ── Tokens / Feedback / Danger ── */
+    --feedback-danger-bg: var(--red-50);
+    --feedback-danger-bg-strong: var(--red-100);
+    --feedback-danger-border: var(--red-200);
+    --feedback-danger-text: var(--red-700);
+    --feedback-danger-icon: var(--red-500);
+    --feedback-danger-solid: var(--red-600);
+
+    /* ── Tokens / Feedback / Success ── */
+    --feedback-success-bg: var(--green-50);
+    --feedback-success-bg-strong: var(--green-100);
+    --feedback-success-border: var(--green-200);
+    --feedback-success-text: var(--green-700);
+    --feedback-success-icon: var(--green-500);
+    --feedback-success-solid: var(--green-600);
+
+    /* ── Tokens / Feedback / Warning ── */
+    --feedback-warning-bg: var(--amber-50);
+    --feedback-warning-bg-strong: var(--amber-100);
+    --feedback-warning-border: var(--amber-200);
+    --feedback-warning-text: var(--amber-700);
+    --feedback-warning-icon: var(--amber-500);
+    --feedback-warning-solid: var(--amber-600);
+
+    /* ── Tokens / Feedback / Info ── */
+    --feedback-info-bg: var(--blue-50);
+    --feedback-info-bg-strong: var(--blue-100);
+    --feedback-info-border: var(--blue-200);
+    --feedback-info-text: var(--blue-700);
+    --feedback-info-icon: var(--blue-500);
+    --feedback-info-solid: var(--blue-600);
+
+    /* ── Tokens / Spacing ── */
+    /* ── Spacing ── */
+    --space-1: 0.25rem; /* 4px */
+    --space-2: 0.5rem; /* 8px */
+    --space-3: 0.75rem; /* 12px */
+    --space-4: 1rem; /* 16px */
+    --space-5: 1.25rem; /* 20px */
+    --space-6: 1.5rem; /* 24px */
+    --space-8: 2rem; /* 32px */
+    --space-10: 2.5rem; /* 40px */
+    --space-12: 3rem; /* 48px */
+    --space-16: 4rem; /* 64px */
+    --space-20: 5rem; /* 80px */
+
+    /* ── Radius ── */
+    --r-sm: 0.25rem; /* 4px */
+    --r-md: 0.5rem; /* 8px */
+    --r-lg: 0.75rem; /* 12px */
+    --r-xl: 1rem; /* 16px */
+    --r-full: 9999px;
+
+    /* ── Component Sizes ── */
+    --size-icon-sm: 1rem; /* 16px */
+    --size-icon-md: 1.25rem; /* 20px */
+    --size-icon-lg: 1.5rem; /* 24px */
+    --size-icon-xl: 2rem; /* 32px */
+    --size-input-h: 2.5rem; /* 40px */
+    --size-input-h-lg: 3rem; /* 48px */
+    --size-btn-h-sm: 2rem; /* 32px */
+    --size-btn-h-md: 2.5rem; /* 40px */
+    --size-btn-h-lg: 3rem; /* 48px */
   }
+
+  /* ─────────────────────────────────────
+     DARK MODE
+  ───────────────────────────────────── */
   .dark {
+    /* Shadcn base tokens */
     --background: oklch(0.145 0 0);
     --foreground: oklch(0.985 0 0);
     --card: oklch(0.145 0 0);
@@ -54,11 +245,6 @@
     --border: oklch(0.269 0 0);
     --input: oklch(0.269 0 0);
     --ring: oklch(0.439 0 0);
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
     --sidebar: oklch(0.205 0 0);
     --sidebar-foreground: oklch(0.985 0 0);
     --sidebar-primary: oklch(0.488 0.243 264.376);
@@ -67,11 +253,99 @@
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(0.269 0 0);
     --sidebar-ring: oklch(0.439 0 0);
+
+    /* ── Tokens / Surface ── */
+    --surface-page: var(--neutral-900);
+    --surface-subtle: var(--neutral-800);
+    --surface-card: var(--neutral-800);
+    --surface-overlay: var(--neutral-700);
+
+    /* ── Tokens / Text ── */
+    --text-primary: var(--neutral-50);
+    --text-secondary: var(--neutral-400);
+    --text-disabled: var(--neutral-600);
+    --text-inverse: var(--neutral-900);
+    --text-brand: var(--blue-400);
+    --text-danger: var(--red-400);
+    --text-success: var(--green-400);
+    --text-warning: var(--amber-400);
+
+    /* ── Tokens / Interactive / Primary ── */
+    --interactive-primary-bg: var(--blue-500);
+    --interactive-primary-hover: var(--blue-400);
+    --interactive-primary-active: var(--blue-600);
+    --interactive-primary-text: var(--neutral-0);
+
+    /* ── Tokens / Interactive / Secondary ── */
+    --interactive-secondary-bg: var(--blue-950);
+    --interactive-secondary-hover: var(--blue-900);
+    --interactive-secondary-text: var(--blue-300);
+
+    /* ── Tokens / Interactive / Ghost ── */
+    --interactive-ghost-border: var(--blue-700);
+    --interactive-ghost-text: var(--blue-400);
+    --interactive-ghost-bg-hover: var(--blue-950);
+
+    /* ── Tokens / Interactive / Disabled ── */
+    --interactive-disabled-bg: var(--neutral-800);
+    --interactive-disabled-text: var(--neutral-600);
+    --interactive-disabled-border: var(--neutral-700);
+
+    /* ── Tokens / Interactive / Focus ── */
+    --interactive-focus-ring: var(--blue-400);
+
+    /* ── Tokens / Interactive / Danger ── */
+    --interactive-danger-bg: var(--red-700);
+    --interactive-danger-hover: var(--red-600);
+    --interactive-danger-active: var(--red-800);
+    --interactive-danger-text: var(--neutral-0);
+
+    /* ── Tokens / Border ── */
+    --border-subtle: var(--neutral-800);
+    --border-default: var(--neutral-700);
+    --border-strong: var(--neutral-600);
+    --border-brand: var(--blue-700);
+
+    /* ── Tokens / Feedback / Danger ── */
+    --feedback-danger-bg: var(--red-950);
+    --feedback-danger-bg-strong: var(--red-900);
+    --feedback-danger-border: var(--red-800);
+    --feedback-danger-text: var(--red-400);
+    --feedback-danger-icon: var(--red-400);
+    --feedback-danger-solid: var(--red-600);
+
+    /* ── Tokens / Feedback / Success ── */
+    --feedback-success-bg: var(--green-950);
+    --feedback-success-bg-strong: var(--green-900);
+    --feedback-success-border: var(--green-800);
+    --feedback-success-text: var(--green-400);
+    --feedback-success-icon: var(--green-400);
+    --feedback-success-solid: var(--green-600);
+
+    /* ── Tokens / Feedback / Warning ── */
+    --feedback-warning-bg: var(--amber-950);
+    --feedback-warning-bg-strong: var(--amber-900);
+    --feedback-warning-border: var(--amber-800);
+    --feedback-warning-text: var(--amber-400);
+    --feedback-warning-icon: var(--amber-400);
+    --feedback-warning-solid: var(--amber-600);
+
+    /* ── Tokens / Feedback / Info ── */
+    --feedback-info-bg: var(--blue-950);
+    --feedback-info-bg-strong: var(--blue-900);
+    --feedback-info-border: var(--blue-800);
+    --feedback-info-text: var(--blue-400);
+    --feedback-info-icon: var(--blue-400);
+    --feedback-info-solid: var(--blue-500);
   }
 
+  /* ─────────────────────────────────────
+     @THEME INLINE — Tailwind v4 utility mapping
+     Every --color-[name] becomes:
+     bg-[name]  text-[name]  border-[name]  ring-[name]
+  ───────────────────────────────────── */
   @theme inline {
-    --font-sans: 'Geist', 'Geist Fallback';
-    --font-mono: 'Geist Mono', 'Geist Mono Fallback';
+    /* Shadcn mappings — keep these */
     --color-background: var(--background);
     --color-foreground: var(--foreground);
     --color-card: var(--card);
@@ -91,15 +365,6 @@
     --color-border: var(--border);
     --color-input: var(--input);
     --color-ring: var(--ring);
-    --color-chart-1: var(--chart-1);
-    --color-chart-2: var(--chart-2);
-    --color-chart-3: var(--chart-3);
-    --color-chart-4: var(--chart-4);
-    --color-chart-5: var(--chart-5);
-    --radius-sm: calc(var(--radius) - 4px);
-    --radius-md: calc(var(--radius) - 2px);
-    --radius-lg: var(--radius);
-    --radius-xl: calc(var(--radius) + 4px);
     --color-sidebar: var(--sidebar);
     --color-sidebar-foreground: var(--sidebar-foreground);
     --color-sidebar-primary: var(--sidebar-primary);
@@ -108,14 +373,312 @@
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-ring: var(--sidebar-ring);
+
+    /* Fonts */
+    --font-sans: 'DM Sans', sans-serif;
+    --font-heading: 'Inter Display', sans-serif;
+
+    /* ── Blue primitives ── */
+    --color-blue-50: var(--blue-50);
+    --color-blue-100: var(--blue-100);
+    --color-blue-200: var(--blue-200);
+    --color-blue-300: var(--blue-300);
+    --color-blue-400: var(--blue-400);
+    --color-blue-500: var(--blue-500);
+    --color-blue-600: var(--blue-600);
+    --color-blue-700: var(--blue-700);
+    --color-blue-800: var(--blue-800);
+    --color-blue-900: var(--blue-900);
+    --color-blue-950: var(--blue-950);
+
+    /* ── Neutral primitives ── */
+    --color-neutral-0: var(--neutral-0);
+    --color-neutral-50: var(--neutral-50);
+    --color-neutral-100: var(--neutral-100);
+    --color-neutral-200: var(--neutral-200);
+    --color-neutral-300: var(--neutral-300);
+    --color-neutral-400: var(--neutral-400);
+    --color-neutral-500: var(--neutral-500);
+    --color-neutral-600: var(--neutral-600);
+    --color-neutral-700: var(--neutral-700);
+    --color-neutral-800: var(--neutral-800);
+    --color-neutral-900: var(--neutral-900);
+    --color-neutral-950: var(--neutral-950);
+
+    /* ── Red primitives ── */
+    --color-red-50: var(--red-50);
+    --color-red-100: var(--red-100);
+    --color-red-200: var(--red-200);
+    --color-red-300: var(--red-300);
+    --color-red-400: var(--red-400);
+    --color-red-500: var(--red-500);
+    --color-red-600: var(--red-600);
+    --color-red-700: var(--red-700);
+    --color-red-800: var(--red-800);
+    --color-red-900: var(--red-900);
+    --color-red-950: var(--red-950);
+
+    /* ── Green primitives ── */
+    --color-green-50: var(--green-50);
+    --color-green-100: var(--green-100);
+    --color-green-200: var(--green-200);
+    --color-green-300: var(--green-300);
+    --color-green-400: var(--green-400);
+    --color-green-500: var(--green-500);
+    --color-green-600: var(--green-600);
+    --color-green-700: var(--green-700);
+    --color-green-800: var(--green-800);
+    --color-green-900: var(--green-900);
+    --color-green-950: var(--green-950);
+
+    /* ── Amber primitives ── */
+    --color-amber-50: var(--amber-50);
+    --color-amber-100: var(--amber-100);
+    --color-amber-200: var(--amber-200);
+    --color-amber-300: var(--amber-300);
+    --color-amber-400: var(--amber-400);
+    --color-amber-500: var(--amber-500);
+    --color-amber-600: var(--amber-600);
+    --color-amber-700: var(--amber-700);
+    --color-amber-800: var(--amber-800);
+    --color-amber-900: var(--amber-900);
+    --color-amber-950: var(--amber-950);
+
+    /* ── Surface tokens ── */
+    --color-surface-page: var(--surface-page);
+    --color-surface-subtle: var(--surface-subtle);
+    --color-surface-card: var(--surface-card);
+    --color-surface-overlay: var(--surface-overlay);
+
+    /* ── Text tokens ── */
+    --color-text-primary: var(--text-primary);
+    --color-text-secondary: var(--text-secondary);
+    --color-text-disabled: var(--text-disabled);
+    --color-text-inverse: var(--text-inverse);
+    --color-text-brand: var(--text-brand);
+    --color-text-danger: var(--text-danger);
+    --color-text-success: var(--text-success);
+    --color-text-warning: var(--text-warning);
+
+    /* ── Interactive tokens ── */
+    --color-interactive-primary-bg: var(--interactive-primary-bg);
+    --color-interactive-primary-hover: var(--interactive-primary-hover);
+    --color-interactive-primary-active: var(--interactive-primary-active);
+    --color-interactive-primary-text: var(--interactive-primary-text);
+    --color-interactive-secondary-bg: var(--interactive-secondary-bg);
+    --color-interactive-secondary-hover: var(--interactive-secondary-hover);
+    --color-interactive-secondary-text: var(--interactive-secondary-text);
+    --color-interactive-ghost-border: var(--interactive-ghost-border);
+    --color-interactive-ghost-text: var(--interactive-ghost-text);
+    --color-interactive-ghost-bg-hover: var(--interactive-ghost-bg-hover);
+    --color-interactive-disabled-bg: var(--interactive-disabled-bg);
+    --color-interactive-disabled-text: var(--interactive-disabled-text);
+    --color-interactive-disabled-border: var(--interactive-disabled-border);
+    --color-interactive-focus-ring: var(--interactive-focus-ring);
+    --color-interactive-danger-bg: var(--interactive-danger-bg);
+    --color-interactive-danger-hover: var(--interactive-danger-hover);
+    --color-interactive-danger-active: var(--interactive-danger-active);
+    --color-interactive-danger-text: var(--interactive-danger-text);
+
+    /* ── Border tokens ── */
+    --color-border-subtle: var(--border-subtle);
+    --color-border-default: var(--border-default);
+    --color-border-strong: var(--border-strong);
+    --color-border-brand: var(--border-brand);
+
+    /* ── Feedback tokens ── */
+    --color-feedback-danger-bg: var(--feedback-danger-bg);
+    --color-feedback-danger-bg-strong: var(--feedback-danger-bg-strong);
+    --color-feedback-danger-border: var(--feedback-danger-border);
+    --color-feedback-danger-text: var(--feedback-danger-text);
+    --color-feedback-danger-icon: var(--feedback-danger-icon);
+    --color-feedback-danger-solid: var(--feedback-danger-solid);
+    --color-feedback-success-bg: var(--feedback-success-bg);
+    --color-feedback-success-bg-strong: var(--feedback-success-bg-strong);
+    --color-feedback-success-border: var(--feedback-success-border);
+    --color-feedback-success-text: var(--feedback-success-text);
+    --color-feedback-success-icon: var(--feedback-success-icon);
+    --color-feedback-success-solid: var(--feedback-success-solid);
+    --color-feedback-warning-bg: var(--feedback-warning-bg);
+    --color-feedback-warning-bg-strong: var(--feedback-warning-bg-strong);
+    --color-feedback-warning-border: var(--feedback-warning-border);
+    --color-feedback-warning-text: var(--feedback-warning-text);
+    --color-feedback-warning-icon: var(--feedback-warning-icon);
+    --color-feedback-warning-solid: var(--feedback-warning-solid);
+    --color-feedback-info-bg: var(--feedback-info-bg);
+    --color-feedback-info-bg-strong: var(--feedback-info-bg-strong);
+    --color-feedback-info-border: var(--feedback-info-border);
+    --color-feedback-info-text: var(--feedback-info-text);
+    --color-feedback-info-icon: var(--feedback-info-icon);
+    --color-feedback-info-solid: var(--feedback-info-solid);
+
+    /* ── Radius ── */
+    --radius-sm: var(--r-sm);
+    --radius-md: var(--r-md);
+    --radius-lg: var(--r-lg);
+    --radius-xl: var(--r-xl);
+    --radius-full: var(--r-full);
+
+    /* ── Spacing ── */
+    --spacing-1: var(--space-1);
+    --spacing-2: var(--space-2);
+    --spacing-3: var(--space-3);
+    --spacing-4: var(--space-4);
+    --spacing-5: var(--space-5);
+    --spacing-6: var(--space-6);
+    --spacing-8: var(--space-8);
+    --spacing-10: var(--space-10);
+    --spacing-12: var(--space-12);
+    --spacing-16: var(--space-16);
+    --spacing-20: var(--space-20);
   }
 
   .hide-scrollbar {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 
   .hide-scrollbar::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, Opera */
+    display: none;
+  }
+}
+
+@layer components {
+  /* ─────────────────────────────────────
+     HEADING STYLES — Inter Display
+  ───────────────────────────────────── */
+  .text-display {
+    font-family: 'Inter Display', sans-serif;
+    font-weight: 600;
+    font-size: 4.5rem;
+    line-height: 5rem;
+    letter-spacing: -0.02em;
+  }
+
+  .text-h1 {
+    font-family: 'Inter Display', sans-serif;
+    font-weight: 600;
+    font-size: 3.75rem;
+    line-height: 4.25rem;
+    letter-spacing: -0.02em;
+  }
+
+  .text-h2 {
+    font-family: 'Inter Display', sans-serif;
+    font-weight: 600;
+    font-size: 3rem;
+    line-height: 3.5rem;
+    letter-spacing: -0.02em;
+  }
+
+  .text-h3 {
+    font-family: 'Inter Display', sans-serif;
+    font-weight: 600;
+    font-size: 2.25rem;
+    line-height: 2.75rem;
+    letter-spacing: -0.02em;
+  }
+
+  .text-h4 {
+    font-family: 'Inter Display', sans-serif;
+    font-weight: 600;
+    font-size: 1.875rem;
+    line-height: 2.375rem;
+    letter-spacing: 0em;
+  }
+
+  .text-h5 {
+    font-family: 'Inter Display', sans-serif;
+    font-weight: 600;
+    font-size: 1.5rem;
+    line-height: 2rem;
+    letter-spacing: 0em;
+  }
+
+  .text-h6 {
+    font-family: 'Inter Display', sans-serif;
+    font-weight: 600;
+    font-size: 1.25rem;
+    line-height: 1.875rem;
+    letter-spacing: 0em;
+  }
+
+  /* ─────────────────────────────────────
+     BODY STYLES — DM Sans Regular
+  ───────────────────────────────────── */
+  .text-body-xl {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
+    font-size: 1.25rem;
+    line-height: 1.875rem;
+    letter-spacing: 0em;
+  }
+
+  .text-body-lg {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+    letter-spacing: 0em;
+  }
+
+  .text-body-base {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
+    font-size: 1rem;
+    line-height: 1.5rem;
+    letter-spacing: 0em;
+  }
+
+  .text-body-sm {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    letter-spacing: 0em;
+  }
+
+  .text-body-xs {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    letter-spacing: 0em;
+  }
+
+  /* ─────────────────────────────────────
+     UI STYLES — DM Sans Medium
+  ───────────────────────────────────── */
+  .text-label-lg {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    font-size: 1rem;
+    line-height: 1.5rem;
+    letter-spacing: 0em;
+  }
+
+  .text-label-base {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    letter-spacing: 0em;
+  }
+
+  .text-label-sm {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    letter-spacing: 0.04em;
+  }
+
+  .text-overline {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
 }

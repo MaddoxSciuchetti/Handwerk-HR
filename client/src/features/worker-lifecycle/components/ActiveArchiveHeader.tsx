@@ -1,38 +1,41 @@
 import { Button } from '@/components/ui/button';
 import { Dispatch, SetStateAction } from 'react';
-import { WorkerListMode } from '../types/index.types';
+import { EngagementStatus } from '../types/index.types';
 
 type ActiveArchiveHeaderProps = {
-  mode: WorkerListMode;
-  setMode: Dispatch<SetStateAction<WorkerListMode>>;
+  engagementStatus: EngagementStatus;
+  setEngagementStatus: Dispatch<SetStateAction<EngagementStatus>>;
 };
 
-const ActiveArchiveHeader = ({ mode, setMode }: ActiveArchiveHeaderProps) => {
+const ActiveArchiveHeader = ({
+  engagementStatus,
+  setEngagementStatus,
+}: ActiveArchiveHeaderProps) => {
   return (
     <>
       <div className="mt-4 flex items-center justify-start gap-2">
         <Button
           type="button"
-          variant={mode === 'active' ? 'default' : 'outline'}
+          variant={engagementStatus === 'active' ? 'default' : 'outline'}
           size={'sm'}
           className={
-            mode === 'active'
+            engagementStatus === 'active'
               ? 'h-8 rounded-full px-4 text-xs font-medium shadow-sm ring-2 ring-primary/30'
               : 'h-8 rounded-full px-4 text-xs font-medium text-muted-foreground'
           }
-          onClick={() => setMode('active')}
+          onClick={() => setEngagementStatus('active')}
         >
           Aktiv
         </Button>
         <Button
           type="button"
-          variant={mode === 'archived' ? 'default' : 'outline'}
+          variant={engagementStatus === 'archived' ? 'default' : 'outline'}
           className={
-            mode === 'archived'
+            engagementStatus === 'archived'
               ? 'h-8 rounded-full px-4 text-xs font-medium shadow-sm ring-2 ring-primary/30'
               : 'h-8 rounded-full px-4 text-xs font-medium text-muted-foreground'
           }
-          onClick={() => setMode('archived')}
+          onClick={() => setEngagementStatus('archived')}
         >
           Archiv
         </Button>

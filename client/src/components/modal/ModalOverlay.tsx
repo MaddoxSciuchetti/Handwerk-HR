@@ -38,7 +38,7 @@ const ModalOverlay = ({
       <div
         onClick={handleToggle}
         className={cn(
-          'fixed inset-0 cursor-pointer bg-(--modal-overlay) ',
+          'fixed inset-0 cursor-pointer bg-[var(--modal-overlay)] ',
           backdropClassName
         )}
         aria-hidden="true"
@@ -48,7 +48,7 @@ const ModalOverlay = ({
         <button
           onClick={handleToggle}
           aria-label="Modal schließen"
-          className="absolute top-3 right-3 rounded-md hover:bg-(--accent)"
+          className="absolute top-3 right-3 rounded-md hover:bg-[var(--accent)]"
         >
           <X className="h-4 w-4" aria-hidden="true" />
         </button>

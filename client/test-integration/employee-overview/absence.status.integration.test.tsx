@@ -1,6 +1,6 @@
 import API from '@/config/apiClient';
 import queryClient from '@/config/query.client';
-import EmployeeOverview from '@/features/employee-overview/components/EmployeeOverview';
+import OrgUsersOverview from '@/features/employee-overview/components/OrgUsersOverview';
 import { EmployeeModalProvider } from '@/features/employee-overview/context/ModalProvider';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, within } from '@testing-library/react';
@@ -36,7 +36,7 @@ describe('Employee absence status integration', () => {
     const getSpy = vi
       .spyOn(API, 'get')
       .mockImplementation(async (url: string) => {
-        if (url === '/employee/specificEmployeeData') {
+        if (url === '/employee/v2/specificEmployeeData') {
           return employeeResponse;
         }
         return [];
@@ -54,13 +54,13 @@ describe('Employee absence status integration', () => {
     render(
       <QueryClientProvider client={queryClient}>
         <EmployeeModalProvider>
-          <EmployeeOverview />
+          <OrgUsersOverview />
         </EmployeeModalProvider>
       </QueryClientProvider>
     );
 
     const presentText = await screen.findByText('Anwesend');
-    expect(presentText).toHaveClass('text-(--chart-2)');
+    expect(presentText).toHaveClass('text-[var(--chart-2)]');
 
     const row = screen.getByText('MaxMustermann').closest('tr');
     expect(row).not.toBeNull();
@@ -96,7 +96,7 @@ describe('Employee absence status integration', () => {
     );
 
     const absentText = await screen.findByText('Abwesend vom');
-    expect(absentText).toHaveClass('text-(--chart-5)');
+    expect(absentText).toHaveClass('text-[var(--chart-5)]');
 
     const updatedRow = screen.getByText('MaxMustermann').closest('tr');
     expect(updatedRow).not.toBeNull();

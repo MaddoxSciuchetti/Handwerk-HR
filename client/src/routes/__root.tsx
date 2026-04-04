@@ -27,6 +27,7 @@ function RootLayout() {
     '/verify-email',
     '/password/forgot',
     '/password/reset',
+    '/register-org',
     '/',
     '/home',
   ]);

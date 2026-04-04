@@ -5,23 +5,18 @@ export function modalReducer(
   action: ModalAction
 ): ModalState {
   switch (action.type) {
-    case 'OPEN_CREATE':
-      return { kind: 'create' };
     case 'OPEN_EDIT':
       return {
         kind: 'edit',
         employeeId: action.employeeId,
         fullname: action.fullname,
       };
+    case 'OPEN_INFO':
+      return { kind: 'info', employeeId: action.employeeId };
+    case 'OPEN_VIEW':
+      return { kind: 'view', selectedOwner: action.selectedOwner };
     case 'CLOSE':
       return { kind: 'closed' };
-    case 'EMPLOYEE_CREATE':
-      return { kind: 'employeecreate', owner: action.owner };
-    case 'OPEN_EMPLOYEE_INFO':
-      return {
-        kind: 'employeeinfo',
-        employeeId: action.employeeId,
-      };
     default:
       return state;
   }

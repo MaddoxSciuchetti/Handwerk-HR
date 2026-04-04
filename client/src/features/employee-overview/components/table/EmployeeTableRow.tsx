@@ -5,15 +5,16 @@ import { User } from '@/features/user-profile/types/auth.type';
 import { UseMutateFunction } from '@tanstack/react-query';
 import { Info } from 'lucide-react';
 import { useState } from 'react';
-import { useEmployeeModal } from '../../hooks/useEmployeeModal';
-import { EmployeeDataArray } from '../../schemas/schema';
+
+import { useOrgUsersModal } from '../../hooks/useOrgUsersModal';
+import { OrgUsersArray } from '../../schemas/schema';
 import EmployeeName from './table-row-item/EmployeeName';
 import EmployeeOpenTasks from './table-row-item/EmployeeOpenTasks';
 import EmployeeStatus from './table-row-item/EmployeeStatus';
 import EmployeeSubstitute from './table-row-item/EmployeeSubstitute';
 
 type EmployeeRowProps = {
-  employee: EmployeeDataArray[number];
+  employee: OrgUsersArray[number];
   handleDeleteEmployee: UseMutateFunction<User, Error, string, unknown>;
   openTaskCountsByEmployee: Map<string, number>;
   openEditEmployee: (id: string, name: string) => void;
@@ -27,7 +28,7 @@ export const EmployeeRow = ({
 }: EmployeeRowProps) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const closeDeleteModalHandler = () => setIsDeleteModalOpen(false);
-  const { openInfoModal } = useEmployeeModal();
+  const { openEmployeeInfo, openViewEmployee } = useOrgUsersModal();
 
   return (
     <tr className="group py-5 transition-colors">
@@ -36,7 +37,7 @@ export const EmployeeRow = ({
           <EmployeeName employee={employee} />
           <Button
             className="cursor-pointer"
-            onClick={() => openInfoModal(employee.id)}
+            onClick={() => openEmployeeInfo(employee.id)}
           >
             <Info />
           </Button>
@@ -47,9 +48,21 @@ export const EmployeeRow = ({
             className="cursor-pointer pointer-events-none opacity-0 transition-opacity duration-150 group-hover:pointer-events-auto group-hover:opacity-100"
             onClick={(e) => {
               e.stopPropagation();
+              openViewEmployee(employee.id);
+            }}
+          >
+            Aufgaben
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="cursor-pointer pointer-events-none opacity-0 transition-opacity duration-150 group-hover:pointer-events-auto group-hover:opacity-100"
+            onClick={(e) => {
+              e.stopPropagation();
               openEditEmployee(
                 employee.id,
-                `${employee.vorname}${employee.nachname}`
+                `${employee.firstName}${employee.lastName}`
               );
             }}
           >
@@ -59,7 +72,6 @@ export const EmployeeRow = ({
       </td>
       <td>
         <EmployeeOpenTasks
-          employee={employee.id}
           openTaskCountsByEmployee={
             openTaskCountsByEmployee.get(employee.id) ?? 0
           }
@@ -73,7 +85,7 @@ export const EmployeeRow = ({
       </td>
       <td className="rounded-r-xl">
         <TrashButton
-          disabled={employee.user_permission === 'CHEF'}
+          // disabled={employee.user_permission === 'CHEF'}
           description={'Löschen'}
           onClick={() => setIsDeleteModalOpen(true)}
         />

@@ -3,21 +3,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { absenceReason } from '@/features/employee-overview/consts/SelectInput';
 import useEditEmployee from '@/features/employee-overview/hooks/useEditEmployee';
-import { EmployeeDataArray } from '@/features/employee-overview/schemas/schema';
+import { OrgUsersArray } from '@/features/employee-overview/schemas/schema';
 import { useMemo } from 'react';
 import FormFields from '../../../../../components/form/FormFields';
 
 type FormModalEditProps = {
   id: string | undefined;
   fullname: string;
-  EmployeeData: EmployeeDataArray | undefined;
+  OrgUsers: OrgUsersArray | undefined;
   toggleEmployeeModal: () => void;
 };
 
 const FormModalEdit = ({
   id,
   fullname,
-  EmployeeData,
+  OrgUsers,
   toggleEmployeeModal,
 }: FormModalEditProps) => {
   const { register, handleSubmit, control, errors, onSubmit } =
@@ -25,11 +25,11 @@ const FormModalEdit = ({
 
   const employeeOptions = useMemo(
     () =>
-      EmployeeData?.map((emp) => ({
-        label: `${emp.vorname}${emp.nachname}`,
-        value: `${emp.id}`,
+      OrgUsers?.map((user) => ({
+        label: `${user.firstName}${user.lastName}`,
+        value: `${user.id}`,
       })) ?? [],
-    [EmployeeData]
+    [OrgUsers]
   );
   return (
     <div className="flex-1 w-full min-h-0 overflow-y-auto overflow-x-hidden pr-1">
@@ -37,12 +37,12 @@ const FormModalEdit = ({
         onSubmit={handleSubmit(onSubmit)}
         className="flex w-full min-w-0 flex-col gap-4"
       >
-        <Input type="hidden" value={id} {...register('id')} />
+        <Input type="hidden" value={id} {...register('userId')} />
         <h1 className="text-left w-full">
           Abwesenheit eintragen für: {fullname}
         </h1>
         <FormSelectOptions
-          name="absencetype"
+          name="absenceType"
           control={control}
           data={absenceReason}
           placeholder={'Grund'}
@@ -53,7 +53,7 @@ const FormModalEdit = ({
           label={'Abwesenheitsbeginn'}
           placeholder={'DD.MM.YYYY'}
           register={register}
-          name={'absencebegin'}
+          name={'startDate'}
           errors={errors}
         />
 
@@ -61,11 +61,11 @@ const FormModalEdit = ({
           label={'Abwesenheitsende'}
           placeholder={'DD.MM.YYYY'}
           register={register}
-          name="absenceEnd"
+          name="endDate"
           errors={errors}
         />
         <FormSelectOptions
-          name="substitute"
+          name="substituteId"
           control={control}
           data={employeeOptions}
           placeholder={'Mitarbeiter'}

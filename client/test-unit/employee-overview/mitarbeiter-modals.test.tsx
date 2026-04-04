@@ -1,4 +1,4 @@
-import EmployeeOverview from '@/features/employee-overview/components/EmployeeOverview';
+import OrgUsersOverview from '@/features/employee-overview/components/OrgUsersOverview';
 import { EmployeeModalProvider } from '@/features/employee-overview/context/ModalProvider';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -53,7 +53,7 @@ describe('Employee overview modal', () => {
 
     renderWithProviders(
       <EmployeeModalProvider>
-        <EmployeeOverview />
+        <OrgUsersOverview />
       </EmployeeModalProvider>
     );
 
@@ -75,7 +75,7 @@ describe('Employee overview modal', () => {
 
     renderWithProviders(
       <EmployeeModalProvider>
-        <EmployeeOverview />
+        <OrgUsersOverview />
       </EmployeeModalProvider>
     );
 
@@ -96,7 +96,7 @@ describe('Employee overview modal', () => {
     const user = userEvent.setup();
     renderWithProviders(
       <EmployeeModalProvider>
-        <EmployeeOverview />
+        <OrgUsersOverview />
       </EmployeeModalProvider>
     );
 
@@ -114,7 +114,7 @@ describe('Employee overview modal', () => {
 
     renderWithProviders(
       <EmployeeModalProvider>
-        <EmployeeOverview />
+        <OrgUsersOverview />
       </EmployeeModalProvider>
     );
 

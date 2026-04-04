@@ -32,7 +32,7 @@ function PasswordValidationBar({
         Mind. 6 Zeichen, 1 Grossbuchstabe, 1 Kleinbuchstabe, 1 Zahl, 1
         Sonderzeichen (!@#$%^&*).
       </p>
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-(--muted)">
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--muted)]">
         <div
           className={`h-full rounded-full transition-all duration-200 ${strength.barClass}`}
           style={{ width: strength.width }}

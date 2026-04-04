@@ -10,7 +10,7 @@ const WorkerInfoHeader = ({ isError }: WorkerInfoHeaderProps) => {
       </h2>
 
       {isError ? (
-        <p className="text-xs text-(--destructive)">
+        <p className="text-xs text-[var(--destructive)]">
           Informationen konnten nicht geladen werden.
         </p>
       ) : null}

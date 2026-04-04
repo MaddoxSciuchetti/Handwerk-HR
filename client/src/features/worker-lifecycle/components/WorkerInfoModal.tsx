@@ -1,7 +1,6 @@
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import ModalOverlay from '@/components/modal/ModalOverlay';
 import MediumWrapper from '@/components/modal/modalSizes/MediumWrapper';
-import { LifecycleType } from '@/features/task-management/types/index.types';
 import { useState } from 'react';
 import useWorkerInfo from '../hooks/useWorkerInfo';
 import WorkerInfoHeader from './WorkerInfoHeader';
@@ -9,21 +8,18 @@ import WorkerInfos from './WorkerInfos';
 
 type WorkerInfoModalProps = {
   isOpen: boolean;
-  workerId: number;
-  lifecycleType: LifecycleType;
+  workerId: string;
   onClose: () => void;
 };
 
 const WorkerInfoModal = ({
   isOpen,
   workerId,
-  lifecycleType,
   onClose,
 }: WorkerInfoModalProps) => {
   const { isError, isLoading, workerInfo } = useWorkerInfo(
     isOpen,
     workerId,
-    lifecycleType
   );
 
   const [isInputActive, setIsInputActive] = useState<boolean>();
@@ -49,7 +45,6 @@ const WorkerInfoModal = ({
             <WorkerInfos
               workerId={workerId}
               workerInfo={workerInfo}
-              lifecycleType={lifecycleType}
               isInputActive={isInputActive}
               setIsInputActive={setIsInputActive}
               uniqueInput={uniqueInput}

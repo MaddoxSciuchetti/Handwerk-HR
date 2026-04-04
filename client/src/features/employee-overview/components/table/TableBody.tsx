@@ -2,19 +2,19 @@ import { TableBody } from '@/components/ui/table';
 import { User } from '@/features/user-profile/types/auth.type';
 import { UseMutateFunction } from '@tanstack/react-query';
 import useEmployeeData from '../../hooks/useEmployeeData';
-import { useEmployeeModal } from '../../hooks/useEmployeeModal';
-import { EmployeeDataArray } from '../../schemas/schema';
+import { useOrgUsersModal } from '../../hooks/useOrgUsersModal';
+import { OrgUsersArray } from '../../schemas/schema';
 import { EmployeeRow } from './EmployeeTableRow';
 
 type TableBodyProps = {
-  filteredEmployeesByFirstName: EmployeeDataArray;
+  filteredEmployeesByFirstName: OrgUsersArray;
   handleDeleteEmployee: UseMutateFunction<User, Error, string, unknown>;
 };
 const EmployeeTableBody = ({
   filteredEmployeesByFirstName,
   handleDeleteEmployee,
 }: TableBodyProps) => {
-  const { openEditEmployee } = useEmployeeModal();
+  const { openEditEmployee } = useOrgUsersModal();
   const { openTaskCountsByEmployee } = useEmployeeData();
 
   return (

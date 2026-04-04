@@ -25,7 +25,7 @@ const FilesContent = ({ fetchFiles, deleteFiles }: FilesContentProps) => {
           return (
             <div
               key={index}
-              className="flex flex-col rounded-xl border border-border hover:bg-(--dropdown-surface) p-3 transition-colors"
+              className="flex flex-col rounded-xl border border-border hover:bg-[var(--dropdown-surface)] p-3 transition-colors"
             >
               <div className="flex justify-end">
                 <Button
@@ -36,7 +36,7 @@ const FilesContent = ({ fetchFiles, deleteFiles }: FilesContentProps) => {
                     e.stopPropagation();
                     deleteFiles(file.id);
                   }}
-                  className="cursor-pointer rounded-xl text-muted-foreground transition-colors hover:bg-(--hover-bg) hover:text-(--hover-foreground)"
+                  className="cursor-pointer rounded-xl text-muted-foreground transition-colors hover:bg-[var(--hover-bg)] hover:text-[var(--hover-foreground)]"
                 >
                   X
                 </Button>

@@ -28,14 +28,12 @@ const TabsFooter = ({
           currentPage={currentPage}
         />
         {tab === 'OFFBOARDING' ? (
-          <p className="font-light text-xs text-(--muted-foreground)">
-            {taskLengthByTemplateType.OFFBOARDING} Aufgaben in Offboarding
-            template
+          <p className="font-light text-xs text-[var(--muted-foreground)]">
+            {taskLengthByTemplateType.OFFBOARDING} Vorlagen (Offboarding)
           </p>
         ) : (
-          <p className="font-light text-xs text-(--muted-foreground)">
-            {taskLengthByTemplateType.ONBOARDING} Aufgaben in Onboarding
-            template
+          <p className="font-light text-xs text-[var(--muted-foreground)]">
+            {taskLengthByTemplateType.ONBOARDING} Vorlagen (Onboarding)
           </p>
         )}
       </div>

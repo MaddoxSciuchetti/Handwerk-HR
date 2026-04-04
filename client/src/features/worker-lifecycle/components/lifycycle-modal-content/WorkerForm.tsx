@@ -1,8 +1,10 @@
 import FormFields from '@/components/form/FormFields';
+import FormSelectOptions from '@/components/form/FormSelectOptions';
+import useGetOrgUsers from '@/features/employee-overview/hooks/useGetEmployees';
 import { LifecycleType } from '@/features/task-management/types/index.types';
 import {
-  AddWorker,
-  addWorkerSchema,
+  CreateWorker,
+  createWorkerSchema,
 } from '@/features/worker-lifecycle/schemas/zod.schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
@@ -32,19 +34,27 @@ export const WorkerForm = ({
     isPending,
   } = useMutation(workerLifecycleMutations.addWorker());
 
+  const { OrgUsers } = useGetOrgUsers();
+
+  const orgUsersSelectData = (OrgUsers ?? []).map((user) => ({
+    value: user.id,
+    label: `${user.firstName} ${user.lastName}`,
+  }));
+
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
-  } = useForm<AddWorker>({
-    resolver: zodResolver(addWorkerSchema),
+  } = useForm<CreateWorker>({
+    resolver: zodResolver(createWorkerSchema),
     defaultValues: {
-      type: type,
+      engagementType: type,
     },
     criteriaMode: 'all',
   });
 
-  const submitWorkerForm = async (data: AddWorker) => {
+  const submitWorkerForm = async (data: CreateWorker) => {
     await addWorkerMutation(data);
     toast.success('Mitarbeiter erstellt und Benachrichtigungen versendet');
     toggleModal();
@@ -52,12 +62,12 @@ export const WorkerForm = ({
 
   const useMemoizedInputs = useMemo(() => {
     const offboardingInputs =
-      type === 'Offboarding'
+      type === 'offboarding'
         ? [
             {
-              name: 'austrittsdatum' as const,
+              name: 'exitDate' as const,
               placeholder: 'Austrittsdatum DD.MM.YYYY',
-              required: type === 'Offboarding',
+              required: type === 'offboarding',
             },
           ]
         : [];
@@ -71,7 +81,7 @@ export const WorkerForm = ({
         className=" gap-4  flex flex-col"
       >
         {isError && (
-          <div className="mb-3 text-(--destructive)">
+          <div className="mb-3 text-[var(--destructive)]">
             {error?.message || 'An error occurred'}
           </div>
         )}
@@ -83,7 +93,9 @@ export const WorkerForm = ({
         >
           Zurück{' '}
         </Button>
-        <h1 className="text-left">Eingabe {type}</h1>
+        <h1 className="text-left">
+          Eingabe {type === 'offboarding' ? 'Offboarding' : 'Onboarding'}
+        </h1>
         <div className="grid grid-cols-2 gap-3 pb-10 ">
           {useMemoizedInputs.map((input) => (
             <div key={input.name}>
@@ -95,9 +107,14 @@ export const WorkerForm = ({
               />
             </div>
           ))}
-
-          {/* <Input type="hidden" {...register('type')} value={type} /> */}
         </div>
+        <FormSelectOptions
+          control={control}
+          errors={errors}
+          name="responsibleUserId"
+          placeholder="Verantwortliche Person wählen"
+          data={orgUsersSelectData}
+        />
         <Button
           variant={'outline'}
           type="submit"

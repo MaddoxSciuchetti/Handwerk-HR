@@ -6,14 +6,14 @@ export const getStrength = (
   if (password.length === 0) {
     return {
       width: '0%',
-      barClass: 'bg-(--muted)',
+      barClass: 'bg-[var(--muted)]',
     };
   }
 
   if (fulfilledRules <= 2) {
     return {
       width: `${progressPercent}%`,
-      barClass: 'bg-(--destructive)',
+      barClass: 'bg-[var(--destructive)]',
     };
   }
 

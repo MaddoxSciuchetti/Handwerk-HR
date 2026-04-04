@@ -1,8 +1,8 @@
 import { UseMutateFunction } from '@tanstack/react-query';
-import { ItemUser } from './index.types';
+import { WorkerRecord } from './index.types';
 
 export type AddWorkerMutation = UseMutateFunction<
-  ItemUser,
+  WorkerRecord,
   Error,
   | {
       vorname: string;

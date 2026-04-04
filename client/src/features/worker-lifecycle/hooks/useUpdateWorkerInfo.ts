@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { WorkerInfoItem } from '../consts/worker-info.consts';
 import { getWorkerFieldSchema } from '../utils/workerInputValidation';
 
-function useUpdateWorkerInfo(workerInfo: WorkerInfoItem, workerId: number) {
+function useUpdateWorkerInfo(workerInfo: WorkerInfoItem, workerId: string) {
   const key = workerInfo.schemaKey;
   const schema = key ? getWorkerFieldSchema(key) : undefined;
   const [inputValue, setInputValue] = useState<string>();

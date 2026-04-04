@@ -30,11 +30,11 @@ const SelectOwner = ({
           id="status"
           name="select_option"
           value={select_option}
-          className={`w-full min-w-0 rounded-xl px-3 py-1 text-sm ${STATUS_MAP[selectedValue]?.className ?? 'bg-(--status-error-bg) text-(--status-error-foreground)'}`}
+          className={`w-full min-w-0 rounded-xl px-3 py-1 text-sm ${STATUS_MAP[selectedValue]?.className ?? 'bg-[var(--status-error-bg)] text-[var(--status-error-foreground)]'}`}
         >
           <SelectValue placeholder="Status" />
         </SelectTrigger>
-        <SelectContent className="border border-border bg-(--dropdown-surface) text-popover-foreground">
+        <SelectContent className="border border-border bg-[var(--dropdown-surface)] text-popover-foreground">
           <SelectGroup className="cursor-pointer">
             <SelectItem className="cursor-pointer" id="select1" value="offen">
               Offen

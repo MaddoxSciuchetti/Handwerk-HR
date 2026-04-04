@@ -31,10 +31,10 @@ const ForgotPassword = () => {
         {isSuccess ? (
           <Alert
             variant="default"
-            className="rounded-xl border border-(--status-success-foreground) bg-(--status-success-bg)"
+            className="rounded-xl border border-[var(--status-success-foreground)] bg-[var(--status-success-bg)]"
           >
-            <CheckCircle className="h-4 w-4 text-(--status-success-foreground)" />
-            <AlertDescription className="text-(--status-success-foreground)">
+            <CheckCircle className="h-4 w-4 text-[var(--status-success-foreground)]" />
+            <AlertDescription className="text-[var(--status-success-foreground)]">
               Email sent! Check your inbox for further instructions.
             </AlertDescription>
           </Alert>

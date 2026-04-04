@@ -13,15 +13,9 @@ export const Route = createFileRoute('/user/$Id')({
 
 function UserPage() {
   const { Id } = Route.useParams();
-  let workerId = parseInt(Id);
-  const numericId = parseInt(String(workerId));
-
   const { lifecycleType } = Route.useSearch();
 
   return (
-    <TaskManagement
-      workerId={numericId}
-      lifecycleType={lifecycleType}
-    />
+    <TaskManagement workerId={Id} lifecycleType={lifecycleType} />
   );
 }

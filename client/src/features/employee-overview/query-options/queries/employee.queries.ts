@@ -1,5 +1,7 @@
-import { DescriptionFieldResponse } from '@/types/api.types';
-import { EmployeeInfoResponse } from '@/types/api.types';
+import {
+  DescriptionFieldResponse,
+  EmployeeInfoResponse,
+} from '@/types/api.types';
 import { queryOptions } from '@tanstack/react-query';
 import {
   fetchDescriptionData,
@@ -7,20 +9,20 @@ import {
   specificEmployeeData,
 } from '../../api/employee-overview.api';
 import { EMPLOYEE_SPECIFICS, PROCESS_DATA } from '../../consts/query-keys';
-import { EmployeeDataArray } from '../../schemas/schema';
+import { OrgUsersArray } from '../../schemas/schema';
 
 export const employeeQueries = {
   getEmployees: () => {
-    return queryOptions<EmployeeDataArray, Error>({
+    return queryOptions<OrgUsersArray, Error>({
       queryKey: [EMPLOYEE_SPECIFICS],
       queryFn: specificEmployeeData,
     });
   },
 
-  fetchDescription: (id: number, form_type: string) => {
+  fetchDescription: (id: string) => {
     return queryOptions<DescriptionFieldResponse, Error>({
-      queryKey: [PROCESS_DATA, id, form_type],
-      queryFn: () => fetchDescriptionData(id, form_type),
+      queryKey: [PROCESS_DATA, id],
+      queryFn: () => fetchDescriptionData(id),
     });
   },
 

@@ -13,7 +13,7 @@ const MediumWrapper = ({
 }: LifeCycleModalProps) => {
   return (
     <div
-      className={`z-50 mx-auto flex ${height} ${width} flex-col items-center justify-center rounded-lg border border-border bg-(--modal-surface) p-4 text-center text-foreground shadow-lg`}
+      className={`z-50 mx-auto flex ${height} ${width} flex-col items-center justify-center rounded-lg border border-border bg-[var(--modal-surface)] p-4 text-center text-foreground shadow-lg`}
     >
       {children}
     </div>

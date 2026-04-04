@@ -14,7 +14,7 @@ const TrashButton = ({ disabled, description, onClick }: TrashButtonProps) => {
       size="icon-sm"
       variant="ghost"
       disabled={disabled}
-      className="cursor-pointer rounded-md text-muted-foreground hover:text-(--destructive) disabled:cursor-not-allowed disabled:opacity-50"
+      className="cursor-pointer rounded-md text-muted-foreground hover:text-[var(--destructive)] disabled:cursor-not-allowed disabled:opacity-50"
       onClick={(e) => {
         e.stopPropagation();
         if (!disabled) onClick();

@@ -5,12 +5,14 @@ import SidebarBody from '../SidebarBody';
 import SidebarHeader from './SidebarHeader';
 
 type TaskSidebarProps = {
+  workerId: string;
   selectedTask: DescriptionField | null;
-  setSelectedTaskId: (value: number | null) => void;
+  setSelectedTaskId: (value: string | number | null) => void;
   handleSubmit: (values: InsertHistoryData) => Promise<void>;
 };
 
 const TaskSidebar = ({
+  workerId,
   selectedTask,
   setSelectedTaskId,
   handleSubmit,
@@ -18,7 +20,7 @@ const TaskSidebar = ({
   return (
     <aside
       className={cn(
-        'fixed right-0 top-0 h-screen border-l border-border bg-(--card) overflow-hidden transition-all duration-300 ease-out z-50',
+        'fixed right-0 top-0 h-screen border-l border-border bg-[var(--card)] overflow-hidden transition-all duration-300 ease-out z-50',
         selectedTask ? 'w-110' : 'w-0'
       )}
     >
@@ -29,6 +31,7 @@ const TaskSidebar = ({
             setSelectedTaskId={setSelectedTaskId}
           />
           <SidebarBody
+            workerId={workerId}
             selectedTask={selectedTask}
             handleSubmit={handleSubmit}
           />

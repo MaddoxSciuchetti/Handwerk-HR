@@ -1,21 +1,14 @@
-import { Home, Inbox, Settings } from 'lucide-react';
+import { Inbox, Settings } from 'lucide-react';
 
 export const LAYOUTITEMS = [
-  {
-    title: 'Meine Mitarbeiter',
-    to: '/employee-overview',
-    icon: Home,
-    requiredPermission: 'CHEF',
-  },
   {
     title: 'Meine Handwerker',
     to: '/worker-lifycycle',
     icon: Inbox,
   },
   {
-    title: 'Vorlage',
-    to: '/template',
+    title: 'Einstellungen',
+    to: '/org-settings',
     icon: Settings,
-    requiredPermission: 'CHEF',
   },
 ];

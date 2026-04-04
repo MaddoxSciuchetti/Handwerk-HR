@@ -43,7 +43,7 @@ const DropdownMenuAction = ({
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="bg-(--muted)"
+        className="bg-[var(--muted)]"
         onClick={(e) => e.stopPropagation()}
       >
         {actions.map((item, idx) => (

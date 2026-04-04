@@ -35,7 +35,7 @@ function DeleteConfirmModal({
               type="button"
               variant="destructive"
               aria-label="Löschen bestätigen"
-              className="bg-(--destructive) text-(--destructive-foreground) hover:bg-(--destructive)"
+              className="bg-[var(--destructive)] text-[var(--destructive-foreground)] hover:bg-[var(--destructive)]"
               onClick={onConfirm}
             >
               Ja, löschen

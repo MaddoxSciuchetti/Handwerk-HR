@@ -12,20 +12,20 @@ type StatusMapEntry = {
 export const STATUS_MAP: Record<TaskStatus, StatusMapEntry> = {
   erledigt: {
     label: 'Erledigt',
-    className: 'bg-(--status-success-bg) text-(--status-success-foreground)',
-    iconClassName: 'text-(--status-success-foreground)',
-    dotClassName: 'bg-(--chart-2) shadow-sm',
+    className: 'bg-[var(--status-success-bg)] text-[var(--status-success-foreground)]',
+    iconClassName: 'text-[var(--status-success-foreground)]',
+    dotClassName: 'bg-[var(--chart-2)] shadow-sm',
   },
   in_bearbeitung: {
     label: 'In Bearbeitung',
-    className: 'bg-(--status-warning-bg) text-(--status-warning-foreground)',
-    iconClassName: 'text-(--status-warning-foreground)',
-    dotClassName: 'bg-(--chart-3) shadow-sm',
+    className: 'bg-[var(--status-warning-bg)] text-[var(--status-warning-foreground)]',
+    iconClassName: 'text-[var(--status-warning-foreground)]',
+    dotClassName: 'bg-[var(--chart-3)] shadow-sm',
   },
   offen: {
     label: 'Offen',
-    className: 'bg-(--status-error-bg) text-(--status-error-foreground)',
-    iconClassName: 'text-(--status-error-foreground)',
-    dotClassName: 'bg-(--chart-5) shadow-sm',
+    className: 'bg-[var(--status-error-bg)] text-[var(--status-error-foreground)]',
+    iconClassName: 'text-[var(--status-error-foreground)]',
+    dotClassName: 'bg-[var(--chart-5)] shadow-sm',
   },
 } satisfies Record<TaskStatus, StatusMapEntry>;

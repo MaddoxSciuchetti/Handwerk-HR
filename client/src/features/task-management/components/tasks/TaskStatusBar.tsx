@@ -4,6 +4,8 @@ type TaskStatusBarProps = {
   isSelected: boolean;
   index: number;
   statusConfig: { className: string; dotClassName?: string };
+  /** When set (V2 issue org color), overrides dotClassName. */
+  dotColor?: string | null;
   task: {
     description: string;
     is_substitute: boolean;
@@ -16,16 +18,17 @@ const TaskStatusBar = ({
   isSelected,
   index,
   statusConfig,
+  dotColor,
   task,
 }: TaskStatusBarProps) => {
   return (
     <>
       <span
         className={cn(
-          'text-sm w-5 shrink-0',
+          'w-5 shrink-0 text-sm',
           isSelected
-            ? 'text-(--foreground) opacity-60'
-            : 'text-(--muted-foreground)'
+            ? 'text-[var(--foreground)] opacity-60'
+            : 'text-[var(--muted-foreground)]'
         )}
       >
         {String(index + 1).padStart(2, '0')}
@@ -33,17 +36,23 @@ const TaskStatusBar = ({
 
       <span
         className={cn(
-          'h-2 w-2 rounded-full shrink-0 transition-all',
-          statusConfig.dotClassName ?? statusConfig.className,
+          'h-2 w-2 shrink-0 rounded-full transition-all',
+          !dotColor &&
+            (statusConfig.dotClassName ?? statusConfig.className),
           isSelected && 'h-2.5 w-2.5'
         )}
+        style={
+          dotColor
+            ? { backgroundColor: dotColor }
+            : undefined
+        }
       />
       <span
         className={cn(
-          'flex-1 text-sm truncate font-semibold',
+          'flex-1 truncate text-sm font-semibold',
           isSelected
-            ? 'text-(--foreground) font-semibold'
-            : 'text-(--foreground)'
+            ? 'font-semibold text-[var(--foreground)]'
+            : 'text-[var(--foreground)]'
         )}
       >
         {task.description}
@@ -51,19 +60,19 @@ const TaskStatusBar = ({
       <div className="flex shrink-0 items-center gap-2">
         <span
           className={cn(
-            'text-sm bg-(--muted) px-2 py-1 rounded-full',
+            'rounded-full bg-[var(--muted)] px-2 py-1 text-sm',
             task.is_substitute
-              ? 'text-(--muted-foreground) opacity-50'
+              ? 'text-[var(--muted-foreground)] opacity-50'
               : isSelected
-                ? 'text-(--foreground) opacity-70'
-                : 'text-(--muted-foreground)'
+                ? 'text-[var(--foreground)] opacity-70'
+                : 'text-[var(--muted-foreground)]'
           )}
         >
           {task.officialOwner}
         </span>
 
         {task.is_substitute && (
-          <span className="text-sm bg-(--muted) px-2 py-1 rounded-full font-semibold text-(--foreground)">
+          <span className="rounded-full bg-[var(--muted)] px-2 py-1 text-sm font-semibold text-[var(--foreground)]">
             {task.substituteOwner}
           </span>
         )}

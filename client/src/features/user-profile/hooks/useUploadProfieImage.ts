@@ -3,18 +3,18 @@ import { DragEvent, useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { userProfileMutations } from '../query-options/mutations/user-profile.mutations';
 import { userProfileQueries } from '../query-options/queries/user-profile.queries';
-import { TFile } from '../types';
+import { File } from '../types';
 
 function useUploadProfieImage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const { handleSubmit, setValue } = useForm<TFile>();
+  const { handleSubmit, setValue } = useForm<File>();
   const uploadMutation = useMutation(userProfileMutations.uploadFoto());
 
   const { data, isPending } = useQuery(userProfileQueries.ProfileFoto());
 
-  const onSubmit: SubmitHandler<TFile> = (data) => {
+  const onSubmit: SubmitHandler<File> = (data) => {
     uploadMutation.mutate(data);
   };
 

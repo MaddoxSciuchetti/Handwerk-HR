@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import { WorkerInfoItem } from '../consts/worker-info.consts';
 import {
-  addWorkerBaseSchema,
-  OffboardingValidation,
+  baseWorkerSchema,
+  offboardingWorkerSchema,
 } from '../schemas/zod.schemas';
 
 type WorkerFieldKey = NonNullable<WorkerInfoItem['schemaKey']>;
@@ -14,12 +14,12 @@ export type WorkerFieldSchema = z.ZodType<
 export const getWorkerFieldSchema = (
   key: WorkerFieldKey
 ): WorkerFieldSchema => {
-  return key === 'austrittsdatum'
-    ? (OffboardingValidation.pick({ [key]: true } as Record<
-        'austrittsdatum',
+  return key === 'exitDate'
+    ? (offboardingWorkerSchema.pick({ [key]: true } as Record<
+        'exitDate',
         true
       >) as WorkerFieldSchema)
-    : (addWorkerBaseSchema.pick({ [key]: true } as Record<
+    : (baseWorkerSchema.pick({ [key]: true } as Record<
         typeof key,
         true
       >) as WorkerFieldSchema);

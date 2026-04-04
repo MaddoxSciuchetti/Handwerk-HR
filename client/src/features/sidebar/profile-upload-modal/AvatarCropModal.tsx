@@ -57,7 +57,7 @@ export const AvatarCropModal = ({
   return createPortal(
     <div
       style={getModalStyle(anchorRect)}
-      className="w-fit rounded-2xl border border-border bg-(--background) p-3 shadow-xl"
+      className="w-fit rounded-2xl border border-border bg-[var(--background)] p-3 shadow-xl"
     >
       <ImageCropHeader onCancel={onCancel} />
 

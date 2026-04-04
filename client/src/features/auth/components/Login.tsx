@@ -52,7 +52,7 @@ export function LoginComponent() {
     <DoorManCard>
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
         {error && (
-          <p className="mb-4 rounded-md border border-(--destructive) bg-(--destructive)/10 px-3 py-2 text-sm text-(--destructive)">
+          <p className="mb-4 rounded-md border border-[var(--destructive)] bg-[var(--destructive)]/10 px-3 py-2 text-sm text-[var(--destructive)]">
             {authErrorMessage}
           </p>
         )}

@@ -1,6 +1,6 @@
 import API from '@/config/apiClient';
 import queryClient from '@/config/query.client';
-import EmployeeOverview from '@/features/employee-overview/components/EmployeeOverview';
+import OrgUsersOverview from '@/features/employee-overview/components/OrgUsersOverview';
 import { EmployeeModalProvider } from '@/features/employee-overview/context/ModalProvider';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
@@ -36,7 +36,7 @@ describe('should create the employee', () => {
     const getSpy = vi
       .spyOn(API, 'get')
       .mockImplementation(async (url: string) => {
-        if (url === '/employee/specificEmployeeData') {
+        if (url === '/employee/v2/specificEmployeeData') {
           return employeeResponse;
         }
         return [];
@@ -45,7 +45,7 @@ describe('should create the employee', () => {
     render(
       <QueryClientProvider client={queryClient}>
         <EmployeeModalProvider>
-          <EmployeeOverview />
+          <OrgUsersOverview />
         </EmployeeModalProvider>
       </QueryClientProvider>
     );

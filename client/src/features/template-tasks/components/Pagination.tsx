@@ -35,7 +35,7 @@ const Pagination = ({
           onClick={(e) => handlePageUpdate(number, e)}
           aria-label={`Seite ${number}`}
           aria-current={currentPage === number ? 'page' : undefined}
-          className={`page-item ${currentPage === number ? 'text-(--muted-foreground) underline' : 'text-(--foreground)'}`}
+          className={`page-item ${currentPage === number ? 'text-[var(--muted-foreground)] underline' : 'text-[var(--foreground)]'}`}
         >
           {number}
         </button>

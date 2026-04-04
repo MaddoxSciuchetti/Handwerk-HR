@@ -1,7 +1,6 @@
 import API from '@/config/apiClient';
 import { User } from '@/features/user-profile/types/auth.type';
 import {
-  DescriptionFieldResponse,
   SuccessResponse,
   EditDescriptionForm as UpdateWorkerDescription,
 } from '@/types/api.types';
@@ -10,19 +9,16 @@ import {
   File_Request,
   HistoryData,
   InsertHistoryData,
-  LifecycleType,
-  UpdatePayload,
+  type UpdatePayload,
+  type WorkerDataPointKey,
 } from '../types/index.types';
+import { WorkerDetailResponse } from '@/features/worker-lifecycle/types/index.types';
+import type { IssueAuditRow } from '../utils/mapIssueAuditToHistory';
 
 export const getWorkerById = async (
-  workerId: number,
-  lifecycleType: LifecycleType
-): Promise<DescriptionFieldResponse> => {
-  const response = await API.get<
-    DescriptionFieldResponse,
-    DescriptionFieldResponse
-  >(`worker/getWorker/${workerId}?lifecycleType=${lifecycleType}`);
-  return response;
+  workerId: string,
+): Promise<WorkerDetailResponse> => {
+  return API.get<WorkerDetailResponse, WorkerDetailResponse>(`worker/${workerId}`);
 };
 
 export const updateWorkerHistory = async (
@@ -73,13 +69,95 @@ export const deleteWorkerFile = async (
   return API.delete(`worker/deleteWorkerFile/${id}`);
 };
 
-export const updateData = async (data: UpdatePayload, workerId: number) => {
-  return await API.put('/worker/singleWorkerDataPoint', { ...data, workerId });
+export const updateData = async (
+  data: UpdatePayload,
+  workerId: string
+): Promise<void> => {
+  const entry = Object.entries(data).find(
+    ([key, v]) =>
+      key !== 'engagementType' &&
+      v !== undefined &&
+      v !== null &&
+      String(v).length > 0
+  ) as [WorkerDataPointKey, string] | undefined;
+  if (!entry) return;
+  const [field, value] = entry;
+  await API.patch(`worker/${workerId}/data-points`, { field, value });
 };
 
 export const createWorkerTask = async (
-  workerId: number,
+  workerId: string | number,
   data: CreateWorkerTaskPayload
 ) => {
   return await API.post(`/worker/createWorkerTask/${workerId}`, data);
+};
+
+export type IssueStatusOption = {
+  id: string;
+  name: string;
+  color: string | null;
+};
+
+export type CreateWorkerIssuePayload = {
+  workerEngagementId: string;
+  createdByUserId: string;
+  statusId: string;
+  title: string;
+  assigneeUserId?: string;
+  description?: string;
+  priority?: 'urgent' | 'high' | 'medium' | 'low' | 'no_priority';
+};
+
+export const getWorkerIssueStatuses = async (
+  workerId: string
+): Promise<IssueStatusOption[]> => {
+  const res = (await API.get(
+    `worker/${workerId}/issue-statuses`
+  )) as { success: boolean; data: IssueStatusOption[] };
+  return res.data ?? [];
+};
+
+export const createWorkerIssue = async (
+  workerId: string,
+  body: CreateWorkerIssuePayload
+) => {
+  return API.post(`worker/${workerId}/issues`, body);
+};
+
+export const applyIssueTemplateToWorker = async (
+  workerId: string,
+  templateId: string,
+  workerEngagementId: string
+) => {
+  return (await API.post(
+    `worker/${workerId}/templates/${templateId}/apply`,
+    { workerEngagementId }
+  )) as { success: boolean; data: { count: number } };
+};
+
+export type UpdateWorkerIssueBody = {
+  workerEngagementId: string;
+  title?: string;
+  description?: string;
+  assigneeUserId?: string | null;
+  statusId?: string;
+  priority?: 'urgent' | 'high' | 'medium' | 'low' | 'no_priority';
+};
+
+export const updateWorkerIssue = async (
+  workerId: string,
+  issueId: string,
+  body: UpdateWorkerIssueBody
+) => {
+  return API.put(`worker/${workerId}/issues/${issueId}`, body);
+};
+
+export const getIssueAuditLogs = async (
+  workerId: string,
+  issueId: string
+): Promise<IssueAuditRow[]> => {
+  const res = (await API.get(
+    `worker/${workerId}/issues/${issueId}/audit-logs`
+  )) as { success: boolean; data: IssueAuditRow[] };
+  return res.data ?? [];
 };

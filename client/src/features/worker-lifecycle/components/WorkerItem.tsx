@@ -1,124 +1,126 @@
-import '@/App.css';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import DropdownActionTrigger from '@/components/DropdownActionTrigger';
 import useFetchProcessData from '@/features/employee-overview/hooks/useFetchProcessData';
 import { LifecycleType } from '@/features/task-management/types/index.types';
-import { useState } from 'react';
+import '../../../../globals.css';
+import useWorkerItemData from '../hooks/useWorkerItemData';
 import useWorkerMutations from '../hooks/useWorkerMutaitons';
-import { WorkerListMode } from '../types/index.types';
+import { EngagementStatus, WorkerRecord } from '../types/index.types';
+import { getFirstFormType } from '../utils/formtype';
 import WorkerInfoModal from './WorkerInfoModal';
 import WorkerItemInfo from './WorkerItemInfo';
+import { WorkerEngagementControls } from './worker-row/WorkerEngagementControls';
 
-interface ToDoItem {
-  item_value: number;
-  form_type: LifecycleType;
+type WorkerItemProps = {
+  worker: WorkerRecord;
+  engagementStatus: EngagementStatus;
   gotopage: (
-    taskId: number,
+    taskId: string,
     form_type: LifecycleType,
     workerName: string
   ) => void;
-  mode: WorkerListMode;
-  className?: string;
-  nachname?: string;
-  vorname: string;
-}
+};
 
 export function Worker_Item({
-  vorname,
-  nachname,
-  form_type,
-  item_value,
+  worker,
+  engagementStatus,
   gotopage,
-  mode,
-}: ToDoItem) {
+}: WorkerItemProps) {
+  const form_type = getFirstFormType(worker);
   const {
     isLoading: processLoading,
     completedTasksCount,
     totalTasks,
-  } = useFetchProcessData(item_value, form_type);
+  } = useFetchProcessData(worker.id);
 
   const { archiveWorkerMutation, deleteTaskMutation, unarchiveWorkerMutation } =
     useWorkerMutations();
 
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
-  const calculatePercent = (completedTasks: number, total: number) => {
-    if (total <= 0) return 'text-(--lifecycle-progress-zero-text)';
-
-    const percent = (completedTasks / total) * 100;
-
-    if (percent < 20) return 'text-(--lifecycle-progress-zero-text)';
-    if (percent >= 20 && percent < 100) return 'text-(--chart-3)';
-    if (percent === 100) return 'text-(--chart-2)';
-
-    return 'text-(--lifecycle-progress-zero-text)';
-  };
-
-  const completedCount = completedTasksCount ?? 0;
-  const totalCount = totalTasks ?? 0;
-  const color = calculatePercent(completedCount, totalCount);
+  const {
+    isDeleteModalOpen,
+    setIsDeleteModalOpen,
+    isInfoModalOpen,
+    setIsInfoModalOpen,
+    completedCount,
+    totalCount,
+    color,
+  } = useWorkerItemData(completedTasksCount, totalTasks);
 
   return (
-    <tr className="group rounded-2xl py-5 transition-colors  ">
-      <td className="text-sm font-semibold">
+    <tr className="group rounded-2xl transition-colors">
+      <td className="align-middle px-2 py-4 text-center text-sm">
+        {/* Responsibile for Info and Ansehen Button */}
         <WorkerItemInfo
           setIsInfoModalOpen={setIsInfoModalOpen}
           gotopage={gotopage}
-          item_value={item_value}
+          workerId={worker.id}
           form_type={form_type}
-          vorname={vorname}
-          nachname={nachname}
+          worker={worker}
         />
       </td>
+      <td className="min-w-[12rem] max-w-[24rem] align-middle px-2 py-4 text-center">
+        {/* Controlls who is the team lead and what the current status is */}
+        <WorkerEngagementControls
+          workerId={worker.id}
+          engagement={worker.engagements[0]}
+        />
+      </td>
+      {/* Controlls type onboardinf or offboarding */}
       <td
         className={
-          form_type === 'Onboarding'
-            ? 'text-sm underline text-(--lifecycle-onboarding-text) justify-center items-center py-5'
-            : 'text-sm underline text-(--lifecycle-offboarding-text) justify-center items-center py-5'
+          form_type === 'onboarding'
+            ? 'px-2 py-4 text-center align-middle text-sm text-[var(--lifecycle-onboarding-text)] underline'
+            : 'px-2 py-4 text-center align-middle text-sm text-[var(--lifecycle-offboarding-text)] underline'
         }
         lang="en"
       >
-        {form_type}
+        {form_type === 'offboarding' ? 'Offboarding' : 'Onboarding'}
       </td>
 
-      <th className="">
+      {/* Controlls the number of completed tasks */}
+      <td className="px-2 py-4 text-center align-middle tabular-nums">
         <span className={color}>{processLoading ? '...' : completedCount}</span>
         <span className="font-medium text-foreground">/{totalCount}</span>
-      </th>
+      </td>
 
-      <td>
-        <DropdownActionTrigger
-          description="Aktionen"
-          disabled={false}
-          triggerIcon="edit"
-          actions={[
-            {
-              label: mode === 'active' ? 'Archivieren' : 'Wiederherstellen',
-              action: () =>
-                mode === 'active'
-                  ? archiveWorkerMutation(item_value)
-                  : unarchiveWorkerMutation(item_value),
-              variant: 'default',
-            },
-            {
-              label: 'Löschen',
-              action: () => setIsDeleteModalOpen(true),
-              variant: 'destructive',
-            },
-          ]}
-        />
+      {/* Controlls the actions like archive, delete, info */}
+      <td className="px-2 py-4 text-center align-middle">
+        <div className="flex justify-center">
+          <DropdownActionTrigger
+            description="Aktionen"
+            disabled={false}
+            triggerIcon="more"
+            actions={[
+              {
+                label:
+                  engagementStatus === 'active'
+                    ? 'Archivieren'
+                    : 'Wiederherstellen',
+                action: () =>
+                  engagementStatus === 'active'
+                    ? archiveWorkerMutation(worker.id)
+                    : unarchiveWorkerMutation(worker.id),
+                variant: 'default',
+              },
+              {
+                label: 'Löschen',
+                action: () => setIsDeleteModalOpen(true),
+                variant: 'destructive',
+              },
+            ]}
+          />
+        </div>
         <DeleteConfirmModal
           isOpen={isDeleteModalOpen}
           onCancel={() => setIsDeleteModalOpen(false)}
           onConfirm={() => {
-            deleteTaskMutation(item_value);
+            deleteTaskMutation(worker.id);
             setIsDeleteModalOpen(false);
           }}
         />
         <WorkerInfoModal
           isOpen={isInfoModalOpen}
-          workerId={item_value}
-          lifecycleType={form_type}
+          workerId={worker.id}
           onClose={() => setIsInfoModalOpen(false)}
         />
       </td>

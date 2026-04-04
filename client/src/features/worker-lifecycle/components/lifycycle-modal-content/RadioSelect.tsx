@@ -27,19 +27,19 @@ const RadioSelect = ({
       >
         <FieldLabel
           htmlFor="plus-plan"
-          className={`${selectedOption === 'Onboarding' ? 'bg-accent text-accent-foreground scale-105' : ''} cursor-pointer rounded-xl p-3 transition-colors hover:bg-accent hover:text-accent-foreground `}
+          className={`${selectedOption === 'onboarding' ? 'bg-accent text-accent-foreground scale-105' : ''} cursor-pointer rounded-xl p-3 transition-colors hover:bg-accent hover:text-accent-foreground `}
         >
           <Field orientation="horizontal">
             <FieldContent className="text-left">
               <FieldTitle>Onboarding</FieldTitle>
               <FieldDescription>Onboarde ein Mitarbeiter</FieldDescription>
             </FieldContent>
-            <RadioGroupItem value="Onboarding" id="plus-plan" />
+            <RadioGroupItem value="onboarding" id="plus-plan" />
           </Field>
         </FieldLabel>
         <FieldLabel
           htmlFor="pro-plan"
-          className={`${selectedOption === 'Offboarding' ? 'active bg-accent text-accent-foreground scale-105' : ''} cursor-pointer rounded-xl p-3 transition-colors hover:bg-accent hover:text-accent-foreground `}
+          className={`${selectedOption === 'offboarding' ? 'active bg-accent text-accent-foreground scale-105' : ''} cursor-pointer rounded-xl p-3 transition-colors hover:bg-accent hover:text-accent-foreground `}
         >
           <Field orientation="horizontal">
             <FieldContent className="text-left">
@@ -48,7 +48,7 @@ const RadioSelect = ({
                 Offboarde ein Mitarbeiter
               </FieldDescription>
             </FieldContent>
-            <RadioGroupItem value="Offboarding" id="pro-plan" />
+            <RadioGroupItem value="offboarding" id="pro-plan" />
           </Field>
         </FieldLabel>
       </RadioGroup>

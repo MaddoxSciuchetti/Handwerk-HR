@@ -1,11 +1,17 @@
-import { addWorkerBaseSchema } from '@/features/worker-lifecycle/schemas/zod.schemas';
-import z from 'zod';
-import { TAuth_User } from '../hooks/useGetWorkerHistory';
+import { baseWorkerSchema } from '@/features/worker-lifecycle/schemas/zod.schemas';
+import type { z } from 'zod';
 import { formSchema } from '../schemas/index.schema';
 import { TaskStatus } from '../utils/selectOptionTernary';
 
+export type TAuth_User = {
+  id: string;
+  email: string;
+  verified: boolean;
+  cloud_url: string;
+};
+
 export type HistoryData = {
-  id: number;
+  id: string | number;
   timestamp: Date | null;
   status: TaskStatus;
   edit: string | null;
@@ -30,13 +36,14 @@ export type File_Request = {
   };
 };
 
-export type UpdatePayload = Partial<
-  z.infer<typeof addWorkerBaseSchema> & {
-    austrittsdatum: string;
-  }
->;
+/** Single-field PATCH body for `PATCH /worker/:workerId/data-points` (modal edits). */
+export type WorkerDataPointKey =
+  | keyof z.infer<typeof baseWorkerSchema>
+  | 'exitDate';
 
-export type LifecycleType = 'Onboarding' | 'Offboarding';
+export type UpdatePayload = Partial<Record<WorkerDataPointKey, string>>;
+
+export type LifecycleType = 'onboarding' | 'offboarding';
 
 export type CreateWorkerTaskPayload = {
   description: string;
@@ -47,3 +54,34 @@ export type CreateWorkerTaskPayload = {
 export type InsertHistoryData = z.infer<typeof formSchema>;
 
 export type WorkerTab = 'form' | 'files';
+
+export type Employees = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  displayName: string | null;
+  email: string;
+  avatarUrl: string | null;
+  isEmailVerified: boolean;
+  isAbsent: boolean;
+  status: 'active' | 'inactive' | 'suspended';
+  createdAt: Date;
+  updatedAt: Date;
+  organizationMembers: {
+    role: {
+      id: string;
+      name: string;
+    };
+  }[];
+  absences: {
+    id: string;
+    absenceType: 'SICK' | 'VACATION' | 'PARENTAL_LEAVE' | 'UNPAID' | 'OTHER';
+    startDate: Date;
+    endDate: Date;
+    substitute: {
+      id: string;
+      firstName: string;
+      lastName: string;
+    } | null;
+  }[];
+}[];

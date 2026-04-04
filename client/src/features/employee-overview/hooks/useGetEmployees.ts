@@ -1,21 +1,20 @@
 import { useQuery } from '@tanstack/react-query';
 import { employeeQueries } from '../query-options/queries/employee.queries';
-import { EmployeeDataArray } from '../schemas/schema';
+import { OrgUsersArray } from '../schemas/schema';
 
-function useGetEmployees() {
+function useGetOrgUsers() {
   const {
-    data: EmployeeData,
+    data: OrgUsers,
     error,
     isError,
     isLoading,
-  } = useQuery<EmployeeDataArray>(employeeQueries.getEmployees());
-
+  } = useQuery<OrgUsersArray>(employeeQueries.getEmployees());
   return {
-    EmployeeData,
+    OrgUsers,
     error,
     isError,
     isLoading,
   };
 }
 
-export default useGetEmployees;
+export default useGetOrgUsers;

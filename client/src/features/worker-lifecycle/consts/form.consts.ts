@@ -1,11 +1,11 @@
 export const Inputs = [
   {
-    name: 'vorname' as const,
+    name: 'firstName' as const,
     placeholder: 'Vorname',
     required: true,
   },
   {
-    name: 'nachname' as const,
+    name: 'lastName' as const,
     placeholder: 'Nachname',
     required: false,
   },
@@ -15,17 +15,17 @@ export const Inputs = [
     required: false,
   },
   {
-    name: 'geburtsdatum' as const,
+    name: 'birthday' as const,
     placeholder: 'Geburtsdatum DD.MM.YYYY',
     required: false,
   },
   {
-    name: 'adresse' as const,
+    name: 'street' as const,
     placeholder: 'Adresse',
     required: false,
   },
   {
-    name: 'eintrittsdatum' as const,
+    name: 'entryDate' as const,
     placeholder: 'Eintrittsdatum DD.MM.YYYY',
     required: false,
   },

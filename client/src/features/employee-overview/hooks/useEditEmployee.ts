@@ -3,7 +3,7 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { employeeMutations } from '../query-options/mutations/employee.mutations';
 import { employeeFormOptions } from '../react-hook-form/employee.options';
-import { AbsenceData } from '../types/index.types';
+import { AbsenceFormData } from '../schemas/schema';
 
 function useEditEmployee(toggleEmployeeModal: () => void) {
   const employeeAbsence = useMutation(employeeMutations.editEmployee());
@@ -13,9 +13,9 @@ function useEditEmployee(toggleEmployeeModal: () => void) {
     handleSubmit,
     control,
     formState: { errors },
-  } = useForm<AbsenceData>(employeeFormOptions.editEmployeeAbsence);
+  } = useForm<AbsenceFormData>(employeeFormOptions.editEmployeeAbsence);
 
-  const onSubmit: SubmitHandler<AbsenceData> = (data) => {
+  const onSubmit: SubmitHandler<AbsenceFormData> = (data) => {
     employeeAbsence.mutate(data, {
       onSuccess: () => {
         toast.success('Abwesenheit geändert');

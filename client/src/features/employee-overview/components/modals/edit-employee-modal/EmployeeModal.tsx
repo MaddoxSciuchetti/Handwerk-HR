@@ -1,30 +1,26 @@
-import useGetEmployees from '@/features/employee-overview/hooks/useGetEmployees';
+import useGetOrgUsers from '@/features/employee-overview/hooks/useGetEmployees';
 import SmallWrapper from '../../../../../components/modal/modalSizes/SmallWrapper';
 import FormModalEdit from './FormModal.Edit';
 
-type ModalEditMitarbeiterProps = {
+type EditOrgUserProps = {
   fullname: string;
   toggleEmployeeModal: () => void;
   id: string | undefined;
 };
 
-function ModalEditMitarbeiter({
-  fullname,
-  toggleEmployeeModal,
-  id,
-}: ModalEditMitarbeiterProps) {
-  const { EmployeeData } = useGetEmployees();
+function EditOrgUser({ fullname, toggleEmployeeModal, id }: EditOrgUserProps) {
+  const { OrgUsers } = useGetOrgUsers();
 
   return (
     <SmallWrapper className="items-stretch justify-start overflow-hidden">
       <FormModalEdit
         id={id}
         fullname={fullname}
-        EmployeeData={EmployeeData}
+        OrgUsers={OrgUsers}
         toggleEmployeeModal={toggleEmployeeModal}
       />
     </SmallWrapper>
   );
 }
 
-export default ModalEditMitarbeiter;
+export default EditOrgUser;

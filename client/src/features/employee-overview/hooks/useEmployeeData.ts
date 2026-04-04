@@ -15,11 +15,21 @@ function useEmployeeData() {
     for (const item of data) {
       const filtered = {
         ...item,
-        inputs: item.inputs.filter((i) => i.status !== 'erledigt'),
+        issues: item.issues.filter((issue) => {
+          const statusName = issue.issueStatus.name.toLowerCase();
+          return (
+            !statusName.includes('erledigt') &&
+            !statusName.includes('done') &&
+            !statusName.includes('closed')
+          );
+        }),
       };
-      const group = groups.get(item.owner) ?? [];
+      if (filtered.issues.length === 0) continue;
+
+      const ownerId = item.responsibleUser.id;
+      const group = groups.get(ownerId) ?? [];
       group.push(filtered);
-      groups.set(item.owner, group);
+      groups.set(ownerId, group);
     }
 
     return Array.from(groups.entries());
@@ -27,12 +37,12 @@ function useEmployeeData() {
 
   const openTaskCountsByEmployee = useMemo(() => {
     return new Map(
-      tasksByEmployee.map(([owner, items]) => {
+      tasksByEmployee.map(([ownerId, items]) => {
         const totalOpenTasks = items.reduce(
-          (count, item) => count + item.inputs.length,
+          (count, item) => count + item.issues.length,
           0
         );
-        return [owner, totalOpenTasks] as const;
+        return [ownerId, totalOpenTasks] as const;
       })
     );
   }, [tasksByEmployee]);

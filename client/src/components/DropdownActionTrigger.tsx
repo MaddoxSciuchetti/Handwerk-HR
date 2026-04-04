@@ -1,4 +1,4 @@
-import { Edit, TrashIcon } from 'lucide-react';
+import { Edit, MoreHorizontal, TrashIcon } from 'lucide-react';
 import DropdownMenuAction, {
   DropdownMenuActionItem,
 } from './DropdownMenuAction';
@@ -6,7 +6,7 @@ import DropdownMenuAction, {
 type DropdownActionTriggerProps = {
   disabled?: boolean;
   description: string;
-  triggerIcon: 'trash' | 'edit';
+  triggerIcon: 'trash' | 'edit' | 'more';
   actions: DropdownMenuActionItem[];
 };
 
@@ -17,7 +17,9 @@ const DropdownActionTrigger = ({
   actions,
 }: DropdownActionTriggerProps) => {
   const icon =
-    triggerIcon === 'edit' ? (
+    triggerIcon === 'more' ? (
+      <MoreHorizontal className="h-4 w-4" />
+    ) : triggerIcon === 'edit' ? (
       <Edit className="h-4 w-4" />
     ) : (
       <TrashIcon className="h-4 w-4" />

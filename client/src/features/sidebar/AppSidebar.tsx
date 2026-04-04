@@ -4,21 +4,19 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { Link, useLocation } from '@tanstack/react-router';
+import { useLocation } from '@tanstack/react-router';
 
 import ErrorAlert from '@/components/alerts/ErrorAlert';
 import { Button } from '@/components/ui/button';
+import { LAYOUTITEMS } from '@/constants/layout.consts';
+import SideBarMenu from '../org-settings/components/SideBarMenu';
 import UserMenu from './UserMenu';
 import { SidebarSkeleton } from './components/SidebarSkeleton';
 import useHasPermission from './hooks/useHasPermission';
 
 export function AppSidebar({ openModal }: { openModal: () => void }) {
-  const { user, isLoading, isError, fullName, accessibleItems } =
-    useHasPermission();
+  const { user, isLoading, isError, fullName } = useHasPermission();
   const { pathname } = useLocation();
 
   if (isLoading) return <SidebarSkeleton />;
@@ -43,49 +41,28 @@ export function AppSidebar({ openModal }: { openModal: () => void }) {
         <SidebarContent>
           <SidebarGroup>
             <SidebarGroupContent>
-              <SidebarMenu className="">
-                {accessibleItems.map((item, index) => {
-                  const isActive =
-                    pathname === item.to || pathname.startsWith(`${item.to}/`);
-
-                  return (
-                    <SidebarMenuItem className="" key={index}>
-                      <SidebarMenuButton
-                        variant={'outline'}
-                        asChild
-                        className="mt-2 rounded-xl py-5 transition-colors"
-                      >
-                        <Link
-                          to={item.to}
-                          className={
-                            isActive
-                              ? 'bg-(--muted) text-(--foreground) hover:bg-(--muted)'
-                              : 'hover:bg-(--hover-bg) hover:text-(--hover-foreground)'
-                          }
-                        >
-                          <item.icon />
-                          <span
-                            className={
-                              isActive
-                                ? 'text-(--foreground) text-md font-medium'
-                                : 'text-muted-foreground text-md'
-                            }
-                          >
-                            {item.title}
-                          </span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
+              <SideBarMenu
+                items={LAYOUTITEMS.map((item) => ({
+                  id: item.to,
+                  label: item.title,
+                  icon: item.icon,
+                  to: item.to,
+                  search:
+                    item.to === '/org-settings'
+                      ? { currentTab: 'employees' }
+                      : undefined,
+                }))}
+                isItemActive={(item) =>
+                  pathname === item.id || pathname.startsWith(`${item.id}/`)
+                }
+              />
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
         <Button
           onClick={() => openModal()}
           variant={'outline'}
-          className="mx-1 mb-1 cursor-pointer rounded-xl bg-muted transition-colors hover:bg-(--hover-bg) hover:text-(--hover-foreground)"
+          className="mx-1 mb-1 cursor-pointer rounded-xl bg-muted transition-colors hover:bg-[var(--hover-bg)] hover:text-[var(--hover-foreground)]"
         >
           Was würdest du ändern?{' '}
         </Button>

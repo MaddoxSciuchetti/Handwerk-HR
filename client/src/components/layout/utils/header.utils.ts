@@ -1,6 +1,17 @@
 import { LAYOUTITEMS } from '@/constants/layout.consts';
 
+/** Same chrome as org settings: sidebar + template editor routes */
+export function isSettingsLayoutPath(pathname: string) {
+  return pathname === '/org-settings' || pathname.startsWith('/template');
+}
+
 export const getSidebarItemLabel = (pathname: string) => {
+  if (
+    pathname === '/employee-overview' ||
+    pathname.startsWith('/template')
+  ) {
+    return 'Einstellungen';
+  }
   const match = LAYOUTITEMS.find(
     (item) => pathname === item.to || pathname.startsWith(`${item.to}/`)
   );

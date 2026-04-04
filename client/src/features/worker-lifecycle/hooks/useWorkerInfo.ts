@@ -1,18 +1,17 @@
-import { LifecycleType } from '@/features/task-management/types/index.types';
+
 import { useQuery } from '@tanstack/react-query';
 import { workerLifecycleQueries } from '../query-options/queries/worker-lifycycle.queries';
 
 function useWorkerInfo(
   isOpen: boolean,
-  workerId: number,
-  lifecycleType: LifecycleType
+  workerId: string,
 ) {
   const {
     data: workerInfo,
     isLoading,
     isError,
   } = useQuery({
-    ...workerLifecycleQueries.workerById(workerId, lifecycleType),
+    ...workerLifecycleQueries.workerById(workerId),
     enabled: isOpen,
   });
 

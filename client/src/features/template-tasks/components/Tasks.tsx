@@ -1,5 +1,3 @@
-import '@/App.css';
-
 import TrashWithModal from '@/components/DropDownWithModal';
 import { Button } from '@/components/ui/button';
 import { DescriptionResponse } from '@/types/api.types';
@@ -24,7 +22,7 @@ const Tasks = ({ items }: TasksProps) => {
       <ul className="divide-y divide-border mt-3 border rounded-2xl ">
         {items?.map((item) => (
           <li
-            className="group flex items-center overflow-x-hidden border-b last:border-b-0 justify-between gap-4 px-4 py-3 transition-colors hover:bg-(--secondary)"
+            className="group flex items-center overflow-x-hidden border-b last:border-b-0 justify-between gap-4 px-4 py-3 transition-colors hover:bg-[var(--secondary)]"
             key={item.form_field_id}
           >
             <div className="flex-1 min-w-0">
@@ -37,7 +35,7 @@ const Tasks = ({ items }: TasksProps) => {
             </div>
 
             <div className="flex items-center gap-3">
-              <span className="inline-flex items-center gap-1.5 rounded-full  bg-(--muted) px-2.5 py-1 text-xs font-medium text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5 rounded-full  bg-[var(--muted)] px-2.5 py-1 text-xs font-medium text-muted-foreground">
                 {item.auth_user.vorname} {item.auth_user.nachname}
               </span>
 
@@ -46,7 +44,7 @@ const Tasks = ({ items }: TasksProps) => {
                   type="button"
                   size="icon-sm"
                   variant="ghost"
-                  className="cursor-pointer rounded-md text-muted-foreground hover:text-(--muted-foreground)"
+                  className="cursor-pointer rounded-md text-muted-foreground hover:text-[var(--muted-foreground)]"
                   onClick={(e) => {
                     e.stopPropagation();
                     openEditTask(

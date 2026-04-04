@@ -58,7 +58,7 @@ export type NewDescriptionField = {
 };
 
 export type DescriptionField = {
-  id: number;
+  id: string | number;
   form_field_id: number;
   description: string;
   officialOwner: string;
@@ -66,12 +66,18 @@ export type DescriptionField = {
   owner_id: string;
   is_substitute: boolean;
   status: TaskStatus;
+  /** Organization issue status id (V2 API). */
+  statusId?: string;
+  /** Display name from API (`issue.issueStatus.name`); avoids legacy German mapping. */
+  issueStatusName?: string | null;
   edit: string;
+  /** Set when the issue was instantiated from an issue template (pseudo item). */
+  templateItemId?: string | null;
 };
 
 export type DescriptionFieldResponse = {
   worker: {
-    id: number;
+    id: string | number;
     vorname: string;
     nachname: string;
     email: string | null;
@@ -82,7 +88,7 @@ export type DescriptionFieldResponse = {
     position: string | null;
   };
   form: {
-    id: number;
+    id: string | number;
     type: string;
     fields: DescriptionField[];
   };
@@ -97,24 +103,35 @@ export type Cache = {
 
 export type SessionCache = Cache[];
 
+export type AbsenceRecord = {
+  id: string;
+  absenceType: 'SICK' | 'VACATION' | 'PARENTAL_LEAVE' | 'UNPAID' | 'OTHER';
+  startDate: string;
+  endDate: string;
+  substitute: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  } | null;
+};
+
 export type EmployeeInfoResponse = {
   id: string;
-  vorname: string;
-  nachname: string;
+  firstName: string;
+  lastName: string;
+  displayName: string | null;
   email: string;
-  verified: boolean;
-  user_permission: 'CHEF' | 'MITARBEITER';
+  avatarUrl: string | null;
+  isEmailVerified: boolean;
+  isAbsent: boolean;
+  status: 'active' | 'inactive' | 'suspended';
   createdAt: string;
-  employeeStatus: {
-    absence: string | null;
-    absencetype: string | null;
-    absencebegin: string | null;
-    absenceEnd: string | null;
-    substitute: string | null;
-    sub_user: {
+  updatedAt: string;
+  organizationMembers: {
+    role: {
       id: string;
-      vorname: string;
-      nachname: string;
-    } | null;
+      name: string;
+    };
   }[];
+  absences: AbsenceRecord[];
 };

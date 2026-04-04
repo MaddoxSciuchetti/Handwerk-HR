@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { workerQueries } from '../query-options/queries/worker.queries';
 
-function useGetWorkerFiles(workerId: number) {
+function useGetWorkerFiles(workerId: string | number) {
   const {
     data: fetchFiles,
     isLoading,

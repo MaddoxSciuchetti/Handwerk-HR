@@ -1,40 +1,134 @@
-import { dateSchema } from '@/schemas/schema';
+import { DateValidation } from '@/schemas/schema';
 import z from 'zod';
 import { VALIDATION_MESSAGES } from '../consts/validationMessages';
 
-export const subUserSchema = z.object({
-  id: z.coerce.string(),
-  vorname: z.string(),
-  nachname: z.string(),
+export const substituteSchema = z.object({
+  id: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
 });
 
-export const employeeStatusSchema = z.array(
+export const absenceRecordSchema = z.object({
+  id: z.string(),
+  absenceType: z.enum([
+    'SICK',
+    'VACATION',
+    'PARENTAL_LEAVE',
+    'UNPAID',
+    'OTHER',
+  ]),
+  startDate: z.coerce.date(),
+  endDate: z.coerce.date(),
+  substitute: substituteSchema.nullable(),
+});
+
+export const organizationMemberSchema = z.object({
+  role: z.object({
+    id: z.string(),
+    name: z.string(),
+  }),
+});
+
+export const OrgUsersSchema = z.array(
   z.object({
-    id: z.coerce.string(),
-    userId: z.coerce.string(),
-    absence: z.coerce.string(),
-    absencetype: z.coerce.string().nullable(),
-    absencebegin: z.coerce.date().nullable(),
-    absenceEnd: z.coerce.date().nullable(),
-    substitute: z.coerce.string().nullable(),
-    sub_user: subUserSchema.nullable(),
+    id: z.string(),
+    firstName: z.string(),
+    lastName: z.string(),
+    displayName: z.string().nullable(),
+    email: z.string(),
+    avatarUrl: z.string().nullable(),
+    isEmailVerified: z.boolean(),
+    isAbsent: z.boolean(),
+    status: z.enum(['active', 'inactive', 'suspended']),
+    createdAt: z.coerce.date(),
+    updatedAt: z.coerce.date(),
+    organizationMembers: z.array(organizationMemberSchema),
+    absences: z.array(absenceRecordSchema),
   })
 );
 
-export const employeeDataSchema = z.array(
+export const employeeWorkerSchema = z.array(
   z.object({
-    id: z.coerce.string(),
-    vorname: z.string(),
-    nachname: z.string(),
-    email: z.string().nullable(),
-    verified: z.boolean(),
-    createdAt: z.string(),
-    updatedAt: z.string(),
-    user_permission: z.enum(['CHEF', 'MITARBEITER']),
-    employeeStatus: employeeStatusSchema.nullable(),
+    id: z.string(),
+    type: z.enum(['onboarding', 'offboarding', 'transfer']),
+    startDate: z.coerce.date().nullable(),
+    endDate: z.coerce.date().nullable(),
+    completedAt: z.coerce.date().nullable(),
+    createdAt: z.coerce.date(),
+    updatedAt: z.coerce.date(),
+    engagementStatus: z.object({
+      id: z.string(),
+      name: z.string(),
+      color: z.string().nullable(),
+    }),
+    worker: z.object({
+      id: z.string(),
+      firstName: z.string(),
+      lastName: z.string(),
+      email: z.string(),
+      position: z.string().nullable(),
+      status: z.enum(['active', 'inactive', 'archived']),
+    }),
+    responsibleUser: z.object({
+      id: z.string(),
+      firstName: z.string(),
+      lastName: z.string(),
+      email: z.string(),
+      avatarUrl: z.string().nullable(),
+      isAbsent: z.boolean(),
+      absences: z.array(absenceRecordSchema),
+    }),
+    issues: z.array(
+      z.object({
+        id: z.string(),
+        title: z.string(),
+        description: z.string().nullable(),
+        priority: z.enum(['urgent', 'high', 'medium', 'low', 'no_priority']),
+        dueDate: z.coerce.date().nullable(),
+        createdAt: z.coerce.date(),
+        updatedAt: z.coerce.date(),
+        issueStatus: z.object({
+          id: z.string(),
+          name: z.string(),
+          color: z.string().nullable(),
+        }),
+        assignee: z
+          .object({
+            id: z.string(),
+            firstName: z.string(),
+            lastName: z.string(),
+            avatarUrl: z.string().nullable(),
+          })
+          .nullable(),
+        auditLogs: z.array(
+          z.object({
+            createdAt: z.coerce.date(),
+            actorUser: z.object({
+              id: z.string(),
+              firstName: z.string(),
+              lastName: z.string(),
+            }),
+          })
+        ),
+      })
+    ),
   })
 );
 
+export const absenceSchema = z.object({
+  userId: z.string(),
+  absenceType: z.enum(
+    ['SICK', 'VACATION', 'PARENTAL_LEAVE', 'UNPAID', 'OTHER'],
+    { message: VALIDATION_MESSAGES.required('Art der Abwesenheit') }
+  ),
+  startDate: DateValidation,
+  endDate: DateValidation,
+  substituteId: z
+    .string({
+      message: VALIDATION_MESSAGES.optionRequired,
+    })
+    .optional(),
+});
 export const createWorkerSchema = z
   .object({
     firstName: z
@@ -71,20 +165,17 @@ export const createWorkerSchema = z
     ),
   });
 
-export const absenceSchema = z.object({
-  id: z.string(),
-  absence: z.string().optional(),
-  absencetype: z
-    .string({ message: VALIDATION_MESSAGES.required('Art der Abwesenheit') })
-    .min(1, { message: VALIDATION_MESSAGES.required('Art der Abwesenheit') }),
-  absencebegin: dateSchema,
-  absenceEnd: dateSchema,
-  substitute: z.string({ message: VALIDATION_MESSAGES.optionRequired }),
-});
-
 export type CreateWorker = z.infer<typeof createWorkerSchema>;
 
-export type EmployeeDataArray = z.infer<typeof employeeDataSchema>;
-export type EmployeeDataObject = z.infer<typeof employeeDataSchema.element>;
-export type EmployeeStatusArray = z.infer<typeof employeeStatusSchema>;
-export type EmployeeStatusObject = z.infer<typeof employeeStatusSchema.element>;
+// employee list
+export type OrgUsersArray = z.infer<typeof OrgUsersSchema>;
+export type OrgUsersObject = z.infer<typeof OrgUsersSchema>[number];
+
+// employee worker data
+export type EmployeeWorkerArray = z.infer<typeof employeeWorkerSchema>;
+export type EmployeeWorkerItem = z.infer<typeof employeeWorkerSchema>[number];
+export type EngagementIssue = EmployeeWorkerItem['issues'][number];
+
+// absence
+export type AbsenceRecord = z.infer<typeof absenceRecordSchema>;
+export type AbsenceFormData = z.infer<typeof absenceSchema>;

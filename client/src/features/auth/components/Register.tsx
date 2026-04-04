@@ -64,7 +64,7 @@ export function SignupForm() {
   return (
     <DoorManCard>
       {isError && (
-        <div className="mb-3 text-(--destructive)">
+        <div className="mb-3 text-[var(--destructive)]">
           {error?.message || 'An error occurred'}
         </div>
       )}
