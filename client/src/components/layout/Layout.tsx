@@ -5,8 +5,12 @@ import { Outlet, useRouterState } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import '../../../globals.css';
 import ModalOverlay from '../modal/ModalOverlay';
-import { SidebarInset, SidebarTrigger, useSidebar } from '../ui/sidebar';
-import Sidebar from '../ui/sidebar/sidebar';
+import AppSidebar from '../ui/sidebar/AppSidebar';
+import {
+  SidebarInset,
+  SidebarTrigger,
+  useSidebar,
+} from '../ui/sidebar/Sidebar';
 import PagePath from './headers/PagePath';
 import { isSettingsLayoutPath } from './utils/header.utils';
 
@@ -37,8 +41,7 @@ function Layout() {
         <SettingsSidebar />
       ) : (
         <>
-          <Sidebar openModal={handleOpenModal} />
-          {/* <AppSidebar openModal={handleOpenModal} /> */}
+          <AppSidebar openModal={handleOpenModal} />
         </>
       )}
       <SidebarInset className="flex flex-col h-svh md:w-max-svw ml-1 mb-1  rounded-l-xl mt-1">

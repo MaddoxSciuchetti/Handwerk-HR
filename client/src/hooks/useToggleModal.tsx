@@ -1,4 +1,4 @@
-import { useSidebar } from '@/components/ui/sidebar';
+import { useSidebar } from '@/components/ui/sidebar/sidebar';
 import { useState } from 'react';
 
 export function useToggleModal() {
