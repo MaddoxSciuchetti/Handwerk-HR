@@ -19,7 +19,7 @@ function Layout() {
           <AppSidebar openModal={handleOpenModal} />
         </>
       )}
-      <SidebarInset className="flex flex-col h-svh md:w-max-svw ml-1 mb-1  rounded-l-xl mt-1">
+      <SidebarInset className="flex flex-col h-svh md:w-max-svw ml-1 mb-1  rounded-xl mt-1">
         <header className="flex h-16 shrink-0 items-center gap-2 px-4">
           <SidebarTrigger className="-ml-1" />
           <PagePath />
