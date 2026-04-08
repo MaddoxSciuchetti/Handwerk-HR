@@ -12,20 +12,20 @@ function AppSidebar({ openModal }: { openModal: () => void }) {
     <Sidebar>
       <div className="w-full p-2">
         <ProfileDropdown />
-      </div>
-      <div className="p-2 w-full flex flex-col text-left items-stretch overflow-x-hidden">
-        <SideBarMenu
-          items={LAYOUTITEMS.map((item) => ({
-            id: item.to,
-            label: item.title,
-            icon: item.icon,
-            to: item.to,
-            search:
-              item.to === '/org-settings'
-                ? { currentTab: 'employees' }
-                : undefined,
-          }))}
-        />
+        <div className="mt-5">
+          <SideBarMenu
+            items={LAYOUTITEMS.map((item) => ({
+              id: item.to,
+              label: item.title,
+              icon: item.icon,
+              to: item.to,
+              search:
+                item.to === '/org-settings'
+                  ? { currentTab: 'employees' }
+                  : undefined,
+            }))}
+          />
+        </div>
       </div>
       <div className="p-2 w-full flex flex-col overflow-x-hidden">
         <SidebarItem

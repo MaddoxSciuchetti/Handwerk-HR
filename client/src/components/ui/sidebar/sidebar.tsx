@@ -178,7 +178,7 @@ function Sidebar({
         <div
           data-sidebar="sidebar"
           data-slot="sidebar-inner"
-          className="justify-between rounded-r-xl flex h-full w-full flex-col mt-1 mb-1  py-6  min-w-48 w-35 max-w-35 bg-card"
+          className="justify-between rounded-r-xl flex h-full w-full flex-col mt-1 mb-1  py-6  min-w-48 max-w-35 bg-card"
         >
           {children}
         </div>
