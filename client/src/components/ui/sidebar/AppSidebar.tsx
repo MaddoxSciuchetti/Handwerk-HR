@@ -1,6 +1,5 @@
 import { LAYOUTITEMS } from '@/constants/layout.consts';
 
-import { useLocation } from '@tanstack/react-router';
 import { MessageSquareIcon } from 'lucide-react';
 import '../../../../globals.css';
 import { ProfileDropdown } from '../selfmade/profiledropdown';
@@ -9,7 +8,6 @@ import { Sidebar } from './sidebar';
 import SideBarMenu from './sidebar-menu-item';
 
 function AppSidebar({ openModal }: { openModal: () => void }) {
-  const { pathname } = useLocation();
   return (
     <Sidebar>
       <div className="w-full p-2">
