@@ -11,8 +11,8 @@ export function createTestUsers(
     vorname: 'Emma',
     nachname: 'Schmidt',
     email: `emma.schmidt-${browserName}-${timestamp}@test.com`,
-    password: 'maddox',
-    confirmpassword: 'maddox',
+    password: 'maddox123!',
+    confirmpassword: 'maddox123!',
   };
 
   return [baseUser, { ...baseUser }, { ...baseUser }];
