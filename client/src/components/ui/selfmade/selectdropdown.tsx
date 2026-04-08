@@ -17,12 +17,14 @@ type SelectDropdownProps = {
   state: State;
   size: Size;
   icon: LucideIcon;
+  label?: string;
 };
 
 export function SelectDropdown({
   state,
   size,
   icon: Icon,
+  label,
 }: SelectDropdownProps) {
   return (
     <div
@@ -32,7 +34,7 @@ export function SelectDropdown({
         sizes[size]
       )}
     >
-      <p className="text-body-sm flex-grow text-text-disabled">Maddox</p>
+      <p className="text-body-sm flex-grow text-text-disabled">{label}</p>
       <Icon
         className={cn(
           `w-6 h-6 text-text-disabled transition-transform duration-200`,
