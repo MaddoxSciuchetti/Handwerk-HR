@@ -11,6 +11,7 @@ import useAuth from '@/features/user-profile/hooks/useAuth';
 import LifeCycleModal from '@/features/worker-lifecycle/components/LifeCycleModal';
 import useHome from '@/features/worker-lifecycle/hooks/useHome';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
+import { getFirstFormType } from '../utils/formtype';
 import ActiveArchiveHeader from './ActiveArchiveHeader';
 
 function WorkerLifeCycle() {
@@ -62,6 +63,9 @@ function WorkerLifeCycle() {
                   date: 'test',
                 }}
                 img={['assets/Box.svg', 'assets/BoxSelect.svg']}
+                item_value={task.id}
+                form_type={getFirstFormType(task)}
+                gotopage={handleNavigate}
               />
             ))
           ) : (

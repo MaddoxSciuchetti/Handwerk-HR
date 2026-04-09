@@ -1,3 +1,4 @@
+import { LifecycleType } from '@/features/task-management/types/index.types';
 import { ChevronUpIcon, LucideIcon } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 import '../../../../../globals.css';
@@ -86,6 +87,13 @@ type ProjectItemsProps<T extends string> = {
   statusInformation: StatusInformation<T>;
   icons?: LucideIcon[];
   img?: string[];
+  gotopage: (
+    taskId: number,
+    form_type: LifecycleType,
+    workerName: string
+  ) => void;
+  form_type: LifecycleType;
+  item_value: number;
 };
 
 type StatusInformation<T extends string> = {
@@ -99,10 +107,16 @@ function ProjectItem<T extends string>({
   project_name,
   statusInformation,
   img,
+  gotopage,
+  item_value,
+  form_type,
 }: ProjectItemsProps<T>) {
   const [Img1, Img2] = img || [];
   return (
-    <div className="flex relative group py-3 rounded-2xl hover:bg-neutral-50">
+    <div
+      className="flex relative group py-3 rounded-2xl hover:bg-neutral-50"
+      onClick={() => gotopage(item_value, form_type, project_name)}
+    >
       {Img2 && (
         <img
           src={Img2}
