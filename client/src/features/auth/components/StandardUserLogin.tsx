@@ -1,5 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
-import { useLogin } from '../hooks/useLogin';
+import { useStandardLogin } from '../hooks/useStandardLogin';
 import { LoginAction } from './LoginAction';
 import { InputFields } from './LoginBody';
 import { PasswordForgot } from './PasswordForgot';
@@ -16,7 +16,7 @@ export function StandardUserLogin() {
     isPending,
     error,
     authErrorMessage,
-  } = useLogin();
+  } = useStandardLogin();
 
   return (
     <DoorManCard>

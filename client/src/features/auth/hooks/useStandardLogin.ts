@@ -11,7 +11,7 @@ type LoginApiError = {
   message?: string;
 };
 
-export function useLogin() {
+export function useStandardLogin() {
   const navigate = useNavigate();
 
   const {
