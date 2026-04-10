@@ -1,4 +1,4 @@
-import { LoginComponent } from '@/features/auth/components/Login';
+import { StandardUserLogin } from '@/features/auth/components/StandardUserLogin';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -17,14 +17,14 @@ vi.mock('@tanstack/react-router', async () => {
 
 describe('Login page', () => {
   it('shows the Login button', () => {
-    renderWithProviders(<LoginComponent />);
+    renderWithProviders(<StandardUserLogin />);
 
     expect(screen.getByRole('button', { name: /Login/i })).toBeInTheDocument();
   });
 
   it('shows a password required error when submitting without password', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<LoginComponent />);
+    renderWithProviders(<StandardUserLogin />);
 
     await user.type(
       screen.getByLabelText(/Email Address/i),
@@ -37,7 +37,7 @@ describe('Login page', () => {
 
   it('shows a email required error when submitting without email', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<LoginComponent />);
+    renderWithProviders(<StandardUserLogin />);
 
     await user.type(screen.getByLabelText(/Password/i), 'password123');
     await user.click(screen.getByRole('button', { name: /Login/i }));
