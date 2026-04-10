@@ -33,6 +33,7 @@ import { sendMail } from "../utils/sendMail";
 export type createAccountParams = {
     firstName: string;
     lastName: string;
+    displayName: string;
     email: string;
     password: string;
     userAgent?: string;

@@ -1,3 +1,4 @@
+import * as V2Routes from "@/controllers/auth.controllerV2";
 import { Router } from "express";
 import {
     login,
@@ -12,6 +13,7 @@ import {
 const authRoutes = Router();
 
 authRoutes.post("/register", register);
+authRoutes.post("/v2/register", V2Routes.register);
 authRoutes.post("/login", login);
 authRoutes.get("/refresh", refresh);
 authRoutes.get("/logout", logout);

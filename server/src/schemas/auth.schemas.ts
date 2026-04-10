@@ -56,14 +56,42 @@ export const registerSchema = loginSchema
 export const verificationCodeSchema = z
     .string()
     .min(1, { message: VALIDATION_MESSAGES.required("Verification code") })
-    .max(25, {
-        message: VALIDATION_MESSAGES.maxLength("Verification code", 25),
+    .max(40, {
+        message: VALIDATION_MESSAGES.maxLength("Verification code", 40),
     });
 
 export const resetPasswordSchema = z.object({
     password: passwordSchema,
     verificationCode: verificationCodeSchema,
 });
+
+export const registerOrgSchema = registerSchema.extend({
+    orgName: z
+        .string()
+        .min(1, { message: VALIDATION_MESSAGES.required("Company name") })
+        .max(255, {
+            message: VALIDATION_MESSAGES.maxLength("Company name", 255),
+        }),
+    orgDescription: z.string().max(1000).optional(),
+    orgEmail: z
+        .string()
+        .email({ message: VALIDATION_MESSAGES.invalidEmail })
+        .max(255)
+        .optional()
+        .or(z.literal("")),
+    orgPhoneNumber: z.string().max(50).optional(),
+    orgWebsiteUrl: z
+        .string()
+        .url({ message: "Must be a valid URL" })
+        .optional()
+        .or(z.literal("")),
+    orgCountry: z.string().max(100).optional(),
+    orgIndustry: z.string().max(100).optional(),
+    orgSize: z.enum(["1-10", "11-50", "51-200", "201-500", "500+"]).optional(),
+    ipAddress: z.string().optional(),
+});
+
+export type RegisterOrgInput = z.infer<typeof registerOrgSchema>;
 
 export type LoginFormValues = Omit<z.infer<typeof loginSchema>, "userAgent">;
 export type RegisterFormValues = Omit<
