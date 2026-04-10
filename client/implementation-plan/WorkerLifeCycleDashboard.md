@@ -13,3 +13,10 @@ Hints:
 
 -Form that enables this is in @WorkerForm.tsx
 -Ensure the resuable FormField component is being used
+
+// Second implementation:
+
+The user hovers over the item element.
+The box shows up.
+The user clicks inside this box and the box highlights full into blue (simple backround fill on click)
+At the bottom of the screen a tooltip shows with containing actions the user can take 1. Delete the selected items (if it is more than one item the user can delete those) 2.

@@ -1,4 +1,3 @@
-import FormFields from '@/components/form/FormFields';
 import { Button } from '@/components/ui/button';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
@@ -6,6 +5,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { login } from '../api/auth.api';
 import { LoginFormValues, loginSchema } from '../schemas/auth.schemas';
+import { InputFields } from './LoginBody';
 import DoorManCard from './resuable/DoorManCard';
 import DoorManFooter from './resuable/DoorManFooter';
 
@@ -56,36 +56,7 @@ export function LoginComponent() {
             {authErrorMessage}
           </p>
         )}
-
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <FormFields
-              errors={errors}
-              register={register}
-              name="email"
-              label="Email Address"
-              labelClassName="text-foreground text-sm font-medium"
-              id="email"
-              type="email"
-              placeholder="m@example.com"
-              className="border-input bg-background text-foreground"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <FormFields
-              errors={errors}
-              register={register}
-              name="password"
-              label="Password"
-              labelClassName="text-foreground text-sm font-medium"
-              id="password"
-              type="password"
-              className="border-input bg-background text-foreground"
-            />
-          </div>
-        </div>
-
+        <InputFields errors={errors} register={register} />
         <div className="mt-4">
           <Button
             type="button"
