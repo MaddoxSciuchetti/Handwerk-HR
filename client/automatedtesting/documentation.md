@@ -20,3 +20,5 @@ Effort was low as only the expectation of what is visible had to change
 -Commit 0a108a1 - 2991768 which
 
 ---
+
+Decided to create my own components -> this let to me having to change the aria labels. My test managed this changes needed to be reflected in the test which managed to go well.

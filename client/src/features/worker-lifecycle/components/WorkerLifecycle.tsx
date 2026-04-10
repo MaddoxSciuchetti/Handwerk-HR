@@ -7,7 +7,6 @@ import {
   CellHolder,
   GrowingItem,
   ItemHeader,
-  Items,
   Table,
   TableDivider,
   TableHeader,
@@ -18,6 +17,7 @@ import useHome from '@/features/worker-lifecycle/hooks/useHome';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import { ChevronUp } from 'lucide-react';
 import GreetingHeader from './GreetingHeader';
+import ProjectItem from './ProjectItem';
 
 function WorkerLifeCycle() {
   const { user, isLoading, isError } = useAuth();
@@ -55,7 +55,12 @@ function WorkerLifeCycle() {
               value={search}
               setValue={setSearch}
             />
-            <Button className="text-sm text-surface-page">Hinzufügen</Button>
+            <Button
+              className="text-sm text-surface-page"
+              onClick={() => toggleModal()}
+            >
+              Hinzufügen
+            </Button>
           </TableHeader>
           <TableDivider />
           <ItemHeader className="p-0">
@@ -69,17 +74,9 @@ function WorkerLifeCycle() {
               <Cell className="text-body-sm">Zuletzt bearbeitet</Cell>
             </CellHolder>
           </ItemHeader>
-          <Items className="pl-10">
-            <GrowingItem className="p-0">
-              <p className="text-body-base">Maddox</p>
-            </GrowingItem>
-            <CellHolder>
-              <Cell>Priority</Cell>
-              <Cell>Lead</Cell>
-              <Cell>Status</Cell>
-              <Cell>Zuletzt bearbeitet</Cell>
-            </CellHolder>
-          </Items>
+          {filtered?.map((value) => (
+            <ProjectItem key={value.id} />
+          ))}
         </Table>
 
         <LifeCycleModal modal={modal} toggleModal={toggleModal} />
