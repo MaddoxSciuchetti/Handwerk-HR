@@ -1,16 +1,23 @@
 import ErrorAlert from '@/components/alerts/ErrorAlert';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
+import { Button } from '@/components/ui/selfmade/button';
+import { SelectDropdown } from '@/components/ui/selfmade/selectdropdown';
 import {
-  ProjectHeader,
-  ProjectItem,
-  ProjectTable,
+  Cell,
+  CellHolder,
+  GrowingItem,
+  ItemHeader,
+  Items,
+  Table,
+  TableDivider,
   TableHeader,
 } from '@/components/ui/selfmade/table/Table';
 import useAuth from '@/features/user-profile/hooks/useAuth';
 import LifeCycleModal from '@/features/worker-lifecycle/components/LifeCycleModal';
 import useHome from '@/features/worker-lifecycle/hooks/useHome';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
-import { getFirstFormType } from '../utils/formtype';
+import { ChevronUp } from 'lucide-react';
+import GreetingHeader from './GreetingHeader';
 
 function WorkerLifeCycle() {
   const { user, isLoading, isError } = useAuth();
@@ -35,38 +42,46 @@ function WorkerLifeCycle() {
   return (
     <div className="mx-auto flex h-full flex-col overflow-auto rounded-2xl bg-card p-6 md:max-w-8xl">
       <div className="h-full w-full flex flex-col">
-        <ProjectTable>
-          <TableHeader
-            label={'Handwerker'}
-            action={toggleModal}
-            actionLabel="Hinzufügen"
-          />
-          <ProjectHeader />
-          {filtered?.length ? (
-            filtered.map((task) => (
-              <div className="mx-2">
-                <ProjectItem
-                  key={task.id}
-                  project_name={`${task.vorname} ${task.nachname}`}
-                  statusInformation={{
-                    status: 'test',
-                    priority: 'Low',
-                    lead: 'test',
-                    date: 'test',
-                  }}
-                  img={['assets/Box.svg', 'assets/BoxSelect.svg']}
-                  item_value={task.id}
-                  form_type={getFirstFormType(task)}
-                  gotopage={handleNavigate}
-                />
-              </div>
-            ))
-          ) : (
-            <p className="text-center text-label-lg">
-              Keine Handwerker gefunden
-            </p>
-          )}
-        </ProjectTable>
+        <GreetingHeader firstname={user.vorname} />
+        <Table>
+          <TableHeader>
+            <GrowingItem>Handwerker</GrowingItem>
+            <SelectDropdown
+              state={'Default'}
+              size={'lg'}
+              icon={ChevronUp}
+              label="Select Option"
+              options={[{ label: 'maddox', value: 'maddox' }]}
+              value={search}
+              setValue={setSearch}
+            />
+            <Button className="text-sm text-surface-page">Hinzufügen</Button>
+          </TableHeader>
+          <TableDivider />
+          <ItemHeader className="p-0">
+            <GrowingItem className="pl-10 py-2">
+              <p className="text-body-sm">Name</p>
+            </GrowingItem>
+            <CellHolder>
+              <Cell className="text-body-sm">Priority</Cell>
+              <Cell className="text-body-sm">Lead</Cell>
+              <Cell className="text-body-sm">Status</Cell>
+              <Cell className="text-body-sm">Zuletzt bearbeitet</Cell>
+            </CellHolder>
+          </ItemHeader>
+          <Items className="pl-10">
+            <GrowingItem className="p-0">
+              <p className="text-body-base">Maddox</p>
+            </GrowingItem>
+            <CellHolder>
+              <Cell>Priority</Cell>
+              <Cell>Lead</Cell>
+              <Cell>Status</Cell>
+              <Cell>Zuletzt bearbeitet</Cell>
+            </CellHolder>
+          </Items>
+        </Table>
+
         <LifeCycleModal modal={modal} toggleModal={toggleModal} />
       </div>
     </div>

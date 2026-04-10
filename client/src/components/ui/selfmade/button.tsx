@@ -16,9 +16,9 @@ const buttonVariants = cva(
         disabled: 'bg-interactive-primary-disabled',
       },
       size: {
-        default: 'px-4',
-        small: '',
-        lg: '',
+        default: 'px-4 py-2',
+        small: 'px-6 py-4',
+        lg: 'px-8 py-6',
       },
       radius: {
         default: 'rounded-xl',

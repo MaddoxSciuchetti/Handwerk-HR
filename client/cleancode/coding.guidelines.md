@@ -33,4 +33,4 @@ Example:
 -Always use a value as a key when mapping over a item. This prevents unessary rerenders (can confuse the dom)
 -Ensure that no more than 6 props are being used for a component. If a component has more think about how you would refactor this
 
--
+-always remove dead code we have git history in case it is needed
