@@ -1,10 +1,31 @@
 import API from '@/config/apiClient';
-import { CreateWorker } from '@/features/employee-overview/schemas/schema';
 import { WorkerRecord } from '../types/index.types';
 
 type WorkerRecordResponse = {
   success: boolean;
   data: WorkerRecord[];
+};
+
+export type CreateWorkerRequest = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  birthday?: string;
+  position?: string;
+  street?: string;
+  entryDate?: string;
+  exitDate?: string;
+  engagementType: 'onboarding' | 'offboarding';
+  responsibleUserId: string;
+  startDate?: string;
+  endDate?: string;
+};
+
+type CreateWorkerResponse = {
+  success: boolean;
+  data: {
+    worker: WorkerRecord;
+  };
 };
 
 export const getWorkerData = async (): Promise<WorkerRecord[]> => {
@@ -27,7 +48,12 @@ export const deleteWorkerById = async (workerId: string): Promise<void> => {
   await API.delete(`worker/${workerId}`);
 };
 
-export const addWorker = async (data: CreateWorker): Promise<WorkerRecord> => {
-  const response = await API.post<WorkerRecord, WorkerRecord>('/worker', data);
+export const addWorker = async (
+  data: CreateWorkerRequest
+): Promise<CreateWorkerResponse> => {
+  const response = await API.post<CreateWorkerResponse, CreateWorkerResponse>(
+    '/worker',
+    data
+  );
   return response;
 };

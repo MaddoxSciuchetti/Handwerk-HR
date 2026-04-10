@@ -1,5 +1,5 @@
 import MediumWrapper from '@/components/modal/modalSizes/MediumWrapper';
-import { LifecycleType } from '@/features/task-management/types/index.types';
+import { AddWorker } from '@/features/worker-lifecycle/schemas/zod.schemas';
 import { useState } from 'react';
 import RadioSelect from './RadioSelect';
 import { WorkerForm } from './WorkerForm';
@@ -10,7 +10,7 @@ type ModalProps = {
 };
 
 const ModalContent = ({ toggleModal }: ModalProps) => {
-  const [selectedOption, setSelectedOption] = useState<LifecycleType | null>(
+  const [selectedOption, setSelectedOption] = useState<AddWorker['type'] | null>(
     null
   );
 
@@ -20,7 +20,7 @@ const ModalContent = ({ toggleModal }: ModalProps) => {
         {selectedOption === null ? (
           <RadioSelect
             selectedOption={selectedOption}
-            setSelectedOption={setSelectedOption}
+            setSelectedOption={setSelectedOption as never}
           />
         ) : (
           <WorkerForm

@@ -20,8 +20,6 @@ function useHome() {
     workerLifecycleQueries.workerData()
   );
 
-  console.log(workers);
-
   const handleNavigate = (
     taskId: string,
     form_type: LifecycleType,

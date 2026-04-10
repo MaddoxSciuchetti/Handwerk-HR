@@ -3,16 +3,16 @@ import { mutationOptions } from '@tanstack/react-query';
 import {
   addWorker,
   archiveWorkerById,
+  CreateWorkerRequest,
   deleteWorkerById,
   unarchiveWorkerById,
 } from '../../api';
 import { ALL_WORKER_DATA } from '../../consts/query-key.consts';
-import { AddWorker } from '../../schemas/zod.schemas';
-import { DeleteUser, ItemUser } from '../../types/index.types';
+import { WorkerRecord } from '../../types/index.types';
 
 export const workerLifecycleMutations = {
   deleteWorker: () => {
-    return mutationOptions<DeleteUser, Error, number>({
+    return mutationOptions<void, Error, string>({
       mutationFn: deleteWorkerById,
       onSuccess: () => {
         queryClient.invalidateQueries({
@@ -24,8 +24,12 @@ export const workerLifecycleMutations = {
   },
 
   addWorker: () => {
-    return mutationOptions<ItemUser, Error, AddWorker>({
-      mutationFn: (data: AddWorker) => addWorker(data),
+    return mutationOptions<
+      { success: boolean; data: { worker: WorkerRecord } },
+      Error,
+      CreateWorkerRequest
+    >({
+      mutationFn: (data: CreateWorkerRequest) => addWorker(data),
       onSuccess: () => {
         queryClient.invalidateQueries({
           queryKey: [ALL_WORKER_DATA],
@@ -39,7 +43,7 @@ export const workerLifecycleMutations = {
   },
 
   archiveWorker: () => {
-    return mutationOptions<ItemUser, Error, number>({
+    return mutationOptions<void, Error, string>({
       mutationFn: archiveWorkerById,
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: [ALL_WORKER_DATA] });
@@ -48,7 +52,7 @@ export const workerLifecycleMutations = {
   },
 
   unarchiveWorker: () => {
-    return mutationOptions<ItemUser, Error, number>({
+    return mutationOptions<void, Error, string>({
       mutationFn: unarchiveWorkerById,
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: [ALL_WORKER_DATA] });
