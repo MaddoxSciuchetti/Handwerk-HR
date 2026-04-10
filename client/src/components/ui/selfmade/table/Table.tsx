@@ -70,7 +70,7 @@ const tableHeaderCells: LabelHeaderCellsProps[] = [
 function ProjectHeader() {
   return (
     <div className="flex ">
-      <div className="flex grow items-center ">
+      <div className="flex grow items-center  ">
         <p className="pl-10 text-body-base">Name</p>
       </div>
       <div className="flex py-3 ">
@@ -114,18 +114,18 @@ function ProjectItem<T extends string>({
   const [Img1, Img2] = img || [];
   return (
     <div
-      className="flex relative group py-3 rounded-2xl hover:bg-neutral-50"
+      className="flex items-center relative group py-4 rounded-2xl hover:bg-neutral-50"
       onClick={() => gotopage(item_value, form_type, project_name)}
     >
       {Img2 && (
         <img
           src={Img2}
-          className="absolute ml-2 opacity-0 group-hover:opacity-100 w-5 h-5 rounded-full"
+          className="  absolute ml-2 opacity-0 group-hover:opacity-100 w-5 h-5 rounded-full"
         />
       )}
-      <div className="flex grow pl-9">
+      <div className="flex grow pl-9 items-center">
         {Img1 && <img src={Img1} className="w-5 h-5 rounded-full" />}
-        <p className="pl-2">{project_name}</p>
+        <p className="pl-2 text-label-base ">{project_name}</p>
       </div>
       <div className="flex">
         <Cell>{statusInformation.status}</Cell>
