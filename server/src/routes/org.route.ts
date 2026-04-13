@@ -5,12 +5,9 @@ import {
     listOrgStatusesHandler,
     updateOrgStatusHandler,
 } from "@/controllers/orgStatus.controller";
-import authenticate from "@/middleware/authenticate";
 import { Router } from "express";
 
 const orgRoutes = Router();
-
-orgRoutes.use(authenticate);
 
 orgRoutes.post("/invite", createInviteHandler);
 orgRoutes.get("/statuses", listOrgStatusesHandler);
