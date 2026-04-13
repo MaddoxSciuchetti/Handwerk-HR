@@ -8,12 +8,23 @@ import {
 } from '@/components/ui/selfmade/table/Table';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { IssueStatusRow } from './IssueStatusRow';
-import { IssueStatusesHeader } from './IssueStatusesHeader';
-import { createIssueStatusSchema } from './issue-statuses.schemas';
-import { useIssueStatuses } from './useIssueStatuses';
+import { OrgStatusRow } from './OrgStatusRow';
+import { SettingsStatusesHeader } from './SettingsStatusesHeader';
+import { createOrgStatusNameSchema } from './org-status.schemas';
+import { StatusEntityType } from './org-status.types';
+import { useOrgStatuses } from './useOrgStatuses';
 
-function IssueStatuses() {
+type OrgStatusesSettingsPageProps = {
+  entityType: StatusEntityType;
+  title: string;
+  description: string;
+};
+
+export function OrgStatusesSettingsPage({
+  entityType,
+  title,
+  description,
+}: OrgStatusesSettingsPageProps) {
   const [newName, setNewName] = useState('');
   const {
     statuses,
@@ -25,12 +36,12 @@ function IssueStatuses() {
     isUpdating,
     deleteStatus,
     isDeleting,
-  } = useIssueStatuses();
+  } = useOrgStatuses(entityType);
 
   const busy = isCreating || isUpdating || isDeleting;
 
   const handleAdd = () => {
-    const parsed = createIssueStatusSchema.safeParse({ name: newName });
+    const parsed = createOrgStatusNameSchema.safeParse({ name: newName });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? 'Ungültiger Name');
       return;
@@ -43,16 +54,14 @@ function IssueStatuses() {
   if (isLoading) return <LoadingAlert />;
   if (isError) {
     return (
-      <div className="p-6">
-        Statusliste konnte nicht geladen werden.
-      </div>
+      <div className="p-6">Statusliste konnte nicht geladen werden.</div>
     );
   }
 
   return (
     <div className="mx-auto flex h-full flex-col overflow-auto rounded-2xl bg-card p-6 md:max-w-8xl">
       <div className="flex h-full w-full flex-col items-center justify-center gap-4">
-        <IssueStatusesHeader />
+        <SettingsStatusesHeader title={title} description={description} />
         <Table className="w-200">
           <TableHeader className="gap-3 py-2">
             <Button
@@ -77,7 +86,7 @@ function IssueStatuses() {
           </TableHeader>
           <TableDivider />
           {statuses.map((status) => (
-            <IssueStatusRow
+            <OrgStatusRow
               key={status.id}
               status={status}
               totalCount={statuses.length}
@@ -91,5 +100,3 @@ function IssueStatuses() {
     </div>
   );
 }
-
-export default IssueStatuses;

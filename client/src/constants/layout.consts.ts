@@ -1,11 +1,4 @@
-import {
-  FileText,
-  Folder,
-  Inbox,
-  ListCheck,
-  Ticket,
-  UserRound,
-} from 'lucide-react';
+import { FileText, Inbox, ListCheck, Ticket, UserRound } from 'lucide-react';
 
 export const LAYOUTITEMS = [
   {
@@ -44,9 +37,9 @@ export const SETTINGSITEMS = [
     icon: ListCheck,
   },
   {
-    title: 'Projekte',
-    to: '/project-settings',
-    icon: Folder,
+    title: 'Handwerker',
+    to: '/settings/engagement-statuses',
+    icon: Inbox,
   },
   {
     title: 'Templates',

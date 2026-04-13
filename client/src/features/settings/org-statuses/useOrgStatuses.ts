@@ -2,25 +2,28 @@ import queryClient from '@/config/query.client';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
-  createIssueStatus,
-  deleteIssueStatus,
-  fetchIssueStatuses,
-  updateIssueStatus,
-} from './issue-statuses.api';
+  createOrgStatus,
+  deleteOrgStatus,
+  fetchOrgStatuses,
+  updateOrgStatus,
+} from './org-status.api';
+import { StatusEntityType } from './org-status.types';
 
-export const ISSUE_STATUSES_QUERY_KEY = ['org', 'issue-statuses'] as const;
+function queryKey(entityType: StatusEntityType) {
+  return ['org', 'statuses', entityType] as const;
+}
 
-export function useIssueStatuses() {
-  const query = useQuery({
-    queryKey: ISSUE_STATUSES_QUERY_KEY,
-    queryFn: fetchIssueStatuses,
+export function useOrgStatuses(entityType: StatusEntityType) {
+  const statusesQuery = useQuery({
+    queryKey: queryKey(entityType),
+    queryFn: () => fetchOrgStatuses(entityType),
   });
 
   const invalidate = () =>
-    queryClient.invalidateQueries({ queryKey: ISSUE_STATUSES_QUERY_KEY });
+    queryClient.invalidateQueries({ queryKey: queryKey(entityType) });
 
   const createMutation = useMutation({
-    mutationFn: createIssueStatus,
+    mutationFn: (name: string) => createOrgStatus(entityType, name),
     onSuccess: () => {
       toast.success('Status hinzugefügt.');
       void invalidate();
@@ -32,7 +35,7 @@ export function useIssueStatuses() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, name }: { id: string; name: string }) =>
-      updateIssueStatus(id, name),
+      updateOrgStatus(id, name),
     onSuccess: () => {
       toast.success('Status gespeichert.');
       void invalidate();
@@ -43,7 +46,7 @@ export function useIssueStatuses() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: deleteIssueStatus,
+    mutationFn: deleteOrgStatus,
     onSuccess: () => {
       toast.success('Status gelöscht.');
       void invalidate();
@@ -54,10 +57,10 @@ export function useIssueStatuses() {
   });
 
   return {
-    statuses: query.data ?? [],
-    isLoading: query.isLoading,
-    isError: query.isError,
-    refetch: query.refetch,
+    statuses: statusesQuery.data ?? [],
+    isLoading: statusesQuery.isLoading,
+    isError: statusesQuery.isError,
+    refetch: statusesQuery.refetch,
     createStatus: createMutation.mutate,
     isCreating: createMutation.isPending,
     updateStatus: updateMutation.mutate,

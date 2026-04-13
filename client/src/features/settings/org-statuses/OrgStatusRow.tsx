@@ -5,29 +5,24 @@ import { cn } from '@/lib/trycatch';
 import { Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { updateIssueStatusNameSchema } from './issue-statuses.schemas';
-import { IssueOrgStatus } from './issue-statuses.types';
+import { updateOrgStatusNameSchema } from './org-status.schemas';
+import { OrgStatus } from './org-status.types';
 
-type IssueStatusRowProps = {
-  status: IssueOrgStatus;
+type OrgStatusRowProps = {
+  status: OrgStatus;
   disabled: boolean;
   totalCount: number;
   onSaveName: (id: string, name: string) => void;
   onDelete: (id: string) => void;
 };
 
-function statusDotClass(color: string | null, fallback: string) {
-  if (color) return undefined;
-  return fallback;
-}
-
-export function IssueStatusRow({
+export function OrgStatusRow({
   status,
   disabled,
   totalCount,
   onSaveName,
   onDelete,
-}: IssueStatusRowProps) {
+}: OrgStatusRowProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(status.name);
 
@@ -38,7 +33,7 @@ export function IssueStatusRow({
   const canDelete = !disabled && totalCount > 1 && status.usageCount === 0;
 
   const commit = () => {
-    const parsed = updateIssueStatusNameSchema.safeParse({ name: draft });
+    const parsed = updateOrgStatusNameSchema.safeParse({ name: draft });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? 'Ungültiger Name');
       setDraft(status.name);
@@ -58,7 +53,7 @@ export function IssueStatusRow({
           <span
             className={cn(
               'h-2.5 w-2.5 shrink-0 rounded-full border border-border-default',
-              statusDotClass(status.color, 'bg-text-secondary')
+              !status.color && 'bg-text-secondary'
             )}
             style={status.color ? { backgroundColor: status.color } : undefined}
             aria-hidden
