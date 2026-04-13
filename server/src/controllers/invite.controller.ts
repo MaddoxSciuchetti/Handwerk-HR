@@ -1,4 +1,5 @@
 import { CREATED, OK, UNAUTHORIZED } from "@/constants/http";
+import { prisma } from "@/lib/prisma";
 import {
     acceptInviteSchema,
     createInviteSchema,
@@ -14,8 +15,16 @@ import { setAuthCookies } from "@/utils/cookies";
 
 export const createInviteHandler = catchErrors(async (req, res) => {
     const invitedByUserId = req.userId;
-    const orgId = req.orgId;
     appAssert(invitedByUserId, UNAUTHORIZED, "Not authenticated");
+
+    const ownerMembership = req.orgId
+        ? null
+        : await prisma.organizationMember.findFirst({
+              where: { userId: invitedByUserId, role: { name: "Owner" } },
+              select: { organizationId: true },
+          });
+    const orgId = req.orgId ?? ownerMembership?.organizationId;
+
     appAssert(
         orgId,
         UNAUTHORIZED,
