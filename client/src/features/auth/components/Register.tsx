@@ -5,7 +5,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useOrgSignup } from '../hooks/useOrgSignup';
 import { OrgSignupBody } from './OrgSignupBody';
 import { RegisterBody } from './RegisterBody';
-import DoorManCard from './resuable/DoorManCard';
+import DoorManWrapper from './resuable/DoorManCard';
 import DoorManFooter from './resuable/DoorManFooter';
 
 export function SignupForm() {
@@ -32,7 +32,7 @@ export function SignupForm() {
     );
 
   return (
-    <DoorManCard>
+    <DoorManWrapper>
       {isError && (
         <div className="mb-3 text-(--destructive)">
           {error?.message || 'An error occurred'}
@@ -79,6 +79,6 @@ export function SignupForm() {
           nav={() => navigate({ to: `/login` })}
         />
       </form>
-    </DoorManCard>
+    </DoorManWrapper>
   );
 }

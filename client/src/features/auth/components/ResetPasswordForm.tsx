@@ -7,7 +7,7 @@ import { useState } from 'react';
 
 import { resetPassword } from '@/features/auth/api/auth.api';
 import { useNavigate } from '@tanstack/react-router';
-import DoorManCard from './resuable/DoorManCard';
+import DoorManWrapper from './resuable/DoorManCard';
 
 const ResetPasswordForm = ({ code }: { code: string }) => {
   const [password, setPassword] = useState('');
@@ -22,7 +22,7 @@ const ResetPasswordForm = ({ code }: { code: string }) => {
 
   const navigate = useNavigate();
   return (
-    <DoorManCard>
+    <DoorManWrapper>
       <div className="text-center">
         {isError && (
           <div className="mb-3 text-destructive">
@@ -85,7 +85,7 @@ const ResetPasswordForm = ({ code }: { code: string }) => {
           </div>
         )}
       </div>
-    </DoorManCard>
+    </DoorManWrapper>
   );
 };
 export default ResetPasswordForm;

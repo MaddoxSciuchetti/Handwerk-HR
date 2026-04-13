@@ -12,6 +12,10 @@ export const createInviteSchema = z.object({
 
 export const acceptInviteSchema = z
     .object({
+        displayName: z
+            .string()
+            .min(1, { message: VALIDATION_MESSAGES.required("Display name") })
+            .max(255),
         firstName: z
             .string()
             .min(1, { message: VALIDATION_MESSAGES.required("First name") })

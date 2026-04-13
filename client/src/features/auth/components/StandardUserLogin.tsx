@@ -3,11 +3,11 @@ import { useStandardLogin } from '../hooks/useStandardLogin';
 import { LoginAction } from './LoginAction';
 import { InputFields } from './LoginBody';
 import { PasswordForgot } from './PasswordForgot';
-import DoorManCard from './resuable/DoorManCard';
+import DoorManWrapper from './resuable/DoorManCard';
 import DoorManFooter from './resuable/DoorManFooter';
 
 export function StandardUserLogin() {
-  const navigate = useNavigate();
+  const navigate = useNavigate({ from: '/login' });
   const {
     register,
     handleSubmit,
@@ -19,7 +19,7 @@ export function StandardUserLogin() {
   } = useStandardLogin();
 
   return (
-    <DoorManCard>
+    <DoorManWrapper>
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
         {error && (
           <p className="mb-4 rounded-md border border-(--destructive) bg-(--destructive)/10 px-3 py-2 text-sm text-(--destructive)">
@@ -32,9 +32,9 @@ export function StandardUserLogin() {
         <DoorManFooter
           description={`Don't have an account? ${''}`}
           action="Sign up"
-          nav={() => navigate({ to: `/signup` })}
+          nav={() => navigate({ to: '/signup' })}
         />
       </form>
-    </DoorManCard>
+    </DoorManWrapper>
   );
 }

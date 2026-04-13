@@ -7,11 +7,12 @@ import {
   TableDivider,
   TableHeader,
 } from '@/components/ui/selfmade/table/Table';
-import { useState } from 'react';
+import { useSendInvite } from '../hooks/useSendInvite';
 import { SettingsHeader } from './SettingsHeader';
 
 function Employees() {
-  const [mitarbeiterEmail, setMitarbeiterEmail] = useState('');
+  const { isPending, handleSendInvite, mitarbeiterEmail, setMitarbeiterEmail } =
+    useSendInvite();
   return (
     <div className="mx-auto flex h-full flex-col overflow-auto rounded-2xl bg-card p-6 md:max-w-8xl">
       <div className="h-full w-full flex flex-col items-center justify-center">
@@ -19,11 +20,11 @@ function Employees() {
         <Table className="w-200 ">
           <TableHeader className=" py-2">
             <Button
-              onClick={() => {
-                console.log(mitarbeiterEmail);
-              }}
+              className="text-sm"
+              disabled={isPending}
+              onClick={handleSendInvite}
             >
-              Hinzufügen
+              {isPending ? 'Sende...' : 'Hinzufügen'}
             </Button>
             <Input
               placeholder="Mitarbeite Email"
