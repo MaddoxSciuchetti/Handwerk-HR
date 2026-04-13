@@ -7,11 +7,11 @@ interface SidebarItemProps extends React.HTMLAttributes<HTMLDivElement> {
 export function SidebarItem({ label, icon: Icon, ...props }: SidebarItemProps) {
   return (
     <div
-      className="flex items-center gap-3 py-3 group/hover cursor-pointer"
+      className="group/hover flex cursor-pointer items-center gap-3 py-3"
       {...props}
     >
-      <Icon className="w-6 h-6 text-interactive-disabled-text group-hover/hover:text-interactive-primary-bg " />
-      <p className="text-interactive-disabled-text text-body-sm group-hover/hover:text-interactive-primary-bg ">
+      <Icon className="h-6 w-6 text-interactive-primary-bg transition-colors group-hover/hover:text-interactive-disabled-text" />
+      <p className="text-body-sm text-interactive-primary-bg transition-colors group-hover/hover:text-interactive-disabled-text">
         {label}
       </p>
     </div>

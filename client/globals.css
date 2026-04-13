@@ -1,8 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Inter:wght@600;700&display=swap');
 @import 'tailwindcss';
 
 @layer base {
   body {
     background-color: var(--gray-100);
+    font-family: var(--font-sans);
   }
   /* ─────────────────────────────────────
      ROOT — Light mode
@@ -373,7 +375,7 @@
 
     /* Fonts */
     --font-sans: 'DM Sans', sans-serif;
-    --font-heading: 'Inter Display', sans-serif;
+    --font-heading: 'Inter Display', 'Inter', sans-serif;
 
     /*
      * Legacy `blue-*` color utilities — mapped to neutral scale (Figma brand primary ramp).
@@ -549,7 +551,7 @@
      HEADING STYLES — Inter Display
   ───────────────────────────────────── */
   .text-display {
-    font-family: 'Inter Display', sans-serif;
+    font-family: var(--font-heading);
     font-weight: 600;
     font-size: 4.5rem;
     line-height: 5rem;
@@ -557,7 +559,7 @@
   }
 
   .text-h1 {
-    font-family: 'Inter Display', sans-serif;
+    font-family: var(--font-heading);
     font-weight: 600;
     font-size: 3.75rem;
     line-height: 4.25rem;
@@ -565,7 +567,7 @@
   }
 
   .text-h2 {
-    font-family: 'Inter Display', sans-serif;
+    font-family: var(--font-heading);
     font-weight: 600;
     font-size: 3rem;
     line-height: 3.5rem;
@@ -573,7 +575,7 @@
   }
 
   .text-h3 {
-    font-family: 'Inter Display', sans-serif;
+    font-family: var(--font-heading);
     font-weight: 600;
     font-size: 2.25rem;
     line-height: 2.75rem;
@@ -581,7 +583,7 @@
   }
 
   .text-h4 {
-    font-family: 'Inter Display', sans-serif;
+    font-family: var(--font-heading);
     font-weight: 600;
     font-size: 1.875rem;
     line-height: 2.375rem;
@@ -589,7 +591,7 @@
   }
 
   .text-h5 {
-    font-family: 'Inter Display', sans-serif;
+    font-family: var(--font-heading);
     font-weight: 600;
     font-size: 1.5rem;
     line-height: 2rem;
@@ -597,7 +599,7 @@
   }
 
   .text-h6 {
-    font-family: 'Inter Display', sans-serif;
+    font-family: var(--font-heading);
     font-weight: 600;
     font-size: 1.25rem;
     line-height: 1.875rem;
@@ -608,7 +610,7 @@
      BODY STYLES — DM Sans Regular
   ───────────────────────────────────── */
   .text-body-xl {
-    font-family: 'DM Sans', sans-serif;
+    font-family: var(--font-sans);
     font-weight: 400;
     font-size: 1.25rem;
     line-height: 1.875rem;
@@ -616,7 +618,7 @@
   }
 
   .text-body-lg {
-    font-family: 'DM Sans', sans-serif;
+    font-family: var(--font-sans);
     font-weight: 400;
     font-size: 1.125rem;
     line-height: 1.75rem;
@@ -624,7 +626,7 @@
   }
 
   .text-body-base {
-    font-family: 'DM Sans', sans-serif;
+    font-family: var(--font-sans);
     font-weight: 400;
     font-size: 1rem;
     line-height: 1.5rem;
@@ -632,7 +634,7 @@
   }
 
   .text-body-sm {
-    font-family: 'DM Sans', sans-serif;
+    font-family: var(--font-sans);
     font-weight: 400;
     font-size: 0.875rem;
     line-height: 1.25rem;
@@ -640,7 +642,7 @@
   }
 
   .text-body-xs {
-    font-family: 'DM Sans', sans-serif;
+    font-family: var(--font-sans);
     font-weight: 400;
     font-size: 0.75rem;
     line-height: 1rem;
@@ -651,7 +653,7 @@
      UI STYLES — DM Sans Medium
   ───────────────────────────────────── */
   .text-label-lg {
-    font-family: 'DM Sans', sans-serif;
+    font-family: var(--font-sans);
     font-weight: 500;
     font-size: 1rem;
     line-height: 1.5rem;
@@ -659,7 +661,7 @@
   }
 
   .text-label-base {
-    font-family: 'DM Sans', sans-serif;
+    font-family: var(--font-sans);
     font-weight: 500;
     font-size: 0.875rem;
     line-height: 1.25rem;
@@ -667,7 +669,7 @@
   }
 
   .text-label-sm {
-    font-family: 'DM Sans', sans-serif;
+    font-family: var(--font-sans);
     font-weight: 500;
     font-size: 0.75rem;
     line-height: 1rem;
@@ -675,7 +677,7 @@
   }
 
   .text-overline {
-    font-family: 'DM Sans', sans-serif;
+    font-family: var(--font-sans);
     font-weight: 500;
     font-size: 0.75rem;
     line-height: 1rem;
