@@ -8,7 +8,9 @@ declare global {
         interface Request {
             userId: DebugUser["id"];
             tokenId?: string;
-            orgId: string;
+            sessionId?: string;
+            /** Set when the user has an active organization membership. */
+            orgId?: string;
         }
     }
 }
