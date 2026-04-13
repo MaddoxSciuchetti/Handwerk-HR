@@ -1,4 +1,7 @@
 import { prisma } from "@/lib/prisma";
+import { CONFLICT } from "@/constants/http";
+import appAssert from "@/utils/appAssert";
+import { UpdateProfileInformationInput } from "@/schemas/user.schemas";
 
 export const queryUser = async (id: string) => {
     const user = await prisma.newUser.findUnique({
@@ -59,5 +62,34 @@ export const queryProfilePhoto = async (id: string) => {
     return await prisma.newUser.findUnique({
         where: { id },
         select: { avatarUrl: true },
+    });
+};
+
+export const updateProfileInformation = async (
+    userId: string,
+    data: UpdateProfileInformationInput,
+) => {
+    const normalizedEmail = data.email.trim().toLowerCase();
+
+    const existingUser = await prisma.newUser.findUnique({
+        where: { email: normalizedEmail },
+        select: { id: true },
+    });
+
+    appAssert(
+        !existingUser || existingUser.id === userId,
+        CONFLICT,
+        "Email already in use",
+    );
+
+    return prisma.newUser.update({
+        where: { id: userId },
+        data: {
+            displayName: data.displayName.trim(),
+            firstName: data.firstName.trim(),
+            lastName: data.lastName.trim(),
+            email: normalizedEmail,
+        },
+        omit: { passwordHash: true },
     });
 };

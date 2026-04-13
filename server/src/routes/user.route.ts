@@ -21,5 +21,6 @@ userRoutes.post(
 );
 userRoutes.get("/profile/photo", getProfilePhoto);
 userRoutes.get("/v2/profile/photo", UserControllerV2.getProfilePhoto);
+userRoutes.post("/v2/updateProfileInformation", UserControllerV2.updateProfile);
 
 export { userRoutes };

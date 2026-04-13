@@ -4,7 +4,9 @@ import {
     insertProfilePhoto,
     queryProfilePhoto,
     queryUser,
+    updateProfileInformation,
 } from "@/services/user.serviceV2";
+import { updateProfileInformationSchema } from "@/schemas/user.schemas";
 
 import appAssert from "@/utils/appAssert";
 import catchErrors from "@/utils/catchErrors";
@@ -60,4 +62,13 @@ export const getProfilePhoto = catchErrors(async (req, res) => {
     const presignedUrl = await generatePresignedUrl(key);
 
     return res.status(OK).json(presignedUrl);
+});
+
+export const updateProfile = catchErrors(async (req, res) => {
+    const id = req.userId;
+    const request = updateProfileInformationSchema.parse(req.body);
+
+    const updatedUser = await updateProfileInformation(id, request);
+
+    return res.status(OK).json(updatedUser);
 });
