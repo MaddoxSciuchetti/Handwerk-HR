@@ -31,34 +31,37 @@ export const loginSchema = z.object({
   userAgent: z.string().optional(),
 });
 
-export const registerSchema = loginSchema
-  .extend({
-    password: registerPasswordSchema,
-    confirmPassword: z
-      .string()
-      .trim()
-      .min(1, { message: 'Confirm password is required' })
-      .max(255, { message: 'Confirm password must be at most 255 characters' }),
-    firstName: z
-      .string()
-      .min(1, { message: 'First name is required' })
-      .max(255, { message: 'First name must be at most 255 characters' }),
-    lastName: z
-      .string()
-      .min(1, { message: 'Last name is required' })
-      .max(255, { message: 'Last name must be at most 255 characters' }),
-    displayName: z
-      .string()
-      .trim()
-      .min(1, { message: 'Display name is required' })
-      .max(255, { message: 'Display name must be at most 255 characters' }),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
+const registerBaseSchema = loginSchema.extend({
+  password: registerPasswordSchema,
+  confirmPassword: z
+    .string()
+    .trim()
+    .min(1, { message: 'Confirm password is required' })
+    .max(255, { message: 'Confirm password must be at most 255 characters' }),
+  firstName: z
+    .string()
+    .min(1, { message: 'First name is required' })
+    .max(255, { message: 'First name must be at most 255 characters' }),
+  lastName: z
+    .string()
+    .min(1, { message: 'Last name is required' })
+    .max(255, { message: 'Last name must be at most 255 characters' }),
+  displayName: z
+    .string()
+    .trim()
+    .min(1, { message: 'Display name is required' })
+    .max(255, { message: 'Display name must be at most 255 characters' }),
+});
+
+export const registerSchema = registerBaseSchema.refine(
+  (data) => data.password === data.confirmPassword,
+  {
     message: 'Password and confirm password must match',
     path: ['confirmPassword'],
-  });
+  }
+);
 
-export const registerOrgSchema = registerSchema.extend({
+const registerOrgBaseSchema = registerBaseSchema.extend({
   orgName: z
     .string()
     .min(1, { message: 'Company name is required' })
@@ -93,6 +96,30 @@ export const registerOrgSchema = registerSchema.extend({
   orgSize: z.enum(['1-10', '11-50', '51-200', '201-500', '500+']).optional(),
 });
 
+export const registerOrgSchema = registerOrgBaseSchema.refine(
+  (data) => data.password === data.confirmPassword,
+  {
+    message: 'Password and confirm password must match',
+    path: ['confirmPassword'],
+  }
+);
+
+const inviteAcceptBaseSchema = registerBaseSchema.pick({
+  displayName: true,
+  firstName: true,
+  lastName: true,
+  password: true,
+  confirmPassword: true,
+});
+
+export const inviteAcceptSchema = inviteAcceptBaseSchema.refine(
+  (data) => data.password === data.confirmPassword,
+  {
+    message: 'Password and confirm password must match',
+    path: ['confirmPassword'],
+  }
+);
+
 export type LoginFormValues = Omit<z.infer<typeof loginSchema>, 'userAgent'>;
 export type RegisterFormValues = Omit<
   z.infer<typeof registerSchema>,
@@ -100,5 +127,9 @@ export type RegisterFormValues = Omit<
 >;
 export type RegisterOrgFormValues = Omit<
   z.infer<typeof registerOrgSchema>,
+  'userAgent'
+>;
+export type InviteAcceptFormValues = Omit<
+  z.infer<typeof inviteAcceptSchema>,
   'userAgent'
 >;
