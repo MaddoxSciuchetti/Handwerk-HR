@@ -30,3 +30,7 @@ I decided to create a completely new table where i also removed how filteres wer
 ---
 
 Integrate breking changes into the new signup flow. A user can no longer signup with with normal required fields. The user now can only signup when creating a entire new org (this required more changes than intially thought (details regarding the implementation will follow)
+
+---
+
+automated tests did not work anymore when changing the overall sidebar layout ansd siwciehd how everything looks

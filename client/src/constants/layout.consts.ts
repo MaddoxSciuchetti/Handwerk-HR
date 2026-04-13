@@ -4,7 +4,7 @@ import {
   Folder,
   Inbox,
   ListCheck,
-  Settings,
+  Ticket,
   UserRound,
 } from 'lucide-react';
 
@@ -17,8 +17,13 @@ export const LAYOUTITEMS = [
   {
     title: 'Aufgaben',
     to: '/template',
-    icon: Settings,
+    icon: Ticket,
     requiredPermission: 'CHEF',
+  },
+  {
+    title: 'Mitarbeiter',
+    to: '/employee-overview',
+    icon: UserRound,
   },
 ];
 

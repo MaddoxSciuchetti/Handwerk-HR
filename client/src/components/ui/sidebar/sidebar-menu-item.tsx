@@ -12,21 +12,27 @@ export type SideBarMenuLinkItem = {
 
 export type SideBarMenuProps<T extends SideBarMenuLinkItem> = {
   items: readonly T[];
+  collapsed?: boolean;
 };
 
 function SideBarMenu<TItem extends SideBarMenuLinkItem>({
   items,
+  collapsed = false,
 }: SideBarMenuProps<TItem>) {
   return (
     <>
-      {items.map((item, index: number) => {
+      {items.map((item) => {
         return (
           <Link
-            key={index}
+            key={item.id}
             to={item.to}
             {...(item.search !== undefined ? { search: item.search } : {})}
           >
-            <SidebarItem label={item.label} icon={item.icon} />
+            <SidebarItem
+              label={item.label}
+              icon={item.icon}
+              collapsed={collapsed}
+            />
           </Link>
         );
       })}
