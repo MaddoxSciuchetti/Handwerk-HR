@@ -15,7 +15,7 @@ const SIDEBAR_COOKIE_NAME = 'sidebar_state';
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 const SIDEBAR_WIDTH = '16rem';
 const SIDEBAR_WIDTH_MOBILE = '18rem';
-const SIDEBAR_WIDTH_ICON = '3rem';
+const SIDEBAR_WIDTH_ICON = '4rem';
 const SIDEBAR_KEYBOARD_SHORTCUT = 'b';
 
 interface SidebarContextProps {
@@ -124,7 +124,7 @@ function CustomSideBarProvider({
 }
 
 function Sidebar({
-  collapsible = 'offcanvas',
+  collapsible = 'icon',
   className,
   children,
   ...props
@@ -132,6 +132,7 @@ function Sidebar({
   collapsible?: 'offcanvas' | 'icon' | 'none';
 }) {
   const { state } = useSidebar();
+  const safeCollapsible = collapsible === 'offcanvas' ? 'icon' : collapsible;
 
   if (collapsible === 'none') {
     return (
@@ -152,7 +153,7 @@ function Sidebar({
     <div
       className="group peer text-sidebar-foreground hidden md:block"
       data-state={state}
-      data-collapsible={state === 'collapsed' ? collapsible : ''}
+      data-collapsible={state === 'collapsed' ? safeCollapsible : ''}
       data-slot="sidebar"
     >
       <div
@@ -160,7 +161,8 @@ function Sidebar({
         className={cn(
           'relative w-[12.25rem] bg-transparent',
           'transition-[width] duration-200 ease-linear',
-          'group-data-[collapsible=offcanvas]:w-0'
+          'group-data-[collapsible=offcanvas]:w-0',
+          'group-data-[collapsible=icon]:w-[var(--sidebar-width-icon)]'
         )}
       />
 
@@ -169,7 +171,8 @@ function Sidebar({
         className={cn(
           'fixed inset-y-1 left-1 z-10 h-[calc(100svh-0.5rem)] w-48',
           'transition-[left,width] duration-200 ease-linear',
-          'group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]'
+          'group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]',
+          'group-data-[collapsible=icon]:w-[var(--sidebar-width-icon)]'
         )}
         {...props}
       >
@@ -178,6 +181,8 @@ function Sidebar({
           data-slot="sidebar-inner"
           className={cn(
             'flex h-full w-full min-w-48 max-w-35 flex-col justify-between overflow-hidden rounded-2xl border border-border bg-card py-6',
+            'group-data-[collapsible=icon]:min-w-[var(--sidebar-width-icon)]',
+            'group-data-[collapsible=icon]:py-4',
             className
           )}
         >
