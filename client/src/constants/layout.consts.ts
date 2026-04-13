@@ -1,5 +1,4 @@
 import {
-  Building,
   FileText,
   Folder,
   Inbox,
@@ -33,11 +32,7 @@ export const SETTINGSITEMS = [
     to: '/settings/profile',
     icon: UserRound,
   },
-  {
-    title: 'Unternehmen',
-    to: '/settings/company',
-    icon: Building,
-  },
+
   {
     title: 'Mitarbeiter',
     to: '/settings/employees',
@@ -45,7 +40,7 @@ export const SETTINGSITEMS = [
   },
   {
     title: 'Aufgaben',
-    to: '/task-settings',
+    to: '/settings/issue-statuses',
     icon: ListCheck,
   },
   {
