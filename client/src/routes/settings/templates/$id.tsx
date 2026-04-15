@@ -1,15 +1,16 @@
+import { TemplateTasks } from '@/features/template-tasks/components/template-items/TemplateTasks';
 import { createFileRoute } from '@tanstack/react-router';
+import z from 'zod/v3';
 
 export const Route = createFileRoute('/settings/templates/$id')({
+  validateSearch: z.object({
+    templateName: z.string(),
+  }),
   component: RouteComponent,
 });
 
 function RouteComponent() {
   const { id } = Route.useParams();
-  return (
-    <div className="p-6">
-      <p className="typo-body-sm text-text-secondary">Template-ID</p>
-      <p className="typo-body-lg text-text-primary">{id}</p>
-    </div>
-  );
+  const { templateName } = Route.useSearch();
+  return <TemplateTasks templateId={id} templateName={templateName} />;
 }

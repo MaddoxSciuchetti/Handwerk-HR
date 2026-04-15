@@ -8,7 +8,6 @@ import {
 import { SettingsStatusesHeader } from '@/features/settings/org-statuses/SettingsStatusesHeader';
 import TemplateSidebar from '@/features/task-management/components/tasks/task-sidebar/TaskSidebar';
 import { useState } from 'react';
-import z from 'zod';
 import { useGetTemplates } from '../hooks/useGetTemplates';
 import { TemplateItem } from './TemplateItem';
 
@@ -21,8 +20,6 @@ export type TemplateEditState = {
 
 function TemplateTasks() {
   const { data: templates, isLoading } = useGetTemplates();
-
-  const searchSchema = z.object({ search: z.string().min(1) });
   const [isOpen, setIsOpen] = useState(false);
   const [isEditTemplate, setIsEditTemplate] = useState<TemplateEditState>({
     templateId: '',

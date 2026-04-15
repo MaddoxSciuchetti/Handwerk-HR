@@ -44,6 +44,9 @@ export function TemplateItem({
             navigate({
               to: '/settings/templates/$id',
               params: { id: template.id },
+              search: {
+                templateName: template.templateName,
+              },
             })
           }
         >
