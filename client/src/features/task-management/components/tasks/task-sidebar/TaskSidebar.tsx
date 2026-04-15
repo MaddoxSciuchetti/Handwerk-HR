@@ -32,21 +32,36 @@ function TemplateSidebar({
           onClick={() => setIsOpen(false)}
         />
       ) : null}
-      <SidebarAside isOpen={isOpen}>
-        <SidebarPanel>
-          <SidebarHeader className="flex items-center justify-between py-3">
+      <SidebarAside className="p-2" isOpen={isOpen}>
+        <SidebarPanel className=" w-full border">
+          <SidebarHeader className="flex items-center justify-between ">
             <Label>Erstelle dein Template</Label>
             <Button type="button" onClick={() => setIsOpen(false)}>
               <X className="h-4 w-4" aria-hidden />
             </Button>
           </SidebarHeader>
-          <FormWrapper onSubmit={onSubmit}>
-            <SidebarContent>
+          <FormWrapper
+            onSubmit={onSubmit}
+            className="flex min-h-0 flex-1 flex-col border"
+          >
+            <SidebarContent className="border mt-5">
               <FormFields
                 errors={errors}
                 register={register}
-                name="search"
+                name="templateName"
                 label="Name des Templates"
+              />
+              <FormFields
+                errors={errors}
+                register={register}
+                name="templateDescription"
+                label="Name des Templates"
+              />
+              <FormFields
+                errors={errors}
+                register={register}
+                name="type"
+                label="Label"
               />
             </SidebarContent>
             <SidebarFooter>

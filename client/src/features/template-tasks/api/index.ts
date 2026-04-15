@@ -5,6 +5,7 @@ import {
   NewDescriptionField,
   SuccessResponse,
 } from '@/types/api.types';
+import { TemplateSubmission } from '../hooks/useSubmitTemplate';
 import { EditDescriptionData } from '../types/taskForm.types';
 
 export type DeleteTaskResponse = {
@@ -32,19 +33,19 @@ export const createTemplateTask = async (data: {
   owner: string;
 }): Promise<NewDescriptionField> => {
   const response = await API.post<NewDescriptionField, NewDescriptionField>(
-    `/template/createTask`,
+    `/template`,
     data
   );
   return response;
 };
 
-export const createTemplateTaskV2 = async (data: {
-  search: string;
-}): Promise<SuccessResponse<{ search: string }>> => {
-  const response = await API.post<
-    SuccessResponse<{ search: string }>,
-    SuccessResponse<{ search: string }>
-  >(`/template/createTemplate`, data);
+export const createTemplateTaskV2 = async (
+  data: TemplateSubmission
+): Promise<TemplateSubmission> => {
+  const response = await API.post<TemplateSubmission, TemplateSubmission>(
+    `/template/`,
+    data
+  );
   return response;
 };
 

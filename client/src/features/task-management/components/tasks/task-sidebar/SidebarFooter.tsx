@@ -7,7 +7,7 @@ function SidebarFooter({ className, children, ...props }: SidebarFooterProps) {
   return (
     <footer
       className={cn(
-        'mt-auto shrink-0 border-t border-border px-6 py-3',
+        'flex justify-end mt-auto shrink-0 border-t border-border py-3',
         className
       )}
       {...props}

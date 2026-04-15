@@ -1,4 +1,4 @@
-import { BAD_REQUEST, CREATED, NOT_FOUND, OK } from "@/constants/http";
+import { CREATED, NOT_FOUND, OK } from "@/constants/http";
 import {
     insertTemplate,
     insertTemplateTask,
@@ -19,14 +19,13 @@ const getParam = (param: string | string[]): string =>
 
 export const createTemplate = catchErrors(async (req, res) => {
     const userId = req.userId;
-    const orgId = req.orgId;
-    const { name, description, type } = req.body;
-    appAssert(type, BAD_REQUEST, "Template type is required");
+    const orgId = req.orgId || "";
+    const { templateName, templateDescription, type } = req.body;
 
     const template = await insertTemplate({
-        name,
-        description,
-        type,
+        templateName,
+        templateDescription,
+        type: type,
         organizationId: orgId,
         createdByUserId: userId,
     });

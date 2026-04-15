@@ -1,18 +1,14 @@
 import { prisma } from "@/lib/prisma";
-import {
-    DefaultIssueStatus,
-    DefaultPriority,
-    EngagementTemplateType,
-} from "@prisma/client";
+import { DefaultIssueStatus, DefaultPriority } from "@prisma/client";
 
 // ============================================================
 // TYPES
 // ============================================================
 
 export type InsertTemplateParams = {
-    name: string;
-    description?: string;
-    type: EngagementTemplateType;
+    templateName: string;
+    templateDescription: string;
+    type?: string;
     organizationId: string;
     createdByUserId: string;
 };
@@ -41,16 +37,16 @@ export type ModifyTemplateTaskParams = {
 export const insertTemplate = async (data: InsertTemplateParams) => {
     return await prisma.issueTemplate.create({
         data: {
-            name: data.name,
-            description: data.description,
+            templateName: data.templateName,
+            templateDescription: data.templateDescription,
             type: data.type,
             organizationId: data.organizationId,
             createdByUserId: data.createdByUserId,
         },
         select: {
             id: true,
-            name: true,
-            description: true,
+            templateName: true,
+            templateDescription: true,
             type: true,
             isActive: true,
             createdAt: true,
@@ -71,8 +67,8 @@ export const queryTemplates = async (orgId: string) => {
         orderBy: { createdAt: "desc" },
         select: {
             id: true,
-            name: true,
-            description: true,
+            templateName: true,
+            templateDescription: true,
             type: true,
             isActive: true,
             createdAt: true,
@@ -100,8 +96,8 @@ export const queryTemplateById = async (id: string, orgId: string) => {
         },
         select: {
             id: true,
-            name: true,
-            description: true,
+            templateName: true,
+            templateDescription: true,
             type: true,
             isActive: true,
             createdAt: true,

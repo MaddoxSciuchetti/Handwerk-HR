@@ -44,3 +44,7 @@ Major functional refactor in the login component. I did this because my login lo
 ---
 
 Do not use the normal button html element. Also do not use complicated state logic when not necessary. This means you can change the state with using the same state setter function e.g. setting it to false than do this instead of creating a new state that closes the other state.
+
+---
+
+Do not use ternary operators at your whim. Use them specifcally when they are need to express the logic that you want to express. Do not use it for simple things that can be done without the ternary operator

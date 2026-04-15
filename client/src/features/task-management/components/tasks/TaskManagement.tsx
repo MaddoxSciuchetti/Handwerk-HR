@@ -2,7 +2,12 @@ import ErrorAlert from '@/components/alerts/ErrorAlert';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import ModalOverlay from '@/components/modal/ModalOverlay';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { useCallback, useState, type Dispatch, type SetStateAction } from 'react';
+import {
+  useCallback,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
 import useFilteredData from '../../hooks/useFilteredData';
 import useTaskData from '../../hooks/useTaskData';
 import useTaskSubmit from '../../hooks/useTaskSubmit';
@@ -45,9 +50,7 @@ const TaskManagement = ({ workerId, lifecycleType }: TaskManagementProps) => {
   const setIsOpen = useCallback<Dispatch<SetStateAction<boolean>>>(
     (action) => {
       const next =
-        typeof action === 'function'
-          ? action(selectedTask !== null)
-          : action;
+        typeof action === 'function' ? action(selectedTask !== null) : action;
       if (!next) {
         setSelectedTaskId(null);
       }
