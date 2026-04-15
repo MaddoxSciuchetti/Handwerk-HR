@@ -2,6 +2,7 @@ import FormFields from '@/components/form/FormFields';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/selfmade/button';
 import { FormWrapper } from '@/components/ui/selfmade/form-wrapper';
+import type { TemplateEditState } from '@/features/template-tasks/components/TemplateTask';
 import { useSubmitTemplate } from '@/features/template-tasks/hooks/useSubmitTemplate';
 import { Check, X } from 'lucide-react';
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
@@ -15,12 +16,14 @@ type TemplateSidebarProps = {
   isOpen: boolean;
   children?: ReactNode;
   setIsOpen: Dispatch<SetStateAction<boolean>>;
+  templateEditState: TemplateEditState;
 };
 
 function TemplateSidebar({
   isOpen,
   children,
   setIsOpen,
+  templateEditState,
 }: TemplateSidebarProps) {
   const { register, handleSubmit, onSubmit, errors } = useSubmitTemplate();
   return (
@@ -50,6 +53,7 @@ function TemplateSidebar({
               <FormFields
                 errors={errors}
                 register={register}
+                defaultValue={templateEditState.templateName}
                 name="templateName"
                 label="Name des Templates"
                 labelClassName="typo-body-base"
@@ -57,6 +61,7 @@ function TemplateSidebar({
               <FormFields
                 errors={errors}
                 register={register}
+                defaultValue={templateEditState.templateDescription ?? ''}
                 name="templateDescription"
                 label="Beschreibung des Templates"
                 labelClassName="typo-body-base"
@@ -64,6 +69,7 @@ function TemplateSidebar({
               <FormFields
                 errors={errors}
                 register={register}
+                defaultValue={templateEditState.templateType ?? ''}
                 name="type"
                 label="Label"
                 labelClassName="typo-body-base"

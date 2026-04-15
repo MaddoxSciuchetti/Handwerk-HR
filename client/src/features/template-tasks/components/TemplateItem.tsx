@@ -2,14 +2,22 @@ import { Cell, GrowingItem, Items } from '@/components/ui/selfmade/table/Table';
 import { cn } from '@/lib/trycatch';
 import { useNavigate } from '@tanstack/react-router';
 import { PencilIcon, TrashIcon } from 'lucide-react';
+import { Dispatch, SetStateAction } from 'react';
 import { useDeleteTemplate } from '../hooks/useDeleteTemplate';
 import type { IssueTemplateListItem } from '../types/template.types';
+import type { TemplateEditState } from './TemplateTask';
 
 type TemplateItemProps = {
   templates: IssueTemplateListItem[];
+  setIsEditTemplate: Dispatch<SetStateAction<TemplateEditState>>;
+  setIsOpen: Dispatch<SetStateAction<boolean>>;
 };
 
-export function TemplateItem({ templates }: TemplateItemProps) {
+export function TemplateItem({
+  templates,
+  setIsEditTemplate,
+  setIsOpen,
+}: TemplateItemProps) {
   const navigate = useNavigate();
 
   const { deleteTemplate } = useDeleteTemplate();
@@ -56,7 +64,19 @@ export function TemplateItem({ templates }: TemplateItemProps) {
               'text-right typo-body-sm font-normal text-text-primary'
             )}
           >
-            <PencilIcon className="w-4 h-4" />
+            <PencilIcon
+              className="w-4 h-4"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsOpen(true);
+                setIsEditTemplate({
+                  templateId: template.id,
+                  templateName: template.templateName,
+                  templateDescription: template.templateDescription,
+                  templateType: template.type,
+                });
+              }}
+            />
             <TrashIcon
               className="w-4 h-4"
               onClick={(e) => {

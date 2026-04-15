@@ -17,6 +17,13 @@ import AddTemplateModal from './AddTemplateModal';
 import EditTemplateModal from './EditTemplateModal';
 import { TemplateItem } from './TemplateItem';
 
+export type TemplateEditState = {
+  templateId: string;
+  templateName: string;
+  templateDescription: string | null;
+  templateType: string | null;
+};
+
 function TemplateTasks() {
   const {
     filteredByType,
@@ -36,6 +43,12 @@ function TemplateTasks() {
 
   const searchSchema = z.object({ search: z.string().min(1) });
   const [isOpen, setIsOpen] = useState(false);
+  const [isEditTemplate, setIsEditTemplate] = useState<TemplateEditState>({
+    templateId: '',
+    templateName: '',
+    templateDescription: null,
+    templateType: null,
+  });
 
   useEffect(() => {
     setCurrentPage(1);
@@ -75,10 +88,17 @@ function TemplateTasks() {
             </Button>
           </TableHeader>
           <TableDivider />
-          <TemplateItem templates={templates ?? []} />
+          <TemplateItem
+            templates={templates ?? []}
+            setIsEditTemplate={setIsEditTemplate}
+            setIsOpen={setIsOpen}
+          />
         </Table>
-        <TemplateSidebar isOpen={isOpen} setIsOpen={setIsOpen} />
-
+        <TemplateSidebar
+          isOpen={isOpen}
+          setIsOpen={setIsOpen}
+          templateEditState={isEditTemplate}
+        />
         {renderModal()}
       </div>
     </div>
