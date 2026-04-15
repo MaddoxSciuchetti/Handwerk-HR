@@ -59,7 +59,7 @@ test.describe('Signup journey', () => {
     await page.waitForURL('**/worker-lifycycle');
     await expect(page).toHaveURL(/\/worker-lifycycle$/);
     await expect(
-      page.getByText(loginCredentials.email, { exact: true })
+      page.getByText(testUser.vorname, { exact: true })
     ).toBeVisible();
   });
 });

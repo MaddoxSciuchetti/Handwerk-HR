@@ -6,7 +6,7 @@ import { Suspense } from 'react';
 
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import Layout from '@/components/layout/Layout';
-import { SidebarProvider } from '@/components/ui/sidebar';
+import { CustomSideBarProvider } from '@/components/ui/sidebar/sidebar';
 import { RouterContext } from '@/router';
 import {
   createRootRouteWithContext,
@@ -43,13 +43,13 @@ function RootLayout() {
   }
 
   return (
-    <SidebarProvider>
+    <CustomSideBarProvider>
       <ErrorBoundary fallback={<ErrorAlert />}>
         <Suspense fallback={<LoadingAlert fullScreen />}>
           <Toaster position="top-center" />
           <Layout />
         </Suspense>
       </ErrorBoundary>
-    </SidebarProvider>
+    </CustomSideBarProvider>
   );
 }

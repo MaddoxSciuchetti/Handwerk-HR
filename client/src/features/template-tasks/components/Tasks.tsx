@@ -20,8 +20,8 @@ const Tasks = ({ items }: TasksProps) => {
   const { deleteDescription } = useDeleteDescription();
   const { openEditTask } = useTemplateModalContext();
   return (
-    <div className="rounded-lg min-h-150 max-h-150 overflow-hidden">
-      <ul className="divide-y divide-border mt-3 border rounded-2xl ">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg">
+      <ul className="mt-3 min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-2xl">
         {items?.map((item) => (
           <li
             className="group flex items-center overflow-x-hidden border-b last:border-b-0 justify-between gap-4 px-4 py-3 transition-colors hover:bg-(--secondary)"

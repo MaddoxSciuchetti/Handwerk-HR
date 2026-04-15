@@ -36,7 +36,7 @@ export type UpdatePayload = Partial<
   }
 >;
 
-export type LifecycleType = 'Onboarding' | 'Offboarding';
+export type LifecycleType = 'onboarding' | 'offboarding';
 
 export type CreateWorkerTaskPayload = {
   description: string;

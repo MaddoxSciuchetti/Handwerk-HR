@@ -1,14 +1,16 @@
+import { Session, User } from "@/generated/prisma/client";
 import jwt, { JwtPayload, SignOptions, VerifyOptions } from "jsonwebtoken";
 import { JWT_REFRESH_SECRET, JWT_SECRET } from "../constants/env";
-import { Session, User } from "@/generated/prisma/client";
 
 export type RefreshTokenPayload = {
-    sessionId: Session["id"];
+    sessionId?: Session["id"]; // v1
+    tokenId?: string; // v2
 };
 
 export type AccessTokenPayload = {
     userId: User["id"];
-    sessionId: Session["id"];
+    sessionId?: string; // v1 — was Session["id"]
+    tokenId?: string; // v2
 };
 
 type SignOptionsAndSecret = SignOptions & {

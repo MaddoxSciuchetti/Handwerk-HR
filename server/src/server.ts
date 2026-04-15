@@ -11,6 +11,8 @@ import errorHandler from "./middleware/errorHandler";
 import authRoutes from "./routes/auth.route";
 import { employeeRoutes } from "./routes/employee.route";
 import { indexRoutes } from "./routes/index.route";
+import inviteRoutes from "./routes/invite.route";
+import orgRoutes from "./routes/org.route";
 import sessionRoutes from "./routes/session.route";
 import { templateRoutes } from "./routes/template.route";
 import testRoutes from "./routes/test.route";
@@ -82,6 +84,9 @@ app.use("/index", authenticate, indexRoutes);
 
 // worker
 app.use("/worker", authenticate, worker);
+
+app.use("/org", authenticate, orgRoutes);
+app.use("/invites", inviteRoutes);
 
 app.use(errorHandler);
 

@@ -9,7 +9,14 @@ export function HandwerkerHeader() {
         <p className="items-center">Handwerker</p>
       </div>
       <div className="flex items-center gap-2">
-        <SelectDropdown state="Open" size="lg" icon={ChevronUpIcon} />
+        <SelectDropdown
+          state="Open"
+          size="lg"
+          icon={ChevronUpIcon}
+          options={[]}
+          setValue={() => {}}
+          value={''}
+        />
         <ToggleSwitch />
       </div>
     </div>

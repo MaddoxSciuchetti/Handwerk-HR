@@ -1,20 +1,33 @@
 import LoadingAlert from '@/components/alerts/LoadingAlert';
-import SearchHeaderResuable from '@/components/layout/headers/SearchHeaderResuable';
 import ModalOverlay from '@/components/modal/ModalOverlay';
-import { useEffect } from 'react';
+import { Button } from '@/components/ui/selfmade/button';
+import {
+  Table,
+  TableDivider,
+  TableHeader,
+} from '@/components/ui/selfmade/table/Table';
+import { SettingsStatusesHeader } from '@/features/settings/org-statuses/SettingsStatusesHeader';
+import TemplateSidebar from '@/features/task-management/components/tasks/task-sidebar/TaskSidebar';
+import { useEffect, useState } from 'react';
+import z from 'zod';
 import useFetchTask from '../hooks/useFetchTask';
+import { useGetTemplates } from '../hooks/useGetTemplates';
 import useTemplateModalContext from '../hooks/useTemplateModalContext';
 import AddTemplateModal from './AddTemplateModal';
 import EditTemplateModal from './EditTemplateModal';
-import TabsFooter from './TabsFooter';
-import TabsHeader from './TabsHeader';
-import Tasks from './Tasks';
+import { TemplateItem } from './TemplateItem';
+
+export type TemplateEditState = {
+  templateId: string;
+  templateName: string;
+  templateDescription: string | null;
+  templateType: string | null;
+};
 
 function TemplateTasks() {
   const {
     filteredByType,
     taskLengthByTemplateType,
-    isLoading,
     search,
     setSearch,
     currentPage,
@@ -23,8 +36,19 @@ function TemplateTasks() {
     paginatedType,
   } = useFetchTask();
 
+  const { data: templates, isLoading, isError } = useGetTemplates();
+
   const { modalState, closeTask, openCreateTask, openEditTask, tab, setTab } =
     useTemplateModalContext();
+
+  const searchSchema = z.object({ search: z.string().min(1) });
+  const [isOpen, setIsOpen] = useState(false);
+  const [isEditTemplate, setIsEditTemplate] = useState<TemplateEditState>({
+    templateId: '',
+    templateName: '',
+    templateDescription: null,
+    templateType: null,
+  });
 
   useEffect(() => {
     setCurrentPage(1);
@@ -51,28 +75,32 @@ function TemplateTasks() {
   }
 
   return (
-    <div
-      role="region"
-      aria-label="Template Aufgaben Verwaltung"
-      className="mx-auto flex h-full w-5xl flex-col overflow-auto rounded-2xl bg-card p-6 md:max-w-8xl"
-    >
-      <SearchHeaderResuable
-        search={search}
-        setSearch={setSearch}
-        description="Add Task"
-        openModal={openCreateTask}
-      />
-      <TabsHeader tab={tab} setTab={setTab} />
-      <Tasks items={paginatedType[tab]} openEditTask={openEditTask} />
-      <TabsFooter
-        currentPage={currentPage}
-        tab={tab}
-        postsPerPage={postsPerPage}
-        taskLengthByTemplateType={taskLengthByTemplateType}
-        setCurrentPage={setCurrentPage}
-        totalPosts={filteredByType[tab].length}
-      />
-      {renderModal()}
+    <div className="mx-auto flex h-full flex-col overflow-auto rounded-2xl bg-card p-6 md:max-w-8xl">
+      <div className="h-full w-full flex flex-col items-center justify-center">
+        <SettingsStatusesHeader
+          title="Template Aufgaben"
+          description="Verwalte deine Template Aufgaben"
+        />
+        <Table className="w-200">
+          <TableHeader className="gap-3 py-2">
+            <Button type="button" onClick={() => setIsOpen(true)}>
+              Hinzufügen
+            </Button>
+          </TableHeader>
+          <TableDivider />
+          <TemplateItem
+            templates={templates ?? []}
+            setIsEditTemplate={setIsEditTemplate}
+            setIsOpen={setIsOpen}
+          />
+        </Table>
+        <TemplateSidebar
+          isOpen={isOpen}
+          setIsOpen={setIsOpen}
+          templateEditState={isEditTemplate}
+        />
+        {renderModal()}
+      </div>
     </div>
   );
 }

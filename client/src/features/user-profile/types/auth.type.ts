@@ -1,13 +1,16 @@
 export type User = {
   id: string;
   email: string;
-  verified: boolean;
-  user_permission: 'CHEF' | 'MITARBEITER';
-  createdAt: Date;
-  updatedAt: Date;
-  vorname: string;
-  nachname: string;
-  cloud_url: string;
+  verified?: boolean;
+  isEmailVerified?: boolean;
+  user_permission?: 'CHEF' | 'MITARBEITER';
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  firstName?: string;
+  lastName?: string;
+  cloud_url?: string;
+  displayName?: string;
+  avatarUrl?: string;
   presignedUrl?: string;
 };
 

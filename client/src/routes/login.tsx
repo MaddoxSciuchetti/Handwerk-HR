@@ -1,4 +1,4 @@
-import { LoginComponent } from '@/features/auth/components/Login';
+import { StandardUserLogin } from '@/features/auth/components/StandardUserLogin';
 import { createFileRoute } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/login')({
@@ -6,5 +6,5 @@ export const Route = createFileRoute('/login')({
 });
 
 export default function LoginForm() {
-  return <LoginComponent />;
+  return <StandardUserLogin />;
 }

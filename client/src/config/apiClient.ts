@@ -50,4 +50,35 @@ API.interceptors.response.use(
   }
 );
 
+/**
+ * Typed helpers for this axios instance: the response interceptor returns
+ * `response.data`, but Axios defaults still use `AxiosResponse<T>`. Use these
+ * methods when you want `Promise<T>` (the JSON body) without repeating `<T, T>`.
+ */
+export const apiJson = {
+  get: <T>(url: string, config?: AxiosRequestConfig) =>
+    API.get<T, T>(url, config),
+
+  post: <T, D = unknown>(
+    url: string,
+    data?: D,
+    config?: AxiosRequestConfig<D>
+  ) => API.post<T, T, D>(url, data, config),
+
+  patch: <T, D = unknown>(
+    url: string,
+    data?: D,
+    config?: AxiosRequestConfig<D>
+  ) => API.patch<T, T, D>(url, data, config),
+
+  put: <T, D = unknown>(
+    url: string,
+    data?: D,
+    config?: AxiosRequestConfig<D>
+  ) => API.put<T, T, D>(url, data, config),
+
+  delete: <T = void>(url: string, config?: AxiosRequestConfig) =>
+    API.delete<T, T>(url, config),
+};
+
 export default API;

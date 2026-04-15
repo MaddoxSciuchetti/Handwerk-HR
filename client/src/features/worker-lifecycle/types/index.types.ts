@@ -68,3 +68,64 @@ export type WorkerOverviewResponse = {
     fields: WorkerOverviewField[];
   };
 };
+
+export type WorkerStatus = 'active' | 'inactive' | 'archived';
+
+export type EngagementType = 'onboarding' | 'offboarding' | 'transfer';
+
+export type WorkerEngagement = {
+  id: string;
+  type: EngagementType;
+  startDate: string | null;
+  endDate: string | null;
+  engagementStatus: {
+    id: string;
+    name: string;
+    color: string | null;
+  };
+  responsibleUser: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+};
+
+export type WorkerRecord = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  position: string | null;
+  status: WorkerStatus;
+  archivedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  engagements: WorkerEngagement[];
+};
+
+export type WorkerDetailResponse = {
+  success: boolean;
+  data: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    birthday: string | null;
+    position: string | null;
+    street: string | null;
+    city: string | null;
+    state: string | null;
+    postalCode: string | null;
+    country: string | null;
+    entryDate: string | null;
+    exitDate: string | null;
+    engagements: Array<
+      WorkerEngagement & {
+        issues?: Array<{ id: string }>;
+      }
+    >;
+  };
+};
+
+export type EngagementStatus = 'active' | 'archived';

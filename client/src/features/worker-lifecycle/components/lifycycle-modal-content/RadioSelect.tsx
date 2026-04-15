@@ -6,12 +6,12 @@ import {
   FieldTitle,
 } from '@/components/ui/field';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { LifecycleType } from '@/features/task-management/types/index.types';
+import { AddWorker } from '@/features/worker-lifecycle/schemas/zod.schemas';
 import { Dispatch, SetStateAction } from 'react';
 
 type RadioSelectProps = {
-  selectedOption: LifecycleType | null;
-  setSelectedOption: Dispatch<SetStateAction<LifecycleType | null>>;
+  selectedOption: AddWorker['type'] | null;
+  setSelectedOption: Dispatch<SetStateAction<AddWorker['type'] | null>>;
 };
 
 const RadioSelect = ({
@@ -22,7 +22,7 @@ const RadioSelect = ({
     <>
       <RadioGroup
         className="h-full flex flex-row items-center"
-        onValueChange={(value) => setSelectedOption(value as LifecycleType)}
+        onValueChange={(value) => setSelectedOption(value as AddWorker['type'])}
         value={selectedOption}
       >
         <FieldLabel

@@ -1,21 +1,12 @@
 import FormFields from '@/components/form/FormFields';
-import { LifecycleType } from '@/features/task-management/types/index.types';
-import {
-  AddWorker,
-  addWorkerSchema,
-} from '@/features/worker-lifecycle/schemas/zod.schemas';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
-import { useMemo } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
+import { AddWorker } from '@/features/worker-lifecycle/schemas/zod.schemas';
 import { Button } from '../../../../components/ui/button';
-import { Inputs } from '../../consts/form.consts';
-import { workerLifecycleMutations } from '../../query-options/mutations/worker-lifycycle.mutations';
+import { useAddWorker } from '../../hooks/useAddWorker';
+import { useMemoizedInputs } from '../../hooks/useMemoizedInputs';
 
 interface WorkerFormProps {
-  setSelectedOption: (value: LifecycleType | null) => void;
-  type: LifecycleType;
+  setSelectedOption: (value: AddWorker['type'] | null) => void;
+  type: AddWorker['type'];
   toggleModal: () => void;
   className?: string;
 }
@@ -26,43 +17,16 @@ export const WorkerForm = ({
   toggleModal,
 }: WorkerFormProps) => {
   const {
-    mutateAsync: addWorkerMutation,
+    register,
+    handleSubmit,
+    submitWorkerForm,
+    errors,
     isError,
     error,
     isPending,
-  } = useMutation(workerLifecycleMutations.addWorker());
+  } = useAddWorker(type, toggleModal);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<AddWorker>({
-    resolver: zodResolver(addWorkerSchema),
-    defaultValues: {
-      type: type,
-    },
-    criteriaMode: 'all',
-  });
-
-  const submitWorkerForm = async (data: AddWorker) => {
-    await addWorkerMutation(data);
-    toast.success('Mitarbeiter erstellt und Benachrichtigungen versendet');
-    toggleModal();
-  };
-
-  const useMemoizedInputs = useMemo(() => {
-    const offboardingInputs =
-      type === 'Offboarding'
-        ? [
-            {
-              name: 'austrittsdatum' as const,
-              placeholder: 'Austrittsdatum DD.MM.YYYY',
-              required: type === 'Offboarding',
-            },
-          ]
-        : [];
-    return [...Inputs, ...offboardingInputs];
-  }, [type]);
+  const memoizedInputs = useMemoizedInputs(type);
 
   return (
     <>
@@ -85,7 +49,7 @@ export const WorkerForm = ({
         </Button>
         <h1 className="text-left">Eingabe {type}</h1>
         <div className="grid grid-cols-2 gap-3 pb-10 ">
-          {useMemoizedInputs.map((input) => (
+          {memoizedInputs.map((input) => (
             <div key={input.name}>
               <FormFields
                 errors={errors}
@@ -95,8 +59,6 @@ export const WorkerForm = ({
               />
             </div>
           ))}
-
-          {/* <Input type="hidden" {...register('type')} value={type} /> */}
         </div>
         <Button
           variant={'outline'}

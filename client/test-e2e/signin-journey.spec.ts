@@ -53,8 +53,9 @@ test.describe('Signin journey', () => {
 
     await page.waitForURL('**/worker-lifycycle');
     await expect(page).toHaveURL(/\/worker-lifycycle$/);
+    console.log(await page.content());
     await expect(
-      page.getByText(loginCredentials.email, { exact: true })
+      page.getByText(testUser.vorname, { exact: true })
     ).toBeVisible();
   });
 });

@@ -1,5 +1,5 @@
 import API from '@/config/apiClient';
-import { TFeatureForm } from '@/features/sidebar/feature-modal/FeatureModal';
+import { TFeatureForm } from '@/features/sidebar/schemas/sidebar.schemas';
 import { FileResponse } from '@/types/api.types';
 
 export const logout = async () => API.get('/auth/logout');

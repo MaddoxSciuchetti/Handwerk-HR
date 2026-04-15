@@ -5,7 +5,9 @@ import {
   NewDescriptionField,
   SuccessResponse,
 } from '@/types/api.types';
+import { TemplateSubmission } from '../hooks/useSubmitTemplate';
 import { EditDescriptionData } from '../types/taskForm.types';
+import type { IssueTemplateListItem } from '../types/template.types';
 
 export type DeleteTaskResponse = {
   description: string | null;
@@ -17,12 +19,12 @@ export type DeleteTaskResponse = {
 };
 
 export const deleteTemplateTask = async (
-  id: number
+  id: string
 ): Promise<SuccessResponse<string>> => {
   const response = await API.delete<
     SuccessResponse<string>,
     SuccessResponse<string>
-  >(`/template/task/${id}`);
+  >(`/template/${id}`);
   return response;
 };
 
@@ -32,9 +34,27 @@ export const createTemplateTask = async (data: {
   owner: string;
 }): Promise<NewDescriptionField> => {
   const response = await API.post<NewDescriptionField, NewDescriptionField>(
-    `/template/createTask`,
+    `/template`,
     data
   );
+  return response;
+};
+
+export const createTemplateTaskV2 = async (
+  data: TemplateSubmission
+): Promise<TemplateSubmission> => {
+  const response = await API.post<TemplateSubmission, TemplateSubmission>(
+    `/template/`,
+    data
+  );
+  return response;
+};
+
+export const getTemplatesV2 = async (): Promise<IssueTemplateListItem[]> => {
+  const response = await API.get<
+    IssueTemplateListItem[],
+    IssueTemplateListItem[]
+  >('/template');
   return response;
 };
 

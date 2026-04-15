@@ -7,7 +7,10 @@ declare global {
     namespace Express {
         interface Request {
             userId: DebugUser["id"];
-            sessionId: DebugSession["id"];
+            tokenId?: string;
+            sessionId?: string;
+            /** Set when the user has an active organization membership. */
+            orgId?: string;
         }
     }
 }

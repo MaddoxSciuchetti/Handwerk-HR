@@ -1,21 +1,48 @@
-import { Home, Inbox, Settings } from 'lucide-react';
+import { FileText, Inbox, ListCheck, Ticket, UserRound } from 'lucide-react';
 
 export const LAYOUTITEMS = [
   {
-    title: 'Meine Mitarbeiter',
-    to: '/employee-overview',
-    icon: Home,
-    requiredPermission: 'CHEF',
-  },
-  {
-    title: 'Meine Handwerker',
+    title: 'Handwerker',
     to: '/worker-lifycycle',
     icon: Inbox,
   },
   {
-    title: 'Vorlage',
+    title: 'Aufgaben',
     to: '/template',
-    icon: Settings,
-    requiredPermission: 'CHEF',
+    icon: Ticket,
+  },
+  {
+    title: 'Mitarbeiter',
+    to: '/employee-overview',
+    icon: UserRound,
+  },
+];
+
+export const SETTINGSITEMS = [
+  {
+    title: 'Profil',
+    to: '/settings/profile',
+    icon: UserRound,
+  },
+
+  {
+    title: 'Mitarbeiter',
+    to: '/settings/employees',
+    icon: UserRound,
+  },
+  {
+    title: 'Aufgaben',
+    to: '/settings/issue-statuses',
+    icon: ListCheck,
+  },
+  {
+    title: 'Handwerker',
+    to: '/settings/engagement-statuses',
+    icon: Inbox,
+  },
+  {
+    title: 'Templates',
+    to: '/settings/templates/template',
+    icon: FileText,
   },
 ];

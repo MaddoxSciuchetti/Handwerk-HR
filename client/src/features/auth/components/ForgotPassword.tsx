@@ -6,7 +6,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { CheckCircle } from 'lucide-react';
 import { useState } from 'react';
 import { authMutations } from '../query-options/mutations/auth.mutations';
-import DoorManCard from './resuable/DoorManCard';
+import DoorManWrapper from './resuable/DoorManCard';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState<string>('');
@@ -20,7 +20,7 @@ const ForgotPassword = () => {
   } = useMutation(authMutations.passwortResetMail());
 
   return (
-    <DoorManCard>
+    <DoorManWrapper>
       <div className="flex flex-col text-center space-y-4">
         {isError && (
           <div className="text-destructive">
@@ -83,7 +83,7 @@ const ForgotPassword = () => {
           </button>
         </p>
       </div>
-    </DoorManCard>
+    </DoorManWrapper>
   );
 };
 

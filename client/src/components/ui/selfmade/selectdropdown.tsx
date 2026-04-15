@@ -1,5 +1,6 @@
 import { cn } from '@/lib/trycatch';
 import { LucideIcon } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 type State = 'Default' | 'Open';
 const DropdownStates: Record<State, string> = {
@@ -13,32 +14,76 @@ const sizes: Record<Size, string> = {
   lg: 'h-9 w-60',
 };
 
-type SelectDropdownProps = {
+type OptionsObjekt = {
+  label: string;
+  value: string;
+  action?: () => void;
+};
+
+type SelectDropdownProps<T extends string> = {
   state: State;
   size: Size;
   icon: LucideIcon;
+  label?: string;
+  options: OptionsObjekt[];
+  setValue: (value: T) => void;
+  value: string;
 };
 
-export function SelectDropdown({
+export function SelectDropdown<T extends string>({
   state,
   size,
   icon: Icon,
-}: SelectDropdownProps) {
+  label,
+  options,
+  setValue,
+  value,
+}: SelectDropdownProps<T>) {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const handeClick = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setIsOpen(false);
+    };
+    document.addEventListener('click', handeClick);
+    return () => document.removeEventListener('click', handeClick);
+  }, []);
+
   return (
     <div
+      ref={ref}
       className={cn(
-        'rounded-lg px-3 flex items-center w-full',
+        'relative rounded-lg border border-interactive-disabled-text px-3 flex items-center w-full',
         DropdownStates[state],
         sizes[size]
       )}
+      onClick={() => setIsOpen(!isOpen)}
     >
-      <p className="text-body-sm flex-grow text-text-disabled">Maddox</p>
+      <p className="typo-body-sm grow text-text-disabled">{value ?? label}</p>
       <Icon
         className={cn(
           `w-6 h-6 text-text-disabled transition-transform duration-200`,
-          state === 'Open' ? 'rotate-90' : 'rotate-0'
+          isOpen ? 'rotate-90' : 'rotate-0'
         )}
       />
+      {isOpen && (
+        <div className="absolute z-10 p-2 bg-surface-page top-full rounded-xl border  left-0 w-full">
+          {options.map((option, index) => (
+            <div
+              className=""
+              onClick={(e) => {
+                e.stopPropagation();
+                setValue(option.value as T);
+                setIsOpen(false);
+                option.action ? option.action() : () => {};
+              }}
+              key={index}
+            >
+              {option.label}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

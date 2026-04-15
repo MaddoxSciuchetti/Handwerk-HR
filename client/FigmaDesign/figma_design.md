@@ -1,0 +1,161 @@
+# HR-Handwerk Figma Variables
+
+Source file: `https://www.figma.com/design/iWT9yonjrDU7vNCDNdA7ig/HR-Handwerk`
+
+## Collections
+
+- `Primitives` (67 variables)
+- `Tokens` (77 variables)
+
+## Primitives (Colors)
+
+- `Primitives/Brand/Blue/blue-50` = `#EFF6FF`
+- `Primitives/Brand/Blue/blue-100` = `#DBEAFE`
+- `Primitives/Brand/Blue/blue-200` = `#BFDBFE`
+- `Primitives/Brand/Blue/blue-300` = `#93C5FD`
+- `Primitives/Brand/Blue/blue-400` = `#60A5FA`
+- `Primitives/Brand/Blue/blue-500` = `#3B82F6`
+- `Primitives/Brand/Blue/blue-600` = `#2563EB`
+- `Primitives/Brand/Blue/blue-700` = `#1D4ED8`
+- `Primitives/Brand/Blue/blue-800` = `#1E40AF`
+- `Primitives/Brand/Blue/blue-900` = `#1E3A8A`
+- `Primitives/Brand/Blue/blue-950` = `#172554`
+- `Primitives/Brand/Neutral/neutral-0` = `#FFFFFF`
+- `Primitives/Brand/Neutral/neutral-50` = `#F8FAFC`
+- `Primitives/Brand/Neutral/neutral-100` = `#F1F5F9`
+- `Primitives/Brand/Neutral/neutral-200` = `#E2E8F0`
+- `Primitives/Brand/Neutral/neutral-300` = `#CBD5E1`
+- `Primitives/Brand/Neutral/neutral-400` = `#94A3B8`
+- `Primitives/Brand/Neutral/neutral-500` = `#64748B`
+- `Primitives/Brand/Neutral/neutral-600` = `#475569`
+- `Primitives/Brand/Neutral/neutral-700` = `#334155`
+- `Primitives/Brand/Neutral/neutral-800` = `#1E293B`
+- `Primitives/Brand/Neutral/neutral-900` = `#0F172A`
+- `Primitives/Brand/Neutral/neutral-950` = `#020617`
+- `Primitives/Global/Red/red-50` = `#FEF2F2`
+- `Primitives/Global/Red/red-100` = `#FEE2E2`
+- `Primitives/Global/Red/red-200` = `#FECACA`
+- `Primitives/Global/Red/red-300` = `#FCA5A5`
+- `Primitives/Global/Red/red-400` = `#F87171`
+- `Primitives/Global/Red/red-500` = `#EF4444`
+- `Primitives/Global/Red/red-600` = `#DC2626`
+- `Primitives/Global/Red/red-700` = `#B91C1C`
+- `Primitives/Global/Red/red-800` = `#991B1B`
+- `Primitives/Global/Red/red-900` = `#7F1D1D`
+- `Primitives/Global/Red/red-950` = `#450A0A`
+- `Primitives/Global/Green/green-50` = `#F0FDF4`
+- `Primitives/Global/Green/green-100` = `#DCFCE7`
+- `Primitives/Global/Green/green-200` = `#BBF7D0`
+- `Primitives/Global/Green/green-300` = `#86EFAC`
+- `Primitives/Global/Green/green-400` = `#4ADE80`
+- `Primitives/Global/Green/green-500` = `#22C55E`
+- `Primitives/Global/Green/green-600` = `#16A34A`
+- `Primitives/Global/Green/green-700` = `#15803D`
+- `Primitives/Global/Green/green-800` = `#166534`
+- `Primitives/Global/Green/green-900` = `#14532D`
+- `Primitives/Global/Green/green-950` = `#052E16`
+- `Primitives/Global/Amber/amber-50` = `#FFFBEB`
+- `Primitives/Global/Amber/amber-100` = `#FEF3C7`
+- `Primitives/Global/Amber/amber-200` = `#FDE68A`
+- `Primitives/Global/Amber/amber-300` = `#FCD34D`
+- `Primitives/Global/Amber/amber-400` = `#FBBF24`
+- `Primitives/Global/Amber/amber-500` = `#F59E0B`
+- `Primitives/Global/Amber/amber-600` = `#D97706`
+- `Primitives/Global/Amber/amber-700` = `#B45309`
+- `Primitives/Global/Amber/amber-800` = `#92400E`
+- `Primitives/Global/Amber/amber-900` = `#78350F`
+- `Primitives/Global/Amber/amber-950` = `#451A03`
+
+## Primitives (Other Types)
+
+- `Primitives/Scale/space/1` `[FLOAT]` = `4`
+- `Primitives/Scale/space/2` `[FLOAT]` = `8`
+- `Primitives/Scale/space/3` `[FLOAT]` = `12`
+- `Primitives/Scale/space/4` `[FLOAT]` = `16`
+- `Primitives/Scale/space/5` `[FLOAT]` = `20`
+- `Primitives/Scale/space/6` `[FLOAT]` = `24`
+- `Primitives/Scale/space/8` `[FLOAT]` = `32`
+- `Primitives/Scale/space/10` `[FLOAT]` = `40`
+- `Primitives/Scale/space/12` `[FLOAT]` = `48`
+- `Primitives/Scale/space/16` `[FLOAT]` = `64`
+- `Primitives/Scale/space/20` `[FLOAT]` = `80`
+
+## Tokens (All)
+
+- `Tokens/Border/brand` `[COLOR]` = `alias(Primitives/Brand/Blue/blue-400)`
+- `Tokens/Border/default` `[COLOR]` = `alias(Primitives/Brand/Neutral/neutral-200)`
+- `Tokens/Border/strong` `[COLOR]` = `alias(Primitives/Brand/Neutral/neutral-400)`
+- `Tokens/Border/subtle` `[COLOR]` = `alias(Primitives/Brand/Neutral/neutral-100)`
+- `Tokens/Feedback/danger-bg` `[COLOR]` = `alias(Primitives/Global/Red/red-50)`
+- `Tokens/Feedback/danger-bg-strong` `[COLOR]` = `alias(Primitives/Global/Red/red-100)`
+- `Tokens/Feedback/danger-border` `[COLOR]` = `alias(Primitives/Global/Red/red-200)`
+- `Tokens/Feedback/danger-icon` `[COLOR]` = `alias(Primitives/Global/Red/red-500)`
+- `Tokens/Feedback/danger-solid` `[COLOR]` = `alias(Primitives/Global/Red/red-600)`
+- `Tokens/Feedback/danger-text` `[COLOR]` = `alias(Primitives/Global/Red/red-700)`
+- `Tokens/Feedback/info-bg` `[COLOR]` = `alias(Primitives/Brand/Blue/blue-50)`
+- `Tokens/Feedback/info-bg-strong` `[COLOR]` = `alias(Primitives/Brand/Blue/blue-100)`
+- `Tokens/Feedback/info-border` `[COLOR]` = `alias(Primitives/Brand/Blue/blue-200)`
+- `Tokens/Feedback/info-icon` `[COLOR]` = `alias(Primitives/Brand/Blue/blue-500)`
+- `Tokens/Feedback/info-solid` `[COLOR]` = `alias(Primitives/Brand/Blue/blue-600)`
+- `Tokens/Feedback/info-text` `[COLOR]` = `alias(Primitives/Brand/Blue/blue-700)`
+- `Tokens/Feedback/success-bg` `[COLOR]` = `alias(Primitives/Global/Green/green-50)`
+- `Tokens/Feedback/success-bg-strong` `[COLOR]` = `alias(Primitives/Global/Green/green-100)`
+- `Tokens/Feedback/success-border` `[COLOR]` = `alias(Primitives/Global/Green/green-200)`
+- `Tokens/Feedback/success-icon` `[COLOR]` = `alias(Primitives/Global/Green/green-500)`
+- `Tokens/Feedback/success-solid` `[COLOR]` = `alias(Primitives/Global/Green/green-600)`
+- `Tokens/Feedback/success-text` `[COLOR]` = `alias(Primitives/Global/Green/green-700)`
+- `Tokens/Feedback/warning-bg` `[COLOR]` = `alias(Primitives/Global/Amber/amber-50)`
+- `Tokens/Feedback/warning-bg-strong` `[COLOR]` = `alias(Primitives/Global/Amber/amber-100)`
+- `Tokens/Feedback/warning-border` `[COLOR]` = `alias(Primitives/Global/Amber/amber-200)`
+- `Tokens/Feedback/warning-icon` `[COLOR]` = `alias(Primitives/Global/Amber/amber-500)`
+- `Tokens/Feedback/warning-solid` `[COLOR]` = `alias(Primitives/Global/Amber/amber-600)`
+- `Tokens/Feedback/warning-text` `[COLOR]` = `alias(Primitives/Global/Amber/amber-700)`
+- `Tokens/Interactive/danger-active` `[COLOR]` = `alias(Primitives/Global/Red/red-800)`
+- `Tokens/Interactive/danger-bg` `[COLOR]` = `alias(Primitives/Global/Red/red-600)`
+- `Tokens/Interactive/danger-hover` `[COLOR]` = `alias(Primitives/Global/Red/red-700)`
+- `Tokens/Interactive/danger-text` `[COLOR]` = `alias(Primitives/Brand/Neutral/neutral-0)`
+- `Tokens/Interactive/disabled-bg` `[COLOR]` = `alias(Primitives/Brand/Neutral/neutral-100)`
+- `Tokens/Interactive/disabled-border` `[COLOR]` = `alias(Primitives/Brand/Neutral/neutral-200)`
+- `Tokens/Interactive/disabled-text` `[COLOR]` = `alias(Primitives/Brand/Neutral/neutral-400)`
+- `Tokens/Interactive/focus-ring` `[COLOR]` = `alias(Primitives/Brand/Blue/blue-500)`
+- `Tokens/Interactive/ghost-bg-hover` `[COLOR]` = `alias(Primitives/Brand/Blue/blue-50)`
+- `Tokens/Interactive/ghost-border` `[COLOR]` = `alias(Primitives/Brand/Blue/blue-300)`
+- `Tokens/Interactive/ghost-text` `[COLOR]` = `alias(Primitives/Brand/Blue/blue-600)`
+- `Tokens/Interactive/primary-active` `[COLOR]` = `alias(Primitives/Brand/Blue/blue-800)`
+- `Tokens/Interactive/primary-bg` `[COLOR]` = `alias(Primitives/Brand/Blue/blue-600)`
+- `Tokens/Interactive/primary-hover` `[COLOR]` = `alias(Primitives/Brand/Blue/blue-700)`
+- `Tokens/Interactive/primary-text` `[COLOR]` = `alias(Primitives/Brand/Neutral/neutral-0)`
+- `Tokens/Interactive/secondary-bg` `[COLOR]` = `alias(Primitives/Brand/Blue/blue-50)`
+- `Tokens/Interactive/secondary-hover` `[COLOR]` = `alias(Primitives/Brand/Blue/blue-100)`
+- `Tokens/Interactive/secondary-text` `[COLOR]` = `alias(Primitives/Brand/Blue/blue-700)`
+- `Tokens/Radius/full` `[FLOAT]` = `9999`
+- `Tokens/Radius/lg` `[FLOAT]` = `alias(Primitives/Scale/space/3)`
+- `Tokens/Radius/md` `[FLOAT]` = `alias(Primitives/Scale/space/2)`
+- `Tokens/Radius/sm` `[FLOAT]` = `alias(Primitives/Scale/space/1)`
+- `Tokens/Radius/xl` `[FLOAT]` = `alias(Primitives/Scale/space/4)`
+- `Tokens/Size/btn-h-lg` `[FLOAT]` = `alias(Primitives/Scale/space/12)`
+- `Tokens/Size/btn-h-md` `[FLOAT]` = `alias(Primitives/Scale/space/10)`
+- `Tokens/Size/btn-h-sm` `[FLOAT]` = `alias(Primitives/Scale/space/8)`
+- `Tokens/Size/icon-lg` `[FLOAT]` = `alias(Primitives/Scale/space/6)`
+- `Tokens/Size/icon-md` `[FLOAT]` = `alias(Primitives/Scale/space/5)`
+- `Tokens/Size/icon-sm` `[FLOAT]` = `alias(Primitives/Scale/space/4)`
+- `Tokens/Size/icon-xl` `[FLOAT]` = `alias(Primitives/Scale/space/8)`
+- `Tokens/Size/input-h` `[FLOAT]` = `alias(Primitives/Scale/space/10)`
+- `Tokens/Size/input-h-lg` `[FLOAT]` = `alias(Primitives/Scale/space/12)`
+- `Tokens/Spacing/2xl` `[FLOAT]` = `alias(Primitives/Scale/space/12)`
+- `Tokens/Spacing/3xl` `[FLOAT]` = `alias(Primitives/Scale/space/16)`
+- `Tokens/Spacing/4xl` `[FLOAT]` = `alias(Primitives/Scale/space/20)`
+- `Tokens/Spacing/lg` `[FLOAT]` = `alias(Primitives/Scale/space/6)`
+- `Tokens/Spacing/md` `[FLOAT]` = `alias(Primitives/Scale/space/4)`
+- `Tokens/Spacing/sm` `[FLOAT]` = `alias(Primitives/Scale/space/3)`
+- `Tokens/Spacing/xl` `[FLOAT]` = `alias(Primitives/Scale/space/8)`
+- `Tokens/Spacing/xs` `[FLOAT]` = `alias(Primitives/Scale/space/2)`
+- `Tokens/Surface/card` `[COLOR]` = `alias(Primitives/Brand/Neutral/neutral-100)`
+- `Tokens/Surface/overlay` `[COLOR]` = `alias(Primitives/Brand/Neutral/neutral-200)`
+- `Tokens/Surface/page` `[COLOR]` = `alias(Primitives/Brand/Neutral/neutral-0)`
+- `Tokens/Surface/subtle` `[COLOR]` = `alias(Primitives/Brand/Neutral/neutral-50)`
+- `Tokens/Text/brand` `[COLOR]` = `alias(Primitives/Brand/Blue/blue-600)`
+- `Tokens/Text/disabled` `[COLOR]` = `alias(Primitives/Brand/Neutral/neutral-400)`
+- `Tokens/Text/inverse` `[COLOR]` = `alias(Primitives/Brand/Neutral/neutral-0)`
+- `Tokens/Text/primary` `[COLOR]` = `alias(Primitives/Brand/Neutral/neutral-900)`
+- `Tokens/Text/secondary` `[COLOR]` = `alias(Primitives/Brand/Neutral/neutral-500)`

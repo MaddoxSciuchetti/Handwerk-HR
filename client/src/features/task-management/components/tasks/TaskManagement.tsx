@@ -2,7 +2,12 @@ import ErrorAlert from '@/components/alerts/ErrorAlert';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import ModalOverlay from '@/components/modal/ModalOverlay';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { useState } from 'react';
+import {
+  useCallback,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
 import useFilteredData from '../../hooks/useFilteredData';
 import useTaskData from '../../hooks/useTaskData';
 import useTaskSubmit from '../../hooks/useTaskSubmit';
@@ -11,7 +16,10 @@ import WorkerFileUploads from '../files/WorkerFileUploads';
 import FilterByUser from '../header/filters/Filter.ByUser';
 import WorkerHeader from '../header/WorkerHeader';
 import AddWorkerTaskModal from './AddWorkerTaskModal';
-import TaskSidebar from './task-sidebar/TaskSidebar';
+import SidebarHeader from './task-sidebar/SidebarHeader';
+import TemplateSidebar from './task-sidebar/TaskSidebar';
+import TaskSidebarBody from './task-sidebar/TaskSidebarBody';
+import TaskSidebarHeader from './task-sidebar/TaskSidebarHeader';
 import TaskIndividual from './TaskIndividual';
 
 type TaskManagementProps = {
@@ -38,6 +46,17 @@ const TaskManagement = ({ workerId, lifecycleType }: TaskManagementProps) => {
 
   const selectedTask =
     displayData.find((field) => field.id === selectedTaskId) ?? null;
+
+  const setIsOpen = useCallback<Dispatch<SetStateAction<boolean>>>(
+    (action) => {
+      const next =
+        typeof action === 'function' ? action(selectedTask !== null) : action;
+      if (!next) {
+        setSelectedTaskId(null);
+      }
+    },
+    [selectedTask, setSelectedTaskId]
+  );
 
   const searchValue =
     activeTab === 'files' ? fileDescriptionSearch : descriptionSearch;
@@ -77,11 +96,25 @@ const TaskManagement = ({ workerId, lifecycleType }: TaskManagementProps) => {
               selectedTaskId={selectedTaskId}
               handleSelectTask={setSelectedTaskId}
             />
-            <TaskSidebar
-              selectedTask={selectedTask}
-              setSelectedTaskId={setSelectedTaskId}
-              handleSubmit={handleSubmit}
-            />
+            <TemplateSidebar
+              isOpen={selectedTask !== null}
+              setIsOpen={setIsOpen}
+            >
+              {selectedTask ? (
+                <>
+                  <SidebarHeader>
+                    <TaskSidebarHeader
+                      selectedTask={selectedTask}
+                      setSelectedTaskId={setSelectedTaskId}
+                    />
+                  </SidebarHeader>
+                  <TaskSidebarBody
+                    selectedTask={selectedTask}
+                    handleSubmit={handleSubmit}
+                  />
+                </>
+              ) : null}
+            </TemplateSidebar>
           </TabsContent>
           <TabsContent value="files">
             <WorkerFileUploads

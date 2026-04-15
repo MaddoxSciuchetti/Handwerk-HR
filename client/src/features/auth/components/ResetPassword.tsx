@@ -3,7 +3,7 @@ import ResetPasswordForm from '@/features/auth/components/ResetPasswordForm';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { AlertCircle } from 'lucide-react';
 import { currentDate } from '../utils/dateNow';
-import DoorManCard from './resuable/DoorManCard';
+import DoorManWrapper from './resuable/DoorManCard';
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -21,7 +21,7 @@ const ResetPassword = () => {
   }
 
   return (
-    <DoorManCard>
+    <DoorManWrapper>
       <div className="flex flex-col items-center space-y-4 text-center">
         <Alert variant="destructive" className="w-fit rounded-xl">
           <AlertCircle className="h-4 w-4" />
@@ -37,7 +37,7 @@ const ResetPassword = () => {
           Request a new password reset link
         </button>
       </div>
-    </DoorManCard>
+    </DoorManWrapper>
   );
 };
 
