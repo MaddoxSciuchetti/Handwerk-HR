@@ -1,6 +1,4 @@
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/selfmade/button';
-import { Input } from '@/components/ui/selfmade/input';
 import { X } from 'lucide-react';
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
 import { SidebarAside } from './SidebarAside';
@@ -21,20 +19,26 @@ function TemplateSidebar({
   setIsOpen,
 }: TemplateSidebarProps) {
   return (
-    <SidebarAside isOpen={isOpen}>
-      <SidebarPanel>
-        <SidebarHeader className="flex items-center justify-end py-3">
-          <Button onClick={() => setIsOpen(false)}>
-            <X className="h-4 w-4" aria-hidden />
-          </Button>
-        </SidebarHeader>
-        <SidebarContent>
-          <Label>Name</Label>
-          <Input />
-        </SidebarContent>
-        <SidebarFooter />
-      </SidebarPanel>
-    </SidebarAside>
+    <>
+      {isOpen ? (
+        <div
+          className="fixed inset-0 z-40 bg-black/25 dark:bg-black/40"
+          aria-hidden
+          onClick={() => setIsOpen(false)}
+        />
+      ) : null}
+      <SidebarAside isOpen={isOpen}>
+        <SidebarPanel>
+          <SidebarHeader className="flex items-center justify-end py-3">
+            <Button type="button" onClick={() => setIsOpen(false)}>
+              <X className="h-4 w-4" aria-hidden />
+            </Button>
+          </SidebarHeader>
+          <SidebarContent>{children}</SidebarContent>
+          <SidebarFooter />
+        </SidebarPanel>
+      </SidebarAside>
+    </>
   );
 }
 

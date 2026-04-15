@@ -14,7 +14,7 @@ export function SidebarAside({
   return (
     <aside
       className={cn(
-        'fixed right-0 top-0 z-50 h-screen overflow-hidden border-l border-border bg-(--card) transition-all duration-300 ease-out',
+        'fixed right-1 top-1 bottom-1 z-50 overflow-hidden rounded-4xl border border-border bg-(--card) transition-all duration-300 ease-out',
         isOpen ? 'w-110' : 'w-0',
         className
       )}
