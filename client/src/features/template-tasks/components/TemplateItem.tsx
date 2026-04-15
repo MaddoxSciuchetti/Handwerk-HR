@@ -73,6 +73,7 @@ export function TemplateItem({
               className="w-4 h-4"
               onClick={(e) => {
                 e.stopPropagation();
+                e.preventDefault();
                 setIsOpen(true);
                 setTemplateState('edit');
                 setIsEditTemplate({
@@ -86,6 +87,7 @@ export function TemplateItem({
             <TrashIcon
               className="w-4 h-4"
               onClick={(e) => {
+                e.preventDefault();
                 e.stopPropagation();
                 deleteTemplate(template.id);
               }}

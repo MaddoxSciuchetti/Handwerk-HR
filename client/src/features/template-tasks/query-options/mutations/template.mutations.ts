@@ -7,10 +7,7 @@ import {
   updateTemplate,
   UpdateTemplateParams,
 } from '../../api';
-import {
-  DESCRIPTION_ROOT,
-  TEMPLATES_LIST_ROOT,
-} from '../../consts/query-key.consts';
+import { TEMPLATES_LIST_ROOT } from '../../consts/query-key.consts';
 import { TemplateSubmission } from '../../hooks/useSubmitTemplate';
 
 export const templateMutations = {
@@ -27,7 +24,7 @@ export const templateMutations = {
       mutationFn: ({ data, templateId }) =>
         updateTemplate({ data, templateId }),
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: [DESCRIPTION_ROOT] });
+        queryClient.invalidateQueries({ queryKey: [TEMPLATES_LIST_ROOT] });
       },
     });
   },
