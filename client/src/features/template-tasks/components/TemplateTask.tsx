@@ -11,12 +11,12 @@ import TemplateSidebar from '@/features/task-management/components/tasks/task-si
 import { useEffect, useState } from 'react';
 import z from 'zod';
 import useFetchTask from '../hooks/useFetchTask';
+import { useGetTemplates } from '../hooks/useGetTemplates';
 import { useSubmitTemplate } from '../hooks/useSubmitTemplate';
 import useTemplateModalContext from '../hooks/useTemplateModalContext';
 import AddTemplateModal from './AddTemplateModal';
 import EditTemplateModal from './EditTemplateModal';
 import { TemplateItem } from './TemplateItem';
-import { useGetTemplates } from '../hooks/useGetTemplates';
 
 function TemplateTasks() {
   const {
@@ -77,9 +77,9 @@ function TemplateTasks() {
             </Button>
           </TableHeader>
           <TableDivider />
+          <TemplateItem templates={templates ?? []} />
         </Table>
         <TemplateSidebar isOpen={isOpen} setIsOpen={setIsOpen} />
-        <TemplateItem />
 
         {renderModal()}
       </div>
