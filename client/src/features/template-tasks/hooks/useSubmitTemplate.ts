@@ -13,16 +13,15 @@ export type TemplateSubmission = {
 
 export function useSubmitTemplate(
   templateState: 'create' | 'edit',
-  templateId: string
+  templateId: string,
+  initialValues: TemplateSubmission
 ) {
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<TemplateSubmission>({
-    defaultValues: {
-      type: '',
-    },
+    defaultValues: initialValues,
     resolver: zodResolver(
       z.object({
         templateName: z.string().min(1, { message: 'Name ist erforderlich' }),

@@ -30,6 +30,8 @@ function Templates() {
   const [templateState, setTemplateState] = useState<'create' | 'edit'>(
     'create'
   );
+  const [createOpenNonce, setCreateOpenNonce] = useState(0);
+
   if (isLoading) {
     return <LoadingAlert />;
   }
@@ -46,6 +48,7 @@ function Templates() {
             <Button
               type="button"
               onClick={() => {
+                setCreateOpenNonce((n) => n + 1);
                 setIsOpen(true);
                 setTemplateState('create');
               }}
@@ -62,6 +65,11 @@ function Templates() {
           />
         </Table>
         <TemplateSidebar
+          key={
+            templateState === 'edit'
+              ? `edit-${isEditTemplate.templateId}`
+              : `create-${createOpenNonce}`
+          }
           isOpen={isOpen}
           setIsOpen={setIsOpen}
           templateEditState={isEditTemplate}

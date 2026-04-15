@@ -4,9 +4,20 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/selfmade/button';
 import { FormWrapper } from '@/components/ui/selfmade/form-wrapper';
 import { Check, X } from 'lucide-react';
-import { TEMPLATE_PRIORITY_OPTIONS } from '../../consts/priority-options';
+import {
+  DEFAULT_TEMPLATE_PRIORITY,
+  TEMPLATE_PRIORITY_OPTIONS,
+} from '../../consts/priority-options';
 import { useSubmitTasks } from '../../hooks/useSubmitTasks';
 import { TemplateTaskFormValues } from '../../types/index.types';
+
+const EMPTY_TEMPLATE_TASK: TemplateTaskFormValues = {
+  taskId: '',
+  taskName: '',
+  taskDescription: '',
+  defaultPriority: DEFAULT_TEMPLATE_PRIORITY,
+  orderIndex: 0,
+};
 import { SidebarAside } from './task-sidebar/SidebarAside';
 import SidebarContent from './task-sidebar/SidebarContent';
 import SidebarFooter from './task-sidebar/SidebarFooter';
@@ -30,7 +41,8 @@ export function TaskSidebar({
   const { register, handleSubmit, errors, onSubmit, control } = useSubmitTasks(
     editTemplateTask.taskId,
     templateId,
-    templateTaskState
+    templateTaskState,
+    templateTaskState === 'edit' ? editTemplateTask : EMPTY_TEMPLATE_TASK
   );
 
   return (
@@ -54,9 +66,6 @@ export function TaskSidebar({
             <FormFields
               errors={errors}
               register={register}
-              defaultValue={
-                templateTaskState === 'edit' ? editTemplateTask.taskName : ''
-              }
               name="taskName"
               label="Name der Aufgabe"
               labelClassName="typo-body-base"
@@ -64,11 +73,6 @@ export function TaskSidebar({
             <FormFields
               errors={errors}
               register={register}
-              defaultValue={
-                templateTaskState === 'edit'
-                  ? ''
-                  : editTemplateTask.taskDescription
-              }
               name="taskDescription"
               label="Beschreibung der Aufgabe"
               labelClassName="typo-body-base"
@@ -76,11 +80,6 @@ export function TaskSidebar({
             <FormSelectOptions
               errors={errors}
               control={control}
-              defaultValue={
-                templateTaskState === 'edit'
-                  ? 'medium'
-                  : editTemplateTask.defaultPriority
-              }
               data={TEMPLATE_PRIORITY_OPTIONS}
               name="defaultPriority"
               label="Standard-Priorität"

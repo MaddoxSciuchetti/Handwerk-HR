@@ -37,6 +37,8 @@ export function TemplateTasks({
   const [templateTaskState, setTemplateTaskState] = useState<'create' | 'edit'>(
     'create'
   );
+  /** Bumps on each "Hinzufügen" so create mode remounts with a clean form. */
+  const [createOpenNonce, setCreateOpenNonce] = useState(0);
 
   if (isLoading) {
     return <LoadingAlert />;
@@ -63,6 +65,7 @@ export function TemplateTasks({
           <TableHeader className="gap-3 py-2">
             <Button
               onClick={() => {
+                setCreateOpenNonce((n) => n + 1);
                 setIsOpen(true);
                 setTemplateTaskState('create');
               }}
@@ -79,6 +82,11 @@ export function TemplateTasks({
           />
         </Table>
         <TaskSidebar
+          key={
+            templateTaskState === 'edit'
+              ? `edit-${editTemplateTask.taskId}`
+              : `create-${createOpenNonce}`
+          }
           isOpen={isOpen}
           setIsOpen={setIsOpen}
           templateId={templateId}

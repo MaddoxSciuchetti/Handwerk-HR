@@ -3,9 +3,12 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/selfmade/button';
 import { FormWrapper } from '@/components/ui/selfmade/form-wrapper';
 import type { TemplateEditState } from '@/features/template-tasks/components/Templates';
-import { useSubmitTemplate } from '@/features/template-tasks/hooks/useSubmitTemplate';
+import {
+  type TemplateSubmission,
+  useSubmitTemplate,
+} from '@/features/template-tasks/hooks/useSubmitTemplate';
 import { Check, X } from 'lucide-react';
-import type { Dispatch, ReactNode, SetStateAction } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 import { SidebarAside } from './SidebarAside';
 import SidebarContent from './SidebarContent';
 import SidebarFooter from './SidebarFooter';
@@ -14,22 +17,37 @@ import { SidebarPanel } from './SidebarPanel';
 
 type TemplateSidebarProps = {
   isOpen: boolean;
-  children?: ReactNode;
   setIsOpen: Dispatch<SetStateAction<boolean>>;
   templateEditState: TemplateEditState;
   templateState: 'create' | 'edit';
 };
 
+const EMPTY_SUBMISSION: TemplateSubmission = {
+  templateName: '',
+  templateDescription: '',
+  type: '',
+};
+
+function templateEditToSubmission(s: TemplateEditState): TemplateSubmission {
+  return {
+    templateName: s.templateName,
+    templateDescription: s.templateDescription ?? '',
+    type: s.templateType ?? '',
+  };
+}
+
 function TemplateSidebar({
   isOpen,
-  children,
   setIsOpen,
   templateEditState,
   templateState,
 }: TemplateSidebarProps) {
   const { register, handleSubmit, onSubmit, errors } = useSubmitTemplate(
     templateState,
-    templateEditState.templateId
+    templateEditState.templateId,
+    templateState === 'edit'
+      ? templateEditToSubmission(templateEditState)
+      : EMPTY_SUBMISSION
   );
   return (
     <>
@@ -58,9 +76,6 @@ function TemplateSidebar({
               <FormFields
                 errors={errors}
                 register={register}
-                defaultValue={
-                  templateState === 'edit' ? templateEditState.templateName : ''
-                }
                 name="templateName"
                 label="Name des Templates"
                 labelClassName="typo-body-base"
@@ -68,11 +83,6 @@ function TemplateSidebar({
               <FormFields
                 errors={errors}
                 register={register}
-                defaultValue={
-                  templateState === 'edit'
-                    ? templateEditState.templateDescription || ''
-                    : ''
-                }
                 name="templateDescription"
                 label="Beschreibung des Templates"
                 labelClassName="typo-body-base"
@@ -80,11 +90,6 @@ function TemplateSidebar({
               <FormFields
                 errors={errors}
                 register={register}
-                defaultValue={
-                  templateState === 'edit'
-                    ? (templateEditState.templateType ?? '')
-                    : ''
-                }
                 name="type"
                 label="Label"
                 labelClassName="typo-body-base"

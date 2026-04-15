@@ -2,13 +2,13 @@ import { taskMutations } from '@/features/template-tasks/query-options/mutations
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { DEFAULT_TEMPLATE_PRIORITY } from '../consts/priority-options';
 import type { TemplateTaskFormValues } from '../types/index.types';
 
 export function useSubmitTasks(
   taskId: string,
   templateId: string,
-  templateTaskState: 'create' | 'edit'
+  templateTaskState: 'create' | 'edit',
+  initialValues: TemplateTaskFormValues
 ) {
   const { mutate: createTask } = useMutation(taskMutations.createTask());
   const { mutate: updateTask } = useMutation(taskMutations.updateTask());
@@ -19,12 +19,7 @@ export function useSubmitTasks(
     control,
     formState: { errors },
   } = useForm<TemplateTaskFormValues>({
-    defaultValues: {
-      taskName: '',
-      taskDescription: '',
-      defaultPriority: DEFAULT_TEMPLATE_PRIORITY,
-      orderIndex: 0,
-    },
+    defaultValues: initialValues,
   });
 
   const onSubmit = handleSubmit((data) => {
