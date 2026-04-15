@@ -1,8 +1,7 @@
 import queryClient from '@/config/query.client';
-import { NewDescriptionField, SuccessResponse } from '@/types/api.types';
+import { SuccessResponse } from '@/types/api.types';
 import { mutationOptions } from '@tanstack/react-query';
 import {
-  createTemplateTask,
   createTemplateTaskV2,
   deleteTemplateTask,
   updateTemplateTask,
@@ -37,23 +36,6 @@ export const templateMutations = {
       mutationFn: createTemplateTaskV2,
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: [TEMPLATES_LIST_ROOT] });
-      },
-    });
-  },
-
-  create: () => {
-    return mutationOptions<
-      NewDescriptionField,
-      Error,
-      {
-        description: string;
-        template_type: 'ONBOARDING' | 'OFFBOARDING';
-        owner: string;
-      }
-    >({
-      mutationFn: createTemplateTask,
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: [DESCRIPTION_ROOT] });
       },
     });
   },

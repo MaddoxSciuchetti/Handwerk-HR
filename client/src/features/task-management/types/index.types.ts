@@ -47,3 +47,10 @@ export type CreateWorkerTaskPayload = {
 export type InsertHistoryData = z.infer<typeof formSchema>;
 
 export type WorkerTab = 'form' | 'files';
+
+export type TaskSubmission = {
+  taskName: string;
+  taskDescription: string;
+  defaultPriority: string;
+  defaultStatus: string;
+};

@@ -6,7 +6,7 @@ import {
   TableHeader,
 } from '@/components/ui/selfmade/table/Table';
 import { SettingsStatusesHeader } from '@/features/settings/org-statuses/SettingsStatusesHeader';
-import TemplateSidebar from '@/features/task-management/components/tasks/task-sidebar/TaskSidebar';
+import TemplateSidebar from '@/features/task-management/components/tasks/task-sidebar/TemplateSidebar';
 import { useState } from 'react';
 import { useGetTemplates } from '../hooks/useGetTemplates';
 import { TemplateItem } from './TemplateItem';

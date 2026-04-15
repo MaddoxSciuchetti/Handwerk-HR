@@ -17,9 +17,9 @@ import FilterByUser from '../header/filters/Filter.ByUser';
 import WorkerHeader from '../header/WorkerHeader';
 import AddWorkerTaskModal from './AddWorkerTaskModal';
 import SidebarHeader from './task-sidebar/SidebarHeader';
-import TemplateSidebar from './task-sidebar/TaskSidebar';
 import TaskSidebarBody from './task-sidebar/TaskSidebarBody';
 import TaskSidebarHeader from './task-sidebar/TaskSidebarHeader';
+import TemplateSidebar from './task-sidebar/TemplateSidebar';
 import TaskIndividual from './TaskIndividual';
 
 type TaskManagementProps = {

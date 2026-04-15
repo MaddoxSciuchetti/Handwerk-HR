@@ -1,8 +1,8 @@
 import API from '@/config/apiClient';
+import { TaskSubmission } from '@/features/task-management/types/index.types';
 import {
   DescriptionData,
   DescriptionResponse,
-  NewDescriptionField,
   SuccessResponse,
 } from '@/types/api.types';
 import { TemplateSubmission } from '../hooks/useSubmitTemplate';
@@ -28,13 +28,12 @@ export const deleteTemplateTask = async (
   return response;
 };
 
-export const createTemplateTask = async (data: {
-  description: string;
-  template_type: 'ONBOARDING' | 'OFFBOARDING';
-  owner: string;
-}): Promise<NewDescriptionField> => {
-  const response = await API.post<NewDescriptionField, NewDescriptionField>(
-    `/template`,
+export const createTemplateTask = async (
+  data: TaskSubmission,
+  templateId: string
+): Promise<TaskSubmission[]> => {
+  const response = await API.post<TaskSubmission, TaskSubmission[]>(
+    `/template/${templateId}/task`,
     data
   );
   return response;
