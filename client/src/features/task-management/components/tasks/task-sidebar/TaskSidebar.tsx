@@ -17,6 +17,7 @@ type TemplateSidebarProps = {
   children?: ReactNode;
   setIsOpen: Dispatch<SetStateAction<boolean>>;
   templateEditState: TemplateEditState;
+  templateState: 'create' | 'edit';
 };
 
 function TemplateSidebar({
@@ -24,6 +25,7 @@ function TemplateSidebar({
   children,
   setIsOpen,
   templateEditState,
+  templateState,
 }: TemplateSidebarProps) {
   const { register, handleSubmit, onSubmit, errors } = useSubmitTemplate();
   return (
@@ -53,7 +55,9 @@ function TemplateSidebar({
               <FormFields
                 errors={errors}
                 register={register}
-                defaultValue={templateEditState.templateName}
+                defaultValue={
+                  templateState === 'edit' ? templateEditState.templateName : ''
+                }
                 name="templateName"
                 label="Name des Templates"
                 labelClassName="typo-body-base"
@@ -61,7 +65,11 @@ function TemplateSidebar({
               <FormFields
                 errors={errors}
                 register={register}
-                defaultValue={templateEditState.templateDescription ?? ''}
+                defaultValue={
+                  templateState === 'edit'
+                    ? templateEditState.templateDescription || ''
+                    : ''
+                }
                 name="templateDescription"
                 label="Beschreibung des Templates"
                 labelClassName="typo-body-base"
@@ -69,7 +77,11 @@ function TemplateSidebar({
               <FormFields
                 errors={errors}
                 register={register}
-                defaultValue={templateEditState.templateType ?? ''}
+                defaultValue={
+                  templateState === 'edit'
+                    ? (templateEditState.templateType ?? '')
+                    : ''
+                }
                 name="type"
                 label="Label"
                 labelClassName="typo-body-base"

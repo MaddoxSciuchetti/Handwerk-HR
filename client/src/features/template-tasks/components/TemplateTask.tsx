@@ -49,6 +49,9 @@ function TemplateTasks() {
     templateDescription: null,
     templateType: null,
   });
+  const [templateState, setTemplateState] = useState<'create' | 'edit'>(
+    'create'
+  );
 
   useEffect(() => {
     setCurrentPage(1);
@@ -83,7 +86,13 @@ function TemplateTasks() {
         />
         <Table className="w-200">
           <TableHeader className="gap-3 py-2">
-            <Button type="button" onClick={() => setIsOpen(true)}>
+            <Button
+              type="button"
+              onClick={() => {
+                setIsOpen(true);
+                setTemplateState('create');
+              }}
+            >
               Hinzufügen
             </Button>
           </TableHeader>
@@ -92,12 +101,15 @@ function TemplateTasks() {
             templates={templates ?? []}
             setIsEditTemplate={setIsEditTemplate}
             setIsOpen={setIsOpen}
+            templateState={templateState}
+            setTemplateState={setTemplateState}
           />
         </Table>
         <TemplateSidebar
           isOpen={isOpen}
           setIsOpen={setIsOpen}
           templateEditState={isEditTemplate}
+          templateState={templateState}
         />
         {renderModal()}
       </div>
