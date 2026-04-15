@@ -1,4 +1,3 @@
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/trycatch';
 import { ErrorMessage } from '@hookform/error-message';
@@ -9,6 +8,7 @@ import {
   Path,
   UseFormRegister,
 } from 'react-hook-form';
+import { Input } from '../ui/selfmade/input';
 
 type FormFieldsProps<TFieldValues extends FieldValues> = Omit<
   ComponentProps<'input'>,
