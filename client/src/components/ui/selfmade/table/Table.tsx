@@ -65,7 +65,7 @@ function Cell({
   className?: string;
 }) {
   return (
-    <div className={cn(`text-label-lg w-42.5 items-center`, className)}>
+    <div className={cn(`ds-label-lg w-42.5 items-center`, className)}>
       {children}
     </div>
   );

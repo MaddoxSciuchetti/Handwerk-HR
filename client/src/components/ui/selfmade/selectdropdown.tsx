@@ -59,7 +59,7 @@ export function SelectDropdown<T extends string>({
       )}
       onClick={() => setIsOpen(!isOpen)}
     >
-      <p className="text-body-sm grow text-text-disabled">{value ?? label}</p>
+      <p className="typo-body-sm grow text-text-disabled">{value ?? label}</p>
       <Icon
         className={cn(
           `w-6 h-6 text-text-disabled transition-transform duration-200`,

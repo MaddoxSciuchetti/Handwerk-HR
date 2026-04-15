@@ -80,7 +80,7 @@ export function OrgStatusRow({
             <button
               type="button"
               disabled={disabled}
-              className="min-w-0 flex-1 truncate rounded-md px-2 py-1 text-left text-body-sm transition-colors hover:bg-accent disabled:opacity-50"
+              className="min-w-0 flex-1 truncate rounded-md px-2 py-1 text-left typo-body-sm transition-colors hover:bg-accent disabled:opacity-50"
               onClick={() => {
                 if (!disabled) setEditing(true);
               }}

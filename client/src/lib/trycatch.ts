@@ -1,27 +1,27 @@
 import { clsx, type ClassValue } from 'clsx';
 import { extendTailwindMerge } from 'tailwind-merge';
 
-/** Matches @layer components typography in globals.css — must not share tailwind-merge's `text-color` group with `text-label-sm` etc. */
+/** Matches @layer components `typo-*` typography in globals.css (not Tailwind `text-*` font sizes). */
 const twMerge = extendTailwindMerge<'design-system-typography'>({
   extend: {
     classGroups: {
       'design-system-typography': [
-        'text-display',
-        'text-h1',
-        'text-h2',
-        'text-h3',
-        'text-h4',
-        'text-h5',
-        'text-h6',
-        'text-body-xl',
-        'text-body-lg',
-        'text-body-base',
-        'text-body-sm',
-        'text-body-xs',
-        'text-label-lg',
-        'text-label-base',
-        'text-label-sm',
-        'text-overline',
+        'typo-display',
+        'typo-h1',
+        'typo-h2',
+        'typo-h3',
+        'typo-h4',
+        'typo-h5',
+        'typo-h6',
+        'typo-body-xl',
+        'typo-body-lg',
+        'typo-body-base',
+        'typo-body-sm',
+        'typo-body-xs',
+        'ds-label-lg',
+        'ds-label-base',
+        'ds-label-sm',
+        'typo-overline',
       ],
     },
   },

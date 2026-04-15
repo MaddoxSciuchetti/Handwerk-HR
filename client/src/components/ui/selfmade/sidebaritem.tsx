@@ -22,7 +22,7 @@ export function SidebarItem({
     >
       <Icon className="h-5 w-5 text-interactive-primary-bg transition-colors group-hover/hover:text-interactive-disabled-text" />
       {!collapsed && (
-        <p className="text-body-sm text-interactive-primary-bg transition-colors group-hover/hover:text-interactive-disabled-text">
+        <p className="typo-body-sm text-interactive-primary-bg transition-colors group-hover/hover:text-interactive-disabled-text">
           {label}
         </p>
       )}

@@ -21,7 +21,7 @@ const SingleFormField = <T extends string | number>({
 }: SingleFormFieldProps<T>) => {
   return (
     <>
-      <Label>{label}</Label>
+      <Label className="ds-label-base">{label}</Label>
       <Input
         id={id}
         type={type}

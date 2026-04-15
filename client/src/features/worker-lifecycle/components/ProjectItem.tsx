@@ -32,7 +32,7 @@ function ProjectItem({ worker, gotopage }: ProjectItemProps) {
         src="assets/BoxSelect.svg"
       />
       <GrowingItem className="pl-10 py-0">
-        <p className="text-body-base">{worker.firstName}</p>
+        <p className="typo-body-base">{worker.firstName}</p>
       </GrowingItem>
       <CellHolder>
         <Cell>{worker.engagements[0].type}</Cell>

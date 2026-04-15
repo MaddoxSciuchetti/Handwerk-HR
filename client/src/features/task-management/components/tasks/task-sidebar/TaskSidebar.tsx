@@ -33,38 +33,43 @@ function TemplateSidebar({
         />
       ) : null}
       <SidebarAside className="p-2" isOpen={isOpen}>
-        <SidebarPanel className=" w-full border">
-          <SidebarHeader className="flex items-center justify-between ">
-            <Label>Erstelle dein Template</Label>
+        <SidebarPanel className=" w-full ">
+          <SidebarHeader className="flex items-center justify-between p-6 ">
+            <Label className="typo-body-lg font-bold">
+              Erstelle dein Template
+            </Label>
             <Button type="button" onClick={() => setIsOpen(false)}>
               <X className="h-4 w-4" aria-hidden />
             </Button>
           </SidebarHeader>
           <FormWrapper
             onSubmit={onSubmit}
-            className="flex min-h-0 flex-1 flex-col border"
+            className="flex min-h-0 flex-1 flex-col  "
           >
-            <SidebarContent className="border mt-5">
+            <SidebarContent className=" mt-5 p-6 flex flex-col gap-2">
               <FormFields
                 errors={errors}
                 register={register}
                 name="templateName"
                 label="Name des Templates"
+                labelClassName="typo-body-base"
               />
               <FormFields
                 errors={errors}
                 register={register}
                 name="templateDescription"
-                label="Name des Templates"
+                label="Beschreibung des Templates"
+                labelClassName="typo-body-base"
               />
               <FormFields
                 errors={errors}
                 register={register}
                 name="type"
                 label="Label"
+                labelClassName="typo-body-base"
               />
             </SidebarContent>
-            <SidebarFooter>
+            <SidebarFooter className="p-6">
               <Button type="submit">
                 <Check className="h-4 w-4" aria-hidden /> Speichern
               </Button>

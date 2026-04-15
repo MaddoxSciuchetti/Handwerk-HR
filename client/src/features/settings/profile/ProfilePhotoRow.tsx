@@ -24,7 +24,7 @@ export function ProfilePhotoRow({
     <>
       <Items state="default" className="px-3 py-1">
         <GrowingItem>
-          <p className="text-body-sm">Profil Foto</p>
+          <p className="typo-body-sm">Profil Foto</p>
         </GrowingItem>
         <div className="w-72">
           <button

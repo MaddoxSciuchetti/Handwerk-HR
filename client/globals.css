@@ -547,10 +547,14 @@
 }
 
 @layer components {
+  /*
+   * Design-system typography — prefixed `typo-*` so it never clashes with Tailwind
+   * utilities like `text-sm`, `text-base`, `text-lg` (font-size) or `text-*` colors.
+   */
   /* ─────────────────────────────────────
      HEADING STYLES — Inter Display
   ───────────────────────────────────── */
-  .text-display {
+  .typo-display {
     font-family: var(--font-heading);
     font-weight: 600;
     font-size: 4.5rem;
@@ -558,7 +562,7 @@
     letter-spacing: -0.02em;
   }
 
-  .text-h1 {
+  .typo-h1 {
     font-family: var(--font-heading);
     font-weight: 600;
     font-size: 3.75rem;
@@ -566,7 +570,7 @@
     letter-spacing: -0.02em;
   }
 
-  .text-h2 {
+  .typo-h2 {
     font-family: var(--font-heading);
     font-weight: 600;
     font-size: 3rem;
@@ -574,7 +578,7 @@
     letter-spacing: -0.02em;
   }
 
-  .text-h3 {
+  .typo-h3 {
     font-family: var(--font-heading);
     font-weight: 600;
     font-size: 2.25rem;
@@ -582,7 +586,7 @@
     letter-spacing: -0.02em;
   }
 
-  .text-h4 {
+  .typo-h4 {
     font-family: var(--font-heading);
     font-weight: 600;
     font-size: 1.875rem;
@@ -590,7 +594,7 @@
     letter-spacing: 0em;
   }
 
-  .text-h5 {
+  .typo-h5 {
     font-family: var(--font-heading);
     font-weight: 600;
     font-size: 1.5rem;
@@ -598,7 +602,7 @@
     letter-spacing: 0em;
   }
 
-  .text-h6 {
+  .typo-h6 {
     font-family: var(--font-heading);
     font-weight: 600;
     font-size: 1.25rem;
@@ -609,7 +613,7 @@
   /* ─────────────────────────────────────
      BODY STYLES — DM Sans Regular
   ───────────────────────────────────── */
-  .text-body-xl {
+  .typo-body-xl {
     font-family: var(--font-sans);
     font-weight: 400;
     font-size: 1.25rem;
@@ -617,7 +621,7 @@
     letter-spacing: 0em;
   }
 
-  .text-body-lg {
+  .typo-body-lg {
     font-family: var(--font-sans);
     font-weight: 400;
     font-size: 1.125rem;
@@ -625,7 +629,7 @@
     letter-spacing: 0em;
   }
 
-  .text-body-base {
+  .typo-body-base {
     font-family: var(--font-sans);
     font-weight: 400;
     font-size: 1rem;
@@ -633,7 +637,7 @@
     letter-spacing: 0em;
   }
 
-  .text-body-sm {
+  .typo-body-sm {
     font-family: var(--font-sans);
     font-weight: 400;
     font-size: 0.875rem;
@@ -641,7 +645,7 @@
     letter-spacing: 0em;
   }
 
-  .text-body-xs {
+  .typo-body-xs {
     font-family: var(--font-sans);
     font-weight: 400;
     font-size: 0.75rem;
@@ -650,25 +654,9 @@
   }
 
   /* ─────────────────────────────────────
-     UI STYLES — DM Sans Medium
+     UI LABEL STYLES — DM Sans Medium (`ds-label-*` avoids `text-*` / `label-*` Tailwind overlap)
   ───────────────────────────────────── */
-  .text-label-lg {
-    font-family: var(--font-sans);
-    font-weight: 500;
-    font-size: 1rem;
-    line-height: 1.5rem;
-    letter-spacing: 0em;
-  }
-
-  .text-label-base {
-    font-family: var(--font-sans);
-    font-weight: 500;
-    font-size: 0.875rem;
-    line-height: 1.25rem;
-    letter-spacing: 0em;
-  }
-
-  .text-label-sm {
+  .ds-label-sm {
     font-family: var(--font-sans);
     font-weight: 500;
     font-size: 0.75rem;
@@ -676,7 +664,23 @@
     letter-spacing: 0.04em;
   }
 
-  .text-overline {
+  .ds-label-base {
+    font-family: var(--font-sans);
+    font-weight: 500;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    letter-spacing: 0em;
+  }
+
+  .ds-label-lg {
+    font-family: var(--font-sans);
+    font-weight: 500;
+    font-size: 1rem;
+    line-height: 1.5rem;
+    letter-spacing: 0em;
+  }
+
+  .typo-overline {
     font-family: var(--font-sans);
     font-weight: 500;
     font-size: 0.75rem;

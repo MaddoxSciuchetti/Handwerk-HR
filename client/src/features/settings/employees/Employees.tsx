@@ -35,7 +35,7 @@ function Employees() {
           <TableDivider />
           <Items state="default" className="px-2 py-0">
             <GrowingItem className="">
-              <p className="text-body-sm">Name</p>
+              <p className="typo-body-sm">Name</p>
             </GrowingItem>
             <p>Aktive</p>
           </Items>

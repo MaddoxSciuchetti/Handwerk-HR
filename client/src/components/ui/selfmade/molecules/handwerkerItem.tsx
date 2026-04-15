@@ -8,7 +8,7 @@ export function HandwerkerItem() {
         <div className="flex items-center gap-2">
           <p>Maddox</p>
           <Button
-            className="p-3 text-label-sm h-8 text-interactive-primary-text"
+            className="p-3 ds-label-sm h-8 text-interactive-primary-text"
             variant="default"
             size="default"
           >
@@ -17,7 +17,7 @@ export function HandwerkerItem() {
         </div>
         <div className="flex items-center gap-2">
           <Button
-            className="p-3 text-label-sm h-8 text-interactive-primary-text"
+            className="p-3 ds-label-sm h-8 text-interactive-primary-text"
             variant="default"
             size="default"
           >
@@ -25,7 +25,7 @@ export function HandwerkerItem() {
             Austehen
           </Button>
           <Button
-            className="p-3 text-label-sm h-8 text-interactive-primary-text"
+            className="p-3 ds-label-sm h-8 text-interactive-primary-text"
             variant="default"
             size="default"
           >
@@ -36,7 +36,7 @@ export function HandwerkerItem() {
       </div>
       <div className="flex items-center gap-2">
         <Button
-          className="p-3 text-label-sm h-8 text-interactive-primary-text"
+          className="p-3 ds-label-sm h-8 text-interactive-primary-text"
           variant="default"
           size="default"
         >

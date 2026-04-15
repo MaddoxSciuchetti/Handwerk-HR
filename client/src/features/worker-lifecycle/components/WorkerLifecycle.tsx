@@ -64,13 +64,13 @@ function WorkerLifeCycle() {
           <TableDivider />
           <ItemHeader className="p-0">
             <GrowingItem className="pl-10 py-2">
-              <p className="text-body-sm">Name</p>
+              <p className="typo-body-sm">Name</p>
             </GrowingItem>
             <CellHolder>
-              <Cell className="text-body-sm">Type</Cell>
-              <Cell className="text-body-sm">Verantwortlich</Cell>
-              <Cell className="text-body-sm">Zuletzt bearbeitet</Cell>
-              <Cell className="text-body-sm">Status</Cell>
+              <Cell className="typo-body-sm">Type</Cell>
+              <Cell className="typo-body-sm">Verantwortlich</Cell>
+              <Cell className="typo-body-sm">Zuletzt bearbeitet</Cell>
+              <Cell className="typo-body-sm">Status</Cell>
             </CellHolder>
           </ItemHeader>
           {workers?.map((worker) => (

@@ -41,7 +41,7 @@ const FormSelectOptions = <T extends FieldValues>({
 }: FormSelectOptionsProps<T>) => {
   return (
     <>
-      <Label>{label}</Label>
+      <Label className="ds-label-base">{label}</Label>
       <Controller
         name={name}
         control={control}

@@ -105,7 +105,7 @@ export function Slot({
         {src ? (
           <img src={src} alt={alt} className="h-4 w-4 object-cover" />
         ) : (
-          <span className={cn(states[state], 'text-label-sm')}>{initials}</span>
+          <span className={cn(states[state], 'ds-label-sm')}>{initials}</span>
         )}
       </div>
     </div>

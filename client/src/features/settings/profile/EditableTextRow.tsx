@@ -23,7 +23,7 @@ export function EditableTextRow({
   return (
     <Items state="default" className="px-3 py-1">
       <GrowingItem>
-        <p className="text-body-sm">{label}</p>
+        <p className="typo-body-sm">{label}</p>
       </GrowingItem>
       <div className="w-72">
         {isEditing ? (
@@ -42,7 +42,7 @@ export function EditableTextRow({
         ) : (
           <button
             type="button"
-            className="w-full rounded-md border border-transparent px-3 py-1.5 text-left text-body-sm transition-colors hover:border-border-default hover:bg-accent"
+            className="w-full rounded-md border border-transparent px-3 py-1.5 text-left typo-body-sm transition-colors hover:border-border-default hover:bg-accent"
             onClick={onClickValue}
           >
             {value || '-'}

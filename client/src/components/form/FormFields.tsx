@@ -19,6 +19,7 @@ type FormFieldsProps<TFieldValues extends FieldValues> = Omit<
   name: Path<TFieldValues>;
   placeholder?: string;
   label?: string;
+  /** Design tokens: `typo-*` or `ds-label-*` (see globals.css). */
   labelClassName?: string;
   type?: string;
   required?: boolean;
@@ -35,9 +36,12 @@ const FormFields = <TFieldValues extends FieldValues>({
   ...props
 }: FormFieldsProps<TFieldValues>) => {
   return (
-    <div className="flex min-w-0 flex-col gap-1">
+    <div className="flex min-w-0 flex-col gap-3">
       {label && (
-        <Label htmlFor={id} className={cn(labelClassName)}>
+        <Label
+          htmlFor={id}
+          className={cn('ds-label-base', labelClassName)}
+        >
           {label}
         </Label>
       )}

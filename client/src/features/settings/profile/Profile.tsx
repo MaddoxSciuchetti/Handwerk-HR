@@ -81,8 +81,8 @@ function Profile() {
     <div className="mx-auto flex h-full flex-col overflow-auto rounded-2xl bg-card p-6 md:max-w-8xl">
       <div className="flex h-full w-full flex-col items-center justify-center">
         <div className="flex w-200 flex-col items-start">
-          <h1 className="text-h4 font-bold">Profil</h1>
-          <p className="text-body-sm text-muted-foreground">
+          <h1 className="typo-h4 font-bold">Profil</h1>
+          <p className="typo-body-sm text-muted-foreground">
             Bearbeite deine persönlichen Kontodaten direkt in der Tabelle.
           </p>
         </div>

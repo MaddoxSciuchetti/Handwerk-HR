@@ -7,7 +7,7 @@ export function PasswordForgot() {
       <Link
         to="/password/forgot"
         onClick={() => navigate({ to: '/password/forgot' })}
-        className="text-label-xs underline text-sm hover:text-accent-foreground"
+        className="ds-label-sm underline hover:text-accent-foreground"
       >
         Forgot Password?
       </Link>
