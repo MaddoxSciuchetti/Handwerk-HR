@@ -15,6 +15,7 @@ import { useState } from 'react';
 import { useCreateTask } from '../hooks/useCreateTask';
 import { useFetchTasks } from '../hooks/useFetchTasks';
 import { TaskItem } from './TaskItem';
+import { TaskSidebar } from './TaskSidebar';
 import { Segment, TaskSegmentToggle } from './ui/taskHeader';
 
 function Tasks() {
@@ -22,6 +23,7 @@ function Tasks() {
   const { data, isLoading } = useFetchTasks();
   const { mutate: createTask } = useCreateTask();
   const [segment, setSegment] = useState<Segment>('left');
+  const [isOpen, setIsOpen] = useState(false);
 
   const tasks = Array.isArray(data) ? data : [];
 
@@ -30,6 +32,7 @@ function Tasks() {
   return (
     <div className="mx-auto flex h-full flex-col overflow-auto rounded-2xl bg-card p-6 md:max-w-8xl">
       <div className="flex h-full w-full flex-col">
+        <TaskSidebar isOpen={isOpen} setIsOpen={setIsOpen} />
         <GreetingHeader firstname={user?.firstName ?? ''} />
         <Table>
           <TableHeader>
@@ -38,7 +41,10 @@ function Tasks() {
             <Button
               className="text-sm text-surface-page"
               type="button"
-              onClick={() => createTask({})}
+              onClick={() => {
+                setIsOpen(true);
+                createTask({});
+              }}
             >
               Hinzufügen
             </Button>
