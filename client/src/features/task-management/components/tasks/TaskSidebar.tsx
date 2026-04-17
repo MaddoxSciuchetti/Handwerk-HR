@@ -10,6 +10,11 @@ import {
 } from '../../consts/priority-options';
 import { useSubmitTasks } from '../../hooks/useSubmitTasks';
 import { TemplateTaskFormValues } from '../../types/index.types';
+import { SidebarAside } from './task-sidebar/SidebarAside';
+import SidebarContent from './task-sidebar/SidebarContent';
+import SidebarFooter from './task-sidebar/SidebarFooter';
+import SidebarHeader from './task-sidebar/SidebarHeader';
+import { SidebarPanel } from './task-sidebar/SidebarPanel';
 
 const EMPTY_TEMPLATE_TASK: TemplateTaskFormValues = {
   taskId: '',
@@ -18,11 +23,6 @@ const EMPTY_TEMPLATE_TASK: TemplateTaskFormValues = {
   defaultPriority: DEFAULT_TEMPLATE_PRIORITY,
   orderIndex: 0,
 };
-import { SidebarAside } from './task-sidebar/SidebarAside';
-import SidebarContent from './task-sidebar/SidebarContent';
-import SidebarFooter from './task-sidebar/SidebarFooter';
-import SidebarHeader from './task-sidebar/SidebarHeader';
-import { SidebarPanel } from './task-sidebar/SidebarPanel';
 
 type TaskSidebarProps = {
   isOpen: boolean;
@@ -42,7 +42,7 @@ export function TaskSidebar({
     editTemplateTask.taskId,
     templateId,
     templateTaskState,
-    templateTaskState === 'edit' ? editTemplateTask : EMPTY_TEMPLATE_TASK
+    editTemplateTask
   );
 
   return (
