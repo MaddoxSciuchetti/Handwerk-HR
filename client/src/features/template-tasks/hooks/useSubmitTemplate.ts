@@ -6,8 +6,9 @@ import { z } from 'zod';
 import { templateMutations } from '../query-options/mutations/template.mutations';
 
 export type TemplateSubmission = {
+  templateId?: string;
   templateName: string;
-  templateDescription: string;
+  templateDescription: string | null;
   type?: string;
 };
 
@@ -24,10 +25,12 @@ export function useSubmitTemplate(
     defaultValues: initialValues,
     resolver: zodResolver(
       z.object({
+        templateId: z.string().optional(),
         templateName: z.string().min(1, { message: 'Name ist erforderlich' }),
         templateDescription: z
           .string()
-          .min(1, { message: 'Beschreibung ist erforderlich' }),
+          .min(1, { message: 'Beschreibung ist erforderlich' })
+          .nullable(),
         type: z.string().optional(),
       })
     ),

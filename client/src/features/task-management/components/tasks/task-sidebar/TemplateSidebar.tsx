@@ -28,14 +28,6 @@ const EMPTY_SUBMISSION: TemplateSubmission = {
   type: '',
 };
 
-function templateEditToSubmission(s: TemplateEditState): TemplateSubmission {
-  return {
-    templateName: s.templateName,
-    templateDescription: s.templateDescription ?? '',
-    type: s.templateType ?? '',
-  };
-}
-
 function TemplateSidebar({
   isOpen,
   setIsOpen,
@@ -45,9 +37,7 @@ function TemplateSidebar({
   const { register, handleSubmit, onSubmit, errors } = useSubmitTemplate(
     templateState,
     templateEditState.templateId,
-    templateState === 'edit'
-      ? templateEditToSubmission(templateEditState)
-      : EMPTY_SUBMISSION
+    templateEditState
   );
   return (
     <>
