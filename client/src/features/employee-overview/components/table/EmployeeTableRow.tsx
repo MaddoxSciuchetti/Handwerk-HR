@@ -49,7 +49,7 @@ export const EmployeeRow = ({
               e.stopPropagation();
               openEditEmployee(
                 employee.id,
-                `${employee.vorname}${employee.nachname}`
+                `${employee.firstName} ${employee.lastName}`
               );
             }}
           >
@@ -73,7 +73,7 @@ export const EmployeeRow = ({
       </td>
       <td className="rounded-r-xl">
         <TrashButton
-          disabled={employee.user_permission === 'CHEF'}
+          disabled={employee.organizationMembers[0]?.role.name === 'Owner'}
           description={'Löschen'}
           onClick={() => setIsDeleteModalOpen(true)}
         />

@@ -11,17 +11,17 @@ type SubstituteProps = {
 const EmployeeSubstitute = ({ employee }: SubstituteProps) => {
   return (
     <>
-      {(employee.employeeStatus?.length ?? 0) > 0 ? (
-        employee.employeeStatus?.map((status, index) => (
+      {employee.absences.length > 0 ? (
+        employee.absences.map((status, index) => (
           <div className="flex gap-1 " key={index}>
             {calculateData(
-              new Date(status.absencebegin || ''),
-              new Date(status.absenceEnd || ''),
+              new Date(status.startDate || ''),
+              new Date(status.endDate || ''),
               dateObject
             ) ? (
               <div>
-                <span>{status.sub_user?.vorname}</span>{' '}
-                <span>{status.sub_user?.nachname}</span>
+                <span>{status.substitute?.firstName}</span>{' '}
+                <span>{status.substitute?.lastName}</span>
               </div>
             ) : (
               <span>n/a</span>

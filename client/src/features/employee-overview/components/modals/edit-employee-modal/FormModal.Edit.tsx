@@ -26,7 +26,7 @@ const FormModalEdit = ({
   const employeeOptions = useMemo(
     () =>
       EmployeeData?.map((emp) => ({
-        label: `${emp.vorname}${emp.nachname}`,
+        label: `${emp.firstName} ${emp.lastName}`,
         value: `${emp.id}`,
       })) ?? [],
     [EmployeeData]

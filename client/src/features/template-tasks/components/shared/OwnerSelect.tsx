@@ -28,7 +28,7 @@ const OwnerSelect = <T extends FieldValues>({
         placeholder="Mitarbeiter"
         data={employees.map((e) => ({
           value: e.id,
-          label: `${e.vorname} ${e.nachname}`,
+          label: `${e.firstName} ${e.lastName}`,
         }))}
       />
     </>

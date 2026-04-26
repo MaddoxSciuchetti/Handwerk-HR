@@ -11,24 +11,24 @@ type EmployeeStatusProps = {
 const EmployeeStatus = ({ employee }: EmployeeStatusProps) => {
   return (
     <>
-      {(employee.employeeStatus?.length ?? 0) > 0 ? (
-        employee.employeeStatus?.map((status) => (
+      {employee.absences.length > 0 ? (
+        employee.absences.map((status) => (
           <div className="flex flex-col" key={status.id}>
             {calculateData(
-              new Date(status.absencebegin || ''),
-              new Date(status.absenceEnd || ''),
+              new Date(status.startDate || ''),
+              new Date(status.endDate || ''),
               dateObject
             ) && status.substitute ? (
               <>
                 <p className="w-full text-sm text-(--chart-5)">Abwesend vom</p>
                 <div className="flex gap-1 text-sm">
-                  {status.absencebegin?.toLocaleDateString('de-DE', {
+                  {status.startDate?.toLocaleDateString('de-DE', {
                     day: '2-digit',
                     month: '2-digit',
                     year: '2-digit',
                   })}
                   <p>bis</p>
-                  {status.absenceEnd?.toLocaleDateString('de-DE', {
+                  {status.endDate?.toLocaleDateString('de-DE', {
                     day: '2-digit',
                     month: '2-digit',
                     year: '2-digit',

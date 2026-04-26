@@ -2,36 +2,35 @@ import { dateSchema } from '@/schemas/schema';
 import z from 'zod';
 import { VALIDATION_MESSAGES } from '../consts/validationMessages';
 
-export const subUserSchema = z.object({
+export const substituteUserSchema = z.object({
   id: z.coerce.string(),
-  vorname: z.string(),
-  nachname: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
 });
 
-export const employeeStatusSchema = z.array(
-  z.object({
-    id: z.coerce.string(),
-    userId: z.coerce.string(),
-    absence: z.coerce.string(),
-    absencetype: z.coerce.string().nullable(),
-    absencebegin: z.coerce.date().nullable(),
-    absenceEnd: z.coerce.date().nullable(),
-    substitute: z.coerce.string().nullable(),
-    sub_user: subUserSchema.nullable(),
-  })
-);
+export const absenceItemSchema = z.object({
+  id: z.coerce.string(),
+  absenceType: z.string().nullable(),
+  startDate: z.coerce.date().nullable(),
+  endDate: z.coerce.date().nullable(),
+  substitute: substituteUserSchema.nullable(),
+});
+
+export const orgMemberSchema = z.object({
+  role: z.object({ name: z.string() }),
+});
 
 export const employeeDataSchema = z.array(
   z.object({
     id: z.coerce.string(),
-    vorname: z.string(),
-    nachname: z.string(),
+    firstName: z.string(),
+    lastName: z.string(),
     email: z.string().nullable(),
-    verified: z.boolean(),
+    isEmailVerified: z.boolean(),
     createdAt: z.string(),
     updatedAt: z.string(),
-    user_permission: z.enum(['CHEF', 'MITARBEITER']),
-    employeeStatus: employeeStatusSchema.nullable(),
+    organizationMembers: z.array(orgMemberSchema),
+    absences: z.array(absenceItemSchema),
   })
 );
 
@@ -86,5 +85,4 @@ export type CreateWorker = z.infer<typeof createWorkerSchema>;
 
 export type EmployeeDataArray = z.infer<typeof employeeDataSchema>;
 export type EmployeeDataObject = z.infer<typeof employeeDataSchema.element>;
-export type EmployeeStatusArray = z.infer<typeof employeeStatusSchema>;
-export type EmployeeStatusObject = z.infer<typeof employeeStatusSchema.element>;
+export type AbsenceItem = z.infer<typeof absenceItemSchema>;

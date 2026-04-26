@@ -21,7 +21,7 @@ function EmployeeOverview() {
   const [search, setSearch] = useState('');
 
   const filteredEmployeesByFirstName = (EmployeeData ?? []).filter((employee) =>
-    employee.vorname.toLowerCase().includes(search.toLowerCase())
+    employee.firstName.toLowerCase().includes(search.toLowerCase())
   );
 
   const renderModal = () => {

@@ -5,17 +5,18 @@ type EmployeeNameProps = {
 };
 
 const EmployeeName = ({ employee }: EmployeeNameProps) => {
+  const isOwner = employee.organizationMembers[0]?.role.name === 'Owner';
+
   return (
     <>
-      {employee.user_permission === 'CHEF' ? (
+      {isOwner ? (
         <p>
           <span className="text-(--status-info-foreground)">Ich:</span> {''}
-          {employee.vorname} {employee.nachname}
+          {employee.firstName} {employee.lastName}
         </p>
       ) : (
         <p>
-          {employee.vorname}
-          {employee.nachname}
+          {employee.firstName} {employee.lastName}
         </p>
       )}
     </>
