@@ -5,14 +5,14 @@ import RadioSelect from './RadioSelect';
 import { WorkerForm } from './WorkerForm';
 
 type ModalProps = {
-  toggleModal: () => void;
+  toggleModal?: () => void;
   className?: string;
 };
 
 const ModalContent = ({ toggleModal }: ModalProps) => {
-  const [selectedOption, setSelectedOption] = useState<AddWorker['type'] | null>(
-    null
-  );
+  const [selectedOption, setSelectedOption] = useState<
+    AddWorker['type'] | null
+  >(null);
 
   return (
     <MediumWrapper>
@@ -26,7 +26,7 @@ const ModalContent = ({ toggleModal }: ModalProps) => {
           <WorkerForm
             setSelectedOption={setSelectedOption}
             type={selectedOption}
-            toggleModal={toggleModal}
+            toggleModal={toggleModal ?? (() => {})}
           />
         )}
       </div>

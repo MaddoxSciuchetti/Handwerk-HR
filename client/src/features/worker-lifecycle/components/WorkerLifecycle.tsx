@@ -16,8 +16,10 @@ import LifeCycleModal from '@/features/worker-lifecycle/components/LifeCycleModa
 import useHome from '@/features/worker-lifecycle/hooks/useHome';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import { ChevronUp } from 'lucide-react';
+import { useState } from 'react';
 import GreetingHeader from './GreetingHeader';
 import ProjectItem from './ProjectItem';
+import { WorkerSidebar } from './WorkerSidebar';
 
 function WorkerLifeCycle() {
   const { user, isLoading, isError } = useAuth();
@@ -31,6 +33,7 @@ function WorkerLifeCycle() {
     toggleModal,
     handleNavigate,
   } = useHome();
+  const [isWorkerSidebarOpen, setIsWorkerSidebarOpen] = useState(false);
 
   useBodyScrollLock();
 
@@ -38,8 +41,14 @@ function WorkerLifeCycle() {
   if (isError || !user) return <ErrorAlert />;
   if (error) return <ErrorAlert message={error.message} />;
 
+  const handleSelectWorker = () => setIsWorkerSidebarOpen(true);
+
   return (
     <div className="mx-auto flex h-full flex-col overflow-auto rounded-2xl bg-card p-6 md:max-w-8xl">
+      <WorkerSidebar
+        isOpen={isWorkerSidebarOpen}
+        setIsOpen={setIsWorkerSidebarOpen}
+      />
       <div className="h-full w-full flex flex-col">
         <GreetingHeader firstname={user?.firstName || ''} />
         <Table>
@@ -56,7 +65,7 @@ function WorkerLifeCycle() {
             />
             <Button
               className="text-sm text-surface-page"
-              onClick={() => toggleModal()}
+              onClick={handleSelectWorker}
             >
               Hinzufügen
             </Button>
