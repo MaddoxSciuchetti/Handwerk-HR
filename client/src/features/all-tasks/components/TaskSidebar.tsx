@@ -15,7 +15,7 @@ import { X } from 'lucide-react';
 import { useMemo } from 'react';
 import { useFetchEngagements } from '../hooks/useFetchEngagements';
 import { useTasks } from '../hooks/useTasks';
-import type { TaskEditState } from './Tasks';
+import type { TaskEditState } from '../hooks/useTaskSidebar';
 
 type TaskSidebarProps = {
   isOpen: boolean;

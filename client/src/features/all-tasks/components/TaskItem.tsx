@@ -8,19 +8,17 @@ import {
 import { cn } from '@/lib/trycatch';
 import { Headset } from 'lucide-react';
 import type { Dispatch, SetStateAction } from 'react';
+import type { TaskEditState } from '../hooks/useTaskSidebar';
 import type { IssueResponse } from '../types/index.types';
 import formatDateDe from '../utilts/date.utils';
 import { PriorityIndicator } from '../utilts/priority.utils';
-import type { TaskEditState } from './Tasks';
 import { PillBadge } from './ui/PillBadge';
 import { SquareCheckIcon, SquareDashedIcon } from './ui/SelectIcons';
 
 type TaskItemProps = {
   task: IssueResponse;
   isSelected: boolean;
-  setIsOpen: Dispatch<SetStateAction<boolean>>;
-  setTaskState: Dispatch<SetStateAction<'create' | 'edit'>>;
-  setTaskEditState: Dispatch<SetStateAction<TaskEditState>>;
+  onOpenEdit: (seed: TaskEditState) => void;
   setLargeEditMode: Dispatch<SetStateAction<boolean>>;
   setEditModeData: Dispatch<
     SetStateAction<{ taskNumber: string; taskTitle: string }[]>
@@ -30,24 +28,20 @@ type TaskItemProps = {
 export function TaskItem({
   task,
   isSelected,
-  setIsOpen,
-  setTaskState,
-  setTaskEditState,
+  onOpenEdit,
   setLargeEditMode,
   setEditModeData,
 }: TaskItemProps) {
   const dateSource = task.dueDate ?? task.createdAt;
 
   const openInEditMode = () => {
-    setTaskState('edit');
-    setTaskEditState({
+    onOpenEdit({
       taskId: task.id,
       title: task.title,
       workerEngagementId: task.workerEngagementId,
       assigneeUserId: task.assigneeUserId ?? '',
       statusId: task.statusId,
     });
-    setIsOpen(true);
   };
 
   const toggleSelection = (e: React.MouseEvent) => {

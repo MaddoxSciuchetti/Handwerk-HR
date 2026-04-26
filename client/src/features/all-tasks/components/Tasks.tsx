@@ -13,37 +13,18 @@ import useAuth from '@/features/user-profile/hooks/useAuth';
 import GreetingHeader from '@/features/worker-lifecycle/components/GreetingHeader';
 import { useMemo, useState } from 'react';
 import { useFetchTasks } from '../hooks/useFetchTasks';
+import { useTaskSidebar } from '../hooks/useTaskSidebar';
 import { LargeEditMode } from './LargeEditMode';
 import { TaskItem } from './TaskItem';
 import { TaskSidebar } from './TaskSidebar';
 import { Segment, TaskSegmentToggle } from './ui/taskHeader';
 
-export type TaskEditState = {
-  taskId: string;
-  title: string;
-  workerEngagementId: string;
-  assigneeUserId: string;
-  statusId: string;
-};
-
-const EMPTY_TASK_EDIT_STATE: TaskEditState = {
-  taskId: '',
-  title: '',
-  workerEngagementId: '',
-  assigneeUserId: '',
-  statusId: '',
-};
-
 function Tasks() {
   const { user } = useAuth();
   const { data, isLoading } = useFetchTasks();
   const [segment, setSegment] = useState<Segment>('left');
-  const [isOpen, setIsOpen] = useState(false);
-  const [taskState, setTaskState] = useState<'create' | 'edit'>('create');
-  const [taskEditState, setTaskEditState] = useState<TaskEditState>(
-    EMPTY_TASK_EDIT_STATE
-  );
-  const [createOpenNonce, setCreateOpenNonce] = useState(0);
+  const { sidebarKey, sidebarProps, openForEdit, openForCreate } =
+    useTaskSidebar();
   const filteredTasks = useMemo(() => {
     if (segment === 'left') return data;
     return data?.filter((task) => task.assigneeUserId === user?.id);
@@ -59,17 +40,7 @@ function Tasks() {
   return (
     <div className="mx-auto flex h-full flex-col overflow-auto rounded-2xl bg-card p-6 md:max-w-8xl">
       <div className="flex h-full w-full flex-col">
-        <TaskSidebar
-          key={
-            taskState === 'edit'
-              ? `edit-${taskEditState.taskId}`
-              : `create-${createOpenNonce}`
-          }
-          isOpen={isOpen}
-          setIsOpen={setIsOpen}
-          taskState={taskState}
-          taskEditState={taskEditState}
-        />
+        <TaskSidebar key={sidebarKey} {...sidebarProps} />
         <GreetingHeader firstname={user?.firstName ?? ''} />
         <Table>
           <TableHeader>
@@ -78,12 +49,7 @@ function Tasks() {
             <Button
               className="text-sm text-surface-page"
               type="button"
-              onClick={() => {
-                setTaskState('create');
-                setTaskEditState(EMPTY_TASK_EDIT_STATE);
-                setCreateOpenNonce((n) => n + 1);
-                setIsOpen(true);
-              }}
+              onClick={openForCreate}
             >
               Hinzufügen
             </Button>
@@ -104,9 +70,7 @@ function Tasks() {
               isSelected={editModeData.some(
                 (item) => item.taskNumber === task.id
               )}
-              setIsOpen={setIsOpen}
-              setTaskState={setTaskState}
-              setTaskEditState={setTaskEditState}
+              onOpenEdit={openForEdit}
               setLargeEditMode={setLargeEditMode}
               setEditModeData={setEditModeData}
             />

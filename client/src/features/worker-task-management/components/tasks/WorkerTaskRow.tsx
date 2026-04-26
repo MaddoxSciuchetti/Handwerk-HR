@@ -6,24 +6,36 @@ import {
   Items,
 } from '@/components/ui/selfmade/table/Table';
 import { PillBadge } from '@/features/all-tasks/components/ui/PillBadge';
+import { SquareDashedIcon } from '@/features/all-tasks/components/ui/SelectIcons';
+import type { TaskEditState } from '@/features/all-tasks/hooks/useTaskSidebar';
 import { IssueResponse } from '@/features/all-tasks/types/index.types';
 import formatDateDe from '@/features/all-tasks/utilts/date.utils';
 import { PriorityIndicator } from '@/features/all-tasks/utilts/priority.utils';
-import { Headset, SquareDashedIcon } from 'lucide-react';
+import { Headset } from 'lucide-react';
 
 type WorkerTaskRowProps = {
   task: IssueResponse;
-  onSelect: (taskId: string) => void;
+  onOpenEdit: (seed: TaskEditState) => void;
 };
-export function WorkerTaskRow({ task, onSelect }: WorkerTaskRowProps) {
+
+export function WorkerTaskRow({ task, onOpenEdit }: WorkerTaskRowProps) {
   const dateSource = task.dueDate ?? task.createdAt;
-  const handleSelect = () => onSelect(task.id);
+
+  const openInEditMode = () => {
+    onOpenEdit({
+      taskId: task.id,
+      title: task.title,
+      workerEngagementId: task.workerEngagementId,
+      assigneeUserId: task.assigneeUserId ?? '',
+      statusId: task.statusId,
+    });
+  };
 
   return (
     <Items
       state="hover"
       className="relative flex items-center"
-      onClick={handleSelect}
+      onClick={openInEditMode}
     >
       <span className="absolute ml-2 flex h-5 w-5 items-center justify-center text-black opacity-0 transition-opacity group-hover:opacity-100">
         <SquareDashedIcon className="h-5 w-5" />
@@ -43,7 +55,7 @@ export function WorkerTaskRow({ task, onSelect }: WorkerTaskRowProps) {
             className="ds-label-sm h-8 min-h-0 shrink-0 gap-1.5 rounded-2xl border border-[var(--border-brand)] px-3 py-0"
             onClick={(e) => {
               e.stopPropagation();
-              handleSelect();
+              openInEditMode();
             }}
           >
             Bearbeiten

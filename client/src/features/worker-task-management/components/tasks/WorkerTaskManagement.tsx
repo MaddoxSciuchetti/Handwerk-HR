@@ -10,10 +10,11 @@ import {
   TableDivider,
 } from '@/components/ui/selfmade/table/Table';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { TaskSidebar } from '@/features/all-tasks/components/TaskSidebar';
+import { useTaskSidebar } from '@/features/all-tasks/hooks/useTaskSidebar';
 import { useState } from 'react';
 import useFilteredData from '../../hooks/useFilteredData';
 import useTaskData from '../../hooks/useTaskData';
-import useTaskSubmit from '../../hooks/useTaskSubmit';
 import { WorkerTab } from '../../types/index.types';
 import WorkerFileUploads from '../files/WorkerFileUploads';
 import FilterByUser from '../header/filters/Filter.ByUser';
@@ -40,7 +41,7 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
     displayData,
   } = useFilteredData(data);
 
-  const { setSelectedTaskId } = useTaskSubmit(workerId);
+  const { sidebarKey, sidebarProps, openForEdit } = useTaskSidebar();
 
   if (isLoading) return <LoadingAlert />;
   if (!data)
@@ -55,6 +56,7 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
 
   return (
     <div className="flex flex-col w-5xl rounded-2xl mx-auto overflow-hidden p-6 h-[calc(100dvh-8rem)] max-h-[calc(100dvh-8rem)] md:max-w-8xl">
+      <TaskSidebar key={sidebarKey} {...sidebarProps} />
       <Tabs
         value={activeTab}
         onValueChange={(value) => {
@@ -88,7 +90,7 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
               <WorkerTaskRow
                 key={task.id}
                 task={task}
-                onSelect={setSelectedTaskId}
+                onOpenEdit={openForEdit}
               />
             ))}
           </Table>
