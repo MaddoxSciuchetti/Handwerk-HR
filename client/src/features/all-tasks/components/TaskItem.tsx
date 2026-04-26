@@ -59,7 +59,11 @@ export function TaskItem({
           e.stopPropagation();
           e.preventDefault();
           setLargeEditMode(true);
-          setEditModeData([{ taskNumber: task.id, taskTitle: task.title }]);
+          setEditModeData((prev) =>
+            prev.some((item) => item.taskNumber === task.id)
+              ? prev
+              : [...prev, { taskNumber: task.id, taskTitle: task.title }]
+          );
         }}
         alt=""
       />

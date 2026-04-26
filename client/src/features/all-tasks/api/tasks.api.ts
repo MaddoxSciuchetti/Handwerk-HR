@@ -20,3 +20,7 @@ export const updateTask = async ({
 }: UpdateTaskParams): Promise<unknown> => {
   return API.patch(`/tasks/${taskId}`, data);
 };
+
+export const deleteTasks = async (ids: string[]): Promise<unknown> => {
+  return API.delete(`/tasks/`, { data: { ids } });
+};

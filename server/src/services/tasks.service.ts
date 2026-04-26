@@ -37,6 +37,16 @@ export async function createTaskInOrg(orgId: string, userId: string) {
     });
 }
 
+export async function deleteTasksInOrg(orgId: string, taskIds: string[]) {
+    if (!taskIds.length) return { count: 0 };
+    return prisma.issue.deleteMany({
+        where: {
+            id: { in: taskIds },
+            workerEngagement: { organizationId: orgId },
+        },
+    });
+}
+
 export async function updateTaskInOrg(
     orgId: string,
     userId: string,

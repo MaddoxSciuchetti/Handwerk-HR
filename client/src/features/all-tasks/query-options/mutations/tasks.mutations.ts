@@ -2,6 +2,7 @@ import queryClient from '@/config/query.client';
 import { mutationOptions } from '@tanstack/react-query';
 import {
   createTask,
+  deleteTasks,
   updateTask,
   type UpdateTaskParams,
 } from '../../api/tasks.api';
@@ -19,6 +20,14 @@ export const taskMutations = {
   updateTask: () =>
     mutationOptions<unknown, Error, UpdateTaskParams>({
       mutationFn: ({ taskId, data }) => updateTask({ taskId, data }),
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] });
+      },
+    }),
+
+  deleteTasks: () =>
+    mutationOptions<unknown, Error, string[]>({
+      mutationFn: (ids: string[]) => deleteTasks(ids),
       onSuccess: () => {
         void queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] });
       },

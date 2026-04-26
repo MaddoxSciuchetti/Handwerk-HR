@@ -52,7 +52,7 @@ function Tasks() {
   const [largeEditMode, setLargeEditMode] = useState(false);
   const [editModeData, setEditModeData] = useState<
     { taskNumber: string; taskTitle: string }[]
-  >([{ taskNumber: '', taskTitle: '' }]);
+  >([]);
 
   if (isLoading) return <LoadingAlert />;
 
@@ -113,6 +113,7 @@ function Tasks() {
           <LargeEditMode
             editModeData={editModeData}
             setLargeEditMode={setLargeEditMode}
+            setEditModeData={setEditModeData}
           />
         )}
       </div>
