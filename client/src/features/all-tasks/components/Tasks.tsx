@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/selfmade/table/Table';
 import useAuth from '@/features/user-profile/hooks/useAuth';
 import GreetingHeader from '@/features/worker-lifecycle/components/GreetingHeader';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useFetchTasks } from '../hooks/useFetchTasks';
 import { TaskItem } from './TaskItem';
 import { TaskSidebar } from './TaskSidebar';
@@ -43,8 +43,10 @@ function Tasks() {
     EMPTY_TASK_EDIT_STATE
   );
   const [createOpenNonce, setCreateOpenNonce] = useState(0);
-
-  const tasks = Array.isArray(data) ? data : [];
+  const filteredTasks = useMemo(() => {
+    if (segment === 'left') return data;
+    return data?.filter((task) => task.assigneeUserId === user?.id);
+  }, [data, segment, user?.id]);
 
   if (isLoading) return <LoadingAlert />;
 
@@ -89,7 +91,7 @@ function Tasks() {
               <Cell className="typo-body-sm">Beschreibung</Cell>
             </CellHolder>
           </ItemHeader>
-          {tasks.map((task) => (
+          {filteredTasks?.map((task) => (
             <TaskItem
               key={task.id}
               task={task}
