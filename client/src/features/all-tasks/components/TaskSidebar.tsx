@@ -52,7 +52,6 @@ export function TaskSidebar({
       })),
     [employees]
   );
-  console.log(ownerOptions);
 
   const statusOptions = useMemo(
     () =>

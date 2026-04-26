@@ -18,6 +18,10 @@ type TaskItemProps = {
   setIsOpen: Dispatch<SetStateAction<boolean>>;
   setTaskState: Dispatch<SetStateAction<'create' | 'edit'>>;
   setTaskEditState: Dispatch<SetStateAction<TaskEditState>>;
+  setLargeEditMode: Dispatch<SetStateAction<boolean>>;
+  setEditModeData: Dispatch<
+    SetStateAction<{ taskNumber: string; taskTitle: string }[]>
+  >;
 };
 
 export function TaskItem({
@@ -25,6 +29,8 @@ export function TaskItem({
   setIsOpen,
   setTaskState,
   setTaskEditState,
+  setLargeEditMode,
+  setEditModeData,
 }: TaskItemProps) {
   const dateSource = task.dueDate ?? task.createdAt;
 
@@ -49,6 +55,12 @@ export function TaskItem({
       <img
         className="group absolute ml-2 h-5 w-5 opacity-0 transition-opacity group-hover:opacity-100"
         src="assets/BoxSelect.svg"
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          setLargeEditMode(true);
+          setEditModeData([{ taskNumber: task.id, taskTitle: task.title }]);
+        }}
         alt=""
       />
       <GrowingItem className="min-w-0 flex-1 py-0 pl-10">

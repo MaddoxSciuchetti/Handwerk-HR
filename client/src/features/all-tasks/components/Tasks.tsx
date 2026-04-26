@@ -13,6 +13,7 @@ import useAuth from '@/features/user-profile/hooks/useAuth';
 import GreetingHeader from '@/features/worker-lifecycle/components/GreetingHeader';
 import { useMemo, useState } from 'react';
 import { useFetchTasks } from '../hooks/useFetchTasks';
+import { LargeEditMode } from './LargeEditMode';
 import { TaskItem } from './TaskItem';
 import { TaskSidebar } from './TaskSidebar';
 import { Segment, TaskSegmentToggle } from './ui/taskHeader';
@@ -47,6 +48,11 @@ function Tasks() {
     if (segment === 'left') return data;
     return data?.filter((task) => task.assigneeUserId === user?.id);
   }, [data, segment, user?.id]);
+
+  const [largeEditMode, setLargeEditMode] = useState(false);
+  const [editModeData, setEditModeData] = useState<
+    { taskNumber: string; taskTitle: string }[]
+  >([{ taskNumber: '', taskTitle: '' }]);
 
   if (isLoading) return <LoadingAlert />;
 
@@ -98,9 +104,17 @@ function Tasks() {
               setIsOpen={setIsOpen}
               setTaskState={setTaskState}
               setTaskEditState={setTaskEditState}
+              setLargeEditMode={setLargeEditMode}
+              setEditModeData={setEditModeData}
             />
           ))}
         </Table>
+        {largeEditMode && (
+          <LargeEditMode
+            editModeData={editModeData}
+            setLargeEditMode={setLargeEditMode}
+          />
+        )}
       </div>
     </div>
   );
