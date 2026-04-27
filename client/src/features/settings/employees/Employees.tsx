@@ -1,8 +1,10 @@
 import { Button } from '@/components/ui/selfmade/button';
 import { Input } from '@/components/ui/selfmade/input';
 import {
+  Cell,
+  CellHolder,
   GrowingItem,
-  Items,
+  ItemHeader,
   Table,
   TableDivider,
   TableHeader,
@@ -33,12 +35,17 @@ function Employees() {
             />
           </TableHeader>
           <TableDivider />
-          <Items state="default" className="px-2 py-0">
-            <GrowingItem className="">
+          <ItemHeader className="p-0">
+            <GrowingItem className="pl-10 py-2">
               <p className="typo-body-sm">Name</p>
             </GrowingItem>
-            <p>Aktive</p>
-          </Items>
+            <CellHolder>
+              <Cell className="typo-body-sm">Offene Aufgaben</Cell>
+              <Cell className="typo-body-sm">Status</Cell>
+              <Cell className="typo-body-sm">Vertretung</Cell>
+              <Cell className="typo-body-sm">Aktionen</Cell>
+            </CellHolder>
+          </ItemHeader>
         </Table>
       </div>
     </div>
