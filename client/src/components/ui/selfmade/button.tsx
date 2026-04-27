@@ -5,7 +5,7 @@ import * as React from 'react';
 import { cn } from '@/lib/trycatch';
 
 const buttonVariants = cva(
-  'inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full  transition-colors [&_svg]:pointer-events-none [&_svg]:shrink-0',
+  'inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap text-sm font-medium transition-colors [&_svg]:pointer-events-none [&_svg]:shrink-0',
   {
     variants: {
       variant: {
@@ -16,12 +16,13 @@ const buttonVariants = cva(
         disabled: 'bg-interactive-primary-disabled',
       },
       size: {
-        default: 'px-4 py-2',
-        small: 'px-6 py-4',
-        lg: 'px-8 py-6',
+        default: 'h-9 min-h-9 px-4 py-0',
+        small: 'h-8 min-h-8 px-3 text-xs',
+        lg: 'h-11 min-h-11 px-6 text-base',
+        icon: 'h-9 w-9 min-h-9 min-w-9 shrink-0 p-0',
       },
       radius: {
-        default: 'rounded-xl',
+        default: 'rounded-full',
         lg: 'rounded-2xl',
         xl: 'rounded-3xl',
       },

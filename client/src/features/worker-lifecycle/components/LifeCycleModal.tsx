@@ -1,4 +1,6 @@
+import { AddWorker } from '@/features/worker-lifecycle/schemas/zod.schemas';
 import ModalOverlay from '@/components/modal/ModalOverlay';
+import { useEffect, useState } from 'react';
 import ModalContent from './lifycycle-modal-content/ModalContent';
 
 type LifeCycleModalProps = {
@@ -7,11 +9,26 @@ type LifeCycleModalProps = {
 };
 
 const LifeCycleModal = ({ toggleModal, modal }: LifeCycleModalProps) => {
+  const [selectedOption, setSelectedOption] = useState<AddWorker['type'] | null>(
+    null
+  );
+
+  useEffect(() => {
+    if (!modal) {
+      setSelectedOption(null);
+    }
+  }, [modal]);
+
   return (
     <>
       {modal && (
         <ModalOverlay size={'max-w-2xl'} handleToggle={toggleModal}>
-          <ModalContent toggleModal={toggleModal} />
+          <ModalContent
+            selectedOption={selectedOption}
+            setSelectedOption={setSelectedOption}
+            toggleModal={toggleModal}
+            showInlineFormBackButton
+          />
         </ModalOverlay>
       )}
     </>

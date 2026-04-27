@@ -4,8 +4,10 @@ import { SidebarAside } from '@/features/worker-task-management/components/tasks
 import SidebarContent from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarContent';
 import SidebarHeader from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarHeader';
 import { SidebarPanel } from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarPanel';
-import { X } from 'lucide-react';
+import { AddWorker } from '@/features/worker-lifecycle/schemas/zod.schemas';
+import { ArrowLeft, X } from 'lucide-react';
 import type { Dispatch, SetStateAction } from 'react';
+import { useEffect, useState } from 'react';
 import ModalContent from './lifycycle-modal-content/ModalContent';
 
 type WorkerSidebarProps = {
@@ -14,19 +16,53 @@ type WorkerSidebarProps = {
 };
 
 export function WorkerSidebar({ isOpen, setIsOpen }: WorkerSidebarProps) {
+  const [selectedOption, setSelectedOption] = useState<AddWorker['type'] | null>(
+    null
+  );
+
   const close = () => setIsOpen(false);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedOption(null);
+    }
+  }, [isOpen]);
+
+  const isFormStep = selectedOption !== null;
 
   return (
     <SidebarAside className="p-2" isOpen={isOpen}>
       <SidebarPanel className="w-full">
         <SidebarHeader className="flex items-center justify-between p-6">
-          <Label className="typo-body-lg font-bold">Mitarbeiter</Label>
-          <Button type="button" aria-label="Schließen" onClick={close}>
+          {isFormStep ? (
+            <Button
+              type="button"
+              className="shrink-0 bg-black text-sm text-surface-page hover:bg-black/90"
+              onClick={() => setSelectedOption(null)}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Zurück
+            </Button>
+          ) : (
+            <Label className="typo-body-lg font-bold">Mitarbeiter</Label>
+          )}
+          <Button
+            type="button"
+            size="icon"
+            aria-label="Schließen"
+            className="bg-transparent text-foreground shadow-none hover:bg-muted"
+            onClick={close}
+          >
             <X className="h-4 w-4" aria-hidden />
           </Button>
         </SidebarHeader>
-        <SidebarContent className="mt-2 flex flex-col gap-4 p-6">
-          <ModalContent toggleModal={close} />
+        <SidebarContent className="mt-2 flex min-h-0 grow flex-col overflow-hidden p-6">
+          <ModalContent
+            selectedOption={selectedOption}
+            setSelectedOption={setSelectedOption}
+            toggleModal={close}
+            showInlineFormBackButton={false}
+          />
         </SidebarContent>
       </SidebarPanel>
     </SidebarAside>

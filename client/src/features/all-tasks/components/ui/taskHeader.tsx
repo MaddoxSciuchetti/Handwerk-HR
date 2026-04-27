@@ -18,7 +18,7 @@ export function TaskSegmentToggle({
 }) {
   return (
     <div
-      className="flex shrink-0 items-start gap-2.5 rounded-xl bg-[var(--neutral-200)] p-0.5"
+      className="flex shrink-0 items-center gap-1 rounded-full bg-[var(--neutral-200)] p-0.5"
       role="group"
       aria-label="Ansicht umschalten"
     >

@@ -45,7 +45,13 @@ export function TemplateSidebar({
           <Label className="typo-body-lg font-bold">
             Erstelle dein Template
           </Label>
-          <Button type="button" onClick={() => setIsOpen(false)}>
+          <Button
+            type="button"
+            size="icon"
+            aria-label="Schließen"
+            className="bg-transparent text-foreground shadow-none hover:bg-muted"
+            onClick={() => setIsOpen(false)}
+          >
             <X className="h-4 w-4" aria-hidden />
           </Button>
         </SidebarHeader>

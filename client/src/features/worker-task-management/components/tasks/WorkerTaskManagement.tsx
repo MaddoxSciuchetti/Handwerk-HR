@@ -2,9 +2,6 @@ import ErrorAlert from '@/components/alerts/ErrorAlert';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import ModalOverlay from '@/components/modal/ModalOverlay';
 import {
-  Cell,
-  CellHolder,
-  GrowingItem,
   ItemHeader,
   Table,
   TableDivider,
@@ -56,13 +53,14 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
         <TabsContent value="form">
           <Table>
             <TableDivider />
-            <ItemHeader className="px-4 py-0">
-              <GrowingItem className="py-2 pl-10">
+            <ItemHeader className="flex w-full min-w-0 items-center gap-0 px-4 py-0">
+              <div className="shrink-0 py-2 pl-10">
                 <p className="typo-body-sm">Titel</p>
-              </GrowingItem>
-              <CellHolder>
-                <Cell className="typo-body-sm">Beschreibung</Cell>
-              </CellHolder>
+              </div>
+              <div className="min-w-0 flex-1" />
+              <div className="shrink-0 py-2 text-right">
+                <p className="typo-body-sm">Beschreibung</p>
+              </div>
             </ItemHeader>
             {displayData.map((task) => (
               <WorkerTaskRow

@@ -1,8 +1,6 @@
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import { Button } from '@/components/ui/selfmade/button';
 import {
-  Cell,
-  CellHolder,
   GrowingItem,
   ItemHeader,
   Table,
@@ -47,7 +45,7 @@ function Tasks() {
             <GrowingItem>Alle Aufgaben</GrowingItem>
             <TaskSegmentToggle value={segment} onChange={setSegment} />
             <Button
-              className="text-sm text-surface-page"
+              className="bg-black text-sm text-surface-page hover:bg-black/90"
               type="button"
               onClick={openForCreate}
             >
@@ -55,13 +53,14 @@ function Tasks() {
             </Button>
           </TableHeader>
           <TableDivider />
-          <ItemHeader className="px-4 py-0">
-            <GrowingItem className="py-2 pl-10">
+          <ItemHeader className="flex w-full min-w-0 items-center gap-0 px-4 py-0">
+            <div className="shrink-0 py-2 pl-10">
               <p className="typo-body-sm">Titel</p>
-            </GrowingItem>
-            <CellHolder>
-              <Cell className="typo-body-sm">Beschreibung</Cell>
-            </CellHolder>
+            </div>
+            <div className="min-w-0 flex-1" />
+            <div className="shrink-0 py-2 text-right">
+              <p className="typo-body-sm">Beschreibung</p>
+            </div>
           </ItemHeader>
           {filteredTasks?.map((task) => (
             <TaskItem

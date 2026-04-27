@@ -70,27 +70,30 @@ function WorkerLifeCycle() {
       <div className="h-full w-full flex flex-col">
         <GreetingHeader firstname={user?.firstName || ''} />
         <Table>
-          <TableHeader>
-            <GrowingItem>Handwerker</GrowingItem>
-            <SelectDropdown
-              state={'Default'}
-              size={'lg'}
-              icon={ChevronUp}
-              label="Select Option"
-              options={filterOptions}
-              value={filterLabel}
-              setValue={handleSelect}
-              onSubSelect={handleSubSelect}
-            />
-            <Button
-              className="text-sm text-surface-page"
-              onClick={handleSelectWorker}
-            >
-              Hinzufügen
-            </Button>
+          <TableHeader className="flex w-full flex-wrap items-center justify-between gap-4 px-6 py-3">
+            <GrowingItem className="!grow-0 !py-0">Handwerker</GrowingItem>
+            <div className="flex shrink-0 items-center gap-3">
+              <SelectDropdown
+                state="Default"
+                size="lg"
+                icon={ChevronUp}
+                label="Select Option"
+                options={filterOptions}
+                value={filterLabel}
+                setValue={handleSelect}
+                onSubSelect={handleSubSelect}
+              />
+              <Button
+                type="button"
+                className="shrink-0 bg-black text-sm text-surface-page hover:bg-black/90"
+                onClick={handleSelectWorker}
+              >
+                Hinzufügen
+              </Button>
+            </div>
           </TableHeader>
           <TableDivider />
-          <ItemHeader className="p-0">
+          <ItemHeader className="px-4 py-0">
             <GrowingItem className="pl-10 py-2">
               <p className="typo-body-sm">Name</p>
             </GrowingItem>

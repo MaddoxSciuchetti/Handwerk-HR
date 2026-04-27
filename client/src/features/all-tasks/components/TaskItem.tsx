@@ -1,10 +1,5 @@
 import { Button } from '@/components/ui/selfmade/button';
-import {
-  Cell,
-  CellHolder,
-  GrowingItem,
-  Items,
-} from '@/components/ui/selfmade/table/Table';
+import { Items } from '@/components/ui/selfmade/table/Table';
 import { cn } from '@/lib/trycatch';
 import { Headset } from 'lucide-react';
 import type { Dispatch, SetStateAction } from 'react';
@@ -60,7 +55,7 @@ export function TaskItem({
   return (
     <Items
       state="hover"
-      className="relative flex min-h-12 items-center px-4 py-2.5"
+      className="relative flex min-h-12 items-center gap-0 px-4 py-2.5"
       onClick={openInEditMode}
     >
       <button
@@ -75,39 +70,38 @@ export function TaskItem({
       >
         <SelectionIcon className="h-5 w-5" />
       </button>
-      <GrowingItem className="min-w-0 flex-1 py-0 pl-10">
-        <div className="flex min-w-0 flex-1 items-center gap-2.5">
-          <p className="typo-body-sm shrink-0 whitespace-nowrap text-black">
-            {`--- ${task.id.slice(0, 8)}`}
-          </p>
+      <div className="flex min-w-0 max-w-full shrink-0 items-center gap-2.5 pl-10">
+        <p className="typo-body-sm w-24 shrink-0 truncate whitespace-nowrap font-mono text-black">
+          {`--- ${task.id.slice(0, 8)}`}
+        </p>
+        <span className="flex w-4 shrink-0 items-center justify-center">
           <PriorityIndicator priority={task.priority} />
-          <p className="typo-body-sm min-w-0 truncate text-black">
-            {task.title}
-          </p>
-          <Button
-            type="button"
-            variant="default"
-            className="ds-label-sm h-7 min-h-0 shrink-0 gap-1.5 rounded-2xl border border-[var(--border-brand)] px-3 py-0 text-xs"
-            onClick={(e) => {
-              e.stopPropagation();
-              openInEditMode();
-            }}
-          >
-            Bearbeiten
-          </Button>
-        </div>
-      </GrowingItem>
-      <CellHolder>
-        <Cell className="flex w-full max-w-none items-center justify-end gap-2 border-0">
-          <PillBadge>
-            <Headset className="size-4 shrink-0" aria-hidden />
-            <span className="whitespace-nowrap">—</span>
-          </PillBadge>
-          <PillBadge>
-            <span className="leading-4">{formatDateDe(dateSource)}</span>
-          </PillBadge>
-        </Cell>
-      </CellHolder>
+        </span>
+        <p className="typo-body-sm min-w-0 max-w-[min(32rem,45vw)] truncate text-black">
+          {task.title}
+        </p>
+        <Button
+          type="button"
+          variant="default"
+          className="ds-label-sm shrink-0 gap-1.5 border border-[var(--border-brand)] bg-card text-foreground shadow-none hover:bg-muted/60"
+          onClick={(e) => {
+            e.stopPropagation();
+            openInEditMode();
+          }}
+        >
+          Bearbeiten
+        </Button>
+      </div>
+      <div className="min-w-0 flex-1" aria-hidden />
+      <div className="flex shrink-0 items-center justify-end gap-2">
+        <PillBadge>
+          <Headset className="size-4 shrink-0" aria-hidden />
+          <span className="whitespace-nowrap">—</span>
+        </PillBadge>
+        <PillBadge>
+          <span className="leading-4">{formatDateDe(dateSource)}</span>
+        </PillBadge>
+      </div>
     </Items>
   );
 }

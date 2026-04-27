@@ -1,6 +1,6 @@
 import FormFields from '@/components/form/FormFields';
+import { Button } from '@/components/ui/selfmade/button';
 import { AddWorker } from '@/features/worker-lifecycle/schemas/zod.schemas';
-import { Button } from '../../../../components/ui/button';
 import { useAddWorker } from '../../hooks/useAddWorker';
 import { useMemoizedInputs } from '../../hooks/useMemoizedInputs';
 import { TemplateSelect } from './TemplateSelect';
@@ -9,12 +9,14 @@ interface WorkerFormProps {
   setSelectedOption: (value: AddWorker['type'] | null) => void;
   type: AddWorker['type'];
   toggleModal: () => void;
+  showInlineFormBackButton?: boolean;
 }
 
 export const WorkerForm = ({
   setSelectedOption,
   type,
   toggleModal,
+  showInlineFormBackButton = true,
 }: WorkerFormProps) => {
   const {
     register,
@@ -32,16 +34,17 @@ export const WorkerForm = ({
   return (
     <form
       onSubmit={handleSubmit(submitWorkerForm)}
-      className="flex flex-col gap-4"
+      className="flex min-h-0 flex-1 flex-col gap-4"
     >
-      <Button
-        type="button"
-        variant="outline"
-        className="w-fit cursor-pointer rounded-xl"
-        onClick={() => setSelectedOption(null)}
-      >
-        Zurück
-      </Button>
+      {showInlineFormBackButton && (
+        <Button
+          type="button"
+          className="w-fit border border-border bg-card text-foreground shadow-none hover:bg-muted/60"
+          onClick={() => setSelectedOption(null)}
+        >
+          Zurück
+        </Button>
+      )}
 
       <h1 className="typo-body-lg font-semibold">Eingabe {type}</h1>
 
@@ -51,7 +54,7 @@ export const WorkerForm = ({
         </p>
       )}
 
-      <div className="flex flex-col gap-3">
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto">
         {memoizedInputs.map((input) => (
           <FormFields
             key={input.name}
@@ -65,14 +68,15 @@ export const WorkerForm = ({
         <TemplateSelect control={control} name="templateId" />
       </div>
 
-      <Button
-        type="submit"
-        variant="outline"
-        disabled={isPending}
-        className="w-full cursor-pointer rounded-xl transition-colors hover:bg-accent hover:text-accent-foreground"
-      >
-        {isPending ? 'Wird erstellt...' : 'Hinzufügen'}
-      </Button>
+      <footer className="mt-auto flex shrink-0 justify-end border-t border-border pt-4">
+        <Button
+          type="submit"
+          disabled={isPending}
+          className="shrink-0 bg-black text-sm text-surface-page hover:bg-black/90"
+        >
+          {isPending ? 'Wird erstellt...' : 'Hinzufügen'}
+        </Button>
+      </footer>
     </form>
   );
 };

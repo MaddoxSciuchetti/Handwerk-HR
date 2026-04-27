@@ -71,8 +71,18 @@ function Cell({
   );
 }
 
-function CellHolder({ children }: { children: ReactNode }) {
-  return <div className="flex items-center  w-150">{children}</div>;
+function CellHolder({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn('flex min-w-0 items-center', className ?? 'w-150')}>
+      {children}
+    </div>
+  );
 }
 
 function ItemHeader({

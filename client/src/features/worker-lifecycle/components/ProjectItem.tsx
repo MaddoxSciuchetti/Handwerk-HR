@@ -58,7 +58,7 @@ function ProjectItem({
   return (
     <Items
       state="hover"
-      className="relative flex items-center"
+      className="relative flex min-h-12 items-center gap-0 px-4 py-2.5"
       onClick={() => gotopage(worker.id, form_type, fullname)}
     >
       <button
