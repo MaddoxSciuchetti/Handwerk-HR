@@ -33,6 +33,8 @@ export const addWorkerBaseSchema = z.object({
   adresse: z.string().min(1, 'erforderlich'),
   eintrittsdatum: workerDateSchema,
   position: z.string().min(1, 'Position erforderlich'),
+  // Optional: when set, every template item becomes a task on the new worker.
+  templateId: z.string().uuid().optional(),
 });
 
 export const OnboardingValidation = addWorkerBaseSchema.extend({

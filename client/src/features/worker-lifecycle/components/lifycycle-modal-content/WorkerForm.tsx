@@ -3,6 +3,7 @@ import { AddWorker } from '@/features/worker-lifecycle/schemas/zod.schemas';
 import { Button } from '../../../../components/ui/button';
 import { useAddWorker } from '../../hooks/useAddWorker';
 import { useMemoizedInputs } from '../../hooks/useMemoizedInputs';
+import { TemplateSelect } from './TemplateSelect';
 
 interface WorkerFormProps {
   setSelectedOption: (value: AddWorker['type'] | null) => void;
@@ -18,6 +19,7 @@ export const WorkerForm = ({
   const {
     register,
     handleSubmit,
+    control,
     submitWorkerForm,
     errors,
     isError,
@@ -59,6 +61,8 @@ export const WorkerForm = ({
             placeholder={input.placeholder}
           />
         ))}
+
+        <TemplateSelect control={control} name="templateId" />
       </div>
 
       <Button

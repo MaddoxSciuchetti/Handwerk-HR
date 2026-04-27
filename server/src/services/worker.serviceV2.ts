@@ -24,7 +24,6 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import {
     Prisma,
     WorkerStatus,
-    type DefaultIssueStatus,
     type DefaultPriority,
     type IssuePriority,
 } from "@prisma/client";
@@ -74,6 +73,8 @@ export async function createWorker(params: CreateWorkerInput) {
         responsibleUserId,
         startDate,
         endDate,
+        // Template (optional)
+        templateId,
     } = params;
 
     const { id: statusId } = await prisma.organizationStatus.findFirstOrThrow({
@@ -115,7 +116,18 @@ export async function createWorker(params: CreateWorkerInput) {
             },
         });
 
-        return { worker, engagement };
+        let issuesCreated = 0;
+        if (templateId) {
+            const result = await applyIssueTemplateInTx(tx, {
+                organizationId,
+                workerEngagementId: engagement.id,
+                templateId,
+                actorUserId: createdByUserId,
+            });
+            issuesCreated = result.count;
+        }
+
+        return { worker, engagement, issuesCreated };
     });
 }
 
@@ -666,12 +678,70 @@ function templatePriorityToIssuePriority(
     return p as IssuePriority;
 }
 
-function resolveTemplateItemStatusId(
-    defaultStatus: DefaultIssueStatus,
-    defaultOpenId: string,
-    inArbeitId: string,
-): string {
-    return defaultStatus === "todo" ? inArbeitId : defaultOpenId;
+// Core template-application logic, parameterized over a Prisma transaction
+// client so it can run either inside an existing $transaction (e.g. createWorker)
+// or wrapped in its own transaction by the public API.
+async function applyIssueTemplateInTx(
+    tx: Prisma.TransactionClient,
+    params: {
+        organizationId: string;
+        workerEngagementId: string;
+        templateId: string;
+        actorUserId: string;
+    },
+) {
+    const { organizationId, workerEngagementId, templateId, actorUserId } =
+        params;
+
+    const template = await tx.issueTemplate.findFirst({
+        where: { id: templateId, organizationId },
+        include: {
+            items: { orderBy: { orderIndex: "asc" } },
+        },
+    });
+    if (!template) throw new Error("Template not found");
+
+    const statuses = await tx.organizationStatus.findMany({
+        where: { organizationId, entityType: "issue" },
+        orderBy: { orderIndex: "asc" },
+    });
+    const byName = (n: string) => statuses.find((s) => s.name === n)?.id;
+    const initialStatusId =
+        statuses.find((s) => s.isDefault)?.id ??
+        byName("Offen") ??
+        statuses[0]?.id;
+    if (!initialStatusId) throw new Error("No issue statuses configured");
+
+    const created = [] as { id: string }[];
+    for (const item of template.items) {
+        const issue = await tx.issue.create({
+            data: {
+                workerEngagementId,
+                createdByUserId: actorUserId,
+                statusId: initialStatusId,
+                title: item.title,
+                description: item.description ?? undefined,
+                priority: templatePriorityToIssuePriority(item.defaultPriority),
+                templateItemId: item.id,
+            },
+            select: { id: true },
+        });
+        await tx.issueAuditLog.create({
+            data: {
+                issueId: issue.id,
+                actorUserId,
+                action: "issue.created",
+                newValue: {
+                    title: item.title,
+                    statusId: initialStatusId,
+                    templateItemId: item.id,
+                },
+            },
+        });
+        created.push(issue);
+    }
+
+    return { count: created.length, issueIds: created.map((c) => c.id) };
 }
 
 export async function applyIssueTemplate(params: {
@@ -697,51 +767,18 @@ export async function applyIssueTemplate(params: {
             workerId,
             organizationId,
         },
+        select: { id: true },
     });
     if (!engagement) throw new Error("Worker engagement not found");
 
-    const template = await prisma.issueTemplate.findFirst({
-        where: { id: templateId, organizationId },
-        include: {
-            items: { orderBy: { orderIndex: "asc" } },
-        },
-    });
-    if (!template) throw new Error("Template not found");
-    if (template.type !== engagement.type) {
-        throw new Error("Template type does not match engagement type");
-    }
-
-    const statuses = await prisma.organizationStatus.findMany({
-        where: { organizationId, entityType: "issue" },
-        orderBy: { orderIndex: "asc" },
-    });
-    const byName = (n: string) => statuses.find((s) => s.name === n)?.id;
-    const defaultOpenId =
-        statuses.find((s) => s.isDefault)?.id ??
-        byName("Offen") ??
-        statuses[0]?.id;
-    if (!defaultOpenId) throw new Error("No issue statuses configured");
-    const inArbeitId = byName("In Arbeit") ?? defaultOpenId;
-
-    const created: Awaited<ReturnType<typeof createIssue>>[] = [];
-    for (const item of template.items) {
-        const issue = await createIssue({
-            workerEngagementId,
-            createdByUserId: actorUserId,
-            statusId: resolveTemplateItemStatusId(
-                item.defaultStatus,
-                defaultOpenId,
-                inArbeitId,
-            ),
-            title: item.title,
-            description: item.description ?? undefined,
-            priority: templatePriorityToIssuePriority(item.defaultPriority),
-            templateItemId: item.id,
-        });
-        created.push(issue);
-    }
-
-    return { count: created.length, issues: created };
+    return prisma.$transaction((tx) =>
+        applyIssueTemplateInTx(tx, {
+            organizationId,
+            workerEngagementId: engagement.id,
+            templateId,
+            actorUserId,
+        }),
+    );
 }
 
 export async function deleteIssue(params: {

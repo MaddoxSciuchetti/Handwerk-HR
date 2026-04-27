@@ -18,13 +18,11 @@ export type {
 // ─── Worker ───────────────────────────────────────────────────────────────────
 
 export interface CreateWorkerInput {
-    // Required by schema
     organizationId: string;
     createdByUserId: string; // from auth / req.user
     firstName: string;
     lastName: string;
     email: string;
-    // Optional Worker fields
     phoneNumber?: string;
     birthday?: Date;
     position?: string;
@@ -35,11 +33,11 @@ export interface CreateWorkerInput {
     country?: string;
     entryDate?: Date;
     exitDate?: Date;
-    // Initial WorkerEngagement (required)
     engagementType: EngagementType;
-    responsibleUserId: string; // required on WorkerEngagement
+    responsibleUserId: string;
     startDate?: Date;
     endDate?: Date;
+    templateId?: string;
 }
 
 export interface UpdateWorkerInput {
@@ -175,7 +173,9 @@ export interface UploadWorkerDocumentInput {
 // ─── Data Point ───────────────────────────────────────────────────────────────
 
 /** Worker columns + `responsibleUserId` (updates latest engagement). */
-export type WorkerDataPointField = keyof UpdateWorkerInput | "responsibleUserId";
+export type WorkerDataPointField =
+    | keyof UpdateWorkerInput
+    | "responsibleUserId";
 
 export interface UpdateDataPointInput {
     workerId: string;

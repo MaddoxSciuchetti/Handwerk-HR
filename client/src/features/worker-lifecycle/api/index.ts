@@ -19,6 +19,7 @@ export type CreateWorkerRequest = {
   responsibleUserId: string;
   startDate?: string;
   endDate?: string;
+  templateId?: string;
 };
 
 type CreateWorkerResponse = {

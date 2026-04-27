@@ -19,6 +19,7 @@ export function useAddWorker(type: AddWorker['type'], toggleModal: () => void) {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<AddWorker>({
     resolver: zodResolver(addWorkerSchema),
@@ -48,6 +49,7 @@ export function useAddWorker(type: AddWorker['type'], toggleModal: () => void) {
       responsibleUserId: user.id,
       startDate: data.eintrittsdatum,
       endDate: data.type === 'Offboarding' ? data.austrittsdatum : undefined,
+      templateId: data.templateId,
     };
 
     await addWorkerMutation(workerPayload);
@@ -58,6 +60,7 @@ export function useAddWorker(type: AddWorker['type'], toggleModal: () => void) {
   return {
     register,
     handleSubmit,
+    control,
     submitWorkerForm,
     errors,
     isError,
