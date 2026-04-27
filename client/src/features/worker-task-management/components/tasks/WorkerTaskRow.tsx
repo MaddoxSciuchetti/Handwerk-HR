@@ -32,23 +32,24 @@ export function WorkerTaskRow({ task, onOpenEdit }: WorkerTaskRowProps) {
       className="relative flex min-h-12 items-center gap-0 px-4 py-2.5"
       onClick={openInEditMode}
     >
-      <span className="absolute ml-2 flex h-5 w-5 items-center justify-center text-black opacity-0 transition-opacity group-hover:opacity-100">
+      <span className="absolute ml-2 flex h-5 w-5 items-center justify-center text-foreground opacity-0 transition-opacity group-hover:opacity-100">
         <SquareDashedIcon className="h-5 w-5" />
       </span>
       <div className="flex min-w-0 max-w-full shrink-0 items-center gap-2.5 pl-10">
-        <p className="typo-body-sm w-24 shrink-0 truncate whitespace-nowrap font-mono text-black">
+        <p className="typo-body-sm w-24 shrink-0 truncate whitespace-nowrap font-mono text-foreground">
           {`--- ${task.id.slice(0, 8)}`}
         </p>
         <span className="flex w-4 shrink-0 items-center justify-center">
           <PriorityIndicator priority={task.priority} />
         </span>
-        <p className="typo-body-sm min-w-0 max-w-[min(32rem,45vw)] truncate text-black">
+        <p className="typo-body-sm min-w-0 max-w-[min(32rem,45vw)] truncate text-foreground">
           {task.title}
         </p>
         <Button
           type="button"
+          size="small"
           variant="default"
-          className="ds-label-sm shrink-0 gap-1.5 border border-[var(--border-brand)] bg-card text-foreground shadow-none hover:bg-muted/60"
+          className="shrink-0 gap-1 border border-border bg-interactive-primary-bg text-xs font-medium text-interactive-primary-text shadow-none hover:bg-interactive-primary-hover"
           onClick={(e) => {
             e.stopPropagation();
             openInEditMode();

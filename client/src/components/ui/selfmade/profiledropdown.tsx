@@ -1,10 +1,12 @@
 import useAuth from '@/features/user-profile/hooks/useAuth';
 import { userProfileQueries } from '@/features/user-profile/query-options/queries/user-profile.queries';
+import { useThemeProvider } from '@/hooks/useThemeProvider';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { ChevronUpIcon } from 'lucide-react';
+import { ChevronUpIcon, Settings } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../tooltip';
 import { Avatar } from './avatar';
+import { ProfileThemeToggle } from './profileThemeToggle';
 import { SelectDropdown } from './selectdropdown';
 
 const getDisplayLabel = (user: ReturnType<typeof useAuth>['user']) => {
@@ -24,6 +26,7 @@ export function ProfileDropdown({
   collapsed?: boolean;
 }) {
   const { user } = useAuth();
+  const { theme, setTheme } = useThemeProvider();
   const { data: profilePhoto } = useQuery({
     ...userProfileQueries.ProfileFoto(),
     retry: false,
@@ -59,23 +62,34 @@ export function ProfileDropdown({
   }
 
   return (
-    <div className="flex flex-row  rounded-md  items-center w-full gap-2">
+    <div className="flex min-w-0 w-full max-w-full flex-row items-center gap-2 rounded-md">
       <Avatar variant="image" src={profilePhoto} alt="Profile" />
-      <SelectDropdown
-        label={getDisplayLabel(user)}
-        state="Default"
-        size="sm"
-        icon={ChevronUpIcon}
-        options={[
-          {
-            label: 'settings',
-            value: 'settings',
-            action: openSettings,
-          },
-        ]}
-        setValue={() => {}}
-        value={''}
-      />
+      <div className="min-w-0 flex-1">
+        <SelectDropdown
+          label={getDisplayLabel(user)}
+          state="Default"
+          size="sm"
+          icon={ChevronUpIcon}
+          options={[
+            {
+              label: 'Einstellungen',
+              value: 'settings',
+              icon: Settings,
+              action: openSettings,
+            },
+            { label: '', value: '__divider__' },
+          ]}
+          setValue={() => {}}
+          value={''}
+          panelFooter={({ close }) => (
+            <ProfileThemeToggle
+              theme={theme}
+              setTheme={setTheme}
+              onDone={close}
+            />
+          )}
+        />
+      </div>
     </div>
   );
 }

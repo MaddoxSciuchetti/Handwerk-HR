@@ -3,8 +3,8 @@ import '../../../../globals.css';
 
 type Variant = 'default' | 'pressed';
 const variants: Record<Variant, string> = {
-  default: 'bg-transparent text-black',
-  pressed: 'bg-surface-page text-black',
+  default: 'bg-transparent text-foreground',
+  pressed: 'bg-background text-foreground',
 };
 
 type ToggleButtonProps = {

@@ -72,7 +72,7 @@ export const WorkerForm = ({
         <Button
           type="submit"
           disabled={isPending}
-          className="shrink-0 bg-black text-sm text-surface-page hover:bg-black/90"
+          className="shrink-0 border-0 bg-interactive-primary-bg text-sm text-interactive-primary-text hover:bg-interactive-primary-hover"
         >
           {isPending ? 'Wird erstellt...' : 'Hinzufügen'}
         </Button>

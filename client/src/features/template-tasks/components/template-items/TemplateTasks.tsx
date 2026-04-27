@@ -44,7 +44,7 @@ export function TemplateTasks({
     return <LoadingAlert />;
   }
   return (
-    <div className="mx-auto flex h-full flex-col overflow-auto rounded-2xl bg-card p-6 md:max-w-8xl">
+    <div className="mx-auto flex h-full flex-col overflow-auto rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
       <div className="h-full w-full flex flex-col items-center justify-center">
         <SettingsStatusesHeader
           action={

@@ -5,7 +5,7 @@ const GreetingHeader = ({ firstname }: GreetingHeaderProps) => {
   return (
     <>
       <div className="flex pb-5 ">
-        <p className="typo-h5">Hallo, {firstname}</p>
+        <p className="typo-h5 text-foreground">Hallo, {firstname}</p>
       </div>
     </>
   );

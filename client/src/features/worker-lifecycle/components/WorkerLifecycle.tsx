@@ -62,7 +62,7 @@ function WorkerLifeCycle() {
   };
 
   return (
-    <div className="mx-auto flex h-full flex-col overflow-auto rounded-2xl bg-card p-6 md:max-w-8xl">
+    <div className="mx-auto flex h-full flex-col overflow-auto rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
       <WorkerSidebar
         isOpen={isWorkerSidebarOpen}
         setIsOpen={setIsWorkerSidebarOpen}
@@ -71,7 +71,9 @@ function WorkerLifeCycle() {
         <GreetingHeader firstname={user?.firstName || ''} />
         <Table>
           <TableHeader className="flex w-full flex-wrap items-center justify-between gap-4 px-6 py-3">
-            <GrowingItem className="!grow-0 !py-0">Handwerker</GrowingItem>
+            <GrowingItem className="!grow-0 !py-0 text-foreground">
+              Handwerker
+            </GrowingItem>
             <div className="flex shrink-0 items-center gap-3">
               <SelectDropdown
                 state="Default"
@@ -85,7 +87,7 @@ function WorkerLifeCycle() {
               />
               <Button
                 type="button"
-                className="shrink-0 bg-black text-sm text-surface-page hover:bg-black/90"
+                className="shrink-0 border-0 bg-interactive-primary-bg text-sm text-interactive-primary-text hover:bg-interactive-primary-hover"
                 onClick={handleSelectWorker}
               >
                 Hinzufügen
@@ -95,13 +97,13 @@ function WorkerLifeCycle() {
           <TableDivider />
           <ItemHeader className="px-4 py-0">
             <GrowingItem className="pl-10 py-2">
-              <p className="typo-body-sm">Name</p>
+              <p className="typo-body-sm text-foreground">Name</p>
             </GrowingItem>
             <CellHolder>
-              <Cell className="typo-body-sm">Type</Cell>
-              <Cell className="typo-body-sm">Verantwortlich</Cell>
-              <Cell className="typo-body-sm">Zuletzt bearbeitet</Cell>
-              <Cell className="typo-body-sm">Status</Cell>
+              <Cell className="typo-body-sm text-foreground">Type</Cell>
+              <Cell className="typo-body-sm text-foreground">Verantwortlich</Cell>
+              <Cell className="typo-body-sm text-foreground">Zuletzt bearbeitet</Cell>
+              <Cell className="typo-body-sm text-foreground">Status</Cell>
             </CellHolder>
           </ItemHeader>
           {filteredWorkers.map((worker) => (

@@ -18,7 +18,7 @@ export function TaskSegmentToggle({
 }) {
   return (
     <div
-      className="flex shrink-0 items-center gap-1 rounded-full bg-[var(--neutral-200)] p-0.5"
+      className="flex shrink-0 items-center gap-0.5 rounded-full bg-muted p-0.5"
       role="group"
       aria-label="Ansicht umschalten"
     >
@@ -27,8 +27,8 @@ export function TaskSegmentToggle({
         onClick={() => onChange('left')}
         className={
           value === 'left'
-            ? 'flex h-9 shrink-0 items-center justify-center rounded-full bg-[var(--surface-page)] px-4 py-2 shadow-[0px_2px_4px_0px_rgba(0,0,0,0.25)] text-sm text-black'
-            : 'flex h-9 shrink-0 items-center justify-center rounded-full bg-transparent px-4 py-2 text-sm text-black'
+            ? 'flex h-7 shrink-0 items-center justify-center rounded-full bg-background px-3 py-1 text-xs font-medium text-foreground shadow-[0px_1px_3px_0px_rgba(0,0,0,0.12)] dark:shadow-[0px_1px_3px_0px_rgba(0,0,0,0.4)]'
+            : 'flex h-7 shrink-0 items-center justify-center rounded-full bg-transparent px-3 py-1 text-xs font-medium text-foreground'
         }
       >
         Alle Aufgaben
@@ -38,8 +38,8 @@ export function TaskSegmentToggle({
         onClick={() => onChange('right')}
         className={
           value === 'right'
-            ? 'flex h-9 shrink-0 items-center justify-center rounded-full bg-[var(--surface-page)] px-4 py-2 shadow-[0px_2px_4px_0px_rgba(0,0,0,0.25)] text-sm text-black'
-            : 'flex h-9 shrink-0 items-center justify-center rounded-full bg-transparent px-4 py-2 text-sm text-black'
+            ? 'flex h-7 shrink-0 items-center justify-center rounded-full bg-background px-3 py-1 text-xs font-medium text-foreground shadow-[0px_1px_3px_0px_rgba(0,0,0,0.12)] dark:shadow-[0px_1px_3px_0px_rgba(0,0,0,0.4)]'
+            : 'flex h-7 shrink-0 items-center justify-center rounded-full bg-transparent px-3 py-1 text-xs font-medium text-foreground'
         }
       >
         Meine Aufgaben

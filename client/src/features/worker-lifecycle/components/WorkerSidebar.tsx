@@ -37,7 +37,7 @@ export function WorkerSidebar({ isOpen, setIsOpen }: WorkerSidebarProps) {
           {isFormStep ? (
             <Button
               type="button"
-              className="shrink-0 bg-black text-sm text-surface-page hover:bg-black/90"
+              className="shrink-0 border-0 bg-interactive-primary-bg text-sm text-interactive-primary-text hover:bg-interactive-primary-hover"
               onClick={() => setSelectedOption(null)}
             >
               <ArrowLeft className="mr-2 h-4 w-4" />

@@ -78,7 +78,7 @@ function Profile() {
   }
 
   return (
-    <div className="mx-auto flex h-full flex-col overflow-auto rounded-2xl bg-card p-6 md:max-w-8xl">
+    <div className="mx-auto flex h-full flex-col overflow-auto rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
       <div className="flex h-full w-full flex-col items-center justify-center">
         <div className="flex w-200 flex-col items-start">
           <h1 className="typo-h4 font-bold">Profil</h1>

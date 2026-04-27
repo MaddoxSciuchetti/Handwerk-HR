@@ -92,7 +92,7 @@ function CustomSideBarProvider({
           } as React.CSSProperties
         }
         className={cn(
-          'group/sidebar-wrapper flex min-h-svh w-full bg-neutral-100 dark:bg-neutral-900',
+          'group/sidebar-wrapper flex min-h-svh w-full bg-muted',
           className
         )}
         {...props}

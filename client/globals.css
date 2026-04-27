@@ -3,7 +3,8 @@
 
 @layer base {
   body {
-    background-color: var(--gray-100);
+    background-color: var(--background);
+    color: var(--foreground);
     font-family: var(--font-sans);
   }
   /* ─────────────────────────────────────
@@ -253,11 +254,11 @@
     --sidebar-border: oklch(0.269 0 0);
     --sidebar-ring: oklch(0.704 0.04 256.788);
 
-    /* ── Tokens / Surface ── */
-    --surface-page: var(--neutral-900);
-    --surface-subtle: var(--neutral-800);
-    --surface-card: var(--neutral-800);
-    --surface-overlay: var(--neutral-700);
+    /* ── Tokens / Surface — align with shadcn semantic colors (avoid light-mode hex neutrals) ── */
+    --surface-page: var(--background);
+    --surface-subtle: var(--muted);
+    --surface-card: var(--card);
+    --surface-overlay: var(--secondary);
 
     /* ── Tokens / Text ── */
     --text-primary: var(--neutral-50);

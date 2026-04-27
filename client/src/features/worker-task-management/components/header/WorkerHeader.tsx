@@ -26,7 +26,7 @@ const WorkerHeader = ({ openForCreate }: WorkerHeaderProps) => {
       </TabsList>
       <Button
         type="button"
-        className="bg-black text-sm text-white hover:bg-black/90"
+        className="border-0 bg-interactive-primary-bg text-sm text-interactive-primary-text hover:bg-interactive-primary-hover"
         onClick={openForCreate}
       >
         Aufgabe hinzufügen

@@ -11,7 +11,7 @@ export function PillBadge({
   return (
     <div
       className={cn(
-        'ds-label-sm flex h-9 min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-full border border-[var(--border-brand)] bg-primary px-4 text-sm text-primary-foreground',
+        'flex h-7 min-h-7 shrink-0 items-center justify-center gap-1 rounded-full border border-border bg-card px-3 text-xs font-medium text-card-foreground',
         className
       )}
     >

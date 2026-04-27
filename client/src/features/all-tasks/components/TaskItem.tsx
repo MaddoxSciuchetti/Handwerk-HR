@@ -55,7 +55,7 @@ export function TaskItem({
   return (
     <Items
       state="hover"
-      className="relative flex min-h-12 items-center gap-0 px-4 py-2.5"
+      className="relative flex min-h-10 items-center gap-0 px-4 py-1.5"
       onClick={openInEditMode}
     >
       <button
@@ -64,26 +64,27 @@ export function TaskItem({
         aria-label={isSelected ? 'Auswahl entfernen' : 'Auswählen'}
         onClick={toggleSelection}
         className={cn(
-          'absolute ml-2 flex h-5 w-5 items-center justify-center text-black transition-opacity',
+          'absolute ml-2 flex h-4 w-4 items-center justify-center text-foreground transition-opacity',
           isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
         )}
       >
-        <SelectionIcon className="h-5 w-5" />
+        <SelectionIcon className="h-4 w-4" />
       </button>
       <div className="flex min-w-0 max-w-full shrink-0 items-center gap-2.5 pl-10">
-        <p className="typo-body-sm w-24 shrink-0 truncate whitespace-nowrap font-mono text-black">
+        <p className="w-24 shrink-0 truncate whitespace-nowrap font-mono text-xs text-foreground">
           {`--- ${task.id.slice(0, 8)}`}
         </p>
         <span className="flex w-4 shrink-0 items-center justify-center">
           <PriorityIndicator priority={task.priority} />
         </span>
-        <p className="typo-body-sm min-w-0 max-w-[min(32rem,45vw)] truncate text-black">
+        <p className="min-w-0 max-w-[min(32rem,45vw)] truncate text-xs text-foreground">
           {task.title}
         </p>
         <Button
           type="button"
+          size="small"
           variant="default"
-          className="ds-label-sm shrink-0 gap-1.5 border border-[var(--border-brand)] bg-card text-foreground shadow-none hover:bg-muted/60"
+          className="shrink-0 gap-1 border border-border bg-interactive-primary-bg text-xs font-medium text-interactive-primary-text shadow-none hover:bg-interactive-primary-hover"
           onClick={(e) => {
             e.stopPropagation();
             openInEditMode();
@@ -95,7 +96,7 @@ export function TaskItem({
       <div className="min-w-0 flex-1" aria-hidden />
       <div className="flex shrink-0 items-center justify-end gap-2">
         <PillBadge>
-          <Headset className="size-4 shrink-0" aria-hidden />
+          <Headset className="size-3.5 shrink-0" aria-hidden />
           <span className="whitespace-nowrap">—</span>
         </PillBadge>
         <PillBadge>

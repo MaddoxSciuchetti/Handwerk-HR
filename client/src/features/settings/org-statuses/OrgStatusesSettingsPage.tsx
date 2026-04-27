@@ -59,7 +59,7 @@ export function OrgStatusesSettingsPage({
   }
 
   return (
-    <div className="mx-auto flex h-full flex-col overflow-auto rounded-2xl bg-card p-6 md:max-w-8xl">
+    <div className="mx-auto flex h-full flex-col overflow-auto rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
       <div className="flex h-full w-full flex-col items-center justify-center gap-4">
         <SettingsStatusesHeader title={title} description={description} />
         <Table className="w-200">

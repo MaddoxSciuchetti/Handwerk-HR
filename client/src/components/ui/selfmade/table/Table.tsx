@@ -12,7 +12,7 @@ function Table({
   return (
     <div
       className={cn(
-        'flex mt-5 w-full h-full flex-col flex-start border border-interactive-disabled-border bg-surface-page rounded-2xl',
+        'flex mt-5 w-full h-full flex-col flex-start rounded-2xl border-2 border-border bg-transparent',
         className
       )}
     >
@@ -22,7 +22,7 @@ function Table({
 }
 
 function TableDivider() {
-  return <div className="border-b border-interactive-disabled-text" />;
+  return <div className="border-b-2 border-border" />;
 }
 
 type TableHeaderProps = {
@@ -100,8 +100,8 @@ type ItemState = 'default' | 'hover' | 'active';
 
 const ItemsState: Record<ItemState, string> = {
   default: 'bg-transparent',
-  hover: 'hover:bg-neutral-50',
-  active: 'bg-neutral-100',
+  hover: 'hover:bg-muted/60',
+  active: 'bg-muted',
 };
 
 type ItemsProps = {

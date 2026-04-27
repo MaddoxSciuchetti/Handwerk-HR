@@ -1,5 +1,6 @@
 import { cn } from '@/lib/trycatch';
 import { LucideIcon } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 
 type State = 'Default' | 'Open';
@@ -19,6 +20,7 @@ export type OptionsObjekt = {
   value: string;
   action?: () => void;
   subOptions?: OptionsObjekt[];
+  icon?: LucideIcon;
 };
 
 type SelectDropdownProps<T extends string> = {
@@ -30,6 +32,8 @@ type SelectDropdownProps<T extends string> = {
   setValue: (value: T) => void;
   value: string;
   onSubSelect?: (sub: OptionsObjekt, parent: OptionsObjekt) => void;
+  /** Renders below options (e.g. compact toggle); receives `close` to dismiss the panel */
+  panelFooter?: (ctx: { close: () => void }) => ReactNode;
 };
 
 export function SelectDropdown<T extends string>({
@@ -41,6 +45,7 @@ export function SelectDropdown<T extends string>({
   setValue,
   value,
   onSubSelect,
+  panelFooter,
 }: SelectDropdownProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
   const [hoveredValue, setHoveredValue] = useState<string | null>(null);
@@ -63,6 +68,7 @@ export function SelectDropdown<T extends string>({
   };
 
   const handleParentSelect = (option: OptionsObjekt) => {
+    if (option.value === '__divider__') return;
     if (option.subOptions?.length) return;
     setValue(option.value as T);
     option.action?.();
@@ -79,31 +85,45 @@ export function SelectDropdown<T extends string>({
     <div
       ref={ref}
       className={cn(
-        'relative rounded-lg border border-interactive-disabled-text px-3 flex items-center w-full',
+        'relative flex min-w-0 w-full max-w-full items-center rounded-lg border border-border px-3',
         DropdownStates[state],
         sizes[size]
       )}
       onClick={() => setIsOpen(!isOpen)}
     >
-      <p className="typo-body-sm grow text-text-disabled">{value || label}</p>
-      <Icon
+      <p className="typo-body-sm min-w-0 grow truncate text-foreground">
+        {value || label}
+      </p>
+        <Icon
         className={cn(
-          'w-6 h-6 text-text-disabled transition-transform duration-200',
+          'h-6 w-6 text-muted-foreground transition-transform duration-200',
           isOpen ? 'rotate-90' : 'rotate-0'
         )}
       />
       {isOpen && (
-        <div className="absolute z-10 p-2 bg-surface-page top-full rounded-xl border left-0 w-full">
-          {options.map((option) => (
-            <DropdownOption
-              key={option.value}
-              option={option}
-              isHovered={hoveredValue === option.value}
-              onHover={() => setHoveredValue(option.value)}
-              onSelect={() => handleParentSelect(option)}
-              onSubSelect={(sub) => handleSubSelect(sub, option)}
-            />
-          ))}
+        <div className="absolute top-full left-0 z-10 w-full min-w-0 max-w-full box-border rounded-xl border border-border bg-popover p-2 text-popover-foreground">
+          {options.map((option) => {
+            if (option.value === '__divider__') {
+              return (
+                <div
+                  key={option.value}
+                  className="my-1.5 border-t border-border"
+                  aria-hidden
+                />
+              );
+            }
+            return (
+              <DropdownOption
+                key={option.value}
+                option={option}
+                isHovered={hoveredValue === option.value}
+                onHover={() => setHoveredValue(option.value)}
+                onSelect={() => handleParentSelect(option)}
+                onSubSelect={(sub) => handleSubSelect(sub, option)}
+              />
+            );
+          })}
+          {panelFooter?.({ close })}
         </div>
       )}
     </div>
@@ -127,17 +147,26 @@ function DropdownOption({
 }: DropdownOptionProps) {
   const hasSubOptions = !!option.subOptions?.length;
   const showSubMenu = hasSubOptions && isHovered;
+  const OptionIcon = option.icon;
 
   return (
     <div className="relative" onMouseEnter={onHover}>
       <div
-        className="cursor-pointer rounded-md px-2 py-1 hover:bg-surface-default"
+        className="flex min-w-0 cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 hover:bg-muted"
         onClick={(e) => {
           e.stopPropagation();
           onSelect();
         }}
       >
-        {option.label}
+        {OptionIcon ? (
+          <OptionIcon
+            className="size-4 shrink-0 text-muted-foreground"
+            aria-hidden
+          />
+        ) : null}
+        <span className="min-w-0 flex-1 truncate text-left typo-body-sm">
+          {option.label}
+        </span>
       </div>
       {showSubMenu && (
         <DropdownSubMenu
@@ -157,13 +186,13 @@ type DropdownSubMenuProps = {
 function DropdownSubMenu({ subOptions, onSelect }: DropdownSubMenuProps) {
   return (
     <div
-      className="absolute right-full top-0 z-20 mr-2 min-w-40 rounded-xl border bg-surface-page p-2"
+      className="absolute top-0 right-full z-20 mr-2 min-w-40 rounded-xl border border-border bg-popover p-2 text-popover-foreground"
       onClick={(e) => e.stopPropagation()}
     >
       {subOptions.map((sub) => (
         <div
           key={sub.value}
-          className="cursor-pointer rounded-md px-2 py-1 hover:bg-surface-default"
+          className="cursor-pointer rounded-md px-2 py-1 hover:bg-muted"
           onClick={(e) => {
             e.stopPropagation();
             onSelect(sub);

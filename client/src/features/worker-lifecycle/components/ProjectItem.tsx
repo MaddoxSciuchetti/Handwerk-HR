@@ -67,7 +67,7 @@ function ProjectItem({
         aria-label={isSelected ? 'Auswahl entfernen' : 'Auswählen'}
         onClick={toggleSelection}
         className={cn(
-          'absolute ml-2 flex h-5 w-5 items-center justify-center text-black transition-opacity',
+          'absolute ml-2 flex h-5 w-5 items-center justify-center text-foreground transition-opacity',
           isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
         )}
       >
