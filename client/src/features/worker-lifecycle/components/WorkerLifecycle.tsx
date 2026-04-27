@@ -23,7 +23,6 @@ import { WorkerSidebar } from './WorkerSidebar';
 
 function WorkerLifeCycle() {
   const { user, isLoading, isError } = useAuth();
-  console.log(user);
   const {
     error,
     workers,
