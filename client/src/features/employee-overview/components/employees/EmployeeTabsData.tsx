@@ -80,8 +80,9 @@ export function EmployeeTabsData({
 
       <Button
         type="button"
+        variant="outline"
         onClick={onTaskClick}
-        className="mt-4 w-full rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent cursor-pointer"
+        className="mt-4 w-full cursor-pointer"
       >
         Erinnerung senden
       </Button>
