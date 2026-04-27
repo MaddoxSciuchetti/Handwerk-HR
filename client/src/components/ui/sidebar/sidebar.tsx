@@ -1,15 +1,13 @@
 import { cn } from '@/lib/trycatch';
 import { PanelLeftIcon } from 'lucide-react';
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import '../../../../globals.css';
 import { Button } from '../button';
+import {
+  SidebarContext,
+  type SidebarContextProps,
+  useSidebar,
+} from './sidebar-context';
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state';
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
@@ -17,24 +15,6 @@ const SIDEBAR_WIDTH = '16rem';
 const SIDEBAR_WIDTH_MOBILE = '18rem';
 const SIDEBAR_WIDTH_ICON = '4rem';
 const SIDEBAR_KEYBOARD_SHORTCUT = 'b';
-
-interface SidebarContextProps {
-  state: 'expanded' | 'collapsed';
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  toggleSidebar: () => void;
-}
-
-const SidebarContext = createContext<SidebarContextProps | null>(null);
-
-function useSidebar() {
-  const context = useContext(SidebarContext);
-  if (!context) {
-    throw new Error('useSidebar must be used within a CustomSideBarProvider.');
-  }
-
-  return context;
-}
 
 function CustomSideBarProvider({
   defaultOpen = true,

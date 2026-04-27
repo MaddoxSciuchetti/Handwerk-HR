@@ -17,7 +17,6 @@ import useFilteredData from '../../hooks/useFilteredData';
 import useTaskData from '../../hooks/useTaskData';
 import { WorkerTab } from '../../types/index.types';
 import WorkerFileUploads from '../files/WorkerFileUploads';
-import FilterByUser from '../header/filters/Filter.ByUser';
 import WorkerHeader from '../header/WorkerHeader';
 import AddWorkerTaskModal from './AddWorkerTaskModal';
 import { WorkerTaskRow } from './WorkerTaskRow';
@@ -28,35 +27,23 @@ type TaskManagementProps = {
 
 const TaskManagement = ({ workerId }: TaskManagementProps) => {
   const [activeTab, setActiveTab] = useState<WorkerTab>('form');
-  const [fileDescriptionSearch, setFileDescriptionSearch] = useState('');
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
 
   const { data, isLoading } = useTaskData(workerId);
 
-  const {
-    descriptionSearch,
-    setDescriptionSearch,
-    showMyItems,
-    handleMeFilter,
-    displayData,
-  } = useFilteredData(data);
+  const { displayData } = useFilteredData(data);
 
-  const { sidebarKey, sidebarProps, openForEdit } = useTaskSidebar();
+  const { sidebarKey, sidebarProps, openForEdit, openForCreate } =
+    useTaskSidebar();
 
   if (isLoading) return <LoadingAlert />;
   if (!data)
     return <ErrorAlert message="The tasks could not load, reload page" />;
 
-  const searchValue =
-    activeTab === 'files' ? fileDescriptionSearch : descriptionSearch;
-  const setSearchValue =
-    activeTab === 'files' ? setFileDescriptionSearch : setDescriptionSearch;
-  const searchPlaceholder =
-    activeTab === 'files' ? 'Dateiname suchen' : 'Beschreibung suchen';
-
   return (
     <div className="flex flex-col w-5xl rounded-2xl mx-auto overflow-hidden p-6 h-[calc(100dvh-8rem)] max-h-[calc(100dvh-8rem)] md:max-w-8xl">
       <TaskSidebar key={sidebarKey} {...sidebarProps} />
+
       <Tabs
         value={activeTab}
         onValueChange={(value) => {
@@ -65,17 +52,8 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
           }
         }}
       >
-        <WorkerHeader
-          searchValue={searchValue}
-          setSearchValue={setSearchValue}
-          searchPlaceholder={searchPlaceholder}
-          handleAddTask={() => setIsAddTaskModalOpen(true)}
-        />
+        <WorkerHeader openForCreate={openForCreate} />
         <TabsContent value="form">
-          <FilterByUser
-            showMyItems={showMyItems}
-            handleMeFilter={handleMeFilter}
-          />
           <Table>
             <TableDivider />
             <ItemHeader className="p-0">
@@ -96,10 +74,7 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
           </Table>
         </TabsContent>
         <TabsContent value="files">
-          <WorkerFileUploads
-            workerId={workerId}
-            fileDescriptionSearch={fileDescriptionSearch}
-          />
+          <WorkerFileUploads workerId={workerId} />
         </TabsContent>
       </Tabs>
 

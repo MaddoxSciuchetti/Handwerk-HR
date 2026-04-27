@@ -6,7 +6,6 @@ import LoadingAlert from '@/components/alerts/LoadingAlert';
 import { useMemo } from 'react';
 import useDeleteWorkerFile from '../../hooks/useDeleteWorkerFile';
 import useGetWorkerFiles from '../../hooks/useGetWorkerFiles';
-import { getFileName } from '../../utils/fileHandling';
 import handleZipExport from '../../utils/handleZipExport';
 import FileUploadForm from './file_upload/FileUploadForm';
 import FileHeader from './FileHeader';
@@ -14,13 +13,9 @@ import FilesContent from './FilesContent';
 
 type WorkerFileUploadsProps = {
   workerId: string;
-  fileDescriptionSearch: string;
 };
 
-function WorkerFileUploads({
-  workerId,
-  fileDescriptionSearch,
-}: WorkerFileUploadsProps) {
+function WorkerFileUploads({ workerId }: WorkerFileUploadsProps) {
   const { fetchFiles, isLoading, isError } = useGetWorkerFiles(workerId);
   const { deleteFiles } = useDeleteWorkerFile(workerId);
   const { toggleModal, modal, setModal } = useToggleModal();
@@ -28,15 +23,8 @@ function WorkerFileUploads({
   const filteredFiles = useMemo(() => {
     if (!fetchFiles) return [];
 
-    const query = fileDescriptionSearch.trim().toLowerCase();
-    if (!query) return fetchFiles;
-
-    return fetchFiles.filter((file) =>
-      getFileName(file.cloud_url, file.original_filename)
-        .toLowerCase()
-        .includes(query)
-    );
-  }, [fetchFiles, fileDescriptionSearch]);
+    return fetchFiles;
+  }, [fetchFiles]);
 
   if (isLoading) return <LoadingAlert />;
   if (isError) return <ErrorAlert />;

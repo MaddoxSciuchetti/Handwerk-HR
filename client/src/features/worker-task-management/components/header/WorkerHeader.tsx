@@ -1,35 +1,18 @@
-import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/selfmade/button';
 import { TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dispatch, SetStateAction } from 'react';
 
 type WorkerHeaderProps = {
-  searchValue: string;
-  setSearchValue: Dispatch<SetStateAction<string>>;
-  searchPlaceholder?: string;
-  handleAddTask: () => void;
+  openForCreate: () => void;
 };
 
-const WorkerHeader = ({
-  searchValue,
-  setSearchValue,
-  searchPlaceholder = 'Search',
-  handleAddTask,
-}: WorkerHeaderProps) => {
+const WorkerHeader = ({ openForCreate }: WorkerHeaderProps) => {
   return (
     <div className="flex items-end justify-between gap-5">
-      <Input
+      {/* <Input
         value={searchValue}
         onChange={(e) => setSearchValue(e.target.value)}
         placeholder={searchPlaceholder}
-      />
-      {/* <Button
-        onClick={handleAddTask}
-        type="button"
-        variant={'outline'}
-        className="cursor-pointer rounded-xl transition-colors hover:bg-accent hover:text-accent-foreground"
-      >
-        Add Task
-      </Button> */}
+      /> */}
       <TabsList variant={'default'} className="bg-(--dropdown-surface)">
         <TabsTrigger className="cursor-pointer" value="form">
           Aufgaben
@@ -38,6 +21,13 @@ const WorkerHeader = ({
           Dateien
         </TabsTrigger>
       </TabsList>
+      <Button
+        type="button"
+        className="bg-black text-white hover:bg-black/90"
+        onClick={openForCreate}
+      >
+        Aufgabe hinzufügen
+      </Button>
     </div>
   );
 };

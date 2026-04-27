@@ -26,14 +26,7 @@ import { WorkerSidebar } from './WorkerSidebar';
 
 function WorkerLifeCycle() {
   const { user, isLoading, isError } = useAuth();
-  const {
-    error,
-    workers,
-    modal,
-
-    toggleModal,
-    handleNavigate,
-  } = useHome();
+  const { error, workers, modal, toggleModal, handleNavigate } = useHome();
   const [isWorkerSidebarOpen, setIsWorkerSidebarOpen] = useState(false);
 
   const [largeEditMode, setLargeEditMode] = useState(false);
