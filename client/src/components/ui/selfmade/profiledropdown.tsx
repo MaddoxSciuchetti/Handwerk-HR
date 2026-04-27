@@ -1,9 +1,20 @@
 import useAuth from '@/features/user-profile/hooks/useAuth';
+import { userProfileQueries } from '@/features/user-profile/query-options/queries/user-profile.queries';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { ChevronUpIcon } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../tooltip';
 import { Avatar } from './avatar';
 import { SelectDropdown } from './selectdropdown';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../tooltip';
+
+const getDisplayLabel = (user: ReturnType<typeof useAuth>['user']) => {
+  if (!user) return '';
+  const firstAndLast = [user.firstName, user.lastName]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+  return user.displayName || firstAndLast || user.email || '';
+};
 
 export function ProfileDropdown({
   setIsSettingOpen,
@@ -13,11 +24,15 @@ export function ProfileDropdown({
   collapsed?: boolean;
 }) {
   const { user } = useAuth();
+  const { data: profilePhoto } = useQuery({
+    ...userProfileQueries.ProfileFoto(),
+    retry: false,
+  });
   const navigate = useNavigate();
 
   const openSettings = () => {
     setIsSettingOpen(true);
-    navigate({ to: '/settings/company' });
+    navigate({ to: '/settings/profile' });
   };
 
   if (collapsed) {
@@ -29,7 +44,7 @@ export function ProfileDropdown({
             onClick={openSettings}
             className="flex w-full justify-center"
           >
-            <Avatar variant="image" src={user?.presignedUrl} alt="Profile" />
+            <Avatar variant="image" src={profilePhoto} alt="Profile" />
           </button>
         </TooltipTrigger>
         <TooltipContent
@@ -45,9 +60,9 @@ export function ProfileDropdown({
 
   return (
     <div className="flex flex-row  rounded-md  items-center w-full gap-2">
-      <Avatar variant="image" src={user?.presignedUrl} alt="Profile" />
+      <Avatar variant="image" src={profilePhoto} alt="Profile" />
       <SelectDropdown
-        label={user?.vorname}
+        label={getDisplayLabel(user)}
         state="Default"
         size="sm"
         icon={ChevronUpIcon}

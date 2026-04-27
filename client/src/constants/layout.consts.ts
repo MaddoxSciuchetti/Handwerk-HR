@@ -11,11 +11,6 @@ export const LAYOUTITEMS = [
     to: '/tasks',
     icon: Ticket,
   },
-  {
-    title: 'Mitarbeiter',
-    to: '/employee-overview',
-    icon: UserRound,
-  },
 ];
 
 export const SETTINGSITEMS = [

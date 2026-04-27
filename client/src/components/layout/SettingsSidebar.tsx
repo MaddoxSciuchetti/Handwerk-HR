@@ -18,7 +18,7 @@ export function SettingsSidebar({
     <Sidebar collapsible="icon" className={className}>
       <div className="w-full p-2">
         <Button onClick={() => setIsSettingOpen(false)}>
-          <ArrowLeftIcon className="w-6 h-6" />
+          <ArrowLeftIcon className="w-4 h-4" />
         </Button>
         <div className="mt-5">
           <SideBarMenu

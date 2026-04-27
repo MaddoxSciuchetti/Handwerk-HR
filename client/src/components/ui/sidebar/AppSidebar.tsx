@@ -46,7 +46,7 @@ function AppSidebar({
           />
         </div>
       </div>
-      <div className="p-2 w-full flex flex-col overflow-x-hidden">
+      <div className="w-full p-2">
         <SidebarItem
           onClick={() => openModal()}
           label="Feedback"
