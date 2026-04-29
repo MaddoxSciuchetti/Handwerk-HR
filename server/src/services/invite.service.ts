@@ -15,20 +15,10 @@ import {
 import { refreshTokenSignOptions, signToken } from "@/utils/jwt";
 import { sendMail } from "@/utils/sendMail";
 import { generateRawToken, hashToken } from "@/utils/v2/tokenV2";
+import type { OrgMemberRole } from "@prisma/client";
 import { InvitationStatus } from "@prisma/client";
 
 const fortyEightHoursFromNow = () => new Date(Date.now() + 48 * 60 * 60 * 1000);
-
-// Find or lazily create a "Member" role for the org
-const ensureMemberRole = async (organizationId: string) => {
-    const existing = await prisma.role.findFirst({
-        where: { organizationId, name: "Member" },
-    });
-    if (existing) return existing;
-    return prisma.role.create({
-        data: { organizationId, name: "Member", isSystem: false },
-    });
-};
 
 // ─── Create Invite ────────────────────────────────────────────────────────────
 
@@ -47,17 +37,12 @@ export const createInvite = async (
             organizationId: orgId,
             userId: invitedByUserId,
         },
-        include: {
-            role: {
-                select: { name: true },
-            },
-        },
     });
     appAssert(inviterMembership, FORBIDDEN, "Only organization members can invite");
     appAssert(
-        inviterMembership.role.name === "Owner",
+        inviterMembership.membershipRole === "admin",
         FORBIDDEN,
-        "Only organization owners can invite users",
+        "Only organization admins can invite users",
     );
 
     const existingUser = await prisma.newUser.findUnique({
@@ -87,12 +72,8 @@ export const createInvite = async (
         "An invite has already been sent to this email",
     );
 
-    const role = data.roleId
-        ? await prisma.role.findFirst({
-              where: { id: data.roleId, organizationId: orgId },
-          })
-        : await ensureMemberRole(orgId);
-    appAssert(role, NOT_FOUND, "Role not found");
+    const invitedMembershipRole: OrgMemberRole =
+        data.invitedMembershipRole ?? "worker";
 
     const rawToken = generateRawToken(32);
     const tokenHash = hashToken(rawToken);
@@ -101,7 +82,7 @@ export const createInvite = async (
         data: {
             organizationId: orgId,
             invitedByUserId,
-            roleId: role.id,
+            invitedMembershipRole,
             email: normalizedEmail,
             tokenHash,
             status: "pending" as any,
@@ -183,7 +164,7 @@ export const acceptInvite = async (
             data: {
                 userId: newUser.id,
                 organizationId: invite.organizationId,
-                roleId: invite.roleId,
+                membershipRole: invite.invitedMembershipRole,
             },
         });
 

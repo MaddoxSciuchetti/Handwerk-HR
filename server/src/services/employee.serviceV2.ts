@@ -141,12 +141,7 @@ export const queryEmployee = async (orgId: string) => {
             organizationMembers: {
                 where: { organizationId: orgId },
                 select: {
-                    role: {
-                        select: {
-                            id: true,
-                            name: true,
-                        },
-                    },
+                    membershipRole: true,
                 },
             },
             absences: {
@@ -196,12 +191,7 @@ export const queryEmployeeById = async (id: string, orgId: string) => {
             organizationMembers: {
                 where: { organizationId: orgId },
                 select: {
-                    role: {
-                        select: {
-                            id: true,
-                            name: true,
-                        },
-                    },
+                    membershipRole: true,
                 },
             },
             absences: {

@@ -262,9 +262,6 @@ export async function getWorkerById(workerId: string, organizationId: string) {
                             },
                         },
                     },
-                    auditLogs: {
-                        orderBy: { createdAt: "desc" },
-                    },
                 },
             },
             createdBy: {
@@ -358,7 +355,7 @@ export async function deleteWorker(params: DeleteWorkerInput) {
     return prisma.$transaction(async (tx) => {
         // WorkerDocument → delete first (Restrict on uploadedBy would block otherwise)
         await tx.workerDocument.deleteMany({ where: { workerId } });
-        // WorkerEngagement cascade-deletes Issues, AuditLogs, Notifications
+        // WorkerEngagement cascade-deletes Issues (and related child rows)
         await tx.workerEngagement.deleteMany({ where: { workerId } });
         // Finally delete the Worker
         return tx.worker.delete({ where: { id: workerId } });
@@ -473,7 +470,7 @@ export async function deleteEngagement(params: {
     const { engagementId, workerId, organizationId } = params;
     await assertOwnership(workerId, organizationId);
 
-    // Cascade on WorkerEngagement will delete Issues, AuditLogs, Notifications
+        // Cascade on WorkerEngagement will delete Issues and related records
     return prisma.workerEngagement.delete({ where: { id: engagementId } });
 }
 
@@ -939,7 +936,7 @@ export async function listWorkerDocuments(params: {
 }
 
 // ─── Worker History ───────────────────────────────────────────────────────────
-// Returns full audit history: engagements + their issues + documents
+// Engagements with issues + standalone documents
 
 export async function getWorkerHistory(params: {
     workerId: string;
@@ -970,7 +967,6 @@ export async function getWorkerHistory(params: {
                         },
                     },
                 },
-                auditLogs: { orderBy: { createdAt: "desc" } },
             },
         }),
         prisma.workerDocument.findMany({

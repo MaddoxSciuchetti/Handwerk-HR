@@ -205,26 +205,16 @@ export const registerOrgAccount = async (data: RegisterOrgInput) => {
             },
         });
 
-        // 4. Create owner role
-        const ownerRole = await tx.role.create({
-            data: {
-                organizationId: organization.id,
-                createdByUserId: user.id,
-                name: "Owner",
-                isSystem: true,
-            },
-        });
-
-        // 5. Add user as org member
+        // 4. Add user as org admin
         await tx.organizationMember.create({
             data: {
                 userId: user.id,
                 organizationId: organization.id,
-                roleId: ownerRole.id,
+                membershipRole: "admin",
             },
         });
 
-        // 6. Seed default statuses for engagement and issue entity types
+        // 5. Seed default statuses for engagement and issue entity types
         await tx.organizationStatus.createMany({
             data: [
                 // Engagement statuses

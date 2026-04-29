@@ -7,6 +7,12 @@ datasource db {
 
 }
 
+/// Org-wide membership: admin (full access) or worker (default).
+enum OrgMemberRole {
+  admin
+  worker
+}
+
 // New Phyiscal Data Model
 
 
@@ -37,16 +43,12 @@ model NewUser {
   createdWorkers         Worker[]              @relation("WorkerCreatedBy")
   archivedWorkers        Worker[]              @relation("WorkerArchivedBy")
   uploadedDocuments      WorkerDocument[]
-  documentLogs           WorkerDocumentLog[]
   responsibleEngagements WorkerEngagement[]
-  workerAuditLogs        WorkerAuditLog[]
   createdIssues          Issue[]               @relation("IssueCreatedBy")
   assignedIssues         Issue[]               @relation("IssueAssignedTo")
   issueAuditLogs         IssueAuditLog[]
   comments               Comment[]
-  notifications          Notification[]
   createdTemplates       IssueTemplate[]
-  createdRoles           Role[]
   createdOrganizations   Organization[]
   absences        Absence[] @relation("UserAbsences")
 substitutingFor Absence[] @relation("SubstituteAbsences")
@@ -116,14 +118,11 @@ model Organization {
   // relations
   createdBy       NewUser?               @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
   members         OrganizationMember[]
-  roles           Role[]
   workers         Worker[]
   invitations     Invitation[]
   issueTemplates  IssueTemplate[]
   engagements     WorkerEngagement[]
-  notifications   Notification[]
   statuses        OrganizationStatus[]   @relation("OrgStatuses")
-  labels          Label[]
   subscription    Subscription?
   absences        Absence[]
 
@@ -132,19 +131,18 @@ model Organization {
 }
 
 model OrganizationMember {
-  id             String       @id @default(uuid())
-  userId         String       @map("user_id")
-  organizationId String       @map("organization_id")
-  roleId         String       @map("role_id")
-  status         MemberStatus @default(active)
-  joinedAt       DateTime?    @map("joined_at") @db.Timestamptz()
-  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz()
+  id             String         @id @default(uuid())
+  userId         String         @map("user_id")
+  organizationId String         @map("organization_id")
+  membershipRole OrgMemberRole  @default(worker) @map("membership_role")
+  status         MemberStatus   @default(active)
+  joinedAt       DateTime?      @map("joined_at") @db.Timestamptz()
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz()
 
   // relations
-  user           NewUser      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  role           Role         @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  user           NewUser        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@unique([userId, organizationId])
   @@index([userId])
@@ -173,96 +171,25 @@ model OrganizationStatus {
   @@map("organization_statuses")
 }
 
-model Label {
-  id             String       @id @default(uuid())
-  organizationId String       @map("organization_id")
-  name           String
-  color          String?
-  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz()
-
-  // relations
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  issueLabels    IssueLabel[]
-
-  @@unique([organizationId, name])
-  @@index([organizationId])
-  @@map("labels")
-}
-
-// ============================================================
-// ROLES & PERMISSIONS
-// ============================================================
-
-model Role {
-  id              String               @id @default(uuid())
-  organizationId  String               @map("organization_id")
-  createdByUserId String?              @map("created_by_user_id")
-  name            String
-  description     String?
-  isSystem        Boolean              @default(false) @map("is_system")
-  createdAt       DateTime             @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt       DateTime             @updatedAt @map("updated_at") @db.Timestamptz()
-
-  // relations
-  organization    Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  createdBy       NewUser?             @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
-  permissions     RolePermission[]
-  members         OrganizationMember[]
-  invitations     Invitation[]
-
-  @@index([organizationId])
-  @@map("roles")
-}
-
-model RolePermission {
-  id              String              @id @default(uuid())
-  roleId          String              @map("role_id")
-  permissionId    String              @map("permission_id")
-  createdByUserId String?             @map("created_by_user_id")
-  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz()
-
-  // relations
-  role            Role                @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  permission      PermissionCatalogue @relation(fields: [permissionId], references: [id], onDelete: Cascade)
-
-  @@unique([roleId, permissionId])
-  @@index([roleId])
-  @@map("role_permissions")
-}
-
-model PermissionCatalogue {
-  id              String           @id @default(uuid())
-  key             String           @unique
-  group           String
-  description     String?
-  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz()
-
-  // relations
-  rolePermissions RolePermission[]
-
-  @@map("permission_catalogue")
-}
-
 // ============================================================
 // INVITATIONS
 // ============================================================
 
 model Invitation {
-  id              String           @id @default(uuid())
-  organizationId  String           @map("organization_id")
-  invitedByUserId String           @map("invited_by_user_id")
-  roleId          String           @map("role_id")
-  email           String           @db.Citext
-  tokenHash       String           @unique @map("token_hash")
-  status          InvitationStatus @default(pending)
-  expiresAt       DateTime         @map("expires_at") @db.Timestamptz()
-  acceptedAt      DateTime?        @map("accepted_at") @db.Timestamptz()
-  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz()
+  id                     String           @id @default(uuid())
+  organizationId         String           @map("organization_id")
+  invitedByUserId        String           @map("invited_by_user_id")
+  invitedMembershipRole  OrgMemberRole    @default(worker) @map("invited_membership_role")
+  email                  String           @db.Citext
+  tokenHash              String           @unique @map("token_hash")
+  status                 InvitationStatus @default(pending)
+  expiresAt              DateTime         @map("expires_at") @db.Timestamptz()
+  acceptedAt             DateTime?        @map("accepted_at") @db.Timestamptz()
+  createdAt              DateTime         @default(now()) @map("created_at") @db.Timestamptz()
 
   // relations
-  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  invitedBy       NewUser          @relation("InvitedBy", fields: [invitedByUserId], references: [id], onDelete: Cascade)
-  role            Role             @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  organization           Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invitedBy              NewUser          @relation("InvitedBy", fields: [invitedByUserId], references: [id], onDelete: Cascade)
 
   @@index([organizationId])
   @@index([email])
@@ -322,27 +249,9 @@ model WorkerDocument {
   // relations
   worker           Worker              @relation(fields: [workerId], references: [id], onDelete: Cascade)
   uploadedBy       NewUser             @relation(fields: [uploadedByUserId], references: [id], onDelete: Restrict)
-  logs             WorkerDocumentLog[]
 
   @@index([workerId])
   @@map("worker_documents")
-}
-
-model WorkerDocumentLog {
-  id               String         @id @default(uuid())
-  workerDocumentId String         @map("worker_document_id")
-  actorUserId      String         @map("actor_user_id")
-  action           String
-  oldValue         Json?          @map("old_value")
-  newValue         Json?          @map("new_value")
-  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz()
-
-  // relations
-  workerDocument   WorkerDocument @relation(fields: [workerDocumentId], references: [id], onDelete: Cascade)
-  actorUser        NewUser        @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
-
-  @@index([workerDocumentId])
-  @@map("worker_document_logs")
 }
 
 // ============================================================
@@ -368,30 +277,11 @@ model WorkerEngagement {
   responsibleUser   NewUser            @relation(fields: [responsibleUserId], references: [id], onDelete: Restrict)
   engagementStatus  OrganizationStatus @relation(fields: [statusId], references: [id], onDelete: Restrict)
   issues            Issue[]
-  auditLogs         WorkerAuditLog[]
-  notifications     Notification[]
 
   @@index([workerId])
   @@index([organizationId])
   @@index([statusId])
   @@map("worker_engagements")
-}
-
-model WorkerAuditLog {
-  id                 String           @id @default(uuid())
-  workerEngagementId String           @map("worker_engagement_id")
-  actorUserId        String           @map("actor_user_id")
-  action             String
-  oldValue           Json?            @map("old_value")
-  newValue           Json?            @map("new_value")
-  createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamptz()
-
-  // relations
-  workerEngagement   WorkerEngagement @relation(fields: [workerEngagementId], references: [id], onDelete: Cascade)
-  actorUser          NewUser          @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
-
-  @@index([workerEngagementId])
-  @@map("worker_audit_logs")
 }
 
 // ============================================================
@@ -461,25 +351,11 @@ model Issue {
   issueStatus        OrganizationStatus @relation(fields: [statusId], references: [id], onDelete: Restrict)
   comments           Comment[]
   auditLogs          IssueAuditLog[]
-  notifications      Notification[]
-  labels             IssueLabel[]
 
   @@index([workerEngagementId])
   @@index([assigneeUserId])
   @@index([statusId])
   @@map("issues")
-}
-
-model IssueLabel {
-  issueId   String @map("issue_id")
-  labelId   String @map("label_id")
-
-  // relations
-  issue     Issue  @relation(fields: [issueId], references: [id], onDelete: Cascade)
-  label     Label  @relation(fields: [labelId], references: [id], onDelete: Cascade)
-
-  @@id([issueId, labelId]) 
-  @@map("issue_labels")
 }
 
 model IssueAuditLog {
@@ -517,34 +393,6 @@ model Comment {
   @@index([issueId])
   @@index([parentCommentId])
   @@map("comments")
-}
-
-// ============================================================
-// NOTIFICATIONS
-// ============================================================
-
-model Notification {
-  id                 String            @id @default(uuid())
-  userId             String            @map("user_id")
-  organizationId     String            @map("organization_id")
-  workerEngagementId String?           @map("worker_engagement_id")
-  issueId            String?           @map("issue_id")
-  title              String
-  body               String
-  type               NotificationType
-  isRead             Boolean           @default(false) @map("is_read")
-  readAt             DateTime?         @map("read_at") @db.Timestamptz()
-  createdAt          DateTime          @default(now()) @map("created_at") @db.Timestamptz()
-
-  // relations
-  user               NewUser           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  organization       Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  workerEngagement   WorkerEngagement? @relation(fields: [workerEngagementId], references: [id], onDelete: SetNull)
-  issue              Issue?            @relation(fields: [issueId], references: [id], onDelete: SetNull)
-
-  @@index([userId])
-  @@index([organizationId])
-  @@map("notifications")
 }
 
 // ============================================================
@@ -616,23 +464,23 @@ model Invoice {
 }
 
 model Absence {
-    id           String      @id @default(cuid())
-    userId       String
-    orgId        String
-    absenceType  AbsenceType
-    startDate    DateTime
-    endDate      DateTime
-    substituteId String?
+  id           String      @id @default(uuid())
+  userId       String
+  orgId        String
+  absenceType  AbsenceType
+  startDate    DateTime
+  endDate      DateTime
+  substituteId String?
 
-    user         NewUser      @relation("UserAbsences", fields: [userId], references: [id])
-    substitute   NewUser?     @relation("SubstituteAbsences", fields: [substituteId], references: [id])
-    organization Organization @relation(fields: [orgId], references: [id])
+  user         NewUser      @relation("UserAbsences", fields: [userId], references: [id])
+  substitute   NewUser?     @relation("SubstituteAbsences", fields: [substituteId], references: [id])
+  organization Organization @relation(fields: [orgId], references: [id])
 
-    createdAt    DateTime    @default(now())
-    updatedAt    DateTime    @updatedAt
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
-    @@index([userId])
-    @@index([orgId])
+  @@index([userId])
+  @@index([orgId])
 }
 
 
@@ -729,13 +577,6 @@ enum DefaultPriority {
 enum DefaultIssueStatus {
   backlog
   todo
-}
-
-enum NotificationType {
-  issue_assigned
-  comment_added
-  status_changed
-  engagement_updated
 }
 
 enum SubscriptionPlan {

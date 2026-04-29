@@ -7,7 +7,7 @@ export const createInviteSchema = z.object({
         .min(1, { message: VALIDATION_MESSAGES.required("Email") })
         .email({ message: VALIDATION_MESSAGES.invalidEmail })
         .max(255),
-    roleId: z.string().optional(),
+    invitedMembershipRole: z.enum(["admin", "worker"]).optional(),
 });
 
 export const acceptInviteSchema = z

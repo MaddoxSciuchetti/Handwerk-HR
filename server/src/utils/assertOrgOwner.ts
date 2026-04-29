@@ -17,7 +17,7 @@ export async function assertOrgOwner(
             userId,
             organizationId: orgId,
             status: "active",
-            role: { name: "Owner" },
+            membershipRole: "admin",
         },
         select: { id: true },
     });
