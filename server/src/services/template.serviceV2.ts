@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { DefaultIssueStatus, DefaultPriority } from "@prisma/client";
+import { DefaultPriority } from "@prisma/client";
 
 // ============================================================
 // TYPES
@@ -18,7 +18,6 @@ export type InsertTemplateTaskParams = {
     taskDescription?: string;
     description?: string;
     defaultPriority?: DefaultPriority;
-    defaultStatus?: DefaultIssueStatus;
     orderIndex?: number;
 };
 

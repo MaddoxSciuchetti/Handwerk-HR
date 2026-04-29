@@ -1,3 +1,7 @@
+import {
+    STATUS_ENTITY_ENGAGEMENT,
+    STATUS_ENTITY_ISSUE,
+} from "@/constants/statusEntity.consts";
 import { prisma } from "@/lib/prisma";
 import type {
     ArchiveWorkerInput,
@@ -78,7 +82,7 @@ export async function createWorker(params: CreateWorkerInput) {
     } = params;
 
     const { id: statusId } = await prisma.organizationStatus.findFirstOrThrow({
-        where: { organizationId, entityType: "engagement", isDefault: true },
+        where: { organizationId, entityType: STATUS_ENTITY_ENGAGEMENT, isDefault: true },
         select: { id: true },
     });
 
@@ -110,6 +114,7 @@ export async function createWorker(params: CreateWorkerInput) {
                 organizationId,
                 responsibleUserId,
                 statusId: statusId,
+                statusEntityType: STATUS_ENTITY_ENGAGEMENT,
                 type: engagementType,
                 startDate,
                 endDate,
@@ -217,8 +222,8 @@ export async function getWorkerById(workerId: string, organizationId: string) {
             // Correct relation names from schema.prisma Worker model:
             // documents  WorkerDocument[]
             // engagements WorkerEngagement[]
-            // createdBy   NewUser
-            // archivedBy  NewUser?
+            // createdBy   User
+            // archivedBy  User?
             // organization Organization
             documents: {
                 orderBy: { createdAt: "desc" },
@@ -427,6 +432,7 @@ export async function createEngagement(params: CreateEngagementInput) {
             organizationId,
             responsibleUserId,
             statusId,
+            statusEntityType: STATUS_ENTITY_ENGAGEMENT,
             type,
             startDate,
             endDate,
@@ -502,6 +508,7 @@ export async function createIssue(params: CreateIssueInput) {
                 workerEngagementId,
                 createdByUserId,
                 statusId,
+                statusEntityType: STATUS_ENTITY_ISSUE,
                 title,
                 assigneeUserId,
                 templateItemId,
@@ -547,7 +554,7 @@ export async function getIssueStatusesForWorker(params: {
     const { workerId, organizationId } = params;
     await assertOwnership(workerId, organizationId);
     return prisma.organizationStatus.findMany({
-        where: { organizationId, entityType: "issue" },
+        where: { organizationId, entityType: STATUS_ENTITY_ISSUE },
         orderBy: { orderIndex: "asc" },
         select: { id: true, name: true, color: true },
     });
@@ -699,7 +706,7 @@ async function applyIssueTemplateInTx(
     if (!template) throw new Error("Template not found");
 
     const statuses = await tx.organizationStatus.findMany({
-        where: { organizationId, entityType: "issue" },
+        where: { organizationId, entityType: STATUS_ENTITY_ISSUE },
         orderBy: { orderIndex: "asc" },
     });
     const byName = (n: string) => statuses.find((s) => s.name === n)?.id;
@@ -716,6 +723,7 @@ async function applyIssueTemplateInTx(
                 workerEngagementId,
                 createdByUserId: actorUserId,
                 statusId: initialStatusId,
+                statusEntityType: STATUS_ENTITY_ISSUE,
                 title: item.title,
                 description: item.description ?? undefined,
                 priority: templatePriorityToIssuePriority(item.defaultPriority),
@@ -793,7 +801,7 @@ export async function deleteIssue(params: {
 }
 
 // ─── Absences ─────────────────────────────────────────────────────────────────
-// Absence belongs to NewUser (userId) + Organization (orgId) — NOT Worker directly
+// Absence belongs to User (userId) + Organization (orgId) — NOT Worker directly
 
 export async function createAbsence(params: CreateAbsenceInput) {
     const { userId, orgId, absenceType, startDate, endDate, substituteId } =

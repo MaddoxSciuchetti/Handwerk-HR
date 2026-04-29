@@ -136,15 +136,15 @@ export interface UpdateIssueInput {
 }
 
 // ─── Absence ─────────────────────────────────────────────────────────────────
-// Absence belongs to NewUser (userId) + Organization (orgId) — NOT Worker
+// Absence belongs to User (userId) + Organization (orgId) — NOT Worker
 
 export interface CreateAbsenceInput {
-    userId: string; // NewUser.id — not workerId
+    userId: string; // User.id — not workerId
     orgId: string; // Organization.id — not organizationId
     absenceType: AbsenceType; // Prisma enum: SICK | VACATION | PARENTAL_LEAVE | UNPAID | OTHER
     startDate: Date;
     endDate: Date;
-    substituteId?: string; // NewUser.id of substitute
+    substituteId?: string; // User.id of substitute
 }
 
 export interface UpdateAbsenceInput {

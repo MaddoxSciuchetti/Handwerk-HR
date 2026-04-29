@@ -45,7 +45,7 @@ export const createInvite = async (
         "Only organization admins can invite users",
     );
 
-    const existingUser = await prisma.newUser.findUnique({
+    const existingUser = await prisma.user.findUnique({
         where: { email: normalizedEmail },
     });
     appAssert(!existingUser, CONFLICT, "An account with this email already exists");
@@ -141,7 +141,7 @@ export const acceptInvite = async (
 
     const normalizedEmail = invite.email.toLowerCase();
 
-    const existing = await prisma.newUser.findUnique({
+    const existing = await prisma.user.findUnique({
         where: { email: normalizedEmail },
     });
     appAssert(!existing, CONFLICT, "An account with this email already exists");
@@ -149,7 +149,7 @@ export const acceptInvite = async (
     const hashedPassword = await hashValue(data.password);
 
     const user = await prisma.$transaction(async (tx) => {
-        const newUser = await tx.newUser.create({
+        const createdUser = await tx.user.create({
             data: {
                 email: normalizedEmail,
                 passwordHash: hashedPassword,
@@ -162,7 +162,7 @@ export const acceptInvite = async (
 
         await tx.organizationMember.create({
             data: {
-                userId: newUser.id,
+                userId: createdUser.id,
                 organizationId: invite.organizationId,
                 membershipRole: invite.invitedMembershipRole,
             },
@@ -176,7 +176,7 @@ export const acceptInvite = async (
             },
         });
 
-        return newUser;
+        return createdUser;
     });
 
     // Verification email

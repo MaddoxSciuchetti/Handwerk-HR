@@ -1,4 +1,8 @@
 import { FRONTENDURL } from "@/constants/env";
+import {
+    STATUS_ENTITY_ENGAGEMENT,
+    STATUS_ENTITY_ISSUE,
+} from "@/constants/statusEntity.consts";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
 
@@ -97,7 +101,7 @@ export const createAccount = async (data: CreateAccountParams) => {
     const normalizedEmail = data.email.trim().toLowerCase();
 
     // verify existing user does not exist
-    const existingUser = await prisma.newUser.findUnique({
+    const existingUser = await prisma.user.findUnique({
         where: { email: normalizedEmail },
     });
     appAssert(!existingUser, CONFLICT, "Email already in use");
@@ -105,7 +109,7 @@ export const createAccount = async (data: CreateAccountParams) => {
     // create user
     const hashedPassword = await hashValue(data.password);
 
-    const user = await prisma.newUser.create({
+    const user = await prisma.user.create({
         data: {
             email: normalizedEmail,
             passwordHash: hashedPassword,
@@ -162,7 +166,7 @@ export const createAccount = async (data: CreateAccountParams) => {
 export const registerOrgAccount = async (data: RegisterOrgInput) => {
     const normalizedEmail = data.email.trim().toLowerCase();
 
-    const existingUser = await prisma.newUser.findUnique({
+    const existingUser = await prisma.user.findUnique({
         where: { email: normalizedEmail },
     });
     appAssert(!existingUser, CONFLICT, "Email already in use");
@@ -171,7 +175,7 @@ export const registerOrgAccount = async (data: RegisterOrgInput) => {
 
     const result = await prisma.$transaction(async (tx) => {
         // 1. Create user
-        const user = await tx.newUser.create({
+        const user = await tx.user.create({
             data: {
                 email: normalizedEmail,
                 passwordHash: hashedPassword,
@@ -220,28 +224,28 @@ export const registerOrgAccount = async (data: RegisterOrgInput) => {
                 // Engagement statuses
                 {
                     organizationId: organization.id,
-                    entityType: "engagement",
+                    entityType: STATUS_ENTITY_ENGAGEMENT,
                     name: "Ausstehend",
                     isDefault: true,
                     orderIndex: 0,
                 },
                 {
                     organizationId: organization.id,
-                    entityType: "engagement",
+                    entityType: STATUS_ENTITY_ENGAGEMENT,
                     name: "In Bearbeitung",
                     isDefault: false,
                     orderIndex: 1,
                 },
                 {
                     organizationId: organization.id,
-                    entityType: "engagement",
+                    entityType: STATUS_ENTITY_ENGAGEMENT,
                     name: "Abgeschlossen",
                     isDefault: false,
                     orderIndex: 2,
                 },
                 {
                     organizationId: organization.id,
-                    entityType: "engagement",
+                    entityType: STATUS_ENTITY_ENGAGEMENT,
                     name: "Abgebrochen",
                     isDefault: false,
                     orderIndex: 3,
@@ -249,28 +253,28 @@ export const registerOrgAccount = async (data: RegisterOrgInput) => {
                 // Issue statuses
                 {
                     organizationId: organization.id,
-                    entityType: "issue",
+                    entityType: STATUS_ENTITY_ISSUE,
                     name: "Offen",
                     isDefault: true,
                     orderIndex: 0,
                 },
                 {
                     organizationId: organization.id,
-                    entityType: "issue",
+                    entityType: STATUS_ENTITY_ISSUE,
                     name: "In Arbeit",
                     isDefault: false,
                     orderIndex: 1,
                 },
                 {
                     organizationId: organization.id,
-                    entityType: "issue",
+                    entityType: STATUS_ENTITY_ISSUE,
                     name: "Erledigt",
                     isDefault: false,
                     orderIndex: 2,
                 },
                 {
                     organizationId: organization.id,
-                    entityType: "issue",
+                    entityType: STATUS_ENTITY_ISSUE,
                     name: "Abgebrochen",
                     isDefault: false,
                     orderIndex: 3,
@@ -332,7 +336,7 @@ export const loginUser = async ({
     const normalizedEmail = email.trim().toLowerCase();
 
     // get user by email
-    const user = await prisma.newUser.findUnique({
+    const user = await prisma.user.findUnique({
         where: { email: normalizedEmail },
     });
     appAssert(user, UNAUTHORIZED, "Invalid email or password");
@@ -447,7 +451,7 @@ export const validationEmailCode = async (code: string) => {
     });
 
     // verify user
-    const updatedUser = await prisma.newUser.update({
+    const updatedUser = await prisma.user.update({
         where: { id: validCode.userId },
         data: { isEmailVerified: true },
         omit: { passwordHash: true },
@@ -464,7 +468,7 @@ export const validationEmailCode = async (code: string) => {
 export const sendPasswordResetEmail = async (email: string) => {
     const normalizedEmail = email.trim().toLowerCase();
 
-    const user = await prisma.newUser.findUnique({
+    const user = await prisma.user.findUnique({
         where: { email: normalizedEmail },
     });
     appAssert(user, NOT_FOUND, "User not found");
@@ -527,7 +531,7 @@ export const modifyPassword = async ({
     appAssert(validCode, NOT_FOUND, "Invalid or expired verification code");
 
     // update password
-    const updatedUser = await prisma.newUser.update({
+    const updatedUser = await prisma.user.update({
         where: { id: validCode.userId },
         data: { passwordHash: await hashValue(password) },
         omit: { passwordHash: true },

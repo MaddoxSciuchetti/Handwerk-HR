@@ -4,7 +4,7 @@ import appAssert from "@/utils/appAssert";
 import { UpdateProfileInformationInput } from "@/schemas/user.schemas";
 
 export const queryUser = async (id: string) => {
-    const user = await prisma.newUser.findUnique({
+    const user = await prisma.user.findUnique({
         where: { id },
         omit: { passwordHash: true },
     });
@@ -48,7 +48,7 @@ type fileData = {
 };
 
 export const insertProfilePhoto = async (file: FileData, id: string) => {
-    return await prisma.newUser.update({
+    return await prisma.user.update({
         where: { id },
         data: { avatarUrl: file.cloud_url },
         select: {
@@ -59,7 +59,7 @@ export const insertProfilePhoto = async (file: FileData, id: string) => {
 };
 
 export const queryProfilePhoto = async (id: string) => {
-    return await prisma.newUser.findUnique({
+    return await prisma.user.findUnique({
         where: { id },
         select: { avatarUrl: true },
     });
@@ -71,7 +71,7 @@ export const updateProfileInformation = async (
 ) => {
     const normalizedEmail = data.email.trim().toLowerCase();
 
-    const existingUser = await prisma.newUser.findUnique({
+    const existingUser = await prisma.user.findUnique({
         where: { email: normalizedEmail },
         select: { id: true },
     });
@@ -82,7 +82,7 @@ export const updateProfileInformation = async (
         "Email already in use",
     );
 
-    return prisma.newUser.update({
+    return prisma.user.update({
         where: { id: userId },
         data: {
             displayName: data.displayName.trim(),

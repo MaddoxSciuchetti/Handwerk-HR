@@ -1,8 +1,10 @@
-import { prisma } from "@/lib/prisma";
+import {
+    STATUS_ENTITY_ENGAGEMENT,
+    type StatusEntityType,
+} from "@/constants/statusEntity.consts";
 import { BAD_REQUEST, CONFLICT, NOT_FOUND } from "@/constants/http";
+import { prisma } from "@/lib/prisma";
 import appAssert from "@/utils/appAssert";
-
-export type StatusEntityType = "engagement" | "issue";
 
 export async function listOrganizationStatuses(
     organizationId: string,
@@ -22,7 +24,7 @@ export async function listOrganizationStatuses(
         orderIndex: r.orderIndex,
         isDefault: r.isDefault,
         usageCount:
-            entityType === "engagement"
+            entityType === STATUS_ENTITY_ENGAGEMENT
                 ? r._count.engagements
                 : r._count.issues,
     }));
@@ -126,7 +128,7 @@ export async function deleteOrganizationStatus(
     );
 
     const usage =
-        existing.entityType === "engagement"
+        existing.entityType === STATUS_ENTITY_ENGAGEMENT
             ? existing._count.engagements
             : existing._count.issues;
     appAssert(

@@ -121,7 +121,7 @@ export const queryEmployeeWorkerData = async (orgId: string) => {
 };
 
 export const queryEmployee = async (orgId: string) => {
-    return await prisma.newUser.findMany({
+    return await prisma.user.findMany({
         where: {
             organizationMembers: {
                 some: { organizationId: orgId },
@@ -170,7 +170,7 @@ export const queryEmployee = async (orgId: string) => {
 // ============================================================
 
 export const queryEmployeeById = async (id: string, orgId: string) => {
-    return await prisma.newUser.findFirst({
+    return await prisma.user.findFirst({
         where: {
             id,
             organizationMembers: {

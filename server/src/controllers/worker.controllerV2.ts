@@ -340,7 +340,7 @@ export async function applyIssueTemplate(req: Request, res: Response) {
 }
 
 // ─── Absences ─────────────────────────────────────────────────────────────────
-// Absence belongs to NewUser (userId) + Organization (orgId) — NOT Worker
+// Absence belongs to User (userId) + Organization (orgId) — NOT Worker
 // Body for create: { userId, orgId, absenceType, startDate, endDate, substituteId? }
 
 export async function createAbsence(req: Request, res: Response) {

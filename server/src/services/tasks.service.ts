@@ -1,3 +1,4 @@
+import { STATUS_ENTITY_ISSUE } from "@/constants/statusEntity.consts";
 import { prisma } from "@/lib/prisma";
 import { createIssue, updateIssue } from "@/services/worker.serviceV2";
 
@@ -47,7 +48,7 @@ export async function createTaskInOrg(orgId: string, userId: string) {
     }
 
     const status = await prisma.organizationStatus.findFirst({
-        where: { organizationId: orgId, entityType: "issue" },
+        where: { organizationId: orgId, entityType: STATUS_ENTITY_ISSUE },
         orderBy: { orderIndex: "asc" },
     });
     if (!status) {
@@ -252,7 +253,7 @@ export async function getTaskHistoryInOrg(
           })
         : [];
     const assignees = assigneeIds.length
-        ? await prisma.newUser.findMany({
+        ? await prisma.user.findMany({
               where: { id: { in: assigneeIds } },
               select: {
                   id: true,
