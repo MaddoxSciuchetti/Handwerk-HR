@@ -1,8 +1,5 @@
 import { POSTGRES_URI } from "@/constants/env";
-import {
-    STATUS_ENTITY_ENGAGEMENT,
-    STATUS_ENTITY_ISSUE,
-} from "@/constants/statusEntity.consts";
+import { appendSubscriptionAuditLog } from "@/services/subscriptionAudit.service";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { OrgMemberRole, PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
@@ -29,71 +26,74 @@ const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD ?? "Admin123!";
 const ORG_SLUG = process.env.SEED_ORG_SLUG ?? "demo-org";
 
 async function ensureDefaultStatuses(organizationId: string) {
-    const count = await prisma.organizationStatus.count({
+    const engagementCount = await prisma.engagementStatus.count({
         where: { organizationId },
     });
-    if (count > 0) return;
-
-    await prisma.organizationStatus.createMany({
-        data: [
-            {
-                organizationId,
-                entityType: STATUS_ENTITY_ENGAGEMENT,
-                name: "Ausstehend",
-                isDefault: true,
-                orderIndex: 0,
-            },
-            {
-                organizationId,
-                entityType: STATUS_ENTITY_ENGAGEMENT,
-                name: "In Bearbeitung",
-                isDefault: false,
-                orderIndex: 1,
-            },
-            {
-                organizationId,
-                entityType: STATUS_ENTITY_ENGAGEMENT,
-                name: "Abgeschlossen",
-                isDefault: false,
-                orderIndex: 2,
-            },
-            {
-                organizationId,
-                entityType: STATUS_ENTITY_ENGAGEMENT,
-                name: "Abgebrochen",
-                isDefault: false,
-                orderIndex: 3,
-            },
-            {
-                organizationId,
-                entityType: STATUS_ENTITY_ISSUE,
-                name: "Offen",
-                isDefault: true,
-                orderIndex: 0,
-            },
-            {
-                organizationId,
-                entityType: STATUS_ENTITY_ISSUE,
-                name: "In Arbeit",
-                isDefault: false,
-                orderIndex: 1,
-            },
-            {
-                organizationId,
-                entityType: STATUS_ENTITY_ISSUE,
-                name: "Erledigt",
-                isDefault: false,
-                orderIndex: 2,
-            },
-            {
-                organizationId,
-                entityType: STATUS_ENTITY_ISSUE,
-                name: "Abgebrochen",
-                isDefault: false,
-                orderIndex: 3,
-            },
-        ],
+    const issueCount = await prisma.issueStatus.count({
+        where: { organizationId },
     });
+
+    if (engagementCount === 0) {
+        await prisma.engagementStatus.createMany({
+            data: [
+                {
+                    organizationId,
+                    name: "Ausstehend",
+                    isDefault: true,
+                    orderIndex: 0,
+                },
+                {
+                    organizationId,
+                    name: "In Bearbeitung",
+                    isDefault: false,
+                    orderIndex: 1,
+                },
+                {
+                    organizationId,
+                    name: "Abgeschlossen",
+                    isDefault: false,
+                    orderIndex: 2,
+                },
+                {
+                    organizationId,
+                    name: "Abgebrochen",
+                    isDefault: false,
+                    orderIndex: 3,
+                },
+            ],
+        });
+    }
+
+    if (issueCount === 0) {
+        await prisma.issueStatus.createMany({
+            data: [
+                {
+                    organizationId,
+                    name: "Offen",
+                    isDefault: true,
+                    orderIndex: 0,
+                },
+                {
+                    organizationId,
+                    name: "In Arbeit",
+                    isDefault: false,
+                    orderIndex: 1,
+                },
+                {
+                    organizationId,
+                    name: "Erledigt",
+                    isDefault: false,
+                    orderIndex: 2,
+                },
+                {
+                    organizationId,
+                    name: "Abgebrochen",
+                    isDefault: false,
+                    orderIndex: 3,
+                },
+            ],
+        });
+    }
 }
 
 async function main() {
@@ -168,7 +168,7 @@ async function main() {
 
     await ensureDefaultStatuses(organization.id);
 
-    await prisma.subscription.upsert({
+    const subscription = await prisma.subscription.upsert({
         where: { organizationId: organization.id },
         update: {},
         create: {
@@ -176,6 +176,13 @@ async function main() {
             plan: "free",
             status: "trialing",
         },
+    });
+
+    await appendSubscriptionAuditLog({
+        subscriptionId: subscription.id,
+        source: "system",
+        action: "subscription.seeded",
+        newValue: { plan: subscription.plan, status: subscription.status },
     });
 
     console.log(

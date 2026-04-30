@@ -1,7 +1,7 @@
-import { StatusEntityKind } from "@prisma/client";
+/** Query/body discriminator for org status APIs (`engagement` vs `issue`). */
+export type OrgStatusEntityType = "engagement" | "issue";
 
-/** Matches `organization_statuses.entity_type` / Prisma `StatusEntityKind`. */
-export const STATUS_ENTITY_ENGAGEMENT = StatusEntityKind.engagement;
-export const STATUS_ENTITY_ISSUE = StatusEntityKind.issue;
-
-export type StatusEntityType = StatusEntityKind;
+export const ORG_STATUS_ENTITY_ENGAGEMENT =
+    "engagement" as const satisfies OrgStatusEntityType;
+export const ORG_STATUS_ENTITY_ISSUE =
+    "issue" as const satisfies OrgStatusEntityType;

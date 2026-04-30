@@ -13,12 +13,6 @@ enum OrgMemberRole {
   worker
 }
 
-/// Scope for rows in `organization_statuses` (and FK targets on engagements vs issues).
-enum StatusEntityKind {
-  engagement
-  issue
-}
-
 // ============================================================
 // AUTH & USER
 // ============================================================
@@ -54,6 +48,7 @@ model User {
   createdOrganizations   Organization[]
   absences               Absence[]             @relation("UserAbsences")
   substitutingFor        Absence[]             @relation("SubstituteAbsences")
+  subscriptionAuditLogs  SubscriptionAuditLog[]
 
   @@map("users")
 }
@@ -123,7 +118,8 @@ model Organization {
   invitations     Invitation[]
   issueTemplates  IssueTemplate[]
   engagements     WorkerEngagement[]
-  statuses        OrganizationStatus[]   @relation("OrgStatuses")
+  engagementStatuses EngagementStatus[]
+  issueStatuses      IssueStatus[]
   subscription    Subscription?
   absences        Absence[]
 
@@ -151,27 +147,38 @@ model OrganizationMember {
   @@map("organization_members")
 }
 
-model OrganizationStatus {
-  id             String            @id @default(uuid())
-  organizationId String            @map("organization_id")
-  entityType     StatusEntityKind  @map("entity_type")
+model EngagementStatus {
+  id             String       @id @default(uuid())
+  organizationId String       @map("organization_id")
   name           String
-  color          String?
-  orderIndex     Int               @default(0) @map("order_index")
-  isDefault      Boolean           @default(false) @map("is_default")
-  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt      DateTime          @updatedAt @map("updated_at") @db.Timestamptz()
+  orderIndex     Int          @default(0) @map("order_index")
+  isDefault      Boolean      @default(false) @map("is_default")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz()
 
-  // relations
-  organization   Organization       @relation("OrgStatuses", fields: [organizationId], references: [id], onDelete: Cascade)
-  engagements    WorkerEngagement[] @relation("OrgStatusEngagements")
-  issues         Issue[]            @relation("OrgStatusIssues")
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  engagements    WorkerEngagement[]
 
-  @@unique([organizationId, entityType, name])
-  /// Anchor for composite FK from WorkerEngagement + Issue (status_id + status_entity_type).
-  @@unique([id, entityType])
+  @@unique([organizationId, name])
   @@index([organizationId])
-  @@map("organization_statuses")
+  @@map("engagement_statuses")
+}
+
+model IssueStatus {
+  id             String       @id @default(uuid())
+  organizationId String       @map("organization_id")
+  name           String
+  orderIndex     Int          @default(0) @map("order_index")
+  isDefault      Boolean      @default(false) @map("is_default")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz()
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  issues         Issue[]
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@map("issue_statuses")
 }
 
 // ============================================================
@@ -264,8 +271,6 @@ model WorkerEngagement {
   organizationId    String             @map("organization_id")
   responsibleUserId String             @map("responsible_user_id")
   statusId          String             @map("status_id")
-  /// Always `engagement`; DB CHECK + FK guarantee valid pairing with `organization_statuses`.
-  statusEntityType  StatusEntityKind   @default(engagement) @map("status_entity_type")
   type              EngagementType
   startDate         DateTime?          @map("start_date") @db.Date
   endDate           DateTime?          @map("end_date") @db.Date
@@ -277,13 +282,12 @@ model WorkerEngagement {
   worker            Worker             @relation(fields: [workerId], references: [id], onDelete: Cascade)
   organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   responsibleUser   User               @relation(fields: [responsibleUserId], references: [id], onDelete: Restrict)
-  engagementStatus  OrganizationStatus @relation("OrgStatusEngagements", fields: [statusId, statusEntityType], references: [id, entityType], onDelete: Restrict)
+  engagementStatus  EngagementStatus   @relation(fields: [statusId], references: [id], onDelete: Restrict)
   issues            Issue[]
 
   @@index([workerId])
   @@index([organizationId])
   @@index([statusId])
-  @@index([statusEntityType])
   @@map("worker_engagements")
 }
 
@@ -339,8 +343,6 @@ model Issue {
   assigneeUserId     String?            @map("assignee_user_id")
   templateItemId     String?            @map("template_item_id")
   statusId           String             @map("status_id")
-  /// Always `issue`; DB CHECK + FK guarantee valid pairing with `organization_statuses`.
-  statusEntityType   StatusEntityKind   @default(issue) @map("status_entity_type")
   title              String
   description        String?
   priority           IssuePriority      @default(no_priority)
@@ -353,14 +355,13 @@ model Issue {
   createdBy          User               @relation("IssueCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
   assignee           User?              @relation("IssueAssignedTo", fields: [assigneeUserId], references: [id], onDelete: SetNull)
   templateItem       TemplateItem?      @relation(fields: [templateItemId], references: [id], onDelete: SetNull)
-  issueStatus        OrganizationStatus @relation("OrgStatusIssues", fields: [statusId, statusEntityType], references: [id, entityType], onDelete: Restrict)
+  issueStatus        IssueStatus        @relation(fields: [statusId], references: [id], onDelete: Restrict)
   comments           Comment[]
   auditLogs          IssueAuditLog[]
 
   @@index([workerEngagementId])
   @@index([assigneeUserId])
   @@index([statusId])
-  @@index([statusEntityType])
   @@map("issues")
 }
 
@@ -382,22 +383,16 @@ model IssueAuditLog {
 }
 
 model Comment {
-  id              String    @id @default(uuid())
-  issueId         String    @map("issue_id")
-  userId          String    @map("user_id")
-  parentCommentId String?   @map("parent_comment_id")
-  body            String
-  editedAt        DateTime? @map("edited_at") @db.Timestamptz()
-  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  id        String   @id @default(uuid())
+  issueId   String   @map("issue_id")
+  userId    String   @map("user_id")
+  body      String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
 
-  // relations
-  issue           Issue     @relation(fields: [issueId], references: [id], onDelete: Cascade)
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  parentComment   Comment?  @relation("CommentReplies", fields: [parentCommentId], references: [id], onDelete: SetNull)
-  replies         Comment[] @relation("CommentReplies")
+  issue     Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([issueId])
-  @@index([parentCommentId])
   @@map("comments")
 }
 
@@ -425,8 +420,27 @@ model Subscription {
   // relations
   organization            Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   invoices                Invoice[]
+  auditLogs               SubscriptionAuditLog[]
 
   @@map("subscriptions")
+}
+
+model SubscriptionAuditLog {
+  id             String       @id @default(uuid())
+  subscriptionId String       @map("subscription_id")
+  actorUserId    String?      @map("actor_user_id")
+  source         AuditSource  @default(user)
+  action         String
+  oldValue       Json?        @map("old_value")
+  newValue       Json?        @map("new_value")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz()
+
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  actorUser      User?        @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([subscriptionId])
+  @@index([createdAt])
+  @@map("subscription_audit_logs")
 }
 
 model Invoice {
@@ -543,6 +557,12 @@ enum IssuePriority {
   medium
   low
   no_priority
+}
+
+enum AuditSource {
+  user
+  webhook
+  system
 }
 
 enum SubscriptionPlan {

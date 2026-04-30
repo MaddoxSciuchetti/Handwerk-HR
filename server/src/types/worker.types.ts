@@ -86,7 +86,7 @@ export interface CreateEngagementInput {
     workerId: string;
     organizationId: string;
     responsibleUserId: string; // required
-    statusId: string; // required FK → OrganizationStatus
+    statusId: string; // required FK → EngagementStatus
     type: EngagementType; // not "engagementType"
     startDate?: Date;
     endDate?: Date;
@@ -111,7 +111,7 @@ export interface UpdateEngagementInput {
 export interface CreateIssueInput {
     workerEngagementId: string; // required — no workerId on Issue
     createdByUserId: string; // required
-    statusId: string; // required FK → OrganizationStatus
+    statusId: string; // required FK → IssueStatus
     title: string;
     assigneeUserId?: string;
     templateItemId?: string;

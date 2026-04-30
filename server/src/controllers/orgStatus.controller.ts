@@ -33,9 +33,12 @@ export const createOrgStatusHandler = catchErrors(async (req, res) => {
     const body = createOrgStatusSchema.parse(req.body);
     const row = await createOrganizationStatus(orgId, body.entityType, {
         name: body.name,
-        color: body.color,
     });
-    return res.status(CREATED).json(row);
+    return res.status(CREATED).json({
+        ...row,
+        color: null,
+        usageCount: 0,
+    });
 });
 
 export const updateOrgStatusHandler = catchErrors(async (req, res) => {
@@ -43,7 +46,11 @@ export const updateOrgStatusHandler = catchErrors(async (req, res) => {
     const statusId = String(req.params.id);
     const body = updateOrgStatusSchema.parse(req.body);
     const row = await updateOrganizationStatus(orgId, statusId, body);
-    return res.status(OK).json(row);
+    return res.status(OK).json({
+        ...row,
+        color: null,
+        usageCount: 0,
+    });
 });
 
 export const deleteOrgStatusHandler = catchErrors(async (req, res) => {

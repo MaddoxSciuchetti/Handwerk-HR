@@ -1,4 +1,3 @@
-import { STATUS_ENTITY_ISSUE } from "@/constants/statusEntity.consts";
 import { prisma } from "@/lib/prisma";
 import { createIssue, updateIssue } from "@/services/worker.serviceV2";
 
@@ -47,8 +46,8 @@ export async function createTaskInOrg(orgId: string, userId: string) {
         throw new Error("No worker engagement for organization");
     }
 
-    const status = await prisma.organizationStatus.findFirst({
-        where: { organizationId: orgId, entityType: STATUS_ENTITY_ISSUE },
+    const status = await prisma.issueStatus.findFirst({
+        where: { organizationId: orgId },
         orderBy: { orderIndex: "asc" },
     });
     if (!status) {
@@ -247,10 +246,16 @@ export async function getTaskHistoryInOrg(
     const assigneeIds = collectReferencedIds(logs, "assigneeUserId");
 
     const statuses = statusIds.length
-        ? await prisma.organizationStatus.findMany({
+        ? await prisma.issueStatus.findMany({
               where: { id: { in: statusIds } },
-              select: { id: true, name: true, color: true },
-          })
+              select: { id: true, name: true },
+          }).then((rows) =>
+              rows.map((s) => ({
+                  id: s.id,
+                  name: s.name,
+                  color: null as string | null,
+              })),
+          )
         : [];
     const assignees = assigneeIds.length
         ? await prisma.user.findMany({
