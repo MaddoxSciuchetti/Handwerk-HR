@@ -316,4 +316,4 @@ UPDATE refresh_tokens SET revoked_at = NOW(), updated_at = NOW() WHERE id = :id;
 
 SELECT * FROM new_verification_codes WHERE id = :code_id;
 
-UPDATE users SET is_email_verified = true, updated_at = NOW() WHERE id = :user_id;
+UPDATE users SET is_verified = true, updated_at = NOW() WHERE id = :user_id;

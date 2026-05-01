@@ -118,8 +118,8 @@ export const queryEmployee = async () => {
     });
 };
 
-export const removeEmployee = async (id: string, chefId: string) => {
-    return await prisma.$transaction([
+export const rem    return await prisma.$transaction([oveEmployee = async (id: string, chefId: string) => {
+
         prisma.form_fields.updateMany({
             where: {
                 owner: id,
