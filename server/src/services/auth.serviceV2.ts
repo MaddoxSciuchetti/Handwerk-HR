@@ -443,7 +443,7 @@ export const validationEmailCode = async (code: string) => {
     // verify user
     const updatedUser = await prisma.user.update({
         where: { id: validCode.userId },
-        data: { isEmailVerified: true },
+        data: { isVerified: true },
         omit: { passwordHash: true },
     });
     appAssert(updatedUser, INTERNAL_SERVER_ERROR, "Failed to verify email");

@@ -27,7 +27,7 @@ model User {
   avatarUrl              String?              @map("avatar_url")
   phoneNumber            String?              @map("phone_number")
   phoneVerified          Boolean              @default(false) @map("phone_verified")
-  isEmailVerified        Boolean              @default(false) @map("is_email_verified")
+  isVerified             Boolean              @default(false) @map("is_verified")
   status                 UserStatus           @default(active)
   createdAt              DateTime             @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt              DateTime             @updatedAt @map("updated_at") @db.Timestamptz()

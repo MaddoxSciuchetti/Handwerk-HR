@@ -106,7 +106,7 @@ async function main() {
         update: {
             firstName: "Admin",
             lastName: "User",
-            isEmailVerified: true,
+            isVerified: true,
             status: "active",
         },
         create: {
@@ -114,7 +114,7 @@ async function main() {
             passwordHash,
             firstName: "Admin",
             lastName: "User",
-            isEmailVerified: true,
+            isVerified: true,
             status: "active",
         },
     });
