@@ -566,6 +566,7 @@ enum AuditSource {
 }
 
 enum SubscriptionPlan {
+  free
   starter
   pro
   enterprise
