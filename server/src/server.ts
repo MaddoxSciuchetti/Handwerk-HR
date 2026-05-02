@@ -1,11 +1,12 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
 
-import cookieParser from "cookie-parser";
 import { APP_ORIGIN } from "./constants/env";
+import { stripeWebhookHandler } from "./controllers/stripeWebhook.controller";
 import authenticate from "./middleware/authenticate";
 import errorHandler from "./middleware/errorHandler";
 import authRoutes from "./routes/auth.route";
@@ -24,6 +25,13 @@ import { worker } from "./routes/worker.route";
 const PORT = process.env.PORT || 3000;
 
 const app = express();
+
+app.post(
+    "/webhooks/stripe",
+    express.raw({ type: "application/json" }),
+    stripeWebhookHandler,
+);
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
