@@ -1,23 +1,25 @@
 import { Button } from '@/components/ui/selfmade/button';
 import { GrowingItem, Items } from '@/components/ui/selfmade/table/Table';
 
-type SubscriptionRowProps = {
-  planName: string;
+type PlanRowProps = {
+  name: string;
+  price: string;
   isLoading?: boolean;
-  onChangePaymentMethod: () => void;
+  onSubscribe: () => void;
 };
 
-export function SubscriptionRow({
-  planName,
+export function PlanRow({
+  name,
+  price,
   isLoading = false,
-  onChangePaymentMethod,
-}: SubscriptionRowProps) {
+  onSubscribe,
+}: PlanRowProps) {
   return (
     <Items state="default" className="px-3 py-1">
       <GrowingItem>
         <div className="flex flex-col">
-          <p className="typo-body-sm font-medium">Aktuelles Abo</p>
-          <p className="typo-caption text-muted-foreground">{planName}</p>
+          <p className="typo-body-sm font-medium">{name}</p>
+          <p className="typo-caption text-muted-foreground">{price}</p>
         </div>
       </GrowingItem>
       <Button
@@ -25,9 +27,9 @@ export function SubscriptionRow({
         radius="lg"
         className="text-xs"
         disabled={isLoading}
-        onClick={onChangePaymentMethod}
+        onClick={onSubscribe}
       >
-        {isLoading ? 'Weiterleitung…' : 'Zahlungsmethode ändern'}
+        {isLoading ? 'Weiterleitung…' : 'Abonnieren'}
       </Button>
     </Items>
   );
