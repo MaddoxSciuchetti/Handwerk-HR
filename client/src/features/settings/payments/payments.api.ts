@@ -2,11 +2,10 @@ import { apiJson } from '@/config/apiClient';
 
 type StripeRedirectResponse = { url: string };
 
-export const createCheckoutSession = (lookupKey: string) =>
-  apiJson.post<StripeRedirectResponse, { lookup_key: string }>(
-    '/billing/checkout',
-    { lookup_key: lookupKey }
-  );
+export const createCheckoutSession = (price: string) =>
+  apiJson.post<StripeRedirectResponse, { price: string }>('/billing/checkout', {
+    price,
+  });
 
 export const createPortalSession = (sessionId?: string) =>
   apiJson.post<StripeRedirectResponse, { session_id?: string }>(

@@ -4,6 +4,7 @@
     "version": "1.0.0",
     "description": "",
     "main": "server.js",
+    "proxy": "http://localhost:4242",
     "scripts": {
         "prisma:generate": "prisma generate --schema=src/prisma/schema.prisma",
         "prisma:push": "prisma db push --schema=src/prisma/schema.prisma",

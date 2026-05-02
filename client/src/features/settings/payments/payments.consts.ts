@@ -2,26 +2,27 @@ export type PaymentPlan = {
   id: 'starter' | 'pro' | 'enterprise';
   name: string;
   price: string;
-  lookupKey: string;
+  /** Stripe Price ID (e.g. price_1TSekY...) */
+  priceId: string;
 };
 
 export const PAYMENT_PLANS: readonly PaymentPlan[] = [
   {
     id: 'starter',
     name: 'Starter',
-    price: '20 € / Monat',
-    lookupKey: 'starter_monthly',
+    price: '10 € / Monat',
+    priceId: 'price_1TSLW4IFABFY32sSl8hcCUBE',
   },
   {
     id: 'pro',
     name: 'Pro',
-    price: '50 € / Monat',
-    lookupKey: 'pro_monthly',
+    price: '30 € / Monat',
+    priceId: 'price_1TSekOIFABFY32sSYamWuX2h',
   },
   {
     id: 'enterprise',
     name: 'Enterprise',
     price: 'Auf Anfrage',
-    lookupKey: 'enterprise_monthly',
+    priceId: 'price_1TSekYIFABFY32sS3XsLPgIW',
   },
 ] as const;
