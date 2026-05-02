@@ -22,7 +22,7 @@ The realistic yet ambitious scenario was taken to test performance on a large da
 
 ## Overview of rows created with seed script
 
-*(row counts per table to be filled in here)*
+_(row counts per table to be filled in here)_
 
 ---
 
@@ -64,7 +64,6 @@ ORDER BY we.created_at ASC, i.created_at DESC;
 
 **Overall**
 
-
 | Metric         | Value                        |
 | -------------- | ---------------------------- |
 | Planning time  | 1.380 ms                     |
@@ -73,9 +72,7 @@ ORDER BY we.created_at ASC, i.created_at DESC;
 | Sort           | quicksort, 65 kB (in-memory) |
 | Result rows    | 180                          |
 
-
 **Per-table access**
-
 
 | Table                 | Access method               | Rows read | Rows kept | Time (ms) | Notes                                            |
 | --------------------- | --------------------------- | --------- | --------- | --------- | ------------------------------------------------ |
@@ -86,7 +83,6 @@ ORDER BY we.created_at ASC, i.created_at DESC;
 | `users` (responsible) | Index Scan (`users_pkey`)   | 1         | 1         | ~0.06     | memoized                                         |
 | `issue_statuses`      | Index Scan (`pkey`) × 180   | 180       | 180       | ~0.18     | one lookup per issue                             |
 | `users` (assignee)    | Index Scan (`users_pkey`)   | 1         | 1         | ~0.04     | memoized                                         |
-
 
 ### Key observations
 
@@ -106,7 +102,6 @@ The adding of the above indexes changed the execution plan from sequential scans
 
 ### Single-query performance comparison
 
-
 | Metric            | Before indexes       | After indexes        |
 | ----------------- | -------------------- | -------------------- |
 | Execution time    | 36.289 ms            | 1.197 ms             |
@@ -117,11 +112,9 @@ The adding of the above indexes changed the execution plan from sequential scans
 | Join type         | Hash Join            | Nested Loop          |
 | Sort              | Full Sort            | Incremental Sort     |
 
-
 ### Concurrent benchmark (pgbench, 50 clients, 60 s)
 
 I also tested the same query using pgbench. PgBench is a simple command-line benchmarking tool for PostgresSQL databases. It is used to measure the performance of a database under load. Key indicators are TPS (transactions per second) , Latency (how long transactions take) and how performance changes when adding more clients. This example used only 50 clients. For further testing it is recommended to test performance with a different number of clients.
-
 
 | Metric                 | Before indexes | After indexes |
 | ---------------------- | -------------- | ------------- |
@@ -131,7 +124,6 @@ I also tested the same query using pgbench. PgBench is a simple command-line ben
 | Failed transactions    | 0              | 0             |
 | Avg latency            | 64.865 ms      | 8.930 ms      |
 | TPS                    | 770.83         | 5 599.10      |
-
 
 The concurrent benchmark shows that the added indexes significantly improved Query 1 under load. With 50 concurrent clients, the database processed 46 087 transactions before indexing and 334 613 after indexing. Average latency dropped from 64.865 ms to 8.930 ms, while throughput increased from 770.83 TPS to 5 599.10 TPS. This means the indexed version handled roughly 7.3× more concurrent query executions per second while also responding much faster. The fact that both tests had 0 failed transactions shows that the database remained stable in both cases, but the indexed version used its resources far more efficiently.
 
@@ -229,7 +221,6 @@ ORDER BY i.created_at DESC;
 
 **Overall**
 
-
 | Metric         | Value                                      |
 | -------------- | ------------------------------------------ |
 | Planning time  | 0.315 ms                                   |
@@ -239,15 +230,12 @@ ORDER BY i.created_at DESC;
 | Sort           | quicksort, 42 kB (per worker, in-memory)   |
 | Result rows    | 180                                        |
 
-
 **Per-table access**
-
 
 | Table                | Access method         | Rows read | Rows kept | Time (ms) | Notes                                                                           |
 | -------------------- | --------------------- | --------- | --------- | --------- | ------------------------------------------------------------------------------- |
 | `issues`             | **Parallel Seq Scan** | 180 000   | 180       | ~5.95     | full scan across 3 workers, no index on `worker_engagement_id`                  |
 | `worker_engagements` | **Seq Scan** + filter | 15 000    | 15        | ~1.85     | 14 985 rows discarded (no `organization_id` idx), repeated per worker (loops=3) |
-
 
 ### Indexes added
 
@@ -263,7 +251,6 @@ ON issues (worker_engagement_id, created_at DESC);
 
 ### Single-query performance comparison
 
-
 | Metric            | Before indexes                | After indexes            |
 | ----------------- | ----------------------------- | ------------------------ |
 | Execution time    | 22.415 ms                     | 0.623 ms                 |
@@ -274,9 +261,7 @@ ON issues (worker_engagement_id, created_at DESC);
 | Join type         | Hash Join                     | Nested Loop              |
 | Sort              | Full Sort                     | Full Sort (still needed) |
 
-
 ### Concurrent benchmark (pgbench)
-
 
 | Metric       | Before indexes | After indexes |
 | ------------ | -------------- | ------------- |
@@ -284,7 +269,6 @@ ON issues (worker_engagement_id, created_at DESC);
 | Avg latency  | 80.572 ms      | 4.027 ms      |
 | TPS          | 620.56         | 12 417.52     |
 | Failed       | 0              | 0             |
-
 
 Indexing dramatically improved Query 2 under concurrency. The database went from scanning large portions of the `issues` table to directly accessing relevant rows via indexes. This reduced latency from ~80 ms to ~4 ms and increased throughput by ~20×, showing that the original bottleneck was full table scans on a large dataset.
 
@@ -332,7 +316,6 @@ ORDER BY w.created_at DESC;
 
 **Overall**
 
-
 | Metric         | Value                        |
 | -------------- | ---------------------------- |
 | Planning time  | 2.614 ms                     |
@@ -341,9 +324,7 @@ ORDER BY w.created_at DESC;
 | Sort           | quicksort, 28 kB (in-memory) |
 | Result rows    | 15                           |
 
-
 **Per-table access**
-
 
 | Table                          | Access method                         | Rows read | Rows kept | Time (ms) | Notes                                                    |
 | ------------------------------ | ------------------------------------- | --------- | --------- | --------- | -------------------------------------------------------- |
@@ -352,7 +333,6 @@ ORDER BY w.created_at DESC;
 | `engagement_statuses`          | Index Scan (`pkey`)                   | 1         | 1         | ~0.04     | memoized, 14/15 cache hits                               |
 | `users` (responsible)          | Index Scan (`users_pkey`)             | 1         | 1         | ~0.03     | memoized                                                 |
 | `users` (created_by)           | Index Scan (`users_pkey`)             | 1         | 1         | ~0.02     | memoized                                                 |
-
 
 ### Indexes added
 
@@ -368,7 +348,6 @@ ANALYZE;
 
 ### Single-query performance comparison
 
-
 | Metric            | Before indexes                      | After indexes           |
 | ----------------- | ----------------------------------- | ----------------------- |
 | Execution time    | 19.352 ms                           | 0.424 ms                |
@@ -378,9 +357,7 @@ ANALYZE;
 | Engagement access | Repeated Seq Scan                   | Index Scan              |
 | Main bottleneck   | LATERAL scanned all engagements 15× | Direct lookup by worker |
 
-
 ### Concurrent benchmark (pgbench)
-
 
 | Metric       | Before indexes | After indexes |
 | ------------ | -------------- | ------------- |
@@ -388,7 +365,6 @@ ANALYZE;
 | Avg latency  | 45.449 ms      | 2.439 ms      |
 | TPS          | 1 100.13       | 20 496.30     |
 | Failed       | 0              | 0             |
-
 
 The performance gain comes mainly from eliminating repeated scans inside the `LATERAL` subquery. Before indexing, the database scanned `worker_engagements` multiple times per worker. After indexing, it directly retrieves the latest engagement using an index, reducing both CPU work and memory usage, leading to a ~18× improvement.
 
@@ -414,7 +390,6 @@ ORDER BY ist.order_index ASC;
 
 **Overall**
 
-
 | Metric         | Value                         |
 | -------------- | ----------------------------- |
 | Planning time  | 0.529 ms                      |
@@ -423,15 +398,12 @@ ORDER BY ist.order_index ASC;
 | Sort           | quicksort, 25 kB (in-memory)  |
 | Result rows    | 3                             |
 
-
 **Per-table access**
-
 
 | Table              | Access method                                                        | Rows read | Rows kept | Time (ms) | Notes                                                                        |
 | ------------------ | -------------------------------------------------------------------- | --------- | --------- | --------- | ---------------------------------------------------------------------------- |
 | `issue_statuses`   | Bitmap Index Scan (`issue_statuses_organization_id_name_key`) → Heap | 3         | 3         | ~0.30     | uses existing unique index                                                   |
 | `issues` (subplan) | **Seq Scan** + filter, repeated per status                           | 540 000   | 180       | ~46.9     | 180 000 rows × 3 loops, 179 940 discarded each loop, no index on `status_id` |
-
 
 ### Indexes added
 
@@ -447,7 +419,6 @@ ANALYZE;
 
 ### Single-query performance comparison
 
-
 | Metric             | Before indexes                     | After indexes                             |
 | ------------------ | ---------------------------------- | ----------------------------------------- |
 | Execution time     | 47.408 ms                          | 0.232 ms                                  |
@@ -457,9 +428,7 @@ ANALYZE;
 | Issue count lookup | Seq Scan on `issues`               | Index Only Scan on `issues_status_id_idx` |
 | Main bottleneck    | Scanned 180 000 issues 3 times     | Direct count via status index             |
 
-
 ### Concurrent benchmark (pgbench)
-
 
 | Metric       | Before indexes | After indexes |
 | ------------ | -------------- | ------------- |
@@ -467,7 +436,6 @@ ANALYZE;
 | Avg latency  | 164.737 ms     | 0.927 ms      |
 | TPS          | 303.51         | 53 915.55     |
 | Failed       | 0              | 0             |
-
 
 This query had the worst baseline performance because it repeatedly scanned the entire `issues` table for each status. Indexing `issues(status_id)` transformed this into an index-only lookup, eliminating repeated full scans. This led to a massive ~177× improvement, making it the most impactful optimization among all queries.
 
@@ -503,7 +471,6 @@ WHERE w.id = (SELECT id FROM picked_worker)
 
 **Overall**
 
-
 | Metric         | Value                        |
 | -------------- | ---------------------------- |
 | Planning time  | 0.762 ms                     |
@@ -511,9 +478,7 @@ WHERE w.id = (SELECT id FROM picked_worker)
 | Total buffers  | shared hit = 5 131 (all RAM) |
 | Result rows    | 12                           |
 
-
 **Per-table access**
-
 
 | Table                | Access method                         | Rows read | Rows kept | Time (ms) | Notes                                                                                     |
 | -------------------- | ------------------------------------- | --------- | --------- | --------- | ----------------------------------------------------------------------------------------- |
@@ -522,7 +487,6 @@ WHERE w.id = (SELECT id FROM picked_worker)
 | `worker_documents`   | **Seq Scan** + filter                 | 15 702    | 1         | ~1.39     | 15 701 rows discarded, no index on `worker_id`                                            |
 | `worker_engagements` | **Seq Scan** + filter (build hash)    | 15 000    | 1         | ~2.50     | 14 999 rows discarded, no index on `worker_id`                                            |
 | `issues`             | **Seq Scan** (probe hash)             | 180 000   | 12        | ~15.46    | full table scan to join against the single engagement, no index on `worker_engagement_id` |
-
 
 ### Indexes added
 
@@ -541,7 +505,6 @@ ANALYZE;
 
 ### Single-query performance comparison
 
-
 | Metric            | Before indexes       | After indexes     |
 | ----------------- | -------------------- | ----------------- |
 | Execution time    | 36.382 ms            | 1.005 ms          |
@@ -552,9 +515,7 @@ ANALYZE;
 | Engagement access | Seq Scan             | Index Scan        |
 | Issues access     | Seq Scan (180k rows) | Bitmap Index Scan |
 
-
 ### Concurrent benchmark (pgbench)
-
 
 | Metric       | Before indexes | After indexes |
 | ------------ | -------------- | ------------- |
@@ -562,6 +523,5 @@ ANALYZE;
 | Avg latency  | 78.157 ms      | 3.246 ms      |
 | TPS          | 639.74         | 15 404.63     |
 | Failed       | 0              | 0             |
-
 
 The improvement comes from indexing all foreign key relationships (`worker_documents`, `worker_engagements`, `issues`). Before indexing, each join required scanning entire tables. After indexing, all joins became direct lookups, reducing latency significantly and improving throughput by ~24×.
