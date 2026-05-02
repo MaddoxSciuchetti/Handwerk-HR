@@ -22,7 +22,7 @@ The realistic yet ambitious scenario was taken to test performance on a large da
 
 ## Overview of rows created with seed script
 
-_(row counts per table to be filled in here)_
+*(row counts per table to be filled in here)*
 
 ---
 
@@ -62,89 +62,33 @@ ORDER BY we.created_at ASC, i.created_at DESC;
 
 ### Result (without indexes)
 
-```text
-"  Sort Key: we.created_at, i.created_at DESC"
-"  Sort Method: quicksort  Memory: 65kB"
-"  Buffers: shared hit=5353"
-"  ->  Nested Loop Left Join  (cost=448.14..7542.22 rows=180 width=211) (actual time=1.905..35.930 rows=180.00 loops=1)"
-"        Buffers: shared hit=5353"
-"        ->  Nested Loop Left Join  (cost=447.85..7537.11 rows=180 width=213) (actual time=1.857..35.792 rows=180.00 loops=1)"
-"              Buffers: shared hit=5350"
-"              ->  Nested Loop Left Join  (cost=447.57..7483.34 rows=180 width=222) (actual time=1.832..35.510 rows=180.00 loops=1)"
-"                    Buffers: shared hit=4810"
-"                    ->  Nested Loop Left Join  (cost=447.27..7462.82 rows=180 width=224) (actual time=1.767..35.349 rows=180.00 loops=1)"
-"                          Buffers: shared hit=4807"
-"                          ->  Nested Loop  (cost=446.98..7351.72 rows=180 width=232) (actual time=1.729..35.222 rows=180.00 loops=1)"
-"                                Buffers: shared hit=4804"
-"                                ->  Hash Right Join  (cost=446.69..7219.32 rows=180 width=183) (actual time=1.666..34.897 rows=180.00 loops=1)"
-"                                      Hash Cond: (i.worker_engagement_id = we.id)"
-"                                      Buffers: shared hit=4759"
-"                                      ->  Seq Scan on issues i  (cost=0.00..6300.00 rows=180000 width=99) (actual time=0.033..19.829 rows=180000.00 loops=1)"
-"                                            Buffers: shared hit=4500"
-"                                      ->  Hash  (cost=446.50..446.50 rows=15 width=100) (actual time=1.617..1.617 rows=15.00 loops=1)"
-"                                            Buckets: 1024  Batches: 1  Memory Usage: 10kB"
-"                                            Buffers: shared hit=259"
-"                                            ->  Seq Scan on worker_engagements we  (cost=0.00..446.50 rows=15 width=100) (actual time=0.018..1.607 rows=15.00 loops=1)"
-"                                                  Filter: (organization_id = 'e8df6732-32d3-4278-9798-be9727da32f5'::uuid)"
-"                                                  Rows Removed by Filter: 14985"
-"                                                  Buffers: shared hit=259"
-"                                ->  Memoize  (cost=0.30..8.05 rows=1 width=65) (actual time=0.001..0.001 rows=1.00 loops=180)"
-"                                      Cache Key: we.worker_id"
-"                                      Cache Mode: logical"
-"                                      Hits: 165  Misses: 15  Evictions: 0  Overflows: 0  Memory Usage: 3kB"
-"                                      Buffers: shared hit=45"
-"                                      ->  Index Scan using workers_pkey on workers w  (cost=0.29..8.04 rows=1 width=65) (actual time=0.013..0.013 rows=1.00 loops=15)"
-"                                            Index Cond: (id = we.worker_id)"
-"                                            Index Searches: 15"
-"                                            Buffers: shared hit=45"
-"                          ->  Memoize  (cost=0.29..6.71 rows=1 width=24) (actual time=0.000..0.000 rows=1.00 loops=180)"
-"                                Cache Key: we.status_id"
-"                                Cache Mode: logical"
-"                                Hits: 179  Misses: 1  Evictions: 0  Overflows: 0  Memory Usage: 1kB"
-"                                Buffers: shared hit=3"
-"                                ->  Index Scan using engagement_statuses_pkey on engagement_statuses es  (cost=0.28..6.70 rows=1 width=24) (actual time=0.032..0.032 rows=1.00 loops=1)"
-"                                      Index Cond: (id = we.status_id)"
-"                                      Index Searches: 1"
-"                                      Buffers: shared hit=3"
-"                    ->  Memoize  (cost=0.30..8.05 rows=1 width=30) (actual time=0.001..0.001 rows=1.00 loops=180)"
-"                          Cache Key: we.responsible_user_id"
-"                          Cache Mode: logical"
-"                          Hits: 179  Misses: 1  Evictions: 0  Overflows: 0  Memory Usage: 1kB"
-"                          Buffers: shared hit=3"
-"                          ->  Index Scan using users_pkey on users ru  (cost=0.29..8.04 rows=1 width=30) (actual time=0.060..0.060 rows=1.00 loops=1)"
-"                                Index Cond: (id = we.responsible_user_id)"
-"                                Index Searches: 1"
-"                                Buffers: shared hit=3"
-"              ->  Index Scan using issue_statuses_pkey on issue_statuses ist  (cost=0.28..0.30 rows=1 width=23) (actual time=0.001..0.001 rows=1.00 loops=180)"
-"                    Index Cond: (id = i.status_id)"
-"                    Index Searches: 180"
-"                    Buffers: shared hit=540"
-"        ->  Memoize  (cost=0.30..0.32 rows=1 width=30) (actual time=0.000..0.000 rows=1.00 loops=180)"
-"              Cache Key: i.assignee_user_id"
-"              Cache Mode: logical"
-"              Hits: 179  Misses: 1  Evictions: 0  Overflows: 0  Memory Usage: 1kB"
-"              Buffers: shared hit=3"
-"              ->  Index Scan using users_pkey on users a  (cost=0.29..0.31 rows=1 width=30) (actual time=0.043..0.043 rows=1.00 loops=1)"
-"                    Index Cond: (id = i.assignee_user_id)"
-"                    Index Searches: 1"
-"                    Buffers: shared hit=3"
-"Planning:"
-"  Buffers: shared hit=30"
-"Planning Time: 1.380 ms"
-"Execution Time: 36.289 ms"
-```
+**Overall**
+
+
+| Metric         | Value                        |
+| -------------- | ---------------------------- |
+| Planning time  | 1.380 ms                     |
+| Execution time | 36.289 ms                    |
+| Total buffers  | shared hit = 5 353 (all RAM) |
+| Sort           | quicksort, 65 kB (in-memory) |
+| Result rows    | 180                          |
+
+
+**Per-table access**
+
+
+| Table                 | Access method               | Rows read | Rows kept | Time (ms) | Notes                                            |
+| --------------------- | --------------------------- | --------- | --------- | --------- | ------------------------------------------------ |
+| `issues`              | **Seq Scan**                | 180 000   | 180       | 19.83     | full scan, no index on `worker_engagement_id`    |
+| `worker_engagements`  | **Seq Scan** + filter       | 15 000    | 15        | 1.61      | 14 985 rows discarded (no `organization_id` idx) |
+| `workers`             | Index Scan (`workers_pkey`) | 15        | 15        | ~0.20     | memoized, 165/180 cache hits                     |
+| `engagement_statuses` | Index Scan (`pkey`)         | 1         | 1         | ~0.03     | memoized                                         |
+| `users` (responsible) | Index Scan (`users_pkey`)   | 1         | 1         | ~0.06     | memoized                                         |
+| `issue_statuses`      | Index Scan (`pkey`) × 180   | 180       | 180       | ~0.18     | one lookup per issue                             |
+| `users` (assignee)    | Index Scan (`users_pkey`)   | 1         | 1         | ~0.04     | memoized                                         |
+
 
 ### Key observations
-
-Even without the use of indexing the query above might still appear to be fast with a total runtime of 56 msec. However, this is also due to the DB being warm and data saved in memory.
-
-- The query does a full table scan on the large tables seen here:
-  - `issues` → scans 180k rows
-  - `worker_engagements` → scans 15k rows
-- This is due to missing indexes.
-- Only 15 workers belong to an org — this leads to 14 985 rows being scanned and then discarded.
-- Postgres builds the hash table instead of relying on index lookups. The lookup is still efficient but it also still scans all rows.
-- The query is heavily relying on memory usage shown by `shared hit=5300`, which is data already in RAM. This explains the fast runtime.
 
 > **Note:** The query processes far more data than is actually necessary due to missing indexes. The speed may appear fast but by no means does it indicate that it would continue to be fast when the database further scales. The solution is proper indexing.
 
@@ -162,28 +106,32 @@ The adding of the above indexes changed the execution plan from sequential scans
 
 ### Single-query performance comparison
 
-| Metric | Before indexes | After indexes |
-| --- | --- | --- |
-| Execution time | 36.289 ms | 1.197 ms |
-| Speedup | — | ~30× faster |
-| Buffers touched | 5353 | 878 |
-| Engagement access | Seq Scan (15k rows) | Index Scan (15 rows) |
-| Issues access | Seq Scan (180k rows) | Bitmap Index Scan |
-| Join type | Hash Join | Nested Loop |
-| Sort | Full Sort | Incremental Sort |
+
+| Metric            | Before indexes       | After indexes        |
+| ----------------- | -------------------- | -------------------- |
+| Execution time    | 36.289 ms            | 1.197 ms             |
+| Speedup           | —                    | ~30× faster          |
+| Buffers touched   | 5353                 | 878                  |
+| Engagement access | Seq Scan (15k rows)  | Index Scan (15 rows) |
+| Issues access     | Seq Scan (180k rows) | Bitmap Index Scan    |
+| Join type         | Hash Join            | Nested Loop          |
+| Sort              | Full Sort            | Incremental Sort     |
+
 
 ### Concurrent benchmark (pgbench, 50 clients, 60 s)
 
-I also tested the same query using `pgbench`. As above I noted the results without the indexes and then with the indexes. The result can be seen in the table below:
+I also tested the same query using pgbench. PgBench is a simple command-line benchmarking tool for PostgresSQL databases. It is used to measure the performance of a database under load. Key indicators are TPS (transactions per second) , Latency (how long transactions take) and how performance changes when adding more clients. This example used only 50 clients. For further testing it is recommended to test performance with a different number of clients.
 
-| Metric | Before indexes | After indexes | Change |
-| --- | --- | --- | --- |
-| Clients | 50 | 50 | Same |
-| Duration | 60 s | 60 s | Same |
-| Transactions processed | 46 087 | 334 613 | ~7.3× more |
-| Failed transactions | 0 | 0 | Stable |
-| Avg latency | 64.865 ms | 8.930 ms | ~7.3× faster |
-| TPS | 770.83 | 5 599.10 | ~7.3× higher |
+
+| Metric                 | Before indexes | After indexes |
+| ---------------------- | -------------- | ------------- |
+| Clients                | 50             | 50            |
+| Duration               | 60 s           | 60 s          |
+| Transactions processed | 46 087         | 334 613       |
+| Failed transactions    | 0              | 0             |
+| Avg latency            | 64.865 ms      | 8.930 ms      |
+| TPS                    | 770.83         | 5 599.10      |
+
 
 The concurrent benchmark shows that the added indexes significantly improved Query 1 under load. With 50 concurrent clients, the database processed 46 087 transactions before indexing and 334 613 after indexing. Average latency dropped from 64.865 ms to 8.930 ms, while throughput increased from 770.83 TPS to 5 599.10 TPS. This means the indexed version handled roughly 7.3× more concurrent query executions per second while also responding much faster. The fact that both tests had 0 failed transactions shows that the database remained stable in both cases, but the indexed version used its resources far more efficiently.
 
@@ -279,43 +227,27 @@ ORDER BY i.created_at DESC;
 
 ### Result (without indexes)
 
-```text
-"Gather Merge  (cost=6895.98..6916.94 rows=180 width=169) (actual time=20.125..22.351 rows=180.00 loops=1)"
-"  Workers Planned: 2"
-"  Workers Launched: 2"
-"  Buffers: shared hit=5293"
-"  ->  Sort  (cost=5895.95..5896.14 rows=75 width=169) (actual time=14.508..14.517 rows=60.00 loops=3)"
-"        Sort Key: i.created_at DESC"
-"        Sort Method: quicksort  Memory: 42kB"
-"        Buffers: shared hit=5293"
-"        Worker 0:  Sort Method: quicksort  Memory: 32kB"
-"        Worker 1:  Sort Method: quicksort  Memory: 34kB"
-"        ->  Hash Join  (cost=446.69..5893.62 rows=75 width=169) (actual time=2.056..14.444 rows=60.00 loops=3)"
-"              Hash Cond: (i.worker_engagement_id = we.id)"
-"              Buffers: shared hit=5277"
-"              ->  Parallel Seq Scan on issues i  (cost=0.00..5250.00 rows=75000 width=169) (actual time=0.009..5.953 rows=60000.00 loops=3)"
-"                    Buffers: shared hit=4500"
-"              ->  Hash  (cost=446.50..446.50 rows=15 width=16) (actual time=1.865..1.866 rows=15.00 loops=3)"
-"                    Buckets: 1024  Batches: 1  Memory Usage: 9kB"
-"                    Buffers: shared hit=777"
-"                    ->  Seq Scan on worker_engagements we  (cost=0.00..446.50 rows=15 width=16) (actual time=0.080..1.853 rows=15.00 loops=3)"
-"                          Filter: (organization_id = 'e8df6732-32d3-4278-9798-be9727da32f5'::uuid)"
-"                          Rows Removed by Filter: 14985"
-"                          Buffers: shared hit=777"
-"Planning:"
-"  Buffers: shared hit=6"
-"Planning Time: 0.315 ms"
-"Execution Time: 22.415 ms"
-```
+**Overall**
 
-### Key observations
 
-**Before indexes:**
+| Metric         | Value                                      |
+| -------------- | ------------------------------------------ |
+| Planning time  | 0.315 ms                                   |
+| Execution time | 22.415 ms                                  |
+| Total buffers  | shared hit = 5 293 (all RAM)               |
+| Parallelism    | Gather Merge, 2 workers planned & launched |
+| Sort           | quicksort, 42 kB (per worker, in-memory)   |
+| Result rows    | 180                                        |
 
-- Execution Time: 22.415 ms
-- Parallel Seq Scan on `issues`
-- Seq Scan on `worker_engagements`
-- Buffers: `shared hit=5293`
+
+**Per-table access**
+
+
+| Table                | Access method         | Rows read | Rows kept | Time (ms) | Notes                                                                           |
+| -------------------- | --------------------- | --------- | --------- | --------- | ------------------------------------------------------------------------------- |
+| `issues`             | **Parallel Seq Scan** | 180 000   | 180       | ~5.95     | full scan across 3 workers, no index on `worker_engagement_id`                  |
+| `worker_engagements` | **Seq Scan** + filter | 15 000    | 15        | ~1.85     | 14 985 rows discarded (no `organization_id` idx), repeated per worker (loops=3) |
+
 
 ### Indexes added
 
@@ -327,35 +259,32 @@ CREATE INDEX issues_engagement_created_idx
 ON issues (worker_engagement_id, created_at DESC);
 ```
 
-**After indexes:**
-
-- Execution Time: 0.623 ms
-- Bitmap Index Scan on `worker_engagements_org_created_idx`
-- Bitmap Index Scan on `issues_engagement_created_idx`
-- Buffers: `shared hit=242`
-
-**Bottom line: 36× faster.**
+### Key observations
 
 ### Single-query performance comparison
 
-| Metric | Before indexes | After indexes |
-| --- | --- | --- |
-| Execution time | 22.415 ms | 0.623 ms |
-| Speedup | — | ~36× faster |
-| Buffers touched | 5293 | 242 |
-| Engagement access | Seq Scan (15k rows) | Bitmap Index Scan |
-| Issues access | Parallel Seq Scan (180k rows) | Bitmap Index Scan |
-| Join type | Hash Join | Nested Loop |
-| Sort | Full Sort | Full Sort (still needed) |
+
+| Metric            | Before indexes                | After indexes            |
+| ----------------- | ----------------------------- | ------------------------ |
+| Execution time    | 22.415 ms                     | 0.623 ms                 |
+| Speedup           | —                             | ~36× faster              |
+| Buffers touched   | 5293                          | 242                      |
+| Engagement access | Seq Scan (15k rows)           | Bitmap Index Scan        |
+| Issues access     | Parallel Seq Scan (180k rows) | Bitmap Index Scan        |
+| Join type         | Hash Join                     | Nested Loop              |
+| Sort              | Full Sort                     | Full Sort (still needed) |
+
 
 ### Concurrent benchmark (pgbench)
 
-| Metric | Before indexes | After indexes | Change |
-| --- | --- | --- | --- |
-| Transactions | 37 103 | 741 890 | ~20× more |
-| Avg latency | 80.572 ms | 4.027 ms | ~20× faster |
-| TPS | 620.56 | 12 417.52 | ~20× higher |
-| Failed | 0 | 0 | Stable |
+
+| Metric       | Before indexes | After indexes |
+| ------------ | -------------- | ------------- |
+| Transactions | 37 103         | 741 890       |
+| Avg latency  | 80.572 ms      | 4.027 ms      |
+| TPS          | 620.56         | 12 417.52     |
+| Failed       | 0              | 0             |
+
 
 Indexing dramatically improved Query 2 under concurrency. The database went from scanning large portions of the `issues` table to directly accessing relevant rows via indexes. This reduced latency from ~80 ms to ~4 ms and increased throughput by ~20×, showing that the original bottleneck was full table scans on a large dataset.
 
@@ -401,65 +330,29 @@ ORDER BY w.created_at DESC;
 
 ### Result (without indexes)
 
-```text
-"Sort (cost=7308.56..7308.59 rows=15 width=193) (actual time=19.096..19.101 rows=15.00 loops=1)"
-"  Sort Key: w.created_at DESC"
-"  Sort Method: quicksort Memory: 28kB"
-"  Buffers: shared hit=4268"
-"  -> Nested Loop Left Join (cost=447.39..7308.26 rows=15 width=193) (actual time=2.611..19.062 rows=15.00 loops=1)"
-"      Buffers: shared hit=4268"
-"      -> Nested Loop Left Join (cost=447.10..7292.36 rows=15 width=177) (actual time=2.587..19.013 rows=15.00 loops=1)"
-"          Buffers: shared hit=4265"
-"          -> Nested Loop Left Join (cost=446.80..7275.94 rows=15 width=161) (actual time=2.550..18.951 rows=15.00 loops=1)"
-"              Buffers: shared hit=4262"
-"              -> Nested Loop Left Join (cost=446.51..7259.52 rows=15 width=169) (actual time=2.506..18.880 rows=15.00 loops=1)"
-"                  Buffers: shared hit=4259"
-"                  -> Seq Scan on workers w (cost=0.00..561.50 rows=15 width=109) (actual time=0.035..2.739 rows=15.00 loops=1)"
-"                      Filter: (organization_id = 'e8df6732-32d3-4278-9798-be9727da32f5'::uuid)"
-"                      Rows Removed by Filter: 14985"
-"                      Buffers: shared hit=374"
-"                  -> Limit (cost=446.51..446.51 rows=1 width=116) (actual time=1.074..1.074 rows=1.00 loops=15)"
-"                      Buffers: shared hit=3885"
-"                      -> Sort (cost=446.51..446.51 rows=1 width=116) (actual time=1.072..1.072 rows=1.00 loops=15)"
-"                          Sort Key: we_inner.start_date DESC NULLS LAST"
-"                          Sort Method: quicksort Memory: 25kB"
-"                          Buffers: shared hit=3885"
-"                          -> Seq Scan on worker_engagements we_inner (cost=0.00..446.50 rows=1 width=116) (actual time=0.422..1.064 rows=1.00 loops=15)"
-"                              Filter: (worker_id = w.id)"
-"                              Rows Removed by Filter: 14999"
-"                              Buffers: shared hit=3885"
-"              -> Memoize (cost=0.29..8.31 rows=1 width=24) (actual time=0.003..0.003 rows=1.00 loops=15)"
-"                  Cache Key: we_inner.status_id"
-"                  Cache Mode: logical"
-"                  Hits: 14 Misses: 1 Evictions: 0 Overflows: 0 Memory Usage: 1kB"
-"                  Buffers: shared hit=3"
-"                  -> Index Scan using engagement_statuses_pkey on engagement_statuses es (cost=0.28..8.30 rows=1 width=24) (actual time=0.036..0.037 rows=1.00 loops=1)"
-"                      Index Cond: (id = we_inner.status_id)"
-"                      Index Searches: 1"
-"                      Buffers: shared hit=3"
-"          -> Memoize (cost=0.30..8.31 rows=1 width=48) (actual time=0.003..0.003 rows=1.00 loops=15)"
-"              Cache Key: we_inner.responsible_user_id"
-"              Cache Mode: logical"
-"              Hits: 14 Misses: 1 Evictions: 0 Overflows: 0 Memory Usage: 1kB"
-"              Buffers: shared hit=3"
-"              -> Index Scan using users_pkey on users ru (cost=0.29..8.30 rows=1 width=48) (actual time=0.033..0.033 rows=1.00 loops=1)"
-"                  Index Cond: (id = we_inner.responsible_user_id)"
-"                  Index Searches: 1"
-"                  Buffers: shared hit=3"
-"      -> Memoize (cost=0.30..8.05 rows=1 width=48) (actual time=0.002..0.002 rows=1.00 loops=15)"
-"          Cache Key: w.created_by_user_id"
-"          Cache Mode: logical"
-"          Hits: 14 Misses: 1 Evictions: 0 Overflows: 0 Memory Usage: 1kB"
-"          Buffers: shared hit=3"
-"          -> Index Scan using users_pkey on users cb (cost=0.29..8.04 rows=1 width=48) (actual time=0.019..0.019 rows=1.00 loops=1)"
-"              Index Cond: (id = w.created_by_user_id)"
-"              Index Searches: 1"
-"              Buffers: shared hit=3"
-"Planning:"
-"  Buffers: shared hit=115 dirtied=1"
-"Planning Time: 2.614 ms"
-"Execution Time: 19.352 ms"
-```
+**Overall**
+
+
+| Metric         | Value                        |
+| -------------- | ---------------------------- |
+| Planning time  | 2.614 ms                     |
+| Execution time | 19.352 ms                    |
+| Total buffers  | shared hit = 4 268 (all RAM) |
+| Sort           | quicksort, 28 kB (in-memory) |
+| Result rows    | 15                           |
+
+
+**Per-table access**
+
+
+| Table                          | Access method                         | Rows read | Rows kept | Time (ms) | Notes                                                    |
+| ------------------------------ | ------------------------------------- | --------- | --------- | --------- | -------------------------------------------------------- |
+| `workers`                      | **Seq Scan** + filter                 | 15 000    | 15        | ~2.74     | 14 985 rows discarded (no `organization_id` idx)         |
+| `worker_engagements` (LATERAL) | **Seq Scan** + filter, sort + LIMIT 1 | 225 000   | 15        | ~16.0     | 15 000 scanned per worker × 15 loops, no `worker_id` idx |
+| `engagement_statuses`          | Index Scan (`pkey`)                   | 1         | 1         | ~0.04     | memoized, 14/15 cache hits                               |
+| `users` (responsible)          | Index Scan (`users_pkey`)             | 1         | 1         | ~0.03     | memoized                                                 |
+| `users` (created_by)           | Index Scan (`users_pkey`)             | 1         | 1         | ~0.02     | memoized                                                 |
+
 
 ### Indexes added
 
@@ -475,23 +368,27 @@ ANALYZE;
 
 ### Single-query performance comparison
 
-| Metric | Before indexes | After indexes |
-| --- | --- | --- |
-| Execution time | 19.352 ms | 0.424 ms |
-| Speedup | — | ~46× faster |
-| Buffers touched | 4268 | 71 |
-| Worker access | Seq Scan | Bitmap Index Scan |
-| Engagement access | Repeated Seq Scan | Index Scan |
-| Main bottleneck | LATERAL scanned all engagements 15× | Direct lookup by worker |
+
+| Metric            | Before indexes                      | After indexes           |
+| ----------------- | ----------------------------------- | ----------------------- |
+| Execution time    | 19.352 ms                           | 0.424 ms                |
+| Speedup           | —                                   | ~46× faster             |
+| Buffers touched   | 4268                                | 71                      |
+| Worker access     | Seq Scan                            | Bitmap Index Scan       |
+| Engagement access | Repeated Seq Scan                   | Index Scan              |
+| Main bottleneck   | LATERAL scanned all engagements 15× | Direct lookup by worker |
+
 
 ### Concurrent benchmark (pgbench)
 
-| Metric | Before indexes | After indexes | Change |
-| --- | --- | --- | --- |
-| Transactions | 65 732 | 1 224 414 | ~18.6× more |
-| Avg latency | 45.449 ms | 2.439 ms | ~18.6× faster |
-| TPS | 1 100.13 | 20 496.30 | ~18.6× higher |
-| Failed | 0 | 0 | Stable |
+
+| Metric       | Before indexes | After indexes |
+| ------------ | -------------- | ------------- |
+| Transactions | 65 732         | 1 224 414     |
+| Avg latency  | 45.449 ms      | 2.439 ms      |
+| TPS          | 1 100.13       | 20 496.30     |
+| Failed       | 0              | 0             |
+
 
 The performance gain comes mainly from eliminating repeated scans inside the `LATERAL` subquery. Before indexing, the database scanned `worker_engagements` multiple times per worker. After indexing, it directly retrieves the latest engagement using an index, reducing both CPU work and memory usage, leading to a ~18× improvement.
 
@@ -515,31 +412,26 @@ ORDER BY ist.order_index ASC;
 
 ### Result (without indexes)
 
-```text
-"Sort  (cost=20265.15..20265.16 rows=3 width=64) (actual time=47.346..47.347 rows=3.00 loops=1)"
-"  Sort Key: ist.order_index"
-"  Sort Method: quicksort  Memory: 25kB"
-"  Buffers: shared hit=13504 read=1"
-"  ->  Bitmap Heap Scan on issue_statuses ist  (cost=4.30..20265.13 rows=3 width=64) (actual time=29.892..47.330 rows=3.00 loops=1)"
-"        Recheck Cond: (organization_id = 'e8df6732-32d3-4278-9798-be9727da32f5'::uuid)"
-"        Heap Blocks: exact=3"
-"        Buffers: shared hit=13504 read=1"
-"        ->  Bitmap Index Scan on issue_statuses_organization_id_name_key  (cost=0.00..4.30 rows=3 width=0) (actual time=0.293..0.293 rows=3.00 loops=1)"
-"              Index Cond: (organization_id = 'e8df6732-32d3-4278-9798-be9727da32f5'::uuid)"
-"              Index Searches: 1"
-"              Buffers: shared hit=1 read=1"
-"        SubPlan 1"
-"          ->  Aggregate  (cost=6750.45..6750.46 rows=1 width=4) (actual time=15.664..15.664 rows=1.00 loops=3)"
-"                Buffers: shared hit=13500"
-"                ->  Seq Scan on issues i  (cost=0.00..6750.00 rows=180 width=0) (actual time=5.804..15.646 rows=60.00 loops=3)"
-"                      Filter: (status_id = ist.id)"
-"                      Rows Removed by Filter: 179940"
-"                      Buffers: shared hit=13500"
-"Planning:"
-"  Buffers: shared hit=35 dirtied=3"
-"Planning Time: 0.529 ms"
-"Execution Time: 47.408 ms"
-```
+**Overall**
+
+
+| Metric         | Value                         |
+| -------------- | ----------------------------- |
+| Planning time  | 0.529 ms                      |
+| Execution time | 47.408 ms                     |
+| Total buffers  | shared hit = 13 504, read = 1 |
+| Sort           | quicksort, 25 kB (in-memory)  |
+| Result rows    | 3                             |
+
+
+**Per-table access**
+
+
+| Table              | Access method                                                        | Rows read | Rows kept | Time (ms) | Notes                                                                        |
+| ------------------ | -------------------------------------------------------------------- | --------- | --------- | --------- | ---------------------------------------------------------------------------- |
+| `issue_statuses`   | Bitmap Index Scan (`issue_statuses_organization_id_name_key`) → Heap | 3         | 3         | ~0.30     | uses existing unique index                                                   |
+| `issues` (subplan) | **Seq Scan** + filter, repeated per status                           | 540 000   | 180       | ~46.9     | 180 000 rows × 3 loops, 179 940 discarded each loop, no index on `status_id` |
+
 
 ### Indexes added
 
@@ -555,23 +447,27 @@ ANALYZE;
 
 ### Single-query performance comparison
 
-| Metric | Before indexes | After indexes |
-| --- | --- | --- |
-| Execution time | 47.408 ms | 0.232 ms |
-| Speedup | — | ~204× faster |
-| Buffers touched | 13 505 | 12 |
-| Status lookup | Bitmap index via unique constraint | Bitmap index via org/order index |
-| Issue count lookup | Seq Scan on `issues` | Index Only Scan on `issues_status_id_idx` |
-| Main bottleneck | Scanned 180 000 issues 3 times | Direct count via status index |
+
+| Metric             | Before indexes                     | After indexes                             |
+| ------------------ | ---------------------------------- | ----------------------------------------- |
+| Execution time     | 47.408 ms                          | 0.232 ms                                  |
+| Speedup            | —                                  | ~204× faster                              |
+| Buffers touched    | 13 505                             | 12                                        |
+| Status lookup      | Bitmap index via unique constraint | Bitmap index via org/order index          |
+| Issue count lookup | Seq Scan on `issues`               | Index Only Scan on `issues_status_id_idx` |
+| Main bottleneck    | Scanned 180 000 issues 3 times     | Direct count via status index             |
+
 
 ### Concurrent benchmark (pgbench)
 
-| Metric | Before indexes | After indexes | Change |
-| --- | --- | --- | --- |
-| Transactions | 18 160 | 3 220 814 | ~177× more |
-| Avg latency | 164.737 ms | 0.927 ms | ~177× faster |
-| TPS | 303.51 | 53 915.55 | ~177× higher |
-| Failed | 0 | 0 | Stable |
+
+| Metric       | Before indexes | After indexes |
+| ------------ | -------------- | ------------- |
+| Transactions | 18 160         | 3 220 814     |
+| Avg latency  | 164.737 ms     | 0.927 ms      |
+| TPS          | 303.51         | 53 915.55     |
+| Failed       | 0              | 0             |
+
 
 This query had the worst baseline performance because it repeatedly scanned the entire `issues` table for each status. Indexing `issues(status_id)` transformed this into an index-only lookup, eliminating repeated full scans. This led to a massive ~177× improvement, making it the most impactful optimization among all queries.
 
@@ -605,50 +501,28 @@ WHERE w.id = (SELECT id FROM picked_worker)
 
 ### Result (without indexes)
 
-```text
-"Nested Loop Left Join (cost=447.26..7790.32 rows=12 width=407) (actual time=7.201..36.300 rows=12.00 loops=1)"
-"  Buffers: shared hit=5131"
-"  CTE picked_worker"
-"    -> Limit (cost=0.29..0.42 rows=1 width=32) (actual time=0.014..0.014 rows=1.00 loops=1)"
-"        Buffers: shared hit=3"
-"        -> Index Scan using workers_pkey on workers w_1 (cost=0.29..2021.16 rows=15000 width=32) (actual time=0.013..0.013 rows=1.00 loops=1)"
-"            Index Searches: 1"
-"            Buffers: shared hit=3"
-"  InitPlan 2"
-"    -> CTE Scan on picked_worker (cost=0.00..0.02 rows=1 width=16) (actual time=0.016..0.016 rows=1.00 loops=1)"
-"        Storage: Memory Maximum Storage: 17kB"
-"        Buffers: shared hit=3"
-"  InitPlan 3"
-"    -> CTE Scan on picked_worker picked_worker_1 (cost=0.00..0.02 rows=1 width=16) (actual time=0.000..0.000 rows=1.00 loops=1)"
-"        Storage: Memory Maximum Storage: 17kB"
-"  -> Nested Loop Left Join (cost=0.29..570.59 rows=1 width=352) (actual time=0.715..1.420 rows=1.00 loops=1)"
-"      Buffers: shared hit=372"
-"      -> Index Scan using workers_pkey on workers w (cost=0.29..8.30 rows=1 width=256) (actual time=0.022..0.024 rows=1.00 loops=1)"
-"          Index Cond: (id = (InitPlan 2).col1)"
-"          Filter: (organization_id = (InitPlan 3).col1)"
-"          Index Searches: 1"
-"          Buffers: shared hit=6"
-"      -> Seq Scan on worker_documents wd (cost=0.00..562.27 rows=1 width=112) (actual time=0.690..1.392 rows=1.00 loops=1)"
-"          Filter: (worker_id = (InitPlan 2).col1)"
-"          Rows Removed by Filter: 15701"
-"          Buffers: shared hit=366"
-"  -> Hash Right Join (cost=446.51..7219.15 rows=12 width=71) (actual time=6.483..34.866 rows=12.00 loops=1)"
-"      Hash Cond: (i.worker_engagement_id = we.id)"
-"      Buffers: shared hit=4759"
-"      -> Seq Scan on issues i (cost=0.00..6300.00 rows=180000 width=55) (actual time=0.017..15.459 rows=180000.00 loops=1)"
-"          Buffers: shared hit=4500"
-"      -> Hash (cost=446.50..446.50 rows=1 width=32) (actual time=2.510..2.518 rows=1.00 loops=1)"
-"          Buckets: 1024 Batches: 1 Memory Usage: 9kB"
-"          Buffers: shared hit=259"
-"          -> Seq Scan on worker_engagements we (cost=0.00..446.50 rows=1 width=32) (actual time=2.093..2.495 rows=1.00 loops=1)"
-"              Filter: (worker_id = (InitPlan 2).col1)"
-"              Rows Removed by Filter: 14999"
-"              Buffers: shared hit=259"
-"Planning:"
-"  Buffers: shared hit=149"
-"Planning Time: 0.762 ms"
-"Execution Time: 36.382 ms"
-```
+**Overall**
+
+
+| Metric         | Value                        |
+| -------------- | ---------------------------- |
+| Planning time  | 0.762 ms                     |
+| Execution time | 36.382 ms                    |
+| Total buffers  | shared hit = 5 131 (all RAM) |
+| Result rows    | 12                           |
+
+
+**Per-table access**
+
+
+| Table                | Access method                         | Rows read | Rows kept | Time (ms) | Notes                                                                                     |
+| -------------------- | ------------------------------------- | --------- | --------- | --------- | ----------------------------------------------------------------------------------------- |
+| `workers` (CTE pick) | Index Scan (`workers_pkey`) + LIMIT 1 | 1         | 1         | ~0.01     | picks one worker via primary key                                                          |
+| `workers` (main)     | Index Scan (`workers_pkey`)           | 1         | 1         | ~0.02     | direct lookup by id                                                                       |
+| `worker_documents`   | **Seq Scan** + filter                 | 15 702    | 1         | ~1.39     | 15 701 rows discarded, no index on `worker_id`                                            |
+| `worker_engagements` | **Seq Scan** + filter (build hash)    | 15 000    | 1         | ~2.50     | 14 999 rows discarded, no index on `worker_id`                                            |
+| `issues`             | **Seq Scan** (probe hash)             | 180 000   | 12        | ~15.46    | full table scan to join against the single engagement, no index on `worker_engagement_id` |
+
 
 ### Indexes added
 
@@ -667,23 +541,27 @@ ANALYZE;
 
 ### Single-query performance comparison
 
-| Metric | Before indexes | After indexes |
-| --- | --- | --- |
-| Execution time | 36.382 ms | 1.005 ms |
-| Speedup | — | ~36× faster |
-| Buffers touched | 5131 | 27 |
-| Worker lookup | Index Scan (PK) | Index Scan (PK) |
-| Documents access | Seq Scan | Index Scan |
-| Engagement access | Seq Scan | Index Scan |
-| Issues access | Seq Scan (180k rows) | Bitmap Index Scan |
+
+| Metric            | Before indexes       | After indexes     |
+| ----------------- | -------------------- | ----------------- |
+| Execution time    | 36.382 ms            | 1.005 ms          |
+| Speedup           | —                    | ~36× faster       |
+| Buffers touched   | 5131                 | 27                |
+| Worker lookup     | Index Scan (PK)      | Index Scan (PK)   |
+| Documents access  | Seq Scan             | Index Scan        |
+| Engagement access | Seq Scan             | Index Scan        |
+| Issues access     | Seq Scan (180k rows) | Bitmap Index Scan |
+
 
 ### Concurrent benchmark (pgbench)
 
-| Metric | Before indexes | After indexes | Change |
-| --- | --- | --- | --- |
-| Transactions | 38 246 | 920 344 | ~24× more |
-| Avg latency | 78.157 ms | 3.246 ms | ~24× faster |
-| TPS | 639.74 | 15 404.63 | ~24× higher |
-| Failed | 0 | 0 | Stable |
+
+| Metric       | Before indexes | After indexes |
+| ------------ | -------------- | ------------- |
+| Transactions | 38 246         | 920 344       |
+| Avg latency  | 78.157 ms      | 3.246 ms      |
+| TPS          | 639.74         | 15 404.63     |
+| Failed       | 0              | 0             |
+
 
 The improvement comes from indexing all foreign key relationships (`worker_documents`, `worker_engagements`, `issues`). Before indexing, each join required scanning entire tables. After indexing, all joins became direct lookups, reducing latency significantly and improving throughput by ~24×.
