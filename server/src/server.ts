@@ -9,6 +9,7 @@ import { APP_ORIGIN } from "./constants/env";
 import authenticate from "./middleware/authenticate";
 import errorHandler from "./middleware/errorHandler";
 import authRoutes from "./routes/auth.route";
+import billingRoutes from "./routes/billing.route";
 import { employeeRoutes } from "./routes/employee.route";
 import { indexRoutes } from "./routes/index.route";
 import inviteRoutes from "./routes/invite.route";
@@ -76,6 +77,8 @@ app.use("/auth", authRoutes);
 app.use("/sessions", authenticate, sessionRoutes);
 
 // protected routes
+
+app.use("/billing", authenticate, billingRoutes);
 
 app.use("/user", authenticate, userRoutes);
 app.use("/template", authenticate, templateRoutes);
