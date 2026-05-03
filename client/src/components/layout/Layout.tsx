@@ -1,7 +1,9 @@
+import { useBillingSubscription } from '@/features/settings/payments/hooks/useBillingSubscription';
+import { isSubscriptionLocked } from '@/features/settings/payments/util/subscriptionAccess.util';
 import FeatureModal from '@/features/sidebar/feature-modal/FeatureModal';
 import { useThemeProvider } from '@/hooks/useThemeProvider';
-import { Outlet } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
+import { Outlet, useLocation, useNavigate } from '@tanstack/react-router';
+import { useEffect, useMemo, useState } from 'react';
 import ModalOverlay from '../modal/ModalOverlay';
 import AppSidebar from '../ui/sidebar/AppSidebar';
 import {
@@ -17,6 +19,22 @@ function Layout() {
   const { toggleSidebar } = useSidebar();
   const { theme } = useThemeProvider();
   const [isSettingOpen, setIsSettingOpen] = useState<boolean>(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { data: subscription, isFetched, isError } = useBillingSubscription();
+
+  const subscriptionLocked = useMemo(
+    () =>
+      isFetched && !isError && isSubscriptionLocked(subscription ?? undefined),
+    [isFetched, isError, subscription]
+  );
+
+  useEffect(() => {
+    if (!subscriptionLocked) return;
+    if (location.pathname === '/settings/payments') return;
+    navigate({ to: '/settings/payments' });
+    setIsSettingOpen(true);
+  }, [subscriptionLocked, location.pathname, navigate]);
 
   const handleOpenModal = () => {
     setModal((prev) => !prev);
@@ -36,11 +54,13 @@ function Layout() {
       {isSettingOpen ? (
         <SettingsSidebar
           className="rounded-2xl"
+          subscriptionLocked={subscriptionLocked}
           setIsSettingOpen={setIsSettingOpen}
         />
       ) : (
         <AppSidebar
           className="rounded-2xl"
+          subscriptionLocked={subscriptionLocked}
           openModal={handleOpenModal}
           setIsSettingOpen={setIsSettingOpen}
         />
