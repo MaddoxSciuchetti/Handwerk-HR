@@ -1,7 +1,7 @@
 import queryClient from '@/config/query.client';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
-import { billingQueries } from '../../billing.queries';
+import { billingQueries } from '../billing.queries';
 
 export function useCheckSubscriptionStatus() {
   useEffect(() => {

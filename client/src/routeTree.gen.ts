@@ -19,6 +19,7 @@ import { Route as HomeRouteImport } from './routes/home'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UserIdRouteImport } from './routes/user/$Id'
 import { Route as SettingsProfileRouteImport } from './routes/settings/profile'
+import { Route as SettingsPlansRouteImport } from './routes/settings/plans'
 import { Route as SettingsPaymentsRouteImport } from './routes/settings/payments'
 import { Route as SettingsIssueStatusesRouteImport } from './routes/settings/issue-statuses'
 import { Route as SettingsEngagementStatusesRouteImport } from './routes/settings/engagement-statuses'
@@ -77,6 +78,11 @@ const UserIdRoute = UserIdRouteImport.update({
 const SettingsProfileRoute = SettingsProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SettingsPlansRoute = SettingsPlansRouteImport.update({
+  id: '/plans',
+  path: '/plans',
   getParentRoute: () => SettingsRoute,
 } as any)
 const SettingsPaymentsRoute = SettingsPaymentsRouteImport.update({
@@ -142,6 +148,7 @@ export interface FileRoutesByFullPath {
   '/settings/engagement-statuses': typeof SettingsEngagementStatusesRoute
   '/settings/issue-statuses': typeof SettingsIssueStatusesRoute
   '/settings/payments': typeof SettingsPaymentsRoute
+  '/settings/plans': typeof SettingsPlansRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/user/$Id': typeof UserIdRoute
   '/email/verify/$code': typeof EmailVerifyCodeRoute
@@ -163,6 +170,7 @@ export interface FileRoutesByTo {
   '/settings/engagement-statuses': typeof SettingsEngagementStatusesRoute
   '/settings/issue-statuses': typeof SettingsIssueStatusesRoute
   '/settings/payments': typeof SettingsPaymentsRoute
+  '/settings/plans': typeof SettingsPlansRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/user/$Id': typeof UserIdRoute
   '/email/verify/$code': typeof EmailVerifyCodeRoute
@@ -185,6 +193,7 @@ export interface FileRoutesById {
   '/settings/engagement-statuses': typeof SettingsEngagementStatusesRoute
   '/settings/issue-statuses': typeof SettingsIssueStatusesRoute
   '/settings/payments': typeof SettingsPaymentsRoute
+  '/settings/plans': typeof SettingsPlansRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/user/$Id': typeof UserIdRoute
   '/email/verify/$code': typeof EmailVerifyCodeRoute
@@ -208,6 +217,7 @@ export interface FileRouteTypes {
     | '/settings/engagement-statuses'
     | '/settings/issue-statuses'
     | '/settings/payments'
+    | '/settings/plans'
     | '/settings/profile'
     | '/user/$Id'
     | '/email/verify/$code'
@@ -229,6 +239,7 @@ export interface FileRouteTypes {
     | '/settings/engagement-statuses'
     | '/settings/issue-statuses'
     | '/settings/payments'
+    | '/settings/plans'
     | '/settings/profile'
     | '/user/$Id'
     | '/email/verify/$code'
@@ -250,6 +261,7 @@ export interface FileRouteTypes {
     | '/settings/engagement-statuses'
     | '/settings/issue-statuses'
     | '/settings/payments'
+    | '/settings/plans'
     | '/settings/profile'
     | '/user/$Id'
     | '/email/verify/$code'
@@ -344,6 +356,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsProfileRouteImport
       parentRoute: typeof SettingsRoute
     }
+    '/settings/plans': {
+      id: '/settings/plans'
+      path: '/plans'
+      fullPath: '/settings/plans'
+      preLoaderRoute: typeof SettingsPlansRouteImport
+      parentRoute: typeof SettingsRoute
+    }
     '/settings/payments': {
       id: '/settings/payments'
       path: '/payments'
@@ -415,6 +434,7 @@ interface SettingsRouteChildren {
   SettingsEngagementStatusesRoute: typeof SettingsEngagementStatusesRoute
   SettingsIssueStatusesRoute: typeof SettingsIssueStatusesRoute
   SettingsPaymentsRoute: typeof SettingsPaymentsRoute
+  SettingsPlansRoute: typeof SettingsPlansRoute
   SettingsProfileRoute: typeof SettingsProfileRoute
   SettingsTemplatesIdRoute: typeof SettingsTemplatesIdRoute
   SettingsTemplatesTemplateRoute: typeof SettingsTemplatesTemplateRoute
@@ -425,6 +445,7 @@ const SettingsRouteChildren: SettingsRouteChildren = {
   SettingsEngagementStatusesRoute: SettingsEngagementStatusesRoute,
   SettingsIssueStatusesRoute: SettingsIssueStatusesRoute,
   SettingsPaymentsRoute: SettingsPaymentsRoute,
+  SettingsPlansRoute: SettingsPlansRoute,
   SettingsProfileRoute: SettingsProfileRoute,
   SettingsTemplatesIdRoute: SettingsTemplatesIdRoute,
   SettingsTemplatesTemplateRoute: SettingsTemplatesTemplateRoute,

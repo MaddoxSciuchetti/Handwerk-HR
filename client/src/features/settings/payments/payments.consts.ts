@@ -2,8 +2,13 @@ export type PaymentPlan = {
   id: 'starter' | 'pro' | 'enterprise';
   name: string;
   price: string;
-  /** Stripe Price ID (e.g. price_1TSekY...) */
   priceId: string;
+};
+
+export const PLAN_TIER_ORDER: Record<PaymentPlan['id'], number> = {
+  starter: 0,
+  pro: 1,
+  enterprise: 2,
 };
 
 export const PAYMENT_PLANS: readonly PaymentPlan[] = [

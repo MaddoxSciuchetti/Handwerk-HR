@@ -50,7 +50,11 @@ API.interceptors.response.use(
     }
 
     if (isSubscriptionAccessDenied(status, data)) {
-      if (!window.location.pathname.startsWith('/settings/payments')) {
+      const path = window.location.pathname;
+      const onBillingPath =
+        path.startsWith('/settings/payments') ||
+        path.startsWith('/settings/plans');
+      if (!onBillingPath) {
         window.location.assign('/settings/payments');
       }
     }

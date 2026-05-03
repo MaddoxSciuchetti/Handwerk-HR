@@ -31,7 +31,8 @@ function Layout() {
 
   useEffect(() => {
     if (!subscriptionLocked) return;
-    if (location.pathname === '/settings/payments') return;
+    const path = location.pathname;
+    if (path === '/settings/payments' || path === '/settings/plans') return;
     navigate({ to: '/settings/payments' });
     setIsSettingOpen(true);
   }, [subscriptionLocked, location.pathname, navigate]);
