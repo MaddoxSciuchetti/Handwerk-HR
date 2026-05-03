@@ -43,7 +43,6 @@ console.log("Parsed origins:", allowedOrigins);
 app.use(
     cors({
         origin: function (origin, callback) {
-            // Allow undefined origins (like local tools or server-to-server requests)
             if (!origin) return callback(null, true);
 
             if (allowedOrigins.includes(origin)) {
@@ -70,20 +69,16 @@ app.use((req, res, next) => {
     });
     next();
 });
-// home page
 app.get("/", (req, res) => {
     res.send("here");
 });
 
-// testing route
 
 app.use("/test", testRoutes);
 
-// auth routes
 
 app.use("/auth", authRoutes);
 
-// protected routes
 
 app.use("/billing", authenticate, billingRoutes);
 
@@ -93,7 +88,6 @@ app.use("/employee", authenticate, requireSubscriptionAccess, employeeRoutes);
 
 app.use("/index", authenticate, requireSubscriptionAccess, indexRoutes);
 
-// worker
 app.use("/worker", authenticate, requireSubscriptionAccess, worker);
 
 app.use("/tasks", authenticate, requireSubscriptionAccess, taskRoutes);

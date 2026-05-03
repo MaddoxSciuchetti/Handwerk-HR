@@ -6,7 +6,6 @@ import * as workerController from "../controllers/worker.controller";
 
 const worker = express.Router();
 
-// new routes
 
 worker.post("/", workerController.createWorker);
 worker.get("/", workerController.getWorkerData);
@@ -14,11 +13,9 @@ worker.get("/:workerId", workerController.getWorkerById);
 worker.put("/:workerId", workerController.updateWorker);
 worker.delete("/:workerId", workerController.deleteWorker);
 
-// Archive / Unarchive
 worker.patch("/:workerId/archive", workerController.archiveWorker);
 worker.patch("/:workerId/unarchive", workerController.unarchiveWorker);
 
-// Engagements
 worker.post("/:workerId/engagements", workerController.createEngagement);
 worker.put(
     "/:workerId/engagements/:engagementId",
@@ -29,7 +26,6 @@ worker.delete(
     workerController.deleteEngagement,
 );
 
-// Issues
 worker.get(
     "/:workerId/issue-statuses",
     workerController.getIssueStatusesForWorker,
@@ -47,15 +43,12 @@ worker.post(
     workerController.applyIssueTemplate,
 );
 
-// Absences
 worker.post("/:workerId/absences", workerController.createAbsence);
 worker.put("/:workerId/absences/:absenceId", workerController.updateAbsence);
 worker.delete("/:workerId/absences/:absenceId", workerController.deleteAbsence);
 
-// Data Points
 worker.patch("/:workerId/data-points", workerController.updateDataPoint);
 
-// Files
 worker.post(
     "/:workerId/files",
     upload.array("files"),
@@ -63,7 +56,6 @@ worker.post(
 );
 worker.delete("/:workerId/files/:fileId", workerController.deleteWorkerFile);
 
-// History
 worker.get("/:workerId/history", workerController.getWorkerHistory);
 
 export { worker };

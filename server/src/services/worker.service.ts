@@ -26,7 +26,6 @@ import { Prisma, WorkerStatus, type IssuePriority } from "@prisma/client";
 const s3 = new S3Client({ region: process.env.AWS_REGION });
 const PRESIGN_EXPIRES = 3600;
 
-// Generate a presigned GET URL from an S3 key
 async function presign(key: string): Promise<string> {
     const cmd = new GetObjectCommand({
         Bucket: process.env.AWS_S3_BUCKET!,
@@ -35,7 +34,6 @@ async function presign(key: string): Promise<string> {
     return getSignedUrl(s3, cmd, { expiresIn: PRESIGN_EXPIRES });
 }
 
-// Scoped ownership guard — throws if worker doesn't belong to org
 async function assertOwnership(workerId: string, organizationId: string) {
     const worker = await prisma.worker.findFirst({
         where: { id: workerId, organizationId },
@@ -44,8 +42,6 @@ async function assertOwnership(workerId: string, organizationId: string) {
     return worker;
 }
 
-// ─── Create Worker ────────────────────────────────────────────────────────────
-// Creates Worker + initial WorkerEngagement in one transaction
 
 export async function createWorker(params: CreateWorkerInput) {
     const {
@@ -64,12 +60,10 @@ export async function createWorker(params: CreateWorkerInput) {
         country,
         entryDate,
         exitDate,
-        // Engagement
         engagementType,
         responsibleUserId,
         startDate,
         endDate,
-        // Template (optional)
         templateId,
     } = params;
 
@@ -127,7 +121,6 @@ export async function createWorker(params: CreateWorkerInput) {
     });
 }
 
-// ─── Get Workers List ──────────────────────────────────────────────────────────
 
 export async function getWorkerData(params: GetWorkersInput) {
     const {
@@ -141,7 +134,6 @@ export async function getWorkerData(params: GetWorkersInput) {
 
     const where = {
         organizationId,
-        // If a specific status is requested use it, otherwise active-only unless includeArchived
         ...(status
             ? { status }
             : includeArchived
@@ -204,17 +196,11 @@ export async function getWorkerData(params: GetWorkersInput) {
     });
 }
 
-// ─── Get Worker By ID ──────────────────────────────────────────────────────────
 
 export async function getWorkerById(workerId: string, organizationId: string) {
     const worker = await prisma.worker.findFirst({
         where: { id: workerId, organizationId },
         include: {
-            // Correct relation names from schema.prisma Worker model:
-            // documents  WorkerDocument[]
-            // engagements WorkerEngagement[]
-            // createdBy   User
-            // organization Organization
             documents: {
                 orderBy: { createdAt: "desc" },
                 include: {
@@ -235,7 +221,6 @@ export async function getWorkerById(workerId: string, organizationId: string) {
                             email: true,
                         },
                     },
-                    // Issues live on WorkerEngagement, not on Worker
                     issues: {
                         orderBy: { createdAt: "desc" },
                         include: {
@@ -275,8 +260,6 @@ export async function getWorkerById(workerId: string, organizationId: string) {
 
     if (!worker) return null;
 
-    // Generate presigned URLs for all documents
-    // WorkerDocument.fileUrl stores the S3 key or full URL
     const documentsWithUrls = await Promise.all(
         worker.documents.map(async (doc) => ({
             ...doc,
@@ -287,7 +270,6 @@ export async function getWorkerById(workerId: string, organizationId: string) {
     return { ...worker, documents: documentsWithUrls };
 }
 
-// ─── Update Worker ────────────────────────────────────────────────────────────
 
 export async function updateWorker(params: {
     workerId: string;
@@ -303,7 +285,6 @@ export async function updateWorker(params: {
     });
 }
 
-// ─── Archive Worker ───────────────────────────────────────────────────────────
 
 export async function archiveWorker(params: ArchiveWorkerInput) {
     const { workerId, organizationId } = params;
@@ -317,7 +298,6 @@ export async function archiveWorker(params: ArchiveWorkerInput) {
     });
 }
 
-// ─── Unarchive Worker ──────────────────────────────────────────────────────────
 
 export async function unarchiveWorker(params: UnarchiveWorkerInput) {
     const { workerId, organizationId } = params;
@@ -331,10 +311,6 @@ export async function unarchiveWorker(params: UnarchiveWorkerInput) {
     });
 }
 
-// ─── Delete Worker ────────────────────────────────────────────────────────────
-// Cascade order: Issues (via engagement cascade) → Documents → Engagements → Worker
-// Note: Issue.onDelete=Cascade on WorkerEngagement means deleting engagements
-// auto-deletes issues. We still delete documents explicitly.
 
 export async function deleteWorker(params: DeleteWorkerInput) {
     const { workerId, organizationId } = params;
@@ -347,8 +323,6 @@ export async function deleteWorker(params: DeleteWorkerInput) {
     });
 }
 
-// ─── Update Data Point ──────────────────────────────────────────────────────────
-// Patches one Worker column, or `responsibleUserId` on the latest engagement.
 
 const WORKER_DATE_FIELDS = new Set(["birthday", "entryDate", "exitDate"]);
 
@@ -391,7 +365,6 @@ export async function updateDataPoint(params: UpdateDataPointInput) {
     });
 }
 
-// ─── Engagements ───────────────────────────────────────────────────────────────
 
 export async function createEngagement(params: CreateEngagementInput) {
     const {
@@ -455,12 +428,9 @@ export async function deleteEngagement(params: {
     const { engagementId, workerId, organizationId } = params;
     await assertOwnership(workerId, organizationId);
 
-    // Cascade on WorkerEngagement will delete Issues and related records
     return prisma.workerEngagement.delete({ where: { id: engagementId } });
 }
 
-// ─── Issues ────────────────────────────────────────────────────────────────────
-// Issues belong to WorkerEngagement via workerEngagementId, NOT directly to Worker
 
 export async function createIssue(params: CreateIssueInput) {
     const {
@@ -475,7 +445,6 @@ export async function createIssue(params: CreateIssueInput) {
         dueDate,
     } = params;
 
-    // Verify the engagement exists (no direct workerId on Issue)
     const engagement = await prisma.workerEngagement.findFirst({
         where: { id: workerEngagementId },
     });
@@ -660,9 +629,6 @@ function templatePriorityToIssuePriority(
     return p;
 }
 
-// Core template-application logic, parameterized over a Prisma transaction
-// client so it can run either inside an existing $transaction (e.g. createWorker)
-// or wrapped in its own transaction by the public API.
 async function applyIssueTemplateInTx(
     tx: Prisma.TransactionClient,
     params: {
@@ -777,8 +743,6 @@ export async function deleteIssue(params: {
     return prisma.issue.delete({ where: { id: issueId } });
 }
 
-// ─── Absences ─────────────────────────────────────────────────────────────────
-// Absence belongs to User (userId) + Organization (orgId) — NOT Worker directly
 
 export async function createAbsence(params: CreateAbsenceInput) {
     const { userId, orgId, absenceType, startDate, endDate, substituteId } =
@@ -834,9 +798,6 @@ export async function deleteAbsence(params: { absenceId: string }) {
     return prisma.absence.delete({ where: { id: absenceId } });
 }
 
-// ─── Worker Documents ──────────────────────────────────────────────────────────
-// Model: WorkerDocument — fields: fileUrl, uploadedByUserId, fileSizeBytes, mimeType
-// NO WorkerFile model, NO cloud_key field
 
 export async function uploadWorkerDocument(params: UploadWorkerDocumentInput) {
     const {
@@ -869,7 +830,6 @@ export async function uploadWorkerDocument(params: UploadWorkerDocumentInput) {
         },
     });
 
-    // Return with presigned URL
     return { ...doc, presignedUrl: await presign(fileUrl) };
 }
 
@@ -920,8 +880,6 @@ export async function listWorkerDocuments(params: {
     );
 }
 
-// ─── Worker History ───────────────────────────────────────────────────────────
-// Engagements with issues + standalone documents
 
 export async function getWorkerHistory(params: {
     workerId: string;

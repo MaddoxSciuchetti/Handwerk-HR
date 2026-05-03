@@ -1,9 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { IssuePriority } from "@prisma/client";
 
-// ============================================================
-// TYPES
-// ============================================================
 
 export type InsertTemplateParams = {
     name: string;
@@ -28,9 +25,6 @@ export type ModifyTemplateTaskParams = {
     orderIndex?: number;
 };
 
-// ============================================================
-// ISSUE TEMPLATE
-// ============================================================
 
 export const insertTemplate = async (data: InsertTemplateParams) => {
     return await prisma.issueTemplate.create({
@@ -147,9 +141,6 @@ export const modifyTemplate = async (
     });
 };
 
-// ============================================================
-// TEMPLATE ITEM (pseudo issue)
-// ============================================================
 
 export const insertTemplateTask = async (
     data: InsertTemplateTaskParams & { organizationId: string },

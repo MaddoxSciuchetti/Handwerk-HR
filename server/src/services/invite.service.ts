@@ -20,7 +20,6 @@ import { InvitationStatus } from "@prisma/client";
 
 const fortyEightHoursFromNow = () => new Date(Date.now() + 48 * 60 * 60 * 1000);
 
-// ─── Create Invite ────────────────────────────────────────────────────────────
 
 export const createInvite = async (
     orgId: string,
@@ -100,7 +99,6 @@ export const createInvite = async (
     return { invite };
 };
 
-// ─── Get Invite Details ───────────────────────────────────────────────────────
 
 export const getInviteByToken = async (rawToken: string) => {
     const tokenHash = hashToken(rawToken);
@@ -121,7 +119,6 @@ export const getInviteByToken = async (rawToken: string) => {
     return { orgName: invite.organization.name, email: invite.email };
 };
 
-// ─── Accept Invite ────────────────────────────────────────────────────────────
 
 export const acceptInvite = async (
     rawToken: string,
@@ -179,7 +176,6 @@ export const acceptInvite = async (
         return createdUser;
     });
 
-    // Verification email
     const verificationCode = await prisma.newVerificationCode.create({
         data: {
             userId: user.id,
@@ -194,7 +190,6 @@ export const acceptInvite = async (
     });
     if (error) console.error("Failed to send verification email:", error);
 
-    // Refresh token
     const rawRefreshToken = generateRawToken();
     const refreshTokenHash = hashToken(rawRefreshToken);
     const tokenRecord = await prisma.refreshToken.create({

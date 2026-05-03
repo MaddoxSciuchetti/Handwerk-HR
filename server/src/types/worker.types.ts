@@ -6,7 +6,6 @@ import type {
     WorkerStatus,
 } from "@prisma/client";
 
-// Re-export Prisma enums so consumers can import from one place
 export type {
     AbsenceType,
     DocumentFileType,
@@ -15,7 +14,6 @@ export type {
     WorkerStatus,
 };
 
-// ─── Worker ───────────────────────────────────────────────────────────────────
 
 export interface CreateWorkerInput {
     organizationId: string;
@@ -80,7 +78,6 @@ export interface DeleteWorkerInput {
     organizationId: string;
 }
 
-// ─── WorkerEngagement ─────────────────────────────────────────────────────────
 
 export interface CreateEngagementInput {
     workerId: string;
@@ -105,8 +102,6 @@ export interface UpdateEngagementInput {
     completedAt?: Date;
 }
 
-// ─── Issue ───────────────────────────────────────────────────────────────────
-// Issues belong to WorkerEngagement, NOT directly to Worker
 
 export interface CreateIssueInput {
     workerEngagementId: string; // required — no workerId on Issue
@@ -133,8 +128,6 @@ export interface UpdateIssueInput {
     dueDate?: Date;
 }
 
-// ─── Absence ─────────────────────────────────────────────────────────────────
-// Absence belongs to User (userId) + Organization (orgId) — NOT Worker
 
 export interface CreateAbsenceInput {
     userId: string; // User.id — not workerId
@@ -153,9 +146,6 @@ export interface UpdateAbsenceInput {
     substituteId?: string;
 }
 
-// ─── WorkerDocument ───────────────────────────────────────────────────────────
-// Schema model is WorkerDocument — fields: fileUrl, uploadedByUserId, fileSizeBytes, mimeType
-// There is NO WorkerFile model and NO cloud_key field
 
 export interface UploadWorkerDocumentInput {
     workerId: string;
@@ -168,7 +158,6 @@ export interface UploadWorkerDocumentInput {
     mimeType?: string;
 }
 
-// ─── Data Point ───────────────────────────────────────────────────────────────
 
 /** Worker columns + `responsibleUserId` (updates latest engagement). */
 export type WorkerDataPointField =
@@ -182,7 +171,6 @@ export interface UpdateDataPointInput {
     value: string | number | boolean | Date | null;
 }
 
-// ─── Legacy Worker (old schema — German field names) ─────────────────────────
 
 export interface InsertWorker {
     vorname: string;

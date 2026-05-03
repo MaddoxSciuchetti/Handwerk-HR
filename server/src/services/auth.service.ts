@@ -35,9 +35,6 @@ import { sendMail } from "@/utils/sendMail";
 import { generateRawToken, hashToken } from "@/utils/v2/tokenV2";
 import { Prisma } from "@prisma/client";
 
-// ============================================================
-// TYPES
-// ============================================================
 
 export type CreateAccountParams = {
     firstName: string;
@@ -62,9 +59,7 @@ type ResetPasswordParams = {
     verificationCode: string;
 };
 
-// ============================================================
 // INTERNAL HELPER
-// ============================================================
 
 const createRefreshTokenRecord = async ({
     userId,
@@ -91,9 +86,7 @@ const createRefreshTokenRecord = async ({
     return { rawToken, record };
 };
 
-// ============================================================
 // CREATE ACCOUNT
-// ============================================================
 
 export const createAccount = async (data: CreateAccountParams) => {
     const normalizedEmail = data.email.trim().toLowerCase();
@@ -157,9 +150,7 @@ export const createAccount = async (data: CreateAccountParams) => {
     return { user, accessToken, refreshToken };
 };
 
-// ============================================================
 // REGISTER ORG (multi-step org + user signup)
-// ============================================================
 
 export const registerOrgAccount = async (data: RegisterOrgInput) => {
     const normalizedEmail = data.email.trim().toLowerCase();
@@ -329,9 +320,7 @@ export const registerOrgAccount = async (data: RegisterOrgInput) => {
     };
 };
 
-// ============================================================
 // LOGIN
-// ============================================================
 
 export const loginUser = async ({
     email,
@@ -383,9 +372,7 @@ export const loginUser = async ({
     return { user: safeUser, accessToken, refreshToken };
 };
 
-// ============================================================
 // REFRESH ACCESS TOKEN
-// ============================================================
 
 export const refreshUserAccessToken = async (refreshToken: string) => {
     // 1. verify JWT signature
@@ -435,9 +422,7 @@ export const refreshUserAccessToken = async (refreshToken: string) => {
     return { accessToken, newRefreshToken };
 };
 
-// ============================================================
 // VERIFY EMAIL
-// ============================================================
 
 export const validationEmailCode = async (code: string) => {
     const validCode = await prisma.newVerificationCode.findFirst({
@@ -467,9 +452,7 @@ export const validationEmailCode = async (code: string) => {
     return { user: updatedUser };
 };
 
-// ============================================================
 // SEND PASSWORD RESET EMAIL
-// ============================================================
 
 export const sendPasswordResetEmail = async (email: string) => {
     const normalizedEmail = email.trim().toLowerCase();
@@ -518,9 +501,7 @@ export const sendPasswordResetEmail = async (email: string) => {
     return { url, emailId: data.id };
 };
 
-// ============================================================
 // RESET PASSWORD
-// ============================================================
 
 export const modifyPassword = async ({
     password,

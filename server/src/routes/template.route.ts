@@ -3,8 +3,6 @@ import * as TemplateV2 from "../controllers/template.controller";
 
 const templateRoutes = express.Router();
 
-// prefix /template
-
 templateRoutes.delete("/task/:id", TemplateV2.deleteTemplateTask);
 
 templateRoutes.delete("/:id", TemplateV2.deleteTemplate);

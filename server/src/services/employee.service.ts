@@ -1,9 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { AbsenceType } from "@prisma/client";
 
-// ============================================================
-// TYPES
-// ============================================================
 
 export type UpdateAbsenceParams = {
     userId: string;
@@ -14,9 +11,6 @@ export type UpdateAbsenceParams = {
     substituteId?: string;
 };
 
-// ============================================================
-// HELPER — compute isAbsent from absence records
-// ============================================================
 
 export const computeIsAbsent = (
     absences: { startDate: Date; endDate: Date }[],
@@ -25,9 +19,6 @@ export const computeIsAbsent = (
     return absences.some((a) => a.startDate <= now && a.endDate >= now);
 };
 
-// ============================================================
-// QUERY ALL EMPLOYEES IN ORG
-// ============================================================
 
 export const queryEmployeeWorkerData = async (orgId: string) => {
     return await prisma.workerEngagement.findMany({
@@ -165,9 +156,6 @@ export const queryEmployee = async (orgId: string) => {
     });
 };
 
-// ============================================================
-// QUERY SINGLE EMPLOYEE BY ID
-// ============================================================
 
 export const queryEmployeeById = async (id: string, orgId: string) => {
     return await prisma.user.findFirst({
@@ -214,12 +202,8 @@ export const queryEmployeeById = async (id: string, orgId: string) => {
     });
 };
 
-// ============================================================
-// REMOVE EMPLOYEE FROM ORG
-// ============================================================
 
 export const removeEmployee = async (id: string, orgId: string) => {
-    // remove the org membership — does not delete the user entirely
     return await prisma.organizationMember.delete({
         where: {
             userId_organizationId: {
@@ -230,9 +214,6 @@ export const removeEmployee = async (id: string, orgId: string) => {
     });
 };
 
-// ============================================================
-// UPSERT ABSENCE
-// ============================================================
 
 export const updateAbsenceData = async (data: UpdateAbsenceParams) => {
     const overlapping = await prisma.absence.findFirst({

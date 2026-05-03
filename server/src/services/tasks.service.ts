@@ -105,8 +105,6 @@ export async function updateTaskInOrg(
     });
 }
 
-// Fields that we know how to display in the task history feed.
-// Anything outside this set is still returned but with raw values.
 const HUMAN_READABLE_FIELDS = new Set([
     "title",
     "description",
@@ -139,9 +137,6 @@ function valueToString(value: unknown): string | null {
     return JSON.stringify(value);
 }
 
-// Maps a raw audit-log value to a user-facing string for a given field.
-// IDs (statusId, assigneeUserId) are resolved to readable names; enums get
-// localized labels; everything else falls back to a string representation.
 function resolveFieldValue(
     field: string,
     rawValue: unknown,
@@ -193,7 +188,6 @@ function diffAuditValues(
     return changes;
 }
 
-// Gathers every referenced ID for a given key across both old and new
 // audit-log payloads. Used to batch-fetch display names in one query.
 function collectReferencedIds(
     logs: Array<{ oldValue: unknown; newValue: unknown }>,

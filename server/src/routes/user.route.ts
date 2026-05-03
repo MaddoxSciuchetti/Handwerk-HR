@@ -4,8 +4,6 @@ import * as UserControllerV2 from "../controllers/user.controller";
 
 const userRoutes = Router();
 
-// prefix /user
-
 userRoutes.get("/v2", UserControllerV2.getUser);
 userRoutes.post(
     "/v2/profile/photo",

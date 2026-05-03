@@ -3,8 +3,6 @@ import * as EmployeeV2 from "../controllers/employee.controller";
 
 const employeeRoutes = express.Router();
 
-// prefix /employee
-
 employeeRoutes.get(
     "/v2/getEmployeeWorkerData",
 

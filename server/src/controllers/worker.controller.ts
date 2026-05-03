@@ -2,17 +2,10 @@ import { uploadFileToS3 } from "@/config/aws";
 import { Request, Response } from "express";
 import * as workerService from "../services/worker.service";
 
-// Safely extract a single string param from Express (params are always string in practice,
-// but typed as string | string[] in older @types/express versions)
 function param(req: Request, key: string): string {
     const val = req.params[key];
     return Array.isArray(val) ? val[0] : String(val);
 }
-
-// ─── Create Worker ────────────────────────────────────────────────────────────
-// Body: CreateWorkerInput fields
-// Required: firstName, lastName, email, createdByUserId,
-//           engagementType, responsibleUserId, engagementStatusId
 
 export async function createWorker(req: Request, res: Response) {
     try {
@@ -30,8 +23,6 @@ export async function createWorker(req: Request, res: Response) {
     }
 }
 
-// ─── Get Workers ───────────────────────────────────────────────────────────────
-// Query: ?status=active|inactive&search=&page=&limit=&includeArchived=true
 
 export async function getWorkerData(req: Request, res: Response) {
     try {
@@ -54,8 +45,6 @@ export async function getWorkerData(req: Request, res: Response) {
     }
 }
 
-// ─── Get Worker By ID ──────────────────────────────────────────────────────────
-// Returns Worker + engagements + issues (nested under engagements) + documents w/ presigned URLs
 
 export async function getWorkerById(req: Request, res: Response) {
     try {
@@ -79,8 +68,6 @@ export async function getWorkerById(req: Request, res: Response) {
     }
 }
 
-// ─── Update Worker ────────────────────────────────────────────────────────────
-// Body: UpdateWorkerInput (all optional, only real Worker fields)
 
 export async function updateWorker(req: Request, res: Response) {
     try {
@@ -100,8 +87,6 @@ export async function updateWorker(req: Request, res: Response) {
     }
 }
 
-// ─── Archive Worker ───────────────────────────────────────────────────────────
-// Sets worker status to inactive (no persisted archive metadata).
 
 export async function archiveWorker(req: Request, res: Response) {
     try {
@@ -120,7 +105,6 @@ export async function archiveWorker(req: Request, res: Response) {
     }
 }
 
-// ─── Unarchive Worker ──────────────────────────────────────────────────────────
 
 export async function unarchiveWorker(req: Request, res: Response) {
     try {
@@ -138,7 +122,6 @@ export async function unarchiveWorker(req: Request, res: Response) {
     }
 }
 
-// ─── Delete Worker ────────────────────────────────────────────────────────────
 
 export async function deleteWorker(req: Request, res: Response) {
     try {
@@ -155,8 +138,6 @@ export async function deleteWorker(req: Request, res: Response) {
     }
 }
 
-// ─── Update Data Point ──────────────────────────────────────────────────────────
-// Body: { field: keyof UpdateWorkerInput, value: any }
 
 export async function updateDataPoint(req: Request, res: Response) {
     try {
@@ -178,8 +159,6 @@ export async function updateDataPoint(req: Request, res: Response) {
     }
 }
 
-// ─── Engagements ───────────────────────────────────────────────────────────────
-// Body for create: { responsibleUserId, statusId, type, startDate?, endDate? }
 
 export async function createEngagement(req: Request, res: Response) {
     try {
@@ -239,13 +218,9 @@ export async function deleteEngagement(req: Request, res: Response) {
     }
 }
 
-// ─── Issues ─────────────────────────────────────────────────────────────────────
-// Issues belong to WorkerEngagement — route must pass engagementId in body or params
-// Body for create: { workerEngagementId, createdByUserId, statusId, title, ... }
 
 export async function createIssue(req: Request, res: Response) {
     try {
-        // workerEngagementId comes from body since issues don't route via workerId
         const result = await workerService.createIssue(req.body);
         return res.status(201).json({ success: true, data: result });
     } catch (error: any) {
@@ -335,9 +310,6 @@ export async function applyIssueTemplate(req: Request, res: Response) {
     }
 }
 
-// ─── Absences ─────────────────────────────────────────────────────────────────
-// Absence belongs to User (userId) + Organization (orgId) — NOT Worker
-// Body for create: { userId, orgId, absenceType, startDate, endDate, substituteId? }
 
 export async function createAbsence(req: Request, res: Response) {
     try {
@@ -376,9 +348,6 @@ export async function deleteAbsence(req: Request, res: Response) {
     }
 }
 
-// ─── Documents (replaces WorkerFile) ────────────────────────────────────────────
-// Multipart upload. Each file in `req.files` (field name "files") is pushed to
-// S3 and persisted as a `WorkerDocument` row. Supports one or many files.
 
 export async function uploadWorkerFile(req: Request, res: Response) {
     try {
@@ -446,8 +415,6 @@ export async function deleteWorkerFile(req: Request, res: Response) {
     }
 }
 
-// Lists all WorkerDocument rows for a worker. Each row is returned in its native
-// Prisma shape with an additional `presignedUrl` for direct download.
 export async function getWorkerFiles(req: Request, res: Response) {
     try {
         const organizationId = req.orgId;
@@ -465,8 +432,6 @@ export async function getWorkerFiles(req: Request, res: Response) {
     }
 }
 
-// ─── History ─────────────────────────────────────────────────────────────────
-// Returns all engagements (with nested issues) + documents for audit trail
 
 export async function getWorkerHistory(req: Request, res: Response) {
     try {

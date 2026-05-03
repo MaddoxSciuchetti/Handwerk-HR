@@ -13,7 +13,6 @@ import {
 import appAssert from "@/utils/appAssert";
 import catchErrors from "@/utils/catchErrors";
 
-// ── IssueTemplate ────────────────────────────────────────────
 
 const getParam = (param: string | string[]): string =>
     Array.isArray(param) ? param[0] : param;
@@ -84,7 +83,6 @@ export const deleteTemplate = catchErrors(async (req, res) => {
     return res.status(OK).json({ message: "Template deleted successfully" });
 });
 
-// ── TemplateItem ─────────────────────────────────────────────
 
 export const createTemplateTask = catchErrors(async (req, res) => {
     const templateId = getParam(req.params.templateId);
