@@ -11,10 +11,12 @@ import SideBarMenu from './sidebar-menu-item';
 function AppSidebar({
   openModal,
   setIsSettingOpen,
+  subscriptionLocked,
   className,
 }: {
   openModal: () => void;
   setIsSettingOpen: (isSettingOpen: boolean) => void;
+  subscriptionLocked: boolean;
   className?: string;
 }) {
   const { state } = useSidebar();
@@ -28,6 +30,7 @@ function AppSidebar({
       <div className="w-full min-w-0 p-2">
         <ProfileDropdown
           setIsSettingOpen={setIsSettingOpen}
+          subscriptionLocked={subscriptionLocked}
           collapsed={isCollapsed}
         />
         <div className="mt-5">
@@ -38,6 +41,7 @@ function AppSidebar({
               label: item.title,
               icon: item.icon,
               to: item.to,
+              disabled: subscriptionLocked,
               search:
                 item.to === '/org-settings'
                   ? { currentTab: 'employees' }
@@ -48,10 +52,15 @@ function AppSidebar({
       </div>
       <div className="w-full p-2">
         <SidebarItem
-          onClick={() => openModal()}
+          onClick={() => {
+            if (!subscriptionLocked) openModal();
+          }}
           label="Feedback"
           icon={MessageSquareIcon}
           collapsed={isCollapsed}
+          className={
+            subscriptionLocked ? 'pointer-events-none opacity-40' : undefined
+          }
         />
       </div>
     </Sidebar>

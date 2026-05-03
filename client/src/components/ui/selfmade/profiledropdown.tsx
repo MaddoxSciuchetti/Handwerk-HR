@@ -20,9 +20,11 @@ const getDisplayLabel = (user: ReturnType<typeof useAuth>['user']) => {
 
 export function ProfileDropdown({
   setIsSettingOpen,
+  subscriptionLocked,
   collapsed = false,
 }: {
   setIsSettingOpen: (isSettingOpen: boolean) => void;
+  subscriptionLocked: boolean;
   collapsed?: boolean;
 }) {
   const { user } = useAuth();
@@ -35,7 +37,9 @@ export function ProfileDropdown({
 
   const openSettings = () => {
     setIsSettingOpen(true);
-    navigate({ to: '/settings/profile' });
+    navigate({
+      to: subscriptionLocked ? '/settings/payments' : '/settings/profile',
+    });
   };
 
   if (collapsed) {

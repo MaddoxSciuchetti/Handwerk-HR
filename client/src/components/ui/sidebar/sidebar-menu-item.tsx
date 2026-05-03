@@ -8,6 +8,7 @@ export type SideBarMenuLinkItem = {
   icon: LucideIcon;
   to: string;
   search?: Record<string, unknown>;
+  disabled?: boolean;
 };
 
 export type SideBarMenuProps<T extends SideBarMenuLinkItem> = {
@@ -22,6 +23,21 @@ function SideBarMenu<TItem extends SideBarMenuLinkItem>({
   return (
     <>
       {items.map((item) => {
+        if (item.disabled) {
+          return (
+            <div
+              key={item.id}
+              className="pointer-events-none opacity-40"
+              aria-disabled
+            >
+              <SidebarItem
+                label={item.label}
+                icon={item.icon}
+                collapsed={collapsed}
+              />
+            </div>
+          );
+        }
         return (
           <Link
             key={item.id}

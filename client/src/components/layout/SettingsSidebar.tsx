@@ -7,9 +7,11 @@ import SideBarMenu from '../ui/sidebar/sidebar-menu-item';
 
 export function SettingsSidebar({
   setIsSettingOpen,
+  subscriptionLocked,
   className,
 }: {
   className?: string;
+  subscriptionLocked: boolean;
   setIsSettingOpen: (isSettingOpen: boolean) => void;
 }) {
   const navigate = useNavigate();
@@ -17,25 +19,32 @@ export function SettingsSidebar({
   const isCollapsed = state === 'collapsed';
 
   const leaveSettings = () => {
+    if (subscriptionLocked) return;
     setIsSettingOpen(false);
     navigate({ to: '/worker-lifycycle' });
   };
 
+  const itemsSource = subscriptionLocked
+    ? SETTINGSITEMS.filter((item) => item.to === '/settings/payments')
+    : SETTINGSITEMS;
+
   return (
     <Sidebar collapsible="icon" className={className}>
       <div className="w-full p-2">
-        <Button
-          type="button"
-          size="icon"
-          className="bg-transparent text-foreground shadow-none hover:bg-muted"
-          onClick={leaveSettings}
-        >
-          <ArrowLeftIcon className="h-4 w-4" />
-        </Button>
+        {!subscriptionLocked ? (
+          <Button
+            type="button"
+            size="icon"
+            className="bg-transparent text-foreground shadow-none hover:bg-muted"
+            onClick={leaveSettings}
+          >
+            <ArrowLeftIcon className="h-4 w-4" />
+          </Button>
+        ) : null}
         <div className="mt-5">
           <SideBarMenu
             collapsed={isCollapsed}
-            items={SETTINGSITEMS.map((item) => ({
+            items={itemsSource.map((item) => ({
               id: item.to,
               label: item.title,
               icon: item.icon,
