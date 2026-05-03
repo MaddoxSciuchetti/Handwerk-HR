@@ -408,6 +408,8 @@ model Subscription {
   trialEndsAt             DateTime?          @map("trial_ends_at") @db.Timestamptz()
   currentPeriodStart      DateTime?          @map("current_period_start") @db.Timestamptz()
   currentPeriodEnd        DateTime?          @map("current_period_end") @db.Timestamptz()
+  stripeCustomerId        String?            @unique @map("stripe_customer_id")
+  stripeSubscriptionId    String?            @unique @map("stripe_subscription_id")
   provider                String?
   providerPaymentMethodId String?          @map("provider_payment_method_id")
   cardBrand               String?          @map("card_brand")
@@ -566,7 +568,6 @@ enum AuditSource {
 }
 
 enum SubscriptionPlan {
-  free
   starter
   pro
   enterprise
