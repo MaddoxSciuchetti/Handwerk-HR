@@ -353,6 +353,7 @@ model Comment {
   userId    String   @map("user_id")
   body      String
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
 
   issue     Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
