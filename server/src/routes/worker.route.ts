@@ -54,6 +54,7 @@ worker.post(
     upload.array("files"),
     workerController.uploadWorkerFile,
 );
+worker.get("/:workerId/files", workerController.getWorkerFiles);
 worker.delete("/:workerId/files/:fileId", workerController.deleteWorkerFile);
 
 worker.get("/:workerId/history", workerController.getWorkerHistory);

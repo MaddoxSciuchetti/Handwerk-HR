@@ -418,7 +418,7 @@ export async function deleteWorkerFile(req: Request, res: Response) {
 export async function getWorkerFiles(req: Request, res: Response) {
     try {
         const organizationId = req.orgId;
-        const workerId = param(req, "id");
+        const workerId = param(req, "workerId");
 
         const docs = await workerService.listWorkerDocuments({
             workerId,
