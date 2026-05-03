@@ -8,6 +8,7 @@ import express from "express";
 import { APP_ORIGIN } from "./constants/env";
 import { stripeWebhookHandler } from "./controllers/stripeWebhook.controller";
 import authenticate from "./middleware/authenticate";
+import requireSubscriptionAccess from "./middleware/requireSubscriptionAccess";
 import errorHandler from "./middleware/errorHandler";
 import authRoutes from "./routes/auth.route";
 import billingRoutes from "./routes/billing.route";
@@ -89,17 +90,27 @@ app.use("/sessions", authenticate, sessionRoutes);
 app.use("/billing", authenticate, billingRoutes);
 
 app.use("/user", authenticate, userRoutes);
-app.use("/template", authenticate, templateRoutes);
-app.use("/employee", authenticate, employeeRoutes);
+app.use(
+    "/template",
+    authenticate,
+    requireSubscriptionAccess,
+    templateRoutes,
+);
+app.use(
+    "/employee",
+    authenticate,
+    requireSubscriptionAccess,
+    employeeRoutes,
+);
 
-app.use("/index", authenticate, indexRoutes);
+app.use("/index", authenticate, requireSubscriptionAccess, indexRoutes);
 
 // worker
-app.use("/worker", authenticate, worker);
+app.use("/worker", authenticate, requireSubscriptionAccess, worker);
 
-app.use("/tasks", authenticate, taskRoutes);
+app.use("/tasks", authenticate, requireSubscriptionAccess, taskRoutes);
 
-app.use("/org", authenticate, orgRoutes);
+app.use("/org", authenticate, requireSubscriptionAccess, orgRoutes);
 app.use("/invites", inviteRoutes);
 
 app.use(errorHandler);
