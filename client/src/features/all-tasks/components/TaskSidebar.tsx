@@ -3,8 +3,11 @@ import FormSelectOptions from '@/components/form/FormSelectOptions';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/selfmade/button';
 import { FormWrapper } from '@/components/ui/selfmade/form-wrapper';
+import { TaskCommentBox } from '@/features/all-tasks/components/TaskCommentBox';
+import { useSaveTaskComment } from '@/features/all-tasks/hooks/useSaveTaskComment';
 import { employeeQueries } from '@/features/employee-overview/query-options/queries/employee.queries';
 import { fetchOrgStatuses } from '@/features/settings/org-statuses/org-status.api';
+import useAuth from '@/features/user-profile/hooks/useAuth';
 import { SidebarAside } from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarAside';
 import SidebarContent from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarContent';
 import SidebarFooter from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarFooter';
@@ -13,7 +16,7 @@ import { SidebarPanel } from '@/features/worker-task-management/components/tasks
 import TaskHistory from '@/features/worker-task-management/components/tasks/task-sidebar/task-history/TaskHistory';
 import { useQuery } from '@tanstack/react-query';
 import { X } from 'lucide-react';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useFetchEngagements } from '../hooks/useFetchEngagements';
 import { useTasks } from '../hooks/useTasks';
 import type { TaskEditState } from '../hooks/useTaskSidebar';
@@ -31,10 +34,39 @@ export function TaskSidebar({
   taskState,
   taskEditState,
 }: TaskSidebarProps) {
-  const { register, control, errors, onSubmit } = useTasks(
+  const [commentText, setCommentText] = useState('');
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const saveComment = useSaveTaskComment();
+
+  useEffect(() => {
+    setCommentText('');
+    setEditingCommentId(null);
+  }, [taskEditState.taskId, taskState]);
+
+  const commentOptions =
+    taskState === 'edit'
+      ? {
+            getCommentDraft: () => ({
+              body: commentText,
+              commentId: editingCommentId,
+            }),
+            persistComment: async (args: {
+              taskId: string;
+              body: string;
+              commentId: string | null;
+            }) => {
+              await saveComment.mutateAsync(args);
+              setCommentText('');
+              setEditingCommentId(null);
+            },
+          }
+      : undefined;
+
+  const { register, control, errors, onSubmit, isTaskSaving } = useTasks(
     taskEditState,
     taskState,
-    setIsOpen
+    setIsOpen,
+    commentOptions,
   );
 
   const { data: employees = [] } = useQuery(employeeQueries.getEmployees());
@@ -44,6 +76,19 @@ export function TaskSidebar({
     enabled: isOpen,
   });
   const { data: engagements = [] } = useFetchEngagements();
+  const { user } = useAuth();
+
+  const isSubmitting = isTaskSaving || saveComment.isPending;
+
+  const handleEditComment = (commentId: string, body: string) => {
+    setEditingCommentId(commentId);
+    setCommentText(body);
+  };
+
+  const handleCancelCommentEdit = () => {
+    setEditingCommentId(null);
+    setCommentText('');
+  };
 
   const ownerOptions = useMemo(
     () =>
@@ -131,17 +176,25 @@ export function TaskSidebar({
                 labelClassName="typo-body-base"
               />
 
-              {taskState === 'edit' && taskEditState.taskId && (
-                <TaskHistory taskId={taskEditState.taskId} />
-              )}
+              {taskState === 'edit' && taskEditState.taskId ? (
+                <>
+                  <TaskCommentBox
+                    commentText={commentText}
+                    onCommentTextChange={setCommentText}
+                    editingCommentId={editingCommentId}
+                    onCancelEdit={handleCancelCommentEdit}
+                    disabled={isSubmitting}
+                  />
+                  <TaskHistory
+                    taskId={taskEditState.taskId}
+                    currentUserId={user?.id}
+                    onEditComment={handleEditComment}
+                  />
+                </>
+              ) : null}
             </SidebarContent>
             <SidebarFooter className="p-6">
-              <Button
-                type="submit"
-                onClick={() => {
-                  console.log('clicked');
-                }}
-              >
+              <Button type="submit" disabled={isSubmitting}>
                 {taskState === 'edit' ? 'Speichern' : 'Hinzufügen'}
               </Button>
             </SidebarFooter>
