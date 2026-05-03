@@ -36,7 +36,11 @@ pgbench/   Benchmark queries
 
 ## Environment variables
 
-Create a `.env` file in `server/` with at minimum:
+Create a `.env` file in `server/`.
+
+`npm install` in `server/` runs `prisma generate`, which only needs **`DATABASE_URL`** in `.env` (via `prisma.config.ts`).
+
+To run the API (`npm run dev`), set all of the following (see `server/src/constants/env.ts`):
 
 ```
 DATABASE_URL=postgresql://user:password@host:5432/dbname
@@ -48,7 +52,11 @@ JWT_SECRET=<random string>
 JWT_REFRESH_SECRET=<random string>
 EMAIL_SENDER=no-reply@example.com
 RESEND_API_KEY=<your Resend key, or any non-empty value for local>
+STRIPE_SECRET_KEY=<Stripe secret key, or sk_test_ placeholder for local if unused>
+STRIPE_WEBHOOK_SECRET=<Stripe webhook signing secret, or whsec_ placeholder for local>
 ```
+
+If any of these are unset at runtime, the server throws a generic `Missing environment variable` error (the key name is not repeated in the message).
 
 Optional in `client/.env` if the API isn't on `localhost:3000`:
 
