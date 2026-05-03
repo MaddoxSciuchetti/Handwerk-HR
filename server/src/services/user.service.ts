@@ -1,7 +1,7 @@
-import { prisma } from "@/lib/prisma";
 import { CONFLICT } from "@/constants/http";
-import appAssert from "@/utils/appAssert";
+import { prisma } from "@/lib/prisma";
 import { UpdateProfileInformationInput } from "@/schemas/user.schemas";
+import appAssert from "@/utils/appAssert";
 
 export const queryUser = async (id: string) => {
     const user = await prisma.user.findUnique({
@@ -12,38 +12,6 @@ export const queryUser = async (id: string) => {
 };
 
 type FileData = {
-    cloud_url: string;
-};
-
-export const getChef = async (id: string) => {
-    const user = await prisma.user.findUnique({
-        where: {
-            id: id,
-        },
-        omit: {
-            password: true,
-        },
-    });
-
-    return user;
-};
-
-export const createDescription = async (
-    description: string,
-    owner: string,
-    template_type: "ONBOARDING" | "OFFBOARDING",
-) => {
-    const newDescription = await prisma.form_fields.create({
-        data: {
-            description: description,
-            owner: owner,
-            template_type: template_type,
-        },
-    });
-    return newDescription;
-};
-
-type fileData = {
     cloud_url: string;
 };
 

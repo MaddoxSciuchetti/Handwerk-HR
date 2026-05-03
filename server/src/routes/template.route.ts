@@ -1,20 +1,11 @@
-import {
-    createTemplateTask,
-    getTask,
-    updateTemplateTask,
-} from "@/controllers/template.controller";
-import { checkChef } from "@/utils/checkChef";
 import express from "express";
-import * as TemplateV2 from "../controllers/template.controllerV2";
+import * as TemplateV2 from "../controllers/template.controller";
 
 const templateRoutes = express.Router();
 
 // prefix /template
 
 templateRoutes.delete("/task/:id", TemplateV2.deleteTemplateTask);
-templateRoutes.get("/getTask", checkChef, getTask);
-templateRoutes.post("/createTask", createTemplateTask);
-templateRoutes.put("/updateTask/:id", checkChef, updateTemplateTask);
 
 templateRoutes.delete("/:id", TemplateV2.deleteTemplate);
 templateRoutes.post("/", TemplateV2.createTemplate);

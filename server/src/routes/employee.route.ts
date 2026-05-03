@@ -1,5 +1,5 @@
 import express from "express";
-import * as EmployeeV2 from "../controllers/employee.controllerV2";
+import * as EmployeeV2 from "../controllers/employee.controller";
 
 const employeeRoutes = express.Router();
 

@@ -1,54 +1,142 @@
-import { OK } from "@/constants/http";
+import { CREATED, NOT_FOUND, OK } from "@/constants/http";
 import {
+    insertTemplate,
     insertTemplateTask,
+    modifyTemplate,
     modifyTemplateTask,
-    queryTask,
+    queryTemplateById,
+    queryTemplates,
+    queryTemplateTasks,
+    removeTemplate,
     removeTemplateTask,
 } from "@/services/template.service";
-
+import appAssert from "@/utils/appAssert";
 import catchErrors from "@/utils/catchErrors";
-import { Request, Response } from "express";
 
-export const deleteTemplateTask = catchErrors(async (req, res) => {
-    const id = +req.params.id;
+// ── IssueTemplate ────────────────────────────────────────────
 
-    const deletedData = await removeTemplateTask(id);
+const getParam = (param: string | string[]): string =>
+    Array.isArray(param) ? param[0] : param;
 
-    return res.status(OK).json({ message: "Message has been deleted" });
+export const createTemplate = catchErrors(async (req, res) => {
+    const userId = req.userId;
+    const orgId = req.orgId || "";
+    const body = req.body as {
+        name?: string;
+        description?: string;
+        templateName?: string;
+        templateDescription?: string;
+    };
+    const name = body.name ?? body.templateName ?? "";
+    const description = body.description ?? body.templateDescription ?? "";
+
+    const template = await insertTemplate({
+        name,
+        description,
+        organizationId: orgId,
+        createdByUserId: userId,
+    });
+
+    return res.status(CREATED).json(template);
 });
 
-export const getTask = catchErrors(async (req, res) => {
-    const id = req.userId;
+export const getTemplates = catchErrors(async (req, res) => {
+    const orgId = req.orgId;
 
-    const descriptionData = await queryTask();
+    const templates = await queryTemplates(orgId);
 
-    return res.status(OK).json(descriptionData);
+    return res.status(OK).json(templates);
 });
 
-export const createTemplateTask = async (req: Request, res: Response) => {
-    try {
-        const request = {
-            ...req.body,
-        };
+export const getTemplateById = catchErrors(async (req, res) => {
+    const id = getParam(req.params.id);
+    const orgId = req.orgId;
 
-        const newField = await insertTemplateTask(request);
-        return res.status(201).json({ success: newField });
-    } catch (error) {
-        console.log(error);
-        return res.status(500).json({ error: "internal error" });
-    }
-};
+    const template = await queryTemplateById(id, orgId);
+    appAssert(template, NOT_FOUND, "Template not found");
+
+    return res.status(OK).json(template);
+});
+
+export const updateTemplate = catchErrors(async (req, res) => {
+    const id = getParam(req.params.id);
+    const body = req.body as {
+        name?: string;
+        description?: string;
+        templateName?: string;
+        templateDescription?: string;
+    };
+    const orgId = req.orgId;
+
+    const template = await modifyTemplate(id, {
+        name: body.name ?? body.templateName ?? "",
+        description: body.description ?? body.templateDescription ?? "",
+    });
+    return res.status(OK).json(template);
+});
+
+export const deleteTemplate = catchErrors(async (req, res) => {
+    const id = getParam(req.params.id);
+    const orgId = req.orgId;
+
+    await removeTemplate(id, orgId);
+
+    return res.status(OK).json({ message: "Template deleted successfully" });
+});
+
+// ── TemplateItem ─────────────────────────────────────────────
+
+export const createTemplateTask = catchErrors(async (req, res) => {
+    const templateId = getParam(req.params.templateId);
+    const orgId = req.orgId;
+    const { taskName, taskDescription, defaultPriority, orderIndex } = req.body;
+    console.log(templateId);
+    const task = await insertTemplateTask({
+        templateId,
+        organizationId: orgId,
+        taskName,
+        taskDescription,
+        defaultPriority,
+        orderIndex,
+    });
+
+    return res.status(CREATED).json(task);
+});
+
+export const getTemplateTasks = catchErrors(async (req, res) => {
+    const templateId = getParam(req.params.templateId);
+    const orgId = req.orgId;
+
+    const result = await queryTemplateTasks(templateId, orgId);
+    appAssert(result, NOT_FOUND, "Template not found");
+
+    const { tasks } = result;
+    const response = tasks.map((task) => ({
+        ...task,
+        taskName: task.title,
+        taskDescription: task.description,
+    }));
+    return res.status(OK).json(response);
+});
 
 export const updateTemplateTask = catchErrors(async (req, res) => {
-    const id = +req.params.id;
+    const id = getParam(req.params.id);
+    const { taskName, taskDescription, defaultPriority, orderIndex } = req.body;
+    const updated = await modifyTemplateTask(id, {
+        taskName,
+        taskDescription,
+        defaultPriority,
+        orderIndex,
+    });
 
-    const { form_field_id, owner, description, template_type } = req.body;
+    return res.status(OK).json(updated);
+});
 
-    const updatedDescription = await modifyTemplateTask(
-        form_field_id,
-        owner,
-        description,
-    );
+export const deleteTemplateTask = catchErrors(async (req, res) => {
+    const id = getParam(req.params.id);
+    const orgId = req.orgId;
 
-    return res.status(OK).json(updatedDescription);
+    await removeTemplateTask(id);
+
+    return res.status(OK).json({ message: "Task deleted successfully" });
 });

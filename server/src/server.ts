@@ -8,15 +8,14 @@ import express from "express";
 import { APP_ORIGIN } from "./constants/env";
 import { stripeWebhookHandler } from "./controllers/stripeWebhook.controller";
 import authenticate from "./middleware/authenticate";
-import requireSubscriptionAccess from "./middleware/requireSubscriptionAccess";
 import errorHandler from "./middleware/errorHandler";
+import requireSubscriptionAccess from "./middleware/requireSubscriptionAccess";
 import authRoutes from "./routes/auth.route";
 import billingRoutes from "./routes/billing.route";
 import { employeeRoutes } from "./routes/employee.route";
 import { indexRoutes } from "./routes/index.route";
 import inviteRoutes from "./routes/invite.route";
 import orgRoutes from "./routes/org.route";
-import sessionRoutes from "./routes/session.route";
 import { taskRoutes } from "./routes/tasks.route";
 import { templateRoutes } from "./routes/template.route";
 import testRoutes from "./routes/test.route";
@@ -83,25 +82,14 @@ app.use("/test", testRoutes);
 // auth routes
 
 app.use("/auth", authRoutes);
-app.use("/sessions", authenticate, sessionRoutes);
 
 // protected routes
 
 app.use("/billing", authenticate, billingRoutes);
 
 app.use("/user", authenticate, userRoutes);
-app.use(
-    "/template",
-    authenticate,
-    requireSubscriptionAccess,
-    templateRoutes,
-);
-app.use(
-    "/employee",
-    authenticate,
-    requireSubscriptionAccess,
-    employeeRoutes,
-);
+app.use("/template", authenticate, requireSubscriptionAccess, templateRoutes);
+app.use("/employee", authenticate, requireSubscriptionAccess, employeeRoutes);
 
 app.use("/index", authenticate, requireSubscriptionAccess, indexRoutes);
 

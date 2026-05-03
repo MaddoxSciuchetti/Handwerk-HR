@@ -1,50 +1,10 @@
 import express from "express";
 
-import {
-    addWorkerTask,
-    archiveWorkerById,
-    createWorker,
-    createWorkerFile,
-    deleteWorker,
-    deleteWorkerFile,
-    getCloudUrl,
-    getWorkerById,
-    getWorkerData,
-    getWorkerHistory,
-    unarchiveWorkerById,
-    updateDataPoint,
-    updateWorker,
-    updateWorkerHistory,
-} from "@/controllers/worker.controller";
-import catchErrors from "@/utils/catchErrors";
 import { upload } from "../middleware/fileparser";
 
-import * as workerController from "../controllers/worker.controllerV2";
+import * as workerController from "../controllers/worker.controller";
 
 const worker = express.Router();
-
-//worker crud operations old
-worker.post("/addWorker", catchErrors(createWorker));
-worker.get("/getWorkerData", getWorkerData);
-worker.put("/archiveWorker/:id", archiveWorkerById);
-worker.put("/unarchiveWorker/:id", unarchiveWorkerById);
-worker.delete("/deleteWorker/:id", deleteWorker);
-worker.get("/getWorker/:id", getWorkerById);
-worker.put("/updateWorker", catchErrors(updateWorker));
-worker.put("/singleWorkerDataPoint", catchErrors(updateDataPoint));
-worker.post("/createWorkerTask/:workerId", catchErrors(addWorkerTask));
-
-// worker history Data
-
-worker.get("/getWorkerHistory/:id", getWorkerHistory);
-worker.post("/updateWorkerHistory", updateWorkerHistory);
-
-// worker file Data
-
-worker.post("/createWorkerFile/:id", upload.array("files"), createWorkerFile);
-worker.get("/getWorkerFiles/:id", workerController.getWorkerFiles);
-worker.get("/getCloudUrl", getCloudUrl);
-worker.delete("/deleteWorkerFile/:id", deleteWorkerFile);
 
 // new routes
 

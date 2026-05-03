@@ -16,7 +16,7 @@ import {
     registerOrgAccount,
     sendPasswordResetEmail,
     validationEmailCode,
-} from "../services/auth.serviceV2";
+} from "../services/auth.service";
 import appAssert from "../utils/appAssert";
 import catchErrors from "../utils/catchErrors";
 import {

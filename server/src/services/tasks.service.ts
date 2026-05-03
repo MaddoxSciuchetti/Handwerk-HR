@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { createIssue, updateIssue } from "@/services/worker.serviceV2";
+import { createIssue, updateIssue } from "@/services/worker.service";
 
 export type TaskHistoryChange = {
     field: string;
@@ -246,16 +246,18 @@ export async function getTaskHistoryInOrg(
     const assigneeIds = collectReferencedIds(logs, "assigneeUserId");
 
     const statuses = statusIds.length
-        ? await prisma.issueStatus.findMany({
-              where: { id: { in: statusIds } },
-              select: { id: true, name: true },
-          }).then((rows) =>
-              rows.map((s) => ({
-                  id: s.id,
-                  name: s.name,
-                  color: null as string | null,
-              })),
-          )
+        ? await prisma.issueStatus
+              .findMany({
+                  where: { id: { in: statusIds } },
+                  select: { id: true, name: true },
+              })
+              .then((rows) =>
+                  rows.map((s) => ({
+                      id: s.id,
+                      name: s.name,
+                      color: null as string | null,
+                  })),
+              )
         : [];
     const assignees = assigneeIds.length
         ? await prisma.user.findMany({

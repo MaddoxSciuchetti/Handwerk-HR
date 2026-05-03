@@ -1,6 +1,6 @@
 import { Router } from "express";
 
-import * as AuthV2 from "../controllers/auth.controllerV2";
+import * as AuthV2 from "../controllers/auth.controller";
 const authRoutes = Router();
 
 authRoutes.post("/v2/register", AuthV2.register);

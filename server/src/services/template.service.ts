@@ -1,85 +1,241 @@
 import { prisma } from "@/lib/prisma";
+import type { IssuePriority } from "@prisma/client";
 
-export const removeTemplateTask = async (id: number) => {
-    const deleteData = await prisma.form_fields.delete({
-        where: {
-            form_field_id: id,
-        },
-    });
+// ============================================================
+// TYPES
+// ============================================================
 
-    return deleteData;
+export type InsertTemplateParams = {
+    name: string;
+    description: string;
+    organizationId: string;
+    createdByUserId: string;
 };
 
-export const queryTask = async () => {
-    const descriptiondata = await prisma.form_fields.findMany({
-        where: {
-            template_type: { not: null },
+export type InsertTemplateTaskParams = {
+    templateId: string;
+    taskName: string;
+    taskDescription?: string;
+    description?: string;
+    defaultPriority?: IssuePriority;
+    orderIndex?: number;
+};
+
+export type ModifyTemplateTaskParams = {
+    taskName?: string;
+    taskDescription?: string;
+    defaultPriority?: IssuePriority;
+    orderIndex?: number;
+};
+
+// ============================================================
+// ISSUE TEMPLATE
+// ============================================================
+
+export const insertTemplate = async (data: InsertTemplateParams) => {
+    return await prisma.issueTemplate.create({
+        data: {
+            name: data.name,
+            description: data.description,
+            organizationId: data.organizationId,
+            createdByUserId: data.createdByUserId,
         },
         select: {
-            form_field_id: true,
+            id: true,
+            name: true,
             description: true,
-            owner: true,
-            template_type: true,
-            auth_user: {
+            isActive: true,
+            createdAt: true,
+            createdBy: {
                 select: {
                     id: true,
-                    vorname: true,
-                    nachname: true,
+                    firstName: true,
+                    lastName: true,
                 },
             },
         },
     });
-
-    return descriptiondata;
 };
 
-export const insertTemplateTask = async (data: {
-    description: string;
-    template_type: "ONBOARDING" | "OFFBOARDING";
-    owner: string;
-}) => {
-    return prisma.$transaction(async (tx) => {
-        const newField = await tx.form_fields.create({
-            data: {
-                description: data.description,
-                template_type: data.template_type,
-                owner: data.owner,
+export const queryTemplates = async (orgId: string) => {
+    return await prisma.issueTemplate.findMany({
+        where: { organizationId: orgId },
+        orderBy: { createdAt: "desc" },
+        select: {
+            id: true,
+            name: true,
+            description: true,
+            isActive: true,
+            createdAt: true,
+            updatedAt: true,
+            createdBy: {
+                select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    avatarUrl: true,
+                },
             },
-        });
-        const formType =
-            data.template_type === "OFFBOARDING" ? "Offboarding" : "Onboarding";
-
-        const existingForms = await tx.employee_forms.findMany({
-            where: { form_type: formType },
-            select: { id: true },
-        });
-        if (existingForms.length > 0) {
-            await tx.form_inputs.createMany({
-                data: existingForms.map((form) => ({
-                    employee_form_id: form.id,
-                    form_field_id: newField.form_field_id,
-                })),
-            });
-        }
-
-        return newField;
+            _count: {
+                select: { items: true },
+            },
+        },
     });
+};
+
+export const queryTemplateById = async (id: string, orgId: string) => {
+    return await prisma.issueTemplate.findFirst({
+        where: {
+            id,
+            organizationId: orgId,
+        },
+        select: {
+            id: true,
+            name: true,
+            description: true,
+            isActive: true,
+            createdAt: true,
+            updatedAt: true,
+            createdBy: {
+                select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    avatarUrl: true,
+                },
+            },
+            items: {
+                orderBy: { orderIndex: "asc" },
+                select: {
+                    id: true,
+                    title: true,
+                    description: true,
+                    defaultPriority: true,
+                    orderIndex: true,
+                    createdAt: true,
+                    updatedAt: true,
+                },
+            },
+        },
+    });
+};
+
+export const removeTemplate = async (id: string, orgId: string) => {
+    return await prisma.issueTemplate.delete({
+        where: {
+            id,
+            organizationId: orgId, // scoped to org for safety
+        },
+    });
+};
+
+type ModifyTemplateParams = {
+    name: string;
+    description: string;
+};
+
+export const modifyTemplate = async (
+    id: string,
+    data: ModifyTemplateParams,
+) => {
+    return await prisma.issueTemplate.update({
+        where: { id },
+        data: {
+            name: data.name,
+            description: data.description,
+        },
+    });
+};
+
+// ============================================================
+// TEMPLATE ITEM (pseudo issue)
+// ============================================================
+
+export const insertTemplateTask = async (
+    data: InsertTemplateTaskParams & { organizationId: string },
+) => {
+    const template = await prisma.issueTemplate.findFirst({
+        where: {
+            id: data.templateId,
+            organizationId: data.organizationId,
+        },
+        select: { id: true },
+    });
+    if (!template) throw new Error("Template not found");
+
+    return await prisma.templateItem.create({
+        data: {
+            issueTemplateId: data.templateId,
+            title: data.taskName,
+            description: data.taskDescription,
+            defaultPriority: data.defaultPriority,
+            orderIndex: data.orderIndex ?? 0,
+        },
+        select: {
+            id: true,
+            title: true,
+            description: true,
+            defaultPriority: true,
+            orderIndex: true,
+            createdAt: true,
+            updatedAt: true,
+        },
+    });
+};
+
+export const queryTemplateTasks = async (templateId: string, orgId: string) => {
+    const template = await prisma.issueTemplate.findFirst({
+        where: {
+            id: templateId,
+            organizationId: orgId,
+        },
+        select: { id: true },
+    });
+
+    if (!template) return null;
+
+    const tasks = await prisma.templateItem.findMany({
+        where: { issueTemplateId: templateId },
+        orderBy: { orderIndex: "asc" },
+        select: {
+            id: true,
+            title: true,
+            description: true,
+            defaultPriority: true,
+            orderIndex: true,
+            createdAt: true,
+            updatedAt: true,
+        },
+    });
+    return { tasks };
 };
 
 export const modifyTemplateTask = async (
-    form_field_id: number,
-    owner: string,
-    description: string,
+    id: string,
+    data: ModifyTemplateTaskParams,
 ) => {
-    const updatedDescription = await prisma.form_fields.update({
-        where: {
-            form_field_id: form_field_id,
-        },
+    return await prisma.templateItem.update({
+        where: { id },
         data: {
-            owner: owner,
-            description: description,
+            title: data.taskName,
+            description: data.taskDescription,
+            defaultPriority: data.defaultPriority,
+            orderIndex: data.orderIndex,
+        },
+        select: {
+            id: true,
+            title: true,
+            description: true,
+            defaultPriority: true,
+            orderIndex: true,
+            createdAt: true,
+            updatedAt: true,
         },
     });
+};
 
-    return updatedDescription;
+export const removeTemplateTask = async (id: string) => {
+    return await prisma.templateItem.delete({
+        where: { id },
+    });
 };
