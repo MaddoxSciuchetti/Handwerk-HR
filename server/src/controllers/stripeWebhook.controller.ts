@@ -2,6 +2,7 @@ import { STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET } from "@/constants/env";
 import { handleCheckoutSessionCompleted } from "@/services/stripe-webhook/intent-handlers/CheckoutSessionCompleted";
 import { handleCustomerSubscriptionDeleted } from "@/services/stripe-webhook/intent-handlers/CustomerSubscriptionDeleted";
 import { handleCustomerSubscriptionWrite } from "@/services/stripe-webhook/intent-handlers/CustomerSubscriptionWrite";
+import { handleInvoiceWrite } from "@/services/stripe-webhook/intent-handlers/InvoiceWrite";
 import type { NextFunction, Request, Response } from "express";
 import Stripe from "stripe";
 
@@ -66,6 +67,17 @@ export async function stripeWebhookHandler(
             }
             case "customer.subscription.deleted": {
                 await handleCustomerSubscriptionDeleted(event.data.object);
+                break;
+            }
+            case "invoice.created":
+            case "invoice.finalized":
+            case "invoice.updated":
+            case "invoice.paid":
+            case "invoice.voided":
+            case "invoice.marked_uncollectible": {
+                await handleInvoiceWrite(
+                    event.data.object as Stripe.Invoice,
+                );
                 break;
             }
             default:
