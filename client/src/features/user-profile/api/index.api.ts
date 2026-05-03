@@ -4,7 +4,7 @@ import { TFile } from '../types';
 export const uploadProfileFoto = async (data: TFile) => {
   const form = new FormData();
   form.append('file', data.file[0]);
-  const response = await API.post<TFile, TFile>('/user/profile/photo', form);
+  const response = await API.post<TFile, TFile>('/user/v2/profile/photo', form);
   return response;
 };
 

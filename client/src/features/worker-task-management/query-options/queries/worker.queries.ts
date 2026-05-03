@@ -10,7 +10,7 @@ import {
   TASKHISTORY,
   WORKERBYID,
 } from '../../consts/query-key.consts';
-import { File_Request, TaskHistoryEntry } from '../../types/index.types';
+import { File_Request, TaskHistoryItem } from '../../types/index.types';
 
 export const workerQueries = {
   getFiles: (workerId: string) =>
@@ -19,7 +19,7 @@ export const workerQueries = {
       queryFn: () => getWorkerFiles(workerId),
     }),
   getTaskHistory: (taskId: string) =>
-    queryOptions<TaskHistoryEntry[], Error>({
+    queryOptions<TaskHistoryItem[], Error>({
       queryKey: [TASKHISTORY, taskId] as const,
       queryFn: () => getTaskHistory(taskId),
       enabled: !!taskId,

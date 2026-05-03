@@ -95,7 +95,8 @@ export type TaskHistoryChange = {
   to: string | null;
 };
 
-export type TaskHistoryEntry = {
+export type TaskHistoryAuditEntry = {
+  kind: 'audit';
   id: string;
   action: string;
   createdAt: string;
@@ -103,3 +104,16 @@ export type TaskHistoryEntry = {
   status: TaskHistoryStatus | null;
   changes: TaskHistoryChange[];
 };
+
+export type TaskHistoryCommentEntry = {
+  kind: 'comment';
+  id: string;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+  user: TaskHistoryActor;
+};
+
+export type TaskHistoryItem =
+  | TaskHistoryAuditEntry
+  | TaskHistoryCommentEntry;
