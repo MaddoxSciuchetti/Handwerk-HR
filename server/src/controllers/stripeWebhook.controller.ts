@@ -14,59 +14,40 @@ export async function stripeWebhookHandler(
     next: NextFunction,
 ): Promise<void> {
     const signature = req.headers["stripe-signature"];
+    // stripe webhook event
+    let e: Stripe.Event;
 
-    if (!STRIPE_WEBHOOK_SECRET) {
-        console.warn("STRIPE_WEBHOOK_SECRET is not set; refusing webhook");
-        res.sendStatus(500);
-        return;
-    }
+    e = stripe.webhooks.constructEvent(
+        req.body,
+        signature!,
+        STRIPE_WEBHOOK_SECRET,
+    );
 
-    let event: Stripe.Event;
-
-    try {
-        if (typeof signature !== "string") {
-            res.sendStatus(400);
-            return;
-        }
-        event = stripe.webhooks.constructEvent(
-            req.body,
-            signature,
-            STRIPE_WEBHOOK_SECRET,
-        );
-    } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        console.warn("Webhook signature verification failed.", message);
-        res.sendStatus(400);
-        return;
-    }
-
-    console.log("[stripe webhook]", event.type);
+    console.log("[stripe webhook]", e.type);
 
     try {
-        switch (event.type) {
+        switch (e.type) {
             case "payment_intent.succeeded": {
-                event.data.object as Stripe.PaymentIntent;
-                // handlePaymentIntentSucceeded(paymentIntent);
+                e.data.object as Stripe.PaymentIntent;
                 break;
             }
             case "payment_method.attached": {
-                event.data.object as Stripe.PaymentMethod;
-                // handlePaymentMethodAttached(paymentMethod);
+                e.data.object as Stripe.PaymentMethod;
                 break;
             }
             case "checkout.session.completed": {
                 await handleCheckoutSessionCompleted(
-                    event.data.object as Stripe.Checkout.Session,
+                    e.data.object as Stripe.Checkout.Session,
                 );
                 break;
             }
             case "customer.subscription.created":
             case "customer.subscription.updated": {
-                await handleCustomerSubscriptionWrite(event.data.object);
+                await handleCustomerSubscriptionWrite(e.data.object);
                 break;
             }
             case "customer.subscription.deleted": {
-                await handleCustomerSubscriptionDeleted(event.data.object);
+                await handleCustomerSubscriptionDeleted(e.data.object);
                 break;
             }
             case "invoice.created":
@@ -75,13 +56,11 @@ export async function stripeWebhookHandler(
             case "invoice.paid":
             case "invoice.voided":
             case "invoice.marked_uncollectible": {
-                await handleInvoiceWrite(
-                    event.data.object as Stripe.Invoice,
-                );
+                await handleInvoiceWrite(e.data.object as Stripe.Invoice);
                 break;
             }
             default:
-                console.log(`Unhandled event type ${event.type}`);
+                console.log(`Unhandled event type ${e.type}`);
         }
 
         res.json({ received: true });

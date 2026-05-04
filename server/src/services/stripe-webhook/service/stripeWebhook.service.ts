@@ -8,11 +8,6 @@ import Stripe from "stripe";
 
 export const stripe = new Stripe(STRIPE_SECRET_KEY);
 
-export const SUBSCRIPTION_EXPAND = [
-    "default_payment_method",
-    "items.data.price",
-] as const;
-
 export async function upsertSubscriptionForOrg(
     organizationId: string,
     stripeSub: StripeSubscriptionResource,

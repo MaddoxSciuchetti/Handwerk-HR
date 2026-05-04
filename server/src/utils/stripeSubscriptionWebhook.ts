@@ -2,20 +2,6 @@ import { planFromStripePriceId } from "@/constants/stripePricePlans";
 import { StripeSubscriptionResource } from "@/types/stipe.types";
 import type { SubscriptionPlan, SubscriptionStatus } from "@prisma/client";
 
-export function asStripeSubscription(raw: unknown): StripeSubscriptionResource {
-    return raw as StripeSubscriptionResource;
-}
-
-export function mapPriceLookupToPlan(
-    lookupKey: string | null | undefined,
-): SubscriptionPlan | null {
-    const key = lookupKey?.toLowerCase();
-    if (key === "starter") return "starter";
-    if (key === "pro") return "pro";
-    if (key === "enterprise") return "enterprise";
-    return null;
-}
-
 export function mapStripeSubscriptionStatus(
     status: string,
 ): SubscriptionStatus {
@@ -34,22 +20,6 @@ export function mapStripeSubscriptionStatus(
     }
 }
 
-export function normalizeLineItemPrice(
-    price:
-        | string
-        | { id?: string; lookup_key?: string | null }
-        | null
-        | undefined,
-): { id?: string; lookup_key?: string | null } | null {
-    if (price == null) {
-        return null;
-    }
-    if (typeof price === "string") {
-        return { id: price };
-    }
-    return price;
-}
-
 export function resolvePlanFromLineItemPrice(
     price: { id?: string; lookup_key?: string | null } | null | undefined,
 ): SubscriptionPlan | null {
@@ -60,7 +30,17 @@ export function resolvePlanFromLineItemPrice(
     if (fromId) {
         return fromId;
     }
-    return mapPriceLookupToPlan(price.lookup_key);
+    const lookupKey = price.lookup_key;
+    switch (lookupKey) {
+        case "starter":
+            return "starter";
+        case "pro":
+            return "pro";
+        case "enterprise":
+            return "enterprise";
+        default:
+            return null;
+    }
 }
 
 export function extractCardFieldsFromStripeSubscription(
