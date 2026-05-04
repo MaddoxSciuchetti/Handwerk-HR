@@ -26,19 +26,11 @@ const PORT = process.env.PORT || 3000;
 
 const app = express();
 
-app.post(
-    "/webhooks/stripe",
-    express.raw({ type: "application/json" }),
-    stripeWebhookHandler,
-);
-
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
 const allowedOrigins = APP_ORIGIN.split(",").map((o) => o.trim());
-console.log("TESTING TESTING");
-console.log("Parsed origins:", allowedOrigins);
 
 app.use(
     cors({
@@ -69,16 +61,20 @@ app.use((req, res, next) => {
     });
     next();
 });
+
+app.post(
+    "/webhooks/stripe",
+    express.raw({ type: "application/json" }),
+    stripeWebhookHandler,
+);
+
 app.get("/", (req, res) => {
     res.send("here");
 });
 
-
 app.use("/test", testRoutes);
 
-
 app.use("/auth", authRoutes);
-
 
 app.use("/billing", authenticate, billingRoutes);
 
