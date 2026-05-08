@@ -12,14 +12,17 @@ export async function handleCheckoutSessionCompleted(
     const sessionMetadata = session.metadata;
     const organizationId = sessionMetadata?.organization_id;
     const actorUserId = sessionMetadata?.user_id ?? null;
-    const retrieved = await stripe.subscriptions.retrieve(
+    const subscriptionId =
         typeof session.subscription === "string"
             ? session.subscription
-            : session.subscription?.id!,
-        {
-            expand: ["default_payment_method", "items.data.price"],
-        },
-    );
+            : session.subscription?.id;
+
+    if (!subscriptionId) {
+        throw new Error("Subscription ID is required");
+    }
+    const retrieved = await stripe.subscriptions.retrieve(subscriptionId, {
+        expand: ["default_payment_method", "items.data.price"],
+    });
 
     const retrievedSubscription =
         retrieved as unknown as StripeSubscriptionResource;
