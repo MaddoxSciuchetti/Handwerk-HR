@@ -11,12 +11,19 @@ import Stripe from "stripe";
 
 export const stripe = new Stripe(STRIPE_SECRET_KEY);
 
-export async function upsertSubscriptionForOrg(
-    organizationId: string,
-    stripeSub: StripeSubscriptionResource,
-    plan: SubscriptionPlan | null,
-    actorUserId: string | null,
-) {
+export type UpsertSubscriptionForOrgParams = {
+    organizationId: string;
+    stripeSub: StripeSubscriptionResource;
+    plan: SubscriptionPlan | null;
+    actorUserId: string | null;
+};
+
+export async function upsertSubscriptionForOrg({
+    organizationId,
+    stripeSub,
+    plan,
+    actorUserId,
+}: UpsertSubscriptionForOrgParams) {
     const mapSubscription = () => {
         const customerRaw = stripeSub.customer;
         const customerId =
