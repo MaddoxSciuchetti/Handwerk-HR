@@ -1,8 +1,5 @@
 import { STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET } from "@/constants/env";
-import { handleCheckoutSessionCompleted } from "@/services/stripe-webhook/intent-handlers/CheckoutSessionCompleted";
-import { handleCustomerSubscriptionDeleted } from "@/services/stripe-webhook/intent-handlers/CustomerSubscriptionDeleted";
-import { handleCustomerSubscriptionWrite } from "@/services/stripe-webhook/intent-handlers/CustomerSubscriptionWrite";
-import { handleInvoiceWrite } from "@/services/stripe-webhook/intent-handlers/InvoiceWrite";
+import { dispatchStripeWebhookEvent } from "@/services/stripe-webhook/dispatchStripeWebhookEvent";
 import type { NextFunction, Request, Response } from "express";
 import Stripe from "stripe";
 
@@ -26,42 +23,7 @@ export async function stripeWebhookHandler(
     console.log("[stripe webhook]", e.type);
 
     try {
-        switch (e.type) {
-            case "payment_intent.succeeded": {
-                e.data.object as Stripe.PaymentIntent;
-                break;
-            }
-            case "payment_method.attached": {
-                e.data.object as Stripe.PaymentMethod;
-                break;
-            }
-            case "checkout.session.completed": {
-                await handleCheckoutSessionCompleted(
-                    e.data.object as Stripe.Checkout.Session,
-                );
-                break;
-            }
-            case "customer.subscription.created":
-            case "customer.subscription.updated": {
-                await handleCustomerSubscriptionWrite(e.data.object);
-                break;
-            }
-            case "customer.subscription.deleted": {
-                await handleCustomerSubscriptionDeleted(e.data.object);
-                break;
-            }
-            case "invoice.created":
-            case "invoice.finalized":
-            case "invoice.updated":
-            case "invoice.paid":
-            case "invoice.voided":
-            case "invoice.marked_uncollectible": {
-                await handleInvoiceWrite(e.data.object as Stripe.Invoice);
-                break;
-            }
-            default:
-                console.log(`Unhandled event type ${e.type}`);
-        }
+        await dispatchStripeWebhookEvent(e);
 
         res.json({ received: true });
     } catch (err) {
