@@ -10,21 +10,27 @@ export async function stripeWebhookHandler(
     res: Response,
     next: NextFunction,
 ): Promise<void> {
-    const signature = req.headers["stripe-signature"];
-    if (typeof signature !== "string") {
-        throw new Error("Missing stripe-signature header");
+    let event: Stripe.Event;
+    try {
+        const signature = req.headers["stripe-signature"];
+        if (typeof signature !== "string") {
+            throw new Error("Missing stripe-signature header");
+        }
+
+        event = stripe.webhooks.constructEvent(
+            req.body,
+            signature,
+            STRIPE_WEBHOOK_SECRET,
+        );
+    } catch (err) {
+        next(err);
+        return;
     }
 
-    const e = stripe.webhooks.constructEvent(
-        req.body,
-        signature,
-        STRIPE_WEBHOOK_SECRET,
-    );
-
-    console.log("[stripe webhook]", e.type);
+    console.log("[stripe webhook]", event.type);
 
     try {
-        await dispatchStripeWebhookEvent(e);
+        await dispatchStripeWebhookEvent(event);
 
         res.json({ received: true });
     } catch (err) {
