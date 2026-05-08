@@ -10,13 +10,10 @@ export async function handleCheckoutSessionCompleted(
     const sessionMetadata = session.metadata;
     const organizationId = sessionMetadata?.organization_id;
     const actorUserId = sessionMetadata?.user_id ?? null;
-
     if (!organizationId) {
         throw new Error("Organization ID is required");
     }
-
     const subscriptionId = resolveCheckoutSessionSubscriptionId(session);
-
     if (!subscriptionId) {
         throw new Error("Subscription ID is required");
     }
@@ -27,7 +24,18 @@ export async function handleCheckoutSessionCompleted(
         },
     );
 
-    const item = retrievedSubscription.items.data[0];
+    await upsertOrgSubscriptionFromCheckoutRetrieve(
+        organizationId,
+        actorUserId,
+        retrievedSubscription,
+    );
+}
+async function upsertOrgSubscriptionFromCheckoutRetrieve(
+    organizationId: string,
+    actorUserId: string | null,
+    subscription: Stripe.Subscription,
+): Promise<void> {
+    const item = subscription.items.data[0];
     const linePrice = item?.price;
     const plan = resolvePlanFromLineItemPrice(
         typeof linePrice === "string"
@@ -39,7 +47,7 @@ export async function handleCheckoutSessionCompleted(
 
     await upsertSubscriptionForOrg({
         organizationId,
-        stripeSub: retrievedSubscription,
+        stripeSub: subscription,
         plan,
         actorUserId,
     });
