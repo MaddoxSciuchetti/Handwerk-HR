@@ -35,10 +35,10 @@ export async function handleCheckoutSessionCompleted(
         typeof linePrice === "string" ? { id: linePrice } : (linePrice ?? null),
     );
 
-    await upsertSubscriptionForOrg(
+    await upsertSubscriptionForOrg({
         organizationId,
-        retrievedSubscription,
+        stripeSub: retrievedSubscription,
         plan,
         actorUserId,
-    );
+    });
 }

@@ -38,5 +38,10 @@ export async function handleCustomerSubscriptionWrite(
         item?.price as { id?: string; lookup_key?: string | null } | null,
     );
 
-    await upsertSubscriptionForOrg(organizationId, stripeSub, plan, null);
+    await upsertSubscriptionForOrg({
+        organizationId,
+        stripeSub,
+        plan,
+        actorUserId: null,
+    });
 }
