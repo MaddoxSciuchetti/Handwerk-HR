@@ -163,20 +163,17 @@ describe("handleCheckoutSessionCompleted", () => {
         );
     });
 
-    it("characterizes missing organization_id: still retrieves and upserts with undefined org id", async () => {
+    it("rejects checkout session completed without organization_id", async () => {
         const session = handlerCheckoutSessionFixture({
             metadata: { user_id: "user_1" },
         });
 
-        await handleCheckoutSessionCompleted(session);
-
-        expect(mockRetrieve).toHaveBeenCalled();
-        expect(mockUpsert).toHaveBeenCalledWith(
-            undefined,
-            stripeRetrieveSubscriptionFixture(),
-            "starter",
-            "user_1",
+        await expect(handleCheckoutSessionCompleted(session)).rejects.toThrow(
+            "Organization ID is required",
         );
+
+        expect(mockRetrieve).not.toHaveBeenCalled();
+        expect(mockUpsert).not.toHaveBeenCalled();
     });
 
     it("rejects checkout session completed without subscription id", async () => {
