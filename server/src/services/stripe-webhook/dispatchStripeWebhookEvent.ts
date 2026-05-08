@@ -8,14 +8,6 @@ export async function dispatchStripeWebhookEvent(
     e: Stripe.Event,
 ): Promise<void> {
     switch (e.type) {
-        case "payment_intent.succeeded": {
-            e.data.object as Stripe.PaymentIntent;
-            break;
-        }
-        case "payment_method.attached": {
-            e.data.object as Stripe.PaymentMethod;
-            break;
-        }
         case "checkout.session.completed": {
             await handleCheckoutSessionCompleted(
                 e.data.object as Stripe.Checkout.Session,
