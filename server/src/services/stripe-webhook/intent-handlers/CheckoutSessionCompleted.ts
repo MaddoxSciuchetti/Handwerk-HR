@@ -2,6 +2,7 @@ import {
     stripe,
     upsertSubscriptionForOrg,
 } from "@/services/stripe-webhook/service/stripeWebhook.service";
+import { resolveCheckoutSessionSubscriptionId } from "@/services/stripe-webhook/util/checkoutSessionSubscription.util";
 import { StripeSubscriptionResource } from "@/types/stipe.types";
 import { resolvePlanFromLineItemPrice } from "@/utils/stripeSubscriptionWebhook";
 import Stripe from "stripe";
@@ -17,10 +18,7 @@ export async function handleCheckoutSessionCompleted(
         throw new Error("Organization ID is required");
     }
 
-    const subscriptionId =
-        typeof session.subscription === "string"
-            ? session.subscription
-            : session.subscription?.id;
+    const subscriptionId = resolveCheckoutSessionSubscriptionId(session);
 
     if (!subscriptionId) {
         throw new Error("Subscription ID is required");
