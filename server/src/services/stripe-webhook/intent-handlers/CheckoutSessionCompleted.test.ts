@@ -147,4 +147,19 @@ describe("handleCheckoutSessionCompleted", () => {
             "user_1",
         ]);
     });
+
+    it("passes null actorUserId when metadata omits user_id", async () => {
+        const session = handlerCheckoutSessionFixture({
+            metadata: { organization_id: "org_only" },
+        });
+
+        await handleCheckoutSessionCompleted(session);
+
+        expect(mockUpsert).toHaveBeenCalledWith(
+            "org_only",
+            stripeRetrieveSubscriptionFixture(),
+            "starter",
+            null,
+        );
+    });
 });
