@@ -211,4 +211,21 @@ describe("stripeWebhookHandler (integration)", () => {
         expect(next).toHaveBeenCalledWith(err);
         expect(res.json).not.toHaveBeenCalled();
     });
+
+    it("when constructEvent throws, the handler rejects (outside inner try; next not used)", async () => {
+        const verifyErr = new Error("Webhook signature verification failed");
+        mockConstructEvent.mockImplementationOnce(() => {
+            throw verifyErr;
+        });
+
+        const { req, res, next } = mockWebhookRequestResponse();
+
+        await expect(stripeWebhookHandler(req, res, next)).rejects.toThrow(
+            "Webhook signature verification failed",
+        );
+
+        expect(mockCheckout).not.toHaveBeenCalled();
+        expect(res.json).not.toHaveBeenCalled();
+        expect(next).not.toHaveBeenCalled();
+    });
 });
