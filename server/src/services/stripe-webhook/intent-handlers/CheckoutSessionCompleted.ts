@@ -12,6 +12,11 @@ export async function handleCheckoutSessionCompleted(
     const sessionMetadata = session.metadata;
     const organizationId = sessionMetadata?.organization_id;
     const actorUserId = sessionMetadata?.user_id ?? null;
+
+    if (!organizationId) {
+        throw new Error("Organization ID is required");
+    }
+
     const subscriptionId =
         typeof session.subscription === "string"
             ? session.subscription
@@ -33,7 +38,7 @@ export async function handleCheckoutSessionCompleted(
     );
 
     await upsertSubscriptionForOrg(
-        organizationId!,
+        organizationId,
         retrievedSubscription,
         plan,
         actorUserId,
