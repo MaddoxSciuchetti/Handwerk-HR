@@ -162,4 +162,38 @@ describe("handleCheckoutSessionCompleted", () => {
             null,
         );
     });
+
+    it("characterizes missing organization_id: still retrieves and upserts with undefined org id", async () => {
+        const session = handlerCheckoutSessionFixture({
+            metadata: { user_id: "user_1" },
+        });
+
+        await handleCheckoutSessionCompleted(session);
+
+        expect(mockRetrieve).toHaveBeenCalled();
+        expect(mockUpsert).toHaveBeenCalledWith(
+            undefined,
+            stripeRetrieveSubscriptionFixture(),
+            "starter",
+            "user_1",
+        );
+    });
+
+    it("characterizes missing subscription: retrieve called with undefined id, upsert still runs", async () => {
+        const session = handlerCheckoutSessionFixture({
+            subscription: null,
+        });
+
+        await handleCheckoutSessionCompleted(session);
+
+        expect(mockRetrieve).toHaveBeenCalledWith(undefined, {
+            expand: ["default_payment_method", "items.data.price"],
+        });
+        expect(mockUpsert).toHaveBeenCalledWith(
+            "org_1",
+            stripeRetrieveSubscriptionFixture(),
+            "starter",
+            "user_1",
+        );
+    });
 });
