@@ -1,5 +1,5 @@
 import { upsertInvoiceFromStripe } from "@/services/stripe-webhook/invoiceSync.service";
-import { stripe } from "@/services/stripe-webhook/service/stripeWebhook.service";
+import { stripe } from "@/stripeClient";
 import type Stripe from "stripe";
 
 export async function handleInvoiceWrite(

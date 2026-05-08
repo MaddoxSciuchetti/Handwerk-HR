@@ -1,21 +1,22 @@
 import type { StripeSubscriptionResource } from "@/types/stipe.types";
 import type Stripe from "stripe";
 
-jest.mock("@/services/stripe-webhook/service/stripeWebhook.service", () => ({
+jest.mock("@/stripeClient", () => ({
     stripe: {
         subscriptions: {
             retrieve: jest.fn(),
         },
     },
+}));
+
+jest.mock("@/services/stripe-webhook/service/stripeWebhook.service", () => ({
     upsertSubscriptionForOrg: jest.fn(),
 }));
 
 import { handleCheckoutSessionCompleted } from "@/services/stripe-webhook/intent-handlers/CheckoutSessionCompleted";
+import { stripe } from "@/stripeClient";
+import { upsertSubscriptionForOrg } from "@/services/stripe-webhook/service/stripeWebhook.service";
 import { resolveCheckoutSessionSubscriptionId } from "@/services/stripe-webhook/util/checkoutSessionSubscription.util";
-import {
-    stripe,
-    upsertSubscriptionForOrg,
-} from "@/services/stripe-webhook/service/stripeWebhook.service";
 
 const mockRetrieve = stripe.subscriptions.retrieve as jest.MockedFunction<
     typeof stripe.subscriptions.retrieve

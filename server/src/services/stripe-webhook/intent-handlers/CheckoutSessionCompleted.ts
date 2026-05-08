@@ -1,7 +1,5 @@
-import {
-    stripe,
-    upsertSubscriptionForOrg,
-} from "@/services/stripe-webhook/service/stripeWebhook.service";
+import { stripe } from "@/stripeClient";
+import { upsertSubscriptionForOrg } from "@/services/stripe-webhook/service/stripeWebhook.service";
 import { resolveCheckoutSessionSubscriptionId } from "@/services/stripe-webhook/util/checkoutSessionSubscription.util";
 import { StripeSubscriptionResource } from "@/types/stipe.types";
 import { resolvePlanFromLineItemPrice } from "@/utils/stripeSubscriptionWebhook";

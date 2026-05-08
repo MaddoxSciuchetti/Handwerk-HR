@@ -1,4 +1,3 @@
-import { STRIPE_SECRET_KEY } from "@/constants/env";
 import { prisma } from "@/lib/prisma";
 import { appendSubscriptionAuditLog } from "@/services/subscriptionAudit.service";
 import { StripeSubscriptionResource } from "@/types/stipe.types";
@@ -7,9 +6,6 @@ import {
     mapStripeSubscriptionStatus,
 } from "@/utils/stripeSubscriptionWebhook";
 import type { SubscriptionPlan } from "@prisma/client";
-import Stripe from "stripe";
-
-export const stripe = new Stripe(STRIPE_SECRET_KEY);
 
 export type UpsertSubscriptionForOrgParams = {
     organizationId: string;
