@@ -7,6 +7,10 @@ const options = {
   baseURL: API_URL,
   withCredentials: true,
 };
+
+//  * Second axios client (not `API`). It does not use the error handler on `API` below.
+//  * Refresh and retry run here so they cannot fire that handler again and loop forever.
+
 const TokenRefreshClient = axios.create(options);
 TokenRefreshClient.interceptors.response.use((response) => response.data);
 
@@ -18,7 +22,9 @@ const isSubscriptionAccessDenied = (status: number, data: ApiErrorResponse) =>
 
 const handleTokenRefresh = async (config: AxiosRequestConfig) => {
   try {
+    // Get a fresh session cookie from the server.
     await TokenRefreshClient.get('/auth/refresh');
+    // Send the failed request again with that cookie. Still on this client so the `API` 401 handler does not run again.
     return TokenRefreshClient(config);
   } catch {
     queryClient.clear();
@@ -46,6 +52,7 @@ API.interceptors.response.use(
     const { status, data } = response;
 
     if (isInvalidAccessToken(status, data)) {
+      // Session expired: refresh it, then try this same request one more time.
       return handleTokenRefresh(config);
     }
 
