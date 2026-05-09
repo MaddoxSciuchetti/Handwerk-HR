@@ -1,31 +1,30 @@
-## Summary
+## Description
 
-What does this PR change, in one short paragraph?
+A clear and concise description of the PR:
 
-## Context
+Use this section for review hints, explanations or discussion points/todos.
 
-Why is this change needed? Link issues, tickets, or prior discussion if any.
+- Summary of changes
+- Reasoning
+- Additional context
 
-- Closes #
+## Screenshots
 
-## How to test
+Screenshots or a screen recording of the visual changes associated with this PR.
 
-Steps a reviewer can follow (commands, URLs, feature flags):
+(Feel free to delete this section for non-visual changes.)
 
-1.
-2.
+## Docs
 
-## Scope
+Add any notes that help to document the feature/changes. Doesn't need to be your best writing, just a few words and/or code snippets.
 
-- [ ] Intended behavior is documented or obvious from the diff
-- [ ] No unrelated refactors or drive-by changes
+## Ready?
 
-## Checklist
+Did you do any of the following? If not, no worries, but if you can
+it's really helpful.
 
-- [ ] Lint / typecheck pass where relevant (`client` / `server`)
-- [ ] Tests added or updated when behavior changes
-- [ ] If touching HTTP or auth: routes vs controllers vs services stay separated (see `clean-code-testing/docs/architecture-principles.md`)
-
-## Screenshots / recordings
-
-N/A — or attach for UI changes.
+- [ ] Documented what's new
+- [ ] Added in-code documentation (wherever needed)
+- [ ] Wrote tests for new components/features
+- [ ] Ran the linter to ensure style guidelines were followed
+- [ ] Created a demo
