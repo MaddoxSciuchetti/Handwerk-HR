@@ -8,7 +8,6 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
-/** Must match `auth.setup.ts` (writes under `test-e2e/playwright/.auth/`). */
 const authStatePath = path.resolve(
   __dirname,
   'test-e2e/playwright/.auth/session.json'

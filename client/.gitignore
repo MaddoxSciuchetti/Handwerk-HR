@@ -29,6 +29,7 @@ dist-ssr
 *.sw?
 built/
 playwright/.auth/
+test-e2e/playwright/.auth/
 
 # Playwright/Vitest generated artifacts
 playwright-report/
