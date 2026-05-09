@@ -114,7 +114,7 @@ jobs:
               env:
                   SEED_ADMIN_EMAIL: ${{ secrets.E2E_PLAYWRIGHT_CHEF_EMAIL }}
                   SEED_ADMIN_PASSWORD: ${{ secrets.E2E_PLAYWRIGHT_CHEF_PASSWORD }}
-              run: npm run seed
+              run: npx prisma db seed --schema=src/prisma/schema.prisma
 
             - name: Start API server
               working-directory: server
