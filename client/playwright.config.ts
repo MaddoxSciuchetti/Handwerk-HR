@@ -8,13 +8,17 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
-const authStatePath = path.resolve(__dirname, 'playwright/.auth/session.json');
+/** Must match `auth.setup.ts` (writes under `test-e2e/playwright/.auth/`). */
+const authStatePath = path.resolve(
+  __dirname,
+  'test-e2e/playwright/.auth/session.json'
+);
 const authenticatedJourneyMatch =
   /(?:create-employee-journey|create-worker-journey|create-template-journey)\.spec\.ts/;
 
 export default defineConfig({
   testDir: './test-e2e',
-  globalTeardown: './test-e2e/global-teardown.ts',
+  globalTeardown: './test-e2e/utils/user-cleanup.ts',
   testMatch: ['**/*.spec.ts', '**/auth.setup.ts'],
   testIgnore: ['**/unit/**'],
   tsconfig: './tsconfig.playwright.json',
