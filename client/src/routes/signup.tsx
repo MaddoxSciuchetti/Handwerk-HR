@@ -3,9 +3,7 @@ import { SignupForm } from '@/features/auth/components/Register';
 import { createFileRoute } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/signup')({
-  validateSearch: (
-    search: Record<string, unknown>
-  ): { invite?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { invite?: string } => ({
     invite: typeof search.invite === 'string' ? search.invite : undefined,
   }),
   component: Signup,

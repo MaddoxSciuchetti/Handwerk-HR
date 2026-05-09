@@ -2,104 +2,160 @@ import { expect, test } from '@playwright/test';
 import { API_BASE_URL } from './constants';
 import { OutboxEmail } from './types';
 
+function newestEmailFirst(emails: OutboxEmail[]): OutboxEmail[] {
+  return [...emails].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+}
+
 test.describe('Create employee journey', () => {
   test.setTimeout(90_000);
 
-  const timestamp = Date.now();
-  const employee = {
-    firstName: 'E2E',
-    lastName: `Worker${timestamp}`,
-    email: `employee-${timestamp}@example.com`,
-    password: 'TestPassword123!',
+  let inviteEmail = '';
+  let employee: {
+    firstName: string;
+    lastName: string;
+    password: string;
   };
 
-  test.beforeAll(async ({ request }) => {
+  test.beforeAll(async ({ request }, testInfo) => {
+    /** File-level `Date.now()` collides across parallel workers (multiple browsers). */
+    const suffix =
+      `${testInfo.project.name}-w${testInfo.workerIndex}-${Date.now()}-` +
+      `${Math.random().toString(36).slice(2, 11)}`;
+    inviteEmail = `employee-${suffix}@example.com`.toLowerCase();
+    employee = {
+      firstName: 'E2E',
+      lastName: `Mitarbeiter${suffix}`,
+      password: 'TestPassword123!',
+    };
+
     await request.delete(`${API_BASE_URL}/test/emails`, {
-      data: { email: employee.email },
+      data: { email: inviteEmail },
     });
   });
 
   test.afterAll(async ({ request }) => {
+    await request.delete(`${API_BASE_URL}/test/deleteTestUser`, {
+      data: { email: inviteEmail },
+      failOnStatusCode: false,
+    });
     await request.delete(`${API_BASE_URL}/test/emails`, {
-      data: { email: employee.email },
+      data: { email: inviteEmail },
     });
   });
 
-  test('creates an employee, shows it in overview, and sends verification email', async ({
+  test('invites from settings, sends invite email, completes invite acceptance, and removes employee', async ({
     page,
     request,
   }) => {
-    await page.goto('/employee-overview');
-    await expect(page).toHaveURL(/\/employee-overview$/);
-
-    await page.getByRole('button', { name: /Mitarbeiter hinzufügen/i }).click();
-
-    await page.getByPlaceholder('Vorname').fill(employee.firstName);
-    await page.getByPlaceholder('Nachname').fill(employee.lastName);
-    await page.getByPlaceholder('email').fill(employee.email);
-    await page
-      .getByPlaceholder('password', { exact: true })
-      .fill(employee.password);
-    await page.getByPlaceholder('Confirm Password').fill(employee.password);
-    await page.getByRole('button', { name: /Nutzer Erstellen/i }).click();
+    await page.goto('/settings/employees');
+    await expect(page).toHaveURL(/\/settings\/employees$/);
 
     await expect(
-      page.getByText(/Neuen Mitarbeiter hinzufügen/i)
-    ).not.toBeVisible({ timeout: 15_000 });
-
-    const searchInput = page.getByPlaceholder('Suche bei Namen');
-    await searchInput.fill(employee.firstName);
-
-    await expect(
-      page.getByText(
-        new RegExp(`${employee.firstName}\\s*${employee.lastName}`)
-      )
+      page.getByRole('heading', { name: /Mitarbeiter/i })
     ).toBeVisible();
+
+    await page.getByPlaceholder('Mitarbeite Email').fill(inviteEmail);
+    await page.getByRole('button', { name: /^Hinzufügen$/i }).click();
+
+    await expect(page.getByText('Einladung erfolgreich gesendet.')).toBeVisible(
+      { timeout: 15_000 }
+    );
 
     await expect
       .poll(async () => {
         const response = await request.get(
-          `${API_BASE_URL}/test/emails?recipient=${encodeURIComponent(employee.email)}`
+          `${API_BASE_URL}/test/emails?recipient=${encodeURIComponent(inviteEmail)}`
         );
+        if (!response.ok()) return 0;
+        const body = (await response.json()) as { emails: OutboxEmail[] };
+        return body.emails.filter((email) =>
+          email.subject.includes("You've been invited")
+        ).length;
+      })
+      .toBeGreaterThanOrEqual(1);
 
-        if (!response.ok()) {
-          return 0;
-        }
+    const emailsAfterInviteResponse = await request.get(
+      `${API_BASE_URL}/test/emails?recipient=${encodeURIComponent(inviteEmail)}`
+    );
+    const emailsAfterInvite = (await emailsAfterInviteResponse.json()) as {
+      emails: OutboxEmail[];
+    };
+    const inviteCandidates = newestEmailFirst(
+      emailsAfterInvite.emails.filter((email) =>
+        email.subject.includes("You've been invited")
+      )
+    );
+    const inviteMail = inviteCandidates[0];
+    expect(inviteMail).toBeDefined();
+    expect(inviteMail?.to?.toLowerCase()).toBe(inviteEmail);
+    expect(inviteMail?.html).toMatch(/signup\?invite=([a-f0-9]+)/i);
 
+    const tokenMatch = inviteMail!.html.match(/signup\?invite=([a-f0-9]+)/i);
+    expect(tokenMatch).toBeTruthy();
+    const inviteToken = tokenMatch![1];
+
+    const acceptResponse = await request.post(
+      `${API_BASE_URL}/invites/${inviteToken}/accept`,
+      {
+        data: {
+          displayName: `${employee.firstName} ${employee.lastName}`,
+          firstName: employee.firstName,
+          lastName: employee.lastName,
+          password: employee.password,
+          confirmPassword: employee.password,
+        },
+      }
+    );
+    expect(acceptResponse.ok()).toBeTruthy();
+
+    await expect
+      .poll(async () => {
+        const response = await request.get(
+          `${API_BASE_URL}/test/emails?recipient=${encodeURIComponent(inviteEmail)}`
+        );
+        if (!response.ok()) return 0;
         const body = (await response.json()) as { emails: OutboxEmail[] };
         return body.emails.filter((email) =>
           email.subject.includes('Verfiziere dein Konto')
         ).length;
       })
-      .toBe(1);
+      .toBeGreaterThanOrEqual(1);
 
-    const emailResponse = await request.get(
-      `${API_BASE_URL}/test/emails?recipient=${encodeURIComponent(employee.email)}`
+    const emailsFinalResponse = await request.get(
+      `${API_BASE_URL}/test/emails?recipient=${encodeURIComponent(inviteEmail)}`
     );
-
-    const body = (await emailResponse.json()) as { emails: OutboxEmail[] };
-    const verificationEmail = body.emails.find((email) =>
-      email.subject.includes('Verfiziere dein Konto')
+    const emailsFinal = (await emailsFinalResponse.json()) as {
+      emails: OutboxEmail[];
+    };
+    const verificationCandidates = newestEmailFirst(
+      emailsFinal.emails.filter((email) =>
+        email.subject.includes('Verfiziere dein Konto')
+      )
     );
-
+    const verificationEmail = verificationCandidates[0];
     expect(verificationEmail).toBeDefined();
-    expect(verificationEmail?.to).toBe(employee.email);
-    expect(verificationEmail?.subject).toContain('Verfiziere dein Konto');
     expect(verificationEmail?.html).toContain('/email/verify/');
     expect(verificationEmail?.html).toContain(employee.password);
 
+    await page.goto('/settings/employees');
+    await expect(page).toHaveURL(/\/settings\/employees$/);
+
     const employeeRow = page
-      .locator('tr', {
-        hasText: new RegExp(`${employee.firstName}\\s*${employee.lastName}`),
+      .locator('div.flex.items-center.relative.group')
+      .filter({
+        hasText: new RegExp(`${employee.firstName}\\s+${employee.lastName}`),
       })
       .first();
-    await expect(employeeRow).toBeVisible();
 
-    const actionsTrigger = employeeRow.getByRole('button', {
+    await expect(employeeRow).toBeVisible({ timeout: 15_000 });
+
+    const deleteTrigger = employeeRow.getByRole('button', {
       name: /Löschen öffnen/i,
     });
-    await expect(actionsTrigger).toBeVisible();
-    await actionsTrigger.click();
+    await expect(deleteTrigger).toBeVisible();
+    await deleteTrigger.click();
 
     const confirmDeleteButton = page.getByRole('button', {
       name: /Löschen bestätigen/i,
@@ -107,6 +163,6 @@ test.describe('Create employee journey', () => {
     await expect(confirmDeleteButton).toBeVisible();
     await confirmDeleteButton.click();
 
-    await expect(employeeRow).not.toBeVisible();
+    await expect(employeeRow).not.toBeVisible({ timeout: 15_000 });
   });
 });

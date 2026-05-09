@@ -1,6 +1,7 @@
 import { addWorkerBaseSchema } from '@/features/worker-lifecycle/schemas/zod.schemas';
 import z from 'zod';
-import { TAuth_User } from '../hooks/useGetWorkerHistory';
+
+import { User } from '@/features/user-profile/types/auth.type';
 import { formSchema } from '../schemas/index.schema';
 import { TaskStatus } from '../utils/selectOptionTernary';
 
@@ -11,7 +12,7 @@ export type HistoryData = {
   edit: string | null;
   form_input_id: number;
   changed_by: string | null;
-  auth_user: TAuth_User | null;
+  auth_user: User | null;
 };
 
 export type DocumentFileType = 'contract' | 'id' | 'certificate' | 'other';
@@ -114,6 +115,4 @@ export type TaskHistoryCommentEntry = {
   user: TaskHistoryActor;
 };
 
-export type TaskHistoryItem =
-  | TaskHistoryAuditEntry
-  | TaskHistoryCommentEntry;
+export type TaskHistoryItem = TaskHistoryAuditEntry | TaskHistoryCommentEntry;

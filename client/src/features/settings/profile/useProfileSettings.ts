@@ -62,7 +62,9 @@ export function useProfileSettings() {
       toast.success('Profilfoto aktualisiert.');
     },
     onError: (error: { message?: string }) => {
-      toast.error(error?.message || 'Profilfoto konnte nicht hochgeladen werden.');
+      toast.error(
+        error?.message || 'Profilfoto konnte nicht hochgeladen werden.'
+      );
     },
   });
 

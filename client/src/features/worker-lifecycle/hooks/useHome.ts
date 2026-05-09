@@ -1,3 +1,4 @@
+import type { LifecycleType } from '@/features/worker-task-management/types/index.types';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
@@ -18,7 +19,11 @@ function useHome() {
     workerLifecycleQueries.workerData()
   );
 
-  const handleNavigate = (taskId: string, workerName: string) => {
+  const handleNavigate = (
+    taskId: string,
+    _formType: LifecycleType,
+    workerName: string
+  ) => {
     navigate({
       to: '/user/$Id',
       params: { Id: String(taskId) },

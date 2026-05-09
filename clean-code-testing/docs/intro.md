@@ -1,12 +1,23 @@
 # Clean code & testing — start here
 
-If you want to add code to this implementation, have improvements to the README.md or for the overall code architecture, clone this repo, create a feature branch and push changes. Ensure that you pullrequest contains the pull request template enabling faster review.
+If you want to add code to this implementation, have improvements to the README.md or for the overall code architecture, clone this repo, create a feature branch and push changes. Ensure that you look at the below listed files to get more context. Also ensure to fill out the pull request template on every pull request that you open. Pull request that do not contain the template will not be looked at. Below is the template [template](/Users/maddoxsciuchetti/fixies-branch/.github/pull_request_template.md)
 
 - Start here for a high level style guide that will help you quickly write your first lines in this project [Style guide](style-guide.md)
 - Start here for better understanding of why certain things in this project are how they are. [Decisions](decisions.md)
 
 - Start here for a overview of clean code principles and how they are applied in the codebase [Architecture principles](architecture-principles.md)
 - Start here for a short intro on how testing is handled in this project [Tests](tests.md)
+
+# Latest testing documentation
+
+Test coverage has been tested using jest built in tool. The result can be seen in the picture below.
+Ensuring that for new code added a test exists so that the overall coverage increases
+
+Short reflection:
+
+Most difficult to test were ui tests. The reason for this is that it is hard to test the functionality and not the implementation because the functinality of a ui test often is its implementation. That means that if you test the functionality you still need the ui part to test for this functionality. But if the ui part changes the test will no longer work even though your goal is to only test the functionality. However as fast as a e2e test might change , as fast it also is to fix it again because you only have to do a minor change
+
+Other than that i also focused on writing tests for the backend that are not dependent on the ui. This proved to be more easy as i had pure functions that let me test the functionality and not the implementation.
 
 ### What is this project about?
 

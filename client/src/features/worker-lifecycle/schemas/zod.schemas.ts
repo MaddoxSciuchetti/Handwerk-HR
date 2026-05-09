@@ -41,10 +41,20 @@ export const OnboardingValidation = addWorkerBaseSchema.extend({
   type: z.literal('Onboarding'),
 });
 
-export const OffboardingValidation = addWorkerBaseSchema.extend({
-  type: z.literal('Offboarding'),
-  austrittsdatum: workerDateSchema,
-});
+export const OffboardingValidation = addWorkerBaseSchema
+  .extend({
+    type: z.literal('Offboarding'),
+    austrittsdatum: workerDateSchema,
+  })
+  .refine(
+    (data) =>
+      new Date(data.austrittsdatum).getTime() >=
+      new Date(data.eintrittsdatum).getTime(),
+    {
+      message: 'An error occurred',
+      path: ['austrittsdatum'],
+    }
+  );
 
 export const addWorkerSchema = z.discriminatedUnion('type', [
   OnboardingValidation,

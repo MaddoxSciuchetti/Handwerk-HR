@@ -2,9 +2,9 @@ import { expect, test } from '@playwright/test';
 import { Buffer } from 'buffer';
 import { createWorkerFixture } from './fixtures/test-workers';
 import {
-  clickViewButton,
   fillWorkerForm,
   getWorkerRow,
+  openWorkerDetailFromRow,
 } from './utils/create-worker-journey.utils';
 
 const PNG_B64 =
@@ -26,25 +26,30 @@ test.describe('Onboarding worker view journey', () => {
     await page.goto('/worker-lifycycle');
     await expect(page).toHaveURL(/\/worker-lifycycle$/);
 
-    await page.getByRole('button', { name: /Handwerker hinzufügen/i }).click();
-    await page.locator('label', { hasText: 'Onboarding' }).click();
+    await page
+      .getByRole('button', { name: /^Hinzufügen$/i })
+      .first()
+      .click();
+
+    await page.locator('#radio-onboarding').click();
 
     await expect(
       page.getByRole('heading', { name: /Eingabe Onboarding/i })
     ).toBeVisible();
 
     await fillWorkerForm(page, worker);
-    await page.getByRole('button', { name: /^Hinzufügen$/i }).click();
+    await page
+      .locator('aside')
+      .getByRole('button', { name: /^Hinzufügen$/i })
+      .click();
 
-    const workerRow = getWorkerRow(page, worker.fullName);
+    const workerRow = getWorkerRow(page, worker.firstName);
     await expect(workerRow).toHaveCount(1, { timeout: 15_000 });
     await expect(workerRow).toBeVisible({ timeout: 15_000 });
 
-    await clickViewButton(page, workerRow);
-    await expect(page).toHaveURL(/\/user\/\d+.*lifecycleType=Onboarding/);
-    await expect(
-      page.locator('header').getByText(worker.fullName, { exact: true })
-    ).toBeVisible();
+    await openWorkerDetailFromRow(page, workerRow);
+    await expect(page).toHaveURL(/\/user\/[^/]+/);
+    await expect(page.getByRole('tab', { name: 'Aufgaben' })).toBeVisible();
 
     await page.getByRole('tab', { name: 'Dateien' }).click();
 
@@ -82,27 +87,16 @@ test.describe('Onboarding worker view journey', () => {
     await page.goto('/worker-lifycycle');
     await expect(page).toHaveURL(/\/worker-lifycycle$/);
 
-    const createdWorkerRow = getWorkerRow(page, worker.fullName);
+    const createdWorkerRow = getWorkerRow(page, worker.firstName);
     await expect(createdWorkerRow).toHaveCount(1, { timeout: 15_000 });
     await expect(createdWorkerRow).toBeVisible({ timeout: 15_000 });
 
-    const actionsTrigger = createdWorkerRow.getByRole('button', {
-      name: /Aktionen öffnen/i,
-    });
-    await expect(actionsTrigger).toBeVisible();
-    await actionsTrigger.click();
+    await createdWorkerRow.hover();
+    await createdWorkerRow.getByRole('button', { name: /Auswählen/i }).click();
 
-    const deleteMenuItem = page.getByRole('menuitem', {
-      name: /^Löschen$/i,
-    });
-    await expect(deleteMenuItem).toBeVisible();
-    await deleteMenuItem.click();
-
-    const confirmDeleteButton = page.getByRole('button', {
-      name: /Löschen bestätigen/i,
-    });
-    await expect(confirmDeleteButton).toBeVisible();
-    await confirmDeleteButton.click();
+    await page
+      .getByRole('button', { name: /Ausgewählte Aufgaben löschen/i })
+      .click();
 
     await expect(createdWorkerRow).toHaveCount(0, { timeout: 15_000 });
   });
