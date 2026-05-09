@@ -66,15 +66,25 @@ test.describe('Onboarding worker view journey', () => {
       buffer: fileBuffer,
     });
 
-    await page.getByRole('button', { name: /Hochladen$/i }).click();
+    const uploadResponse = page.waitForResponse(
+      (res) =>
+        res.request().method() === 'POST' &&
+        /\/worker\/[^/]+\/files\b/.test(res.url()) &&
+        res.status() >= 200 &&
+        res.status() < 300,
+      { timeout: 60_000 }
+    );
+
+    await page.getByRole('button', { name: /^Hochladen$/i }).click();
+    await uploadResponse;
+
+    await expect(page.getByRole('dialog')).not.toBeVisible({
+      timeout: 30_000,
+    });
 
     await expect(
-      page.getByRole('button', { name: /Hochladen$/i })
-    ).not.toBeVisible({ timeout: 30_000 });
-
-    await expect(page.getByText(TEST_FILE_NAME)).toBeVisible({
-      timeout: 15_000,
-    });
+      page.getByRole('button', { name: `${TEST_FILE_NAME} löschen` })
+    ).toBeVisible({ timeout: 15_000 });
 
     await page
       .getByRole('button', { name: `${TEST_FILE_NAME} löschen` })
