@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, RenderOptions } from '@testing-library/react';
-import { ReactElement, ReactNode } from 'react';
+import { MouseEventHandler, ReactElement, ReactNode } from 'react';
 
 function createTestQueryClient() {
   return new QueryClient({
@@ -26,4 +26,22 @@ export function renderWithProviders(
   );
 
   return render(ui, { wrapper: Wrapper, ...options });
+}
+
+export function MockLink({
+  children,
+  to,
+  className,
+  onClick,
+}: {
+  children?: ReactNode;
+  to: string;
+  className?: string;
+  onClick?: MouseEventHandler<HTMLAnchorElement>;
+}) {
+  return (
+    <a href={to} className={className} onClick={onClick}>
+      {children}
+    </a>
+  );
 }
