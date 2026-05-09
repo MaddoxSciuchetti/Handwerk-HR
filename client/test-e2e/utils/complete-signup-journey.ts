@@ -1,5 +1,4 @@
 import { expect, type Page } from '@playwright/test';
-import { waitForPostLoginUrl } from './wait-post-login-url';
 
 export type CompleteSignupUser = {
   vorname: string;
@@ -36,5 +35,8 @@ export async function completeSignupAndLogin(
   await page.getByLabel(/^Password$/i).fill(testUser.password);
   await page.getByRole('button', { name: /^Login$/i }).click();
 
-  await waitForPostLoginUrl(page);
+  await page.waitForURL('**/worker-lifycycle', {
+    timeout: 60_000,
+    waitUntil: 'commit',
+  });
 }
