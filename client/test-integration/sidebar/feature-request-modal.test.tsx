@@ -9,8 +9,8 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MessageSquareIcon } from 'lucide-react';
 import { useState } from 'react';
+import { renderWithProviders } from 'test-unit/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { renderWithAppQueryClient } from '../test-utils';
 
 const { sendFeatureRequestMock } = vi.hoisted(() => ({
   sendFeatureRequestMock: vi.fn(),
@@ -65,7 +65,7 @@ describe('Feature request (Feedback) modal', () => {
 
   it('opens from Feedback, submits text, calls the API, then closes', async () => {
     const user = userEvent.setup();
-    renderWithAppQueryClient(<FeedbackSidebarHarness />);
+    renderWithProviders(<FeedbackSidebarHarness />);
 
     await user.click(screen.getByText('Feedback'));
 

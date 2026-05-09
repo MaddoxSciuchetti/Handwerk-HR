@@ -2,8 +2,8 @@ import Tasks from '@/features/all-tasks/components/Tasks';
 import type { IssueResponse } from '@/features/all-tasks/types/index.types';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { renderWithProviders } from 'test-unit/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { renderWithAppQueryClient } from '../test-utils';
 
 const { taskStore } = vi.hoisted(() => ({
   taskStore: {
@@ -67,7 +67,7 @@ describe('Aufgaben (all tasks) — row selection & bulk delete', () => {
   });
 
   it('uses opacity + group-hover classes so the checkbox is hidden until row hover (CSS in real browsers)', async () => {
-    renderWithAppQueryClient(<Tasks />);
+    renderWithProviders(<Tasks />);
 
     await screen.findByText('Alpha Aufgabe');
 
@@ -82,7 +82,7 @@ describe('Aufgaben (all tasks) — row selection & bulk delete', () => {
 
   it('shows the selection control at full opacity when the task is selected (bulk mode)', async () => {
     const user = userEvent.setup();
-    renderWithAppQueryClient(<Tasks />);
+    renderWithProviders(<Tasks />);
 
     await screen.findByText('Alpha Aufgabe');
 
@@ -99,7 +99,7 @@ describe('Aufgaben (all tasks) — row selection & bulk delete', () => {
 
   it('opens the bottom bar after selecting a row, deletes via the bar, and removes the task from the list', async () => {
     const user = userEvent.setup();
-    renderWithAppQueryClient(<Tasks />);
+    renderWithProviders(<Tasks />);
 
     await screen.findByText('Alpha Aufgabe');
     await screen.findByText('Beta Aufgabe');
