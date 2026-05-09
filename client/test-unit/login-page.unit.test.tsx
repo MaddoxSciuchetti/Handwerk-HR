@@ -2,16 +2,18 @@ import { StandardUserLogin } from '@/features/auth/components/StandardUserLogin'
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { renderWithProviders } from './test-utils';
+import { MockLink, renderWithProviders } from './test-utils';
 
 vi.mock('@tanstack/react-router', async () => {
   const actual = await vi.importActual<typeof import('@tanstack/react-router')>(
     '@tanstack/react-router'
   );
 
+  //  Router `Link` needs a full provider;
   return {
     ...actual,
     useNavigate: () => vi.fn(),
+    Link: MockLink,
   };
 });
 
@@ -32,16 +34,18 @@ describe('Login page', () => {
     );
     await user.click(screen.getByRole('button', { name: /Login/i }));
 
-    expect(await screen.findByText('Password is required')).toBeInTheDocument();
+    expect(
+      await screen.findByText(/^Password is required$/)
+    ).toBeInTheDocument();
   });
 
-  it('shows a email required error when submitting without email', async () => {
+  it('shows an email required error when submitting without email', async () => {
     const user = userEvent.setup();
     renderWithProviders(<StandardUserLogin />);
 
     await user.type(screen.getByLabelText(/Password/i), 'password123');
     await user.click(screen.getByRole('button', { name: /Login/i }));
 
-    expect(await screen.findByText('Email is required')).toBeInTheDocument();
+    expect(await screen.findByText(/^Email is required$/)).toBeInTheDocument();
   });
 });
