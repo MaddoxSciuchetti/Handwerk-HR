@@ -1,10 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { appendSubscriptionAuditLog } from "@/services/subscriptionAudit.service";
 import { StripeSubscriptionResource } from "@/types/stripe.types";
-import {
-    extractCardFieldsFromStripeSubscription,
-    mapStripeSubscriptionStatus,
-} from "@/utils/stripeSubscriptionWebhook";
+import { buildSubscriptionDbFieldsFromStripeSubscription } from "@/utils/stripeSubscriptionWebhook";
 import type { SubscriptionPlan } from "@prisma/client";
 
 export type UpsertSubscriptionForOrgParams = {
@@ -20,39 +17,8 @@ export async function upsertSubscriptionForOrg({
     plan,
     actorUserId,
 }: UpsertSubscriptionForOrgParams) {
-    const mapSubscription = () => {
-        const customerRaw = stripeSub.customer;
-        const customerId =
-            typeof customerRaw === "string"
-                ? customerRaw
-                : customerRaw && typeof customerRaw === "object"
-                  ? customerRaw.id
-                  : null;
-        if (!customerId || typeof customerId !== "string") {
-            throw new Error("Stripe subscription missing customer id");
-        }
-
-        return {
-            status: mapStripeSubscriptionStatus(stripeSub.status),
-            provider: "stripe",
-            stripeSubscriptionId: stripeSub.id,
-            stripeCustomerId: customerId,
-            currentPeriodStart:
-                stripeSub.current_period_start != null
-                    ? new Date(stripeSub.current_period_start * 1000)
-                    : null,
-            currentPeriodEnd:
-                stripeSub.current_period_end != null
-                    ? new Date(stripeSub.current_period_end * 1000)
-                    : null,
-            trialEndsAt:
-                stripeSub.trial_end != null
-                    ? new Date(stripeSub.trial_end * 1000)
-                    : null,
-            ...extractCardFieldsFromStripeSubscription(stripeSub),
-        };
-    };
-    const stripeFields = mapSubscription();
+    const stripeFields =
+        buildSubscriptionDbFieldsFromStripeSubscription(stripeSub);
 
     const existing = await prisma.subscription.findUnique({
         where: { organizationId },
