@@ -12,7 +12,7 @@ export function SidebarPanel({
     <div
       className={cn(
         'flex h-full min-h-0 w-full min-w-0 max-w-full flex-col pt-6',
-        className,
+        className
       )}
       {...props}
     >

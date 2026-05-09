@@ -46,9 +46,7 @@ function renderChange(change: TaskHistoryChange) {
   return `${label}: ${from} → ${to}`;
 }
 
-function renderAuditEntry(
-  entry: TaskHistoryAuditEntry,
-): ReactNode {
+function renderAuditEntry(entry: TaskHistoryAuditEntry): ReactNode {
   const actor = entry.actorUser;
   return (
     <>
@@ -90,9 +88,7 @@ function renderAuditEntry(
       {entry.changes.length > 0 ? (
         <ul className="mt-1 space-y-0.5 text-xs text-muted-foreground">
           {entry.changes.map((change) => (
-            <li key={`${entry.id}-${change.field}`}>
-              {renderChange(change)}
-            </li>
+            <li key={`${entry.id}-${change.field}`}>{renderChange(change)}</li>
           ))}
         </ul>
       ) : null}
@@ -103,7 +99,7 @@ function renderAuditEntry(
 function renderCommentEntry(
   entry: TaskHistoryCommentEntry,
   currentUserId: string | undefined,
-  onEditComment: HistoryContentProps['onEditComment'],
+  onEditComment: HistoryContentProps['onEditComment']
 ): ReactNode {
   const canEdit = Boolean(
     currentUserId && entry.user.id === currentUserId && onEditComment

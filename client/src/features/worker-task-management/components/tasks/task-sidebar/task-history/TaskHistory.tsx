@@ -13,7 +13,11 @@ type TaskHistoryProps = {
   onEditComment?: (commentId: string, body: string) => void;
 };
 
-const TaskHistory = ({ taskId, currentUserId, onEditComment }: TaskHistoryProps) => {
+const TaskHistory = ({
+  taskId,
+  currentUserId,
+  onEditComment,
+}: TaskHistoryProps) => {
   return (
     <Accordion type="single" collapsible className="max-w-6xl">
       <AccordionItem value="history" className="mb-10">
