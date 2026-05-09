@@ -1,8 +1,11 @@
 import Tasks from '@/features/all-tasks/components/Tasks';
 import type { IssueResponse } from '@/features/all-tasks/types/index.types';
+import queryClient from '@/config/query.client';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { renderWithProviders } from 'test-unit/test-utils';
+import {
+  renderWithAppQueryClient,
+} from 'test-unit/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { taskStore } = vi.hoisted(() => ({
@@ -56,6 +59,7 @@ function getTaskRowByTitle(title: string) {
 
 describe('Aufgaben (all tasks) — row selection & bulk delete', () => {
   beforeEach(() => {
+    queryClient.clear();
     taskStore.remaining = [
       makeTask('11111111-1111-4111-8111-111111111111', 'Alpha Aufgabe'),
       makeTask('22222222-2222-4222-8222-222222222222', 'Beta Aufgabe'),
@@ -67,7 +71,7 @@ describe('Aufgaben (all tasks) — row selection & bulk delete', () => {
   });
 
   it('uses opacity + group-hover classes so the checkbox is hidden until row hover (CSS in real browsers)', async () => {
-    renderWithProviders(<Tasks />);
+    renderWithAppQueryClient(<Tasks />);
 
     await screen.findByText('Alpha Aufgabe');
 
@@ -82,7 +86,7 @@ describe('Aufgaben (all tasks) — row selection & bulk delete', () => {
 
   it('shows the selection control at full opacity when the task is selected (bulk mode)', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<Tasks />);
+    renderWithAppQueryClient(<Tasks />);
 
     await screen.findByText('Alpha Aufgabe');
 
@@ -99,7 +103,7 @@ describe('Aufgaben (all tasks) — row selection & bulk delete', () => {
 
   it('opens the bottom bar after selecting a row, deletes via the bar, and removes the task from the list', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<Tasks />);
+    renderWithAppQueryClient(<Tasks />);
 
     await screen.findByText('Alpha Aufgabe');
     await screen.findByText('Beta Aufgabe');
