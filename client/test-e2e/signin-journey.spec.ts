@@ -1,7 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { API_BASE_URL } from './constants';
 import { LoginCredentials, SignupTestUser } from './types';
-import { waitForPostLoginUrl } from './utils/wait-post-login-url';
 
 test.describe('Signin journey', () => {
   test.setTimeout(60_000);
@@ -60,7 +59,10 @@ test.describe('Signin journey', () => {
     await page.getByLabel(/^Password$/i).fill(loginCredentials.password);
     await page.getByRole('button', { name: /^Login$/i }).click();
 
-    await waitForPostLoginUrl(page);
+    await page.waitForURL('**/worker-lifycycle', {
+      timeout: 60_000,
+      waitUntil: 'commit',
+    });
     await expect(
       page.getByText(testUser.vorname, { exact: true })
     ).toBeVisible();
