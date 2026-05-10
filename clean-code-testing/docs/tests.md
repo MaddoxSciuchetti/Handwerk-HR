@@ -1,11 +1,18 @@
 # Tests
 
-Before pushing a new test ensure that you have run the jest test coverage command. Below is an example of how this test currently runs on a specified file:
+Before pushing changes ensure that you have
+
+1. Written a test for this new feature
+2. Ran the test on this feature
+3. Ran jest coverage to see if the changes you did, did not worsen the coverage of the codebase
+
+client:
+
+server:
 
 `"coverage:webhook-handler": "jest --coverage --collectCoverageFrom=src/controllers/stripeWebhook.controller.ts --collectCoverageFrom=src/services/stripe-webhook/intent-handlers/CheckoutSessionCompleted.ts",`
 
-This is to ensure that no new changes have dramatically worse test coverage than before. Also ensure that you run tests every once in a while.
-Below shows the before test coverage result and the after test coverage result.
+Below is an example of a test coverage result before implementing a refactor and after implementing a refactor. The refacotr could only be safely made due to extensive testing before ensuring that the refactor did not change the functionality of the refactored code
 
 ## Before
 

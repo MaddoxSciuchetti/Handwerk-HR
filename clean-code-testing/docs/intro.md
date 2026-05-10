@@ -3,10 +3,11 @@
 If you want to add code to this implementation, have improvements to the README.md or for the overall code architecture, clone this repo, create a feature branch and push changes. Ensure that you look at the below listed files to get more context. Also ensure to fill out the pull request template on every pull request that you open. Pull request that do not contain the template will not be looked at. Below is the template [template](/Users/maddoxsciuchetti/fixies-branch/.github/pull_request_template.md)
 
 - Start here for a high level style guide that will help you quickly write your first lines in this project [Style guide](style-guide.md)
+- Start here for a overview of clean code principles and how they are applied in the codebase [Architecture principles](principles.md)
 - Start here for better understanding of why certain things in this project are how they are. [Decisions](decisions.md)
 
-- Start here for a overview of clean code principles and how they are applied in the codebase [Architecture principles](architecture-principles.md)
 - Start here for a short intro on how testing is handled in this project [Tests](tests.md)
+- Start here for a overview of how to add a github actions workflow [workflow](/Users/maddoxsciuchetti/fixies-branch/clean-code-testing/docs/cd.md)
 
 # Latest testing documentation
 
@@ -47,8 +48,3 @@ The typical scale consists of 1-10 office workers, 5-50 trades people working wi
 | Users can comment on issues                                               | Yes          |
 | Changes to issues are recorded in an audit trail                          | Yes          |
 | Users get notified when assigned to an issue or when issue status changes | No           |
-
-### Information about code analysis tools
-
-- CI/CD Pipeline
-- Anaylzing entire codebase for coverage
