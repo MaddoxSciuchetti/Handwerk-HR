@@ -4,9 +4,14 @@ on:
     schedule:
         - cron: "15 3 * * *"
     workflow_dispatch:
+        inputs:
+            git_ref:
+                description: "Branch or SHA (empty = variable E2E_TARGET_BRANCH, else fixes/staging)"
+                required: false
+                type: string
 
 concurrency:
-    group: e2e-nightly-${{ github.ref }}
+    group: e2e-nightly
     cancel-in-progress: false
 
 jobs:
@@ -43,19 +48,69 @@ jobs:
             STRIPE_WEBHOOK_SECRET: whsec_ci_placeholder
             VITE_API_URL: http://localhost:3000
             PLAYWRIGHT_API_BASE_URL: http://localhost:3000
+            PLAYWRIGHT_CHEF_EMAIL: ${{ secrets.E2E_PLAYWRIGHT_CHEF_EMAIL }}
+            PLAYWRIGHT_CHEF_PASSWORD: ${{ secrets.E2E_PLAYWRIGHT_CHEF_PASSWORD }}
+            AWS_ACCESS_KEY_ID: ${{ secrets.E2E_AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY: ${{ secrets.E2E_AWS_SECRET_ACCESS_KEY }}
+            AWS_REGION: ${{ vars.E2E_AWS_REGION }}
+            AWS_S3_BUCKET: ${{ vars.E2E_AWS_S3_BUCKET }}
+            # Default branch to test when E2E_TARGET_BRANCH is unset (not main).
+            E2E_DEFAULT_TEST_BRANCH: fixes/staging
 
         steps:
-            - name: Check E2E_STRIPE_SECRET_KEY is configured
+            - name: Resolve git ref to test
+              id: e2e-ref
+              run: |
+                  MANUAL='${{ github.event.inputs.git_ref }}'
+                  VAR_REF='${{ vars.E2E_TARGET_BRANCH }}'
+                  DEFAULT_BRANCH='${{ env.E2E_DEFAULT_TEST_BRANCH }}'
+                  if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "$MANUAL" ]; then
+                    REF="$MANUAL"
+                  elif [ -n "$VAR_REF" ]; then
+                    REF="$VAR_REF"
+                  else
+                    REF="$DEFAULT_BRANCH"
+                  fi
+                  echo "E2E testing ref: $REF"
+                  echo "ref=$REF" >> "$GITHUB_OUTPUT"
+
+            - name: Check required E2E secrets
               env:
                   STRIPE_SECRET_KEY: ${{ secrets.E2E_STRIPE_SECRET_KEY }}
+                  CHEF_EMAIL: ${{ secrets.E2E_PLAYWRIGHT_CHEF_EMAIL }}
+                  CHEF_PASSWORD: ${{ secrets.E2E_PLAYWRIGHT_CHEF_PASSWORD }}
+                  AWS_ACCESS_KEY_ID: ${{ secrets.E2E_AWS_ACCESS_KEY_ID }}
+                  AWS_SECRET_ACCESS_KEY: ${{ secrets.E2E_AWS_SECRET_ACCESS_KEY }}
+                  AWS_REGION: ${{ vars.E2E_AWS_REGION }}
+                  AWS_S3_BUCKET: ${{ vars.E2E_AWS_S3_BUCKET }}
               run: |
+                  missing=0
                   if [ -z "$STRIPE_SECRET_KEY" ]; then
-                    echo "::error::Set Actions secret E2E_STRIPE_SECRET_KEY to your Stripe test secret key."
-                    exit 1
+                    echo "::error::Set E2E_STRIPE_SECRET_KEY (Stripe test sk_test_…)."
+                    missing=1
                   fi
+                  if [ -z "$CHEF_EMAIL" ]; then
+                    echo "::error::Set E2E_PLAYWRIGHT_CHEF_EMAIL (same email seed will create)."
+                    missing=1
+                  fi
+                  if [ -z "$CHEF_PASSWORD" ]; then
+                    echo "::error::Set E2E_PLAYWRIGHT_CHEF_PASSWORD (same password as seed admin)."
+                    missing=1
+                  fi
+                  if [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
+                    echo "::error::Set secrets E2E_AWS_ACCESS_KEY_ID and E2E_AWS_SECRET_ACCESS_KEY (worker file upload E2E)."
+                    missing=1
+                  fi
+                  if [ -z "$AWS_REGION" ] || [ -z "$AWS_S3_BUCKET" ]; then
+                    echo "::error::Set variables E2E_AWS_REGION and E2E_AWS_S3_BUCKET (Actions → Variables)."
+                    missing=1
+                  fi
+                  exit $missing
 
             - name: Checkout
               uses: actions/checkout@v4
+              with:
+                  ref: ${{ steps.e2e-ref.outputs.ref }}
 
             - name: Use Node.js 20
               uses: actions/setup-node@v4
@@ -69,6 +124,13 @@ jobs:
             - name: Apply Prisma migrations
               working-directory: server
               run: npx prisma migrate deploy --schema=src/prisma/schema.prisma
+
+            - name: Seed DB user for Playwright chef login
+              working-directory: server
+              env:
+                  SEED_ADMIN_EMAIL: ${{ secrets.E2E_PLAYWRIGHT_CHEF_EMAIL }}
+                  SEED_ADMIN_PASSWORD: ${{ secrets.E2E_PLAYWRIGHT_CHEF_PASSWORD }}
+              run: npx prisma db seed --schema=src/prisma/schema.prisma
 
             - name: Start API server
               working-directory: server
