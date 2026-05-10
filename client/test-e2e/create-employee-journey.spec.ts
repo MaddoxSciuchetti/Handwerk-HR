@@ -19,7 +19,6 @@ test.describe('Create employee journey', () => {
   };
 
   test.beforeAll(async ({ request }, testInfo) => {
-    /** File-level `Date.now()` collides across parallel workers (multiple browsers). */
     const suffix =
       `${testInfo.project.name}-w${testInfo.workerIndex}-${Date.now()}-` +
       `${Math.random().toString(36).slice(2, 11)}`;

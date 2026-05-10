@@ -15,5 +15,8 @@ export const uploadProfilePhotoV2 = async (data: TFile) => {
   const form = new FormData();
   form.append('file', data.file[0]);
 
-  return API.post<FormData, { success: string }>('/user/v2/profile/photo', form);
+  return API.post<FormData, { success: string }>(
+    '/user/v2/profile/photo',
+    form
+  );
 };

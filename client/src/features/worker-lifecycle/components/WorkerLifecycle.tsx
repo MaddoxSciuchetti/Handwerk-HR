@@ -101,8 +101,12 @@ function WorkerLifeCycle() {
             </GrowingItem>
             <CellHolder>
               <Cell className="typo-body-sm text-foreground">Type</Cell>
-              <Cell className="typo-body-sm text-foreground">Verantwortlich</Cell>
-              <Cell className="typo-body-sm text-foreground">Zuletzt bearbeitet</Cell>
+              <Cell className="typo-body-sm text-foreground">
+                Verantwortlich
+              </Cell>
+              <Cell className="typo-body-sm text-foreground">
+                Zuletzt bearbeitet
+              </Cell>
               <Cell className="typo-body-sm text-foreground">Status</Cell>
             </CellHolder>
           </ItemHeader>

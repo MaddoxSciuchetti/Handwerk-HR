@@ -14,7 +14,6 @@ export function hasSubscriptionAppAccess(
 ): boolean {
   if (!s) return true;
   if (s.status === 'cancelled') return false;
-  /** Invoice unpaid: app locked; billing / portal only (same UX as expired trial). */
   if (s.status === 'past_due') return false;
   if (s.status === 'active') return true;
   if (s.status === 'trialing' && s.stripeSubscriptionId) return true;

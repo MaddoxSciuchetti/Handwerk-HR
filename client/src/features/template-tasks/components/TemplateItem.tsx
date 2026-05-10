@@ -54,9 +54,7 @@ export function TemplateItem({
               'py-0 pl-0 pr-4'
             )}
           >
-            <p className="typo-body-sm text-text-primary">
-              {template.name}
-            </p>
+            <p className="typo-body-sm text-text-primary">{template.name}</p>
             {template.description ? (
               <p className="typo-body-xs text-text-secondary line-clamp-3">
                 {template.description}

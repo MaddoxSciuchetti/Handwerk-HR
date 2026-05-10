@@ -20,14 +20,17 @@ type DragStart = {
 export const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
 
-export const getCoverScale = (previewSize: number, width: number, height: number) =>
-  Math.max(previewSize / width, previewSize / height);
+export const getCoverScale = (
+  previewSize: number,
+  width: number,
+  height: number
+) => Math.max(previewSize / width, previewSize / height);
 
 export const getCenteredPosition = (
   previewSize: number,
   width: number,
   height: number,
-  scale: number,
+  scale: number
 ): Position => ({
   x: (previewSize - width * scale) / 2,
   y: (previewSize - height * scale) / 2,
@@ -112,12 +115,12 @@ export const moveDrag = ({
     x: clamp(
       dragStart.current.posX + clientX - dragStart.current.mouseX,
       cropLeft + cropSize - displayW,
-      cropLeft,
+      cropLeft
     ),
     y: clamp(
       dragStart.current.posY + clientY - dragStart.current.mouseY,
       cropTop + cropSize - displayH,
-      cropTop,
+      cropTop
     ),
   });
 };

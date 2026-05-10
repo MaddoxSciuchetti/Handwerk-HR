@@ -33,7 +33,9 @@ export function PlanPickerCard({
         <h2 className="typo-body-sm font-semibold text-foreground">{name}</h2>
         <p className="typo-caption text-muted-foreground">{price}</p>
         {isCurrent ? (
-          <p className="typo-caption text-interactive-primary-bg">Aktueller Plan</p>
+          <p className="typo-caption text-interactive-primary-bg">
+            Aktueller Plan
+          </p>
         ) : null}
       </div>
       <Button

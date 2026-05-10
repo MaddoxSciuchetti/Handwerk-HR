@@ -16,14 +16,7 @@ export function SquareDashedIcon({ className, ...props }: IconProps) {
       className={cn('shrink-0', className)}
       {...props}
     >
-      <rect
-        x={3}
-        y={3}
-        width={18}
-        height={18}
-        rx={2}
-        strokeDasharray="3 3"
-      />
+      <rect x={3} y={3} width={18} height={18} rx={2} strokeDasharray="3 3" />
     </svg>
   );
 }

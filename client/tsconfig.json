@@ -15,7 +15,8 @@
     "module": "esnext",
     "strict": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "test-unit/*": ["./test-unit/*"]
     }
   },
   "include": [

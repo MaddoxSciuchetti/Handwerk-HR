@@ -16,9 +16,9 @@ type WorkerSidebarProps = {
 };
 
 export function WorkerSidebar({ isOpen, setIsOpen }: WorkerSidebarProps) {
-  const [selectedOption, setSelectedOption] = useState<AddWorker['type'] | null>(
-    null
-  );
+  const [selectedOption, setSelectedOption] = useState<
+    AddWorker['type'] | null
+  >(null);
 
   const close = () => setIsOpen(false);
 

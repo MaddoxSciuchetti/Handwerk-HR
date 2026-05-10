@@ -94,7 +94,7 @@ export function SelectDropdown<T extends string>({
       <p className="typo-body-sm min-w-0 grow truncate text-foreground">
         {value || label}
       </p>
-        <Icon
+      <Icon
         className={cn(
           'h-6 w-6 text-muted-foreground transition-transform duration-200',
           isOpen ? 'rotate-90' : 'rotate-0'

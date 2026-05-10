@@ -53,9 +53,7 @@ export function OrgStatusesSettingsPage({
 
   if (isLoading) return <LoadingAlert />;
   if (isError) {
-    return (
-      <div className="p-6">Statusliste konnte nicht geladen werden.</div>
-    );
+    return <div className="p-6">Statusliste konnte nicht geladen werden.</div>;
   }
 
   return (
@@ -64,11 +62,7 @@ export function OrgStatusesSettingsPage({
         <SettingsStatusesHeader title={title} description={description} />
         <Table className="w-200">
           <TableHeader className="gap-3 py-2">
-            <Button
-              className="text-sm"
-              disabled={busy}
-              onClick={handleAdd}
-            >
+            <Button className="text-sm" disabled={busy} onClick={handleAdd}>
               {isCreating ? 'Wird hinzugefügt…' : 'Hinzufügen'}
             </Button>
             <Input

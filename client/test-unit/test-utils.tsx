@@ -29,7 +29,6 @@ export function renderWithProviders(
   return render(ui, { wrapper: Wrapper, ...options });
 }
 
-/** Same TanStack Query client as `@/config/query.client` — use when tests depend on mutation `invalidateQueries` from production mutation modules (e.g. tasks). */
 export function renderWithAppQueryClient(
   ui: ReactElement,
   options?: Omit<RenderOptions, 'wrapper'>

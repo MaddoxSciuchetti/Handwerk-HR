@@ -79,9 +79,12 @@ export const createWorkerSchema = z
 
 export const absenceSchema = z.object({
   userId: z.string().min(1),
-  absenceType: z.enum(['SICK', 'VACATION', 'PARENTAL_LEAVE', 'UNPAID', 'OTHER'], {
-    message: VALIDATION_MESSAGES.required('Art der Abwesenheit'),
-  }),
+  absenceType: z.enum(
+    ['SICK', 'VACATION', 'PARENTAL_LEAVE', 'UNPAID', 'OTHER'],
+    {
+      message: VALIDATION_MESSAGES.required('Art der Abwesenheit'),
+    }
+  ),
   startDate: isoDateSchema,
   endDate: isoDateSchema,
   substituteId: z

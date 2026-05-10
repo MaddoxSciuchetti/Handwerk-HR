@@ -19,10 +19,7 @@ type TemplateTasksProps = {
   name: string;
 };
 
-export function TemplateTasks({
-  templateId,
-  name,
-}: TemplateTasksProps) {
+export function TemplateTasks({ templateId, name }: TemplateTasksProps) {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const { data: templateTasks, isLoading } = useGetTemplateTasks(templateId);

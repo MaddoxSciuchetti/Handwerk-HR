@@ -48,14 +48,9 @@ export const EmployeeRow = ({
       <td className="">
         <EmployeeSubstitute employee={employee} />
       </td>
-      <td
-        className="rounded-r-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <td className="rounded-r-xl" onClick={(e) => e.stopPropagation()}>
         <TrashButton
-          disabled={
-            employee.organizationMembers[0]?.membershipRole === 'admin'
-          }
+          disabled={employee.organizationMembers[0]?.membershipRole === 'admin'}
           description={'Löschen'}
           onClick={() => setIsDeleteModalOpen(true)}
         />
