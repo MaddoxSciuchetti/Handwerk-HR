@@ -8,7 +8,6 @@ import { defineConfig } from 'vite';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-/** Vitest defaults to “hit files only”; set `VITEST_COVERAGE_FULL_TREE=1` for entire `src` (unchanged modules = 0%). */
 const coverageFullTree = process.env.VITEST_COVERAGE_FULL_TREE === '1';
 
 const coverageSharedExclude = [
