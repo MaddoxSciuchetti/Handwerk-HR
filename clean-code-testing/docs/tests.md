@@ -47,11 +47,11 @@ Below is an example of a test coverage result before implementing a refactor and
 
 ## Before
 
-![Before](./before.png)
+Before
 
 ## After
 
-![After](./after.png)
+After
 
 ## Code analysis tools:
 
@@ -61,4 +61,4 @@ Aikido is a tool that analyzes the entire codebase for security vulnerabilities.
 
 Below is a screenshot of the aikido manager showing the analysis of my codebase:
 
-![image](./aikido.png)
+image

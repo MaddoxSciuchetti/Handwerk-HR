@@ -44,4 +44,4 @@ ORDER BY idx_scan DESC;
 | issue_statuses   | issue_statuses_pkey            | 122 158 924 |  122 158 924 |   119 505 780 | 160 kB     |
 | worker_documents | worker_documents_worker_id_idx |     920 282 |      963 320 |       963 320 | 432 kB     |
 
-What is interesting abouto this result shown in table format is that it shows the amount of times the index was looked up. This indicates that the index is often being used and thus also helpful to get the results.
+What is interesting about the result shown in table format is that it shows the amount of times the index was looked up. This indicates that the index is often being used and thus also helpful to get the results.
