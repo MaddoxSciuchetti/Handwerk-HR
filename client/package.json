@@ -16,6 +16,8 @@
     "test:integration": "vitest run \"test-integration\"",
     "test:integration:watch": "vitest \"test-integration\"",
     "test:all": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:coverage:full": "VITEST_COVERAGE_FULL_TREE=1 vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed"
