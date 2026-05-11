@@ -35,7 +35,6 @@ import { sendMail } from "@/utils/sendMail";
 import { generateRawToken, hashToken } from "@/utils/v2/tokenV2";
 import { Prisma } from "@prisma/client";
 
-
 export type CreateAccountParams = {
     firstName: string;
     lastName: string;
@@ -164,7 +163,6 @@ export const registerOrgAccount = async (data: RegisterOrgInput) => {
 
     const result = await prisma.$transaction(
         async (tx) => {
-            // 1. Create user
             const user = await tx.user.create({
                 data: {
                     email: normalizedEmail,
@@ -176,14 +174,12 @@ export const registerOrgAccount = async (data: RegisterOrgInput) => {
                 omit: { passwordHash: true },
             });
 
-            // 2. Generate unique slug from org name
             const baseSlug = data.orgName
                 .toLowerCase()
                 .replace(/[^a-z0-9]+/g, "-")
                 .replace(/^-|-$/g, "");
             const slug = `${baseSlug}-${Math.random().toString(36).slice(2, 8)}`;
 
-            // 3. Create organization
             const organization = await tx.organization.create({
                 data: {
                     name: data.orgName,
@@ -199,7 +195,6 @@ export const registerOrgAccount = async (data: RegisterOrgInput) => {
                 },
             });
 
-            // 4. Add user as org admin
             await tx.organizationMember.create({
                 data: {
                     userId: user.id,
@@ -216,7 +211,6 @@ export const registerOrgAccount = async (data: RegisterOrgInput) => {
                 },
             });
 
-            // 6. Seed default engagement + issue statuses
             await tx.engagementStatus.createMany({
                 data: [
                     {
@@ -284,7 +278,6 @@ export const registerOrgAccount = async (data: RegisterOrgInput) => {
 
     const userId = result.user.id;
 
-    // Send verification email
     const verificationCode = await prisma.newVerificationCode.create({
         data: {
             userId,
@@ -299,7 +292,6 @@ export const registerOrgAccount = async (data: RegisterOrgInput) => {
     });
     if (error) console.log(error);
 
-    // Create refresh token record
     const { record } = await createRefreshTokenRecord({
         userId,
         userAgent: data.userAgent,
