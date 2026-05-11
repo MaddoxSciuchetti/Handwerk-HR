@@ -80,10 +80,6 @@ describe("stripeWebhookHandler (integration)", () => {
         mockInvoiceWrite.mockResolvedValue(undefined);
     });
 
-    afterEach(() => {
-        jest.restoreAllMocks();
-    });
-
     it("verifies webhook then runs checkout.session.completed handler and acknowledges", async () => {
         const session = {
             id: "cs_test",
