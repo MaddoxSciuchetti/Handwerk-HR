@@ -309,11 +309,18 @@ export async function deleteWorker(params: DeleteWorkerInput) {
     const { workerId, organizationId } = params;
     await assertOwnership(workerId, organizationId);
 
-    return withTxRetry(async (tx) => {
-        await tx.workerDocument.deleteMany({ where: { workerId } });
-        await tx.workerEngagement.deleteMany({ where: { workerId } });
-        return tx.worker.delete({ where: { id: workerId } });
-    });
+    return withTxRetry(
+        async (tx) => {
+            await tx.workerDocument.deleteMany({ where: { workerId } });
+            await tx.workerEngagement.deleteMany({ where: { workerId } });
+            return tx.worker.delete({ where: { id: workerId } });
+        },
+        {
+            maxAttempts: 3,
+            baseDelayMs: 1000,
+            isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
+        },
+    );
 }
 
 const WORKER_DATE_FIELDS = new Set(["birthday", "entryDate", "exitDate"]);
