@@ -318,7 +318,6 @@ export async function deleteWorker(params: DeleteWorkerInput) {
         {
             maxAttempts: 3,
             baseDelayMs: 1000,
-            isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
         },
     );
 }
