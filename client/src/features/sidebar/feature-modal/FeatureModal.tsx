@@ -1,15 +1,30 @@
 import { sendFeatureRequest } from '@/apis/index.apis';
-import FormSelectOptions from '@/components/form/FormSelectOptions';
-import SmallWrapper from '@/components/modal/modalSizes/SmallWrapper';
 import { Button } from '@/components/ui/button';
-import { CardContent } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+} from '@/components/ui/card';
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from '@/components/ui/field';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-
 import { FileDropzone } from '@/features/worker-task-management/components/files/file_upload/Dropzone';
 import { FileList } from '@/features/worker-task-management/components/files/file_upload/FileList';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { DragEvent, useRef, useState } from 'react';
-import { SubmitHandler, useForm } from 'react-hook-form';
+import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { importanceOptions } from '../consts/sidebar.consts';
 import { featureSchema, TFeatureForm } from '../schemas/sidebar.schemas';
@@ -28,6 +43,7 @@ function FeatureModal({ handleToggle }: { handleToggle: () => void }) {
       textarea: '',
     },
   });
+
   const onSubmit: SubmitHandler<TFeatureForm> = (data) => {
     sendFeatureRequest(data);
     toast.success('Erfolgreich abgeschickt');
@@ -95,65 +111,75 @@ function FeatureModal({ handleToggle }: { handleToggle: () => void }) {
   };
 
   return (
-    <SmallWrapper className="h-auto min-h-0 max-h-[85vh] overflow-y-auto">
-      <div className="w-full">
-        <h1 className=" text-lg mb-5"> Was würdest du ändern? </h1>
-        <div className="flex flex-col w-full ">
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="flex flex-col gap-5"
-          >
-            <FormSelectOptions
-              control={control}
-              errors={errors}
-              name="importance"
-              label="Wichtigkeitsgrad"
-              placeholder="Wichtigkeitsgrad"
-              defaultValue={importanceOptions.items[0].value}
-              data={importanceOptions.items.map((option) => ({
-                value: option.value,
-                label: option.label,
-              }))}
-            />
+    <Card className="max-h-[85vh] w-full max-w-md overflow-y-auto shadow-lg">
+      <CardHeader>
+        <h2 className="font-heading text-base leading-snug font-medium">
+          Was würdest du ändern?
+        </h2>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <FieldGroup>
+            <Field>
+              <FieldLabel htmlFor="importance">Wichtigkeitsgrad</FieldLabel>
+              <Controller
+                name="importance"
+                control={control}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger id="importance" className="w-full">
+                      <SelectValue placeholder="Wichtigkeitsgrad" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {importanceOptions.items.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              <FieldError errors={[errors.importance]} />
+            </Field>
 
-            <Textarea
-              className=""
-              {...register('textarea')}
-              placeholder="Erzähle uns von deinem Feedback oder deiner Idee"
-            ></Textarea>
-            {errors.textarea?.message && (
-              <p className="text-left text-sm text-(--destructive)">
-                {errors.textarea.message}
-              </p>
-            )}
+            <Field>
+              <FieldLabel htmlFor="textarea">Feedback</FieldLabel>
+              <Textarea
+                id="textarea"
+                {...register('textarea')}
+                placeholder="Erzähle uns von deinem Feedback oder deiner Idee"
+                rows={4}
+              />
+              <FieldError errors={[errors.textarea]} />
+            </Field>
 
-            <p className="text-left">Optional</p>
-            <CardContent className="w-full rounded-2xl">
-              {/* <Form /> */}
-              <div className="w-full mx-auto">
-                <FileDropzone
-                  {...register('file')}
-                  fileInputRef={fileInputRef}
-                  handleBoxClick={handleBoxClick}
-                  handleDragOver={handleDragOver}
-                  handleDrop={handleDrop}
-                  handleFileSelect={handleFileSelect}
-                />
-                <FileList
-                  uploadedFiles={uploadedFiles}
-                  fileProgresses={fileProgresses}
-                  removeFile={removeFile}
-                />
-              </div>
-            </CardContent>
+            <Field>
+              <FieldLabel className="text-muted-foreground">Optional</FieldLabel>
+              <FileDropzone
+                {...register('file')}
+                fileInputRef={fileInputRef}
+                handleBoxClick={handleBoxClick}
+                handleDragOver={handleDragOver}
+                handleDrop={handleDrop}
+                handleFileSelect={handleFileSelect}
+              />
+              <FileList
+                uploadedFiles={uploadedFiles}
+                fileProgresses={fileProgresses}
+                removeFile={removeFile}
+              />
+            </Field>
 
-            <Button className="cursor-pointer" type="submit">
+            <Button type="submit" className="w-full">
               Senden
             </Button>
-          </form>
-        </div>
-      </div>
-    </SmallWrapper>
+          </FieldGroup>
+        </form>
+      </CardContent>
+    </Card>
   );
 }
 

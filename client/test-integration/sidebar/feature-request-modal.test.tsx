@@ -48,7 +48,11 @@ function FeedbackSidebarHarness() {
         </SidebarFooter>
       </Sidebar>
       {modalOpen && (
-        <ModalOverlay handleToggle={toggleModal}>
+        <ModalOverlay
+          handleToggle={toggleModal}
+          className="backdrop-blur-xs"
+          backdropClassName="bg-black/30"
+        >
           <FeatureModal handleToggle={toggleModal} />
         </ModalOverlay>
       )}
