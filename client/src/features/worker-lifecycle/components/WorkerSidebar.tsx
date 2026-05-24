@@ -1,5 +1,5 @@
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/selfmade/button';
+import { Button } from '@/components/ui/button';
 import { SidebarAside } from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarAside';
 import SidebarContent from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarContent';
 import SidebarHeader from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarHeader';
@@ -35,12 +35,8 @@ export function WorkerSidebar({ isOpen, setIsOpen }: WorkerSidebarProps) {
       <SidebarPanel className="w-full">
         <SidebarHeader className="flex items-center justify-between p-6">
           {isFormStep ? (
-            <Button
-              type="button"
-              className="shrink-0 border-0 bg-interactive-primary-bg text-sm text-interactive-primary-text hover:bg-interactive-primary-hover"
-              onClick={() => setSelectedOption(null)}
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
+            <Button type="button" className="rounded-2xl" onClick={() => setSelectedOption(null)}>
+              <ArrowLeft className="size-4" />
               Zurück
             </Button>
           ) : (
@@ -48,12 +44,13 @@ export function WorkerSidebar({ isOpen, setIsOpen }: WorkerSidebarProps) {
           )}
           <Button
             type="button"
-            size="icon"
+            variant="ghost"
+            size="icon-sm"
+            className="rounded-2xl"
             aria-label="Schließen"
-            className="bg-transparent text-foreground shadow-none hover:bg-muted"
             onClick={close}
           >
-            <X className="h-4 w-4" aria-hidden />
+            <X className="size-4" aria-hidden />
           </Button>
         </SidebarHeader>
         <SidebarContent className="mt-2 flex min-h-0 grow flex-col overflow-hidden p-6">

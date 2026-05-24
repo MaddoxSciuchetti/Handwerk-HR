@@ -1,4 +1,4 @@
-import { OptionsObjekt } from '@/components/ui/selfmade/selectdropdown';
+import { DropdownOption } from '@/components/ui/nested-dropdown';
 import { employeeQueries } from '@/features/employee-overview/query-options/queries/employee.queries';
 import { fetchOrgStatuses } from '@/features/settings/org-statuses/org-status.api';
 import { useQuery } from '@tanstack/react-query';
@@ -41,7 +41,7 @@ export function useWorkerFilter(workers: WorkerRecord[] | undefined) {
     setFilterLabel(option?.label ?? '');
   };
 
-  const handleSubSelect = (sub: OptionsObjekt, parent: OptionsObjekt) => {
+  const handleSubSelect = (sub: DropdownOption, parent: DropdownOption) => {
     setFilterMode(parent.value as FilterMode);
     setFilterValue(sub.value);
     setFilterLabel(`${parent.label}: ${sub.label}`);

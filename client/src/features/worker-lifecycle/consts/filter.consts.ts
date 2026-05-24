@@ -1,11 +1,11 @@
-import { OptionsObjekt } from '@/components/ui/selfmade/selectdropdown';
+import { DropdownOption } from '@/components/ui/nested-dropdown';
 
-const SORT_SUB_OPTIONS: OptionsObjekt[] = [
+const SORT_SUB_OPTIONS: DropdownOption[] = [
   { label: 'Neueste zuerst', value: 'desc' },
   { label: 'Älteste zuerst', value: 'asc' },
 ];
 
-export const FILTER_OPTIONS: OptionsObjekt[] = [
+export const FILTER_OPTIONS: DropdownOption[] = [
   { label: 'All', value: 'all' },
   {
     label: 'Hinzugefügt',

@@ -1,16 +1,15 @@
 import ErrorAlert from '@/components/alerts/ErrorAlert';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
-import { Button } from '@/components/ui/selfmade/button';
-import { SelectDropdown } from '@/components/ui/selfmade/selectdropdown';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { NestedDropdown } from '@/components/ui/nested-dropdown';
 import {
-  Cell,
-  CellHolder,
-  GrowingItem,
-  ItemHeader,
   Table,
-  TableDivider,
+  TableBody,
+  TableHead,
   TableHeader,
-} from '@/components/ui/selfmade/table/Table';
+  TableRow,
+} from '@/components/ui/table';
 import EditModeBar from '@/features/all-tasks/components/EditModeBar';
 import useAuth from '@/features/user-profile/hooks/useAuth';
 import LifeCycleModal from '@/features/worker-lifecycle/components/LifeCycleModal';
@@ -18,7 +17,6 @@ import useHome from '@/features/worker-lifecycle/hooks/useHome';
 import { useWorkerFilter } from '@/features/worker-lifecycle/hooks/useWorkerFilter';
 import useWorkerMutations from '@/features/worker-lifecycle/hooks/useWorkerMutaitons';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
-import { ChevronUp } from 'lucide-react';
 import { useState, type Dispatch, type SetStateAction } from 'react';
 import GreetingHeader from './GreetingHeader';
 import ProjectItem, { type WorkerSelection } from './ProjectItem';
@@ -77,59 +75,50 @@ function WorkerLifeCycle() {
         isOpen={isWorkerSidebarOpen}
         setIsOpen={setIsWorkerSidebarOpen}
       />
-      <div className="h-full w-full flex flex-col">
+      <div className="flex h-full w-full flex-col">
         <GreetingHeader firstname={user?.firstName || ''} />
-        <Table>
-          <TableHeader className="flex w-full flex-wrap items-center justify-between gap-4 px-6 py-3">
-            <GrowingItem className="!grow-0 !py-0 text-foreground">
-              Handwerker
-            </GrowingItem>
+        <Card className="mt-5 flex h-full flex-col gap-0 border border-border py-0 shadow-none ring-0">
+          <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-3">
+            <CardTitle className="text-base font-medium">Handwerker</CardTitle>
             <div className="flex shrink-0 items-center gap-3">
-              <SelectDropdown
-                state="Default"
-                size="lg"
-                icon={ChevronUp}
-                label="Select Option"
+              <NestedDropdown
                 options={filterOptions}
                 value={filterLabel}
-                setValue={handleSelect}
+                onSelect={handleSelect}
                 onSubSelect={handleSubSelect}
               />
-              <Button
-                type="button"
-                className="shrink-0 border-0 bg-interactive-primary-bg text-sm text-interactive-primary-text hover:bg-interactive-primary-hover"
-                onClick={handleSelectWorker}
-              >
+              <Button type="button" className="rounded-2xl" onClick={handleSelectWorker}>
                 Hinzufügen
               </Button>
             </div>
-          </TableHeader>
-          <TableDivider />
-          <ItemHeader className="px-4 py-0">
-            <GrowingItem className="pl-10 py-2">
-              <p className="typo-body-sm text-foreground">Name</p>
-            </GrowingItem>
-            <CellHolder>
-              <Cell className="typo-body-sm text-foreground">Type</Cell>
-              <Cell className="typo-body-sm text-foreground">
-                Verantwortlich
-              </Cell>
-              <Cell className="typo-body-sm text-foreground">Status</Cell>
-            </CellHolder>
-          </ItemHeader>
-          {filteredWorkers.map((worker) => (
-            <ProjectItem
-              key={worker.id}
-              worker={worker}
-              gotopage={handleNavigate}
-              isSelected={editModeData.some(
-                (item) => item.engagementNumber === worker.id
-              )}
-              setLargeEditMode={setLargeEditMode}
-              setEditModeData={handleSetEditModeData}
-            />
-          ))}
-        </Table>
+          </CardHeader>
+          <CardContent className="px-0 pb-0">
+            <Table>
+              <TableHeader className="[&_tr]:border-0">
+                <TableRow className="border-0 hover:bg-transparent">
+                  <TableHead className="pl-14">Name</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Verantwortlich</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody className="[&_tr]:border-0">
+                {filteredWorkers.map((worker) => (
+                  <ProjectItem
+                    key={worker.id}
+                    worker={worker}
+                    gotopage={handleNavigate}
+                    isSelected={editModeData.some(
+                      (item) => item.engagementNumber === worker.id
+                    )}
+                    setLargeEditMode={setLargeEditMode}
+                    setEditModeData={handleSetEditModeData}
+                  />
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
         <LifeCycleModal modal={modal} toggleModal={toggleModal} />
         {largeEditMode && (
           <EditModeBar

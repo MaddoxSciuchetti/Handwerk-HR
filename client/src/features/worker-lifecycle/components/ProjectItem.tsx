@@ -1,16 +1,11 @@
-import {
-  Cell,
-  CellHolder,
-  GrowingItem,
-  Items,
-} from '@/components/ui/selfmade/table/Table';
-
+import { Button } from '@/components/ui/button';
+import { TableCell, TableRow } from '@/components/ui/table';
 import {
   SquareCheckIcon,
   SquareDashedIcon,
 } from '@/features/all-tasks/components/ui/SelectIcons';
 import { LifecycleType } from '@/features/worker-task-management/types/index.types';
-import { cn } from '@/lib/trycatch';
+import { cn } from '@/lib/utils';
 import type { Dispatch, SetStateAction } from 'react';
 import { WorkerRecord } from '../types/index.types';
 import { getFirstFormType } from '../utils/formtype';
@@ -56,32 +51,31 @@ function ProjectItem({
   const SelectionIcon = isSelected ? SquareCheckIcon : SquareDashedIcon;
 
   return (
-    <Items
-      state="hover"
-      className="relative flex min-h-12 items-center gap-0 px-4 py-2.5"
+    <TableRow
+      className="group relative cursor-pointer border-0"
       onClick={() => gotopage(worker.id, form_type, fullname)}
     >
-      <button
-        type="button"
-        aria-pressed={isSelected}
-        aria-label={isSelected ? 'Auswahl entfernen' : 'Auswählen'}
-        onClick={toggleSelection}
-        className={cn(
-          'absolute ml-2 flex h-5 w-5 items-center justify-center text-foreground transition-opacity',
-          isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-        )}
-      >
-        <SelectionIcon className="h-5 w-5" />
-      </button>
-      <GrowingItem className="pl-10 py-0">
-        <p className="typo-body-base">{worker.firstName}</p>
-      </GrowingItem>
-      <CellHolder>
-        <Cell>{worker.engagements[0].type}</Cell>
-        <Cell>{worker.engagements[0].responsibleUser.firstName}</Cell>
-        <Cell>{worker.engagements[0].engagementStatus.name}</Cell>
-      </CellHolder>
-    </Items>
+      <TableCell className="relative pl-14 font-medium">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          aria-pressed={isSelected}
+          aria-label={isSelected ? 'Auswahl entfernen' : 'Auswählen'}
+          onClick={toggleSelection}
+          className={cn(
+            'absolute left-2 top-1/2 -translate-y-1/2 rounded-2xl',
+            isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+          )}
+        >
+          <SelectionIcon className="size-4" />
+        </Button>
+        {worker.firstName}
+      </TableCell>
+      <TableCell>{worker.engagements[0].type}</TableCell>
+      <TableCell>{worker.engagements[0].responsibleUser.firstName}</TableCell>
+      <TableCell>{worker.engagements[0].engagementStatus.name}</TableCell>
+    </TableRow>
   );
 }
 

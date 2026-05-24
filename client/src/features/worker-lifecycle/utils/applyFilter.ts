@@ -1,4 +1,4 @@
-import { OptionsObjekt } from '@/components/ui/selfmade/selectdropdown';
+import { DropdownOption } from '@/components/ui/nested-dropdown';
 import { EmployeeDataArray } from '@/features/employee-overview/schemas/schema';
 import { OrgStatus } from '@/features/settings/org-statuses/org-status.types';
 import { FilterMode } from '../hooks/useWorkerFilter';
@@ -68,7 +68,7 @@ export function applyFilter(
 
 export function buildResponsibleSubOptions(
   employees: EmployeeDataArray
-): OptionsObjekt[] {
+): DropdownOption[] {
   return employees.map((e) => ({
     label: `${e.firstName} ${e.lastName}`,
     value: e.id,
@@ -77,7 +77,7 @@ export function buildResponsibleSubOptions(
 
 export function buildEngagementStatusSubOptions(
   statuses: OrgStatus[]
-): OptionsObjekt[] {
+): DropdownOption[] {
   return statuses.map((status) => ({
     label: status.name,
     value: status.id,
@@ -85,10 +85,10 @@ export function buildEngagementStatusSubOptions(
 }
 
 export function withDynamicOptions(
-  options: OptionsObjekt[],
+  options: DropdownOption[],
   employees: EmployeeDataArray,
   engagementStatuses: OrgStatus[]
-): OptionsObjekt[] {
+): DropdownOption[] {
   return options.map((option) => {
     if (option.value === RESPONSIBLE_VALUE) {
       return { ...option, subOptions: buildResponsibleSubOptions(employees) };
