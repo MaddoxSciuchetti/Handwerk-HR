@@ -2,7 +2,6 @@ import LoadingAlert from '@/components/alerts/LoadingAlert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Cell,
   CellHolder,
   GrowingItem,
   ItemHeader,
@@ -55,10 +54,10 @@ function Employees() {
               <p className="typo-body-sm">Name</p>
             </GrowingItem>
             <CellHolder>
-              <Cell className="typo-body-sm">Offene Aufgaben</Cell>
-              <Cell className="typo-body-sm">Status</Cell>
-              <Cell className="typo-body-sm">Vertretung</Cell>
-              <Cell className="typo-body-sm">Aktionen</Cell>
+              <div className="typo-body-sm w-42.5">Offene Aufgaben</div>
+              <div className="typo-body-sm w-42.5">Status</div>
+              <div className="typo-body-sm w-42.5">Vertretung</div>
+              <div className="typo-body-sm w-42.5">Aktionen</div>
             </CellHolder>
           </ItemHeader>
           <EmployeeItemList
