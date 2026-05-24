@@ -7,13 +7,19 @@ export type MitarbeiterInput = {
 
 export type MitarbeiterInputs = MitarbeiterInput[];
 
+export type AbsenceType =
+  | 'SICK'
+  | 'VACATION'
+  | 'PARENTAL_LEAVE'
+  | 'UNPAID'
+  | 'OTHER';
+
 export type AbsenceData = {
-  id: string;
-  absence?: string;
-  absencetype: string;
-  absencebegin: string;
-  absenceEnd: string;
-  substitute: string;
+  userId: string;
+  absenceType: AbsenceType;
+  startDate: string;
+  endDate: string;
+  substituteId: string;
 };
 
 export type EmployeeInfoItem = {

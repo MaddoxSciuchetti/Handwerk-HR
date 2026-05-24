@@ -1,29 +1,61 @@
 import z from 'zod';
+import { ISSUE_STATUSES } from '@/features/all-tasks/consts/issue-status.consts';
 
-export const employeeWorkerSchema = z.array(
-  z.object({
-    form_field_id: z.coerce.number(),
-    description: z.coerce.string(),
-    owner: z.string(),
-    ownerName: z.string(),
-    isSubstitute: z.boolean(),
-    substituteName: z.string().nullable(),
-    inputs: z.array(
-      z.object({
-        id: z.coerce.number(),
-        status: z.coerce.string(),
-        timestamp: z.coerce.date(),
-        lastChangedAt: z.coerce.date(),
-        employee: z.object({
-          id: z.number(),
-          vorname: z.string(),
-          nachname: z.string(),
-          email: z.string().nullable(),
-        }),
-      })
-    ),
+const issueAssigneeSchema = z
+  .object({
+    id: z.string(),
+    firstName: z.string(),
+    lastName: z.string(),
+    avatarUrl: z.string().nullable(),
   })
-);
+  .nullable();
+
+const issueSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string().nullable(),
+  priority: z.string(),
+  dueDate: z.coerce.date().nullable(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+  status: z.enum(ISSUE_STATUSES),
+  assignee: issueAssigneeSchema,
+});
+
+const engagementWorkerSchema = z.object({
+  id: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  email: z.string().nullable(),
+  position: z.string().nullable(),
+  status: z.string(),
+});
+
+const responsibleUserSchema = z.object({
+  id: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  email: z.string(),
+  avatarUrl: z.string().nullable(),
+  isAbsent: z.boolean(),
+});
+
+const engagementSchema = z.object({
+  id: z.string(),
+  type: z.string(),
+  startDate: z.coerce.date().nullable(),
+  endDate: z.coerce.date().nullable(),
+  worker: engagementWorkerSchema,
+  responsibleUser: responsibleUserSchema,
+  issues: z.array(issueSchema),
+});
+
+export const employeeWorkerSchema = z.array(engagementSchema);
+
+export type IssueData = z.infer<typeof issueSchema>;
+export type EngagementWorker = z.infer<typeof engagementWorkerSchema>;
+export type ResponsibleUserData = z.infer<typeof responsibleUserSchema>;
+export type WorkerEngagement = z.infer<typeof engagementSchema>;
 
 export const sendReminderSchema = z.object({
   email: z.email({ message: 'Ungültige Email Adresse' }),

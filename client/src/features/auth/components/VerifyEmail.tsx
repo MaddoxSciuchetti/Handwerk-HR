@@ -2,7 +2,7 @@ import LoadingAlert from '@/components/alerts/LoadingAlert';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { verifyEmail } from '../api/auth.api';
-import DoorManCard from './resuable/DoorManCard';
+import DoorManWrapper from './resuable/DoorManCard';
 
 function VerifyEmail() {
   const code = useParams({ from: '/email/verify/$code' });
@@ -18,7 +18,7 @@ function VerifyEmail() {
   if (isPending) return <LoadingAlert />;
 
   return (
-    <DoorManCard>
+    <DoorManWrapper>
       <div className="text-center">
         <div className="flex flex-col items-center space-y-4">
           <p
@@ -49,7 +49,7 @@ function VerifyEmail() {
           </button>
         </div>
       </div>
-    </DoorManCard>
+    </DoorManWrapper>
   );
 }
 

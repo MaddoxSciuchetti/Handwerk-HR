@@ -11,12 +11,10 @@ import {
 import OwnerSelect from './OwnerSelect';
 
 type TaskFormProps<T extends FieldValues> = {
-  template_header: string;
   templateHeaderAdjective: string;
   register: UseFormRegister<T>;
   errors: FieldErrors<T>;
   control: Control<T, T, T>;
-  tab: 'ONBOARDING' | 'OFFBOARDING';
   submit: () => void;
   buttonsaveText: string;
   description?: string | undefined;
@@ -28,7 +26,6 @@ type TaskFormProps<T extends FieldValues> = {
 };
 
 const TaskForm = <T extends FieldValues>({
-  template_header,
   templateHeaderAdjective,
   buttonsaveText,
   register,
@@ -41,8 +38,6 @@ const TaskForm = <T extends FieldValues>({
 }: TaskFormProps<T>) => {
   return (
     <form onSubmit={submit} className="flex w-full flex-col items-start ">
-      <p>{`${template_header} Aufgabe ${templateHeaderAdjective}`}</p>
-
       <Textarea
         data-testid="description"
         {...register(descriptionFormName)}

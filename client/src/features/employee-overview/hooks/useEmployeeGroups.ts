@@ -1,72 +1,48 @@
 import { useMemo } from 'react';
-import { EmployeeWorker } from '../types/employeeform.types';
+import {
+  EngagementWorker,
+  IssueData,
+  WorkerEngagement,
+} from '../schemas/employeeform.schemas';
+
+export type WorkerIssueGroup = {
+  worker: EngagementWorker;
+  issues: IssueData[];
+};
 
 function useEmployeeGroups(
   user: string,
-  tasksByEmployee: Array<[string, EmployeeWorker]>
+  tasksByEmployee: Array<[string, WorkerEngagement[]]>
 ) {
   const employeeGroups = useMemo(() => {
-    const ownerItems =
-      tasksByEmployee.find(([owner]) => owner === user)?.[1] ?? [];
+    const ownerEngagements =
+      tasksByEmployee.find(([ownerId]) => ownerId === user)?.[1] ?? [];
 
-    const groupedByHandwerker = new Map<
-      number,
-      {
-        employee: {
-          id: number;
-          vorname: string;
-          nachname: string;
-          email: string | null;
-        };
-        inputs: Array<{
-          description: string;
-          timestamp: Date;
-          lastChangedAt: Date;
-          form_field_id: number;
-          status: string;
-        }>;
-      }
-    >();
+    const groupedByWorker = new Map<string, WorkerIssueGroup>();
 
-    ownerItems.forEach((task) => {
-      task.inputs.forEach((input) => {
-        const current = groupedByHandwerker.get(input.employee.id);
+    for (const engagement of ownerEngagements) {
+      const existing = groupedByWorker.get(engagement.worker.id);
 
-        if (!current) {
-          groupedByHandwerker.set(input.employee.id, {
-            employee: input.employee,
-            inputs: [
-              {
-                description: task.description,
-                timestamp: input.timestamp,
-                lastChangedAt: input.lastChangedAt,
-                form_field_id: task.form_field_id,
-                status: input.status,
-              },
-            ],
-          });
-          return;
-        }
-
-        current.inputs.push({
-          description: task.description,
-          timestamp: input.timestamp,
-          lastChangedAt: input.lastChangedAt,
-          form_field_id: task.form_field_id,
-          status: input.status,
+      if (!existing) {
+        groupedByWorker.set(engagement.worker.id, {
+          worker: engagement.worker,
+          issues: [...engagement.issues],
         });
-      });
-    });
+        continue;
+      }
 
-    return Array.from(groupedByHandwerker.entries())
-      .map(([employeeId, group]) => [String(employeeId), group] as const)
-      .filter(([, group]) => group.inputs.length > 0);
+      existing.issues.push(...engagement.issues);
+    }
+
+    return Array.from(groupedByWorker.entries()).filter(
+      ([, group]) => group.issues.length > 0
+    );
   }, [tasksByEmployee, user]);
 
   const totalOpenTasks = useMemo(
     () =>
       employeeGroups.reduce(
-        (total, [, group]) => total + group.inputs.length,
+        (total, [, group]) => total + group.issues.length,
         0
       ),
     [employeeGroups]

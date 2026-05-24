@@ -1,45 +1,39 @@
 import queryClient from '@/config/query.client';
-import { NewDescriptionField, SuccessResponse } from '@/types/api.types';
+import { SuccessResponse } from '@/types/api.types';
 import { mutationOptions } from '@tanstack/react-query';
 import {
-  createTemplateTask,
-  deleteTemplateTask,
-  updateTemplateTask,
+  createTemplateTaskV2,
+  deleteTemplate,
+  updateTemplate,
+  UpdateTemplateParams,
 } from '../../api';
-import { DESCRIPTION_ROOT } from '../../consts/query-key.consts';
-import { EditDescriptionData } from '../../types/taskForm.types';
+import { TEMPLATES_LIST_ROOT } from '../../consts/query-key.consts';
+import { TemplateSubmission } from '../../hooks/useSubmitTemplate';
 
 export const templateMutations = {
   delete: () => {
-    return mutationOptions<SuccessResponse<string>, Error, number>({
-      mutationFn: deleteTemplateTask,
+    return mutationOptions<SuccessResponse<string>, Error, string>({
+      mutationFn: (id: string) => deleteTemplate(id),
       onSuccess: () =>
-        queryClient.invalidateQueries({ queryKey: [DESCRIPTION_ROOT] }),
+        queryClient.invalidateQueries({ queryKey: [TEMPLATES_LIST_ROOT] }),
     });
   },
 
   update: () => {
-    return mutationOptions<EditDescriptionData, Error, EditDescriptionData>({
-      mutationFn: updateTemplateTask,
+    return mutationOptions<TemplateSubmission, Error, UpdateTemplateParams>({
+      mutationFn: ({ data, templateId }) =>
+        updateTemplate({ data, templateId }),
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: [DESCRIPTION_ROOT] });
+        queryClient.invalidateQueries({ queryKey: [TEMPLATES_LIST_ROOT] });
       },
     });
   },
 
-  create: () => {
-    return mutationOptions<
-      NewDescriptionField,
-      Error,
-      {
-        description: string;
-        template_type: 'ONBOARDING' | 'OFFBOARDING';
-        owner: string;
-      }
-    >({
-      mutationFn: createTemplateTask,
+  createTemplate: () => {
+    return mutationOptions<TemplateSubmission, Error, TemplateSubmission>({
+      mutationFn: createTemplateTaskV2,
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: [DESCRIPTION_ROOT] });
+        queryClient.invalidateQueries({ queryKey: [TEMPLATES_LIST_ROOT] });
       },
     });
   },

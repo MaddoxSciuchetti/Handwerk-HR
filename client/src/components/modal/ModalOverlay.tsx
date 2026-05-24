@@ -1,4 +1,5 @@
-import { cn } from '@/lib/trycatch';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { X } from 'lucide-react';
 import { ReactNode, useEffect } from 'react';
 
@@ -38,20 +39,23 @@ const ModalOverlay = ({
       <div
         onClick={handleToggle}
         className={cn(
-          'fixed inset-0 cursor-pointer bg-(--modal-overlay) ',
+          'fixed inset-0 cursor-pointer bg-(--modal-overlay)',
           backdropClassName
         )}
         aria-hidden="true"
       />
 
       <div className={`relative z-10 w-full ${size}`}>
-        <button
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
           onClick={handleToggle}
           aria-label="Modal schließen"
-          className="absolute top-3 right-3 rounded-md hover:bg-(--accent)"
+          className="absolute top-3 right-3 z-20"
         >
-          <X className="h-4 w-4" aria-hidden="true" />
-        </button>
+          <X />
+        </Button>
         {children}
       </div>
     </div>

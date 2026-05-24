@@ -6,13 +6,14 @@ function useHandwerkerProBSBEmployee(
 ) {
   return useMemo(() => {
     if (!allEmployeeData) return [];
-    const ownerToUserMap = new Map<string, EmployeeWorker[0]>();
+    const ownerToEngagementMap = new Map<string, EmployeeWorker[number]>();
     allEmployeeData.forEach((item) => {
-      if (!ownerToUserMap.has(item.owner)) {
-        ownerToUserMap.set(item.owner, item);
+      const ownerId = item.responsibleUser.id;
+      if (!ownerToEngagementMap.has(ownerId)) {
+        ownerToEngagementMap.set(ownerId, item);
       }
     });
-    return Array.from(ownerToUserMap.values());
+    return Array.from(ownerToEngagementMap.values());
   }, [allEmployeeData]);
 }
 

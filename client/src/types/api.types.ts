@@ -1,4 +1,4 @@
-import { TaskStatus } from '@/features/task-management/utils/selectOptionTernary';
+import { TaskStatus } from '@/features/worker-task-management/utils/selectOptionTernary';
 
 export type SuccessResponse<T> = {
   success: true;
@@ -97,24 +97,32 @@ export type Cache = {
 
 export type SessionCache = Cache[];
 
+export type EmployeeAbsenceInfo = {
+  id: string;
+  absenceType: string;
+  startDate: string;
+  endDate: string;
+  substitute: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  } | null;
+};
+
 export type EmployeeInfoResponse = {
   id: string;
-  vorname: string;
-  nachname: string;
+  firstName: string;
+  lastName: string;
+  displayName: string | null;
   email: string;
-  verified: boolean;
-  user_permission: 'CHEF' | 'MITARBEITER';
+  avatarUrl: string | null;
+  isVerified: boolean;
+  status: string;
   createdAt: string;
-  employeeStatus: {
-    absence: string | null;
-    absencetype: string | null;
-    absencebegin: string | null;
-    absenceEnd: string | null;
-    substitute: string | null;
-    sub_user: {
-      id: string;
-      vorname: string;
-      nachname: string;
-    } | null;
-  }[];
+  updatedAt: string;
+  organizationMembers: Array<{
+    membershipRole: 'admin' | 'worker';
+  }>;
+  absences: EmployeeAbsenceInfo[];
+  isAbsent: boolean;
 };

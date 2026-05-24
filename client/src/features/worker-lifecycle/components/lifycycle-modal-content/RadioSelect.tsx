@@ -6,53 +6,51 @@ import {
   FieldTitle,
 } from '@/components/ui/field';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { LifecycleType } from '@/features/task-management/types/index.types';
+import { cn } from '@/lib/utils';
 import { Dispatch, SetStateAction } from 'react';
 
-type RadioSelectProps = {
-  selectedOption: LifecycleType | null;
-  setSelectedOption: Dispatch<SetStateAction<LifecycleType | null>>;
+type RadioSelectProps<T> = {
+  selectedOption: T | null;
+  setSelectedOption: Dispatch<SetStateAction<T | null>>;
+  options: { id: string; value: T; title: string; description: string }[];
 };
 
-const RadioSelect = ({
+const optionCardClassName =
+  'cursor-pointer rounded-xl border border-border bg-background p-4 shadow-none ring-0 transition-colors hover:bg-muted/50 has-data-checked:border-border has-data-checked:bg-muted/50 has-data-checked:shadow-none dark:has-data-checked:border-border dark:has-data-checked:bg-muted/50';
+
+const RadioSelect = <T,>({
   setSelectedOption,
   selectedOption,
-}: RadioSelectProps) => {
+  options,
+}: RadioSelectProps<T>) => {
   return (
-    <>
-      <RadioGroup
-        className="h-full flex flex-row items-center"
-        onValueChange={(value) => setSelectedOption(value as LifecycleType)}
-        value={selectedOption}
-      >
+    <RadioGroup
+      className="flex flex-col gap-3"
+      onValueChange={(value) => setSelectedOption(value as T)}
+      value={selectedOption as string}
+    >
+      {options.map((option) => (
         <FieldLabel
-          htmlFor="plus-plan"
-          className={`${selectedOption === 'Onboarding' ? 'bg-accent text-accent-foreground scale-105' : ''} cursor-pointer rounded-xl p-3 transition-colors hover:bg-accent hover:text-accent-foreground `}
+          key={option.id}
+          htmlFor={option.id}
+          className={cn(
+            optionCardClassName,
+            selectedOption === option.value && 'bg-muted/50'
+          )}
         >
-          <Field orientation="horizontal">
+          <Field
+            orientation="horizontal"
+            className="items-center justify-between gap-3"
+          >
             <FieldContent className="text-left">
-              <FieldTitle>Onboarding</FieldTitle>
-              <FieldDescription>Onboarde ein Mitarbeiter</FieldDescription>
+              <FieldTitle>{option.title}</FieldTitle>
+              <FieldDescription>{option.description}</FieldDescription>
             </FieldContent>
-            <RadioGroupItem value="Onboarding" id="plus-plan" />
+            <RadioGroupItem value={option.value as string} id={option.id} />
           </Field>
         </FieldLabel>
-        <FieldLabel
-          htmlFor="pro-plan"
-          className={`${selectedOption === 'Offboarding' ? 'active bg-accent text-accent-foreground scale-105' : ''} cursor-pointer rounded-xl p-3 transition-colors hover:bg-accent hover:text-accent-foreground `}
-        >
-          <Field orientation="horizontal">
-            <FieldContent className="text-left">
-              <FieldTitle>Offboarding</FieldTitle>
-              <FieldDescription className="">
-                Offboarde ein Mitarbeiter
-              </FieldDescription>
-            </FieldContent>
-            <RadioGroupItem value="Offboarding" id="pro-plan" />
-          </Field>
-        </FieldLabel>
-      </RadioGroup>
-    </>
+      ))}
+    </RadioGroup>
   );
 };
 

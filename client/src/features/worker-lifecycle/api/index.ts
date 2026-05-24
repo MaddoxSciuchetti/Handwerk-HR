@@ -1,41 +1,74 @@
 import API from '@/config/apiClient';
-import { AddWorker } from '@/features/worker-lifecycle/schemas/zod.schemas';
-import {
-  DeleteUser,
-  ItemUser,
-  WorkerItem,
-  WorkerListMode,
-} from '../types/index.types';
+import { WorkerRecord } from '../types/index.types';
 
-export const getWorkerData = async (
-  mode: WorkerListMode = 'active'
-): Promise<WorkerItem[]> => {
-  const response = API.get<WorkerItem[], WorkerItem[]>(
-    `/worker/getWorkerData?mode=${mode}`
+type WorkerRecordResponse = {
+  success: boolean;
+  data: WorkerRecord[];
+};
+
+export type CreateWorkerRequest = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  birthday?: string;
+  position?: string;
+  street?: string;
+  entryDate?: string;
+  exitDate?: string;
+  engagementType: 'onboarding' | 'offboarding';
+  responsibleUserId: string;
+  startDate?: string;
+  endDate?: string;
+  templateId?: string;
+};
+
+type CreateWorkerResponse = {
+  success: boolean;
+  data: {
+    worker: WorkerRecord;
+  };
+};
+
+export const getWorkerData = async (): Promise<WorkerRecord[]> => {
+  const response = await API.get<WorkerRecordResponse, WorkerRecordResponse>(
+    `/worker`,
+    { params: { includeArchived: true } }
+  );
+  return response.data;
+};
+
+export const archiveWorkerById = async (workerId: string): Promise<void> => {
+  await API.patch(`worker/${workerId}/archive`, {});
+};
+
+export const unarchiveWorkerById = async (workerId: string): Promise<void> => {
+  await API.patch(`worker/${workerId}/unarchive`, {});
+};
+
+export const deleteWorkerById = async (workerId: string): Promise<void> => {
+  await API.delete(`worker/${workerId}`);
+};
+
+export const deleteWorkersByIds = async (
+  workerIds: string[]
+): Promise<void> => {
+  await Promise.all(workerIds.map((id) => deleteWorkerById(id)));
+};
+
+export const addWorker = async (
+  data: CreateWorkerRequest
+): Promise<CreateWorkerResponse> => {
+  const response = await API.post<CreateWorkerResponse, CreateWorkerResponse>(
+    '/worker',
+    data
   );
   return response;
 };
 
-export const archiveWorkerById = async (taskId: number): Promise<ItemUser> => {
-  return API.put<unknown, ItemUser>(`/worker/archiveWorker/${taskId}`, {});
-};
-
-export const unarchiveWorkerById = async (
-  taskId: number
-): Promise<ItemUser> => {
-  return API.put<unknown, ItemUser>(`/worker/unarchiveWorker/${taskId}`, {});
-};
-
-export const deleteWorkerById = async (taskId: number): Promise<DeleteUser> => {
-  const response = await API.delete<DeleteUser, DeleteUser>(
-    `/worker/deleteWorker/${taskId}`
-  );
-  return response;
-};
-
-export const addWorker = async (data: AddWorker): Promise<ItemUser> => {
-  const response = await API.post<ItemUser, ItemUser>('/worker/addWorker', {
-    data,
-  });
-  return response;
+export const updateEngagement = async (
+  workerId: string,
+  engagementId: string,
+  data: { status: string }
+): Promise<void> => {
+  await API.put(`worker/${workerId}/engagements/${engagementId}`, data);
 };

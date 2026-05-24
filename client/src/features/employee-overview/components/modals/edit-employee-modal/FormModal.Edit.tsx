@@ -26,7 +26,7 @@ const FormModalEdit = ({
   const employeeOptions = useMemo(
     () =>
       EmployeeData?.map((emp) => ({
-        label: `${emp.vorname}${emp.nachname}`,
+        label: `${emp.firstName} ${emp.lastName}`,
         value: `${emp.id}`,
       })) ?? [],
     [EmployeeData]
@@ -37,12 +37,12 @@ const FormModalEdit = ({
         onSubmit={handleSubmit(onSubmit)}
         className="flex w-full min-w-0 flex-col gap-4"
       >
-        <Input type="hidden" value={id} {...register('id')} />
+        <Input type="hidden" value={id} {...register('userId')} />
         <h1 className="text-left w-full">
           Abwesenheit eintragen für: {fullname}
         </h1>
         <FormSelectOptions
-          name="absencetype"
+          name="absenceType"
           control={control}
           data={absenceReason}
           placeholder={'Grund'}
@@ -51,21 +51,21 @@ const FormModalEdit = ({
         />
         <FormFields
           label={'Abwesenheitsbeginn'}
-          placeholder={'DD.MM.YYYY'}
+          type="date"
           register={register}
-          name={'absencebegin'}
+          name={'startDate'}
           errors={errors}
         />
 
         <FormFields
           label={'Abwesenheitsende'}
-          placeholder={'DD.MM.YYYY'}
+          type="date"
           register={register}
-          name="absenceEnd"
+          name="endDate"
           errors={errors}
         />
         <FormSelectOptions
-          name="substitute"
+          name="substituteId"
           control={control}
           data={employeeOptions}
           placeholder={'Mitarbeiter'}
@@ -73,7 +73,11 @@ const FormModalEdit = ({
           label={'Soll vertreten werden von'}
         />
 
-        <Button className="cursor-pointer" variant={'outline'} type="submit">
+        <Button
+          className="cursor-pointer rounded-full"
+          variant="outline"
+          type="submit"
+        >
           Speichern
         </Button>
       </form>

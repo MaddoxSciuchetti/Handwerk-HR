@@ -1,0 +1,5 @@
+---
+alwaysApply: true
+---
+
+Ensure that you follow reacts best principles. This includes small components, single responsibility (meaning a component only does one specific things).

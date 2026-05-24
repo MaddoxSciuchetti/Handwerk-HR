@@ -57,7 +57,7 @@ export const useAvatarCropSave = ({
         0,
         0,
         outputSize,
-        outputSize,
+        outputSize
       );
       canvas.toBlob(
         (blob) => {
@@ -65,7 +65,7 @@ export const useAvatarCropSave = ({
           onSave(new File([blob], 'avatar.jpg', { type: 'image/jpeg' }));
         },
         'image/jpeg',
-        0.9,
+        0.9
       );
     };
     img.src = imgSrc;

@@ -1,278 +1,339 @@
-import { generatePresignedUrl, uploadFileToS3 } from "@/config/aws";
-import { CONFLICT } from "@/constants/http";
-import { prisma } from "@/lib/prisma";
-import {
-    createWorkerTaskSchema,
-    insertWorkerHistorySchema,
-    updateWorkerSchema,
-} from "@/schemas/worker.schemas";
-import { notifyEmployeesAboutWorkerCreated } from "@/services/worker.notification.service";
-import {
-    archiveWorker,
-    createWorkerTask,
-    insertDataPoint,
-    insertWorker,
-    insertWorkerFile,
-    insertWorkerHistory,
-    modifyWorker,
-    queryWorkerById,
-    queryWorkerData,
-    queryWorkerFiles,
-    queryWorkerHistory,
-    removeWorker,
-    removeWorkerFile,
-    unarchiveWorker,
-} from "@/services/worker.service";
-import appAssert from "@/utils/appAssert";
-import resolveOwner from "@/utils/resolverOwner";
+import { uploadFileToS3 } from "@/config/aws";
+import catchErrors from "@/utils/catchErrors";
 import { Request, Response } from "express";
-import z from "zod";
+import * as workerService from "../services/worker.service";
 
-export const createWorker = async (req: Request, res: Response) => {
-    const request = {
-        ...req.body.data,
-    };
+function param(req: Request, key: string): string {
+    const val = req.params[key];
+    return Array.isArray(val) ? val[0] : String(val);
+}
 
-    // verify existing worker does not exists
-    const existingWorker = await prisma.users.findUnique({
-        where: {
-            email: request.email.toLocaleLowerCase(),
-        },
+export const createWorker = catchErrors(async (req: Request, res: Response) => {
+    const organizationId = req.orgId;
+    const createdByUserId = req.userId;
+    const result = await workerService.createWorker({
+        organizationId,
+        createdByUserId,
+        ...req.body,
     });
+    return res.status(201).json({ success: true, data: result });
+});
 
-    appAssert(!existingWorker, CONFLICT, "Email wird bereits verwendet");
+export const getWorkerData = catchErrors(
+    async (req: Request, res: Response) => {
+        const organizationId = req.orgId;
+        const { status, search, page, limit, includeArchived } = req.query;
 
-    const { worker } = await insertWorker(request);
+        const result = await workerService.getWorkerData({
+            organizationId,
+            status: status as any,
+            search: search as string | undefined,
+            page: page ? parseInt(page as string, 10) : 1,
+            limit: limit ? parseInt(limit as string, 10) : 25,
+            includeArchived: includeArchived === "true",
+        });
 
-    await notifyEmployeesAboutWorkerCreated({
-        workerName: `${worker.vorname} ${worker.nachname}`,
-        lifecycleType: request.type,
-    });
+        return res.status(200).json({ success: true, data: result });
+    },
+);
 
-    return res.status(201).json({ success: worker });
-};
+export const getWorkerById = catchErrors(
+    async (req: Request, res: Response) => {
+        const organizationId = req.orgId;
+        const workerId = param(req, "workerId");
 
-export const getWorkerData = async (req: Request, res: Response) => {
-    const mode = req.query.mode === "archived" ? "archived" : "active";
-    const { worker } = await queryWorkerData(mode);
-    return res.status(201).json(worker);
-};
-
-export const archiveWorkerById = async (req: Request, res: Response) => {
-    const id = +req.params.id;
-    const archivedBy = req.userId;
-
-    const worker = await archiveWorker(id, archivedBy);
-    return res.status(200).json({ success: worker });
-};
-
-export const unarchiveWorkerById = async (req: Request, res: Response) => {
-    const id = +req.params.id;
-
-    const worker = await unarchiveWorker(id);
-    return res.status(200).json({ success: worker });
-};
-
-export const deleteWorker = async (req: Request, res: Response) => {
-    const id = +req.params.id;
-
-    const worker = await removeWorker(id);
-
-    return res.status(204).json(worker);
-};
-
-export const getWorkerById = async (req: Request, res: Response) => {
-    const id = +req.params.id;
-    const lifecycleType = req.query.lifecycleType;
-
-    const worker = await queryWorkerById(id);
-    if (!worker) {
-        throw new Error("error occued");
-    }
-
-    const form = worker.employee_forms.find(
-        (f: any) => f.form_type === lifecycleType,
-    );
-
-    if (!form) {
-        return res
-            .status(404)
-            .json({ message: "Offboarding form is not found" });
-    }
-
-    const response = {
-        worker: {
-            id: worker.id,
-            vorname: worker.vorname,
-            nachname: worker.nachname,
-            email: worker.email,
-            geburtsdatum: worker.geburtsdatum,
-            adresse: worker.adresse,
-            eintrittsdatum: worker.eintrittsdatum,
-            austrittsdatum: worker.austrittsdatum,
-            position: worker.position,
-        },
-        form: {
-            id: form.id,
-            type: form.form_type,
-            fields: form.form_inputs.map((input) => {
-                const resolvedOwner = resolveOwner(input.form_fields.auth_user);
-                return {
-                    id: input.id,
-                    form_field_id: input.form_field_id,
-                    description: input.form_fields.description,
-                    officialOwner:
-                        input.form_fields.auth_user.vorname +
-                        " " +
-                        input.form_fields.auth_user.nachname,
-                    substituteOwner:
-                        resolvedOwner.vorname + " " + resolvedOwner.nachname,
-                    owner_id: resolvedOwner.id,
-                    is_substitute: resolvedOwner.isSubstitute,
-                    status: input.status,
-                    edit: input.edit,
-                };
-            }),
-        },
-    };
-
-    return res.status(200).json(response);
-};
-
-export const updateWorker = async (req: Request, res: Response) => {
-    const request = updateWorkerSchema.parse(req.body);
-    const modifyWorkerResponse = await modifyWorker(request);
-    return res.status(200).json(modifyWorkerResponse);
-};
-
-export const getWorkerHistory = async (req: Request, res: Response) => {
-    const id = req.params.id;
-
-    const parsedId = z.coerce.number().parse(id);
-
-    const historyData = await queryWorkerHistory(parsedId);
-
-    const historyWithPresignedUrls = await Promise.all(
-        historyData.map(async (entry) => {
-            if (!entry.auth_user?.cloud_url) return entry;
-
-            const key = new URL(entry.auth_user.cloud_url).pathname.slice(1);
-            return {
-                ...entry,
-                auth_user: {
-                    ...entry.auth_user,
-                    cloud_url: await generatePresignedUrl(key),
-                },
-            };
-        }),
-    );
-
-    return res.status(200).json(historyWithPresignedUrls);
-};
-
-export const updateWorkerHistory = async (req: Request, res: Response) => {
-    const data = insertWorkerHistorySchema.parse(req.body);
-
-    const result = await insertWorkerHistory(data);
-
-    return res.status(200).json(result || []);
-};
-
-export const createWorkerFile = async (req: Request, res: Response) => {
-    const id = req.params.id;
-    const formId = Array.isArray(id) ? id[0] : id;
-
-    const files = req.files as Express.Multer.File[];
-    if (!files || files.length === 0) {
-        return res.status(400).json({ error: "No files uploded" });
-    }
-    const uploadFiles: Array<any> = [];
-    for (const file of files) {
-        const uploadResult = await uploadFileToS3(file, formId);
-
-        if (uploadResult.success && uploadResult.key && uploadResult.url) {
-            const fileData = {
-                userId: parseInt(formId),
-                original_filename: file.originalname,
-                file_size: file.size,
-                content_type: file.mimetype,
-                cloud_url: uploadResult.url,
-                cloud_key: uploadResult.key,
-            };
-            console.log("=== FileData ===");
-            console.log(fileData);
-            const savedfile = await insertWorkerFile(fileData);
-
-            const sanitizedFile = {
-                ...savedfile,
-                id: savedfile.id.toString(),
-                employee_form_id: Number(savedfile.employee_form_id),
-                file_size: Number(savedfile.file_size),
-            };
-            uploadFiles.push(sanitizedFile);
-        }
-    }
-
-    res.json({
-        success: true,
-        files: uploadFiles,
-        count: uploadFiles.length,
-    });
-};
-
-export const getWorkerFiles = async (req: Request, res: Response) => {
-    try {
-        const { id } = req.params;
-
-        const parsedId = z.coerce.number().parse(id);
-        const files = await queryWorkerFiles(parsedId);
-
-        const presignedUrl = await Promise.all(
-            files.map(async (file) => ({
-                ...file,
-                id: file.id.toString(),
-                employee_form_id: file.employee_form_id.toString(),
-                cloud_url: await generatePresignedUrl(file.cloud_key),
-            })),
+        const worker = await workerService.getWorkerById(
+            workerId,
+            organizationId,
         );
-        return res.status(200).json(presignedUrl);
-    } catch (error) {
-        console.log(error);
-    }
-};
+        if (!worker) {
+            return res
+                .status(404)
+                .json({ success: false, message: "Worker not found" });
+        }
 
-export const getCloudUrl = async (req: Request, res: Response) => {
-    const cloud_key = decodeURIComponent(req.query.cloud_key as string);
-    const fullUrl = `https://your-bucket.s3.amazonaws.com/${cloud_key}`;
-    const response = await fetch(fullUrl);
-    const buffer = await response.arrayBuffer();
-    res.send(Buffer.from(buffer));
-};
+        return res.status(200).json({ success: true, data: worker });
+    },
+);
 
-export const deleteWorkerFile = async (req: Request, res: Response) => {
-    try {
-        const id = +req.params.id;
-        await removeWorkerFile(id);
-        return res.status(200).json({ sucess: true });
-    } catch (error) {
-        console.log(error);
-        return res.status(404).json({ error: "File not found" });
-    }
-};
+export const updateWorker = catchErrors(async (req: Request, res: Response) => {
+    const organizationId = req.orgId;
+    const workerId = param(req, "workerId");
 
-export const updateDataPoint = async (req: Request, res: Response) => {
-    const { workerId, ...rest } = req.body;
-    const key = Object.keys(rest)[0];
-    const value = rest[key];
-    const data = await insertDataPoint(key, value, workerId);
-    return res.status(200).json(data);
-};
+    const result = await workerService.updateWorker({
+        organizationId,
+        workerId,
+        updateData: req.body,
+    });
 
-export const addWorkerTask = async (req: Request, res: Response) => {
-    const workerId = z.coerce.number().parse(req.params.workerId);
-    const request = createWorkerTaskSchema.parse(req.body);
+    return res.status(200).json({ success: true, data: result });
+});
 
-    const data = await createWorkerTask(workerId, request);
+export const archiveWorker = catchErrors(
+    async (req: Request, res: Response) => {
+        const organizationId = req.orgId;
+        const workerId = param(req, "workerId");
 
-    return res.status(201).json({ success: data });
-};
+        const result = await workerService.archiveWorker({
+            organizationId,
+            workerId,
+        });
+
+        return res.status(200).json({ success: true, data: result });
+    },
+);
+
+export const unarchiveWorker = catchErrors(
+    async (req: Request, res: Response) => {
+        const organizationId = req.orgId;
+        const workerId = param(req, "workerId");
+
+        const result = await workerService.unarchiveWorker({
+            organizationId,
+            workerId,
+        });
+        return res.status(200).json({ success: true, data: result });
+    },
+);
+
+export const deleteWorker = catchErrors(async (req: Request, res: Response) => {
+    const organizationId = req.orgId;
+    const workerId = param(req, "workerId");
+
+    await workerService.deleteWorker({ organizationId, workerId });
+    return res.status(200).json({ success: true, message: "Worker deleted" });
+});
+
+export const updateDataPoint = catchErrors(
+    async (req: Request, res: Response) => {
+        const organizationId = req.orgId;
+        const workerId = param(req, "workerId");
+        const { field, value } = req.body;
+
+        const result = await workerService.updateDataPoint({
+            organizationId,
+            workerId,
+            field,
+            value,
+        });
+
+        return res.status(200).json({ success: true, data: result });
+    },
+);
+
+export const createEngagement = catchErrors(
+    async (req: Request, res: Response) => {
+        const organizationId = req.orgId;
+        const workerId = param(req, "workerId");
+
+        const result = await workerService.createEngagement({
+            organizationId,
+            workerId,
+            ...req.body,
+        });
+
+        return res.status(201).json({ success: true, data: result });
+    },
+);
+
+export const updateEngagement = catchErrors(
+    async (req: Request, res: Response) => {
+        const organizationId = req.orgId;
+        const workerId = param(req, "workerId");
+        const engagementId = param(req, "engagementId");
+
+        const result = await workerService.updateEngagement({
+            organizationId,
+            workerId,
+            engagementId,
+            ...req.body,
+        });
+
+        return res.status(200).json({ success: true, data: result });
+    },
+);
+
+export const deleteEngagement = catchErrors(
+    async (req: Request, res: Response) => {
+        const organizationId = req.orgId;
+        const workerId = param(req, "workerId");
+        const engagementId = param(req, "engagementId");
+
+        await workerService.deleteEngagement({
+            organizationId,
+            workerId,
+            engagementId,
+        });
+        return res
+            .status(200)
+            .json({ success: true, message: "Engagement deleted" });
+    },
+);
+
+export const createIssue = catchErrors(async (req: Request, res: Response) => {
+    const result = await workerService.createIssue(req.body);
+    return res.status(201).json({ success: true, data: result });
+});
+
+export const updateIssue = catchErrors(async (req: Request, res: Response) => {
+    const issueId = param(req, "issueId");
+    const result = await workerService.updateIssue({
+        issueId,
+        actorUserId: req.userId!,
+        ...req.body,
+    });
+    return res.status(200).json({ success: true, data: result });
+});
+
+export const getIssueAuditLogs = catchErrors(
+    async (req: Request, res: Response) => {
+        const organizationId = req.orgId;
+        const workerId = param(req, "workerId");
+        const issueId = param(req, "issueId");
+        const data = await workerService.getIssueAuditLogs({
+            workerId,
+            issueId,
+            organizationId,
+        });
+        return res.status(200).json({ success: true, data });
+    },
+);
+
+export const deleteIssue = catchErrors(async (req: Request, res: Response) => {
+    const issueId = param(req, "issueId");
+    const { workerEngagementId } = req.body;
+    await workerService.deleteIssue({ issueId, workerEngagementId });
+    return res.status(200).json({ success: true, message: "Issue deleted" });
+});
+
+export const applyIssueTemplate = catchErrors(
+    async (req: Request, res: Response) => {
+        const organizationId = req.orgId;
+        const workerId = param(req, "workerId");
+        const templateId = param(req, "templateId");
+        const { workerEngagementId } = req.body;
+        const result = await workerService.applyIssueTemplate({
+            workerId,
+            organizationId,
+            templateId,
+            workerEngagementId,
+            actorUserId: req.userId!,
+        });
+        return res.status(200).json({ success: true, data: result });
+    },
+);
+
+export const createAbsence = catchErrors(
+    async (req: Request, res: Response) => {
+        const result = await workerService.createAbsence(req.body);
+        return res.status(201).json({ success: true, data: result });
+    },
+);
+
+export const updateAbsence = catchErrors(
+    async (req: Request, res: Response) => {
+        const absenceId = param(req, "absenceId");
+        const result = await workerService.updateAbsence({
+            absenceId,
+            ...req.body,
+        });
+        return res.status(200).json({ success: true, data: result });
+    },
+);
+
+export const deleteAbsence = catchErrors(
+    async (req: Request, res: Response) => {
+        const absenceId = param(req, "absenceId");
+        await workerService.deleteAbsence({ absenceId });
+        return res
+            .status(200)
+            .json({ success: true, message: "Absence deleted" });
+    },
+);
+
+export const uploadWorkerFile = catchErrors(
+    async (req: Request, res: Response) => {
+        const organizationId = req.orgId;
+        const workerId = param(req, "workerId");
+        const uploadedByUserId = req.userId;
+
+        const files = (req.files as Express.Multer.File[] | undefined) ?? [];
+        if (files.length === 0) {
+            return res
+                .status(400)
+                .json({ success: false, message: "No files uploaded" });
+        }
+
+        const stored = await Promise.all(
+            files.map(async (file) => {
+                const upload = await uploadFileToS3(
+                    file,
+                    workerId,
+                    "upload/workers",
+                );
+                if (!upload.success || !upload.key) {
+                    throw new Error(upload.error ?? "S3 upload failed");
+                }
+
+                return workerService.uploadWorkerDocument({
+                    organizationId,
+                    workerId,
+                    uploadedByUserId,
+                    name: file.originalname,
+                    fileUrl: upload.key,
+                    fileType: "other",
+                    fileSizeBytes: file.size,
+                    mimeType: file.mimetype,
+                });
+            }),
+        );
+
+        return res
+            .status(201)
+            .json({ success: true, files: stored, count: stored.length });
+    },
+);
+
+export const deleteWorkerFile = catchErrors(
+    async (req: Request, res: Response) => {
+        const organizationId = req.orgId;
+        const workerId = param(req, "workerId");
+        const documentId = param(req, "fileId"); // route param stays as :fileId for back-compat
+
+        await workerService.deleteWorkerDocument({
+            organizationId,
+            workerId,
+            documentId,
+        });
+        return res
+            .status(200)
+            .json({ success: true, message: "Document deleted" });
+    },
+);
+
+export const getWorkerFiles = catchErrors(
+    async (req: Request, res: Response) => {
+        const organizationId = req.orgId;
+        const workerId = param(req, "workerId");
+
+        const docs = await workerService.listWorkerDocuments({
+            workerId,
+            organizationId,
+        });
+
+        return res.status(200).json(docs);
+    },
+);
+
+export const getWorkerHistory = catchErrors(
+    async (req: Request, res: Response) => {
+        const organizationId = req.orgId;
+        const workerId = param(req, "workerId");
+
+        const result = await workerService.getWorkerHistory({
+            organizationId,
+            workerId,
+        });
+        return res.status(200).json({ success: true, data: result });
+    },
+);

@@ -7,10 +7,12 @@ import SearchHeaderResuable from '@/components/layout/headers/SearchHeaderResuab
 import ModalOverlay from '@/components/modal/ModalOverlay';
 import { useState } from 'react';
 import { useEmployeeModal } from '../hooks/useEmployeeModal';
+import { EmployeeDataArray } from '../schemas/schema';
 import ModalMitarbeiter from './modals/create-employee-modal/EmployeeModal';
 import ModalEditMitarbeiter from './modals/edit-employee-modal/EmployeeModal';
 import EmployeeInfoModal from './modals/employee-info-modal/EmployeeInfoModal';
 import ViewEmployeeModal from './modals/view-employeedata-modal/ViewEmployeeModal';
+import EmployeeSidebar from './sidebar/EmployeeSidebar';
 import EmployeeTableHeader from './table/EmployeeTableHeader';
 import EmployeeTableBody from './table/TableBody';
 
@@ -19,9 +21,12 @@ function EmployeeOverview() {
   const { modalState, openCreateEmployee, closeEmployee } = useEmployeeModal();
   const { handleDeleteEmployee, isPending } = useDeleteEmployee();
   const [search, setSearch] = useState('');
+  const [selectedEmployee, setSelectedEmployee] = useState<
+    EmployeeDataArray[number] | null
+  >(null);
 
   const filteredEmployeesByFirstName = (EmployeeData ?? []).filter((employee) =>
-    employee.vorname.toLowerCase().includes(search.toLowerCase())
+    employee.firstName.toLowerCase().includes(search.toLowerCase())
   );
 
   const renderModal = () => {
@@ -62,7 +67,7 @@ function EmployeeOverview() {
   if (isLoading || isPending) return <LoadingAlert />;
 
   return (
-    <div className="mx-auto flex h-full w-5xl flex-col overflow-auto rounded-2xl bg-card p-6 md:max-w-8xl">
+    <div className="mx-auto flex h-full w-5xl flex-col overflow-auto rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
       <div className="h-full w-full flex flex-col">
         <SearchHeaderResuable
           search={search}
@@ -75,9 +80,15 @@ function EmployeeOverview() {
           <EmployeeTableBody
             filteredEmployeesByFirstName={filteredEmployeesByFirstName}
             handleDeleteEmployee={handleDeleteEmployee}
+            onSelectEmployee={setSelectedEmployee}
           />
         </Table>
       </div>
+      <EmployeeSidebar
+        employee={selectedEmployee}
+        isOpen={selectedEmployee !== null}
+        onClose={() => setSelectedEmployee(null)}
+      />
       {renderModal()}
     </div>
   );

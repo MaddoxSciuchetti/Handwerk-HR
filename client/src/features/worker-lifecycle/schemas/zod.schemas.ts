@@ -33,16 +33,28 @@ export const addWorkerBaseSchema = z.object({
   adresse: z.string().min(1, 'erforderlich'),
   eintrittsdatum: workerDateSchema,
   position: z.string().min(1, 'Position erforderlich'),
+  // Optional: when set, every template item becomes a task on the new worker.
+  templateId: z.string().uuid().optional(),
 });
 
 export const OnboardingValidation = addWorkerBaseSchema.extend({
   type: z.literal('Onboarding'),
 });
 
-export const OffboardingValidation = addWorkerBaseSchema.extend({
-  type: z.literal('Offboarding'),
-  austrittsdatum: workerDateSchema,
-});
+export const OffboardingValidation = addWorkerBaseSchema
+  .extend({
+    type: z.literal('Offboarding'),
+    austrittsdatum: workerDateSchema,
+  })
+  .refine(
+    (data) =>
+      new Date(data.austrittsdatum).getTime() >=
+      new Date(data.eintrittsdatum).getTime(),
+    {
+      message: 'An error occurred',
+      path: ['austrittsdatum'],
+    }
+  );
 
 export const addWorkerSchema = z.discriminatedUnion('type', [
   OnboardingValidation,

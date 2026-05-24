@@ -1,48 +1,73 @@
-import { OK } from "@/constants/http";
+import { NOT_FOUND, OK } from "@/constants/http";
+import { editAbsenceBodySchema } from "@/schemas/employee.schemas";
 import {
+    computeIsAbsent,
     queryEmployee,
     queryEmployeeById,
     queryEmployeeWorkerData,
     removeEmployee,
     updateAbsenceData,
 } from "@/services/employee.service";
+import appAssert from "@/utils/appAssert";
 import catchErrors from "@/utils/catchErrors";
 
 export const getEmployeeWorkerData = catchErrors(async (req, res) => {
-    const data = await queryEmployeeWorkerData();
-    return res.status(OK).json(data);
+    const orgId = req.orgId;
+    const data = await queryEmployeeWorkerData(orgId);
+
+    const result = data.map((engagement) => ({
+        ...engagement,
+        responsibleUser: {
+            ...engagement.responsibleUser,
+            isAbsent: computeIsAbsent(engagement.responsibleUser.absences),
+        },
+    }));
+
+    return res.status(OK).json(result);
 });
 
 export const getEmployee = catchErrors(async (req, res) => {
-    const EmployeeData = await queryEmployee();
-    return res.status(OK).json(EmployeeData);
+    const orgId = req.orgId;
+    const employees = await queryEmployee(orgId);
+
+    const result = employees.map((emp) => ({
+        ...emp,
+        isAbsent: computeIsAbsent(emp.absences),
+    }));
+
+    return res.status(OK).json(result);
 });
 
 export const getEmployeeById = catchErrors(async (req, res) => {
-    const { id } =
-        typeof req.params.id === "string"
-            ? { id: req.params.id }
-            : { id: req.params.id?.[0] };
-    const employee = await queryEmployeeById(id);
-    if (!employee) {
-        return res.status(404).json({ message: "Employee not found" });
-    }
-    return res.status(OK).json(employee);
+    const id = req.params.id as string;
+    const orgId = req.orgId;
+
+    const employee = await queryEmployeeById(id, orgId);
+    appAssert(employee, NOT_FOUND, "Employee not found");
+
+    return res.status(OK).json({
+        ...employee,
+        isAbsent: computeIsAbsent(employee.absences),
+    });
 });
 
-export const deleteEmplyoee = catchErrors(async (req, res) => {
+export const deleteEmployee = catchErrors(async (req, res) => {
     const id = req.params.id as string;
-    const chefId = req.userId;
-    console.log(id);
+    const orgId = req.orgId;
 
-    const deleteEmployeeResult = await removeEmployee(id, chefId);
+    await removeEmployee(id, orgId);
 
-    return res.status(OK).json(deleteEmployeeResult);
+    return res.status(OK).json({ message: "Employee removed successfully" });
 });
 
 export const editAbsenceData = catchErrors(async (req, res) => {
-    const data = req.body;
+    const orgId = req.orgId;
+    const body = editAbsenceBodySchema.parse(req.body);
 
-    const editAbsenceResult = await updateAbsenceData(data);
-    return res.status(OK).json(editAbsenceResult);
+    const result = await updateAbsenceData({
+        ...body,
+        orgId,
+    });
+
+    return res.status(OK).json(result);
 });

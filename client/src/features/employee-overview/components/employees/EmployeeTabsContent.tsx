@@ -1,24 +1,24 @@
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { SetStateAction } from 'react';
-import { EmployeeWorker } from '../../types/employeeform.types';
+import { WorkerEngagement } from '../../schemas/employeeform.schemas';
 import { EmployeeTabsData } from './EmployeeTabsData';
 
 type CeoTabsContentProps = {
   selectedUser: string;
-  cleanData: Array<[string, EmployeeWorker]>;
+  tasksByEmployee: Array<[string, WorkerEngagement[]]>;
   setModalOpen: (value: SetStateAction<boolean>) => void;
 };
 
 function EmployeeTabsContent({
   selectedUser,
-  cleanData,
+  tasksByEmployee,
   setModalOpen,
 }: CeoTabsContentProps) {
   return (
     <Tabs>
       <TabsContent value={selectedUser} className="mt-10">
         <EmployeeTabsData
-          cleanData={cleanData}
+          tasksByEmployee={tasksByEmployee}
           user={selectedUser}
           onTaskClick={() => setModalOpen(true)}
         />

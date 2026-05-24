@@ -7,143 +7,523 @@ datasource db {
 
 }
 
-model employee_forms {
-  id           Int           @id @default(autoincrement())
-  user_id      Int
-  timestamp    DateTime?     @default(now()) @db.Timestamp(6)
-  form_type    String
-  worker_files WorkerFiles[]
-  users        users         @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "employee_forms_users")
-  form_inputs  form_inputs[]
+enum OrgMemberRole {
+  admin
+  worker
 }
 
-model form_fields {
-  form_field_id Int           @id @default(autoincrement())
-  description   String?
-  order_index   Int?
-  timestamp     DateTime?     @default(now()) @db.Timestamp(6)
-  owner         String        @default("cmknti1f800028tmmhf5u5627")
-  template_type TemplateType?  @default(ONBOARDING)
-  auth_user     User          @relation(fields: [owner], references: [id])
-  form_inputs   form_inputs[]
-}
-
-model form_inputs {
-  id               Int               @id @default(autoincrement())
-  employee_form_id Int
-  form_field_id    Int
-  status           String?           @db.VarChar(55)
-  edit             String?
-  timestamp        DateTime?         @default(now()) @db.Timestamp(6)
-  completed        Boolean           @default(false)
-  HistoryFormData  HistoryFormData[]
-  employee_forms   employee_forms    @relation(fields: [employee_form_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "form_inputs_employee_forms")
-  form_fields      form_fields       @relation(fields: [form_field_id], references: [form_field_id], onDelete: Cascade, onUpdate: NoAction, map: "form_inputs_form_fields")
-}
-
-model users {
-  id             Int              @id @default(autoincrement())
-  email          String?          @unique @db.Citext
-  adresse        String
-  austrittsdatum DateTime?        @db.Date
-  archivedAt     DateTime?        @db.Timestamp(6)
-  archivedBy     String?
-  createdAt      DateTime         @default(now()) @db.Timestamp(6)
-  eintrittsdatum DateTime         @db.Date
-  geburtsdatum   DateTime         @db.Date
-  nachname       String
-  position       String
-  updatedAt      DateTime         @updatedAt @db.Timestamp(6)
-  vorname        String
-  archivedByUser User?            @relation("WorkerArchivedBy", fields: [archivedBy], references: [id], onDelete: SetNull)
-  employee_forms employee_forms[]
-
-  @@index([archivedAt])
-}
-
-model Session {
-  id        String   @id @default(cuid())
-  userId    String
-  userAgent String?
-  createdAt DateTime @default(now())
-  expiresAt DateTime @default(dbgenerated("(now() + '30 days'::interval)"))
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  @@index([userId])
-}
 
 model User {
-  id                String             @id @default(cuid())
-  vorname String  @db.VarChar(55) @default("TestVorname")
-  nachname String @db.VarChar(55) @default("TestVorname")
-  cloud_url String         @default("something")@db.VarChar(500) 
-  email             String             @unique @db.Citext
-  password          String
-  verified          Boolean            @default(false)
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  user_permission   UserRole           @default(MITARBEITER)
-  historyChanges    HistoryFormData[]
-  sessions          Session[]
-  verificationCodes VerificationCode[]
-  owned_fields      form_fields[]
-  employeeStatus    EmployeeStatus[]   @relation("absent_user")
-  substituteFor     EmployeeStatus[]   @relation("substitute_user")
-  archivedWorkers   users[]            @relation("WorkerArchivedBy")
+  id                     String               @id @default(uuid())
+  firstName              String               @map("first_name") @db.VarChar(120)
+  lastName               String               @map("last_name") @db.VarChar(120)
+  displayName            String?              @map("display_name") @db.VarChar(200)
+  email                  String               @unique @db.VarChar(254)
+  passwordHash           String               @map("password_hash") @db.VarChar(255)
+  avatarUrl              String?              @map("avatar_url") @db.VarChar(2048)
+  phoneNumber            String?              @map("phone_number") @db.VarChar(32)
+  phoneVerified          Boolean              @default(false) @map("phone_verified")
+  isVerified             Boolean              @default(false) @map("is_verified")
+  status                 UserStatus           @default(active)
+  createdAt              DateTime             @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt              DateTime             @updatedAt @map("updated_at") @db.Timestamptz()
+
+  refreshTokens          RefreshToken[]
+  verificationCodes      NewVerificationCode[]
+  organizationMembers    OrganizationMember[]
+  sentInvitations        Invitation[]          @relation("InvitedBy")
+  createdWorkers         Worker[]              @relation("WorkerCreatedBy")
+  uploadedDocuments      WorkerDocument[]
+  responsibleEngagements WorkerEngagement[]
+  createdIssues          Issue[]               @relation("IssueCreatedBy")
+  assignedIssues         Issue[]               @relation("IssueAssignedTo")
+  issueAuditLogs         IssueAuditLog[]
+  comments               Comment[]
+  createdTemplates       IssueTemplate[]
+  defaultAssignedTemplateItems TemplateItem[] @relation("TemplateItemDefaultAssignee")
+  createdOrganizations   Organization[]
+  absences               Absence[]             @relation("UserAbsences")
+  substitutingFor        Absence[]             @relation("SubstituteAbsences")
+  subscriptionAuditLogs  SubscriptionAuditLog[]
+
+  @@map("users")
 }
 
-model EmployeeStatus {
-  id        Int      @id @default(autoincrement())
-  userId String @unique
-  absence String? 
-  absencetype String?
-  absencebegin DateTime?
-  absenceEnd DateTime?
-  substitute String?
-  user      User     @relation("absent_user", fields: [userId], references: [id], onDelete: Cascade)
-  sub_user     User?     @relation("substitute_user", fields: [substitute], references: [id])
+model RefreshToken {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  tokenHash  String    @unique @map("token_hash") @db.VarChar(128)
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz()
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz()
+  deviceName String?   @map("device_name") @db.VarChar(200)
+  deviceType String?   @map("device_type") @db.VarChar(64)
+  ipAddress  String?   @map("ip_address") @db.VarChar(45)
+  userAgent  String?   @map("user_agent") @db.VarChar(512)
+  lastUsedAt DateTime? @map("last_used_at") @db.Timestamptz()
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  user       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
+  @@map("refresh_tokens")
 }
 
-model VerificationCode {
-  id        String   @id @default(cuid())
-  userId    String
-  type      String
-  createdAt DateTime @default(now())
-  expiresAt DateTime
+model NewVerificationCode {
+  id        String               @id @default(uuid())
+  userId    String               @map("user_id")
+  type      VerificationCodeType
+  expiresAt DateTime             @map("expires_at") @db.Timestamptz()
+  usedAt    DateTime?            @map("used_at") @db.Timestamptz()
+  createdAt DateTime             @default(now()) @map("created_at") @db.Timestamptz()
+
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("new_verification_codes")
+}
+
+
+model Organization {
+  id              String                 @id @default(uuid())
+  createdByUserId String?                @map("created_by_user_id")
+  name            String                @db.VarChar(255)
+  slug            String                 @unique @db.VarChar(120)
+  logoUrl         String?                @map("logo_url") @db.VarChar(2048)
+  description     String?               @db.VarChar(5000)
+  email           String?               @db.VarChar(254)
+  phoneNumber     String?                @map("phone_number") @db.VarChar(32)
+  websiteUrl      String?                @map("website_url") @db.VarChar(2048)
+  country         String?               @db.VarChar(3)
+  timezone        String?               @db.VarChar(64)
+  language        String?               @db.VarChar(16)
+  industry        String?               @db.VarChar(120)
+  size            OrganizationSize?
+  status          OrganizationStatusEnum @default(active)
+  createdAt       DateTime               @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime               @updatedAt @map("updated_at") @db.Timestamptz()
+
+  createdBy       User?                  @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+  members         OrganizationMember[]
+  workers         Worker[]
+  invitations     Invitation[]
+  issueTemplates  IssueTemplate[]
+  engagements     WorkerEngagement[]
+  subscription    Subscription?
+  absences        Absence[]
+
+
+  @@map("organizations")
+}
+
+model OrganizationMember {
+  id             String         @id @default(uuid())
+  userId         String         @map("user_id")
+  organizationId String         @map("organization_id")
+  membershipRole OrgMemberRole  @default(worker) @map("membership_role")
+  status         MemberStatus   @default(active)
+  joinedAt       DateTime?      @map("joined_at") @db.Timestamptz()
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([userId])
+  @@index([organizationId])
+  @@map("organization_members")
+}
+
+model WorkerEngagement {
+  id                String             @id @default(uuid())
+  workerId          String             @map("worker_id")
+  organizationId    String             @map("organization_id")
+  responsibleUserId String             @map("responsible_user_id")
+  status            EngagementProgress @default(pending)
+  type              EngagementType
+  startDate         DateTime?          @map("start_date") @db.Date
+  endDate           DateTime?          @map("end_date") @db.Date
+  completedAt       DateTime?          @map("completed_at") @db.Timestamptz()
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz()
+
+  worker            Worker             @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  responsibleUser   User               @relation(fields: [responsibleUserId], references: [id], onDelete: Restrict)
+  issues            Issue[]
+
+  @@index([workerId])
+  @@index([organizationId])
+  @@index([status])
+  @@map("worker_engagements")
+}
+
+model Invitation {
+  id                     String           @id @default(uuid())
+  organizationId         String           @map("organization_id")
+  invitedByUserId        String           @map("invited_by_user_id")
+  invitedMembershipRole  OrgMemberRole    @default(worker) @map("invited_membership_role")
+  email                  String           @db.VarChar(254)
+  tokenHash              String           @unique @map("token_hash") @db.VarChar(128)
+  status                 InvitationStatus @default(pending)
+  expiresAt              DateTime         @map("expires_at") @db.Timestamptz()
+  acceptedAt             DateTime?        @map("accepted_at") @db.Timestamptz()
+  createdAt              DateTime         @default(now()) @map("created_at") @db.Timestamptz()
+
+  organization           Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invitedBy              User             @relation("InvitedBy", fields: [invitedByUserId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([email])
+  @@map("invitations")
+}
+
+
+model Worker {
+  id               String             @id @default(uuid())
+  organizationId   String             @map("organization_id")
+  createdByUserId  String             @map("created_by_user_id")
+  firstName        String             @map("first_name") @db.VarChar(120)
+  lastName         String             @map("last_name") @db.VarChar(120)
+  email            String             @db.VarChar(254)
+  phoneNumber      String?            @map("phone_number") @db.VarChar(32)
+  birthday         DateTime?          @db.Date
+  position         String?            @db.VarChar(160)
+  street           String?            @db.VarChar(255)
+  city             String?            @db.VarChar(120)
+  state            String?            @db.VarChar(120)
+  postalCode       String?            @map("postal_code") @db.VarChar(24)
+  country          String?            @db.VarChar(3)
+  entryDate        DateTime?          @map("entry_date") @db.Date
+  exitDate         DateTime?          @map("exit_date") @db.Date
+  status           WorkerStatus       @default(active)
+  createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime           @updatedAt @map("updated_at") @db.Timestamptz()
+
+  organization     Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy        User               @relation("WorkerCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  documents        WorkerDocument[]
+  engagements      WorkerEngagement[]
+
+  @@index([organizationId])
+  @@index([email])
+  @@map("workers")
+}
+
+model WorkerDocument {
+  id               String              @id @default(uuid())
+  workerId         String              @map("worker_id")
+  uploadedByUserId String              @map("uploaded_by_user_id")
+  name             String              @db.VarChar(255)
+  fileUrl          String              @map("file_url") @db.VarChar(2048)
+  fileType         DocumentFileType    @map("file_type")
+  fileSizeBytes    Int?                @map("file_size_bytes")
+  mimeType         String?             @map("mime_type") @db.VarChar(128)
+  createdAt        DateTime            @default(now()) @map("created_at") @db.Timestamptz()
+
+  worker           Worker              @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  uploadedBy       User                @relation(fields: [uploadedByUserId], references: [id], onDelete: Restrict)
+
+  @@index([workerId])
+  @@map("worker_documents")
+}
+
+
+model IssueTemplate {
+  id              String                 @id @default(uuid())
+  organizationId  String                 @map("organization_id")
+  createdByUserId String                 @map("created_by_user_id")
+  name            String                 @map("template_name") @db.VarChar(200)
+  description     String?                @map("template_description") @db.VarChar(5000)
+  isActive        Boolean                @default(true) @map("is_active")
+  createdAt       DateTime               @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime               @updatedAt @map("updated_at") @db.Timestamptz()
+
+  organization    Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy       User                   @relation(fields: [createdByUserId], references: [id], onDelete: Restrict)
+  items           TemplateItem[]
+
+  @@index([organizationId])
+  @@map("issue_templates")
+}
+
+model TemplateItem {
+  id                      String             @id @default(uuid())
+  issueTemplateId         String             @map("issue_template_id")
+  title                   String             @db.VarChar(400)
+  description             String?            @db.VarChar(5000)
+  defaultPriority         IssuePriority?     @map("default_priority")
+  defaultStatus           IssueStatus        @default(open) @map("default_status")
+  defaultAssigneeUserId   String?            @map("default_assignee_user_id")
+  orderIndex              Int                @default(0) @map("order_index")
+  createdAt               DateTime           @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt               DateTime           @updatedAt @map("updated_at") @db.Timestamptz()
+
+  issueTemplate           IssueTemplate      @relation(fields: [issueTemplateId], references: [id], onDelete: Cascade)
+  defaultAssignee         User?              @relation("TemplateItemDefaultAssignee", fields: [defaultAssigneeUserId], references: [id], onDelete: SetNull)
+  issues                  Issue[]
+
+  @@index([issueTemplateId])
+  @@index([defaultAssigneeUserId])
+  @@map("template_items")
+}
+
+
+model Issue {
+  id                 String             @id @default(uuid())
+  workerEngagementId String             @map("worker_engagement_id")
+  createdByUserId    String             @map("created_by_user_id")
+  assigneeUserId     String?            @map("assignee_user_id")
+  templateItemId     String?            @map("template_item_id")
+  status             IssueStatus        @default(open)
+  title              String             @db.VarChar(400)
+  description        String?            @db.VarChar(8000)
+  priority           IssuePriority      @default(no_priority)
+  dueDate            DateTime?          @map("due_date") @db.Date
+  createdAt          DateTime           @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt          DateTime           @updatedAt @map("updated_at") @db.Timestamptz()
+
+  workerEngagement   WorkerEngagement   @relation(fields: [workerEngagementId], references: [id], onDelete: Cascade)
+  createdBy          User               @relation("IssueCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  assignee           User?              @relation("IssueAssignedTo", fields: [assigneeUserId], references: [id], onDelete: SetNull)
+  templateItem       TemplateItem?      @relation(fields: [templateItemId], references: [id], onDelete: SetNull)
+  comments           Comment[]
+  auditLogs          IssueAuditLog[]
+
+  @@index([workerEngagementId])
+  @@index([assigneeUserId])
+  @@index([status])
+  @@map("issues")
+}
+
+model IssueAuditLog {
+  id          String   @id @default(uuid())
+  issueId     String   @map("issue_id")
+  actorUserId String   @map("actor_user_id")
+  action      String   @db.VarChar(160)
+  oldValue    Json?    @map("old_value")
+  newValue    Json?    @map("new_value")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  issue       Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  actorUser   User     @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([issueId])
+  @@map("issue_audit_logs")
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  issueId   String   @map("issue_id")
+  userId    String   @map("user_id")
+  body      String   @db.VarChar(10000)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  issue     Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([issueId])
+  @@map("comments")
+}
+
+
+model Subscription {
+  id                      String             @id @default(uuid())
+  organizationId        String               @unique @map("organization_id")
+  plan                    SubscriptionPlan?
+  status                  SubscriptionStatus @default(trialing)
+  trialEndsAt             DateTime?          @map("trial_ends_at") @db.Timestamptz()
+  currentPeriodStart      DateTime?          @map("current_period_start") @db.Timestamptz()
+  currentPeriodEnd        DateTime?          @map("current_period_end") @db.Timestamptz()
+  stripeCustomerId        String?            @unique @map("stripe_customer_id") @db.VarChar(255)
+  stripeSubscriptionId    String?            @unique @map("stripe_subscription_id") @db.VarChar(255)
+  provider                String?           @db.VarChar(64)
+  providerPaymentMethodId String?          @map("provider_payment_method_id") @db.VarChar(255)
+  cardBrand               String?          @map("card_brand") @db.VarChar(32)
+  cardLast4               String?          @map("card_last4") @db.Char(4)
+  cardExpMonth            Int?             @map("card_exp_month") @db.SmallInt
+  cardExpYear             Int?             @map("card_exp_year") @db.SmallInt
+  createdAt               DateTime         @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt               DateTime         @updatedAt @map("updated_at") @db.Timestamptz()
+
+  organization            Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invoices                Invoice[]
+  auditLogs               SubscriptionAuditLog[]
+
+  @@map("subscriptions")
+}
+
+model SubscriptionAuditLog {
+  id             String       @id @default(uuid())
+  subscriptionId String       @map("subscription_id")
+  actorUserId    String?      @map("actor_user_id")
+  source         AuditSource  @default(user)
+  action         String       @db.VarChar(160)
+  oldValue       Json?        @map("old_value")
+  newValue       Json?        @map("new_value")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz()
+
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  actorUser      User?        @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([subscriptionId])
+  @@index([createdAt])
+  @@map("subscription_audit_logs")
+}
+
+model Invoice {
+  id                String        @id @default(uuid())
+  subscriptionId    String        @map("subscription_id")
+  providerInvoiceId String        @unique @map("provider_invoice_id") @db.VarChar(255)
+  amountCents       Int           @map("amount_cents")
+  currency          String        @default("USD") @db.VarChar(3)
+  status            InvoiceStatus @default(draft)
+  invoicePdfUrl     String?       @map("invoice_pdf_url") @db.VarChar(2048)
+  paidAt            DateTime?     @map("paid_at") @db.Timestamptz()
+  dueDate           DateTime?     @map("due_date") @db.Date
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz()
+
+  subscription      Subscription  @relation(fields: [subscriptionId], references: [id], onDelete: Restrict)
+
+  @@index([subscriptionId])
+  @@map("invoices")
+}
+
+model Absence {
+  id           String      @id @default(uuid())
+  userId       String      @map("user_id")
+  orgId        String      @map("org_id")
+  absenceType  AbsenceType @map("absence_type")
+  startDate    DateTime    @map("start_date") @db.Timestamptz()
+  endDate      DateTime    @map("end_date") @db.Timestamptz()
+  substituteId String?     @map("substitute_id")
+
+  user         User         @relation("UserAbsences", fields: [userId], references: [id])
+  substitute   User?        @relation("SubstituteAbsences", fields: [substituteId], references: [id])
+  organization Organization @relation(fields: [orgId], references: [id])
+
+  createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt    DateTime    @updatedAt @map("updated_at") @db.Timestamptz()
+
   @@index([userId])
+  @@index([orgId])
+  @@map("absences")
 }
 
-model HistoryFormData {
-  id            Int         @id @default(autoincrement())
-  form_input_id Int
-  status        String?     @db.VarChar(55)
-  edit          String?
-  timestamp     DateTime?   @default(now()) @db.Timestamp(6)
-  changed_by    String? 
-  auth_user     User?        @relation(fields: [changed_by], references: [id])
-  form_inputs   form_inputs @relation(fields: [form_input_id], references: [id], onDelete: Cascade)
+
+
+
+enum AbsenceType {
+    SICK
+    VACATION
+    PARENTAL_LEAVE
+    UNPAID
+    OTHER
 }
 
-model WorkerFiles {
-  id                Int            @id @default(autoincrement())
-  employee_form_id  Int
-  original_filename String         @db.VarChar(255)
-  file_size         Int
-  content_type      String         @db.VarChar(100)
-  cloud_url         String         @db.VarChar(500)
-  cloud_key         String         @db.VarChar(500)
-  uploaded_at       DateTime       @default(now())
-  employee_forms    employee_forms @relation(fields: [employee_form_id], references: [id], onDelete: Cascade)
+enum UserStatus {
+  active
+  inactive
+  suspended
 }
 
-enum UserRole {
-  MITARBEITER
-  CHEF
+enum OrganizationSize {
+  size_1_10     @map("1-10")
+  size_11_50    @map("11-50")
+  size_51_200   @map("51-200")
+  size_201_500  @map("201-500")
+  size_500_plus @map("500+")
 }
 
-enum TemplateType {
-  ONBOARDING
-  OFFBOARDING
+enum OrganizationStatusEnum {
+  active
+  suspended
+  deleted
 }
+
+enum MemberStatus {
+  active
+  inactive
+  suspended
+}
+
+enum VerificationCodeType {
+  email_verify
+  password_reset
+}
+
+enum InvitationStatus {
+  pending
+  accepted
+  expired
+  revoked
+}
+
+enum WorkerStatus {
+  active
+  inactive
+}
+
+enum DocumentFileType {
+  contract
+  id
+  certificate
+  other
+}
+
+enum EngagementType {
+  onboarding
+  offboarding
+  transfer
+}
+
+enum IssuePriority {
+  urgent
+  high
+  medium
+  low
+  no_priority
+}
+
+enum EngagementProgress {
+  pending
+  in_progress
+  completed
+  cancelled
+}
+
+enum IssueStatus {
+  open
+  in_progress
+  done
+  cancelled
+}
+
+enum AuditSource {
+  user
+  webhook
+  system
+}
+
+enum SubscriptionPlan {
+  starter
+  pro
+  enterprise
+}
+
+enum SubscriptionStatus {
+  active
+  past_due
+  cancelled
+  trialing
+}
+
+enum InvoiceStatus {
+  draft
+  open
+  paid
+  void
+  uncollectible
+}
+

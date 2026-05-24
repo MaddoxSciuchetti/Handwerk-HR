@@ -6,6 +6,9 @@ function useWorkerMutations() {
     workerLifecycleMutations.deleteWorker()
   );
 
+  const { mutate: deleteWorkersMutation, isPending: isDeletingWorkers } =
+    useMutation(workerLifecycleMutations.deleteWorkers());
+
   const { mutate: archiveWorkerMutation } = useMutation(
     workerLifecycleMutations.archiveWorker()
   );
@@ -16,6 +19,8 @@ function useWorkerMutations() {
 
   return {
     deleteTaskMutation,
+    deleteWorkersMutation,
+    isDeletingWorkers,
     archiveWorkerMutation,
     unarchiveWorkerMutation,
   };

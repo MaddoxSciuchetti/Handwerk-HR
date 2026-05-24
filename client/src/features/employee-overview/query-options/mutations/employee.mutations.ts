@@ -4,9 +4,9 @@ import {
   RegisterRequest,
   RegisterResponse,
 } from '@/features/auth/types/auth.types';
-import { User } from '@/features/user-profile/types/auth.type';
 import { mutationOptions } from '@tanstack/react-query';
 import {
+  DeleteEmployeeResponse,
   deleteEmployeeHandler,
   editEmployeeAbsence,
 } from '../../api/employee-overview.api';
@@ -26,7 +26,7 @@ export const employeeMutations = {
   },
 
   deleteEmployee: () => {
-    return mutationOptions<User, Error, string>({
+    return mutationOptions<DeleteEmployeeResponse, Error, string>({
       mutationFn: deleteEmployeeHandler,
       onSuccess: () => {
         queryClient.invalidateQueries({

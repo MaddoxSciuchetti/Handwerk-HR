@@ -6,7 +6,10 @@ function useCurrentBSBEmployee(
   selectedUser: string | null
 ) {
   const currentBSBEmployee = useMemo(
-    () => allEmployeeData?.filter((item) => item.owner === selectedUser) || [],
+    () =>
+      allEmployeeData?.filter(
+        (item) => item.responsibleUser.id === selectedUser
+      ) || [],
     [selectedUser, allEmployeeData]
   );
 

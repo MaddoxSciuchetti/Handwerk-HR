@@ -2,13 +2,13 @@ import { EmployeeInfoResponse } from '@/types/api.types';
 import { calculateData, dateObject } from './calculateDate.utils';
 
 export const getAbsenceInfo = (e: EmployeeInfoResponse) => {
-  const status = e.employeeStatus?.[0];
-  if (!status) return null;
+  const absence = e.absences?.[0];
+  if (!absence) return null;
 
-  const isAbsent = calculateData(
-    new Date(status.absencebegin || ''),
-    new Date(status.absenceEnd || ''),
+  const isCurrent = calculateData(
+    new Date(absence.startDate),
+    new Date(absence.endDate),
     dateObject
   );
-  return isAbsent ? status : null;
+  return isCurrent ? absence : null;
 };

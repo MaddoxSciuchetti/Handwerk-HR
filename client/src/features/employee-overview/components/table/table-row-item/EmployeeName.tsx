@@ -5,17 +5,18 @@ type EmployeeNameProps = {
 };
 
 const EmployeeName = ({ employee }: EmployeeNameProps) => {
+  const isAdmin = employee.organizationMembers[0]?.membershipRole === 'admin';
+
   return (
     <>
-      {employee.user_permission === 'CHEF' ? (
+      {isAdmin ? (
         <p>
           <span className="text-(--status-info-foreground)">Ich:</span> {''}
-          {employee.vorname} {employee.nachname}
+          {employee.firstName} {employee.lastName}
         </p>
       ) : (
         <p>
-          {employee.vorname}
-          {employee.nachname}
+          {employee.firstName} {employee.lastName}
         </p>
       )}
     </>

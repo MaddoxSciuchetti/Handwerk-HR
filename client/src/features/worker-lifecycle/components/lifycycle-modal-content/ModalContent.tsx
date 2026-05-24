@@ -1,36 +1,40 @@
-import MediumWrapper from '@/components/modal/modalSizes/MediumWrapper';
-import { LifecycleType } from '@/features/task-management/types/index.types';
-import { useState } from 'react';
+import { AddWorker } from '@/features/worker-lifecycle/schemas/zod.schemas';
+import type { Dispatch, SetStateAction } from 'react';
+import { OPTIONS } from '../../consts/radio.consts';
 import RadioSelect from './RadioSelect';
 import { WorkerForm } from './WorkerForm';
 
-type ModalProps = {
-  toggleModal: () => void;
-  className?: string;
+type ModalContentProps = {
+  toggleModal?: () => void;
+  selectedOption: AddWorker['type'] | null;
+  setSelectedOption: Dispatch<SetStateAction<AddWorker['type'] | null>>;
+  /** When false, header provides Zurück (e.g. WorkerSidebar). */
+  showInlineFormBackButton?: boolean;
 };
 
-const ModalContent = ({ toggleModal }: ModalProps) => {
-  const [selectedOption, setSelectedOption] = useState<LifecycleType | null>(
-    null
-  );
+const ModalContent = ({
+  toggleModal,
+  selectedOption,
+  setSelectedOption,
+  showInlineFormBackButton = true,
+}: ModalContentProps) => {
+  if (selectedOption === null) {
+    return (
+      <RadioSelect
+        selectedOption={selectedOption}
+        setSelectedOption={setSelectedOption}
+        options={OPTIONS}
+      />
+    );
+  }
 
   return (
-    <MediumWrapper>
-      <div className="h-full w-xl max-w-xl">
-        {selectedOption === null ? (
-          <RadioSelect
-            selectedOption={selectedOption}
-            setSelectedOption={setSelectedOption}
-          />
-        ) : (
-          <WorkerForm
-            setSelectedOption={setSelectedOption}
-            type={selectedOption}
-            toggleModal={toggleModal}
-          />
-        )}
-      </div>
-    </MediumWrapper>
+    <WorkerForm
+      setSelectedOption={setSelectedOption}
+      type={selectedOption}
+      toggleModal={toggleModal ?? (() => {})}
+      showInlineFormBackButton={showInlineFormBackButton}
+    />
   );
 };
 

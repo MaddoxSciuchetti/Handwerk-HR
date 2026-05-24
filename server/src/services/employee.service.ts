@@ -1,30 +1,99 @@
 import { prisma } from "@/lib/prisma";
-import { AbsenceData } from "@/types/employee.types";
-import { parseGermanDate } from "@/utils/dateParser";
-import resolveOwner from "@/utils/resolverOwner";
+import { AbsenceType } from "@prisma/client";
 
-export const queryEmployeeWorkerData = async () => {
-    const form_fields = await prisma.form_fields.findMany({
+export type UpdateAbsenceParams = {
+    userId: string;
+    orgId: string;
+    absenceType: AbsenceType;
+    startDate: Date;
+    endDate: Date;
+    substituteId?: string;
+};
+
+export const computeIsAbsent = (
+    absences: { startDate: Date; endDate: Date }[],
+) => {
+    const now = new Date();
+    return absences.some((a) => a.startDate <= now && a.endDate >= now);
+};
+
+export const queryEmployeeWorkerData = async (orgId: string) => {
+    return await prisma.workerEngagement.findMany({
+        where: { organizationId: orgId },
+        orderBy: { createdAt: "asc" },
         select: {
-            form_field_id: true,
-            description: true,
-            auth_user: {
+            id: true,
+            type: true,
+            startDate: true,
+            endDate: true,
+            completedAt: true,
+            createdAt: true,
+            updatedAt: true,
+            status: true,
+            worker: {
                 select: {
                     id: true,
-                    vorname: true,
-                    nachname: true,
-                    employeeStatus: {
-                        where: { absenceEnd: { gte: new Date() } },
-                        orderBy: { absenceEnd: "desc" },
+                    firstName: true,
+                    lastName: true,
+                    email: true,
+                    position: true,
+                    status: true,
+                },
+            },
+            responsibleUser: {
+                select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    email: true,
+                    avatarUrl: true,
+                    absences: {
+                        where: { endDate: { gte: new Date() } },
+                        orderBy: { endDate: "desc" },
                         take: 1,
                         select: {
-                            absencebegin: true,
-                            absenceEnd: true,
-                            sub_user: {
+                            absenceType: true,
+                            startDate: true,
+                            endDate: true,
+                            substitute: {
                                 select: {
                                     id: true,
-                                    vorname: true,
-                                    nachname: true,
+                                    firstName: true,
+                                    lastName: true,
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+            issues: {
+                select: {
+                    id: true,
+                    title: true,
+                    description: true,
+                    priority: true,
+                    dueDate: true,
+                    createdAt: true,
+                    updatedAt: true,
+                    status: true,
+                    assignee: {
+                        select: {
+                            id: true,
+                            firstName: true,
+                            lastName: true,
+                            avatarUrl: true,
+                        },
+                    },
+                    auditLogs: {
+                        orderBy: { createdAt: "desc" },
+                        take: 1,
+                        select: {
+                            createdAt: true,
+                            actorUser: {
+                                select: {
+                                    id: true,
+                                    firstName: true,
+                                    lastName: true,
                                 },
                             },
                         },
@@ -32,137 +101,46 @@ export const queryEmployeeWorkerData = async () => {
                 },
             },
         },
-        orderBy: { form_field_id: "asc" },
-    });
-
-    const form_inputs = await prisma.form_inputs.findMany({
-        select: {
-            id: true,
-            form_field_id: true,
-            status: true,
-            timestamp: true,
-            employee_forms: {
-                select: {
-                    users: {
-                        select: {
-                            id: true,
-                            vorname: true,
-                            nachname: true,
-                            email: true,
-                        },
-                    },
-                },
-            },
-            HistoryFormData: {
-                select: { timestamp: true },
-                orderBy: { timestamp: "desc" },
-                take: 1,
-            },
-        },
-    });
-
-    return form_fields.map((field) => {
-        const resolved = resolveOwner(field.auth_user);
-        return {
-            form_field_id: field.form_field_id,
-            description: field.description,
-            owner: field.auth_user.id,
-            ownerName: `${field.auth_user.vorname} ${field.auth_user.nachname}`,
-            isSubstitute: resolved.isSubstitute,
-            substituteName: resolved.isSubstitute
-                ? `${resolved.vorname} ${resolved.nachname}`
-                : null,
-            inputs: form_inputs
-                .filter((input) => input.form_field_id === field.form_field_id)
-                .map((input) => ({
-                    id: input.id,
-                    status: input.status,
-                    timestamp: input.timestamp,
-                    lastChangedAt:
-                        input.HistoryFormData[0]?.timestamp ?? input.timestamp,
-                    employee: input.employee_forms.users,
-                })),
-        };
     });
 };
 
-export const queryEmployee = async () => {
+export const queryEmployee = async (orgId: string) => {
     return await prisma.user.findMany({
+        where: {
+            organizationMembers: {
+                some: { organizationId: orgId },
+            },
+        },
         select: {
             id: true,
-            vorname: true,
-            nachname: true,
+            firstName: true,
+            lastName: true,
+            displayName: true,
             email: true,
-            verified: true,
+            avatarUrl: true,
+            isVerified: true,
+            status: true,
             createdAt: true,
             updatedAt: true,
-            user_permission: true,
-            employeeStatus: {
+            organizationMembers: {
+                where: { organizationId: orgId },
                 select: {
-                    id: true,
-                    absence: true,
-                    absencetype: true,
-                    absencebegin: true,
-                    absenceEnd: true,
-                    substitute: true,
-                    sub_user: {
-                        select: {
-                            id: true,
-                            vorname: true,
-                            nachname: true,
-                        },
-                    },
+                    membershipRole: true,
                 },
             },
-        },
-    });
-};
-
-export const removeEmployee = async (id: string, chefId: string) => {
-    return await prisma.$transaction([
-        prisma.form_fields.updateMany({
-            where: {
-                owner: id,
-            },
-            data: {
-                owner: chefId,
-            },
-        }),
-
-        prisma.historyFormData.updateMany({
-            where: { changed_by: id },
-            data: { changed_by: chefId },
-        }),
-        prisma.user.delete({
-            where: { id },
-        }),
-    ]);
-};
-
-export const queryEmployeeById = async (id: string) => {
-    return await prisma.user.findUnique({
-        where: { id },
-        select: {
-            id: true,
-            vorname: true,
-            nachname: true,
-            email: true,
-            verified: true,
-            user_permission: true,
-            createdAt: true,
-            employeeStatus: {
+            absences: {
+                orderBy: { startDate: "desc" },
                 take: 1,
                 select: {
-                    absence: true,
-                    absencetype: true,
-                    absencebegin: true,
-                    absenceEnd: true,
-                    substitute: true,
-                    sub_user: {
+                    id: true,
+                    absenceType: true,
+                    startDate: true,
+                    endDate: true,
+                    substitute: {
                         select: {
                             id: true,
-                            vorname: true,
-                            nachname: true,
+                            firstName: true,
+                            lastName: true,
                         },
                     },
                 },
@@ -171,25 +149,91 @@ export const queryEmployeeById = async (id: string) => {
     });
 };
 
-export const updateAbsenceData = async (data: AbsenceData) => {
-    return await prisma.employeeStatus.upsert({
+export const queryEmployeeById = async (id: string, orgId: string) => {
+    return await prisma.user.findFirst({
         where: {
-            userId: data.id,
+            id,
+            organizationMembers: {
+                some: { organizationId: orgId },
+            },
         },
-        update: {
-            absence: data.absence,
-            absencetype: data.absencetype,
-            absencebegin: parseGermanDate(data.absencebegin),
-            absenceEnd: parseGermanDate(data.absenceEnd),
-            substitute: data.substitute,
+        select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            displayName: true,
+            email: true,
+            avatarUrl: true,
+            isVerified: true,
+            status: true,
+            createdAt: true,
+            updatedAt: true,
+            organizationMembers: {
+                where: { organizationId: orgId },
+                select: {
+                    membershipRole: true,
+                },
+            },
+            absences: {
+                orderBy: { startDate: "desc" },
+                select: {
+                    id: true,
+                    absenceType: true,
+                    startDate: true,
+                    endDate: true,
+                    substitute: {
+                        select: {
+                            id: true,
+                            firstName: true,
+                            lastName: true,
+                        },
+                    },
+                },
+            },
         },
-        create: {
-            userId: data.id,
-            absence: data.absence,
-            absencetype: data.absencetype,
-            absencebegin: parseGermanDate(data.absencebegin),
-            absenceEnd: parseGermanDate(data.absenceEnd),
-            substitute: data.substitute,
+    });
+};
+
+export const removeEmployee = async (id: string, orgId: string) => {
+    return await prisma.organizationMember.delete({
+        where: {
+            userId_organizationId: {
+                userId: id,
+                organizationId: orgId,
+            },
+        },
+    });
+};
+
+export const updateAbsenceData = async (data: UpdateAbsenceParams) => {
+    const overlapping = await prisma.absence.findFirst({
+        where: {
+            userId: data.userId,
+            startDate: { lte: data.endDate },
+            endDate: { gte: data.startDate },
+        },
+    });
+
+    if (overlapping) {
+        return await prisma.absence.update({
+            where: { id: overlapping.id },
+            data: {
+                absenceType: data.absenceType,
+                startDate: data.startDate,
+                endDate: data.endDate,
+                substituteId: data.substituteId,
+            },
+        });
+    }
+
+    return await prisma.absence.create({
+        data: {
+            userId: data.userId,
+            orgId: data.orgId,
+            absenceType: data.absenceType,
+            startDate: data.startDate,
+            endDate: data.endDate,
+            substituteId: data.substituteId,
         },
     });
 };

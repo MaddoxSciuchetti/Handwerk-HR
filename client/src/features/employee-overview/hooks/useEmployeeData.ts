@@ -1,25 +1,31 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { adminQueries } from '../query-options/queries/admin.queries';
+import { IssueData, WorkerEngagement } from '../schemas/employeeform.schemas';
 import { EmployeeWorker } from '../types/employeeform.types';
+
+const CLOSED_STATUSES = new Set<IssueData['status']>(['done', 'cancelled']);
+
+const isOpenIssue = (issue: IssueData) => !CLOSED_STATUSES.has(issue.status);
 
 function useEmployeeData() {
   const { data, isLoading } = useQuery<EmployeeWorker>(
     adminQueries.EmployeeWorker()
   );
 
-  const tasksByEmployee = useMemo(() => {
+  const tasksByEmployee = useMemo<Array<[string, WorkerEngagement[]]>>(() => {
     if (!data) return [];
-    const groups = new Map<string, EmployeeWorker>();
+    const groups = new Map<string, WorkerEngagement[]>();
 
-    for (const item of data) {
-      const filtered = {
-        ...item,
-        inputs: item.inputs.filter((i) => i.status !== 'erledigt'),
+    for (const engagement of data) {
+      const filtered: WorkerEngagement = {
+        ...engagement,
+        issues: engagement.issues.filter(isOpenIssue),
       };
-      const group = groups.get(item.owner) ?? [];
+      const ownerId = engagement.responsibleUser.id;
+      const group = groups.get(ownerId) ?? [];
       group.push(filtered);
-      groups.set(item.owner, group);
+      groups.set(ownerId, group);
     }
 
     return Array.from(groups.entries());
@@ -27,12 +33,12 @@ function useEmployeeData() {
 
   const openTaskCountsByEmployee = useMemo(() => {
     return new Map(
-      tasksByEmployee.map(([owner, items]) => {
-        const totalOpenTasks = items.reduce(
-          (count, item) => count + item.inputs.length,
+      tasksByEmployee.map(([ownerId, engagements]) => {
+        const totalOpenTasks = engagements.reduce(
+          (count, engagement) => count + engagement.issues.length,
           0
         );
-        return [owner, totalOpenTasks] as const;
+        return [ownerId, totalOpenTasks] as const;
       })
     );
   }, [tasksByEmployee]);

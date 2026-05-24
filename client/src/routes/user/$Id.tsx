@@ -1,10 +1,8 @@
-import TaskManagement from '@/features/task-management/components/tasks/TaskManagement';
-import { LifecycleType } from '@/features/task-management/types/index.types';
+import TaskManagement from '@/features/worker-task-management/components/tasks/WorkerTaskManagement';
 import { createFileRoute } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/user/$Id')({
   validateSearch: (search: Record<string, unknown>) => ({
-    lifecycleType: (search.lifecycleType as LifecycleType) || '',
     workerName: (search.workerName as string) || '',
     prevPage: (search.prevPage as string) || '',
   }),
@@ -12,16 +10,7 @@ export const Route = createFileRoute('/user/$Id')({
 });
 
 function UserPage() {
-  const { Id } = Route.useParams();
-  let workerId = parseInt(Id);
-  const numericId = parseInt(String(workerId));
+  const { Id: workerId } = Route.useParams();
 
-  const { lifecycleType } = Route.useSearch();
-
-  return (
-    <TaskManagement
-      workerId={numericId}
-      lifecycleType={lifecycleType}
-    />
-  );
+  return <TaskManagement workerId={workerId} />;
 }

@@ -1,5 +1,16 @@
-import { WorkerItem } from '@/features/worker-lifecycle/types/index.types';
+import { LifecycleType } from '@/features/task-management/types/index.types';
+import {
+  EngagementType,
+  WorkerRecord,
+} from '@/features/worker-lifecycle/types/index.types';
 
-export const getFirstFormType = (item: WorkerItem) => {
-  return item.employee_forms[0]?.form_type;
+const engagementTypeToLifecycleType = (
+  type: EngagementType | undefined
+): LifecycleType => {
+  if (type === 'offboarding') return 'offboarding';
+  return 'onboarding';
+};
+
+export const getFirstFormType = (item: WorkerRecord): LifecycleType => {
+  return engagementTypeToLifecycleType(item.engagements[0]?.type);
 };

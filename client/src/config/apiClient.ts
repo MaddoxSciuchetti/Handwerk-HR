@@ -1,4 +1,4 @@
-import { UNAUTHORIZED } from '@/constants/http.consts';
+import { FORBIDDEN, UNAUTHORIZED } from '@/constants/http.consts';
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 import { API_URL } from './env';
 import queryClient from './query.client';
@@ -7,15 +7,24 @@ const options = {
   baseURL: API_URL,
   withCredentials: true,
 };
+
+//  * Second axios client (not `API`). It does not use the error handler on `API` below.
+//  * Refresh and retry run here so they cannot fire that handler again and loop forever.
+
 const TokenRefreshClient = axios.create(options);
 TokenRefreshClient.interceptors.response.use((response) => response.data);
 
 const isInvalidAccessToken = (status: number, data: ApiErrorResponse) =>
   status === UNAUTHORIZED && data?.errorCode === 'InvalidAccessToken';
 
+const isSubscriptionAccessDenied = (status: number, data: ApiErrorResponse) =>
+  status === FORBIDDEN && data?.errorCode === 'SubscriptionAccessDenied';
+
 const handleTokenRefresh = async (config: AxiosRequestConfig) => {
   try {
+    // Get a fresh session cookie from the server.
     await TokenRefreshClient.get('/auth/refresh');
+    // Send the failed request again with that cookie. Still on this client so the `API` 401 handler does not run again.
     return TokenRefreshClient(config);
   } catch {
     queryClient.clear();
@@ -43,11 +52,53 @@ API.interceptors.response.use(
     const { status, data } = response;
 
     if (isInvalidAccessToken(status, data)) {
+      // Session expired: refresh it, then try this same request one more time.
       return handleTokenRefresh(config);
+    }
+
+    if (isSubscriptionAccessDenied(status, data)) {
+      const path = window.location.pathname;
+      const onBillingPath =
+        path.startsWith('/settings/payments') ||
+        path.startsWith('/settings/plans');
+      if (!onBillingPath) {
+        window.location.assign('/settings/payments');
+      }
     }
 
     return Promise.reject({ status, ...data });
   }
 );
+
+/**
+ * Typed helpers for this axios instance: the response interceptor returns
+ * `response.data`, but Axios defaults still use `AxiosResponse<T>`. Use these
+ * methods when you want `Promise<T>` (the JSON body) without repeating `<T, T>`.
+ */
+export const apiJson = {
+  get: <T>(url: string, config?: AxiosRequestConfig) =>
+    API.get<T, T>(url, config),
+
+  post: <T, D = unknown>(
+    url: string,
+    data?: D,
+    config?: AxiosRequestConfig<D>
+  ) => API.post<T, T, D>(url, data, config),
+
+  patch: <T, D = unknown>(
+    url: string,
+    data?: D,
+    config?: AxiosRequestConfig<D>
+  ) => API.patch<T, T, D>(url, data, config),
+
+  put: <T, D = unknown>(
+    url: string,
+    data?: D,
+    config?: AxiosRequestConfig<D>
+  ) => API.put<T, T, D>(url, data, config),
+
+  delete: <T = void>(url: string, config?: AxiosRequestConfig) =>
+    API.delete<T, T>(url, config),
+};
 
 export default API;

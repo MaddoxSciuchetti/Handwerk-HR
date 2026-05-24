@@ -1,21 +1,10 @@
 import useEmployeeGroups from '../hooks/useEmployeeGroups';
-import { EmployeeWorker } from './employeeform.types';
+import { WorkerEngagement } from '../schemas/employeeform.schemas';
 
 export type TAccordion = {
   onTaskClick: () => void;
   user: string;
-  tasksByEmployee: Array<[string, EmployeeWorker]>;
-};
-
-export type EmployeeOpenTasks = {
-  employee: { vorname: string; nachname: string; email: string | null };
-  inputs: Array<{
-    description: string;
-    timestamp: Date;
-    lastChangedAt: Date;
-    form_field_id: number;
-    status: string;
-  }>;
+  tasksByEmployee: Array<[string, WorkerEngagement[]]>;
 };
 
 export type EmployeeGroup = ReturnType<

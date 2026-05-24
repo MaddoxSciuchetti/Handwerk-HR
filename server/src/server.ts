@@ -1,17 +1,22 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
 
-import cookieParser from "cookie-parser";
 import { APP_ORIGIN } from "./constants/env";
+import { stripeWebhookHandler } from "./controllers/stripeWebhook.controller";
 import authenticate from "./middleware/authenticate";
 import errorHandler from "./middleware/errorHandler";
+import requireSubscriptionAccess from "./middleware/requireSubscriptionAccess";
 import authRoutes from "./routes/auth.route";
+import billingRoutes from "./routes/billing.route";
 import { employeeRoutes } from "./routes/employee.route";
 import { indexRoutes } from "./routes/index.route";
-import sessionRoutes from "./routes/session.route";
+import inviteRoutes from "./routes/invite.route";
+import orgRoutes from "./routes/org.route";
+import { taskRoutes } from "./routes/tasks.route";
 import { templateRoutes } from "./routes/template.route";
 import testRoutes from "./routes/test.route";
 import { userRoutes } from "./routes/user.route";
@@ -20,18 +25,16 @@ import { worker } from "./routes/worker.route";
 const PORT = process.env.PORT || 3000;
 
 const app = express();
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
 const allowedOrigins = APP_ORIGIN.split(",").map((o) => o.trim());
-console.log("TESTING TESTING");
-console.log("Parsed origins:", allowedOrigins);
 
 app.use(
     cors({
         origin: function (origin, callback) {
-            // Allow undefined origins (like local tools or server-to-server requests)
             if (!origin) return callback(null, true);
 
             if (allowedOrigins.includes(origin)) {
@@ -58,30 +61,35 @@ app.use((req, res, next) => {
     });
     next();
 });
-// home page
+
+app.post(
+    "/webhooks/stripe",
+    express.raw({ type: "application/json" }),
+    stripeWebhookHandler,
+);
+
 app.get("/", (req, res) => {
     res.send("here");
 });
 
-// testing route
-
 app.use("/test", testRoutes);
 
-// auth routes
-
 app.use("/auth", authRoutes);
-app.use("/sessions", authenticate, sessionRoutes);
 
-// protected routes
+app.use("/billing", authenticate, billingRoutes);
 
 app.use("/user", authenticate, userRoutes);
-app.use("/template", authenticate, templateRoutes);
-app.use("/employee", authenticate, employeeRoutes);
+app.use("/template", authenticate, requireSubscriptionAccess, templateRoutes);
+app.use("/employee", authenticate, requireSubscriptionAccess, employeeRoutes);
 
-app.use("/index", authenticate, indexRoutes);
+app.use("/index", authenticate, requireSubscriptionAccess, indexRoutes);
 
-// worker
-app.use("/worker", authenticate, worker);
+app.use("/worker", authenticate, requireSubscriptionAccess, worker);
+
+app.use("/tasks", authenticate, requireSubscriptionAccess, taskRoutes);
+
+app.use("/org", authenticate, requireSubscriptionAccess, orgRoutes);
+app.use("/invites", inviteRoutes);
 
 app.use(errorHandler);
 

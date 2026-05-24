@@ -17,3 +17,5 @@ export const JWT_REFRESH_SECRET = getEnv("JWT_REFRESH_SECRET");
 export const EMAIL_SENDER = getEnv("EMAIL_SENDER");
 export const RESEND_API_KEY = getEnv("RESEND_API_KEY");
 export const POSTGRES_URI = getEnv("DATABASE_URL");
+export const STRIPE_SECRET_KEY = getEnv("STRIPE_SECRET_KEY");
+export const STRIPE_WEBHOOK_SECRET = getEnv("STRIPE_WEBHOOK_SECRET");

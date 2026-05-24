@@ -1,41 +1,26 @@
 import { Locator, Page, expect } from '@playwright/test';
 import { WorkerFixture } from '../types';
 
-export const getWorkerRow = (page: Page, fullName: string): Locator =>
-  page
-    .getByRole('row')
-    // Keep this selector resilient: icons/buttons added to the name cell can
-    // change the combined accessible text, so match by independent semantics.
-    .filter({ hasText: fullName })
-    .filter({ has: page.getByRole('button', { name: /Anschauen/i }) })
-    .filter({ has: page.getByRole('cell', { name: /^\s*Onboarding\s*$/ }) });
+function escapeForRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
-export const clickViewButton = async (page: Page, workerRow: Locator) => {
-  const viewButton = workerRow.getByRole('button', { name: /Anschauen/i });
+export const getWorkerRow = (page: Page, firstName: string): Locator =>
+  page.locator('div.flex.items-center.relative.group').filter({
+    has: page.locator('p.typo-body-base', {
+      hasText: new RegExp(`^${escapeForRegex(firstName)}$`),
+    }),
+  });
 
+export const openWorkerDetailFromRow = async (
+  page: Page,
+  workerRow: Locator
+) => {
   await workerRow.scrollIntoViewIfNeeded();
   await expect(workerRow).toHaveCount(1);
   await expect(workerRow).toBeVisible({ timeout: 30_000 });
-
-  const rowBox = await workerRow.boundingBox();
-  if (!rowBox) {
-    throw new Error('Worker row is rendered but has no bounding box.');
-  }
-
-  await page.mouse.move(
-    rowBox.x + rowBox.width / 2,
-    rowBox.y + rowBox.height / 2
-  );
-
-  await expect(viewButton).toBeVisible({ timeout: 10_000 });
-
-  try {
-    await viewButton.click({ noWaitAfter: true, timeout: 5_000 });
-  } catch {
-    await viewButton.dispatchEvent('click');
-  }
-
-  await expect(page).toHaveURL(/\/user\/\d+/, { timeout: 30_000 });
+  await workerRow.locator('p.typo-body-base').click();
+  await expect(page).toHaveURL(/\/user\/[^/]+/, { timeout: 30_000 });
 };
 
 export const fillWorkerForm = async (page: Page, worker: WorkerFixture) => {

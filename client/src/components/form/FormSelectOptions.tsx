@@ -25,6 +25,7 @@ type FormSelectOptionsProps<T extends FieldValues> = {
   name: Path<T>;
   placeholder: string;
   label?: string;
+  labelClassName?: string;
   triggerClassName?: string;
   defaultValue?: string;
 };
@@ -36,12 +37,13 @@ const FormSelectOptions = <T extends FieldValues>({
   name,
   placeholder,
   label,
+  labelClassName,
   triggerClassName,
   defaultValue,
 }: FormSelectOptionsProps<T>) => {
   return (
     <>
-      <Label>{label}</Label>
+      <Label className={cn('ds-label-base', labelClassName)}>{label}</Label>
       <Controller
         name={name}
         control={control}

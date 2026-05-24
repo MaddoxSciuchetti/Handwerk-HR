@@ -1,4 +1,6 @@
-import { LifecycleType } from '@/features/task-management/types/index.types';
+import { IssueResponse } from '@/features/all-tasks/types/index.types';
+import type { EngagementProgressValue } from '../consts/engagement-progress.consts';
+import { LifecycleType } from '@/features/worker-task-management/types/index.types';
 
 export type EmployeeForm = {
   form_type: LifecycleType;
@@ -9,9 +11,6 @@ export type WorkerItem = {
   id: number;
   nachname: string;
   vorname: string;
-  archivedAt: string | null;
-  archivedBy: string | null;
-  archivedByName: string | null;
 };
 
 export type WorkerListMode = 'active' | 'archived';
@@ -68,3 +67,60 @@ export type WorkerOverviewResponse = {
     fields: WorkerOverviewField[];
   };
 };
+
+export type WorkerStatus = 'active' | 'inactive';
+
+export type EngagementType = 'onboarding' | 'offboarding' | 'transfer';
+
+export type WorkerEngagement = {
+  id: string;
+  type: EngagementType;
+  status: EngagementProgressValue;
+  startDate: string | null;
+  endDate: string | null;
+  responsibleUser: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  issues?: Pick<IssueResponse, 'id' | 'status'>[];
+};
+
+export type WorkerRecord = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  position: string | null;
+  status: WorkerStatus;
+  createdAt: string;
+  updatedAt: string;
+  engagements: WorkerEngagement[];
+};
+
+export type WorkerDetailResponse = {
+  success: boolean;
+  data: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    birthday: string | null;
+    position: string | null;
+    street: string | null;
+    city: string | null;
+    state: string | null;
+    postalCode: string | null;
+    country: string | null;
+    entryDate: string | null;
+    exitDate: string | null;
+    engagements: Array<
+      Omit<WorkerEngagement, 'issues'> & {
+        issues?: IssueResponse[];
+      }
+    >;
+  };
+};
+
+export type EngagementStatus = 'active' | 'archived';

@@ -1,11 +1,8 @@
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import TrashButton from '@/components/TrashButton';
-import { Button } from '@/components/ui/button';
 import { User } from '@/features/user-profile/types/auth.type';
 import { UseMutateFunction } from '@tanstack/react-query';
-import { Info } from 'lucide-react';
 import { useState } from 'react';
-import { useEmployeeModal } from '../../hooks/useEmployeeModal';
 import { EmployeeDataArray } from '../../schemas/schema';
 import EmployeeName from './table-row-item/EmployeeName';
 import EmployeeOpenTasks from './table-row-item/EmployeeOpenTasks';
@@ -16,50 +13,30 @@ type EmployeeRowProps = {
   employee: EmployeeDataArray[number];
   handleDeleteEmployee: UseMutateFunction<User, Error, string, unknown>;
   openTaskCountsByEmployee: Map<string, number>;
-  openEditEmployee: (id: string, name: string) => void;
+  onSelectEmployee: (employee: EmployeeDataArray[number]) => void;
 };
 
 export const EmployeeRow = ({
   employee,
   handleDeleteEmployee,
   openTaskCountsByEmployee,
-  openEditEmployee,
+  onSelectEmployee,
 }: EmployeeRowProps) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const closeDeleteModalHandler = () => setIsDeleteModalOpen(false);
-  const { openInfoModal } = useEmployeeModal();
 
   return (
-    <tr className="group py-5 transition-colors">
+    <tr
+      className="group cursor-pointer py-5 transition-colors hover:bg-accent/40"
+      onClick={() => onSelectEmployee(employee)}
+    >
       <td className="text-sm font-semibold py-5 rounded-l-xl">
         <div className="flex items-center gap-3">
           <EmployeeName employee={employee} />
-          <Button
-            className="cursor-pointer"
-            onClick={() => openInfoModal(employee.id)}
-          >
-            <Info />
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="cursor-pointer pointer-events-none opacity-0 transition-opacity duration-150 group-hover:pointer-events-auto group-hover:opacity-100"
-            onClick={(e) => {
-              e.stopPropagation();
-              openEditEmployee(
-                employee.id,
-                `${employee.vorname}${employee.nachname}`
-              );
-            }}
-          >
-            Abwesenheit eintragen
-          </Button>
         </div>
       </td>
       <td>
         <EmployeeOpenTasks
-          employee={employee.id}
           openTaskCountsByEmployee={
             openTaskCountsByEmployee.get(employee.id) ?? 0
           }
@@ -71,9 +48,9 @@ export const EmployeeRow = ({
       <td className="">
         <EmployeeSubstitute employee={employee} />
       </td>
-      <td className="rounded-r-xl">
+      <td className="rounded-r-xl" onClick={(e) => e.stopPropagation()}>
         <TrashButton
-          disabled={employee.user_permission === 'CHEF'}
+          disabled={employee.organizationMembers[0]?.membershipRole === 'admin'}
           description={'Löschen'}
           onClick={() => setIsDeleteModalOpen(true)}
         />

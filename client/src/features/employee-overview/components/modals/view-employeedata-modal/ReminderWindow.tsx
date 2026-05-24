@@ -42,9 +42,9 @@ function ReminderWindow({ onClose }: TCloseModal) {
       )}
       {isError && <ErrorAlert />}
       <Button
-        className="rounded-xl"
+        className="rounded-full"
         type={isSuccess ? 'button' : 'submit'}
-        variant={'outline'}
+        variant="outline"
         onClick={isSuccess ? onClose : undefined}
       >
         {isSuccess ? (
