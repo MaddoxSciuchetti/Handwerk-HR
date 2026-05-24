@@ -11,7 +11,7 @@ function Table({
   return (
     <div
       className={cn(
-        'mt-5 flex h-full w-full flex-col flex-start gap-2 rounded-2xl border-2 border-border bg-transparent p-3',
+        'mt-5 flex h-full min-h-0 w-full flex-col flex-start gap-2 overflow-hidden rounded-2xl border-2 border-border bg-transparent p-3',
         className
       )}
     >
@@ -21,7 +21,7 @@ function Table({
 }
 
 function TableDivider() {
-  return <div className="border-b-2 border-border" />;
+  return <div className="shrink-0 border-b-2 border-border" />;
 }
 
 type TableHeaderProps = {
@@ -33,7 +33,7 @@ function TableHeader({ children, className }: TableHeaderProps) {
   return (
     <div
       className={cn(
-        'flex w-full items-center gap-3 bg-transparent px-1 pb-1',
+        'flex w-full shrink-0 items-center gap-3 bg-transparent px-1 pb-1',
         className
       )}
     >
@@ -98,6 +98,9 @@ function ItemHeader({
   );
 }
 
+const employeeTableGridClassName =
+  'grid w-full grid-cols-[minmax(0,1fr)_10.625rem_10.625rem_10.625rem_10.625rem] items-center gap-x-4';
+
 type ItemState = 'default' | 'hover' | 'active';
 
 const itemsState: Record<ItemState, string> = {
@@ -136,4 +139,5 @@ export {
   Table,
   TableDivider,
   TableHeader,
+  employeeTableGridClassName,
 };

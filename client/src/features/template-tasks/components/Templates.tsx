@@ -1,5 +1,6 @@
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import { Button } from '@/components/ui/button';
+import { ScrollableTableViewport } from '@/components/ui/scrollable-table-viewport';
 import {
   Table,
   TableDivider,
@@ -36,13 +37,13 @@ function Templates() {
   }
 
   return (
-    <div className="mx-auto flex h-full flex-col overflow-auto rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
-      <div className="h-full w-full flex flex-col items-center justify-center">
+    <div className="mx-auto flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
+      <div className="flex h-full min-h-0 w-full flex-col">
         <SettingsPageHeader
           title="Template Aufgaben"
           description="Verwalte deine Template Aufgaben"
         />
-        <Table className="w-200">
+        <Table className="min-h-0 flex-1 w-200">
           <TableHeader>
             <Button
               type="button"
@@ -57,12 +58,14 @@ function Templates() {
             </Button>
           </TableHeader>
           <TableDivider />
-          <TemplateItem
-            templates={templates ?? []}
-            setIsEditTemplate={setIsEditTemplate}
-            setIsOpen={setIsOpen}
-            setTemplateState={setTemplateState}
-          />
+          <ScrollableTableViewport>
+            <TemplateItem
+              templates={templates ?? []}
+              setIsEditTemplate={setIsEditTemplate}
+              setIsOpen={setIsOpen}
+              setTemplateState={setTemplateState}
+            />
+          </ScrollableTableViewport>
         </Table>
         <TemplateSidebar
           key={

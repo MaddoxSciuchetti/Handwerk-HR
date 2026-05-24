@@ -1,5 +1,6 @@
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import { Button } from '@/components/ui/button';
+import { ScrollableTableViewport } from '@/components/ui/scrollable-table-viewport';
 import {
   Table,
   TableDivider,
@@ -36,8 +37,8 @@ export function TemplateTasks({ templateId, name }: TemplateTasksProps) {
     return <LoadingAlert />;
   }
   return (
-    <div className="mx-auto flex h-full flex-col overflow-auto rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
-      <div className="h-full w-full flex flex-col items-center justify-center">
+    <div className="mx-auto flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
+      <div className="flex h-full min-h-0 w-full flex-col">
         <SettingsPageHeader
           action={
             <Button
@@ -54,7 +55,7 @@ export function TemplateTasks({ templateId, name }: TemplateTasksProps) {
           title={name}
           description="Füge Aufgaben zu dieser Vorlage hinzu"
         />
-        <Table className="w-200">
+        <Table className="min-h-0 flex-1 w-200">
           <TableHeader>
             <Button
               className="rounded-full"
@@ -69,12 +70,14 @@ export function TemplateTasks({ templateId, name }: TemplateTasksProps) {
             </Button>
           </TableHeader>
           <TableDivider />
-          <TemplateTaskItem
-            templateTasks={templateTasks ?? []}
-            setIsOpen={setIsOpen}
-            setEditTemplateTask={setEditTemplateTask}
-            setTemplateTaskState={setTemplateTaskState}
-          />
+          <ScrollableTableViewport>
+            <TemplateTaskItem
+              templateTasks={templateTasks ?? []}
+              setIsOpen={setIsOpen}
+              setEditTemplateTask={setEditTemplateTask}
+              setTemplateTaskState={setTemplateTaskState}
+            />
+          </ScrollableTableViewport>
         </Table>
         <TaskSidebar
           key={
