@@ -83,7 +83,7 @@ export function EmployeeTabsData({
         type="button"
         variant="outline"
         onClick={onTaskClick}
-        className="mt-4 w-full cursor-pointer"
+        className="mt-4 w-full cursor-pointer rounded-full"
       >
         Erinnerung senden
       </Button>

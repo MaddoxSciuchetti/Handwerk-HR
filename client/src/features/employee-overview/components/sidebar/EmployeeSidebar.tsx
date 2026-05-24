@@ -1,5 +1,5 @@
+import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/selfmade/button';
 import { SidebarAside } from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarAside';
 import SidebarContent from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarContent';
 import SidebarHeader from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarHeader';
@@ -45,6 +45,9 @@ const EmployeeSidebar = ({
             {selectedAction && (
               <Button
                 type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="rounded-full"
                 aria-label="Zurück"
                 onClick={() => setSelectedAction(null)}
               >
@@ -53,7 +56,14 @@ const EmployeeSidebar = ({
             )}
             <Label className="typo-body-lg font-bold">{headerLabel}</Label>
           </div>
-          <Button type="button" aria-label="Schließen" onClick={onClose}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="rounded-full"
+            aria-label="Schließen"
+            onClick={onClose}
+          >
             <X className="h-4 w-4" aria-hidden />
           </Button>
         </SidebarHeader>

@@ -1,13 +1,14 @@
 import FormFields from '@/components/form/FormFields';
 import FormSelectOptions from '@/components/form/FormSelectOptions';
+import { TaskStatusSelect } from '@/features/all-tasks/components/ui/TaskStatusSelect';
+import { employeeQueries } from '@/features/employee-overview/query-options/queries/employee.queries';
+import { EMPTY_TEMPLATE_TASK } from '@/features/template-tasks/schemas/templateTaskForm.schema';
+import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/selfmade/button';
-import { FormWrapper } from '@/components/ui/selfmade/form-wrapper';
+import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
 import { Check, X } from 'lucide-react';
-import {
-  DEFAULT_TEMPLATE_PRIORITY,
-  TEMPLATE_PRIORITY_OPTIONS,
-} from '../../consts/priority-options';
+import { useMemo } from 'react';
 import { useSubmitTasks } from '../../hooks/useSubmitTasks';
 import { TemplateTaskFormValues } from '../../types/index.types';
 import { SidebarAside } from './task-sidebar/SidebarAside';
@@ -15,14 +16,6 @@ import SidebarContent from './task-sidebar/SidebarContent';
 import SidebarFooter from './task-sidebar/SidebarFooter';
 import SidebarHeader from './task-sidebar/SidebarHeader';
 import { SidebarPanel } from './task-sidebar/SidebarPanel';
-
-const EMPTY_TEMPLATE_TASK: TemplateTaskFormValues = {
-  taskId: '',
-  taskName: '',
-  taskDescription: '',
-  defaultPriority: DEFAULT_TEMPLATE_PRIORITY,
-  orderIndex: 0,
-};
 
 type TaskSidebarProps = {
   isOpen: boolean;
@@ -44,6 +37,16 @@ export function TaskSidebar({
     templateTaskState,
     editTemplateTask
   );
+  const { data: employees = [] } = useQuery(employeeQueries.getEmployees());
+
+  const assigneeOptions = useMemo(
+    () =>
+      employees.map((employee) => ({
+        value: employee.id,
+        label: `${employee.firstName} ${employee.lastName}`,
+      })),
+    [employees]
+  );
 
   return (
     <SidebarAside isOpen={isOpen}>
@@ -56,18 +59,16 @@ export function TaskSidebar({
           </Label>
           <Button
             type="button"
-            size="icon"
+            variant="ghost"
+            size="icon-sm"
             aria-label="Schließen"
-            className="bg-transparent text-foreground shadow-none hover:bg-muted"
+            className="rounded-full"
             onClick={() => setIsOpen(false)}
           >
             <X className="h-4 w-4" aria-hidden />
           </Button>
         </SidebarHeader>
-        <FormWrapper
-          onSubmit={onSubmit}
-          className="flex min-h-0 flex-1 flex-col"
-        >
+        <form onSubmit={onSubmit} className={cn('flex min-h-0 flex-1 flex-col')}>
           <SidebarContent className="mt-5 p-6 flex flex-col gap-2">
             <FormFields
               errors={errors}
@@ -83,23 +84,31 @@ export function TaskSidebar({
               label="Beschreibung der Aufgabe"
               labelClassName="typo-body-base"
             />
+            <TaskStatusSelect
+              control={control}
+              errors={errors}
+              name="defaultStatus"
+              label="Status"
+            />
             <FormSelectOptions
               errors={errors}
               control={control}
-              data={TEMPLATE_PRIORITY_OPTIONS}
-              name="defaultPriority"
-              label="Standard-Priorität"
+              data={assigneeOptions}
+              name="defaultAssigneeUserId"
+              label="Verantwortlich"
               labelClassName="typo-body-base"
-              placeholder="Priorität wählen"
+              placeholder="Verantwortlichen wählen"
             />
           </SidebarContent>
           <SidebarFooter className="p-6">
-            <Button type="submit">
+            <Button type="submit" className="rounded-full">
               <Check className="h-4 w-4" aria-hidden /> Speichern
             </Button>
           </SidebarFooter>
-        </FormWrapper>
+        </form>
       </SidebarPanel>
     </SidebarAside>
   );
 }
+
+export { EMPTY_TEMPLATE_TASK };

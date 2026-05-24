@@ -8,6 +8,8 @@
     "scripts": {
         "prisma:generate": "prisma generate --schema=src/prisma/schema.prisma",
         "prisma:push": "prisma db push --schema=src/prisma/schema.prisma",
+        "migrate:deploy": "PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK=1 prisma migrate deploy",
+        "migrate:dev": "PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK=1 prisma migrate dev",
         "postinstall": "prisma generate --schema=src/prisma/schema.prisma",
         "test": "jest",
         "coverage:webhook-handler": "jest --coverage --collectCoverageFrom=src/controllers/stripeWebhook.controller.ts --collectCoverageFrom=src/services/stripe-webhook/intent-handlers/CheckoutSessionCompleted.ts",

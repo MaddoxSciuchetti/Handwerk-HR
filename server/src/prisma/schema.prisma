@@ -40,6 +40,7 @@ model User {
   issueAuditLogs         IssueAuditLog[]
   comments               Comment[]
   createdTemplates       IssueTemplate[]
+  defaultAssignedTemplateItems TemplateItem[] @relation("TemplateItemDefaultAssignee")
   createdOrganizations   Organization[]
   absences               Absence[]             @relation("UserAbsences")
   substitutingFor        Absence[]             @relation("SubstituteAbsences")
@@ -247,19 +248,23 @@ model IssueTemplate {
 }
 
 model TemplateItem {
-  id              String             @id @default(uuid())
-  issueTemplateId String             @map("issue_template_id")
-  title           String             @db.VarChar(400)
-  description     String?            @db.VarChar(5000)
-  defaultPriority IssuePriority?     @map("default_priority")
-  orderIndex      Int                @default(0) @map("order_index")
-  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt       DateTime           @updatedAt @map("updated_at") @db.Timestamptz()
+  id                      String             @id @default(uuid())
+  issueTemplateId         String             @map("issue_template_id")
+  title                   String             @db.VarChar(400)
+  description             String?            @db.VarChar(5000)
+  defaultPriority         IssuePriority?     @map("default_priority")
+  defaultStatus           IssueStatus        @default(open) @map("default_status")
+  defaultAssigneeUserId   String?            @map("default_assignee_user_id")
+  orderIndex              Int                @default(0) @map("order_index")
+  createdAt               DateTime           @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt               DateTime           @updatedAt @map("updated_at") @db.Timestamptz()
 
-  issueTemplate   IssueTemplate      @relation(fields: [issueTemplateId], references: [id], onDelete: Cascade)
-  issues          Issue[]
+  issueTemplate           IssueTemplate      @relation(fields: [issueTemplateId], references: [id], onDelete: Cascade)
+  defaultAssignee         User?              @relation("TemplateItemDefaultAssignee", fields: [defaultAssigneeUserId], references: [id], onDelete: SetNull)
+  issues                  Issue[]
 
   @@index([issueTemplateId])
+  @@index([defaultAssigneeUserId])
   @@map("template_items")
 }
 

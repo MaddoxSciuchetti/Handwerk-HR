@@ -1,10 +1,10 @@
 import LoadingAlert from '@/components/alerts/LoadingAlert';
-import { Button } from '@/components/ui/selfmade/button';
+import { Button } from '@/components/ui/button';
 import {
   Table,
   TableDivider,
   TableHeader,
-} from '@/components/ui/selfmade/table/Table';
+} from '@/features/settings/components/Table';
 import { SettingsPageHeader } from '@/features/settings/components/SettingsPageHeader';
 
 import { TemplateSidebar } from '@/features/worker-task-management/components/tasks/task-sidebar/TemplateSidebar';
@@ -43,9 +43,10 @@ function Templates() {
           description="Verwalte deine Template Aufgaben"
         />
         <Table className="w-200">
-          <TableHeader className="gap-3 py-2">
+          <TableHeader>
             <Button
               type="button"
+              className="rounded-full"
               onClick={() => {
                 setCreateOpenNonce((n) => n + 1);
                 setIsOpen(true);

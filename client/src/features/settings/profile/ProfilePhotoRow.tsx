@@ -1,6 +1,6 @@
 import { AvatarCropModal } from '@/features/sidebar/profile-upload-modal/AvatarCropModal';
 import { Input } from '@/components/ui/input';
-import { GrowingItem, Items } from '@/components/ui/selfmade/table/Table';
+import { GrowingItem, Items } from '@/features/settings/components/Table';
 import { Camera } from 'lucide-react';
 import { useRef, useState } from 'react';
 
@@ -22,14 +22,14 @@ export function ProfilePhotoRow({
 
   return (
     <>
-      <Items state="default" className="px-3 py-1">
+      <Items state="default">
         <GrowingItem>
           <p className="typo-body-sm">Profil Foto</p>
         </GrowingItem>
         <div className="w-72">
           <button
             type="button"
-            className="group relative h-16 w-16 overflow-hidden rounded-full border border-border-default"
+            className="group relative h-16 w-16 overflow-hidden rounded-full border border-border"
             disabled={isUploading}
             onClick={() => fileInputRef.current?.click()}
           >

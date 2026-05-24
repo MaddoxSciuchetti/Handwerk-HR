@@ -5,7 +5,7 @@ import {
   CellHolder,
   GrowingItem,
   Items,
-} from '@/components/ui/selfmade/table/Table';
+} from '@/features/settings/components/Table';
 import { User } from '@/features/user-profile/types/auth.type';
 import { UseMutateFunction } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -37,7 +37,7 @@ const EmployeeItem = ({
       className="cursor-pointer"
       onClick={() => onSelectEmployee(employee)}
     >
-      <GrowingItem className="pl-10 py-0">
+      <GrowingItem className="pl-7 py-0">
         <EmployeeName employee={employee} />
       </GrowingItem>
       <CellHolder>

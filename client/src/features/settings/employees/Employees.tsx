@@ -1,6 +1,6 @@
 import LoadingAlert from '@/components/alerts/LoadingAlert';
-import { Button } from '@/components/ui/selfmade/button';
-import { Input } from '@/components/ui/selfmade/input';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Cell,
   CellHolder,
@@ -9,7 +9,7 @@ import {
   Table,
   TableDivider,
   TableHeader,
-} from '@/components/ui/selfmade/table/Table';
+} from '@/features/settings/components/Table';
 import EmployeeItemList from '@/features/employee-overview/components/items/EmployeeItemList';
 import EmployeeSidebar from '@/features/employee-overview/components/sidebar/EmployeeSidebar';
 import useDeleteEmployee from '@/features/employee-overview/hooks/useDeleteEmployee';
@@ -35,9 +35,9 @@ function Employees() {
       <div className="h-full w-full flex flex-col items-center justify-center">
         <SettingsHeader />
         <Table className="w-200 ">
-          <TableHeader className=" py-2">
+          <TableHeader>
             <Button
-              className="text-sm"
+              className="rounded-full text-sm"
               disabled={isPending}
               onClick={handleSendInvite}
             >
@@ -50,8 +50,8 @@ function Employees() {
             />
           </TableHeader>
           <TableDivider />
-          <ItemHeader className="p-0">
-            <GrowingItem className="pl-10 py-2">
+          <ItemHeader>
+            <GrowingItem className="pl-7 py-1">
               <p className="typo-body-sm">Name</p>
             </GrowingItem>
             <CellHolder>

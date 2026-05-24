@@ -28,14 +28,19 @@ function DeleteConfirmModal({
             Dieser Eintrag wird dauerhaft gelöscht.
           </p>
           <div className="flex items-center justify-center gap-2">
-            <Button type="button" variant="outline" onClick={onCancel}>
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-full"
+              onClick={onCancel}
+            >
               Abbrechen
             </Button>
             <Button
               type="button"
               variant="destructive"
               aria-label="Löschen bestätigen"
-              className="bg-(--destructive) text-(--destructive-foreground) hover:bg-(--destructive)"
+              className="rounded-full bg-(--destructive) text-(--destructive-foreground) hover:bg-(--destructive)"
               onClick={onConfirm}
             >
               Ja, löschen

@@ -607,12 +607,6 @@ export async function getIssueAuditLogs(params: {
     });
 }
 
-function templatePriorityToIssuePriority(
-    p: IssuePriority | null,
-): IssuePriority {
-    if (!p) return "no_priority";
-    return p;
-}
 
 async function applyIssueTemplateInTx(
     tx: Prisma.TransactionClient,
@@ -640,10 +634,11 @@ async function applyIssueTemplateInTx(
             data: {
                 workerEngagementId,
                 createdByUserId: actorUserId,
-                status: "open",
+                assigneeUserId: item.defaultAssigneeUserId ?? undefined,
+                status: item.defaultStatus ?? "open",
                 title: item.title,
                 description: item.description ?? undefined,
-                priority: templatePriorityToIssuePriority(item.defaultPriority),
+                priority: "no_priority",
                 templateItemId: item.id,
             },
             select: { id: true },
@@ -655,7 +650,8 @@ async function applyIssueTemplateInTx(
                 action: "issue.created",
                 newValue: {
                     title: item.title,
-                    status: "open",
+                    status: item.defaultStatus ?? "open",
+                    assigneeUserId: item.defaultAssigneeUserId,
                     templateItemId: item.id,
                 },
             },
