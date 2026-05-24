@@ -1,6 +1,7 @@
 import ErrorAlert from '@/components/alerts/ErrorAlert';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { ScrollableTableViewport } from '@/components/ui/scrollable-table-viewport';
 import {
   Table,
   TableBody,
@@ -82,7 +83,7 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
     return <ErrorAlert message="The tasks could not load, reload page" />;
 
   return (
-    <div className="mx-auto flex h-full flex-col overflow-auto rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
+    <div className="mx-auto flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
       <TaskSidebar key={sidebarKey} {...sidebarProps} />
 
       <Tabs
@@ -93,11 +94,11 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
             setActiveTab(value);
           }
         }}
-        className="flex h-full flex-col"
+        className="flex min-h-0 flex-1 flex-col"
       >
         <WorkerTabButtons activeTab={activeTab} onTabChange={setActiveTab} />
-        <Card className="mt-3 flex h-full flex-col gap-0 border border-border py-0 shadow-none ring-0">
-          <CardHeader className="flex min-h-14 flex-row flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-3">
+        <Card className="mt-3 flex min-h-0 flex-1 flex-col gap-0 border border-border py-0 shadow-none ring-0">
+          <CardHeader className="flex min-h-14 shrink-0 flex-row flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-3">
             <WorkerHeader
               activeTab={activeTab}
               openForCreate={openForCreate}
@@ -105,54 +106,60 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
               onExportFiles={() => void handleZipExport(fetchFiles)}
             />
           </CardHeader>
-          <CardContent className="px-2 pb-0">
-            <TabsContent value="form" className="mt-0">
-              <Table>
-                <TableHeader className="[&_tr]:border-0">
-                  <TableRow className="border-0 hover:bg-transparent">
-                    <TableHead className={sectionHeaderClassName}>
-                      Titel
-                    </TableHead>
-                    <TableHead className="h-12 py-3 px-2 text-right">
-                      Beschreibung
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody className="[&_tr]:border-0 [&_td]:py-4 [&_td]:px-2 [&_td:first-child]:pl-10">
-                  {displayData.length ? (
-                    displayData.map((task) => (
-                      <TaskItem
-                        key={task.id}
-                        task={task}
-                        workerId={workerId}
-                        isSelected={editModeData.some(
-                          (item) => item.taskNumber === task.id
-                        )}
-                        onOpenEdit={openForEdit}
-                        setLargeEditMode={setLargeEditMode}
-                        setEditModeData={handleSetEditModeData}
-                      />
-                    ))
-                  ) : (
+          <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-0">
+            <TabsContent value="form" className="mt-0 flex min-h-0 flex-1 flex-col">
+              <ScrollableTableViewport>
+                <Table>
+                  <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-0">
                     <TableRow className="border-0 hover:bg-transparent">
-                      <TableCell
-                        colSpan={2}
-                        className="py-10 text-center text-sm text-muted-foreground"
+                      <TableHead
+                        className={`${sectionHeaderClassName} bg-card`}
                       >
-                        Keine Aufgaben gefunden.
-                      </TableCell>
+                        Titel
+                      </TableHead>
+                      <TableHead className="h-12 bg-card py-3 px-2 text-right">
+                        Beschreibung
+                      </TableHead>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody className="[&_tr]:border-0 [&_td]:py-4 [&_td]:px-2 [&_td:first-child]:pl-10">
+                    {displayData.length ? (
+                      displayData.map((task) => (
+                        <TaskItem
+                          key={task.id}
+                          task={task}
+                          workerId={workerId}
+                          isSelected={editModeData.some(
+                            (item) => item.taskNumber === task.id
+                          )}
+                          onOpenEdit={openForEdit}
+                          setLargeEditMode={setLargeEditMode}
+                          setEditModeData={handleSetEditModeData}
+                        />
+                      ))
+                    ) : (
+                      <TableRow className="border-0 hover:bg-transparent">
+                        <TableCell
+                          colSpan={2}
+                          className="py-10 text-center text-sm text-muted-foreground"
+                        >
+                          Keine Aufgaben gefunden.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </ScrollableTableViewport>
             </TabsContent>
-            <TabsContent value="files" className="mt-0">
-              <div className={sectionHeaderClassName}>Name</div>
-              <WorkerFileUploads
-                workerId={workerId}
-                isUploadModalOpen={isFileUploadOpen}
-                setIsUploadModalOpen={setIsFileUploadOpen}
-              />
+            <TabsContent value="files" className="mt-0 flex min-h-0 flex-1 flex-col">
+              <ScrollableTableViewport>
+                <div className={sectionHeaderClassName}>Name</div>
+                <WorkerFileUploads
+                  workerId={workerId}
+                  isUploadModalOpen={isFileUploadOpen}
+                  setIsUploadModalOpen={setIsFileUploadOpen}
+                />
+              </ScrollableTableViewport>
             </TabsContent>
           </CardContent>
         </Card>

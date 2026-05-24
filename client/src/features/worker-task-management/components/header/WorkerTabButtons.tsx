@@ -11,7 +11,7 @@ export function WorkerTabButtons({
   onTabChange,
 }: WorkerTabButtonsProps) {
   return (
-    <div className="mt-5 flex items-center gap-3">
+    <div className="mt-5 flex shrink-0 items-center gap-3">
       <Button
         type="button"
         variant={activeTab === 'form' ? 'default' : 'outline'}

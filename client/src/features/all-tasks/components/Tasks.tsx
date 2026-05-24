@@ -1,6 +1,7 @@
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ScrollableTableViewport } from '@/components/ui/scrollable-table-viewport';
 import {
   Table,
   TableBody,
@@ -47,12 +48,12 @@ function Tasks() {
   if (isLoading) return <LoadingAlert />;
 
   return (
-    <div className="mx-auto flex h-full flex-col overflow-auto rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
-      <div className="flex h-full w-full flex-col">
+    <div className="mx-auto flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
+      <div className="flex h-full min-h-0 w-full flex-col">
         <TaskSidebar key={sidebarKey} {...sidebarProps} />
         <GreetingHeader firstname={user?.firstName ?? ''} />
-        <Card className="mt-5 flex h-full flex-col gap-0 border border-border py-0 shadow-none ring-0">
-          <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-3">
+        <Card className="mt-5 flex min-h-0 flex-1 flex-col gap-0 border border-border py-0 shadow-none ring-0">
+          <CardHeader className="flex shrink-0 flex-row flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-3">
             <CardTitle className="text-base font-medium">Alle Aufgaben</CardTitle>
             <div className="flex shrink-0 items-center gap-3">
               <TaskSegmentToggle value={segment} onChange={setSegment} />
@@ -65,31 +66,35 @@ function Tasks() {
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="px-2 pb-0">
-            <Table>
-              <TableHeader className="[&_tr]:border-0">
-                <TableRow className="border-0 hover:bg-transparent">
-                  <TableHead className="h-12 py-3 pl-10 pr-2">Titel</TableHead>
-                  <TableHead className="py-3 px-2 text-right">
-                    Beschreibung
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody className="[&_tr]:border-0 [&_td]:py-4 [&_td]:px-2 [&_td:first-child]:pl-10">
-                {filteredTasks?.map((task) => (
-                  <TaskItem
-                    key={task.id}
-                    task={task}
-                    isSelected={editModeData.some(
-                      (item) => item.taskNumber === task.id
-                    )}
-                    onOpenEdit={openForEdit}
-                    setLargeEditMode={setLargeEditMode}
-                    setEditModeData={handleSetEditModeData}
-                  />
-                ))}
-              </TableBody>
-            </Table>
+          <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-0">
+            <ScrollableTableViewport>
+              <Table>
+                <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-0">
+                  <TableRow className="border-0 hover:bg-transparent">
+                    <TableHead className="h-12 bg-card py-3 pl-10 pr-2">
+                      Titel
+                    </TableHead>
+                    <TableHead className="bg-card py-3 px-2 text-right">
+                      Beschreibung
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="[&_tr]:border-0 [&_td]:py-4 [&_td]:px-2 [&_td:first-child]:pl-10">
+                  {filteredTasks?.map((task) => (
+                    <TaskItem
+                      key={task.id}
+                      task={task}
+                      isSelected={editModeData.some(
+                        (item) => item.taskNumber === task.id
+                      )}
+                      onOpenEdit={openForEdit}
+                      setLargeEditMode={setLargeEditMode}
+                      setEditModeData={handleSetEditModeData}
+                    />
+                  ))}
+                </TableBody>
+              </Table>
+            </ScrollableTableViewport>
           </CardContent>
         </Card>
         {largeEditMode && (

@@ -2,8 +2,8 @@ import LoadingAlert from '@/components/alerts/LoadingAlert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  CellHolder,
-  GrowingItem,
+  Cell,
+  employeeTableGridClassName,
   ItemHeader,
   Table,
   TableDivider,
@@ -49,16 +49,12 @@ function Employees() {
             />
           </TableHeader>
           <TableDivider />
-          <ItemHeader>
-            <GrowingItem className="pl-7 py-1">
-              <p className="typo-body-sm">Name</p>
-            </GrowingItem>
-            <CellHolder>
-              <div className="typo-body-sm w-42.5">Offene Aufgaben</div>
-              <div className="typo-body-sm w-42.5">Status</div>
-              <div className="typo-body-sm w-42.5">Vertretung</div>
-              <div className="typo-body-sm w-42.5">Aktionen</div>
-            </CellHolder>
+          <ItemHeader className={employeeTableGridClassName}>
+            <div className="typo-body-sm pl-7 py-1">Name</div>
+            <div className="typo-body-sm text-left">Offene Aufgaben</div>
+            <div className="typo-body-sm text-left">Status</div>
+            <div className="typo-body-sm text-left">Vertretung</div>
+            <div className="typo-body-sm text-left">Aktionen</div>
           </ItemHeader>
           <EmployeeItemList
             employees={EmployeeData ?? []}

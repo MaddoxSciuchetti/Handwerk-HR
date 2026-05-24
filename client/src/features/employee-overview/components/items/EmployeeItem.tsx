@@ -2,10 +2,10 @@ import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import TrashButton from '@/components/TrashButton';
 import {
   Cell,
-  CellHolder,
-  GrowingItem,
+  employeeTableGridClassName,
   Items,
 } from '@/features/settings/components/Table';
+import { cn } from '@/lib/utils';
 import { User } from '@/features/user-profile/types/auth.type';
 import { UseMutateFunction } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -34,42 +34,40 @@ const EmployeeItem = ({
   return (
     <Items
       state="hover"
-      className="cursor-pointer"
+      className={cn('w-full cursor-pointer', employeeTableGridClassName)}
       onClick={() => onSelectEmployee(employee)}
     >
-      <GrowingItem className="pl-7 py-0">
+      <div className="min-w-0 pl-7">
         <EmployeeName employee={employee} />
-      </GrowingItem>
-      <CellHolder>
-        <Cell>
-          <EmployeeOpenTasks openTaskCountsByEmployee={openTaskCount} />
-        </Cell>
-        <Cell>
-          <EmployeeStatus employee={employee} />
-        </Cell>
-        <Cell>
-          <EmployeeSubstitute employee={employee} />
-        </Cell>
-        <Cell>
-          <div onClick={(e) => e.stopPropagation()}>
-            <TrashButton
-              disabled={
-                employee.organizationMembers[0]?.membershipRole === 'admin'
-              }
-              description={'Löschen'}
-              onClick={() => setIsDeleteModalOpen(true)}
-            />
-            <DeleteConfirmModal
-              isOpen={isDeleteModalOpen}
-              onCancel={closeDeleteModalHandler}
-              onConfirm={() => {
-                handleDeleteEmployee(employee.id);
-                closeDeleteModalHandler();
-              }}
-            />
-          </div>
-        </Cell>
-      </CellHolder>
+      </div>
+      <Cell className="text-left">
+        <EmployeeOpenTasks openTaskCountsByEmployee={openTaskCount} />
+      </Cell>
+      <Cell className="text-left">
+        <EmployeeStatus employee={employee} />
+      </Cell>
+      <Cell className="text-left">
+        <EmployeeSubstitute employee={employee} />
+      </Cell>
+      <Cell className="text-left">
+        <div onClick={(e) => e.stopPropagation()}>
+          <TrashButton
+            disabled={
+              employee.organizationMembers[0]?.membershipRole === 'admin'
+            }
+            description={'Löschen'}
+            onClick={() => setIsDeleteModalOpen(true)}
+          />
+          <DeleteConfirmModal
+            isOpen={isDeleteModalOpen}
+            onCancel={closeDeleteModalHandler}
+            onConfirm={() => {
+              handleDeleteEmployee(employee.id);
+              closeDeleteModalHandler();
+            }}
+          />
+        </div>
+      </Cell>
     </Items>
   );
 };
