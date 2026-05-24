@@ -37,19 +37,19 @@ const EmployeeItem = ({
       className={cn('w-full cursor-pointer', employeeTableGridClassName)}
       onClick={() => onSelectEmployee(employee)}
     >
-      <div className="min-w-0 pl-7">
+      <div className="min-w-0 truncate pl-7">
         <EmployeeName employee={employee} />
       </div>
-      <Cell className="text-left">
+      <div className="min-w-0 text-left tabular-nums">
         <EmployeeOpenTasks openTaskCountsByEmployee={openTaskCount} />
-      </Cell>
-      <Cell className="text-left">
+      </div>
+      <Cell className="min-w-0 w-auto max-w-full text-left">
         <EmployeeStatus employee={employee} />
       </Cell>
-      <Cell className="text-left">
+      <Cell className="min-w-0 w-auto max-w-full text-left">
         <EmployeeSubstitute employee={employee} />
       </Cell>
-      <Cell className="text-left">
+      <Cell className="min-w-0 w-auto max-w-full text-left">
         <div onClick={(e) => e.stopPropagation()}>
           <TrashButton
             disabled={
