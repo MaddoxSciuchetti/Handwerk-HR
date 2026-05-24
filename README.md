@@ -1,5 +1,3 @@
-# fixies
-
 Onboarding / offboarding workflow tool. Express + Prisma + PostgreSQL on the backend, React + Vite on the frontend.
 
 ## Repository layout
