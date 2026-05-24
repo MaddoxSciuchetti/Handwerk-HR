@@ -18,6 +18,7 @@ type HistoryContentProps = {
 const FIELD_LABELS: Record<string, string> = {
   title: 'Titel',
   description: 'Beschreibung',
+  status: 'Status',
   statusId: 'Status',
   assigneeUserId: 'Zuständig',
   priority: 'Priorität',

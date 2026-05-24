@@ -1,27 +1,15 @@
 import API from '@/config/apiClient';
-import {
-  ListOrgStatusesResponse,
-  OrgStatus,
-  StatusEntityType,
-} from './org-status.types';
+import { ListOrgStatusesResponse, OrgStatus } from './org-status.types';
 
-export async function fetchOrgStatuses(
-  entityType: StatusEntityType
-): Promise<OrgStatus[]> {
+export async function fetchOrgStatuses(): Promise<OrgStatus[]> {
   const res = await API.get<ListOrgStatusesResponse, ListOrgStatusesResponse>(
-    '/org/statuses',
-    {
-      params: { entityType },
-    }
+    '/org/statuses'
   );
   return res.statuses;
 }
 
-export async function createOrgStatus(
-  entityType: StatusEntityType,
-  name: string
-): Promise<OrgStatus> {
-  return API.post<OrgStatus, OrgStatus>('/org/statuses', { entityType, name });
+export async function createOrgStatus(name: string): Promise<OrgStatus> {
+  return API.post<OrgStatus, OrgStatus>('/org/statuses', { name });
 }
 
 export async function updateOrgStatus(

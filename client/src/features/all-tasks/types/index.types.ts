@@ -1,3 +1,5 @@
+import type { IssueStatusValue } from '../consts/issue-status.consts';
+
 export type EngagementResponse = {
   id: string;
   type: string;
@@ -23,7 +25,7 @@ export type IssueResponse = {
   assigneeUserId: string | null;
   assignee?: IssueAssignee | null;
   templateItemId: string | null;
-  statusId: string;
+  status: IssueStatusValue;
   title: string;
   description: string | null;
   priority: 'urgent' | 'high' | 'medium' | 'low' | 'no_priority';
@@ -36,5 +38,5 @@ export type TaskSidebarForm = {
   title: string;
   workerEngagementId: string;
   assigneeUserId: string;
-  statusId: string;
+  status: IssueStatusValue;
 };

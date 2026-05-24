@@ -7,9 +7,9 @@ import type { TaskEditState } from '../hooks/useTaskSidebar';
 import type { IssueResponse } from '../types/index.types';
 import { getAssigneeLabel } from '../utilts/assignee.utils';
 import formatDateDe from '../utilts/date.utils';
-import { PriorityIndicator } from '../utilts/priority.utils';
 import { PillBadge } from './ui/PillBadge';
 import { SquareCheckIcon, SquareDashedIcon } from './ui/SelectIcons';
+import { TaskStatusPicker } from './ui/TaskStatusPicker';
 
 type TaskItemProps = {
   task: IssueResponse;
@@ -36,7 +36,7 @@ export function TaskItem({
       title: task.title,
       workerEngagementId: task.workerEngagementId,
       assigneeUserId: task.assigneeUserId ?? '',
-      statusId: task.statusId,
+      status: task.status,
     });
   };
 
@@ -54,10 +54,7 @@ export function TaskItem({
   const SelectionIcon = isSelected ? SquareCheckIcon : SquareDashedIcon;
 
   return (
-    <TableRow
-      className="group relative cursor-pointer border-0 hover:bg-transparent"
-      onClick={openInEditMode}
-    >
+    <TableRow className="group relative border-0 hover:bg-transparent">
       <TableCell
         className={cn(
           'relative pl-10 pr-2 font-medium transition-colors group-hover:rounded-l-xl group-hover:bg-muted/50',
@@ -82,19 +79,14 @@ export function TaskItem({
           <p className="w-24 shrink-0 truncate whitespace-nowrap font-mono text-sm">
             {`--- ${task.id.slice(0, 8)}`}
           </p>
-          <span className="flex w-4 shrink-0 items-center justify-center">
-            <PriorityIndicator priority={task.priority} />
-          </span>
+          <TaskStatusPicker taskId={task.id} status={task.status} />
           <p className="min-w-0 truncate text-sm">{task.title}</p>
           <Button
             type="button"
             variant="outline"
             size="xs"
             className="shrink-0 rounded-2xl"
-            onClick={(e) => {
-              e.stopPropagation();
-              openInEditMode();
-            }}
+            onClick={openInEditMode}
           >
             Bearbeiten
           </Button>

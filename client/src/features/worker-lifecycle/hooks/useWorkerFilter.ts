@@ -25,7 +25,7 @@ export function useWorkerFilter(workers: WorkerRecord[] | undefined) {
   const { data: employees = [] } = useQuery(employeeQueries.getEmployees());
   const { data: engagementStatuses = [] } = useQuery({
     queryKey: engagementStatusQueryKey,
-    queryFn: () => fetchOrgStatuses('engagement'),
+    queryFn: fetchOrgStatuses,
   });
 
   const filterOptions = useMemo(

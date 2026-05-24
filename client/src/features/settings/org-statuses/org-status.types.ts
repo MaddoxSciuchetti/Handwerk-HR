@@ -1,5 +1,3 @@
-export type StatusEntityType = 'issue' | 'engagement';
-
 export type OrgStatus = {
   id: string;
   name: string;

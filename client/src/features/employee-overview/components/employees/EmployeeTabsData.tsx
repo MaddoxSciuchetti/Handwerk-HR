@@ -5,6 +5,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
+import { issueStatusLabel } from '@/features/all-tasks/consts/issue-status.consts';
 import { cn } from '@/lib/trycatch';
 import { CalendarDays, ChevronRight } from 'lucide-react';
 import useEmployeeGroups from '../../hooks/useEmployeeGroups';
@@ -66,7 +67,7 @@ export function EmployeeTabsData({
                           {issue.updatedAt.toLocaleDateString('de-DE')}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {issue.issueStatus.name}
+                          {issueStatusLabel(issue.status)}
                         </span>
                       </div>
                     </div>

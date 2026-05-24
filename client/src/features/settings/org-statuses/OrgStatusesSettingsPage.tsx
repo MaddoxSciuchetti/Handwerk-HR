@@ -11,17 +11,14 @@ import { toast } from 'sonner';
 import { OrgStatusRow } from './OrgStatusRow';
 import { SettingsStatusesHeader } from './SettingsStatusesHeader';
 import { createOrgStatusNameSchema } from './org-status.schemas';
-import { StatusEntityType } from './org-status.types';
 import { useOrgStatuses } from './useOrgStatuses';
 
 type OrgStatusesSettingsPageProps = {
-  entityType: StatusEntityType;
   title: string;
   description: string;
 };
 
 export function OrgStatusesSettingsPage({
-  entityType,
   title,
   description,
 }: OrgStatusesSettingsPageProps) {
@@ -36,7 +33,7 @@ export function OrgStatusesSettingsPage({
     isUpdating,
     deleteStatus,
     isDeleting,
-  } = useOrgStatuses(entityType);
+  } = useOrgStatuses();
 
   const busy = isCreating || isUpdating || isDeleting;
 

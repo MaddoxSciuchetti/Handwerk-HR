@@ -7,23 +7,20 @@ import {
   fetchOrgStatuses,
   updateOrgStatus,
 } from './org-status.api';
-import { StatusEntityType } from './org-status.types';
 
-function queryKey(entityType: StatusEntityType) {
-  return ['org', 'statuses', entityType] as const;
-}
+const queryKey = ['org', 'statuses', 'engagement'] as const;
 
-export function useOrgStatuses(entityType: StatusEntityType) {
+export function useOrgStatuses() {
   const statusesQuery = useQuery({
-    queryKey: queryKey(entityType),
-    queryFn: () => fetchOrgStatuses(entityType),
+    queryKey,
+    queryFn: fetchOrgStatuses,
   });
 
   const invalidate = () =>
-    queryClient.invalidateQueries({ queryKey: queryKey(entityType) });
+    queryClient.invalidateQueries({ queryKey });
 
   const createMutation = useMutation({
-    mutationFn: (name: string) => createOrgStatus(entityType, name),
+    mutationFn: (name: string) => createOrgStatus(name),
     onSuccess: () => {
       toast.success('Status hinzugefügt.');
       void invalidate();

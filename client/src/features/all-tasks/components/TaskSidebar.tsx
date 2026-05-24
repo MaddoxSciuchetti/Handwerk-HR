@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button';
 import { FieldGroup } from '@/components/ui/field';
 import { Label } from '@/components/ui/label';
 import { TaskCommentBox } from '@/features/all-tasks/components/TaskCommentBox';
+import { ISSUE_STATUS_OPTIONS } from '@/features/all-tasks/consts/issue-status.consts';
 import { useSaveTaskComment } from '@/features/all-tasks/hooks/useSaveTaskComment';
 import { employeeQueries } from '@/features/employee-overview/query-options/queries/employee.queries';
-import { fetchOrgStatuses } from '@/features/settings/org-statuses/org-status.api';
 import useAuth from '@/features/user-profile/hooks/useAuth';
 import { SidebarAside } from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarAside';
 import SidebarContent from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarContent';
@@ -70,11 +70,6 @@ export function TaskSidebar({
   );
 
   const { data: employees = [] } = useQuery(employeeQueries.getEmployees());
-  const { data: statuses = [] } = useQuery({
-    queryKey: ['org', 'statuses', 'issue'],
-    queryFn: () => fetchOrgStatuses('issue'),
-    enabled: isOpen,
-  });
   const { data: engagements = [] } = useFetchEngagements();
   const { user } = useAuth();
 
@@ -101,11 +96,11 @@ export function TaskSidebar({
 
   const statusOptions = useMemo(
     () =>
-      statuses.map((s) => ({
-        value: s.id,
-        label: s.name,
+      ISSUE_STATUS_OPTIONS.map((option) => ({
+        value: option.value,
+        label: option.label,
       })),
-    [statuses]
+    []
   );
 
   const engagementOptions = useMemo(
@@ -162,7 +157,7 @@ export function TaskSidebar({
                 label="Zuständigkeit"
               />
               <FormSelectOptions
-                name="statusId"
+                name="status"
                 control={control}
                 data={statusOptions}
                 placeholder="Status"

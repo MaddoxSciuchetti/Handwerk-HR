@@ -8,7 +8,6 @@ export const Route = createFileRoute('/settings/engagement-statuses')({
 function RouteComponent() {
   return (
     <OrgStatusesSettingsPage
-      entityType="engagement"
       title="Handwerker"
       description="Verwalte die Status-Stufen für Handwerker (Projektfortschritt) in deinem Unternehmen."
     />

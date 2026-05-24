@@ -1,11 +1,12 @@
 import { useCallback, useState } from 'react';
+import type { IssueStatusValue } from '../consts/issue-status.consts';
 
 export type TaskEditState = {
   taskId: string;
   title: string;
   workerEngagementId: string;
   assigneeUserId: string;
-  statusId: string;
+  status: IssueStatusValue | '';
 };
 
 export const EMPTY_TASK_EDIT_STATE: TaskEditState = {
@@ -13,7 +14,7 @@ export const EMPTY_TASK_EDIT_STATE: TaskEditState = {
   title: '',
   workerEngagementId: '',
   assigneeUserId: '',
-  statusId: '',
+  status: '',
 };
 
 export function useTaskSidebar() {

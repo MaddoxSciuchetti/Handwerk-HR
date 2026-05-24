@@ -45,7 +45,7 @@ export function useTasks(
       title: taskEditState.title,
       workerEngagementId: taskEditState.workerEngagementId,
       assigneeUserId: taskEditState.assigneeUserId,
-      statusId: taskEditState.statusId,
+      status: taskEditState.status || 'open',
     },
     resolver: zodResolver(taskFormSchema),
   });
