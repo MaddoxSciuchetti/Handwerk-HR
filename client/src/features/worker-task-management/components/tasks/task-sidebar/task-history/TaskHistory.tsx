@@ -20,7 +20,7 @@ const TaskHistory = ({
 }: TaskHistoryProps) => {
   return (
     <Accordion type="single" collapsible className="max-w-6xl">
-      <AccordionItem value="history" className="mb-10">
+      <AccordionItem value="history" className="border-0 pb-2">
         <AccordionTrigger className="border-border rounded-2xl border p-2">
           <div className="text-foreground flex items-center gap-2 rounded-2xl text-sm font-medium">
             <Clock className="text-muted-foreground ml-2 h-4 w-4" />

@@ -1,3 +1,7 @@
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+
 type TaskCommentBoxProps = {
   commentText: string;
   onCommentTextChange: (value: string) => void;
@@ -14,30 +18,26 @@ export function TaskCommentBox({
   disabled = false,
 }: TaskCommentBoxProps) {
   return (
-    <div className="border-border flex flex-col gap-2 border-t pt-4">
+    <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2">
-        <label
-          className="text-sm font-medium text-foreground"
-          htmlFor="task-comment"
-        >
-          Kommentar
-        </label>
+        <Label htmlFor="task-comment">Kommentar</Label>
         {editingCommentId ? (
-          <button
+          <Button
             type="button"
-            className="text-muted-foreground hover:text-foreground text-xs underline"
+            variant="link"
+            size="sm"
+            className="h-auto px-0 text-xs"
             onClick={onCancelEdit}
           >
             Bearbeiten abbrechen
-          </button>
+          </Button>
         ) : null}
       </div>
-      <textarea
+      <Textarea
         id="task-comment"
         value={commentText}
         disabled={disabled}
         onChange={(e) => onCommentTextChange(e.target.value)}
-        className="border-input bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-ring min-h-[4.5rem] w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none disabled:opacity-60"
         placeholder="Kommentar hinzufügen… (mit Speichern übernehmen)"
         rows={3}
       />

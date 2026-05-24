@@ -1,8 +1,8 @@
 import FormFields from '@/components/form/FormFields';
 import FormSelectOptions from '@/components/form/FormSelectOptions';
+import { Button } from '@/components/ui/button';
+import { FieldGroup } from '@/components/ui/field';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/selfmade/button';
-import { FormWrapper } from '@/components/ui/selfmade/form-wrapper';
 import { TaskCommentBox } from '@/features/all-tasks/components/TaskCommentBox';
 import { useSaveTaskComment } from '@/features/all-tasks/hooks/useSaveTaskComment';
 import { employeeQueries } from '@/features/employee-overview/query-options/queries/employee.queries';
@@ -16,14 +16,14 @@ import { SidebarPanel } from '@/features/worker-task-management/components/tasks
 import TaskHistory from '@/features/worker-task-management/components/tasks/task-sidebar/task-history/TaskHistory';
 import { useQuery } from '@tanstack/react-query';
 import { X } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import { useFetchEngagements } from '../hooks/useFetchEngagements';
 import { useTasks } from '../hooks/useTasks';
 import type { TaskEditState } from '../hooks/useTaskSidebar';
 
 type TaskSidebarProps = {
   isOpen: boolean;
-  setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsOpen: Dispatch<SetStateAction<boolean>>;
   taskState: 'create' | 'edit';
   taskEditState: TaskEditState;
 };
@@ -118,44 +118,40 @@ export function TaskSidebar({
   );
 
   return (
-    <>
-      <SidebarAside className="p-2" isOpen={isOpen}>
-        <SidebarPanel className="w-full">
-          <SidebarHeader className="flex items-center justify-between p-6">
-            <Label className="typo-body-lg font-bold">
-              {taskState === 'edit' ? 'Aufgabe bearbeiten' : 'Aufgabe'}
-            </Label>
-            <Button
-              type="button"
-              size="icon"
-              aria-label="Schließen"
-              className="bg-transparent text-foreground shadow-none hover:bg-muted"
-              onClick={() => setIsOpen(false)}
-            >
-              <X className="h-4 w-4" aria-hidden />
-            </Button>
-          </SidebarHeader>
-          <FormWrapper
-            onSubmit={onSubmit}
-            className="flex min-h-0 flex-1 flex-col"
+    <SidebarAside className="p-2" isOpen={isOpen}>
+      <SidebarPanel className="w-full">
+        <SidebarHeader className="flex items-center justify-between p-6">
+          <Label className="text-base font-semibold">
+            {taskState === 'edit' ? 'Aufgabe bearbeiten' : 'Aufgabe'}
+          </Label>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="rounded-2xl"
+            aria-label="Schließen"
+            onClick={() => setIsOpen(false)}
           >
-            <SidebarContent className="mt-5 flex flex-col gap-4 p-6">
+            <X className="size-4" aria-hidden />
+          </Button>
+        </SidebarHeader>
+        <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <SidebarContent className="mt-2 min-h-0 flex-1 overflow-y-auto p-6">
+            <FieldGroup className="gap-4 pb-4">
               <FormFields
                 errors={errors}
                 register={register}
                 name="title"
                 label="Aufgabe"
-                labelClassName="typo-body-base"
                 placeholder="Titel"
               />
               <FormSelectOptions
                 name="workerEngagementId"
                 control={control}
                 data={engagementOptions}
-                placeholder="Engagement"
+                placeholder="Handwerker"
                 errors={errors}
-                label="Engagement"
-                labelClassName="typo-body-base"
+                label="Handwerker"
               />
               <FormSelectOptions
                 name="assigneeUserId"
@@ -164,7 +160,6 @@ export function TaskSidebar({
                 placeholder="Zuständig"
                 errors={errors}
                 label="Zuständigkeit"
-                labelClassName="typo-body-base"
               />
               <FormSelectOptions
                 name="statusId"
@@ -173,7 +168,6 @@ export function TaskSidebar({
                 placeholder="Status"
                 errors={errors}
                 label="Status"
-                labelClassName="typo-body-base"
               />
 
               {taskState === 'edit' && taskEditState.taskId ? (
@@ -192,15 +186,19 @@ export function TaskSidebar({
                   />
                 </>
               ) : null}
-            </SidebarContent>
-            <SidebarFooter className="p-6">
-              <Button type="submit" disabled={isSubmitting}>
-                {taskState === 'edit' ? 'Speichern' : 'Hinzufügen'}
-              </Button>
-            </SidebarFooter>
-          </FormWrapper>
-        </SidebarPanel>
-      </SidebarAside>
-    </>
+            </FieldGroup>
+          </SidebarContent>
+          <SidebarFooter className="shrink-0 border-0 p-6">
+            <Button
+              type="submit"
+              className="rounded-2xl"
+              disabled={isSubmitting}
+            >
+              {taskState === 'edit' ? 'Speichern' : 'Hinzufügen'}
+            </Button>
+          </SidebarFooter>
+        </form>
+      </SidebarPanel>
+    </SidebarAside>
   );
 }

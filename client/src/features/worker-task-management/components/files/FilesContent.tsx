@@ -18,7 +18,7 @@ type FilesContentProps = {
 const FilesContent = ({ fetchFiles, deleteFiles }: FilesContentProps) => {
   return (
     <>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
+      <div className="mt-0 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
         {fetchFiles?.map((file, index) => {
           return (
             <div

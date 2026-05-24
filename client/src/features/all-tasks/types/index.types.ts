@@ -10,11 +10,18 @@ export type ListEngagementsResponse = {
   engagements: EngagementResponse[];
 };
 
+export type IssueAssignee = {
+  id: string;
+  firstName: string;
+  lastName: string;
+};
+
 export type IssueResponse = {
   id: string;
   workerEngagementId: string;
   createdByUserId: string;
   assigneeUserId: string | null;
+  assignee?: IssueAssignee | null;
   templateItemId: string | null;
   statusId: string;
   title: string;

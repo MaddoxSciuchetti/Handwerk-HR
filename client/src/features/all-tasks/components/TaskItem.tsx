@@ -1,10 +1,11 @@
-import { Button } from '@/components/ui/selfmade/button';
-import { Items } from '@/components/ui/selfmade/table/Table';
-import { cn } from '@/lib/trycatch';
+import { Button } from '@/components/ui/button';
+import { TableCell, TableRow } from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 import { Headset } from 'lucide-react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { TaskEditState } from '../hooks/useTaskSidebar';
 import type { IssueResponse } from '../types/index.types';
+import { getAssigneeLabel } from '../utilts/assignee.utils';
 import formatDateDe from '../utilts/date.utils';
 import { PriorityIndicator } from '../utilts/priority.utils';
 import { PillBadge } from './ui/PillBadge';
@@ -53,56 +54,68 @@ export function TaskItem({
   const SelectionIcon = isSelected ? SquareCheckIcon : SquareDashedIcon;
 
   return (
-    <Items
-      state="hover"
-      className="relative flex min-h-10 items-center gap-0 px-4 py-1.5"
+    <TableRow
+      className="group relative cursor-pointer border-0 hover:bg-transparent"
       onClick={openInEditMode}
     >
-      <button
-        type="button"
-        aria-pressed={isSelected}
-        aria-label={isSelected ? 'Auswahl entfernen' : 'Auswählen'}
-        onClick={toggleSelection}
+      <TableCell
         className={cn(
-          'absolute ml-2 flex h-4 w-4 items-center justify-center text-foreground transition-opacity',
-          isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+          'relative pl-10 pr-2 font-medium transition-colors group-hover:rounded-l-xl group-hover:bg-muted/50',
+          isSelected && 'rounded-l-xl bg-muted/50'
         )}
       >
-        <SelectionIcon className="h-4 w-4" />
-      </button>
-      <div className="flex min-w-0 max-w-full shrink-0 items-center gap-2.5 pl-10">
-        <p className="w-24 shrink-0 truncate whitespace-nowrap font-mono text-xs text-foreground">
-          {`--- ${task.id.slice(0, 8)}`}
-        </p>
-        <span className="flex w-4 shrink-0 items-center justify-center">
-          <PriorityIndicator priority={task.priority} />
-        </span>
-        <p className="min-w-0 max-w-[min(32rem,45vw)] truncate text-xs text-foreground">
-          {task.title}
-        </p>
         <Button
           type="button"
-          size="small"
-          variant="default"
-          className="shrink-0 gap-1 border border-border bg-interactive-primary-bg text-xs font-medium text-interactive-primary-text shadow-none hover:bg-interactive-primary-hover"
-          onClick={(e) => {
-            e.stopPropagation();
-            openInEditMode();
-          }}
+          variant="ghost"
+          size="icon-xs"
+          aria-pressed={isSelected}
+          aria-label={isSelected ? 'Auswahl entfernen' : 'Auswählen'}
+          onClick={toggleSelection}
+          className={cn(
+            'absolute left-2 top-1/2 -translate-y-1/2 rounded-2xl',
+            isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+          )}
         >
-          Bearbeiten
+          <SelectionIcon className="size-4" />
         </Button>
-      </div>
-      <div className="min-w-0 flex-1" aria-hidden />
-      <div className="flex shrink-0 items-center justify-end gap-2">
-        <PillBadge>
-          <Headset className="size-3.5 shrink-0" aria-hidden />
-          <span className="whitespace-nowrap">—</span>
-        </PillBadge>
-        <PillBadge>
-          <span className="leading-4">{formatDateDe(dateSource)}</span>
-        </PillBadge>
-      </div>
-    </Items>
+        <div className="flex min-w-0 items-center gap-2.5">
+          <p className="w-24 shrink-0 truncate whitespace-nowrap font-mono text-sm">
+            {`--- ${task.id.slice(0, 8)}`}
+          </p>
+          <span className="flex w-4 shrink-0 items-center justify-center">
+            <PriorityIndicator priority={task.priority} />
+          </span>
+          <p className="min-w-0 truncate text-sm">{task.title}</p>
+          <Button
+            type="button"
+            variant="outline"
+            size="xs"
+            className="shrink-0 rounded-2xl"
+            onClick={(e) => {
+              e.stopPropagation();
+              openInEditMode();
+            }}
+          >
+            Bearbeiten
+          </Button>
+        </div>
+      </TableCell>
+      <TableCell
+        className={cn(
+          'transition-colors group-hover:rounded-r-xl group-hover:bg-muted/50',
+          isSelected && 'rounded-r-xl bg-muted/50'
+        )}
+      >
+        <div className="flex items-center justify-end gap-2">
+          <PillBadge>
+            <Headset className="size-4 shrink-0" aria-hidden />
+            <span className="whitespace-nowrap">{getAssigneeLabel(task)}</span>
+          </PillBadge>
+          <PillBadge>
+            <span className="leading-4">{formatDateDe(dateSource)}</span>
+          </PillBadge>
+        </div>
+      </TableCell>
+    </TableRow>
   );
 }

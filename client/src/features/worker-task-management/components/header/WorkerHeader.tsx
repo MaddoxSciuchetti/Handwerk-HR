@@ -1,37 +1,55 @@
-import { Button } from '@/components/ui/selfmade/button';
-import { TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { CardTitle } from '@/components/ui/card';
+import type { WorkerTab } from '../../types/index.types';
 
 type WorkerHeaderProps = {
+  activeTab: WorkerTab;
   openForCreate: () => void;
+  onOpenFileUpload: () => void;
+  onExportFiles: () => void;
 };
 
-const WorkerHeader = ({ openForCreate }: WorkerHeaderProps) => {
+const WorkerHeader = ({
+  activeTab,
+  openForCreate,
+  onOpenFileUpload,
+  onExportFiles,
+}: WorkerHeaderProps) => {
+  const title = activeTab === 'form' ? 'Aufgaben' : 'Dateien';
+
   return (
-    <div className="flex items-end justify-between gap-5">
-      {/* <Input
-        value={searchValue}
-        onChange={(e) => setSearchValue(e.target.value)}
-        placeholder={searchPlaceholder}
-      /> */}
-      <TabsList
-        variant={'default'}
-        className="rounded-full bg-(--dropdown-surface)"
-      >
-        <TabsTrigger className="cursor-pointer rounded-full" value="form">
-          Aufgaben
-        </TabsTrigger>
-        <TabsTrigger className="cursor-pointer rounded-full" value="files">
-          Dateien
-        </TabsTrigger>
-      </TabsList>
-      <Button
-        type="button"
-        className="border-0 bg-interactive-primary-bg text-sm text-interactive-primary-text hover:bg-interactive-primary-hover"
-        onClick={openForCreate}
-      >
-        Aufgabe hinzufügen
-      </Button>
-    </div>
+    <>
+      <CardTitle className="text-base font-medium">{title}</CardTitle>
+      <div className="flex h-8 shrink-0 items-center gap-3">
+        {activeTab === 'form' ? (
+          <Button type="button" className="rounded-2xl" onClick={openForCreate}>
+            Aufgabe hinzufügen
+          </Button>
+        ) : (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="rounded-2xl"
+              data-testid="open-file-upload"
+              onClick={onOpenFileUpload}
+            >
+              Hochladen
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="rounded-2xl"
+              onClick={onExportFiles}
+            >
+              Exportieren
+            </Button>
+          </>
+        )}
+      </div>
+    </>
   );
 };
 
