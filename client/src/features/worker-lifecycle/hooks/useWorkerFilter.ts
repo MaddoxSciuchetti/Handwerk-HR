@@ -1,18 +1,21 @@
 import { OptionsObjekt } from '@/components/ui/selfmade/selectdropdown';
 import { employeeQueries } from '@/features/employee-overview/query-options/queries/employee.queries';
+import { fetchOrgStatuses } from '@/features/settings/org-statuses/org-status.api';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { FILTER_OPTIONS } from '../consts/filter.consts';
 import { WorkerRecord } from '../types/index.types';
-import { applyFilter, withDynamicOptions } from '../utils/applyFilter';
+import { applyFilterAndSort, withDynamicOptions } from '../utils/applyFilter';
 
 export type FilterMode =
   | ''
   | 'all'
+  | 'createdAt'
   | 'engagementType'
   | 'status'
-  | 'responsible'
-  | 'lastEdited';
+  | 'responsible';
+
+const engagementStatusQueryKey = ['org', 'statuses', 'engagement'] as const;
 
 export function useWorkerFilter(workers: WorkerRecord[] | undefined) {
   const [filterMode, setFilterMode] = useState<FilterMode>('');
@@ -20,10 +23,14 @@ export function useWorkerFilter(workers: WorkerRecord[] | undefined) {
   const [filterLabel, setFilterLabel] = useState<string>('');
 
   const { data: employees = [] } = useQuery(employeeQueries.getEmployees());
+  const { data: engagementStatuses = [] } = useQuery({
+    queryKey: engagementStatusQueryKey,
+    queryFn: () => fetchOrgStatuses('engagement'),
+  });
 
   const filterOptions = useMemo(
-    () => withDynamicOptions(FILTER_OPTIONS, employees),
-    [employees]
+    () => withDynamicOptions(FILTER_OPTIONS, employees, engagementStatuses),
+    [employees, engagementStatuses]
   );
 
   const handleSelect = (mode: string) => {
@@ -41,7 +48,7 @@ export function useWorkerFilter(workers: WorkerRecord[] | undefined) {
   };
 
   const filteredWorkers = useMemo(
-    () => applyFilter(workers ?? [], filterMode, filterValue),
+    () => applyFilterAndSort(workers ?? [], filterMode, filterValue),
     [workers, filterMode, filterValue]
   );
 

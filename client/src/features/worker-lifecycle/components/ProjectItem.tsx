@@ -80,7 +80,6 @@ function ProjectItem({
         <Cell>{worker.engagements[0].type}</Cell>
         <Cell>{worker.engagements[0].responsibleUser.firstName}</Cell>
         <Cell>{worker.engagements[0].engagementStatus.name}</Cell>
-        <Cell>{worker.status}</Cell>
       </CellHolder>
     </Items>
   );
