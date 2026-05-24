@@ -47,6 +47,7 @@
         "bcrypt": "^6.0.0",
         "cookie-parser": "^1.4.7",
         "cors": "^2.8.6",
+        "dotenv": "^17.3.1",
         "express-session": "^1.18.2",
         "fflate": "^0.8.2",
         "googleapis": "^171.4.0",
@@ -58,6 +59,7 @@
         "passport": "^0.7.0",
         "pdfkit": "^0.17.2",
         "pg": "^8.16.3",
+        "prisma": "^7.4.0",
         "resend": "^6.8.0",
         "stripe": "^22.1.0",
         "supertest": "^7.1.4",
@@ -70,9 +72,7 @@
     },
     "devDependencies": {
         "@types/adm-zip": "^0.5.7",
-        "@types/archiver": "^7.0.0",
-        "dotenv": "^17.3.1",
-        "prisma": "^7.4.0"
+        "@types/archiver": "^7.0.0"
     },
     "prisma": {
         "schema": "src/prisma/schema.prisma",
