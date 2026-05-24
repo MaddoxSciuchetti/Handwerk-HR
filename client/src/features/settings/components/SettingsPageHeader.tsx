@@ -12,7 +12,7 @@ export function SettingsPageHeader({
   action,
 }: SettingsPageHeaderProps) {
   return (
-    <div className="flex w-200 flex-col items-start">
+    <div className="flex w-200 shrink-0 flex-col items-start">
       {action}
       <h1 className={action ? 'typo-h4 mt-2 font-bold' : 'typo-h4 font-bold'}>
         {title}
