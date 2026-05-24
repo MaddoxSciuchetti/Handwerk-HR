@@ -10,12 +10,12 @@ const EmployeeName = ({ employee }: EmployeeNameProps) => {
   return (
     <>
       {isAdmin ? (
-        <p>
-          <span className="text-(--status-info-foreground)">Ich:</span> {''}
+        <p className="truncate">
+          <span className="text-(--status-info-foreground)">Ich:</span>{' '}
           {employee.firstName} {employee.lastName}
         </p>
       ) : (
-        <p>
+        <p className="truncate">
           {employee.firstName} {employee.lastName}
         </p>
       )}

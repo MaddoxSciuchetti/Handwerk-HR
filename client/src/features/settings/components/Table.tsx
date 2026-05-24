@@ -99,7 +99,7 @@ function ItemHeader({
 }
 
 const employeeTableGridClassName =
-  'grid w-full grid-cols-[minmax(0,1fr)_10.625rem_10.625rem_10.625rem_10.625rem] items-center gap-x-4';
+  'grid w-full grid-cols-[minmax(0,1fr)_4rem_minmax(0,10rem)_minmax(0,10rem)_4.5rem] items-center gap-x-4';
 
 type ItemState = 'default' | 'hover' | 'active';
 
@@ -120,8 +120,8 @@ function Items({ state, children, className, ...props }: ItemsProps) {
     <div
       className={cn(
         'group relative flex items-center rounded-2xl px-3 py-3',
-        className,
-        itemsState[state]
+        itemsState[state],
+        className
       )}
       {...props}
     >
