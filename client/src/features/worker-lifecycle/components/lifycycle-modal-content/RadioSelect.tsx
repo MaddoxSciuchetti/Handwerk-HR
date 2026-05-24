@@ -6,7 +6,7 @@ import {
   FieldTitle,
 } from '@/components/ui/field';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { cn } from '@/lib/trycatch';
+import { cn } from '@/lib/utils';
 import { Dispatch, SetStateAction } from 'react';
 
 type RadioSelectProps<T> = {
@@ -14,6 +14,9 @@ type RadioSelectProps<T> = {
   setSelectedOption: Dispatch<SetStateAction<T | null>>;
   options: { id: string; value: T; title: string; description: string }[];
 };
+
+const optionCardClassName =
+  'cursor-pointer rounded-xl border border-border bg-background p-4 shadow-none ring-0 transition-colors hover:bg-muted/50 has-data-checked:border-border has-data-checked:bg-muted/50 has-data-checked:shadow-none dark:has-data-checked:border-border dark:has-data-checked:bg-muted/50';
 
 const RadioSelect = <T,>({
   setSelectedOption,
@@ -31,9 +34,8 @@ const RadioSelect = <T,>({
           key={option.id}
           htmlFor={option.id}
           className={cn(
-            'cursor-pointer rounded-xl border border-border p-4 transition-colors hover:bg-accent hover:text-accent-foreground',
-            selectedOption === option.value &&
-              'bg-accent text-accent-foreground'
+            optionCardClassName,
+            selectedOption === option.value && 'bg-muted/50'
           )}
         >
           <Field
