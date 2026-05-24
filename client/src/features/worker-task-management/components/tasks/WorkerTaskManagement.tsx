@@ -86,6 +86,7 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                       <WorkerTaskRow
                         key={task.id}
                         task={task}
+                        workerId={workerId}
                         onOpenEdit={openForEdit}
                       />
                     ))
