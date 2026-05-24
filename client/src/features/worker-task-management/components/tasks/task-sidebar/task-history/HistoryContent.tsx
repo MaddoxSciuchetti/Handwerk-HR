@@ -1,4 +1,3 @@
-import { type ReactNode } from 'react';
 import { Button } from '@/components/ui/selfmade/button';
 import { TaskStatusIcon } from '@/features/all-tasks/components/ui/TaskStatusIcons';
 import {
@@ -6,6 +5,7 @@ import {
   issueStatusLabel,
   type IssueStatusValue,
 } from '@/features/all-tasks/consts/issue-status.consts';
+import { type ReactNode } from 'react';
 import { useGetTaskHistory } from '../../../../hooks/useGetTaskHistory';
 import {
   TaskHistoryAuditEntry,

@@ -11,8 +11,10 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { TaskSidebar } from '@/features/all-tasks/components/TaskSidebar';
+import { LargeEditMode } from '@/features/all-tasks/components/LargeEditMode';
+import { TaskItem } from '@/features/all-tasks/components/TaskItem';
 import { useTaskSidebar } from '@/features/all-tasks/hooks/useTaskSidebar';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 import useFilteredData from '../../hooks/useFilteredData';
 import useGetWorkerFiles from '../../hooks/useGetWorkerFiles';
 import useTaskData from '../../hooks/useTaskData';
@@ -21,7 +23,6 @@ import { WorkerTab } from '../../types/index.types';
 import WorkerFileUploads from '../files/WorkerFileUploads';
 import WorkerHeader from '../header/WorkerHeader';
 import { WorkerTabButtons } from '../header/WorkerTabButtons';
-import { WorkerTaskRow } from './WorkerTaskRow';
 
 type TaskManagementProps = {
   workerId: string;
@@ -32,6 +33,20 @@ const sectionHeaderClassName = 'h-12 py-3 pl-10 pr-2 text-sm font-medium';
 const TaskManagement = ({ workerId }: TaskManagementProps) => {
   const [activeTab, setActiveTab] = useState<WorkerTab>('form');
   const [isFileUploadOpen, setIsFileUploadOpen] = useState(false);
+  const [largeEditMode, setLargeEditMode] = useState(false);
+  const [editModeData, setEditModeData] = useState<
+    { taskNumber: string; taskTitle: string }[]
+  >([]);
+
+  const handleSetEditModeData: Dispatch<
+    SetStateAction<{ taskNumber: string; taskTitle: string }[]>
+  > = (action) => {
+    setEditModeData((prev) => {
+      const next = typeof action === 'function' ? action(prev) : action;
+      setLargeEditMode(next.length > 0);
+      return next;
+    });
+  };
 
   const { data, isLoading } = useTaskData(workerId);
   const { displayData } = useFilteredData(data);
@@ -101,11 +116,16 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                 <TableBody className="[&_tr]:border-0 [&_td]:py-4 [&_td]:px-2 [&_td:first-child]:pl-10">
                   {displayData.length ? (
                     displayData.map((task) => (
-                      <WorkerTaskRow
+                      <TaskItem
                         key={task.id}
                         task={task}
                         workerId={workerId}
+                        isSelected={editModeData.some(
+                          (item) => item.taskNumber === task.id
+                        )}
                         onOpenEdit={openForEdit}
+                        setLargeEditMode={setLargeEditMode}
+                        setEditModeData={handleSetEditModeData}
                       />
                     ))
                   ) : (
@@ -131,6 +151,13 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
             </TabsContent>
           </CardContent>
         </Card>
+        {largeEditMode ? (
+          <LargeEditMode
+            editModeData={editModeData}
+            setLargeEditMode={setLargeEditMode}
+            setEditModeData={handleSetEditModeData}
+          />
+        ) : null}
       </Tabs>
     </div>
   );

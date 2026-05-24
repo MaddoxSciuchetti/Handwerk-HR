@@ -14,6 +14,7 @@ import { TaskStatusPicker } from './ui/TaskStatusPicker';
 type TaskItemProps = {
   task: IssueResponse;
   isSelected: boolean;
+  workerId?: string;
   onOpenEdit: (seed: TaskEditState) => void;
   setLargeEditMode: Dispatch<SetStateAction<boolean>>;
   setEditModeData: Dispatch<
@@ -24,6 +25,7 @@ type TaskItemProps = {
 export function TaskItem({
   task,
   isSelected,
+  workerId,
   onOpenEdit,
   setLargeEditMode,
   setEditModeData,
@@ -76,10 +78,11 @@ export function TaskItem({
           <SelectionIcon className="size-4" />
         </Button>
         <div className="flex min-w-0 items-center gap-2.5">
-          <p className="w-24 shrink-0 truncate whitespace-nowrap font-mono text-sm">
-            {`--- ${task.id.slice(0, 8)}`}
-          </p>
-          <TaskStatusPicker taskId={task.id} status={task.status} />
+          <TaskStatusPicker
+            taskId={task.id}
+            status={task.status}
+            workerId={workerId}
+          />
           <p className="min-w-0 truncate text-sm">{task.title}</p>
           <Button
             type="button"

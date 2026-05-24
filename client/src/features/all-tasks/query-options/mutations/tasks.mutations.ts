@@ -40,6 +40,7 @@ export const taskMutations = {
       mutationFn: (ids: string[]) => deleteTasks(ids),
       onSuccess: () => {
         void queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] });
+        void queryClient.invalidateQueries({ queryKey: [WORKERBYID] });
       },
     }),
 
