@@ -19,7 +19,7 @@ import { useWorkerFilter } from '@/features/worker-lifecycle/hooks/useWorkerFilt
 import useWorkerMutations from '@/features/worker-lifecycle/hooks/useWorkerMutaitons';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import { ChevronUp } from 'lucide-react';
-import { useState } from 'react';
+import { useState, type Dispatch, type SetStateAction } from 'react';
 import GreetingHeader from './GreetingHeader';
 import ProjectItem, { type WorkerSelection } from './ProjectItem';
 import { WorkerSidebar } from './WorkerSidebar';
@@ -47,6 +47,16 @@ function WorkerLifeCycle() {
   if (error) return <ErrorAlert message={error.message} />;
 
   const handleSelectWorker = () => setIsWorkerSidebarOpen(true);
+
+  const handleSetEditModeData: Dispatch<SetStateAction<WorkerSelection[]>> = (
+    action
+  ) => {
+    setEditModeData((prev) => {
+      const next = typeof action === 'function' ? action(prev) : action;
+      setLargeEditMode(next.length > 0);
+      return next;
+    });
+  };
 
   const handleDeleteSelected = () => {
     const ids = editModeData
@@ -119,7 +129,7 @@ function WorkerLifeCycle() {
                 (item) => item.engagementNumber === worker.id
               )}
               setLargeEditMode={setLargeEditMode}
-              setEditModeData={setEditModeData}
+              setEditModeData={handleSetEditModeData}
             />
           ))}
         </Table>
@@ -127,7 +137,7 @@ function WorkerLifeCycle() {
         {largeEditMode && (
           <EditModeBar
             selectedItems={editModeData}
-            setSelectedItems={setEditModeData}
+            setSelectedItems={handleSetEditModeData}
             isPending={isDeletingWorkers}
             onDelete={handleDeleteSelected}
             onClose={() => setLargeEditMode(false)}
