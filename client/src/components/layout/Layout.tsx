@@ -67,7 +67,7 @@ function Layout() {
           <PagePath />
         </header>
         <main className="flex min-h-0 grow flex-col gap-4 bg-background p-4 lg:items-center">
-          <div className="h-full w-full min-h-0 min-w-0 grow overflow-auto">
+          <div className="h-full w-full min-h-0 min-w-0 grow overflow-hidden">
             <Outlet />
           </div>
         </main>
