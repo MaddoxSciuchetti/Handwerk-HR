@@ -4,11 +4,12 @@ Further considerations I thought about include:
 
 ## Monitoring dashboard
 
-I thought about setting up a dashboard that runs the following types of queries every hour or 12 hours:
+I thought about setting up a dashboard that runs the following types of queries every hour or 12 hours and than shows the results:
 
 - Runs specific DB queries
 - Runs the queries that check the index size
 - Runs the queries that check overall DB sizes
+- Runs concurrent queries using pgbench
 
 The benefit of the above would be that I can compare the latest result to the one before that. It would give me an overview of how my queries perform in regards to the growth that my DB is experiencing. Once queries get slower, it gets easier to pinpoint the issue and take measures that are efficient, ensuring that the queries stay fast.
 
