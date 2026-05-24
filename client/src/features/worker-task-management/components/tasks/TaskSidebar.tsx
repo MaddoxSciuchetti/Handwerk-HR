@@ -49,13 +49,13 @@ export function TaskSidebar({
   );
 
   return (
-    <SidebarAside isOpen={isOpen}>
-      <SidebarPanel>
-        <SidebarHeader>
-          <Label>
+    <SidebarAside className="p-2" isOpen={isOpen}>
+      <SidebarPanel className="w-full">
+        <SidebarHeader className="flex items-center justify-between p-6">
+          <Label className="typo-body-lg font-bold">
             {templateTaskState === 'create'
-              ? 'Erstelle deine Aufgabe'
-              : 'Bearbeite deine Aufgabe'}
+              ? 'Aufgabe erstellen'
+              : 'Aufgabe bearbeiten'}
           </Label>
           <Button
             type="button"
@@ -69,7 +69,7 @@ export function TaskSidebar({
           </Button>
         </SidebarHeader>
         <form onSubmit={onSubmit} className={cn('flex min-h-0 flex-1 flex-col')}>
-          <SidebarContent className="mt-5 p-6 flex flex-col gap-2">
+          <SidebarContent className="mt-2 flex flex-col gap-4 p-6">
             <FormFields
               errors={errors}
               register={register}

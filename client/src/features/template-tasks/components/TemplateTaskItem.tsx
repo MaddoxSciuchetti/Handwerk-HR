@@ -1,4 +1,3 @@
-import { issueStatusLabel } from '@/features/all-tasks/consts/issue-status.consts';
 import { Button } from '@/components/ui/button';
 import { Cell, GrowingItem, Items } from '@/features/settings/components/Table';
 
@@ -40,9 +39,6 @@ export function TemplateTaskItem({
             )}
           >
             <p className="typo-body-sm text-text-primary">{task.taskName}</p>
-            <div className="flex flex-wrap items-center gap-2 typo-body-xs text-text-secondary">
-              <span>{issueStatusLabel(task.defaultStatus)}</span>
-            </div>
             {task.taskDescription ? (
               <p className="typo-body-xs text-text-secondary line-clamp-3">
                 {task.taskDescription}
