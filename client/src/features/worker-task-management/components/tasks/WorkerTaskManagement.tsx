@@ -12,7 +12,7 @@ import {
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { TaskSidebar } from '@/features/all-tasks/components/TaskSidebar';
 import { useTaskSidebar } from '@/features/all-tasks/hooks/useTaskSidebar';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import useFilteredData from '../../hooks/useFilteredData';
 import useGetWorkerFiles from '../../hooks/useGetWorkerFiles';
 import useTaskData from '../../hooks/useTaskData';
@@ -36,8 +36,26 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
   const { data, isLoading } = useTaskData(workerId);
   const { displayData } = useFilteredData(data);
   const { fetchFiles } = useGetWorkerFiles(workerId);
-  const { sidebarKey, sidebarProps, openForEdit, openForCreate } =
+  const { sidebarKey, sidebarProps, openForEdit, openForCreate, patchTaskEditState } =
     useTaskSidebar();
+
+  useEffect(() => {
+    if (!sidebarProps.isOpen || sidebarProps.taskState !== 'edit') return;
+
+    const task = displayData.find(
+      (item) => item.id === sidebarProps.taskEditState.taskId
+    );
+    if (!task || task.status === sidebarProps.taskEditState.status) return;
+
+    patchTaskEditState({ status: task.status });
+  }, [
+    displayData,
+    patchTaskEditState,
+    sidebarProps.isOpen,
+    sidebarProps.taskEditState.status,
+    sidebarProps.taskEditState.taskId,
+    sidebarProps.taskState,
+  ]);
 
   if (isLoading) return <LoadingAlert />;
   if (!data)

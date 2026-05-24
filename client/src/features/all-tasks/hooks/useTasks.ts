@@ -1,7 +1,9 @@
 import { tryCatch } from '@/lib/trycatch';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { Dispatch, SetStateAction } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import type { IssueStatusValue } from '../consts/issue-status.consts';
 import { taskFormSchema } from '../schemas/taskForm.schema';
 import { TaskSidebarForm } from '../types/index.types';
 import { useCreateTask } from './useCreateTask';
@@ -39,6 +41,7 @@ export function useTasks(
     register,
     handleSubmit,
     control,
+    setValue,
     formState: { errors },
   } = useForm<TaskSidebarForm>({
     defaultValues: {
@@ -49,6 +52,10 @@ export function useTasks(
     },
     resolver: zodResolver(taskFormSchema),
   });
+
+  useEffect(() => {
+    setValue('status', (taskEditState.status || 'open') as IssueStatusValue);
+  }, [taskEditState.status, setValue]);
 
   const onSubmit = handleSubmit(async (data) => {
     if (taskState === 'create') {

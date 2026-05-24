@@ -1,6 +1,11 @@
 import { type ReactNode } from 'react';
 import { Button } from '@/components/ui/selfmade/button';
-import { cn } from '@/lib/trycatch';
+import { TaskStatusIcon } from '@/features/all-tasks/components/ui/TaskStatusIcons';
+import {
+  ISSUE_STATUSES,
+  issueStatusLabel,
+  type IssueStatusValue,
+} from '@/features/all-tasks/consts/issue-status.consts';
 import { useGetTaskHistory } from '../../../../hooks/useGetTaskHistory';
 import {
   TaskHistoryAuditEntry,
@@ -40,6 +45,29 @@ function getActionLabel(entry: TaskHistoryAuditEntry): string {
   return entry.action;
 }
 
+function isIssueStatusValue(value: string): value is IssueStatusValue {
+  return (ISSUE_STATUSES as readonly string[]).includes(value);
+}
+
+function TaskHistoryStatusBadge({
+  statusId,
+  name,
+}: {
+  statusId: string;
+  name: string;
+}) {
+  const label = name || issueStatusLabel(statusId);
+
+  return (
+    <span className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground">
+      {isIssueStatusValue(statusId) ? (
+        <TaskStatusIcon status={statusId} className="size-3.5" />
+      ) : null}
+      {label}
+    </span>
+  );
+}
+
 function renderChange(change: TaskHistoryChange) {
   const label = FIELD_LABELS[change.field] ?? change.field;
   const from = change.from ?? '–';
@@ -68,19 +96,10 @@ function renderAuditEntry(entry: TaskHistoryAuditEntry): ReactNode {
           {new Date(entry.createdAt).toLocaleString()}
         </span>
         {entry.status ? (
-          <span
-            className={cn(
-              'rounded px-2 py-0.5 text-xs font-medium',
-              'bg-(--status-success-bg) text-(--status-success-foreground)'
-            )}
-            style={
-              entry.status.color
-                ? { backgroundColor: entry.status.color }
-                : undefined
-            }
-          >
-            {entry.status.name}
-          </span>
+          <TaskHistoryStatusBadge
+            statusId={entry.status.id}
+            name={entry.status.name}
+          />
         ) : null}
       </div>
       <p className="mt-1 text-sm text-muted-foreground">
@@ -168,21 +187,27 @@ const HistoryContent = ({
   }
 
   return (
-    <div className="pb-4">
-      <div className="relative pl-6">
-        <div className="absolute top-2 bottom-2 left-[7px] w-px bg-(--border)" />
-        <div className="space-y-4">
-          {historyData.map((entry: TaskHistoryItem) => (
-            <div key={`${entry.kind}-${entry.id}`} className="relative">
-              <div className="absolute -left-6 top-1.5 h-3 w-3 rounded-full bg-(--chart-2) shadow-sm" />
-              <div className="bg-(--dropdown-surface) rounded-lg p-3">
-                {entry.kind === 'audit'
-                  ? renderAuditEntry(entry)
-                  : renderCommentEntry(entry, currentUserId, onEditComment)}
-              </div>
+    <div className="relative">
+      <div
+        aria-hidden
+        className="absolute top-6 bottom-6 left-3 w-px -translate-x-1/2 bg-(--border)"
+      />
+      <div className="space-y-4">
+        {historyData.map((entry: TaskHistoryItem) => (
+          <div key={`${entry.kind}-${entry.id}`} className="flex gap-3">
+            <div className="flex w-6 shrink-0 justify-center">
+              <div
+                aria-hidden
+                className="relative z-10 mt-6 size-3 shrink-0 rounded-full bg-(--chart-2) shadow-sm"
+              />
             </div>
-          ))}
-        </div>
+            <div className="bg-(--dropdown-surface) min-w-0 flex-1 rounded-lg p-3">
+              {entry.kind === 'audit'
+                ? renderAuditEntry(entry)
+                : renderCommentEntry(entry, currentUserId, onEditComment)}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

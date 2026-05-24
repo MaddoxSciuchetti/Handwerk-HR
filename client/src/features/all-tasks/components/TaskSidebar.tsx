@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { FieldGroup } from '@/components/ui/field';
 import { Label } from '@/components/ui/label';
 import { TaskCommentBox } from '@/features/all-tasks/components/TaskCommentBox';
-import { ISSUE_STATUS_OPTIONS } from '@/features/all-tasks/consts/issue-status.consts';
+import { TaskStatusSelect } from '@/features/all-tasks/components/ui/TaskStatusSelect';
 import { useSaveTaskComment } from '@/features/all-tasks/hooks/useSaveTaskComment';
 import { employeeQueries } from '@/features/employee-overview/query-options/queries/employee.queries';
 import useAuth from '@/features/user-profile/hooks/useAuth';
@@ -94,15 +94,6 @@ export function TaskSidebar({
     [employees]
   );
 
-  const statusOptions = useMemo(
-    () =>
-      ISSUE_STATUS_OPTIONS.map((option) => ({
-        value: option.value,
-        label: option.label,
-      })),
-    []
-  );
-
   const engagementOptions = useMemo(
     () =>
       engagements.map((e) => ({
@@ -131,8 +122,8 @@ export function TaskSidebar({
           </Button>
         </SidebarHeader>
         <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <SidebarContent className="mt-2 min-h-0 flex-1 overflow-y-auto p-6">
-            <FieldGroup className="gap-4 pb-4">
+          <SidebarContent className="mt-2 flex min-h-0 flex-1 flex-col overflow-y-auto p-6">
+            <FieldGroup className="gap-4 pb-8">
               <FormFields
                 errors={errors}
                 register={register}
@@ -156,14 +147,7 @@ export function TaskSidebar({
                 errors={errors}
                 label="Zuständigkeit"
               />
-              <FormSelectOptions
-                name="status"
-                control={control}
-                data={statusOptions}
-                placeholder="Status"
-                errors={errors}
-                label="Status"
-              />
+              <TaskStatusSelect control={control} errors={errors} />
 
               {taskState === 'edit' && taskEditState.taskId ? (
                 <>
