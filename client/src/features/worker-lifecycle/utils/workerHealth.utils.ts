@@ -14,6 +14,10 @@ function collectWorkerIssues(worker: WorkerRecord) {
   return worker.engagements.flatMap((engagement) => engagement.issues ?? []);
 }
 
+export function getWorkerIssueCount(worker: WorkerRecord): number {
+  return collectWorkerIssues(worker).length;
+}
+
 export function getWorkerHealth(worker: WorkerRecord): WorkerHealth {
   const issues = collectWorkerIssues(worker);
   const totalCount = issues.length;

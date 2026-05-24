@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import type { Dispatch, MouseEvent, SetStateAction } from 'react';
 import { WorkerRecord } from '../types/index.types';
 import { getFirstFormType } from '../utils/formtype';
+import { getWorkerIssueCount } from '../utils/workerHealth.utils';
 import { EngagementProgressPicker } from './ui/EngagementProgressPicker';
 
 export type WorkerSelection = {
@@ -50,6 +51,7 @@ function ProjectItem({
   };
 
   const SelectionIcon = isSelected ? SquareCheckIcon : SquareDashedIcon;
+  const issueCount = getWorkerIssueCount(worker);
 
   return (
     <TableRow
@@ -93,6 +95,14 @@ function ProjectItem({
         )}
       >
         {worker.engagements[0].responsibleUser.firstName}
+      </TableCell>
+      <TableCell
+        className={cn(
+          'text-sm tabular-nums text-muted-foreground transition-colors group-hover:bg-muted/50',
+          isSelected && 'bg-muted/50'
+        )}
+      >
+        {issueCount}
       </TableCell>
       <TableCell
         className={cn(
