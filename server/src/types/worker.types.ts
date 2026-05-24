@@ -3,6 +3,7 @@ import type {
     DocumentFileType,
     EngagementType,
     IssuePriority,
+    IssueStatus,
     WorkerStatus,
 } from "@prisma/client";
 
@@ -11,6 +12,7 @@ export type {
     DocumentFileType,
     EngagementType,
     IssuePriority,
+    IssueStatus,
     WorkerStatus,
 };
 
@@ -106,7 +108,7 @@ export interface UpdateEngagementInput {
 export interface CreateIssueInput {
     workerEngagementId: string; // required — no workerId on Issue
     createdByUserId: string; // required
-    statusId: string; // required FK → IssueStatus
+    status?: IssueStatus;
     title: string;
     assigneeUserId?: string;
     templateItemId?: string;
@@ -123,7 +125,7 @@ export interface UpdateIssueInput {
     title?: string;
     description?: string;
     assigneeUserId?: string;
-    statusId?: string;
+    status?: IssueStatus;
     priority?: IssuePriority;
     dueDate?: Date;
 }

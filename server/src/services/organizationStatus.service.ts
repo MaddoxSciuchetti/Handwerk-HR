@@ -1,38 +1,13 @@
-import {
-    ORG_STATUS_ENTITY_ENGAGEMENT,
-    type OrgStatusEntityType,
-} from "@/constants/statusEntity.consts";
 import { BAD_REQUEST, CONFLICT, NOT_FOUND } from "@/constants/http";
 import { prisma } from "@/lib/prisma";
 import appAssert from "@/utils/appAssert";
 
-export async function listOrganizationStatuses(
-    organizationId: string,
-    entityType: OrgStatusEntityType,
-) {
-    if (entityType === ORG_STATUS_ENTITY_ENGAGEMENT) {
-        const rows = await prisma.engagementStatus.findMany({
-            where: { organizationId },
-            orderBy: { orderIndex: "asc" },
-            include: {
-                _count: { select: { engagements: true } },
-            },
-        });
-        return rows.map((r) => ({
-            id: r.id,
-            name: r.name,
-            color: null as string | null,
-            orderIndex: r.orderIndex,
-            isDefault: r.isDefault,
-            usageCount: r._count.engagements,
-        }));
-    }
-
-    const rows = await prisma.issueStatus.findMany({
+export async function listOrganizationStatuses(organizationId: string) {
+    const rows = await prisma.engagementStatus.findMany({
         where: { organizationId },
         orderBy: { orderIndex: "asc" },
         include: {
-            _count: { select: { issues: true } },
+            _count: { select: { engagements: true } },
         },
     });
     return rows.map((r) => ({
@@ -41,50 +16,22 @@ export async function listOrganizationStatuses(
         color: null as string | null,
         orderIndex: r.orderIndex,
         isDefault: r.isDefault,
-        usageCount: r._count.issues,
+        usageCount: r._count.engagements,
     }));
 }
 
 export async function createOrganizationStatus(
     organizationId: string,
-    entityType: OrgStatusEntityType,
     input: { name: string },
 ) {
     const name = input.name.trim();
     appAssert(name.length > 0, BAD_REQUEST, "Name erforderlich");
 
-    if (entityType === ORG_STATUS_ENTITY_ENGAGEMENT) {
-        const total = await prisma.engagementStatus.count({
-            where: { organizationId },
-        });
-        try {
-            return await prisma.engagementStatus.create({
-                data: {
-                    organizationId,
-                    name,
-                    orderIndex: total,
-                    isDefault: false,
-                },
-            });
-        } catch (e: unknown) {
-            const code =
-                typeof e === "object" && e !== null && "code" in e
-                    ? (e as { code: string }).code
-                    : "";
-            appAssert(
-                code !== "P2002",
-                CONFLICT,
-                "Ein Status mit diesem Namen existiert bereits",
-            );
-            throw e;
-        }
-    }
-
-    const total = await prisma.issueStatus.count({
+    const total = await prisma.engagementStatus.count({
         where: { organizationId },
     });
     try {
-        return await prisma.issueStatus.create({
+        return await prisma.engagementStatus.create({
             data: {
                 organizationId,
                 name,
@@ -106,23 +53,10 @@ export async function createOrganizationStatus(
     }
 }
 
-async function findStatusAnyTable(organizationId: string, statusId: string) {
-    const engagement = await prisma.engagementStatus.findFirst({
+async function findEngagementStatus(organizationId: string, statusId: string) {
+    return prisma.engagementStatus.findFirst({
         where: { id: statusId, organizationId },
     });
-    if (engagement) {
-        return {
-            kind: "engagement" as const,
-            row: engagement,
-        };
-    }
-    const issue = await prisma.issueStatus.findFirst({
-        where: { id: statusId, organizationId },
-    });
-    if (issue) {
-        return { kind: "issue" as const, row: issue };
-    }
-    return null;
 }
 
 export async function updateOrganizationStatus(
@@ -130,7 +64,7 @@ export async function updateOrganizationStatus(
     statusId: string,
     input: { name?: string },
 ) {
-    const found = await findStatusAnyTable(organizationId, statusId);
+    const found = await findEngagementStatus(organizationId, statusId);
     appAssert(found, NOT_FOUND, "Status nicht gefunden");
 
     const data: { name?: string } = {};
@@ -140,16 +74,10 @@ export async function updateOrganizationStatus(
         data.name = name;
     }
 
-    if (Object.keys(data).length === 0) return found.row;
+    if (Object.keys(data).length === 0) return found;
 
     try {
-        if (found.kind === "engagement") {
-            return await prisma.engagementStatus.update({
-                where: { id: statusId },
-                data,
-            });
-        }
-        return await prisma.issueStatus.update({
+        return await prisma.engagementStatus.update({
             where: { id: statusId },
             data,
         });
@@ -171,22 +99,16 @@ export async function deleteOrganizationStatus(
     organizationId: string,
     statusId: string,
 ) {
-    const found = await findStatusAnyTable(organizationId, statusId);
+    const found = await findEngagementStatus(organizationId, statusId);
     appAssert(found, NOT_FOUND, "Status nicht gefunden");
 
-    const usage =
-        found.kind === "engagement"
-            ? await prisma.workerEngagement.count({
-                  where: { statusId },
-              })
-            : await prisma.issue.count({
-                  where: { statusId },
-              });
+    const usage = await prisma.workerEngagement.count({
+        where: { statusId },
+    });
 
-    const total =
-        found.kind === "engagement"
-            ? await prisma.engagementStatus.count({ where: { organizationId } })
-            : await prisma.issueStatus.count({ where: { organizationId } });
+    const total = await prisma.engagementStatus.count({
+        where: { organizationId },
+    });
     appAssert(
         total > 1,
         BAD_REQUEST,
@@ -198,9 +120,5 @@ export async function deleteOrganizationStatus(
         "Status ist noch in Verwendung und kann nicht gelöscht werden",
     );
 
-    if (found.kind === "engagement") {
-        await prisma.engagementStatus.delete({ where: { id: statusId } });
-    } else {
-        await prisma.issueStatus.delete({ where: { id: statusId } });
-    }
+    await prisma.engagementStatus.delete({ where: { id: statusId } });
 }

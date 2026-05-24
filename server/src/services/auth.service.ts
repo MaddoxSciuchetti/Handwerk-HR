@@ -239,34 +239,6 @@ export const registerOrgAccount = async (data: RegisterOrgInput) => {
                     },
                 ],
             });
-            await tx.issueStatus.createMany({
-                data: [
-                    {
-                        organizationId: organization.id,
-                        name: "Offen",
-                        isDefault: true,
-                        orderIndex: 0,
-                    },
-                    {
-                        organizationId: organization.id,
-                        name: "In Arbeit",
-                        isDefault: false,
-                        orderIndex: 1,
-                    },
-                    {
-                        organizationId: organization.id,
-                        name: "Erledigt",
-                        isDefault: false,
-                        orderIndex: 2,
-                    },
-                    {
-                        organizationId: organization.id,
-                        name: "Abgebrochen",
-                        isDefault: false,
-                        orderIndex: 3,
-                    },
-                ],
-            });
 
             return { user, organization };
         },

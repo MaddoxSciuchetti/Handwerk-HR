@@ -1,4 +1,6 @@
+import { issueStatusLabel } from "@/constants/issueStatus.consts";
 import { prisma } from "@/lib/prisma";
+import type { IssueStatus } from "@prisma/client";
 import { createIssue, updateIssue } from "@/services/worker.service";
 
 export type TaskHistoryChange = {
@@ -48,6 +50,15 @@ export const queryTasks = async (orgId: string) => {
             },
         },
         orderBy: { createdAt: "desc" },
+        include: {
+            assignee: {
+                select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                },
+            },
+        },
     });
 };
 
@@ -60,18 +71,10 @@ export async function createTaskInOrg(orgId: string, userId: string) {
         throw new Error("No worker engagement for organization");
     }
 
-    const status = await prisma.issueStatus.findFirst({
-        where: { organizationId: orgId },
-        orderBy: { orderIndex: "asc" },
-    });
-    if (!status) {
-        throw new Error("No issue status for organization");
-    }
-
     return createIssue({
         workerEngagementId: engagement.id,
         createdByUserId: userId,
-        statusId: status.id,
+        status: "open",
         title: "Neue Aufgabe",
     });
 }
@@ -105,7 +108,7 @@ export async function updateTaskInOrg(
 
     const body = (payload ?? {}) as {
         title?: string;
-        statusId?: string;
+        status?: IssueStatus;
         assigneeUserId?: string;
     };
 
@@ -114,7 +117,7 @@ export async function updateTaskInOrg(
         workerEngagementId: existing.workerEngagementId,
         actorUserId: userId,
         title: body.title,
-        statusId: body.statusId,
+        status: body.status,
         assigneeUserId: body.assigneeUserId,
     });
 }
@@ -122,6 +125,7 @@ export async function updateTaskInOrg(
 const HUMAN_READABLE_FIELDS = new Set([
     "title",
     "description",
+    "status",
     "statusId",
     "assigneeUserId",
     "priority",
@@ -137,7 +141,6 @@ const PRIORITY_LABELS: Record<string, string> = {
 };
 
 type ChangeResolvers = {
-    statusName: (id: string) => string | null;
     userName: (id: string) => string | null;
 };
 
@@ -159,8 +162,8 @@ function resolveFieldValue(
     const stringValue = valueToString(rawValue);
     if (stringValue === null) return null;
 
-    if (field === "statusId") {
-        return resolvers.statusName(stringValue) ?? stringValue;
+    if (field === "status" || field === "statusId") {
+        return issueStatusLabel(stringValue);
     }
     if (field === "assigneeUserId") {
         return resolvers.userName(stringValue) ?? stringValue;
@@ -193,8 +196,10 @@ function diffAuditValues(
     const changes: TaskHistoryChange[] = [];
     for (const field of fields) {
         if (!HUMAN_READABLE_FIELDS.has(field)) continue;
+        const normalizedField = field === "statusId" ? "status" : field;
+        if (changes.some((c) => c.field === normalizedField)) continue;
         changes.push({
-            field,
+            field: normalizedField,
             from: resolveFieldValue(field, oldObj[field], resolvers),
             to: resolveFieldValue(field, newObj[field], resolvers),
         });
@@ -202,21 +207,26 @@ function diffAuditValues(
     return changes;
 }
 
-// audit-log payloads. Used to batch-fetch display names in one query.
-function collectReferencedIds(
-    logs: Array<{ oldValue: unknown; newValue: unknown }>,
-    key: string,
-): string[] {
-    const ids = new Set<string>();
-    for (const log of logs) {
-        for (const blob of [log.oldValue, log.newValue]) {
-            if (blob && typeof blob === "object" && key in blob) {
-                const id = (blob as Record<string, unknown>)[key];
-                if (typeof id === "string") ids.add(id);
-            }
-        }
-    }
-    return Array.from(ids);
+function readStatusFromAuditBlob(
+    blob: Record<string, unknown> | null,
+): IssueStatus | null {
+    if (!blob) return null;
+    const raw =
+        typeof blob.status === "string"
+            ? blob.status
+            : typeof blob.statusId === "string"
+              ? blob.statusId
+              : null;
+    if (!raw) return null;
+    return raw as IssueStatus;
+}
+
+function statusDisplay(status: IssueStatus) {
+    return {
+        id: status,
+        name: issueStatusLabel(status),
+        color: null as string | null,
+    };
 }
 
 export async function getTaskHistoryInOrg(
@@ -250,26 +260,19 @@ export async function getTaskHistoryInOrg(
         },
     });
 
-    const statusIds = collectReferencedIds(logs, "statusId");
-    const assigneeIds = collectReferencedIds(logs, "assigneeUserId");
+    const assigneeIds = new Set<string>();
+    for (const log of logs) {
+        for (const blob of [log.oldValue, log.newValue]) {
+            if (blob && typeof blob === "object" && "assigneeUserId" in blob) {
+                const id = (blob as Record<string, unknown>).assigneeUserId;
+                if (typeof id === "string") assigneeIds.add(id);
+            }
+        }
+    }
 
-    const statuses = statusIds.length
-        ? await prisma.issueStatus
-              .findMany({
-                  where: { id: { in: statusIds } },
-                  select: { id: true, name: true },
-              })
-              .then((rows) =>
-                  rows.map((s) => ({
-                      id: s.id,
-                      name: s.name,
-                      color: null as string | null,
-                  })),
-              )
-        : [];
-    const assignees = assigneeIds.length
+    const assignees = assigneeIds.size
         ? await prisma.user.findMany({
-              where: { id: { in: assigneeIds } },
+              where: { id: { in: Array.from(assigneeIds) } },
               select: {
                   id: true,
                   firstName: true,
@@ -279,11 +282,9 @@ export async function getTaskHistoryInOrg(
           })
         : [];
 
-    const statusById = new Map(statuses.map((s) => [s.id, s]));
     const userById = new Map(assignees.map((u) => [u.id, u]));
 
     const resolvers: ChangeResolvers = {
-        statusName: (id) => statusById.get(id)?.name ?? null,
         userName: (id) => {
             const u = userById.get(id);
             if (!u) return null;
@@ -297,10 +298,7 @@ export async function getTaskHistoryInOrg(
             log.newValue && typeof log.newValue === "object"
                 ? (log.newValue as Record<string, unknown>)
                 : null;
-        const newStatusId =
-            newObj && typeof newObj.statusId === "string"
-                ? (newObj.statusId as string)
-                : null;
+        const newStatus = readStatusFromAuditBlob(newObj);
 
         return {
             kind: "audit" as const,
@@ -316,7 +314,7 @@ export async function getTaskHistoryInOrg(
                       avatarUrl: log.actorUser.avatarUrl,
                   }
                 : null,
-            status: newStatusId ? (statusById.get(newStatusId) ?? null) : null,
+            status: newStatus ? statusDisplay(newStatus) : null,
             changes: diffAuditValues(log.oldValue, log.newValue, resolvers),
         };
     });

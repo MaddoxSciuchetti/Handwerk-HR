@@ -103,6 +103,7 @@ function WorkerLifeCycle() {
                   <TableHead className="h-12 py-3 pl-10 pr-2">Name</TableHead>
                   <TableHead className="py-3 px-2">Type</TableHead>
                   <TableHead className="py-3 px-2">Verantwortlich</TableHead>
+                  <TableHead className="py-3 px-2">Gesundheit</TableHead>
                   <TableHead className="py-3 px-2">Status</TableHead>
                 </TableRow>
               </TableHeader>

@@ -1,4 +1,5 @@
 import { IssueResponse } from '@/features/all-tasks/types/index.types';
+import { IssueResponse } from '@/features/all-tasks/types/index.types';
 import { LifecycleType } from '@/features/worker-task-management/types/index.types';
 
 export type EmployeeForm = {
@@ -87,6 +88,7 @@ export type WorkerEngagement = {
     lastName: string;
     email: string;
   };
+  issues?: Pick<IssueResponse, 'id' | 'status'>[];
 };
 
 export type WorkerRecord = {

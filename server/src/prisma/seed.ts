@@ -29,9 +29,6 @@ async function ensureDefaultStatuses(organizationId: string) {
     const engagementCount = await prisma.engagementStatus.count({
         where: { organizationId },
     });
-    const issueCount = await prisma.issueStatus.count({
-        where: { organizationId },
-    });
 
     if (engagementCount === 0) {
         await prisma.engagementStatus.createMany({
@@ -51,37 +48,6 @@ async function ensureDefaultStatuses(organizationId: string) {
                 {
                     organizationId,
                     name: "Abgeschlossen",
-                    isDefault: false,
-                    orderIndex: 2,
-                },
-                {
-                    organizationId,
-                    name: "Abgebrochen",
-                    isDefault: false,
-                    orderIndex: 3,
-                },
-            ],
-        });
-    }
-
-    if (issueCount === 0) {
-        await prisma.issueStatus.createMany({
-            data: [
-                {
-                    organizationId,
-                    name: "Offen",
-                    isDefault: true,
-                    orderIndex: 0,
-                },
-                {
-                    organizationId,
-                    name: "In Arbeit",
-                    isDefault: false,
-                    orderIndex: 1,
-                },
-                {
-                    organizationId,
-                    name: "Erledigt",
                     isDefault: false,
                     orderIndex: 2,
                 },

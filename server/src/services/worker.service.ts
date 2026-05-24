@@ -180,6 +180,12 @@ export async function getWorkerData(params: GetWorkersInput) {
                             email: true,
                         },
                     },
+                    issues: {
+                        select: {
+                            id: true,
+                            status: true,
+                        },
+                    },
                 },
             },
             createdBy: {
@@ -221,7 +227,6 @@ export async function getWorkerById(workerId: string, organizationId: string) {
                     issues: {
                         orderBy: { createdAt: "desc" },
                         include: {
-                            issueStatus: true,
                             assignee: {
                                 select: {
                                     id: true,
@@ -432,7 +437,7 @@ export async function createIssue(params: CreateIssueInput) {
     const {
         workerEngagementId,
         createdByUserId,
-        statusId,
+        status,
         title,
         assigneeUserId,
         templateItemId,
@@ -451,7 +456,7 @@ export async function createIssue(params: CreateIssueInput) {
             data: {
                 workerEngagementId,
                 createdByUserId,
-                statusId,
+                status: status ?? "open",
                 title,
                 assigneeUserId,
                 templateItemId,
@@ -460,7 +465,6 @@ export async function createIssue(params: CreateIssueInput) {
                 dueDate,
             },
             include: {
-                issueStatus: true,
                 assignee: {
                     select: {
                         id: true,
@@ -482,24 +486,11 @@ export async function createIssue(params: CreateIssueInput) {
                 action: "issue.created",
                 newValue: {
                     title: issue.title,
-                    statusId: issue.statusId,
+                    status: issue.status,
                 },
             },
         });
         return issue;
-    });
-}
-
-export async function getIssueStatusesForWorker(params: {
-    workerId: string;
-    organizationId: string;
-}) {
-    const { workerId, organizationId } = params;
-    await assertOwnership(workerId, organizationId);
-    return prisma.issueStatus.findMany({
-        where: { organizationId },
-        orderBy: { orderIndex: "asc" },
-        select: { id: true, name: true },
     });
 }
 
@@ -511,7 +502,7 @@ export async function updateIssue(params: UpdateIssueInput) {
         title,
         description,
         assigneeUserId,
-        statusId,
+        status,
         priority,
         dueDate,
     } = params;
@@ -525,7 +516,7 @@ export async function updateIssue(params: UpdateIssueInput) {
     if (title !== undefined) data.title = title;
     if (description !== undefined) data.description = description;
     if (assigneeUserId !== undefined) data.assigneeUserId = assigneeUserId;
-    if (statusId !== undefined) data.statusId = statusId;
+    if (status !== undefined) data.status = status;
     if (priority !== undefined) data.priority = priority;
     if (dueDate !== undefined) data.dueDate = dueDate;
 
@@ -534,7 +525,6 @@ export async function updateIssue(params: UpdateIssueInput) {
         return prisma.issue.findFirst({
             where: { id: issueId },
             include: {
-                issueStatus: true,
                 assignee: {
                     select: {
                         id: true,
@@ -557,7 +547,6 @@ export async function updateIssue(params: UpdateIssueInput) {
             where: { id: issueId },
             data,
             include: {
-                issueStatus: true,
                 assignee: {
                     select: {
                         id: true,
@@ -645,24 +634,13 @@ async function applyIssueTemplateInTx(
     });
     if (!template) throw new Error("Template not found");
 
-    const statuses = await tx.issueStatus.findMany({
-        where: { organizationId },
-        orderBy: { orderIndex: "asc" },
-    });
-    const byName = (n: string) => statuses.find((s) => s.name === n)?.id;
-    const initialStatusId =
-        statuses.find((s) => s.isDefault)?.id ??
-        byName("Offen") ??
-        statuses[0]?.id;
-    if (!initialStatusId) throw new Error("No issue statuses configured");
-
     const created = [] as { id: string }[];
     for (const item of template.items) {
         const issue = await tx.issue.create({
             data: {
                 workerEngagementId,
                 createdByUserId: actorUserId,
-                statusId: initialStatusId,
+                status: "open",
                 title: item.title,
                 description: item.description ?? undefined,
                 priority: templatePriorityToIssuePriority(item.defaultPriority),
@@ -677,7 +655,7 @@ async function applyIssueTemplateInTx(
                 action: "issue.created",
                 newValue: {
                     title: item.title,
-                    statusId: initialStatusId,
+                    status: "open",
                     templateItemId: item.id,
                 },
             },
@@ -893,7 +871,6 @@ export async function getWorkerHistory(params: {
                 issues: {
                     orderBy: { createdAt: "desc" },
                     include: {
-                        issueStatus: true,
                         assignee: {
                             select: {
                                 id: true,

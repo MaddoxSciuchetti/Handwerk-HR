@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { AbsenceType } from "@prisma/client";
 
-
 export type UpdateAbsenceParams = {
     userId: string;
     orgId: string;
@@ -11,14 +10,12 @@ export type UpdateAbsenceParams = {
     substituteId?: string;
 };
 
-
 export const computeIsAbsent = (
     absences: { startDate: Date; endDate: Date }[],
 ) => {
     const now = new Date();
     return absences.some((a) => a.startDate <= now && a.endDate >= now);
 };
-
 
 export const queryEmployeeWorkerData = async (orgId: string) => {
     return await prisma.workerEngagement.findMany({
@@ -80,9 +77,7 @@ export const queryEmployeeWorkerData = async (orgId: string) => {
                     dueDate: true,
                     createdAt: true,
                     updatedAt: true,
-                    issueStatus: {
-                        select: { id: true, name: true },
-                    },
+                    status: true,
                     assignee: {
                         select: {
                             id: true,
@@ -156,7 +151,6 @@ export const queryEmployee = async (orgId: string) => {
     });
 };
 
-
 export const queryEmployeeById = async (id: string, orgId: string) => {
     return await prisma.user.findFirst({
         where: {
@@ -202,7 +196,6 @@ export const queryEmployeeById = async (id: string, orgId: string) => {
     });
 };
 
-
 export const removeEmployee = async (id: string, orgId: string) => {
     return await prisma.organizationMember.delete({
         where: {
@@ -213,7 +206,6 @@ export const removeEmployee = async (id: string, orgId: string) => {
         },
     });
 };
-
 
 export const updateAbsenceData = async (data: UpdateAbsenceParams) => {
     const overlapping = await prisma.absence.findFirst({

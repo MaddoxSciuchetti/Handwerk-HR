@@ -6,7 +6,6 @@ import * as workerController from "../controllers/worker.controller";
 
 const worker = express.Router();
 
-
 worker.post("/", workerController.createWorker);
 worker.get("/", workerController.getWorkerData);
 worker.get("/:workerId", workerController.getWorkerById);
@@ -26,10 +25,6 @@ worker.delete(
     workerController.deleteEngagement,
 );
 
-worker.get(
-    "/:workerId/issue-statuses",
-    workerController.getIssueStatusesForWorker,
-);
 worker.get(
     "/:workerId/issues/:issueId/audit-logs",
     workerController.getIssueAuditLogs,

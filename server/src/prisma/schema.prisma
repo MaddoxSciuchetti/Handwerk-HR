@@ -108,7 +108,6 @@ model Organization {
   issueTemplates  IssueTemplate[]
   engagements     WorkerEngagement[]
   engagementStatuses EngagementStatus[]
-  issueStatuses      IssueStatus[]
   subscription    Subscription?
   absences        Absence[]
 
@@ -151,24 +150,6 @@ model EngagementStatus {
   @@index([organizationId])
   @@map("engagement_statuses")
 }
-
-model IssueStatus {
-  id             String       @id @default(uuid())
-  organizationId String       @map("organization_id")
-  name           String      @db.VarChar(120)
-  orderIndex     Int          @default(0) @map("order_index")
-  isDefault      Boolean      @default(false) @map("is_default")
-  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz()
-
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  issues         Issue[]
-
-  @@unique([organizationId, name])
-  @@index([organizationId])
-  @@map("issue_statuses")
-}
-
 
 model Invitation {
   id                     String           @id @default(uuid())
@@ -309,7 +290,7 @@ model Issue {
   createdByUserId    String             @map("created_by_user_id")
   assigneeUserId     String?            @map("assignee_user_id")
   templateItemId     String?            @map("template_item_id")
-  statusId           String             @map("status_id")
+  status             IssueStatus        @default(open)
   title              String             @db.VarChar(400)
   description        String?            @db.VarChar(8000)
   priority           IssuePriority      @default(no_priority)
@@ -321,13 +302,12 @@ model Issue {
   createdBy          User               @relation("IssueCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
   assignee           User?              @relation("IssueAssignedTo", fields: [assigneeUserId], references: [id], onDelete: SetNull)
   templateItem       TemplateItem?      @relation(fields: [templateItemId], references: [id], onDelete: SetNull)
-  issueStatus        IssueStatus        @relation(fields: [statusId], references: [id], onDelete: Restrict)
   comments           Comment[]
   auditLogs          IssueAuditLog[]
 
   @@index([workerEngagementId])
   @@index([assigneeUserId])
-  @@index([statusId])
+  @@index([status])
   @@map("issues")
 }
 
@@ -519,6 +499,13 @@ enum IssuePriority {
   medium
   low
   no_priority
+}
+
+enum IssueStatus {
+  open
+  in_progress
+  done
+  cancelled
 }
 
 enum AuditSource {

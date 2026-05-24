@@ -10,16 +10,16 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { TaskSidebar } from '@/features/all-tasks/components/TaskSidebar';
 import { LargeEditMode } from '@/features/all-tasks/components/LargeEditMode';
 import { TaskItem } from '@/features/all-tasks/components/TaskItem';
+import { TaskSidebar } from '@/features/all-tasks/components/TaskSidebar';
 import { useTaskSidebar } from '@/features/all-tasks/hooks/useTaskSidebar';
 import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 import useFilteredData from '../../hooks/useFilteredData';
 import useGetWorkerFiles from '../../hooks/useGetWorkerFiles';
 import useTaskData from '../../hooks/useTaskData';
-import handleZipExport from '../../utils/handleZipExport';
 import { WorkerTab } from '../../types/index.types';
+import handleZipExport from '../../utils/handleZipExport';
 import WorkerFileUploads from '../files/WorkerFileUploads';
 import WorkerHeader from '../header/WorkerHeader';
 import { WorkerTabButtons } from '../header/WorkerTabButtons';
@@ -51,8 +51,13 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
   const { data, isLoading } = useTaskData(workerId);
   const { displayData } = useFilteredData(data);
   const { fetchFiles } = useGetWorkerFiles(workerId);
-  const { sidebarKey, sidebarProps, openForEdit, openForCreate, patchTaskEditState } =
-    useTaskSidebar();
+  const {
+    sidebarKey,
+    sidebarProps,
+    openForEdit,
+    openForCreate,
+    patchTaskEditState,
+  } = useTaskSidebar();
 
   useEffect(() => {
     if (!sidebarProps.isOpen || sidebarProps.taskState !== 'edit') return;

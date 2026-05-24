@@ -1,7 +1,6 @@
 import { CREATED, NO_CONTENT, OK, UNAUTHORIZED } from "@/constants/http";
 import {
     createOrgStatusSchema,
-    orgStatusEntityTypeSchema,
     updateOrgStatusSchema,
 } from "@/schemas/orgStatus.schemas";
 import {
@@ -21,19 +20,14 @@ export const listOrgStatusesHandler = catchErrors(async (req, res) => {
         UNAUTHORIZED,
         "No organization associated with this account",
     );
-    const raw = req.query.entityType;
-    const single = Array.isArray(raw) ? raw[0] : raw;
-    const entityType = orgStatusEntityTypeSchema.parse(single);
-    const statuses = await listOrganizationStatuses(orgId, entityType);
+    const statuses = await listOrganizationStatuses(orgId);
     return res.status(OK).json({ statuses });
 });
 
 export const createOrgStatusHandler = catchErrors(async (req, res) => {
     const orgId = await assertOrgOwner(req.userId, req.orgId);
     const body = createOrgStatusSchema.parse(req.body);
-    const row = await createOrganizationStatus(orgId, body.entityType, {
-        name: body.name,
-    });
+    const row = await createOrganizationStatus(orgId, { name: body.name });
     return res.status(CREATED).json({
         ...row,
         color: null,

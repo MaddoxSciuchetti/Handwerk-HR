@@ -175,18 +175,6 @@ export const createIssue = catchErrors(async (req: Request, res: Response) => {
     return res.status(201).json({ success: true, data: result });
 });
 
-export const getIssueStatusesForWorker = catchErrors(
-    async (req: Request, res: Response) => {
-        const organizationId = req.orgId;
-        const workerId = param(req, "workerId");
-        const data = await workerService.getIssueStatusesForWorker({
-            workerId,
-            organizationId,
-        });
-        return res.status(200).json({ success: true, data });
-    },
-);
-
 export const updateIssue = catchErrors(async (req: Request, res: Response) => {
     const issueId = param(req, "issueId");
     const result = await workerService.updateIssue({

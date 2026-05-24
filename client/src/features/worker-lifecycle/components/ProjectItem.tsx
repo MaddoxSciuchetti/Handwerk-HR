@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import type { Dispatch, SetStateAction } from 'react';
 import { WorkerRecord } from '../types/index.types';
 import { getFirstFormType } from '../utils/formtype';
+import { WorkerHealthCell } from './WorkerHealthCell';
 
 export type WorkerSelection = {
   engagementNumber: string;
@@ -92,6 +93,14 @@ function ProjectItem({
         )}
       >
         {worker.engagements[0].responsibleUser.firstName}
+      </TableCell>
+      <TableCell
+        className={cn(
+          'transition-colors group-hover:bg-muted/50',
+          isSelected && 'bg-muted/50'
+        )}
+      >
+        <WorkerHealthCell worker={worker} />
       </TableCell>
       <TableCell
         className={cn(
