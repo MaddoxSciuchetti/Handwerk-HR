@@ -29,9 +29,7 @@ export const queryEmployeeWorkerData = async (orgId: string) => {
             completedAt: true,
             createdAt: true,
             updatedAt: true,
-            engagementStatus: {
-                select: { id: true, name: true },
-            },
+            status: true,
             worker: {
                 select: {
                     id: true,

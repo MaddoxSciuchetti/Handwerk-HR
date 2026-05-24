@@ -66,11 +66,6 @@ export async function createWorker(params: CreateWorkerInput) {
         templateId,
     } = params;
 
-    const { id: statusId } = await prisma.engagementStatus.findFirstOrThrow({
-        where: { organizationId, isDefault: true },
-        select: { id: true },
-    });
-
     return prisma.$transaction(async (tx) => {
         const worker = await tx.worker.create({
             data: {
@@ -98,7 +93,7 @@ export async function createWorker(params: CreateWorkerInput) {
                 workerId: worker.id,
                 organizationId,
                 responsibleUserId,
-                statusId,
+                status: "pending",
                 type: engagementType,
                 startDate,
                 endDate,
@@ -171,7 +166,6 @@ export async function getWorkerData(params: GetWorkersInput) {
                 orderBy: { startDate: "desc" },
                 take: 1,
                 include: {
-                    engagementStatus: true,
                     responsibleUser: {
                         select: {
                             id: true,
@@ -215,7 +209,6 @@ export async function getWorkerById(workerId: string, organizationId: string) {
             engagements: {
                 orderBy: { startDate: "desc" },
                 include: {
-                    engagementStatus: true,
                     responsibleUser: {
                         select: {
                             id: true,
@@ -373,7 +366,7 @@ export async function createEngagement(params: CreateEngagementInput) {
         workerId,
         organizationId,
         responsibleUserId,
-        statusId,
+        status,
         type,
         startDate,
         endDate,
@@ -386,14 +379,13 @@ export async function createEngagement(params: CreateEngagementInput) {
             workerId,
             organizationId,
             responsibleUserId,
-            statusId,
+            status: status ?? "pending",
             type,
             startDate,
             endDate,
             completedAt,
         },
         include: {
-            engagementStatus: true,
             responsibleUser: {
                 select: { id: true, firstName: true, lastName: true },
             },
@@ -410,11 +402,19 @@ export async function updateEngagement(params: UpdateEngagementInput) {
     });
     if (!existing) throw new Error("Engagement not found");
 
+    const data: Prisma.WorkerEngagementUpdateInput = { ...updateData };
+    if (
+        updateData.status === "completed" &&
+        !existing.completedAt &&
+        updateData.completedAt === undefined
+    ) {
+        data.completedAt = new Date();
+    }
+
     return prisma.workerEngagement.update({
         where: { id: engagementId },
-        data: updateData,
+        data,
         include: {
-            engagementStatus: true,
             responsibleUser: {
                 select: { id: true, firstName: true, lastName: true },
             },
@@ -864,7 +864,6 @@ export async function getWorkerHistory(params: {
             where: { workerId },
             orderBy: { startDate: "desc" },
             include: {
-                engagementStatus: true,
                 responsibleUser: {
                     select: { id: true, firstName: true, lastName: true },
                 },

@@ -21,7 +21,6 @@ import { Route as UserIdRouteImport } from './routes/user/$Id'
 import { Route as SettingsProfileRouteImport } from './routes/settings/profile'
 import { Route as SettingsPlansRouteImport } from './routes/settings/plans'
 import { Route as SettingsPaymentsRouteImport } from './routes/settings/payments'
-import { Route as SettingsEngagementStatusesRouteImport } from './routes/settings/engagement-statuses'
 import { Route as SettingsEmployeesRouteImport } from './routes/settings/employees'
 import { Route as PasswordResetRouteImport } from './routes/password/reset'
 import { Route as PasswordForgotRouteImport } from './routes/password/forgot'
@@ -89,12 +88,6 @@ const SettingsPaymentsRoute = SettingsPaymentsRouteImport.update({
   path: '/payments',
   getParentRoute: () => SettingsRoute,
 } as any)
-const SettingsEngagementStatusesRoute =
-  SettingsEngagementStatusesRouteImport.update({
-    id: '/engagement-statuses',
-    path: '/engagement-statuses',
-    getParentRoute: () => SettingsRoute,
-  } as any)
 const SettingsEmployeesRoute = SettingsEmployeesRouteImport.update({
   id: '/employees',
   path: '/employees',
@@ -139,7 +132,6 @@ export interface FileRoutesByFullPath {
   '/password/forgot': typeof PasswordForgotRoute
   '/password/reset': typeof PasswordResetRoute
   '/settings/employees': typeof SettingsEmployeesRoute
-  '/settings/engagement-statuses': typeof SettingsEngagementStatusesRoute
   '/settings/payments': typeof SettingsPaymentsRoute
   '/settings/plans': typeof SettingsPlansRoute
   '/settings/profile': typeof SettingsProfileRoute
@@ -160,7 +152,6 @@ export interface FileRoutesByTo {
   '/password/forgot': typeof PasswordForgotRoute
   '/password/reset': typeof PasswordResetRoute
   '/settings/employees': typeof SettingsEmployeesRoute
-  '/settings/engagement-statuses': typeof SettingsEngagementStatusesRoute
   '/settings/payments': typeof SettingsPaymentsRoute
   '/settings/plans': typeof SettingsPlansRoute
   '/settings/profile': typeof SettingsProfileRoute
@@ -182,7 +173,6 @@ export interface FileRoutesById {
   '/password/forgot': typeof PasswordForgotRoute
   '/password/reset': typeof PasswordResetRoute
   '/settings/employees': typeof SettingsEmployeesRoute
-  '/settings/engagement-statuses': typeof SettingsEngagementStatusesRoute
   '/settings/payments': typeof SettingsPaymentsRoute
   '/settings/plans': typeof SettingsPlansRoute
   '/settings/profile': typeof SettingsProfileRoute
@@ -205,7 +195,6 @@ export interface FileRouteTypes {
     | '/password/forgot'
     | '/password/reset'
     | '/settings/employees'
-    | '/settings/engagement-statuses'
     | '/settings/payments'
     | '/settings/plans'
     | '/settings/profile'
@@ -226,7 +215,6 @@ export interface FileRouteTypes {
     | '/password/forgot'
     | '/password/reset'
     | '/settings/employees'
-    | '/settings/engagement-statuses'
     | '/settings/payments'
     | '/settings/plans'
     | '/settings/profile'
@@ -247,7 +235,6 @@ export interface FileRouteTypes {
     | '/password/forgot'
     | '/password/reset'
     | '/settings/employees'
-    | '/settings/engagement-statuses'
     | '/settings/payments'
     | '/settings/plans'
     | '/settings/profile'
@@ -358,13 +345,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsPaymentsRouteImport
       parentRoute: typeof SettingsRoute
     }
-    '/settings/engagement-statuses': {
-      id: '/settings/engagement-statuses'
-      path: '/engagement-statuses'
-      fullPath: '/settings/engagement-statuses'
-      preLoaderRoute: typeof SettingsEngagementStatusesRouteImport
-      parentRoute: typeof SettingsRoute
-    }
     '/settings/employees': {
       id: '/settings/employees'
       path: '/employees'
@@ -412,7 +392,6 @@ declare module '@tanstack/react-router' {
 
 interface SettingsRouteChildren {
   SettingsEmployeesRoute: typeof SettingsEmployeesRoute
-  SettingsEngagementStatusesRoute: typeof SettingsEngagementStatusesRoute
   SettingsPaymentsRoute: typeof SettingsPaymentsRoute
   SettingsPlansRoute: typeof SettingsPlansRoute
   SettingsProfileRoute: typeof SettingsProfileRoute
@@ -422,7 +401,6 @@ interface SettingsRouteChildren {
 
 const SettingsRouteChildren: SettingsRouteChildren = {
   SettingsEmployeesRoute: SettingsEmployeesRoute,
-  SettingsEngagementStatusesRoute: SettingsEngagementStatusesRoute,
   SettingsPaymentsRoute: SettingsPaymentsRoute,
   SettingsPlansRoute: SettingsPlansRoute,
   SettingsProfileRoute: SettingsProfileRoute,

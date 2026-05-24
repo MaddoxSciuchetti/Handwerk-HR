@@ -1,6 +1,7 @@
 import type {
     AbsenceType,
     DocumentFileType,
+    EngagementProgress,
     EngagementType,
     IssuePriority,
     IssueStatus,
@@ -10,6 +11,7 @@ import type {
 export type {
     AbsenceType,
     DocumentFileType,
+    EngagementProgress,
     EngagementType,
     IssuePriority,
     IssueStatus,
@@ -84,9 +86,9 @@ export interface DeleteWorkerInput {
 export interface CreateEngagementInput {
     workerId: string;
     organizationId: string;
-    responsibleUserId: string; // required
-    statusId: string; // required FK → EngagementStatus
-    type: EngagementType; // not "engagementType"
+    responsibleUserId: string;
+    status?: EngagementProgress;
+    type: EngagementType;
     startDate?: Date;
     endDate?: Date;
     completedAt?: Date;
@@ -97,7 +99,7 @@ export interface UpdateEngagementInput {
     workerId: string;
     organizationId: string;
     responsibleUserId?: string;
-    statusId?: string;
+    status?: EngagementProgress;
     type?: EngagementType;
     startDate?: Date;
     endDate?: Date;

@@ -5,7 +5,7 @@ import {
   TableDivider,
   TableHeader,
 } from '@/components/ui/selfmade/table/Table';
-import { SettingsStatusesHeader } from '@/features/settings/org-statuses/SettingsStatusesHeader';
+import { SettingsPageHeader } from '@/features/settings/components/SettingsPageHeader';
 import { TaskSidebar } from '@/features/worker-task-management/components/tasks/TaskSidebar';
 import { TemplateTaskFormValues } from '@/features/worker-task-management/types/index.types';
 import { useNavigate } from '@tanstack/react-router';
@@ -43,7 +43,7 @@ export function TemplateTasks({ templateId, name }: TemplateTasksProps) {
   return (
     <div className="mx-auto flex h-full flex-col overflow-auto rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
       <div className="h-full w-full flex flex-col items-center justify-center">
-        <SettingsStatusesHeader
+        <SettingsPageHeader
           action={
             <Button
               type="button"

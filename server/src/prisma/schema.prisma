@@ -107,7 +107,6 @@ model Organization {
   invitations     Invitation[]
   issueTemplates  IssueTemplate[]
   engagements     WorkerEngagement[]
-  engagementStatuses EngagementStatus[]
   subscription    Subscription?
   absences        Absence[]
 
@@ -134,21 +133,28 @@ model OrganizationMember {
   @@map("organization_members")
 }
 
-model EngagementStatus {
-  id             String       @id @default(uuid())
-  organizationId String       @map("organization_id")
-  name           String      @db.VarChar(120)
-  orderIndex     Int          @default(0) @map("order_index")
-  isDefault      Boolean      @default(false) @map("is_default")
-  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz()
+model WorkerEngagement {
+  id                String             @id @default(uuid())
+  workerId          String             @map("worker_id")
+  organizationId    String             @map("organization_id")
+  responsibleUserId String             @map("responsible_user_id")
+  status            EngagementProgress @default(pending)
+  type              EngagementType
+  startDate         DateTime?          @map("start_date") @db.Date
+  endDate           DateTime?          @map("end_date") @db.Date
+  completedAt       DateTime?          @map("completed_at") @db.Timestamptz()
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz()
 
-  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  engagements    WorkerEngagement[]
+  worker            Worker             @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  responsibleUser   User               @relation(fields: [responsibleUserId], references: [id], onDelete: Restrict)
+  issues            Issue[]
 
-  @@unique([organizationId, name])
+  @@index([workerId])
   @@index([organizationId])
-  @@map("engagement_statuses")
+  @@index([status])
+  @@map("worker_engagements")
 }
 
 model Invitation {
@@ -219,32 +225,6 @@ model WorkerDocument {
 
   @@index([workerId])
   @@map("worker_documents")
-}
-
-
-model WorkerEngagement {
-  id                String             @id @default(uuid())
-  workerId          String             @map("worker_id")
-  organizationId    String             @map("organization_id")
-  responsibleUserId String             @map("responsible_user_id")
-  statusId          String             @map("status_id")
-  type              EngagementType
-  startDate         DateTime?          @map("start_date") @db.Date
-  endDate           DateTime?          @map("end_date") @db.Date
-  completedAt       DateTime?          @map("completed_at") @db.Timestamptz()
-  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz()
-
-  worker            Worker             @relation(fields: [workerId], references: [id], onDelete: Cascade)
-  organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  responsibleUser   User               @relation(fields: [responsibleUserId], references: [id], onDelete: Restrict)
-  engagementStatus  EngagementStatus   @relation(fields: [statusId], references: [id], onDelete: Restrict)
-  issues            Issue[]
-
-  @@index([workerId])
-  @@index([organizationId])
-  @@index([statusId])
-  @@map("worker_engagements")
 }
 
 
@@ -499,6 +479,13 @@ enum IssuePriority {
   medium
   low
   no_priority
+}
+
+enum EngagementProgress {
+  pending
+  in_progress
+  completed
+  cancelled
 }
 
 enum IssueStatus {

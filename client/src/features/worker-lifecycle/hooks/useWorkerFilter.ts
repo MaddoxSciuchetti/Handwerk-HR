@@ -1,6 +1,5 @@
 import { DropdownOption } from '@/components/ui/nested-dropdown';
 import { employeeQueries } from '@/features/employee-overview/query-options/queries/employee.queries';
-import { fetchOrgStatuses } from '@/features/settings/org-statuses/org-status.api';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { FILTER_OPTIONS } from '../consts/filter.consts';
@@ -15,22 +14,16 @@ export type FilterMode =
   | 'status'
   | 'responsible';
 
-const engagementStatusQueryKey = ['org', 'statuses', 'engagement'] as const;
-
 export function useWorkerFilter(workers: WorkerRecord[] | undefined) {
   const [filterMode, setFilterMode] = useState<FilterMode>('');
   const [filterValue, setFilterValue] = useState<string>('');
   const [filterLabel, setFilterLabel] = useState<string>('');
 
   const { data: employees = [] } = useQuery(employeeQueries.getEmployees());
-  const { data: engagementStatuses = [] } = useQuery({
-    queryKey: engagementStatusQueryKey,
-    queryFn: fetchOrgStatuses,
-  });
 
   const filterOptions = useMemo(
-    () => withDynamicOptions(FILTER_OPTIONS, employees, engagementStatuses),
-    [employees, engagementStatuses]
+    () => withDynamicOptions(FILTER_OPTIONS, employees),
+    [employees]
   );
 
   const handleSelect = (mode: string) => {

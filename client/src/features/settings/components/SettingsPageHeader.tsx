@@ -1,16 +1,16 @@
 import type { ReactNode } from 'react';
 
-type SettingsStatusesHeaderProps = {
+type SettingsPageHeaderProps = {
   title: string;
   description: string;
   action?: ReactNode;
 };
 
-export function SettingsStatusesHeader({
+export function SettingsPageHeader({
   title,
   description,
   action,
-}: SettingsStatusesHeaderProps) {
+}: SettingsPageHeaderProps) {
   return (
     <div className="flex w-200 flex-col items-start">
       {action}

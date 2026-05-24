@@ -5,7 +5,7 @@ import {
   TableDivider,
   TableHeader,
 } from '@/components/ui/selfmade/table/Table';
-import { SettingsStatusesHeader } from '@/features/settings/org-statuses/SettingsStatusesHeader';
+import { SettingsPageHeader } from '@/features/settings/components/SettingsPageHeader';
 
 import { TemplateSidebar } from '@/features/worker-task-management/components/tasks/task-sidebar/TemplateSidebar';
 import { useState } from 'react';
@@ -38,7 +38,7 @@ function Templates() {
   return (
     <div className="mx-auto flex h-full flex-col overflow-auto rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
       <div className="h-full w-full flex flex-col items-center justify-center">
-        <SettingsStatusesHeader
+        <SettingsPageHeader
           title="Template Aufgaben"
           description="Verwalte deine Template Aufgaben"
         />

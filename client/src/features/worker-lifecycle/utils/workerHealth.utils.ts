@@ -46,16 +46,3 @@ export function getWorkerHealth(worker: WorkerRecord): WorkerHealth {
     level,
   };
 }
-
-export function workerHealthClassName(level: WorkerHealthLevel): string {
-  switch (level) {
-    case 'green':
-      return 'bg-(--status-success-bg) text-(--status-success-foreground)';
-    case 'orange':
-      return 'bg-(--status-warning-bg) text-(--status-warning-foreground)';
-    case 'red':
-      return 'bg-(--status-error-bg) text-(--status-error-foreground)';
-    default:
-      return 'bg-muted text-muted-foreground';
-  }
-}

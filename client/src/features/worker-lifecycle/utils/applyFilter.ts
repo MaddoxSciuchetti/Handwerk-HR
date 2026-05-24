@@ -1,6 +1,6 @@
 import { DropdownOption } from '@/components/ui/nested-dropdown';
 import { EmployeeDataArray } from '@/features/employee-overview/schemas/schema';
-import { OrgStatus } from '@/features/settings/org-statuses/org-status.types';
+import { ENGAGEMENT_PROGRESS_OPTIONS } from '../consts/engagement-progress.consts';
 import { FilterMode } from '../hooks/useWorkerFilter';
 import { WorkerRecord } from '../types/index.types';
 
@@ -55,7 +55,7 @@ export function applyFilter(
       return workers.filter((w) => w.engagements.some((e) => e.type === value));
     case 'status':
       return workers.filter((w) =>
-        w.engagements.some((e) => e.engagementStatus.id === value)
+        w.engagements.some((e) => e.status === value)
       );
     case 'responsible':
       return workers.filter((w) =>
@@ -75,19 +75,16 @@ export function buildResponsibleSubOptions(
   }));
 }
 
-export function buildEngagementStatusSubOptions(
-  statuses: OrgStatus[]
-): DropdownOption[] {
-  return statuses.map((status) => ({
-    label: status.name,
-    value: status.id,
+export function buildEngagementProgressSubOptions(): DropdownOption[] {
+  return ENGAGEMENT_PROGRESS_OPTIONS.map((option) => ({
+    label: option.label,
+    value: option.value,
   }));
 }
 
 export function withDynamicOptions(
   options: DropdownOption[],
-  employees: EmployeeDataArray,
-  engagementStatuses: OrgStatus[]
+  employees: EmployeeDataArray
 ): DropdownOption[] {
   return options.map((option) => {
     if (option.value === RESPONSIBLE_VALUE) {
@@ -96,7 +93,7 @@ export function withDynamicOptions(
     if (option.value === STATUS_VALUE) {
       return {
         ...option,
-        subOptions: buildEngagementStatusSubOptions(engagementStatuses),
+        subOptions: buildEngagementProgressSubOptions(),
       };
     }
     return option;

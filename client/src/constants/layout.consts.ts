@@ -32,11 +32,6 @@ export const SETTINGSITEMS = [
     icon: UserRound,
   },
   {
-    title: 'Handwerker',
-    to: '/settings/engagement-statuses',
-    icon: Inbox,
-  },
-  {
     title: 'Templates',
     to: '/settings/templates/template',
     icon: FileText,

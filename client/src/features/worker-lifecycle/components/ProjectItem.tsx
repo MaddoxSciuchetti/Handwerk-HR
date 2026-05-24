@@ -6,10 +6,10 @@ import {
 } from '@/features/all-tasks/components/ui/SelectIcons';
 import { LifecycleType } from '@/features/worker-task-management/types/index.types';
 import { cn } from '@/lib/utils';
-import type { Dispatch, SetStateAction } from 'react';
+import type { Dispatch, MouseEvent, SetStateAction } from 'react';
 import { WorkerRecord } from '../types/index.types';
 import { getFirstFormType } from '../utils/formtype';
-import { WorkerHealthCell } from './WorkerHealthCell';
+import { EngagementProgressPicker } from './ui/EngagementProgressPicker';
 
 export type WorkerSelection = {
   engagementNumber: string;
@@ -38,7 +38,7 @@ function ProjectItem({
   const form_type = getFirstFormType(worker);
   const fullname = `${worker.firstName} ${worker.lastName}`;
 
-  const toggleSelection = (e: React.MouseEvent) => {
+  const toggleSelection = (e: MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     setLargeEditMode(true);
@@ -96,19 +96,18 @@ function ProjectItem({
       </TableCell>
       <TableCell
         className={cn(
-          'transition-colors group-hover:bg-muted/50',
-          isSelected && 'bg-muted/50'
-        )}
-      >
-        <WorkerHealthCell worker={worker} />
-      </TableCell>
-      <TableCell
-        className={cn(
           'transition-colors group-hover:rounded-r-xl group-hover:bg-muted/50',
           isSelected && 'rounded-r-xl bg-muted/50'
         )}
       >
-        {worker.engagements[0].engagementStatus.name}
+        <div onClick={(e) => e.stopPropagation()}>
+          <EngagementProgressPicker
+            worker={worker}
+            workerId={worker.id}
+            engagementId={worker.engagements[0].id}
+            status={worker.engagements[0].status}
+          />
+        </div>
       </TableCell>
     </TableRow>
   );
