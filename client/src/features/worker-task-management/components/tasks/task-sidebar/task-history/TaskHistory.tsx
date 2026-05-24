@@ -1,10 +1,6 @@
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
-import { Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ChevronDown, ChevronUp, Clock } from 'lucide-react';
+import { useState } from 'react';
 import HistoryContent from './HistoryContent';
 
 type TaskHistoryProps = {
@@ -18,24 +14,37 @@ const TaskHistory = ({
   currentUserId,
   onEditComment,
 }: TaskHistoryProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
-    <Accordion type="single" collapsible className="max-w-6xl">
-      <AccordionItem value="history" className="mb-10">
-        <AccordionTrigger className="border-border rounded-2xl border p-2">
-          <div className="text-foreground flex items-center gap-2 rounded-2xl text-sm font-medium">
-            <Clock className="text-muted-foreground ml-2 h-4 w-4" />
-            <span>Bearbeitungsverlauf</span>
-          </div>
-        </AccordionTrigger>
-        <AccordionContent className="mt-5">
+    <div className="w-full">
+      <Button
+        type="button"
+        variant="outline"
+        aria-expanded={isOpen}
+        className="border-border h-auto w-full justify-between rounded-2xl p-2"
+        onClick={() => setIsOpen((open) => !open)}
+      >
+        <span className="text-foreground flex items-center gap-2 text-sm font-medium">
+          <Clock className="text-muted-foreground ml-2 h-4 w-4" />
+          Bearbeitungsverlauf
+        </span>
+        {isOpen ? (
+          <ChevronUp className="text-muted-foreground mr-2 size-4 shrink-0" />
+        ) : (
+          <ChevronDown className="text-muted-foreground mr-2 size-4 shrink-0" />
+        )}
+      </Button>
+      {isOpen ? (
+        <div className="mt-5 pb-6">
           <HistoryContent
             taskId={taskId}
             currentUserId={currentUserId}
             onEditComment={onEditComment}
           />
-        </AccordionContent>
-      </AccordionItem>
-    </Accordion>
+        </div>
+      ) : null}
+    </div>
   );
 };
 

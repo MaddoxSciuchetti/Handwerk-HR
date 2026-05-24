@@ -40,7 +40,7 @@ function makeTask(id: string, title: string): IssueResponse {
     createdByUserId: 'user-1',
     assigneeUserId: 'user-1',
     templateItemId: null,
-    statusId: 'st-1',
+    status: 'open',
     title,
     description: null,
     priority: 'medium',

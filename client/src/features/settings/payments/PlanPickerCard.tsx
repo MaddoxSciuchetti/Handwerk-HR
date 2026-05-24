@@ -1,5 +1,5 @@
-import { Button } from '@/components/ui/selfmade/button';
-import { cn } from '@/lib/trycatch';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 type PlanPickerCardProps = {
   name: string;
@@ -25,7 +25,7 @@ export function PlanPickerCard({
       className={cn(
         'flex min-h-[200px] flex-col justify-between rounded-2xl border bg-card p-6 shadow-sm transition-colors',
         isCurrent
-          ? 'border-interactive-primary-bg ring-1 ring-interactive-primary-bg/25'
+          ? 'border-primary ring-1 ring-primary/25'
           : 'border-border'
       )}
     >
@@ -33,14 +33,15 @@ export function PlanPickerCard({
         <h2 className="typo-body-sm font-semibold text-foreground">{name}</h2>
         <p className="typo-caption text-muted-foreground">{price}</p>
         {isCurrent ? (
-          <p className="typo-caption text-interactive-primary-bg">Aktueller Plan</p>
+          <p className="typo-caption text-primary">
+            Aktueller Plan
+          </p>
         ) : null}
       </div>
       <Button
         type="button"
-        size="small"
-        radius="lg"
-        className="mt-6 w-full text-xs"
+        size="sm"
+        className="mt-6 w-full rounded-full text-xs"
         disabled={primaryDisabled || primaryLoading}
         onClick={onPrimary}
       >

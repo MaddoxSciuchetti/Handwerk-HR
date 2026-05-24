@@ -1,9 +1,8 @@
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
-// Only DATABASE_URL here so `prisma generate` / migrate work during `npm install`
-// without loading the full app env (see src/constants/env.ts for runtime requirements).
-const databaseUrl = process.env.DATABASE_URL;
+// DIRECT_URL is optional (Neon direct connection for Prisma CLI). Falls back to DATABASE_URL.
+const databaseUrl = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
 if (databaseUrl == null || databaseUrl === "") {
     throw new Error(
         "Missing DATABASE_URL: add it to server/.env (see repo README). Required for Prisma CLI.",

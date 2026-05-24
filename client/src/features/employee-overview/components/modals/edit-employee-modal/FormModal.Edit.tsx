@@ -73,7 +73,11 @@ const FormModalEdit = ({
           label={'Soll vertreten werden von'}
         />
 
-        <Button className="cursor-pointer" variant={'outline'} type="submit">
+        <Button
+          className="cursor-pointer rounded-full"
+          variant="outline"
+          type="submit"
+        >
           Speichern
         </Button>
       </form>

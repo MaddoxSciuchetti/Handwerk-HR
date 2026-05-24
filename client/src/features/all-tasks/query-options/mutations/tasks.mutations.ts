@@ -1,5 +1,8 @@
 import queryClient from '@/config/query.client';
-import { TASKHISTORY } from '@/features/worker-task-management/consts/query-key.consts';
+import {
+  TASKHISTORY,
+  WORKERBYID,
+} from '@/features/worker-task-management/consts/query-key.consts';
 import { mutationOptions } from '@tanstack/react-query';
 import {
   createTask,
@@ -25,6 +28,7 @@ export const taskMutations = {
       mutationFn: ({ taskId, data }) => updateTask({ taskId, data }),
       onSuccess: (_, { taskId }) => {
         void queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] });
+        void queryClient.invalidateQueries({ queryKey: [WORKERBYID] });
         void queryClient.invalidateQueries({
           queryKey: [TASKHISTORY, taskId],
         });
@@ -36,6 +40,7 @@ export const taskMutations = {
       mutationFn: (ids: string[]) => deleteTasks(ids),
       onSuccess: () => {
         void queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] });
+        void queryClient.invalidateQueries({ queryKey: [WORKERBYID] });
       },
     }),
 

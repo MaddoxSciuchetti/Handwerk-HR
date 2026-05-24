@@ -224,6 +224,51 @@ export function PaymentRedirectMessage({
 }
 ```
 
+## Error handling
+
+See below one pattern used in the /client directory
+
+```ts
+export async function tryCatch<T, E = Error>(
+    promise: Promise<T>,
+): Promise<Result<T, E>> {
+    try {
+        const data = await promise;
+        return [data, null] as const;
+    } catch (error) {
+        return [null, error as E] as const;
+    }
+}
+```
+
+**Avoid** — repeating manual blocks when you only need “await, then bail on failure” (easy to leave empty `catch`, duplicate noise):
+
+```ts
+try {
+    await doThing();
+} catch {
+    return;
+}
+```
+
+See below one pattern used in the /server directory
+
+The wrapper is applied before the controller. The error is being handled by the express middleware
+
+```ts
+const catchErrors =
+    (controller: AsyncController): AsyncController =>
+    async (req, res, next) => {
+        try {
+            await controller(req, res, next);
+        } catch (error) {
+            next(error);
+        }
+    };
+```
+
+Usage pattern: `[server/src/controllers/template.controller.ts](server/src/controllers/template.controller.ts)` — e.g. `export const createTemplate = catchErrors(async (req, res) => { ... })`.
+
 ---
 
 ### Understandability Principles
@@ -524,4 +569,3 @@ Shows a small component.
 Shows the same component doing only one thing.
 
 - Better to have many functions than to pass some code into a function to select a behavior. `[client/src/features/all-tasks/api/tasks.api.ts](client/src/features/all-tasks/api/tasks.api.ts)`
-

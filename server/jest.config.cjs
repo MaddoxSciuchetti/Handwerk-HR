@@ -1,7 +1,15 @@
+const runningCoverage = process.argv.some(
+    (arg) => arg === "--coverage" || arg.startsWith("--coverage="),
+);
+
 /** @type {import("jest").Config} */
 module.exports = {
     testEnvironment: "node",
-    roots: ["<rootDir>/src"],
+    roots: [
+        "<rootDir>/src",
+        "<rootDir>/test-unit",
+        "<rootDir>/test-integration",
+    ],
     testMatch: ["**/*.test.ts"],
     moduleNameMapper: {
         "^@/(.*)$": "<rootDir>/src/$1",
@@ -17,4 +25,5 @@ module.exports = {
     },
     clearMocks: true,
     setupFiles: ["<rootDir>/jest.setup.cjs"],
+    ...(runningCoverage ? { maxWorkers: 1 } : {}),
 };

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import type { IssuePriority } from "@prisma/client";
+import type { IssueStatus } from "@prisma/client";
 
 
 export type InsertTemplateParams = {
@@ -14,14 +14,16 @@ export type InsertTemplateTaskParams = {
     taskName: string;
     taskDescription?: string;
     description?: string;
-    defaultPriority?: IssuePriority;
+    defaultStatus?: IssueStatus;
+    defaultAssigneeUserId?: string;
     orderIndex?: number;
 };
 
 export type ModifyTemplateTaskParams = {
     taskName?: string;
     taskDescription?: string;
-    defaultPriority?: IssuePriority;
+    defaultStatus?: IssueStatus;
+    defaultAssigneeUserId?: string;
     orderIndex?: number;
 };
 
@@ -104,7 +106,8 @@ export const queryTemplateById = async (id: string, orgId: string) => {
                     id: true,
                     title: true,
                     description: true,
-                    defaultPriority: true,
+                    defaultStatus: true,
+                    defaultAssigneeUserId: true,
                     orderIndex: true,
                     createdAt: true,
                     updatedAt: true,
@@ -159,14 +162,16 @@ export const insertTemplateTask = async (
             issueTemplateId: data.templateId,
             title: data.taskName,
             description: data.taskDescription,
-            defaultPriority: data.defaultPriority,
+            defaultStatus: data.defaultStatus,
+            defaultAssigneeUserId: data.defaultAssigneeUserId,
             orderIndex: data.orderIndex ?? 0,
         },
         select: {
             id: true,
             title: true,
             description: true,
-            defaultPriority: true,
+            defaultStatus: true,
+            defaultAssigneeUserId: true,
             orderIndex: true,
             createdAt: true,
             updatedAt: true,
@@ -192,7 +197,8 @@ export const queryTemplateTasks = async (templateId: string, orgId: string) => {
             id: true,
             title: true,
             description: true,
-            defaultPriority: true,
+            defaultStatus: true,
+            defaultAssigneeUserId: true,
             orderIndex: true,
             createdAt: true,
             updatedAt: true,
@@ -210,14 +216,16 @@ export const modifyTemplateTask = async (
         data: {
             title: data.taskName,
             description: data.taskDescription,
-            defaultPriority: data.defaultPriority,
+            defaultStatus: data.defaultStatus,
+            defaultAssigneeUserId: data.defaultAssigneeUserId,
             orderIndex: data.orderIndex,
         },
         select: {
             id: true,
             title: true,
             description: true,
-            defaultPriority: true,
+            defaultStatus: true,
+            defaultAssigneeUserId: true,
             orderIndex: true,
             createdAt: true,
             updatedAt: true,

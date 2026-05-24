@@ -4,15 +4,9 @@ import { adminQueries } from '../query-options/queries/admin.queries';
 import { IssueData, WorkerEngagement } from '../schemas/employeeform.schemas';
 import { EmployeeWorker } from '../types/employeeform.types';
 
-const CLOSED_STATUS_NAMES = new Set([
-  'erledigt',
-  'done',
-  'completed',
-  'closed',
-]);
+const CLOSED_STATUSES = new Set<IssueData['status']>(['done', 'cancelled']);
 
-const isOpenIssue = (issue: IssueData) =>
-  !CLOSED_STATUS_NAMES.has(issue.issueStatus.name.toLowerCase());
+const isOpenIssue = (issue: IssueData) => !CLOSED_STATUSES.has(issue.status);
 
 function useEmployeeData() {
   const { data, isLoading } = useQuery<EmployeeWorker>(

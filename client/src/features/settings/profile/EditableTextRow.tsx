@@ -1,5 +1,6 @@
-import { Input } from '@/components/ui/selfmade/input';
-import { GrowingItem, Items } from '@/components/ui/selfmade/table/Table';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { GrowingItem, Items } from '@/features/settings/components/Table';
 
 type EditableTextRowProps = {
   label: string;
@@ -21,7 +22,7 @@ export function EditableTextRow({
   onBlur,
 }: EditableTextRowProps) {
   return (
-    <Items state="default" className="px-3 py-1">
+    <Items state="default">
       <GrowingItem>
         <p className="typo-body-sm">{label}</p>
       </GrowingItem>
@@ -40,13 +41,14 @@ export function EditableTextRow({
             }}
           />
         ) : (
-          <button
+          <Button
             type="button"
-            className="w-full rounded-md border border-transparent px-3 py-1.5 text-left typo-body-sm transition-colors hover:border-border-default hover:bg-accent"
+            variant="ghost"
+            className="h-auto w-full justify-start rounded-md px-3 py-1.5 text-left font-normal typo-body-sm hover:bg-accent"
             onClick={onClickValue}
           >
             {value || '-'}
-          </button>
+          </Button>
         )}
       </div>
     </Items>

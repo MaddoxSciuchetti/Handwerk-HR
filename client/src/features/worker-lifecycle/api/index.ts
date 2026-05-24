@@ -64,3 +64,11 @@ export const addWorker = async (
   );
   return response;
 };
+
+export const updateEngagement = async (
+  workerId: string,
+  engagementId: string,
+  data: { status: string }
+): Promise<void> => {
+  await API.put(`worker/${workerId}/engagements/${engagementId}`, data);
+};

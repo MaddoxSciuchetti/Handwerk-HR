@@ -1,10 +1,5 @@
 import z from 'zod';
-
-const issueStatusSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  color: z.string().nullable(),
-});
+import { ISSUE_STATUSES } from '@/features/all-tasks/consts/issue-status.consts';
 
 const issueAssigneeSchema = z
   .object({
@@ -23,7 +18,7 @@ const issueSchema = z.object({
   dueDate: z.coerce.date().nullable(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
-  issueStatus: issueStatusSchema,
+  status: z.enum(ISSUE_STATUSES),
   assignee: issueAssigneeSchema,
 });
 

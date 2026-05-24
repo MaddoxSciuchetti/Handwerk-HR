@@ -2,7 +2,6 @@ import {
   CreditCard,
   FileText,
   Inbox,
-  ListCheck,
   Ticket,
   UserRound,
 } from 'lucide-react';
@@ -31,16 +30,6 @@ export const SETTINGSITEMS = [
     title: 'Mitarbeiter',
     to: '/settings/employees',
     icon: UserRound,
-  },
-  {
-    title: 'Aufgaben',
-    to: '/settings/issue-statuses',
-    icon: ListCheck,
-  },
-  {
-    title: 'Handwerker',
-    to: '/settings/engagement-statuses',
-    icon: Inbox,
   },
   {
     title: 'Templates',

@@ -4,7 +4,7 @@ This folder holds everything related to the database. Below is a quick guide so 
 
 ## Processes
 
-If you want to make changes to the conceptual or physical data model contact maddox(at)test.com. We will discuss the changes and based on that decide if the model needs to be changed or not. Changes will than be applied in mermaid in a new project labeled DB_NAME_VERSION(<Number of Version>). Once the changes have been applied apply the changes in the schema.ts file. Once this is completed run `npx prisma migrate dev --name <descriptive_name> --schema=src/prisma/schema.prisma` to let prisma generate the migration file. Migration files are always reviewed with 4 eyes before commiting the changes. Once its sound push changes.
+If you want to make changes to the conceptual or physical data model contact maddox(at)test.com. We will discuss the changes and based on that decide if the model needs to be changed or not. Changes will than be applied in mermaid in a new project labeled DB_NAME_VERSION(Number of Version). Once the changes have been applied apply the changes in the schema.ts file. Once this is completed run `npx prisma migrate dev --name <descriptive_name> --schema=src/prisma/schema.prisma` to let prisma generate the migration file. Migration files are always reviewed with 4 eyes before commiting the changes. Once its sound push changes.
 
 Feel free to propose changes for the below files so that this project can be maintained more efficiently.
 

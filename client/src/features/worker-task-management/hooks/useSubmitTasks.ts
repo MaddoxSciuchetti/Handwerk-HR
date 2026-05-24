@@ -1,4 +1,6 @@
 import { taskMutations } from '@/features/template-tasks/query-options/mutations/task.mutations';
+import { templateTaskFormSchema } from '@/features/template-tasks/schemas/templateTaskForm.schema';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -19,6 +21,7 @@ export function useSubmitTasks(
     control,
     formState: { errors },
   } = useForm<TemplateTaskFormValues>({
+    resolver: zodResolver(templateTaskFormSchema),
     defaultValues: initialValues,
   });
 

@@ -1,7 +1,7 @@
+import queryClient from '@/config/query.client';
 import Profile from '@/features/settings/profile/Profile';
 import type { ProfileUpdateInput } from '@/features/settings/profile/profile.schemas';
 import type { User } from '@/features/user-profile/types/auth.type';
-import queryClient from '@/config/query.client';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithAppQueryClient } from 'test-unit/test-utils';
@@ -51,7 +51,9 @@ vi.mock('@/features/auth/api/auth.api', async (importOriginal) => {
 
 vi.mock('@/features/settings/profile/profile.api', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('@/features/settings/profile/profile.api')>();
+    await importOriginal<
+      typeof import('@/features/settings/profile/profile.api')
+    >();
   return {
     ...actual,
     getProfilePhotoV2: vi.fn(async () => ''),
@@ -76,7 +78,9 @@ describe('Settings / Profil', () => {
     const user = userEvent.setup();
     renderProfile();
 
-    expect(await screen.findByRole('button', { name: 'Maria M.' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('button', { name: 'Maria M.' })
+    ).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Maria M.' }));
     const input = screen.getByRole('textbox');
@@ -101,19 +105,17 @@ describe('Settings / Profil', () => {
     const user = userEvent.setup();
     renderProfile();
 
-    expect(await screen.findByRole('button', { name: /^Maria$/ })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('button', { name: /^Maria$/ })
+    ).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /^Maria$/ }));
     await user.clear(screen.getByRole('textbox'));
     await user.tab();
 
-    expect(toastError).toHaveBeenCalledWith(
-      'Muss mindestens 2 Zeichen haben'
-    );
+    expect(toastError).toHaveBeenCalledWith('Muss mindestens 2 Zeichen haben');
     expect(updateProfileInformationMock).not.toHaveBeenCalled();
 
-    expect(
-      screen.getByRole('button', { name: /^Maria$/ })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Maria$/ })).toBeInTheDocument();
   });
 });

@@ -1,7 +1,7 @@
 import FormFields from '@/components/form/FormFields';
+import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/selfmade/button';
-import { FormWrapper } from '@/components/ui/selfmade/form-wrapper';
+import { cn } from '@/lib/utils';
 import type { TemplateEditState } from '@/features/template-tasks/components/Templates';
 import {
   type TemplateSubmission,
@@ -40,26 +40,29 @@ export function TemplateSidebar({
   );
   return (
     <SidebarAside className="p-2" isOpen={isOpen}>
-      <SidebarPanel className=" w-full ">
-        <SidebarHeader className="flex items-center justify-between p-6 ">
+      <SidebarPanel className="w-full">
+        <SidebarHeader className="flex items-center justify-between p-6">
           <Label className="typo-body-lg font-bold">
-            Erstelle dein Template
+            {templateState === 'create'
+              ? 'Template erstellen'
+              : 'Template bearbeiten'}
           </Label>
           <Button
             type="button"
-            size="icon"
+            variant="ghost"
+            size="icon-sm"
             aria-label="Schließen"
-            className="bg-transparent text-foreground shadow-none hover:bg-muted"
+            className="rounded-full"
             onClick={() => setIsOpen(false)}
           >
             <X className="h-4 w-4" aria-hidden />
           </Button>
         </SidebarHeader>
-        <FormWrapper
+        <form
           onSubmit={onSubmit}
-          className="flex min-h-0 flex-1 flex-col  "
+          className={cn('flex min-h-0 flex-1 flex-col')}
         >
-          <SidebarContent className=" mt-5 p-6 flex flex-col gap-2">
+          <SidebarContent className="mt-2 flex flex-col gap-4 p-6">
             <FormFields
               errors={errors}
               register={register}
@@ -76,11 +79,11 @@ export function TemplateSidebar({
             />
           </SidebarContent>
           <SidebarFooter className="p-6">
-            <Button type="submit">
+            <Button type="submit" className="rounded-full">
               <Check className="h-4 w-4" aria-hidden /> Speichern
             </Button>
           </SidebarFooter>
-        </FormWrapper>
+        </form>
       </SidebarPanel>
     </SidebarAside>
   );

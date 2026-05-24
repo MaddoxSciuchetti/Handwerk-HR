@@ -1,10 +1,11 @@
-import { Cell, GrowingItem, Items } from '@/components/ui/selfmade/table/Table';
+import { Button } from '@/components/ui/button';
+import { Cell, GrowingItem, Items } from '@/features/settings/components/Table';
 
 import {
   TemplateTaskFormValues,
   TemplateTaskResponse,
 } from '@/features/worker-task-management/types/index.types';
-import { cn } from '@/lib/trycatch';
+import { cn } from '@/lib/utils';
 import { PencilIcon, TrashIcon } from 'lucide-react';
 import { useDeleteTemplateTask } from '../hooks/useDeleteTemplateTask';
 export type TemplateTaskItemProps = {
@@ -20,17 +21,15 @@ export function TemplateTaskItem({
   setEditTemplateTask,
   setTemplateTaskState,
 }: TemplateTaskItemProps) {
-  console.log(templateTasks);
   const { deleteTemplateTask } = useDeleteTemplateTask();
   return (
-    <div className="flex w-full min-w-0 flex-col divide-y divide-border-subtle">
+    <div className="flex w-full min-w-0 flex-col gap-2">
       {templateTasks.map((task) => (
         <Items
           key={task.id}
           state="hover"
           className={cn(
-            'group w-full min-w-0 cursor-pointer items-center justify-between gap-6',
-            'px-6 py-4'
+            'group w-full min-w-0 cursor-pointer items-center justify-between gap-6'
           )}
         >
           <GrowingItem
@@ -48,28 +47,43 @@ export function TemplateTaskItem({
           </GrowingItem>
           <Cell
             className={cn(
-              'opacity-0 group-hover:opacity-100 w-auto flex gap-5 min-w-0 max-w-[min(100%,14rem)] shrink-0',
+              'opacity-0 group-hover:opacity-100 w-auto flex gap-2 min-w-0 max-w-[min(100%,14rem)] shrink-0',
               'text-right typo-body-sm font-normal text-text-primary'
             )}
           >
-            <PencilIcon
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="text-muted-foreground hover:text-foreground"
+              aria-label="Aufgabe bearbeiten"
               onClick={() => {
                 setIsOpen(true);
                 setEditTemplateTask({
                   taskId: task.id,
                   taskName: task.taskName,
                   taskDescription: task.taskDescription,
-                  defaultPriority: task.defaultPriority,
+                  defaultStatus: task.defaultStatus,
+                  defaultAssigneeUserId: task.defaultAssigneeUserId ?? '',
                   orderIndex: task.orderIndex,
                 });
                 setTemplateTaskState('edit');
               }}
-            />
-            <TrashIcon
+            >
+              <PencilIcon className="size-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="text-muted-foreground hover:text-destructive"
+              aria-label="Aufgabe löschen"
               onClick={() => {
                 deleteTemplateTask(task.id);
               }}
-            />
+            >
+              <TrashIcon className="size-4" />
+            </Button>
           </Cell>
         </Items>
       ))}

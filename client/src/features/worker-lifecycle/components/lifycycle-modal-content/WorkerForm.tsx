@@ -1,5 +1,5 @@
 import FormFields from '@/components/form/FormFields';
-import { Button } from '@/components/ui/selfmade/button';
+import { Button } from '@/components/ui/button';
 import { AddWorker } from '@/features/worker-lifecycle/schemas/zod.schemas';
 import { useAddWorker } from '../../hooks/useAddWorker';
 import { useMemoizedInputs } from '../../hooks/useMemoizedInputs';
@@ -39,7 +39,8 @@ export const WorkerForm = ({
       {showInlineFormBackButton && (
         <Button
           type="button"
-          className="w-fit border border-border bg-card text-foreground shadow-none hover:bg-muted/60"
+          variant="outline"
+          className="w-fit rounded-2xl"
           onClick={() => setSelectedOption(null)}
         >
           Zurück
@@ -69,11 +70,7 @@ export const WorkerForm = ({
       </div>
 
       <footer className="mt-auto flex shrink-0 justify-end border-t border-border pt-4">
-        <Button
-          type="submit"
-          disabled={isPending}
-          className="shrink-0 border-0 bg-interactive-primary-bg text-sm text-interactive-primary-text hover:bg-interactive-primary-hover"
-        >
+        <Button type="submit" className="rounded-2xl" disabled={isPending}>
           {isPending ? 'Wird erstellt...' : 'Hinzufügen'}
         </Button>
       </footer>

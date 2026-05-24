@@ -9,9 +9,9 @@ type LifeCycleModalProps = {
 };
 
 const LifeCycleModal = ({ toggleModal, modal }: LifeCycleModalProps) => {
-  const [selectedOption, setSelectedOption] = useState<AddWorker['type'] | null>(
-    null
-  );
+  const [selectedOption, setSelectedOption] = useState<
+    AddWorker['type'] | null
+  >(null);
 
   useEffect(() => {
     if (!modal) {

@@ -22,9 +22,7 @@ The realistic yet ambitious scenario was taken to test performance on a large da
 
 ## Overview of rows created with seed script
 
-_(row counts per table to be filled in here)_
-
----
+![image](./image.png)
 
 ## Query 1 — Engagement overview with issues per organization
 

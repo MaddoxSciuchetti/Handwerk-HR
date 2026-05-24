@@ -5,8 +5,7 @@ type EmployeeNameProps = {
 };
 
 const EmployeeName = ({ employee }: EmployeeNameProps) => {
-  const isAdmin =
-    employee.organizationMembers[0]?.membershipRole === 'admin';
+  const isAdmin = employee.organizationMembers[0]?.membershipRole === 'admin';
 
   return (
     <>

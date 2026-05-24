@@ -49,20 +49,15 @@ export type InsertHistoryData = z.infer<typeof formSchema>;
 
 export type WorkerTab = 'form' | 'files';
 
-/** Matches Prisma `IssuePriority` for template tasks. */
-export type IssuePriority =
-  | 'no_priority'
-  | 'low'
-  | 'medium'
-  | 'high'
-  | 'urgent';
+import type { IssueStatusValue } from '@/features/all-tasks/consts/issue-status.consts';
 
 /** Form + create body for a template task (sidebar). */
 export type TemplateTaskFormValues = {
   taskId: string;
   taskName: string;
   taskDescription: string;
-  defaultPriority: IssuePriority;
+  defaultStatus: IssueStatusValue;
+  defaultAssigneeUserId: string;
   orderIndex: number;
 };
 
@@ -73,7 +68,8 @@ export type TemplateTaskResponse = {
   orderIndex: number;
   taskName: string;
   taskDescription: string;
-  defaultPriority: IssuePriority;
+  defaultStatus: IssueStatusValue;
+  defaultAssigneeUserId: string | null;
 };
 
 export type TaskHistoryActor = {

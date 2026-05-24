@@ -1,11 +1,12 @@
 import { useCallback, useState } from 'react';
+import type { IssueStatusValue } from '../consts/issue-status.consts';
 
 export type TaskEditState = {
   taskId: string;
   title: string;
   workerEngagementId: string;
   assigneeUserId: string;
-  statusId: string;
+  status: IssueStatusValue | '';
 };
 
 export const EMPTY_TASK_EDIT_STATE: TaskEditState = {
@@ -13,7 +14,7 @@ export const EMPTY_TASK_EDIT_STATE: TaskEditState = {
   title: '',
   workerEngagementId: '',
   assigneeUserId: '',
-  statusId: '',
+  status: '',
 };
 
 export function useTaskSidebar() {
@@ -39,6 +40,13 @@ export function useTaskSidebar() {
 
   const close = useCallback(() => setIsOpen(false), []);
 
+  const patchTaskEditState = useCallback(
+    (patch: Partial<TaskEditState>) => {
+      setTaskEditState((prev) => ({ ...prev, ...patch }));
+    },
+    []
+  );
+
   const sidebarKey =
     taskState === 'edit'
       ? `edit-${taskEditState.taskId}`
@@ -50,5 +58,6 @@ export function useTaskSidebar() {
     openForEdit,
     openForCreate,
     close,
+    patchTaskEditState,
   };
 }

@@ -9,14 +9,12 @@ import AppSidebar from '../ui/sidebar/AppSidebar';
 import {
   SidebarInset,
   SidebarTrigger,
-  useSidebar,
-} from '../ui/sidebar/sidebar';
+} from '@/components/ui/sidebar';
 import PagePath from './headers/PagePath';
 import { SettingsSidebar } from './SettingsSidebar';
 
 function Layout() {
   const [modal, setModal] = useState<boolean>(false);
-  const { toggleSidebar } = useSidebar();
   const { theme } = useThemeProvider();
   const [isSettingOpen, setIsSettingOpen] = useState<boolean>(false);
   const navigate = useNavigate();
@@ -39,7 +37,6 @@ function Layout() {
 
   const handleOpenModal = () => {
     setModal((prev) => !prev);
-    toggleSidebar();
   };
 
   useEffect(() => {
@@ -54,13 +51,11 @@ function Layout() {
     <>
       {isSettingOpen ? (
         <SettingsSidebar
-          className="rounded-2xl"
           subscriptionLocked={subscriptionLocked}
           setIsSettingOpen={setIsSettingOpen}
         />
       ) : (
         <AppSidebar
-          className="rounded-2xl"
           subscriptionLocked={subscriptionLocked}
           openModal={handleOpenModal}
           setIsSettingOpen={setIsSettingOpen}
@@ -78,7 +73,11 @@ function Layout() {
         </main>
       </SidebarInset>
       {modal && (
-        <ModalOverlay handleToggle={handleOpenModal}>
+        <ModalOverlay
+          handleToggle={handleOpenModal}
+          className="backdrop-blur-xs"
+          backdropClassName="bg-black/30"
+        >
           <FeatureModal handleToggle={handleOpenModal} />
         </ModalOverlay>
       )}

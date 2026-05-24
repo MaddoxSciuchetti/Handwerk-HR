@@ -25,77 +25,6 @@ const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL ?? "admin@example.com";
 const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD ?? "Admin123!";
 const ORG_SLUG = process.env.SEED_ORG_SLUG ?? "demo-org";
 
-async function ensureDefaultStatuses(organizationId: string) {
-    const engagementCount = await prisma.engagementStatus.count({
-        where: { organizationId },
-    });
-    const issueCount = await prisma.issueStatus.count({
-        where: { organizationId },
-    });
-
-    if (engagementCount === 0) {
-        await prisma.engagementStatus.createMany({
-            data: [
-                {
-                    organizationId,
-                    name: "Ausstehend",
-                    isDefault: true,
-                    orderIndex: 0,
-                },
-                {
-                    organizationId,
-                    name: "In Bearbeitung",
-                    isDefault: false,
-                    orderIndex: 1,
-                },
-                {
-                    organizationId,
-                    name: "Abgeschlossen",
-                    isDefault: false,
-                    orderIndex: 2,
-                },
-                {
-                    organizationId,
-                    name: "Abgebrochen",
-                    isDefault: false,
-                    orderIndex: 3,
-                },
-            ],
-        });
-    }
-
-    if (issueCount === 0) {
-        await prisma.issueStatus.createMany({
-            data: [
-                {
-                    organizationId,
-                    name: "Offen",
-                    isDefault: true,
-                    orderIndex: 0,
-                },
-                {
-                    organizationId,
-                    name: "In Arbeit",
-                    isDefault: false,
-                    orderIndex: 1,
-                },
-                {
-                    organizationId,
-                    name: "Erledigt",
-                    isDefault: false,
-                    orderIndex: 2,
-                },
-                {
-                    organizationId,
-                    name: "Abgebrochen",
-                    isDefault: false,
-                    orderIndex: 3,
-                },
-            ],
-        });
-    }
-}
-
 async function main() {
     console.log("Starting database seed…");
 
@@ -165,8 +94,6 @@ async function main() {
             data: { membershipRole: OrgMemberRole.admin, status: "active" },
         });
     }
-
-    await ensureDefaultStatuses(organization.id);
 
     const subscription = await prisma.subscription.upsert({
         where: { organizationId: organization.id },

@@ -1,6 +1,9 @@
+import { tryCatch } from '@/lib/trycatch';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { Dispatch, SetStateAction } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import type { IssueStatusValue } from '../consts/issue-status.consts';
 import { taskFormSchema } from '../schemas/taskForm.schema';
 import { TaskSidebarForm } from '../types/index.types';
 import { useCreateTask } from './useCreateTask';
@@ -38,16 +41,21 @@ export function useTasks(
     register,
     handleSubmit,
     control,
+    setValue,
     formState: { errors },
   } = useForm<TaskSidebarForm>({
     defaultValues: {
       title: taskEditState.title,
       workerEngagementId: taskEditState.workerEngagementId,
       assigneeUserId: taskEditState.assigneeUserId,
-      statusId: taskEditState.statusId,
+      status: taskEditState.status || 'open',
     },
     resolver: zodResolver(taskFormSchema),
   });
+
+  useEffect(() => {
+    setValue('status', (taskEditState.status || 'open') as IssueStatusValue);
+  }, [taskEditState.status, setValue]);
 
   const onSubmit = handleSubmit(async (data) => {
     if (taskState === 'create') {
@@ -66,15 +74,14 @@ export function useTasks(
     const draft = options?.getCommentDraft?.();
     const trimmed = draft?.body.trim() ?? '';
     if (trimmed.length > 0 && options?.persistComment) {
-      try {
-        await options.persistComment({
+      const [, persistErr] = await tryCatch(
+        options.persistComment({
           taskId: taskEditState.taskId,
           body: trimmed,
           commentId: draft?.commentId ?? null,
-        });
-      } catch {
-        return;
-      }
+        })
+      );
+      if (persistErr) return;
     }
 
     setIsOpen(false);

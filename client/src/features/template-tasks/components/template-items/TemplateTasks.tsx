@@ -1,12 +1,13 @@
 import LoadingAlert from '@/components/alerts/LoadingAlert';
-import { Button } from '@/components/ui/selfmade/button';
+import { Button } from '@/components/ui/button';
 import {
   Table,
   TableDivider,
   TableHeader,
-} from '@/components/ui/selfmade/table/Table';
-import { SettingsStatusesHeader } from '@/features/settings/org-statuses/SettingsStatusesHeader';
+} from '@/features/settings/components/Table';
+import { SettingsPageHeader } from '@/features/settings/components/SettingsPageHeader';
 import { TaskSidebar } from '@/features/worker-task-management/components/tasks/TaskSidebar';
+import { EMPTY_TEMPLATE_TASK } from '@/features/template-tasks/schemas/templateTaskForm.schema';
 import { TemplateTaskFormValues } from '@/features/worker-task-management/types/index.types';
 import { useNavigate } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
@@ -19,21 +20,12 @@ type TemplateTasksProps = {
   name: string;
 };
 
-export function TemplateTasks({
-  templateId,
-  name,
-}: TemplateTasksProps) {
+export function TemplateTasks({ templateId, name }: TemplateTasksProps) {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const { data: templateTasks, isLoading } = useGetTemplateTasks(templateId);
   const [editTemplateTask, setEditTemplateTask] =
-    useState<TemplateTaskFormValues>({
-      taskId: '',
-      taskName: '',
-      taskDescription: '',
-      defaultPriority: 'medium',
-      orderIndex: 0,
-    });
+    useState<TemplateTaskFormValues>(EMPTY_TEMPLATE_TASK);
   const [templateTaskState, setTemplateTaskState] = useState<'create' | 'edit'>(
     'create'
   );
@@ -46,12 +38,13 @@ export function TemplateTasks({
   return (
     <div className="mx-auto flex h-full flex-col overflow-auto rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
       <div className="h-full w-full flex flex-col items-center justify-center">
-        <SettingsStatusesHeader
+        <SettingsPageHeader
           action={
             <Button
               type="button"
-              hierachy="ghost"
-              className="size-9 p-0"
+              variant="ghost"
+              size="icon"
+              className="rounded-full"
               aria-label="Zurück"
               onClick={() => navigate({ to: '/settings/templates/template' })}
             >
@@ -62,9 +55,11 @@ export function TemplateTasks({
           description="Füge Aufgaben zu dieser Vorlage hinzu"
         />
         <Table className="w-200">
-          <TableHeader className="gap-3 py-2">
+          <TableHeader>
             <Button
+              className="rounded-full"
               onClick={() => {
+                setEditTemplateTask(EMPTY_TEMPLATE_TASK);
                 setCreateOpenNonce((n) => n + 1);
                 setIsOpen(true);
                 setTemplateTaskState('create');

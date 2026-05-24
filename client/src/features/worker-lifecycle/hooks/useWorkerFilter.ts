@@ -1,18 +1,18 @@
-import { OptionsObjekt } from '@/components/ui/selfmade/selectdropdown';
+import { DropdownOption } from '@/components/ui/nested-dropdown';
 import { employeeQueries } from '@/features/employee-overview/query-options/queries/employee.queries';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { FILTER_OPTIONS } from '../consts/filter.consts';
 import { WorkerRecord } from '../types/index.types';
-import { applyFilter, withDynamicOptions } from '../utils/applyFilter';
+import { applyFilterAndSort, withDynamicOptions } from '../utils/applyFilter';
 
 export type FilterMode =
   | ''
   | 'all'
+  | 'createdAt'
   | 'engagementType'
   | 'status'
-  | 'responsible'
-  | 'lastEdited';
+  | 'responsible';
 
 export function useWorkerFilter(workers: WorkerRecord[] | undefined) {
   const [filterMode, setFilterMode] = useState<FilterMode>('');
@@ -34,14 +34,14 @@ export function useWorkerFilter(workers: WorkerRecord[] | undefined) {
     setFilterLabel(option?.label ?? '');
   };
 
-  const handleSubSelect = (sub: OptionsObjekt, parent: OptionsObjekt) => {
+  const handleSubSelect = (sub: DropdownOption, parent: DropdownOption) => {
     setFilterMode(parent.value as FilterMode);
     setFilterValue(sub.value);
     setFilterLabel(`${parent.label}: ${sub.label}`);
   };
 
   const filteredWorkers = useMemo(
-    () => applyFilter(workers ?? [], filterMode, filterValue),
+    () => applyFilterAndSort(workers ?? [], filterMode, filterValue),
     [workers, filterMode, filterValue]
   );
 

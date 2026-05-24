@@ -1,4 +1,5 @@
 import { IssueResponse } from '@/features/all-tasks/types/index.types';
+import type { EngagementProgressValue } from '../consts/engagement-progress.consts';
 import { LifecycleType } from '@/features/worker-task-management/types/index.types';
 
 export type EmployeeForm = {
@@ -74,19 +75,16 @@ export type EngagementType = 'onboarding' | 'offboarding' | 'transfer';
 export type WorkerEngagement = {
   id: string;
   type: EngagementType;
+  status: EngagementProgressValue;
   startDate: string | null;
   endDate: string | null;
-  engagementStatus: {
-    id: string;
-    name: string;
-    color: string | null;
-  };
   responsibleUser: {
     id: string;
     firstName: string;
     lastName: string;
     email: string;
   };
+  issues?: Pick<IssueResponse, 'id' | 'status'>[];
 };
 
 export type WorkerRecord = {
@@ -118,7 +116,7 @@ export type WorkerDetailResponse = {
     entryDate: string | null;
     exitDate: string | null;
     engagements: Array<
-      WorkerEngagement & {
+      Omit<WorkerEngagement, 'issues'> & {
         issues?: IssueResponse[];
       }
     >;

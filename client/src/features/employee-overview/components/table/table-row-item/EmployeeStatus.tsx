@@ -36,13 +36,17 @@ const EmployeeStatus = ({ employee }: EmployeeStatusProps) => {
                 </div>
               </>
             ) : (
-              <p className="w-full text-sm text-(--chart-2)">Anwesend</p>
+              <p className="w-full typo-body-sm font-medium text-(--status-success-foreground)">
+                Anwesend
+              </p>
             )}
           </div>
         ))
       ) : (
         <div className="flex flex-col" key={`preent-${employee.id}`}>
-          <p className="w-full text-sm text-(--chart-2)">Anwesend</p>
+          <p className="w-full typo-body-sm font-medium text-(--status-success-foreground)">
+            Anwesend
+          </p>
         </div>
       )}
     </>

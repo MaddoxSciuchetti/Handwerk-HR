@@ -1,4 +1,5 @@
-import { Table } from '@/components/ui/selfmade/table/Table';
+import { Table } from '@/features/settings/components/Table';
+import { SettingsPageHeader } from '@/features/settings/components/SettingsPageHeader';
 import { Link } from '@tanstack/react-router';
 import { PlanRow } from './PlanRow';
 import { SubscriptionRow } from './SubscriptionRow';
@@ -41,12 +42,14 @@ export function PaymentPlanDisplay({
   return (
     <section className="flex h-full w-full flex-col items-center justify-center">
       <div className="flex w-200 flex-col items-start gap-1">
-        <h1 className="typo-h4 font-bold">Zahlungen</h1>
-        <p className="typo-body-sm text-muted-foreground">
-          {hasActiveSubscription
-            ? 'Verwalte dein Abo und deine Zahlungsmethoden.'
-            : 'Wähle einen Plan, um dein Abo zu starten.'}
-        </p>
+        <SettingsPageHeader
+          title="Zahlungen"
+          description={
+            hasActiveSubscription
+              ? 'Verwalte dein Abo und deine Zahlungsmethoden.'
+              : 'Wähle einen Plan, um dein Abo zu starten.'
+          }
+        />
         {showPastDueNotice ? (
           <p className="typo-body-sm font-medium text-destructive">
             Die letzte Zahlung ist fehlgeschlagen. Bitte aktualisiere deine
@@ -65,7 +68,7 @@ export function PaymentPlanDisplay({
         ) : null}
         <Link
           to="/settings/plans"
-          className="typo-body-sm font-medium text-interactive-primary-bg underline-offset-4 hover:underline"
+          className="typo-body-sm font-medium text-primary underline-offset-4 hover:underline"
         >
           Pläne vergleichen
         </Link>

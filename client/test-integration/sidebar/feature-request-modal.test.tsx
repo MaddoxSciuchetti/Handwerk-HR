@@ -1,9 +1,12 @@
 import ModalOverlay from '@/components/modal/ModalOverlay';
-import { SidebarItem } from '@/components/ui/selfmade/sidebaritem';
 import {
-  CustomSideBarProvider,
   Sidebar,
-} from '@/components/ui/sidebar/sidebar';
+  SidebarFooter,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+} from '@/components/ui/sidebar';
 import FeatureModal from '@/features/sidebar/feature-modal/FeatureModal';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -31,26 +34,29 @@ function FeedbackSidebarHarness() {
   const toggleModal = () => setModalOpen((v) => !v);
 
   return (
-    <CustomSideBarProvider defaultOpen>
-      <Sidebar
-        collapsible="icon"
-        className="flex flex-col justify-between rounded-2xl"
-      >
-        <div />
-        <div className="w-full p-2">
-          <SidebarItem
-            label="Feedback"
-            icon={MessageSquareIcon}
-            onClick={() => setModalOpen(true)}
-          />
-        </div>
+    <SidebarProvider defaultOpen>
+      <Sidebar collapsible="icon">
+        <SidebarFooter>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={() => setModalOpen(true)}>
+                <MessageSquareIcon />
+                <span>Feedback</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
       </Sidebar>
       {modalOpen && (
-        <ModalOverlay handleToggle={toggleModal}>
+        <ModalOverlay
+          handleToggle={toggleModal}
+          className="backdrop-blur-xs"
+          backdropClassName="bg-black/30"
+        >
           <FeatureModal handleToggle={toggleModal} />
         </ModalOverlay>
       )}
-    </CustomSideBarProvider>
+    </SidebarProvider>
   );
 }
 

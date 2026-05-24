@@ -6,7 +6,6 @@ Read this before you push work so layout, naming, and architeecture stay consist
 
 If in any case you see code that violates the below principles, open a new branch and adjust the code to match the below styles. This ensures that overtime the codebase closely follows the above rules and stays more maintanable.
 
----
 
 ## 1. Client (`client/`)
 
@@ -30,7 +29,6 @@ export const TaskSidebar = (props: TaskSidebarProps) => {
 };
 ```
 
----
 
 ### 1.2 One component, one responsibility
 
@@ -52,7 +50,6 @@ export function MegaSettingsScreen() {
 }
 ```
 
----
 
 ### 1.3 Exported hooks use `export function`
 
@@ -72,7 +69,6 @@ Bad:
 export const useBillingSubscription = () => useQuery(…);
 ```
 
----
 
 ### 1.4 Inside a component or hook, use `const` + arrow helpers
 
@@ -100,7 +96,6 @@ export function Form() {
 }
 ```
 
----
 
 ### 1.5 Create types for each component above the function definition
 
@@ -140,7 +135,6 @@ Bad:
 import API from "../../../../config/apiClient";
 ```
 
----
 
 ### 1.6 Type-only imports use `import type`
 
@@ -158,7 +152,6 @@ Bad:
 import { BillingSubscription } from "./billing.types";
 ```
 
----
 
 ### 1.7 Client: one env module, import constants from it
 
@@ -184,7 +177,6 @@ const url = import.meta.env.DATABASE_URL;
 
 Server uses the same idea in `server/src/constants/env.ts` — see §2.1.
 
----
 
 ### 1.8 Unused bindings follow ESLint intentional-prefix rules
 
@@ -202,7 +194,6 @@ Bad:
 useEffect((event) => { … }); // unused `event` triggers lint
 ```
 
----
 
 ## 2. Server (`server/`)
 
@@ -227,7 +218,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "");
 
 Client uses the same idea in `client/src/config/env.ts` — see §1.7.
 
----
 
 ### 2.2 Keep HTTP layers split: `.route.ts` → `.controller.ts` → `.service.ts`
 
@@ -245,7 +235,6 @@ Bad:
 // task.route.ts mixes Prisma + JSON shaping + branching in hundreds of lines
 ```
 
----
 
 ### 2.3 Server tests named `*.test.ts` grouped under `server/tests/`
 
@@ -263,7 +252,6 @@ Bad:
 server/manual-check-stripe.ts //
 ```
 
----
 
 ## 3. Shared naming (`client/` + `server/`)
 
@@ -287,7 +275,6 @@ export const LoadUsers = () => {};
 export const unauthorizedHttp = 401;
 ```
 
----
 
 ### 3.2 Prefer `type` aliases over interfaces
 
@@ -307,7 +294,6 @@ export interface BillingSubscription {
 }
 ```
 
----
 
 ### 3.3 Name verbs after what happens (`saveTaskComment`, `getTasks`)
 
@@ -325,7 +311,6 @@ Bad:
 export async function fetch() {}
 ```
 
----
 
 ### 3.4 ESLint + Prettier (client)
 
@@ -344,7 +329,6 @@ Server: There is no `lint`/`format` script in `server/package.json` yet — this
 
 Avoid: Only using your editor’s built-in formatter with no `.prettierrc`, or piling ESLint “style” rules on top of Prettier without `eslint-config-prettier`-style disables.
 
----
 
 ### 3.5 Do not stash secrets inside readmes or other files where they should not belong
 
@@ -363,7 +347,6 @@ Bad:
 STRIPE_SECRET_KEY=sk_live_12345 pasted in README
 ```
 
----
 
 ## 4. Repository layout
 
@@ -371,7 +354,6 @@ STRIPE_SECRET_KEY=sk_live_12345 pasted in README
 
 SPA work lands in `client/` (Vite + React + TanStack Router + Query). Persistent HTTP + Stripe + Prisma work lands in `server/`. Do not edit generated files from Prisma.
 
----
 
 ## 5. `client/src/` folders
 
@@ -418,7 +400,6 @@ Bad:
 />
 ```
 
----
 
 ## 6. File naming and most important reminders before pushing
 
@@ -458,7 +439,6 @@ Bad:
 server/src/billingStuff.ts // unclear layer
 ```
 
----
 
 ## 7. Imports & tooling (both packages)
 
@@ -478,7 +458,6 @@ Bad:
 import { prisma } from "../../../../lib/prisma";
 ```
 
----
 
 ### 7.2 Client ESLint = TS recommended + Hooks
 
@@ -496,7 +475,6 @@ Bad:
 Disabling Hooks plugin locally to shortcut dependency arrays repeatedly
 ```
 
----
 
 ### 7.3 Run scripted `lint` / `format` before review
 

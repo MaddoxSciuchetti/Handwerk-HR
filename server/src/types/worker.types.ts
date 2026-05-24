@@ -1,16 +1,20 @@
 import type {
     AbsenceType,
     DocumentFileType,
+    EngagementProgress,
     EngagementType,
     IssuePriority,
+    IssueStatus,
     WorkerStatus,
 } from "@prisma/client";
 
 export type {
     AbsenceType,
     DocumentFileType,
+    EngagementProgress,
     EngagementType,
     IssuePriority,
+    IssueStatus,
     WorkerStatus,
 };
 
@@ -82,9 +86,9 @@ export interface DeleteWorkerInput {
 export interface CreateEngagementInput {
     workerId: string;
     organizationId: string;
-    responsibleUserId: string; // required
-    statusId: string; // required FK → EngagementStatus
-    type: EngagementType; // not "engagementType"
+    responsibleUserId: string;
+    status?: EngagementProgress;
+    type: EngagementType;
     startDate?: Date;
     endDate?: Date;
     completedAt?: Date;
@@ -95,7 +99,7 @@ export interface UpdateEngagementInput {
     workerId: string;
     organizationId: string;
     responsibleUserId?: string;
-    statusId?: string;
+    status?: EngagementProgress;
     type?: EngagementType;
     startDate?: Date;
     endDate?: Date;
@@ -106,7 +110,7 @@ export interface UpdateEngagementInput {
 export interface CreateIssueInput {
     workerEngagementId: string; // required — no workerId on Issue
     createdByUserId: string; // required
-    statusId: string; // required FK → IssueStatus
+    status?: IssueStatus;
     title: string;
     assigneeUserId?: string;
     templateItemId?: string;
@@ -123,7 +127,7 @@ export interface UpdateIssueInput {
     title?: string;
     description?: string;
     assigneeUserId?: string;
-    statusId?: string;
+    status?: IssueStatus;
     priority?: IssuePriority;
     dueDate?: Date;
 }

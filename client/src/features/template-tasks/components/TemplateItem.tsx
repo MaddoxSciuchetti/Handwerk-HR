@@ -1,5 +1,6 @@
-import { Cell, GrowingItem, Items } from '@/components/ui/selfmade/table/Table';
-import { cn } from '@/lib/trycatch';
+import { Button } from '@/components/ui/button';
+import { Cell, GrowingItem, Items } from '@/features/settings/components/Table';
+import { cn } from '@/lib/utils';
 import { useNavigate } from '@tanstack/react-router';
 import { PencilIcon, TrashIcon } from 'lucide-react';
 import { Dispatch, SetStateAction } from 'react';
@@ -29,14 +30,13 @@ export function TemplateItem({
   }
 
   return (
-    <div className="flex w-full min-w-0 flex-col divide-y divide-border-subtle">
+    <div className="flex w-full min-w-0 flex-col gap-2">
       {templates.map((template) => (
         <Items
           key={template.id}
           state="hover"
           className={cn(
-            'group w-full min-w-0 cursor-pointer items-center justify-between gap-6',
-            'px-6 py-4'
+            'group w-full min-w-0 cursor-pointer items-center justify-between gap-6'
           )}
           onClick={() =>
             navigate({
@@ -54,9 +54,7 @@ export function TemplateItem({
               'py-0 pl-0 pr-4'
             )}
           >
-            <p className="typo-body-sm text-text-primary">
-              {template.name}
-            </p>
+            <p className="typo-body-sm text-text-primary">{template.name}</p>
             {template.description ? (
               <p className="typo-body-xs text-text-secondary line-clamp-3">
                 {template.description}
@@ -65,12 +63,16 @@ export function TemplateItem({
           </GrowingItem>
           <Cell
             className={cn(
-              'opacity-0 group-hover:opacity-100 w-auto flex gap-5 min-w-0 max-w-[min(100%,14rem)] shrink-0',
+              'opacity-0 group-hover:opacity-100 w-auto flex gap-2 min-w-0 max-w-[min(100%,14rem)] shrink-0',
               'text-right typo-body-sm font-normal text-text-primary'
             )}
           >
-            <PencilIcon
-              className="w-4 h-4"
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="text-muted-foreground hover:text-foreground"
+              aria-label="Template bearbeiten"
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
@@ -82,15 +84,23 @@ export function TemplateItem({
                   description: template.description,
                 });
               }}
-            />
-            <TrashIcon
-              className="w-4 h-4"
+            >
+              <PencilIcon className="size-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="text-muted-foreground hover:text-destructive"
+              aria-label="Template löschen"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 deleteTemplate(template.id);
               }}
-            />
+            >
+              <TrashIcon className="size-4" />
+            </Button>
           </Cell>
         </Items>
       ))}
