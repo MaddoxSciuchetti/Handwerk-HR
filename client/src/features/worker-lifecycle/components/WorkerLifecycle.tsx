@@ -87,22 +87,26 @@ function WorkerLifeCycle() {
                 onSelect={handleSelect}
                 onSubSelect={handleSubSelect}
               />
-              <Button type="button" className="rounded-2xl" onClick={handleSelectWorker}>
+              <Button
+                type="button"
+                className="rounded-2xl"
+                onClick={handleSelectWorker}
+              >
                 Hinzufügen
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="px-0 pb-0">
+          <CardContent className="px-2 pb-0">
             <Table>
               <TableHeader className="[&_tr]:border-0">
                 <TableRow className="border-0 hover:bg-transparent">
-                  <TableHead className="pl-14">Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Verantwortlich</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead className="h-12 py-3 pl-10 pr-2">Name</TableHead>
+                  <TableHead className="py-3 px-2">Type</TableHead>
+                  <TableHead className="py-3 px-2">Verantwortlich</TableHead>
+                  <TableHead className="py-3 px-2">Status</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody className="[&_tr]:border-0">
+              <TableBody className="[&_tr]:border-0 [&_td]:py-4 [&_td]:px-2 [&_td:first-child]:pl-10">
                 {filteredWorkers.map((worker) => (
                   <ProjectItem
                     key={worker.id}

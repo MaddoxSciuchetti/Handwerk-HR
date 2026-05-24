@@ -52,10 +52,15 @@ function ProjectItem({
 
   return (
     <TableRow
-      className="group relative cursor-pointer border-0"
+      className="group relative cursor-pointer border-0 hover:bg-transparent"
       onClick={() => gotopage(worker.id, form_type, fullname)}
     >
-      <TableCell className="relative pl-14 font-medium">
+      <TableCell
+        className={cn(
+          'relative pl-10 pr-2 font-medium transition-colors group-hover:rounded-l-xl group-hover:bg-muted/50',
+          isSelected && 'rounded-l-xl bg-muted/50'
+        )}
+      >
         <Button
           type="button"
           variant="ghost"
@@ -72,9 +77,30 @@ function ProjectItem({
         </Button>
         {worker.firstName}
       </TableCell>
-      <TableCell>{worker.engagements[0].type}</TableCell>
-      <TableCell>{worker.engagements[0].responsibleUser.firstName}</TableCell>
-      <TableCell>{worker.engagements[0].engagementStatus.name}</TableCell>
+      <TableCell
+        className={cn(
+          'transition-colors group-hover:bg-muted/50',
+          isSelected && 'bg-muted/50'
+        )}
+      >
+        {worker.engagements[0].type}
+      </TableCell>
+      <TableCell
+        className={cn(
+          'transition-colors group-hover:bg-muted/50',
+          isSelected && 'bg-muted/50'
+        )}
+      >
+        {worker.engagements[0].responsibleUser.firstName}
+      </TableCell>
+      <TableCell
+        className={cn(
+          'transition-colors group-hover:rounded-r-xl group-hover:bg-muted/50',
+          isSelected && 'rounded-r-xl bg-muted/50'
+        )}
+      >
+        {worker.engagements[0].engagementStatus.name}
+      </TableCell>
     </TableRow>
   );
 }
