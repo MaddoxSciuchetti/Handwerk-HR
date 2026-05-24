@@ -10,7 +10,7 @@ import {
   SidebarInset,
   SidebarTrigger,
   useSidebar,
-} from '../ui/sidebar/sidebar';
+} from '@/components/ui/sidebar';
 import PagePath from './headers/PagePath';
 import { SettingsSidebar } from './SettingsSidebar';
 
@@ -54,13 +54,11 @@ function Layout() {
     <>
       {isSettingOpen ? (
         <SettingsSidebar
-          className="rounded-2xl"
           subscriptionLocked={subscriptionLocked}
           setIsSettingOpen={setIsSettingOpen}
         />
       ) : (
         <AppSidebar
-          className="rounded-2xl"
           subscriptionLocked={subscriptionLocked}
           openModal={handleOpenModal}
           setIsSettingOpen={setIsSettingOpen}
