@@ -50,8 +50,12 @@ function Employees() {
           </TableHeader>
           <TableDivider />
           <ItemHeader className={employeeTableGridClassName}>
-            <div className="typo-body-sm pl-7 py-1">Name</div>
-            <div className="typo-body-sm text-left">Offene Aufgaben</div>
+            <div className="typo-body-sm min-w-0 truncate pl-7 py-1">Name</div>
+            <div className="typo-body-xs text-left leading-tight">
+              Offene
+              <br />
+              Aufgaben
+            </div>
             <div className="typo-body-sm text-left">Status</div>
             <div className="typo-body-sm text-left">Vertretung</div>
             <div className="typo-body-sm text-left">Aktionen</div>

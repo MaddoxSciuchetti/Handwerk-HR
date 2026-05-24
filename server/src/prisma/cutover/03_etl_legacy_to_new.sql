@@ -159,7 +159,7 @@ SELECT ff.form_field_id, gen_random_uuid()::text
 FROM _legacy_form_fields ff;
 
 INSERT INTO template_items (
-    id, issue_template_id, title, default_status, order_index, created_at, updated_at
+    id, issue_template_id, title, default_status, default_assignee_user_id, order_index, created_at, updated_at
 )
 SELECT
     m.template_item_id,
@@ -170,11 +170,13 @@ SELECT
     END,
     ff.description,
     'open'::"IssueStatus",
+    owner_user.id,
     COALESCE(ff.order_index, ff.form_field_id),
     COALESCE(ff."timestamp", NOW()),
     NOW()
 FROM _legacy_form_fields ff
 JOIN _map_form_field m ON m.legacy_id = ff.form_field_id
+LEFT JOIN users owner_user ON owner_user.id = ff.owner
 CROSS JOIN _cutover_config c;
 
 -- ---------------------------------------------------------------------------
@@ -214,7 +216,7 @@ FROM _legacy_form_inputs fi;
 
 INSERT INTO issues (
     id, worker_engagement_id, created_by_user_id, template_item_id, status,
-    title, created_at, updated_at
+    title, assignee_user_id, created_at, updated_at
 )
 SELECT
     mi.issue_id,
@@ -227,6 +229,7 @@ SELECT
         ELSE 'open'::"IssueStatus"
     END,
     ff.description,
+    owner_user.id,
     COALESCE(fi."timestamp", NOW()),
     NOW()
 FROM _legacy_form_inputs fi
@@ -234,6 +237,7 @@ JOIN _map_form_input mi ON mi.legacy_id = fi.id
 JOIN _map_form mf ON mf.legacy_id = fi.employee_form_id
 JOIN _legacy_form_fields ff ON ff.form_field_id = fi.form_field_id
 JOIN _map_form_field mff ON mff.legacy_id = fi.form_field_id
+LEFT JOIN users owner_user ON owner_user.id = ff.owner
 CROSS JOIN _cutover_config c;
 
 -- ---------------------------------------------------------------------------
