@@ -22,10 +22,12 @@ import { Route as SettingsProfileRouteImport } from './routes/settings/profile'
 import { Route as SettingsPlansRouteImport } from './routes/settings/plans'
 import { Route as SettingsPaymentsRouteImport } from './routes/settings/payments'
 import { Route as SettingsEmployeesRouteImport } from './routes/settings/employees'
+import { Route as SettingsDocumentsRouteImport } from './routes/settings/documents'
 import { Route as PasswordResetRouteImport } from './routes/password/reset'
 import { Route as PasswordForgotRouteImport } from './routes/password/forgot'
 import { Route as SettingsTemplatesTemplateRouteImport } from './routes/settings/templates/template'
 import { Route as SettingsTemplatesIdRouteImport } from './routes/settings/templates/$id'
+import { Route as SettingsDocumentsIdRouteImport } from './routes/settings/documents/$id'
 import { Route as EmailVerifyCodeRouteImport } from './routes/email/verify/$code'
 
 const WorkerLifycycleRoute = WorkerLifycycleRouteImport.update({
@@ -93,6 +95,11 @@ const SettingsEmployeesRoute = SettingsEmployeesRouteImport.update({
   path: '/employees',
   getParentRoute: () => SettingsRoute,
 } as any)
+const SettingsDocumentsRoute = SettingsDocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
+  getParentRoute: () => SettingsRoute,
+} as any)
 const PasswordResetRoute = PasswordResetRouteImport.update({
   id: '/password/reset',
   path: '/password/reset',
@@ -114,6 +121,11 @@ const SettingsTemplatesIdRoute = SettingsTemplatesIdRouteImport.update({
   path: '/templates/$id',
   getParentRoute: () => SettingsRoute,
 } as any)
+const SettingsDocumentsIdRoute = SettingsDocumentsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => SettingsDocumentsRoute,
+} as any)
 const EmailVerifyCodeRoute = EmailVerifyCodeRouteImport.update({
   id: '/email/verify/$code',
   path: '/email/verify/$code',
@@ -131,12 +143,14 @@ export interface FileRoutesByFullPath {
   '/worker-lifycycle': typeof WorkerLifycycleRoute
   '/password/forgot': typeof PasswordForgotRoute
   '/password/reset': typeof PasswordResetRoute
+  '/settings/documents': typeof SettingsDocumentsRouteWithChildren
   '/settings/employees': typeof SettingsEmployeesRoute
   '/settings/payments': typeof SettingsPaymentsRoute
   '/settings/plans': typeof SettingsPlansRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/user/$Id': typeof UserIdRoute
   '/email/verify/$code': typeof EmailVerifyCodeRoute
+  '/settings/documents/$id': typeof SettingsDocumentsIdRoute
   '/settings/templates/$id': typeof SettingsTemplatesIdRoute
   '/settings/templates/template': typeof SettingsTemplatesTemplateRoute
 }
@@ -151,12 +165,14 @@ export interface FileRoutesByTo {
   '/worker-lifycycle': typeof WorkerLifycycleRoute
   '/password/forgot': typeof PasswordForgotRoute
   '/password/reset': typeof PasswordResetRoute
+  '/settings/documents': typeof SettingsDocumentsRouteWithChildren
   '/settings/employees': typeof SettingsEmployeesRoute
   '/settings/payments': typeof SettingsPaymentsRoute
   '/settings/plans': typeof SettingsPlansRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/user/$Id': typeof UserIdRoute
   '/email/verify/$code': typeof EmailVerifyCodeRoute
+  '/settings/documents/$id': typeof SettingsDocumentsIdRoute
   '/settings/templates/$id': typeof SettingsTemplatesIdRoute
   '/settings/templates/template': typeof SettingsTemplatesTemplateRoute
 }
@@ -172,12 +188,14 @@ export interface FileRoutesById {
   '/worker-lifycycle': typeof WorkerLifycycleRoute
   '/password/forgot': typeof PasswordForgotRoute
   '/password/reset': typeof PasswordResetRoute
+  '/settings/documents': typeof SettingsDocumentsRouteWithChildren
   '/settings/employees': typeof SettingsEmployeesRoute
   '/settings/payments': typeof SettingsPaymentsRoute
   '/settings/plans': typeof SettingsPlansRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/user/$Id': typeof UserIdRoute
   '/email/verify/$code': typeof EmailVerifyCodeRoute
+  '/settings/documents/$id': typeof SettingsDocumentsIdRoute
   '/settings/templates/$id': typeof SettingsTemplatesIdRoute
   '/settings/templates/template': typeof SettingsTemplatesTemplateRoute
 }
@@ -194,12 +212,14 @@ export interface FileRouteTypes {
     | '/worker-lifycycle'
     | '/password/forgot'
     | '/password/reset'
+    | '/settings/documents'
     | '/settings/employees'
     | '/settings/payments'
     | '/settings/plans'
     | '/settings/profile'
     | '/user/$Id'
     | '/email/verify/$code'
+    | '/settings/documents/$id'
     | '/settings/templates/$id'
     | '/settings/templates/template'
   fileRoutesByTo: FileRoutesByTo
@@ -214,12 +234,14 @@ export interface FileRouteTypes {
     | '/worker-lifycycle'
     | '/password/forgot'
     | '/password/reset'
+    | '/settings/documents'
     | '/settings/employees'
     | '/settings/payments'
     | '/settings/plans'
     | '/settings/profile'
     | '/user/$Id'
     | '/email/verify/$code'
+    | '/settings/documents/$id'
     | '/settings/templates/$id'
     | '/settings/templates/template'
   id:
@@ -234,12 +256,14 @@ export interface FileRouteTypes {
     | '/worker-lifycycle'
     | '/password/forgot'
     | '/password/reset'
+    | '/settings/documents'
     | '/settings/employees'
     | '/settings/payments'
     | '/settings/plans'
     | '/settings/profile'
     | '/user/$Id'
     | '/email/verify/$code'
+    | '/settings/documents/$id'
     | '/settings/templates/$id'
     | '/settings/templates/template'
   fileRoutesById: FileRoutesById
@@ -352,6 +376,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsEmployeesRouteImport
       parentRoute: typeof SettingsRoute
     }
+    '/settings/documents': {
+      id: '/settings/documents'
+      path: '/documents'
+      fullPath: '/settings/documents'
+      preLoaderRoute: typeof SettingsDocumentsRouteImport
+      parentRoute: typeof SettingsRoute
+    }
     '/password/reset': {
       id: '/password/reset'
       path: '/password/reset'
@@ -380,6 +411,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsTemplatesIdRouteImport
       parentRoute: typeof SettingsRoute
     }
+    '/settings/documents/$id': {
+      id: '/settings/documents/$id'
+      path: '/$id'
+      fullPath: '/settings/documents/$id'
+      preLoaderRoute: typeof SettingsDocumentsIdRouteImport
+      parentRoute: typeof SettingsDocumentsRoute
+    }
     '/email/verify/$code': {
       id: '/email/verify/$code'
       path: '/email/verify/$code'
@@ -390,7 +428,19 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface SettingsDocumentsRouteChildren {
+  SettingsDocumentsIdRoute: typeof SettingsDocumentsIdRoute
+}
+
+const SettingsDocumentsRouteChildren: SettingsDocumentsRouteChildren = {
+  SettingsDocumentsIdRoute: SettingsDocumentsIdRoute,
+}
+
+const SettingsDocumentsRouteWithChildren =
+  SettingsDocumentsRoute._addFileChildren(SettingsDocumentsRouteChildren)
+
 interface SettingsRouteChildren {
+  SettingsDocumentsRoute: typeof SettingsDocumentsRouteWithChildren
   SettingsEmployeesRoute: typeof SettingsEmployeesRoute
   SettingsPaymentsRoute: typeof SettingsPaymentsRoute
   SettingsPlansRoute: typeof SettingsPlansRoute
@@ -400,6 +450,7 @@ interface SettingsRouteChildren {
 }
 
 const SettingsRouteChildren: SettingsRouteChildren = {
+  SettingsDocumentsRoute: SettingsDocumentsRouteWithChildren,
   SettingsEmployeesRoute: SettingsEmployeesRoute,
   SettingsPaymentsRoute: SettingsPaymentsRoute,
   SettingsPlansRoute: SettingsPlansRoute,
