@@ -1,3 +1,5 @@
+import type { DocumentSegment } from './documentSegments';
+
 export const DOCUMENT_MASTER_KINDS = [
   'employment_contract',
   'arbeitszeugnis',
@@ -14,6 +16,7 @@ export type DocumentMasterListItem = {
 
 export type DocumentMasterDetail = DocumentMasterListItem & {
   text: string;
+  segments: DocumentSegment[];
 };
 
 export const DOCUMENT_MASTER_KIND_LABELS: Record<DocumentMasterKind, string> =

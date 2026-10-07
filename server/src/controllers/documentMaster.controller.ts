@@ -5,6 +5,10 @@ import {
     listDocumentMasters,
     updateDocumentMaster,
 } from "@/services/documentMaster.service";
+import {
+    parseDocumentSegments,
+    segmentsFromText,
+} from "@/services/documentBody";
 import { extractDocumentText } from "@/services/extractDocumentText";
 import AppError from "@/utils/AppError";
 import appAssert from "@/utils/appAssert";
@@ -80,19 +84,19 @@ export const getMaster = catchErrors(async (req, res) => {
 
 export const updateMaster = catchErrors(async (req, res) => {
     appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
-    const body = req.body as { name?: string; text?: string };
-    appAssert(typeof body.text === "string", BAD_REQUEST, "Text fehlt.");
-    appAssert(
-        body.text.length <= TEXT_MAX,
-        BAD_REQUEST,
-        "Das Dokument ist zu lang.",
-    );
+    const body = req.body as { name?: string; text?: string; segments?: unknown };
+    const segments = Array.isArray(body.segments)
+        ? parseDocumentSegments(body.segments)
+        : typeof body.text === "string"
+          ? parseDocumentSegments(segmentsFromText(body.text))
+          : null;
+    appAssert(segments, BAD_REQUEST, "Text fehlt.");
 
     const master = await updateDocumentMaster({
         id: param(req.params.id),
         organizationId: req.orgId,
         name: requireName(body.name ?? ""),
-        text: body.text,
+        segments,
     });
 
     return res.status(OK).json(master);

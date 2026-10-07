@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 type SettingsPageHeaderProps = {
   title: string;
-  description: string;
+  description?: string;
   action?: ReactNode;
 };
 
@@ -17,7 +17,9 @@ export function SettingsPageHeader({
       <h1 className={action ? 'typo-h4 mt-2 font-bold' : 'typo-h4 font-bold'}>
         {title}
       </h1>
-      <p className="typo-body-sm text-muted-foreground">{description}</p>
+      {description ? (
+        <p className="typo-body-sm text-muted-foreground">{description}</p>
+      ) : null}
     </div>
   );
 }

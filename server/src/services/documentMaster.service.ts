@@ -1,7 +1,14 @@
 import { BAD_REQUEST, NOT_FOUND } from "@/constants/http";
 import { prisma } from "@/lib/prisma";
 import AppError from "@/utils/AppError";
-import { DocumentMasterKind, Prisma } from "@prisma/client";
+import { DocumentMasterKind } from "@prisma/client";
+import {
+    documentBody,
+    DocumentSegment,
+    readDocumentSegments,
+    segmentsFromText,
+    textFromSegments,
+} from "./documentBody";
 
 const KINDS = new Set<string>([
     DocumentMasterKind.employment_contract,
@@ -17,6 +24,7 @@ export type DocumentMasterListItem = {
 
 export type DocumentMasterDetail = DocumentMasterListItem & {
     text: string;
+    segments: DocumentSegment[];
 };
 
 function asKind(kind: string): DocumentMasterKind {
@@ -26,21 +34,22 @@ function asKind(kind: string): DocumentMasterKind {
     return kind as DocumentMasterKind;
 }
 
-function readText(body: Prisma.JsonValue): string {
-    if (
-        body !== null &&
-        typeof body === "object" &&
-        !Array.isArray(body) &&
-        "text" in body &&
-        typeof body.text === "string"
-    ) {
-        return body.text;
-    }
-    return "";
-}
-
-function documentBody(text: string): Prisma.InputJsonValue {
-    return { version: 1, text };
+function toDetail(master: {
+    id: string;
+    name: string;
+    kind: DocumentMasterKind;
+    body: Parameters<typeof readDocumentSegments>[0];
+    updatedAt: Date;
+}): DocumentMasterDetail {
+    const segments = readDocumentSegments(master.body);
+    return {
+        id: master.id,
+        name: master.name,
+        kind: master.kind,
+        text: textFromSegments(segments),
+        segments,
+        updatedAt: master.updatedAt,
+    };
 }
 
 export async function listDocumentMasters(
@@ -69,7 +78,7 @@ export async function createDocumentMaster(params: {
             organizationId: params.organizationId,
             kind: asKind(params.kind),
             name: params.name,
-            body: documentBody(params.text),
+            body: documentBody(segmentsFromText(params.text)),
         },
         select: {
             id: true,
@@ -80,13 +89,7 @@ export async function createDocumentMaster(params: {
         },
     });
 
-    return {
-        id: created.id,
-        name: created.name,
-        kind: created.kind,
-        text: readText(created.body),
-        updatedAt: created.updatedAt,
-    };
+    return toDetail(created);
 }
 
 export async function getDocumentMaster(
@@ -108,20 +111,14 @@ export async function getDocumentMaster(
         throw new AppError(NOT_FOUND, "Dokument nicht gefunden.");
     }
 
-    return {
-        id: master.id,
-        name: master.name,
-        kind: master.kind,
-        text: readText(master.body),
-        updatedAt: master.updatedAt,
-    };
+    return toDetail(master);
 }
 
 export async function updateDocumentMaster(params: {
     id: string;
     organizationId: string;
     name: string;
-    text: string;
+    segments: DocumentSegment[];
 }): Promise<DocumentMasterDetail> {
     const existing = await prisma.documentMaster.findFirst({
         where: { id: params.id, organizationId: params.organizationId },
@@ -136,7 +133,7 @@ export async function updateDocumentMaster(params: {
         where: { id: params.id },
         data: {
             name: params.name,
-            body: documentBody(params.text),
+            body: documentBody(params.segments),
         },
         select: {
             id: true,
@@ -147,11 +144,5 @@ export async function updateDocumentMaster(params: {
         },
     });
 
-    return {
-        id: updated.id,
-        name: updated.name,
-        kind: updated.kind,
-        text: readText(updated.body),
-        updatedAt: updated.updatedAt,
-    };
+    return toDetail(updated);
 }
