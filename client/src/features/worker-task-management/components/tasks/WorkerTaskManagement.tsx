@@ -161,6 +161,18 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                 <div className={sectionHeaderClassName}>Name</div>
                 <WorkerFileUploads
                   workerId={workerId}
+                  contracts={data.data.engagements.flatMap((engagement) =>
+                    engagement.employmentContract
+                      ? [
+                          {
+                            engagementId: engagement.id,
+                            id: engagement.employmentContract.id,
+                            name: engagement.employmentContract.master.name,
+                            status: engagement.employmentContract.status,
+                          },
+                        ]
+                      : []
+                  )}
                   isUploadModalOpen={isFileUploadOpen}
                   setIsUploadModalOpen={setIsFileUploadOpen}
                 />

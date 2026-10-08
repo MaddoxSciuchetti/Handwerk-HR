@@ -444,6 +444,7 @@ model EmploymentContract {
   engagementId      String                   @unique @map("engagement_id")
   masterId          String                   @map("master_id")
   status            EmploymentContractStatus @default(draft)
+  body              Json?
   signedBody        Json?                    @map("signed_body")
   fileUrl           String?                  @map("file_url") @db.VarChar(2048)
   sentAt            DateTime?                @map("sent_at") @db.Timestamptz()

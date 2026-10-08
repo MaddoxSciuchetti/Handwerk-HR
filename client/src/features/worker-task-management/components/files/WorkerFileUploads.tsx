@@ -4,17 +4,23 @@ import LoadingAlert from '@/components/alerts/LoadingAlert';
 import { useMemo } from 'react';
 import useDeleteWorkerFile from '../../hooks/useDeleteWorkerFile';
 import useGetWorkerFiles from '../../hooks/useGetWorkerFiles';
+import {
+  EngagementContractList,
+  type EngagementContractLink,
+} from './EngagementContractList';
 import FileUploadForm from './file_upload/FileUploadForm';
 import FilesContent from './FilesContent';
 
 type WorkerFileUploadsProps = {
   workerId: string;
+  contracts: EngagementContractLink[];
   isUploadModalOpen: boolean;
   setIsUploadModalOpen: (open: boolean) => void;
 };
 
 function WorkerFileUploads({
   workerId,
+  contracts,
   isUploadModalOpen,
   setIsUploadModalOpen,
 }: WorkerFileUploadsProps) {
@@ -23,17 +29,19 @@ function WorkerFileUploads({
 
   const filteredFiles = useMemo(() => fetchFiles ?? [], [fetchFiles]);
 
-  if (isLoading) return <LoadingAlert />;
-  if (isError) return <ErrorAlert />;
-
   return (
     <>
-      <FilesContent fetchFiles={filteredFiles} deleteFiles={deleteFiles} />
-      {!filteredFiles.length && (
+      <EngagementContractList workerId={workerId} contracts={contracts} />
+      {isLoading ? <LoadingAlert /> : null}
+      {isError ? <ErrorAlert /> : null}
+      {!isLoading && !isError ? (
+        <FilesContent fetchFiles={filteredFiles} deleteFiles={deleteFiles} />
+      ) : null}
+      {!isLoading && !isError && !filteredFiles.length && !contracts.length ? (
         <div className="flex min-h-100 items-center justify-center py-10 text-sm text-muted-foreground">
           Keine Hochgeladenen Dateien
         </div>
-      )}
+      ) : null}
 
       {isUploadModalOpen && (
         <ModalOverlay handleToggle={() => setIsUploadModalOpen(false)}>

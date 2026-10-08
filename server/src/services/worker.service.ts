@@ -183,6 +183,24 @@ export async function startExpectedOnboarding(params: {
             },
         });
 
+        const master = await tx.documentMaster.findFirst({
+            where: {
+                organizationId: params.organizationId,
+                kind: "employment_contract",
+            },
+            orderBy: { updatedAt: "desc" },
+        });
+
+        if (master) {
+            await tx.employmentContract.create({
+                data: {
+                    engagementId: engagement.id,
+                    masterId: master.id,
+                    status: "draft",
+                },
+            });
+        }
+
         return { worker, engagement };
     });
 
@@ -302,6 +320,13 @@ export async function getWorkerById(workerId: string, organizationId: string) {
                             firstName: true,
                             lastName: true,
                             email: true,
+                        },
+                    },
+                    employmentContract: {
+                        select: {
+                            id: true,
+                            status: true,
+                            master: { select: { name: true } },
                         },
                     },
                     issues: {

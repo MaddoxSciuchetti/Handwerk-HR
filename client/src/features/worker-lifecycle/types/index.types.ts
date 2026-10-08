@@ -118,6 +118,11 @@ export type WorkerDetailResponse = {
     engagements: Array<
       Omit<WorkerEngagement, 'issues'> & {
         issues?: IssueResponse[];
+        employmentContract: {
+          id: string;
+          status: 'draft' | 'signed';
+          master: { name: string };
+        } | null;
       }
     >;
   };

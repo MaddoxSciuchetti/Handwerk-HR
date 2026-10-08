@@ -1,4 +1,5 @@
 import { uploadFileToS3 } from "@/config/aws";
+import * as employmentContractService from "@/services/employmentContract.service";
 import catchErrors from "@/utils/catchErrors";
 import { Request, Response } from "express";
 import * as workerService from "../services/worker.service";
@@ -354,5 +355,45 @@ export const getWorkerHistory = catchErrors(
             workerId,
         });
         return res.status(200).json({ success: true, data: result });
+    },
+);
+
+export const getEngagementContract = catchErrors(
+    async (req: Request, res: Response) => {
+        const contract = await employmentContractService.getEngagementContract({
+            organizationId: req.orgId,
+            workerId: param(req, "workerId"),
+            engagementId: param(req, "engagementId"),
+        });
+        if (!contract) {
+            return res
+                .status(404)
+                .json({ success: false, message: "Vertrag nicht gefunden." });
+        }
+        return res.status(200).json({ success: true, data: contract });
+    },
+);
+
+export const saveEngagementContractDraft = catchErrors(
+    async (req: Request, res: Response) => {
+        const values = req.body?.values;
+        if (
+            values === null ||
+            typeof values !== "object" ||
+            Array.isArray(values)
+        ) {
+            return res
+                .status(400)
+                .json({ success: false, message: "Werte fehlen." });
+        }
+
+        const contract =
+            await employmentContractService.saveEngagementContractDraft({
+                organizationId: req.orgId,
+                workerId: param(req, "workerId"),
+                engagementId: param(req, "engagementId"),
+                values: values as Record<string, unknown>,
+            });
+        return res.status(200).json({ success: true, data: contract });
     },
 );

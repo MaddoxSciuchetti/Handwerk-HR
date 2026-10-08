@@ -17,6 +17,14 @@ worker.patch("/:workerId/archive", workerController.archiveWorker);
 worker.patch("/:workerId/unarchive", workerController.unarchiveWorker);
 
 worker.post("/:workerId/engagements", workerController.createEngagement);
+worker.get(
+    "/:workerId/engagements/:engagementId/contract",
+    workerController.getEngagementContract,
+);
+worker.put(
+    "/:workerId/engagements/:engagementId/contract",
+    workerController.saveEngagementContractDraft,
+);
 worker.put(
     "/:workerId/engagements/:engagementId",
     workerController.updateEngagement,
