@@ -82,6 +82,10 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
   if (!data)
     return <ErrorAlert message="The tasks could not load, reload page" />;
 
+  const waiting = data.data.engagements.some(
+    (engagement) => engagement.status === 'expected'
+  );
+
   return (
     <div className="mx-auto flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
       <TaskSidebar key={sidebarKey} {...sidebarProps} />
@@ -102,6 +106,7 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
             <WorkerHeader
               activeTab={activeTab}
               openForCreate={openForCreate}
+              hideCreate={waiting}
               onOpenFileUpload={() => setIsFileUploadOpen(true)}
               onExportFiles={() => void handleZipExport(fetchFiles)}
             />

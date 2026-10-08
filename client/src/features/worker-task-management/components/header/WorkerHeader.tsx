@@ -5,6 +5,7 @@ import type { WorkerTab } from '../../types/index.types';
 type WorkerHeaderProps = {
   activeTab: WorkerTab;
   openForCreate: () => void;
+  hideCreate?: boolean;
   onOpenFileUpload: () => void;
   onExportFiles: () => void;
 };
@@ -12,6 +13,7 @@ type WorkerHeaderProps = {
 const WorkerHeader = ({
   activeTab,
   openForCreate,
+  hideCreate = false,
   onOpenFileUpload,
   onExportFiles,
 }: WorkerHeaderProps) => {
@@ -21,11 +23,11 @@ const WorkerHeader = ({
     <>
       <CardTitle className="text-base font-medium">{title}</CardTitle>
       <div className="flex h-8 shrink-0 items-center gap-3">
-        {activeTab === 'form' ? (
+        {activeTab === 'form' && !hideCreate ? (
           <Button type="button" className="rounded-2xl" onClick={openForCreate}>
             Aufgabe hinzufügen
           </Button>
-        ) : (
+        ) : activeTab === 'files' ? (
           <>
             <Button
               type="button"
@@ -47,7 +49,7 @@ const WorkerHeader = ({
               Exportieren
             </Button>
           </>
-        )}
+        ) : null}
       </div>
     </>
   );

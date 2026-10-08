@@ -116,6 +116,11 @@ export async function createWorker(params: CreateWorkerInput) {
     });
 }
 
+const EXPECTED_ONBOARDING_TASKS = [
+    { title: "Fragebogen", status: "in_progress" },
+    { title: "Arbeitsvertrag", status: "open" },
+] as const;
+
 function placeholderNamesFromEmail(email: string) {
     const local = (email.split("@")[0] ?? "").split("+")[0];
     const parts = local
@@ -160,6 +165,15 @@ export async function startExpectedOnboarding(params: {
                 status: "expected",
                 type: "onboarding",
             },
+        });
+
+        await tx.issue.createMany({
+            data: EXPECTED_ONBOARDING_TASKS.map((task) => ({
+                workerEngagementId: engagement.id,
+                createdByUserId: params.createdByUserId,
+                status: task.status,
+                title: task.title,
+            })),
         });
 
         await tx.questionnaireSubmission.create({
