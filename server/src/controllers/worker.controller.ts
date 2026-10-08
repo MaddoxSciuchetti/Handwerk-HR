@@ -8,6 +8,25 @@ function param(req: Request, key: string): string {
     return Array.isArray(val) ? val[0] : String(val);
 }
 
+export const startExpectedOnboarding = catchErrors(
+    async (req: Request, res: Response) => {
+        const email = String(req.body?.email ?? "").trim();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            return res
+                .status(400)
+                .json({ success: false, message: "E-Mail fehlt." });
+        }
+
+        const result = await workerService.startExpectedOnboarding({
+            organizationId: req.orgId,
+            createdByUserId: req.userId,
+            email,
+        });
+
+        return res.status(201).json({ success: true, data: result });
+    },
+);
+
 export const createWorker = catchErrors(async (req: Request, res: Response) => {
     const organizationId = req.orgId;
     const createdByUserId = req.userId;

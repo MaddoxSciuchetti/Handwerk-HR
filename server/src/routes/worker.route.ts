@@ -7,6 +7,7 @@ import * as workerController from "../controllers/worker.controller";
 const worker = express.Router();
 
 worker.post("/", workerController.createWorker);
+worker.post("/fast-track", workerController.startExpectedOnboarding);
 worker.get("/", workerController.getWorkerData);
 worker.get("/:workerId", workerController.getWorkerById);
 worker.put("/:workerId", workerController.updateWorker);
