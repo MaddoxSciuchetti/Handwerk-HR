@@ -10,6 +10,7 @@ import type { Dispatch, MouseEvent, SetStateAction } from 'react';
 import { WorkerRecord } from '../types/index.types';
 import { getFirstFormType } from '../utils/formtype';
 import { getWorkerIssueCount } from '../utils/workerHealth.utils';
+import WorkerEngagementInfoButton from './WorkerEngagementInfoButton';
 import { EngagementProgressPicker } from './ui/EngagementProgressPicker';
 
 export type WorkerSelection = {
@@ -78,7 +79,10 @@ function ProjectItem({
         >
           <SelectionIcon className="size-4" />
         </Button>
-        {worker.firstName}
+        <span className="inline-flex items-center gap-2">
+          {worker.firstName}
+          <WorkerEngagementInfoButton workerId={worker.id} />
+        </span>
       </TableCell>
       <TableCell
         className={cn(
