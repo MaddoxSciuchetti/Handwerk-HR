@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { ContractDraftDialog } from './ContractDraftDialog';
+import type { EmploymentContractStatus } from '../../api/employmentContract.api';
 
 export type EngagementContractLink = {
   engagementId: string;
   id: string;
   name: string;
-  status: 'draft' | 'signed';
+  status: EmploymentContractStatus;
 };
 
 type EngagementContractListProps = {
@@ -15,6 +16,7 @@ type EngagementContractListProps = {
 
 const STATUS_LABEL = {
   draft: 'Entwurf',
+  ready: 'Zum Versand',
   signed: 'Unterschrieben',
 } as const;
 

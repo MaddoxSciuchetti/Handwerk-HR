@@ -67,9 +67,10 @@ async function findContract(params: ContractParams) {
 function present(
     contract: NonNullable<Awaited<ReturnType<typeof findContract>>>,
 ) {
-    const frozen =
-        contract.body === null ? null : readDocumentSegments(contract.body);
-    const segments = frozen ?? readDocumentSegments(contract.master.body);
+    const followsMaster = contract.status === "draft";
+    const segments = followsMaster
+        ? readDocumentSegments(contract.master.body)
+        : readDocumentSegments(contract.body ?? contract.master.body);
     const values: Record<string, string> = {};
     for (const entry of contract.values) {
         values[entry.key] = entry.value;
@@ -80,7 +81,7 @@ function present(
         engagementId: contract.engagementId,
         status: contract.status,
         name: contract.master.name,
-        followsMaster: frozen === null && contract.status === "draft",
+        followsMaster,
         segments,
         values,
     };
@@ -103,17 +104,14 @@ export async function saveEngagementContractDraft(
         throw new AppError(CONFLICT, "Der Vertrag ist kein Entwurf mehr.");
     }
 
-    const followsMaster = contract.body === null;
-    const segments = followsMaster
-        ? readDocumentSegments(contract.master.body)
-        : readDocumentSegments(contract.body as Prisma.JsonValue);
+    const segments = readDocumentSegments(contract.master.body);
     const entries = readDraftValues(params.values, inputKeys(segments));
 
     const saved = await prisma.$transaction(async (tx) => {
-        if (followsMaster) {
+        if (contract.body !== null) {
             await tx.employmentContract.update({
                 where: { id: contract.id },
-                data: { body: documentBody(segments), status: "draft" },
+                data: { body: Prisma.DbNull },
             });
         }
 
@@ -136,5 +134,32 @@ export async function saveEngagementContractDraft(
         });
     });
 
-    return { ...present(saved), detachedFromMaster: followsMaster };
+    return present(saved);
+}
+
+/**
+ * Call when the user confirms the Personalfragebogen is back and this contract can be sent.
+ * Copies the current master text onto the child and locks text and input fields.
+ */
+export async function confirmEngagementContractForSend(params: ContractParams) {
+    const contract = await findContract(params);
+    if (!contract) {
+        throw new AppError(NOT_FOUND, "Vertrag nicht gefunden.");
+    }
+    if (contract.status === "ready") return present(contract);
+    if (contract.status !== "draft") {
+        throw new AppError(CONFLICT, "Der Vertrag ist kein Entwurf mehr.");
+    }
+
+    const segments = readDocumentSegments(contract.master.body);
+    const saved = await prisma.employmentContract.update({
+        where: { id: contract.id },
+        data: {
+            body: documentBody(segments),
+            status: "ready",
+        },
+        include: { master: true, values: true },
+    });
+
+    return present(saved);
 }

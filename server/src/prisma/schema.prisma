@@ -703,6 +703,7 @@ enum DocumentMasterKind {
 
 enum EmploymentContractStatus {
   draft
+  ready
   signed
 }
 

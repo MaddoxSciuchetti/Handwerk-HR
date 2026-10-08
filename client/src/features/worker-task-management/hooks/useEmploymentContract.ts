@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  confirmEngagementContractForSend,
   getEngagementContract,
   saveEngagementContractDraft,
   type EmploymentContractDraft,
@@ -29,6 +30,23 @@ export function useSaveEmploymentContract(
   return useMutation({
     mutationFn: (values: Record<string, string>) =>
       saveEngagementContractDraft(workerId, engagementId, values),
+    onSuccess: (saved) => {
+      queryClient.setQueryData<EmploymentContractDraft>(
+        employmentContractKey(workerId, engagementId),
+        saved
+      );
+    },
+  });
+}
+
+export function useConfirmEngagementContractForSend(
+  workerId: string,
+  engagementId: string
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => confirmEngagementContractForSend(workerId, engagementId),
     onSuccess: (saved) => {
       queryClient.setQueryData<EmploymentContractDraft>(
         employmentContractKey(workerId, engagementId),

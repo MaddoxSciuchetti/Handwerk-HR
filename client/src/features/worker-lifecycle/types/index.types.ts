@@ -120,7 +120,7 @@ export type WorkerDetailResponse = {
         issues?: IssueResponse[];
         employmentContract: {
           id: string;
-          status: 'draft' | 'signed';
+          status: 'draft' | 'ready' | 'signed';
           master: { name: string };
         } | null;
       }

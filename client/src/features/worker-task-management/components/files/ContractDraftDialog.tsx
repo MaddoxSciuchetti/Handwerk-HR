@@ -9,8 +9,14 @@ import {
 } from '../../hooks/useEmploymentContract';
 import { ContractDraftBody } from './ContractDraftBody';
 
-const DETACHED_NOTE =
-  'Änderungen am Mustertext werden für diesen Vertrag nicht mehr übernommen.';
+const STATUS_LABEL = {
+  draft: 'Entwurf',
+  ready: 'Zum Versand',
+  signed: 'Unterschrieben',
+} as const;
+
+const FROZEN_NOTE =
+  'Änderungen am Mustertext werden nicht mehr übernommen.';
 
 type ContractDraftDialogProps = {
   workerId: string;
@@ -40,13 +46,7 @@ export function ContractDraftDialog({
   const save = () => {
     if (!data || readOnly) return;
     saveDraft.mutate(values, {
-      onSuccess: (saved) => {
-        toast.success(
-          saved.detachedFromMaster
-            ? `Entwurf gespeichert. ${DETACHED_NOTE}`
-            : 'Entwurf gespeichert'
-        );
-      },
+      onSuccess: () => toast.success('Entwurf gespeichert'),
       onError: () => toast.error('Entwurf konnte nicht gespeichert werden'),
     });
   };
@@ -65,11 +65,11 @@ export function ContractDraftDialog({
             <div className="pr-8">
               <h2 className="text-base font-medium">{data.name}</h2>
               <p className="text-sm text-muted-foreground">
-                {data.status === 'draft' ? 'Entwurf' : 'Unterschrieben'}
+                {STATUS_LABEL[data.status]}
               </p>
             </div>
             {data.followsMaster ? null : (
-              <p className="text-sm text-muted-foreground">{DETACHED_NOTE}</p>
+              <p className="text-sm text-muted-foreground">{FROZEN_NOTE}</p>
             )}
             <ContractDraftBody
               segments={data.segments}

@@ -1,15 +1,16 @@
 import API from '@/config/apiClient';
 import type { DocumentSegment } from '@/features/settings/documents/documentSegments';
 
+export type EmploymentContractStatus = 'draft' | 'ready' | 'signed';
+
 export type EmploymentContractDraft = {
   id: string;
   engagementId: string;
-  status: 'draft' | 'signed';
+  status: EmploymentContractStatus;
   name: string;
   followsMaster: boolean;
   segments: DocumentSegment[];
   values: Record<string, string>;
-  detachedFromMaster?: boolean;
 };
 
 type ContractResponse = {
@@ -37,4 +38,14 @@ export function saveEngagementContractDraft(
   >(`worker/${workerId}/engagements/${engagementId}/contract`, {
     values,
   }).then((response) => response.data);
+}
+
+export function confirmEngagementContractForSend(
+  workerId: string,
+  engagementId: string
+): Promise<EmploymentContractDraft> {
+  return API.post<Record<string, never>, ContractResponse>(
+    `worker/${workerId}/engagements/${engagementId}/contract/confirm-send`,
+    {}
+  ).then((response) => response.data);
 }

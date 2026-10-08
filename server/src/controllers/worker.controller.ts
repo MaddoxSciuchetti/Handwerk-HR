@@ -397,3 +397,15 @@ export const saveEngagementContractDraft = catchErrors(
         return res.status(200).json({ success: true, data: contract });
     },
 );
+
+export const confirmEngagementContractForSend = catchErrors(
+    async (req: Request, res: Response) => {
+        const contract =
+            await employmentContractService.confirmEngagementContractForSend({
+                organizationId: req.orgId,
+                workerId: param(req, "workerId"),
+                engagementId: param(req, "engagementId"),
+            });
+        return res.status(200).json({ success: true, data: contract });
+    },
+);

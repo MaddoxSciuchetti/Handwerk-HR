@@ -25,6 +25,10 @@ worker.put(
     "/:workerId/engagements/:engagementId/contract",
     workerController.saveEngagementContractDraft,
 );
+worker.post(
+    "/:workerId/engagements/:engagementId/contract/confirm-send",
+    workerController.confirmEngagementContractForSend,
+);
 worker.put(
     "/:workerId/engagements/:engagementId",
     workerController.updateEngagement,
