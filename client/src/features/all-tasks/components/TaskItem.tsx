@@ -16,6 +16,7 @@ type TaskItemProps = {
   isSelected: boolean;
   workerId?: string;
   onOpenEdit: (seed: TaskEditState) => void;
+  onOpenContractSend?: (task: IssueResponse) => void;
   setLargeEditMode: Dispatch<SetStateAction<boolean>>;
   setEditModeData: Dispatch<
     SetStateAction<{ taskNumber: string; taskTitle: string }[]>
@@ -27,6 +28,7 @@ export function TaskItem({
   isSelected,
   workerId,
   onOpenEdit,
+  onOpenContractSend,
   setLargeEditMode,
   setEditModeData,
 }: TaskItemProps) {
@@ -89,11 +91,29 @@ export function TaskItem({
             variant="outline"
             size="xs"
             className="shrink-0 rounded-2xl"
-            onClick={openInEditMode}
+            onClick={() => {
+              if (task.kind === 'contract_send') {
+                onOpenContractSend?.(task);
+                return;
+              }
+              openInEditMode();
+            }}
           >
             Bearbeiten
           </Button>
         </div>
+      </TableCell>
+      <TableCell
+        className={cn(
+          'transition-colors group-hover:bg-muted/50',
+          isSelected && 'bg-muted/50'
+        )}
+      >
+        {task.isTemporary ? (
+          <span className="inline-flex h-7 items-center rounded-full border border-border px-3 text-xs font-medium">
+            isTemporary
+          </span>
+        ) : null}
       </TableCell>
       <TableCell
         className={cn(

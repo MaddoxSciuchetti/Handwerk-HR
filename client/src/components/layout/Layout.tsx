@@ -28,6 +28,12 @@ function Layout() {
   );
 
   useEffect(() => {
+    if (location.pathname.startsWith('/settings')) {
+      setIsSettingOpen(true);
+    }
+  }, [location.pathname]);
+
+  useEffect(() => {
     if (!subscriptionLocked) return;
     const path = location.pathname;
     if (path === '/settings/payments' || path === '/settings/plans') return;

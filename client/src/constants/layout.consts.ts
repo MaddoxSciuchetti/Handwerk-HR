@@ -2,6 +2,7 @@ import {
   CreditCard,
   FileText,
   Inbox,
+  ScrollText,
   Ticket,
   UserRound,
 } from 'lucide-react';
@@ -35,6 +36,11 @@ export const SETTINGSITEMS = [
     title: 'Templates',
     to: '/settings/templates/template',
     icon: FileText,
+  },
+  {
+    title: 'Dokumente',
+    to: '/settings/documents',
+    icon: ScrollText,
   },
   {
     title: 'Zahlungen',

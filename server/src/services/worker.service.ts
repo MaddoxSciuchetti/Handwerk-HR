@@ -1,3 +1,4 @@
+import { FRONTENDURL } from "@/constants/env";
 import { prisma } from "@/lib/prisma";
 import type {
     ArchiveWorkerInput,
@@ -16,6 +17,9 @@ import type {
     UploadWorkerDocumentInput,
 } from "@/types/worker.types";
 import { withTxRetry } from "@/utils/withTxRetry";
+import { getQuestionnaireTemplate } from "@/utils/emailTemplates";
+import { sendMail } from "@/utils/sendMail";
+import { randomUUID } from "crypto";
 import {
     DeleteObjectCommand,
     GetObjectCommand,
@@ -113,6 +117,118 @@ export async function createWorker(params: CreateWorkerInput) {
 
         return { worker, engagement, issuesCreated };
     });
+}
+
+const EXPECTED_ONBOARDING_TASKS = [
+    { title: "Fragebogen", status: "in_progress" },
+    { title: "Arbeitsvertrag", status: "open" },
+] as const;
+
+function placeholderNamesFromEmail(email: string) {
+    const local = (email.split("@")[0] ?? "").split("+")[0];
+    const parts = local
+        .split(/[._-]+/)
+        .map((part) => part.replace(/\d+$/g, "").replace(/[^a-zäöüß]/gi, ""))
+        .filter((part) => part.length > 0)
+        .map(
+            (part) =>
+                part.charAt(0).toLocaleUpperCase("de-DE") + part.slice(1),
+        );
+
+    return {
+        firstName: (parts[0] ?? "Unbekannt").slice(0, 120),
+        lastName: parts.slice(1).join(" ").slice(0, 120),
+    };
+}
+
+export async function startExpectedOnboarding(params: {
+    organizationId: string;
+    createdByUserId: string;
+    email: string;
+}) {
+    const email = params.email.trim().toLowerCase();
+    const { firstName, lastName } = placeholderNamesFromEmail(email);
+    const created = await prisma.$transaction(async (tx) => {
+        const worker = await tx.worker.create({
+            data: {
+                organizationId: params.organizationId,
+                createdByUserId: params.createdByUserId,
+                firstName,
+                lastName,
+                email,
+                status: WorkerStatus.active,
+            },
+        });
+
+        const engagement = await tx.workerEngagement.create({
+            data: {
+                workerId: worker.id,
+                organizationId: params.organizationId,
+                responsibleUserId: params.createdByUserId,
+                status: "expected",
+                type: "onboarding",
+            },
+        });
+
+        await tx.issue.createMany({
+            data: EXPECTED_ONBOARDING_TASKS.map((task) => ({
+                workerEngagementId: engagement.id,
+                createdByUserId: params.createdByUserId,
+                status: task.status,
+                title: task.title,
+            })),
+        });
+
+        const token = randomUUID();
+        await tx.questionnaireSubmission.create({
+            data: {
+                engagementId: engagement.id,
+                status: "sent",
+                token,
+            },
+        });
+
+        const master = await tx.documentMaster.findFirst({
+            where: {
+                organizationId: params.organizationId,
+                kind: "employment_contract",
+            },
+            orderBy: { updatedAt: "desc" },
+        });
+
+        if (master) {
+            await tx.employmentContract.create({
+                data: {
+                    engagementId: engagement.id,
+                    masterId: master.id,
+                    status: "draft",
+                },
+            });
+        }
+
+        return { worker, engagement, token };
+    });
+
+    const formUrl = `${FRONTENDURL.replace(/\/$/, "")}/fragebogen/${created.token}`;
+    const template = getQuestionnaireTemplate(formUrl);
+    let emailSent = true;
+    try {
+        const sent = await sendMail({
+            to: email,
+            subject: template.subject,
+            text: template.text,
+            html: template.html,
+        });
+        emailSent = !sent.error;
+    } catch {
+        emailSent = false;
+    }
+
+    return {
+        worker: created.worker,
+        engagement: created.engagement,
+        emailSent,
+    };
 }
 
 export async function getWorkerData(params: GetWorkersInput) {
@@ -217,6 +333,13 @@ export async function getWorkerById(workerId: string, organizationId: string) {
                             email: true,
                         },
                     },
+                    employmentContract: {
+                        select: {
+                            id: true,
+                            status: true,
+                            master: { select: { name: true } },
+                        },
+                    },
                     issues: {
                         orderBy: { createdAt: "desc" },
                         include: {
@@ -249,6 +372,9 @@ export async function getWorkerById(workerId: string, organizationId: string) {
             },
             organization: {
                 select: { id: true, name: true, slug: true },
+            },
+            workwear: {
+                orderBy: { itemName: "asc" },
             },
         },
     });

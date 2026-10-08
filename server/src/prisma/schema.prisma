@@ -45,6 +45,7 @@ model User {
   absences               Absence[]             @relation("UserAbsences")
   substitutingFor        Absence[]             @relation("SubstituteAbsences")
   subscriptionAuditLogs  SubscriptionAuditLog[]
+  confirmedEmploymentContracts EmploymentContract[] @relation("EmploymentContractConfirmedBy")
 
   @@map("users")
 }
@@ -110,6 +111,8 @@ model Organization {
   engagements     WorkerEngagement[]
   subscription    Subscription?
   absences        Absence[]
+  documentMasters DocumentMaster[]
+  questionnaire   Questionnaire?
 
 
   @@map("organizations")
@@ -149,8 +152,13 @@ model WorkerEngagement {
 
   worker            Worker             @relation(fields: [workerId], references: [id], onDelete: Cascade)
   organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  responsibleUser   User               @relation(fields: [responsibleUserId], references: [id], onDelete: Restrict)
-  issues            Issue[]
+  responsibleUser          User                      @relation(fields: [responsibleUserId], references: [id], onDelete: Restrict)
+  issues                   Issue[]
+  employmentContract       EmploymentContract?
+  arbeitszeugnis           Arbeitszeugnis?
+  questionnaireSubmission  QuestionnaireSubmission?
+  materials                EngagementMaterial[]
+  mailForwarding           MailForwarding?
 
   @@index([workerId])
   @@index([organizationId])
@@ -186,6 +194,7 @@ model Worker {
   firstName        String             @map("first_name") @db.VarChar(120)
   lastName         String             @map("last_name") @db.VarChar(120)
   email            String             @db.VarChar(254)
+  workEmail        String?            @map("work_email") @db.VarChar(254)
   phoneNumber      String?            @map("phone_number") @db.VarChar(32)
   birthday         DateTime?          @db.Date
   position         String?            @db.VarChar(160)
@@ -204,6 +213,8 @@ model Worker {
   createdBy        User               @relation("WorkerCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
   documents        WorkerDocument[]
   engagements      WorkerEngagement[]
+  workwear         WorkerWorkwear[]
+  externalAccounts WorkerExternalAccount[]
 
   @@index([organizationId])
   @@index([email])
@@ -276,6 +287,8 @@ model Issue {
   assigneeUserId     String?            @map("assignee_user_id")
   templateItemId     String?            @map("template_item_id")
   status             IssueStatus        @default(open)
+  kind               IssueKind          @default(standard)
+  isTemporary        Boolean            @default(false) @map("is_temporary")
   title              String             @db.VarChar(400)
   description        String?            @db.VarChar(8000)
   priority           IssuePriority      @default(no_priority)
@@ -411,6 +424,198 @@ model Absence {
   @@map("absences")
 }
 
+model DocumentMaster {
+  id             String             @id @default(uuid())
+  organizationId String             @map("organization_id")
+  kind           DocumentMasterKind
+  name           String             @db.VarChar(200)
+  body           Json
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz()
+
+  organization        Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employmentContracts EmploymentContract[]
+  arbeitszeugnisse    Arbeitszeugnis[]
+
+  @@index([organizationId])
+  @@map("document_masters")
+}
+
+model EmploymentContract {
+  id                String                   @id @default(uuid())
+  engagementId      String                   @unique @map("engagement_id")
+  masterId          String                   @map("master_id")
+  status            EmploymentContractStatus @default(draft)
+  body              Json?
+  signedBody        Json?                    @map("signed_body")
+  fileUrl           String?                  @map("file_url") @db.VarChar(2048)
+  sentAt            DateTime?                @map("sent_at") @db.Timestamptz()
+  confirmedAt       DateTime?                @map("confirmed_at") @db.Timestamptz()
+  confirmedByUserId String?                  @map("confirmed_by_user_id")
+  createdAt         DateTime                 @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt         DateTime                 @updatedAt @map("updated_at") @db.Timestamptz()
+
+  engagement  WorkerEngagement         @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+  master      DocumentMaster           @relation(fields: [masterId], references: [id], onDelete: Restrict)
+  confirmedBy User?                    @relation("EmploymentContractConfirmedBy", fields: [confirmedByUserId], references: [id], onDelete: SetNull)
+  values      EmploymentContractValue[]
+
+  @@index([masterId])
+  @@index([confirmedByUserId])
+  @@map("employment_contracts")
+}
+
+model EmploymentContractValue {
+  id                   String   @id @default(uuid())
+  employmentContractId String   @map("employment_contract_id")
+  key                  String   @db.VarChar(120)
+  value                String   @db.VarChar(8000)
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  employmentContract EmploymentContract @relation(fields: [employmentContractId], references: [id], onDelete: Cascade)
+
+  @@unique([employmentContractId, key])
+  @@map("employment_contract_values")
+}
+
+model Arbeitszeugnis {
+  id           String    @id @default(uuid())
+  engagementId String    @unique @map("engagement_id")
+  masterId     String    @map("master_id")
+  body         Json
+  fileUrl      String?   @map("file_url") @db.VarChar(2048)
+  sentAt       DateTime? @map("sent_at") @db.Timestamptz()
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  engagement WorkerEngagement @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+  master     DocumentMaster   @relation(fields: [masterId], references: [id], onDelete: Restrict)
+
+  @@index([masterId])
+  @@map("arbeitszeugnisse")
+}
+
+model Questionnaire {
+  id             String   @id @default(uuid())
+  organizationId String   @unique @map("organization_id")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  organization Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  questions    QuestionnaireQuestion[]
+
+  @@map("questionnaires")
+}
+
+model QuestionnaireQuestion {
+  id              String   @id @default(uuid())
+  questionnaireId String   @map("questionnaire_id")
+  key             String   @db.VarChar(120)
+  label           String   @db.VarChar(400)
+  required        Boolean  @default(false)
+  orderIndex      Int      @default(0) @map("order_index")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  questionnaire Questionnaire @relation(fields: [questionnaireId], references: [id], onDelete: Cascade)
+
+  @@unique([questionnaireId, key])
+  @@index([questionnaireId])
+  @@map("questionnaire_questions")
+}
+
+model QuestionnaireSubmission {
+  id           String                        @id @default(uuid())
+  engagementId String                        @unique @map("engagement_id")
+  token        String                        @unique @db.VarChar(64)
+  status       QuestionnaireSubmissionStatus @default(sent)
+  completedAt  DateTime?                     @map("completed_at") @db.Timestamptz()
+  createdAt    DateTime                      @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt    DateTime                      @updatedAt @map("updated_at") @db.Timestamptz()
+
+  engagement WorkerEngagement      @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+  answers    QuestionnaireAnswer[]
+
+  @@map("questionnaire_submissions")
+}
+
+model QuestionnaireAnswer {
+  id           String   @id @default(uuid())
+  submissionId String   @map("submission_id")
+  key          String   @db.VarChar(120)
+  value        String   @db.VarChar(8000)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  submission QuestionnaireSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@unique([submissionId, key])
+  @@map("questionnaire_answers")
+}
+
+model EngagementMaterial {
+  id            String   @id @default(uuid())
+  engagementId  String   @map("engagement_id")
+  name          String   @db.VarChar(255)
+  articleNumber String   @map("article_number") @db.VarChar(120)
+  unitPrice     Decimal  @map("unit_price") @db.Decimal(12, 2)
+  quantity      Int
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  engagement WorkerEngagement @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+
+  @@index([engagementId])
+  @@map("engagement_materials")
+}
+
+model WorkerWorkwear {
+  id            String   @id @default(uuid())
+  workerId      String   @map("worker_id")
+  itemName      String   @map("item_name") @db.VarChar(255)
+  size          String   @db.VarChar(32)
+  articleNumber String   @map("article_number") @db.VarChar(120)
+  quantity      Int
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  worker Worker @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  @@index([workerId])
+  @@map("worker_workwear")
+}
+
+model WorkerExternalAccount {
+  id         String                  @id @default(uuid())
+  workerId   String                  @map("worker_id")
+  provider   ExternalAccountProvider
+  externalId String                  @map("external_id") @db.VarChar(255)
+  status     ExternalAccountStatus   @default(active)
+  createdAt  DateTime                @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt  DateTime                @updatedAt @map("updated_at") @db.Timestamptz()
+
+  worker Worker @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  @@unique([workerId, provider])
+  @@index([workerId])
+  @@map("worker_external_accounts")
+}
+
+model MailForwarding {
+  id           String    @id @default(uuid())
+  engagementId String    @unique @map("engagement_id")
+  needed       Boolean   @default(false)
+  destination  String?   @db.VarChar(254)
+  acceptedAt   DateTime? @map("accepted_at") @db.Timestamptz()
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  engagement WorkerEngagement @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+
+  @@map("mail_forwardings")
+}
+
 
 
 
@@ -488,9 +693,37 @@ enum IssuePriority {
 
 enum EngagementProgress {
   pending
+  expected
   in_progress
   completed
   cancelled
+}
+
+enum DocumentMasterKind {
+  employment_contract
+  arbeitszeugnis
+}
+
+enum EmploymentContractStatus {
+  draft
+  ready
+  signed
+}
+
+enum QuestionnaireSubmissionStatus {
+  sent
+  completed
+}
+
+enum ExternalAccountProvider {
+  engine4
+  microsoft_365
+  crewmeister
+}
+
+enum ExternalAccountStatus {
+  active
+  disabled
 }
 
 enum IssueStatus {
@@ -498,6 +731,11 @@ enum IssueStatus {
   in_progress
   done
   cancelled
+}
+
+enum IssueKind {
+  standard
+  contract_send
 }
 
 enum AuditSource {

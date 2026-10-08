@@ -15,6 +15,7 @@ import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import { useFetchTasks } from '../hooks/useFetchTasks';
 import { useTaskSidebar } from '../hooks/useTaskSidebar';
 import { LargeEditMode } from './LargeEditMode';
+import { ContractSendDialog } from '@/features/worker-task-management/components/files/ContractSendDialog';
 import { TaskItem } from './TaskItem';
 import { TaskSidebar } from './TaskSidebar';
 import { Segment, TaskSegmentToggle } from './ui/taskHeader';
@@ -30,6 +31,11 @@ function Tasks() {
     return data?.filter((task) => task.assigneeUserId === user?.id);
   }, [data, segment, user?.id]);
 
+  const [contractSend, setContractSend] = useState<{
+    workerId: string;
+    engagementId: string;
+    issueId: string;
+  } | null>(null);
   const [largeEditMode, setLargeEditMode] = useState(false);
   const [editModeData, setEditModeData] = useState<
     { taskNumber: string; taskTitle: string }[]
@@ -51,6 +57,14 @@ function Tasks() {
     <div className="mx-auto flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
       <div className="flex h-full min-h-0 w-full flex-col">
         <TaskSidebar key={sidebarKey} {...sidebarProps} />
+        {contractSend ? (
+          <ContractSendDialog
+            workerId={contractSend.workerId}
+            engagementId={contractSend.engagementId}
+            issueId={contractSend.issueId}
+            onClose={() => setContractSend(null)}
+          />
+        ) : null}
         <GreetingHeader firstname={user?.firstName ?? ''} />
         <Card className="mt-5 flex min-h-0 flex-1 flex-col gap-0 border border-border py-0 shadow-none ring-0">
           <CardHeader className="flex shrink-0 flex-row flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-3">
@@ -74,6 +88,7 @@ function Tasks() {
                     <TableHead className="h-12 bg-card py-3 pl-10 pr-2">
                       Titel
                     </TableHead>
+                    <TableHead className="bg-card py-3 px-2" />
                     <TableHead className="bg-card py-3 px-2 text-right">
                       Beschreibung
                     </TableHead>
@@ -88,6 +103,15 @@ function Tasks() {
                         (item) => item.taskNumber === task.id
                       )}
                       onOpenEdit={openForEdit}
+                      onOpenContractSend={(task) => {
+                        const taskWorkerId = task.workerEngagement?.workerId;
+                        if (!taskWorkerId) return;
+                        setContractSend({
+                          workerId: taskWorkerId,
+                          engagementId: task.workerEngagementId,
+                          issueId: task.id,
+                        });
+                      }}
                       setLargeEditMode={setLargeEditMode}
                       setEditModeData={handleSetEditModeData}
                     />

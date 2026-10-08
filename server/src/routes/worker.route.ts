@@ -7,6 +7,7 @@ import * as workerController from "../controllers/worker.controller";
 const worker = express.Router();
 
 worker.post("/", workerController.createWorker);
+worker.post("/fast-track", workerController.startExpectedOnboarding);
 worker.get("/", workerController.getWorkerData);
 worker.get("/:workerId", workerController.getWorkerById);
 worker.put("/:workerId", workerController.updateWorker);
@@ -16,6 +17,22 @@ worker.patch("/:workerId/archive", workerController.archiveWorker);
 worker.patch("/:workerId/unarchive", workerController.unarchiveWorker);
 
 worker.post("/:workerId/engagements", workerController.createEngagement);
+worker.get(
+    "/:workerId/engagements/:engagementId/contract",
+    workerController.getEngagementContract,
+);
+worker.put(
+    "/:workerId/engagements/:engagementId/contract",
+    workerController.saveEngagementContractDraft,
+);
+worker.post(
+    "/:workerId/engagements/:engagementId/contract/confirm-send",
+    workerController.confirmEngagementContractForSend,
+);
+worker.post(
+    "/:workerId/engagements/:engagementId/contract/send",
+    workerController.sendFilledEmploymentContract,
+);
 worker.put(
     "/:workerId/engagements/:engagementId",
     workerController.updateEngagement,

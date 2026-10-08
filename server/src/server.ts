@@ -16,7 +16,9 @@ import { employeeRoutes } from "./routes/employee.route";
 import { indexRoutes } from "./routes/index.route";
 import inviteRoutes from "./routes/invite.route";
 import orgRoutes from "./routes/org.route";
+import { questionnaireRoutes } from "./routes/questionnaire.route";
 import { taskRoutes } from "./routes/tasks.route";
+import { documentMasterRoutes } from "./routes/documentMaster.route";
 import { templateRoutes } from "./routes/template.route";
 import testRoutes from "./routes/test.route";
 import { userRoutes } from "./routes/user.route";
@@ -80,6 +82,12 @@ app.use("/billing", authenticate, billingRoutes);
 
 app.use("/user", authenticate, userRoutes);
 app.use("/template", authenticate, requireSubscriptionAccess, templateRoutes);
+app.use(
+    "/document-masters",
+    authenticate,
+    requireSubscriptionAccess,
+    documentMasterRoutes,
+);
 app.use("/employee", authenticate, requireSubscriptionAccess, employeeRoutes);
 
 app.use("/index", authenticate, requireSubscriptionAccess, indexRoutes);
@@ -90,6 +98,7 @@ app.use("/tasks", authenticate, requireSubscriptionAccess, taskRoutes);
 
 app.use("/org", authenticate, requireSubscriptionAccess, orgRoutes);
 app.use("/invites", inviteRoutes);
+app.use("/fragebogen", questionnaireRoutes);
 
 app.use(errorHandler);
 

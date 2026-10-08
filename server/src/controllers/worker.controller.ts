@@ -1,4 +1,5 @@
 import { uploadFileToS3 } from "@/config/aws";
+import * as employmentContractService from "@/services/employmentContract.service";
 import catchErrors from "@/utils/catchErrors";
 import { Request, Response } from "express";
 import * as workerService from "../services/worker.service";
@@ -7,6 +8,25 @@ function param(req: Request, key: string): string {
     const val = req.params[key];
     return Array.isArray(val) ? val[0] : String(val);
 }
+
+export const startExpectedOnboarding = catchErrors(
+    async (req: Request, res: Response) => {
+        const email = String(req.body?.email ?? "").trim();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            return res
+                .status(400)
+                .json({ success: false, message: "E-Mail fehlt." });
+        }
+
+        const result = await workerService.startExpectedOnboarding({
+            organizationId: req.orgId,
+            createdByUserId: req.userId,
+            email,
+        });
+
+        return res.status(201).json({ success: true, data: result });
+    },
+);
 
 export const createWorker = catchErrors(async (req: Request, res: Response) => {
     const organizationId = req.orgId;
@@ -335,5 +355,89 @@ export const getWorkerHistory = catchErrors(
             workerId,
         });
         return res.status(200).json({ success: true, data: result });
+    },
+);
+
+export const getEngagementContract = catchErrors(
+    async (req: Request, res: Response) => {
+        const contract = await employmentContractService.getEngagementContract({
+            organizationId: req.orgId,
+            workerId: param(req, "workerId"),
+            engagementId: param(req, "engagementId"),
+        });
+        if (!contract) {
+            return res
+                .status(404)
+                .json({ success: false, message: "Vertrag nicht gefunden." });
+        }
+        return res.status(200).json({ success: true, data: contract });
+    },
+);
+
+export const saveEngagementContractDraft = catchErrors(
+    async (req: Request, res: Response) => {
+        const values = req.body?.values;
+        if (
+            values === null ||
+            typeof values !== "object" ||
+            Array.isArray(values)
+        ) {
+            return res
+                .status(400)
+                .json({ success: false, message: "Werte fehlen." });
+        }
+
+        const contract =
+            await employmentContractService.saveEngagementContractDraft({
+                organizationId: req.orgId,
+                workerId: param(req, "workerId"),
+                engagementId: param(req, "engagementId"),
+                values: values as Record<string, unknown>,
+            });
+        return res.status(200).json({ success: true, data: contract });
+    },
+);
+
+export const confirmEngagementContractForSend = catchErrors(
+    async (req: Request, res: Response) => {
+        const contract =
+            await employmentContractService.confirmEngagementContractForSend({
+                organizationId: req.orgId,
+                workerId: param(req, "workerId"),
+                engagementId: param(req, "engagementId"),
+            });
+        return res.status(200).json({ success: true, data: contract });
+    },
+);
+
+export const sendFilledEmploymentContract = catchErrors(
+    async (req: Request, res: Response) => {
+        const issueId = String(req.body?.issueId ?? "").trim();
+        const values = req.body?.values;
+        if (!issueId) {
+            return res
+                .status(400)
+                .json({ success: false, message: "Aufgabe fehlt." });
+        }
+        if (
+            values === null ||
+            typeof values !== "object" ||
+            Array.isArray(values)
+        ) {
+            return res
+                .status(400)
+                .json({ success: false, message: "Werte fehlen." });
+        }
+
+        const contract =
+            await employmentContractService.sendFilledEmploymentContract({
+                organizationId: req.orgId,
+                workerId: param(req, "workerId"),
+                engagementId: param(req, "engagementId"),
+                actorUserId: req.userId,
+                issueId,
+                values: values as Record<string, unknown>,
+            });
+        return res.status(200).json({ success: true, data: contract });
     },
 );

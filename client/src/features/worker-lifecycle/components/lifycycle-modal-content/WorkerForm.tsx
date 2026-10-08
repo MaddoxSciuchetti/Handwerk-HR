@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { AddWorker } from '@/features/worker-lifecycle/schemas/zod.schemas';
 import { useAddWorker } from '../../hooks/useAddWorker';
 import { useMemoizedInputs } from '../../hooks/useMemoizedInputs';
+import { FastTrackOnboarding } from './FastTrackOnboarding';
 import { TemplateSelect } from './TemplateSelect';
 
 interface WorkerFormProps {
@@ -48,6 +49,10 @@ export const WorkerForm = ({
       )}
 
       <h1 className="typo-body-lg font-semibold">Eingabe {type}</h1>
+
+      {type === 'Onboarding' ? (
+        <FastTrackOnboarding onStarted={toggleModal} />
+      ) : null}
 
       {isError && (
         <p className="text-(--destructive)">

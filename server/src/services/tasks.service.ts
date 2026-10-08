@@ -58,6 +58,9 @@ export const queryTasks = async (orgId: string) => {
                     lastName: true,
                 },
             },
+            workerEngagement: {
+                select: { workerId: true },
+            },
         },
     });
 };
