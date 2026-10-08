@@ -41,6 +41,8 @@ function makeTask(id: string, title: string): IssueResponse {
     assigneeUserId: 'user-1',
     templateItemId: null,
     status: 'open',
+    kind: 'standard',
+    isTemporary: false,
     title,
     description: null,
     priority: 'medium',

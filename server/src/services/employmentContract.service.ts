@@ -5,6 +5,7 @@ import {
     readDocumentSegments,
     type DocumentSegment,
 } from "@/services/documentBody";
+import { sendMail } from "@/utils/sendMail";
 import AppError from "@/utils/AppError";
 import { Prisma } from "@prisma/client";
 
@@ -84,7 +85,37 @@ function present(
         followsMaster,
         segments,
         values,
+        sentAt: contract.sentAt?.toISOString() ?? null,
     };
+}
+
+function escapeHtml(value: string) {
+    return value
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+}
+
+function contractMessage(
+    name: string,
+    segments: DocumentSegment[],
+    values: Record<string, string>,
+) {
+    const textParts = segments.map((segment) =>
+        segment.type === "text" ? segment.text : (values[segment.key] ?? ""),
+    );
+    const text = [`Ihr Arbeitsvertrag: ${name}`, "", textParts.join("")].join("\n");
+    const htmlBody = segments
+        .map((segment) => {
+            if (segment.type === "text") {
+                return escapeHtml(segment.text).replaceAll("\n", "<br>");
+            }
+            return `<strong>${escapeHtml(values[segment.key] ?? "")}</strong>`;
+        })
+        .join("");
+    const html = `<div style="font-family:Arial,sans-serif;line-height:1.6"><p>anbei Ihr Arbeitsvertrag.</p><h1>${escapeHtml(name)}</h1><div>${htmlBody}</div></div>`;
+    return { text, html };
 }
 
 export async function getEngagementContract(params: ContractParams) {
@@ -162,4 +193,103 @@ export async function confirmEngagementContractForSend(params: ContractParams) {
     });
 
     return present(saved);
+}
+
+export async function sendFilledEmploymentContract(
+    params: ContractParams & {
+        actorUserId: string;
+        issueId: string;
+        values: Record<string, unknown>;
+    },
+) {
+    const contract = await findContract(params);
+    if (!contract) {
+        throw new AppError(NOT_FOUND, "Vertrag nicht gefunden.");
+    }
+
+    const issue = await prisma.issue.findFirst({
+        where: {
+            id: params.issueId,
+            workerEngagementId: params.engagementId,
+            kind: "contract_send",
+        },
+    });
+    if (!issue) {
+        throw new AppError(NOT_FOUND, "Aufgabe nicht gefunden.");
+    }
+
+    let current = contract;
+    if (current.status === "draft") {
+        const segments = readDocumentSegments(current.master.body);
+        const allowed = inputKeys(segments);
+        const entries = readDraftValues(params.values, allowed);
+        const filled = new Set(entries.map((entry) => entry.key));
+        for (const key of allowed) {
+            if (!filled.has(key)) {
+                throw new AppError(
+                    BAD_REQUEST,
+                    "Bitte füllen Sie alle Vertragsfelder aus.",
+                );
+            }
+        }
+        await prisma.$transaction(async (tx) => {
+            await tx.employmentContractValue.deleteMany({
+                where: { employmentContractId: current.id },
+            });
+            if (entries.length > 0) {
+                await tx.employmentContractValue.createMany({
+                    data: entries.map((entry) => ({
+                        employmentContractId: current.id,
+                        key: entry.key,
+                        value: entry.value,
+                    })),
+                });
+            }
+        });
+        await confirmEngagementContractForSend(params);
+        current = (await findContract(params)) ?? current;
+    } else if (current.status !== "ready") {
+        throw new AppError(CONFLICT, "Der Vertrag ist kein Entwurf mehr.");
+    }
+
+    const worker = await prisma.worker.findFirst({
+        where: { id: params.workerId, organizationId: params.organizationId },
+        select: { email: true },
+    });
+    if (!worker) {
+        throw new AppError(NOT_FOUND, "Mitarbeiter nicht gefunden.");
+    }
+
+    const ready = present((await findContract(params)) ?? current);
+    const message = contractMessage(ready.name, ready.segments, ready.values);
+    await sendMail({
+        to: worker.email,
+        subject: "Ihr Arbeitsvertrag",
+        text: message.text,
+        html: message.html,
+    });
+
+    await prisma.$transaction(async (tx) => {
+        await tx.employmentContract.update({
+            where: { id: current.id },
+            data: { sentAt: new Date() },
+        });
+        if (issue.status !== "done") {
+            await tx.issue.update({
+                where: { id: issue.id },
+                data: { status: "done" },
+            });
+            await tx.issueAuditLog.create({
+                data: {
+                    issueId: issue.id,
+                    actorUserId: params.actorUserId,
+                    action: "issue.updated",
+                    oldValue: { status: issue.status },
+                    newValue: { status: "done" },
+                },
+            });
+        }
+    });
+
+    return present((await findContract(params)) ?? current);
 }

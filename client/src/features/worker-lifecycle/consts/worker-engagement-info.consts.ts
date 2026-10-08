@@ -22,6 +22,15 @@ function displayDate(value: string | null) {
   return formatDate(value);
 }
 
+function workwearSize(
+  worker: WorkerDetailResponse['data'],
+  itemName: string
+) {
+  return displayText(
+    worker.workwear?.find((item) => item.itemName === itemName)?.size
+  );
+}
+
 function formatAddress(worker: WorkerDetailResponse['data']) {
   const cityLine = [worker.postalCode, worker.city].filter(Boolean).join(' ');
   const parts = [worker.street, cityLine, worker.state, worker.country].filter(
@@ -45,6 +54,8 @@ export function workerEngagementInfoItems(
     { label: 'E-Mail', value: displayText(worker.email) },
     { label: 'Geburtsdatum', value: displayDate(worker.birthday) },
     { label: 'Adresse', value: formatAddress(worker) },
+    { label: 'Hosengröße', value: workwearSize(worker, 'Hose') },
+    { label: 'T-Shirt-Größe', value: workwearSize(worker, 'T-Shirt') },
     { label: 'Eintrittsdatum', value: displayDate(worker.entryDate) },
     { label: 'Position', value: displayText(worker.position) },
     { label: 'Austrittsdatum', value: displayDate(worker.exitDate) },

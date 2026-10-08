@@ -287,6 +287,8 @@ model Issue {
   assigneeUserId     String?            @map("assignee_user_id")
   templateItemId     String?            @map("template_item_id")
   status             IssueStatus        @default(open)
+  kind               IssueKind          @default(standard)
+  isTemporary        Boolean            @default(false) @map("is_temporary")
   title              String             @db.VarChar(400)
   description        String?            @db.VarChar(8000)
   priority           IssuePriority      @default(no_priority)
@@ -526,6 +528,7 @@ model QuestionnaireQuestion {
 model QuestionnaireSubmission {
   id           String                        @id @default(uuid())
   engagementId String                        @unique @map("engagement_id")
+  token        String                        @unique @db.VarChar(64)
   status       QuestionnaireSubmissionStatus @default(sent)
   completedAt  DateTime?                     @map("completed_at") @db.Timestamptz()
   createdAt    DateTime                      @default(now()) @map("created_at") @db.Timestamptz()
@@ -728,6 +731,11 @@ enum IssueStatus {
   in_progress
   done
   cancelled
+}
+
+enum IssueKind {
+  standard
+  contract_send
 }
 
 enum AuditSource {

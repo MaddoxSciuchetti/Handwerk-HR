@@ -16,6 +16,7 @@ import { employeeRoutes } from "./routes/employee.route";
 import { indexRoutes } from "./routes/index.route";
 import inviteRoutes from "./routes/invite.route";
 import orgRoutes from "./routes/org.route";
+import { questionnaireRoutes } from "./routes/questionnaire.route";
 import { taskRoutes } from "./routes/tasks.route";
 import { documentMasterRoutes } from "./routes/documentMaster.route";
 import { templateRoutes } from "./routes/template.route";
@@ -97,6 +98,7 @@ app.use("/tasks", authenticate, requireSubscriptionAccess, taskRoutes);
 
 app.use("/org", authenticate, requireSubscriptionAccess, orgRoutes);
 app.use("/invites", inviteRoutes);
+app.use("/fragebogen", questionnaireRoutes);
 
 app.use(errorHandler);
 

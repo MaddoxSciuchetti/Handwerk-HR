@@ -409,3 +409,35 @@ export const confirmEngagementContractForSend = catchErrors(
         return res.status(200).json({ success: true, data: contract });
     },
 );
+
+export const sendFilledEmploymentContract = catchErrors(
+    async (req: Request, res: Response) => {
+        const issueId = String(req.body?.issueId ?? "").trim();
+        const values = req.body?.values;
+        if (!issueId) {
+            return res
+                .status(400)
+                .json({ success: false, message: "Aufgabe fehlt." });
+        }
+        if (
+            values === null ||
+            typeof values !== "object" ||
+            Array.isArray(values)
+        ) {
+            return res
+                .status(400)
+                .json({ success: false, message: "Werte fehlen." });
+        }
+
+        const contract =
+            await employmentContractService.sendFilledEmploymentContract({
+                organizationId: req.orgId,
+                workerId: param(req, "workerId"),
+                engagementId: param(req, "engagementId"),
+                actorUserId: req.userId,
+                issueId,
+                values: values as Record<string, unknown>,
+            });
+        return res.status(200).json({ success: true, data: contract });
+    },
+);

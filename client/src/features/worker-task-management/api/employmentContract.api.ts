@@ -11,6 +11,7 @@ export type EmploymentContractDraft = {
   followsMaster: boolean;
   segments: DocumentSegment[];
   values: Record<string, string>;
+  sentAt: string | null;
 };
 
 type ContractResponse = {
@@ -36,6 +37,21 @@ export function saveEngagementContractDraft(
     { values: Record<string, string> },
     ContractResponse
   >(`worker/${workerId}/engagements/${engagementId}/contract`, {
+    values,
+  }).then((response) => response.data);
+}
+
+export function sendFilledEmploymentContract(
+  workerId: string,
+  engagementId: string,
+  issueId: string,
+  values: Record<string, string>
+): Promise<EmploymentContractDraft> {
+  return API.post<
+    { issueId: string; values: Record<string, string> },
+    ContractResponse
+  >(`worker/${workerId}/engagements/${engagementId}/contract/send`, {
+    issueId,
     values,
   }).then((response) => response.data);
 }

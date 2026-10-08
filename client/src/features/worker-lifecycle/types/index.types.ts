@@ -115,6 +115,10 @@ export type WorkerDetailResponse = {
     country: string | null;
     entryDate: string | null;
     exitDate: string | null;
+    workwear?: Array<{
+      itemName: string;
+      size: string;
+    }>;
     engagements: Array<
       Omit<WorkerEngagement, 'issues'> & {
         issues?: IssueResponse[];

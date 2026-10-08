@@ -21,6 +21,7 @@ import useGetWorkerFiles from '../../hooks/useGetWorkerFiles';
 import useTaskData from '../../hooks/useTaskData';
 import { WorkerTab } from '../../types/index.types';
 import handleZipExport from '../../utils/handleZipExport';
+import { ContractSendDialog } from '../files/ContractSendDialog';
 import WorkerFileUploads from '../files/WorkerFileUploads';
 import WorkerHeader from '../header/WorkerHeader';
 import { WorkerTabButtons } from '../header/WorkerTabButtons';
@@ -34,6 +35,10 @@ const sectionHeaderClassName = 'h-12 py-3 pl-10 pr-2 text-sm font-medium';
 const TaskManagement = ({ workerId }: TaskManagementProps) => {
   const [activeTab, setActiveTab] = useState<WorkerTab>('form');
   const [isFileUploadOpen, setIsFileUploadOpen] = useState(false);
+  const [contractSend, setContractSend] = useState<{
+    engagementId: string;
+    issueId: string;
+  } | null>(null);
   const [largeEditMode, setLargeEditMode] = useState(false);
   const [editModeData, setEditModeData] = useState<
     { taskNumber: string; taskTitle: string }[]
@@ -89,6 +94,14 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
   return (
     <div className="mx-auto flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
       <TaskSidebar key={sidebarKey} {...sidebarProps} />
+      {contractSend ? (
+        <ContractSendDialog
+          workerId={workerId}
+          engagementId={contractSend.engagementId}
+          issueId={contractSend.issueId}
+          onClose={() => setContractSend(null)}
+        />
+      ) : null}
 
       <Tabs
         value={activeTab}
@@ -122,6 +135,7 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                       >
                         Titel
                       </TableHead>
+                      <TableHead className="h-12 bg-card py-3 px-2" />
                       <TableHead className="h-12 bg-card py-3 px-2 text-right">
                         Beschreibung
                       </TableHead>
@@ -138,6 +152,12 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                             (item) => item.taskNumber === task.id
                           )}
                           onOpenEdit={openForEdit}
+                          onOpenContractSend={(task) =>
+                            setContractSend({
+                              engagementId: task.workerEngagementId,
+                              issueId: task.id,
+                            })
+                          }
                           setLargeEditMode={setLargeEditMode}
                           setEditModeData={handleSetEditModeData}
                         />
@@ -145,7 +165,7 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                     ) : (
                       <TableRow className="border-0 hover:bg-transparent">
                         <TableCell
-                          colSpan={2}
+                          colSpan={3}
                           className="py-10 text-center text-sm text-muted-foreground"
                         >
                           Keine Aufgaben gefunden.

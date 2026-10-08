@@ -1,3 +1,4 @@
+import { FRONTENDURL } from "@/constants/env";
 import { prisma } from "@/lib/prisma";
 import type {
     ArchiveWorkerInput,
@@ -16,7 +17,9 @@ import type {
     UploadWorkerDocumentInput,
 } from "@/types/worker.types";
 import { withTxRetry } from "@/utils/withTxRetry";
+import { getQuestionnaireTemplate } from "@/utils/emailTemplates";
 import { sendMail } from "@/utils/sendMail";
+import { randomUUID } from "crypto";
 import {
     DeleteObjectCommand,
     GetObjectCommand,
@@ -176,10 +179,12 @@ export async function startExpectedOnboarding(params: {
             })),
         });
 
+        const token = randomUUID();
         await tx.questionnaireSubmission.create({
             data: {
                 engagementId: engagement.id,
                 status: "sent",
+                token,
             },
         });
 
@@ -201,23 +206,29 @@ export async function startExpectedOnboarding(params: {
             });
         }
 
-        return { worker, engagement };
+        return { worker, engagement, token };
     });
 
+    const formUrl = `${FRONTENDURL.replace(/\/$/, "")}/fragebogen/${created.token}`;
+    const template = getQuestionnaireTemplate(formUrl);
     let emailSent = true;
     try {
         const sent = await sendMail({
             to: email,
-            subject: "Onboarding",
-            text: "Ihr Onboarding wurde gestartet.",
-            html: "<p>Ihr Onboarding wurde gestartet.</p>",
+            subject: template.subject,
+            text: template.text,
+            html: template.html,
         });
         emailSent = !sent.error;
     } catch {
         emailSent = false;
     }
 
-    return { ...created, emailSent };
+    return {
+        worker: created.worker,
+        engagement: created.engagement,
+        emailSent,
+    };
 }
 
 export async function getWorkerData(params: GetWorkersInput) {
@@ -361,6 +372,9 @@ export async function getWorkerById(workerId: string, organizationId: string) {
             },
             organization: {
                 select: { id: true, name: true, slug: true },
+            },
+            workwear: {
+                orderBy: { itemName: "asc" },
             },
         },
     });

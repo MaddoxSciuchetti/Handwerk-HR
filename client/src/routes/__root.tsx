@@ -33,7 +33,11 @@ function RootLayout() {
   ]);
 
   const isEmailVerifyPage = location.pathname.startsWith('/email/verify/');
-  const isDoorman = isVerifiedPage.has(location.pathname) || isEmailVerifyPage;
+  const isQuestionnairePage = location.pathname.startsWith('/fragebogen/');
+  const isDoorman =
+    isVerifiedPage.has(location.pathname) ||
+    isEmailVerifyPage ||
+    isQuestionnairePage;
 
   if (isDoorman) {
     return (
