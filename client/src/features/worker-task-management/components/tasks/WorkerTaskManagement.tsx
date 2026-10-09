@@ -25,6 +25,7 @@ import useGetWorkerFiles from '../../hooks/useGetWorkerFiles';
 import useTaskData from '../../hooks/useTaskData';
 import { WorkerTab } from '../../types/index.types';
 import handleZipExport from '../../utils/handleZipExport';
+import { ContractConfirmDialog } from '../files/ContractConfirmDialog';
 import { ContractSendDialog } from '../files/ContractSendDialog';
 import WorkerFileUploads from '../files/WorkerFileUploads';
 import WorkerHeader from '../header/WorkerHeader';
@@ -40,6 +41,10 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
   const [activeTab, setActiveTab] = useState<WorkerTab>('form');
   const [isFileUploadOpen, setIsFileUploadOpen] = useState(false);
   const [contractSend, setContractSend] = useState<{
+    engagementId: string;
+    issueId: string;
+  } | null>(null);
+  const [contractConfirm, setContractConfirm] = useState<{
     engagementId: string;
     issueId: string;
   } | null>(null);
@@ -122,6 +127,14 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
           issueId={contractSend.issueId}
           onClose={() => setContractSend(null)}
         />
+        ) : null}
+      {contractConfirm ? (
+        <ContractConfirmDialog
+          workerId={workerId}
+          engagementId={contractConfirm.engagementId}
+          issueId={contractConfirm.issueId}
+          onClose={() => setContractConfirm(null)}
+        />
       ) : null}
 
       <Tabs
@@ -175,6 +188,12 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                           onOpenEdit={openForEdit}
                           onOpenContractSend={(task) =>
                             setContractSend({
+                              engagementId: task.workerEngagementId,
+                              issueId: task.id,
+                            })
+                          }
+                          onOpenContractConfirm={(task) =>
+                            setContractConfirm({
                               engagementId: task.workerEngagementId,
                               issueId: task.id,
                             })

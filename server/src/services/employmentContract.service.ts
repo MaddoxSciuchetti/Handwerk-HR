@@ -6,8 +6,12 @@ import {
     readDocumentSegments,
     type DocumentSegment,
 } from "@/services/documentBody";
-import { sendMail } from "@/utils/sendMail";
+import { randomUUID } from "node:crypto";
+import { generatePresignedUrl } from "@/config/aws";
+import { RESEND_INBOUND_ADDRESS, USE_MICROSOFT_MAIL } from "@/constants/env";
+import { sendGraphMail } from "@/services/graphMail";
 import AppError from "@/utils/AppError";
+import { sendMail } from "@/utils/sendMail";
 import { Prisma } from "@prisma/client";
 
 const VALUE_MAX = 8000;
@@ -119,6 +123,7 @@ function present(
         values,
         unmatchedAnswers,
         sentAt: contract.sentAt?.toISOString() ?? null,
+        signedFileUrl: null as string | null,
     };
 }
 
@@ -154,7 +159,16 @@ function contractMessage(
 export async function getEngagementContract(params: ContractParams) {
     const contract = await findContract(params);
     if (!contract) return null;
-    return present(contract);
+    const view = present(contract);
+    if (!contract.fileUrl) return view;
+    try {
+        return {
+            ...view,
+            signedFileUrl: await generatePresignedUrl(contract.fileUrl),
+        };
+    } catch {
+        return view;
+    }
 }
 
 export async function saveEngagementContractDraft(
@@ -292,9 +306,8 @@ export async function sendFilledEmploymentContract(
 
     const ready = present((await findContract(params)) ?? current);
     const message = contractMessage(ready.name, ready.segments, ready.values);
-    await sendMail({
+    const conversationId = await deliverContractMail({
         to: worker.email,
-        subject: "Ihr Arbeitsvertrag",
         text: message.text,
         html: message.html,
     });
@@ -302,7 +315,7 @@ export async function sendFilledEmploymentContract(
     await prisma.$transaction(async (tx) => {
         await tx.employmentContract.update({
             where: { id: current.id },
-            data: { sentAt: new Date() },
+            data: { sentAt: new Date(), conversationId },
         });
 
         const contractTasks = await tx.issue.findMany({
@@ -333,4 +346,39 @@ export async function sendFilledEmploymentContract(
     });
 
     return present((await findContract(params)) ?? current);
+}
+
+async function deliverContractMail(params: {
+    to: string;
+    text: string;
+    html: string;
+}) {
+    if (USE_MICROSOFT_MAIL) {
+        const sent = await sendGraphMail({
+            to: params.to,
+            subject: "Ihr Arbeitsvertrag",
+            html: params.html,
+        });
+        return sent.conversationId;
+    }
+
+    const token = randomUUID();
+    const sent = await sendMail({
+        to: params.to,
+        subject: RESEND_INBOUND_ADDRESS
+            ? `Ihr Arbeitsvertrag [${token}]`
+            : "Ihr Arbeitsvertrag",
+        text: params.text,
+        html: params.html,
+        ...(RESEND_INBOUND_ADDRESS
+            ? {
+                  replyTo: RESEND_INBOUND_ADDRESS,
+                  headers: { "X-Handwerk-Contract": token },
+              }
+            : {}),
+    });
+    if (sent.error) {
+        throw new AppError(BAD_REQUEST, "Der Vertrag konnte nicht versendet werden.");
+    }
+    return RESEND_INBOUND_ADDRESS ? `resend:${token}` : null;
 }

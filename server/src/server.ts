@@ -6,6 +6,7 @@ import cors from "cors";
 import express from "express";
 
 import { APP_ORIGIN } from "./constants/env";
+import { resendInboundHandler } from "./controllers/resendInbound.controller";
 import { stripeWebhookHandler } from "./controllers/stripeWebhook.controller";
 import authenticate from "./middleware/authenticate";
 import errorHandler from "./middleware/errorHandler";
@@ -23,10 +24,17 @@ import { templateRoutes } from "./routes/template.route";
 import testRoutes from "./routes/test.route";
 import { userRoutes } from "./routes/user.route";
 import { worker } from "./routes/worker.route";
+import { startReturnedContractPolling } from "./services/signedContractReturn.service";
 
 const PORT = process.env.PORT || 3000;
 
 const app = express();
+
+app.post(
+    "/webhooks/resend",
+    express.raw({ type: "application/json" }),
+    resendInboundHandler,
+);
 
 app.use(express.json());
 app.use(cookieParser());
@@ -104,4 +112,5 @@ app.use(errorHandler);
 
 app.listen(PORT, () => {
     console.log(`port running on ${PORT}`);
+    startReturnedContractPolling();
 });

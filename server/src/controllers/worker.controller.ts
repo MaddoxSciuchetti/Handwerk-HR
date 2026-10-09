@@ -1,5 +1,6 @@
 import { uploadFileToS3 } from "@/config/aws";
 import * as employmentContractService from "@/services/employmentContract.service";
+import { confirmReturnedEmploymentContract } from "@/services/signedContractReturn.service";
 import catchErrors from "@/utils/catchErrors";
 import { Request, Response } from "express";
 import * as workerService from "../services/worker.service";
@@ -406,6 +407,31 @@ export const confirmEngagementContractForSend = catchErrors(
                 workerId: param(req, "workerId"),
                 engagementId: param(req, "engagementId"),
             });
+        return res.status(200).json({ success: true, data: contract });
+    },
+);
+
+export const confirmReturnedEmploymentContractHandler = catchErrors(
+    async (req: Request, res: Response) => {
+        const issueId = String(req.body?.issueId ?? "").trim();
+        if (!issueId) {
+            return res
+                .status(400)
+                .json({ success: false, message: "Aufgabe fehlt." });
+        }
+
+        await confirmReturnedEmploymentContract({
+            organizationId: req.orgId,
+            workerId: param(req, "workerId"),
+            engagementId: param(req, "engagementId"),
+            actorUserId: req.userId,
+            issueId,
+        });
+        const contract = await employmentContractService.getEngagementContract({
+            organizationId: req.orgId,
+            workerId: param(req, "workerId"),
+            engagementId: param(req, "engagementId"),
+        });
         return res.status(200).json({ success: true, data: contract });
     },
 );

@@ -3,6 +3,7 @@ import { google } from "googleapis";
 import { Readable } from "stream";
 import z from "zod";
 
+import { getGoogleAuth } from "@/config/googleAuth";
 import { sendEmployeeEmail } from "@/services/index.service";
 import { OK } from "../constants/http";
 
@@ -16,27 +17,13 @@ export const sendReminder = async (req: Request, res: Response) => {
     return res.status(OK).json({ success: true });
 };
 
-const getOAuthClient = () => {
-    const oauth2Client = new google.auth.OAuth2(
-        process.env.GOOGLE_OAUTH_CLIENT_ID,
-        process.env.GOOGLE_OAUTH_CLIENT_SECRET,
-        process.env.GOOGLE_OAUTH_REDIRECT_URI,
-    );
-
-    oauth2Client.setCredentials({
-        refresh_token: process.env.GOOGLE_OAUTH_REFRESH_TOKEN,
-    });
-
-    return oauth2Client;
-};
-
 export const postFeature = async (req: Request, res: Response) => {
     const { importance, text } = req.body;
     const files = req.files as Express.Multer.File[];
 
     const fileUrls: string[] = [];
 
-    const auth = getOAuthClient();
+    const auth = getGoogleAuth();
 
     if (files?.length) {
         const drive = google.drive({ version: "v3", auth });

@@ -26,7 +26,7 @@ export type IssueResponse = {
   assignee?: IssueAssignee | null;
   templateItemId: string | null;
   status: IssueStatusValue;
-  kind: 'standard' | 'contract_send';
+  kind: 'standard' | 'contract_send' | 'contract_confirm';
   isTemporary: boolean;
   workerEngagement?: { workerId: string };
   title: string;

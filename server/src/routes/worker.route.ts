@@ -33,6 +33,10 @@ worker.post(
     "/:workerId/engagements/:engagementId/contract/send",
     workerController.sendFilledEmploymentContract,
 );
+worker.post(
+    "/:workerId/engagements/:engagementId/contract/confirm-return",
+    workerController.confirmReturnedEmploymentContractHandler,
+);
 worker.put(
     "/:workerId/engagements/:engagementId",
     workerController.updateEngagement,

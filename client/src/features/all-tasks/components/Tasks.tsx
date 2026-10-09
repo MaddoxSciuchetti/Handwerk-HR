@@ -19,6 +19,7 @@ import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from
 import { useFetchTasks } from '../hooks/useFetchTasks';
 import { useTaskSidebar } from '../hooks/useTaskSidebar';
 import { LargeEditMode } from './LargeEditMode';
+import { ContractConfirmDialog } from '@/features/worker-task-management/components/files/ContractConfirmDialog';
 import { ContractSendDialog } from '@/features/worker-task-management/components/files/ContractSendDialog';
 import { TaskItem } from './TaskItem';
 import { TaskSidebar } from './TaskSidebar';
@@ -36,6 +37,11 @@ function Tasks() {
   }, [data, segment, user?.id]);
 
   const [contractSend, setContractSend] = useState<{
+    workerId: string;
+    engagementId: string;
+    issueId: string;
+  } | null>(null);
+  const [contractConfirm, setContractConfirm] = useState<{
     workerId: string;
     engagementId: string;
     issueId: string;
@@ -81,6 +87,14 @@ function Tasks() {
             onClose={() => setContractSend(null)}
           />
         ) : null}
+        {contractConfirm ? (
+          <ContractConfirmDialog
+            workerId={contractConfirm.workerId}
+            engagementId={contractConfirm.engagementId}
+            issueId={contractConfirm.issueId}
+            onClose={() => setContractConfirm(null)}
+          />
+        ) : null}
         <GreetingHeader firstname={user?.firstName ?? ''} />
         <Card className="mt-5 flex min-h-0 flex-1 flex-col gap-0 border border-border py-0 shadow-none ring-0">
           <CardHeader className="flex shrink-0 flex-row flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-3">
@@ -123,6 +137,15 @@ function Tasks() {
                         const taskWorkerId = task.workerEngagement?.workerId;
                         if (!taskWorkerId) return;
                         setContractSend({
+                          workerId: taskWorkerId,
+                          engagementId: task.workerEngagementId,
+                          issueId: task.id,
+                        });
+                      }}
+                      onOpenContractConfirm={(task) => {
+                        const taskWorkerId = task.workerEngagement?.workerId;
+                        if (!taskWorkerId) return;
+                        setContractConfirm({
                           workerId: taskWorkerId,
                           engagementId: task.workerEngagementId,
                           issueId: task.id,

@@ -20,6 +20,7 @@ export type EmploymentContractDraft = {
   values: Record<string, string>;
   unmatchedAnswers: UnmatchedQuestionnaireAnswer[];
   sentAt: string | null;
+  signedFileUrl: string | null;
 };
 
 type ContractResponse = {
@@ -62,6 +63,17 @@ export function sendFilledEmploymentContract(
     issueId,
     values,
   }).then((response) => response.data);
+}
+
+export function confirmReturnedEmploymentContract(
+  workerId: string,
+  engagementId: string,
+  issueId: string
+): Promise<EmploymentContractDraft> {
+  return API.post<{ issueId: string }, ContractResponse>(
+    `worker/${workerId}/engagements/${engagementId}/contract/confirm-return`,
+    { issueId }
+  ).then((response) => response.data);
 }
 
 export function confirmEngagementContractForSend(

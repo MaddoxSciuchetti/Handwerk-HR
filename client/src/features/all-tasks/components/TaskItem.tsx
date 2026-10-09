@@ -17,6 +17,7 @@ type TaskItemProps = {
   workerId?: string;
   onOpenEdit: (seed: TaskEditState) => void;
   onOpenContractSend?: (task: IssueResponse) => void;
+  onOpenContractConfirm?: (task: IssueResponse) => void;
   setLargeEditMode: Dispatch<SetStateAction<boolean>>;
   setEditModeData: Dispatch<
     SetStateAction<{ taskNumber: string; taskTitle: string }[]>
@@ -29,6 +30,7 @@ export function TaskItem({
   workerId,
   onOpenEdit,
   onOpenContractSend,
+  onOpenContractConfirm,
   setLargeEditMode,
   setEditModeData,
 }: TaskItemProps) {
@@ -105,6 +107,10 @@ export function TaskItem({
             onClick={() => {
               if (task.kind === 'contract_send') {
                 onOpenContractSend?.(task);
+                return;
+              }
+              if (task.kind === 'contract_confirm') {
+                onOpenContractConfirm?.(task);
                 return;
               }
               openInEditMode();

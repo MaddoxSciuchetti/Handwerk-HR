@@ -449,6 +449,7 @@ model EmploymentContract {
   body              Json?
   signedBody        Json?                    @map("signed_body")
   fileUrl           String?                  @map("file_url") @db.VarChar(2048)
+  conversationId    String?                  @unique @map("conversation_id") @db.VarChar(512)
   sentAt            DateTime?                @map("sent_at") @db.Timestamptz()
   confirmedAt       DateTime?                @map("confirmed_at") @db.Timestamptz()
   confirmedByUserId String?                  @map("confirmed_by_user_id")
@@ -736,6 +737,7 @@ enum IssueStatus {
 enum IssueKind {
   standard
   contract_send
+  contract_confirm
 }
 
 enum AuditSource {
