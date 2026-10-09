@@ -37,3 +37,4 @@ export const GOOGLE_OAUTH_REDIRECT_URI =
     process.env.GOOGLE_OAUTH_REDIRECT_URI?.trim() ?? "";
 export const GOOGLE_OAUTH_REFRESH_TOKEN =
     process.env.GOOGLE_OAUTH_REFRESH_TOKEN?.trim() ?? "";
+export const OPENAI_API_KEY = process.env.OPENAI_API_KEY?.trim() ?? "";

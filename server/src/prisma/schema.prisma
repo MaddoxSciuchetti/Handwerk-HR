@@ -158,6 +158,7 @@ model WorkerEngagement {
   arbeitszeugnis           Arbeitszeugnis?
   questionnaireSubmission  QuestionnaireSubmission?
   materials                EngagementMaterial[]
+  materialDocuments        EngagementMaterialDocument[]
   mailForwarding           MailForwarding?
 
   @@index([workerId])
@@ -555,19 +556,38 @@ model QuestionnaireAnswer {
   @@map("questionnaire_answers")
 }
 
-model EngagementMaterial {
+model EngagementMaterialDocument {
   id            String   @id @default(uuid())
   engagementId  String   @map("engagement_id")
   name          String   @db.VarChar(255)
-  articleNumber String   @map("article_number") @db.VarChar(120)
-  unitPrice     Decimal  @map("unit_price") @db.Decimal(12, 2)
-  quantity      Int
+  fileUrl       String   @map("file_url") @db.VarChar(2048)
+  mimeType      String?  @map("mime_type") @db.VarChar(128)
+  fileSizeBytes Int?     @map("file_size_bytes")
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz()
 
-  engagement WorkerEngagement @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+  engagement WorkerEngagement      @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+  materials  EngagementMaterial[]
 
   @@index([engagementId])
+  @@map("engagement_material_documents")
+}
+
+model EngagementMaterial {
+  id               String   @id @default(uuid())
+  engagementId     String   @map("engagement_id")
+  sourceDocumentId String?  @map("source_document_id")
+  name             String   @db.VarChar(255)
+  articleNumber    String   @map("article_number") @db.VarChar(120)
+  unitPrice        Decimal  @map("unit_price") @db.Decimal(12, 2)
+  quantity         Int
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  engagement     WorkerEngagement            @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+  sourceDocument EngagementMaterialDocument? @relation(fields: [sourceDocumentId], references: [id], onDelete: Cascade)
+
+  @@index([engagementId])
+  @@index([sourceDocumentId])
   @@map("engagement_materials")
 }
 

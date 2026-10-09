@@ -19,7 +19,7 @@ import {
   clearContractSendReturn,
   peekContractSendReturn,
 } from '../../contractSendReturn';
-import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import useFilteredData from '../../hooks/useFilteredData';
 import useGetWorkerFiles from '../../hooks/useGetWorkerFiles';
 import useTaskData from '../../hooks/useTaskData';
@@ -28,6 +28,7 @@ import handleZipExport from '../../utils/handleZipExport';
 import { ContractConfirmDialog } from '../files/ContractConfirmDialog';
 import { ContractSendDialog } from '../files/ContractSendDialog';
 import WorkerFileUploads from '../files/WorkerFileUploads';
+import { MaterialsTab } from '../materials/MaterialsTab';
 import WorkerHeader from '../header/WorkerHeader';
 import { WorkerTabButtons } from '../header/WorkerTabButtons';
 
@@ -40,6 +41,7 @@ const sectionHeaderClassName = 'h-12 py-3 pl-10 pr-2 text-sm font-medium';
 const TaskManagement = ({ workerId }: TaskManagementProps) => {
   const [activeTab, setActiveTab] = useState<WorkerTab>('form');
   const [isFileUploadOpen, setIsFileUploadOpen] = useState(false);
+  const materialFileInputRef = useRef<HTMLInputElement>(null);
   const [contractSend, setContractSend] = useState<{
     engagementId: string;
     issueId: string;
@@ -141,7 +143,7 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
         value={activeTab}
         defaultValue="form"
         onValueChange={(value) => {
-          if (value === 'form' || value === 'files') {
+          if (value === 'form' || value === 'files' || value === 'materials') {
             setActiveTab(value);
           }
         }}
@@ -156,6 +158,8 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
               hideCreate={waiting}
               onOpenFileUpload={() => setIsFileUploadOpen(true)}
               onExportFiles={() => void handleZipExport(fetchFiles)}
+              onUploadMaterials={() => materialFileInputRef.current?.click()}
+              materialsUploadDisabled={data.data.engagements.length === 0}
             />
           </CardHeader>
           <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-0">
@@ -235,6 +239,22 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                   )}
                   isUploadModalOpen={isFileUploadOpen}
                   setIsUploadModalOpen={setIsFileUploadOpen}
+                />
+              </ScrollableTableViewport>
+            </TabsContent>
+            <TabsContent
+              value="materials"
+              className="mt-0 flex min-h-0 flex-1 flex-col"
+            >
+              <ScrollableTableViewport>
+                <MaterialsTab
+                  workerId={workerId}
+                  fileInputRef={materialFileInputRef}
+                  engagements={data.data.engagements.map((engagement) => ({
+                    id: engagement.id,
+                    type: engagement.type,
+                    startDate: engagement.startDate,
+                  }))}
                 />
               </ScrollableTableViewport>
             </TabsContent>

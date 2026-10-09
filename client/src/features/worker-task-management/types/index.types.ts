@@ -47,7 +47,7 @@ export type CreateWorkerTaskPayload = {
 
 export type InsertHistoryData = z.infer<typeof formSchema>;
 
-export type WorkerTab = 'form' | 'files';
+export type WorkerTab = 'form' | 'files' | 'materials';
 
 import type { IssueStatusValue } from '@/features/all-tasks/consts/issue-status.consts';
 

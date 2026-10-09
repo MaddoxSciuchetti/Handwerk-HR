@@ -30,6 +30,16 @@ export function WorkerTabButtons({
       >
         Dateien
       </Button>
+      <Button
+        type="button"
+        variant={activeTab === 'materials' ? 'default' : 'outline'}
+        size="sm"
+        className="rounded-2xl"
+        data-testid="materials-tab-button"
+        onClick={() => onTabChange('materials')}
+      >
+        Materialien
+      </Button>
     </div>
   );
 }
