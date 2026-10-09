@@ -12,9 +12,10 @@ import { Prisma } from "@prisma/client";
 const HOSE = "Hose";
 const TSHIRT = "T-Shirt";
 const CONTRACT_TASK_TITLE = "Arbeitsvertrag versenden";
+const birthdayRegex = /^\d{4}-\d{2}-\d{2}$/;
 
 function parseBirthday(value: string) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    if (!birthdayRegex.test(value)) {
         throw new AppError(BAD_REQUEST, "Das Geburtsdatum ist ungültig.");
     }
     const birthday = new Date(`${value}T00:00:00.000Z`);
@@ -107,6 +108,8 @@ export async function submitPublicQuestionnaire(
         await tx.worker.update({
             where: { id: submission.engagement.workerId },
             data: {
+                firstName: answers.firstName,
+                lastName: answers.lastName,
                 street: answers.street,
                 postalCode: answers.postalCode,
                 city: answers.city,
@@ -127,6 +130,7 @@ export async function submitPublicQuestionnaire(
             const entries = contractValuesFromAnswers(
                 readDocumentSegments(contract.master.body),
                 answers,
+                submission.engagement.worker.email,
             );
             for (const entry of entries) {
                 await tx.employmentContractValue.upsert({
