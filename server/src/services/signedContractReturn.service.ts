@@ -61,6 +61,30 @@ async function openConfirmTask(engagementId: string, actorUserId: string) {
         });
         if (existing) return;
 
+        const closedEarly = await tx.issue.findMany({
+            where: {
+                workerEngagementId: engagementId,
+                title: "Arbeitsvertrag",
+                kind: "standard",
+                status: "done",
+            },
+        });
+        for (const contractTask of closedEarly) {
+            await tx.issue.update({
+                where: { id: contractTask.id },
+                data: { status: "open" },
+            });
+            await tx.issueAuditLog.create({
+                data: {
+                    issueId: contractTask.id,
+                    actorUserId,
+                    action: "issue.updated",
+                    oldValue: { status: "done" },
+                    newValue: { status: "open" },
+                },
+            });
+        }
+
         await tx.issue.create({
             data: {
                 workerEngagementId: engagementId,
@@ -81,39 +105,64 @@ export function contractTokenFromSubject(subject: string) {
     return subject.match(CONTRACT_TOKEN)?.[0] ?? null;
 }
 
+const waitingContractSelect = {
+    id: true,
+    fileUrl: true,
+    engagement: {
+        select: {
+            id: true,
+            workerId: true,
+            responsibleUserId: true,
+            issues: {
+                where: { kind: "contract_confirm" as const },
+                select: { id: true },
+                take: 1,
+            },
+        },
+    },
+} satisfies Prisma.EmploymentContractSelect;
+
+async function tokenFromReply(params: { subject: string; emailId: string }) {
+    const fromSubject = contractTokenFromSubject(params.subject);
+    if (fromSubject) return fromSubject;
+
+    const email = await resend.emails.receiving.get(params.emailId);
+    if (email.error || !email.data) return null;
+    const body = email.data as {
+        subject?: string | null;
+        text?: string | null;
+        html?: string | null;
+        headers?: Record<string, string> | null;
+    };
+    const headerToken = Object.entries(body.headers ?? {}).find(
+        ([key]) => key.toLowerCase() === "x-handwerk-contract",
+    )?.[1];
+    if (headerToken && CONTRACT_TOKEN.test(headerToken)) return headerToken;
+    return contractTokenFromSubject(
+        [body.subject, body.text, body.html].filter(Boolean).join("\n"),
+    );
+}
+
 export async function ingestResendContractReply(params: {
     subject: string;
     emailId: string;
+    hasPdf?: boolean | null;
 }) {
-    const token = contractTokenFromSubject(params.subject);
-    if (!token) return;
-
-    const contract = await prisma.employmentContract.findFirst({
-        where: {
-            conversationId: `${RESEND_MATCH}${token}`,
-            confirmedAt: null,
-            status: "ready",
-        },
-        select: {
-            id: true,
-            fileUrl: true,
-            engagement: {
-                select: {
-                    id: true,
-                    workerId: true,
-                    responsibleUserId: true,
-                    issues: {
-                        where: { kind: "contract_confirm" },
-                        select: { id: true },
-                        take: 1,
-                    },
-                },
-            },
-        },
-    });
+    const token = await tokenFromReply(params);
+    const contract = token
+        ? await prisma.employmentContract.findFirst({
+              where: {
+                  conversationId: `${RESEND_MATCH}${token}`,
+                  confirmedAt: null,
+                  status: "ready",
+              },
+              select: waitingContractSelect,
+          })
+        : await onlyWaitingContract(params.hasPdf);
     if (!contract || contract.engagement.issues.length > 0) return;
 
-    if (!contract.fileUrl) {
+    let storedPdf = Boolean(contract.fileUrl);
+    if (!storedPdf) {
         try {
             const pdf = await downloadResendPdf(params.emailId);
             if (pdf) {
@@ -123,6 +172,7 @@ export async function ingestResendContractReply(params: {
                     uploadedByUserId: contract.engagement.responsibleUserId,
                     pdf,
                 });
+                storedPdf = true;
             }
         } catch (error) {
             console.error(
@@ -132,6 +182,7 @@ export async function ingestResendContractReply(params: {
             );
         }
     }
+    if (!token && !storedPdf) return;
 
     await openConfirmTask(
         contract.engagement.id,
@@ -157,22 +208,86 @@ async function downloadResendPdf(emailId: string) {
     };
 }
 
+async function onlyWaitingContract(hasPdf?: boolean | null) {
+    if (hasPdf === false) return null;
+    const waiting = await prisma.employmentContract.findMany({
+        where: {
+            confirmedAt: null,
+            status: "ready",
+            sentAt: { not: null },
+            engagement: { issues: { none: { kind: "contract_confirm" } } },
+        },
+        select: waitingContractSelect,
+    });
+    if (waiting.length !== 1) {
+        if (waiting.length > 1) {
+            console.log(
+                `Returned contract email has no reference; ${waiting.length} contracts are waiting.`,
+            );
+        }
+        return null;
+    }
+    return waiting[0];
+}
+
+function receivedMessages(payload: unknown) {
+    if (!payload || typeof payload !== "object") return [];
+    const body = payload as { data?: unknown };
+    const rows = Array.isArray(body.data)
+        ? body.data
+        : body.data &&
+            typeof body.data === "object" &&
+            Array.isArray((body.data as { data?: unknown }).data)
+          ? (body.data as { data: unknown[] }).data
+          : [];
+    return rows.flatMap((row) => {
+        if (!row || typeof row !== "object") return [];
+        const message = row as {
+            id?: unknown;
+            subject?: unknown;
+            created_at?: unknown;
+            attachments?: unknown;
+        };
+        if (typeof message.id !== "string") return [];
+        const attachments = Array.isArray(message.attachments)
+            ? message.attachments
+            : null;
+        const hasPdf = attachments?.some((attachment) => {
+            if (!attachment || typeof attachment !== "object") return false;
+            const file = attachment as {
+                filename?: unknown;
+                content_type?: unknown;
+            };
+            const name =
+                typeof file.filename === "string" ? file.filename.toLowerCase() : "";
+            return file.content_type === "application/pdf" || name.endsWith(".pdf");
+        });
+        return [
+            {
+                id: message.id,
+                subject: typeof message.subject === "string" ? message.subject : "",
+                createdAt:
+                    typeof message.created_at === "string" ? message.created_at : "",
+                hasPdf: attachments ? Boolean(hasPdf) : null,
+            },
+        ];
+    });
+}
+
 async function pollResendInbox() {
-    if (!RESEND_INBOUND_ADDRESS) return;
-    const listed = await resend.emails.receiving.list();
+    const listed = await resend.emails.receiving.list({ limit: 100 });
     if (listed.error || !listed.data) {
         console.error("Resend receiving inbox could not be read", listed.error);
         return;
     }
-    const inbox = RESEND_INBOUND_ADDRESS.toLowerCase();
-    for (const message of listed.data.data) {
-        const addressedHere = message.to.some(
-            (address) => address.toLowerCase() === inbox,
-        );
-        if (!addressedHere) continue;
+    const messages = receivedMessages(listed.data).sort((left, right) =>
+        right.createdAt.localeCompare(left.createdAt),
+    );
+    for (const message of messages) {
         await ingestResendContractReply({
             subject: message.subject,
             emailId: message.id,
+            hasPdf: message.hasPdf,
         });
     }
 }
@@ -266,9 +381,8 @@ export function startReturnedContractPolling() {
     }
     if (!USE_MICROSOFT_MAIL && !RESEND_INBOUND_ADDRESS) {
         console.log(
-            "RESEND_INBOUND_ADDRESS is not set, so returned contracts are not watched.",
+            "RESEND_INBOUND_ADDRESS is not set. Replies are still watched, but new contract mail has no Reply-To address.",
         );
-        return;
     }
 
     console.log(
@@ -399,6 +513,29 @@ export async function confirmReturnedEmploymentContract(params: {
         if (claimed.count === 0) return;
 
         await tx.issue.delete({ where: { id: issue.id } });
+        const contractTasks = await tx.issue.findMany({
+            where: {
+                workerEngagementId: contract.engagementId,
+                title: "Arbeitsvertrag",
+                kind: "standard",
+                status: { not: "done" },
+            },
+        });
+        for (const contractTask of contractTasks) {
+            await tx.issue.update({
+                where: { id: contractTask.id },
+                data: { status: "done" },
+            });
+            await tx.issueAuditLog.create({
+                data: {
+                    issueId: contractTask.id,
+                    actorUserId: params.actorUserId,
+                    action: "issue.updated",
+                    oldValue: { status: contractTask.status },
+                    newValue: { status: "done" },
+                },
+            });
+        }
         await createRemainingOnboardingTasks(tx, {
             organizationId: params.organizationId,
             workerEngagementId: contract.engagementId,

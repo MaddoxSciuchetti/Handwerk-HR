@@ -318,30 +318,6 @@ export async function sendFilledEmploymentContract(
             data: { sentAt: new Date(), conversationId },
         });
 
-        const contractTasks = await tx.issue.findMany({
-            where: {
-                workerEngagementId: params.engagementId,
-                title: "Arbeitsvertrag",
-                kind: "standard",
-                status: { not: "done" },
-            },
-        });
-        for (const contractTask of contractTasks) {
-            await tx.issue.update({
-                where: { id: contractTask.id },
-                data: { status: "done" },
-            });
-            await tx.issueAuditLog.create({
-                data: {
-                    issueId: contractTask.id,
-                    actorUserId: params.actorUserId,
-                    action: "issue.updated",
-                    oldValue: { status: contractTask.status },
-                    newValue: { status: "done" },
-                },
-            });
-        }
-
         await tx.issue.delete({ where: { id: issue.id } });
     });
 
@@ -365,20 +341,16 @@ async function deliverContractMail(params: {
     const token = randomUUID();
     const sent = await sendMail({
         to: params.to,
-        subject: RESEND_INBOUND_ADDRESS
-            ? `Ihr Arbeitsvertrag [${token}]`
-            : "Ihr Arbeitsvertrag",
-        text: params.text,
-        html: params.html,
+        subject: `Ihr Arbeitsvertrag [${token}]`,
+        text: `${params.text}\n\nReferenz: ${token}`,
+        html: `${params.html}<p>Referenz: ${token}</p>`,
+        headers: { "X-Handwerk-Contract": token },
         ...(RESEND_INBOUND_ADDRESS
-            ? {
-                  replyTo: RESEND_INBOUND_ADDRESS,
-                  headers: { "X-Handwerk-Contract": token },
-              }
+            ? { replyTo: RESEND_INBOUND_ADDRESS }
             : {}),
     });
     if (sent.error) {
         throw new AppError(BAD_REQUEST, "Der Vertrag konnte nicht versendet werden.");
     }
-    return RESEND_INBOUND_ADDRESS ? `resend:${token}` : null;
+    return `resend:${token}`;
 }
