@@ -1,7 +1,11 @@
 import type { DocumentSegment } from "@/services/documentBody";
 import type { QuestionnaireAnswers } from "@/services/questionnaireForm";
 
-const FIELD_ALIASES: Record<keyof QuestionnaireAnswers | "address", string[]> = {
+const FIELD_ALIASES: Record<string, string[]> = {
+    firstName: ["vorname", "firstname", "givenname", "vornamen"],
+    lastName: ["nachname", "lastname", "familienname", "surname", "zuname"],
+    fullName: ["vorundnachname", "vollername"],
+    email: ["email", "emailadresse", "mail"],
     birthday: ["geburtsdatum", "birthday", "geburtstag", "alter"],
     address: ["adresse", "anschrift", "wohnadresse"],
     street: ["strasse", "street"],
@@ -23,7 +27,10 @@ function fold(value: string) {
         .replace(/[^a-z0-9]/g, "");
 }
 
-function answerValues(answers: QuestionnaireAnswers): Record<string, string> {
+function answerValues(
+    answers: QuestionnaireAnswers,
+    email: string,
+): Record<string, string> {
     const [year, month, day] = answers.birthday.split("-");
     const birthday =
         year && month && day ? `${day}.${month}.${year}` : answers.birthday;
@@ -31,7 +38,14 @@ function answerValues(answers: QuestionnaireAnswers): Record<string, string> {
         .filter((part) => part.length > 0)
         .join(", ");
 
+    const firstName = answers.firstName.trim();
+    const lastName = answers.lastName.trim();
+
     return {
+        firstName,
+        lastName,
+        fullName: [firstName, lastName].filter((part) => part.length > 0).join(" "),
+        email: email.trim(),
         birthday,
         address,
         street: answers.street,
@@ -56,8 +70,9 @@ function matchAlias(label: string, key: string) {
 export function contractValuesFromAnswers(
     segments: DocumentSegment[],
     answers: QuestionnaireAnswers,
+    email = "",
 ): { key: string; value: string }[] {
-    const values = answerValues(answers);
+    const values = answerValues(answers, email);
     const entries: { key: string; value: string }[] = [];
     const seen = new Set<string>();
 

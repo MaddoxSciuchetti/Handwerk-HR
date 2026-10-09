@@ -1,4 +1,6 @@
 export const QUESTIONNAIRE_FIELDS = [
+    { key: "firstName", label: "Vorname", type: "text" },
+    { key: "lastName", label: "Nachname", type: "text" },
     { key: "street", label: "Straße", type: "text" },
     { key: "postalCode", label: "PLZ", type: "text" },
     { key: "city", label: "Ort", type: "text" },
