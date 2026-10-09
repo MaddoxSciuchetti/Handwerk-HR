@@ -57,12 +57,18 @@ export function TaskItem({
 
   const SelectionIcon = isSelected ? SquareCheckIcon : SquareDashedIcon;
 
+  const temporaryEdge = task.isTemporary
+    ? 'border-y-2 border-purple-500'
+    : '';
+
   return (
     <TableRow className="group relative border-0 hover:bg-transparent">
       <TableCell
         className={cn(
           'relative pl-10 pr-2 font-medium transition-colors group-hover:rounded-l-xl group-hover:bg-muted/50',
-          isSelected && 'rounded-l-xl bg-muted/50'
+          isSelected && 'rounded-l-xl bg-muted/50',
+          temporaryEdge,
+          task.isTemporary && 'rounded-l-xl border-l-2'
         )}
       >
         <Button
@@ -85,7 +91,12 @@ export function TaskItem({
             status={task.status}
             workerId={workerId}
           />
-          <p className="min-w-0 truncate text-sm">{task.title}</p>
+          <p className="min-w-0 truncate text-sm">
+            {task.title}
+            {task.isTemporary ? (
+              <span className="sr-only">, temporäre Aufgabe</span>
+            ) : null}
+          </p>
           <Button
             type="button"
             variant="outline"
@@ -106,19 +117,16 @@ export function TaskItem({
       <TableCell
         className={cn(
           'transition-colors group-hover:bg-muted/50',
-          isSelected && 'bg-muted/50'
+          isSelected && 'bg-muted/50',
+          temporaryEdge
         )}
-      >
-        {task.isTemporary ? (
-          <span className="inline-flex h-7 items-center rounded-full border border-border px-3 text-xs font-medium">
-            isTemporary
-          </span>
-        ) : null}
-      </TableCell>
+      />
       <TableCell
         className={cn(
           'transition-colors group-hover:rounded-r-xl group-hover:bg-muted/50',
-          isSelected && 'rounded-r-xl bg-muted/50'
+          isSelected && 'rounded-r-xl bg-muted/50',
+          temporaryEdge,
+          task.isTemporary && 'rounded-r-xl border-r-2'
         )}
       >
         <div className="flex items-center justify-end gap-2">

@@ -304,21 +304,32 @@ export async function sendFilledEmploymentContract(
             where: { id: current.id },
             data: { sentAt: new Date() },
         });
-        if (issue.status !== "done") {
+
+        const contractTasks = await tx.issue.findMany({
+            where: {
+                workerEngagementId: params.engagementId,
+                title: "Arbeitsvertrag",
+                kind: "standard",
+                status: { not: "done" },
+            },
+        });
+        for (const contractTask of contractTasks) {
             await tx.issue.update({
-                where: { id: issue.id },
+                where: { id: contractTask.id },
                 data: { status: "done" },
             });
             await tx.issueAuditLog.create({
                 data: {
-                    issueId: issue.id,
+                    issueId: contractTask.id,
                     actorUserId: params.actorUserId,
                     action: "issue.updated",
-                    oldValue: { status: issue.status },
+                    oldValue: { status: contractTask.status },
                     newValue: { status: "done" },
                 },
             });
         }
+
+        await tx.issue.delete({ where: { id: issue.id } });
     });
 
     return present((await findContract(params)) ?? current);
