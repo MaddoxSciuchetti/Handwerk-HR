@@ -24,6 +24,7 @@ import { Route as SettingsPlansRouteImport } from './routes/settings/plans'
 import { Route as SettingsPaymentsRouteImport } from './routes/settings/payments'
 import { Route as SettingsEmployeesRouteImport } from './routes/settings/employees'
 import { Route as SettingsDocumentsRouteImport } from './routes/settings/documents'
+import { Route as SettingsDepartureMailRouteImport } from './routes/settings/departure-mail'
 import { Route as SettingsAutomationRouteImport } from './routes/settings/automation'
 import { Route as PasswordResetRouteImport } from './routes/password/reset'
 import { Route as PasswordForgotRouteImport } from './routes/password/forgot'
@@ -108,6 +109,11 @@ const SettingsDocumentsRoute = SettingsDocumentsRouteImport.update({
   path: '/documents',
   getParentRoute: () => SettingsRoute,
 } as any)
+const SettingsDepartureMailRoute = SettingsDepartureMailRouteImport.update({
+  id: '/departure-mail',
+  path: '/departure-mail',
+  getParentRoute: () => SettingsRoute,
+} as any)
 const SettingsAutomationRoute = SettingsAutomationRouteImport.update({
   id: '/automation',
   path: '/automation',
@@ -163,6 +169,7 @@ export interface FileRoutesByFullPath {
   '/password/forgot': typeof PasswordForgotRoute
   '/password/reset': typeof PasswordResetRoute
   '/settings/automation': typeof SettingsAutomationRoute
+  '/settings/departure-mail': typeof SettingsDepartureMailRoute
   '/settings/documents': typeof SettingsDocumentsRouteWithChildren
   '/settings/employees': typeof SettingsEmployeesRoute
   '/settings/payments': typeof SettingsPaymentsRoute
@@ -188,6 +195,7 @@ export interface FileRoutesByTo {
   '/password/forgot': typeof PasswordForgotRoute
   '/password/reset': typeof PasswordResetRoute
   '/settings/automation': typeof SettingsAutomationRoute
+  '/settings/departure-mail': typeof SettingsDepartureMailRoute
   '/settings/documents': typeof SettingsDocumentsRouteWithChildren
   '/settings/employees': typeof SettingsEmployeesRoute
   '/settings/payments': typeof SettingsPaymentsRoute
@@ -214,6 +222,7 @@ export interface FileRoutesById {
   '/password/forgot': typeof PasswordForgotRoute
   '/password/reset': typeof PasswordResetRoute
   '/settings/automation': typeof SettingsAutomationRoute
+  '/settings/departure-mail': typeof SettingsDepartureMailRoute
   '/settings/documents': typeof SettingsDocumentsRouteWithChildren
   '/settings/employees': typeof SettingsEmployeesRoute
   '/settings/payments': typeof SettingsPaymentsRoute
@@ -241,6 +250,7 @@ export interface FileRouteTypes {
     | '/password/forgot'
     | '/password/reset'
     | '/settings/automation'
+    | '/settings/departure-mail'
     | '/settings/documents'
     | '/settings/employees'
     | '/settings/payments'
@@ -266,6 +276,7 @@ export interface FileRouteTypes {
     | '/password/forgot'
     | '/password/reset'
     | '/settings/automation'
+    | '/settings/departure-mail'
     | '/settings/documents'
     | '/settings/employees'
     | '/settings/payments'
@@ -291,6 +302,7 @@ export interface FileRouteTypes {
     | '/password/forgot'
     | '/password/reset'
     | '/settings/automation'
+    | '/settings/departure-mail'
     | '/settings/documents'
     | '/settings/employees'
     | '/settings/payments'
@@ -427,6 +439,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsDocumentsRouteImport
       parentRoute: typeof SettingsRoute
     }
+    '/settings/departure-mail': {
+      id: '/settings/departure-mail'
+      path: '/departure-mail'
+      fullPath: '/settings/departure-mail'
+      preLoaderRoute: typeof SettingsDepartureMailRouteImport
+      parentRoute: typeof SettingsRoute
+    }
     '/settings/automation': {
       id: '/settings/automation'
       path: '/automation'
@@ -499,6 +518,7 @@ const SettingsDocumentsRouteWithChildren =
 
 interface SettingsRouteChildren {
   SettingsAutomationRoute: typeof SettingsAutomationRoute
+  SettingsDepartureMailRoute: typeof SettingsDepartureMailRoute
   SettingsDocumentsRoute: typeof SettingsDocumentsRouteWithChildren
   SettingsEmployeesRoute: typeof SettingsEmployeesRoute
   SettingsPaymentsRoute: typeof SettingsPaymentsRoute
@@ -511,6 +531,7 @@ interface SettingsRouteChildren {
 
 const SettingsRouteChildren: SettingsRouteChildren = {
   SettingsAutomationRoute: SettingsAutomationRoute,
+  SettingsDepartureMailRoute: SettingsDepartureMailRoute,
   SettingsDocumentsRoute: SettingsDocumentsRouteWithChildren,
   SettingsEmployeesRoute: SettingsEmployeesRoute,
   SettingsPaymentsRoute: SettingsPaymentsRoute,

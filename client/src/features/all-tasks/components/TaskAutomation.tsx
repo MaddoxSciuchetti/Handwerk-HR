@@ -12,6 +12,7 @@ import {
   O365_BLOCK_SIGN_IN,
   TASK_AUTOMATION_NONE,
   TASK_AUTOMATION_OPTIONS,
+  TEAM_DEPARTURE_MAIL,
 } from '../consts/task-automation.consts';
 import type { TaskSidebarForm } from '../types/index.types';
 
@@ -32,12 +33,15 @@ function TaskAutomation({
 }: TaskAutomationProps) {
   const queryClient = useQueryClient();
   const automation = useWatch({ control, name: 'automation' });
-  const canRun = automation === O365_BLOCK_SIGN_IN && !disabled;
+  const canRun =
+    (automation === O365_BLOCK_SIGN_IN ||
+      automation === TEAM_DEPARTURE_MAIL) &&
+    !disabled;
 
   const onGo = async () => {
     if (!canRun) return;
     const [, error] = await tryCatch(
-      runTaskAutomation({ taskId, automation: O365_BLOCK_SIGN_IN })
+      runTaskAutomation({ taskId, automation })
     );
     if (error) {
       const message =
@@ -54,7 +58,11 @@ function TaskAutomation({
     void queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] });
     void queryClient.invalidateQueries({ queryKey: [WORKERBYID] });
     void queryClient.invalidateQueries({ queryKey: [TASKHISTORY, taskId] });
-    toast.success('Anmeldung bei Microsoft 365 ist gesperrt. Die Aufgabe ist erledigt.');
+    toast.success(
+      automation === TEAM_DEPARTURE_MAIL
+        ? 'Das Team wurde über die Entlassung informiert. Die Aufgabe ist erledigt.'
+        : 'Anmeldung bei Microsoft 365 ist gesperrt. Die Aufgabe ist erledigt.'
+    );
   };
 
   return (

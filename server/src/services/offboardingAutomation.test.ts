@@ -5,6 +5,8 @@ import { runTaskAutomation } from "@/services/offboardingAutomation";
 jest.mock("@/lib/prisma", () => ({
     prisma: {
         issue: { findFirst: jest.fn(), update: jest.fn() },
+        worker: { findFirst: jest.fn(), update: jest.fn() },
+        departureMailSettings: { findUnique: jest.fn() },
         $transaction: jest.fn(),
     },
 }));
@@ -15,8 +17,29 @@ jest.mock("@/services/microsoft365Account", () => ({
 
 const findIssue = prisma.issue.findFirst as jest.Mock;
 const updateIssue = prisma.issue.update as jest.Mock;
+const findWorker = prisma.worker.findFirst as jest.Mock;
+const updateWorker = prisma.worker.update as jest.Mock;
+const findDepartureSettings = prisma.departureMailSettings.findUnique as jest.Mock;
 const transaction = prisma.$transaction as jest.Mock;
 const token = microsoftGraphToken as jest.Mock;
+
+const departureWorker = {
+    id: "worker-1",
+    firstName: "Ada",
+    lastName: "Lovelace",
+    workEmail: "ada@firma.de",
+    position: "Maler",
+    exitDate: new Date("2026-10-01T00:00:00.000Z"),
+    departureMailSentAt: null as Date | null,
+};
+
+const departureSettings = {
+    senderAddress: "admin@firma.de",
+    groupId: "group-bsb",
+    groupName: "BSB",
+    subject: "Entlassung {{Vorname}} {{Nachname}}",
+    body: "{{Vorname}} {{Nachname}} wurde entlassen.\n{{Entlassung}}",
+};
 
 const issue = {
     id: "issue-1",
@@ -138,5 +161,79 @@ describe("offboarding microsoft automation", () => {
             message: "Microsoft Graph hat die Sperre abgelehnt.",
         });
         expect(transaction).not.toHaveBeenCalled();
+    });
+
+    it("sends the departure notice and marks the chosen task done", async () => {
+        findWorker.mockResolvedValue(departureWorker);
+        findDepartureSettings.mockResolvedValue(departureSettings);
+        updateWorker.mockResolvedValue({});
+        const fetchMock = jest.spyOn(global, "fetch").mockImplementation(async (input, init) => {
+            const url = String(input);
+            if (url.includes("/transitiveMembers/")) {
+                return jsonResponse({
+                    value: [{ mail: "team@firma.de" }],
+                });
+            }
+            if (url.endsWith("/sendMail") && init?.method === "POST") {
+                return jsonResponse(null, 202);
+            }
+            throw new Error(`unexpected ${init?.method ?? "GET"} ${url}`);
+        });
+
+        const result = await runTaskAutomation({
+            organizationId: "org-1",
+            issueId: "issue-1",
+            actorUserId: "user-1",
+            automation: "team-departure-mail",
+        });
+
+        expect(result).toEqual({ status: "completed", alreadyBlocked: false });
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+        const sendCall = fetchMock.mock.calls.find((call) =>
+            String(call[0]).endsWith("/sendMail"),
+        );
+        const body = JSON.parse(String(sendCall?.[1]?.body)) as {
+            message: { subject: string; body: { content: string } };
+        };
+        expect(body.message.subject).toBe("Entlassung Ada Lovelace");
+        expect(body.message.body.content).toContain("01.10.2026");
+        expect(updateIssue).toHaveBeenCalledWith({
+            where: { id: "issue-1" },
+            data: { automation: "team-departure-mail" },
+        });
+        expect(updateWorker).toHaveBeenCalledWith({
+            where: { id: "worker-1" },
+            data: { departureMailSentAt: expect.any(Date) },
+        });
+        const tx = await transaction.mock.results[0].value;
+        expect(tx.issue.update).toHaveBeenCalledWith({
+            where: { id: "issue-1" },
+            data: { status: "done" },
+        });
+        expect(tx.workerExternalAccount.upsert).not.toHaveBeenCalled();
+    });
+
+    it("completes the task without a second departure mail", async () => {
+        findWorker.mockResolvedValue({
+            ...departureWorker,
+            departureMailSentAt: new Date("2026-10-02T08:00:00.000Z"),
+        });
+        const fetchMock = jest.spyOn(global, "fetch");
+
+        const result = await runTaskAutomation({
+            organizationId: "org-1",
+            issueId: "issue-1",
+            actorUserId: "user-1",
+            automation: "team-departure-mail",
+        });
+
+        expect(result).toEqual({ status: "completed", alreadyBlocked: false });
+        expect(fetchMock).not.toHaveBeenCalled();
+        expect(updateWorker).not.toHaveBeenCalled();
+        const tx = await transaction.mock.results[0].value;
+        expect(tx.issue.update).toHaveBeenCalledWith({
+            where: { id: "issue-1" },
+            data: { status: "done" },
+        });
     });
 });

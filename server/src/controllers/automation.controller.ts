@@ -1,6 +1,10 @@
 import { BAD_REQUEST } from "@/constants/http";
 import { isTaskAutomationId } from "@/constants/taskAutomation.consts";
 import { microsoft365AutomationStatus } from "@/services/microsoft365Account";
+import {
+    saveDepartureMailSettings,
+    departureMailPage,
+} from "@/services/departureMail";
 import { runTaskAutomation } from "@/services/offboardingAutomation";
 import {
     saveWelcomeMailSettings,
@@ -11,7 +15,7 @@ import appAssert from "@/utils/appAssert";
 import catchErrors from "@/utils/catchErrors";
 import { z } from "zod";
 
-const welcomeMailInput = z.object({
+const teamMailInput = z.object({
     senderAddress: z.string().trim().email().max(254),
     groupId: z.string().trim().min(1).max(255),
     groupName: z.string().trim().min(1).max(255),
@@ -54,11 +58,28 @@ export const postTaskAutomation = catchErrors(async (req, res) => {
     return res.status(200).json({ success: true, data: result });
 });
 
+export const getDepartureMail = catchErrors(async (req, res) => {
+    appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
+    return res.status(200).json({
+        success: true,
+        data: await departureMailPage(req.orgId),
+    });
+});
+
 export const putWelcomeMail = catchErrors(async (req, res) => {
     appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
-    const input = welcomeMailInput.parse(req.body);
+    const input = teamMailInput.parse(req.body);
     return res.status(200).json({
         success: true,
         data: await saveWelcomeMailSettings(req.orgId, input),
+    });
+});
+
+export const putDepartureMail = catchErrors(async (req, res) => {
+    appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
+    const input = teamMailInput.parse(req.body);
+    return res.status(200).json({
+        success: true,
+        data: await saveDepartureMailSettings(req.orgId, input),
     });
 });

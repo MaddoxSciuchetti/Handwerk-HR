@@ -107,7 +107,7 @@ function welcomeHtml(text: string) {
         .join("");
 }
 
-function settingsComplete(
+export function teamMailSettingsComplete(
     settings: WelcomeMailSettingsRecord | null,
 ): settings is WelcomeMailSettingsRecord {
     if (!settings) return false;
@@ -255,6 +255,61 @@ async function closeWelcomeMailTask(params: {
     });
 }
 
+export async function sendGraphMailToGroup(params: {
+    token: string;
+    senderAddress: string;
+    groupId: string;
+    subject: string;
+    text: string;
+    emptyLog: string;
+    rejectedLog: string;
+    failureMessage: { members: string; rejected: string };
+}): Promise<
+    | { status: "sent" }
+    | { status: "skipped"; reason: "no_recipients" }
+    | { status: "failed"; message: string }
+> {
+    const members = await listGraph<GraphMember>(
+        params.token,
+        `/groups/${encodeURIComponent(params.groupId)}/transitiveMembers/microsoft.graph.user?$select=mail,userPrincipalName&$top=999`,
+    );
+    if (!members) {
+        return { status: "failed", message: params.failureMessage.members };
+    }
+
+    const recipients = welcomeRecipientAddresses(members);
+    if (recipients.length === 0) {
+        console.error(params.emptyLog);
+        return { status: "skipped", reason: "no_recipients" };
+    }
+
+    const { response } = await graphJson(
+        params.token,
+        `${GRAPH}/users/${encodeURIComponent(params.senderAddress)}/sendMail`,
+        {
+            method: "POST",
+            body: JSON.stringify({
+                message: {
+                    subject: params.subject,
+                    body: {
+                        contentType: "HTML",
+                        content: welcomeHtml(params.text),
+                    },
+                    toRecipients: recipients.map((address) => ({
+                        emailAddress: { address },
+                    })),
+                },
+                saveToSentItems: true,
+            }),
+        },
+    );
+    if (!response.ok) {
+        console.error(params.rejectedLog, response.status);
+        return { status: "failed", message: params.failureMessage.rejected };
+    }
+    return { status: "sent" };
+}
+
 export async function sendTeamWelcomeMail(params: {
     organizationId: string;
     workerId: string;
@@ -281,7 +336,7 @@ export async function sendTeamWelcomeMail(params: {
     if (!workEmail) return { status: "skipped", reason: "no_work_email" };
 
     const settings = await readWelcomeMailSettings(params.organizationId);
-    if (!settingsComplete(settings)) {
+    if (!teamMailSettingsComplete(settings)) {
         console.error("Willkommensmail ist nicht konfiguriert.");
         return { status: "skipped", reason: "not_configured" };
     }
@@ -294,23 +349,6 @@ export async function sendTeamWelcomeMail(params: {
         };
     }
 
-    const members = await listGraph<GraphMember>(
-        token,
-        `/groups/${encodeURIComponent(settings.groupId)}/transitiveMembers/microsoft.graph.user?$select=mail,userPrincipalName&$top=999`,
-    );
-    if (!members) {
-        return {
-            status: "failed",
-            message: "Microsoft Graph hat die Teammitglieder nicht geliefert.",
-        };
-    }
-
-    const recipients = welcomeRecipientAddresses(members);
-    if (recipients.length === 0) {
-        console.error("Die Willkommensmail hat keine Empfänger.");
-        return { status: "skipped", reason: "no_recipients" };
-    }
-
     const values = {
         firstName: worker.firstName.trim(),
         lastName: worker.lastName.trim(),
@@ -318,34 +356,22 @@ export async function sendTeamWelcomeMail(params: {
         position: worker.position?.trim() ?? "",
         entryDate: formatWelcomeEntryDate(worker.entryDate),
     };
-    const subject = applyWelcomeMailTemplate(settings.subject, values)
-        .replace(/\s+/g, " ")
-        .trim();
-    const text = applyWelcomeMailTemplate(settings.body, values);
-    const { response } = await graphJson(
+    const sent = await sendGraphMailToGroup({
         token,
-        `${GRAPH}/users/${encodeURIComponent(settings.senderAddress)}/sendMail`,
-        {
-            method: "POST",
-            body: JSON.stringify({
-                message: {
-                    subject,
-                    body: { contentType: "HTML", content: welcomeHtml(text) },
-                    toRecipients: recipients.map((address) => ({
-                        emailAddress: { address },
-                    })),
-                },
-                saveToSentItems: true,
-            }),
+        senderAddress: settings.senderAddress,
+        groupId: settings.groupId,
+        subject: applyWelcomeMailTemplate(settings.subject, values)
+            .replace(/\s+/g, " ")
+            .trim(),
+        text: applyWelcomeMailTemplate(settings.body, values),
+        emptyLog: "Die Willkommensmail hat keine Empfänger.",
+        rejectedLog: "Microsoft Graph welcome mail failed",
+        failureMessage: {
+            members: "Microsoft Graph hat die Teammitglieder nicht geliefert.",
+            rejected: "Microsoft Graph hat die Willkommensmail abgelehnt.",
         },
-    );
-    if (!response.ok) {
-        console.error("Microsoft Graph welcome mail failed", response.status);
-        return {
-            status: "failed",
-            message: "Microsoft Graph hat die Willkommensmail abgelehnt.",
-        };
-    }
+    });
+    if (sent.status !== "sent") return sent;
 
     await closeWelcomeMailTask({
         engagementId: params.engagementId,

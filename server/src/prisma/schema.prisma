@@ -113,7 +113,8 @@ model Organization {
   absences        Absence[]
   documentMasters DocumentMaster[]
   questionnaire   Questionnaire?
-  welcomeMailSettings WelcomeMailSettings?
+  welcomeMailSettings   WelcomeMailSettings?
+  departureMailSettings DepartureMailSettings?
 
 
   @@map("organizations")
@@ -197,7 +198,8 @@ model Worker {
   lastName         String             @map("last_name") @db.VarChar(120)
   email            String             @db.VarChar(254)
   workEmail        String?            @map("work_email") @db.VarChar(254)
-  welcomeMailSentAt DateTime?         @map("welcome_mail_sent_at") @db.Timestamptz()
+  welcomeMailSentAt   DateTime?        @map("welcome_mail_sent_at") @db.Timestamptz()
+  departureMailSentAt DateTime?        @map("departure_mail_sent_at") @db.Timestamptz()
   phoneNumber      String?            @map("phone_number") @db.VarChar(32)
   birthday         DateTime?          @db.Date
   position         String?            @db.VarChar(160)
@@ -624,6 +626,22 @@ model WelcomeMailSettings {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@map("welcome_mail_settings")
+}
+
+model DepartureMailSettings {
+  id             String   @id @default(uuid())
+  organizationId String   @unique @map("organization_id")
+  senderAddress  String   @map("sender_address") @db.VarChar(254)
+  groupId        String   @map("group_id") @db.VarChar(255)
+  groupName      String   @map("group_name") @db.VarChar(255)
+  subject        String   @db.VarChar(400)
+  body           String   @db.Text
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("departure_mail_settings")
 }
 
 model WorkerExternalAccount {

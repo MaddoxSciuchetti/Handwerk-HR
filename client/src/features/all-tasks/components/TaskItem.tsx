@@ -3,10 +3,7 @@ import { TableCell, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import { Headset } from 'lucide-react';
 import type { Dispatch, SetStateAction } from 'react';
-import {
-  O365_BLOCK_SIGN_IN,
-  TASK_AUTOMATION_NONE,
-} from '../consts/task-automation.consts';
+import { storedTaskAutomation } from '../consts/task-automation.consts';
 import type { TaskEditState } from '../hooks/useTaskSidebar';
 import type { IssueResponse } from '../types/index.types';
 import { getAssigneeLabel } from '../utilts/assignee.utils';
@@ -47,10 +44,7 @@ export function TaskItem({
       workerEngagementId: task.workerEngagementId,
       assigneeUserId: task.assigneeUserId ?? '',
       status: task.status,
-      automation:
-        task.automation === O365_BLOCK_SIGN_IN
-          ? O365_BLOCK_SIGN_IN
-          : TASK_AUTOMATION_NONE,
+      automation: storedTaskAutomation(task.automation),
     });
   };
 
@@ -67,9 +61,7 @@ export function TaskItem({
 
   const SelectionIcon = isSelected ? SquareCheckIcon : SquareDashedIcon;
 
-  const temporaryEdge = task.isTemporary
-    ? 'border-y-2 border-purple-500'
-    : '';
+  const temporaryEdge = task.isTemporary ? 'border-y-2 border-purple-500' : '';
 
   return (
     <TableRow className="group relative border-0 hover:bg-transparent">

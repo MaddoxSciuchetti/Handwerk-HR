@@ -55,6 +55,11 @@ export const SETTINGSITEMS = [
     icon: Mail,
   },
   {
+    title: 'Infomail Entlassung',
+    to: '/settings/departure-mail',
+    icon: Mail,
+  },
+  {
     title: 'Zahlungen',
     to: '/settings/payments',
     icon: CreditCard,

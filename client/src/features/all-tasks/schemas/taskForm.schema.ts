@@ -3,6 +3,7 @@ import { ISSUE_STATUSES } from '../consts/issue-status.consts';
 import {
   O365_BLOCK_SIGN_IN,
   TASK_AUTOMATION_NONE,
+  TEAM_DEPARTURE_MAIL,
 } from '../consts/task-automation.consts';
 
 export const taskFormSchema = z.object({
@@ -16,7 +17,11 @@ export const taskFormSchema = z.object({
   status: z.enum(ISSUE_STATUSES, {
     message: 'Bitte wähle einen Status aus',
   }),
-  automation: z.enum([TASK_AUTOMATION_NONE, O365_BLOCK_SIGN_IN]),
+  automation: z.enum([
+    TASK_AUTOMATION_NONE,
+    O365_BLOCK_SIGN_IN,
+    TEAM_DEPARTURE_MAIL,
+  ]),
 });
 
 export type TaskFormSchema = z.infer<typeof taskFormSchema>;

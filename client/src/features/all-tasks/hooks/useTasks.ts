@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import type { IssueStatusValue } from '../consts/issue-status.consts';
 import {
-  O365_BLOCK_SIGN_IN,
+  storedTaskAutomation,
   TASK_AUTOMATION_NONE,
 } from '../consts/task-automation.consts';
 import { taskFormSchema } from '../schemas/taskForm.schema';
@@ -60,12 +60,7 @@ export function useTasks(
 
   useEffect(() => {
     setValue('status', (taskEditState.status || 'open') as IssueStatusValue);
-    setValue(
-      'automation',
-      taskEditState.automation === O365_BLOCK_SIGN_IN
-        ? O365_BLOCK_SIGN_IN
-        : TASK_AUTOMATION_NONE
-    );
+    setValue('automation', storedTaskAutomation(taskEditState.automation));
   }, [taskEditState.automation, taskEditState.status, setValue]);
 
   const onSubmit = handleSubmit(async (data) => {

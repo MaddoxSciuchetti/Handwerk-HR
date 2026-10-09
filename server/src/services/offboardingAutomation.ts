@@ -1,5 +1,10 @@
-import { O365_BLOCK_SIGN_IN } from "@/constants/taskAutomation.consts";
+import {
+    O365_BLOCK_SIGN_IN,
+    TEAM_DEPARTURE_MAIL,
+    isTaskAutomationId,
+} from "@/constants/taskAutomation.consts";
 import { prisma } from "@/lib/prisma";
+import { sendTeamDepartureMail } from "@/services/departureMail";
 import { microsoftGraphToken } from "@/services/microsoft365Account";
 
 const GRAPH = "https://graph.microsoft.com/v1.0";
@@ -102,6 +107,29 @@ async function blockMicrosoftSignIn(token: string, userKey: string) {
     };
 }
 
+async function markIssueDone(params: {
+    issueId: string;
+    previousStatus: string;
+    actorUserId: string;
+}) {
+    if (params.previousStatus === "done") return;
+    await prisma.$transaction(async (tx) => {
+        await tx.issue.update({
+            where: { id: params.issueId },
+            data: { status: "done" },
+        });
+        await tx.issueAuditLog.create({
+            data: {
+                issueId: params.issueId,
+                actorUserId: params.actorUserId,
+                action: "issue.updated",
+                oldValue: { status: params.previousStatus },
+                newValue: { status: "done" },
+            },
+        });
+    });
+}
+
 async function completeAutomatedTask(params: {
     issueId: string;
     previousStatus: string;
@@ -151,7 +179,7 @@ export async function runTaskAutomation(params: {
     actorUserId: string;
     automation: string;
 }): Promise<RunTaskAutomationResult> {
-    if (params.automation !== O365_BLOCK_SIGN_IN) {
+    if (!isTaskAutomationId(params.automation)) {
         return { status: "failed", message: "Diese Automatisierung gibt es nicht." };
     }
 
@@ -186,8 +214,26 @@ export async function runTaskAutomation(params: {
 
     await prisma.issue.update({
         where: { id: issue.id },
-        data: { automation: O365_BLOCK_SIGN_IN },
+        data: { automation: params.automation },
     });
+
+    if (params.automation === TEAM_DEPARTURE_MAIL) {
+        const mailed = await sendTeamDepartureMail({
+            organizationId: params.organizationId,
+            workerId: issue.workerEngagement.worker.id,
+        });
+        if (mailed.status === "failed") return mailed;
+        await markIssueDone({
+            issueId: issue.id,
+            previousStatus: issue.status,
+            actorUserId: params.actorUserId,
+        });
+        return { status: "completed", alreadyBlocked: false };
+    }
+
+    if (params.automation !== O365_BLOCK_SIGN_IN) {
+        return { status: "failed", message: "Diese Automatisierung gibt es nicht." };
+    }
 
     const worker = issue.workerEngagement.worker;
     const userKey =
