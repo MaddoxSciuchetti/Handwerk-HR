@@ -15,6 +15,7 @@ import { rememberContractSendReturn } from '../../contractSendReturn';
 import {
   employmentContractKey,
   useEmploymentContract,
+  useSaveEmploymentContract,
 } from '../../hooks/useEmploymentContract';
 import { ContractDraftBody } from './ContractDraftBody';
 import { UnmatchedQuestionnaireAnswers } from './UnmatchedQuestionnaireAnswers';
@@ -53,6 +54,7 @@ export function ContractSendDialog({
     engagementId
   );
   const [values, setValues] = useState<Record<string, string>>({});
+  const saveDraft = useSaveEmploymentContract(workerId, engagementId);
 
   useEffect(() => {
     if (!data) return;
@@ -92,7 +94,7 @@ export function ContractSendDialog({
         )
       : [];
 
-  const openMaster = () => {
+  const leaveForMaster = () => {
     if (!data) return;
     const search = new URLSearchParams(window.location.search);
     rememberContractSendReturn({
@@ -110,6 +112,15 @@ export function ContractSendDialog({
       to: '/settings/documents/$id',
       params: { id: data.masterId },
       search: { returnContract: '1' },
+    });
+  };
+
+  const openMaster = () => {
+    if (!data || readOnly || saveDraft.isPending) return;
+    saveDraft.mutate(values, {
+      onSuccess: leaveForMaster,
+      onError: () =>
+        toast.error('Die Zuordnung konnte nicht gespeichert werden'),
     });
   };
 
@@ -139,6 +150,7 @@ export function ContractSendDialog({
               {unmatched.length > 0 ? (
                 <UnmatchedQuestionnaireAnswers
                   answers={unmatched}
+                  saving={saveDraft.isPending}
                   onEditMaster={openMaster}
                 />
               ) : null}

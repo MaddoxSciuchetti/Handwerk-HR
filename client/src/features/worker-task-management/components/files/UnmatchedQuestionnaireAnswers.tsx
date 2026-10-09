@@ -8,11 +8,13 @@ import {
 type UnmatchedQuestionnaireAnswersProps = {
   answers: UnmatchedQuestionnaireAnswer[];
   onEditMaster: () => void;
+  saving: boolean;
 };
 
 export function UnmatchedQuestionnaireAnswers({
   answers,
   onEditMaster,
+  saving,
 }: UnmatchedQuestionnaireAnswersProps) {
   return (
     <aside className="flex w-60 shrink-0 flex-col gap-3 overflow-auto">
@@ -58,9 +60,10 @@ export function UnmatchedQuestionnaireAnswers({
           type="button"
           variant="outline"
           className="rounded-2xl"
+          disabled={saving}
           onClick={onEditMaster}
         >
-          Mustervertrag ergänzen
+          {saving ? 'Speichert…' : 'Mustervertrag ergänzen'}
         </Button>
       </div>
     </aside>
