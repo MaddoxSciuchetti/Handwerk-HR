@@ -2,7 +2,6 @@ import { ARBEITSZEUGNIS } from "@/constants/taskAutomation.consts";
 import { prisma } from "@/lib/prisma";
 import { valuesForDocumentSegments } from "@/services/contractFieldMatch";
 import {
-    documentBody,
     readDocumentSegments,
     textFromSegments,
     type DocumentSegment,
@@ -10,9 +9,31 @@ import {
 import { microsoftGraphToken } from "@/services/microsoft365Account";
 import { formatWelcomeEntryDate } from "@/services/welcomeMail";
 import { Prisma } from "@prisma/client";
+import {
+    prepareDocument,
+    sendPreparedDocument,
+    invalidatePreparedDocuments,
+    outgoingPdfUrl,
+    currentPreparation,
+    DeliveryRejected,
+} from "@/services/preparedDocument";
+import {
+    readStyledDocument,
+    filledDocument,
+    type StyledDocument,
+} from "../../../shared/document";
+import { validateFieldValues } from "../../../shared/documentRendering";
+import { BAD_REQUEST } from "@/constants/http";
+import AppError from "@/utils/AppError";
+import { USE_MICROSOFT_MAIL } from "@/constants/env";
+import { sendMail } from "@/utils/sendMail";
 
 const GRAPH = "https://graph.microsoft.com/v1.0";
 const SUBJECT = "Ihr Arbeitszeugnis";
+
+export function certificateText(body: Prisma.JsonValue) {
+    return textFromSegments(readDocumentSegments(body));
+}
 
 export type ArbeitszeugnisResult =
     | { status: "sent" }
@@ -49,13 +70,17 @@ function letterFields(params: {
     return {
         firstName,
         lastName,
-        fullName: [firstName, lastName].filter((part) => part.length > 0).join(" "),
+        fullName: [firstName, lastName]
+            .filter((part) => part.length > 0)
+            .join(" "),
         email: params.worker.email.trim(),
         workEmail: params.worker.workEmail?.trim() ?? "",
         position: params.worker.position?.trim() ?? "",
         phone: params.worker.phoneNumber?.trim() ?? "",
         birthday: formatWelcomeEntryDate(params.worker.birthday),
-        address: [street, locality].filter((part) => part.length > 0).join(", "),
+        address: [street, locality]
+            .filter((part) => part.length > 0)
+            .join(", "),
         street,
         postalCode,
         city,
@@ -66,41 +91,6 @@ function letterFields(params: {
             formatWelcomeEntryDate(params.endDate) ||
             formatWelcomeEntryDate(params.worker.exitDate),
     };
-}
-
-function escapeHtml(value: string) {
-    return value
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;");
-}
-
-function letterHtml(
-    name: string,
-    segments: DocumentSegment[],
-    values: Record<string, string>,
-) {
-    const htmlBody = segments
-        .map((segment) => {
-            if (segment.type === "text") {
-                return escapeHtml(segment.text).replaceAll("\n", "<br>");
-            }
-            return `<strong>${escapeHtml(values[segment.key] ?? "")}</strong>`;
-        })
-        .join("");
-    return `<div style="font-family:Arial,sans-serif;line-height:1.6"><h1>${escapeHtml(name)}</h1><div>${htmlBody}</div></div>`;
-}
-
-function filledSegments(
-    segments: DocumentSegment[],
-    values: Record<string, string>,
-): DocumentSegment[] {
-    return segments.map((segment) =>
-        segment.type === "text"
-            ? segment
-            : { type: "text", text: values[segment.key] ?? "" },
-    );
 }
 
 async function senderAddress(organizationId: string) {
@@ -116,44 +106,6 @@ async function senderAddress(organizationId: string) {
         select: { senderAddress: true },
     });
     return welcome?.senderAddress.trim() ?? "";
-}
-
-async function sendLetter(params: {
-    token: string;
-    senderAddress: string;
-    to: string;
-    name: string;
-    segments: DocumentSegment[];
-    values: Record<string, string>;
-}) {
-    const response = await fetch(
-        `${GRAPH}/users/${encodeURIComponent(params.senderAddress)}/sendMail`,
-        {
-            method: "POST",
-            headers: {
-                Authorization: `Bearer ${params.token}`,
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                message: {
-                    subject: SUBJECT,
-                    body: {
-                        contentType: "HTML",
-                        content: letterHtml(params.name, params.segments, params.values),
-                    },
-                    toRecipients: [
-                        { emailAddress: { address: params.to } },
-                    ],
-                },
-                saveToSentItems: true,
-            }),
-        },
-    );
-    if (!response.ok) {
-        console.error("Microsoft Graph reference letter failed", response.status);
-        return false;
-    }
-    return true;
 }
 
 const LETTER_FIELD_LABELS = [
@@ -195,37 +147,28 @@ function unplacedLetterValues(
     });
 }
 
-function suppliedValues(
-    segments: DocumentSegment[],
-    raw: Record<string, string>,
-) {
-    const values: Record<string, string> = {};
-    const missing: string[] = [];
-    const seen = new Set<string>();
-    for (const segment of segments) {
-        if (segment.type !== "input" || seen.has(segment.key)) continue;
-        seen.add(segment.key);
-        const value = (raw[segment.key] ?? "").trim().slice(0, 8000);
-        if (!value) {
-            missing.push(segment.label);
-            continue;
-        }
-        values[segment.key] = value;
-    }
-    return { values, missing };
-}
-
 async function loadLetter(params: {
     organizationId: string;
     engagementId: string;
 }) {
     const engagement = await prisma.workerEngagement.findFirst({
-        where: { id: params.engagementId, organizationId: params.organizationId },
+        where: {
+            id: params.engagementId,
+            organizationId: params.organizationId,
+        },
         select: {
             id: true,
             workerId: true,
             endDate: true,
-            arbeitszeugnis: { select: { sentAt: true, body: true, master: { select: { name: true } } } },
+            arbeitszeugnis: {
+                select: {
+                    sentAt: true,
+                    body: true,
+                    draftValues: true,
+                    outgoingPdfId: true,
+                    master: { select: { name: true } },
+                },
+            },
             worker: {
                 select: {
                     firstName: true,
@@ -265,7 +208,11 @@ async function loadLetter(params: {
             },
         },
     });
-    return { status: "found" as const, engagement, master: setting?.documentMaster ?? null };
+    return {
+        status: "found" as const,
+        engagement,
+        master: setting?.documentMaster ?? null,
+    };
 }
 
 export type ArbeitszeugnisPreview = {
@@ -274,10 +221,13 @@ export type ArbeitszeugnisPreview = {
     workerId: string;
     engagementId: string;
     segments: DocumentSegment[];
+    document: StyledDocument;
     values: Record<string, string>;
     unmatched: LetterValue[];
     unresolved: { key: string; label: string }[];
     alreadySent: boolean;
+    outgoingFileUrl?: string | null;
+    prepared?: Awaited<ReturnType<typeof currentPreparation>>;
 };
 
 export async function previewArbeitszeugnis(params: {
@@ -301,17 +251,23 @@ export async function previewArbeitszeugnis(params: {
                 workerId: engagement.workerId,
                 engagementId: engagement.id,
                 segments: readDocumentSegments(engagement.arbeitszeugnis.body),
+                document: readStyledDocument(engagement.arbeitszeugnis.body),
                 values: {},
                 unmatched: [],
                 unresolved: [],
                 alreadySent: true,
+                outgoingFileUrl: await outgoingPdfUrl(
+                    { ...params, kind: "arbeitszeugnis" },
+                    engagement.arbeitszeugnis.outgoingPdfId,
+                ),
             },
         };
     }
     if (!master || master.kind !== "arbeitszeugnis") {
         return {
             status: "failed",
-            message: "Für diese Automatisierung ist kein Arbeitszeugnis hinterlegt.",
+            message:
+                "Für diese Automatisierung ist kein Arbeitszeugnis hinterlegt.",
         };
     }
 
@@ -322,6 +278,27 @@ export async function previewArbeitszeugnis(params: {
         onboardingStart: engagement.worker.engagements[0]?.startDate ?? null,
     });
     const filled = valuesForDocumentSegments(segments, fields);
+    const draft = engagement.arbeitszeugnis?.draftValues as Record<
+        string,
+        string
+    > | null;
+    const allowed = new Set(
+        segments.flatMap((segment) =>
+            segment.type === "input" ? [segment.key] : [],
+        ),
+    );
+    const values = Object.fromEntries(
+        Object.entries({ ...filled.values, ...(draft ?? {}) }).filter(([key]) =>
+            allowed.has(key),
+        ),
+    );
+    for (const s of segments)
+        if (
+            s.type === "input" &&
+            s.fieldType === "checkbox" &&
+            values[s.key] === undefined
+        )
+            values[s.key] = "false";
     return {
         status: "ready",
         preview: {
@@ -330,111 +307,225 @@ export async function previewArbeitszeugnis(params: {
             workerId: engagement.workerId,
             engagementId: engagement.id,
             segments,
-            values: filled.values,
-            unmatched: unplacedLetterValues(fields, filled.values),
+            document: readStyledDocument(master.body),
+            values,
+            unmatched: unplacedLetterValues(fields, values),
             unresolved: filled.unresolved,
             alreadySent: false,
+            prepared: await currentPreparation({
+                ...params,
+                kind: "arbeitszeugnis",
+            }),
         },
     };
+}
+
+export async function saveArbeitszeugnisDraft(params: {
+    organizationId: string;
+    engagementId: string;
+    values: Record<string, string>;
+}) {
+    const loaded = await loadLetter(params);
+    if (
+        loaded.status !== "found" ||
+        !loaded.master ||
+        loaded.engagement.arbeitszeugnis?.sentAt
+    )
+        throw new AppError(
+            BAD_REQUEST,
+            "Arbeitszeugnis kann nicht bearbeitet werden.",
+        );
+    const document = readStyledDocument(loaded.master.body);
+    const master = loaded.master;
+    let values: Record<string, string>;
+    try {
+        values = validateFieldValues(document, params.values, false);
+    } catch (error) {
+        throw new AppError(BAD_REQUEST, (error as Error).message);
+    }
+    await prisma.$transaction(async (tx) => {
+        await invalidatePreparedDocuments(
+            {
+                organizationId: params.organizationId,
+                engagementId: params.engagementId,
+                kind: "arbeitszeugnis",
+            },
+            tx,
+        );
+        const latest = await tx.arbeitszeugnis.findUnique({
+            where: { engagementId: params.engagementId },
+        });
+        if (latest?.sentAt)
+            throw new AppError(
+                BAD_REQUEST,
+                "Arbeitszeugnis wurde bereits versendet.",
+            );
+        await tx.arbeitszeugnis.upsert({
+            where: { engagementId: params.engagementId },
+            create: {
+                engagementId: params.engagementId,
+                masterId: master.id,
+                body: master.body as Prisma.InputJsonValue,
+                draftValues: values,
+            },
+            update: { masterId: master.id, draftValues: values },
+        });
+    });
+}
+
+export async function prepareArbeitszeugnisPdf(params: {
+    organizationId: string;
+    engagementId: string;
+    values: Record<string, string>;
+}) {
+    await saveArbeitszeugnisDraft(params);
+    const loaded = await loadLetter(params);
+    if (loaded.status !== "found" || !loaded.master)
+        throw new AppError(BAD_REQUEST, "Vorlage fehlt.");
+    return prepareDocument({
+        ...params,
+        kind: "arbeitszeugnis",
+        masterId: loaded.master.id,
+        recipient: loaded.engagement.worker.email,
+    });
 }
 
 export async function sendArbeitszeugnis(params: {
     organizationId: string;
     engagementId: string;
-    values?: Record<string, string>;
+    artifactId: string;
+    actorUserId: string;
 }): Promise<ArbeitszeugnisResult> {
     const loaded = await loadLetter(params);
-    if (loaded.status === "missing") {
+    if (loaded.status === "missing")
         return { status: "failed", message: "Aufgabe nicht gefunden." };
-    }
     const { engagement, master } = loaded;
-    if (engagement.arbeitszeugnis?.sentAt) {
-        return { status: "already_sent" };
-    }
-    if (!master || master.kind !== "arbeitszeugnis") {
-        return {
-            status: "failed",
-            message: "Für diese Automatisierung ist kein Arbeitszeugnis hinterlegt.",
-        };
-    }
-
-    const to = engagement.worker.email.trim();
-    if (!to) {
-        return {
-            status: "failed",
-            message: "Für diesen Mitarbeiter ist keine E-Mail hinterlegt.",
-        };
-    }
-
-    const segments = readDocumentSegments(master.body);
-    const filled = params.values
-        ? suppliedValues(segments, params.values)
-        : valuesForDocumentSegments(
-              segments,
-              letterFields({
-                  worker: engagement.worker,
-                  endDate: engagement.endDate,
-                  onboardingStart:
-                      engagement.worker.engagements[0]?.startDate ?? null,
-              }),
-          );
-    if (filled.missing.length > 0) {
-        return {
-            status: "failed",
-            message: `Diese Platzhalter konnten nicht gefüllt werden: ${filled.missing.join(", ")}.`,
-        };
-    }
-
-    const from = await senderAddress(params.organizationId);
-    if (!from) {
-        return {
-            status: "failed",
-            message: "Es ist kein Absender für den Versand hinterlegt.",
-        };
-    }
-
-    const token = await microsoftGraphToken();
-    if (!token) {
-        return {
-            status: "failed",
-            message: "Microsoft 365 ist nicht konfiguriert.",
-        };
-    }
-
-    const sent = await sendLetter({
-        token,
-        senderAddress: from,
-        to,
-        name: master.name,
-        segments,
-        values: filled.values,
-    });
-    if (!sent) {
-        return {
-            status: "failed",
-            message: "Microsoft Graph hat das Arbeitszeugnis abgelehnt.",
-        };
-    }
-
-    const snapshot = documentBody(filledSegments(segments, filled.values));
-    await prisma.arbeitszeugnis.upsert({
-        where: { engagementId: engagement.id },
-        create: {
-            engagementId: engagement.id,
+    if (engagement.arbeitszeugnis?.sentAt) return { status: "already_sent" };
+    if (!master) return { status: "failed", message: "Vorlage fehlt." };
+    const selected = await prisma.preparedDocument.findFirst({
+        where: {
+            id: params.artifactId,
             masterId: master.id,
-            body: snapshot,
-            sentAt: new Date(),
-        },
-        update: {
-            masterId: master.id,
-            body: snapshot,
-            sentAt: new Date(),
+            organizationId: params.organizationId,
         },
     });
-
+    if (!selected)
+        throw new AppError(
+            BAD_REQUEST,
+            "PDF gehört nicht zur ausgewählten Vorlage.",
+        );
+    const from = USE_MICROSOFT_MAIL
+        ? await senderAddress(params.organizationId)
+        : "";
+    const token = USE_MICROSOFT_MAIL ? await microsoftGraphToken() : "";
+    if (USE_MICROSOFT_MAIL && (!from || !token))
+        return {
+            status: "failed",
+            message: "Microsoft 365 und Absender müssen eingerichtet sein.",
+        };
+    await sendPreparedDocument({
+        ...params,
+        kind: "arbeitszeugnis",
+        recipient: engagement.worker.email,
+        deliver: async (attachment, artifactId) => {
+            if (!USE_MICROSOFT_MAIL) {
+                const sent = await sendMail({
+                    to: engagement.worker.email,
+                    subject: SUBJECT,
+                    text: "Anbei Ihr Arbeitszeugnis als PDF.",
+                    html: "<p>Anbei Ihr Arbeitszeugnis als PDF.</p>",
+                    attachments: [attachment],
+                    idempotencyKey: artifactId,
+                });
+                if (sent.error) {
+                    if (
+                        [
+                            "validation_error",
+                            "invalid_parameter",
+                            "missing_required_field",
+                            "restricted_api_key",
+                            "invalid_api_key",
+                        ].includes(sent.error.name)
+                    )
+                        throw new DeliveryRejected(sent.error.message);
+                    throw new Error(sent.error.message);
+                }
+                return "resend:" + artifactId;
+            }
+            const response = await fetch(
+                `${GRAPH}/users/${encodeURIComponent(from)}/sendMail`,
+                {
+                    method: "POST",
+                    signal: AbortSignal.timeout(30_000),
+                    headers: {
+                        Authorization: "Bearer " + token,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        message: {
+                            subject: SUBJECT,
+                            body: {
+                                contentType: "HTML",
+                                content:
+                                    "<p>Anbei Ihr Arbeitszeugnis als PDF.</p>",
+                            },
+                            toRecipients: [
+                                {
+                                    emailAddress: {
+                                        address: engagement.worker.email,
+                                    },
+                                },
+                            ],
+                            attachments: [
+                                {
+                                    "@odata.type":
+                                        "#microsoft.graph.fileAttachment",
+                                    name: attachment.filename,
+                                    contentType: attachment.contentType,
+                                    contentBytes:
+                                        attachment.content.toString("base64"),
+                                },
+                            ],
+                        },
+                        saveToSentItems: true,
+                    }),
+                },
+            );
+            if (!response.ok) {
+                if (response.status >= 400 && response.status < 500)
+                    throw new DeliveryRejected(
+                        "Microsoft Graph rejected delivery",
+                    );
+                throw new Error("Microsoft Graph delivery failed");
+            }
+            return "graph:" + params.artifactId;
+        },
+        finalize: async (tx, document, values, artifactId) => {
+            await tx.arbeitszeugnis.upsert({
+                where: { engagementId: engagement.id },
+                create: {
+                    engagementId: engagement.id,
+                    masterId: master.id,
+                    body: filledDocument(
+                        document,
+                        values,
+                    ) as unknown as Prisma.InputJsonValue,
+                    draftValues: values,
+                    outgoingPdfId: artifactId,
+                    sentAt: new Date(),
+                },
+                update: {
+                    masterId: master.id,
+                    body: filledDocument(
+                        document,
+                        values,
+                    ) as unknown as Prisma.InputJsonValue,
+                    draftValues: values,
+                    outgoingPdfId: artifactId,
+                    sentAt: new Date(),
+                },
+            });
+        },
+    });
     return { status: "sent" };
-}
-
-export function certificateText(body: Prisma.JsonValue) {
-    return textFromSegments(readDocumentSegments(body));
 }

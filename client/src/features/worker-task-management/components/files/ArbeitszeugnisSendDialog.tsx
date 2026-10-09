@@ -5,16 +5,24 @@ import { FETCHDESCRIPTION } from '@/features/all-tasks/consts/query.consts';
 import {
   getArbeitszeugnisPreview,
   sendArbeitszeugnis,
+  prepareArbeitszeugnisPdf,
+  saveArbeitszeugnisDraft,
 } from '@/features/all-tasks/api/arbeitszeugnis.api';
 import { ALL_WORKER_DATA } from '@/features/worker-lifecycle/consts/query-key.consts';
 import { WORKERBYID } from '@/features/worker-task-management/consts/query-key.consts';
 import { rememberContractSendReturn } from '@/features/worker-task-management/contractSendReturn';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { ContractDraftBody } from '@/features/worker-task-management/components/files/ContractDraftBody';
 import { UnmatchedQuestionnaireAnswers } from '@/features/worker-task-management/components/files/UnmatchedQuestionnaireAnswers';
+import { PreparedPdfPreview, type PreparedPdf } from './PreparedPdfPreview';
+import {
+  documentFields,
+  fieldComplete,
+  fromSegments,
+} from '@/features/settings/documents/styledDocument';
 
 function visibleUnmatched(
   answers: { key: string; label: string; value: string }[],
@@ -46,14 +54,21 @@ export function ArbeitszeugnisSendDialog({
     queryFn: () => getArbeitszeugnisPreview(issueId),
   });
   const [values, setValues] = useState<Record<string, string>>({});
+  const [prepared, setPrepared] = useState<PreparedPdf | null>(null);
+  const [approved, setApproved] = useState(false);
 
+  const initialized = useRef(false);
   useEffect(() => {
-    if (!preview.data) return;
+    if (!preview.data || initialized.current) return;
+    initialized.current = true;
+    // Hydrate once; later query refreshes must not overwrite local corrections.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setValues(preview.data.values);
+    setPrepared(preview.data.prepared ?? null);
   }, [preview.data]);
 
   const send = useMutation({
-    mutationFn: () => sendArbeitszeugnis(issueId, values),
+    mutationFn: () => sendArbeitszeugnis(issueId, prepared?.id ?? ''),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] });
       void queryClient.invalidateQueries({ queryKey: [WORKERBYID] });
@@ -66,7 +81,7 @@ export function ArbeitszeugnisSendDialog({
       onSent();
       onClose();
     },
-    onError: (error) => {
+    onError: async (error) => {
       const message =
         error &&
         typeof error === 'object' &&
@@ -75,27 +90,76 @@ export function ArbeitszeugnisSendDialog({
           ? error.message
           : 'Das Arbeitszeugnis konnte nicht versendet werden.';
       toast.error(message);
+      setApproved(false);
+      const refreshed = await preview.refetch();
+      setPrepared(refreshed.data?.prepared ?? null);
     },
   });
 
+  const prepare = useMutation({
+    mutationFn: () => prepareArbeitszeugnisPdf(issueId, values),
+    onSuccess: (pdf) => {
+      setPrepared(pdf);
+      setApproved(false);
+      queryClient.setQueryData(
+        ['automation', 'arbeitszeugnis', issueId],
+        (previous: typeof preview.data) =>
+          previous ? { ...previous, values, prepared: pdf } : previous
+      );
+    },
+    onError: (error) =>
+      toast.error(
+        (error as { message?: string }).message ??
+          'PDF konnte nicht erstellt werden'
+      ),
+  });
+  const blockedDelivery = ['sending', 'uncertain'].includes(
+    prepared?.status ?? ''
+  );
+  const close = async () => {
+    if (prepare.isPending || send.isPending) return;
+    if (
+      preview.data &&
+      !preview.data.alreadySent &&
+      JSON.stringify(values) !== JSON.stringify(preview.data.values)
+    ) {
+      try {
+        await saveArbeitszeugnisDraft(issueId, values);
+      } catch {
+        toast.error('Entwurf konnte nicht gespeichert werden');
+        return;
+      }
+    }
+    onClose();
+  };
+
   const data = preview.data;
-  const inputKeys =
-    data?.segments
-      .filter((segment) => segment.type === 'input')
-      .map((segment) => segment.key) ?? [];
   const complete =
     data?.alreadySent ||
-    inputKeys.every((key) => (values[key] ?? '').trim().length > 0);
-  const unmatched = data
-    ? visibleUnmatched(data.unmatched, values)
-    : [];
+    (data &&
+      documentFields(data.document ?? fromSegments(data.segments)).every(
+        (field) =>
+          fieldComplete(
+            field,
+            field.fieldType === 'checkbox'
+              ? (values[field.key] ?? 'false')
+              : values[field.key]
+          )
+      ));
+  const unmatched = data ? visibleUnmatched(data.unmatched, values) : [];
   const showAside =
     Boolean(data) &&
     !data?.alreadySent &&
     (unmatched.length > 0 || (data?.unresolved.length ?? 0) > 0);
 
-  const leaveForMaster = () => {
+  const leaveForMaster = async () => {
     if (!data) return;
+    try {
+      await saveArbeitszeugnisDraft(issueId, values);
+    } catch {
+      toast.error('Entwurf konnte nicht gespeichert werden');
+      return;
+    }
     const search = new URLSearchParams(window.location.search);
     rememberContractSendReturn({
       kind: 'arbeitszeugnis',
@@ -118,7 +182,7 @@ export function ArbeitszeugnisSendDialog({
 
   return (
     <ModalOverlay
-      handleToggle={onClose}
+      handleToggle={() => void close()}
       size={showAside ? 'max-w-5xl' : 'max-w-3xl'}
     >
       <div className="flex max-h-[85vh] flex-col gap-4 overflow-hidden rounded-2xl bg-card p-6 text-card-foreground">
@@ -138,35 +202,84 @@ export function ArbeitszeugnisSendDialog({
                   : 'Prüfen Sie das Arbeitszeugnis und bestätigen Sie den Versand.'}
               </p>
             </div>
-            <div className="flex min-h-0 flex-1 gap-4 overflow-hidden">
-              {showAside ? (
-                <UnmatchedQuestionnaireAnswers
-                  answers={unmatched}
-                  saving={false}
-                  unresolvedLabels={data.unresolved.map((item) => item.label)}
-                  description="Diese Angaben des Mitarbeiters sind keinem Feld zugeordnet. Ziehen Sie eine Angabe auf das passende Feld."
-                  masterHint="Konnte ein Platzhalter nicht gefüllt werden, benennen Sie das Feld im Muster so, dass es einer Mitarbeiterangabe entspricht, und kehren Sie danach hierher zurück."
-                  masterAction="Muster ergänzen"
-                  onEditMaster={leaveForMaster}
-                />
-              ) : null}
-              <ContractDraftBody
-                segments={data.segments}
-                values={values}
-                readOnly={data.alreadySent}
-                acceptAnswerDrop={showAside}
-                onValueChange={(key, value) =>
-                  setValues((current) => ({ ...current, [key]: value }))
-                }
+            {data.outgoingFileUrl ? (
+              <a
+                href={data.outgoingFileUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-sm underline"
+              >
+                Versendetes Original-PDF öffnen
+              </a>
+            ) : null}
+            {prepared ? (
+              <PreparedPdfPreview
+                prepared={prepared}
+                approved={approved}
+                onApprove={setApproved}
               />
-            </div>
+            ) : (
+              <div className="flex min-h-0 flex-1 gap-4 overflow-hidden">
+                {showAside ? (
+                  <UnmatchedQuestionnaireAnswers
+                    answers={unmatched}
+                    saving={false}
+                    unresolvedLabels={data.unresolved.map((item) => item.label)}
+                    description="Diese Angaben des Mitarbeiters sind keinem Feld zugeordnet. Ziehen Sie eine Angabe auf das passende Feld."
+                    masterHint="Konnte ein Platzhalter nicht gefüllt werden, benennen Sie das Feld im Muster so, dass es einer Mitarbeiterangabe entspricht, und kehren Sie danach hierher zurück."
+                    masterAction="Muster ergänzen"
+                    onEditMaster={leaveForMaster}
+                  />
+                ) : null}
+                <ContractDraftBody
+                  document={data.document}
+                  segments={data.segments}
+                  values={values}
+                  readOnly={
+                    data.alreadySent || prepare.isPending || send.isPending
+                  }
+                  acceptAnswerDrop={showAside}
+                  onValueChange={(key, value) => {
+                    setPrepared(null);
+                    setApproved(false);
+                    setValues((current) => ({ ...current, [key]: value }));
+                  }}
+                />
+              </div>
+            )}
             <div className="flex justify-end">
+              {!data.alreadySent &&
+                (prepared ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={send.isPending || blockedDelivery}
+                    onClick={() => {
+                      setPrepared(null);
+                      setApproved(false);
+                    }}
+                  >
+                    Werte bearbeiten
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    disabled={!complete || prepare.isPending}
+                    onClick={() => prepare.mutate()}
+                  >
+                    {prepare.isPending
+                      ? 'PDF wird erstellt…'
+                      : 'Finales PDF erstellen und prüfen'}
+                  </Button>
+                ))}
               <Button
                 type="button"
                 className="rounded-2xl"
                 disabled={
                   !complete ||
+                  (!data.alreadySent && (!prepared || !approved)) ||
                   send.isPending ||
+                  blockedDelivery ||
                   (!data.masterId && !data.alreadySent)
                 }
                 onClick={() => send.mutate()}

@@ -439,20 +439,17 @@ export const confirmReturnedEmploymentContractHandler = catchErrors(
 export const sendFilledEmploymentContract = catchErrors(
     async (req: Request, res: Response) => {
         const issueId = String(req.body?.issueId ?? "").trim();
-        const values = req.body?.values;
+        const artifactId = String(req.body?.artifactId ?? "").trim();
         if (!issueId) {
             return res
                 .status(400)
                 .json({ success: false, message: "Aufgabe fehlt." });
         }
-        if (
-            values === null ||
-            typeof values !== "object" ||
-            Array.isArray(values)
-        ) {
-            return res
-                .status(400)
-                .json({ success: false, message: "Werte fehlen." });
+        if (!artifactId) {
+            return res.status(400).json({
+                success: false,
+                message: "Bitte das PDF zuerst erstellen und prüfen.",
+            });
         }
 
         const contract =
@@ -462,8 +459,24 @@ export const sendFilledEmploymentContract = catchErrors(
                 engagementId: param(req, "engagementId"),
                 actorUserId: req.userId,
                 issueId,
-                values: values as Record<string, unknown>,
+                artifactId,
             });
         return res.status(200).json({ success: true, data: contract });
+    },
+);
+
+export const prepareEmploymentContractPdf = catchErrors(
+    async (req: Request, res: Response) => {
+        const values = req.body?.values;
+        if (!values || typeof values !== "object" || Array.isArray(values))
+            return res.status(400).json({ message: "Werte fehlen." });
+        const prepared =
+            await employmentContractService.prepareEmploymentContractPdf({
+                organizationId: req.orgId,
+                workerId: param(req, "workerId"),
+                engagementId: param(req, "engagementId"),
+                values,
+            });
+        return res.json({ success: true, data: prepared });
     },
 );

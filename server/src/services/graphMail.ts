@@ -4,6 +4,10 @@ import {
     MICROSOFT_GRAPH_TOKEN,
 } from "@/constants/env";
 import AppError from "@/utils/AppError";
+import {
+    DeliveryRejected,
+    type PdfAttachment,
+} from "@/services/documentDelivery";
 
 const GRAPH = "https://graph.microsoft.com/v1.0";
 
@@ -26,6 +30,7 @@ async function graphFetch(path: string, init?: RequestInit) {
 
     const response = await fetch(`${GRAPH}${path}`, {
         ...init,
+        signal: init?.signal ?? AbortSignal.timeout(30_000),
         headers: {
             Authorization: `Bearer ${MICROSOFT_GRAPH_TOKEN}`,
             "Content-Type": "application/json",
@@ -37,7 +42,9 @@ async function graphFetch(path: string, init?: RequestInit) {
 
     const text = await response.text();
     if (!response.ok) {
-        console.error("Microsoft Graph request failed", response.status, text.slice(0, 500));
+        console.error("Microsoft Graph request failed", response.status);
+        if (response.status >= 400 && response.status < 500)
+            throw new DeliveryRejected("Microsoft Graph rejected delivery");
         throw new AppError(
             BAD_REQUEST,
             "Microsoft Graph hat die Anfrage abgelehnt.",
@@ -51,15 +58,24 @@ export async function sendGraphMail(params: {
     to: string;
     subject: string;
     html: string;
+    attachments?: PdfAttachment[];
 }) {
     const draft = (await graphFetch(`${mailboxPath()}/messages`, {
         method: "POST",
         body: JSON.stringify({
             subject: params.subject,
             body: { contentType: "HTML", content: params.html },
-            toRecipients: [
-                { emailAddress: { address: params.to } },
-            ],
+            toRecipients: [{ emailAddress: { address: params.to } }],
+            ...(params.attachments
+                ? {
+                      attachments: params.attachments.map((a) => ({
+                          "@odata.type": "#microsoft.graph.fileAttachment",
+                          name: a.filename,
+                          contentType: a.contentType,
+                          contentBytes: a.content.toString("base64"),
+                      })),
+                  }
+                : {}),
         }),
     })) as { id?: string; conversationId?: string } | null;
 

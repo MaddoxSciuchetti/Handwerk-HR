@@ -68,6 +68,7 @@ export function ContractConfirmDialog({
               </p>
             </div>
             <ContractDraftBody
+              document={data.document}
               segments={data.segments}
               values={data.values}
               readOnly

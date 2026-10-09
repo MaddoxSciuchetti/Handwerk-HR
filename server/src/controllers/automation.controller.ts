@@ -10,7 +10,12 @@ import {
     saveDepartureMailSettings,
     departureMailPage,
 } from "@/services/departureMail";
-import { runTaskAutomation, arbeitszeugnisPreview, confirmArbeitszeugnis } from "@/services/offboardingAutomation";
+import {
+    runTaskAutomation,
+    arbeitszeugnisPreview,
+    confirmArbeitszeugnis,
+    prepareLetterForIssue,
+} from "@/services/offboardingAutomation";
 import {
     saveWelcomeMailSettings,
     welcomeMailPage,
@@ -49,26 +54,70 @@ export const getArbeitszeugnisPreview = catchErrors(async (req, res) => {
         organizationId: req.orgId,
         issueId: String(req.params.issueId),
     });
-    appAssert(result.status === "ready", BAD_REQUEST, result.status === "failed" ? result.message : "Arbeitszeugnis konnte nicht geladen werden.");
+    appAssert(
+        result.status === "ready",
+        BAD_REQUEST,
+        result.status === "failed"
+            ? result.message
+            : "Arbeitszeugnis konnte nicht geladen werden.",
+    );
     return res.status(200).json({ success: true, data: result.preview });
 });
 
 export const postArbeitszeugnis = catchErrors(async (req, res) => {
     appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
     appAssert(req.userId, BAD_REQUEST, "Benutzer fehlt.");
-    const values = z.record(z.string(), z.string().max(8000)).parse(req.body?.values ?? {});
+    const artifactId = z.string().parse(req.body?.artifactId);
     const result = await confirmArbeitszeugnis({
         organizationId: req.orgId,
         issueId: String(req.params.issueId),
         actorUserId: req.userId,
-        values,
+        artifactId,
     });
     appAssert(
         result.status === "completed",
         BAD_REQUEST,
-        result.status === "failed" ? result.message : "Automatisierung fehlgeschlagen.",
+        result.status === "failed"
+            ? result.message
+            : "Automatisierung fehlgeschlagen.",
     );
     return res.status(200).json({ success: true, data: result });
+});
+
+export const prepareArbeitszeugnis = catchErrors(async (req, res) => {
+    const values = z
+        .record(z.string(), z.string().max(8000))
+        .parse(req.body?.values);
+    const result = await prepareLetterForIssue({
+        organizationId: req.orgId,
+        issueId: String(req.params.issueId),
+        values,
+    });
+    appAssert(
+        result.status === "prepared",
+        BAD_REQUEST,
+        "PDF konnte nicht vorbereitet werden.",
+    );
+    return res.json({ success: true, data: result.data });
+});
+export const saveArbeitszeugnisValues = catchErrors(async (req, res) => {
+    const values = z
+        .record(z.string(), z.string().max(8000))
+        .parse(req.body?.values);
+    const result = await prepareLetterForIssue(
+        {
+            organizationId: req.orgId,
+            issueId: String(req.params.issueId),
+            values,
+        },
+        true,
+    );
+    appAssert(
+        result.status === "saved",
+        BAD_REQUEST,
+        "Entwurf konnte nicht gespeichert werden.",
+    );
+    return res.json({ success: true });
 });
 
 export const postTaskAutomation = catchErrors(async (req, res) => {
@@ -87,7 +136,13 @@ export const postTaskAutomation = catchErrors(async (req, res) => {
         actorUserId: req.userId,
         automation,
     });
-    appAssert(result.status === "completed", BAD_REQUEST, result.status === "failed" ? result.message : "Automatisierung fehlgeschlagen.");
+    appAssert(
+        result.status === "completed",
+        BAD_REQUEST,
+        result.status === "failed"
+            ? result.message
+            : "Automatisierung fehlgeschlagen.",
+    );
     return res.status(200).json({ success: true, data: result });
 });
 
@@ -130,7 +185,10 @@ export const putAutomationDocument = catchErrors(async (req, res) => {
         BAD_REQUEST,
         "Diese Automatisierung verwendet kein Dokument.",
     );
-    const documentMasterId = z.string().uuid().parse(req.body?.documentMasterId);
+    const documentMasterId = z
+        .string()
+        .uuid()
+        .parse(req.body?.documentMasterId);
     return res.status(200).json({
         success: true,
         data: await saveAutomationDocument({

@@ -437,6 +437,11 @@ model DocumentMaster {
   kind           DocumentMasterKind
   name           String             @db.VarChar(200)
   body           Json
+  revision       Int                @default(1)
+  approvedAt     DateTime?          @map("approved_at") @db.Timestamptz()
+  sourceKey      String?            @map("source_key")
+  sourceMime     String?            @map("source_mime")
+  sourceName     String?            @map("source_name")
   createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz()
 
@@ -455,6 +460,7 @@ model EmploymentContract {
   masterId          String                   @map("master_id")
   status            EmploymentContractStatus @default(draft)
   body              Json?
+  outgoingPdfId     String?                  @map("outgoing_pdf_id")
   signedBody        Json?                    @map("signed_body")
   fileUrl           String?                  @map("file_url") @db.VarChar(2048)
   conversationId    String?                  @unique @map("conversation_id") @db.VarChar(512)
@@ -493,6 +499,8 @@ model Arbeitszeugnis {
   engagementId String    @unique @map("engagement_id")
   masterId     String    @map("master_id")
   body         Json
+  draftValues  Json?     @map("draft_values")
+  outgoingPdfId String?  @map("outgoing_pdf_id")
   fileUrl      String?   @map("file_url") @db.VarChar(2048)
   sentAt       DateTime? @map("sent_at") @db.Timestamptz()
   createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz()
@@ -503,6 +511,31 @@ model Arbeitszeugnis {
 
   @@index([masterId])
   @@map("arbeitszeugnisse")
+}
+
+model PreparedDocument {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  engagementId   String   @map("engagement_id")
+  masterId       String   @map("master_id")
+  masterRevision Int      @map("master_revision")
+  kind           String
+  name           String
+  recipient      String
+  snapshot       Json
+  values         Json
+  fontManifest   Json     @map("font_manifest")
+  s3Key          String   @map("s3_key")
+  contentHash    String   @map("content_hash")
+  status         String   @default("prepared")
+  providerId     String?  @map("provider_id")
+  approvedBy     String?  @map("approved_by")
+  approvedAt     DateTime? @map("approved_at") @db.Timestamptz()
+  sentAt         DateTime? @map("sent_at") @db.Timestamptz()
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@index([organizationId, engagementId, kind, status])
+  @@map("prepared_documents")
 }
 
 model Questionnaire {
@@ -841,4 +874,3 @@ enum InvoiceStatus {
   void
   uncollectible
 }
-

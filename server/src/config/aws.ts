@@ -28,6 +28,14 @@ export const generatePresignedUrl = async (
     });
 };
 
+export async function downloadStoredFile(key: string): Promise<Buffer> {
+    const result = await s3Client.send(
+        new GetObjectCommand({ Bucket: process.env.AWS_S3_BUCKET!, Key: key }),
+    );
+    if (!result.Body) throw new Error("Stored file is missing");
+    return Buffer.from(await result.Body.transformToByteArray());
+}
+
 export async function uploadFileToS3(
     file: Express.Multer.File,
     formId: string,

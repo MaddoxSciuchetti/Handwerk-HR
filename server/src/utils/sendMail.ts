@@ -2,6 +2,7 @@ import resend from "../config/resend";
 import { EMAIL_SENDER, NODE_ENV, USE_MICROSOFT_MAIL } from "../constants/env";
 import { sendGraphMail } from "../services/graphMail";
 import { recordSentEmail } from "./testEmailOutbox";
+import type { PdfAttachment } from "@/services/documentDelivery";
 
 type Params = {
     to: string;
@@ -10,6 +11,8 @@ type Params = {
     html: string;
     replyTo?: string;
     headers?: Record<string, string>;
+    attachments?: PdfAttachment[];
+    idempotencyKey?: string;
 };
 
 type SendResult = {
@@ -47,11 +50,18 @@ export const sendMail = async ({
     html,
     replyTo,
     headers,
+    attachments,
+    idempotencyKey,
 }: Params): Promise<SendResult> => {
     const recipient = getToEmail(to);
     if (USE_MICROSOFT_MAIL) {
         try {
-            const sent = await sendGraphMail({ to: recipient, subject, html });
+            const sent = await sendGraphMail({
+                to: recipient,
+                subject,
+                html,
+                attachments,
+            });
             recordSentEmail({
                 to: recipient,
                 subject,
@@ -65,15 +75,27 @@ export const sendMail = async ({
         }
     }
 
-    const response = await resend.emails.send({
-        from: getFromEmail(),
-        to: recipient,
-        subject,
-        text,
-        html,
-        ...(replyTo ? { replyTo } : {}),
-        ...(headers ? { headers } : {}),
-    });
+    const response = await resend.emails.send(
+        {
+            from: getFromEmail(),
+            to: recipient,
+            subject,
+            text,
+            html,
+            ...(replyTo ? { replyTo } : {}),
+            ...(headers ? { headers } : {}),
+            ...(attachments
+                ? {
+                      attachments: attachments.map((a) => ({
+                          filename: a.filename,
+                          content: a.content,
+                          contentType: a.contentType,
+                      })),
+                  }
+                : {}),
+        },
+        idempotencyKey ? { idempotencyKey } : undefined,
+    );
     recordSentEmail({
         to: recipient,
         subject,

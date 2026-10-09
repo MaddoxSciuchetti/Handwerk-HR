@@ -7,10 +7,11 @@ import { peekContractSendReturn } from '@/features/worker-task-management/contra
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { ContractBodyEditor } from './ContractBodyEditor';
+import { StyledDocumentEditor } from './StyledDocumentEditor';
+import { fromSegments, type StyledDocument } from './styledDocument';
+import { apiJson } from '@/config/apiClient';
+import { useQuery } from '@tanstack/react-query';
 import { DOCUMENT_MASTER_KIND_LABELS } from './documentMaster.types';
-import type { DocumentSegment } from './documentSegments';
-import { ContractPreview } from './ContractPreview';
 import { InsertContractInput } from './InsertContractInput';
 import { useDocumentMaster } from './useDocumentMaster';
 import { useSaveDocumentMaster } from './useSaveDocumentMaster';
@@ -28,7 +29,18 @@ export function DocumentMasterEditor({
   const saveMaster = useSaveDocumentMaster(id);
   const navigate = useNavigate();
   const [name, setName] = useState('');
-  const [segments, setSegments] = useState<DocumentSegment[]>([]);
+  const [revision, setRevision] = useState(1);
+  const [document, setDocument] = useState<StyledDocument>(fromSegments([]));
+  const [section, setSection] = useState<'content' | 'header' | 'footer'>(
+    'content'
+  );
+  const fonts = useQuery({
+    queryKey: ['document-font-status'],
+    queryFn: () =>
+      apiJson.get<{ ready: boolean; available: string[] }>(
+        '/document-masters/font-status'
+      ),
+  });
   const [editing, setEditing] = useState(false);
   const editStartedAt = useRef(0);
   const openedForReturn = useRef(false);
@@ -41,21 +53,26 @@ export function DocumentMasterEditor({
 
   useEffect(() => {
     if (!data || editing) return;
+    // Hydrate editable form state from the async query only while not editing.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setName(data.name);
-    setSegments(data.segments ?? []);
+    setRevision(data.revision);
+    setDocument(data.document ?? fromSegments(data.segments ?? []));
   }, [data, editing]);
 
   useEffect(() => {
     if (!returnContract || !data || openedForReturn.current) return;
     openedForReturn.current = true;
     editStartedAt.current = performance.now();
+    // Auto-open editing once when returning from an engagement review.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEditing(true);
   }, [returnContract, data]);
 
-  const save = () => {
+  const save = (approved = false) => {
     if (!data || performance.now() - editStartedAt.current < 400) return;
     saveMaster.mutate(
-      { name: name.trim(), segments },
+      { name: name.trim(), document, revision, approved },
       {
         onSuccess: () => {
           setEditing(false);
@@ -109,7 +126,7 @@ export function DocumentMasterEditor({
   }
 
   return (
-    <div className="mx-auto flex h-full min-h-0 w-full max-w-3xl flex-col gap-4 overflow-hidden rounded-2xl bg-card p-6 text-card-foreground">
+    <div className="mx-auto flex h-full min-h-0 w-full max-w-7xl flex-col gap-4 overflow-hidden rounded-2xl bg-card p-6 text-card-foreground">
       <SettingsPageHeader
         title={DOCUMENT_MASTER_KIND_LABELS[data.kind]}
         action={
@@ -131,6 +148,22 @@ export function DocumentMasterEditor({
         }
       />
       <div className="flex min-h-0 flex-1 flex-col gap-4">
+        <p className="text-sm text-muted-foreground">
+          {data.approvedAt
+            ? 'Vorlage freigegeben. Änderungen benötigen eine neue Freigabe.'
+            : 'Bitte Import und Formatierung anhand des Originals prüfen und freigeben.'}
+        </p>
+        {fonts.data && !fonts.data.ready ? (
+          <p className="text-sm text-destructive">
+            Die vollständigen Calibri-Schriftdateien fehlen noch. PDF-Versand
+            ist bis zur Einrichtung gesperrt.
+          </p>
+        ) : null}
+        {data.importWarnings?.map((warning) => (
+          <p key={warning} className="text-sm text-muted-foreground">
+            {warning}
+          </p>
+        ))}
         {editing ? (
           <div className="flex flex-col gap-2">
             <Label htmlFor="master-name">Name</Label>
@@ -148,8 +181,8 @@ export function DocumentMasterEditor({
         {returnContract && isContract ? (
           <p className="text-sm text-muted-foreground">
             Ergänzen Sie die fehlende Eingabe, speichern Sie den Mustervertrag
-            und kehren Sie zum Vertrag zurück. Dort ziehen Sie die Angabe in
-            das neue Feld.
+            und kehren Sie zum Vertrag zurück. Dort ziehen Sie die Angabe in das
+            neue Feld.
           </p>
         ) : null}
         {returnContract && returnKind === 'arbeitszeugnis' ? (
@@ -159,14 +192,91 @@ export function DocumentMasterEditor({
             Arbeitszeugnis zurück.
           </p>
         ) : null}
-        {editing && usesSegments ? (
-          <div className="flex min-h-0 flex-1 flex-col gap-3">
-            <InsertContractInput />
-            <ContractBodyEditor segments={segments} onChange={setSegments} />
+        {usesSegments ? (
+          <div className="flex min-h-0 flex-1 gap-4">
+            {data.sourceUrl && data.sourceMime === 'application/pdf' ? (
+              <iframe
+                title="Originaldokument"
+                src={data.sourceUrl}
+                className="hidden min-h-96 w-1/2 rounded border lg:block"
+              />
+            ) : data.sourceUrl ? (
+              <a href={data.sourceUrl} target="_blank" rel="noreferrer">
+                Original öffnen
+              </a>
+            ) : null}
+            <div className="flex min-h-0 flex-1 flex-col gap-2">
+              <div className="flex gap-2">
+                {(['content', 'header', 'footer'] as const).map((s, i) => (
+                  <Button
+                    key={s}
+                    type="button"
+                    variant={section === s ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSection(s)}
+                  >
+                    {['Dokument', 'Kopfzeile', 'Fußzeile'][i]}
+                  </Button>
+                ))}
+              </div>
+              {editing ? (
+                <>
+                  <InsertContractInput />
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    {(
+                      [
+                        'width',
+                        'height',
+                        'marginTop',
+                        'marginBottom',
+                        'marginLeft',
+                        'marginRight',
+                      ] as const
+                    ).map((key, i) => (
+                      <label key={key}>
+                        {
+                          [
+                            'Breite',
+                            'Höhe',
+                            'Rand oben',
+                            'Rand unten',
+                            'Rand links',
+                            'Rand rechts',
+                          ][i]
+                        }{' '}
+                        (mm)
+                        <input
+                          aria-label={key}
+                          type="number"
+                          min={0}
+                          max={700}
+                          className="ml-1 w-16 rounded border p-1"
+                          value={document.page[key]}
+                          onChange={(e) =>
+                            setDocument((d) => ({
+                              ...d,
+                              page: {
+                                ...d.page,
+                                [key]: Number(e.target.value),
+                              },
+                            }))
+                          }
+                        />
+                      </label>
+                    ))}
+                  </div>
+                </>
+              ) : null}
+              <StyledDocumentEditor
+                key={section}
+                document={document}
+                section={section}
+                master
+                readOnly={!editing}
+                onChange={setDocument}
+              />
+            </div>
           </div>
-        ) : null}
-        {!editing && usesSegments ? (
-          <ContractPreview segments={segments} />
         ) : null}
         <div className="flex gap-2">
           {editing ? (
@@ -174,16 +284,25 @@ export function DocumentMasterEditor({
               <Button
                 type="button"
                 disabled={saveMaster.isPending}
-                onClick={save}
+                onClick={() => save(false)}
               >
                 {saveMaster.isPending ? 'Speichert…' : 'Speichern'}
+              </Button>
+              <Button
+                type="button"
+                disabled={saveMaster.isPending}
+                onClick={() => save(true)}
+              >
+                Speichern und Vorlage freigeben
               </Button>
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => {
                   setName(data.name);
-                  setSegments(data.segments ?? []);
+                  setDocument(
+                    data.document ?? fromSegments(data.segments ?? [])
+                  );
                   setEditing(false);
                 }}
               >

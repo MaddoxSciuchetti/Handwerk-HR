@@ -1,5 +1,7 @@
 import API from '@/config/apiClient';
 import type { DocumentSegment } from '@/features/settings/documents/documentSegments';
+import type { StyledDocument } from '@/features/settings/documents/styledDocument';
+import type { PreparedPdf } from '@/features/worker-task-management/components/files/PreparedPdfPreview';
 
 export type EmploymentContractStatus = 'draft' | 'ready' | 'signed';
 
@@ -17,10 +19,13 @@ export type EmploymentContractDraft = {
   name: string;
   followsMaster: boolean;
   segments: DocumentSegment[];
+  document: StyledDocument;
   values: Record<string, string>;
   unmatchedAnswers: UnmatchedQuestionnaireAnswer[];
   sentAt: string | null;
   signedFileUrl: string | null;
+  outgoingFileUrl?: string | null;
+  prepared?: PreparedPdf | null;
 };
 
 type ContractResponse = {
@@ -42,27 +47,38 @@ export function saveEngagementContractDraft(
   engagementId: string,
   values: Record<string, string>
 ): Promise<EmploymentContractDraft> {
-  return API.put<
-    { values: Record<string, string> },
-    ContractResponse
-  >(`worker/${workerId}/engagements/${engagementId}/contract`, {
-    values,
-  }).then((response) => response.data);
+  return API.put<{ values: Record<string, string> }, ContractResponse>(
+    `worker/${workerId}/engagements/${engagementId}/contract`,
+    {
+      values,
+    }
+  ).then((response) => response.data);
 }
 
 export function sendFilledEmploymentContract(
   workerId: string,
   engagementId: string,
   issueId: string,
-  values: Record<string, string>
+  artifactId: string
 ): Promise<EmploymentContractDraft> {
-  return API.post<
-    { issueId: string; values: Record<string, string> },
-    ContractResponse
-  >(`worker/${workerId}/engagements/${engagementId}/contract/send`, {
-    issueId,
-    values,
-  }).then((response) => response.data);
+  return API.post<{ issueId: string; artifactId: string }, ContractResponse>(
+    `worker/${workerId}/engagements/${engagementId}/contract/send`,
+    {
+      issueId,
+      artifactId,
+    }
+  ).then((response) => response.data);
+}
+
+export function prepareEmploymentContractPdf(
+  workerId: string,
+  engagementId: string,
+  values: Record<string, string>
+) {
+  return API.post<{ values: Record<string, string> }, { data: PreparedPdf }>(
+    `worker/${workerId}/engagements/${engagementId}/contract/prepare-pdf`,
+    { values }
+  ).then((response) => response.data);
 }
 
 export function confirmReturnedEmploymentContract(
