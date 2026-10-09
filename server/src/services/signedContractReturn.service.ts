@@ -1,4 +1,4 @@
-import { CONFLICT, NOT_FOUND } from "@/constants/http";
+import { NOT_FOUND } from "@/constants/http";
 import { RESEND_INBOUND_ADDRESS, USE_MICROSOFT_MAIL } from "@/constants/env";
 import { prisma } from "@/lib/prisma";
 import { uploadFileToS3 } from "@/config/aws";
@@ -421,12 +421,7 @@ async function createRemainingOnboardingTasks(
                 isQuestionnaireOrContractTemplateTask(item.title),
             ),
         ) ?? templates[0];
-    if (!template) {
-        throw new AppError(
-            CONFLICT,
-            "Keine aktive Aufgabenvorlage für das Onboarding.",
-        );
-    }
+    if (!template) return;
 
     const items = template.items.filter(
         (item) => !isQuestionnaireOrContractTemplateTask(item.title),
