@@ -2,17 +2,36 @@ import LoadingAlert from '@/components/alerts/LoadingAlert';
 import ModalOverlay from '@/components/modal/ModalOverlay';
 import { Button } from '@/components/ui/button';
 import { FETCHDESCRIPTION } from '@/features/all-tasks/consts/query.consts';
+import type { DocumentSegment } from '@/features/settings/documents/documentSegments';
 import { ALL_WORKER_DATA } from '@/features/worker-lifecycle/consts/query-key.consts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { sendFilledEmploymentContract } from '../../api/employmentContract.api';
+import type { UnmatchedQuestionnaireAnswer } from '../../api/employmentContract.api';
 import { WORKERBYID } from '../../consts/query-key.consts';
+import { rememberContractSendReturn } from '../../contractSendReturn';
 import {
   employmentContractKey,
   useEmploymentContract,
 } from '../../hooks/useEmploymentContract';
 import { ContractDraftBody } from './ContractDraftBody';
+import { UnmatchedQuestionnaireAnswers } from './UnmatchedQuestionnaireAnswers';
+
+function visibleUnmatchedAnswers(
+  answers: UnmatchedQuestionnaireAnswer[],
+  segments: DocumentSegment[],
+  values: Record<string, string>
+) {
+  const placed = new Set<string>();
+  for (const segment of segments) {
+    if (segment.type !== 'input') continue;
+    const value = (values[segment.key] ?? '').trim();
+    if (value) placed.add(value);
+  }
+  return answers.filter((answer) => !placed.has(answer.value.trim()));
+}
 
 type ContractSendDialogProps = {
   workerId: string;
@@ -28,6 +47,7 @@ export function ContractSendDialog({
   onClose,
 }: ContractSendDialogProps) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { data, isLoading, isError } = useEmploymentContract(
     workerId,
     engagementId
@@ -63,9 +83,41 @@ export function ContractSendDialog({
   const complete = inputKeys.every((key) => (values[key] ?? '').trim().length > 0);
   const alreadySent = Boolean(data?.sentAt);
   const readOnly = data?.status !== 'draft';
+  const unmatched =
+    data && !alreadySent && !readOnly
+      ? visibleUnmatchedAnswers(
+          data.unmatchedAnswers ?? [],
+          data.segments,
+          values
+        )
+      : [];
+
+  const openMaster = () => {
+    if (!data) return;
+    const search = new URLSearchParams(window.location.search);
+    rememberContractSendReturn({
+      returnTo: window.location.pathname.startsWith('/tasks')
+        ? 'tasks'
+        : 'worker',
+      workerId,
+      engagementId,
+      issueId,
+      workerName: search.get('workerName') ?? '',
+      prevPage: search.get('prevPage') ?? '',
+    });
+    onClose();
+    void navigate({
+      to: '/settings/documents/$id',
+      params: { id: data.masterId },
+      search: { returnContract: '1' },
+    });
+  };
 
   return (
-    <ModalOverlay handleToggle={onClose} size="max-w-3xl">
+    <ModalOverlay
+      handleToggle={onClose}
+      size={unmatched.length > 0 ? 'max-w-5xl' : 'max-w-3xl'}
+    >
       <div className="flex max-h-[85vh] flex-col gap-4 overflow-hidden rounded-2xl bg-card p-6 text-card-foreground">
         {isLoading ? <LoadingAlert className="min-h-40" /> : null}
         {isError || (!isLoading && !data) ? (
@@ -83,14 +135,23 @@ export function ContractSendDialog({
                   : 'Prüfen Sie den Vertrag und bestätigen Sie den Versand.'}
               </p>
             </div>
-            <ContractDraftBody
-              segments={data.segments}
-              values={values}
-              readOnly={readOnly}
-              onValueChange={(key, value) =>
-                setValues((current) => ({ ...current, [key]: value }))
-              }
-            />
+            <div className="flex min-h-0 flex-1 gap-4 overflow-hidden">
+              {unmatched.length > 0 ? (
+                <UnmatchedQuestionnaireAnswers
+                  answers={unmatched}
+                  onEditMaster={openMaster}
+                />
+              ) : null}
+              <ContractDraftBody
+                segments={data.segments}
+                values={values}
+                readOnly={readOnly}
+                acceptAnswerDrop={unmatched.length > 0}
+                onValueChange={(key, value) =>
+                  setValues((current) => ({ ...current, [key]: value }))
+                }
+              />
+            </div>
             {alreadySent ? null : (
               <div className="flex justify-end">
                 <Button

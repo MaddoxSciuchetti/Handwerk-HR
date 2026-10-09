@@ -11,7 +11,11 @@ import {
 } from '@/components/ui/table';
 import useAuth from '@/features/user-profile/hooks/useAuth';
 import GreetingHeader from '@/features/worker-lifecycle/components/GreetingHeader';
-import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
+import {
+  clearContractSendReturn,
+  peekContractSendReturn,
+} from '@/features/worker-task-management/contractSendReturn';
+import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import { useFetchTasks } from '../hooks/useFetchTasks';
 import { useTaskSidebar } from '../hooks/useTaskSidebar';
 import { LargeEditMode } from './LargeEditMode';
@@ -36,6 +40,18 @@ function Tasks() {
     engagementId: string;
     issueId: string;
   } | null>(null);
+
+  useEffect(() => {
+    const pending = peekContractSendReturn();
+    if (!pending || pending.returnTo !== 'tasks') return;
+    setContractSend({
+      workerId: pending.workerId,
+      engagementId: pending.engagementId,
+      issueId: pending.issueId,
+    });
+    const timeout = window.setTimeout(() => clearContractSendReturn(), 0);
+    return () => window.clearTimeout(timeout);
+  }, []);
   const [largeEditMode, setLargeEditMode] = useState(false);
   const [editModeData, setEditModeData] = useState<
     { taskNumber: string; taskTitle: string }[]

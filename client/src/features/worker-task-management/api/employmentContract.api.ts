@@ -3,14 +3,22 @@ import type { DocumentSegment } from '@/features/settings/documents/documentSegm
 
 export type EmploymentContractStatus = 'draft' | 'ready' | 'signed';
 
+export type UnmatchedQuestionnaireAnswer = {
+  key: string;
+  label: string;
+  value: string;
+};
+
 export type EmploymentContractDraft = {
   id: string;
   engagementId: string;
+  masterId: string;
   status: EmploymentContractStatus;
   name: string;
   followsMaster: boolean;
   segments: DocumentSegment[];
   values: Record<string, string>;
+  unmatchedAnswers: UnmatchedQuestionnaireAnswer[];
   sentAt: string | null;
 };
 

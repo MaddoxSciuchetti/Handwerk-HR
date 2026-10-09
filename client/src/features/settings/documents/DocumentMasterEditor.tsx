@@ -4,7 +4,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { SettingsPageHeader } from '@/features/settings/components/SettingsPageHeader';
-import { Link } from '@tanstack/react-router';
+import { peekContractSendReturn } from '@/features/worker-task-management/contractSendReturn';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { ContractBodyEditor } from './ContractBodyEditor';
@@ -17,16 +18,22 @@ import { useSaveDocumentMaster } from './useSaveDocumentMaster';
 
 type DocumentMasterEditorProps = {
   id: string;
+  returnContract?: boolean;
 };
 
-export function DocumentMasterEditor({ id }: DocumentMasterEditorProps) {
+export function DocumentMasterEditor({
+  id,
+  returnContract = false,
+}: DocumentMasterEditorProps) {
   const { data, isLoading, isError } = useDocumentMaster(id);
   const saveMaster = useSaveDocumentMaster(id);
+  const navigate = useNavigate();
   const [name, setName] = useState('');
   const [text, setText] = useState('');
   const [segments, setSegments] = useState<DocumentSegment[]>([]);
   const [editing, setEditing] = useState(false);
   const editStartedAt = useRef(0);
+  const openedForReturn = useRef(false);
   const isContract = data?.kind === 'employment_contract';
 
   useEffect(() => {
@@ -35,6 +42,13 @@ export function DocumentMasterEditor({ id }: DocumentMasterEditorProps) {
     setText(data.text);
     setSegments(data.segments ?? []);
   }, [data, editing]);
+
+  useEffect(() => {
+    if (!returnContract || !data || openedForReturn.current) return;
+    openedForReturn.current = true;
+    editStartedAt.current = performance.now();
+    setEditing(true);
+  }, [returnContract, data]);
 
   const save = () => {
     if (!data || performance.now() - editStartedAt.current < 400) return;
@@ -50,6 +64,26 @@ export function DocumentMasterEditor({ id }: DocumentMasterEditorProps) {
         onError: () => toast.error('Dokument konnte nicht gespeichert werden'),
       }
     );
+  };
+
+  const returnToContract = () => {
+    const pending = peekContractSendReturn();
+    if (!pending) {
+      void navigate({ to: '/settings/documents' });
+      return;
+    }
+    if (pending.returnTo === 'tasks') {
+      void navigate({ to: '/tasks' });
+      return;
+    }
+    void navigate({
+      to: '/user/$Id',
+      params: { Id: pending.workerId },
+      search: {
+        workerName: pending.workerName,
+        prevPage: pending.prevPage,
+      },
+    });
   };
 
   const startEditing = () => {
@@ -79,9 +113,19 @@ export function DocumentMasterEditor({ id }: DocumentMasterEditorProps) {
       <SettingsPageHeader
         title={DOCUMENT_MASTER_KIND_LABELS[data.kind]}
         action={
-          <Link to="/settings/documents" className="text-sm underline">
-            Zurück
-          </Link>
+          returnContract ? (
+            <button
+              type="button"
+              className="text-sm underline"
+              onClick={returnToContract}
+            >
+              Zurück zum Vertrag
+            </button>
+          ) : (
+            <Link to="/settings/documents" className="text-sm underline">
+              Zurück
+            </Link>
+          )
         }
       />
       <div className="flex min-h-0 flex-1 flex-col gap-4">
@@ -99,6 +143,13 @@ export function DocumentMasterEditor({ id }: DocumentMasterEditorProps) {
         ) : (
           <h2 className="text-lg font-semibold">{name}</h2>
         )}
+        {returnContract && isContract ? (
+          <p className="text-sm text-muted-foreground">
+            Ergänzen Sie die fehlende Eingabe, speichern Sie den Mustervertrag
+            und kehren Sie zum Vertrag zurück. Dort ziehen Sie die Angabe in
+            das neue Feld.
+          </p>
+        ) : null}
         {editing && isContract ? (
           <div className="flex min-h-0 flex-1 flex-col gap-3">
             <InsertContractInput />
