@@ -1,5 +1,6 @@
 import { BAD_REQUEST, CONFLICT, NOT_FOUND } from "@/constants/http";
 import { prisma } from "@/lib/prisma";
+import { unmatchedQuestionnaireAnswers } from "@/services/contractFieldMatch";
 import {
     documentBody,
     readDocumentSegments,
@@ -49,6 +50,23 @@ function readDraftValues(
     return entries;
 }
 
+const contractInclude = {
+    master: true,
+    values: true,
+    engagement: {
+        select: {
+            questionnaireSubmission: {
+                select: {
+                    status: true,
+                    answers: {
+                        select: { key: true, value: true },
+                    },
+                },
+            },
+        },
+    },
+} satisfies Prisma.EmploymentContractInclude;
+
 async function findContract(params: ContractParams) {
     return prisma.employmentContract.findFirst({
         where: {
@@ -58,10 +76,17 @@ async function findContract(params: ContractParams) {
                 organizationId: params.organizationId,
             },
         },
-        include: {
-            master: true,
-            values: true,
-        },
+        include: contractInclude,
+    });
+}
+
+function reloadContract(
+    id: string,
+    db: Prisma.TransactionClient | typeof prisma = prisma,
+) {
+    return db.employmentContract.findFirstOrThrow({
+        where: { id },
+        include: contractInclude,
     });
 }
 
@@ -77,14 +102,22 @@ function present(
         values[entry.key] = entry.value;
     }
 
+    const submission = contract.engagement.questionnaireSubmission;
+    const unmatchedAnswers =
+        submission?.status === "completed"
+            ? unmatchedQuestionnaireAnswers(segments, values, submission.answers)
+            : [];
+
     return {
         id: contract.id,
         engagementId: contract.engagementId,
+        masterId: contract.masterId,
         status: contract.status,
         name: contract.master.name,
         followsMaster,
         segments,
         values,
+        unmatchedAnswers,
         sentAt: contract.sentAt?.toISOString() ?? null,
     };
 }
@@ -159,10 +192,7 @@ export async function saveEngagementContractDraft(
             });
         }
 
-        return tx.employmentContract.findFirstOrThrow({
-            where: { id: contract.id },
-            include: { master: true, values: true },
-        });
+        return reloadContract(contract.id, tx);
     });
 
     return present(saved);
@@ -183,14 +213,14 @@ export async function confirmEngagementContractForSend(params: ContractParams) {
     }
 
     const segments = readDocumentSegments(contract.master.body);
-    const saved = await prisma.employmentContract.update({
+    await prisma.employmentContract.update({
         where: { id: contract.id },
         data: {
             body: documentBody(segments),
             status: "ready",
         },
-        include: { master: true, values: true },
     });
+    const saved = await reloadContract(contract.id);
 
     return present(saved);
 }

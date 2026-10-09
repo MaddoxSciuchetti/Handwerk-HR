@@ -15,6 +15,10 @@ import { LargeEditMode } from '@/features/all-tasks/components/LargeEditMode';
 import { TaskItem } from '@/features/all-tasks/components/TaskItem';
 import { TaskSidebar } from '@/features/all-tasks/components/TaskSidebar';
 import { useTaskSidebar } from '@/features/all-tasks/hooks/useTaskSidebar';
+import {
+  clearContractSendReturn,
+  peekContractSendReturn,
+} from '../../contractSendReturn';
 import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 import useFilteredData from '../../hooks/useFilteredData';
 import useGetWorkerFiles from '../../hooks/useGetWorkerFiles';
@@ -39,6 +43,23 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
     engagementId: string;
     issueId: string;
   } | null>(null);
+
+  useEffect(() => {
+    const pending = peekContractSendReturn();
+    if (
+      !pending ||
+      pending.returnTo !== 'worker' ||
+      pending.workerId !== workerId
+    ) {
+      return;
+    }
+    setContractSend({
+      engagementId: pending.engagementId,
+      issueId: pending.issueId,
+    });
+    const timeout = window.setTimeout(() => clearContractSendReturn(), 0);
+    return () => window.clearTimeout(timeout);
+  }, [workerId]);
   const [largeEditMode, setLargeEditMode] = useState(false);
   const [editModeData, setEditModeData] = useState<
     { taskNumber: string; taskTitle: string }[]

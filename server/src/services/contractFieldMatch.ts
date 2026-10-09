@@ -1,5 +1,14 @@
 import type { DocumentSegment } from "@/services/documentBody";
-import type { QuestionnaireAnswers } from "@/services/questionnaireForm";
+import {
+    QUESTIONNAIRE_FIELDS,
+    type QuestionnaireAnswers,
+} from "@/services/questionnaireForm";
+
+export type UnmatchedQuestionnaireAnswer = {
+    key: string;
+    label: string;
+    value: string;
+};
 
 const FIELD_ALIASES: Record<string, string[]> = {
     firstName: ["vorname", "firstname", "givenname", "vornamen"],
@@ -87,4 +96,69 @@ export function contractValuesFromAnswers(
     }
 
     return entries;
+}
+
+function displayAnswer(key: string, raw: string) {
+    const value = raw.trim();
+    if (key !== "birthday") return value;
+    const [year, month, day] = value.split("-");
+    if (!year || !month || !day) return value;
+    return `${day}.${month}.${year}`;
+}
+
+function placedValues(
+    segments: DocumentSegment[],
+    contractValues: Record<string, string>,
+) {
+    const placed = new Set<string>();
+    for (const segment of segments) {
+        if (segment.type !== "input") continue;
+        const value = (contractValues[segment.key] ?? "").trim();
+        if (value) placed.add(value);
+    }
+    return placed;
+}
+
+export function unmatchedQuestionnaireAnswers(
+    segments: DocumentSegment[],
+    contractValues: Record<string, string>,
+    answers: { key: string; value: string }[],
+): UnmatchedQuestionnaireAnswer[] {
+    const byKey = new Map<string, string>();
+    for (const answer of answers) {
+        const value = displayAnswer(answer.key, answer.value);
+        if (value) byKey.set(answer.key, value);
+    }
+
+    const fullName = [byKey.get("firstName"), byKey.get("lastName")]
+        .filter((part): part is string => Boolean(part))
+        .join(" ");
+    const locality = [byKey.get("postalCode"), byKey.get("city")]
+        .filter((part): part is string => Boolean(part))
+        .join(" ");
+    const address = [byKey.get("street"), locality]
+        .filter((part): part is string => Boolean(part))
+        .join(", ");
+
+    const placed = placedValues(segments, contractValues);
+    const consumed = new Set<string>();
+    for (const [key, value] of byKey) {
+        if (placed.has(value)) consumed.add(key);
+    }
+    if (fullName && placed.has(fullName)) {
+        consumed.add("firstName");
+        consumed.add("lastName");
+    }
+    if (address && placed.has(address)) {
+        consumed.add("street");
+        consumed.add("postalCode");
+        consumed.add("city");
+    }
+
+    return QUESTIONNAIRE_FIELDS.flatMap((field) => {
+        if (consumed.has(field.key)) return [];
+        const value = byKey.get(field.key);
+        if (!value) return [];
+        return [{ key: field.key, label: field.label, value }];
+    });
 }
