@@ -18,6 +18,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UserIdRouteImport } from './routes/user/$Id'
+import { Route as SettingsWelcomeMailRouteImport } from './routes/settings/welcome-mail'
 import { Route as SettingsProfileRouteImport } from './routes/settings/profile'
 import { Route as SettingsPlansRouteImport } from './routes/settings/plans'
 import { Route as SettingsPaymentsRouteImport } from './routes/settings/payments'
@@ -76,6 +77,11 @@ const UserIdRoute = UserIdRouteImport.update({
   id: '/user/$Id',
   path: '/user/$Id',
   getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsWelcomeMailRoute = SettingsWelcomeMailRouteImport.update({
+  id: '/welcome-mail',
+  path: '/welcome-mail',
+  getParentRoute: () => SettingsRoute,
 } as any)
 const SettingsProfileRoute = SettingsProfileRouteImport.update({
   id: '/profile',
@@ -162,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/settings/payments': typeof SettingsPaymentsRoute
   '/settings/plans': typeof SettingsPlansRoute
   '/settings/profile': typeof SettingsProfileRoute
+  '/settings/welcome-mail': typeof SettingsWelcomeMailRoute
   '/user/$Id': typeof UserIdRoute
   '/email/verify/$code': typeof EmailVerifyCodeRoute
   '/settings/documents/$id': typeof SettingsDocumentsIdRoute
@@ -186,6 +193,7 @@ export interface FileRoutesByTo {
   '/settings/payments': typeof SettingsPaymentsRoute
   '/settings/plans': typeof SettingsPlansRoute
   '/settings/profile': typeof SettingsProfileRoute
+  '/settings/welcome-mail': typeof SettingsWelcomeMailRoute
   '/user/$Id': typeof UserIdRoute
   '/email/verify/$code': typeof EmailVerifyCodeRoute
   '/settings/documents/$id': typeof SettingsDocumentsIdRoute
@@ -211,6 +219,7 @@ export interface FileRoutesById {
   '/settings/payments': typeof SettingsPaymentsRoute
   '/settings/plans': typeof SettingsPlansRoute
   '/settings/profile': typeof SettingsProfileRoute
+  '/settings/welcome-mail': typeof SettingsWelcomeMailRoute
   '/user/$Id': typeof UserIdRoute
   '/email/verify/$code': typeof EmailVerifyCodeRoute
   '/settings/documents/$id': typeof SettingsDocumentsIdRoute
@@ -237,6 +246,7 @@ export interface FileRouteTypes {
     | '/settings/payments'
     | '/settings/plans'
     | '/settings/profile'
+    | '/settings/welcome-mail'
     | '/user/$Id'
     | '/email/verify/$code'
     | '/settings/documents/$id'
@@ -261,6 +271,7 @@ export interface FileRouteTypes {
     | '/settings/payments'
     | '/settings/plans'
     | '/settings/profile'
+    | '/settings/welcome-mail'
     | '/user/$Id'
     | '/email/verify/$code'
     | '/settings/documents/$id'
@@ -285,6 +296,7 @@ export interface FileRouteTypes {
     | '/settings/payments'
     | '/settings/plans'
     | '/settings/profile'
+    | '/settings/welcome-mail'
     | '/user/$Id'
     | '/email/verify/$code'
     | '/settings/documents/$id'
@@ -372,6 +384,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/user/$Id'
       preLoaderRoute: typeof UserIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/settings/welcome-mail': {
+      id: '/settings/welcome-mail'
+      path: '/welcome-mail'
+      fullPath: '/settings/welcome-mail'
+      preLoaderRoute: typeof SettingsWelcomeMailRouteImport
+      parentRoute: typeof SettingsRoute
     }
     '/settings/profile': {
       id: '/settings/profile'
@@ -485,6 +504,7 @@ interface SettingsRouteChildren {
   SettingsPaymentsRoute: typeof SettingsPaymentsRoute
   SettingsPlansRoute: typeof SettingsPlansRoute
   SettingsProfileRoute: typeof SettingsProfileRoute
+  SettingsWelcomeMailRoute: typeof SettingsWelcomeMailRoute
   SettingsTemplatesIdRoute: typeof SettingsTemplatesIdRoute
   SettingsTemplatesTemplateRoute: typeof SettingsTemplatesTemplateRoute
 }
@@ -496,6 +516,7 @@ const SettingsRouteChildren: SettingsRouteChildren = {
   SettingsPaymentsRoute: SettingsPaymentsRoute,
   SettingsPlansRoute: SettingsPlansRoute,
   SettingsProfileRoute: SettingsProfileRoute,
+  SettingsWelcomeMailRoute: SettingsWelcomeMailRoute,
   SettingsTemplatesIdRoute: SettingsTemplatesIdRoute,
   SettingsTemplatesTemplateRoute: SettingsTemplatesTemplateRoute,
 }

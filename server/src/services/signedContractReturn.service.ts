@@ -9,6 +9,7 @@ import {
     graphMailConfigured,
 } from "@/services/graphMail";
 import { provisionMicrosoft365Account } from "@/services/microsoft365Account";
+import { sendTeamWelcomeMail } from "@/services/welcomeMail";
 import { isQuestionnaireOrContractTemplateTask } from "@/services/onboardingTemplateTasks";
 import AppError from "@/utils/AppError";
 import { Prisma } from "@prisma/client";
@@ -559,6 +560,29 @@ export async function confirmReturnedEmploymentContract(params: {
                 "Microsoft 365 Konto wurde nicht angelegt.",
                 result.message,
             );
+            return;
+        }
+        const accountReady =
+            result.status === "created" ||
+            (result.status === "skipped" &&
+                result.reason === "already_provisioned");
+        if (!accountReady) return;
+
+        try {
+            const welcome = await sendTeamWelcomeMail({
+                organizationId: params.organizationId,
+                workerId: params.workerId,
+                engagementId: params.engagementId,
+                actorUserId: params.actorUserId,
+            });
+            if (welcome.status === "failed") {
+                console.error(
+                    "Willkommensmail wurde nicht gesendet.",
+                    welcome.message,
+                );
+            }
+        } catch (error) {
+            console.error("Willkommensmail wurde nicht gesendet.", error);
         }
     } catch (error) {
         console.error("Microsoft 365 Konto wurde nicht angelegt.", error);

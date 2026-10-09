@@ -2,6 +2,7 @@ import {
   CreditCard,
   FileText,
   Inbox,
+  Mail,
   ScrollText,
   Ticket,
   UserRound,
@@ -47,6 +48,11 @@ export const SETTINGSITEMS = [
     title: 'Automatisierung',
     to: '/settings/automation',
     icon: Zap,
+  },
+  {
+    title: 'Willkommensmail',
+    to: '/settings/welcome-mail',
+    icon: Mail,
   },
   {
     title: 'Zahlungen',

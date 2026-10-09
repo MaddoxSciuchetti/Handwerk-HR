@@ -12,6 +12,7 @@ const TOKEN_SCOPE = "https://graph.microsoft.com/.default";
 const REQUIRED_PERMISSIONS = [
     "User.ReadWrite.All",
     "Directory.ReadWrite.All",
+    "Mail.Send",
 ] as const;
 const MAX_ADDRESS_ATTEMPTS = 20;
 
@@ -139,6 +140,12 @@ async function readBody(response: Response) {
     } catch {
         return text;
     }
+}
+
+export async function microsoftGraphToken() {
+    const config = readConfig();
+    if (!config) return null;
+    return graphToken(config);
 }
 
 async function graphToken(config: Microsoft365Config) {
@@ -344,7 +351,7 @@ export async function provisionMicrosoft365Account(params: {
         };
     }
 
-    const token = await graphToken(config);
+    const token = await microsoftGraphToken();
     if (!token) {
         return {
             status: "failed",
