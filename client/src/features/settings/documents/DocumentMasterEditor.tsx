@@ -2,7 +2,6 @@ import LoadingAlert from '@/components/alerts/LoadingAlert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { SettingsPageHeader } from '@/features/settings/components/SettingsPageHeader';
 import { peekContractSendReturn } from '@/features/worker-task-management/contractSendReturn';
 import { Link, useNavigate } from '@tanstack/react-router';
@@ -29,17 +28,20 @@ export function DocumentMasterEditor({
   const saveMaster = useSaveDocumentMaster(id);
   const navigate = useNavigate();
   const [name, setName] = useState('');
-  const [text, setText] = useState('');
   const [segments, setSegments] = useState<DocumentSegment[]>([]);
   const [editing, setEditing] = useState(false);
   const editStartedAt = useRef(0);
   const openedForReturn = useRef(false);
+  const returnKind = returnContract
+    ? peekContractSendReturn()?.kind
+    : undefined;
   const isContract = data?.kind === 'employment_contract';
+  const usesSegments =
+    data?.kind === 'employment_contract' || data?.kind === 'arbeitszeugnis';
 
   useEffect(() => {
     if (!data || editing) return;
     setName(data.name);
-    setText(data.text);
     setSegments(data.segments ?? []);
   }, [data, editing]);
 
@@ -53,9 +55,7 @@ export function DocumentMasterEditor({
   const save = () => {
     if (!data || performance.now() - editStartedAt.current < 400) return;
     saveMaster.mutate(
-      isContract
-        ? { name: name.trim(), segments }
-        : { name: name.trim(), text },
+      { name: name.trim(), segments },
       {
         onSuccess: () => {
           setEditing(false);
@@ -119,7 +119,9 @@ export function DocumentMasterEditor({
               className="text-sm underline"
               onClick={returnToContract}
             >
-              Zurück zum Vertrag
+              {returnKind === 'arbeitszeugnis'
+                ? 'Zurück zum Arbeitszeugnis'
+                : 'Zurück zum Vertrag'}
             </button>
           ) : (
             <Link to="/settings/documents" className="text-sm underline">
@@ -150,30 +152,21 @@ export function DocumentMasterEditor({
             das neue Feld.
           </p>
         ) : null}
-        {editing && isContract ? (
+        {returnContract && returnKind === 'arbeitszeugnis' ? (
+          <p className="text-sm text-muted-foreground">
+            Benennen Sie den Platzhalter so, dass er einer Mitarbeiterangabe
+            entspricht, speichern Sie das Muster und kehren Sie zum
+            Arbeitszeugnis zurück.
+          </p>
+        ) : null}
+        {editing && usesSegments ? (
           <div className="flex min-h-0 flex-1 flex-col gap-3">
             <InsertContractInput />
             <ContractBodyEditor segments={segments} onChange={setSegments} />
           </div>
         ) : null}
-        {editing && !isContract ? (
-          <div className="flex min-h-0 flex-1 flex-col gap-2">
-            <Label htmlFor="master-text">Text</Label>
-            <Textarea
-              id="master-text"
-              value={text}
-              onChange={(event) => setText(event.target.value)}
-              className="min-h-80 flex-1"
-            />
-          </div>
-        ) : null}
-        {!editing && isContract ? (
+        {!editing && usesSegments ? (
           <ContractPreview segments={segments} />
-        ) : null}
-        {!editing && !isContract ? (
-          <p className="min-h-80 flex-1 overflow-auto text-sm whitespace-pre-wrap">
-            {text}
-          </p>
         ) : null}
         <div className="flex gap-2">
           {editing ? (
@@ -190,7 +183,6 @@ export function DocumentMasterEditor({
                 variant="outline"
                 onClick={() => {
                   setName(data.name);
-                  setText(data.text);
                   setSegments(data.segments ?? []);
                   setEditing(false);
                 }}

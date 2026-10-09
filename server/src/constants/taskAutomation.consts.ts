@@ -1,5 +1,6 @@
 export const O365_BLOCK_SIGN_IN = "o365-block-signin";
 export const TEAM_DEPARTURE_MAIL = "team-departure-mail";
+export const ARBEITSZEUGNIS = "arbeitszeugnis";
 
 export const TASK_AUTOMATIONS = [
     {
@@ -9,6 +10,10 @@ export const TASK_AUTOMATIONS = [
     {
         id: TEAM_DEPARTURE_MAIL,
         name: "Infomail Entlassung",
+    },
+    {
+        id: ARBEITSZEUGNIS,
+        name: "Arbeitszeugnis",
     },
 ] as const;
 

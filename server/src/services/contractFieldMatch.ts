@@ -13,13 +13,18 @@ export type UnmatchedQuestionnaireAnswer = {
 const FIELD_ALIASES: Record<string, string[]> = {
     firstName: ["vorname", "firstname", "givenname", "vornamen"],
     lastName: ["nachname", "lastname", "familienname", "surname", "zuname"],
-    fullName: ["vorundnachname", "vollername"],
+    fullName: ["vorundnachname", "vollername", "name"],
     email: ["email", "emailadresse", "mail"],
+    workEmail: ["arbeitsmail", "workemail", "dienstmail", "firmenmail"],
+    position: ["position", "stelle", "beruf", "taetigkeit"],
+    phone: ["telefon", "telefonnummer", "phone", "handy"],
     birthday: ["geburtsdatum", "birthday", "geburtstag", "alter"],
     address: ["adresse", "anschrift", "wohnadresse"],
     street: ["strasse", "street"],
     postalCode: ["plz", "postleitzahl", "postalcode"],
     city: ["ort", "stadt", "wohnort", "city"],
+    entryDate: ["eintritt", "eintrittsdatum", "entrydate"],
+    exitDate: ["austritt", "austrittsdatum", "entlassung", "exitdate"],
     trouserSize: ["hosengroesse", "hose", "trousers"],
     tshirtSize: ["tshirtgroesse", "tshirt", "shirtgroesse"],
 };
@@ -96,6 +101,39 @@ export function contractValuesFromAnswers(
     }
 
     return entries;
+}
+
+export function valuesForDocumentSegments(
+    segments: DocumentSegment[],
+    fields: Record<string, string>,
+): {
+    values: Record<string, string>;
+    missing: string[];
+    unresolved: { key: string; label: string }[];
+} {
+    const values: Record<string, string> = {};
+    const missing: string[] = [];
+    const unresolved: { key: string; label: string }[] = [];
+    const seen = new Set<string>();
+
+    for (const segment of segments) {
+        if (segment.type !== "input" || seen.has(segment.key)) continue;
+        seen.add(segment.key);
+        const field = matchAlias(segment.label, segment.key);
+        if (!field) {
+            unresolved.push({ key: segment.key, label: segment.label });
+            missing.push(segment.label);
+            continue;
+        }
+        const value = fields[field]?.trim() ?? "";
+        if (!value) {
+            missing.push(segment.label);
+            continue;
+        }
+        values[segment.key] = value.slice(0, 8000);
+    }
+
+    return { values, missing, unresolved };
 }
 
 function displayAnswer(key: string, raw: string) {

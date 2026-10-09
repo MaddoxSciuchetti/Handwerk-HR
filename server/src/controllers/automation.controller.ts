@@ -1,11 +1,16 @@
 import { BAD_REQUEST } from "@/constants/http";
 import { isTaskAutomationId } from "@/constants/taskAutomation.consts";
+import {
+    automationDocumentPage,
+    isDocumentAutomation,
+    saveAutomationDocument,
+} from "@/services/automationDocument";
 import { microsoft365AutomationStatus } from "@/services/microsoft365Account";
 import {
     saveDepartureMailSettings,
     departureMailPage,
 } from "@/services/departureMail";
-import { runTaskAutomation } from "@/services/offboardingAutomation";
+import { runTaskAutomation, arbeitszeugnisPreview, confirmArbeitszeugnis } from "@/services/offboardingAutomation";
 import {
     saveWelcomeMailSettings,
     welcomeMailPage,
@@ -36,6 +41,34 @@ export const getWelcomeMail = catchErrors(async (req, res) => {
         success: true,
         data: await welcomeMailPage(req.orgId),
     });
+});
+
+export const getArbeitszeugnisPreview = catchErrors(async (req, res) => {
+    appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
+    const result = await arbeitszeugnisPreview({
+        organizationId: req.orgId,
+        issueId: String(req.params.issueId),
+    });
+    appAssert(result.status === "ready", BAD_REQUEST, result.status === "failed" ? result.message : "Arbeitszeugnis konnte nicht geladen werden.");
+    return res.status(200).json({ success: true, data: result.preview });
+});
+
+export const postArbeitszeugnis = catchErrors(async (req, res) => {
+    appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
+    appAssert(req.userId, BAD_REQUEST, "Benutzer fehlt.");
+    const values = z.record(z.string(), z.string().max(8000)).parse(req.body?.values ?? {});
+    const result = await confirmArbeitszeugnis({
+        organizationId: req.orgId,
+        issueId: String(req.params.issueId),
+        actorUserId: req.userId,
+        values,
+    });
+    appAssert(
+        result.status === "completed",
+        BAD_REQUEST,
+        result.status === "failed" ? result.message : "Automatisierung fehlgeschlagen.",
+    );
+    return res.status(200).json({ success: true, data: result });
 });
 
 export const postTaskAutomation = catchErrors(async (req, res) => {
@@ -72,6 +105,39 @@ export const putWelcomeMail = catchErrors(async (req, res) => {
     return res.status(200).json({
         success: true,
         data: await saveWelcomeMailSettings(req.orgId, input),
+    });
+});
+
+export const getAutomationDocument = catchErrors(async (req, res) => {
+    appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
+    const automation = String(req.params.automation);
+    appAssert(
+        isDocumentAutomation(automation),
+        BAD_REQUEST,
+        "Diese Automatisierung verwendet kein Dokument.",
+    );
+    return res.status(200).json({
+        success: true,
+        data: await automationDocumentPage(req.orgId, automation),
+    });
+});
+
+export const putAutomationDocument = catchErrors(async (req, res) => {
+    appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
+    const automation = String(req.params.automation);
+    appAssert(
+        isDocumentAutomation(automation),
+        BAD_REQUEST,
+        "Diese Automatisierung verwendet kein Dokument.",
+    );
+    const documentMasterId = z.string().uuid().parse(req.body?.documentMasterId);
+    return res.status(200).json({
+        success: true,
+        data: await saveAutomationDocument({
+            organizationId: req.orgId,
+            automation,
+            documentMasterId,
+        }),
     });
 });
 

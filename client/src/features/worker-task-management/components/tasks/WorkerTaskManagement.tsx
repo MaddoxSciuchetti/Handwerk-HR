@@ -27,6 +27,7 @@ import { WorkerTab } from '../../types/index.types';
 import handleZipExport from '../../utils/handleZipExport';
 import { ContractConfirmDialog } from '../files/ContractConfirmDialog';
 import { ContractSendDialog } from '../files/ContractSendDialog';
+import { ArbeitszeugnisSendDialog } from '../files/ArbeitszeugnisSendDialog';
 import WorkerFileUploads from '../files/WorkerFileUploads';
 import { MaterialsTab } from '../materials/MaterialsTab';
 import WorkerHeader from '../header/WorkerHeader';
@@ -51,6 +52,8 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
     issueId: string;
   } | null>(null);
 
+  const [zeugnisIssueId, setZeugnisIssueId] = useState<string | null>(null);
+
   useEffect(() => {
     const pending = peekContractSendReturn();
     if (
@@ -60,10 +63,14 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
     ) {
       return;
     }
-    setContractSend({
-      engagementId: pending.engagementId,
-      issueId: pending.issueId,
-    });
+    if (pending.kind === 'arbeitszeugnis') {
+      setZeugnisIssueId(pending.issueId);
+    } else {
+      setContractSend({
+        engagementId: pending.engagementId,
+        issueId: pending.issueId,
+      });
+    }
     const timeout = window.setTimeout(() => clearContractSendReturn(), 0);
     return () => window.clearTimeout(timeout);
   }, [workerId]);
@@ -121,7 +128,11 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
 
   return (
     <div className="mx-auto flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
-      <TaskSidebar key={sidebarKey} {...sidebarProps} />
+      <TaskSidebar
+        key={sidebarKey}
+        {...sidebarProps}
+        onOpenArbeitszeugnis={setZeugnisIssueId}
+      />
       {contractSend ? (
         <ContractSendDialog
           workerId={workerId}
@@ -130,6 +141,13 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
           onClose={() => setContractSend(null)}
         />
         ) : null}
+      {zeugnisIssueId ? (
+        <ArbeitszeugnisSendDialog
+          issueId={zeugnisIssueId}
+          onClose={() => setZeugnisIssueId(null)}
+          onSent={() => setZeugnisIssueId(null)}
+        />
+      ) : null}
       {contractConfirm ? (
         <ContractConfirmDialog
           workerId={workerId}
@@ -242,6 +260,17 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                             id: engagement.employmentContract.id,
                             name: engagement.employmentContract.master.name,
                             status: engagement.employmentContract.status,
+                          },
+                        ]
+                      : []
+                  )}
+                  certificates={data.data.engagements.flatMap((engagement) =>
+                    engagement.arbeitszeugnis
+                      ? [
+                          {
+                            id: engagement.arbeitszeugnis.id,
+                            name: engagement.arbeitszeugnis.name,
+                            text: engagement.arbeitszeugnis.text,
                           },
                         ]
                       : []

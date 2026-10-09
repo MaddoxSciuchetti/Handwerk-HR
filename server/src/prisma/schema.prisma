@@ -113,8 +113,9 @@ model Organization {
   absences        Absence[]
   documentMasters DocumentMaster[]
   questionnaire   Questionnaire?
-  welcomeMailSettings   WelcomeMailSettings?
-  departureMailSettings DepartureMailSettings?
+  welcomeMailSettings       WelcomeMailSettings?
+  departureMailSettings     DepartureMailSettings?
+  automationDocumentSettings AutomationDocumentSetting[]
 
 
   @@map("organizations")
@@ -439,9 +440,10 @@ model DocumentMaster {
   createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz()
 
-  organization        Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  employmentContracts EmploymentContract[]
-  arbeitszeugnisse    Arbeitszeugnis[]
+  organization               Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employmentContracts        EmploymentContract[]
+  arbeitszeugnisse           Arbeitszeugnis[]
+  automationDocumentSettings AutomationDocumentSetting[]
 
   @@index([organizationId])
   @@map("document_masters")
@@ -626,6 +628,22 @@ model WelcomeMailSettings {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@map("welcome_mail_settings")
+}
+
+model AutomationDocumentSetting {
+  id               String   @id @default(uuid())
+  organizationId   String   @map("organization_id")
+  automation       String   @db.VarChar(64)
+  documentMasterId String   @map("document_master_id")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  documentMaster DocumentMaster @relation(fields: [documentMasterId], references: [id], onDelete: Restrict)
+
+  @@unique([organizationId, automation])
+  @@index([documentMasterId])
+  @@map("automation_document_settings")
 }
 
 model DepartureMailSettings {

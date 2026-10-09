@@ -1,6 +1,7 @@
 import z from 'zod';
 import { ISSUE_STATUSES } from '../consts/issue-status.consts';
 import {
+  ARBEITSZEUGNIS,
   O365_BLOCK_SIGN_IN,
   TASK_AUTOMATION_NONE,
   TEAM_DEPARTURE_MAIL,
@@ -21,6 +22,7 @@ export const taskFormSchema = z.object({
     TASK_AUTOMATION_NONE,
     O365_BLOCK_SIGN_IN,
     TEAM_DEPARTURE_MAIL,
+    ARBEITSZEUGNIS,
   ]),
 });
 

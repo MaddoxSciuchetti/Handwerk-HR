@@ -9,6 +9,7 @@ import { useWatch } from 'react-hook-form';
 import { runTaskAutomation } from '../api/tasks.api';
 import { FETCHDESCRIPTION } from '../consts/query.consts';
 import {
+  ARBEITSZEUGNIS,
   O365_BLOCK_SIGN_IN,
   TASK_AUTOMATION_NONE,
   TASK_AUTOMATION_OPTIONS,
@@ -22,6 +23,7 @@ type TaskAutomationProps = {
   errors: FieldErrors<TaskSidebarForm>;
   setValue: UseFormSetValue<TaskSidebarForm>;
   disabled: boolean;
+  onOpenArbeitszeugnis?: () => void;
 };
 
 function TaskAutomation({
@@ -30,16 +32,22 @@ function TaskAutomation({
   errors,
   setValue,
   disabled,
+  onOpenArbeitszeugnis,
 }: TaskAutomationProps) {
   const queryClient = useQueryClient();
   const automation = useWatch({ control, name: 'automation' });
   const canRun =
     (automation === O365_BLOCK_SIGN_IN ||
-      automation === TEAM_DEPARTURE_MAIL) &&
+      automation === TEAM_DEPARTURE_MAIL ||
+      automation === ARBEITSZEUGNIS) &&
     !disabled;
 
   const onGo = async () => {
     if (!canRun) return;
+    if (automation === ARBEITSZEUGNIS) {
+      onOpenArbeitszeugnis?.();
+      return;
+    }
     const [, error] = await tryCatch(
       runTaskAutomation({ taskId, automation })
     );

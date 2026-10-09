@@ -1,12 +1,20 @@
 import { prisma } from "@/lib/prisma";
 import { microsoftGraphToken } from "@/services/microsoft365Account";
-import { runTaskAutomation } from "@/services/offboardingAutomation";
+import {
+    arbeitszeugnisPreview,
+    confirmArbeitszeugnis,
+    runTaskAutomation,
+} from "@/services/offboardingAutomation";
 
 jest.mock("@/lib/prisma", () => ({
     prisma: {
         issue: { findFirst: jest.fn(), update: jest.fn() },
         worker: { findFirst: jest.fn(), update: jest.fn() },
         departureMailSettings: { findUnique: jest.fn() },
+        welcomeMailSettings: { findUnique: jest.fn() },
+        workerEngagement: { findFirst: jest.fn() },
+        automationDocumentSetting: { findUnique: jest.fn() },
+        arbeitszeugnis: { upsert: jest.fn() },
         $transaction: jest.fn(),
     },
 }));
@@ -20,6 +28,10 @@ const updateIssue = prisma.issue.update as jest.Mock;
 const findWorker = prisma.worker.findFirst as jest.Mock;
 const updateWorker = prisma.worker.update as jest.Mock;
 const findDepartureSettings = prisma.departureMailSettings.findUnique as jest.Mock;
+const findWelcomeSettings = prisma.welcomeMailSettings.findUnique as jest.Mock;
+const findEngagement = prisma.workerEngagement.findFirst as jest.Mock;
+const findDocumentSetting = prisma.automationDocumentSetting.findUnique as jest.Mock;
+const upsertCertificate = prisma.arbeitszeugnis.upsert as jest.Mock;
 const transaction = prisma.$transaction as jest.Mock;
 const token = microsoftGraphToken as jest.Mock;
 
@@ -45,6 +57,7 @@ const issue = {
     id: "issue-1",
     status: "open",
     workerEngagement: {
+        id: "engagement-1",
         worker: {
             id: "worker-1",
             workEmail: "ada@firma.de",
@@ -235,5 +248,243 @@ describe("offboarding microsoft automation", () => {
             where: { id: "issue-1" },
             data: { status: "done" },
         });
+    });
+
+    it("does not send the reference letter from Go", async () => {
+        const fetchMock = jest.spyOn(global, "fetch");
+
+        const result = await runTaskAutomation({
+            organizationId: "org-1",
+            issueId: "issue-1",
+            actorUserId: "user-1",
+            automation: "arbeitszeugnis",
+        });
+
+        expect(result).toEqual({
+            status: "failed",
+            message: "Bitte prüfen Sie das Arbeitszeugnis vor dem Versand.",
+        });
+        expect(fetchMock).not.toHaveBeenCalled();
+        expect(transaction).not.toHaveBeenCalled();
+    });
+
+    it("fills the reference letter, sends it, and stores the snapshot", async () => {
+        findEngagement.mockResolvedValue({
+            id: "engagement-1",
+            workerId: "worker-1",
+            endDate: new Date("2026-10-01T00:00:00.000Z"),
+            arbeitszeugnis: null,
+            worker: {
+                firstName: "Ada",
+                lastName: "Lovelace",
+                email: "ada.privat@example.de",
+                workEmail: "ada@firma.de",
+                phoneNumber: null,
+                birthday: null,
+                position: "Maler",
+                street: null,
+                city: null,
+                postalCode: null,
+                entryDate: new Date("2020-01-15T00:00:00.000Z"),
+                exitDate: null,
+                engagements: [],
+            },
+        });
+        findDocumentSetting.mockResolvedValue({
+            documentMaster: {
+                id: "master-1",
+                name: "Arbeitszeugnis Maler",
+                kind: "arbeitszeugnis",
+                body: {
+                    version: 2,
+                    segments: [
+                        { type: "text", text: "Frau " },
+                        { type: "input", key: "contract.vorname", label: "Vorname" },
+                        { type: "text", text: " trat ein am " },
+                        { type: "input", key: "contract.eintritt", label: "Eintritt" },
+                        { type: "text", text: " und aus am " },
+                        { type: "input", key: "contract.austritt", label: "Austritt" },
+                        { type: "text", text: "." },
+                    ],
+                },
+            },
+        });
+        findDepartureSettings.mockResolvedValue(departureSettings);
+        upsertCertificate.mockResolvedValue({});
+
+        const preview = await arbeitszeugnisPreview({
+            organizationId: "org-1",
+            issueId: "issue-1",
+        });
+        expect(preview.status).toBe("ready");
+        if (preview.status !== "ready") return;
+        expect(preview.preview.values["contract.vorname"]).toBe("Ada");
+        expect(preview.preview.unmatched).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({ label: "Position", value: "Maler" }),
+            ]),
+        );
+
+        const fetchMock = jest.spyOn(global, "fetch").mockResolvedValue(jsonResponse(null, 202));
+        const result = await confirmArbeitszeugnis({
+            organizationId: "org-1",
+            issueId: "issue-1",
+            actorUserId: "user-1",
+            values: preview.preview.values,
+        });
+
+        expect(result).toEqual({ status: "completed", alreadyBlocked: false });
+        expect(String(fetchMock.mock.calls[0]?.[0])).toBe(
+            "https://graph.microsoft.com/v1.0/users/admin%40firma.de/sendMail",
+        );
+        const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)) as {
+            message: {
+                subject: string;
+                body: { content: string };
+                toRecipients: { emailAddress: { address: string } }[];
+            };
+        };
+        expect(body.message.subject).toBe("Ihr Arbeitszeugnis");
+        expect(body.message.toRecipients[0]?.emailAddress.address).toBe(
+            "ada.privat@example.de",
+        );
+        expect(body.message.body.content).toContain("Ada");
+        expect(body.message.body.content).toContain("15.01.2020");
+        expect(body.message.body.content).toContain("01.10.2026");
+        expect(upsertCertificate).toHaveBeenCalledWith(
+            expect.objectContaining({
+                where: { engagementId: "engagement-1" },
+                create: expect.objectContaining({
+                    masterId: "master-1",
+                    sentAt: expect.any(Date),
+                    body: {
+                        version: 2,
+                        segments: [
+                            { type: "text", text: "Frau " },
+                            { type: "text", text: "Ada" },
+                            { type: "text", text: " trat ein am " },
+                            { type: "text", text: "15.01.2020" },
+                            { type: "text", text: " und aus am " },
+                            { type: "text", text: "01.10.2026" },
+                            { type: "text", text: "." },
+                        ],
+                    },
+                }),
+            }),
+        );
+        const tx = await transaction.mock.results[0].value;
+        expect(tx.issue.update).toHaveBeenCalledWith({
+            where: { id: "issue-1" },
+            data: { status: "done" },
+        });
+    });
+
+    it("completes the task without sending the reference letter again", async () => {
+        findEngagement.mockResolvedValue({
+            id: "engagement-1",
+            workerId: "worker-1",
+            endDate: null,
+            arbeitszeugnis: { sentAt: new Date("2026-10-02T08:00:00.000Z") },
+            worker: {
+                firstName: "Ada",
+                lastName: "Lovelace",
+                email: "ada.privat@example.de",
+                workEmail: null,
+                phoneNumber: null,
+                birthday: null,
+                position: null,
+                street: null,
+                city: null,
+                postalCode: null,
+                entryDate: null,
+                exitDate: null,
+                engagements: [],
+            },
+        });
+        const fetchMock = jest.spyOn(global, "fetch");
+
+        const result = await confirmArbeitszeugnis({
+            organizationId: "org-1",
+            issueId: "issue-1",
+            actorUserId: "user-1",
+            values: {},
+        });
+
+        expect(result).toEqual({ status: "completed", alreadyBlocked: false });
+        expect(fetchMock).not.toHaveBeenCalled();
+        expect(upsertCertificate).not.toHaveBeenCalled();
+        expect(findWelcomeSettings).not.toHaveBeenCalled();
+        const tx = await transaction.mock.results[0].value;
+        expect(tx.issue.update).toHaveBeenCalledWith({
+            where: { id: "issue-1" },
+            data: { status: "done" },
+        });
+    });
+
+    it("leaves the task open when a placeholder has no value", async () => {
+        findEngagement.mockResolvedValue({
+            id: "engagement-1",
+            workerId: "worker-1",
+            endDate: null,
+            arbeitszeugnis: null,
+            worker: {
+                firstName: "Ada",
+                lastName: "Lovelace",
+                email: "ada.privat@example.de",
+                workEmail: null,
+                phoneNumber: null,
+                birthday: null,
+                position: null,
+                street: null,
+                city: null,
+                postalCode: null,
+                entryDate: null,
+                exitDate: null,
+                engagements: [],
+            },
+        });
+        findDocumentSetting.mockResolvedValue({
+            documentMaster: {
+                id: "master-1",
+                name: "Arbeitszeugnis Maler",
+                kind: "arbeitszeugnis",
+                body: {
+                    version: 2,
+                    segments: [
+                        { type: "input", key: "contract.farbe", label: "Lieblingsfarbe" },
+                        { type: "input", key: "contract.austritt", label: "Austritt" },
+                    ],
+                },
+            },
+        });
+        const fetchMock = jest.spyOn(global, "fetch");
+
+        const preview = await arbeitszeugnisPreview({
+            organizationId: "org-1",
+            issueId: "issue-1",
+        });
+        expect(preview).toEqual(
+            expect.objectContaining({
+                status: "ready",
+                preview: expect.objectContaining({
+                    unresolved: [{ key: "contract.farbe", label: "Lieblingsfarbe" }],
+                }),
+            }),
+        );
+
+        const result = await confirmArbeitszeugnis({
+            organizationId: "org-1",
+            issueId: "issue-1",
+            actorUserId: "user-1",
+            values: {},
+        });
+
+        expect(result).toEqual({
+            status: "failed",
+            message: "Diese Platzhalter konnten nicht gefüllt werden: Lieblingsfarbe, Austritt.",
+        });
+        expect(fetchMock).not.toHaveBeenCalled();
+        expect(upsertCertificate).not.toHaveBeenCalled();
+        expect(transaction).not.toHaveBeenCalled();
     });
 });

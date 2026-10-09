@@ -98,6 +98,7 @@ export function ContractSendDialog({
     if (!data) return;
     const search = new URLSearchParams(window.location.search);
     rememberContractSendReturn({
+      kind: 'contract',
       returnTo: window.location.pathname.startsWith('/tasks')
         ? 'tasks'
         : 'worker',

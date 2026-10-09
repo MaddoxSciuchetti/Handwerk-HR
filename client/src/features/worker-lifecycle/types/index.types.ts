@@ -128,6 +128,12 @@ export type WorkerDetailResponse = {
           status: 'draft' | 'ready' | 'signed';
           master: { name: string };
         } | null;
+        arbeitszeugnis: {
+          id: string;
+          sentAt: string | null;
+          name: string;
+          text: string;
+        } | null;
       }
     >;
   };

@@ -21,6 +21,7 @@ import { useTaskSidebar } from '../hooks/useTaskSidebar';
 import { LargeEditMode } from './LargeEditMode';
 import { ContractConfirmDialog } from '@/features/worker-task-management/components/files/ContractConfirmDialog';
 import { ContractSendDialog } from '@/features/worker-task-management/components/files/ContractSendDialog';
+import { ArbeitszeugnisSendDialog } from '@/features/worker-task-management/components/files/ArbeitszeugnisSendDialog';
 import { TaskItem } from './TaskItem';
 import { TaskSidebar } from './TaskSidebar';
 import { Segment, TaskSegmentToggle } from './ui/taskHeader';
@@ -47,14 +48,20 @@ function Tasks() {
     issueId: string;
   } | null>(null);
 
+  const [zeugnisIssueId, setZeugnisIssueId] = useState<string | null>(null);
+
   useEffect(() => {
     const pending = peekContractSendReturn();
     if (!pending || pending.returnTo !== 'tasks') return;
-    setContractSend({
-      workerId: pending.workerId,
-      engagementId: pending.engagementId,
-      issueId: pending.issueId,
-    });
+    if (pending.kind === 'arbeitszeugnis') {
+      setZeugnisIssueId(pending.issueId);
+    } else {
+      setContractSend({
+        workerId: pending.workerId,
+        engagementId: pending.engagementId,
+        issueId: pending.issueId,
+      });
+    }
     const timeout = window.setTimeout(() => clearContractSendReturn(), 0);
     return () => window.clearTimeout(timeout);
   }, []);
@@ -78,13 +85,24 @@ function Tasks() {
   return (
     <div className="mx-auto flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
       <div className="flex h-full min-h-0 w-full flex-col">
-        <TaskSidebar key={sidebarKey} {...sidebarProps} />
+        <TaskSidebar
+          key={sidebarKey}
+          {...sidebarProps}
+          onOpenArbeitszeugnis={setZeugnisIssueId}
+        />
         {contractSend ? (
           <ContractSendDialog
             workerId={contractSend.workerId}
             engagementId={contractSend.engagementId}
             issueId={contractSend.issueId}
             onClose={() => setContractSend(null)}
+          />
+        ) : null}
+        {zeugnisIssueId ? (
+          <ArbeitszeugnisSendDialog
+            issueId={zeugnisIssueId}
+            onClose={() => setZeugnisIssueId(null)}
+            onSent={() => setZeugnisIssueId(null)}
           />
         ) : null}
         {contractConfirm ? (

@@ -28,6 +28,7 @@ type TaskSidebarProps = {
   setIsOpen: Dispatch<SetStateAction<boolean>>;
   taskState: 'create' | 'edit';
   taskEditState: TaskEditState;
+  onOpenArbeitszeugnis?: (taskId: string) => void;
 };
 
 export function TaskSidebar({
@@ -35,6 +36,7 @@ export function TaskSidebar({
   setIsOpen,
   taskState,
   taskEditState,
+  onOpenArbeitszeugnis,
 }: TaskSidebarProps) {
   const [commentText, setCommentText] = useState('');
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
@@ -166,6 +168,11 @@ export function TaskSidebar({
                   errors={errors}
                   setValue={setValue}
                   disabled={isSubmitting}
+                  onOpenArbeitszeugnis={
+                    onOpenArbeitszeugnis
+                      ? () => onOpenArbeitszeugnis(taskEditState.taskId)
+                      : undefined
+                  }
                 />
               ) : null}
 

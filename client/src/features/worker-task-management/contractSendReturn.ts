@@ -1,6 +1,7 @@
 const STORAGE_KEY = 'handwerk.contractSendReturn';
 
 export type ContractSendReturn = {
+  kind: 'contract' | 'arbeitszeugnis';
   returnTo: 'tasks' | 'worker';
   workerId: string;
   engagementId: string;
@@ -27,6 +28,7 @@ export function peekContractSendReturn(): ContractSendReturn | null {
       return null;
     }
     return {
+      kind: parsed.kind === 'arbeitszeugnis' ? 'arbeitszeugnis' : 'contract',
       returnTo: parsed.returnTo,
       workerId: parsed.workerId,
       engagementId: parsed.engagementId,

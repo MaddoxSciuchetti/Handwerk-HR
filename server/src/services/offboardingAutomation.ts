@@ -1,9 +1,14 @@
 import {
+    ARBEITSZEUGNIS,
     O365_BLOCK_SIGN_IN,
     TEAM_DEPARTURE_MAIL,
     isTaskAutomationId,
 } from "@/constants/taskAutomation.consts";
 import { prisma } from "@/lib/prisma";
+import {
+    previewArbeitszeugnis,
+    sendArbeitszeugnis,
+} from "@/services/arbeitszeugnis";
 import { sendTeamDepartureMail } from "@/services/departureMail";
 import { microsoftGraphToken } from "@/services/microsoft365Account";
 
@@ -193,6 +198,7 @@ export async function runTaskAutomation(params: {
             status: true,
             workerEngagement: {
                 select: {
+                    id: true,
                     worker: {
                         select: {
                             id: true,
@@ -231,6 +237,13 @@ export async function runTaskAutomation(params: {
         return { status: "completed", alreadyBlocked: false };
     }
 
+    if (params.automation === ARBEITSZEUGNIS) {
+        return {
+            status: "failed",
+            message: "Bitte prüfen Sie das Arbeitszeugnis vor dem Versand.",
+        };
+    }
+
     if (params.automation !== O365_BLOCK_SIGN_IN) {
         return { status: "failed", message: "Diese Automatisierung gibt es nicht." };
     }
@@ -267,4 +280,58 @@ export async function runTaskAutomation(params: {
     });
 
     return { status: "completed", alreadyBlocked: blocked.alreadyBlocked };
+}
+
+async function issueForAutomation(organizationId: string, issueId: string) {
+    return prisma.issue.findFirst({
+        where: {
+            id: issueId,
+            workerEngagement: { organizationId },
+        },
+        select: {
+            id: true,
+            status: true,
+            workerEngagement: { select: { id: true } },
+        },
+    });
+}
+
+export async function arbeitszeugnisPreview(params: {
+    organizationId: string;
+    issueId: string;
+}) {
+    const issue = await issueForAutomation(params.organizationId, params.issueId);
+    if (!issue) return { status: "failed" as const, message: "Aufgabe nicht gefunden." };
+    return previewArbeitszeugnis({
+        organizationId: params.organizationId,
+        engagementId: issue.workerEngagement.id,
+    });
+}
+
+export async function confirmArbeitszeugnis(params: {
+    organizationId: string;
+    issueId: string;
+    actorUserId: string;
+    values: Record<string, string>;
+}): Promise<RunTaskAutomationResult> {
+    const issue = await issueForAutomation(params.organizationId, params.issueId);
+    if (!issue) return { status: "failed", message: "Aufgabe nicht gefunden." };
+
+    const mailed = await sendArbeitszeugnis({
+        organizationId: params.organizationId,
+        engagementId: issue.workerEngagement.id,
+        values: params.values,
+    });
+    if (mailed.status === "failed") return mailed;
+
+    await prisma.issue.update({
+        where: { id: issue.id },
+        data: { automation: ARBEITSZEUGNIS },
+    });
+    await markIssueDone({
+        issueId: issue.id,
+        previousStatus: issue.status,
+        actorUserId: params.actorUserId,
+    });
+    return { status: "completed", alreadyBlocked: false };
 }

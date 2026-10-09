@@ -5,6 +5,10 @@ import { useMemo } from 'react';
 import useDeleteWorkerFile from '../../hooks/useDeleteWorkerFile';
 import useGetWorkerFiles from '../../hooks/useGetWorkerFiles';
 import {
+  EngagementCertificateList,
+  type EngagementCertificateLink,
+} from './EngagementCertificateList';
+import {
   EngagementContractList,
   type EngagementContractLink,
 } from './EngagementContractList';
@@ -14,6 +18,7 @@ import FilesContent from './FilesContent';
 type WorkerFileUploadsProps = {
   workerId: string;
   contracts: EngagementContractLink[];
+  certificates: EngagementCertificateLink[];
   isUploadModalOpen: boolean;
   setIsUploadModalOpen: (open: boolean) => void;
 };
@@ -21,6 +26,7 @@ type WorkerFileUploadsProps = {
 function WorkerFileUploads({
   workerId,
   contracts,
+  certificates,
   isUploadModalOpen,
   setIsUploadModalOpen,
 }: WorkerFileUploadsProps) {
@@ -32,12 +38,17 @@ function WorkerFileUploads({
   return (
     <>
       <EngagementContractList workerId={workerId} contracts={contracts} />
+      <EngagementCertificateList certificates={certificates} />
       {isLoading ? <LoadingAlert /> : null}
       {isError ? <ErrorAlert /> : null}
       {!isLoading && !isError ? (
         <FilesContent fetchFiles={filteredFiles} deleteFiles={deleteFiles} />
       ) : null}
-      {!isLoading && !isError && !filteredFiles.length && !contracts.length ? (
+      {!isLoading &&
+      !isError &&
+      !filteredFiles.length &&
+      !contracts.length &&
+      !certificates.length ? (
         <div className="flex min-h-100 items-center justify-center py-10 text-sm text-muted-foreground">
           Keine Hochgeladenen Dateien
         </div>

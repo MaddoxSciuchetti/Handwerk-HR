@@ -1,5 +1,6 @@
 import { FRONTENDURL } from "@/constants/env";
 import { prisma } from "@/lib/prisma";
+import { certificateText } from "@/services/arbeitszeugnis";
 import type {
     ArchiveWorkerInput,
     CreateAbsenceInput,
@@ -340,6 +341,14 @@ export async function getWorkerById(workerId: string, organizationId: string) {
                             master: { select: { name: true } },
                         },
                     },
+                    arbeitszeugnis: {
+                        select: {
+                            id: true,
+                            sentAt: true,
+                            body: true,
+                            master: { select: { name: true } },
+                        },
+                    },
                     issues: {
                         orderBy: { createdAt: "desc" },
                         include: {
@@ -388,7 +397,21 @@ export async function getWorkerById(workerId: string, organizationId: string) {
         })),
     );
 
-    return { ...worker, documents: documentsWithUrls };
+    return {
+        ...worker,
+        documents: documentsWithUrls,
+        engagements: worker.engagements.map((engagement) => ({
+            ...engagement,
+            arbeitszeugnis: engagement.arbeitszeugnis
+                ? {
+                      id: engagement.arbeitszeugnis.id,
+                      sentAt: engagement.arbeitszeugnis.sentAt,
+                      name: engagement.arbeitszeugnis.master.name,
+                      text: certificateText(engagement.arbeitszeugnis.body),
+                  }
+                : null,
+        })),
+    };
 }
 
 export async function updateWorker(params: {
