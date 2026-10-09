@@ -38,3 +38,17 @@ export const GOOGLE_OAUTH_REDIRECT_URI =
 export const GOOGLE_OAUTH_REFRESH_TOKEN =
     process.env.GOOGLE_OAUTH_REFRESH_TOKEN?.trim() ?? "";
 export const OPENAI_API_KEY = process.env.OPENAI_API_KEY?.trim() ?? "";
+
+export const MICROSOFT_365_ENV_KEYS = [
+    "MICROSOFT_365_TENANT_ID",
+    "MICROSOFT_365_CLIENT_ID",
+    "MICROSOFT_365_CLIENT_SECRET",
+    "MICROSOFT_365_DOMAIN",
+    "MICROSOFT_365_LICENSE_SKU_ID",
+] as const;
+
+export type Microsoft365EnvKey = (typeof MICROSOFT_365_ENV_KEYS)[number];
+
+export function microsoft365Env(key: Microsoft365EnvKey) {
+    return process.env[key]?.trim() ?? "";
+}

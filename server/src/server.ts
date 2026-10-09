@@ -11,6 +11,7 @@ import { stripeWebhookHandler } from "./controllers/stripeWebhook.controller";
 import authenticate from "./middleware/authenticate";
 import errorHandler from "./middleware/errorHandler";
 import requireSubscriptionAccess from "./middleware/requireSubscriptionAccess";
+import { automationRoutes } from "./routes/automation.route";
 import authRoutes from "./routes/auth.route";
 import billingRoutes from "./routes/billing.route";
 import { employeeRoutes } from "./routes/employee.route";
@@ -85,6 +86,12 @@ app.get("/", (req, res) => {
 app.use("/test", testRoutes);
 
 app.use("/auth", authRoutes);
+app.use(
+    "/automation",
+    authenticate,
+    requireSubscriptionAccess,
+    automationRoutes,
+);
 
 app.use("/billing", authenticate, billingRoutes);
 

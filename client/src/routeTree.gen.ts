@@ -23,6 +23,7 @@ import { Route as SettingsPlansRouteImport } from './routes/settings/plans'
 import { Route as SettingsPaymentsRouteImport } from './routes/settings/payments'
 import { Route as SettingsEmployeesRouteImport } from './routes/settings/employees'
 import { Route as SettingsDocumentsRouteImport } from './routes/settings/documents'
+import { Route as SettingsAutomationRouteImport } from './routes/settings/automation'
 import { Route as PasswordResetRouteImport } from './routes/password/reset'
 import { Route as PasswordForgotRouteImport } from './routes/password/forgot'
 import { Route as FragebogenTokenRouteImport } from './routes/fragebogen/$token'
@@ -101,6 +102,11 @@ const SettingsDocumentsRoute = SettingsDocumentsRouteImport.update({
   path: '/documents',
   getParentRoute: () => SettingsRoute,
 } as any)
+const SettingsAutomationRoute = SettingsAutomationRouteImport.update({
+  id: '/automation',
+  path: '/automation',
+  getParentRoute: () => SettingsRoute,
+} as any)
 const PasswordResetRoute = PasswordResetRouteImport.update({
   id: '/password/reset',
   path: '/password/reset',
@@ -150,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/fragebogen/$token': typeof FragebogenTokenRoute
   '/password/forgot': typeof PasswordForgotRoute
   '/password/reset': typeof PasswordResetRoute
+  '/settings/automation': typeof SettingsAutomationRoute
   '/settings/documents': typeof SettingsDocumentsRouteWithChildren
   '/settings/employees': typeof SettingsEmployeesRoute
   '/settings/payments': typeof SettingsPaymentsRoute
@@ -173,6 +180,7 @@ export interface FileRoutesByTo {
   '/fragebogen/$token': typeof FragebogenTokenRoute
   '/password/forgot': typeof PasswordForgotRoute
   '/password/reset': typeof PasswordResetRoute
+  '/settings/automation': typeof SettingsAutomationRoute
   '/settings/documents': typeof SettingsDocumentsRouteWithChildren
   '/settings/employees': typeof SettingsEmployeesRoute
   '/settings/payments': typeof SettingsPaymentsRoute
@@ -197,6 +205,7 @@ export interface FileRoutesById {
   '/fragebogen/$token': typeof FragebogenTokenRoute
   '/password/forgot': typeof PasswordForgotRoute
   '/password/reset': typeof PasswordResetRoute
+  '/settings/automation': typeof SettingsAutomationRoute
   '/settings/documents': typeof SettingsDocumentsRouteWithChildren
   '/settings/employees': typeof SettingsEmployeesRoute
   '/settings/payments': typeof SettingsPaymentsRoute
@@ -222,6 +231,7 @@ export interface FileRouteTypes {
     | '/fragebogen/$token'
     | '/password/forgot'
     | '/password/reset'
+    | '/settings/automation'
     | '/settings/documents'
     | '/settings/employees'
     | '/settings/payments'
@@ -245,6 +255,7 @@ export interface FileRouteTypes {
     | '/fragebogen/$token'
     | '/password/forgot'
     | '/password/reset'
+    | '/settings/automation'
     | '/settings/documents'
     | '/settings/employees'
     | '/settings/payments'
@@ -268,6 +279,7 @@ export interface FileRouteTypes {
     | '/fragebogen/$token'
     | '/password/forgot'
     | '/password/reset'
+    | '/settings/automation'
     | '/settings/documents'
     | '/settings/employees'
     | '/settings/payments'
@@ -396,6 +408,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsDocumentsRouteImport
       parentRoute: typeof SettingsRoute
     }
+    '/settings/automation': {
+      id: '/settings/automation'
+      path: '/automation'
+      fullPath: '/settings/automation'
+      preLoaderRoute: typeof SettingsAutomationRouteImport
+      parentRoute: typeof SettingsRoute
+    }
     '/password/reset': {
       id: '/password/reset'
       path: '/password/reset'
@@ -460,6 +479,7 @@ const SettingsDocumentsRouteWithChildren =
   SettingsDocumentsRoute._addFileChildren(SettingsDocumentsRouteChildren)
 
 interface SettingsRouteChildren {
+  SettingsAutomationRoute: typeof SettingsAutomationRoute
   SettingsDocumentsRoute: typeof SettingsDocumentsRouteWithChildren
   SettingsEmployeesRoute: typeof SettingsEmployeesRoute
   SettingsPaymentsRoute: typeof SettingsPaymentsRoute
@@ -470,6 +490,7 @@ interface SettingsRouteChildren {
 }
 
 const SettingsRouteChildren: SettingsRouteChildren = {
+  SettingsAutomationRoute: SettingsAutomationRoute,
   SettingsDocumentsRoute: SettingsDocumentsRouteWithChildren,
   SettingsEmployeesRoute: SettingsEmployeesRoute,
   SettingsPaymentsRoute: SettingsPaymentsRoute,

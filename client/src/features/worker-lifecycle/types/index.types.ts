@@ -106,6 +106,7 @@ export type WorkerDetailResponse = {
     firstName: string;
     lastName: string;
     email: string;
+    workEmail: string | null;
     birthday: string | null;
     position: string | null;
     street: string | null;

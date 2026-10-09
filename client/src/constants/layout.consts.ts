@@ -5,6 +5,7 @@ import {
   ScrollText,
   Ticket,
   UserRound,
+  Zap,
 } from 'lucide-react';
 
 export const LAYOUTITEMS = [
@@ -41,6 +42,11 @@ export const SETTINGSITEMS = [
     title: 'Dokumente',
     to: '/settings/documents',
     icon: ScrollText,
+  },
+  {
+    title: 'Automatisierung',
+    to: '/settings/automation',
+    icon: Zap,
   },
   {
     title: 'Zahlungen',

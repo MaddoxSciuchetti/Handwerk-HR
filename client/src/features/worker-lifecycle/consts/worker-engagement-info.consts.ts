@@ -52,6 +52,7 @@ export function workerEngagementInfoItems(
     { label: 'Vorname', value: displayText(worker.firstName) },
     { label: 'Nachname', value: displayText(worker.lastName) },
     { label: 'E-Mail', value: displayText(worker.email) },
+    { label: 'Arbeits-E-Mail', value: displayText(worker.workEmail) },
     { label: 'Geburtsdatum', value: displayDate(worker.birthday) },
     { label: 'Adresse', value: formatAddress(worker) },
     { label: 'Hosengröße', value: workwearSize(worker, 'Hose') },

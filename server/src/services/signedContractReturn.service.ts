@@ -8,6 +8,7 @@ import {
     findInboxReply,
     graphMailConfigured,
 } from "@/services/graphMail";
+import { provisionMicrosoft365Account } from "@/services/microsoft365Account";
 import { isQuestionnaireOrContractTemplateTask } from "@/services/onboardingTemplateTasks";
 import AppError from "@/utils/AppError";
 import { Prisma } from "@prisma/client";
@@ -496,6 +497,7 @@ export async function confirmReturnedEmploymentContract(params: {
 
     if (contract.confirmedAt) return;
 
+    let claimedConfirmation = false;
     await prisma.$transaction(async (tx) => {
         const claimed = await tx.employmentContract.updateMany({
             where: { id: contract.id, confirmedAt: null },
@@ -506,6 +508,7 @@ export async function confirmReturnedEmploymentContract(params: {
             },
         });
         if (claimed.count === 0) return;
+        claimedConfirmation = true;
 
         await tx.issue.delete({ where: { id: issue.id } });
         const contractTasks = await tx.issue.findMany({
@@ -544,4 +547,20 @@ export async function confirmReturnedEmploymentContract(params: {
         }
     });
 
+    if (!claimedConfirmation) return;
+
+    try {
+        const result = await provisionMicrosoft365Account({
+            organizationId: params.organizationId,
+            workerId: params.workerId,
+        });
+        if (result.status === "failed") {
+            console.error(
+                "Microsoft 365 Konto wurde nicht angelegt.",
+                result.message,
+            );
+        }
+    } catch (error) {
+        console.error("Microsoft 365 Konto wurde nicht angelegt.", error);
+    }
 }
