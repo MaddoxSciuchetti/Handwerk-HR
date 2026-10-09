@@ -1,5 +1,5 @@
 import { CONFLICT, NOT_FOUND } from "@/constants/http";
-import { USE_MICROSOFT_MAIL } from "@/constants/env";
+import { RESEND_INBOUND_ADDRESS, USE_MICROSOFT_MAIL } from "@/constants/env";
 import { prisma } from "@/lib/prisma";
 import { uploadFileToS3 } from "@/config/aws";
 import resend from "@/config/resend";
@@ -157,8 +157,32 @@ async function downloadResendPdf(emailId: string) {
     };
 }
 
+async function pollResendInbox() {
+    if (!RESEND_INBOUND_ADDRESS) return;
+    const listed = await resend.emails.receiving.list();
+    if (listed.error || !listed.data) {
+        console.error("Resend receiving inbox could not be read", listed.error);
+        return;
+    }
+    const inbox = RESEND_INBOUND_ADDRESS.toLowerCase();
+    for (const message of listed.data.data) {
+        const addressedHere = message.to.some(
+            (address) => address.toLowerCase() === inbox,
+        );
+        if (!addressedHere) continue;
+        await ingestResendContractReply({
+            subject: message.subject,
+            emailId: message.id,
+        });
+    }
+}
+
 export async function pollReturnedContracts() {
-    if (!USE_MICROSOFT_MAIL || !graphMailConfigured()) return;
+    if (!USE_MICROSOFT_MAIL) {
+        await pollResendInbox();
+        return;
+    }
+    if (!graphMailConfigured()) return;
 
     const waiting = await prisma.employmentContract.findMany({
         where: {
@@ -234,15 +258,15 @@ async function findReturnedMessage(conversationId: string) {
 }
 
 export function startReturnedContractPolling() {
-    if (!USE_MICROSOFT_MAIL) {
+    if (USE_MICROSOFT_MAIL && !graphMailConfigured()) {
         console.log(
-            "Returned contracts are received at POST /webhooks/resend.",
+            "USE_MICROSOFT_MAIL is on, but the Microsoft Graph token is not set.",
         );
         return;
     }
-    if (!graphMailConfigured()) {
+    if (!USE_MICROSOFT_MAIL && !RESEND_INBOUND_ADDRESS) {
         console.log(
-            "USE_MICROSOFT_MAIL is on, but the Microsoft Graph token is not set.",
+            "RESEND_INBOUND_ADDRESS is not set, so returned contracts are not watched.",
         );
         return;
     }
@@ -250,7 +274,7 @@ export function startReturnedContractPolling() {
     console.log(
         USE_MICROSOFT_MAIL
             ? "Watching returned contracts in Microsoft Graph."
-            : "Watching returned contracts in the Google mailbox.",
+            : "Watching returned contracts in the Resend inbox.",
     );
 
     const run = () => {
