@@ -154,7 +154,16 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
           <CardHeader className="flex min-h-14 shrink-0 flex-row flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-3">
             <WorkerHeader
               activeTab={activeTab}
-              openForCreate={openForCreate}
+              openForCreate={() =>
+                openForCreate({
+                  workerEngagementId:
+                    data.data.engagements.find(
+                      (engagement) => engagement.type === 'offboarding'
+                    )?.id ??
+                    data.data.engagements[0]?.id ??
+                    '',
+                })
+              }
               hideCreate={waiting}
               onOpenFileUpload={() => setIsFileUploadOpen(true)}
               onExportFiles={() => void handleZipExport(fetchFiles)}

@@ -1,4 +1,5 @@
 import queryClient from '@/config/query.client';
+import { ALL_WORKER_DATA } from '@/features/worker-lifecycle/consts/query-key.consts';
 import {
   TASKHISTORY,
   WORKERBYID,
@@ -20,6 +21,8 @@ export const taskMutations = {
       mutationFn: (payload: unknown) => createTask(payload),
       onSuccess: () => {
         void queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] });
+        void queryClient.invalidateQueries({ queryKey: [WORKERBYID] });
+        void queryClient.invalidateQueries({ queryKey: [ALL_WORKER_DATA] });
       },
     }),
 

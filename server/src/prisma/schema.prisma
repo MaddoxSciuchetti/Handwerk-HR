@@ -291,6 +291,7 @@ model Issue {
   templateItemId     String?            @map("template_item_id")
   status             IssueStatus        @default(open)
   kind               IssueKind          @default(standard)
+  automation         String?            @db.VarChar(64)
   isTemporary        Boolean            @default(false) @map("is_temporary")
   title              String             @db.VarChar(400)
   description        String?            @db.VarChar(8000)

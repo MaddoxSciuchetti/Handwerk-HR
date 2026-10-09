@@ -1,4 +1,5 @@
 import type { IssueStatusValue } from '../consts/issue-status.consts';
+import type { TaskAutomationValue } from '../consts/task-automation.consts';
 
 export type EngagementResponse = {
   id: string;
@@ -26,6 +27,7 @@ export type IssueResponse = {
   assignee?: IssueAssignee | null;
   templateItemId: string | null;
   status: IssueStatusValue;
+  automation?: string | null;
   kind: 'standard' | 'contract_send' | 'contract_confirm';
   isTemporary: boolean;
   workerEngagement?: { workerId: string };
@@ -42,4 +44,5 @@ export type TaskSidebarForm = {
   workerEngagementId: string;
   assigneeUserId: string;
   status: IssueStatusValue;
+  automation: TaskAutomationValue;
 };

@@ -3,6 +3,10 @@ import { TableCell, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import { Headset } from 'lucide-react';
 import type { Dispatch, SetStateAction } from 'react';
+import {
+  O365_BLOCK_SIGN_IN,
+  TASK_AUTOMATION_NONE,
+} from '../consts/task-automation.consts';
 import type { TaskEditState } from '../hooks/useTaskSidebar';
 import type { IssueResponse } from '../types/index.types';
 import { getAssigneeLabel } from '../utilts/assignee.utils';
@@ -43,6 +47,10 @@ export function TaskItem({
       workerEngagementId: task.workerEngagementId,
       assigneeUserId: task.assigneeUserId ?? '',
       status: task.status,
+      automation:
+        task.automation === O365_BLOCK_SIGN_IN
+          ? O365_BLOCK_SIGN_IN
+          : TASK_AUTOMATION_NONE,
     });
   };
 

@@ -570,6 +570,7 @@ export async function createIssue(params: CreateIssueInput) {
         description,
         priority,
         dueDate,
+        automation,
     } = params;
 
     const engagement = await prisma.workerEngagement.findFirst({
@@ -589,6 +590,7 @@ export async function createIssue(params: CreateIssueInput) {
                 description,
                 priority: priority ?? "no_priority",
                 dueDate,
+                automation,
             },
             include: {
                 assignee: {
@@ -631,6 +633,7 @@ export async function updateIssue(params: UpdateIssueInput) {
         status,
         priority,
         dueDate,
+        automation,
     } = params;
 
     const existing = await prisma.issue.findFirst({
@@ -645,6 +648,7 @@ export async function updateIssue(params: UpdateIssueInput) {
     if (status !== undefined) data.status = status;
     if (priority !== undefined) data.priority = priority;
     if (dueDate !== undefined) data.dueDate = dueDate;
+    if (automation !== undefined) data.automation = automation;
 
     const keys = Object.keys(data);
     if (keys.length === 0) {

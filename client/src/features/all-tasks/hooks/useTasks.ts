@@ -4,6 +4,10 @@ import type { Dispatch, SetStateAction } from 'react';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import type { IssueStatusValue } from '../consts/issue-status.consts';
+import {
+  O365_BLOCK_SIGN_IN,
+  TASK_AUTOMATION_NONE,
+} from '../consts/task-automation.consts';
 import { taskFormSchema } from '../schemas/taskForm.schema';
 import { TaskSidebarForm } from '../types/index.types';
 import { useCreateTask } from './useCreateTask';
@@ -49,13 +53,20 @@ export function useTasks(
       workerEngagementId: taskEditState.workerEngagementId,
       assigneeUserId: taskEditState.assigneeUserId,
       status: taskEditState.status || 'open',
+      automation: taskEditState.automation || TASK_AUTOMATION_NONE,
     },
     resolver: zodResolver(taskFormSchema),
   });
 
   useEffect(() => {
     setValue('status', (taskEditState.status || 'open') as IssueStatusValue);
-  }, [taskEditState.status, setValue]);
+    setValue(
+      'automation',
+      taskEditState.automation === O365_BLOCK_SIGN_IN
+        ? O365_BLOCK_SIGN_IN
+        : TASK_AUTOMATION_NONE
+    );
+  }, [taskEditState.automation, taskEditState.status, setValue]);
 
   const onSubmit = handleSubmit(async (data) => {
     if (taskState === 'create') {
@@ -91,6 +102,7 @@ export function useTasks(
     register,
     control,
     errors,
+    setValue,
     onSubmit,
     isTaskSaving: isCreatePending || isUpdatePending,
   };

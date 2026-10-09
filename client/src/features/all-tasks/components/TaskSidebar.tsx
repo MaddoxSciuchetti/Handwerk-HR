@@ -3,6 +3,7 @@ import FormSelectOptions from '@/components/form/FormSelectOptions';
 import { Button } from '@/components/ui/button';
 import { FieldGroup } from '@/components/ui/field';
 import { Label } from '@/components/ui/label';
+import TaskAutomation from '@/features/all-tasks/components/TaskAutomation';
 import { TaskCommentBox } from '@/features/all-tasks/components/TaskCommentBox';
 import { TaskStatusSelect } from '@/features/all-tasks/components/ui/TaskStatusSelect';
 import { useSaveTaskComment } from '@/features/all-tasks/hooks/useSaveTaskComment';
@@ -17,6 +18,7 @@ import TaskHistory from '@/features/worker-task-management/components/tasks/task
 import { useQuery } from '@tanstack/react-query';
 import { X } from 'lucide-react';
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
+import { useWatch } from 'react-hook-form';
 import { useFetchEngagements } from '../hooks/useFetchEngagements';
 import { useTasks } from '../hooks/useTasks';
 import type { TaskEditState } from '../hooks/useTaskSidebar';
@@ -62,7 +64,7 @@ export function TaskSidebar({
         }
       : undefined;
 
-  const { register, control, errors, onSubmit, isTaskSaving } = useTasks(
+  const { register, control, errors, setValue, onSubmit, isTaskSaving } = useTasks(
     taskEditState,
     taskState,
     setIsOpen,
@@ -93,6 +95,15 @@ export function TaskSidebar({
       })),
     [employees]
   );
+
+  const selectedEngagementId = useWatch({
+    control,
+    name: 'workerEngagementId',
+  });
+  const selectedEngagement = engagements.find(
+    (engagement) => engagement.id === selectedEngagementId
+  );
+  const showAutomation = selectedEngagement?.type === 'offboarding';
 
   const engagementOptions = useMemo(
     () =>
@@ -148,6 +159,15 @@ export function TaskSidebar({
                 label="Zuständigkeit"
               />
               <TaskStatusSelect control={control} errors={errors} />
+              {taskState === 'edit' && showAutomation && taskEditState.taskId ? (
+                <TaskAutomation
+                  taskId={taskEditState.taskId}
+                  control={control}
+                  errors={errors}
+                  setValue={setValue}
+                  disabled={isSubmitting}
+                />
+              ) : null}
 
               {taskState === 'edit' && taskEditState.taskId ? (
                 <>

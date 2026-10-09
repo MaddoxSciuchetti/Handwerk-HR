@@ -1,5 +1,7 @@
 import { BAD_REQUEST } from "@/constants/http";
+import { isTaskAutomationId } from "@/constants/taskAutomation.consts";
 import { microsoft365AutomationStatus } from "@/services/microsoft365Account";
+import { runTaskAutomation } from "@/services/offboardingAutomation";
 import {
     saveWelcomeMailSettings,
     welcomeMailPage,
@@ -30,6 +32,26 @@ export const getWelcomeMail = catchErrors(async (req, res) => {
         success: true,
         data: await welcomeMailPage(req.orgId),
     });
+});
+
+export const postTaskAutomation = catchErrors(async (req, res) => {
+    appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
+    appAssert(req.userId, BAD_REQUEST, "Benutzer fehlt.");
+    const automation =
+        typeof req.body?.automation === "string" ? req.body.automation : "";
+    appAssert(
+        isTaskAutomationId(automation),
+        BAD_REQUEST,
+        "Bitte eine Automatisierung wählen.",
+    );
+    const result = await runTaskAutomation({
+        organizationId: req.orgId,
+        issueId: String(req.params.issueId),
+        actorUserId: req.userId,
+        automation,
+    });
+    appAssert(result.status === "completed", BAD_REQUEST, result.status === "failed" ? result.message : "Automatisierung fehlgeschlagen.");
+    return res.status(200).json({ success: true, data: result });
 });
 
 export const putWelcomeMail = catchErrors(async (req, res) => {

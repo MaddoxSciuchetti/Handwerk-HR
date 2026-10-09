@@ -20,6 +20,15 @@ export const updateTask = async ({
   return API.patch(`/tasks/${taskId}`, data);
 };
 
+export const runTaskAutomation = async (params: {
+  taskId: string;
+  automation: string;
+}): Promise<unknown> => {
+  return API.post(`/automation/issues/${params.taskId}/run`, {
+    automation: params.automation,
+  });
+};
+
 export const deleteTasks = async (ids: string[]): Promise<unknown> => {
   return API.delete(`/tasks/`, { data: { ids } });
 };

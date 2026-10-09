@@ -1,5 +1,9 @@
 import { useCallback, useState } from 'react';
 import type { IssueStatusValue } from '../consts/issue-status.consts';
+import {
+  TASK_AUTOMATION_NONE,
+  type TaskAutomationValue,
+} from '../consts/task-automation.consts';
 
 export type TaskEditState = {
   taskId: string;
@@ -7,6 +11,7 @@ export type TaskEditState = {
   workerEngagementId: string;
   assigneeUserId: string;
   status: IssueStatusValue | '';
+  automation: TaskAutomationValue;
 };
 
 export const EMPTY_TASK_EDIT_STATE: TaskEditState = {
@@ -15,6 +20,7 @@ export const EMPTY_TASK_EDIT_STATE: TaskEditState = {
   workerEngagementId: '',
   assigneeUserId: '',
   status: '',
+  automation: TASK_AUTOMATION_NONE,
 };
 
 export function useTaskSidebar() {
@@ -31,9 +37,9 @@ export function useTaskSidebar() {
     setIsOpen(true);
   }, []);
 
-  const openForCreate = useCallback(() => {
+  const openForCreate = useCallback((seed?: Partial<TaskEditState>) => {
     setTaskState('create');
-    setTaskEditState(EMPTY_TASK_EDIT_STATE);
+    setTaskEditState({ ...EMPTY_TASK_EDIT_STATE, ...seed, taskId: '' });
     setCreateOpenNonce((n) => n + 1);
     setIsOpen(true);
   }, []);

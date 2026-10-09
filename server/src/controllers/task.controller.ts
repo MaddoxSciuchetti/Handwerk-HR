@@ -18,7 +18,7 @@ export const fetchTasks = catchErrors(async (req, res) => {
 export const createTask = catchErrors(async (req, res) => {
     const orgId = req.orgId;
     const userId = req.userId;
-    const result = await createTaskInOrg(orgId, userId);
+    const result = await createTaskInOrg(orgId, userId, req.body);
     return res.status(CREATED).json(result);
 });
 
