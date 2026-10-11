@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { BookDemoSection } from './BookDemoSection';
 import { LandingHeader } from './LandingHeader';
 import { LandingHero } from './LandingHero';
 import { PlanSection } from './PlanSection';
@@ -19,6 +20,7 @@ export function LandingPage() {
       <LandingHero />
       <ProductSection />
       <PlanSection />
+      <BookDemoSection />
     </div>
   );
 }
