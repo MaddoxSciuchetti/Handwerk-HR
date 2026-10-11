@@ -30,11 +30,6 @@ export function ProductSection() {
       className="mx-auto w-full max-w-5xl px-6 py-12"
     >
       <h2 className="text-3xl font-medium tracking-tight">What Hadox does</h2>
-      <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground">
-        One person, one record, three parts of the job. Hadox follows the
-        hire from the questionnaire to the workplace, and later from the
-        workplace to the goodbye.
-      </p>
       <div className="mt-6 grid gap-4 md:grid-cols-3">
         {STEPS.map((step) => (
           <Card key={step.title}>
