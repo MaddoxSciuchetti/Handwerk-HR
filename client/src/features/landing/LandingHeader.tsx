@@ -30,6 +30,13 @@ export function LandingHeader() {
           >
             Plans
           </Button>
+          <Button
+            size="sm"
+            type="button"
+            onClick={() => scrollToSection('demo')}
+          >
+            Book a demo
+          </Button>
           <Button variant="outline" size="sm" asChild>
             <Link to="/login">Sign in</Link>
           </Button>

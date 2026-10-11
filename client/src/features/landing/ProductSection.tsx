@@ -27,7 +27,7 @@ export function ProductSection() {
   return (
     <section
       id="product"
-      className="mx-auto flex min-h-[80vh] w-full max-w-5xl flex-col px-6 pt-16 pb-28"
+      className="mx-auto w-full max-w-5xl px-6 py-12"
     >
       <h2 className="text-3xl font-medium tracking-tight">What Hadox does</h2>
       <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground">
@@ -35,11 +35,11 @@ export function ProductSection() {
         hire from the questionnaire to the workplace, and later from the
         workplace to the goodbye.
       </p>
-      <div className="mt-10 grid flex-1 content-start gap-6 md:grid-cols-3">
+      <div className="mt-6 grid gap-4 md:grid-cols-3">
         {STEPS.map((step) => (
-          <Card key={step.title} className="min-h-80">
-            <CardHeader className="gap-4 px-6 py-8">
-              <CardTitle className="text-2xl">{step.title}</CardTitle>
+          <Card key={step.title}>
+            <CardHeader>
+              <CardTitle>{step.title}</CardTitle>
               <CardDescription className="text-base leading-relaxed">
                 {step.detail}
               </CardDescription>
