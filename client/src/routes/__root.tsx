@@ -30,6 +30,7 @@ function RootLayout() {
     '/password/reset',
     '/',
     '/home',
+    '/landing',
   ]);
 
   const isEmailVerifyPage = location.pathname.startsWith('/email/verify/');
@@ -40,8 +41,13 @@ function RootLayout() {
     isQuestionnairePage;
 
   if (isDoorman) {
+    const isLanding = location.pathname === '/landing';
     return (
-      <main className="h-dvh overflow-hidden">
+      <main
+        className={
+          isLanding ? 'h-dvh overflow-y-auto' : 'h-dvh overflow-hidden'
+        }
+      >
         <Outlet />
       </main>
     );
