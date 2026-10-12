@@ -5,6 +5,7 @@ import {
   WORKERBYID,
 } from '@/features/worker-task-management/consts/query-key.consts';
 import { mutationOptions } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import {
   createTask,
   deleteTasks,
@@ -14,6 +15,14 @@ import {
   type UpdateTaskParams,
 } from '../../api/tasks.api';
 import { FETCHDESCRIPTION } from '../../consts/query.consts';
+import {
+  patchTaskInCaches,
+  readTaskPatch,
+  removeTasksFromCaches,
+  restoreTaskCaches,
+  snapshotTaskCaches,
+  type TaskCacheSnapshot,
+} from './optimisticTaskCache';
 
 export const taskMutations = {
   createTask: () =>
@@ -27,11 +36,21 @@ export const taskMutations = {
     }),
 
   updateTask: () =>
-    mutationOptions<unknown, Error, UpdateTaskParams>({
+    mutationOptions<unknown, Error, UpdateTaskParams, { previous: TaskCacheSnapshot }>({
       mutationFn: ({ taskId, data }) => updateTask({ taskId, data }),
-      onSuccess: (_, { taskId }) => {
+      onMutate: async ({ taskId, data }) => {
+        const previous = await snapshotTaskCaches();
+        patchTaskInCaches(taskId, readTaskPatch(data));
+        return { previous };
+      },
+      onError: (_error, _variables, context) => {
+        if (context?.previous) restoreTaskCaches(context.previous);
+        toast.error('Aufgabe konnte nicht gespeichert werden.');
+      },
+      onSettled: (_data, _error, { taskId }) => {
         void queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] });
         void queryClient.invalidateQueries({ queryKey: [WORKERBYID] });
+        void queryClient.invalidateQueries({ queryKey: [ALL_WORKER_DATA] });
         void queryClient.invalidateQueries({
           queryKey: [TASKHISTORY, taskId],
         });
@@ -39,11 +58,21 @@ export const taskMutations = {
     }),
 
   deleteTasks: () =>
-    mutationOptions<unknown, Error, string[]>({
+    mutationOptions<unknown, Error, string[], { previous: TaskCacheSnapshot }>({
       mutationFn: (ids: string[]) => deleteTasks(ids),
-      onSuccess: () => {
+      onMutate: async (ids) => {
+        const previous = await snapshotTaskCaches();
+        removeTasksFromCaches(ids);
+        return { previous };
+      },
+      onError: (_error, _ids, context) => {
+        if (context?.previous) restoreTaskCaches(context.previous);
+        toast.error('Aufgaben konnten nicht gelöscht werden.');
+      },
+      onSettled: () => {
         void queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] });
         void queryClient.invalidateQueries({ queryKey: [WORKERBYID] });
+        void queryClient.invalidateQueries({ queryKey: [ALL_WORKER_DATA] });
       },
     }),
 

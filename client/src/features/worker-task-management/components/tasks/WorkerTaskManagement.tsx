@@ -212,7 +212,6 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                         <TaskItem
                           key={task.id}
                           task={task}
-                          workerId={workerId}
                           isSelected={editModeData.some(
                             (item) => item.taskNumber === task.id
                           )}

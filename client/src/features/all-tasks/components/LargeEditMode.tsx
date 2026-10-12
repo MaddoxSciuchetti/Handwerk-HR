@@ -15,17 +15,20 @@ export function LargeEditMode({
   setLargeEditMode,
   setEditModeData,
 }: LargeEditModeProps) {
-  const { mutate: deleteTasks, isPending } = useDeleteTasks();
+  const { mutate: deleteTasks } = useDeleteTasks();
 
   const handleDelete = () => {
     const ids = editModeData
       .map((item) => item.taskNumber)
       .filter((id) => id.length > 0);
     if (!ids.length) return;
+    const selected = editModeData;
+    setEditModeData([]);
+    setLargeEditMode(false);
     deleteTasks(ids, {
-      onSuccess: () => {
-        setEditModeData([]);
-        setLargeEditMode(false);
+      onError: () => {
+        setEditModeData(selected);
+        setLargeEditMode(true);
       },
     });
   };
@@ -34,7 +37,7 @@ export function LargeEditMode({
     <EditModeBar
       selectedItems={editModeData}
       setSelectedItems={setEditModeData}
-      isPending={isPending}
+      isPending={false}
       onDelete={handleDelete}
       onClose={() => setLargeEditMode(false)}
     />

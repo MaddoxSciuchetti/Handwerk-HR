@@ -15,7 +15,6 @@ import { TaskStatusPicker } from './ui/TaskStatusPicker';
 type TaskItemProps = {
   task: IssueResponse;
   isSelected: boolean;
-  workerId?: string;
   onOpenEdit: (seed: TaskEditState) => void;
   onOpenContractSend?: (task: IssueResponse) => void;
   onOpenContractConfirm?: (task: IssueResponse) => void;
@@ -28,7 +27,6 @@ type TaskItemProps = {
 export function TaskItem({
   task,
   isSelected,
-  workerId,
   onOpenEdit,
   onOpenContractSend,
   onOpenContractConfirm,
@@ -88,11 +86,7 @@ export function TaskItem({
           <SelectionIcon className="size-4" />
         </Button>
         <div className="flex min-w-0 items-center gap-2.5">
-          <TaskStatusPicker
-            taskId={task.id}
-            status={task.status}
-            workerId={workerId}
-          />
+          <TaskStatusPicker taskId={task.id} status={task.status} />
           <p className="min-w-0 truncate text-sm">
             {task.title}
             {task.isTemporary ? (
