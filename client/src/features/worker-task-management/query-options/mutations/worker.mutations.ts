@@ -4,6 +4,7 @@ import { User } from '@/features/user-profile/types/auth.type';
 import { ALL_WORKER_DATA } from '@/features/worker-lifecycle/consts/query-key.consts';
 import { FileResponse, SuccessResponse } from '@/types/api.types';
 import { mutationOptions } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import {
   createWorkerTask,
   deleteWorkerFile,
@@ -30,21 +31,35 @@ type UpdateTaskHistoryVariables = {
 
 export const workerMutations = {
   deleteWorker: (workerId: string) => {
-    return mutationOptions<SuccessResponse<string>, Error, string>({
+    return mutationOptions<
+      SuccessResponse<string>,
+      Error,
+      string,
+      { previous?: File_Request[] }
+    >({
       mutationFn: (fileId: string) => deleteWorkerFile(workerId, fileId),
       onMutate: async (fileId) => {
         await queryClient.cancelQueries({ queryKey: [HISTORYDATA, workerId] });
+        const previous = queryClient.getQueryData<File_Request[]>([
+          HISTORYDATA,
+          workerId,
+        ]);
 
         queryClient.setQueryData<File_Request[]>(
           [HISTORYDATA, workerId],
           (old) => old?.filter((file) => file.id !== fileId) || []
         );
+
+        return { previous };
       },
-      onError: () => {
-        queryClient.invalidateQueries({ queryKey: [HISTORYDATA, workerId] });
+      onError: (_error, _fileId, context) => {
+        if (context?.previous) {
+          queryClient.setQueryData([HISTORYDATA, workerId], context.previous);
+        }
+        toast.error('Datei konnte nicht gelöscht werden.');
       },
       onSettled: () => {
-        queryClient.invalidateQueries({ queryKey: [HISTORYDATA, workerId] });
+        void queryClient.invalidateQueries({ queryKey: [HISTORYDATA, workerId] });
       },
     });
   },
