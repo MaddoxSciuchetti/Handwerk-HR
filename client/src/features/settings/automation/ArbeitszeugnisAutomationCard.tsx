@@ -42,7 +42,6 @@ export function ArbeitszeugnisAutomationCard({
         ) : (
           <Select
             value={selected ?? undefined}
-            disabled={save.isPending}
             onValueChange={(documentMasterId) => {
               save.mutate(documentMasterId, {
                 onError: () =>
