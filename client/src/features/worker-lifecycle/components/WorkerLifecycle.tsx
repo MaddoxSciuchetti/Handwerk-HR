@@ -30,7 +30,7 @@ function WorkerLifeCycle() {
 
   const [largeEditMode, setLargeEditMode] = useState(false);
   const [editModeData, setEditModeData] = useState<WorkerSelection[]>([]);
-  const { deleteWorkersMutation, isDeletingWorkers } = useWorkerMutations();
+  const { deleteWorkersMutation } = useWorkerMutations();
   const {
     filterLabel,
     filterOptions,
@@ -62,10 +62,13 @@ function WorkerLifeCycle() {
       .map((item) => item.engagementNumber)
       .filter((id) => id.length > 0);
     if (!ids.length) return;
+    const selected = editModeData;
+    setEditModeData([]);
+    setLargeEditMode(false);
     deleteWorkersMutation(ids, {
-      onSuccess: () => {
-        setEditModeData([]);
-        setLargeEditMode(false);
+      onError: () => {
+        setEditModeData(selected);
+        setLargeEditMode(true);
       },
     });
   };
@@ -136,7 +139,7 @@ function WorkerLifeCycle() {
           <EditModeBar
             selectedItems={editModeData}
             setSelectedItems={handleSetEditModeData}
-            isPending={isDeletingWorkers}
+            isPending={false}
             onDelete={handleDeleteSelected}
             onClose={() => setLargeEditMode(false)}
           />
