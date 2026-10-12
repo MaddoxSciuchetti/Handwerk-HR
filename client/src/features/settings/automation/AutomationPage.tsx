@@ -17,11 +17,8 @@ export function AutomationPage() {
   return (
     <div className="mx-auto flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
       <div className="flex h-full min-h-0 w-full flex-col items-center">
-        <SettingsPageHeader
-          title="Automatisierung"
-          description="Automatisierungen für Onboarding und Offboarding"
-        />
-        <Table className="min-h-0 w-200 flex-1">
+        <SettingsPageHeader title="Automatisierung" />
+        <Table className="min-h-0 w-full flex-1">
           {isError || !data ? (
             <p className="px-3 py-6 text-sm text-destructive">
               Automatisierung konnte nicht geladen werden.

@@ -41,15 +41,8 @@ export function PaymentPlanDisplay({
 
   return (
     <section className="flex h-full w-full flex-col items-center justify-center">
-      <div className="flex w-200 flex-col items-start gap-1">
-        <SettingsPageHeader
-          title="Zahlungen"
-          description={
-            hasActiveSubscription
-              ? 'Verwalte dein Abo und deine Zahlungsmethoden.'
-              : 'Wähle einen Plan, um dein Abo zu starten.'
-          }
-        />
+      <div className="flex w-full flex-col items-start gap-1">
+        <SettingsPageHeader title="Zahlungen" />
         {showPastDueNotice ? (
           <p className="typo-body-sm font-medium text-destructive">
             Die letzte Zahlung ist fehlgeschlagen. Bitte aktualisiere deine
@@ -73,7 +66,7 @@ export function PaymentPlanDisplay({
           Pläne vergleichen
         </Link>
       </div>
-      <Table className="w-200">
+      <Table className="w-full">
         {hasActiveSubscription ? (
           <SubscriptionRow
             planName={planName}
