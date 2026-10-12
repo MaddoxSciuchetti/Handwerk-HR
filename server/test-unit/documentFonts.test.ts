@@ -39,3 +39,26 @@ it("blocks missing variants and refuses arbitrary public font paths", async () =
     ]);
     expect((await fontStatus()).ready).toBe(false);
 });
+it("serves Carlito for Calibri only when the licensed file is missing", async () => {
+    (readFile as jest.Mock).mockImplementation(async (path: string) => {
+        if (path.endsWith("Carlito-Regular.ttf")) return Buffer.from("carlito");
+        throw new Error("missing");
+    });
+    expect((await fontBytes("Calibri.ttf")).toString()).toBe("carlito");
+    (readdir as jest.Mock).mockResolvedValue([
+        "Carlito-Regular.ttf",
+        "Carlito-Bold.ttf",
+        "Carlito-Italic.ttf",
+    ]);
+    expect(await fontStatus()).toMatchObject({
+        ready: true,
+        substitute: "Carlito",
+    });
+    (readdir as jest.Mock).mockResolvedValue([
+        "Calibri.ttf",
+        "Calibri-Bold.ttf",
+        "Calibri-Italic.ttf",
+        "Carlito-Regular.ttf",
+    ]);
+    expect(await fontStatus()).toMatchObject({ ready: true, substitute: null });
+});

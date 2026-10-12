@@ -30,6 +30,27 @@ export const FONT_FILES: Record<string, string> = {
     "Times New Roman:700:italic": "TimesNewRoman-BoldItalic.ttf",
 };
 
+// Carlito (SIL OFL) has Calibri's exact advance widths, so line breaks match
+// the original. It is used only when the licensed Calibri file is absent.
+const SUBSTITUTES: Record<string, string> = {
+    "Calibri.ttf": "Carlito-Regular.ttf",
+    "Calibri-Bold.ttf": "Carlito-Bold.ttf",
+    "Calibri-Italic.ttf": "Carlito-Italic.ttf",
+    "Calibri-BoldItalic.ttf": "Carlito-BoldItalic.ttf",
+};
+
+const REQUIRED = ["Calibri.ttf", "Calibri-Bold.ttf", "Calibri-Italic.ttf"];
+
+async function readFontFile(directory: string, filename: string) {
+    try {
+        return await readFile(join(directory, filename));
+    } catch (error) {
+        const substitute = SUBSTITUTES[filename];
+        if (!substitute) throw error;
+        return await readFile(join(directory, substitute));
+    }
+}
+
 export async function loadDocumentFonts(document: StyledDocument) {
     if (!DOCUMENT_FONT_DIR)
         throw new AppError(
@@ -59,7 +80,7 @@ export async function loadDocumentFonts(document: StyledDocument) {
             );
         let bytes: Buffer;
         try {
-            bytes = await readFile(join(DOCUMENT_FONT_DIR, filename));
+            bytes = await readFontFile(DOCUMENT_FONT_DIR, filename);
         } catch {
             throw new AppError(BAD_REQUEST, "Schriftdatei fehlt: " + filename);
         }
@@ -89,12 +110,17 @@ export async function fontStatus() {
     const available = DOCUMENT_FONT_DIR
         ? await readdir(DOCUMENT_FONT_DIR).catch(() => [])
         : [];
+    const licensed = REQUIRED.every((f) => available.includes(f));
+    const substituted =
+        !licensed &&
+        REQUIRED.every(
+            (f) => available.includes(f) || available.includes(SUBSTITUTES[f]),
+        );
     return {
         available,
-        required: ["Calibri.ttf", "Calibri-Bold.ttf", "Calibri-Italic.ttf"],
-        ready: ["Calibri.ttf", "Calibri-Bold.ttf", "Calibri-Italic.ttf"].every(
-            (f) => available.includes(f),
-        ),
+        required: REQUIRED,
+        ready: licensed || substituted,
+        substitute: substituted ? "Carlito" : null,
     };
 }
 
@@ -102,7 +128,7 @@ export async function fontBytes(filename: string) {
     if (!Object.values(FONT_FILES).includes(filename) || !DOCUMENT_FONT_DIR)
         throw new AppError(BAD_REQUEST, "Schrift nicht verfügbar.");
     try {
-        return await readFile(join(DOCUMENT_FONT_DIR, filename));
+        return await readFontFile(DOCUMENT_FONT_DIR, filename);
     } catch {
         throw new AppError(BAD_REQUEST, "Schriftdatei fehlt.");
     }
