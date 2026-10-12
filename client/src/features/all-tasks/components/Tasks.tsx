@@ -15,9 +15,16 @@ import {
   clearContractSendReturn,
   peekContractSendReturn,
 } from '@/features/worker-task-management/contractSendReturn';
-import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
 import { useFetchTasks } from '../hooks/useFetchTasks';
 import { useTaskSidebar } from '../hooks/useTaskSidebar';
+import { confirmationTasksFirst } from '../utilts/task-order.utils';
 import { LargeEditMode } from './LargeEditMode';
 import { ContractConfirmDialog } from '@/features/worker-task-management/components/files/ContractConfirmDialog';
 import { ContractSendDialog } from '@/features/worker-task-management/components/files/ContractSendDialog';
@@ -33,8 +40,12 @@ function Tasks() {
   const { sidebarKey, sidebarProps, openForEdit, openForCreate } =
     useTaskSidebar();
   const filteredTasks = useMemo(() => {
-    if (segment === 'left') return data;
-    return data?.filter((task) => task.assigneeUserId === user?.id);
+    const visibleTasks =
+      segment === 'left'
+        ? (data ?? [])
+        : (data?.filter((task) => task.assigneeUserId === user?.id) ?? []);
+
+    return confirmationTasksFirst(visibleTasks);
   }, [data, segment, user?.id]);
 
   const [contractSend, setContractSend] = useState<{
@@ -116,7 +127,9 @@ function Tasks() {
         <GreetingHeader firstname={user?.firstName ?? ''} />
         <Card className="mt-5 flex min-h-0 flex-1 flex-col gap-0 border border-border py-0 shadow-none ring-0">
           <CardHeader className="flex shrink-0 flex-row flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-3">
-            <CardTitle className="text-base font-medium">Alle Aufgaben</CardTitle>
+            <CardTitle className="text-base font-medium">
+              Alle Aufgaben
+            </CardTitle>
             <div className="flex shrink-0 items-center gap-3">
               <TaskSegmentToggle value={segment} onChange={setSegment} />
               <Button

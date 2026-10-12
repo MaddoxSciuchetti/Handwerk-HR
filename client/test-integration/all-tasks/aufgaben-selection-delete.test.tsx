@@ -86,6 +86,25 @@ describe('Aufgaben (all tasks) — row selection & bulk delete', () => {
     expect(selectBtn.className).toMatch(/group-hover:opacity-100/);
   });
 
+
+  it('places confirmation tasks before the normal task list', async () => {
+    taskStore.remaining[1].kind = 'contract_confirm';
+    renderWithAppQueryClient(<Tasks />);
+
+    await screen.findByText('Alpha Aufgabe');
+
+    const rows = Array.from(
+      screen
+        .getByText('Alpha Aufgabe')
+        .closest('tbody')
+        ?.querySelectorAll('tr') ?? []
+    );
+    expect(rows.map((row) => row.textContent)).toEqual([
+      expect.stringContaining('Beta Aufgabe'),
+      expect.stringContaining('Alpha Aufgabe'),
+    ]);
+  });
+
   it('shows the selection control at full opacity when the task is selected (bulk mode)', async () => {
     const user = userEvent.setup();
     renderWithAppQueryClient(<Tasks />);
