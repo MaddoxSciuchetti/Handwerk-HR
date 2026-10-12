@@ -21,6 +21,7 @@ import orgRoutes from "./routes/org.route";
 import { questionnaireRoutes } from "./routes/questionnaire.route";
 import { taskRoutes } from "./routes/tasks.route";
 import { documentMasterRoutes } from "./routes/documentMaster.route";
+import { getDocumentFont } from "./controllers/documentMaster.controller";
 import { templateRoutes } from "./routes/template.route";
 import testRoutes from "./routes/test.route";
 import { userRoutes } from "./routes/user.route";
@@ -37,7 +38,7 @@ app.post(
     resendInboundHandler,
 );
 
-app.use(express.json());
+app.use(express.json({ limit: "8mb" }));
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
@@ -86,6 +87,7 @@ app.get("/", (req, res) => {
 app.use("/test", testRoutes);
 
 app.use("/auth", authRoutes);
+app.get("/document-fonts/:filename", getDocumentFont);
 app.use(
     "/automation",
     authenticate,

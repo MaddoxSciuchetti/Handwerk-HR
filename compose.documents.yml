@@ -1,0 +1,11 @@
+services:
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    ports:
+      - "127.0.0.1:3001:3000"
+    command:
+      - "gotenberg"
+      - "--chromium-deny-list=^https?://"
+    volumes:
+      - "${DOCUMENT_FONT_DIR:-./server/document-fonts}:/usr/local/share/fonts/bsb:ro"
+    restart: unless-stopped

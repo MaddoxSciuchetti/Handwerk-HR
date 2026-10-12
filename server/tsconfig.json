@@ -3,7 +3,8 @@
         "lib": ["dom", "dom.iterable", "esnext"],
         "target": "es2020",
         "outDir": "./built",
-        "rootDir": ".",
+        "rootDir": "..",
+        "skipLibCheck": true,
         "module": "esnext",
         "moduleResolution": "bundler",
 

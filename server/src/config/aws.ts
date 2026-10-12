@@ -5,14 +5,10 @@ import {
     S3Client,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { storageClientConfig } from "./storageClientConfig";
 
-const s3Client = new S3Client({
-    region: process.env.AWS_REGION,
-    credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-    },
-});
+// Without explicit keys, use the SDK provider chain (AWS_PROFILE/SSO/IAM role).
+const s3Client = new S3Client(storageClientConfig());
 
 export const generatePresignedUrl = async (
     cloudKey: string,
@@ -27,6 +23,14 @@ export const generatePresignedUrl = async (
         expiresIn: 3600, // 1 hour
     });
 };
+
+export async function downloadStoredFile(key: string): Promise<Buffer> {
+    const result = await s3Client.send(
+        new GetObjectCommand({ Bucket: process.env.AWS_S3_BUCKET!, Key: key }),
+    );
+    if (!result.Body) throw new Error("Stored file is missing");
+    return Buffer.from(await result.Body.transformToByteArray());
+}
 
 export async function uploadFileToS3(
     file: Express.Multer.File,

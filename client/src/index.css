@@ -1,1 +1,169 @@
 @import 'tailwindcss';
+@theme {
+  --font-sans: 'Calibri', Arial, sans-serif;
+}
+body {
+  font-family: 'Calibri', Arial, sans-serif;
+}
+.styled-document {
+  color: #111;
+  background: white;
+  font-synthesis: none;
+}
+.document-editor-paper {
+  box-sizing: border-box;
+  margin: 0 auto;
+  box-shadow: 0 2px 8px #0002;
+}
+.document-editor-canvas {
+  scrollbar-gutter: stable;
+  overflow-anchor: none;
+}
+.styled-document .tiptap {
+  outline: none;
+  min-height: 12rem;
+}
+.styled-document p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin-bottom: 8pt;
+}
+.styled-document h1 {
+  font-size: 20pt;
+  font-weight: 700;
+}
+.styled-document h2 {
+  font-size: 16pt;
+  font-weight: 700;
+}
+.styled-document h3 {
+  font-size: 14pt;
+  font-weight: 700;
+}
+.styled-document h4 {
+  font-size: 12pt;
+  font-weight: 700;
+}
+.styled-document h5 {
+  font-size: 11pt;
+  font-weight: 700;
+}
+.styled-document h6 {
+  font-size: 10pt;
+  font-weight: 700;
+}
+.styled-document h1,
+.styled-document h2,
+.styled-document h3,
+.styled-document h4,
+.styled-document h5,
+.styled-document h6 {
+  margin: 0 0 8pt;
+}
+.styled-document ul,
+.styled-document ol {
+  margin: 0 0 8pt;
+}
+.styled-document table {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed;
+}
+.styled-document td,
+.styled-document th {
+  border: 1px solid #aaa;
+  padding: 4pt;
+  vertical-align: top;
+}
+.styled-document table[data-border='box'] {
+  border: 0.75pt solid #000;
+}
+.styled-document table[data-border='box'] td,
+.styled-document table[data-border='box'] th {
+  border: none;
+  padding: 1pt 4pt;
+}
+.styled-document table[data-border='none'],
+.styled-document table[data-border='none'] td,
+.styled-document table[data-border='none'] th {
+  border: none;
+  padding: 0;
+}
+.styled-document u {
+  text-underline-offset: 0.12em;
+}
+.styled-document ul {
+  list-style: disc;
+  padding-left: 20pt;
+}
+.styled-document ol {
+  list-style: decimal;
+  padding-left: 20pt;
+}
+.styled-document img {
+  max-width: 100%;
+  height: auto;
+}
+.styled-document [data-page-break] {
+  border-top: 1px dashed #bbb;
+  margin: 20pt 0;
+}
+.styled-document [data-line-group] {
+  break-inside: avoid;
+}
+.styled-document [data-line-label],
+.styled-document [data-line-label]:focus {
+  pointer-events: auto;
+  outline: none;
+  caret-color: currentcolor;
+  cursor: text;
+}
+.styled-document [data-line-label].ProseMirror-selectednode,
+.styled-document [data-line-group].ProseMirror-selectednode {
+  outline: none;
+}
+.document-inline-value:empty::before {
+  content: attr(data-placeholder);
+  color: #64748b;
+}
+
+.document-editor-paper.document-editor-paginated {
+  background: transparent;
+  box-shadow: none;
+}
+.document-editor-page-sheet {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  background: white;
+  box-shadow: 0 2px 6px #0002;
+  pointer-events: none;
+}
+.document-editor-page-header,
+.document-editor-page-footer {
+  position: absolute;
+  font-size: inherit;
+}
+.document-editor-page-header {
+  top: 5mm;
+}
+.document-editor-page-footer {
+  bottom: 7mm;
+}
+.document-editor-page-label {
+  position: absolute;
+  bottom: -24px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font: 12px sans-serif;
+  color: #737373;
+}
+.document-editor-paginated [data-page-break] {
+  margin: 0;
+  height: 0;
+  border: 0;
+}
+.document-editor-paginated .tiptap {
+  display: flow-root;
+}

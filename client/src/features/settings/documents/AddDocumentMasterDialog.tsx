@@ -74,7 +74,8 @@ export function AddDocumentMasterDialog({
         <div>
           <h2 className="typo-h4 font-bold">Dokument hinzufügen</h2>
           <p className="typo-body-sm text-muted-foreground">
-            Die Datei wird gelesen und als bearbeitbarer Text angelegt.
+            Die Datei wird als bearbeitbare Vorlage importiert. Bitte prüfen Sie
+            anschließend Formatierung und Felder anhand des Originals.
           </p>
         </div>
 

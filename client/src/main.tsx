@@ -7,10 +7,12 @@ import './index.css';
 import queryClient from './config/query.client';
 import { ThemeProvider } from './context/theme-provider/ThemeProvider';
 import { AppRouter } from './router';
+import { DocumentFontStyles } from './features/settings/documents/DocumentFontStyles';
 import './styles/theme.css';
 
 createRoot(document.getElementById('root')!).render(
   <QueryClientProvider client={queryClient}>
+    <DocumentFontStyles />
     <ThemeProvider>
       <AppRouter />
     </ThemeProvider>

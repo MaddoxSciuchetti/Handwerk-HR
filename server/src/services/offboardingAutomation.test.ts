@@ -1,3 +1,6 @@
+import { sendPreparedDocument } from "@/services/preparedDocument";
+import { readStyledDocument } from "../../../shared/document";
+import { certificateText } from "@/services/arbeitszeugnis";
 import { prisma } from "@/lib/prisma";
 import { microsoftGraphToken } from "@/services/microsoft365Account";
 import {
@@ -15,6 +18,7 @@ jest.mock("@/lib/prisma", () => ({
         workerEngagement: { findFirst: jest.fn() },
         automationDocumentSetting: { findUnique: jest.fn() },
         arbeitszeugnis: { upsert: jest.fn() },
+        preparedDocument: { findFirst: jest.fn() },
         $transaction: jest.fn(),
     },
 }));
@@ -22,15 +26,28 @@ jest.mock("@/lib/prisma", () => ({
 jest.mock("@/services/microsoft365Account", () => ({
     microsoftGraphToken: jest.fn(),
 }));
+jest.mock("@/constants/env", () => ({
+    ...jest.requireActual("@/constants/env"),
+    USE_MICROSOFT_MAIL: true,
+}));
+
+jest.mock("@/services/preparedDocument", () => ({
+    sendPreparedDocument: jest.fn(),
+    currentPreparation: jest.fn().mockResolvedValue(null),
+    outgoingPdfUrl: jest.fn().mockResolvedValue(null),
+    DeliveryRejected: class extends Error {},
+}));
 
 const findIssue = prisma.issue.findFirst as jest.Mock;
 const updateIssue = prisma.issue.update as jest.Mock;
 const findWorker = prisma.worker.findFirst as jest.Mock;
 const updateWorker = prisma.worker.update as jest.Mock;
-const findDepartureSettings = prisma.departureMailSettings.findUnique as jest.Mock;
+const findDepartureSettings = prisma.departureMailSettings
+    .findUnique as jest.Mock;
 const findWelcomeSettings = prisma.welcomeMailSettings.findUnique as jest.Mock;
 const findEngagement = prisma.workerEngagement.findFirst as jest.Mock;
-const findDocumentSetting = prisma.automationDocumentSetting.findUnique as jest.Mock;
+const findDocumentSetting = prisma.automationDocumentSetting
+    .findUnique as jest.Mock;
 const upsertCertificate = prisma.arbeitszeugnis.upsert as jest.Mock;
 const transaction = prisma.$transaction as jest.Mock;
 const token = microsoftGraphToken as jest.Mock;
@@ -79,17 +96,44 @@ describe("offboarding microsoft automation", () => {
         jest.clearAllMocks();
         jest.spyOn(console, "error").mockImplementation(() => undefined);
         findIssue.mockResolvedValue(issue);
+        (prisma.preparedDocument.findFirst as jest.Mock).mockResolvedValue({
+            id: "pdf-1",
+        });
+        (sendPreparedDocument as jest.Mock).mockImplementation(
+            async (params) => {
+                const setting = await findDocumentSetting();
+                const values = {
+                    "contract.vorname": "Ada",
+                    "contract.eintritt": "15.01.2020",
+                    "contract.austritt": "01.10.2026",
+                };
+                const providerId = await params.deliver({
+                    filename: "Arbeitszeugnis.pdf",
+                    content: Buffer.from("%PDF-Ada-15.01.2020-01.10.2026"),
+                    contentType: "application/pdf",
+                });
+                await params.finalize(
+                    { arbeitszeugnis: { upsert: upsertCertificate } },
+                    readStyledDocument(setting.documentMaster.body),
+                    values,
+                    "pdf-1",
+                    providerId,
+                );
+            },
+        );
         updateIssue.mockResolvedValue({});
         token.mockResolvedValue("graph-token");
-        transaction.mockImplementation(async (run: (tx: unknown) => unknown) => {
-            const tx = {
-                workerExternalAccount: { upsert: jest.fn() },
-                issue: { update: jest.fn() },
-                issueAuditLog: { create: jest.fn() },
-            };
-            await run(tx);
-            return tx;
-        });
+        transaction.mockImplementation(
+            async (run: (tx: unknown) => unknown) => {
+                const tx = {
+                    workerExternalAccount: { upsert: jest.fn() },
+                    issue: { update: jest.fn() },
+                    issueAuditLog: { create: jest.fn() },
+                };
+                await run(tx);
+                return tx;
+            },
+        );
     });
 
     afterEach(() => {
@@ -180,18 +224,20 @@ describe("offboarding microsoft automation", () => {
         findWorker.mockResolvedValue(departureWorker);
         findDepartureSettings.mockResolvedValue(departureSettings);
         updateWorker.mockResolvedValue({});
-        const fetchMock = jest.spyOn(global, "fetch").mockImplementation(async (input, init) => {
-            const url = String(input);
-            if (url.includes("/transitiveMembers/")) {
-                return jsonResponse({
-                    value: [{ mail: "team@firma.de" }],
-                });
-            }
-            if (url.endsWith("/sendMail") && init?.method === "POST") {
-                return jsonResponse(null, 202);
-            }
-            throw new Error(`unexpected ${init?.method ?? "GET"} ${url}`);
-        });
+        const fetchMock = jest
+            .spyOn(global, "fetch")
+            .mockImplementation(async (input, init) => {
+                const url = String(input);
+                if (url.includes("/transitiveMembers/")) {
+                    return jsonResponse({
+                        value: [{ mail: "team@firma.de" }],
+                    });
+                }
+                if (url.endsWith("/sendMail") && init?.method === "POST") {
+                    return jsonResponse(null, 202);
+                }
+                throw new Error(`unexpected ${init?.method ?? "GET"} ${url}`);
+            });
 
         const result = await runTaskAutomation({
             organizationId: "org-1",
@@ -299,11 +345,23 @@ describe("offboarding microsoft automation", () => {
                     version: 2,
                     segments: [
                         { type: "text", text: "Frau " },
-                        { type: "input", key: "contract.vorname", label: "Vorname" },
+                        {
+                            type: "input",
+                            key: "contract.vorname",
+                            label: "Vorname",
+                        },
                         { type: "text", text: " trat ein am " },
-                        { type: "input", key: "contract.eintritt", label: "Eintritt" },
+                        {
+                            type: "input",
+                            key: "contract.eintritt",
+                            label: "Eintritt",
+                        },
                         { type: "text", text: " und aus am " },
-                        { type: "input", key: "contract.austritt", label: "Austritt" },
+                        {
+                            type: "input",
+                            key: "contract.austritt",
+                            label: "Austritt",
+                        },
                         { type: "text", text: "." },
                     ],
                 },
@@ -325,12 +383,14 @@ describe("offboarding microsoft automation", () => {
             ]),
         );
 
-        const fetchMock = jest.spyOn(global, "fetch").mockResolvedValue(jsonResponse(null, 202));
+        const fetchMock = jest
+            .spyOn(global, "fetch")
+            .mockResolvedValue(jsonResponse(null, 202));
         const result = await confirmArbeitszeugnis({
             organizationId: "org-1",
             issueId: "issue-1",
             actorUserId: "user-1",
-            values: preview.preview.values,
+            artifactId: "pdf-1",
         });
 
         expect(result).toEqual({ status: "completed", alreadyBlocked: false });
@@ -348,30 +408,21 @@ describe("offboarding microsoft automation", () => {
         expect(body.message.toRecipients[0]?.emailAddress.address).toBe(
             "ada.privat@example.de",
         );
-        expect(body.message.body.content).toContain("Ada");
-        expect(body.message.body.content).toContain("15.01.2020");
-        expect(body.message.body.content).toContain("01.10.2026");
-        expect(upsertCertificate).toHaveBeenCalledWith(
-            expect.objectContaining({
-                where: { engagementId: "engagement-1" },
-                create: expect.objectContaining({
-                    masterId: "master-1",
-                    sentAt: expect.any(Date),
-                    body: {
-                        version: 2,
-                        segments: [
-                            { type: "text", text: "Frau " },
-                            { type: "text", text: "Ada" },
-                            { type: "text", text: " trat ein am " },
-                            { type: "text", text: "15.01.2020" },
-                            { type: "text", text: " und aus am " },
-                            { type: "text", text: "01.10.2026" },
-                            { type: "text", text: "." },
-                        ],
-                    },
-                }),
-            }),
-        );
+        expect(body.message.body.content).toContain("als PDF");
+        const message = JSON.parse(
+            String(fetchMock.mock.calls[0]?.[1]?.body),
+        ).message;
+        expect(message.attachments[0].contentType).toBe("application/pdf");
+        expect(
+            Buffer.from(
+                message.attachments[0].contentBytes,
+                "base64",
+            ).toString(),
+        ).toBe("%PDF-Ada-15.01.2020-01.10.2026");
+        const stored = upsertCertificate.mock.calls[0][0].create;
+        expect(stored.outgoingPdfId).toBe("pdf-1");
+        expect(certificateText(stored.body)).toContain("Ada");
+        expect(certificateText(stored.body)).toContain("15.01.2020");
         const tx = await transaction.mock.results[0].value;
         expect(tx.issue.update).toHaveBeenCalledWith({
             where: { id: "issue-1" },
@@ -407,7 +458,7 @@ describe("offboarding microsoft automation", () => {
             organizationId: "org-1",
             issueId: "issue-1",
             actorUserId: "user-1",
-            values: {},
+            artifactId: "pdf-1",
         });
 
         expect(result).toEqual({ status: "completed", alreadyBlocked: false });
@@ -451,8 +502,16 @@ describe("offboarding microsoft automation", () => {
                 body: {
                     version: 2,
                     segments: [
-                        { type: "input", key: "contract.farbe", label: "Lieblingsfarbe" },
-                        { type: "input", key: "contract.austritt", label: "Austritt" },
+                        {
+                            type: "input",
+                            key: "contract.farbe",
+                            label: "Lieblingsfarbe",
+                        },
+                        {
+                            type: "input",
+                            key: "contract.austritt",
+                            label: "Austritt",
+                        },
                     ],
                 },
             },
@@ -467,22 +526,24 @@ describe("offboarding microsoft automation", () => {
             expect.objectContaining({
                 status: "ready",
                 preview: expect.objectContaining({
-                    unresolved: [{ key: "contract.farbe", label: "Lieblingsfarbe" }],
+                    unresolved: [
+                        { key: "contract.farbe", label: "Lieblingsfarbe" },
+                    ],
                 }),
             }),
         );
 
-        const result = await confirmArbeitszeugnis({
-            organizationId: "org-1",
-            issueId: "issue-1",
-            actorUserId: "user-1",
-            values: {},
-        });
-
-        expect(result).toEqual({
-            status: "failed",
-            message: "Diese Platzhalter konnten nicht gefüllt werden: Lieblingsfarbe, Austritt.",
-        });
+        (prisma.preparedDocument.findFirst as jest.Mock).mockResolvedValue(
+            null,
+        );
+        await expect(
+            confirmArbeitszeugnis({
+                organizationId: "org-1",
+                issueId: "issue-1",
+                actorUserId: "user-1",
+                artifactId: "missing-pdf",
+            }),
+        ).rejects.toThrow("PDF gehört nicht zur ausgewählten Vorlage.");
         expect(fetchMock).not.toHaveBeenCalled();
         expect(upsertCertificate).not.toHaveBeenCalled();
         expect(transaction).not.toHaveBeenCalled();

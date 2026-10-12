@@ -15,8 +15,7 @@ const STATUS_LABEL = {
   signed: 'Unterschrieben',
 } as const;
 
-const FROZEN_NOTE =
-  'Änderungen am Mustertext werden nicht mehr übernommen.';
+const FROZEN_NOTE = 'Änderungen am Mustertext werden nicht mehr übernommen.';
 
 type ContractDraftDialogProps = {
   workerId: string;
@@ -72,6 +71,7 @@ export function ContractDraftDialog({
               <p className="text-sm text-muted-foreground">{FROZEN_NOTE}</p>
             )}
             <ContractDraftBody
+              document={data.document}
               segments={data.segments}
               values={values}
               readOnly={readOnly}

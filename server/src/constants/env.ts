@@ -38,6 +38,8 @@ export const GOOGLE_OAUTH_REDIRECT_URI =
 export const GOOGLE_OAUTH_REFRESH_TOKEN =
     process.env.GOOGLE_OAUTH_REFRESH_TOKEN?.trim() ?? "";
 export const OPENAI_API_KEY = process.env.OPENAI_API_KEY?.trim() ?? "";
+export const GOTENBERG_URL = process.env.GOTENBERG_URL?.trim() ?? "";
+export const DOCUMENT_FONT_DIR = process.env.DOCUMENT_FONT_DIR?.trim() ?? "";
 
 export const MICROSOFT_365_ENV_KEYS = [
     "MICROSOFT_365_TENANT_ID",

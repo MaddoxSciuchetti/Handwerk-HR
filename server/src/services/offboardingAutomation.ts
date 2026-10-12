@@ -8,6 +8,8 @@ import { prisma } from "@/lib/prisma";
 import {
     previewArbeitszeugnis,
     sendArbeitszeugnis,
+    prepareArbeitszeugnisPdf,
+    saveArbeitszeugnisDraft,
 } from "@/services/arbeitszeugnis";
 import { sendTeamDepartureMail } from "@/services/departureMail";
 import { microsoftGraphToken } from "@/services/microsoft365Account";
@@ -76,7 +78,11 @@ async function blockMicrosoftSignIn(token: string, userKey: string) {
         };
     }
     if (!current.accountEnabled) {
-        return { ok: true as const, externalId: current.id, alreadyBlocked: true };
+        return {
+            ok: true as const,
+            externalId: current.id,
+            alreadyBlocked: true,
+        };
     }
 
     const patched = await graphJson(
@@ -185,7 +191,10 @@ export async function runTaskAutomation(params: {
     automation: string;
 }): Promise<RunTaskAutomationResult> {
     if (!isTaskAutomationId(params.automation)) {
-        return { status: "failed", message: "Diese Automatisierung gibt es nicht." };
+        return {
+            status: "failed",
+            message: "Diese Automatisierung gibt es nicht.",
+        };
     }
 
     const issue = await prisma.issue.findFirst({
@@ -245,7 +254,10 @@ export async function runTaskAutomation(params: {
     }
 
     if (params.automation !== O365_BLOCK_SIGN_IN) {
-        return { status: "failed", message: "Diese Automatisierung gibt es nicht." };
+        return {
+            status: "failed",
+            message: "Diese Automatisierung gibt es nicht.",
+        };
     }
 
     const worker = issue.workerEngagement.worker;
@@ -256,7 +268,8 @@ export async function runTaskAutomation(params: {
     if (!userKey) {
         return {
             status: "failed",
-            message: "Für diesen Mitarbeiter ist kein Microsoft-365-Konto hinterlegt.",
+            message:
+                "Für diesen Mitarbeiter ist kein Microsoft-365-Konto hinterlegt.",
         };
     }
 
@@ -300,8 +313,15 @@ export async function arbeitszeugnisPreview(params: {
     organizationId: string;
     issueId: string;
 }) {
-    const issue = await issueForAutomation(params.organizationId, params.issueId);
-    if (!issue) return { status: "failed" as const, message: "Aufgabe nicht gefunden." };
+    const issue = await issueForAutomation(
+        params.organizationId,
+        params.issueId,
+    );
+    if (!issue)
+        return {
+            status: "failed" as const,
+            message: "Aufgabe nicht gefunden.",
+        };
     return previewArbeitszeugnis({
         organizationId: params.organizationId,
         engagementId: issue.workerEngagement.id,
@@ -312,15 +332,19 @@ export async function confirmArbeitszeugnis(params: {
     organizationId: string;
     issueId: string;
     actorUserId: string;
-    values: Record<string, string>;
+    artifactId: string;
 }): Promise<RunTaskAutomationResult> {
-    const issue = await issueForAutomation(params.organizationId, params.issueId);
+    const issue = await issueForAutomation(
+        params.organizationId,
+        params.issueId,
+    );
     if (!issue) return { status: "failed", message: "Aufgabe nicht gefunden." };
 
     const mailed = await sendArbeitszeugnis({
         organizationId: params.organizationId,
         engagementId: issue.workerEngagement.id,
-        values: params.values,
+        artifactId: params.artifactId,
+        actorUserId: params.actorUserId,
     });
     if (mailed.status === "failed") return mailed;
 
@@ -334,4 +358,36 @@ export async function confirmArbeitszeugnis(params: {
         actorUserId: params.actorUserId,
     });
     return { status: "completed", alreadyBlocked: false };
+}
+
+export async function prepareLetterForIssue(
+    params: {
+        organizationId: string;
+        issueId: string;
+        values: Record<string, string>;
+    },
+    draftOnly = false,
+) {
+    const issue = await issueForAutomation(
+        params.organizationId,
+        params.issueId,
+    );
+    if (!issue)
+        return {
+            status: "failed" as const,
+            message: "Aufgabe nicht gefunden.",
+        };
+    const input = {
+        organizationId: params.organizationId,
+        engagementId: issue.workerEngagement.id,
+        values: params.values,
+    };
+    if (draftOnly) {
+        await saveArbeitszeugnisDraft(input);
+        return { status: "saved" as const };
+    }
+    return {
+        status: "prepared" as const,
+        data: await prepareArbeitszeugnisPdf(input),
+    };
 }

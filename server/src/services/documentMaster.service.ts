@@ -1,7 +1,12 @@
-import { BAD_REQUEST, NOT_FOUND } from "@/constants/http";
+import { BAD_REQUEST, NOT_FOUND, CONFLICT } from "@/constants/http";
+import { generatePresignedUrl } from "@/config/aws";
+import {
+    readStyledDocument,
+    type StyledDocument,
+} from "../../../shared/document";
 import { prisma } from "@/lib/prisma";
 import AppError from "@/utils/AppError";
-import { DocumentMasterKind } from "@prisma/client";
+import { DocumentMasterKind, Prisma } from "@prisma/client";
 import {
     documentBody,
     DocumentSegment,
@@ -25,6 +30,12 @@ export type DocumentMasterListItem = {
 export type DocumentMasterDetail = DocumentMasterListItem & {
     text: string;
     segments: DocumentSegment[];
+    document: StyledDocument;
+    revision: number;
+    approvedAt: Date | null;
+    sourceUrl?: string | null;
+    sourceMime?: string | null;
+    importWarnings?: string[];
 };
 
 function asKind(kind: string): DocumentMasterKind {
@@ -40,6 +51,9 @@ function toDetail(master: {
     kind: DocumentMasterKind;
     body: Parameters<typeof readDocumentSegments>[0];
     updatedAt: Date;
+    revision: number;
+    approvedAt: Date | null;
+    sourceMime?: string | null;
 }): DocumentMasterDetail {
     const segments = readDocumentSegments(master.body);
     return {
@@ -49,6 +63,11 @@ function toDetail(master: {
         text: textFromSegments(segments),
         segments,
         updatedAt: master.updatedAt,
+        document: readStyledDocument(master.body),
+        revision: master.revision,
+        approvedAt: master.approvedAt,
+        sourceMime: master.sourceMime,
+        importWarnings: readStyledDocument(master.body).importWarnings,
     };
 }
 
@@ -71,20 +90,33 @@ export async function createDocumentMaster(params: {
     organizationId: string;
     kind: string;
     name: string;
-    text: string;
+    text?: string;
+    document?: StyledDocument;
+    sourceKey?: string;
+    sourceMime?: string;
+    sourceName?: string;
 }): Promise<DocumentMasterDetail> {
     const created = await prisma.documentMaster.create({
         data: {
             organizationId: params.organizationId,
             kind: asKind(params.kind),
             name: params.name,
-            body: documentBody(segmentsFromText(params.text)),
+            body: (params.document ??
+                documentBody(
+                    segmentsFromText(params.text ?? ""),
+                )) as Prisma.InputJsonValue,
+            sourceKey: params.sourceKey,
+            sourceMime: params.sourceMime,
+            sourceName: params.sourceName,
         },
         select: {
             id: true,
             name: true,
             kind: true,
             body: true,
+            revision: true,
+            approvedAt: true,
+            sourceMime: true,
             updatedAt: true,
         },
     });
@@ -103,6 +135,10 @@ export async function getDocumentMaster(
             name: true,
             kind: true,
             body: true,
+            revision: true,
+            approvedAt: true,
+            sourceKey: true,
+            sourceMime: true,
             updatedAt: true,
         },
     });
@@ -111,38 +147,50 @@ export async function getDocumentMaster(
         throw new AppError(NOT_FOUND, "Dokument nicht gefunden.");
     }
 
-    return toDetail(master);
+    return {
+        ...toDetail(master),
+        sourceUrl: master.sourceKey
+            ? await generatePresignedUrl(master.sourceKey)
+            : null,
+    };
 }
 
 export async function updateDocumentMaster(params: {
     id: string;
     organizationId: string;
     name: string;
-    segments: DocumentSegment[];
+    segments?: DocumentSegment[];
+    document?: StyledDocument;
+    revision?: number;
+    approved?: boolean;
 }): Promise<DocumentMasterDetail> {
     const existing = await prisma.documentMaster.findFirst({
         where: { id: params.id, organizationId: params.organizationId },
-        select: { id: true },
+        select: { id: true, revision: true },
     });
 
     if (!existing) {
         throw new AppError(NOT_FOUND, "Dokument nicht gefunden.");
     }
 
-    const updated = await prisma.documentMaster.update({
-        where: { id: params.id },
+    const result = await prisma.documentMaster.updateMany({
+        where: {
+            id: params.id,
+            organizationId: params.organizationId,
+            revision: params.revision ?? existing.revision,
+        },
         data: {
             name: params.name,
-            body: documentBody(params.segments),
-        },
-        select: {
-            id: true,
-            name: true,
-            kind: true,
-            body: true,
-            updatedAt: true,
+            body: (params.document ??
+                documentBody(params.segments ?? [])) as Prisma.InputJsonValue,
+            revision: { increment: 1 },
+            approvedAt: params.approved ? new Date() : null,
         },
     });
-
-    return toDetail(updated);
+    if (!result.count)
+        throw new AppError(
+            CONFLICT,
+            "Die Vorlage wurde inzwischen geändert. Bitte neu laden.",
+        );
+    return getDocumentMaster(params.id, params.organizationId);
 }

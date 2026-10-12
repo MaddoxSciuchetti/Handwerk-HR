@@ -1,6 +1,8 @@
 import { Router } from "express";
 import {
     getArbeitszeugnisPreview,
+    prepareArbeitszeugnis,
+    saveArbeitszeugnisValues,
     getAutomationDocument,
     getDepartureMail,
     getMicrosoft365Automation,
@@ -21,7 +23,18 @@ automationRoutes.get("/departure-mail", getDepartureMail);
 automationRoutes.put("/departure-mail", putDepartureMail);
 automationRoutes.get("/documents/:automation", getAutomationDocument);
 automationRoutes.put("/documents/:automation", putAutomationDocument);
-automationRoutes.get("/issues/:issueId/arbeitszeugnis", getArbeitszeugnisPreview);
+automationRoutes.get(
+    "/issues/:issueId/arbeitszeugnis",
+    getArbeitszeugnisPreview,
+);
+automationRoutes.post(
+    "/issues/:issueId/arbeitszeugnis/prepare-pdf",
+    prepareArbeitszeugnis,
+);
+automationRoutes.put(
+    "/issues/:issueId/arbeitszeugnis/draft",
+    saveArbeitszeugnisValues,
+);
 automationRoutes.post("/issues/:issueId/arbeitszeugnis", postArbeitszeugnis);
 automationRoutes.post("/issues/:issueId/run", postTaskAutomation);
 

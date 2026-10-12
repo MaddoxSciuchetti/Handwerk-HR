@@ -6,6 +6,10 @@ import * as engagementMaterialController from "../controllers/engagementMaterial
 import * as workerController from "../controllers/worker.controller";
 
 const worker = express.Router();
+worker.post(
+    "/:workerId/engagements/:engagementId/contract/prepare-pdf",
+    workerController.prepareEmploymentContractPdf,
+);
 
 worker.post("/", workerController.createWorker);
 worker.post("/fast-track", workerController.startExpectedOnboarding);

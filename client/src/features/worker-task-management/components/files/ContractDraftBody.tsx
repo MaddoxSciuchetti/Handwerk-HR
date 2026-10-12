@@ -1,12 +1,15 @@
 import { cn } from '@/lib/utils';
 import type { DocumentSegment } from '@/features/settings/documents/documentSegments';
 import { useState } from 'react';
+import type { StyledDocument } from '@/features/settings/documents/styledDocument';
+import { StyledDocumentReview } from '@/features/settings/documents/StyledDocumentReview';
 import {
   getDraggedQuestionnaireAnswer,
   setDraggedQuestionnaireAnswer,
 } from './questionnaireAnswerDrag';
 
 type ContractDraftBodyProps = {
+  document?: StyledDocument;
   segments: DocumentSegment[];
   values: Record<string, string>;
   onValueChange: (key: string, value: string) => void;
@@ -15,6 +18,7 @@ type ContractDraftBodyProps = {
 };
 
 export function ContractDraftBody({
+  document,
   segments,
   values,
   onValueChange,
@@ -23,6 +27,15 @@ export function ContractDraftBody({
 }: ContractDraftBodyProps) {
   const [dropIndex, setDropIndex] = useState<number | null>(null);
   const canDrop = acceptAnswerDrop && !readOnly;
+  if (document)
+    return (
+      <StyledDocumentReview
+        document={document}
+        values={values}
+        onValueChange={onValueChange}
+        readOnly={readOnly}
+      />
+    );
 
   return (
     <div className="min-h-80 flex-1 overflow-auto rounded-lg border border-border p-4 text-sm leading-8 whitespace-pre-wrap">
@@ -56,7 +69,9 @@ export function ContractDraftBody({
             onDragLeave={
               canDrop
                 ? () => {
-                    setDropIndex((current) => (current === index ? null : current));
+                    setDropIndex((current) =>
+                      current === index ? null : current
+                    );
                   }
                 : undefined
             }
