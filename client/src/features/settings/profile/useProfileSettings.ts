@@ -55,16 +55,44 @@ export function useProfileSettings() {
     },
   });
 
-  const photoUploadMutation = useMutation({
+  const photoUploadMutation = useMutation<
+    unknown,
+    { message?: string },
+    TFile,
+    { previousPhoto?: string; previewUrl: string }
+  >({
     mutationFn: uploadProfilePhotoV2,
+    onMutate: async (payload) => {
+      await queryClient.cancelQueries({ queryKey: [PROFILEPICTURE] });
+      const previousPhoto = queryClient.getQueryData<string>([PROFILEPICTURE]);
+      const file = payload.file[0];
+      const previewUrl = URL.createObjectURL(file);
+      queryClient.setQueryData([PROFILEPICTURE], previewUrl);
+      return { previousPhoto, previewUrl };
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [PROFILEPICTURE] });
       toast.success('Profilfoto aktualisiert.');
     },
-    onError: (error: { message?: string }) => {
+    onError: (error, _payload, context) => {
+      if (context?.previewUrl) URL.revokeObjectURL(context.previewUrl);
+      if (context?.previousPhoto) {
+        queryClient.setQueryData([PROFILEPICTURE], context.previousPhoto);
+      } else {
+        queryClient.removeQueries({ queryKey: [PROFILEPICTURE], exact: true });
+      }
       toast.error(
         error?.message || 'Profilfoto konnte nicht hochgeladen werden.'
       );
+    },
+    onSettled: async (_data, error, _payload, context) => {
+      await queryClient.invalidateQueries({ queryKey: [PROFILEPICTURE] });
+      if (
+        !error &&
+        context?.previewUrl &&
+        queryClient.getQueryData([PROFILEPICTURE]) !== context.previewUrl
+      ) {
+        URL.revokeObjectURL(context.previewUrl);
+      }
     },
   });
 
