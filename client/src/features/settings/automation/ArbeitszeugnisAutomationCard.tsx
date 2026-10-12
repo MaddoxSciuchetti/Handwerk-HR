@@ -7,6 +7,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { AutomationOverviewCard } from './AutomationOverviewCard';
 import type { AutomationDocumentPage } from './automationDocument.api';
 import { useSaveArbeitszeugnisDocument } from './useArbeitszeugnisDocument';
 
@@ -25,14 +26,10 @@ export function ArbeitszeugnisAutomationCard({
     : undefined;
 
   return (
-    <div className="flex flex-col gap-4 border-t border-border px-3 py-4">
-      <div className="min-w-0">
-        <p className="typo-body-sm text-text-primary">{page.name}</p>
-        <p className="typo-body-xs text-text-secondary">
-          Musterbrief, der beim Offboarding ausgefüllt und an den Handwerker
-          gesendet wird.
-        </p>
-      </div>
+    <AutomationOverviewCard
+      name={page.name}
+      description="Erstellt beim Offboarding ein Arbeitszeugnis aus dem ausgewählten Referenzdokument."
+    >
       <div className="flex flex-col gap-2">
         <Label htmlFor="arbeitszeugnis-master">Referenzdokument</Label>
         {page.masters.length === 0 ? (
@@ -45,7 +42,9 @@ export function ArbeitszeugnisAutomationCard({
             onValueChange={(documentMasterId) => {
               save.mutate(documentMasterId, {
                 onError: () =>
-                  toast.error('Referenzdokument konnte nicht gespeichert werden'),
+                  toast.error(
+                    'Referenzdokument konnte nicht gespeichert werden'
+                  ),
               });
             }}
           >
@@ -62,6 +61,6 @@ export function ArbeitszeugnisAutomationCard({
           </Select>
         )}
       </div>
-    </div>
+    </AutomationOverviewCard>
   );
 }

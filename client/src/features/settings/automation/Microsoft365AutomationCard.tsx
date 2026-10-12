@@ -1,4 +1,5 @@
 import type { Microsoft365Automation } from './automation.api';
+import { AutomationOverviewCard } from './AutomationOverviewCard';
 
 type Microsoft365AutomationCardProps = {
   automation: Microsoft365Automation;
@@ -8,18 +9,15 @@ export function Microsoft365AutomationCard({
   automation,
 }: Microsoft365AutomationCardProps) {
   return (
-    <div className="flex flex-col gap-4 px-3 py-4">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <p className="typo-body-sm text-text-primary">{automation.name}</p>
-          <p className="typo-body-xs text-text-secondary">
-            {automation.description}
-          </p>
-        </div>
-        <p className="shrink-0 text-sm text-foreground">
+    <AutomationOverviewCard
+      name={automation.name}
+      description={automation.description}
+      status={
+        <span className="text-sm text-foreground">
           {automation.configured ? 'Bereit' : 'Zugangsdaten fehlen'}
-        </p>
-      </div>
+        </span>
+      }
+    >
       {automation.missing.length > 0 ? (
         <div>
           <p className="text-sm text-muted-foreground">Fehlende Variablen</p>
@@ -40,6 +38,6 @@ export function Microsoft365AutomationCard({
           ))}
         </ul>
       </div>
-    </div>
+    </AutomationOverviewCard>
   );
 }

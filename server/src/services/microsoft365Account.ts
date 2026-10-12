@@ -76,7 +76,7 @@ export function microsoft365AutomationStatus(): Microsoft365AutomationStatus {
         id: "microsoft-365",
         name: "Microsoft 365 Konto anlegen",
         description:
-            "Legt nach der Bestätigung des unterschriebenen Vertrags das Microsoft-Konto an, weist die Lizenz zu und speichert die Arbeits-E-Mail am Mitarbeiter.",
+            "Erstellt nach der Vertragsbestätigung das Microsoft-365-Konto und speichert die Arbeits-E-Mail.",
         configured: microsoft365Configured(),
         missing: missingMicrosoft365Env(),
         permissions: REQUIRED_PERMISSIONS,
