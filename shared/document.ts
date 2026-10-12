@@ -30,8 +30,7 @@ export type StyledDocument = {
   importWarnings?: string[];
 };
 export type LegacySegment =
-  | { type: "text"; text: string }
-  | ({ type: "input" } & DocumentField);
+  { type: "text"; text: string } | ({ type: "input" } & DocumentField);
 
 export const DEFAULT_PAGE: StyledDocument["page"] = {
   width: 210,
@@ -52,16 +51,14 @@ export function fromSegments(segments: LegacySegment[]): StyledDocument {
   const paragraphs: DocumentNode[] = [{ type: "paragraph", content: [] }];
   for (const segment of segments) {
     if (segment.type === "input") {
-      paragraphs
-        .at(-1)!
-        .content!.push({
-          type: "documentField",
-          attrs: {
-            ...segment,
-            fieldType: segment.fieldType ?? "text",
-            required: segment.required ?? segment.fieldType !== "checkbox",
-          },
-        });
+      paragraphs.at(-1)!.content!.push({
+        type: "documentField",
+        attrs: {
+          ...segment,
+          fieldType: segment.fieldType ?? "text",
+          required: segment.required ?? segment.fieldType !== "checkbox",
+        },
+      });
     } else {
       const lines = segment.text.split("\n");
       lines.forEach((line, i) => {
@@ -99,8 +96,19 @@ export function documentSegments(document: StyledDocument): LegacySegment[] {
     if (node.type === "hardBreak") result.push({ type: "text", text: "\n" });
     if (node.type === "documentField")
       result.push({ type: "input", ...(node.attrs as DocumentField) });
+    if (node.type === "lineGroup" && Array.isArray(node.attrs?.labels))
+      for (const label of node.attrs.labels)
+        if (typeof (label as Record<string, unknown>).text === "string")
+          result.push({
+            type: "text",
+            text: String((label as Record<string, unknown>).text),
+          });
     node.content?.forEach(walk);
-    if (["paragraph", "heading", "tableRow", "pageBreak"].includes(node.type))
+    if (
+      ["paragraph", "heading", "tableRow", "pageBreak", "lineGroup"].includes(
+        node.type,
+      )
+    )
       result.push({ type: "text", text: "\n" });
   };
   [document.header, document.content, document.footer].forEach(walk);

@@ -32,15 +32,22 @@ export function nodeStyle(node: DocumentNode): string {
     "fontSize",
     "marginTop",
     "marginBottom",
+    "marginLeft",
+    "marginRight",
+    "textIndent",
     "lineHeight",
     "paddingLeft",
   ]) {
-    const n = Number(a[key]);
+    const raw = a[key];
+    const n =
+      key === "fontSize" && typeof raw === "string" && raw.endsWith("pt")
+        ? Number(raw.slice(0, -2))
+        : Number(raw);
     if (
-      a[key] !== undefined &&
-      a[key] !== null &&
+      raw !== undefined &&
+      raw !== null &&
       Number.isFinite(n) &&
-      n >= 0 &&
+      (key === "textIndent" ? n >= -200 : n >= 0) &&
       n <= 200
     )
       rules.push(
@@ -54,7 +61,118 @@ export function nodeStyle(node: DocumentNode): string {
     rules.push("text-align:" + a.textAlign);
   if (typeof a.color === "string" && /^#[0-9a-f]{6}$/i.test(a.color))
     rules.push("color:" + a.color);
+  const listStyles: Record<string, string> = {
+    disc: "disc",
+    circle: "circle",
+    square: "square",
+    dash: '"- "',
+  };
+  if (
+    typeof a.listStyleType === "string" &&
+    Object.hasOwn(listStyles, a.listStyleType)
+  )
+    rules.push("list-style-type:" + listStyles[a.listStyleType]);
+  if (Number(a.blankUnderlineWidth) > 0 && Number(a.blankUnderlineWidth) <= 200)
+    rules.push(
+      "display:inline-block",
+      "width:" + Number(a.blankUnderlineWidth) + "pt",
+      "border-bottom:0.5pt solid currentColor",
+      "line-height:1",
+      "text-decoration:none",
+    );
+  if (
+    node.type === "table" &&
+    Number(a.boxWidth) > 0 &&
+    Number(a.boxWidth) <= 2000
+  )
+    rules.push(
+      "width:" + Number(a.boxWidth) + "pt",
+      "max-width:calc(100% - " +
+        Math.max(0, Math.min(200, Number(a.marginLeft) || 0)) +
+        "pt)",
+    );
+  if (
+    ["tableCell", "tableHeader"].includes(node.type) &&
+    Array.isArray(a.colwidth) &&
+    a.colwidth.length === 1 &&
+    Number(a.colwidth[0]) > 0 &&
+    Number(a.colwidth[0]) <= 3000
+  )
+    rules.push("width:" + Number(a.colwidth[0]) + "px");
   return rules.join(";");
+}
+
+export function lineLabelRunStyle(props: Record<string, unknown>): string {
+  return (
+    nodeStyle({ type: "text", attrs: props }) +
+    (props.bold === true ? ";font-weight:700" : ";font-weight:400") +
+    (props.italic === true ? ";font-style:italic" : ";font-style:normal") +
+    (props.underline === true ? ";text-decoration:underline" : "")
+  );
+}
+
+function inlineText(node: DocumentNode): string {
+  return (node.content ?? []).map((child) => child.text ?? inlineText(child)).join("");
+}
+
+function storedLabelText(label: Record<string, unknown>): string {
+  if (Array.isArray(label.runs))
+    return label.runs
+      .map((run) => String((run as { text?: unknown }).text ?? ""))
+      .join("");
+  return String(label.text ?? "");
+}
+
+function positionedLabelHtml(
+  attrs: Record<string, unknown>,
+  inner: string,
+): string {
+  const left = Math.max(-2000, Math.min(2000, Number(attrs.left) || 0));
+  const top = Math.max(-2000, Math.min(2000, Number(attrs.top) || 0));
+  const fontSize = Math.max(4, Math.min(72, Number(attrs.fontSize) || 11));
+  const color = /^#[0-9a-f]{6}$/i.test(String(attrs.color))
+    ? String(attrs.color)
+    : "#000000";
+  const family = FONT_FAMILIES.includes(
+    attrs.fontFamily as (typeof FONT_FAMILIES)[number],
+  )
+    ? String(attrs.fontFamily)
+    : "inherit";
+  return (
+    '<span style="position:absolute;white-space:pre;left:' +
+    left +
+    "pt;top:" +
+    top +
+    "pt;font-family:" +
+    escapeHtml(family) +
+    ";font-size:" +
+    fontSize +
+    "pt;color:" +
+    color +
+    (attrs.centered === true ? ";transform:translateX(-50%)" : "") +
+    (attrs.bold === true ? ";font-weight:700" : "") +
+    (attrs.italic === true ? ";font-style:italic" : "") +
+    (attrs.underline === true
+      ? ";text-decoration:underline;text-underline-offset:0.12em"
+      : "") +
+    '">' +
+    inner +
+    "</span>"
+  );
+}
+
+function printText(value: string | undefined): string {
+  return escapeHtml(value).replace(
+    /[☐☒☑]/g,
+    (glyph) =>
+      '<svg aria-label="' +
+      glyph +
+      '" viewBox="0 0 12 12" width="0.8em" height="0.8em" style="display:inline-block;vertical-align:baseline"><rect x="0.5" y="0.5" width="11" height="11" fill="none" stroke="currentColor"/>' +
+      (glyph === "☐"
+        ? ""
+        : '<path d="M2 2L10 10M10 2L2 10" fill="none" stroke="currentColor"/>') +
+      "</svg>",
+  );
 }
 
 export function renderNode(
@@ -64,11 +182,17 @@ export function renderNode(
   const style = nodeStyle(node);
   const styled = style ? ' style="' + escapeHtml(style) + '"' : "";
   if (node.type === "text") {
-    let text = escapeHtml(node.text);
+    let text = printText(node.text);
     for (const mark of node.marks ?? []) {
       if (mark.type === "bold") text = "<strong>" + text + "</strong>";
       if (mark.type === "italic") text = "<em>" + text + "</em>";
-      if (mark.type === "underline") text = "<u>" + text + "</u>";
+      if (mark.type === "underline")
+        text =
+          mark.attrs?.variant === "double"
+            ? '<u style="text-decoration-style:double;text-underline-offset:0.12em">' +
+              text +
+              "</u>"
+            : '<u style="text-underline-offset:0.12em">' + text + "</u>";
       if (mark.type === "strike") text = "<s>" + text + "</s>";
       if (mark.type === "textStyle")
         text =
@@ -95,8 +219,126 @@ export function renderNode(
       value = value.split("-").reverse().join(".");
     return renderNode({ type: "text", text: value, marks: node.marks }, values);
   }
+  if (node.type === "pageField")
+    return (
+      '<span class="' +
+      (node.attrs?.kind === "pages" ? "totalPages" : "pageNumber") +
+      '" style="' +
+      escapeHtml(
+        nodeStyle({
+          type: "text",
+          attrs: node.marks?.find((mark) => mark.type === "textStyle")?.attrs,
+        }),
+      ) +
+      '" data-page-field="' +
+      (node.attrs?.kind === "pages" ? "pages" : "page") +
+      '">' +
+      (node.attrs?.kind === "pages" ? "‹Seiten›" : "‹Seite›") +
+      "</span>"
+    );
   if (node.type === "hardBreak") return "<br>";
   if (node.type === "pageBreak") return '<div class="page-break"></div>';
+  if (node.type === "lineGroup") {
+    const height = Math.max(0, Math.min(2000, Number(node.attrs?.height) || 0));
+    const marginTop = Math.max(
+      0,
+      Math.min(2000, Number(node.attrs?.marginTop) || 0),
+    );
+    const marginBottom = Math.max(
+      0,
+      Math.min(2000, Number(node.attrs?.marginBottom) || 0),
+    );
+    const lines = Array.isArray(node.attrs?.lines)
+      ? node.attrs.lines
+          .slice(0, 50)
+          .map((raw) => {
+            const line = raw as Record<string, unknown>;
+            const left = Math.max(
+              -2000,
+              Math.min(2000, Number(line.left) || 0),
+            );
+            const top = Math.max(-2000, Math.min(2000, Number(line.top) || 0));
+            const width = Math.max(0, Math.min(2000, Number(line.width) || 0));
+            const thickness = Math.max(
+              0.25,
+              Math.min(10, Number(line.thickness) || 0.5),
+            );
+            const color = /^#[0-9a-f]{6}$/i.test(String(line.color))
+              ? String(line.color)
+              : "#000000";
+            return (
+              '<span style="position:absolute;left:' +
+              left +
+              "pt;top:" +
+              top +
+              "pt;width:" +
+              width +
+              "pt;border-top:" +
+              thickness +
+              "pt solid " +
+              color +
+              '"></span>'
+            );
+          })
+          .join("")
+      : "";
+    const storedLabels = Array.isArray(node.attrs?.labels)
+      ? node.attrs.labels.slice(0, 100)
+      : [];
+    const contentLabels = (node.content ?? [])
+      .filter((child) => child.type === "lineLabel")
+      .slice(0, 100);
+    const labels = (
+      contentLabels.length ? contentLabels : storedLabels.map(() => null)
+    )
+      .map((child, index) => {
+        const stored = storedLabels[index] as Record<string, unknown> | undefined;
+        if (
+          stored &&
+          (!child || inlineText(child) === storedLabelText(stored))
+        ) {
+          return positionedLabelHtml(
+            stored,
+            Array.isArray(stored.runs)
+              ? stored.runs
+                  .slice(0, 500)
+                  .map((raw) => {
+                    const run = raw as {
+                      text?: unknown;
+                      props?: Record<string, unknown>;
+                    };
+                    return (
+                      '<span style="' +
+                      escapeHtml(lineLabelRunStyle(run.props ?? {})) +
+                      '">' +
+                      printText(String(run.text ?? "")) +
+                      "</span>"
+                    );
+                  })
+                  .join("")
+              : printText(String(stored.text ?? "")),
+          );
+        }
+        if (!child) return "";
+        return positionedLabelHtml(
+          child.attrs ?? {},
+          (child.content ?? []).map((part) => renderNode(part, values)).join(""),
+        );
+      })
+      .join("");
+    return (
+      '<div class="document-line-group" style="position:relative;height:' +
+      height +
+      "pt;margin-top:" +
+      marginTop +
+      "pt;margin-bottom:" +
+      marginBottom +
+      'pt">' +
+      lines +
+      labels +
+      "</div>"
+    );
+  }
   if (node.type === "image") {
     const src = String(node.attrs?.src ?? "");
     if (!/^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(src)) return "";
@@ -131,6 +373,11 @@ export function renderNode(
       ? "h" + Math.min(6, Math.max(1, Number(node.attrs?.level) || 1))
       : tags[node.type];
   if (!tag) return inner;
+  const border =
+    tag === "table" &&
+    (node.attrs?.border === "box" || node.attrs?.border === "none")
+      ? ' data-border="' + node.attrs.border + '"'
+      : "";
   const span = ["td", "th"].includes(tag)
     ? ' colspan="' +
       (Number(node.attrs?.colspan) || 1) +
@@ -142,7 +389,14 @@ export function renderNode(
     "<" +
     tag +
     styled +
+    border +
     span +
+    (tag === "ol" &&
+    Number.isInteger(Number(node.attrs?.start)) &&
+    Number(node.attrs?.start) > 0 &&
+    Number(node.attrs?.start) < 10000
+      ? ' start="' + Number(node.attrs?.start) + '"'
+      : "") +
     ">" +
     (inner || (tag === "p" ? "<br>" : "")) +
     "</" +
@@ -152,7 +406,7 @@ export function renderNode(
 }
 
 export const DOCUMENT_CSS =
-  "body{color:#111;background:white;font-synthesis:none}p{margin:0 0 8pt;white-space:pre-wrap;overflow-wrap:anywhere;orphans:2;widows:2}h1,h2,h3,h4,h5,h6{break-after:avoid;margin:0 0 8pt;font-weight:700}h1{font-size:20pt}h2{font-size:16pt}h3{font-size:14pt}h4{font-size:12pt}h5{font-size:11pt}h6{font-size:10pt}ul,ol{margin:0 0 8pt;padding-left:20pt}blockquote{margin:0 0 8pt;padding-left:12pt;border-left:2pt solid #aaa}table{border-collapse:collapse;width:100%;table-layout:fixed}td,th{border:1px solid #aaa;padding:4pt;vertical-align:top;overflow-wrap:anywhere}tr{break-inside:avoid}img{max-width:100%;height:auto}.page-break{break-before:page}.pdf-checkbox{display:inline-flex;align-items:center;justify-content:center;width:10pt;height:10pt;border:1px solid black;vertical-align:middle}";
+  "body{color:#111;background:white;font-synthesis:none}p{margin:0 0 8pt;white-space:pre-wrap;overflow-wrap:anywhere;orphans:2;widows:2}h1,h2,h3,h4,h5,h6{break-after:avoid;margin:0 0 8pt;font-weight:700}h1{font-size:20pt}h2{font-size:16pt}h3{font-size:14pt}h4{font-size:12pt}h5{font-size:11pt}h6{font-size:10pt}ul,ol{margin:0 0 8pt;padding-left:20pt}blockquote{margin:0 0 8pt;padding-left:12pt;border-left:2pt solid #aaa}table{border-collapse:collapse;width:100%;table-layout:fixed}td,th{border:1px solid #aaa;padding:4pt;vertical-align:top;overflow-wrap:anywhere}tr{break-inside:avoid}table[data-border=box]{border:0.75pt solid #000}table[data-border=box] td,table[data-border=box] th{border:none;padding:1pt 4pt}table[data-border=none],table[data-border=none] td,table[data-border=none] th{border:none;padding:0}img{max-width:100%;height:auto}.page-break{break-before:page}.document-line-group{break-inside:avoid}u{text-underline-offset:0.12em}.pdf-checkbox{display:inline-flex;align-items:center;justify-content:center;width:10pt;height:10pt;border:1px solid black;vertical-align:middle}";
 
 export function validateFieldValues(
   document: StyledDocument,
