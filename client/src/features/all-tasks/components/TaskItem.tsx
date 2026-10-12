@@ -2,8 +2,11 @@ import { Button } from '@/components/ui/button';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import { Headset } from 'lucide-react';
-import type { Dispatch, SetStateAction } from 'react';
-import { storedTaskAutomation } from '../consts/task-automation.consts';
+import type { Dispatch, MouseEvent, SetStateAction } from 'react';
+import {
+  storedTaskAutomation,
+  TASK_AUTOMATION_NONE,
+} from '../consts/task-automation.consts';
 import type { TaskEditState } from '../hooks/useTaskSidebar';
 import type { IssueResponse } from '../types/index.types';
 import { getAssigneeLabel } from '../utilts/assignee.utils';
@@ -34,6 +37,8 @@ export function TaskItem({
   setEditModeData,
 }: TaskItemProps) {
   const dateSource = task.dueDate ?? task.createdAt;
+  const isAutomationTask =
+    storedTaskAutomation(task.automation) !== TASK_AUTOMATION_NONE;
 
   const openInEditMode = () => {
     onOpenEdit({
@@ -46,7 +51,7 @@ export function TaskItem({
     });
   };
 
-  const toggleSelection = (e: React.MouseEvent) => {
+  const toggleSelection = (e: MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     setLargeEditMode(true);
@@ -62,7 +67,13 @@ export function TaskItem({
   const temporaryEdge = task.isTemporary ? 'border-y-2 border-purple-500' : '';
 
   return (
-    <TableRow className="group relative border-0 hover:bg-transparent">
+    <TableRow
+      data-automation-task={isAutomationTask || undefined}
+      className={cn(
+        'group relative border-0 hover:bg-transparent',
+        isAutomationTask && 'automation-task-row'
+      )}
+    >
       <TableCell
         className={cn(
           'relative pl-10 pr-2 font-medium transition-colors group-hover:rounded-l-xl group-hover:bg-muted/50',
@@ -91,6 +102,9 @@ export function TaskItem({
             {task.title}
             {task.isTemporary ? (
               <span className="sr-only">, temporäre Aufgabe</span>
+            ) : null}
+            {isAutomationTask ? (
+              <span className="sr-only">, Automatisierungsaufgabe</span>
             ) : null}
           </p>
           <Button

@@ -3,9 +3,7 @@ import type { IssueResponse } from '@/features/all-tasks/types/index.types';
 import queryClient from '@/config/query.client';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {
-  renderWithAppQueryClient,
-} from 'test-unit/test-utils';
+import { renderWithAppQueryClient } from 'test-unit/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { taskStore } = vi.hoisted(() => ({
@@ -86,6 +84,20 @@ describe('Aufgaben (all tasks) — row selection & bulk delete', () => {
     expect(selectBtn.className).toMatch(/group-hover:opacity-100/);
   });
 
+  it('marks only configured automation tasks for the animated purple outline', async () => {
+    taskStore.remaining[0].automation = 'o365-block-signin';
+    renderWithAppQueryClient(<Tasks />);
+
+    await screen.findByText('Alpha Aufgabe');
+
+    expect(getTaskRowByTitle('Alpha Aufgabe')).toHaveAttribute(
+      'data-automation-task',
+      'true'
+    );
+    expect(getTaskRowByTitle('Beta Aufgabe')).not.toHaveAttribute(
+      'data-automation-task'
+    );
+  });
 
   it('places confirmation tasks before the normal task list', async () => {
     taskStore.remaining[1].kind = 'contract_confirm';

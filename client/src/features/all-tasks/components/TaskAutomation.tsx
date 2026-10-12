@@ -1,11 +1,16 @@
 import FormSelectOptions from '@/components/form/FormSelectOptions';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+import {
+  TASKHISTORY,
+  WORKERBYID,
+} from '@/features/worker-task-management/consts/query-key.consts';
 import { tryCatch } from '@/lib/trycatch';
 import { useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import { TASKHISTORY, WORKERBYID } from '@/features/worker-task-management/consts/query-key.consts';
+import { useState } from 'react';
 import type { Control, FieldErrors, UseFormSetValue } from 'react-hook-form';
 import { useWatch } from 'react-hook-form';
+import { toast } from 'sonner';
 import { runTaskAutomation } from '../api/tasks.api';
 import { FETCHDESCRIPTION } from '../consts/query.consts';
 import {
@@ -35,12 +40,14 @@ function TaskAutomation({
   onOpenArbeitszeugnis,
 }: TaskAutomationProps) {
   const queryClient = useQueryClient();
+  const [isRunning, setIsRunning] = useState(false);
   const automation = useWatch({ control, name: 'automation' });
   const canRun =
     (automation === O365_BLOCK_SIGN_IN ||
       automation === TEAM_DEPARTURE_MAIL ||
       automation === ARBEITSZEUGNIS) &&
-    !disabled;
+    !disabled &&
+    !isRunning;
 
   const onGo = async () => {
     if (!canRun) return;
@@ -48,9 +55,9 @@ function TaskAutomation({
       onOpenArbeitszeugnis?.();
       return;
     }
-    const [, error] = await tryCatch(
-      runTaskAutomation({ taskId, automation })
-    );
+    setIsRunning(true);
+    const [, error] = await tryCatch(runTaskAutomation({ taskId, automation }));
+    setIsRunning(false);
     if (error) {
       const message =
         error &&
@@ -88,9 +95,17 @@ function TaskAutomation({
         type="button"
         className="rounded-2xl"
         disabled={!canRun}
+        aria-busy={isRunning}
         onClick={() => void onGo()}
       >
-        Go
+        {isRunning ? (
+          <>
+            <Spinner className="size-4 text-(--automation-accent)" />
+            Wird ausgeführt…
+          </>
+        ) : (
+          'Go'
+        )}
       </Button>
     </div>
   );
