@@ -4,7 +4,11 @@ export type DocumentFontStatus = {
   substitute?: string | null;
 };
 
-export function DocumentFontNotice({ status }: { status?: DocumentFontStatus }) {
+export function DocumentFontNotice({
+  status,
+}: {
+  status?: DocumentFontStatus;
+}) {
   if (!status) return null;
   if (!status.ready)
     return (

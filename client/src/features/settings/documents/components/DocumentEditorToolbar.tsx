@@ -1,10 +1,17 @@
 import type { Editor } from '@tiptap/react';
 import { Button } from '@/components/ui/button';
 import {
+  DEFAULT_LINE_HEIGHT,
+  DEFAULT_PARAGRAPH_MARGIN_PT,
   EDITOR_FONT_FAMILIES,
+  LINE_HEIGHT_STEP,
   MAX_EDITOR_IMAGE_BYTES,
   MAX_FONT_PT,
+  MAX_LINE_HEIGHT,
+  MAX_PARAGRAPH_MARGIN_PT,
   MIN_FONT_PT,
+  MIN_LINE_HEIGHT,
+  MIN_PARAGRAPH_MARGIN_PT,
   ORDERED_LIST_START_MAX,
   ORDERED_LIST_START_MIN,
 } from '../consts/editor.consts';
@@ -125,9 +132,9 @@ export function DocumentEditorToolbar({
       <input
         type="number"
         aria-label="Absatzabstand"
-        min={0}
-        max={100}
-        defaultValue={8}
+        min={MIN_PARAGRAPH_MARGIN_PT}
+        max={MAX_PARAGRAPH_MARGIN_PT}
+        defaultValue={DEFAULT_PARAGRAPH_MARGIN_PT}
         className="w-14 border"
         onChange={(event) =>
           editor
@@ -142,10 +149,10 @@ export function DocumentEditorToolbar({
       <input
         type="number"
         aria-label="Zeilenabstand"
-        min={1}
-        max={3}
-        step={0.1}
-        defaultValue={1.2}
+        min={MIN_LINE_HEIGHT}
+        max={MAX_LINE_HEIGHT}
+        step={LINE_HEIGHT_STEP}
+        defaultValue={DEFAULT_LINE_HEIGHT}
         className="w-14 border"
         onChange={(event) =>
           editor

@@ -3,6 +3,7 @@ import type { Editor } from '@tiptap/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { contractFieldKey } from '../util/fieldKey.util';
+import { FIELD_DRAG_TYPE } from '../consts/editor.consts';
 
 type FieldType = 'text' | 'date' | 'checkbox';
 
@@ -34,7 +35,7 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
   };
   const startFieldDrag = (event: DragEvent<HTMLSpanElement>) => {
     event.dataTransfer.setData(
-      'application/x-bsb-field',
+      FIELD_DRAG_TYPE,
       JSON.stringify({
         key: contractFieldKey(label, fieldKey),
         label: label.trim(),

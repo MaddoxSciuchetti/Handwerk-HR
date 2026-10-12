@@ -150,7 +150,10 @@ export function ContractBodyEditor({
           return;
         }
         const chip = target.closest('[data-input-key]');
-        if (!(chip instanceof HTMLElement) || !rootRef.current?.contains(chip)) {
+        if (
+          !(chip instanceof HTMLElement) ||
+          !rootRef.current?.contains(chip)
+        ) {
           return;
         }
         const key = chip.dataset.inputKey;
@@ -197,8 +200,7 @@ export function ContractBodyEditor({
         const root = rootRef.current;
         const hit = caretRangeFromPoint(event.clientX, event.clientY);
         const range =
-          (root && hit ? rangeInEditor(root, hit) : null) ??
-          savedRange.current;
+          (root && hit ? rangeInEditor(root, hit) : null) ?? savedRange.current;
         if (!range || !root) return;
         insertChip(dragged.key, dragged.label, range, dragged.source);
         setDraggedContractInput(null);

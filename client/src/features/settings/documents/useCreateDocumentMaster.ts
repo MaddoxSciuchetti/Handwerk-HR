@@ -7,8 +7,11 @@ export function useCreateDocumentMaster() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: { kind: DocumentMasterKind; name: string; file: File }) =>
-      createDocumentMaster(input),
+    mutationFn: (input: {
+      kind: DocumentMasterKind;
+      name: string;
+      file: File;
+    }) => createDocumentMaster(input),
     onSuccess: (created) => {
       queryClient.invalidateQueries({ queryKey: [DOCUMENT_MASTERS_KEY] });
       queryClient.setQueryData([DOCUMENT_MASTERS_KEY, created.id], created);

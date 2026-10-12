@@ -1,4 +1,4 @@
-import { pdfTextColorMatcher } from "@/services/pdfTextPaint";
+import { pdfTextColorMatcher } from "@/services/pdfTextPaint.service";
 jest.mock("pdfjs-dist/legacy/build/pdf.mjs", () => ({
     OPS: {
         save: 10,

@@ -1,6 +1,9 @@
 import type { Editor } from '@tiptap/react';
-
-const LONG_PARAGRAPH_LENGTH = 100;
+import {
+  DEFAULT_TABLE_COLUMNS,
+  DEFAULT_TABLE_ROWS,
+  LONG_PARAGRAPH_LENGTH,
+} from '../consts/editor.consts';
 
 function alignLongCenteredParagraphs(editor: Editor) {
   editor
@@ -47,7 +50,11 @@ export function documentEditorActions(editor: Editor) {
         editor
           .chain()
           .focus()
-          .insertTable({ rows: 3, cols: 2, withHeaderRow: true })
+          .insertTable({
+            rows: DEFAULT_TABLE_ROWS,
+            cols: DEFAULT_TABLE_COLUMNS,
+            withHeaderRow: true,
+          })
           .run(),
     },
     {

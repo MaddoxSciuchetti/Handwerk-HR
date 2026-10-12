@@ -842,14 +842,14 @@ export async function restoreDocxStyles(
               positionedTabs.lines.push(
                 ...inline.map((line) => ({
                   ...line,
-                  left: line.left - (Number(node.attrs.marginLeft) || 0),
+                  left: line.left - (Number(node.attrs?.marginLeft) || 0),
                 })),
               );
               consumedInlineRules.add(inlineParagraph);
             }
           }
           if (positionedTabs.lines.length) {
-            const offset = Number(node.attrs.marginLeft) || 0;
+            const offset = Number(node.attrs?.marginLeft) || 0;
             positionedTabs.lines.forEach((line) => {
               line.left += offset;
             });

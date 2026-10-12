@@ -5,9 +5,9 @@ export {
   documentFields,
   fieldComplete,
   DEFAULT_PAGE,
-} from '../../../../../shared/document';
+} from '@shared/document';
 export type {
   StyledDocument,
   DocumentNode,
   DocumentField,
-} from '../../../../../shared/document';
+} from '@shared/document';

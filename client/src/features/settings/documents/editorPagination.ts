@@ -1,6 +1,12 @@
 import { Extension } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
+import {
+  CSS_PX_PER_INCH,
+  MM_PER_INCH,
+  PAGE_BREAK_SLOP_PX,
+  PAGE_SHEET_GAP_PX,
+} from './consts/editor.consts';
 
 export type PageBlock = {
   pos: number;
@@ -21,7 +27,8 @@ export function paginateBlocks(
     const bottom = page * pitch + body;
     if (
       block.break ||
-      (top + block.height > bottom + 1 && top > page * pitch + 1)
+      (top + block.height > bottom + PAGE_BREAK_SLOP_PX &&
+        top > page * pitch + PAGE_BREAK_SLOP_PX)
     ) {
       const height = (page + 1) * pitch - top;
       if (height > 0) {
@@ -70,9 +77,9 @@ export function editorPagination(
               frame = 0;
               const layout = getLayout();
               if (!layout.enabled || !alive) return;
-              const px = 96 / 25.4;
+              const px = CSS_PX_PER_INCH / MM_PER_INCH;
               const body = (layout.height - layout.top - layout.bottom) * px;
-              const pitch = layout.height * px + 32;
+              const pitch = layout.height * px + PAGE_SHEET_GAP_PX;
               const origin = view.dom.getBoundingClientRect().top;
               const spacers = Array.from(
                 view.dom.querySelectorAll<HTMLElement>('[data-editor-page-gap]')
