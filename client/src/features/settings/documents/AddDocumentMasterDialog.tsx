@@ -1,6 +1,13 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import ModalOverlay from '@/components/modal/ModalOverlay';
 import { useNavigate } from '@tanstack/react-router';
 import { FormEvent, useState } from 'react';
@@ -71,21 +78,29 @@ export function AddDocumentMasterDialog({
           </p>
         </div>
 
-        <fieldset className="flex flex-col gap-2">
-          <legend className="text-sm font-medium">Art</legend>
-          <div className="flex gap-2">
-            {DOCUMENT_MASTER_KINDS.map((option) => (
-              <Button
-                key={option}
-                type="button"
-                variant={kind === option ? 'default' : 'outline'}
-                onClick={() => setKind(option)}
-              >
-                {DOCUMENT_MASTER_KIND_LABELS[option]}
-              </Button>
-            ))}
-          </div>
-        </fieldset>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="document-kind">Art</Label>
+          <Select
+            value={kind}
+            onValueChange={(value) => {
+              const selectedKind = DOCUMENT_MASTER_KINDS.find(
+                (option) => option === value
+              );
+              if (selectedKind) setKind(selectedKind);
+            }}
+          >
+            <SelectTrigger id="document-kind" className="w-full">
+              <SelectValue placeholder="Dokumentart wählen" />
+            </SelectTrigger>
+            <SelectContent>
+              {DOCUMENT_MASTER_KINDS.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {DOCUMENT_MASTER_KIND_LABELS[option]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="document-file">Datei</Label>
