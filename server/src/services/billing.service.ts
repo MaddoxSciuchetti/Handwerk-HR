@@ -6,6 +6,10 @@ import {
 import { prisma } from "@/lib/prisma";
 import type { SubscriptionPlan, SubscriptionStatus } from "@prisma/client";
 import appAssert from "@/utils/appAssert";
+import {
+    mapStripeInvoiceToBillingJson,
+    type BillingInvoiceJson,
+} from "@/utils/mapBillingInvoice";
 import Stripe from "stripe";
 
 const stripe = new Stripe(STRIPE_SECRET_KEY);
@@ -124,4 +128,28 @@ export async function createBillingPortalSessionUrl(
     );
 
     return session.url;
+}
+
+const INVOICE_LIST_LIMIT = 24;
+
+export async function listBillingInvoicesForOrg(
+    organizationId: string,
+): Promise<BillingInvoiceJson[]> {
+    const row = await prisma.subscription.findUnique({
+        where: { organizationId },
+        select: { stripeCustomerId: true },
+    });
+    if (!row?.stripeCustomerId) {
+        return [];
+    }
+
+    const page = await stripe.invoices.list({
+        customer: row.stripeCustomerId,
+        limit: INVOICE_LIST_LIMIT,
+    });
+
+    return page.data.flatMap((invoice) => {
+        const mapped = mapStripeInvoiceToBillingJson(invoice);
+        return mapped ? [mapped] : [];
+    });
 }

@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { useBillingSubscription } from './hooks/useBillingSubscription';
 import { useCheckSubscriptionStatus } from './hooks/useCheckSubscriptionStatus';
 import { useSubscriptionTrialEnds } from './hooks/useSubscriptionTrialEnds';
+import { InvoiceList } from './InvoiceList';
 import { PaymentPlanDisplay } from './PaymentCheckoutDisplay';
 import {
   createBillingPortalSession,
@@ -71,7 +72,9 @@ function Payments() {
         isPortalLoading={isPortalLoading}
         onSubscribe={handleSubscribe}
         onManageBilling={handleManageBilling}
-      />
+      >
+        {hasActiveSubscription ? <InvoiceList /> : null}
+      </PaymentPlanDisplay>
     </div>
   );
 }

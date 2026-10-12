@@ -1,6 +1,6 @@
 import { apiJson } from '@/config/apiClient';
 
-import type { BillingSubscription } from './billing.types';
+import type { BillingInvoice, BillingSubscription } from './billing.types';
 
 type StripeRedirectResponse = { url: string };
 
@@ -14,3 +14,6 @@ export const createCheckoutSession = (price: string) =>
 
 export const createBillingPortalSession = () =>
   apiJson.post<StripeRedirectResponse>('/billing/portal', {});
+
+export const fetchBillingInvoices = () =>
+  apiJson.get<{ invoices: BillingInvoice[] }>('/billing/invoices');

@@ -4,6 +4,7 @@ import {
     createBillingPortalSessionUrl,
     createCheckoutSessionUrl,
     getBillingSubscriptionForOrg,
+    listBillingInvoicesForOrg,
 } from "@/services/billing.service";
 import appAssert from "@/utils/appAssert";
 import catchErrors from "@/utils/catchErrors";
@@ -27,6 +28,14 @@ export const createBillingPortalSession = catchErrors(async (req, res) => {
 
     const url = await createBillingPortalSessionUrl(organizationId);
     return res.status(OK).json({ url });
+});
+
+export const listBillingInvoices = catchErrors(async (req, res) => {
+    const organizationId = req.orgId;
+    appAssert(organizationId, UNAUTHORIZED, "Missing auth context");
+
+    const invoices = await listBillingInvoicesForOrg(organizationId);
+    return res.status(OK).json({ invoices });
 });
 
 export const getBillingSubscription = catchErrors(async (req, res) => {

@@ -1,4 +1,5 @@
 import { Table } from '@/features/settings/components/Table';
+import type { ReactNode } from 'react';
 import { SettingsPageHeader } from '@/features/settings/components/SettingsPageHeader';
 import { Link } from '@tanstack/react-router';
 import { PlanRow } from './PlanRow';
@@ -15,6 +16,7 @@ type PaymentPanDisplayProps = {
   isPortalLoading?: boolean;
   onSubscribe: (priceId: string) => void;
   onManageBilling: () => void;
+  children?: ReactNode;
 };
 
 export function PaymentPlanDisplay({
@@ -26,6 +28,7 @@ export function PaymentPlanDisplay({
   isPortalLoading = false,
   onSubscribe,
   onManageBilling,
+  children,
 }: PaymentPanDisplayProps) {
   const showTrial = Boolean(trialEndsAt) && !hasActiveSubscription;
   const trialEndFormatted =
@@ -85,6 +88,7 @@ export function PaymentPlanDisplay({
           ))
         )}
       </Table>
+      {children}
     </section>
   );
 }
