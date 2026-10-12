@@ -48,5 +48,13 @@ export async function tryCatch<T, E = Error>(
   }
 }
 
+export function tryCatchSync<T, E = Error>(run: () => T): Result<T, E> {
+  try {
+    return [run(), null] as const;
+  } catch (error) {
+    return [null, error as E] as const;
+  }
+}
+
 export const threeDaysAgo = new Date();
 threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);

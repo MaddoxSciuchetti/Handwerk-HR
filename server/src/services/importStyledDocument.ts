@@ -10,10 +10,10 @@ import {
 } from "../../../shared/document";
 import { BAD_REQUEST } from "@/constants/http";
 import AppError from "@/utils/AppError";
-import { pdfTextColorMatcher } from "./pdfTextPaint";
-import { createLigatureRepair } from "./pdfLigatures";
-import { pdfHorizontalRules, pdfTextRuns } from "./pdfPageGeometry";
-import { restoreDocxStyles, docxHeaderBuffer } from "./docxStyles";
+import { pdfTextColorMatcher } from "./pdfTextPaint.service";
+import { createLigatureRepair } from "./pdfLigatures.service";
+import { pdfHorizontalRules, pdfTextRuns } from "./pdfPageGeometry.service";
+import { restoreDocxStyles, docxHeaderBuffer } from "./docxStyles.service";
 
 export type Fragment = {
   text: string;

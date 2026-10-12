@@ -1,4 +1,10 @@
 import { Extension } from '@tiptap/core';
+import {
+  BLANK_UNDERLINE_BORDER_PT,
+  LAYOUT_MAX_PT,
+  MAX_BLANK_UNDERLINE_PT,
+  MAX_TABLE_MARGIN_PT,
+} from '../consts/editor.consts';
 
 const LIST_STYLE_TYPES: Record<string, string> = {
   disc: 'disc',
@@ -32,12 +38,12 @@ export const Layout = Extension.create({
               null,
             renderHTML: (attrs) =>
               Number(attrs.blankUnderlineWidth) > 0 &&
-              Number(attrs.blankUnderlineWidth) <= 200
+              Number(attrs.blankUnderlineWidth) <= MAX_BLANK_UNDERLINE_PT
                 ? {
                     'data-blank-underline-width': String(
                       attrs.blankUnderlineWidth
                     ),
-                    style: `display:inline-block;width:${Number(attrs.blankUnderlineWidth)}pt;border-bottom:0.5pt solid currentColor;line-height:1;text-decoration:none`,
+                    style: `display:inline-block;width:${Number(attrs.blankUnderlineWidth)}pt;border-bottom:${BLANK_UNDERLINE_BORDER_PT}pt solid currentColor;line-height:1;text-decoration:none`,
                   }
                 : {},
           },
@@ -59,10 +65,11 @@ export const Layout = Extension.create({
             parseHTML: (element) =>
               Number(element.getAttribute('data-box-width')) || null,
             renderHTML: (attrs) =>
-              Number(attrs.boxWidth) > 0 && Number(attrs.boxWidth) <= 2000
+              Number(attrs.boxWidth) > 0 &&
+              Number(attrs.boxWidth) <= LAYOUT_MAX_PT
                 ? {
                     'data-box-width': String(attrs.boxWidth),
-                    style: `width:${Number(attrs.boxWidth)}pt;max-width:calc(100% - ${Math.max(0, Math.min(200, Number(attrs.marginLeft) || 0))}pt)`,
+                    style: `width:${Number(attrs.boxWidth)}pt;max-width:calc(100% - ${Math.max(0, Math.min(MAX_TABLE_MARGIN_PT, Number(attrs.marginLeft) || 0))}pt)`,
                   }
                 : {},
           },

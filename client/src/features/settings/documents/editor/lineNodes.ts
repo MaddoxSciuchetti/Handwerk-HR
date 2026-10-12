@@ -1,5 +1,5 @@
 import { Node } from '@tiptap/core';
-import { LAYOUT_MAX_PT } from '../consts/editor.consts';
+import { DEFAULT_FONT_PT, LAYOUT_MAX_PT } from '../consts/editor.consts';
 import { finiteLayout, labelStyle, paintRules } from '../util/lineLayout.util';
 
 export const LineLabel = Node.create({
@@ -10,7 +10,7 @@ export const LineLabel = Node.create({
     return {
       left: { default: 0 },
       top: { default: 0 },
-      fontSize: { default: 11 },
+      fontSize: { default: DEFAULT_FONT_PT },
       fontFamily: { default: null },
       color: { default: '#000000' },
       centered: { default: false },

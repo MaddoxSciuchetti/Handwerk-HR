@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { renderNode } from '../../../../../../shared/documentRendering';
+import { renderNode } from '@shared/documentRendering';
 import { PAGE_SHEET_GAP_PX } from '../consts/editor.consts';
 import type { StyledDocument } from '../styledDocument';
 
