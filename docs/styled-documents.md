@@ -3,6 +3,12 @@
 Implementation checkpoint: `0066acb7`, isolated branch `codex/styled-document-pdf`.
 No AI, OCR, external font CDN, or PDF-subset extraction is used.
 
+See [the reference conversion delta](document-conversion-delta.md) for measured
+changes against the actual Pages source, reproducible benchmarks and remaining
+layout/font limitations. Word/DOCX preserves editable wording and styles better,
+but Pages-exported numbering still needs comparison against the original PDF.
+Native Pages import remains unsupported.
+
 ## Deployment prerequisites
 
 1. Supply full font files with rights for web distribution and PDF embedding. Set
@@ -31,6 +37,14 @@ No AI, OCR, external font CDN, or PDF-subset extraction is used.
    encryption at the bucket level. Signed preview links expire after one hour;
    access to endpoints issuing them requires authentication and organization scope.
    Links are bearer credentials: do not log or share them.
+   Local development can use `AWS_PROFILE`, `AWS_REGION` and `AWS_S3_BUCKET` after
+   confirming the intended development bucket. The SDK reads the existing local
+   AWS profile; do not copy access keys into the repository. In production, prefer
+   an IAM role. Explicit key pairs remain supported, including `AWS_SESSION_TOKEN`
+   for temporary credentials; incomplete key pairs are rejected.
+   The isolated local preview has an ignored `server/.env` configured for the
+   approved development bucket `bsb-onboarding-development` in `eu-north-1`, using
+   AWS profile `temper-3455`. No AWS credential values are stored in that file.
 5. Review and apply the additive migration
    `server/src/prisma/migrations/20261009190000_styled_documents/migration.sql`
    using the existing migration deployment process. Generate the Prisma client.
@@ -59,6 +73,16 @@ No AI, OCR, external font CDN, or PDF-subset extraction is used.
   Any subsequent save increments its revision and requires a new approval.
   Legacy masters read through an adapter; saving adopts version 3 without changing
   field keys. Historical sent/signed bodies are not rewritten.
+- The editing workspace offers a large view, view-only zoom, and an optional
+  original-document comparison panel. Formatting and page-layout controls collapse
+  to leave more room for text. Narrow editing views reflow text without changing
+  saved page dimensions, font sizes, or the generated PDF. The actual prepared PDF
+  remains the authoritative pre-send preview.
+- PDF alignment detection defaults long margin-aligned prose and table cells to
+  left alignment, retaining clearly centered short headings. Existing imports are
+  not silently rewritten: use “Formatierung und Felder → Fließtext linksbündig”
+  to correct long centered paragraphs without changing short headings or field
+  keys; use “Alles linksbündig” only when intentionally resetting all alignment.
 - Engagement review locks wording and lets users change field values or drag
   unmatched deterministic answers onto fields. Draft corrections are saved on
   preparation, close, or navigation to the master. An unchecked checkbox is valid
