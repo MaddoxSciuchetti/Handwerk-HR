@@ -55,7 +55,7 @@ export function DocumentMasterEditor({
   const [returnEditing, setReturnEditing] = useState(false);
   const [cancelledReturnEdit, setCancelledReturnEdit] = useState(false);
   const editing = manualEditing || returnEditing;
-  const [printPreview, setPrintPreview] = useState(true);
+  const [printPreview, setPrintPreview] = useState(false);
   const [showOriginal, setShowOriginal] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const editStartedAt = useRef(0);
@@ -65,12 +65,14 @@ export function DocumentMasterEditor({
     setName(data.name);
     setRevision(data.revision);
     setDocument(data.document ?? fromSegments(data.segments ?? []));
+    // Open imported masters as real editable text; PDF pages remain a preview.
+    if (!syncedMaster) setManualEditing(true);
     if (returnContract && !cancelledReturnEdit) setReturnEditing(true);
   }
   useEffect(() => {
-    if (returnEditing && editStartedAt.current === 0)
+    if (editing && editStartedAt.current === 0)
       editStartedAt.current = performance.now();
-  }, [returnEditing]);
+  }, [editing]);
   const returnKind = returnContract
     ? peekContractSendReturn()?.kind
     : undefined;

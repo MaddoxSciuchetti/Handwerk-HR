@@ -67,7 +67,13 @@ it('saves without replacing the editor, jumping scroll, refreshing detail, or re
   fireEvent.click(
     await screen.findByRole('button', { name: 'Original vergleichen' })
   );
-  fireEvent.click(screen.getByRole('button', { name: 'Bearbeiten' }));
+  expect(container.querySelector('.tiptap')).toHaveAttribute(
+    'contenteditable',
+    'true'
+  );
+  expect(
+    screen.queryByRole('button', { name: 'Bearbeiten' })
+  ).not.toBeInTheDocument();
   time.mockReturnValue(1000);
   const editor = container.querySelector('.tiptap')!;
   const canvas = container.querySelector('.document-editor-canvas')!;
