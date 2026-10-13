@@ -130,6 +130,24 @@ it("sends dynamic page fields in a footer constrained to the printable width", a
   expect(footer).toContain("padding:0 20mm 0 20mm");
 });
 
+it("accepts Carlito when Arial and Times files are absent", async () => {
+  font.name = "AAAAAA+Carlito-BoldItalic";
+  (loadDocumentFonts as jest.Mock).mockResolvedValue({
+    assets: [
+      {
+        filename: "Arial-BoldItalic.ttf",
+        bytes: Buffer.from("font"),
+        hash: "hash",
+      },
+      { filename: "TimesNewRoman.ttf", bytes: Buffer.from("font"), hash: "hash" },
+    ],
+    css: "",
+    checks: [],
+  });
+  await expect(
+    generateDocumentPdf(document, { name: "Ada" }),
+  ).resolves.toHaveProperty("bytes", bytes);
+});
 it("accepts the configured embedded Carlito replacement for Calibri", async () => {
   font.name = "AAAAAA+Carlito";
   (loadDocumentFonts as jest.Mock).mockResolvedValue({

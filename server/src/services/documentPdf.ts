@@ -38,6 +38,25 @@ function fontFilename(name: string) {
     : null;
 }
 
+function acceptedEmbeddedFont(
+  filename: string | null,
+  fontName: string,
+  expected: string[],
+) {
+  if (filename && expected.includes(filename)) return true;
+  if (!/carlito/i.test(fontName) || !filename?.startsWith("Calibri"))
+    return false;
+  const variant = filename.match(/-(BoldItalic|Bold|Italic)\.ttf$/)?.[1] ?? "";
+  return expected.some((file) => {
+    const expectedVariant =
+      file.match(/-(BoldItalic|Bold|Italic)\.ttf$/)?.[1] ?? "";
+    return (
+      /^(Arial|Helvetica|TimesNewRoman|Calibri)(-|\.)/.test(file) &&
+      variant === expectedVariant
+    );
+  });
+}
+
 async function verifyPdfFonts(bytes: Buffer, expected: string[]) {
   const task = getDocument({
     data: new Uint8Array(bytes),
@@ -57,12 +76,11 @@ async function verifyPdfFonts(bytes: Buffer, expected: string[]) {
           data?: Uint8Array;
           missingFile?: boolean;
         };
-        const filename = fontFilename(
-          font.name ?? text.styles[item.fontName]?.fontFamily ?? "",
-        );
+        const fontName =
+          font.name ?? text.styles[item.fontName]?.fontFamily ?? "";
+        const filename = fontFilename(fontName);
         if (
-          !filename ||
-          !expected.includes(filename) ||
+          !acceptedEmbeddedFont(filename, fontName, expected) ||
           !font.data?.length ||
           font.missingFile
         )

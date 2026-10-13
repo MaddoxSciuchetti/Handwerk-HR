@@ -25,6 +25,7 @@ const nodeTypes = [
   "image",
   "pageBreak",
   "lineGroup",
+  "lineLabel",
   "documentField",
   "pageField",
 ];

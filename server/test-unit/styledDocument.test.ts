@@ -213,4 +213,41 @@ describe("styled document compatibility and rendering", () => {
     expect(html).toContain("width:208.7pt");
     expect(html).toContain(">den</span>");
   });
+  it("accepts letterhead labels stored as line nodes", () => {
+    const document = fromSegments([{ type: "text", text: "Vertrag" }]);
+    document.header.content = [
+      {
+        type: "lineGroup",
+        attrs: {
+          height: 20,
+          lines: [],
+          labels: [
+            {
+              left: 10,
+              top: 2,
+              text: "bsb",
+              fontSize: 12,
+              color: "#000000",
+            },
+          ],
+        },
+        content: [
+          {
+            type: "lineLabel",
+            attrs: {
+              left: 10,
+              top: 2,
+              fontSize: 12,
+              fontFamily: "Arial",
+              color: "#000000",
+            },
+            content: [{ type: "text", text: "bsb" }],
+          },
+        ],
+      },
+    ];
+    expect(parseStyledDocument(document).header.content?.[0].type).toBe(
+      "lineGroup",
+    );
+  });
 });

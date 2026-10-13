@@ -30,13 +30,31 @@ export const FONT_FILES: Record<string, string> = {
     "Times New Roman:700:italic": "TimesNewRoman-BoldItalic.ttf",
 };
 
-// Carlito (SIL OFL) has Calibri's exact advance widths, so line breaks match
-// the original. It is used only when the licensed Calibri file is absent.
+// Carlito (SIL OFL) has Calibri's advance widths. The same files also stand in
+// for Arial, Helvetica, and Times New Roman when those licensed files are absent.
+const CARLITO = {
+    regular: "Carlito-Regular.ttf",
+    bold: "Carlito-Bold.ttf",
+    italic: "Carlito-Italic.ttf",
+    boldItalic: "Carlito-BoldItalic.ttf",
+};
 const SUBSTITUTES: Record<string, string> = {
-    "Calibri.ttf": "Carlito-Regular.ttf",
-    "Calibri-Bold.ttf": "Carlito-Bold.ttf",
-    "Calibri-Italic.ttf": "Carlito-Italic.ttf",
-    "Calibri-BoldItalic.ttf": "Carlito-BoldItalic.ttf",
+    "Calibri.ttf": CARLITO.regular,
+    "Calibri-Bold.ttf": CARLITO.bold,
+    "Calibri-Italic.ttf": CARLITO.italic,
+    "Calibri-BoldItalic.ttf": CARLITO.boldItalic,
+    "Arial.ttf": CARLITO.regular,
+    "Arial-Bold.ttf": CARLITO.bold,
+    "Arial-Italic.ttf": CARLITO.italic,
+    "Arial-BoldItalic.ttf": CARLITO.boldItalic,
+    "Helvetica.ttf": CARLITO.regular,
+    "Helvetica-Bold.ttf": CARLITO.bold,
+    "Helvetica-Italic.ttf": CARLITO.italic,
+    "Helvetica-BoldItalic.ttf": CARLITO.boldItalic,
+    "TimesNewRoman.ttf": CARLITO.regular,
+    "TimesNewRoman-Bold.ttf": CARLITO.bold,
+    "TimesNewRoman-Italic.ttf": CARLITO.italic,
+    "TimesNewRoman-BoldItalic.ttf": CARLITO.boldItalic,
 };
 
 const REQUIRED = ["Calibri.ttf", "Calibri-Bold.ttf", "Calibri-Italic.ttf"];
