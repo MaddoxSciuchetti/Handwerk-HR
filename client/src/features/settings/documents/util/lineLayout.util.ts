@@ -50,7 +50,8 @@ export function labelContent(label: Record<string, unknown>): EditorNode[] {
     if (props.underline === true) marks.push({ type: 'underline' });
     const style: Record<string, unknown> = {};
     const size = Number(props.fontSize);
-    if (size > 0) style.fontSize = `${size}pt`;
+    // Font sizes are numeric points throughout the document model.
+    if (size > 0) style.fontSize = size;
     if (typeof props.fontFamily === 'string')
       style.fontFamily = props.fontFamily;
     if (typeof props.color === 'string') style.color = props.color;

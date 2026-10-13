@@ -397,3 +397,91 @@ it('lets a positioned line label be edited after Bearbeiten', async () => {
   );
   optionsSpy.mockRestore();
 });
+
+it('keeps imported 8pt runs below a 14pt checkbox from expanding over an adjacent tab label', async () => {
+  const optionsSpy = vi.spyOn(Editor.prototype, 'setOptions');
+  const value = fromSegments([]);
+  value.content = {
+    type: 'doc',
+    content: [
+      {
+        type: 'lineGroup',
+        attrs: {
+          height: 20,
+          lines: [],
+          labels: [
+            {
+              left: 0,
+              top: 0,
+              fontFamily: 'Arial',
+              fontSize: 14,
+              text: '☐ in einem befristeten Arbeitsverhältnis',
+              runs: [
+                { text: '☐', props: { fontFamily: 'Arial', fontSize: 14 } },
+                {
+                  text: ' in einem ',
+                  props: { fontFamily: 'Arial', fontSize: 8, color: '#000000' },
+                },
+                {
+                  text: 'befristeten Arbeitsverhältnis',
+                  props: { fontFamily: 'Arial', fontSize: 8, bold: true },
+                },
+              ],
+            },
+            {
+              left: 369.35,
+              top: 0,
+              fontFamily: 'Arial',
+              fontSize: 8,
+              text: 'bis zum ',
+              runs: [
+                {
+                  text: 'bis zum ',
+                  props: { fontFamily: 'Arial', fontSize: 8 },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    ],
+  };
+  const onChange = vi.fn();
+  const { container } = render(
+    <StyledDocumentEditor
+      document={value}
+      master
+      pageView
+      onChange={onChange}
+    />
+  );
+  const caption = await screen.findByText('befristeten Arbeitsverhältnis');
+  expect(caption.closest('span')!.style.fontSize).toBe('8pt');
+  expect(screen.getByText('☐').closest('span')!.style.fontSize).toBe('14pt');
+  expect(screen.getByText('bis zum').closest('span')!.style.fontSize).toBe(
+    '8pt'
+  );
+  expect(container.innerHTML).not.toContain('ptpt');
+  const editor = optionsSpy.mock.instances.at(-1) as Editor;
+  let textPos = 0;
+  editor.state.doc.descendants((node, pos) => {
+    if (node.isText && node.text === 'befristeten Arbeitsverhältnis')
+      textPos = pos;
+  });
+  act(() => {
+    editor.view.dispatch(editor.state.tr.delete(textPos, textPos + 1));
+  });
+  const published = onChange.mock.calls.at(-1)![0];
+  const first = published.content.content[0].content[0];
+  expect(
+    first.content
+      .flatMap(
+        (run: { marks?: { type: string; attrs?: { fontSize?: unknown } }[] }) =>
+          run.marks ?? []
+      )
+      .filter((mark: { type: string }) => mark.type === 'textStyle')
+      .map((mark: { attrs: { fontSize: unknown } }) => mark.attrs.fontSize)
+  ).toEqual([14, 8, 8]);
+  expect(published.content.content[0].attrs.labels[1].left).toBe(369.35);
+  optionsSpy.mockRestore();
+});
