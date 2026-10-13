@@ -18,4 +18,10 @@ export const getEnv = (key: string, defaultValue?: string): string => {
   return value;
 };
 
-export const API_URL = getEnv('VITE_API_URL', 'http://localhost:3000');
+// Local session cookies require the page and API to use the same hostname.
+const defaultApiUrl =
+  typeof window !== 'undefined' && window.location.hostname === '127.0.0.1'
+    ? 'http://127.0.0.1:3000'
+    : 'http://localhost:3000';
+
+export const API_URL = getEnv('VITE_API_URL', defaultApiUrl);
