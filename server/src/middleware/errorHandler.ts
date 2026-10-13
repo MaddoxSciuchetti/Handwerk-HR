@@ -30,6 +30,7 @@ export const errorHandler: ErrorRequestHandler = (error, req, res, next) => {
     if (documentRequest)
         console.error("Document request failed", {
             outcome: error instanceof AppError ? "rejected" : "internal_error",
+            message: error instanceof Error ? error.message : "unknown",
         });
     else console.log(`PATH: ${req.path}`, error);
 
