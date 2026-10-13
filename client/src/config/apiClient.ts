@@ -35,9 +35,18 @@ const handleTokenRefresh = async (config: AxiosRequestConfig) => {
 const API = axios.create(options);
 
 type ApiErrorResponse = {
-  errorCode: string;
-  message: string;
+  errorCode?: string;
+  message?: string;
 };
+
+async function readBlobError(blob: Blob): Promise<ApiErrorResponse> {
+  try {
+    const parsed = JSON.parse(await blob.text()) as ApiErrorResponse;
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
 
 API.interceptors.response.use(
   (response) => response.data,
@@ -49,7 +58,11 @@ API.interceptors.response.use(
     if (!response) {
       throw new Error('response is not ok');
     }
-    const { status, data } = response;
+    const { status } = response;
+    const data =
+      response.data instanceof Blob
+        ? await readBlobError(response.data)
+        : response.data;
 
     if (isInvalidAccessToken(status, data)) {
       // Session expired: refresh it, then try this same request one more time.
