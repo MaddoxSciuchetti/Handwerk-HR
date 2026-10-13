@@ -25,6 +25,7 @@ const nodeTypes = [
   "image",
   "pageBreak",
   "lineGroup",
+  "lineLabel",
   "documentField",
   "pageField",
 ];
@@ -59,7 +60,7 @@ export function parseStyledDocument(value: unknown): StyledDocument {
       throw new Error("Die Seitenränder sind zu groß.");
     const fields = new Map<string, string>();
     let count = 0;
-    const walk = (node: DocumentNode, depth = 0) => {
+    const walk = (node: DocumentNode, depth = 0, parentType?: string) => {
       if (++count > 30_000 || depth > 30 || !nodeTypes.includes(node.type))
         throw new Error("Ungültige Dokumentstruktur.");
       if (node.text !== undefined && typeof node.text !== "string")
@@ -146,6 +147,26 @@ export function parseStyledDocument(value: unknown): StyledDocument {
         )
       )
         throw new Error("Bilder müssen als PNG/JPEG eingebettet sein.");
+      if (node.type === "lineLabel") {
+        if (
+          parentType !== "lineGroup" ||
+          !["left", "top"].every((key) => {
+            const value = node.attrs?.[key];
+            return (
+              typeof value === "number" &&
+              Number.isFinite(value) &&
+              Math.abs(value) <= 2000
+            );
+          }) ||
+          node.content?.some(
+            (child) =>
+              !["text", "hardBreak", "documentField", "pageField"].includes(
+                child.type,
+              ),
+          )
+        )
+          throw new Error("Ungültige Linienbeschriftung.");
+      }
       if (node.type === "lineGroup") {
         const lines = node.attrs?.lines;
         if (!Array.isArray(lines) || lines.length > 50)
@@ -198,7 +219,7 @@ export function parseStyledDocument(value: unknown): StyledDocument {
       }
       if (node.content && !Array.isArray(node.content))
         throw new Error("Ungültiger Inhalt.");
-      node.content?.forEach((child) => walk(child, depth + 1));
+      node.content?.forEach((child) => walk(child, depth + 1, node.type));
     };
     [body.content, body.header, body.footer].forEach((node) => walk(node));
     return body;
