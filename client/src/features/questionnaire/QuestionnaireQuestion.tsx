@@ -1,5 +1,6 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import type { ReactNode } from 'react';
 import type { QuestionnaireQuestion as QuestionnaireQuestionData } from './questionnaire.types';
 
 type QuestionnaireQuestionProps = {
@@ -8,7 +9,24 @@ type QuestionnaireQuestionProps = {
   onChange: (value: string) => void;
   disabled?: boolean;
   employerFilled?: boolean;
+  labelControl?: ReactNode;
 };
+
+function QuestionText({
+  question,
+  labelControl,
+}: {
+  question: QuestionnaireQuestionData;
+  labelControl?: ReactNode;
+}) {
+  if (labelControl) return labelControl;
+  return (
+    <>
+      {question.label}
+      {question.required ? ' *' : ''}
+    </>
+  );
+}
 
 export function QuestionnaireQuestion({
   question,
@@ -16,15 +34,15 @@ export function QuestionnaireQuestion({
   onChange,
   disabled = false,
   employerFilled = false,
+  labelControl,
 }: QuestionnaireQuestionProps) {
   const locked = disabled;
   if (question.type === 'single') {
     return (
       <fieldset className="flex flex-col gap-2">
-        {question.label ? (
+        {question.label || labelControl ? (
           <legend className="text-sm font-medium">
-            {question.label}
-            {question.required ? ' *' : ''}
+            <QuestionText question={question} labelControl={labelControl} />
           </legend>
         ) : null}
         <div className="grid gap-2 sm:grid-cols-2">
@@ -61,8 +79,7 @@ export function QuestionnaireQuestion({
           onChange={(event) => onChange(event.target.checked ? 'ja' : '')}
         />
         <span>
-          {question.label}
-          {question.required ? ' *' : ''}
+          <QuestionText question={question} labelControl={labelControl} />
         </span>
       </label>
     );
@@ -71,8 +88,7 @@ export function QuestionnaireQuestion({
   return (
     <div className="flex flex-col gap-2">
       <Label htmlFor={question.key}>
-        {question.label}
-        {question.required ? ' *' : ''}
+        <QuestionText question={question} labelControl={labelControl} />
       </Label>
       <Input
         id={question.key}

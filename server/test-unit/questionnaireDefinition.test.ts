@@ -1,7 +1,9 @@
 import { deterministicContractValues } from "@/services/contractFieldMatch";
 import {
     hourKeys,
+    isWorkerLocked,
     parseQuestionnaireDefinition,
+    readEngagementDraft,
     seedQuestionnaireDefinition,
 } from "@/services/questionnaireDefinition";
 import {
@@ -20,15 +22,16 @@ function answers(extra: Record<string, string> = {}): QuestionnaireAnswers {
 }
 
 describe("questionnaire definition", () => {
-    it("seeds weekday hours and Teilzeit as grey employer fields", () => {
+    it("seeds weekday hours and Teilzeit as required questions", () => {
         const definition = seedQuestionnaireDefinition();
         const hours = new Set<string>(hourKeys());
         const hourItems = definition.items.filter(
             (item) => item.kind === "field" && hours.has(item.key),
         );
         expect(hourItems).toHaveLength(7);
+        expect(hourItems.every((item) => item.kind === "field" && item.required)).toBe(true);
         expect(hourItems.every((item) => item.kind === "field" && item.employerFilled)).toBe(
-            true,
+            false,
         );
 
         const extent = definition.items.find(
@@ -36,9 +39,15 @@ describe("questionnaire definition", () => {
         );
         expect(extent).toMatchObject({
             kind: "field",
-            employerFilled: true,
+            required: true,
             options: ["Vollzeit", "Teilzeit"],
         });
+    });
+
+    it("reads the seeded form back, including the unlabeled employment choice", () => {
+        const seed = seedQuestionnaireDefinition();
+        const parsed = parseQuestionnaireDefinition(JSON.parse(JSON.stringify(seed)));
+        expect(parsed.items.map((item) => item.key)).toEqual(seed.items.map((item) => item.key));
     });
 
     it("keeps a custom question and drops unknown builtins", () => {
@@ -58,6 +67,42 @@ describe("questionnaire definition", () => {
             "firstName",
             "custom.shoe-size",
         ]);
+        const custom = definition.items[1];
+        expect(custom).toMatchObject({
+            label: "Schuhgröße",
+            required: true,
+            employerFilled: false,
+        });
+        expect(definition.items[0]).toMatchObject({ label: "Vorname" });
+    });
+
+    it("keeps a renamed builtin question", () => {
+        const definition = parseQuestionnaireDefinition({
+            items: [{ kind: "field", key: "firstName", label: "Rufname" }],
+        });
+        expect(definition.items[0]).toMatchObject({ key: "firstName", label: "Rufname" });
+    });
+
+    it("locks only answers the office actually filled in", () => {
+        expect(isWorkerLocked({ defaultValue: "BSB" })).toBe(true);
+        expect(isWorkerLocked({ defaultValue: "  " })).toBe(false);
+        expect(isWorkerLocked({})).toBe(false);
+    });
+
+    it("keeps questions added after the engagement exists", () => {
+        const draft = readEngagementDraft({
+            values: { firstName: "Ada" },
+            questions: [
+                {
+                    kind: "field",
+                    key: "custom.shoe-size",
+                    label: "Schuhgröße",
+                    type: "text",
+                },
+            ],
+        });
+        expect(draft.values).toEqual({ firstName: "Ada" });
+        expect(draft.questions.map((question) => question.label)).toEqual(["Schuhgröße"]);
     });
 });
 

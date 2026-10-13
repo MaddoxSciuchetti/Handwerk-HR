@@ -59,7 +59,8 @@ const employmentExtent: QuestionnaireFieldItem = {
     section: "Beschäftigung",
     type: "single",
     options: ["Vollzeit", "Teilzeit"],
-    employerFilled: true,
+    required: true,
+    employerFilled: false,
     builtin: true,
 };
 
@@ -73,13 +74,13 @@ function fieldItem(
         label: field.label,
         section: field.section,
         type: field.type,
-        required: field.required,
         options: field.options ? [...field.options] : undefined,
         max: field.max,
         layout: field.layout,
         builtin: true,
-        employerFilled: field.key.startsWith("hours"),
         ...extra,
+        required: true,
+        employerFilled: false,
     };
 }
 
@@ -144,8 +145,8 @@ export function definitionRepeaters(definition: QuestionnaireDefinition): Questi
     return repeaters;
 }
 
-export function isOfficeEditable(field: QuestionnaireFieldItem) {
-    return Boolean(field.employerFilled) || Boolean(field.defaultValue?.trim());
+export function isWorkerLocked(field: { defaultValue?: string }) {
+    return Boolean(field.defaultValue?.trim());
 }
 
 export function presentQuestions(definition: QuestionnaireDefinition) {
@@ -154,12 +155,13 @@ export function presentQuestions(definition: QuestionnaireDefinition) {
         label: field.label,
         section: field.section,
         type: field.type,
-        required: field.required,
+        required: true,
         options: field.options,
         max: field.max,
         layout: field.layout,
-        employerFilled: field.employerFilled,
+        employerFilled: isWorkerLocked(field),
         defaultValue: field.defaultValue,
+        builtin: field.builtin,
     }));
 }
 
@@ -221,14 +223,15 @@ function parseField(raw: object, seen: Set<string>): QuestionnaireFieldItem {
     const base = builtin
         ? { ...catalog }
         : customBase(raw, key);
-    const label = "label" in raw && typeof raw.label === "string" ? raw.label.trim() : base.label;
-    if (!label || label.length > 400) reject("Jede Frage braucht eine Beschriftung.");
+    const postedLabel = "label" in raw && typeof raw.label === "string" ? raw.label.trim() : "";
+    const label = postedLabel || base.label;
+    if ((!label && !builtin) || label.length > 400) reject("Jede Frage braucht eine Beschriftung.");
     const contractFieldKey = readContractKey(raw);
     const draft: QuestionnaireFieldItem = {
         ...base,
-        label: builtin ? base.label : label,
-        required: "required" in raw ? Boolean(raw.required) : base.required,
-        employerFilled: "employerFilled" in raw ? Boolean(raw.employerFilled) : base.employerFilled,
+        label,
+        required: true,
+        employerFilled: false,
         contractFieldKey,
         defaultValue: undefined,
     };
@@ -265,6 +268,7 @@ function customBase(raw: object, key: string): QuestionnaireFieldItem {
         type,
         options: type === "single" ? options : undefined,
         max: type === "text" ? 255 : undefined,
+        required: true,
         builtin: false,
     };
 }
@@ -284,10 +288,50 @@ export function applyOverrides(
     return {
         intro: definition.intro,
         items: definition.items.map((item) => {
-            if (item.kind !== "field" || !isOfficeEditable(item)) return item;
+            if (item.kind !== "field") return item;
             const next = cleanDefault(item, overrides[item.key] ?? item.defaultValue ?? "");
-            return { ...item, defaultValue: next };
+            return { ...item, defaultValue: next, required: true, employerFilled: false };
         }),
+    };
+}
+
+export type AddedQuestionnaireQuestion = QuestionnaireFieldItem;
+
+export function parseCustomQuestions(input: unknown): QuestionnaireFieldItem[] {
+    if (input == null) return [];
+    if (!Array.isArray(input)) reject("Neue Fragen sind ungültig.");
+    const seen = new Set<string>();
+    return input.map((raw) => {
+        const field = parseField(raw, seen);
+        if (field.builtin) reject("Neue Fragen haben einen ungültigen Schlüssel.");
+        return field;
+    });
+}
+
+export function withAddedQuestions(
+    definition: QuestionnaireDefinition,
+    questions: QuestionnaireFieldItem[],
+): QuestionnaireDefinition {
+    const seen = new Set(definition.items.map((item) => item.key));
+    const extras = questions.filter((question) => !seen.has(question.key));
+    return { intro: definition.intro, items: [...definition.items, ...extras] };
+}
+
+export function readEngagementDraft(value: unknown): {
+    values: Record<string, string>;
+    questions: QuestionnaireFieldItem[];
+} {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+        return { values: {}, questions: [] };
+    }
+    const body = value as Record<string, unknown>;
+    const nested =
+        Array.isArray(body.questions) ||
+        (Boolean(body.values) && typeof body.values === "object" && !Array.isArray(body.values));
+    if (!nested) return { values: readOverrides(value), questions: [] };
+    return {
+        values: readOverrides(body.values),
+        questions: parseCustomQuestions(body.questions ?? []),
     };
 }
 

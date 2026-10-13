@@ -1,43 +1,31 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { QuestionTitle } from './QuestionTitle';
 import type { ContractFieldOption, TemplateField } from './questionnaireTemplate.types';
 
 type QuestionnaireFieldControlsProps = {
   field: TemplateField;
   contractFields: ContractFieldOption[];
   onChange: (field: TemplateField) => void;
+  onCommit: (field: TemplateField) => void;
 };
 
 export function QuestionnaireFieldControls({
   field,
   contractFields,
   onChange,
+  onCommit,
 }: QuestionnaireFieldControlsProps) {
   const patch = (next: Partial<TemplateField>) => onChange({ ...field, ...next });
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-sm font-medium">{field.label || 'Frage'}</p>
-      <label className="flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          className="size-4 accent-primary"
-          checked={Boolean(field.required)}
-          onChange={(event) => patch({ required: event.target.checked })}
-        />
-        Pflichtfeld
-      </label>
-      <label className="flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          className="size-4 accent-primary"
-          checked={Boolean(field.employerFilled)}
-          onChange={(event) => patch({ employerFilled: event.target.checked })}
-        />
-        Graues Feld, vom Betrieb ausgefüllt
-      </label>
+      <QuestionTitle
+        label={field.label}
+        onCommit={(label) => onCommit({ ...field, label })}
+      />
       <div className="flex flex-col gap-2">
-        <Label htmlFor={`${field.key}-default`}>Vorgabe</Label>
+        <Label htmlFor={`${field.key}-default`}>Antwort</Label>
         {field.type === 'single' ? (
           <select
             id={`${field.key}-default`}

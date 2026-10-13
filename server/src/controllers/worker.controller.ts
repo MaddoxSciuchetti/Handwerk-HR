@@ -50,6 +50,7 @@ export const saveEngagementQuestionnaire = catchErrors(
             organizationId: req.orgId,
             engagementId: param(req, "engagementId"),
             values: req.body?.values ?? req.body,
+            questions: req.body?.questions,
         });
         return res.status(200).json({ success: true, data: draft });
     },

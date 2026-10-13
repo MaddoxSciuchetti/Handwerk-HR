@@ -9,6 +9,7 @@ export type QuestionnaireQuestion = {
   layout?: 'inline';
   employerFilled?: boolean;
   officeEditable?: boolean;
+  builtin?: boolean;
   contractFieldKey?: string;
   builtin?: boolean;
   max?: number;

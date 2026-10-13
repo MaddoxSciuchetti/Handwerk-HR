@@ -52,6 +52,7 @@ export function QuestionnairePalette({ catalog, items, onAdd }: QuestionnairePal
       label: name,
       section: 'Weitere Angaben',
       type,
+      required: true,
       builtin: false,
       options: type === 'single' ? choices : undefined,
       max: type === 'text' ? 255 : undefined,
@@ -92,7 +93,7 @@ export function QuestionnairePalette({ catalog, items, onAdd }: QuestionnairePal
         <h2 className="text-sm font-medium">Neue Frage</h2>
         <Input
           value={label}
-          placeholder="Beschriftung"
+          placeholder="Frage"
           maxLength={400}
           onChange={(event) => setLabel(event.target.value)}
         />

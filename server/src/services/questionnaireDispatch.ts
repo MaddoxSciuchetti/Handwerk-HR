@@ -5,10 +5,11 @@ import {
     applyOverrides,
     definitionFields,
     definitionRepeaters,
-    isOfficeEditable,
     presentQuestions,
-    readOverrides,
+    readEngagementDraft,
+    withAddedQuestions,
     type QuestionnaireDefinition,
+    type QuestionnaireFieldItem,
 } from "@/services/questionnaireDefinition";
 import { questionnaireForOrganization } from "@/services/questionnaireTemplate";
 import AppError from "@/utils/AppError";
@@ -36,18 +37,24 @@ async function findEngagement(organizationId: string, engagementId: string) {
 function previewFrom(
     definition: QuestionnaireDefinition,
     overrides: Record<string, string>,
+    added: QuestionnaireFieldItem[],
 ) {
-    const merged = applyOverrides(definition, overrides);
-    const editable = new Set(
-        definitionFields(definition).filter(isOfficeEditable).map((field) => field.key),
-    );
+    const merged = applyOverrides(withAddedQuestions(definition, added), overrides);
     return {
         intro: merged.intro,
         questions: presentQuestions(merged).map((question) => ({
             ...question,
-            officeEditable: editable.has(question.key),
+            officeEditable: true,
+            employerFilled: false,
         })),
         repeaters: definitionRepeaters(merged),
+        addedQuestions: added.map((question) => ({
+            key: question.key,
+            label: question.label,
+            section: question.section,
+            type: question.type,
+            options: question.options,
+        })),
     };
 }
 
@@ -57,12 +64,13 @@ export async function getQuestionnaireDraft(params: {
 }) {
     const engagement = await findEngagement(params.organizationId, params.engagementId);
     const definition = await questionnaireForOrganization(params.organizationId);
+    const draft = readEngagementDraft(engagement.questionnaireOverrides);
     return {
         workerId: engagement.worker.id,
         engagementId: engagement.id,
         email: engagement.worker.email,
         sent: Boolean(engagement.questionnaireSubmission),
-        ...previewFrom(definition, readOverrides(engagement.questionnaireOverrides)),
+        ...previewFrom(definition, draft.values, draft.questions),
     };
 }
 
@@ -70,23 +78,32 @@ export async function saveQuestionnaireDraft(params: {
     organizationId: string;
     engagementId: string;
     values: unknown;
+    questions?: unknown;
 }) {
     const engagement = await findEngagement(params.organizationId, params.engagementId);
     if (engagement.questionnaireSubmission) {
         return getQuestionnaireDraft(params);
     }
     const definition = await questionnaireForOrganization(params.organizationId);
-    const posted = readOverrides(params.values);
+    const current = readEngagementDraft(engagement.questionnaireOverrides);
+    const questions =
+        params.questions === undefined ? current.questions : parseAdded(params.questions);
+    const posted = readEngagementDraft({ values: params.values }).values;
+    const merged = withAddedQuestions(definition, questions);
     const overrides: Record<string, string> = {};
-    for (const field of definitionFields(definition)) {
-        if (!isOfficeEditable(field) || !(field.key in posted)) continue;
+    for (const field of definitionFields(merged)) {
+        if (!(field.key in posted)) continue;
         overrides[field.key] = posted[field.key] ?? "";
     }
     await prisma.workerEngagement.update({
         where: { id: engagement.id },
-        data: { questionnaireOverrides: overrides },
+        data: { questionnaireOverrides: { values: overrides, questions } },
     });
     return getQuestionnaireDraft(params);
+}
+
+function parseAdded(questions: unknown) {
+    return readEngagementDraft({ questions, values: {} }).questions;
 }
 
 async function deliverQuestionnaire(email: string | null, token: string) {
@@ -120,9 +137,13 @@ export async function sendEngagementQuestionnaire(params: {
         return { emailSent, engagementId: engagement.id };
     }
 
+    const draft = readEngagementDraft(engagement.questionnaireOverrides);
     const definition = applyOverrides(
-        await questionnaireForOrganization(params.organizationId),
-        readOverrides(engagement.questionnaireOverrides),
+        withAddedQuestions(
+            await questionnaireForOrganization(params.organizationId),
+            draft.questions,
+        ),
+        draft.values,
     );
     const token = randomUUID();
     await prisma.$transaction(async (tx) => {

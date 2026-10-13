@@ -19,6 +19,7 @@ type QuestionnaireStackProps = {
   contractFields: ContractFieldOption[];
   onDrop: (index: number, payload: DragPayload) => void;
   onChangeField: (field: TemplateField) => void;
+  onCommitField: (field: TemplateField) => void;
   onRemove: (id: string) => void;
 };
 
@@ -27,6 +28,7 @@ export function QuestionnaireStack({
   contractFields,
   onDrop,
   onChangeField,
+  onCommitField,
   onRemove,
 }: QuestionnaireStackProps) {
   return (
@@ -77,6 +79,7 @@ export function QuestionnaireStack({
             block={block}
             contractFields={contractFields}
             onChangeField={onChangeField}
+            onCommitField={onCommitField}
           />
         </article>
       ))}
@@ -88,10 +91,12 @@ function BlockBody({
   block,
   contractFields,
   onChangeField,
+  onCommitField,
 }: {
   block: QuestionnaireBlock;
   contractFields: ContractFieldOption[];
   onChangeField: (field: TemplateField) => void;
+  onCommitField: (field: TemplateField) => void;
 }) {
   const first = block.items[0];
   if (first?.kind === 'repeater') {
@@ -109,6 +114,7 @@ function BlockBody({
             field={field}
             contractFields={contractFields}
             onChange={onChangeField}
+            onCommit={onCommitField}
           />
         ))}
       </div>
@@ -120,6 +126,7 @@ function BlockBody({
         field={first}
         contractFields={contractFields}
         onChange={onChangeField}
+        onCommit={onCommitField}
       />
     );
   }

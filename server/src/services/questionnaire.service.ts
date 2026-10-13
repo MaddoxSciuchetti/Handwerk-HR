@@ -7,6 +7,7 @@ import {
     definitionFields,
     definitionRepeaters,
     parseQuestionnaireDefinition,
+    isWorkerLocked,
     presentQuestions,
     type QuestionnaireDefinition,
     type QuestionnaireFieldItem,
@@ -50,7 +51,7 @@ function publicPayload(definition: QuestionnaireDefinition | null) {
     if (!definition) {
         return {
             intro: QUESTIONNAIRE_INTRO,
-            questions: QUESTIONNAIRE_FIELDS,
+            questions: QUESTIONNAIRE_FIELDS.map((field) => ({ ...field, required: true })),
             repeaters: QUESTIONNAIRE_REPEATERS,
         };
     }
@@ -71,7 +72,8 @@ function publicPayload(definition: QuestionnaireDefinition | null) {
                       options: item.options,
                       max: item.max,
                       layout: item.layout,
-                      employerFilled: item.employerFilled,
+                      required: true,
+                      employerFilled: isWorkerLocked(item),
                       defaultValue: item.defaultValue,
                   },
         ),
@@ -94,8 +96,8 @@ export async function getPublicQuestionnaire(token: string) {
 }
 
 function fieldsOf(definition: QuestionnaireDefinition | null): QuestionnaireField[] {
-    if (!definition) return [...QUESTIONNAIRE_FIELDS];
-    return definitionFields(definition);
+    const fields = definition ? definitionFields(definition) : [...QUESTIONNAIRE_FIELDS];
+    return fields.map((field) => ({ ...field, required: true }));
 }
 
 function lockEmployerValues(
@@ -107,7 +109,7 @@ function lockEmployerValues(
             ? { ...(body as Record<string, unknown>) }
             : {};
     for (const field of fields) {
-        if (!("employerFilled" in field) || !field.employerFilled) continue;
+        if (!isWorkerLocked(field)) continue;
         answers[field.key] = field.defaultValue ?? "";
     }
     return answers;

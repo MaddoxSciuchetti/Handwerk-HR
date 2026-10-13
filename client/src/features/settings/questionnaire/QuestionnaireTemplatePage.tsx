@@ -2,7 +2,7 @@ import LoadingAlert from '@/components/alerts/LoadingAlert';
 import { Button } from '@/components/ui/button';
 import { SettingsPageHeader } from '@/features/settings/components/SettingsPageHeader';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { paletteItems, QuestionnairePalette } from './QuestionnairePalette';
 import { QuestionnaireStack, type DragPayload } from './QuestionnaireStack';
@@ -22,13 +22,15 @@ export function QuestionnaireTemplatePage() {
     queryFn: getQuestionnaireTemplate,
   });
   const [items, setItems] = useState<TemplateItem[]>([]);
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
 
   useEffect(() => {
     if (template.data) setItems(template.data.items);
   }, [template.data]);
 
   const save = useMutation({
-    mutationFn: () => saveQuestionnaireTemplate(items),
+    mutationFn: (next: TemplateItem[]) => saveQuestionnaireTemplate(next),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: templateKey });
       toast.success('Fragebogen gespeichert');
@@ -80,6 +82,14 @@ export function QuestionnaireTemplatePage() {
     );
   };
 
+  const commitField = (field: TemplateField) => {
+    const next = itemsRef.current.map((item) =>
+      item.kind === 'field' && item.key === field.key ? field : item
+    );
+    setItems(next);
+    save.mutate(next);
+  };
+
   const remove = (id: string) => {
     setItems(itemsFromBlocks(blocks.filter((block) => block.id !== id)));
   };
@@ -92,7 +102,7 @@ export function QuestionnaireTemplatePage() {
           type="button"
           className="rounded-2xl"
           disabled={save.isPending}
-          onClick={() => save.mutate()}
+          onClick={() => save.mutate(itemsRef.current)}
         >
           {save.isPending ? 'Speichert…' : 'Speichern'}
         </Button>
@@ -104,6 +114,7 @@ export function QuestionnaireTemplatePage() {
           contractFields={template.data.contractFields}
           onDrop={drop}
           onChangeField={changeField}
+          onCommitField={commitField}
           onRemove={remove}
         />
       </div>
