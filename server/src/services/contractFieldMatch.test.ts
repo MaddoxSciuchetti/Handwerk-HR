@@ -1,4 +1,7 @@
-import { unmatchedQuestionnaireAnswers } from "@/services/contractFieldMatch";
+import {
+    acceptModelMatches,
+    unmatchedQuestionnaireAnswers,
+} from "@/services/contractFieldMatch";
 import type { DocumentSegment } from "@/services/documentBody";
 
 const segments: DocumentSegment[] = [
@@ -16,13 +19,13 @@ describe("unmatchedQuestionnaireAnswers", () => {
             [
                 { key: "firstName", value: "Ada" },
                 { key: "lastName", value: "Lovelace" },
-                { key: "trouserSize", value: "38" },
+                { key: "iban", value: "DE89" },
             ],
         );
 
         expect(unmatched).toEqual([
-            { key: "lastName", label: "Nachname", value: "Lovelace" },
-            { key: "trouserSize", label: "Hosengröße", value: "38" },
+            { key: "lastName", label: "Familienname", value: "Lovelace" },
+            { key: "iban", label: "IBAN", value: "DE89" },
         ]);
     });
 
@@ -49,5 +52,23 @@ describe("unmatchedQuestionnaireAnswers", () => {
         expect(unmatched).toEqual([
             { key: "birthday", label: "Geburtsdatum", value: "01.02.1990" },
         ]);
+    });
+});
+
+describe("acceptModelMatches", () => {
+    const fields = [{ key: "contract.iban" }, { key: "contract.steuer" }];
+    const answers = [{ value: "DE89" }, { value: "123" }];
+
+    it("keeps only keys on the template and values copied from the answers", () => {
+        expect(
+            acceptModelMatches(fields, answers, {
+                matches: [
+                    { key: "contract.iban", value: "DE89" },
+                    { key: "contract.unknown", value: "DE89" },
+                    { key: "contract.steuer", value: "erfunden" },
+                    { key: "contract.iban", value: "123" },
+                ],
+            }),
+        ).toEqual([{ key: "contract.iban", value: "DE89" }]);
     });
 });

@@ -22,6 +22,9 @@ export type EmploymentContractDraft = {
   document: StyledDocument;
   values: Record<string, string>;
   unmatchedAnswers: UnmatchedQuestionnaireAnswer[];
+  masterRevision: number;
+  matchedMasterRevision: number | null;
+  questionnaireCompleted: boolean;
   sentAt: string | null;
   signedFileUrl: string | null;
   outgoingFileUrl?: string | null;
@@ -89,6 +92,16 @@ export function confirmReturnedEmploymentContract(
   return API.post<{ issueId: string }, ContractResponse>(
     `worker/${workerId}/engagements/${engagementId}/contract/confirm-return`,
     { issueId }
+  ).then((response) => response.data);
+}
+
+export function resyncEngagementContractFromQuestionnaire(
+  workerId: string,
+  engagementId: string
+): Promise<EmploymentContractDraft> {
+  return API.post<Record<string, never>, ContractResponse>(
+    `worker/${workerId}/engagements/${engagementId}/contract/resync`,
+    {}
   ).then((response) => response.data);
 }
 

@@ -1,6 +1,6 @@
 import type { DocumentSegment } from "@/services/documentBody";
 import {
-    QUESTIONNAIRE_FIELDS,
+    questionnaireAnswerLabel,
     type QuestionnaireAnswers,
 } from "@/services/questionnaireForm";
 
@@ -25,8 +25,6 @@ const FIELD_ALIASES: Record<string, string[]> = {
     city: ["ort", "stadt", "wohnort", "city"],
     entryDate: ["eintritt", "eintrittsdatum", "entrydate"],
     exitDate: ["austritt", "austrittsdatum", "entlassung", "exitdate"],
-    trouserSize: ["hosengroesse", "hose", "trousers"],
-    tshirtSize: ["tshirtgroesse", "tshirt", "shirtgroesse"],
 };
 
 function fold(value: string) {
@@ -45,9 +43,7 @@ function answerValues(
     answers: QuestionnaireAnswers,
     email: string,
 ): Record<string, string> {
-    const [year, month, day] = answers.birthday.split("-");
-    const birthday =
-        year && month && day ? `${day}.${month}.${year}` : answers.birthday;
+    const birthday = germanDate(answers.birthday);
     const address = [answers.street, `${answers.postalCode} ${answers.city}`.trim()]
         .filter((part) => part.length > 0)
         .join(", ");
@@ -65,9 +61,16 @@ function answerValues(
         street: answers.street,
         postalCode: answers.postalCode,
         city: answers.city,
-        trouserSize: answers.trouserSize,
-        tshirtSize: answers.tshirtSize,
+        entryDate: germanDate(answers.entryDate),
+        position: (answers.jobTitle ?? "").trim(),
     };
+}
+
+function germanDate(value: string | undefined) {
+    if (!value) return "";
+    const [year, month, day] = value.split("-");
+    if (!year || !month || !day) return value;
+    return `${day}.${month}.${year}`;
 }
 
 function matchAlias(label: string, key: string) {
@@ -98,6 +101,42 @@ export function contractValuesFromAnswers(
         if (!value) continue;
         seen.add(segment.key);
         entries.push({ key: segment.key, value: value.slice(0, 8000) });
+    }
+
+    return entries;
+}
+
+export function acceptModelMatches(
+    fields: { key: string }[],
+    answers: { value: string }[],
+    raw: unknown,
+): { key: string; value: string }[] {
+    const record =
+        raw && typeof raw === "object" && !Array.isArray(raw)
+            ? (raw as { matches?: unknown })
+            : null;
+    if (!record || !Array.isArray(record.matches)) return [];
+
+    const allowedKeys = new Set(fields.map((field) => field.key));
+    const allowedValues = new Set(
+        answers
+            .map((answer) => answer.value.trim())
+            .filter((value) => value.length > 0),
+    );
+    const seen = new Set<string>();
+    const entries: { key: string; value: string }[] = [];
+
+    for (const item of record.matches) {
+        if (!item || typeof item !== "object" || Array.isArray(item)) continue;
+        const key = "key" in item ? item.key : null;
+        const value = "value" in item ? item.value : null;
+        if (typeof key !== "string" || typeof value !== "string") continue;
+        const trimmed = value.trim().slice(0, 8000);
+        if (!allowedKeys.has(key) || !allowedValues.has(trimmed) || seen.has(key)) {
+            continue;
+        }
+        seen.add(key);
+        entries.push({ key, value: trimmed });
     }
 
     return entries;
@@ -138,10 +177,11 @@ export function valuesForDocumentSegments(
 
 function displayAnswer(key: string, raw: string) {
     const value = raw.trim();
-    if (key !== "birthday") return value;
-    const [year, month, day] = value.split("-");
-    if (!year || !month || !day) return value;
-    return `${day}.${month}.${year}`;
+    if (!value) return "";
+    if (key === "birthday" || key.endsWith(".birthday") || key.endsWith(".from") || key.endsWith(".until") || key === "signatureDate" || key === "minorSignatureDate" || key === "entryDate" || key === "trainingStart" || key === "trainingEnd" || key === "constructionSince" || key === "vwlSince") {
+        return germanDate(value);
+    }
+    return value;
 }
 
 function placedValues(
@@ -193,10 +233,10 @@ export function unmatchedQuestionnaireAnswers(
         consumed.add("city");
     }
 
-    return QUESTIONNAIRE_FIELDS.flatMap((field) => {
-        if (consumed.has(field.key)) return [];
-        const value = byKey.get(field.key);
-        if (!value) return [];
-        return [{ key: field.key, label: field.label, value }];
+    return [...byKey].flatMap(([key, value]) => {
+        if (consumed.has(key) || !value) return [];
+        const label = questionnaireAnswerLabel(key, value);
+        if (!label) return [];
+        return [{ key, label, value }];
     });
 }

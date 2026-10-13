@@ -11,6 +11,7 @@ import {
 } from "../../shared/documentRendering";
 import { parseStyledDocument } from "@/services/styledDocument";
 import { contractValuesFromAnswers } from "@/services/contractFieldMatch";
+import type { QuestionnaireAnswers } from "@/services/questionnaireForm";
 
 const template = () =>
   fromSegments([
@@ -61,9 +62,9 @@ describe("styled document compatibility and rendering", () => {
       street: "",
       city: "",
       postalCode: "",
-      trouserSize: "",
-      tshirtSize: "",
-    };
+      children: [],
+      priorEmployment: [],
+    } as unknown as QuestionnaireAnswers;
     const entries = contractValuesFromAnswers(
       documentSegments(document),
       answers,

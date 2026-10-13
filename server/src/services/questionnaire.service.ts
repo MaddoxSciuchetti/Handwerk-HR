@@ -1,16 +1,17 @@
 import { BAD_REQUEST, NOT_FOUND } from "@/constants/http";
 import { prisma } from "@/lib/prisma";
-import { contractValuesFromAnswers } from "@/services/contractFieldMatch";
+import { matchQuestionnaireToContract } from "@/services/contractFieldMatchAi";
 import { readDocumentSegments } from "@/services/documentBody";
+import { persistMatchedContractValues } from "@/services/employmentContract.service";
 import {
+    flattenQuestionnaireAnswers,
     QUESTIONNAIRE_FIELDS,
+    QUESTIONNAIRE_INTRO,
+    QUESTIONNAIRE_REPEATERS,
     type QuestionnaireAnswers,
 } from "@/services/questionnaireForm";
 import AppError from "@/utils/AppError";
-import { Prisma } from "@prisma/client";
 
-const HOSE = "Hose";
-const TSHIRT = "T-Shirt";
 const CONTRACT_TASK_TITLE = "Arbeitsvertrag versenden";
 const birthdayRegex = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -25,33 +26,6 @@ function parseBirthday(value: string) {
     return birthday;
 }
 
-async function upsertWorkwear(
-    tx: Prisma.TransactionClient,
-    workerId: string,
-    itemName: string,
-    size: string,
-) {
-    const existing = await tx.workerWorkwear.findFirst({
-        where: { workerId, itemName },
-    });
-    if (existing) {
-        await tx.workerWorkwear.update({
-            where: { id: existing.id },
-            data: { size },
-        });
-        return;
-    }
-    await tx.workerWorkwear.create({
-        data: {
-            workerId,
-            itemName,
-            size,
-            articleNumber: "",
-            quantity: 1,
-        },
-    });
-}
-
 export async function getPublicQuestionnaire(token: string) {
     const submission = await prisma.questionnaireSubmission.findUnique({
         where: { token },
@@ -63,7 +37,9 @@ export async function getPublicQuestionnaire(token: string) {
     }
     return {
         status: "sent" as const,
+        intro: QUESTIONNAIRE_INTRO,
         questions: QUESTIONNAIRE_FIELDS,
+        repeaters: QUESTIONNAIRE_REPEATERS,
     };
 }
 
@@ -90,6 +66,16 @@ export async function submitPublicQuestionnaire(
         return { status: "completed" as const };
     }
 
+    const contract = submission.engagement.employmentContract;
+    const matched =
+        contract?.status === "draft"
+            ? await matchQuestionnaireToContract(
+                  readDocumentSegments(contract.master.body),
+                  answers,
+                  submission.engagement.worker.email ?? "",
+              )
+            : null;
+
     await prisma.$transaction(async (tx) => {
         const claimed = await tx.questionnaireSubmission.updateMany({
             where: { id: submission.id, status: "sent" },
@@ -98,10 +84,10 @@ export async function submitPublicQuestionnaire(
         if (claimed.count === 0) return;
 
         await tx.questionnaireAnswer.createMany({
-            data: QUESTIONNAIRE_FIELDS.map((field) => ({
+            data: flattenQuestionnaireAnswers(answers).map((answer) => ({
                 submissionId: submission.id,
-                key: field.key,
-                value: answers[field.key],
+                key: answer.key,
+                value: answer.value,
             })),
         });
 
@@ -117,37 +103,12 @@ export async function submitPublicQuestionnaire(
             },
         });
 
-        await upsertWorkwear(tx, submission.engagement.workerId, HOSE, answers.trouserSize);
-        await upsertWorkwear(
-            tx,
-            submission.engagement.workerId,
-            TSHIRT,
-            answers.tshirtSize,
-        );
-
-        const contract = submission.engagement.employmentContract;
-        if (contract?.status === "draft") {
-            const entries = contractValuesFromAnswers(
-                readDocumentSegments(contract.master.body),
-                answers,
-                submission.engagement.worker.email,
-            );
-            for (const entry of entries) {
-                await tx.employmentContractValue.upsert({
-                    where: {
-                        employmentContractId_key: {
-                            employmentContractId: contract.id,
-                            key: entry.key,
-                        },
-                    },
-                    create: {
-                        employmentContractId: contract.id,
-                        key: entry.key,
-                        value: entry.value,
-                    },
-                    update: { value: entry.value },
-                });
-            }
+        if (contract?.status === "draft" && matched) {
+            await persistMatchedContractValues(tx, {
+                contractId: contract.id,
+                entries: matched,
+                masterRevision: contract.master.revision,
+            });
         }
 
         await tx.issue.updateMany({

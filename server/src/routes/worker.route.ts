@@ -35,6 +35,10 @@ worker.post(
     workerController.confirmEngagementContractForSend,
 );
 worker.post(
+    "/:workerId/engagements/:engagementId/contract/resync",
+    workerController.resyncEngagementContractFromQuestionnaire,
+);
+worker.post(
     "/:workerId/engagements/:engagementId/contract/send",
     workerController.sendFilledEmploymentContract,
 );
