@@ -30,6 +30,7 @@ import { ContractSendDialog } from '../files/ContractSendDialog';
 import { ArbeitszeugnisSendDialog } from '../files/ArbeitszeugnisSendDialog';
 import WorkerFileUploads from '../files/WorkerFileUploads';
 import { MaterialsTab } from '../materials/MaterialsTab';
+import { QuestionnaireSendDialog } from '@/features/questionnaire/QuestionnaireSendDialog';
 import WorkerHeader from '../header/WorkerHeader';
 import { WorkerTabButtons } from '../header/WorkerTabButtons';
 
@@ -53,6 +54,9 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
   } | null>(null);
 
   const [zeugnisIssueId, setZeugnisIssueId] = useState<string | null>(null);
+  const [questionnaireEngagementId, setQuestionnaireEngagementId] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     const pending = peekContractSendReturn();
@@ -125,6 +129,9 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
   const waiting = data.data.engagements.some(
     (engagement) => engagement.status === 'expected'
   );
+  const pendingQuestionnaire = data.data.engagements.find(
+    (engagement) => engagement.status === 'expected' && !engagement.questionnaireSubmission
+  );
 
   return (
     <div className="mx-auto flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
@@ -146,6 +153,12 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
           issueId={zeugnisIssueId}
           onClose={() => setZeugnisIssueId(null)}
           onSent={() => setZeugnisIssueId(null)}
+        />
+      ) : null}
+      {questionnaireEngagementId ? (
+        <QuestionnaireSendDialog
+          engagementId={questionnaireEngagementId}
+          onClose={() => setQuestionnaireEngagementId(null)}
         />
       ) : null}
       {contractConfirm ? (
@@ -187,6 +200,11 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
               onExportFiles={() => void handleZipExport(fetchFiles)}
               onUploadMaterials={() => materialFileInputRef.current?.click()}
               materialsUploadDisabled={data.data.engagements.length === 0}
+              onSendQuestionnaire={
+                pendingQuestionnaire
+                  ? () => setQuestionnaireEngagementId(pendingQuestionnaire.id)
+                  : undefined
+              }
             />
           </CardHeader>
           <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-0">

@@ -1,14 +1,6 @@
-import {
-    QUESTIONNAIRE_FIELDS,
-    QUESTIONNAIRE_INTRO,
-    questionnaireAnswerSchema,
-    type QuestionnaireAnswers,
-} from "@/services/questionnaireForm";
 import * as questionnaireService from "@/services/questionnaire.service";
 import catchErrors from "@/utils/catchErrors";
 import { Request, Response } from "express";
-
-const answerSchema = questionnaireAnswerSchema();
 
 function param(req: Request, key: string): string {
     const val = req.params[key];
@@ -29,14 +21,13 @@ export const getQuestionnaire = catchErrors(async (req: Request, res: Response) 
 
 export const submitQuestionnaire = catchErrors(
     async (req: Request, res: Response) => {
-        const answers = answerSchema.parse(req.body) as QuestionnaireAnswers;
         const result = await questionnaireService.submitPublicQuestionnaire(
             param(req, "token"),
-            answers,
+            req.body,
         );
         return res.status(200).json({
             success: true,
-            data: { ...result, intro: QUESTIONNAIRE_INTRO, questions: QUESTIONNAIRE_FIELDS },
+            data: result,
         });
     },
 );

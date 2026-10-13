@@ -6,13 +6,18 @@ type QuestionnaireQuestionProps = {
   question: QuestionnaireQuestionData;
   value: string;
   onChange: (value: string) => void;
+  disabled?: boolean;
+  employerFilled?: boolean;
 };
 
 export function QuestionnaireQuestion({
   question,
   value,
   onChange,
+  disabled = false,
+  employerFilled = false,
 }: QuestionnaireQuestionProps) {
+  const locked = disabled;
   if (question.type === 'single') {
     return (
       <fieldset className="flex flex-col gap-2">
@@ -33,12 +38,14 @@ export function QuestionnaireQuestion({
                 name={question.key}
                 className="size-4 accent-primary"
                 checked={value === option}
+                disabled={locked}
                 onChange={() => onChange(option)}
               />
               {option}
             </label>
           ))}
         </div>
+        {employerFilled ? <FieldLock /> : null}
       </fieldset>
     );
   }
@@ -50,6 +57,7 @@ export function QuestionnaireQuestion({
           type="checkbox"
           className="mt-1 size-4 shrink-0 accent-primary"
           checked={value === 'ja'}
+          disabled={locked}
           onChange={(event) => onChange(event.target.checked ? 'ja' : '')}
         />
         <span>
@@ -69,10 +77,17 @@ export function QuestionnaireQuestion({
       <Input
         id={question.key}
         type={question.type === 'date' ? 'date' : 'text'}
-        required={question.required}
+        required={question.required && !locked}
+        disabled={locked}
         value={value}
+        className={locked ? 'bg-muted text-muted-foreground' : undefined}
         onChange={(event) => onChange(event.target.value)}
       />
+      {employerFilled ? <FieldLock /> : null}
     </div>
   );
+}
+
+function FieldLock() {
+  return <p className="text-xs text-muted-foreground">Vom Betrieb ausgefüllt</p>;
 }

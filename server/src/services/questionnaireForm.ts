@@ -251,18 +251,45 @@ function fieldSchema(field: QuestionnaireField) {
         .refine((value) => !field.required || value.length > 0, "erforderlich");
 }
 
-export function questionnaireAnswerSchema() {
+export function questionnaireAnswerSchema(
+    fields: readonly QuestionnaireField[] = QUESTIONNAIRE_FIELDS,
+    repeaterKeys: readonly string[] = ["children", "priorEmployment"],
+) {
     return z.object({
-        ...Object.fromEntries(
-            QUESTIONNAIRE_FIELDS.map((field) => [field.key, fieldSchema(field)]),
-        ),
-        children: z.array(childSchema).max(10).default([]),
-        priorEmployment: z.array(priorSchema).max(8).default([]),
+        ...Object.fromEntries(fields.map((field) => [field.key, fieldSchema(field)])),
+        ...(repeaterKeys.includes("children")
+            ? { children: z.array(childSchema).max(10).default([]) }
+            : {}),
+        ...(repeaterKeys.includes("priorEmployment")
+            ? { priorEmployment: z.array(priorSchema).max(8).default([]) }
+            : {}),
     });
 }
 
 function filled(values: string[]) {
     return values.some((value) => value.trim().length > 0);
+}
+
+const WORKER_TEXT = ["firstName", "lastName", "street", "postalCode", "city"] as const;
+
+export function workerTextFromAnswers(
+    fields: { key: string }[],
+    answers: QuestionnaireAnswers,
+) {
+    const present = new Set(fields.map((field) => field.key));
+    const data: Partial<Record<(typeof WORKER_TEXT)[number], string>> = {};
+    for (const key of WORKER_TEXT) {
+        if (!present.has(key)) continue;
+        const value = answerString(answers, key).trim();
+        if (value) data[key] = value;
+    }
+    const birthday = present.has("birthday") ? answerString(answers, "birthday").trim() : "";
+    return { data, birthday };
+}
+
+export function answerString(answers: QuestionnaireAnswers, key: string) {
+    const value = (answers as Record<string, unknown>)[key];
+    return typeof value === "string" ? value : "";
 }
 
 export function questionnaireAnswersFromStored(
@@ -272,6 +299,10 @@ export function questionnaireAnswersFromStored(
     const answers = Object.fromEntries(
         QUESTIONNAIRE_FIELDS.map((field) => [field.key, byKey.get(field.key) ?? ""]),
     ) as unknown as QuestionnaireAnswers;
+    for (const [key, value] of byKey) {
+        if (/^(child|prior)\.\d+\./.test(key)) continue;
+        (answers as Record<string, unknown>)[key] = value;
+    }
 
     const children: QuestionnaireChild[] = [];
     for (let index = 1; index <= 10; index += 1) {
@@ -302,12 +333,21 @@ export function questionnaireAnswersFromStored(
     return answers;
 }
 
-export function flattenQuestionnaireAnswers(answers: QuestionnaireAnswers) {
-    const rows: { key: string; value: string }[] = QUESTIONNAIRE_FIELDS.map((field) => ({
+export function flattenQuestionnaireAnswers(
+    answers: QuestionnaireAnswers,
+    fields: readonly { key: string }[] = QUESTIONNAIRE_FIELDS,
+) {
+    const known = new Set(fields.map((field) => field.key));
+    const rows: { key: string; value: string }[] = fields.map((field) => ({
         key: field.key,
-        value: answers[field.key] ?? "",
+        value: answerString(answers, field.key),
     }));
-    answers.children.forEach((child, index) => {
+    for (const [key, value] of Object.entries(answers)) {
+        if (key === "children" || key === "priorEmployment" || known.has(key)) continue;
+        if (typeof value !== "string" || !value.trim()) continue;
+        rows.push({ key, value });
+    }
+    (answers.children ?? []).forEach((child, index) => {
         if (!filled([child.lastName, child.firstName, child.birthday])) return;
         const number = index + 1;
         rows.push(
@@ -316,7 +356,7 @@ export function flattenQuestionnaireAnswers(answers: QuestionnaireAnswers) {
             { key: `child.${number}.birthday`, value: child.birthday },
         );
     });
-    answers.priorEmployment.forEach((prior, index) => {
+    (answers.priorEmployment ?? []).forEach((prior, index) => {
         if (!filled([prior.from, prior.until, prior.kind])) return;
         const number = index + 1;
         rows.push(
@@ -340,7 +380,12 @@ const priorLabels = {
     kind: "Art der Beschäftigung",
 } as const;
 
-export function questionnaireAnswerLabel(key: string, value = "") {
+export function questionnaireAnswerLabel(
+    key: string,
+    value = "",
+    labels: Record<string, string> = {},
+) {
+    if (labels[key]) return labels[key];
     const field = QUESTIONNAIRE_FIELDS.find((item) => item.key === key);
     if (field) return field.label || value;
     const child = /^child\.\d+\.(lastName|firstName|birthday)$/.exec(key);

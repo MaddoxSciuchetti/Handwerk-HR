@@ -19,6 +19,10 @@ type QuestionnaireResponse = {
     intro?: string;
     questions?: QuestionnaireQuestionData[];
     repeaters?: QuestionnaireRepeater[];
+    items?: Array<
+      | (QuestionnaireQuestionData & { kind: 'field' })
+      | (QuestionnaireRepeater & { kind: 'repeater' })
+    >;
   };
 };
 
@@ -50,7 +54,10 @@ export function QuestionnaireForm({ token }: QuestionnaireFormProps) {
   });
 
   const data = questionnaire.data?.data;
-  const questions = data?.questions ?? [];
+  const questions =
+    data?.items?.flatMap((item) => (item.kind === 'field' ? [item] : [])) ??
+    data?.questions ??
+    [];
   const repeaters = data?.repeaters ?? [];
 
   useEffect(() => {
@@ -77,21 +84,37 @@ export function QuestionnaireForm({ token }: QuestionnaireFormProps) {
   const missing = questions.some(
     (question) => question.required && !(values[question.key] ?? '').trim()
   );
-  const sections = questions.reduce<Section[]>((list, question) => {
-    const current = list.at(-1);
-    if (!current || current.title !== question.section) {
-      list.push({ title: question.section, questions: [question] });
-    } else {
-      current.questions.push(question);
-    }
-    return list;
-  }, []);
-  repeaters.forEach((repeater) => {
-    const index = sections.findIndex((section) => section.title === repeater.afterSection);
-    const block = { title: repeater.section, questions: [], repeater };
-    if (index === -1) sections.push(block);
-    else sections.splice(index + 1, 0, block);
-  });
+  const sections = data?.items
+    ? data.items.reduce<Section[]>((list, item) => {
+        if (item.kind === 'repeater') {
+          list.push({ title: item.section, questions: [], repeater: item });
+          return list;
+        }
+        const current = list.at(-1);
+        if (!current || current.repeater || current.title !== item.section) {
+          list.push({ title: item.section, questions: [item] });
+        } else {
+          current.questions.push(item);
+        }
+        return list;
+      }, [])
+    : questions.reduce<Section[]>((list, question) => {
+        const current = list.at(-1);
+        if (!current || current.title !== question.section) {
+          list.push({ title: question.section, questions: [question] });
+        } else {
+          current.questions.push(question);
+        }
+        return list;
+      }, []);
+  if (!data?.items) {
+    repeaters.forEach((repeater) => {
+      const index = sections.findIndex((section) => section.title === repeater.afterSection);
+      const block = { title: repeater.section, questions: [], repeater };
+      if (index === -1) sections.push(block);
+      else sections.splice(index + 1, 0, block);
+    });
+  }
 
   return (
     <div className="h-full overflow-y-auto px-4 py-8">
@@ -135,13 +158,20 @@ export function QuestionnaireForm({ token }: QuestionnaireFormProps) {
                       {section.title}
                     </h2>
                     {section.questions.every((question) => question.layout === 'inline') ? (
+                      <>
                       <div className="grid grid-cols-4 gap-3 sm:grid-cols-7">
                         {section.questions.map((question) => (
                           <div key={question.key} className="flex flex-col gap-2">
                             <Label htmlFor={question.key}>{question.label}</Label>
                             <Input
                               id={question.key}
+                              disabled={question.employerFilled}
                               value={values[question.key] ?? ''}
+                              className={
+                                question.employerFilled
+                                  ? 'bg-muted text-muted-foreground'
+                                  : undefined
+                              }
                               onChange={(event) =>
                                 setValues((current) => ({
                                   ...current,
@@ -152,11 +182,17 @@ export function QuestionnaireForm({ token }: QuestionnaireFormProps) {
                           </div>
                         ))}
                       </div>
+                      {section.questions.some((question) => question.employerFilled) ? (
+                        <p className="text-xs text-muted-foreground">Vom Betrieb ausgefüllt</p>
+                      ) : null}
+                      </>
                     ) : (
                       section.questions.map((question) => (
                         <QuestionnaireQuestion
                           key={question.key}
                           question={question}
+                          disabled={question.employerFilled}
+                          employerFilled={question.employerFilled}
                           value={values[question.key] ?? ''}
                           onChange={(value) =>
                             setValues((current) => ({

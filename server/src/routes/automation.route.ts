@@ -6,17 +6,21 @@ import {
     getAutomationDocument,
     getDepartureMail,
     getMicrosoft365Automation,
+    getQuestionnaireTemplate,
     getWelcomeMail,
     postArbeitszeugnis,
     postTaskAutomation,
     putAutomationDocument,
     putDepartureMail,
+    putQuestionnaireTemplate,
     putWelcomeMail,
 } from "@/controllers/automation.controller";
 
 const automationRoutes = Router();
 
 automationRoutes.get("/microsoft-365", getMicrosoft365Automation);
+automationRoutes.get("/questionnaire", getQuestionnaireTemplate);
+automationRoutes.put("/questionnaire", putQuestionnaireTemplate);
 automationRoutes.get("/welcome-mail", getWelcomeMail);
 automationRoutes.put("/welcome-mail", putWelcomeMail);
 automationRoutes.get("/departure-mail", getDepartureMail);

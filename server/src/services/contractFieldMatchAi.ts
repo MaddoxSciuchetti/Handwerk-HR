@@ -1,8 +1,9 @@
 import type { DocumentSegment } from "@/services/documentBody";
 import {
     acceptModelMatches,
-    contractValuesFromAnswers,
+    deterministicContractValues,
     unmatchedQuestionnaireAnswers,
+    type MatchField,
 } from "@/services/contractFieldMatch";
 import {
     flattenQuestionnaireAnswers,
@@ -98,22 +99,32 @@ export async function matchQuestionnaireToContract(
     segments: DocumentSegment[],
     answers: QuestionnaireAnswers,
     email = "",
+    matchFields: MatchField[] = [],
 ) {
-    const alias = contractValuesFromAnswers(segments, answers, email);
-    const filled = new Set(alias.map((entry) => entry.key));
+    const placedEntries = deterministicContractValues(
+        segments,
+        answers,
+        email,
+        matchFields,
+    );
+    const filled = new Set(placedEntries.map((entry) => entry.key));
     const fields = leftoverFields(segments, filled);
-    const placed = Object.fromEntries(alias.map((entry) => [entry.key, entry.value]));
+    const placed = Object.fromEntries(placedEntries.map((entry) => [entry.key, entry.value]));
     const leftovers = unmatchedQuestionnaireAnswers(
         segments,
         placed,
-        flattenQuestionnaireAnswers(answers),
+        flattenQuestionnaireAnswers(
+            answers,
+            matchFields.length > 0 ? matchFields : undefined,
+        ),
+        matchFields,
     );
-    if (!openAiKey() || fields.length === 0 || leftovers.length === 0) return alias;
+    if (!openAiKey() || fields.length === 0 || leftovers.length === 0) return placedEntries;
 
     try {
         const matched = await askModel(fields, leftovers);
-        return [...alias, ...matched];
+        return [...placedEntries, ...matched];
     } catch {
-        return alias;
+        return placedEntries;
     }
 }

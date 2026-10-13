@@ -7,6 +7,11 @@ export type QuestionnaireQuestion = {
   options?: string[];
   defaultValue?: string;
   layout?: 'inline';
+  employerFilled?: boolean;
+  officeEditable?: boolean;
+  contractFieldKey?: string;
+  builtin?: boolean;
+  max?: number;
 };
 
 export type QuestionnaireRepeater = {

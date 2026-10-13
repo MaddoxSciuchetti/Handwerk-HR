@@ -8,25 +8,34 @@ import { toast } from 'sonner';
 import { ALL_WORKER_DATA } from '../../consts/query-key.consts';
 
 type FastTrackOnboardingProps = {
-  onStarted: () => void;
+  onCreated: (draft: { engagementId: string }) => void;
+};
+
+type FastTrackResponse = {
+  success: boolean;
+  data: {
+    worker: { id: string };
+    engagement: { id: string };
+  };
 };
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function FastTrackOnboarding({ onStarted }: FastTrackOnboardingProps) {
+export function FastTrackOnboarding({ onCreated }: FastTrackOnboardingProps) {
   const [email, setEmail] = useState('');
   const { mutate, isPending } = useMutation({
     mutationFn: (value: string) =>
-      API.post('/worker/fast-track', { email: value }),
-    onSuccess: () => {
+      API.post<FastTrackResponse>('/worker/fast-track', { email: value }),
+    onSuccess: (response) => {
+      const body = response as unknown as FastTrackResponse;
       queryClient.invalidateQueries({
         queryKey: [ALL_WORKER_DATA],
         refetchType: 'all',
       });
-      toast.success('Onboarding gestartet');
-      onStarted();
+      toast.success('Mitarbeiter angelegt');
+      onCreated({ engagementId: body.data.engagement.id });
     },
-    onError: () => toast.error('Onboarding konnte nicht gestartet werden'),
+    onError: () => toast.error('Mitarbeiter konnte nicht angelegt werden'),
   });
 
   const send = () => {
@@ -58,7 +67,7 @@ export function FastTrackOnboarding({ onStarted }: FastTrackOnboardingProps) {
         disabled={isPending}
         onClick={send}
       >
-        {isPending ? 'Sendet…' : 'Senden'}
+        {isPending ? 'Legt an…' : 'Anlegen'}
       </Button>
     </div>
   );

@@ -6,9 +6,10 @@ import ModalContent from './lifycycle-modal-content/ModalContent';
 type LifeCycleModalProps = {
   modal: boolean;
   toggleModal: () => void;
+  onQuestionnaire?: (draft: { engagementId: string }) => void;
 };
 
-const LifeCycleModal = ({ toggleModal, modal }: LifeCycleModalProps) => {
+const LifeCycleModal = ({ toggleModal, modal, onQuestionnaire }: LifeCycleModalProps) => {
   const [selectedOption, setSelectedOption] = useState<
     AddWorker['type'] | null
   >(null);
@@ -28,6 +29,7 @@ const LifeCycleModal = ({ toggleModal, modal }: LifeCycleModalProps) => {
             setSelectedOption={setSelectedOption}
             toggleModal={toggleModal}
             showInlineFormBackButton
+            onQuestionnaire={onQuestionnaire}
           />
         </ModalOverlay>
       )}

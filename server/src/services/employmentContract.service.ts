@@ -1,8 +1,15 @@
 import { BAD_REQUEST, CONFLICT, NOT_FOUND } from "@/constants/http";
 import { prisma } from "@/lib/prisma";
-import { unmatchedQuestionnaireAnswers } from "@/services/contractFieldMatch";
+import { unmatchedQuestionnaireAnswers, type MatchField } from "@/services/contractFieldMatch";
 import { matchQuestionnaireToContract } from "@/services/contractFieldMatchAi";
-import { questionnaireAnswersFromStored } from "@/services/questionnaireForm";
+import {
+    definitionFields,
+    parseQuestionnaireDefinition,
+} from "@/services/questionnaireDefinition";
+import {
+    QUESTIONNAIRE_FIELDS,
+    questionnaireAnswersFromStored,
+} from "@/services/questionnaireForm";
 import {
     readDocumentSegments,
     type DocumentSegment,
@@ -66,6 +73,28 @@ function readDraftValues(
     return entries;
 }
 
+function matchFieldsFrom(value: unknown): MatchField[] {
+    const fields = (() => {
+        if (!value || typeof value !== "object" || Array.isArray(value)) {
+            return QUESTIONNAIRE_FIELDS;
+        }
+        try {
+            return definitionFields(parseQuestionnaireDefinition(value));
+        } catch {
+            return QUESTIONNAIRE_FIELDS;
+        }
+    })();
+    return fields.map((field) => ({
+        key: field.key,
+        label: field.label,
+        type: field.type,
+        contractFieldKey:
+            "contractFieldKey" in field && typeof field.contractFieldKey === "string"
+                ? field.contractFieldKey
+                : undefined,
+    }));
+}
+
 const contractInclude = {
     master: true,
     values: true,
@@ -74,6 +103,7 @@ const contractInclude = {
             questionnaireSubmission: {
                 select: {
                     status: true,
+                    formDefinition: true,
                     answers: {
                         select: { key: true, value: true },
                     },
@@ -121,12 +151,14 @@ function present(
     }
 
     const submission = contract.engagement.questionnaireSubmission;
+    const matchFields = matchFieldsFrom(submission?.formDefinition);
     const unmatchedAnswers =
         submission?.status === "completed"
             ? unmatchedQuestionnaireAnswers(
                   segments,
                   values,
                   submission.answers,
+                  matchFields,
               )
             : [];
 
@@ -290,6 +322,7 @@ export async function resyncEngagementContractFromQuestionnaire(
         segments,
         answers,
         contract.engagement.worker.email ?? "",
+        matchFieldsFrom(submission.formDefinition),
     );
 
     const saved = await prisma.$transaction(async (tx) => {

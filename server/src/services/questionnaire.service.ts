@@ -4,11 +4,22 @@ import { matchQuestionnaireToContract } from "@/services/contractFieldMatchAi";
 import { readDocumentSegments } from "@/services/documentBody";
 import { persistMatchedContractValues } from "@/services/employmentContract.service";
 import {
+    definitionFields,
+    definitionRepeaters,
+    parseQuestionnaireDefinition,
+    presentQuestions,
+    type QuestionnaireDefinition,
+    type QuestionnaireFieldItem,
+} from "@/services/questionnaireDefinition";
+import {
     flattenQuestionnaireAnswers,
+    workerTextFromAnswers,
     QUESTIONNAIRE_FIELDS,
     QUESTIONNAIRE_INTRO,
     QUESTIONNAIRE_REPEATERS,
+    questionnaireAnswerSchema,
     type QuestionnaireAnswers,
+    type QuestionnaireField,
 } from "@/services/questionnaireForm";
 import AppError from "@/utils/AppError";
 
@@ -26,10 +37,51 @@ function parseBirthday(value: string) {
     return birthday;
 }
 
+function storedDefinition(value: unknown): QuestionnaireDefinition | null {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+    try {
+        return parseQuestionnaireDefinition(value);
+    } catch {
+        return null;
+    }
+}
+
+function publicPayload(definition: QuestionnaireDefinition | null) {
+    if (!definition) {
+        return {
+            intro: QUESTIONNAIRE_INTRO,
+            questions: QUESTIONNAIRE_FIELDS,
+            repeaters: QUESTIONNAIRE_REPEATERS,
+        };
+    }
+    return {
+        intro: definition.intro,
+        questions: presentQuestions(definition),
+        repeaters: definitionRepeaters(definition),
+        items: definition.items.map((item) =>
+            item.kind === "repeater"
+                ? item
+                : {
+                      kind: "field" as const,
+                      key: item.key,
+                      label: item.label,
+                      section: item.section,
+                      type: item.type,
+                      required: item.required,
+                      options: item.options,
+                      max: item.max,
+                      layout: item.layout,
+                      employerFilled: item.employerFilled,
+                      defaultValue: item.defaultValue,
+                  },
+        ),
+    };
+}
+
 export async function getPublicQuestionnaire(token: string) {
     const submission = await prisma.questionnaireSubmission.findUnique({
         where: { token },
-        select: { status: true },
+        select: { status: true, formDefinition: true },
     });
     if (!submission) return null;
     if (submission.status !== "sent") {
@@ -37,17 +89,31 @@ export async function getPublicQuestionnaire(token: string) {
     }
     return {
         status: "sent" as const,
-        intro: QUESTIONNAIRE_INTRO,
-        questions: QUESTIONNAIRE_FIELDS,
-        repeaters: QUESTIONNAIRE_REPEATERS,
+        ...publicPayload(storedDefinition(submission.formDefinition)),
     };
 }
 
-export async function submitPublicQuestionnaire(
-    token: string,
-    answers: QuestionnaireAnswers,
+function fieldsOf(definition: QuestionnaireDefinition | null): QuestionnaireField[] {
+    if (!definition) return [...QUESTIONNAIRE_FIELDS];
+    return definitionFields(definition);
+}
+
+function lockEmployerValues(
+    fields: Array<QuestionnaireField | QuestionnaireFieldItem>,
+    body: unknown,
 ) {
-    const birthday = parseBirthday(answers.birthday);
+    const answers =
+        body && typeof body === "object" && !Array.isArray(body)
+            ? { ...(body as Record<string, unknown>) }
+            : {};
+    for (const field of fields) {
+        if (!("employerFilled" in field) || !field.employerFilled) continue;
+        answers[field.key] = field.defaultValue ?? "";
+    }
+    return answers;
+}
+
+export async function submitPublicQuestionnaire(token: string, body: unknown) {
     const submission = await prisma.questionnaireSubmission.findUnique({
         where: { token },
         include: {
@@ -66,6 +132,24 @@ export async function submitPublicQuestionnaire(
         return { status: "completed" as const };
     }
 
+    const definition = storedDefinition(submission.formDefinition);
+    const fields = fieldsOf(definition);
+    const repeaterKeys = definition
+        ? definitionRepeaters(definition).map((repeater) => repeater.key)
+        : ["children", "priorEmployment"];
+    const answers = questionnaireAnswerSchema(fields, repeaterKeys).parse(
+        lockEmployerValues(fields, body),
+    ) as QuestionnaireAnswers;
+    const matchFields = fields.map((field) => ({
+        key: field.key,
+        label: field.label,
+        type: field.type,
+        contractFieldKey:
+            "contractFieldKey" in field && typeof field.contractFieldKey === "string"
+                ? field.contractFieldKey
+                : undefined,
+    }));
+
     const contract = submission.engagement.employmentContract;
     const matched =
         contract?.status === "draft"
@@ -73,6 +157,7 @@ export async function submitPublicQuestionnaire(
                   readDocumentSegments(contract.master.body),
                   answers,
                   submission.engagement.worker.email ?? "",
+                  matchFields,
               )
             : null;
 
@@ -84,24 +169,26 @@ export async function submitPublicQuestionnaire(
         if (claimed.count === 0) return;
 
         await tx.questionnaireAnswer.createMany({
-            data: flattenQuestionnaireAnswers(answers).map((answer) => ({
+            data: flattenQuestionnaireAnswers(answers, fields).map((answer) => ({
                 submissionId: submission.id,
                 key: answer.key,
                 value: answer.value,
             })),
         });
 
-        await tx.worker.update({
-            where: { id: submission.engagement.workerId },
-            data: {
-                firstName: answers.firstName,
-                lastName: answers.lastName,
-                street: answers.street,
-                postalCode: answers.postalCode,
-                city: answers.city,
-                birthday,
-            },
-        });
+        const workerFields = workerTextFromAnswers(fields, answers);
+        const workerData = {
+            ...workerFields.data,
+            ...(workerFields.birthday
+                ? { birthday: parseBirthday(workerFields.birthday) }
+                : {}),
+        };
+        if (Object.keys(workerData).length > 0) {
+            await tx.worker.update({
+                where: { id: submission.engagement.workerId },
+                data: workerData,
+            });
+        }
 
         if (contract?.status === "draft" && matched) {
             await persistMatchedContractValues(tx, {

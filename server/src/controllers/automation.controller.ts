@@ -21,6 +21,12 @@ import {
     welcomeMailPage,
     type WelcomeMailSettingsRecord,
 } from "@/services/welcomeMail";
+import { builtinCatalog } from "@/services/questionnaireDefinition";
+import {
+    employmentContractFields,
+    questionnaireForOrganization,
+    saveOrganizationQuestionnaire,
+} from "@/services/questionnaireTemplate";
 import appAssert from "@/utils/appAssert";
 import catchErrors from "@/utils/catchErrors";
 import { z } from "zod";
@@ -197,6 +203,24 @@ export const putAutomationDocument = catchErrors(async (req, res) => {
             documentMasterId,
         }),
     });
+});
+
+export const getQuestionnaireTemplate = catchErrors(async (req, res) => {
+    appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
+    const [definition, contractFields] = await Promise.all([
+        questionnaireForOrganization(req.orgId),
+        employmentContractFields(req.orgId),
+    ]);
+    return res.status(200).json({
+        success: true,
+        data: { ...definition, catalog: builtinCatalog(), contractFields },
+    });
+});
+
+export const putQuestionnaireTemplate = catchErrors(async (req, res) => {
+    appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
+    const definition = await saveOrganizationQuestionnaire(req.orgId, req.body);
+    return res.status(200).json({ success: true, data: definition });
 });
 
 export const putDepartureMail = catchErrors(async (req, res) => {

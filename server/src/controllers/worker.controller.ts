@@ -3,6 +3,11 @@ import * as employmentContractService from "@/services/employmentContract.servic
 import { confirmReturnedEmploymentContract } from "@/services/signedContractReturn.service";
 import catchErrors from "@/utils/catchErrors";
 import { Request, Response } from "express";
+import {
+    getQuestionnaireDraft,
+    saveQuestionnaireDraft,
+    sendEngagementQuestionnaire,
+} from "@/services/questionnaireDispatch";
 import * as workerService from "../services/worker.service";
 
 function param(req: Request, key: string): string {
@@ -26,6 +31,38 @@ export const startExpectedOnboarding = catchErrors(
         });
 
         return res.status(201).json({ success: true, data: result });
+    },
+);
+
+export const getEngagementQuestionnaire = catchErrors(
+    async (req: Request, res: Response) => {
+        const draft = await getQuestionnaireDraft({
+            organizationId: req.orgId,
+            engagementId: param(req, "engagementId"),
+        });
+        return res.status(200).json({ success: true, data: draft });
+    },
+);
+
+export const saveEngagementQuestionnaire = catchErrors(
+    async (req: Request, res: Response) => {
+        const draft = await saveQuestionnaireDraft({
+            organizationId: req.orgId,
+            engagementId: param(req, "engagementId"),
+            values: req.body?.values ?? req.body,
+        });
+        return res.status(200).json({ success: true, data: draft });
+    },
+);
+
+export const sendEngagementQuestionnaireHandler = catchErrors(
+    async (req: Request, res: Response) => {
+        const result = await sendEngagementQuestionnaire({
+            organizationId: req.orgId,
+            createdByUserId: req.userId,
+            engagementId: param(req, "engagementId"),
+        });
+        return res.status(200).json({ success: true, data: result });
     },
 );
 

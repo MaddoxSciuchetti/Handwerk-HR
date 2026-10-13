@@ -150,6 +150,7 @@ model WorkerEngagement {
   startDate         DateTime?          @map("start_date") @db.Date
   endDate           DateTime?          @map("end_date") @db.Date
   completedAt       DateTime?          @map("completed_at") @db.Timestamptz()
+  questionnaireOverrides Json?         @map("questionnaire_overrides")
   createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz()
 
@@ -542,6 +543,7 @@ model PreparedDocument {
 model Questionnaire {
   id             String   @id @default(uuid())
   organizationId String   @unique @map("organization_id")
+  definition     Json     @default("{}")
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz()
 
@@ -571,9 +573,10 @@ model QuestionnaireQuestion {
 model QuestionnaireSubmission {
   id           String                        @id @default(uuid())
   engagementId String                        @unique @map("engagement_id")
-  token        String                        @unique @db.VarChar(64)
-  status       QuestionnaireSubmissionStatus @default(sent)
-  completedAt  DateTime?                     @map("completed_at") @db.Timestamptz()
+  token          String                        @unique @db.VarChar(64)
+  status         QuestionnaireSubmissionStatus @default(sent)
+  formDefinition Json?                       @map("form_definition")
+  completedAt    DateTime?                   @map("completed_at") @db.Timestamptz()
   createdAt    DateTime                      @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt    DateTime                      @updatedAt @map("updated_at") @db.Timestamptz()
 

@@ -11,6 +11,7 @@ interface WorkerFormProps {
   type: AddWorker['type'];
   toggleModal: () => void;
   showInlineFormBackButton?: boolean;
+  onQuestionnaire?: (draft: { engagementId: string }) => void;
 }
 
 export const WorkerForm = ({
@@ -18,6 +19,7 @@ export const WorkerForm = ({
   type,
   toggleModal,
   showInlineFormBackButton = true,
+  onQuestionnaire,
 }: WorkerFormProps) => {
   const {
     register,
@@ -51,7 +53,12 @@ export const WorkerForm = ({
       <h1 className="typo-body-lg font-semibold">Eingabe {type}</h1>
 
       {type === 'Onboarding' ? (
-        <FastTrackOnboarding onStarted={toggleModal} />
+        <FastTrackOnboarding
+          onCreated={(draft) => {
+            toggleModal();
+            onQuestionnaire?.(draft);
+          }}
+        />
       ) : null}
 
       {isError && (
