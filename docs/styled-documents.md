@@ -151,3 +151,9 @@ renderer fonts correctly blocked preparation. Disposable test containers and the
 test database volume were removed afterward. The client-wide type-check has the
 same pre-existing unrelated errors as checkpoint `0066acb7`; changed editor files
 pass focused lint checks.
+
+### Mapped checkboxes
+
+In **Formatierung und Felder**, choose **Kontrollkästchen**, enter a label and a stable field key (for example `contract.fixed_term`), then select **Feld einsetzen** or drag the field into the document. To keep an existing imported checkbox's exact appearance, select only its symbol (`☐`, `□`, `☒`, or `☑`) before inserting. Its symbol, font, point size, color and text marks are preserved, without adding a visible label or control padding. New boxes inherit the current text formatting; **Kästchenform** selects the empty symbol.
+
+Incoming values match the field key: `{"contract.fixed_term":"true"}` checks the box and `"false"` clears it. Checkboxes with the same key share a value. The original glyph reserves the same space in both states, including PDF output. The template shows the original symbol; the filled document shows the incoming value. Hovering a mapped checkbox reveals its label and key. Existing templates are not converted automatically.

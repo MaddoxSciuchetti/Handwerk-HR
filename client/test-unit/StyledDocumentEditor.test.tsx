@@ -571,3 +571,105 @@ it('keeps imported 8pt runs below a 14pt checkbox from expanding over an adjacen
   expect(published.content.content[0].attrs.labels[1].left).toBe(369.35);
   optionsSpy.mockRestore();
 });
+
+it.each(['□', '☐', '☒', '☑'])(
+  'replaces imported %s with a keyed checkbox without changing its marks or neighboring text',
+  async (glyph) => {
+    const optionsSpy = vi.spyOn(Editor.prototype, 'setOptions');
+    const value = fromSegments([]);
+    value.content.content = [
+      {
+        type: 'paragraph',
+        content: [
+          {
+            type: 'text',
+            text: glyph,
+            marks: [
+              {
+                type: 'textStyle',
+                attrs: { fontFamily: 'Arial', fontSize: 14, color: '#215e99' },
+              },
+            ],
+          },
+          {
+            type: 'text',
+            text: ' Fixed term',
+            marks: [{ type: 'textStyle', attrs: { fontSize: 8 } }],
+          },
+        ],
+      },
+    ];
+    render(<StyledDocumentEditor document={value} master onChange={vi.fn()} />);
+    await screen.findByText('Fixed term');
+    const editor = optionsSpy.mock.instances.at(-1) as Editor;
+    vi.spyOn(editor.view, 'scrollToSelection').mockImplementation(
+      () => undefined
+    );
+    const originalMarks = editor.getJSON().content![0].content![0].marks;
+    act(() => editor.commands.setTextSelection({ from: 1, to: 2 }));
+    fireEvent.change(screen.getByLabelText('Feldbezeichnung'), {
+      target: { value: 'Fixed term' },
+    });
+    fireEvent.change(screen.getByLabelText('Feldschlüssel'), {
+      target: { value: 'contract.fixed_term' },
+    });
+    fireEvent.change(screen.getByLabelText('Feldtyp'), {
+      target: { value: 'checkbox' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Feld einsetzen' }));
+    const nodes = editor.getJSON().content![0].content!;
+    expect(nodes[0].attrs).toMatchObject({
+      key: 'contract.fixed_term',
+      fieldType: 'checkbox',
+      checkboxGlyph: glyph,
+      required: false,
+    });
+    expect(nodes[0].marks).toEqual(originalMarks);
+    expect(nodes[1].text).toBe(' Fixed term');
+    await waitFor(() =>
+      expect(
+        screen.getByTitle('Fixed term (contract.fixed_term)')
+      ).toHaveTextContent(glyph)
+    );
+    optionsSpy.mockRestore();
+  }
+);
+
+it('uses mapped checkbox values with the same glyph footprint and supports read-only viewing', async () => {
+  const value = fromSegments([
+    {
+      type: 'input',
+      key: 'contract.fixed_term',
+      label: 'Fixed term',
+      fieldType: 'checkbox',
+      required: false,
+    },
+  ]);
+  value.content.content![0].content![0].attrs!.checkboxGlyph = '□';
+  const onValueChange = vi.fn();
+  const { rerender } = render(
+    <StyledDocumentEditor
+      document={value}
+      values={{ 'contract.fixed_term': 'false' }}
+      onValueChange={onValueChange}
+    />
+  );
+  const checkbox = await screen.findByRole('checkbox', { name: 'Fixed term' });
+  expect(checkbox).not.toBeChecked();
+  expect(checkbox.parentElement).toHaveTextContent('□');
+  fireEvent.click(checkbox);
+  expect(onValueChange).toHaveBeenCalledWith('contract.fixed_term', 'true');
+  rerender(
+    <StyledDocumentEditor
+      document={value}
+      values={{ 'contract.fixed_term': 'true' }}
+      readOnly
+    />
+  );
+  await waitFor(() => expect(checkbox).toBeChecked());
+  expect(checkbox).toBeDisabled();
+  expect(checkbox.parentElement!.querySelector('span')).toHaveStyle({
+    visibility: 'visible',
+  });
+  expect(checkbox.parentElement).toHaveTextContent('□×');
+});

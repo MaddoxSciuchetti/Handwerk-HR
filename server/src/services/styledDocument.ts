@@ -124,6 +124,8 @@ export function parseStyledDocument(value: unknown): StyledDocument {
             label: z.string().trim().min(1).max(120),
             fieldType: z.enum(["text", "date", "checkbox"]).default("text"),
             required: z.boolean().optional(),
+            checkboxGlyph: z.enum(["☐", "□", "☒", "☑"]).nullish(),
+            checkboxValue: z.enum(["true", "false"]).nullish(),
           })
           .parse(node.attrs);
         const field = {

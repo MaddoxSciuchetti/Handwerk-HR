@@ -11,6 +11,7 @@ type DroppedDocumentField = {
   label: string;
   fieldType?: string;
   required?: boolean;
+  checkboxGlyph?: string;
 };
 
 type DropSession = {
@@ -40,12 +41,17 @@ export function insertDroppedDocumentField(
   view.dispatch(
     view.state.tr.insert(
       pos.pos,
-      view.state.schema.nodes.documentField.create({
-        key: dragged.key,
-        label: dragged.label,
-        fieldType: dragged.fieldType ?? 'text',
-        required: dragged.required ?? dragged.fieldType !== 'checkbox',
-      })
+      view.state.schema.nodes.documentField.create(
+        {
+          key: dragged.key,
+          label: dragged.label,
+          fieldType: dragged.fieldType ?? 'text',
+          checkboxGlyph: dragged.checkboxGlyph ?? null,
+          required: dragged.required ?? dragged.fieldType !== 'checkbox',
+        },
+        null,
+        view.state.doc.resolve(pos.pos).marks()
+      )
     )
   );
   setDraggedContractInput(null);

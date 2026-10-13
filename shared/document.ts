@@ -138,6 +138,19 @@ export function filledDocument(
   values: Record<string, string>,
 ): StyledDocument {
   const fill = (node: DocumentNode): DocumentNode => {
+    if (
+      node.type === "documentField" &&
+      node.attrs?.fieldType === "checkbox" &&
+      node.attrs.checkboxGlyph
+    )
+      return {
+        ...node,
+        attrs: {
+          ...node.attrs,
+          checkboxValue:
+            values[String(node.attrs.key)] === "true" ? "true" : "false",
+        },
+      };
     if (node.type === "documentField")
       return {
         type: "text",

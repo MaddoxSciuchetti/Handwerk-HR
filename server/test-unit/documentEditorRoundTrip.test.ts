@@ -1,4 +1,4 @@
-import { fromSegments } from "../../shared/document";
+import { filledDocument, fromSegments } from "../../shared/document";
 import { renderNode } from "../../shared/documentRendering";
 import { normalizeLineLabels } from "../../client/src/features/settings/documents/util/lineLayout.util";
 import { parseStyledDocument } from "@/services/styledDocument";
@@ -64,4 +64,72 @@ it("rejects invalid positioned label coordinates and block content", () => {
   label.attrs!.left = 0;
   label.content = [{ type: "paragraph" }];
   expect(() => parseStyledDocument(document)).toThrow("Linienbeschriftung");
+});
+
+it("preserves a mapped checkbox's glyph, marks and fixed footprint when saving and printing", () => {
+  const document = imported();
+  const label = document.content.content![0].content![0];
+  const marks = label.content![0].marks;
+  label.content![0] = {
+    type: "documentField",
+    attrs: {
+      key: "contract.fixed_term",
+      label: "Fixed term",
+      fieldType: "checkbox",
+      required: false,
+      checkboxGlyph: "☐",
+    },
+    marks,
+  };
+  const saved = parseStyledDocument(JSON.parse(JSON.stringify(document)));
+  const field = saved.content.content![0].content![0].content![0];
+  expect(field.attrs!.checkboxGlyph).toBe("☐");
+  expect(field.marks).toEqual(marks);
+  const unchecked = renderNode(saved.content, {
+    "contract.fixed_term": "false",
+  });
+  const checked = renderNode(saved.content, { "contract.fixed_term": "true" });
+  expect(unchecked).toContain("☐");
+  expect(checked).toContain("☒");
+  expect(checked).toContain("visibility:hidden");
+  expect(checked).toContain("font-size:14pt");
+  expect(checked).not.toContain('class="pdf-checkbox"');
+  label.content![0].attrs!.checkboxGlyph = "invalid";
+  expect(() => parseStyledDocument(document)).toThrow();
+});
+
+it("keeps checkbox geometry in a frozen filled-document snapshot", () => {
+  const document = fromSegments([]);
+  document.content.content = [
+    {
+      type: "paragraph",
+      content: [
+        {
+          type: "documentField",
+          attrs: {
+            key: "contract.fixed_term",
+            label: "Fixed term",
+            fieldType: "checkbox",
+            required: false,
+            checkboxGlyph: "□",
+          },
+          marks: [
+            {
+              type: "textStyle",
+              attrs: { fontFamily: "Arial", fontSize: 14, color: "#215e99" },
+            },
+          ],
+        },
+      ],
+    },
+  ];
+  const saved = parseStyledDocument(
+    filledDocument(document, { "contract.fixed_term": "true" }),
+  );
+  const html = renderNode(saved.content, {});
+  expect(html).toContain("□");
+  expect(html).toContain("×");
+  expect(html).toContain("position:absolute");
+  expect(html).toContain("#215e99");
+  expect(html).not.toContain("visibility:hidden");
 });

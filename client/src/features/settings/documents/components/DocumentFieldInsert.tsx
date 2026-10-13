@@ -3,6 +3,7 @@ import type { Editor } from '@tiptap/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { contractFieldKey } from '../util/fieldKey.util';
+import { insertDocumentField } from '../util/insertDocumentField.util';
 import { FIELD_DRAG_TYPE } from '../consts/editor.consts';
 
 type FieldType = 'text' | 'date' | 'checkbox';
@@ -15,21 +16,16 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
   const [label, setLabel] = useState('');
   const [fieldKey, setFieldKey] = useState('');
   const [fieldType, setFieldType] = useState<FieldType>('text');
+  const [checkboxGlyph, setCheckboxGlyph] = useState('☐');
   const [required, setRequired] = useState(true);
   const insertField = () => {
-    editor
-      .chain()
-      .focus()
-      .insertContent({
-        type: 'documentField',
-        attrs: {
-          key: contractFieldKey(label, fieldKey),
-          label: label.trim(),
-          fieldType,
-          required,
-        },
-      })
-      .run();
+    insertDocumentField(editor, {
+      key: contractFieldKey(label, fieldKey),
+      label: label.trim(),
+      fieldType,
+      required,
+      checkboxGlyph,
+    });
     setLabel('');
     setFieldKey('');
   };
@@ -41,6 +37,7 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
         label: label.trim(),
         fieldType,
         required,
+        ...(fieldType === 'checkbox' ? { checkboxGlyph } : {}),
       })
     );
     event.dataTransfer.effectAllowed = 'copy';
@@ -82,6 +79,23 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
         <option value="date">Datum</option>
         <option value="checkbox">Kontrollkästchen</option>
       </select>
+      {fieldType === 'checkbox' ? (
+        <>
+          <select
+            aria-label="Kästchenform"
+            value={checkboxGlyph}
+            onChange={(event) => setCheckboxGlyph(event.target.value)}
+          >
+            <option value="☐">☐</option>
+            <option value="□">□</option>
+          </select>
+          <span className="text-sm text-muted-foreground">
+            Vorhandenes Kästchen markieren und ersetzen, oder neues einsetzen.
+            Schlüssel: {contractFieldKey(label, fieldKey) || '…'} · true =
+            angekreuzt, false = leer
+          </span>
+        </>
+      ) : null}
       <label className="text-sm">
         <input
           type="checkbox"
