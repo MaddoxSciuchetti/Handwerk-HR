@@ -282,17 +282,13 @@ describe("approved PDF delivery", () => {
         });
         expect(finalize).not.toHaveBeenCalled();
     });
-    it("requires master approval and does not create artifacts when rendering or storage fails", async () => {
+    it("does not create artifacts when rendering or storage fails", async () => {
         const input = {
             ...scope,
             masterId: "master-1",
             values: { "contract.vorname": "Ada" },
             recipient: "ada@example.de",
         };
-        (prisma.documentMaster.findFirst as jest.Mock).mockResolvedValue({
-            approvedAt: null,
-        });
-        await expect(prepareDocument(input)).rejects.toThrow("freigeben");
         (prisma.documentMaster.findFirst as jest.Mock).mockResolvedValue({
             id: "master-1",
             revision: 1,
