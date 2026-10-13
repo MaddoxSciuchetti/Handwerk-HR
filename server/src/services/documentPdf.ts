@@ -83,11 +83,16 @@ async function verifyPdfFonts(bytes: Buffer, expected: string[]) {
           !acceptedEmbeddedFont(filename, fontName, expected) ||
           !font.data?.length ||
           font.missingFile
-        )
+        ) {
+          console.error("Embedded font rejected", {
+            fontName,
+            missingFile: font.missingFile === true,
+          });
           throw new AppError(
             BAD_REQUEST,
             "Die PDF-Schrift wurde ersetzt oder nicht eingebettet. Bitte dieselben vollständigen Schriftdateien im PDF-Dienst installieren.",
           );
+        }
       }
     }
   } finally {
@@ -106,6 +111,19 @@ export async function generateDocumentPdf(
     );
   const fonts = await loadDocumentFonts(document);
   const page = document.page;
+  const familyMap = fonts.familyMap ?? {};
+  const printFamily = (family: string) => familyMap[family] ?? family;
+  const printHtml = (html: string) => {
+    const names = Object.keys(familyMap).sort((a, b) => b.length - a.length);
+    return names.reduce(
+      (current, name) =>
+        current.replaceAll(
+          "font-family:" + name,
+          'font-family:"' + familyMap[name] + '"',
+        ),
+      html,
+    );
+  };
   const inlineFonts = fonts.css.replace(
     /url\("([^"]+)"\)/g,
     (_all, file) =>
@@ -117,15 +135,15 @@ export async function generateDocumentPdf(
     inlineFonts +
     DOCUMENT_CSS +
     'body{margin:0;font-family:"' +
-    page.fontFamily +
+    printFamily(page.fontFamily) +
     '";font-size:' +
     page.fontSize +
-    "pt}";
+    "pt}li::marker{font-family:inherit;font-weight:inherit}";
   const html =
     '<!doctype html><html lang="de"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'; font-src data:; img-src data:"><style>' +
     css +
     "</style></head><body>" +
-    renderNode(document.content, values) +
+    printHtml(renderNode(document.content, values)) +
     "</body></html>";
   const form = new FormData();
   form.append("files", new Blob([html], { type: "text/html" }), "index.html");
@@ -143,8 +161,9 @@ export async function generateDocumentPdf(
       new Blob([
         '<!doctype html><html><head><meta charset="utf-8"><style>' +
           DOCUMENT_CSS +
-          '</style></head><body style="margin:0;width:100%"><div style="box-sizing:border-box;width:100%;font-family:' +
-          page.fontFamily +
+          '</style></head><body style="margin:0;width:100%"><div style="box-sizing:border-box;width:100%;font-family:&quot;' +
+          printFamily(page.fontFamily) +
+          '&quot;' +
           ";font-size:" +
           page.fontSize +
           "pt;padding:0 " +
@@ -152,7 +171,7 @@ export async function generateDocumentPdf(
           "mm 0 " +
           page.marginLeft +
           'mm">' +
-          renderNode(document[part], values).replace(
+          printHtml(renderNode(document[part], values)).replace(
             /(<span class="(?:pageNumber|totalPages)"[^>]*>)[^<]*(<\/span>)/g,
             "$1$2",
           ) +
