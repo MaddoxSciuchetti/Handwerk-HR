@@ -6,9 +6,25 @@ import * as engagementMaterialController from "../controllers/engagementMaterial
 import * as workerController from "../controllers/worker.controller";
 
 const worker = express.Router();
+worker.post(
+    "/:workerId/engagements/:engagementId/contract/prepare-pdf",
+    workerController.prepareEmploymentContractPdf,
+);
 
 worker.post("/", workerController.createWorker);
 worker.post("/fast-track", workerController.startExpectedOnboarding);
+worker.get(
+    "/engagements/:engagementId/questionnaire",
+    workerController.getEngagementQuestionnaire,
+);
+worker.put(
+    "/engagements/:engagementId/questionnaire",
+    workerController.saveEngagementQuestionnaire,
+);
+worker.post(
+    "/engagements/:engagementId/questionnaire/send",
+    workerController.sendEngagementQuestionnaireHandler,
+);
 worker.get("/", workerController.getWorkerData);
 worker.get("/:workerId", workerController.getWorkerById);
 worker.put("/:workerId", workerController.updateWorker);
@@ -29,6 +45,10 @@ worker.put(
 worker.post(
     "/:workerId/engagements/:engagementId/contract/confirm-send",
     workerController.confirmEngagementContractForSend,
+);
+worker.post(
+    "/:workerId/engagements/:engagementId/contract/resync",
+    workerController.resyncEngagementContractFromQuestionnaire,
 );
 worker.post(
     "/:workerId/engagements/:engagementId/contract/send",

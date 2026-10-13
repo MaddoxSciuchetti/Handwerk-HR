@@ -1,5 +1,5 @@
-import { FRONTENDURL } from "@/constants/env";
 import { prisma } from "@/lib/prisma";
+import { certificateText } from "@/services/arbeitszeugnis";
 import type {
     ArchiveWorkerInput,
     CreateAbsenceInput,
@@ -17,9 +17,6 @@ import type {
     UploadWorkerDocumentInput,
 } from "@/types/worker.types";
 import { withTxRetry } from "@/utils/withTxRetry";
-import { getQuestionnaireTemplate } from "@/utils/emailTemplates";
-import { sendMail } from "@/utils/sendMail";
-import { randomUUID } from "crypto";
 import {
     DeleteObjectCommand,
     GetObjectCommand,
@@ -119,11 +116,6 @@ export async function createWorker(params: CreateWorkerInput) {
     });
 }
 
-const EXPECTED_ONBOARDING_TASKS = [
-    { title: "Fragebogen", status: "in_progress" },
-    { title: "Arbeitsvertrag", status: "open" },
-] as const;
-
 function placeholderNamesFromEmail(email: string) {
     const local = (email.split("@")[0] ?? "").split("+")[0];
     const parts = local
@@ -170,64 +162,12 @@ export async function startExpectedOnboarding(params: {
             },
         });
 
-        await tx.issue.createMany({
-            data: EXPECTED_ONBOARDING_TASKS.map((task) => ({
-                workerEngagementId: engagement.id,
-                createdByUserId: params.createdByUserId,
-                status: task.status,
-                title: task.title,
-            })),
-        });
-
-        const token = randomUUID();
-        await tx.questionnaireSubmission.create({
-            data: {
-                engagementId: engagement.id,
-                status: "sent",
-                token,
-            },
-        });
-
-        const master = await tx.documentMaster.findFirst({
-            where: {
-                organizationId: params.organizationId,
-                kind: "employment_contract",
-            },
-            orderBy: { updatedAt: "desc" },
-        });
-
-        if (master) {
-            await tx.employmentContract.create({
-                data: {
-                    engagementId: engagement.id,
-                    masterId: master.id,
-                    status: "draft",
-                },
-            });
-        }
-
-        return { worker, engagement, token };
+        return { worker, engagement };
     });
-
-    const formUrl = `${FRONTENDURL.replace(/\/$/, "")}/fragebogen/${created.token}`;
-    const template = getQuestionnaireTemplate(formUrl);
-    let emailSent = true;
-    try {
-        const sent = await sendMail({
-            to: email,
-            subject: template.subject,
-            text: template.text,
-            html: template.html,
-        });
-        emailSent = !sent.error;
-    } catch {
-        emailSent = false;
-    }
 
     return {
         worker: created.worker,
         engagement: created.engagement,
-        emailSent,
     };
 }
 
@@ -340,6 +280,17 @@ export async function getWorkerById(workerId: string, organizationId: string) {
                             master: { select: { name: true } },
                         },
                     },
+                    arbeitszeugnis: {
+                        select: {
+                            id: true,
+                            sentAt: true,
+                            body: true,
+                            master: { select: { name: true } },
+                        },
+                    },
+                    questionnaireSubmission: {
+                        select: { id: true, status: true },
+                    },
                     issues: {
                         orderBy: { createdAt: "desc" },
                         include: {
@@ -388,7 +339,21 @@ export async function getWorkerById(workerId: string, organizationId: string) {
         })),
     );
 
-    return { ...worker, documents: documentsWithUrls };
+    return {
+        ...worker,
+        documents: documentsWithUrls,
+        engagements: worker.engagements.map((engagement) => ({
+            ...engagement,
+            arbeitszeugnis: engagement.arbeitszeugnis
+                ? {
+                      id: engagement.arbeitszeugnis.id,
+                      sentAt: engagement.arbeitszeugnis.sentAt,
+                      name: engagement.arbeitszeugnis.master.name,
+                      text: certificateText(engagement.arbeitszeugnis.body),
+                  }
+                : null,
+        })),
+    };
 }
 
 export async function updateWorker(params: {
@@ -570,6 +535,7 @@ export async function createIssue(params: CreateIssueInput) {
         description,
         priority,
         dueDate,
+        automation,
     } = params;
 
     const engagement = await prisma.workerEngagement.findFirst({
@@ -589,6 +555,7 @@ export async function createIssue(params: CreateIssueInput) {
                 description,
                 priority: priority ?? "no_priority",
                 dueDate,
+                automation,
             },
             include: {
                 assignee: {
@@ -631,6 +598,7 @@ export async function updateIssue(params: UpdateIssueInput) {
         status,
         priority,
         dueDate,
+        automation,
     } = params;
 
     const existing = await prisma.issue.findFirst({
@@ -645,6 +613,7 @@ export async function updateIssue(params: UpdateIssueInput) {
     if (status !== undefined) data.status = status;
     if (priority !== undefined) data.priority = priority;
     if (dueDate !== undefined) data.dueDate = dueDate;
+    if (automation !== undefined) data.automation = automation;
 
     const keys = Object.keys(data);
     if (keys.length === 0) {

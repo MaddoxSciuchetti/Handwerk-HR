@@ -117,6 +117,7 @@ export interface CreateIssueInput {
     description?: string;
     priority?: IssuePriority;
     dueDate?: Date;
+    automation?: string | null;
 }
 
 export interface UpdateIssueInput {
@@ -130,6 +131,7 @@ export interface UpdateIssueInput {
     status?: IssueStatus;
     priority?: IssuePriority;
     dueDate?: Date;
+    automation?: string | null;
 }
 
 

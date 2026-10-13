@@ -18,17 +18,15 @@ import { TaskStatusIcon } from './TaskStatusIcons';
 type TaskStatusPickerProps = {
   taskId: string;
   status: IssueStatusValue;
-  workerId?: string;
   className?: string;
 };
 
 export function TaskStatusPicker({
   taskId,
   status,
-  workerId,
   className,
 }: TaskStatusPickerProps) {
-  const { mutate } = useQuickUpdateTaskStatus(workerId);
+  const { mutate } = useQuickUpdateTaskStatus();
 
   return (
     <DropdownMenu>

@@ -113,7 +113,9 @@ model Organization {
   absences        Absence[]
   documentMasters DocumentMaster[]
   questionnaire   Questionnaire?
-  welcomeMailSettings WelcomeMailSettings?
+  welcomeMailSettings       WelcomeMailSettings?
+  departureMailSettings     DepartureMailSettings?
+  automationDocumentSettings AutomationDocumentSetting[]
 
 
   @@map("organizations")
@@ -148,6 +150,7 @@ model WorkerEngagement {
   startDate         DateTime?          @map("start_date") @db.Date
   endDate           DateTime?          @map("end_date") @db.Date
   completedAt       DateTime?          @map("completed_at") @db.Timestamptz()
+  questionnaireOverrides Json?         @map("questionnaire_overrides")
   createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz()
 
@@ -197,7 +200,8 @@ model Worker {
   lastName         String             @map("last_name") @db.VarChar(120)
   email            String             @db.VarChar(254)
   workEmail        String?            @map("work_email") @db.VarChar(254)
-  welcomeMailSentAt DateTime?         @map("welcome_mail_sent_at") @db.Timestamptz()
+  welcomeMailSentAt   DateTime?        @map("welcome_mail_sent_at") @db.Timestamptz()
+  departureMailSentAt DateTime?        @map("departure_mail_sent_at") @db.Timestamptz()
   phoneNumber      String?            @map("phone_number") @db.VarChar(32)
   birthday         DateTime?          @db.Date
   position         String?            @db.VarChar(160)
@@ -291,6 +295,7 @@ model Issue {
   templateItemId     String?            @map("template_item_id")
   status             IssueStatus        @default(open)
   kind               IssueKind          @default(standard)
+  automation         String?            @db.VarChar(64)
   isTemporary        Boolean            @default(false) @map("is_temporary")
   title              String             @db.VarChar(400)
   description        String?            @db.VarChar(8000)
@@ -433,12 +438,18 @@ model DocumentMaster {
   kind           DocumentMasterKind
   name           String             @db.VarChar(200)
   body           Json
+  revision       Int                @default(1)
+  approvedAt     DateTime?          @map("approved_at") @db.Timestamptz()
+  sourceKey      String?            @map("source_key")
+  sourceMime     String?            @map("source_mime")
+  sourceName     String?            @map("source_name")
   createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz()
 
-  organization        Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  employmentContracts EmploymentContract[]
-  arbeitszeugnisse    Arbeitszeugnis[]
+  organization               Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employmentContracts        EmploymentContract[]
+  arbeitszeugnisse           Arbeitszeugnis[]
+  automationDocumentSettings AutomationDocumentSetting[]
 
   @@index([organizationId])
   @@map("document_masters")
@@ -450,12 +461,14 @@ model EmploymentContract {
   masterId          String                   @map("master_id")
   status            EmploymentContractStatus @default(draft)
   body              Json?
+  outgoingPdfId     String?                  @map("outgoing_pdf_id")
   signedBody        Json?                    @map("signed_body")
   fileUrl           String?                  @map("file_url") @db.VarChar(2048)
   conversationId    String?                  @unique @map("conversation_id") @db.VarChar(512)
-  sentAt            DateTime?                @map("sent_at") @db.Timestamptz()
-  confirmedAt       DateTime?                @map("confirmed_at") @db.Timestamptz()
-  confirmedByUserId String?                  @map("confirmed_by_user_id")
+  sentAt                DateTime?                @map("sent_at") @db.Timestamptz()
+  matchedMasterRevision Int?                     @map("matched_master_revision")
+  confirmedAt           DateTime?                @map("confirmed_at") @db.Timestamptz()
+  confirmedByUserId     String?                  @map("confirmed_by_user_id")
   createdAt         DateTime                 @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt         DateTime                 @updatedAt @map("updated_at") @db.Timestamptz()
 
@@ -488,6 +501,8 @@ model Arbeitszeugnis {
   engagementId String    @unique @map("engagement_id")
   masterId     String    @map("master_id")
   body         Json
+  draftValues  Json?     @map("draft_values")
+  outgoingPdfId String?  @map("outgoing_pdf_id")
   fileUrl      String?   @map("file_url") @db.VarChar(2048)
   sentAt       DateTime? @map("sent_at") @db.Timestamptz()
   createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz()
@@ -500,9 +515,35 @@ model Arbeitszeugnis {
   @@map("arbeitszeugnisse")
 }
 
+model PreparedDocument {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  engagementId   String   @map("engagement_id")
+  masterId       String   @map("master_id")
+  masterRevision Int      @map("master_revision")
+  kind           String
+  name           String
+  recipient      String
+  snapshot       Json
+  values         Json
+  fontManifest   Json     @map("font_manifest")
+  s3Key          String   @map("s3_key")
+  contentHash    String   @map("content_hash")
+  status         String   @default("prepared")
+  providerId     String?  @map("provider_id")
+  approvedBy     String?  @map("approved_by")
+  approvedAt     DateTime? @map("approved_at") @db.Timestamptz()
+  sentAt         DateTime? @map("sent_at") @db.Timestamptz()
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@index([organizationId, engagementId, kind, status])
+  @@map("prepared_documents")
+}
+
 model Questionnaire {
   id             String   @id @default(uuid())
   organizationId String   @unique @map("organization_id")
+  definition     Json     @default("{}")
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz()
 
@@ -532,9 +573,10 @@ model QuestionnaireQuestion {
 model QuestionnaireSubmission {
   id           String                        @id @default(uuid())
   engagementId String                        @unique @map("engagement_id")
-  token        String                        @unique @db.VarChar(64)
-  status       QuestionnaireSubmissionStatus @default(sent)
-  completedAt  DateTime?                     @map("completed_at") @db.Timestamptz()
+  token          String                        @unique @db.VarChar(64)
+  status         QuestionnaireSubmissionStatus @default(sent)
+  formDefinition Json?                       @map("form_definition")
+  completedAt    DateTime?                   @map("completed_at") @db.Timestamptz()
   createdAt    DateTime                      @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt    DateTime                      @updatedAt @map("updated_at") @db.Timestamptz()
 
@@ -623,6 +665,38 @@ model WelcomeMailSettings {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@map("welcome_mail_settings")
+}
+
+model AutomationDocumentSetting {
+  id               String   @id @default(uuid())
+  organizationId   String   @map("organization_id")
+  automation       String   @db.VarChar(64)
+  documentMasterId String   @map("document_master_id")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  documentMaster DocumentMaster @relation(fields: [documentMasterId], references: [id], onDelete: Restrict)
+
+  @@unique([organizationId, automation])
+  @@index([documentMasterId])
+  @@map("automation_document_settings")
+}
+
+model DepartureMailSettings {
+  id             String   @id @default(uuid())
+  organizationId String   @unique @map("organization_id")
+  senderAddress  String   @map("sender_address") @db.VarChar(254)
+  groupId        String   @map("group_id") @db.VarChar(255)
+  groupName      String   @map("group_name") @db.VarChar(255)
+  subject        String   @db.VarChar(400)
+  body           String   @db.Text
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("departure_mail_settings")
 }
 
 model WorkerExternalAccount {
@@ -804,4 +878,3 @@ enum InvoiceStatus {
   void
   uncollectible
 }
-

@@ -1,4 +1,5 @@
 import { Table } from '@/features/settings/components/Table';
+import type { ReactNode } from 'react';
 import { SettingsPageHeader } from '@/features/settings/components/SettingsPageHeader';
 import { Link } from '@tanstack/react-router';
 import { PlanRow } from './PlanRow';
@@ -15,6 +16,7 @@ type PaymentPanDisplayProps = {
   isPortalLoading?: boolean;
   onSubscribe: (priceId: string) => void;
   onManageBilling: () => void;
+  children?: ReactNode;
 };
 
 export function PaymentPlanDisplay({
@@ -26,6 +28,7 @@ export function PaymentPlanDisplay({
   isPortalLoading = false,
   onSubscribe,
   onManageBilling,
+  children,
 }: PaymentPanDisplayProps) {
   const showTrial = Boolean(trialEndsAt) && !hasActiveSubscription;
   const trialEndFormatted =
@@ -41,15 +44,8 @@ export function PaymentPlanDisplay({
 
   return (
     <section className="flex h-full w-full flex-col items-center justify-center">
-      <div className="flex w-200 flex-col items-start gap-1">
-        <SettingsPageHeader
-          title="Zahlungen"
-          description={
-            hasActiveSubscription
-              ? 'Verwalte dein Abo und deine Zahlungsmethoden.'
-              : 'Wähle einen Plan, um dein Abo zu starten.'
-          }
-        />
+      <div className="flex w-full flex-col items-start gap-1">
+        <SettingsPageHeader title="Zahlungen" />
         {showPastDueNotice ? (
           <p className="typo-body-sm font-medium text-destructive">
             Die letzte Zahlung ist fehlgeschlagen. Bitte aktualisiere deine
@@ -73,7 +69,7 @@ export function PaymentPlanDisplay({
           Pläne vergleichen
         </Link>
       </div>
-      <Table className="w-200">
+      <Table className="w-full">
         {hasActiveSubscription ? (
           <SubscriptionRow
             planName={planName}
@@ -92,6 +88,7 @@ export function PaymentPlanDisplay({
           ))
         )}
       </Table>
+      {children}
     </section>
   );
 }

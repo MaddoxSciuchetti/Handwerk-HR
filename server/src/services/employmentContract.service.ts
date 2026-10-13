@@ -1,18 +1,37 @@
 import { BAD_REQUEST, CONFLICT, NOT_FOUND } from "@/constants/http";
 import { prisma } from "@/lib/prisma";
-import { unmatchedQuestionnaireAnswers } from "@/services/contractFieldMatch";
+import { unmatchedQuestionnaireAnswers, type MatchField } from "@/services/contractFieldMatch";
+import { matchQuestionnaireToContract } from "@/services/contractFieldMatchAi";
 import {
-    documentBody,
+    definitionFields,
+    parseQuestionnaireDefinition,
+} from "@/services/questionnaireDefinition";
+import {
+    QUESTIONNAIRE_FIELDS,
+    questionnaireAnswersFromStored,
+} from "@/services/questionnaireForm";
+import {
     readDocumentSegments,
     type DocumentSegment,
 } from "@/services/documentBody";
-import { randomUUID } from "node:crypto";
 import { generatePresignedUrl } from "@/config/aws";
 import { RESEND_INBOUND_ADDRESS, USE_MICROSOFT_MAIL } from "@/constants/env";
 import { sendGraphMail } from "@/services/graphMail";
 import AppError from "@/utils/AppError";
 import { sendMail } from "@/utils/sendMail";
 import { Prisma } from "@prisma/client";
+import {
+    readStyledDocument,
+    type StyledDocument,
+} from "../../../shared/document";
+import {
+    prepareDocument,
+    sendPreparedDocument,
+    invalidatePreparedDocuments,
+    outgoingPdfUrl,
+    currentPreparation,
+    DeliveryRejected,
+} from "@/services/preparedDocument";
 
 const VALUE_MAX = 8000;
 
@@ -54,6 +73,28 @@ function readDraftValues(
     return entries;
 }
 
+function matchFieldsFrom(value: unknown): MatchField[] {
+    const fields = (() => {
+        if (!value || typeof value !== "object" || Array.isArray(value)) {
+            return QUESTIONNAIRE_FIELDS;
+        }
+        try {
+            return definitionFields(parseQuestionnaireDefinition(value));
+        } catch {
+            return QUESTIONNAIRE_FIELDS;
+        }
+    })();
+    return fields.map((field) => ({
+        key: field.key,
+        label: field.label,
+        type: field.type,
+        contractFieldKey:
+            "contractFieldKey" in field && typeof field.contractFieldKey === "string"
+                ? field.contractFieldKey
+                : undefined,
+    }));
+}
+
 const contractInclude = {
     master: true,
     values: true,
@@ -62,11 +103,13 @@ const contractInclude = {
             questionnaireSubmission: {
                 select: {
                     status: true,
+                    formDefinition: true,
                     answers: {
                         select: { key: true, value: true },
                     },
                 },
             },
+            worker: { select: { email: true } },
         },
     },
 } satisfies Prisma.EmploymentContractInclude;
@@ -97,19 +140,26 @@ function reloadContract(
 function present(
     contract: NonNullable<Awaited<ReturnType<typeof findContract>>>,
 ) {
-    const followsMaster = contract.status === "draft";
+    const followsMaster = !contract.sentAt && contract.status !== "signed";
     const segments = followsMaster
         ? readDocumentSegments(contract.master.body)
         : readDocumentSegments(contract.body ?? contract.master.body);
     const values: Record<string, string> = {};
+    const allowed = inputKeys(segments);
     for (const entry of contract.values) {
-        values[entry.key] = entry.value;
+        if (allowed.has(entry.key)) values[entry.key] = entry.value;
     }
 
     const submission = contract.engagement.questionnaireSubmission;
+    const matchFields = matchFieldsFrom(submission?.formDefinition);
     const unmatchedAnswers =
         submission?.status === "completed"
-            ? unmatchedQuestionnaireAnswers(segments, values, submission.answers)
+            ? unmatchedQuestionnaireAnswers(
+                  segments,
+                  values,
+                  submission.answers,
+                  matchFields,
+              )
             : [];
 
     return {
@@ -120,51 +170,45 @@ function present(
         name: contract.master.name,
         followsMaster,
         segments,
+        document: readStyledDocument(
+            followsMaster
+                ? contract.master.body
+                : (contract.body ?? contract.master.body),
+        ),
         values,
         unmatchedAnswers,
+        masterRevision: contract.master.revision,
+        matchedMasterRevision: contract.matchedMasterRevision,
+        questionnaireCompleted: submission?.status === "completed",
         sentAt: contract.sentAt?.toISOString() ?? null,
         signedFileUrl: null as string | null,
+        outgoingFileUrl: null as string | null,
     };
-}
-
-function escapeHtml(value: string) {
-    return value
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;");
-}
-
-function contractMessage(
-    name: string,
-    segments: DocumentSegment[],
-    values: Record<string, string>,
-) {
-    const textParts = segments.map((segment) =>
-        segment.type === "text" ? segment.text : (values[segment.key] ?? ""),
-    );
-    const text = [`Ihr Arbeitsvertrag: ${name}`, "", textParts.join("")].join("\n");
-    const htmlBody = segments
-        .map((segment) => {
-            if (segment.type === "text") {
-                return escapeHtml(segment.text).replaceAll("\n", "<br>");
-            }
-            return `<strong>${escapeHtml(values[segment.key] ?? "")}</strong>`;
-        })
-        .join("");
-    const html = `<div style="font-family:Arial,sans-serif;line-height:1.6"><p>anbei Ihr Arbeitsvertrag.</p><h1>${escapeHtml(name)}</h1><div>${htmlBody}</div></div>`;
-    return { text, html };
 }
 
 export async function getEngagementContract(params: ContractParams) {
     const contract = await findContract(params);
     if (!contract) return null;
     const view = present(contract);
-    if (!contract.fileUrl) return view;
     try {
         return {
             ...view,
-            signedFileUrl: await generatePresignedUrl(contract.fileUrl),
+            signedFileUrl: contract.fileUrl
+                ? await generatePresignedUrl(contract.fileUrl)
+                : null,
+            outgoingFileUrl: await outgoingPdfUrl(
+                {
+                    organizationId: params.organizationId,
+                    engagementId: params.engagementId,
+                    kind: "employment_contract",
+                },
+                contract.outgoingPdfId,
+            ),
+            prepared: await currentPreparation({
+                organizationId: params.organizationId,
+                engagementId: params.engagementId,
+                kind: "employment_contract",
+            }),
         };
     } catch {
         return view;
@@ -178,7 +222,7 @@ export async function saveEngagementContractDraft(
     if (!contract) {
         throw new AppError(NOT_FOUND, "Vertrag nicht gefunden.");
     }
-    if (contract.status !== "draft") {
+    if (contract.status === "signed" || contract.sentAt) {
         throw new AppError(CONFLICT, "Der Vertrag ist kein Entwurf mehr.");
     }
 
@@ -186,10 +230,26 @@ export async function saveEngagementContractDraft(
     const entries = readDraftValues(params.values, inputKeys(segments));
 
     const saved = await prisma.$transaction(async (tx) => {
+        await invalidatePreparedDocuments(
+            {
+                organizationId: params.organizationId,
+                engagementId: params.engagementId,
+                kind: "employment_contract",
+            },
+            tx,
+        );
+        const latest = await tx.employmentContract.findUnique({
+            where: { id: contract.id },
+        });
+        if (latest?.sentAt || latest?.status === "signed")
+            throw new AppError(
+                CONFLICT,
+                "Der Vertrag wurde bereits versendet.",
+            );
         if (contract.body !== null) {
             await tx.employmentContract.update({
                 where: { id: contract.id },
-                data: { body: Prisma.DbNull },
+                data: { body: Prisma.DbNull, status: "draft" },
             });
         }
 
@@ -212,6 +272,88 @@ export async function saveEngagementContractDraft(
     return present(saved);
 }
 
+export async function persistMatchedContractValues(
+    tx: Prisma.TransactionClient,
+    params: {
+        contractId: string;
+        entries: { key: string; value: string }[];
+        masterRevision: number;
+    },
+) {
+    await tx.employmentContractValue.deleteMany({
+        where: { employmentContractId: params.contractId },
+    });
+    if (params.entries.length > 0) {
+        await tx.employmentContractValue.createMany({
+            data: params.entries.map((entry) => ({
+                employmentContractId: params.contractId,
+                key: entry.key,
+                value: entry.value,
+            })),
+        });
+    }
+    await tx.employmentContract.update({
+        where: { id: params.contractId },
+        data: { matchedMasterRevision: params.masterRevision },
+    });
+}
+
+export async function resyncEngagementContractFromQuestionnaire(
+    params: ContractParams,
+) {
+    const contract = await findContract(params);
+    if (!contract) {
+        throw new AppError(NOT_FOUND, "Vertrag nicht gefunden.");
+    }
+    if (contract.sentAt || contract.status === "signed") {
+        throw new AppError(CONFLICT, "Der Vertrag wurde bereits versendet.");
+    }
+    const submission = contract.engagement.questionnaireSubmission;
+    if (!submission || submission.status !== "completed") {
+        throw new AppError(
+            BAD_REQUEST,
+            "Der Fragebogen ist noch nicht ausgefüllt.",
+        );
+    }
+
+    const answers = questionnaireAnswersFromStored(submission.answers);
+    const segments = readDocumentSegments(contract.master.body);
+    const entries = await matchQuestionnaireToContract(
+        segments,
+        answers,
+        contract.engagement.worker.email ?? "",
+        matchFieldsFrom(submission.formDefinition),
+    );
+
+    const saved = await prisma.$transaction(async (tx) => {
+        await invalidatePreparedDocuments(
+            {
+                organizationId: params.organizationId,
+                engagementId: params.engagementId,
+                kind: "employment_contract",
+            },
+            tx,
+        );
+        const latest = await tx.employmentContract.findUnique({
+            where: { id: contract.id },
+        });
+        if (latest?.sentAt || latest?.status === "signed") {
+            throw new AppError(
+                CONFLICT,
+                "Der Vertrag wurde bereits versendet.",
+            );
+        }
+        await persistMatchedContractValues(tx, {
+            contractId: contract.id,
+            entries,
+            masterRevision: contract.master.revision,
+        });
+        return reloadContract(contract.id, tx);
+    });
+
+    return present(saved);
+}
+
 /**
  * Call when the user confirms the Personalfragebogen is back and this contract can be sent.
  * Copies the current master text onto the child and locks text and input fields.
@@ -226,11 +368,12 @@ export async function confirmEngagementContractForSend(params: ContractParams) {
         throw new AppError(CONFLICT, "Der Vertrag ist kein Entwurf mehr.");
     }
 
-    const segments = readDocumentSegments(contract.master.body);
     await prisma.employmentContract.update({
         where: { id: contract.id },
         data: {
-            body: documentBody(segments),
+            body: readStyledDocument(
+                contract.master.body,
+            ) as unknown as Prisma.InputJsonValue,
             status: "ready",
         },
     });
@@ -239,118 +382,134 @@ export async function confirmEngagementContractForSend(params: ContractParams) {
     return present(saved);
 }
 
+export async function prepareEmploymentContractPdf(
+    params: ContractParams & { values: Record<string, unknown> },
+) {
+    const contract = await findContract(params);
+    if (!contract || contract.sentAt || contract.status === "signed")
+        throw new AppError(CONFLICT, "Vertrag kann nicht vorbereitet werden.");
+    await saveEngagementContractDraft(params);
+    const worker = await prisma.worker.findFirst({
+        where: { id: params.workerId, organizationId: params.organizationId },
+        select: { email: true },
+    });
+    if (!worker?.email) throw new AppError(BAD_REQUEST, "Empfänger fehlt.");
+    return prepareDocument({
+        ...params,
+        kind: "employment_contract",
+        masterId: contract.masterId,
+        recipient: worker.email,
+    });
+}
+
 export async function sendFilledEmploymentContract(
     params: ContractParams & {
         actorUserId: string;
         issueId: string;
-        values: Record<string, unknown>;
+        artifactId: string;
     },
 ) {
     const contract = await findContract(params);
-    if (!contract) {
-        throw new AppError(NOT_FOUND, "Vertrag nicht gefunden.");
-    }
-
+    if (!contract) throw new AppError(NOT_FOUND, "Vertrag nicht gefunden.");
     const issue = await prisma.issue.findFirst({
         where: {
             id: params.issueId,
             workerEngagementId: params.engagementId,
             kind: "contract_send",
+            workerEngagement: { organizationId: params.organizationId },
         },
     });
-    if (!issue) {
-        throw new AppError(NOT_FOUND, "Aufgabe nicht gefunden.");
-    }
-
-    let current = contract;
-    if (current.status === "draft") {
-        const segments = readDocumentSegments(current.master.body);
-        const allowed = inputKeys(segments);
-        const entries = readDraftValues(params.values, allowed);
-        const filled = new Set(entries.map((entry) => entry.key));
-        for (const key of allowed) {
-            if (!filled.has(key)) {
-                throw new AppError(
-                    BAD_REQUEST,
-                    "Bitte füllen Sie alle Vertragsfelder aus.",
-                );
-            }
-        }
-        await prisma.$transaction(async (tx) => {
-            await tx.employmentContractValue.deleteMany({
-                where: { employmentContractId: current.id },
-            });
-            if (entries.length > 0) {
-                await tx.employmentContractValue.createMany({
-                    data: entries.map((entry) => ({
-                        employmentContractId: current.id,
-                        key: entry.key,
-                        value: entry.value,
-                    })),
-                });
-            }
-        });
-        await confirmEngagementContractForSend(params);
-        current = (await findContract(params)) ?? current;
-    } else if (current.status !== "ready") {
-        throw new AppError(CONFLICT, "Der Vertrag ist kein Entwurf mehr.");
-    }
-
+    if (!issue) throw new AppError(NOT_FOUND, "Aufgabe nicht gefunden.");
     const worker = await prisma.worker.findFirst({
         where: { id: params.workerId, organizationId: params.organizationId },
         select: { email: true },
     });
-    if (!worker) {
-        throw new AppError(NOT_FOUND, "Mitarbeiter nicht gefunden.");
-    }
-
-    const ready = present((await findContract(params)) ?? current);
-    const message = contractMessage(ready.name, ready.segments, ready.values);
-    const conversationId = await deliverContractMail({
-        to: worker.email,
-        text: message.text,
-        html: message.html,
+    if (!worker?.email) throw new AppError(BAD_REQUEST, "Empfänger fehlt.");
+    const selected = await prisma.preparedDocument.findFirst({
+        where: {
+            id: params.artifactId,
+            masterId: contract.masterId,
+            organizationId: params.organizationId,
+        },
     });
-
-    await prisma.$transaction(async (tx) => {
-        await tx.employmentContract.update({
-            where: { id: current.id },
-            data: { sentAt: new Date(), conversationId },
-        });
-
-        await tx.issue.delete({ where: { id: issue.id } });
+    if (!selected)
+        throw new AppError(
+            CONFLICT,
+            "PDF gehört nicht zur ausgewählten Vorlage.",
+        );
+    await sendPreparedDocument({
+        organizationId: params.organizationId,
+        engagementId: params.engagementId,
+        kind: "employment_contract",
+        artifactId: params.artifactId,
+        actorUserId: params.actorUserId,
+        recipient: worker.email,
+        deliver: async (attachment, artifactId) => {
+            if (USE_MICROSOFT_MAIL) {
+                const sent = await sendGraphMail({
+                    to: worker.email,
+                    subject: "Ihr Arbeitsvertrag",
+                    html: "<p>Anbei Ihr Arbeitsvertrag als PDF.</p>",
+                    attachments: [attachment],
+                });
+                return sent.conversationId;
+            }
+            const token = artifactId;
+            const sent = await sendMail({
+                to: worker.email,
+                subject: `Ihr Arbeitsvertrag [${token}]`,
+                text: "Anbei Ihr Arbeitsvertrag als PDF. Referenz: " + token,
+                html:
+                    "<p>Anbei Ihr Arbeitsvertrag als PDF.</p><p>Referenz: " +
+                    token +
+                    "</p>",
+                headers: { "X-Handwerk-Contract": token },
+                attachments: [attachment],
+                idempotencyKey: artifactId,
+                ...(RESEND_INBOUND_ADDRESS
+                    ? { replyTo: RESEND_INBOUND_ADDRESS }
+                    : {}),
+            });
+            if (sent.error) {
+                if (
+                    [
+                        "validation_error",
+                        "invalid_parameter",
+                        "missing_required_field",
+                        "restricted_api_key",
+                        "invalid_api_key",
+                    ].includes(sent.error.name)
+                )
+                    throw new DeliveryRejected(sent.error.message);
+                throw new Error(sent.error.message);
+            }
+            return "resend:" + token;
+        },
+        finalize: async (tx, document, values, artifactId, providerId) => {
+            await tx.employmentContractValue.deleteMany({
+                where: { employmentContractId: contract.id },
+            });
+            const entries = Object.entries(values);
+            if (entries.length)
+                await tx.employmentContractValue.createMany({
+                    data: entries.map(([key, value]) => ({
+                        employmentContractId: contract.id,
+                        key,
+                        value,
+                    })),
+                });
+            await tx.employmentContract.update({
+                where: { id: contract.id },
+                data: {
+                    body: document as unknown as Prisma.InputJsonValue,
+                    outgoingPdfId: artifactId,
+                    status: "ready",
+                    sentAt: new Date(),
+                    conversationId: providerId,
+                },
+            });
+            await tx.issue.deleteMany({ where: { id: issue.id } });
+        },
     });
-
-    return present((await findContract(params)) ?? current);
-}
-
-async function deliverContractMail(params: {
-    to: string;
-    text: string;
-    html: string;
-}) {
-    if (USE_MICROSOFT_MAIL) {
-        const sent = await sendGraphMail({
-            to: params.to,
-            subject: "Ihr Arbeitsvertrag",
-            html: params.html,
-        });
-        return sent.conversationId;
-    }
-
-    const token = randomUUID();
-    const sent = await sendMail({
-        to: params.to,
-        subject: `Ihr Arbeitsvertrag [${token}]`,
-        text: `${params.text}\n\nReferenz: ${token}`,
-        html: `${params.html}<p>Referenz: ${token}</p>`,
-        headers: { "X-Handwerk-Contract": token },
-        ...(RESEND_INBOUND_ADDRESS
-            ? { replyTo: RESEND_INBOUND_ADDRESS }
-            : {}),
-    });
-    if (sent.error) {
-        throw new AppError(BAD_REQUEST, "Der Vertrag konnte nicht versendet werden.");
-    }
-    return `resend:${token}`;
+    return present((await findContract(params)) ?? contract);
 }

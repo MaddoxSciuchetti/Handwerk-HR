@@ -1,4 +1,5 @@
 import {
+  ClipboardList,
   CreditCard,
   FileText,
   Inbox,
@@ -45,6 +46,11 @@ export const SETTINGSITEMS = [
     icon: ScrollText,
   },
   {
+    title: 'Fragebogen',
+    to: '/settings/questionnaire',
+    icon: ClipboardList,
+  },
+  {
     title: 'Automatisierung',
     to: '/settings/automation',
     icon: Zap,
@@ -52,6 +58,11 @@ export const SETTINGSITEMS = [
   {
     title: 'Willkommensmail',
     to: '/settings/welcome-mail',
+    icon: Mail,
+  },
+  {
+    title: 'Infomail Entlassung',
+    to: '/settings/departure-mail',
     icon: Mail,
   },
   {

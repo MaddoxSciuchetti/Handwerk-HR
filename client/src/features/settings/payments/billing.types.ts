@@ -13,3 +13,23 @@ export type BillingSubscription = {
   cardExpMonth: number | null;
   cardExpYear: number | null;
 };
+
+export type BillingInvoiceStatus =
+  | 'draft'
+  | 'open'
+  | 'paid'
+  | 'void'
+  | 'uncollectible';
+
+export type BillingInvoice = {
+  id: string;
+  number: string | null;
+  amountCents: number;
+  currency: string;
+  status: BillingInvoiceStatus;
+  invoicePdfUrl: string | null;
+  hostedInvoiceUrl: string | null;
+  paidAt: string | null;
+  dueDate: string | null;
+  createdAt: string;
+};

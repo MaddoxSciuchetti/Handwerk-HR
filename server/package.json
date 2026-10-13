@@ -56,12 +56,14 @@
         "jest": "^30.2.0",
         "jsonwebtoken": "^9.0.2",
         "jszip": "^3.10.1",
+        "linkedom": "^0.18.13",
         "mammoth": "^1.13.0",
         "multer": "^2.0.2",
         "passport": "^0.7.0",
         "pdfjs-dist": "^6.4.299",
         "pdfkit": "^0.17.2",
         "pg": "^8.16.3",
+        "pngjs": "^7.0.0",
         "prisma": "^7.4.0",
         "resend": "^6.8.0",
         "stripe": "^22.1.0",
@@ -75,7 +77,8 @@
     },
     "devDependencies": {
         "@types/adm-zip": "^0.5.7",
-        "@types/archiver": "^7.0.0"
+        "@types/archiver": "^7.0.0",
+        "@types/pngjs": "^6.0.5"
     },
     "prisma": {
         "schema": "src/prisma/schema.prisma",

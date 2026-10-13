@@ -20,11 +20,13 @@ import { Route as HomeRouteImport } from './routes/home'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UserIdRouteImport } from './routes/user/$Id'
 import { Route as SettingsWelcomeMailRouteImport } from './routes/settings/welcome-mail'
+import { Route as SettingsQuestionnaireRouteImport } from './routes/settings/questionnaire'
 import { Route as SettingsProfileRouteImport } from './routes/settings/profile'
 import { Route as SettingsPlansRouteImport } from './routes/settings/plans'
 import { Route as SettingsPaymentsRouteImport } from './routes/settings/payments'
 import { Route as SettingsEmployeesRouteImport } from './routes/settings/employees'
 import { Route as SettingsDocumentsRouteImport } from './routes/settings/documents'
+import { Route as SettingsDepartureMailRouteImport } from './routes/settings/departure-mail'
 import { Route as SettingsAutomationRouteImport } from './routes/settings/automation'
 import { Route as PasswordResetRouteImport } from './routes/password/reset'
 import { Route as PasswordForgotRouteImport } from './routes/password/forgot'
@@ -89,6 +91,11 @@ const SettingsWelcomeMailRoute = SettingsWelcomeMailRouteImport.update({
   path: '/welcome-mail',
   getParentRoute: () => SettingsRoute,
 } as any)
+const SettingsQuestionnaireRoute = SettingsQuestionnaireRouteImport.update({
+  id: '/questionnaire',
+  path: '/questionnaire',
+  getParentRoute: () => SettingsRoute,
+} as any)
 const SettingsProfileRoute = SettingsProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -112,6 +119,11 @@ const SettingsEmployeesRoute = SettingsEmployeesRouteImport.update({
 const SettingsDocumentsRoute = SettingsDocumentsRouteImport.update({
   id: '/documents',
   path: '/documents',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SettingsDepartureMailRoute = SettingsDepartureMailRouteImport.update({
+  id: '/departure-mail',
+  path: '/departure-mail',
   getParentRoute: () => SettingsRoute,
 } as any)
 const SettingsAutomationRoute = SettingsAutomationRouteImport.update({
@@ -170,11 +182,13 @@ export interface FileRoutesByFullPath {
   '/password/forgot': typeof PasswordForgotRoute
   '/password/reset': typeof PasswordResetRoute
   '/settings/automation': typeof SettingsAutomationRoute
+  '/settings/departure-mail': typeof SettingsDepartureMailRoute
   '/settings/documents': typeof SettingsDocumentsRouteWithChildren
   '/settings/employees': typeof SettingsEmployeesRoute
   '/settings/payments': typeof SettingsPaymentsRoute
   '/settings/plans': typeof SettingsPlansRoute
   '/settings/profile': typeof SettingsProfileRoute
+  '/settings/questionnaire': typeof SettingsQuestionnaireRoute
   '/settings/welcome-mail': typeof SettingsWelcomeMailRoute
   '/user/$Id': typeof UserIdRoute
   '/email/verify/$code': typeof EmailVerifyCodeRoute
@@ -196,11 +210,13 @@ export interface FileRoutesByTo {
   '/password/forgot': typeof PasswordForgotRoute
   '/password/reset': typeof PasswordResetRoute
   '/settings/automation': typeof SettingsAutomationRoute
+  '/settings/departure-mail': typeof SettingsDepartureMailRoute
   '/settings/documents': typeof SettingsDocumentsRouteWithChildren
   '/settings/employees': typeof SettingsEmployeesRoute
   '/settings/payments': typeof SettingsPaymentsRoute
   '/settings/plans': typeof SettingsPlansRoute
   '/settings/profile': typeof SettingsProfileRoute
+  '/settings/questionnaire': typeof SettingsQuestionnaireRoute
   '/settings/welcome-mail': typeof SettingsWelcomeMailRoute
   '/user/$Id': typeof UserIdRoute
   '/email/verify/$code': typeof EmailVerifyCodeRoute
@@ -223,11 +239,13 @@ export interface FileRoutesById {
   '/password/forgot': typeof PasswordForgotRoute
   '/password/reset': typeof PasswordResetRoute
   '/settings/automation': typeof SettingsAutomationRoute
+  '/settings/departure-mail': typeof SettingsDepartureMailRoute
   '/settings/documents': typeof SettingsDocumentsRouteWithChildren
   '/settings/employees': typeof SettingsEmployeesRoute
   '/settings/payments': typeof SettingsPaymentsRoute
   '/settings/plans': typeof SettingsPlansRoute
   '/settings/profile': typeof SettingsProfileRoute
+  '/settings/questionnaire': typeof SettingsQuestionnaireRoute
   '/settings/welcome-mail': typeof SettingsWelcomeMailRoute
   '/user/$Id': typeof UserIdRoute
   '/email/verify/$code': typeof EmailVerifyCodeRoute
@@ -251,11 +269,13 @@ export interface FileRouteTypes {
     | '/password/forgot'
     | '/password/reset'
     | '/settings/automation'
+    | '/settings/departure-mail'
     | '/settings/documents'
     | '/settings/employees'
     | '/settings/payments'
     | '/settings/plans'
     | '/settings/profile'
+    | '/settings/questionnaire'
     | '/settings/welcome-mail'
     | '/user/$Id'
     | '/email/verify/$code'
@@ -277,11 +297,13 @@ export interface FileRouteTypes {
     | '/password/forgot'
     | '/password/reset'
     | '/settings/automation'
+    | '/settings/departure-mail'
     | '/settings/documents'
     | '/settings/employees'
     | '/settings/payments'
     | '/settings/plans'
     | '/settings/profile'
+    | '/settings/questionnaire'
     | '/settings/welcome-mail'
     | '/user/$Id'
     | '/email/verify/$code'
@@ -303,11 +325,13 @@ export interface FileRouteTypes {
     | '/password/forgot'
     | '/password/reset'
     | '/settings/automation'
+    | '/settings/departure-mail'
     | '/settings/documents'
     | '/settings/employees'
     | '/settings/payments'
     | '/settings/plans'
     | '/settings/profile'
+    | '/settings/questionnaire'
     | '/settings/welcome-mail'
     | '/user/$Id'
     | '/email/verify/$code'
@@ -412,6 +436,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsWelcomeMailRouteImport
       parentRoute: typeof SettingsRoute
     }
+    '/settings/questionnaire': {
+      id: '/settings/questionnaire'
+      path: '/questionnaire'
+      fullPath: '/settings/questionnaire'
+      preLoaderRoute: typeof SettingsQuestionnaireRouteImport
+      parentRoute: typeof SettingsRoute
+    }
     '/settings/profile': {
       id: '/settings/profile'
       path: '/profile'
@@ -445,6 +476,13 @@ declare module '@tanstack/react-router' {
       path: '/documents'
       fullPath: '/settings/documents'
       preLoaderRoute: typeof SettingsDocumentsRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/settings/departure-mail': {
+      id: '/settings/departure-mail'
+      path: '/departure-mail'
+      fullPath: '/settings/departure-mail'
+      preLoaderRoute: typeof SettingsDepartureMailRouteImport
       parentRoute: typeof SettingsRoute
     }
     '/settings/automation': {
@@ -519,11 +557,13 @@ const SettingsDocumentsRouteWithChildren =
 
 interface SettingsRouteChildren {
   SettingsAutomationRoute: typeof SettingsAutomationRoute
+  SettingsDepartureMailRoute: typeof SettingsDepartureMailRoute
   SettingsDocumentsRoute: typeof SettingsDocumentsRouteWithChildren
   SettingsEmployeesRoute: typeof SettingsEmployeesRoute
   SettingsPaymentsRoute: typeof SettingsPaymentsRoute
   SettingsPlansRoute: typeof SettingsPlansRoute
   SettingsProfileRoute: typeof SettingsProfileRoute
+  SettingsQuestionnaireRoute: typeof SettingsQuestionnaireRoute
   SettingsWelcomeMailRoute: typeof SettingsWelcomeMailRoute
   SettingsTemplatesIdRoute: typeof SettingsTemplatesIdRoute
   SettingsTemplatesTemplateRoute: typeof SettingsTemplatesTemplateRoute
@@ -531,11 +571,13 @@ interface SettingsRouteChildren {
 
 const SettingsRouteChildren: SettingsRouteChildren = {
   SettingsAutomationRoute: SettingsAutomationRoute,
+  SettingsDepartureMailRoute: SettingsDepartureMailRoute,
   SettingsDocumentsRoute: SettingsDocumentsRouteWithChildren,
   SettingsEmployeesRoute: SettingsEmployeesRoute,
   SettingsPaymentsRoute: SettingsPaymentsRoute,
   SettingsPlansRoute: SettingsPlansRoute,
   SettingsProfileRoute: SettingsProfileRoute,
+  SettingsQuestionnaireRoute: SettingsQuestionnaireRoute,
   SettingsWelcomeMailRoute: SettingsWelcomeMailRoute,
   SettingsTemplatesIdRoute: SettingsTemplatesIdRoute,
   SettingsTemplatesTemplateRoute: SettingsTemplatesTemplateRoute,

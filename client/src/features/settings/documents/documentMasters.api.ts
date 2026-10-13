@@ -1,5 +1,6 @@
 import API from '@/config/apiClient';
 import type { DocumentSegment } from './documentSegments';
+import type { StyledDocument } from './styledDocument';
 import type {
   DocumentMasterDetail,
   DocumentMasterKind,
@@ -32,7 +33,14 @@ export function createDocumentMaster(input: {
 
 export function updateDocumentMaster(
   id: string,
-  input: { name: string; text?: string; segments?: DocumentSegment[] }
+  input: {
+    name: string;
+    text?: string;
+    segments?: DocumentSegment[];
+    document?: StyledDocument;
+    revision?: number;
+    approved?: boolean;
+  }
 ): Promise<DocumentMasterDetail> {
   return API.put<typeof input, DocumentMasterDetail>(
     `/document-masters/${id}`,

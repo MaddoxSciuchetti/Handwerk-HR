@@ -27,8 +27,10 @@ import { WorkerTab } from '../../types/index.types';
 import handleZipExport from '../../utils/handleZipExport';
 import { ContractConfirmDialog } from '../files/ContractConfirmDialog';
 import { ContractSendDialog } from '../files/ContractSendDialog';
+import { ArbeitszeugnisSendDialog } from '../files/ArbeitszeugnisSendDialog';
 import WorkerFileUploads from '../files/WorkerFileUploads';
 import { MaterialsTab } from '../materials/MaterialsTab';
+import { QuestionnaireSendDialog } from '@/features/questionnaire/QuestionnaireSendDialog';
 import WorkerHeader from '../header/WorkerHeader';
 import { WorkerTabButtons } from '../header/WorkerTabButtons';
 
@@ -51,6 +53,11 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
     issueId: string;
   } | null>(null);
 
+  const [zeugnisIssueId, setZeugnisIssueId] = useState<string | null>(null);
+  const [questionnaireEngagementId, setQuestionnaireEngagementId] = useState<string | null>(
+    null
+  );
+
   useEffect(() => {
     const pending = peekContractSendReturn();
     if (
@@ -60,10 +67,14 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
     ) {
       return;
     }
-    setContractSend({
-      engagementId: pending.engagementId,
-      issueId: pending.issueId,
-    });
+    if (pending.kind === 'arbeitszeugnis') {
+      setZeugnisIssueId(pending.issueId);
+    } else {
+      setContractSend({
+        engagementId: pending.engagementId,
+        issueId: pending.issueId,
+      });
+    }
     const timeout = window.setTimeout(() => clearContractSendReturn(), 0);
     return () => window.clearTimeout(timeout);
   }, [workerId]);
@@ -118,10 +129,17 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
   const waiting = data.data.engagements.some(
     (engagement) => engagement.status === 'expected'
   );
+  const pendingQuestionnaire = data.data.engagements.find(
+    (engagement) => engagement.status === 'expected' && !engagement.questionnaireSubmission
+  );
 
   return (
     <div className="mx-auto flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
-      <TaskSidebar key={sidebarKey} {...sidebarProps} />
+      <TaskSidebar
+        key={sidebarKey}
+        {...sidebarProps}
+        onOpenArbeitszeugnis={setZeugnisIssueId}
+      />
       {contractSend ? (
         <ContractSendDialog
           workerId={workerId}
@@ -130,6 +148,19 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
           onClose={() => setContractSend(null)}
         />
         ) : null}
+      {zeugnisIssueId ? (
+        <ArbeitszeugnisSendDialog
+          issueId={zeugnisIssueId}
+          onClose={() => setZeugnisIssueId(null)}
+          onSent={() => setZeugnisIssueId(null)}
+        />
+      ) : null}
+      {questionnaireEngagementId ? (
+        <QuestionnaireSendDialog
+          engagementId={questionnaireEngagementId}
+          onClose={() => setQuestionnaireEngagementId(null)}
+        />
+      ) : null}
       {contractConfirm ? (
         <ContractConfirmDialog
           workerId={workerId}
@@ -154,12 +185,26 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
           <CardHeader className="flex min-h-14 shrink-0 flex-row flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-3">
             <WorkerHeader
               activeTab={activeTab}
-              openForCreate={openForCreate}
+              openForCreate={() =>
+                openForCreate({
+                  workerEngagementId:
+                    data.data.engagements.find(
+                      (engagement) => engagement.type === 'offboarding'
+                    )?.id ??
+                    data.data.engagements[0]?.id ??
+                    '',
+                })
+              }
               hideCreate={waiting}
               onOpenFileUpload={() => setIsFileUploadOpen(true)}
               onExportFiles={() => void handleZipExport(fetchFiles)}
               onUploadMaterials={() => materialFileInputRef.current?.click()}
               materialsUploadDisabled={data.data.engagements.length === 0}
+              onSendQuestionnaire={
+                pendingQuestionnaire
+                  ? () => setQuestionnaireEngagementId(pendingQuestionnaire.id)
+                  : undefined
+              }
             />
           </CardHeader>
           <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-0">
@@ -185,7 +230,6 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                         <TaskItem
                           key={task.id}
                           task={task}
-                          workerId={workerId}
                           isSelected={editModeData.some(
                             (item) => item.taskNumber === task.id
                           )}
@@ -233,6 +277,17 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                             id: engagement.employmentContract.id,
                             name: engagement.employmentContract.master.name,
                             status: engagement.employmentContract.status,
+                          },
+                        ]
+                      : []
+                  )}
+                  certificates={data.data.engagements.flatMap((engagement) =>
+                    engagement.arbeitszeugnis
+                      ? [
+                          {
+                            id: engagement.arbeitszeugnis.id,
+                            name: engagement.arbeitszeugnis.name,
+                            text: engagement.arbeitszeugnis.text,
                           },
                         ]
                       : []

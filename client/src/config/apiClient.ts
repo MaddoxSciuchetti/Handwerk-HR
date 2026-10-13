@@ -23,7 +23,7 @@ const isSubscriptionAccessDenied = (status: number, data: ApiErrorResponse) =>
 const handleTokenRefresh = async (config: AxiosRequestConfig) => {
   try {
     // Get a fresh session cookie from the server.
-    await TokenRefreshClient.get('/auth/refresh');
+    await TokenRefreshClient.get('/auth/v2/refresh');
     // Send the failed request again with that cookie. Still on this client so the `API` 401 handler does not run again.
     return TokenRefreshClient(config);
   } catch {

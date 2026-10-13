@@ -25,6 +25,7 @@ const profileState = vi.hoisted(() => {
 
 const toastSuccess = vi.fn();
 const toastError = vi.fn();
+const profilePhotoUrl = 'https://images.example.test/profile-photo.jpg';
 
 vi.mock('sonner', () => ({
   toast: {
@@ -56,7 +57,7 @@ vi.mock('@/features/settings/profile/profile.api', async (importOriginal) => {
     >();
   return {
     ...actual,
-    getProfilePhotoV2: vi.fn(async () => ''),
+    getProfilePhotoV2: vi.fn(async () => profilePhotoUrl),
     updateProfileInformation: updateProfileInformationMock,
   };
 });
@@ -99,6 +100,15 @@ describe('Settings / Profil', () => {
     ).toBeInTheDocument();
 
     expect(toastSuccess).toHaveBeenCalledWith('Profil gespeichert.');
+  });
+
+  it('shows the current profile photo', async () => {
+    renderProfile();
+
+    expect(await screen.findByAltText('Profilfoto')).toHaveAttribute(
+      'src',
+      profilePhotoUrl
+    );
   });
 
   it('does not persist empty Vorname: shows validation toast and restores previous value', async () => {

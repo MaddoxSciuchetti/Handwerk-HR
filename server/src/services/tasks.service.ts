@@ -1,4 +1,8 @@
 import { issueStatusLabel } from "@/constants/issueStatus.consts";
+import {
+    isTaskAutomationId,
+    taskAutomationName,
+} from "@/constants/taskAutomation.consts";
 import { prisma } from "@/lib/prisma";
 import type { IssueStatus } from "@prisma/client";
 import { createIssue, updateIssue } from "@/services/worker.service";
@@ -65,20 +69,53 @@ export const queryTasks = async (orgId: string) => {
     });
 };
 
-export async function createTaskInOrg(orgId: string, userId: string) {
+export async function createTaskInOrg(
+    orgId: string,
+    userId: string,
+    payload: unknown,
+) {
+    const body = (payload ?? {}) as {
+        title?: string;
+        status?: IssueStatus;
+        assigneeUserId?: string;
+        workerEngagementId?: string;
+        automation?: string | null;
+    };
+    const workerEngagementId = body.workerEngagementId?.trim() ?? "";
+    if (!workerEngagementId) {
+        throw new Error("Engagement fehlt");
+    }
+
     const engagement = await prisma.workerEngagement.findFirst({
-        where: { organizationId: orgId },
-        orderBy: { createdAt: "asc" },
+        where: { id: workerEngagementId, organizationId: orgId },
     });
     if (!engagement) {
-        throw new Error("No worker engagement for organization");
+        throw new Error("Engagement not found for organization");
     }
+
+    let automation: string | null | undefined;
+    if (
+        body.automation === null ||
+        body.automation === "none" ||
+        body.automation === ""
+    ) {
+        automation = null;
+    } else if (
+        typeof body.automation === "string" &&
+        isTaskAutomationId(body.automation)
+    ) {
+        automation = body.automation;
+    }
+
+    const title = body.title?.trim() || "Neue Aufgabe";
 
     return createIssue({
         workerEngagementId: engagement.id,
         createdByUserId: userId,
-        status: "open",
-        title: "Neue Aufgabe",
+        status: body.status ?? "open",
+        title,
+        assigneeUserId: body.assigneeUserId || undefined,
+        automation,
     });
 }
 
@@ -113,7 +150,18 @@ export async function updateTaskInOrg(
         title?: string;
         status?: IssueStatus;
         assigneeUserId?: string;
+        automation?: string | null;
     };
+
+    let automation: string | null | undefined;
+    if (body.automation === null || body.automation === "none" || body.automation === "") {
+        automation = null;
+    } else if (
+        typeof body.automation === "string" &&
+        isTaskAutomationId(body.automation)
+    ) {
+        automation = body.automation;
+    }
 
     return updateIssue({
         issueId: existing.id,
@@ -122,6 +170,7 @@ export async function updateTaskInOrg(
         title: body.title,
         status: body.status,
         assigneeUserId: body.assigneeUserId,
+        automation,
     });
 }
 
@@ -133,6 +182,7 @@ const HUMAN_READABLE_FIELDS = new Set([
     "assigneeUserId",
     "priority",
     "dueDate",
+    "automation",
 ]);
 
 const PRIORITY_LABELS: Record<string, string> = {
@@ -173,6 +223,9 @@ function resolveFieldValue(
     }
     if (field === "priority") {
         return PRIORITY_LABELS[stringValue] ?? stringValue;
+    }
+    if (field === "automation") {
+        return taskAutomationName(stringValue);
     }
     return stringValue;
 }

@@ -33,7 +33,7 @@ function Employees() {
     <div className="mx-auto flex h-full flex-col overflow-auto rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
       <div className="h-full w-full flex flex-col items-center justify-center">
         <SettingsHeader />
-        <Table className="w-200 ">
+        <Table className="w-full">
           <TableHeader>
             <Button
               className="rounded-full text-sm"

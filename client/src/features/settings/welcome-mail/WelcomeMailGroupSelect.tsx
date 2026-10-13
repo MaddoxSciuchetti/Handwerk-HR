@@ -11,6 +11,7 @@ type WelcomeMailGroupSelectProps = {
   groups: MicrosoftGroupOption[];
   groupId: string;
   groupName: string;
+  triggerId?: string;
   disabled?: boolean;
   onChange: (group: MicrosoftGroupOption) => void;
 };
@@ -19,6 +20,7 @@ export function WelcomeMailGroupSelect({
   groups,
   groupId,
   groupName,
+  triggerId = 'welcome-group',
   disabled = false,
   onChange,
 }: WelcomeMailGroupSelectProps) {
@@ -37,7 +39,7 @@ export function WelcomeMailGroupSelect({
         onChange(group);
       }}
     >
-      <SelectTrigger id="welcome-group" className="w-full">
+      <SelectTrigger id={triggerId} className="w-full">
         <SelectValue placeholder="Team auswählen" />
       </SelectTrigger>
       <SelectContent>

@@ -16,6 +16,7 @@
     "strict": true,
     "paths": {
       "@/*": ["./src/*"],
+      "@shared/*": ["../shared/*"],
       "test-unit/*": ["./test-unit/*"]
     }
   },

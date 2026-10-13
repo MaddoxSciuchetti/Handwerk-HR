@@ -1,5 +1,6 @@
 import { BAD_REQUEST } from "@/constants/http";
 import AppError from "@/utils/AppError";
+import { documentSegments, readStyledDocument } from "../../../shared/document";
 import { Prisma } from "@prisma/client";
 
 const TEXT_MAX = 200_000;
@@ -8,7 +9,13 @@ const KEY_PATTERN = /^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$/;
 
 export type DocumentSegment =
     | { type: "text"; text: string }
-    | { type: "input"; key: string; label: string };
+    | {
+          type: "input";
+          key: string;
+          label: string;
+          fieldType?: "text" | "date" | "checkbox";
+          required?: boolean;
+      };
 
 export function textFromSegments(segments: DocumentSegment[]): string {
     return segments
@@ -21,7 +28,16 @@ export function segmentsFromText(text: string): DocumentSegment[] {
     return [{ type: "text", text }];
 }
 
-export function readDocumentSegments(body: Prisma.JsonValue): DocumentSegment[] {
+export function readDocumentSegments(
+    body: Prisma.JsonValue,
+): DocumentSegment[] {
+    if (
+        body &&
+        typeof body === "object" &&
+        !Array.isArray(body) &&
+        body.version === 3
+    )
+        return documentSegments(readStyledDocument(body));
     if (body === null || typeof body !== "object" || Array.isArray(body)) {
         return segmentsFromText("");
     }
@@ -64,7 +80,12 @@ function parseStoredSegment(value: unknown): DocumentSegment | null {
     if (value === null || typeof value !== "object" || Array.isArray(value)) {
         return null;
     }
-    if ("type" in value && value.type === "text" && "text" in value && typeof value.text === "string") {
+    if (
+        "type" in value &&
+        value.type === "text" &&
+        "text" in value &&
+        typeof value.text === "string"
+    ) {
         return { type: "text", text: value.text };
     }
     if (
@@ -93,16 +114,25 @@ function parseIncomingSegment(value: unknown): DocumentSegment {
     }
 
     if ("type" in value && value.type === "input") {
-        const key = "key" in value && typeof value.key === "string" ? value.key.trim() : "";
+        const key =
+            "key" in value && typeof value.key === "string"
+                ? value.key.trim()
+                : "";
         const label =
             "label" in value && typeof value.label === "string"
                 ? value.label.trim()
                 : "";
         if (!KEY_PATTERN.test(key) || key.length > LABEL_MAX) {
-            throw new AppError(BAD_REQUEST, "Der Schlüssel eines Eingabefelds ist ungültig.");
+            throw new AppError(
+                BAD_REQUEST,
+                "Der Schlüssel eines Eingabefelds ist ungültig.",
+            );
         }
         if (label.length === 0 || label.length > LABEL_MAX) {
-            throw new AppError(BAD_REQUEST, "Die Bezeichnung eines Eingabefelds fehlt.");
+            throw new AppError(
+                BAD_REQUEST,
+                "Die Bezeichnung eines Eingabefelds fehlt.",
+            );
         }
         return { type: "input", key, label };
     }

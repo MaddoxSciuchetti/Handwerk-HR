@@ -23,7 +23,15 @@ const handleAppError = (res: Response, error: AppError) => {
 };
 
 export const errorHandler: ErrorRequestHandler = (error, req, res, next) => {
-    console.log(`PATH: ${req.path}`, error);
+    const documentRequest =
+        /document-masters|document-fonts|\/contract(?:\/|$)|arbeitszeugnis/.test(
+            req.path,
+        );
+    if (documentRequest)
+        console.error("Document request failed", {
+            outcome: error instanceof AppError ? "rejected" : "internal_error",
+        });
+    else console.log(`PATH: ${req.path}`, error);
 
     if (req.path === REFRESH_PATH) {
         clearAuthCookies(res);

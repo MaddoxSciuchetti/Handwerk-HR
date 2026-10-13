@@ -33,11 +33,13 @@ export function DocumentMasterList({ masters }: DocumentMasterListProps) {
             })
           }
         >
-          <GrowingItem className="min-w-0 flex-1 flex-col items-start gap-1 py-0">
-            <p className="typo-body-sm text-text-primary">{master.name}</p>
-            <p className="typo-body-xs text-text-secondary">
-              {DOCUMENT_MASTER_KIND_LABELS[master.kind]}
+          <GrowingItem className="min-w-0 flex-1 justify-between gap-3 py-0">
+            <p className="typo-body-sm min-w-0 truncate text-text-primary">
+              {master.name}
             </p>
+            <span className="typo-body-xs shrink-0 rounded-full border border-border bg-secondary px-3 py-1 text-secondary-foreground">
+              {DOCUMENT_MASTER_KIND_LABELS[master.kind]}
+            </span>
           </GrowingItem>
         </Items>
       ))}
