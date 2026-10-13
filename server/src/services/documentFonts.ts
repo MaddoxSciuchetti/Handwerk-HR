@@ -81,12 +81,17 @@ async function readNamedFont(filename: string) {
 }
 
 async function readFontFile(filename: string) {
+    const loaded = await loadFontFile(filename);
+    return loaded.bytes;
+}
+
+async function loadFontFile(filename: string) {
     try {
-        return await readNamedFont(filename);
+        return { bytes: await readNamedFont(filename), substituted: false };
     } catch (error) {
         const substitute = SUBSTITUTES[filename];
         if (!substitute) throw error;
-        return await readNamedFont(substitute);
+        return { bytes: await readNamedFont(substitute), substituted: true };
     }
 }
 
@@ -114,6 +119,8 @@ export async function loadDocumentFonts(document: StyledDocument) {
     const assets: { filename: string; bytes: Buffer; hash: string }[] = [];
     const css: string[] = [];
     const checks: string[] = [];
+    const familyMap: Record<string, string> = {};
+    const faces = new Set<string>();
     for (const key of keys) {
         const filename = FONT_FILES[key];
         if (!filename)
@@ -121,32 +128,43 @@ export async function loadDocumentFonts(document: StyledDocument) {
                 BAD_REQUEST,
                 "Nicht unterstützte Schrift: " + key,
             );
-        let bytes: Buffer;
+        let loaded: { bytes: Buffer; substituted: boolean };
         try {
-            bytes = await readFontFile(filename);
+            loaded = await loadFontFile(filename);
         } catch {
             throw new AppError(BAD_REQUEST, "Schriftdatei fehlt: " + filename);
         }
         const [family, weight, style] = key.split(":");
-        checks.push(style + " " + weight + " 11px " + JSON.stringify(family));
+        // The PDF service already aliases Arial and Calibri to Liberation Sans.
+        // A face has to be requested by the name inside the font file, or that
+        // alias wins and the embedded font no longer matches the contract.
+        const embeddedFamily = loaded.substituted ? "Carlito" : family;
+        if (loaded.substituted) familyMap[family] = embeddedFamily;
+        const face = embeddedFamily + ":" + weight + ":" + style;
+        if (!faces.has(face)) {
+            faces.add(face);
+            checks.push(
+                style + " " + weight + " 11px " + JSON.stringify(embeddedFamily),
+            );
+            css.push(
+                '@font-face{font-family:"' +
+                    embeddedFamily +
+                    '";font-weight:' +
+                    weight +
+                    ";font-style:" +
+                    style +
+                    ';src:url("' +
+                    filename +
+                    '") format("truetype")}',
+            );
+        }
         assets.push({
             filename,
-            bytes,
-            hash: createHash("sha256").update(bytes).digest("hex"),
+            bytes: loaded.bytes,
+            hash: createHash("sha256").update(loaded.bytes).digest("hex"),
         });
-        css.push(
-            '@font-face{font-family:"' +
-                family +
-                '";font-weight:' +
-                weight +
-                ";font-style:" +
-                style +
-                ';src:url("' +
-                filename +
-                '") format("truetype")}',
-        );
     }
-    return { assets, css: css.join(""), checks };
+    return { assets, css: css.join(""), checks, familyMap };
 }
 
 export async function fontStatus() {

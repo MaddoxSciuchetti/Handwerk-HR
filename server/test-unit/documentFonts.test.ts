@@ -77,4 +77,10 @@ it("serves Carlito for Arial and Times New Roman when those files are missing", 
     expect((await fontBytes("Arial-BoldItalic.ttf")).toString()).toBe(
         "carlito-bold-italic",
     );
+    const document = fromSegments([{ type: "text", text: "BSB" }]);
+    document.page.fontFamily = "Arial";
+    const fonts = await loadDocumentFonts(document);
+    expect(fonts.familyMap).toEqual({ Arial: "Carlito" });
+    expect(fonts.css).toContain('font-family:"Carlito"');
+    expect(fonts.checks.join(" ")).toContain('"Carlito"');
 });
