@@ -204,6 +204,79 @@ it.each(['Body', 'Label', 'Table'])(
   }
 );
 
+it.each([
+  ['Body', 3, 4],
+  ['Body', 4, 3],
+  ['Label', 3, 4],
+  ['Label', 4, 3],
+  ['Table', 3, 4],
+  ['Table', 4, 3],
+])(
+  'preserves a short native drag in %s, including its direction (%i → %i)',
+  async (prefix, anchor, head) => {
+    const spy = vi.spyOn(Editor.prototype, 'setOptions');
+    const onChange = vi.fn();
+    const { container } = render(
+      <StyledDocumentEditor
+        document={fixture()}
+        master
+        pageView
+        onChange={onChange}
+      />
+    );
+    const target = await screen.findByText(`${prefix}, Wort!`);
+    const editor = spy.mock.instances.at(-1) as Editor;
+    const rule = container.querySelector(
+      '[data-line-group] > div:first-child > span'
+    );
+    const text = target.firstChild!;
+    const expectedAnchor = editor.view.posAtDOM(text, Number(anchor));
+    const expectedHead = editor.view.posAtDOM(text, Number(head));
+    const coords = vi
+      .spyOn(editor.view, 'posAtCoords')
+      .mockReturnValue({ pos: 0, inside: 0 });
+    try {
+      act(() => {
+        editor.view.focus();
+      });
+      onChange.mockClear();
+      act(() => {
+        editor.view.someProp('handleDOMEvents', (handlers) =>
+          handlers.mousedown?.(
+            editor.view,
+            new MouseEvent('mousedown', { clientX: 10, clientY: 10 })
+          )
+        );
+        window
+          .getSelection()!
+          .setBaseAndExtent(text, Number(anchor), text, Number(head));
+        const event = new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+          detail: 1,
+          clientX: 11,
+          clientY: 10,
+        });
+        Object.defineProperty(event, 'target', { value: target });
+        editor.view.someProp('handleClick', (handler) =>
+          handler(editor.view, 0, event)
+        );
+      });
+      expect(editor.state.selection.anchor).toBe(expectedAnchor);
+      expect(editor.state.selection.head).toBe(expectedHead);
+      expect(editor.state.selection.empty).toBe(false);
+      expect(coords).not.toHaveBeenCalled();
+      expect(onChange).not.toHaveBeenCalled();
+      expect(
+        container.querySelector('[data-line-group] > div:first-child > span')
+      ).toBe(rule);
+    } finally {
+      coords.mockRestore();
+      spy.mockRestore();
+    }
+  }
+);
+
 it('keeps positioned label styles and decorative rule DOM stable while the text changes', async () => {
   const spy = vi.spyOn(Editor.prototype, 'setOptions');
   const { container } = render(
@@ -228,3 +301,82 @@ it('keeps positioned label styles and decorative rule DOM stable while the text 
   observer.disconnect();
   spy.mockRestore();
 });
+
+it.each([
+  ['Body', 0, 1],
+  ['Label', 0, 1],
+  ['Table', 0, 1],
+  ['Body', 1, 1],
+  ['Label', 1, 1],
+  ['Table', 1, 1],
+  ['Body', 0, 2],
+  ['Label', 0, 2],
+  ['Table', 0, 2],
+])(
+  'replaces an old highlight on a new %s click (movement %i, detail %i)',
+  async (prefix, movement, detail) => {
+    const spy = vi.spyOn(Editor.prototype, 'setOptions');
+    render(<StyledDocumentEditor document={fixture()} master pageView />);
+    const target = await screen.findByText(`${prefix}, Wort!`);
+    const editor = spy.mock.instances.at(-1) as Editor;
+    const text = target.firstChild!;
+    const descriptor = Object.getOwnPropertyDescriptor(
+      window.document,
+      'caretPositionFromPoint'
+    );
+    const offset = `${prefix}, `.length + 2;
+    Object.defineProperty(window.document, 'caretPositionFromPoint', {
+      configurable: true,
+      value: () => ({ offsetNode: text, offset }),
+    });
+    try {
+      act(() => {
+        editor.view.focus();
+        editor.commands.setTextSelection({
+          from: editor.view.posAtDOM(text, 0),
+          to: editor.view.posAtDOM(text, String(prefix).length),
+        });
+      });
+      expect(window.getSelection()!.toString()).toBe(prefix);
+      act(() => {
+        editor.view.someProp('handleDOMEvents', (handlers) =>
+          handlers.mousedown?.(
+            editor.view,
+            new MouseEvent('mousedown', { clientX: 20, clientY: 20 })
+          )
+        );
+        const event = new MouseEvent('mouseup', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 20 + Number(movement),
+          clientY: 20,
+          detail: Number(detail),
+        });
+        Object.defineProperty(event, 'target', { value: target });
+        editor.view.someProp(
+          Number(detail) === 2 ? 'handleDoubleClick' : 'handleClick',
+          (handler) => handler(editor.view, 0, event)
+        );
+      });
+      if (Number(detail) === 1) {
+        expect(editor.state.selection.empty).toBe(true);
+        expect(editor.state.selection.$from.parentOffset).toBe(offset);
+        expect(window.getSelection()!.isCollapsed).toBe(true);
+      } else {
+        expect(window.getSelection()!.toString()).toBe('Wort');
+      }
+    } finally {
+      if (descriptor)
+        Object.defineProperty(
+          window.document,
+          'caretPositionFromPoint',
+          descriptor
+        );
+      else
+        delete (
+          window.document as Document & { caretPositionFromPoint?: unknown }
+        ).caretPositionFromPoint;
+      spy.mockRestore();
+    }
+  }
+);
