@@ -1,7 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { MailMessageField } from '@/features/settings/mail-template/MailMessageField';
+import { welcomeMailPlaceholders } from '@/features/settings/mail-template/mailPlaceholders';
 import { useEffect, useState } from 'react';
 import { WelcomeMailGroupSelect } from './WelcomeMailGroupSelect';
 import type { WelcomeMailPageData, WelcomeMailSettings } from './welcomeMail.api';
@@ -63,9 +64,6 @@ export function WelcomeMailForm({ page }: WelcomeMailFormProps) {
             }))
           }
         />
-        <p className="text-sm text-muted-foreground">
-          Die Mail geht über dieses Microsoft-Postfach raus.
-        </p>
       </div>
       <div className="flex flex-col gap-2">
         <Label htmlFor="welcome-group">Team</Label>
@@ -83,11 +81,7 @@ export function WelcomeMailForm({ page }: WelcomeMailFormProps) {
         />
         {page.groupsError ? (
           <p className="text-sm text-destructive">{page.groupsError}</p>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            Alle Personen in diesem Microsoft-Team erhalten die Mail.
-          </p>
-        )}
+        ) : null}
       </div>
       <div className="flex flex-col gap-2">
         <Label htmlFor="welcome-subject">Betreff</Label>
@@ -100,19 +94,16 @@ export function WelcomeMailForm({ page }: WelcomeMailFormProps) {
         />
       </div>
       <div className="flex flex-col gap-2">
-        <Label htmlFor="welcome-body">Nachricht</Label>
-        <Textarea
+        <Label id="welcome-body-label" htmlFor="welcome-body">
+          Nachricht
+        </Label>
+        <MailMessageField
           id="welcome-body"
-          className="min-h-40"
+          labelledBy="welcome-body-label"
           value={draft.body}
-          onChange={(event) =>
-            setDraft((current) => ({ ...current, body: event.target.value }))
-          }
+          placeholders={welcomeMailPlaceholders}
+          onChange={(body) => setDraft((current) => ({ ...current, body }))}
         />
-        <p className="text-sm text-muted-foreground">
-          Platzhalter: {'{{Vorname}}'}, {'{{Nachname}}'}, {'{{Arbeitsmail}}'},{' '}
-          {'{{Position}}'}, {'{{Eintritt}}'}
-        </p>
       </div>
       {save.isError ? (
         <p className="text-sm text-destructive">

@@ -1,7 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { MailMessageField } from '@/features/settings/mail-template/MailMessageField';
+import { departureMailPlaceholders } from '@/features/settings/mail-template/mailPlaceholders';
 import { WelcomeMailGroupSelect } from '@/features/settings/welcome-mail/WelcomeMailGroupSelect';
 import type {
   WelcomeMailPageData,
@@ -64,9 +65,6 @@ export function DepartureMailForm({ page }: DepartureMailFormProps) {
             }))
           }
         />
-        <p className="text-sm text-muted-foreground">
-          Die Mail geht über dieses Microsoft-Postfach raus.
-        </p>
       </div>
       <div className="flex flex-col gap-2">
         <Label htmlFor="departure-group">Team</Label>
@@ -85,11 +83,7 @@ export function DepartureMailForm({ page }: DepartureMailFormProps) {
         />
         {page.groupsError ? (
           <p className="text-sm text-destructive">{page.groupsError}</p>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            Alle Personen in diesem Microsoft-Team erhalten die Entlassungsmail.
-          </p>
-        )}
+        ) : null}
       </div>
       <div className="flex flex-col gap-2">
         <Label htmlFor="departure-subject">Betreff</Label>
@@ -102,20 +96,16 @@ export function DepartureMailForm({ page }: DepartureMailFormProps) {
         />
       </div>
       <div className="flex flex-col gap-2">
-        <Label htmlFor="departure-body">Nachricht</Label>
-        <Textarea
+        <Label id="departure-body-label" htmlFor="departure-body">
+          Nachricht
+        </Label>
+        <MailMessageField
           id="departure-body"
-          className="min-h-40"
+          labelledBy="departure-body-label"
           value={draft.body}
-          onChange={(event) =>
-            setDraft((current) => ({ ...current, body: event.target.value }))
-          }
+          placeholders={departureMailPlaceholders}
+          onChange={(body) => setDraft((current) => ({ ...current, body }))}
         />
-        <p className="text-sm text-muted-foreground">
-          Platzhalter: {'{{Vorname}}'}, {'{{Nachname}}'}, {'{{Arbeitsmail}}'},{' '}
-          {'{{Position}}'}, {'{{Entlassung}}'}. {'{{Entlassung}}'} ist das
-          Entlassungsdatum. Diese Vorlage gilt nur für eine Entlassung.
-        </p>
       </div>
       {save.isError ? (
         <p className="text-sm text-destructive">
