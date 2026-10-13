@@ -5,7 +5,8 @@ import { finiteLayout, labelStyle, paintRules } from '../util/lineLayout.util';
 export const LineLabel = Node.create({
   name: 'lineLabel',
   group: 'block',
-  content: 'text*',
+  content: 'inline*',
+  selectable: false,
   addAttributes() {
     return {
       left: { default: 0 },
@@ -87,6 +88,11 @@ export const LineGroup = Node.create({
       dom.dataset.lineGroup = '';
       const rules = document.createElement('div');
       const content = document.createElement('div');
+      // Give positioned text a real editable hit area without moving its labels.
+      content.style.cssText = 'position:relative;height:100%';
+      rules.contentEditable = 'false';
+      rules.setAttribute('aria-hidden', 'true');
+      rules.style.pointerEvents = 'none';
       dom.append(rules, content);
       const paint = (current: { attrs: Record<string, unknown> }) => {
         const height = finiteLayout(current.attrs.height, 0, LAYOUT_MAX_PT);
@@ -107,6 +113,9 @@ export const LineGroup = Node.create({
       return {
         dom,
         contentDOM: content,
+        ignoreMutation(mutation) {
+          return mutation.type !== 'selection' && rules.contains(mutation.target);
+        },
         update(next) {
           if (next.type.name !== 'lineGroup') return false;
           paint(next);

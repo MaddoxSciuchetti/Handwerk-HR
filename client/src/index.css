@@ -21,6 +21,9 @@ body {
 }
 .styled-document .tiptap {
   outline: none;
+  cursor: text;
+  caret-color: currentcolor;
+  user-select: text;
   min-height: 12rem;
 }
 .styled-document p {

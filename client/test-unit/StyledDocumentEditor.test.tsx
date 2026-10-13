@@ -165,7 +165,7 @@ it('keeps cursor and controlled text stable across typing, deletion and parent e
   expect(onChange).toHaveBeenCalledTimes(1);
   act(() => {
     editor.commands.setTextSelection({ from: 2, to: 4 });
-    editor.commands.deleteSelection();
+    editor.view.dispatch(editor.state.tr.deleteSelection());
   });
   expect(editor.state.selection.from).toBe(2);
   expect(editor.getText()).toContain('AhXa beta gamma');
@@ -396,6 +396,92 @@ it('lets a positioned line label be edited after Bearbeiten', async () => {
     'BSBX Haustechnik GmbH'
   );
   optionsSpy.mockRestore();
+});
+
+it('places a caret inside positioned text even when coordinate lookup finds the group boundary', async () => {
+  const optionsSpy = vi.spyOn(Editor.prototype, 'setOptions');
+  const value = fromSegments([]);
+  value.content = {
+    type: 'doc',
+    content: [
+      {
+        type: 'lineGroup',
+        attrs: {
+          height: 16,
+          lines: [],
+          labels: [
+            { text: 'BSB Haustechnik GmbH', left: 20, top: 0, fontSize: 10 },
+          ],
+        },
+      },
+    ],
+  };
+  render(<StyledDocumentEditor document={value} master pageView />);
+  const label = await screen.findByText('BSB Haustechnik GmbH');
+  const editor = optionsSpy.mock.instances.at(-1) as Editor;
+  const range = window.document.createRange();
+  range.setStart(label.firstChild!, 7);
+  range.collapse(true);
+  const original = Object.getOwnPropertyDescriptor(
+    window.document,
+    'caretRangeFromPoint'
+  );
+  Object.defineProperty(window.document, 'caretRangeFromPoint', {
+    configurable: true,
+    value: () => range,
+  });
+  const coords = vi
+    .spyOn(editor.view, 'posAtCoords')
+    .mockReturnValue({ pos: 0, inside: 0 });
+  const click = (detail: number) => {
+    const event = new MouseEvent('click', {
+      bubbles: true,
+      cancelable: true,
+      detail,
+    });
+    Object.defineProperty(event, 'target', { value: label });
+    act(() => {
+      editor.view.someProp(
+        detail > 1 ? 'handleDoubleClick' : 'handleClick',
+        (handler) => handler(editor.view, 0, event)
+      );
+    });
+    return event;
+  };
+  try {
+    expect(click(1).defaultPrevented).toBe(true);
+    expect(editor.state.selection.$from.parentOffset).toBe(7);
+    expect(editor.state.selection.empty).toBe(true);
+    expect(coords).not.toHaveBeenCalled();
+    act(() => {
+      editor.commands.deleteRange({
+        from: editor.state.selection.from - 1,
+        to: editor.state.selection.from,
+      });
+    });
+    expect(label).toHaveTextContent('BSB Hastechnik GmbH');
+    range.setStart(label.firstChild!, 6);
+    range.collapse(true);
+    click(2);
+    expect(
+      editor.state.doc.textBetween(
+        editor.state.selection.from,
+        editor.state.selection.to
+      )
+    ).toBe('Hastechnik');
+    act(() => {
+      editor.view.dispatch(editor.state.tr.deleteSelection());
+    });
+    expect(label).toHaveTextContent('BSB GmbH');
+  } finally {
+    if (original)
+      Object.defineProperty(window.document, 'caretRangeFromPoint', original);
+    else
+      delete (window.document as Document & { caretRangeFromPoint?: unknown })
+        .caretRangeFromPoint;
+    coords.mockRestore();
+    optionsSpy.mockRestore();
+  }
 });
 
 it('keeps imported 8pt runs below a 14pt checkbox from expanding over an adjacent tab label', async () => {
