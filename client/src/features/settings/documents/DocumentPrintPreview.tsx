@@ -65,10 +65,21 @@ export function DocumentPrintPreview({
   const result = useQuery({
     queryKey: ['document-print-preview', id, revision],
     queryFn: async () => {
-      const bytes = await apiJson.get<Blob>(
-        `/document-masters/${id}/preview.pdf`,
-        { responseType: 'blob' }
-      );
+      let bytes: Blob;
+      try {
+        bytes = await apiJson.get<Blob>(`/document-masters/${id}/preview.pdf`, {
+          responseType: 'blob',
+        });
+      } catch (error) {
+        const message =
+          error &&
+          typeof error === 'object' &&
+          'message' in error &&
+          typeof error.message === 'string'
+            ? error.message
+            : 'PDF-Vorschau konnte nicht geladen werden.';
+        throw new Error(message);
+      }
       if (!(bytes instanceof Blob))
         throw new Error('PDF-Vorschau konnte nicht geladen werden.');
       const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist');
@@ -100,13 +111,18 @@ export function DocumentPrintPreview({
     },
     [result.data]
   );
-  if (result.isError)
+  if (result.isError) {
+    const detail =
+      result.error instanceof Error ? result.error.message : '';
     return (
       <p role="alert">
-        Druckvorschau konnte nicht erstellt werden. Bitte prüfen Sie den
-        PDF-Dienst und die Dokumentschriften.
+        Druckvorschau konnte nicht erstellt werden.
+        {detail
+          ? ' ' + detail
+          : ' Bitte prüfen Sie den PDF-Dienst und die Dokumentschriften.'}
       </p>
     );
+  }
   if (!result.data) return <p role="status">Druckseiten werden erstellt…</p>;
   return (
     <>

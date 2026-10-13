@@ -1,5 +1,5 @@
 import { readFile, readdir } from "node:fs/promises";
-import { join } from "node:path";
+import path from "node:path";
 import { createHash } from "node:crypto";
 import { DOCUMENT_FONT_DIR } from "@/constants/env";
 import { BAD_REQUEST } from "@/constants/http";
@@ -41,22 +41,47 @@ const SUBSTITUTES: Record<string, string> = {
 
 const REQUIRED = ["Calibri.ttf", "Calibri-Bold.ttf", "Calibri-Italic.ttf"];
 
-async function readFontFile(directory: string, filename: string) {
+function fontDirectories() {
+    const candidates = [
+        DOCUMENT_FONT_DIR,
+        path.resolve(process.cwd(), "document-fonts"),
+        path.resolve(process.cwd(), "server/document-fonts"),
+    ].filter((dir): dir is string => Boolean(dir));
+    return [...new Set(candidates)];
+}
+
+async function readNamedFont(filename: string) {
+    let lastError: unknown;
+    for (const directory of fontDirectories()) {
+        try {
+            return await readFile(path.join(directory, filename));
+        } catch (error) {
+            lastError = error;
+        }
+    }
+    throw lastError instanceof Error ? lastError : new Error("missing font");
+}
+
+async function readFontFile(filename: string) {
     try {
-        return await readFile(join(directory, filename));
+        return await readNamedFont(filename);
     } catch (error) {
         const substitute = SUBSTITUTES[filename];
         if (!substitute) throw error;
-        return await readFile(join(directory, substitute));
+        return await readNamedFont(substitute);
     }
 }
 
+async function availableFontFiles() {
+    const names = new Set<string>();
+    for (const directory of fontDirectories()) {
+        const files = await readdir(directory).catch(() => []);
+        for (const file of files) names.add(file);
+    }
+    return [...names];
+}
+
 export async function loadDocumentFonts(document: StyledDocument) {
-    if (!DOCUMENT_FONT_DIR)
-        throw new AppError(
-            BAD_REQUEST,
-            "Die vollständigen BSB-Schriftdateien sind noch nicht eingerichtet.",
-        );
     const keys = new Set(
         requiredFonts(document).map(
             (f) =>
@@ -80,7 +105,7 @@ export async function loadDocumentFonts(document: StyledDocument) {
             );
         let bytes: Buffer;
         try {
-            bytes = await readFontFile(DOCUMENT_FONT_DIR, filename);
+            bytes = await readFontFile(filename);
         } catch {
             throw new AppError(BAD_REQUEST, "Schriftdatei fehlt: " + filename);
         }
@@ -107,9 +132,7 @@ export async function loadDocumentFonts(document: StyledDocument) {
 }
 
 export async function fontStatus() {
-    const available = DOCUMENT_FONT_DIR
-        ? await readdir(DOCUMENT_FONT_DIR).catch(() => [])
-        : [];
+    const available = await availableFontFiles();
     const licensed = REQUIRED.every((f) => available.includes(f));
     const substituted =
         !licensed &&
@@ -125,10 +148,10 @@ export async function fontStatus() {
 }
 
 export async function fontBytes(filename: string) {
-    if (!Object.values(FONT_FILES).includes(filename) || !DOCUMENT_FONT_DIR)
+    if (!Object.values(FONT_FILES).includes(filename))
         throw new AppError(BAD_REQUEST, "Schrift nicht verfügbar.");
     try {
-        return await readFontFile(DOCUMENT_FONT_DIR, filename);
+        return await readFontFile(filename);
     } catch {
         throw new AppError(BAD_REQUEST, "Schriftdatei fehlt.");
     }

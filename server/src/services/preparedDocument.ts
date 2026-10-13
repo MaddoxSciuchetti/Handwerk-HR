@@ -59,7 +59,6 @@ export async function currentPreparation(scope: PreparedScope) {
                 id: artifact.masterId,
                 organizationId: scope.organizationId,
                 revision: artifact.masterRevision,
-                approvedAt: { not: null },
             },
         });
         if (!master) return null;
@@ -156,11 +155,6 @@ export async function prepareDocument(
         },
     });
     if (!master) throw new AppError(NOT_FOUND, "Vorlage nicht gefunden.");
-    if (!master.approvedAt)
-        throw new AppError(
-            BAD_REQUEST,
-            "Bitte zuerst die Formatierung der Vorlage prüfen und freigeben.",
-        );
     const document = parseStyledDocument(master.body);
     let values: Record<string, string>;
     try {
@@ -216,7 +210,6 @@ export async function prepareDocument(
             where: {
                 id: master.id,
                 revision: master.revision,
-                approvedAt: { not: null },
             },
         });
         if (!latest)
@@ -358,7 +351,6 @@ export async function sendPreparedDocument(
                 id: artifact.masterId,
                 organizationId: params.organizationId,
                 revision: artifact.masterRevision,
-                approvedAt: { not: null },
             },
         });
         if (!master)
