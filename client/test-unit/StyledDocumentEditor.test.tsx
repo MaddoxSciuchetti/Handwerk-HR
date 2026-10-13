@@ -55,6 +55,16 @@ it('lets master review correct a list restart without changing field keys', asyn
   );
   optionsSpy.mockRestore();
 });
+it('shows a checkbox as a box and reveals its stored key only when the field is clicked', async () => {
+  render(<StyledDocumentEditor document={document} master />);
+  const box = await screen.findByRole('checkbox', { name: 'Bestätigung' });
+  expect(box).not.toHaveTextContent('Bestätigung');
+  expect(screen.queryByText('contract.accept')).not.toBeInTheDocument();
+  fireEvent.mouseDown(box);
+  expect(await screen.findByText('contract.accept')).toBeInTheDocument();
+  fireEvent.mouseDown(screen.getByText('Vorname'));
+  expect(await screen.findByText('contract.vorname')).toBeInTheDocument();
+});
 it('allows inline value and checkbox edits while locking the surrounding wording', async () => {
   const onValueChange = vi.fn();
   render(
