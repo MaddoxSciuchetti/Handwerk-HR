@@ -1,5 +1,6 @@
 import {
     getEngagementContract,
+    resyncEngagementContractFromQuestionnaire,
     saveEngagementContractDraft,
 } from "@/services/employmentContract.service";
 import { prisma } from "@/lib/prisma";
@@ -76,6 +77,12 @@ beforeEach(() => {
             contract.values = data;
         },
     );
+    (prisma.employmentContract.update as jest.Mock).mockImplementation(
+        async ({ data }) => {
+            Object.assign(contract, data);
+            return contract;
+        },
+    );
 });
 it("persists a manual correction across closing/reopening and field movement without changing the master", async () => {
     await saveEngagementContractDraft({
@@ -113,4 +120,61 @@ it("keeps sent/signed snapshots locked and rejects foreign keys", async () => {
         }),
     ).rejects.toThrow("kein Entwurf");
     expect(contract.signedBody).toEqual(before);
+});
+
+it("replaces contract values from the Fragebogen and drops removed fields", async () => {
+    contract.master = {
+        name: "Vertrag",
+        revision: 4,
+        body: fromSegments([
+            { type: "input", key: "contract.nachname", label: "Nachname" },
+        ]),
+    };
+    contract.matchedMasterRevision = 2;
+    contract.values = [
+        { key: "contract.gehalt", value: "4000" },
+        { key: "contract.nachname", value: "Alt" },
+    ];
+    contract.engagement = {
+        questionnaireSubmission: {
+            status: "completed",
+            answers: [
+                { key: "lastName", value: "Lovelace" },
+                { key: "firstName", value: "Ada" },
+            ],
+        },
+        worker: { email: "ada@example.com" },
+    };
+
+    const view = await resyncEngagementContractFromQuestionnaire(params);
+
+    expect(prisma.employmentContractValue.deleteMany).toHaveBeenCalled();
+    expect(prisma.employmentContractValue.createMany).toHaveBeenCalledWith({
+        data: [
+            {
+                employmentContractId: "contract",
+                key: "contract.nachname",
+                value: "Lovelace",
+            },
+        ],
+    });
+    expect(view.values).toEqual({ "contract.nachname": "Lovelace" });
+    expect(view.matchedMasterRevision).toBe(4);
+    expect(view.masterRevision).toBe(4);
+});
+
+it("refuses to resync a contract that was already sent", async () => {
+    contract.sentAt = new Date();
+    contract.engagement = {
+        questionnaireSubmission: {
+            status: "completed",
+            answers: [{ key: "lastName", value: "Lovelace" }],
+        },
+        worker: { email: "ada@example.com" },
+    };
+
+    await expect(
+        resyncEngagementContractFromQuestionnaire(params),
+    ).rejects.toThrow("bereits versendet");
+    expect(prisma.employmentContractValue.deleteMany).not.toHaveBeenCalled();
 });

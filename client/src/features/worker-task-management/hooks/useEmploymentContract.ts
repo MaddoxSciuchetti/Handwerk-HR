@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   confirmEngagementContractForSend,
   getEngagementContract,
+  resyncEngagementContractFromQuestionnaire,
   saveEngagementContractDraft,
   type EmploymentContractDraft,
 } from '../api/employmentContract.api';
@@ -30,6 +31,24 @@ export function useSaveEmploymentContract(
   return useMutation({
     mutationFn: (values: Record<string, string>) =>
       saveEngagementContractDraft(workerId, engagementId, values),
+    onSuccess: (saved) => {
+      queryClient.setQueryData<EmploymentContractDraft>(
+        employmentContractKey(workerId, engagementId),
+        saved
+      );
+    },
+  });
+}
+
+export function useResyncEmploymentContract(
+  workerId: string,
+  engagementId: string
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () =>
+      resyncEngagementContractFromQuestionnaire(workerId, engagementId),
     onSuccess: (saved) => {
       queryClient.setQueryData<EmploymentContractDraft>(
         employmentContractKey(workerId, engagementId),

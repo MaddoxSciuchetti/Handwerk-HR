@@ -85,6 +85,7 @@ export type WorkerEngagement = {
     email: string;
   };
   issues?: Pick<IssueResponse, 'id' | 'status'>[];
+  questionnaireSubmission?: { id: string; status: string } | null;
 };
 
 export type WorkerRecord = {

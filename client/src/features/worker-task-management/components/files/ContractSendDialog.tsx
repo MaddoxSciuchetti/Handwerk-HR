@@ -24,6 +24,7 @@ import { rememberContractSendReturn } from '../../contractSendReturn';
 import {
   employmentContractKey,
   useEmploymentContract,
+  useResyncEmploymentContract,
   useSaveEmploymentContract,
 } from '../../hooks/useEmploymentContract';
 import { ContractDraftBody } from './ContractDraftBody';
@@ -65,7 +66,9 @@ export function ContractSendDialog({
   const [values, setValues] = useState<Record<string, string>>({});
   const [prepared, setPrepared] = useState<PreparedPdf | null>(null);
   const [approved, setApproved] = useState(false);
+  const [confirmResync, setConfirmResync] = useState(false);
   const saveDraft = useSaveEmploymentContract(workerId, engagementId);
+  const resync = useResyncEmploymentContract(workerId, engagementId);
 
   const initialized = useRef(false);
   useEffect(() => {
@@ -141,8 +144,15 @@ export function ContractSendDialog({
   const blockedDelivery = ['sending', 'uncertain'].includes(
     prepared?.status ?? ''
   );
+  const needsResync = Boolean(
+    data?.followsMaster &&
+      data.questionnaireCompleted &&
+      !readOnly &&
+      data.masterRevision !== data.matchedMasterRevision
+  );
+
   const close = async () => {
-    if (send.isPending || prepare.isPending) return;
+    if (send.isPending || prepare.isPending || resync.isPending) return;
     if (
       !readOnly &&
       data &&
@@ -218,6 +228,63 @@ export function ContractSendDialog({
                   ? 'Der Vertrag wurde versendet.'
                   : 'Prüfen Sie den Vertrag und bestätigen Sie den Versand.'}
               </p>
+              {needsResync ? (
+                <div className="mt-3 flex flex-col gap-2">
+                  {confirmResync ? (
+                    <p className="text-sm text-muted-foreground">
+                      Erneut abgleichen ersetzt alle Eingaben im Vertrag durch
+                      die Antworten des Fragebogens, auch Werte, die von Hand
+                      geändert wurden.
+                    </p>
+                  ) : null}
+                  <div className="flex gap-2">
+                    {confirmResync ? (
+                      <>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          disabled={resync.isPending}
+                          onClick={() => setConfirmResync(false)}
+                        >
+                          Abbrechen
+                        </Button>
+                        <Button
+                          type="button"
+                          disabled={resync.isPending}
+                          onClick={() =>
+                            resync.mutate(undefined, {
+                              onSuccess: (saved) => {
+                                setValues(saved.values);
+                                setPrepared(null);
+                                setApproved(false);
+                                setConfirmResync(false);
+                                toast.success(
+                                  'Vertrag wurde erneut mit dem Fragebogen abgeglichen'
+                                );
+                              },
+                              onError: (error) =>
+                                toast.error(
+                                  (error as { message?: string }).message ??
+                                    'Abgleich ist fehlgeschlagen'
+                                ),
+                            })
+                          }
+                        >
+                          {resync.isPending ? 'Wird abgeglichen…' : 'Werte ersetzen'}
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setConfirmResync(true)}
+                      >
+                        Erneut abgleichen
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ) : null}
             </div>
             {data.outgoingFileUrl ? (
               <a
@@ -248,7 +315,12 @@ export function ContractSendDialog({
                   document={data.document}
                   segments={data.segments}
                   values={values}
-                  readOnly={readOnly || prepare.isPending || send.isPending}
+                  readOnly={
+                    readOnly ||
+                    prepare.isPending ||
+                    send.isPending ||
+                    resync.isPending
+                  }
                   acceptAnswerDrop={unmatched.length > 0}
                   onValueChange={(key, value) => {
                     setPrepared(null);

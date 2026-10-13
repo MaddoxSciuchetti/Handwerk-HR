@@ -10,6 +10,7 @@ type ModalContentProps = {
   setSelectedOption: Dispatch<SetStateAction<AddWorker['type'] | null>>;
   /** When false, header provides Zurück (e.g. WorkerSidebar). */
   showInlineFormBackButton?: boolean;
+  onQuestionnaire?: (draft: { engagementId: string }) => void;
 };
 
 const ModalContent = ({
@@ -17,6 +18,7 @@ const ModalContent = ({
   selectedOption,
   setSelectedOption,
   showInlineFormBackButton = true,
+  onQuestionnaire,
 }: ModalContentProps) => {
   if (selectedOption === null) {
     return (
@@ -34,6 +36,7 @@ const ModalContent = ({
       type={selectedOption}
       toggleModal={toggleModal ?? (() => {})}
       showInlineFormBackButton={showInlineFormBackButton}
+      onQuestionnaire={onQuestionnaire}
     />
   );
 };

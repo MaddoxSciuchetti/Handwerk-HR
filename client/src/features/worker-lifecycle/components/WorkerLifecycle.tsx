@@ -19,6 +19,7 @@ import { useWorkerFilter } from '@/features/worker-lifecycle/hooks/useWorkerFilt
 import useWorkerMutations from '@/features/worker-lifecycle/hooks/useWorkerMutaitons';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import { useState, type Dispatch, type SetStateAction } from 'react';
+import { QuestionnaireSendDialog } from '@/features/questionnaire/QuestionnaireSendDialog';
 import GreetingHeader from './GreetingHeader';
 import ProjectItem, { type WorkerSelection } from './ProjectItem';
 import { WorkerSidebar } from './WorkerSidebar';
@@ -27,6 +28,9 @@ function WorkerLifeCycle() {
   const { user, isLoading, isError } = useAuth();
   const { error, workers, modal, toggleModal, handleNavigate } = useHome();
   const [isWorkerSidebarOpen, setIsWorkerSidebarOpen] = useState(false);
+  const [questionnaireEngagementId, setQuestionnaireEngagementId] = useState<string | null>(
+    null
+  );
 
   const [largeEditMode, setLargeEditMode] = useState(false);
   const [editModeData, setEditModeData] = useState<WorkerSelection[]>([]);
@@ -78,7 +82,14 @@ function WorkerLifeCycle() {
       <WorkerSidebar
         isOpen={isWorkerSidebarOpen}
         setIsOpen={setIsWorkerSidebarOpen}
+        onQuestionnaire={(draft) => setQuestionnaireEngagementId(draft.engagementId)}
       />
+      {questionnaireEngagementId ? (
+        <QuestionnaireSendDialog
+          engagementId={questionnaireEngagementId}
+          onClose={() => setQuestionnaireEngagementId(null)}
+        />
+      ) : null}
       <div className="flex h-full min-h-0 w-full flex-col">
         <GreetingHeader firstname={user?.firstName || ''} />
         <Card className="mt-5 flex min-h-0 flex-1 flex-col gap-0 border border-border py-0 shadow-none ring-0">
@@ -134,7 +145,11 @@ function WorkerLifeCycle() {
             </ScrollableTableViewport>
           </CardContent>
         </Card>
-        <LifeCycleModal modal={modal} toggleModal={toggleModal} />
+        <LifeCycleModal
+          modal={modal}
+          toggleModal={toggleModal}
+          onQuestionnaire={(draft) => setQuestionnaireEngagementId(draft.engagementId)}
+        />
         {largeEditMode && (
           <EditModeBar
             selectedItems={editModeData}

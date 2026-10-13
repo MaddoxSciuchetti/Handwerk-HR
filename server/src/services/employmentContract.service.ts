@@ -1,6 +1,15 @@
 import { BAD_REQUEST, CONFLICT, NOT_FOUND } from "@/constants/http";
 import { prisma } from "@/lib/prisma";
-import { unmatchedQuestionnaireAnswers } from "@/services/contractFieldMatch";
+import { unmatchedQuestionnaireAnswers, type MatchField } from "@/services/contractFieldMatch";
+import { matchQuestionnaireToContract } from "@/services/contractFieldMatchAi";
+import {
+    definitionFields,
+    parseQuestionnaireDefinition,
+} from "@/services/questionnaireDefinition";
+import {
+    QUESTIONNAIRE_FIELDS,
+    questionnaireAnswersFromStored,
+} from "@/services/questionnaireForm";
 import {
     readDocumentSegments,
     type DocumentSegment,
@@ -64,6 +73,28 @@ function readDraftValues(
     return entries;
 }
 
+function matchFieldsFrom(value: unknown): MatchField[] {
+    const fields = (() => {
+        if (!value || typeof value !== "object" || Array.isArray(value)) {
+            return QUESTIONNAIRE_FIELDS;
+        }
+        try {
+            return definitionFields(parseQuestionnaireDefinition(value));
+        } catch {
+            return QUESTIONNAIRE_FIELDS;
+        }
+    })();
+    return fields.map((field) => ({
+        key: field.key,
+        label: field.label,
+        type: field.type,
+        contractFieldKey:
+            "contractFieldKey" in field && typeof field.contractFieldKey === "string"
+                ? field.contractFieldKey
+                : undefined,
+    }));
+}
+
 const contractInclude = {
     master: true,
     values: true,
@@ -72,11 +103,13 @@ const contractInclude = {
             questionnaireSubmission: {
                 select: {
                     status: true,
+                    formDefinition: true,
                     answers: {
                         select: { key: true, value: true },
                     },
                 },
             },
+            worker: { select: { email: true } },
         },
     },
 } satisfies Prisma.EmploymentContractInclude;
@@ -118,12 +151,14 @@ function present(
     }
 
     const submission = contract.engagement.questionnaireSubmission;
+    const matchFields = matchFieldsFrom(submission?.formDefinition);
     const unmatchedAnswers =
         submission?.status === "completed"
             ? unmatchedQuestionnaireAnswers(
                   segments,
                   values,
                   submission.answers,
+                  matchFields,
               )
             : [];
 
@@ -142,6 +177,9 @@ function present(
         ),
         values,
         unmatchedAnswers,
+        masterRevision: contract.master.revision,
+        matchedMasterRevision: contract.matchedMasterRevision,
+        questionnaireCompleted: submission?.status === "completed",
         sentAt: contract.sentAt?.toISOString() ?? null,
         signedFileUrl: null as string | null,
         outgoingFileUrl: null as string | null,
@@ -228,6 +266,88 @@ export async function saveEngagementContractDraft(
             });
         }
 
+        return reloadContract(contract.id, tx);
+    });
+
+    return present(saved);
+}
+
+export async function persistMatchedContractValues(
+    tx: Prisma.TransactionClient,
+    params: {
+        contractId: string;
+        entries: { key: string; value: string }[];
+        masterRevision: number;
+    },
+) {
+    await tx.employmentContractValue.deleteMany({
+        where: { employmentContractId: params.contractId },
+    });
+    if (params.entries.length > 0) {
+        await tx.employmentContractValue.createMany({
+            data: params.entries.map((entry) => ({
+                employmentContractId: params.contractId,
+                key: entry.key,
+                value: entry.value,
+            })),
+        });
+    }
+    await tx.employmentContract.update({
+        where: { id: params.contractId },
+        data: { matchedMasterRevision: params.masterRevision },
+    });
+}
+
+export async function resyncEngagementContractFromQuestionnaire(
+    params: ContractParams,
+) {
+    const contract = await findContract(params);
+    if (!contract) {
+        throw new AppError(NOT_FOUND, "Vertrag nicht gefunden.");
+    }
+    if (contract.sentAt || contract.status === "signed") {
+        throw new AppError(CONFLICT, "Der Vertrag wurde bereits versendet.");
+    }
+    const submission = contract.engagement.questionnaireSubmission;
+    if (!submission || submission.status !== "completed") {
+        throw new AppError(
+            BAD_REQUEST,
+            "Der Fragebogen ist noch nicht ausgefüllt.",
+        );
+    }
+
+    const answers = questionnaireAnswersFromStored(submission.answers);
+    const segments = readDocumentSegments(contract.master.body);
+    const entries = await matchQuestionnaireToContract(
+        segments,
+        answers,
+        contract.engagement.worker.email ?? "",
+        matchFieldsFrom(submission.formDefinition),
+    );
+
+    const saved = await prisma.$transaction(async (tx) => {
+        await invalidatePreparedDocuments(
+            {
+                organizationId: params.organizationId,
+                engagementId: params.engagementId,
+                kind: "employment_contract",
+            },
+            tx,
+        );
+        const latest = await tx.employmentContract.findUnique({
+            where: { id: contract.id },
+        });
+        if (latest?.sentAt || latest?.status === "signed") {
+            throw new AppError(
+                CONFLICT,
+                "Der Vertrag wurde bereits versendet.",
+            );
+        }
+        await persistMatchedContractValues(tx, {
+            contractId: contract.id,
+            entries,
+            masterRevision: contract.master.revision,
+        });
         return reloadContract(contract.id, tx);
     });
 

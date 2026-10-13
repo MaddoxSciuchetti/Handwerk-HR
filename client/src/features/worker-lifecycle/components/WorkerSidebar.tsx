@@ -13,9 +13,10 @@ import ModalContent from './lifycycle-modal-content/ModalContent';
 type WorkerSidebarProps = {
   isOpen: boolean;
   setIsOpen: Dispatch<SetStateAction<boolean>>;
+  onQuestionnaire?: (draft: { engagementId: string }) => void;
 };
 
-export function WorkerSidebar({ isOpen, setIsOpen }: WorkerSidebarProps) {
+export function WorkerSidebar({ isOpen, setIsOpen, onQuestionnaire }: WorkerSidebarProps) {
   const [selectedOption, setSelectedOption] = useState<
     AddWorker['type'] | null
   >(null);
@@ -59,6 +60,7 @@ export function WorkerSidebar({ isOpen, setIsOpen }: WorkerSidebarProps) {
             setSelectedOption={setSelectedOption}
             toggleModal={close}
             showInlineFormBackButton={false}
+            onQuestionnaire={onQuestionnaire}
           />
         </SidebarContent>
       </SidebarPanel>
