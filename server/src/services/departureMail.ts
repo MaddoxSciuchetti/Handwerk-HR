@@ -1,5 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import { microsoftGraphToken } from "@/services/microsoft365Account";
+import {
+    microsoft365Configured,
+    microsoftGraphToken,
+} from "@/services/microsoft365Account";
 import {
     applyWelcomeMailTemplate,
     formatWelcomeEntryDate,
@@ -97,11 +100,10 @@ export async function sendTeamDepartureMail(params: {
     if (worker.departureMailSentAt) return { status: "already_sent" };
 
     const settings = await readDepartureMailSettings(params.organizationId);
-    if (!teamMailSettingsComplete(settings)) {
-        console.error("Entlassungsmail ist nicht konfiguriert.");
+    if (!teamMailSettingsComplete(settings) || !microsoft365Configured()) {
         return {
             status: "failed",
-            message: "Die Entlassungsmail ist nicht konfiguriert.",
+            message: "Die Entlassungsmail ist nicht eingerichtet.",
         };
     }
 
@@ -109,7 +111,7 @@ export async function sendTeamDepartureMail(params: {
     if (!token) {
         return {
             status: "failed",
-            message: "Microsoft 365 ist nicht konfiguriert.",
+            message: "Microsoft Graph hat die Anmeldung abgelehnt.",
         };
     }
 

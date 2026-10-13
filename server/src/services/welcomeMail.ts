@@ -1,5 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import { microsoftGraphToken } from "@/services/microsoft365Account";
+import {
+    microsoft365Configured,
+    microsoftGraphToken,
+} from "@/services/microsoft365Account";
 
 const GRAPH = "https://graph.microsoft.com/v1.0";
 export const WELCOME_MAIL_TASK_TITLE = "Willkommensmail an das Team";
@@ -158,9 +161,13 @@ export async function listMicrosoftGroups(): Promise<
     | { groups: MicrosoftGroupOption[]; error: null }
     | { groups: []; error: string }
 > {
+    if (!microsoft365Configured()) return { groups: [], error: null };
     const token = await microsoftGraphToken();
     if (!token) {
-        return { groups: [], error: "Microsoft 365 ist nicht konfiguriert." };
+        return {
+            groups: [],
+            error: "Microsoft Graph hat die Anmeldung abgelehnt.",
+        };
     }
     const groups = await listGraph<{ id?: string; displayName?: string }>(
         token,
@@ -336,8 +343,7 @@ export async function sendTeamWelcomeMail(params: {
     if (!workEmail) return { status: "skipped", reason: "no_work_email" };
 
     const settings = await readWelcomeMailSettings(params.organizationId);
-    if (!teamMailSettingsComplete(settings)) {
-        console.error("Willkommensmail ist nicht konfiguriert.");
+    if (!teamMailSettingsComplete(settings) || !microsoft365Configured()) {
         return { status: "skipped", reason: "not_configured" };
     }
 

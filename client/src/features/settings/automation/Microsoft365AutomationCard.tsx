@@ -13,21 +13,22 @@ export function Microsoft365AutomationCard({
       name={automation.name}
       description={automation.description}
       status={
-        <span className="text-sm text-foreground">
-          {automation.configured ? 'Bereit' : 'Zugangsdaten fehlen'}
+        <span
+          className={
+            automation.configured
+              ? 'text-sm text-foreground'
+              : 'text-sm text-muted-foreground'
+          }
+        >
+          {automation.configured ? 'Bereit' : 'Nicht eingerichtet'}
         </span>
       }
     >
-      {automation.missing.length > 0 ? (
-        <div>
-          <p className="text-sm text-muted-foreground">Fehlende Variablen</p>
-          <ul className="mt-1 list-disc pl-5 text-sm text-foreground">
-            {automation.missing.map((name) => (
-              <li key={name}>{name}</li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
+      {automation.configured ? null : (
+        <p className="text-sm text-muted-foreground">
+          Microsoft 365 ist in dieser Umgebung nicht eingerichtet.
+        </p>
+      )}
       <div>
         <p className="text-sm text-muted-foreground">
           Erforderliche Anwendungsrechte

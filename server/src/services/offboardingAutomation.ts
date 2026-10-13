@@ -12,7 +12,10 @@ import {
     saveArbeitszeugnisDraft,
 } from "@/services/arbeitszeugnis";
 import { sendTeamDepartureMail } from "@/services/departureMail";
-import { microsoftGraphToken } from "@/services/microsoft365Account";
+import {
+    microsoft365Configured,
+    microsoftGraphToken,
+} from "@/services/microsoft365Account";
 
 const GRAPH = "https://graph.microsoft.com/v1.0";
 
@@ -273,11 +276,18 @@ export async function runTaskAutomation(params: {
         };
     }
 
+    if (!microsoft365Configured()) {
+        return {
+            status: "failed",
+            message: "Microsoft 365 ist in dieser Umgebung nicht eingerichtet.",
+        };
+    }
+
     const token = await microsoftGraphToken();
     if (!token) {
         return {
             status: "failed",
-            message: "Microsoft 365 ist nicht konfiguriert.",
+            message: "Microsoft Graph hat die Anmeldung abgelehnt.",
         };
     }
 
