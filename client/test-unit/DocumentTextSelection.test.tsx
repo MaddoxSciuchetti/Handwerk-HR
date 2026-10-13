@@ -203,3 +203,28 @@ it.each(['Body', 'Label', 'Table'])(
     }
   }
 );
+
+it('keeps positioned label styles and decorative rule DOM stable while the text changes', async () => {
+  const spy = vi.spyOn(Editor.prototype, 'setOptions');
+  const { container } = render(
+    <StyledDocumentEditor document={fixture()} master pageView />
+  );
+  const target = await screen.findByText('Label, Wort!');
+  const label = target.closest('[data-line-label]')!;
+  const editor = spy.mock.instances.at(-1) as Editor;
+  const rule = container.querySelector(
+    '[data-line-group] > div:first-child > span'
+  );
+  const observer = new MutationObserver(() => undefined);
+  observer.observe(label, { attributes: true });
+  const pos = editor.view.posAtDOM(target.firstChild!, 3);
+  act(() => {
+    editor.view.dispatch(editor.state.tr.insertText('X', pos));
+  });
+  expect(observer.takeRecords()).toHaveLength(0);
+  expect(
+    container.querySelector('[data-line-group] > div:first-child > span')
+  ).toBe(rule);
+  observer.disconnect();
+  spy.mockRestore();
+});

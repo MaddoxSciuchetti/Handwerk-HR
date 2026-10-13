@@ -72,10 +72,12 @@ export function editorPagination(
           view(view) {
             let frame = 0;
             let signature = '';
+            let lastLayout = JSON.stringify(getLayout());
             let alive = true;
             const measure = () => {
               frame = 0;
               const layout = getLayout();
+              lastLayout = JSON.stringify(layout);
               if (!layout.enabled || !alive) return;
               const px = CSS_PX_PER_INCH / MM_PER_INCH;
               const body = (layout.height - layout.top - layout.bottom) * px;
@@ -151,7 +153,15 @@ export function editorPagination(
             void window.document.fonts?.ready.then(schedule);
             schedule();
             return {
-              update: schedule,
+              update(current, previous) {
+                // Selecting text does not change page geometry. Avoid layout
+                // work and decoration updates during mouse selection.
+                if (
+                  !current.state.doc.eq(previous.doc) ||
+                  JSON.stringify(getLayout()) !== lastLayout
+                )
+                  schedule();
+              },
               destroy: () => {
                 alive = false;
                 cancelAnimationFrame(frame);
