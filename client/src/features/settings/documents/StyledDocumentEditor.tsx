@@ -16,6 +16,7 @@ type StyledDocumentEditorProps = {
   readOnly?: boolean;
   section?: 'content' | 'header' | 'footer';
   pageView?: boolean;
+  showZoomNote?: boolean;
 };
 
 export function StyledDocumentEditor({
@@ -27,6 +28,7 @@ export function StyledDocumentEditor({
   readOnly = false,
   section = 'content',
   pageView = false,
+  showZoomNote = true,
 }: StyledDocumentEditorProps) {
   const { editor, zoom, setZoom, pageCount, toolbar } = useStyledDocumentEditor(
     { document, onChange, master, readOnly, section, pageView }
@@ -37,7 +39,7 @@ export function StyledDocumentEditor({
     <DocumentValuesContext.Provider
       value={{ master, readOnly, values, onValueChange }}
     >
-      <div className="flex min-h-0 flex-1 flex-col gap-2">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
         {master && !readOnly ? (
           <details
             open={!pageView}
@@ -53,7 +55,11 @@ export function StyledDocumentEditor({
           </details>
         ) : null}
         {pageView ? (
-          <DocumentEditorZoom zoom={zoom} onZoomChange={setZoom} />
+          <DocumentEditorZoom
+            zoom={zoom}
+            onZoomChange={setZoom}
+            note={showZoomNote}
+          />
         ) : null}
         <DocumentEditorCanvas
           document={document}

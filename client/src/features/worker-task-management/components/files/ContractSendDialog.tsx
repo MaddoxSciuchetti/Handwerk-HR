@@ -210,7 +210,7 @@ export function ContractSendDialog({
   return (
     <ModalOverlay
       handleToggle={() => void close()}
-      size={unmatched.length > 0 ? 'max-w-5xl' : 'max-w-3xl'}
+      size="max-w-7xl"
     >
       <div className="flex max-h-[85vh] flex-col gap-4 overflow-hidden rounded-2xl bg-card p-6 text-card-foreground">
         {isLoading ? <LoadingAlert className="min-h-40" /> : null}
@@ -309,6 +309,7 @@ export function ContractSendDialog({
                     answers={unmatched}
                     saving={saveDraft.isPending}
                     onEditMaster={openMaster}
+                    description=""
                   />
                 ) : null}
                 <ContractDraftBody

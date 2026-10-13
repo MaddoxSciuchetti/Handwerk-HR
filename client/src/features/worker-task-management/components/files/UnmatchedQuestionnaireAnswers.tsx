@@ -28,9 +28,11 @@ export function UnmatchedQuestionnaireAnswers({
     <aside className="flex w-60 shrink-0 flex-col gap-3 overflow-auto">
       <div>
         <h3 className="text-sm font-medium">Nicht zugeordnet</h3>
-        <p className="mt-1 text-xs leading-5 text-muted-foreground">
-          {description}
-        </p>
+        {description ? (
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">
+            {description}
+          </p>
+        ) : null}
       </div>
       {unresolvedLabels.length > 0 ? (
         <div>

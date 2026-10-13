@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { Editor } from '@tiptap/core';
 import { vi, it, expect } from 'vitest';
 import { StyledDocumentEditor } from '@/features/settings/documents/StyledDocumentEditor';
+import { StyledDocumentReview } from '@/features/settings/documents/StyledDocumentReview';
 import { fromSegments } from '@/features/settings/documents/styledDocument';
 import { PreparedPdfPreview } from '@/features/worker-task-management/components/files/PreparedPdfPreview';
 
@@ -396,4 +397,45 @@ it('lets a positioned line label be edited after Bearbeiten', async () => {
     'BSBX Haustechnik GmbH'
   );
   optionsSpy.mockRestore();
+});
+
+it('reviews a contract as separate pages with the letterhead on the sheet', async () => {
+  const value = fromSegments([{ type: 'text', text: 'Vertragsseite' }]);
+  value.header = {
+    type: 'doc',
+    content: [
+      {
+        type: 'paragraph',
+        content: [{ type: 'text', text: 'Briefkopf' }],
+      },
+    ],
+  };
+  value.footer = {
+    type: 'doc',
+    content: [
+      {
+        type: 'paragraph',
+        content: [{ type: 'text', text: 'Fußzeile Seite ‹Seite› von ‹Seiten›' }],
+      },
+    ],
+  };
+  const { container } = render(
+    <StyledDocumentReview
+      document={value}
+      values={{}}
+      onValueChange={() => undefined}
+      readOnly
+    />
+  );
+  expect(await screen.findByText('Vertragsseite')).toBeInTheDocument();
+  const sheet = screen.getByLabelText('Editorseite 1');
+  expect(sheet).toHaveTextContent('Briefkopf');
+  expect(sheet).toHaveTextContent('Fußzeile Seite 1 von 1');
+  expect(container.querySelectorAll('.tiptap')).toHaveLength(1);
+  expect(container.querySelector('.document-editor-paper')).toHaveStyle({
+    zoom: '1',
+  });
+  expect(
+    screen.queryByText('Ansichtszoom – verändert nicht das PDF')
+  ).not.toBeInTheDocument();
 });

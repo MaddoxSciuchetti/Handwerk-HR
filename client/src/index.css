@@ -143,12 +143,17 @@ body {
 .document-editor-page-footer {
   position: absolute;
   font-size: inherit;
+  line-height: 1.2;
+}
+.document-editor-page-header p,
+.document-editor-page-footer p {
+  margin: 0;
 }
 .document-editor-page-header {
-  top: 5mm;
+  top: 4mm;
 }
 .document-editor-page-footer {
-  bottom: 7mm;
+  bottom: 5mm;
 }
 .document-editor-page-label {
   position: absolute;
@@ -166,4 +171,5 @@ body {
 }
 .document-editor-paginated .tiptap {
   display: flow-root;
+  min-height: 0;
 }
