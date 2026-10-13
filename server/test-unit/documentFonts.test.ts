@@ -62,3 +62,19 @@ it("serves Carlito for Calibri only when the licensed file is missing", async ()
     ]);
     expect(await fontStatus()).toMatchObject({ ready: true, substitute: null });
 });
+it("serves Carlito for Arial and Times New Roman when those files are missing", async () => {
+    (readFile as jest.Mock).mockImplementation(async (filePath: string) => {
+        if (String(filePath).endsWith("Carlito-Regular.ttf"))
+            return Buffer.from("carlito-regular");
+        if (String(filePath).endsWith("Carlito-BoldItalic.ttf"))
+            return Buffer.from("carlito-bold-italic");
+        throw new Error("missing");
+    });
+    expect((await fontBytes("Arial.ttf")).toString()).toBe("carlito-regular");
+    expect((await fontBytes("TimesNewRoman.ttf")).toString()).toBe(
+        "carlito-regular",
+    );
+    expect((await fontBytes("Arial-BoldItalic.ttf")).toString()).toBe(
+        "carlito-bold-italic",
+    );
+});
