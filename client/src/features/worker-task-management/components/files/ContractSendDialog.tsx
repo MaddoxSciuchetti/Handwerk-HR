@@ -210,9 +210,10 @@ export function ContractSendDialog({
   return (
     <ModalOverlay
       handleToggle={() => void close()}
-      size="max-w-7xl"
+      className="p-3 sm:p-6"
+      size={prepared ? 'max-w-3xl' : 'max-w-7xl'}
     >
-      <div className="flex h-[85vh] max-h-[85vh] min-h-0 flex-col gap-4 overflow-hidden rounded-2xl bg-card p-6 text-card-foreground">
+      <div className="flex h-[85dvh] max-h-[85dvh] min-h-0 flex-col gap-4 overflow-hidden rounded-2xl bg-card p-4 text-card-foreground sm:p-6">
         {isLoading ? <LoadingAlert className="min-h-40" /> : null}
         {isError || (!isLoading && !data) ? (
           <p className="text-sm text-destructive">

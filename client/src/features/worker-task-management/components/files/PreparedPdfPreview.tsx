@@ -13,6 +13,7 @@ function viewerSrc(url: string) {
     hashIndex === -1 ? '' : url.slice(hashIndex + 1)
   );
   params.set('view', 'FitH');
+  params.set('zoom', 'page-width');
   params.set('toolbar', '1');
   params.set('navpanes', '0');
   params.set('scrollbar', '1');
@@ -29,8 +30,8 @@ export function PreparedPdfPreview({
   onApprove,
 }: PreparedPdfPreviewProps) {
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
-      <div className="relative min-h-0 flex-1 overflow-hidden rounded border bg-muted">
+    <div className="mx-auto flex min-h-0 w-full min-w-0 max-w-3xl flex-1 flex-col gap-3 overflow-hidden">
+      <div className="relative min-h-0 flex-1 overflow-hidden rounded-lg border bg-muted shadow-sm">
         <iframe
           title="Finales PDF vor dem Versand"
           src={viewerSrc(prepared.previewUrl)}
