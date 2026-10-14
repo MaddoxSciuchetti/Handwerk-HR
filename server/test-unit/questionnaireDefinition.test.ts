@@ -76,6 +76,42 @@ describe("questionnaire definition", () => {
         expect(definition.items[0]).toMatchObject({ label: "Vorname" });
     });
 
+    it("stores two labeled checkboxes and the chosen text", () => {
+        const definition = parseQuestionnaireDefinition({
+            items: [
+                {
+                    kind: "field",
+                    key: "custom.shift-choice",
+                    label: "Schicht",
+                    type: "check",
+                    options: ["Früh", "Spät"],
+                    defaultValue: "Spät",
+                },
+            ],
+        });
+        expect(definition.items[0]).toMatchObject({
+            type: "check",
+            options: ["Früh", "Spät"],
+            defaultValue: "Spät",
+        });
+    });
+
+    it("rejects a checkbox that has only one label", () => {
+        expect(() =>
+            parseQuestionnaireDefinition({
+                items: [
+                    {
+                        kind: "field",
+                        key: "custom.shift-choice",
+                        label: "Schicht",
+                        type: "check",
+                        options: ["Früh"],
+                    },
+                ],
+            }),
+        ).toThrow("Eine Checkbox braucht zwei bis acht Beschriftungen.");
+    });
+
     it("keeps a renamed builtin question", () => {
         const definition = parseQuestionnaireDefinition({
             items: [{ kind: "field", key: "firstName", label: "Rufname" }],

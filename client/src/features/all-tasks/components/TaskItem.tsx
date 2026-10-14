@@ -11,6 +11,7 @@ import type { TaskEditState } from '../hooks/useTaskSidebar';
 import type { IssueResponse } from '../types/index.types';
 import { getAssigneeLabel } from '../utilts/assignee.utils';
 import formatDateDe from '../utilts/date.utils';
+import { ConfirmationTaskDecor } from './ConfirmationTaskDecor';
 import { PillBadge } from './ui/PillBadge';
 import { SquareCheckIcon, SquareDashedIcon } from './ui/SelectIcons';
 import { TaskStatusPicker } from './ui/TaskStatusPicker';
@@ -39,6 +40,7 @@ export function TaskItem({
   const dateSource = task.dueDate ?? task.createdAt;
   const isAutomationTask =
     storedTaskAutomation(task.automation) !== TASK_AUTOMATION_NONE;
+  const isConfirmationTask = task.kind === 'contract_confirm';
 
   const openInEditMode = () => {
     onOpenEdit({
@@ -64,14 +66,17 @@ export function TaskItem({
 
   const SelectionIcon = isSelected ? SquareCheckIcon : SquareDashedIcon;
 
-  const temporaryEdge = task.isTemporary ? 'border-y-2 border-purple-500' : '';
+  const showTemporaryEdge = task.isTemporary && !isConfirmationTask;
+  const temporaryEdge = showTemporaryEdge ? 'border-y-2 border-purple-500' : '';
 
   return (
     <TableRow
       data-automation-task={isAutomationTask || undefined}
+      data-confirmation-task={isConfirmationTask || undefined}
       className={cn(
         'group relative border-0 hover:bg-transparent',
-        isAutomationTask && 'automation-task-row'
+        isAutomationTask && !isConfirmationTask && 'automation-task-row',
+        isConfirmationTask && 'confirmation-task-row'
       )}
     >
       <TableCell
@@ -79,9 +84,10 @@ export function TaskItem({
           'relative pl-10 pr-2 font-medium transition-colors group-hover:rounded-l-xl group-hover:bg-muted/50',
           isSelected && 'rounded-l-xl bg-muted/50',
           temporaryEdge,
-          task.isTemporary && 'rounded-l-xl border-l-2'
+          showTemporaryEdge && 'rounded-l-xl border-l-2'
         )}
       >
+        {isConfirmationTask ? <ConfirmationTaskDecor /> : null}
         <Button
           type="button"
           variant="ghost"
@@ -90,13 +96,13 @@ export function TaskItem({
           aria-label={isSelected ? 'Auswahl entfernen' : 'Auswählen'}
           onClick={toggleSelection}
           className={cn(
-            'absolute left-2 top-1/2 -translate-y-1/2 rounded-2xl',
+            'absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-2xl',
             isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
           )}
         >
           <SelectionIcon className="size-4" />
         </Button>
-        <div className="flex min-w-0 items-center gap-2.5">
+        <div className="relative z-10 flex min-w-0 items-center gap-2.5">
           <TaskStatusPicker taskId={task.id} status={task.status} />
           <p className="min-w-0 truncate text-sm">
             {task.title}
@@ -105,6 +111,9 @@ export function TaskItem({
             ) : null}
             {isAutomationTask ? (
               <span className="sr-only">, Automatisierungsaufgabe</span>
+            ) : null}
+            {isConfirmationTask ? (
+              <span className="sr-only">, Bestätigungsaufgabe</span>
             ) : null}
           </p>
           <Button
@@ -140,7 +149,7 @@ export function TaskItem({
           'transition-colors group-hover:rounded-r-xl group-hover:bg-muted/50',
           isSelected && 'rounded-r-xl bg-muted/50',
           temporaryEdge,
-          task.isTemporary && 'rounded-r-xl border-r-2'
+          showTemporaryEdge && 'rounded-r-xl border-r-2'
         )}
       >
         <div className="flex items-center justify-end gap-2">

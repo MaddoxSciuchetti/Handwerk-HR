@@ -7,6 +7,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { QuestionnaireQuestion } from './QuestionnaireQuestion';
 import { QuestionnaireRepeatableRows } from './QuestionnaireRepeatableRows';
+import type { CandidateItem } from './questionnairePreview';
 import type {
   QuestionnaireQuestion as QuestionnaireQuestionData,
   QuestionnaireRepeater,
@@ -27,7 +28,11 @@ type QuestionnaireResponse = {
 };
 
 type QuestionnaireFormProps = {
-  token: string;
+  token?: string;
+  preview?: {
+    intro?: string;
+    items: CandidateItem[];
+  };
 };
 
 type Section = {
@@ -42,7 +47,7 @@ function filledRows(rows: Record<string, string>[]) {
   );
 }
 
-export function QuestionnaireForm({ token }: QuestionnaireFormProps) {
+export function QuestionnaireForm({ token, preview }: QuestionnaireFormProps) {
   const [values, setValues] = useState<Record<string, string>>({});
   const [rows, setRows] = useState<Record<string, Record<string, string>[]>>({});
   const [submitted, setSubmitted] = useState(false);
@@ -50,10 +55,13 @@ export function QuestionnaireForm({ token }: QuestionnaireFormProps) {
   const questionnaire = useQuery({
     queryKey: ['fragebogen', token],
     queryFn: () => apiJson.get<QuestionnaireResponse>(`fragebogen/${token}`),
+    enabled: !preview && Boolean(token),
     retry: false,
   });
 
-  const data = questionnaire.data?.data;
+  const data = preview
+    ? { status: 'sent' as const, intro: preview.intro, items: preview.items }
+    : questionnaire.data?.data;
   const questions =
     data?.items?.flatMap((item) => (item.kind === 'field' ? [item] : [])) ??
     data?.questions ??
@@ -71,12 +79,14 @@ export function QuestionnaireForm({ token }: QuestionnaireFormProps) {
   }, [questions]);
 
   const submit = useMutation({
-    mutationFn: () =>
-      apiJson.post<QuestionnaireResponse>(`fragebogen/${token}`, {
+    mutationFn: () => {
+      if (preview) return Promise.resolve({ success: true, data: { status: 'completed' as const } });
+      return apiJson.post<QuestionnaireResponse>(`fragebogen/${token}`, {
         ...values,
         children: filledRows(rows.children ?? []),
         priorEmployment: filledRows(rows.priorEmployment ?? []),
-      }),
+      });
+    },
     onSuccess: () => setSubmitted(true),
   });
 
@@ -120,8 +130,8 @@ export function QuestionnaireForm({ token }: QuestionnaireFormProps) {
     <div className="h-full overflow-y-auto px-4 py-8">
       <div className="mx-auto w-full max-w-3xl rounded-lg border border-border bg-card p-8 text-card-foreground shadow-lg">
         <h1 className="text-xl font-medium">Personalfragebogen</h1>
-        {questionnaire.isPending ? <LoadingAlert className="min-h-40" /> : null}
-        {questionnaire.isError ? (
+        {!preview && questionnaire.isPending ? <LoadingAlert className="min-h-40" /> : null}
+        {!preview && questionnaire.isError ? (
           <p className="mt-4 text-sm text-destructive">Dieser Link ist ungültig.</p>
         ) : null}
         {done ? (

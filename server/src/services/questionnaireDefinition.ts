@@ -168,7 +168,11 @@ export function presentQuestions(definition: QuestionnaireDefinition) {
 function cleanDefault(field: QuestionnaireFieldItem, value: string) {
     const trimmed = value.trim().slice(0, field.max ?? 255);
     if (!trimmed) return undefined;
-    if (field.type === "check") return trimmed === "ja" ? "ja" : undefined;
+    if (field.type === "check") {
+        const options = field.options ?? [];
+        if (options.length > 0) return options.includes(trimmed) ? trimmed : undefined;
+        return trimmed === "ja" ? "ja" : undefined;
+    }
     if (field.type === "single" && !(field.options ?? []).includes(trimmed)) return undefined;
     if (field.type === "date" && !/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return undefined;
     return trimmed;
@@ -248,17 +252,38 @@ function parseField(raw: object, seen: Set<string>): QuestionnaireFieldItem {
     return draft;
 }
 
+function choiceOptions(raw: object) {
+    if (!("options" in raw) || !Array.isArray(raw.options)) return [];
+    return raw.options
+        .filter((option): option is string => typeof option === "string")
+        .map((option) => option.trim())
+        .filter(Boolean);
+}
+
+function assertChoiceOptions(options: string[], message: string) {
+    if (
+        options.length < 2 ||
+        options.length > 8 ||
+        options.some((option) => option.length > 80)
+    ) {
+        reject(message);
+    }
+    if (new Set(options).size !== options.length) {
+        reject("Jede Antwort darf nur einmal vorkommen.");
+    }
+}
+
 function customBase(raw: object, key: string): QuestionnaireFieldItem {
     const type = "type" in raw ? raw.type : "";
     if (type !== "text" && type !== "date" && type !== "single" && type !== "check") {
         reject("Dieser Fragetyp ist nicht verfügbar.");
     }
-    const options =
-        type === "single" && "options" in raw && Array.isArray(raw.options)
-            ? raw.options.filter((option): option is string => typeof option === "string").map((option) => option.trim()).filter(Boolean)
-            : [];
-    if (type === "single" && (options.length < 2 || options.length > 8 || options.some((option) => option.length > 80))) {
-        reject("Eine Auswahl braucht zwei bis acht Antworten.");
+    const options = choiceOptions(raw);
+    if (type === "single") {
+        assertChoiceOptions(options, "Eine Auswahl braucht zwei bis acht Antworten.");
+    }
+    if (type === "check" && options.length > 0) {
+        assertChoiceOptions(options, "Eine Checkbox braucht zwei bis acht Beschriftungen.");
     }
     return {
         kind: "field",
@@ -266,7 +291,7 @@ function customBase(raw: object, key: string): QuestionnaireFieldItem {
         label: "",
         section: CUSTOM_SECTION,
         type,
-        options: type === "single" ? options : undefined,
+        options: type === "single" || (type === "check" && options.length > 0) ? options : undefined,
         max: type === "text" ? 255 : undefined,
         required: true,
         builtin: false,

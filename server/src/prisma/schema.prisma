@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["partialIndexes"]
 }
 
 datasource db {
@@ -443,6 +444,7 @@ model DocumentMaster {
   sourceKey      String?            @map("source_key")
   sourceMime     String?            @map("source_mime")
   sourceName     String?            @map("source_name")
+  isPrimary      Boolean            @default(false) @map("is_primary")
   createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz()
 
@@ -452,6 +454,7 @@ model DocumentMaster {
   automationDocumentSettings AutomationDocumentSetting[]
 
   @@index([organizationId])
+  @@unique([organizationId], map: "document_masters_one_primary_contract", where: raw("is_primary = true AND kind = 'employment_contract'"))
   @@map("document_masters")
 }
 

@@ -1,6 +1,7 @@
 import {
     flattenQuestionnaireAnswers,
     QUESTIONNAIRE_FIELDS,
+    questionnaireAnswerSchema,
     type QuestionnaireAnswers,
 } from "@/services/questionnaireForm";
 
@@ -62,5 +63,25 @@ describe("questionnaire form", () => {
             ]),
         );
         expect(stored.some((row) => row.key.startsWith("child.2"))).toBe(false);
+    });
+
+    it("accepts one label from a checkbox pair", () => {
+        const schema = questionnaireAnswerSchema(
+            [
+                {
+                    key: "shift",
+                    label: "Schicht",
+                    section: "Weitere Angaben",
+                    type: "check",
+                    options: ["Früh", "Spät"],
+                    required: true,
+                },
+            ],
+            [],
+        );
+
+        expect(schema.parse({ shift: "Spät" })).toMatchObject({ shift: "Spät" });
+        expect(() => schema.parse({ shift: "Nacht" })).toThrow("ungültige Auswahl");
+        expect(() => schema.parse({ shift: "" })).toThrow("erforderlich");
     });
 });

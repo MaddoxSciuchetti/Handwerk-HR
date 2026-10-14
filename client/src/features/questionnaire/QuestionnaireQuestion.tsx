@@ -57,7 +57,42 @@ export function QuestionnaireQuestion({
                 className="size-4 accent-primary"
                 checked={value === option}
                 disabled={locked}
+                onClick={(event) => {
+                  if (locked || value !== option) return;
+                  event.preventDefault();
+                  onChange('');
+                }}
                 onChange={() => onChange(option)}
+              />
+              {option}
+            </label>
+          ))}
+        </div>
+        {employerFilled ? <FieldLock /> : null}
+      </fieldset>
+    );
+  }
+
+  if (question.type === 'check' && (question.options?.length ?? 0) > 1) {
+    return (
+      <fieldset className="flex flex-col gap-2">
+        {question.label || labelControl ? (
+          <legend className="text-sm font-medium">
+            <QuestionText question={question} labelControl={labelControl} />
+          </legend>
+        ) : null}
+        <div className="flex flex-wrap gap-x-6 gap-y-2">
+          {(question.options ?? []).map((option) => (
+            <label
+              key={option}
+              className="flex items-start gap-2 text-sm text-foreground"
+            >
+              <input
+                type="checkbox"
+                className="mt-0.5 size-4 shrink-0 accent-primary"
+                checked={value === option}
+                disabled={locked}
+                onChange={() => onChange(value === option ? '' : option)}
               />
               {option}
             </label>

@@ -31,6 +31,14 @@ export function createDocumentMaster(input: {
   return API.post<FormData, DocumentMasterDetail>('/document-masters', form);
 }
 
+export function setPrimaryDocumentMaster(
+  id: string
+): Promise<DocumentMasterDetail> {
+  return API.post<undefined, DocumentMasterDetail>(
+    `/document-masters/${id}/primary`
+  );
+}
+
 export function updateDocumentMaster(
   id: string,
   input: {

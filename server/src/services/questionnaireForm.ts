@@ -238,6 +238,14 @@ function fieldSchema(field: QuestionnaireField) {
             .refine((value) => !field.required || value.length > 0, "erforderlich");
     }
     if (field.type === "check") {
+        const options = field.options ?? [];
+        if (options.length > 0) {
+            return z
+                .string()
+                .trim()
+                .refine((value) => value === "" || options.includes(value), "ungültige Auswahl")
+                .refine((value) => !field.required || value.length > 0, "erforderlich");
+        }
         return z
             .string()
             .trim()

@@ -10,6 +10,7 @@ import {
   setDraggedQuestionnaireAnswer,
 } from '@/features/worker-task-management/components/files/questionnaireAnswerDrag';
 
+import { DocumentFieldDetails } from './components/DocumentFieldDetails';
 import { DocumentValuesContext } from './DocumentValuesContext';
 
 type InlineValueProps = {
@@ -56,6 +57,48 @@ function InlineValue({ label, value, readOnly, onChange }: InlineValueProps) {
   );
 }
 
+function MasterDocumentField({
+  fieldKey,
+  label,
+  fieldType,
+  readOnly,
+  onRename,
+}: {
+  fieldKey: string;
+  label: string;
+  fieldType: string;
+  readOnly: boolean;
+  onRename: (label: string) => void;
+}) {
+  const rename = () => {
+    if (readOnly) return;
+    const next = window.prompt(
+      'Feldbezeichnung (Schlüssel bleibt unverändert)',
+      label
+    );
+    if (next?.trim()) onRename(next.trim());
+  };
+  return (
+    <DocumentFieldDetails fieldKey={fieldKey} label={label}>
+      <span data-drag-handle className="inline" onDoubleClick={rename}>
+        {fieldType === 'checkbox' ? (
+          <span
+            role="checkbox"
+            aria-checked={false}
+            aria-disabled="true"
+            aria-label={label}
+            className="mx-0.5 inline-block size-3.5 rounded-[2px] border border-current bg-blue-50 align-[-0.125em]"
+          />
+        ) : (
+          <span className="mx-0.5 rounded border bg-blue-50 px-1 text-blue-900">
+            {label}
+          </span>
+        )}
+      </span>
+    </DocumentFieldDetails>
+  );
+}
+
 function DocumentFieldView({ node, updateAttributes }: NodeViewProps) {
   const context = useContext(DocumentValuesContext);
   const key = String(node.attrs.key);
@@ -89,22 +132,13 @@ function DocumentFieldView({ node, updateAttributes }: NodeViewProps) {
       }}
     >
       {context.master ? (
-        <span
-          data-drag-handle
-          className="mx-0.5 rounded border bg-blue-50 px-1 text-blue-900"
-          title={key}
-          onDoubleClick={() => {
-            if (context.readOnly) return;
-            const next = window.prompt(
-              'Feldbezeichnung (Schlüssel bleibt unverändert)',
-              label
-            );
-            if (next?.trim()) updateAttributes({ label: next.trim() });
-          }}
-        >
-          {node.attrs.fieldType === 'checkbox' ? '☐ ' : ''}
-          {label}
-        </span>
+        <MasterDocumentField
+          fieldKey={key}
+          label={label}
+          fieldType={String(node.attrs.fieldType)}
+          readOnly={context.readOnly}
+          onRename={(next) => updateAttributes({ label: next })}
+        />
       ) : node.attrs.fieldType === 'text' ? (
         <InlineValue
           label={label}
@@ -174,7 +208,6 @@ export const DocumentFieldNode = Node.create({
     return [
       'span',
       mergeAttributes(HTMLAttributes, { 'data-document-field': '' }),
-      HTMLAttributes.label,
     ];
   },
   addNodeView() {

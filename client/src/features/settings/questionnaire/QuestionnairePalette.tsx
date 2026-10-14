@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { choiceLines } from '@/features/questionnaire/ChoiceLineEditor';
 import { useState } from 'react';
 import { isHourField } from './questionnaireBlocks';
 import {
@@ -45,7 +46,16 @@ export function QuestionnairePalette({ catalog, items, onAdd }: QuestionnairePal
       .split('\n')
       .map((option) => option.trim())
       .filter(Boolean);
-    if (type === 'single' && choices.length < 2) return;
+    let fieldOptions: string[] | undefined;
+    if (type === 'single') {
+      if (choices.length < 2) return;
+      fieldOptions = choices;
+    }
+    if (type === 'check') {
+      const checkboxChoices = choiceLines(options);
+      if (!checkboxChoices) return;
+      fieldOptions = checkboxChoices;
+    }
     const field: TemplateField = {
       kind: 'field',
       key: `custom.${crypto.randomUUID()}`,
@@ -54,7 +64,7 @@ export function QuestionnairePalette({ catalog, items, onAdd }: QuestionnairePal
       type,
       required: true,
       builtin: false,
-      options: type === 'single' ? choices : undefined,
+      options: fieldOptions,
       max: type === 'text' ? 255 : undefined,
     };
     onAdd([field]);
@@ -110,12 +120,20 @@ export function QuestionnairePalette({ catalog, items, onAdd }: QuestionnairePal
             </option>
           ))}
         </select>
-        {type === 'single' ? (
-          <textarea
-            className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm"
-            value={options}
-            onChange={(event) => setOptions(event.target.value)}
-          />
+        {type === 'single' || type === 'check' ? (
+          <>
+            <textarea
+              className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm"
+              value={options}
+              aria-label={type === 'check' ? 'Text neben den Kästchen' : 'Antworten'}
+              onChange={(event) => setOptions(event.target.value)}
+            />
+            {type === 'check' ? (
+              <p className="text-xs text-muted-foreground">
+                Jede Zeile steht neben einem Kästchen. Mindestens zwei.
+              </p>
+            ) : null}
+          </>
         ) : null}
         <Button type="button" className="rounded-2xl" onClick={addCustom}>
           Hinzufügen

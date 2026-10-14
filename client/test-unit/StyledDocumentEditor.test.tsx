@@ -55,6 +55,16 @@ it('lets master review correct a list restart without changing field keys', asyn
   );
   optionsSpy.mockRestore();
 });
+it('shows a checkbox as a box and reveals its stored key only when the field is clicked', async () => {
+  render(<StyledDocumentEditor document={document} master />);
+  const box = await screen.findByRole('checkbox', { name: 'Bestätigung' });
+  expect(box).not.toHaveTextContent('Bestätigung');
+  expect(screen.queryByText('contract.accept')).not.toBeInTheDocument();
+  fireEvent.mouseDown(box);
+  expect(await screen.findByText('contract.accept')).toBeInTheDocument();
+  fireEvent.mouseDown(screen.getByText('Vorname'));
+  expect(await screen.findByText('contract.vorname')).toBeInTheDocument();
+});
 it('allows inline value and checkbox edits while locking the surrounding wording', async () => {
   const onValueChange = vi.fn();
   render(
@@ -107,7 +117,7 @@ it('shows the actual prepared PDF and requires an explicit approval', () => {
   );
   expect(screen.getByTitle('Finales PDF vor dem Versand')).toHaveAttribute(
     'src',
-    'https://signed.example/pdf-1'
+    'https://signed.example/pdf-1#view=FitH&toolbar=1&navpanes=0&scrollbar=1'
   );
   expect(screen.getByRole('checkbox')).not.toBeChecked();
   fireEvent.click(screen.getByRole('checkbox'));
@@ -223,7 +233,6 @@ it('zooms only the viewing canvas and retains import metadata while correcting e
     width: '210mm',
   });
   expect(onChange).not.toHaveBeenCalled();
-  fireEvent.click(screen.getByText('Formatierung und Felder'));
   fireEvent.click(screen.getByRole('button', { name: 'Alles linksbündig' }));
   const changed = onChange.mock.calls.at(-1)![0];
   expect(changed.content.content[0].attrs.textAlign).toBe('left');
@@ -329,7 +338,6 @@ it('retains centered labels, salary sizing and dynamic page fields when edited',
   expect(
     container.querySelector('[data-page-field="pages"]')
   ).toHaveTextContent('‹Seiten›');
-  fireEvent.click(screen.getByText('Formatierung und Felder'));
   fireEvent.click(screen.getByRole('button', { name: 'Alles linksbündig' }));
   const updated = onChange.mock.calls.at(-1)![0];
   expect(
@@ -415,7 +423,9 @@ it('reviews a contract as separate pages with the letterhead on the sheet', asyn
     content: [
       {
         type: 'paragraph',
-        content: [{ type: 'text', text: 'Fußzeile Seite ‹Seite› von ‹Seiten›' }],
+        content: [
+          { type: 'text', text: 'Fußzeile Seite ‹Seite› von ‹Seiten›' },
+        ],
       },
     ],
   };

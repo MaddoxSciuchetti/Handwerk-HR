@@ -1,5 +1,6 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ChoiceLineEditor } from '@/features/questionnaire/ChoiceLineEditor';
 import { QuestionTitle } from './QuestionTitle';
 import type { ContractFieldOption, TemplateField } from './questionnaireTemplate.types';
 
@@ -25,21 +26,43 @@ export function QuestionnaireFieldControls({
         onCommit={(label) => onCommit({ ...field, label })}
       />
       <div className="flex flex-col gap-2">
-        <Label htmlFor={`${field.key}-default`}>Antwort</Label>
+        <Label>Antwort</Label>
         {field.type === 'single' ? (
-          <select
-            id={`${field.key}-default`}
-            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-            value={field.defaultValue ?? ''}
-            onChange={(event) => patch({ defaultValue: event.target.value })}
-          >
-            <option value="">Keine</option>
+          <div className="flex flex-col gap-2">
             {(field.options ?? []).map((option) => (
-              <option key={option} value={option}>
+              <label key={option} className="flex items-center gap-2 text-sm">
+                <input
+                  type="radio"
+                  name={`${field.key}-default`}
+                  className="size-4 accent-primary"
+                  checked={field.defaultValue === option}
+                  onClick={(event) => {
+                    if (field.defaultValue !== option) return;
+                    event.preventDefault();
+                    patch({ defaultValue: '' });
+                  }}
+                  onChange={() => patch({ defaultValue: option })}
+                />
                 {option}
-              </option>
+              </label>
             ))}
-          </select>
+          </div>
+        ) : field.type === 'check' && (field.options?.length ?? 0) > 1 ? (
+          <div className="flex flex-col gap-2">
+            {(field.options ?? []).map((option) => (
+              <label key={option} className="flex items-start gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 size-4 shrink-0 accent-primary"
+                  checked={field.defaultValue === option}
+                  onChange={() =>
+                    patch({ defaultValue: field.defaultValue === option ? '' : option })
+                  }
+                />
+                {option}
+              </label>
+            ))}
+          </div>
         ) : field.type === 'check' ? (
           <label className="flex items-center gap-2 text-sm">
             <input
@@ -59,6 +82,19 @@ export function QuestionnaireFieldControls({
           />
         )}
       </div>
+      {field.type === 'check' && !field.builtin ? (
+        <ChoiceLineEditor
+          options={field.options ?? []}
+          onChange={(options) =>
+            patch({
+              options,
+              defaultValue: options.includes(field.defaultValue ?? '')
+                ? field.defaultValue
+                : '',
+            })
+          }
+        />
+      ) : null}
       <div className="flex flex-col gap-2">
         <Label htmlFor={`${field.key}-contract`}>Vertragsfeld</Label>
         <select

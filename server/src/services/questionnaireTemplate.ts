@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { primaryEmploymentContract } from "@/services/documentMaster.service";
 import { readDocumentSegments } from "@/services/documentBody";
 import {
     parseQuestionnaireDefinition,
@@ -44,10 +45,7 @@ export async function saveOrganizationQuestionnaire(
 }
 
 export async function employmentContractFields(organizationId: string) {
-    const master = await prisma.documentMaster.findFirst({
-        where: { organizationId, kind: "employment_contract" },
-        orderBy: { updatedAt: "desc" },
-    });
+    const master = await primaryEmploymentContract(organizationId);
     if (!master) return [];
     const seen = new Set<string>();
     return readDocumentSegments(master.body).flatMap((segment) => {

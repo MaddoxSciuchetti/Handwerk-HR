@@ -212,7 +212,7 @@ export function ContractSendDialog({
       handleToggle={() => void close()}
       size="max-w-7xl"
     >
-      <div className="flex max-h-[85vh] flex-col gap-4 overflow-hidden rounded-2xl bg-card p-6 text-card-foreground">
+      <div className="flex h-[85vh] max-h-[85vh] min-h-0 flex-col gap-4 overflow-hidden rounded-2xl bg-card p-6 text-card-foreground">
         {isLoading ? <LoadingAlert className="min-h-40" /> : null}
         {isError || (!isLoading && !data) ? (
           <p className="text-sm text-destructive">
@@ -221,7 +221,7 @@ export function ContractSendDialog({
         ) : null}
         {data ? (
           <>
-            <div className="pr-8">
+            <div className="shrink-0 pr-8">
               <h2 className="text-base font-medium">{data.name}</h2>
               <p className="text-sm text-muted-foreground">
                 {alreadySent
@@ -332,7 +332,7 @@ export function ContractSendDialog({
               </div>
             )}
             {alreadySent ? null : (
-              <div className="flex justify-end">
+              <div className="flex shrink-0 justify-end">
                 {prepared ? (
                   <Button
                     type="button"

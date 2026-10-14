@@ -43,7 +43,7 @@ function Templates() {
           title="Template Aufgaben"
           description="Verwalte deine Template Aufgaben"
         />
-        <Table className="min-h-0 flex-1 w-200">
+        <Table className="min-h-0 w-full flex-1">
           <TableHeader>
             <Button
               type="button"

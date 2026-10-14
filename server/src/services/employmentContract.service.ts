@@ -114,7 +114,7 @@ const contractInclude = {
     },
 } satisfies Prisma.EmploymentContractInclude;
 
-async function findContract(params: ContractParams) {
+async function loadContract(params: ContractParams) {
     return prisma.employmentContract.findFirst({
         where: {
             engagementId: params.engagementId,
@@ -125,6 +125,54 @@ async function findContract(params: ContractParams) {
         },
         include: contractInclude,
     });
+}
+
+async function alignUnsentContractToPrimary(
+    contract: NonNullable<Awaited<ReturnType<typeof loadContract>>>,
+    organizationId: string,
+) {
+    if (contract.sentAt || contract.status === "signed") return contract;
+    const primary = await prisma.documentMaster.findFirst({
+        where: {
+            organizationId,
+            kind: "employment_contract",
+            isPrimary: true,
+        },
+        select: { id: true },
+    });
+    if (!primary || primary.id === contract.masterId) return contract;
+
+    await prisma.$transaction(async (tx) => {
+        await invalidatePreparedDocuments(
+            {
+                organizationId,
+                engagementId: contract.engagementId,
+                kind: "employment_contract",
+            },
+            tx,
+        );
+        const latest = await tx.employmentContract.findUnique({
+            where: { id: contract.id },
+            select: { sentAt: true, status: true },
+        });
+        if (!latest || latest.sentAt || latest.status === "signed") return;
+        await tx.employmentContract.update({
+            where: { id: contract.id },
+            data: {
+                masterId: primary.id,
+                body: Prisma.DbNull,
+                status: "draft",
+                matchedMasterRevision: null,
+            },
+        });
+    });
+    return reloadContract(contract.id);
+}
+
+async function findContract(params: ContractParams) {
+    const contract = await loadContract(params);
+    if (!contract) return null;
+    return alignUnsentContractToPrimary(contract, params.organizationId);
 }
 
 function reloadContract(

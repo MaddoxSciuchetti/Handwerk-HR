@@ -14,6 +14,7 @@ import type { DocumentMasterDetail } from '@/features/settings/documents/documen
 vi.mock('@/features/settings/documents/documentMasters.api', () => ({
   getDocumentMaster: vi.fn(),
   updateDocumentMaster: vi.fn(),
+  setPrimaryDocumentMaster: vi.fn(),
 }));
 vi.mock('@/config/apiClient', () => ({
   apiJson: { get: vi.fn(async () => ({ ready: false, available: [] })) },
@@ -21,9 +22,6 @@ vi.mock('@/config/apiClient', () => ({
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ children }: { children: ReactNode }) => <a>{children}</a>,
   useNavigate: () => vi.fn(),
-}));
-vi.mock('@/features/settings/documents/InsertContractInput', () => ({
-  InsertContractInput: () => null,
 }));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 afterEach(() => {
@@ -36,6 +34,7 @@ it('saves without replacing the editor, jumping scroll, refreshing detail, or re
     id: 'master-1',
     name: 'Test master',
     kind: 'employment_contract',
+    isPrimary: true,
     updatedAt: '2026-10-09',
     revision: 1,
     approvedAt: null,

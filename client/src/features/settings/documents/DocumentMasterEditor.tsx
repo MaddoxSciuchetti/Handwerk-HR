@@ -1,6 +1,5 @@
 import { DocumentPrintPreview } from './DocumentPrintPreview';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SettingsPageHeader } from '@/features/settings/components/SettingsPageHeader';
@@ -15,15 +14,15 @@ import { useQuery } from '@tanstack/react-query';
 import { DOCUMENT_MASTER_KIND_LABELS } from './documentMaster.types';
 import type { DocumentMasterDetail } from './documentMaster.types';
 import { DocumentMasterActions } from './components/DocumentMasterActions';
-import { DocumentPageFields } from './components/DocumentPageFields';
-import { DocumentSectionSwitch } from './components/DocumentSectionSwitch';
+import { PrimaryContractStatus } from './components/PrimaryContractStatus';
+import { DocumentEditorCorner } from './components/DocumentEditorCorner';
 import {
   DocumentFontNotice,
   type DocumentFontStatus,
 } from './DocumentFontNotice';
-import { InsertContractInput } from './InsertContractInput';
 import { useDocumentMaster } from './useDocumentMaster';
 import { useSaveDocumentMaster } from './useSaveDocumentMaster';
+import { useSetPrimaryDocumentMaster } from './useSetPrimaryDocumentMaster';
 
 type DocumentMasterEditorProps = {
   id: string;
@@ -36,15 +35,13 @@ export function DocumentMasterEditor({
 }: DocumentMasterEditorProps) {
   const { data, isLoading, isError } = useDocumentMaster(id);
   const saveMaster = useSaveDocumentMaster(id);
+  const setPrimary = useSetPrimaryDocumentMaster();
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [revision, setRevision] = useState(1);
   const [document, setDocument] = useState<StyledDocument>(fromSegments([]));
   const [syncedMaster, setSyncedMaster] = useState<DocumentMasterDetail | null>(
     null
-  );
-  const [section, setSection] = useState<'content' | 'header' | 'footer'>(
-    'content'
   );
   const fonts = useQuery({
     queryKey: ['document-font-status'],
@@ -55,7 +52,6 @@ export function DocumentMasterEditor({
   const [returnEditing, setReturnEditing] = useState(false);
   const [cancelledReturnEdit, setCancelledReturnEdit] = useState(false);
   const editing = manualEditing || returnEditing;
-  const [printPreview, setPrintPreview] = useState(true);
   const [showOriginal, setShowOriginal] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const editStartedAt = useRef(0);
@@ -195,6 +191,20 @@ export function DocumentMasterEditor({
         ) : (
           <h2 className="text-lg font-semibold">{name}</h2>
         )}
+        {isContract ? (
+          <PrimaryContractStatus
+            isPrimary={data.isPrimary}
+            pending={setPrimary.isPending}
+            onSelect={() =>
+              setPrimary.mutate(data.id, {
+                onError: () =>
+                  toast.error(
+                    'Die Versandvorlage konnte nicht gespeichert werden'
+                  ),
+              })
+            }
+          />
+        ) : null}
         {returnContract && isContract ? (
           <p className="text-sm text-muted-foreground">
             Ergänzen Sie die fehlende Eingabe, speichern Sie den Mustervertrag
@@ -231,60 +241,38 @@ export function DocumentMasterEditor({
               </a>
             ) : null}
             <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
-              <DocumentSectionSwitch
-                section={section}
-                onSectionChange={(next) => {
-                  setSection(next);
-                  setPrintPreview(false);
-                }}
-                showOriginalToggle={
-                  Boolean(data.sourceUrl) &&
-                  data.sourceMime === 'application/pdf'
-                }
-                showOriginal={showOriginal}
-                onToggleOriginal={() => setShowOriginal((show) => !show)}
-                expanded={expanded}
-                onToggleExpanded={() => setExpanded((open) => !open)}
-              />
-              {!editing ? (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={printPreview ? 'default' : 'outline'}
-                  onClick={() => setPrintPreview(true)}
-                >
-                  Druckvorschau
-                </Button>
-              ) : null}
               {editing ? (
-                <details className="shrink-0 rounded border p-2 text-sm">
-                  <summary className="cursor-pointer">
-                    Seitenlayout und zusätzliche Eingaben
-                  </summary>
-                  <InsertContractInput />
-                  <DocumentPageFields
-                    page={document.page}
-                    onChange={(key, value) =>
-                      setDocument((current) => ({
-                        ...current,
-                        page: { ...current.page, [key]: value },
-                      }))
-                    }
-                  />
-                </details>
-              ) : null}
-              {!editing && printPreview ? (
-                <DocumentPrintPreview id={id} revision={revision} />
-              ) : (
                 <StyledDocumentEditor
-                  key={section}
                   document={document}
-                  section={section}
+                  section="content"
                   master
                   pageView
-                  readOnly={!editing}
                   onChange={setDocument}
+                  expanded={expanded}
+                  onToggleExpanded={() => setExpanded((open) => !open)}
+                  showOriginalToggle={
+                    Boolean(data.sourceUrl) &&
+                    data.sourceMime === 'application/pdf'
+                  }
+                  showOriginal={showOriginal}
+                  onToggleOriginal={() => setShowOriginal((show) => !show)}
                 />
+              ) : (
+                <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border bg-background shadow-sm">
+                  <div className="flex justify-end border-b bg-muted/40 px-2 py-2">
+                    <DocumentEditorCorner
+                      expanded={expanded}
+                      onToggleExpanded={() => setExpanded((open) => !open)}
+                      showOriginalToggle={
+                        Boolean(data.sourceUrl) &&
+                        data.sourceMime === 'application/pdf'
+                      }
+                      showOriginal={showOriginal}
+                      onToggleOriginal={() => setShowOriginal((show) => !show)}
+                    />
+                  </div>
+                  <DocumentPrintPreview id={id} revision={revision} />
+                </div>
               )}
             </div>
           </div>

@@ -19,6 +19,7 @@ jest.mock("@/lib/prisma", () => ({
             createMany: jest.fn(),
         },
         $transaction: jest.fn(),
+        documentMaster: { findFirst: jest.fn() },
     },
 }));
 jest.mock("@/services/preparedDocument", () => ({
@@ -83,7 +84,38 @@ beforeEach(() => {
             return contract;
         },
     );
+    (prisma.documentMaster.findFirst as jest.Mock).mockResolvedValue(null);
 });
+it("points an unsent contract at the marked master before it can be sent", async () => {
+    (prisma.documentMaster.findFirst as jest.Mock).mockResolvedValue({
+        id: "primary-master",
+    });
+
+    await getEngagementContract(params);
+
+    expect(prisma.employmentContract.update).toHaveBeenCalledWith({
+        where: { id: "contract" },
+        data: {
+            masterId: "primary-master",
+            body: expect.anything(),
+            status: "draft",
+            matchedMasterRevision: null,
+        },
+    });
+});
+
+it("keeps a sent contract on the master it was sent with", async () => {
+    contract.sentAt = new Date();
+    (prisma.documentMaster.findFirst as jest.Mock).mockResolvedValue({
+        id: "primary-master",
+    });
+
+    await getEngagementContract(params);
+
+    expect(prisma.documentMaster.findFirst).not.toHaveBeenCalled();
+    expect(prisma.employmentContract.update).not.toHaveBeenCalled();
+});
+
 it("persists a manual correction across closing/reopening and field movement without changing the master", async () => {
     await saveEngagementContractDraft({
         ...params,

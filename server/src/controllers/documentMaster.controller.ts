@@ -5,6 +5,7 @@ import {
   createDocumentMaster,
   getDocumentMaster,
   listDocumentMasters,
+  setPrimaryDocumentMaster,
   updateDocumentMaster,
 } from "@/services/documentMaster.service";
 import {
@@ -124,6 +125,12 @@ export const updateMaster = catchErrors(async (req, res) => {
     approved: body.approved === true,
   });
 
+  return res.status(OK).json(master);
+});
+
+export const setPrimaryMaster = catchErrors(async (req, res) => {
+  appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
+  const master = await setPrimaryDocumentMaster(param(req.params.id), req.orgId);
   return res.status(OK).json(master);
 });
 
