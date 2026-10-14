@@ -29,6 +29,7 @@ export type ContractFieldOption = {
 };
 
 export type QuestionnaireTemplatePage = {
+  name?: string;
   intro: string;
   items: TemplateItem[];
   catalog: TemplateItem[];

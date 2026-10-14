@@ -1,5 +1,7 @@
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { SettingsPageHeader } from '@/features/settings/components/SettingsPageHeader';
 import {
   forgetQuestionnaireDraft,
@@ -17,7 +19,10 @@ import {
   getQuestionnaireTemplate,
   saveQuestionnaireTemplate,
 } from './questionnaireTemplate.api';
-import type { TemplateField, TemplateItem } from './questionnaireTemplate.types';
+import type {
+  TemplateField,
+  TemplateItem,
+} from './questionnaireTemplate.types';
 
 const templateKey = ['automation', 'questionnaire'] as const;
 
@@ -29,6 +34,9 @@ export function QuestionnaireTemplatePage() {
     queryFn: getQuestionnaireTemplate,
   });
   const draftOnOpen = useRef(readQuestionnaireDraft());
+  const [name, setName] = useState(
+    draftOnOpen.current?.name ?? 'Personalfragebogen'
+  );
   const [items, setItems] = useState<TemplateItem[]>(
     () => (draftOnOpen.current?.items as TemplateItem[] | undefined) ?? []
   );
@@ -41,13 +49,16 @@ export function QuestionnaireTemplatePage() {
     if (draft) {
       draftOnOpen.current = null;
       setItems(draft.items as TemplateItem[]);
+      setName(draft.name ?? template.data.name ?? 'Personalfragebogen');
       return;
     }
     setItems(template.data.items);
+    setName(template.data.name ?? 'Personalfragebogen');
   }, [template.data]);
 
   const save = useMutation({
-    mutationFn: (next: TemplateItem[]) => saveQuestionnaireTemplate(next),
+    mutationFn: (next: TemplateItem[]) =>
+      saveQuestionnaireTemplate(next, name.trim()),
     onSuccess: async () => {
       forgetQuestionnaireDraft();
       await queryClient.invalidateQueries({ queryKey: templateKey });
@@ -58,14 +69,20 @@ export function QuestionnaireTemplatePage() {
 
   const openPreview = () => {
     if (!template.data) return;
-    rememberQuestionnaireDraft({ intro: template.data.intro, items: itemsRef.current });
+    rememberQuestionnaireDraft({
+      name: name.trim(),
+      intro: template.data.intro,
+      items: itemsRef.current,
+    });
     void navigate({ to: '/fragebogen/preview' });
   };
 
   if (template.isPending) return <LoadingAlert />;
   if (template.isError || !template.data) {
     return (
-      <p className="p-6 text-sm text-destructive">Fragebogen konnte nicht geladen werden.</p>
+      <p className="p-6 text-sm text-destructive">
+        Fragebogen konnte nicht geladen werden.
+      </p>
     );
   }
 
@@ -102,7 +119,9 @@ export function QuestionnaireTemplatePage() {
 
   const changeField = (field: TemplateField) => {
     setItems((current) =>
-      current.map((item) => (item.kind === 'field' && item.key === field.key ? field : item))
+      current.map((item) =>
+        item.kind === 'field' && item.key === field.key ? field : item
+      )
     );
   };
 
@@ -136,15 +155,29 @@ export function QuestionnaireTemplatePage() {
           <Button
             type="button"
             className="rounded-2xl"
-            disabled={save.isPending}
+            disabled={save.isPending || !name.trim()}
             onClick={() => save.mutate(itemsRef.current)}
           >
             {save.isPending ? 'Speichert…' : 'Speichern'}
           </Button>
         </div>
       </div>
+      <div className="mt-4 flex max-w-xl flex-col gap-2">
+        <Label htmlFor="questionnaire-name">Name des Fragebogens</Label>
+        <Input
+          id="questionnaire-name"
+          value={name}
+          required
+          maxLength={200}
+          onChange={(event) => setName(event.target.value)}
+        />
+      </div>
       <div className="mt-4 grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[18rem_minmax(0,1fr)]">
-        <QuestionnairePalette catalog={catalog} items={items} onAdd={addItems} />
+        <QuestionnairePalette
+          catalog={catalog}
+          items={items}
+          onAdd={addItems}
+        />
         <QuestionnaireStack
           blocks={blocks}
           contractFields={template.data.contractFields}

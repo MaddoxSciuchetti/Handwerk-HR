@@ -5,6 +5,8 @@ import {
     parseQuestionnaireDefinition,
     readEngagementDraft,
     seedQuestionnaireDefinition,
+    applyOverrides,
+    withAddedQuestions,
 } from "@/services/questionnaireDefinition";
 import {
     QUESTIONNAIRE_FIELDS,
@@ -22,6 +24,23 @@ function answers(extra: Record<string, string> = {}): QuestionnaireAnswers {
 }
 
 describe("questionnaire definition", () => {
+    it("keeps the chosen name through parsing and engagement-specific changes", () => {
+        const definition = parseQuestionnaireDefinition({
+            name: "  Personalbogen Montage  ",
+            items: [{ kind: "field", key: "firstName" }],
+        });
+        expect(definition.name).toBe("Personalbogen Montage");
+        expect(applyOverrides(withAddedQuestions(definition, []), { firstName: "Ada" }).name)
+            .toBe("Personalbogen Montage");
+    });
+
+    it("supplies a name for older definitions and rejects empty or oversized names", () => {
+        const items = [{ kind: "field", key: "firstName" }];
+        expect(parseQuestionnaireDefinition({ items }).name).toBe("Personalfragebogen");
+        for (const name of ["   ", "x".repeat(201), 123]) {
+            expect(() => parseQuestionnaireDefinition({ items, name })).toThrow("Namen");
+        }
+    });
     it("seeds weekday hours and Teilzeit as required questions", () => {
         const definition = seedQuestionnaireDefinition();
         const hours = new Set<string>(hourKeys());

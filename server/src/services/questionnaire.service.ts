@@ -50,12 +50,14 @@ function storedDefinition(value: unknown): QuestionnaireDefinition | null {
 function publicPayload(definition: QuestionnaireDefinition | null) {
     if (!definition) {
         return {
+            name: "Personalfragebogen",
             intro: QUESTIONNAIRE_INTRO,
             questions: QUESTIONNAIRE_FIELDS.map((field) => ({ ...field, required: true })),
             repeaters: QUESTIONNAIRE_REPEATERS,
         };
     }
     return {
+        name: definition.name ?? "Personalfragebogen",
         intro: definition.intro,
         questions: presentQuestions(definition),
         repeaters: definitionRepeaters(definition),

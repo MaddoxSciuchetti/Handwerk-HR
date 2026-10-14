@@ -23,7 +23,7 @@ function RouteComponent() {
 
   return (
     <QuestionnaireForm
-      preview={{ intro: draft.intro, items: candidateItems(draft.items) }}
+      preview={{ name: draft.name, intro: draft.intro, items: candidateItems(draft.items) }}
     />
   );
 }

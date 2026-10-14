@@ -30,6 +30,7 @@ type DraftResponse = {
     email: string | null;
     sent: boolean;
     intro?: string;
+    name?: string;
     questions: QuestionnaireQuestionData[];
     repeaters: QuestionnaireRepeater[];
     addedQuestions?: AddedQuestion[];
@@ -211,6 +212,7 @@ export function QuestionnaireSendDialog({
         ) : null}
         {draft.data ? (
           <>
+            <p className="text-sm font-medium">{draft.data.data.name ?? 'Personalfragebogen'}</p>
             <p className="text-sm text-muted-foreground">
               An {draft.data.data.email ?? 'ohne E-Mail'}. Jedes Feld kann vorausgefüllt werden.
               Ausgefüllte Felder sind für den Handwerker danach gesperrt.

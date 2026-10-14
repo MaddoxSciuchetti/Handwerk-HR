@@ -34,6 +34,7 @@ export type QuestionnaireRepeaterItem = {
 export type QuestionnaireItem = QuestionnaireFieldItem | QuestionnaireRepeaterItem;
 
 export type QuestionnaireDefinition = {
+    name?: string;
     intro: string;
     items: QuestionnaireItem[];
 };
@@ -121,7 +122,7 @@ export function seedQuestionnaireDefinition(): QuestionnaireDefinition {
         }
         items.splice(insertAt, 0, repeaterItem(repeater));
     }
-    return { intro: QUESTIONNAIRE_INTRO, items };
+    return { name: "Personalfragebogen", intro: QUESTIONNAIRE_INTRO, items };
 }
 
 export function definitionFields(definition: QuestionnaireDefinition) {
@@ -186,13 +187,16 @@ export function parseQuestionnaireDefinition(input: unknown): QuestionnaireDefin
     if (!input || typeof input !== "object" || Array.isArray(input)) {
         reject("Der Fragebogen ist ungültig.");
     }
-    const body = input as { items?: unknown };
+    const body = input as { items?: unknown; name?: unknown };
+    const name = body.name === undefined ? "Personalfragebogen" :
+        typeof body.name === "string" ? body.name.trim() : "";
+    if (!name || name.length > 200) reject("Der Fragebogen braucht einen Namen mit höchstens 200 Zeichen.");
     if (!Array.isArray(body.items) || body.items.length === 0 || body.items.length > 80) {
         reject("Der Fragebogen braucht mindestens eine Frage.");
     }
     const seen = new Set<string>();
     const items = body.items.map((raw) => parseItem(raw, seen));
-    return { intro: QUESTIONNAIRE_INTRO, items };
+    return { name, intro: QUESTIONNAIRE_INTRO, items };
 }
 
 function parseItem(raw: unknown, seen: Set<string>): QuestionnaireItem {
@@ -311,7 +315,7 @@ export function applyOverrides(
     overrides: Record<string, string>,
 ): QuestionnaireDefinition {
     return {
-        intro: definition.intro,
+        ...definition,
         items: definition.items.map((item) => {
             if (item.kind !== "field") return item;
             const next = cleanDefault(item, overrides[item.key] ?? item.defaultValue ?? "");
@@ -339,7 +343,7 @@ export function withAddedQuestions(
 ): QuestionnaireDefinition {
     const seen = new Set(definition.items.map((item) => item.key));
     const extras = questions.filter((question) => !seen.has(question.key));
-    return { intro: definition.intro, items: [...definition.items, ...extras] };
+    return { ...definition, items: [...definition.items, ...extras] };
 }
 
 export function readEngagementDraft(value: unknown): {

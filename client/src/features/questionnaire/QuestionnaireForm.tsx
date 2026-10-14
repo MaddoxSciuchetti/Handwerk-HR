@@ -17,6 +17,7 @@ type QuestionnaireResponse = {
   success: boolean;
   data: {
     status: 'sent' | 'completed';
+    name?: string;
     intro?: string;
     questions?: QuestionnaireQuestionData[];
     repeaters?: QuestionnaireRepeater[];
@@ -30,6 +31,7 @@ type QuestionnaireResponse = {
 type QuestionnaireFormProps = {
   token?: string;
   preview?: {
+    name?: string;
     intro?: string;
     items: CandidateItem[];
   };
@@ -60,7 +62,7 @@ export function QuestionnaireForm({ token, preview }: QuestionnaireFormProps) {
   });
 
   const data = preview
-    ? { status: 'sent' as const, intro: preview.intro, items: preview.items }
+    ? { status: 'sent' as const, name: preview.name, intro: preview.intro, items: preview.items }
     : questionnaire.data?.data;
   const questions =
     data?.items?.flatMap((item) => (item.kind === 'field' ? [item] : [])) ??
@@ -129,7 +131,7 @@ export function QuestionnaireForm({ token, preview }: QuestionnaireFormProps) {
   return (
     <div className="h-full overflow-y-auto px-4 py-8">
       <div className="mx-auto w-full max-w-3xl rounded-lg border border-border bg-card p-8 text-card-foreground shadow-lg">
-        <h1 className="text-xl font-medium">Personalfragebogen</h1>
+        <h1 className="text-xl font-medium">{data?.name ?? 'Personalfragebogen'}</h1>
         {!preview && questionnaire.isPending ? <LoadingAlert className="min-h-40" /> : null}
         {!preview && questionnaire.isError ? (
           <p className="mt-4 text-sm text-destructive">Dieser Link ist ungültig.</p>

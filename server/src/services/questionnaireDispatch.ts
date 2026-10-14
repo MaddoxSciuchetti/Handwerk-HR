@@ -42,6 +42,7 @@ function previewFrom(
 ) {
     const merged = applyOverrides(withAddedQuestions(definition, added), overrides);
     return {
+        name: merged.name ?? "Personalfragebogen",
         intro: merged.intro,
         questions: presentQuestions(merged).map((question) => ({
             ...question,

@@ -27,6 +27,7 @@ export type PreviewRepeater = {
 export type PreviewItem = PreviewField | PreviewRepeater;
 
 export type QuestionnairePreviewDraft = {
+  name?: string;
   intro: string;
   items: PreviewItem[];
 };

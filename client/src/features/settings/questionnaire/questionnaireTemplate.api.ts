@@ -1,5 +1,8 @@
 import { apiJson } from '@/config/apiClient';
-import type { QuestionnaireTemplatePage, TemplateItem } from './questionnaireTemplate.types';
+import type {
+  QuestionnaireTemplatePage,
+  TemplateItem,
+} from './questionnaireTemplate.types';
 
 type TemplateResponse = {
   success: boolean;
@@ -12,8 +15,8 @@ export function getQuestionnaireTemplate() {
     .then((response) => response.data);
 }
 
-export function saveQuestionnaireTemplate(items: TemplateItem[]) {
+export function saveQuestionnaireTemplate(items: TemplateItem[], name: string) {
   return apiJson
-    .put<TemplateResponse>('/automation/questionnaire', { items })
+    .put<TemplateResponse>('/automation/questionnaire', { items, name })
     .then((response) => response.data);
 }
