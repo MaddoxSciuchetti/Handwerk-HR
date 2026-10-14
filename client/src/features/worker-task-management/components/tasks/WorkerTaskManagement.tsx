@@ -269,6 +269,17 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                 <div className={sectionHeaderClassName}>Name</div>
                 <WorkerFileUploads
                   workerId={workerId}
+                  questionnaires={data.data.engagements.flatMap((engagement) =>
+                    engagement.questionnaireSubmission?.status === 'completed'
+                      ? [{
+                          id: engagement.questionnaireSubmission.id,
+                          engagementId: engagement.id,
+                          name: engagement.questionnaireSubmission.name,
+                          engagementLabel: `${engagement.type === 'onboarding' ? 'Eintritt' : engagement.type === 'offboarding' ? 'Austritt' : 'Wechsel'}${engagement.startDate ? ` · ${new Date(engagement.startDate).toLocaleDateString('de-DE')}` : ''}`,
+                          completedAt: engagement.questionnaireSubmission.completedAt,
+                        }]
+                      : []
+                  )}
                   contracts={data.data.engagements.flatMap((engagement) =>
                     engagement.employmentContract
                       ? [

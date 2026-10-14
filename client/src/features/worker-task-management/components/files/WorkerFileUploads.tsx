@@ -14,11 +14,13 @@ import {
 } from './EngagementContractList';
 import FileUploadForm from './file_upload/FileUploadForm';
 import FilesContent from './FilesContent';
+import { EngagementQuestionnaireList, type EngagementQuestionnaireLink } from './EngagementQuestionnaireList';
 
 type WorkerFileUploadsProps = {
   workerId: string;
   contracts: EngagementContractLink[];
   certificates: EngagementCertificateLink[];
+  questionnaires?: EngagementQuestionnaireLink[];
   isUploadModalOpen: boolean;
   setIsUploadModalOpen: (open: boolean) => void;
 };
@@ -27,6 +29,7 @@ function WorkerFileUploads({
   workerId,
   contracts,
   certificates,
+  questionnaires = [],
   isUploadModalOpen,
   setIsUploadModalOpen,
 }: WorkerFileUploadsProps) {
@@ -37,6 +40,7 @@ function WorkerFileUploads({
 
   return (
     <>
+      <EngagementQuestionnaireList workerId={workerId} questionnaires={questionnaires} />
       <EngagementContractList workerId={workerId} contracts={contracts} />
       <EngagementCertificateList certificates={certificates} />
       {isLoading ? <LoadingAlert /> : null}
@@ -48,6 +52,7 @@ function WorkerFileUploads({
       !isError &&
       !filteredFiles.length &&
       !contracts.length &&
+      !questionnaires.length &&
       !certificates.length ? (
         <div className="flex min-h-100 items-center justify-center py-10 text-sm text-muted-foreground">
           Keine Hochgeladenen Dateien

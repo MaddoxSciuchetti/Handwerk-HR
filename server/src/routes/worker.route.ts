@@ -35,6 +35,10 @@ worker.patch("/:workerId/unarchive", workerController.unarchiveWorker);
 
 worker.post("/:workerId/engagements", workerController.createEngagement);
 worker.get(
+    "/:workerId/engagements/:engagementId/questionnaire/completed",
+    workerController.getCompletedEngagementQuestionnaire,
+);
+worker.get(
     "/:workerId/engagements/:engagementId/contract",
     workerController.getEngagementContract,
 );

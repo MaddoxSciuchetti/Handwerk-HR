@@ -9,6 +9,18 @@ import {
     sendEngagementQuestionnaire,
 } from "@/services/questionnaireDispatch";
 import * as workerService from "../services/worker.service";
+import { getCompletedQuestionnaire } from "@/services/completedQuestionnaire.service";
+
+export const getCompletedEngagementQuestionnaire = catchErrors(
+    async (req: Request, res: Response) => {
+        const data = await getCompletedQuestionnaire({
+            organizationId: req.orgId,
+            workerId: param(req, "workerId"),
+            engagementId: param(req, "engagementId"),
+        });
+        return res.status(200).json({ success: true, data });
+    },
+);
 
 function param(req: Request, key: string): string {
     const val = req.params[key];

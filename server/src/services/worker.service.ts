@@ -289,7 +289,7 @@ export async function getWorkerById(workerId: string, organizationId: string) {
                         },
                     },
                     questionnaireSubmission: {
-                        select: { id: true, status: true },
+                        select: { id: true, status: true, completedAt: true, formDefinition: true },
                     },
                     issues: {
                         orderBy: { createdAt: "desc" },
@@ -344,6 +344,14 @@ export async function getWorkerById(workerId: string, organizationId: string) {
         documents: documentsWithUrls,
         engagements: worker.engagements.map((engagement) => ({
             ...engagement,
+            questionnaireSubmission: engagement.questionnaireSubmission
+                ? {
+                      id: engagement.questionnaireSubmission.id,
+                      status: engagement.questionnaireSubmission.status,
+                      completedAt: engagement.questionnaireSubmission.completedAt,
+                      name: questionnaireName(engagement.questionnaireSubmission.formDefinition),
+                  }
+                : null,
             arbeitszeugnis: engagement.arbeitszeugnis
                 ? {
                       id: engagement.arbeitszeugnis.id,
@@ -354,6 +362,13 @@ export async function getWorkerById(workerId: string, organizationId: string) {
                 : null,
         })),
     };
+}
+
+function questionnaireName(definition: unknown): string {
+    return definition && typeof definition === "object" &&
+        "name" in definition && typeof definition.name === "string"
+        ? definition.name
+        : "Personalfragebogen";
 }
 
 export async function updateWorker(params: {
