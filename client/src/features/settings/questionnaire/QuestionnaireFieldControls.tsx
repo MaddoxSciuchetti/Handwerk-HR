@@ -25,63 +25,7 @@ export function QuestionnaireFieldControls({
         label={field.label}
         onCommit={(label) => onCommit({ ...field, label })}
       />
-      <div className="flex flex-col gap-2">
-        <Label>Antwort</Label>
-        {field.type === 'single' ? (
-          <div className="flex flex-col gap-2">
-            {(field.options ?? []).map((option) => (
-              <label key={option} className="flex items-center gap-2 text-sm">
-                <input
-                  type="radio"
-                  name={`${field.key}-default`}
-                  className="size-4 accent-primary"
-                  checked={field.defaultValue === option}
-                  onClick={(event) => {
-                    if (field.defaultValue !== option) return;
-                    event.preventDefault();
-                    patch({ defaultValue: '' });
-                  }}
-                  onChange={() => patch({ defaultValue: option })}
-                />
-                {option}
-              </label>
-            ))}
-          </div>
-        ) : field.type === 'check' && (field.options?.length ?? 0) > 1 ? (
-          <div className="flex flex-col gap-2">
-            {(field.options ?? []).map((option) => (
-              <label key={option} className="flex items-start gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  className="mt-0.5 size-4 shrink-0 accent-primary"
-                  checked={field.defaultValue === option}
-                  onChange={() =>
-                    patch({ defaultValue: field.defaultValue === option ? '' : option })
-                  }
-                />
-                {option}
-              </label>
-            ))}
-          </div>
-        ) : field.type === 'check' ? (
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              className="size-4 accent-primary"
-              checked={field.defaultValue === 'ja'}
-              onChange={(event) => patch({ defaultValue: event.target.checked ? 'ja' : '' })}
-            />
-            Bereits angekreuzt
-          </label>
-        ) : (
-          <Input
-            id={`${field.key}-default`}
-            type={field.type === 'date' ? 'date' : 'text'}
-            value={field.defaultValue ?? ''}
-            onChange={(event) => patch({ defaultValue: event.target.value })}
-          />
-        )}
-      </div>
+      <QuestionAnswer field={field} onChange={patch} />
       {field.type === 'check' && !field.builtin ? (
         <ChoiceLineEditor
           options={field.options ?? []}
@@ -112,5 +56,81 @@ export function QuestionnaireFieldControls({
         </select>
       </div>
     </div>
+  );
+}
+
+function QuestionAnswer({
+  field,
+  onChange,
+}: {
+  field: TemplateField;
+  onChange: (next: Partial<TemplateField>) => void;
+}) {
+  if (field.type === 'single') {
+    return (
+      <div className="flex flex-col gap-2">
+        {(field.options ?? []).map((option) => (
+          <label key={option} className="flex items-center gap-2 text-sm">
+            <input
+              type="radio"
+              name={`${field.key}-default`}
+              className="size-4 accent-primary"
+              checked={field.defaultValue === option}
+              onClick={(event) => {
+                if (field.defaultValue !== option) return;
+                event.preventDefault();
+                onChange({ defaultValue: '' });
+              }}
+              onChange={() => onChange({ defaultValue: option })}
+            />
+            {option}
+          </label>
+        ))}
+      </div>
+    );
+  }
+
+  if (field.type === 'check' && (field.options?.length ?? 0) > 1) {
+    return (
+      <div className="flex flex-col gap-2">
+        {(field.options ?? []).map((option) => (
+          <label key={option} className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              className="mt-0.5 size-4 shrink-0 accent-primary"
+              checked={field.defaultValue === option}
+              onChange={() =>
+                onChange({ defaultValue: field.defaultValue === option ? '' : option })
+              }
+            />
+            {option}
+          </label>
+        ))}
+      </div>
+    );
+  }
+
+  if (field.type === 'check') {
+    return (
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          className="size-4 accent-primary"
+          checked={field.defaultValue === 'ja'}
+          onChange={(event) => onChange({ defaultValue: event.target.checked ? 'ja' : '' })}
+        />
+        Bereits angekreuzt
+      </label>
+    );
+  }
+
+  return (
+    <Input
+      id={`${field.key}-default`}
+      type={field.type === 'date' ? 'date' : 'text'}
+      value={field.defaultValue ?? ''}
+      aria-label="Antwort"
+      onChange={(event) => onChange({ defaultValue: event.target.value })}
+    />
   );
 }
