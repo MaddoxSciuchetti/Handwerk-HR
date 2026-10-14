@@ -556,6 +556,29 @@ export async function sendFilledEmploymentContract(
                     conversationId: providerId,
                 },
             });
+            const contractTasks = await tx.issue.findMany({
+                where: {
+                    workerEngagementId: params.engagementId,
+                    title: "Arbeitsvertrag",
+                    kind: "standard",
+                    status: "open",
+                },
+            });
+            for (const contractTask of contractTasks) {
+                await tx.issue.update({
+                    where: { id: contractTask.id },
+                    data: { status: "in_progress" },
+                });
+                await tx.issueAuditLog.create({
+                    data: {
+                        issueId: contractTask.id,
+                        actorUserId: params.actorUserId,
+                        action: "issue.updated",
+                        oldValue: { status: contractTask.status },
+                        newValue: { status: "in_progress" },
+                    },
+                });
+            }
             await tx.issue.deleteMany({ where: { id: issue.id } });
         },
     });
