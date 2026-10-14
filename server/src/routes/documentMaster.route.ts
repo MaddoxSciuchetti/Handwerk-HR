@@ -3,6 +3,7 @@ import {
   createMaster,
   getMaster,
   listMasters,
+  setPrimaryMaster,
   updateMaster,
   getDocumentFontStatus,
   previewMasterPdf,
@@ -15,6 +16,7 @@ documentMasterRoutes.get("/", listMasters);
 documentMasterRoutes.get("/font-status", getDocumentFontStatus);
 documentMasterRoutes.post("/", upload.single("file"), createMaster);
 documentMasterRoutes.get("/:id/preview.pdf", previewMasterPdf);
+documentMasterRoutes.post("/:id/primary", setPrimaryMaster);
 documentMasterRoutes.get("/:id", getMaster);
 documentMasterRoutes.put("/:id", updateMaster);
 

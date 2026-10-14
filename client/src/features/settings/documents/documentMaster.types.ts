@@ -12,6 +12,7 @@ export type DocumentMasterListItem = {
   id: string;
   name: string;
   kind: DocumentMasterKind;
+  isPrimary: boolean;
   updatedAt: string;
 };
 

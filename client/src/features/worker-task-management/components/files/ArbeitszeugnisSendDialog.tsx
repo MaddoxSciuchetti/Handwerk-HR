@@ -185,7 +185,7 @@ export function ArbeitszeugnisSendDialog({
       handleToggle={() => void close()}
       size={showAside ? 'max-w-5xl' : 'max-w-3xl'}
     >
-      <div className="flex max-h-[85vh] flex-col gap-4 overflow-hidden rounded-2xl bg-card p-6 text-card-foreground">
+      <div className="flex h-[85vh] max-h-[85vh] min-h-0 flex-col gap-4 overflow-hidden rounded-2xl bg-card p-6 text-card-foreground">
         {preview.isLoading ? <LoadingAlert className="min-h-40" /> : null}
         {preview.isError || (!preview.isLoading && !data) ? (
           <p className="text-sm text-destructive">
@@ -194,7 +194,7 @@ export function ArbeitszeugnisSendDialog({
         ) : null}
         {data ? (
           <>
-            <div className="pr-8">
+            <div className="shrink-0 pr-8">
               <h2 className="text-base font-medium">{data.name}</h2>
               <p className="text-sm text-muted-foreground">
                 {data.alreadySent
@@ -247,7 +247,7 @@ export function ArbeitszeugnisSendDialog({
                 />
               </div>
             )}
-            <div className="flex justify-end">
+            <div className="flex shrink-0 justify-end">
               {!data.alreadySent &&
                 (prepared ? (
                   <Button

@@ -2,10 +2,24 @@ import { useState, type DragEvent } from 'react';
 import type { Editor } from '@tiptap/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { contractFieldKey } from '../util/fieldKey.util';
 import { FIELD_DRAG_TYPE } from '../consts/editor.consts';
 
 type FieldType = 'text' | 'date' | 'checkbox';
+
+const FIELD_TYPES = [
+  { value: 'text', label: 'Text' },
+  { value: 'date', label: 'Datum' },
+  { value: 'checkbox', label: 'Kontrollkästchen' },
+] as const;
 
 type DocumentFieldInsertProps = {
   editor: Editor;
@@ -53,7 +67,7 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
         placeholder="Vorname, Nachname …"
         value={label}
         onChange={(event) => setLabel(event.target.value)}
-        className="w-44"
+        className="h-7 w-44"
         maxLength={120}
       />
       <Input
@@ -65,31 +79,38 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
             event.target.value.toLowerCase().replace(/[^a-z0-9_.]/g, '')
           )
         }
-        className="w-44"
+        className="h-7 w-44"
         maxLength={120}
         title="Gleicher Schlüssel = gemeinsamer Wert. Ein neuer Schlüssel erzeugt ein unabhängiges Feld."
       />
-      <select
-        aria-label="Feldtyp"
+      <Select
         value={fieldType}
-        onChange={(event) => {
-          const next = event.target.value as FieldType;
+        onValueChange={(value) => {
+          const next = value as FieldType;
           setFieldType(next);
           setRequired(next !== 'checkbox');
         }}
       >
-        <option value="text">Text</option>
-        <option value="date">Datum</option>
-        <option value="checkbox">Kontrollkästchen</option>
-      </select>
-      <label className="text-sm">
+        <SelectTrigger aria-label="Feldtyp" size="sm" className="w-40">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {FIELD_TYPES.map((type) => (
+            <SelectItem key={type.value} value={type.value}>
+              {type.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Label className="h-7 gap-1.5 px-1 text-xs font-normal">
         <input
           type="checkbox"
+          className="size-3.5 accent-primary"
           checked={required}
           onChange={(event) => setRequired(event.target.checked)}
-        />{' '}
+        />
         {fieldType === 'checkbox' ? 'Muss angekreuzt sein' : 'Pflichtfeld'}
-      </label>
+      </Label>
       <Button
         type="button"
         size="sm"
@@ -101,7 +122,7 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
       {label.trim() ? (
         <span
           draggable
-          className="cursor-grab rounded border px-2 py-1 text-sm"
+          className="inline-flex h-7 cursor-grab items-center rounded-lg border bg-background px-2 text-xs"
           onDragStart={startFieldDrag}
         >
           Feld ins Dokument ziehen: {label}

@@ -24,6 +24,7 @@ export type DocumentMasterListItem = {
     id: string;
     name: string;
     kind: DocumentMasterKind;
+    isPrimary: boolean;
     updatedAt: Date;
 };
 
@@ -45,10 +46,19 @@ function asKind(kind: string): DocumentMasterKind {
     return kind as DocumentMasterKind;
 }
 
+const masterSelect = {
+    id: true,
+    name: true,
+    kind: true,
+    isPrimary: true,
+    updatedAt: true,
+} as const;
+
 function toDetail(master: {
     id: string;
     name: string;
     kind: DocumentMasterKind;
+    isPrimary: boolean;
     body: Parameters<typeof readDocumentSegments>[0];
     updatedAt: Date;
     revision: number;
@@ -60,6 +70,7 @@ function toDetail(master: {
         id: master.id,
         name: master.name,
         kind: master.kind,
+        isPrimary: master.isPrimary,
         text: textFromSegments(segments),
         segments,
         updatedAt: master.updatedAt,
@@ -71,18 +82,34 @@ function toDetail(master: {
     };
 }
 
+export async function primaryEmploymentContract(
+    organizationId: string,
+    db: Prisma.TransactionClient | typeof prisma = prisma,
+) {
+    const marked = await db.documentMaster.findFirst({
+        where: {
+            organizationId,
+            kind: DocumentMasterKind.employment_contract,
+            isPrimary: true,
+        },
+    });
+    if (marked) return marked;
+    return db.documentMaster.findFirst({
+        where: {
+            organizationId,
+            kind: DocumentMasterKind.employment_contract,
+        },
+        orderBy: { updatedAt: "desc" },
+    });
+}
+
 export async function listDocumentMasters(
     organizationId: string,
 ): Promise<DocumentMasterListItem[]> {
     return prisma.documentMaster.findMany({
         where: { organizationId },
-        orderBy: { updatedAt: "desc" },
-        select: {
-            id: true,
-            name: true,
-            kind: true,
-            updatedAt: true,
-        },
+        orderBy: [{ isPrimary: "desc" }, { updatedAt: "desc" }],
+        select: masterSelect,
     });
 }
 
@@ -96,11 +123,22 @@ export async function createDocumentMaster(params: {
     sourceMime?: string;
     sourceName?: string;
 }): Promise<DocumentMasterDetail> {
+    const kind = asKind(params.kind);
+    const marked = await prisma.documentMaster.findFirst({
+        where: {
+            organizationId: params.organizationId,
+            kind: DocumentMasterKind.employment_contract,
+            isPrimary: true,
+        },
+        select: { id: true },
+    });
     const created = await prisma.documentMaster.create({
         data: {
             organizationId: params.organizationId,
-            kind: asKind(params.kind),
+            kind,
             name: params.name,
+            isPrimary:
+                kind === DocumentMasterKind.employment_contract && !marked,
             body: (params.document ??
                 documentBody(
                     segmentsFromText(params.text ?? ""),
@@ -113,6 +151,7 @@ export async function createDocumentMaster(params: {
             id: true,
             name: true,
             kind: true,
+            isPrimary: true,
             body: true,
             revision: true,
             approvedAt: true,
@@ -134,6 +173,7 @@ export async function getDocumentMaster(
             id: true,
             name: true,
             kind: true,
+            isPrimary: true,
             body: true,
             revision: true,
             approvedAt: true,
@@ -193,4 +233,54 @@ export async function updateDocumentMaster(params: {
             "Die Vorlage wurde inzwischen geändert. Bitte neu laden.",
         );
     return getDocumentMaster(params.id, params.organizationId);
+}
+
+export async function setPrimaryDocumentMaster(
+    id: string,
+    organizationId: string,
+): Promise<DocumentMasterDetail> {
+    const master = await prisma.documentMaster.findFirst({
+        where: { id, organizationId },
+        select: { id: true, kind: true, isPrimary: true },
+    });
+    if (!master) {
+        throw new AppError(NOT_FOUND, "Dokument nicht gefunden.");
+    }
+    if (master.kind !== DocumentMasterKind.employment_contract) {
+        throw new AppError(
+            BAD_REQUEST,
+            "Nur ein Arbeitsvertrag kann die Versandvorlage sein.",
+        );
+    }
+    if (master.isPrimary) return getDocumentMaster(id, organizationId);
+
+    try {
+        await prisma.$transaction(async (tx) => {
+            await tx.documentMaster.updateMany({
+                where: {
+                    organizationId,
+                    kind: DocumentMasterKind.employment_contract,
+                    isPrimary: true,
+                },
+                data: { isPrimary: false },
+            });
+            await tx.documentMaster.update({
+                where: { id: master.id },
+                data: { isPrimary: true },
+            });
+        });
+    } catch (error) {
+        if (
+            error instanceof Prisma.PrismaClientKnownRequestError &&
+            error.code === "P2002"
+        ) {
+            throw new AppError(
+                CONFLICT,
+                "Die Versandvorlage wurde gerade geändert. Bitte erneut versuchen.",
+            );
+        }
+        throw error;
+    }
+
+    return getDocumentMaster(id, organizationId);
 }

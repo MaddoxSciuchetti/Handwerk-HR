@@ -5,6 +5,19 @@ export type PreparedPdf = {
   masterRevision: number;
   status?: string;
 };
+
+function viewerSrc(url: string) {
+  const hashIndex = url.indexOf('#');
+  const base = hashIndex === -1 ? url : url.slice(0, hashIndex);
+  const params = new URLSearchParams(
+    hashIndex === -1 ? '' : url.slice(hashIndex + 1)
+  );
+  params.set('view', 'FitH');
+  params.set('toolbar', '1');
+  params.set('navpanes', '0');
+  params.set('scrollbar', '1');
+  return `${base}#${params.toString()}`;
+}
 type PreparedPdfPreviewProps = {
   prepared: PreparedPdf;
   approved: boolean;
@@ -16,27 +29,29 @@ export function PreparedPdfPreview({
   onApprove,
 }: PreparedPdfPreviewProps) {
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3">
-      <iframe
-        title="Finales PDF vor dem Versand"
-        src={prepared.previewUrl}
-        className="min-h-80 w-full flex-1 rounded border"
-      />
+    <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
+      <div className="relative min-h-0 flex-1 overflow-hidden rounded border bg-muted">
+        <iframe
+          title="Finales PDF vor dem Versand"
+          src={viewerSrc(prepared.previewUrl)}
+          className="absolute inset-0 h-full w-full"
+        />
+      </div>
       <a
         href={prepared.previewUrl}
         target="_blank"
         rel="noreferrer"
-        className="text-sm underline"
+        className="shrink-0 text-sm underline"
       >
         PDF in neuem Fenster öffnen
       </a>
       {['sending', 'uncertain'].includes(prepared.status ?? '') ? (
-        <p className="text-sm text-destructive">
+        <p className="shrink-0 text-sm text-destructive">
           Versand läuft oder der Status ist unklar. Bitte den Postausgang prüfen
           lassen; erneuter Versand ist gesperrt.
         </p>
       ) : (
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex shrink-0 items-center gap-2 text-sm">
           <input
             type="checkbox"
             checked={approved}
