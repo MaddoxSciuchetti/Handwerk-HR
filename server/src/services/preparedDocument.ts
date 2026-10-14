@@ -59,6 +59,7 @@ export async function currentPreparation(scope: PreparedScope) {
                 id: artifact.masterId,
                 organizationId: scope.organizationId,
                 revision: artifact.masterRevision,
+                deletedAt: null,
             },
         });
         if (!master) return null;
@@ -152,6 +153,7 @@ export async function prepareDocument(
             id: params.masterId,
             organizationId: params.organizationId,
             kind: params.kind,
+            deletedAt: null,
         },
     });
     if (!master) throw new AppError(NOT_FOUND, "Vorlage nicht gefunden.");
@@ -210,6 +212,7 @@ export async function prepareDocument(
             where: {
                 id: master.id,
                 revision: master.revision,
+                deletedAt: null,
             },
         });
         if (!latest)
@@ -351,6 +354,7 @@ export async function sendPreparedDocument(
                 id: artifact.masterId,
                 organizationId: params.organizationId,
                 revision: artifact.masterRevision,
+                deletedAt: null,
             },
         });
         if (!master)

@@ -137,6 +137,7 @@ async function alignUnsentContractToPrimary(
             organizationId,
             kind: "employment_contract",
             isPrimary: true,
+            deletedAt: null,
         },
         select: { id: true },
     });

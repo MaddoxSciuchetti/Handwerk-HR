@@ -3,7 +3,6 @@ import { RadioGroupItem } from '@/components/ui/radio-group';
 type PrimaryContractMarkProps = {
   id: string;
   name: string;
-  isPrimary: boolean;
 };
 
 export function primaryContractLabel(name: string) {
@@ -13,7 +12,6 @@ export function primaryContractLabel(name: string) {
 export function PrimaryContractMark({
   id,
   name,
-  isPrimary,
 }: PrimaryContractMarkProps) {
   return (
     <div className="flex shrink-0 items-center gap-2">
@@ -22,11 +20,6 @@ export function PrimaryContractMark({
         aria-label={primaryContractLabel(name)}
         onClick={(event) => event.stopPropagation()}
       />
-      {isPrimary ? (
-        <span className="typo-body-xs rounded-full border border-border bg-secondary px-3 py-1 text-secondary-foreground">
-          Für den Versand
-        </span>
-      ) : null}
     </div>
   );
 }

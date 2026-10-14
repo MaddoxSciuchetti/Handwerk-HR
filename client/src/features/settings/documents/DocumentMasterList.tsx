@@ -1,5 +1,5 @@
 import { RadioGroup } from '@/components/ui/radio-group';
-import { GrowingItem, Items } from '@/features/settings/components/Table';
+import { Items } from '@/features/settings/components/Table';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { DocumentMasterDelete } from './components/DocumentMasterDelete';
@@ -54,14 +54,10 @@ export function DocumentMasterList({ masters }: DocumentMasterListProps) {
               })
             }
           >
-            <GrowingItem className="min-w-0 flex-1 justify-between gap-3 py-0">
-              <div className="flex min-w-0 items-center gap-3">
+            <div className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 sm:grid-cols-[minmax(0,1fr)_19rem_auto]">
+              <div className="col-start-1 row-start-1 flex min-w-0 items-center gap-3">
                 {master.kind === 'employment_contract' ? (
-                  <PrimaryContractMark
-                    id={master.id}
-                    name={master.name}
-                    isPrimary={master.isPrimary}
-                  />
+                  <PrimaryContractMark id={master.id} name={master.name} />
                 ) : (
                   <span className="size-4 shrink-0" />
                 )}
@@ -69,11 +65,24 @@ export function DocumentMasterList({ masters }: DocumentMasterListProps) {
                   {master.name}
                 </p>
               </div>
-              <span className="typo-body-xs shrink-0 rounded-full border border-border bg-secondary px-3 py-1 text-secondary-foreground">
-                {DOCUMENT_MASTER_KIND_LABELS[master.kind]}
-              </span>
-              <DocumentMasterDelete id={master.id} name={master.name} />
-            </GrowingItem>
+              <div className="col-start-1 row-start-2 flex flex-wrap items-center gap-2 sm:col-start-2 sm:row-start-1 sm:grid sm:grid-cols-[9rem_10rem] sm:gap-0">
+                <div>
+                  {master.isPrimary ? (
+                    <span className="typo-body-xs inline-flex rounded-full border border-border bg-secondary px-3 py-1 text-secondary-foreground">
+                      Für den Versand
+                    </span>
+                  ) : null}
+                </div>
+                <div>
+                  <span className="typo-body-xs inline-flex rounded-full border border-border bg-secondary px-3 py-1 text-secondary-foreground">
+                    {DOCUMENT_MASTER_KIND_LABELS[master.kind]}
+                  </span>
+                </div>
+              </div>
+              <div className="col-start-2 row-start-1 sm:col-start-3">
+                <DocumentMasterDelete id={master.id} name={master.name} />
+              </div>
+            </div>
           </Items>
         ))}
       </RadioGroup>

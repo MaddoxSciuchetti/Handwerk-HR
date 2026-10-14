@@ -28,7 +28,7 @@ export async function automationDocumentPage(
             select: { documentMasterId: true },
         }),
         prisma.documentMaster.findMany({
-            where: { organizationId, kind: "arbeitszeugnis" },
+            where: { organizationId, kind: "arbeitszeugnis", deletedAt: null },
             orderBy: { updatedAt: "desc" },
             select: { id: true, name: true },
         }),
@@ -52,6 +52,7 @@ export async function saveAutomationDocument(params: {
             id: params.documentMasterId,
             organizationId: params.organizationId,
             kind: "arbeitszeugnis",
+            deletedAt: null,
         },
         select: { id: true },
     });

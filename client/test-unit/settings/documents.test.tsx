@@ -35,17 +35,39 @@ describe('document settings', () => {
   beforeEach(() => navigate.mockClear());
   it('requires a chosen name instead of copying a generated upload filename', async () => {
     const user = userEvent.setup();
-    const file = new File(['contract'], '1728896800-086dd584-78be-47d7-bf77-67d09eea79e1.pdf', { type: 'application/pdf' });
+    const file = new File(
+      ['contract'],
+      '1728896800-086dd584-78be-47d7-bf77-67d09eea79e1.pdf',
+      { type: 'application/pdf' }
+    );
     renderWithProviders(<AddDocumentMasterDialog onClose={vi.fn()} />);
     await user.upload(screen.getByLabelText('Datei'), file);
     expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('');
     expect(screen.getByRole('button', { name: 'Anlegen' })).toBeDisabled();
-    await user.type(screen.getByRole('textbox', { name: 'Name' }), 'Arbeitsvertrag Montage');
+    await user.type(
+      screen.getByRole('textbox', { name: 'Name' }),
+      'Arbeitsvertrag Montage'
+    );
     expect(screen.getByRole('button', { name: 'Anlegen' })).toBeEnabled();
-    vi.mocked(createDocumentMaster).mockResolvedValue({ id: 'chosen-contract' } as Awaited<ReturnType<typeof createDocumentMaster>>);
-    fireEvent.submit(screen.getByRole('button', { name: 'Anlegen' }).closest('form')!);
-    await waitFor(() => expect(createDocumentMaster).toHaveBeenCalledWith({ kind: 'employment_contract', name: 'Arbeitsvertrag Montage', file }));
-    await waitFor(() => expect(navigate).toHaveBeenCalledWith({ to: '/settings/documents/$id', params: { id: 'chosen-contract' } }));
+    vi.mocked(createDocumentMaster).mockResolvedValue({
+      id: 'chosen-contract',
+    } as Awaited<ReturnType<typeof createDocumentMaster>>);
+    fireEvent.submit(
+      screen.getByRole('button', { name: 'Anlegen' }).closest('form')!
+    );
+    await waitFor(() =>
+      expect(createDocumentMaster).toHaveBeenCalledWith({
+        kind: 'employment_contract',
+        name: 'Arbeitsvertrag Montage',
+        file,
+      })
+    );
+    await waitFor(() =>
+      expect(navigate).toHaveBeenCalledWith({
+        to: '/settings/documents/$id',
+        params: { id: 'chosen-contract' },
+      })
+    );
   });
   it('chooses the new document type from a dropdown containing Arbeitszeugnis', async () => {
     const user = userEvent.setup();
@@ -101,6 +123,45 @@ describe('document settings', () => {
 
     expect(deleteDocumentMaster).toHaveBeenCalledWith('master-1');
     expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('keeps a template visible until deletion succeeds and keeps it absent after reloading the list', async () => {
+    const user = userEvent.setup();
+    const master = {
+      id: 'persistent-delete',
+      name: 'Alte Vorlage',
+      kind: 'employment_contract' as const,
+      isPrimary: true,
+      updatedAt: '2026-10-14T00:00:00.000Z',
+    };
+    let masters = [master];
+    vi.mocked(listDocumentMasters).mockImplementation(async () => masters);
+    let finishDelete!: () => void;
+    vi.mocked(deleteDocumentMaster).mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          finishDelete = () => {
+            masters = [];
+            resolve();
+          };
+        })
+    );
+    const view = renderWithProviders(<DocumentsPage />);
+    await user.click(
+      await screen.findByRole('button', { name: 'Alte Vorlage löschen' })
+    );
+    expect(screen.getByText('Alte Vorlage')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Alte Vorlage löschen' })
+    ).toBeDisabled();
+    finishDelete();
+    await waitFor(() =>
+      expect(screen.queryByText('Alte Vorlage')).not.toBeInTheDocument()
+    );
+    view.unmount();
+    renderWithProviders(<DocumentsPage />);
+    expect(await screen.findByText(/Noch keine Dokumente/)).toBeInTheDocument();
+    expect(screen.queryByText('Alte Vorlage')).not.toBeInTheDocument();
   });
 
   it('marks one employment contract as the template used for sending', async () => {

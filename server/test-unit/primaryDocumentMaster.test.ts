@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import {
     deleteDocumentMaster,
     primaryEmploymentContract,
+    listDocumentMasters,
     setPrimaryDocumentMaster,
 } from "@/services/documentMaster.service";
 
@@ -9,13 +10,14 @@ jest.mock("@/lib/prisma", () => ({
     prisma: {
         documentMaster: {
             findFirst: jest.fn(),
+            findMany: jest.fn(),
             updateMany: jest.fn(),
             update: jest.fn(),
             delete: jest.fn(),
         },
         employmentContract: { count: jest.fn() },
         arbeitszeugnis: { count: jest.fn() },
-        automationDocumentSetting: { count: jest.fn() },
+        automationDocumentSetting: { count: jest.fn(), deleteMany: jest.fn() },
         $transaction: jest.fn(),
     },
 }));
@@ -45,6 +47,7 @@ it("uses the marked employment contract instead of the latest template", async (
             organizationId: "org",
             kind: "employment_contract",
             isPrimary: true,
+            deletedAt: null,
         },
     });
 });
@@ -80,7 +83,7 @@ it("marks one employment contract and clears the previous mark", async () => {
         data: { isPrimary: false },
     });
     expect(prisma.documentMaster.update).toHaveBeenCalledWith({
-        where: { id: "next" },
+        where: { id: "next", deletedAt: null },
         data: { isPrimary: true },
     });
     expect(saved.isPrimary).toBe(true);
@@ -100,27 +103,36 @@ it("rejects marking an Arbeitszeugnis as the contract template", async () => {
     expect(prisma.documentMaster.update).not.toHaveBeenCalled();
 });
 
-it("deletes a document that is not used by a contract or automation", async () => {
-    (prisma.documentMaster.findFirst as jest.Mock).mockResolvedValue({ id: "draft" });
-    (prisma.employmentContract.count as jest.Mock).mockResolvedValue(0);
-    (prisma.arbeitszeugnis.count as jest.Mock).mockResolvedValue(0);
-    (prisma.automationDocumentSetting.count as jest.Mock).mockResolvedValue(0);
+it("removes even an in-use template from the library without deleting historical records", async () => {
+    (prisma.documentMaster.findFirst as jest.Mock).mockResolvedValue({ id: "used" });
+    await deleteDocumentMaster("used", "org");
+    expect(prisma.documentMaster.updateMany).toHaveBeenCalledWith({
+        where: { id: "used", organizationId: "org", deletedAt: null },
+        data: { deletedAt: expect.any(Date), isPrimary: false },
+    });
+    expect(prisma.automationDocumentSetting.deleteMany).toHaveBeenCalledWith({
+        where: { organizationId: "org", documentMasterId: "used" },
+    });
+    expect(prisma.documentMaster.delete).not.toHaveBeenCalled();
+    expect(prisma.employmentContract.count).not.toHaveBeenCalled();
+});
 
-    await deleteDocumentMaster("draft", "org");
-
-    expect(prisma.documentMaster.delete).toHaveBeenCalledWith({
-        where: { id: "draft" },
+it("hides removed templates from the library and from primary fallback selection", async () => {
+    (prisma.documentMaster.findMany as jest.Mock).mockResolvedValue([]);
+    await expect(listDocumentMasters("org")).resolves.toEqual([]);
+    expect(prisma.documentMaster.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: { organizationId: "org", deletedAt: null },
+    }));
+    (prisma.documentMaster.findFirst as jest.Mock).mockResolvedValue(null);
+    await primaryEmploymentContract("org");
+    expect(prisma.documentMaster.findFirst).toHaveBeenLastCalledWith({
+        where: { organizationId: "org", kind: "employment_contract", deletedAt: null },
+        orderBy: { updatedAt: "desc" },
     });
 });
 
-it("keeps a document that is still used", async () => {
-    (prisma.documentMaster.findFirst as jest.Mock).mockResolvedValue({ id: "used" });
-    (prisma.employmentContract.count as jest.Mock).mockResolvedValue(1);
-    (prisma.arbeitszeugnis.count as jest.Mock).mockResolvedValue(0);
-    (prisma.automationDocumentSetting.count as jest.Mock).mockResolvedValue(0);
-
-    await expect(deleteDocumentMaster("used", "org")).rejects.toThrow(
-        "noch verwendet",
-    );
-    expect(prisma.documentMaster.delete).not.toHaveBeenCalled();
+it("does not remove another organization's template", async () => {
+    (prisma.documentMaster.findFirst as jest.Mock).mockResolvedValue(null);
+    await expect(deleteDocumentMaster("foreign", "org")).rejects.toThrow("Dokument nicht gefunden");
+    expect(prisma.documentMaster.updateMany).not.toHaveBeenCalled();
 });

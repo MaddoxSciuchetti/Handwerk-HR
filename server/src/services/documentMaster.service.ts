@@ -91,6 +91,7 @@ export async function primaryEmploymentContract(
             organizationId,
             kind: DocumentMasterKind.employment_contract,
             isPrimary: true,
+            deletedAt: null,
         },
     });
     if (marked) return marked;
@@ -98,6 +99,7 @@ export async function primaryEmploymentContract(
         where: {
             organizationId,
             kind: DocumentMasterKind.employment_contract,
+            deletedAt: null,
         },
         orderBy: { updatedAt: "desc" },
     });
@@ -107,7 +109,7 @@ export async function listDocumentMasters(
     organizationId: string,
 ): Promise<DocumentMasterListItem[]> {
     return prisma.documentMaster.findMany({
-        where: { organizationId },
+        where: { organizationId, deletedAt: null },
         orderBy: [{ isPrimary: "desc" }, { updatedAt: "desc" }],
         select: masterSelect,
     });
@@ -129,6 +131,7 @@ export async function createDocumentMaster(params: {
             organizationId: params.organizationId,
             kind: DocumentMasterKind.employment_contract,
             isPrimary: true,
+            deletedAt: null,
         },
         select: { id: true },
     });
@@ -168,7 +171,7 @@ export async function getDocumentMaster(
     organizationId: string,
 ): Promise<DocumentMasterDetail> {
     const master = await prisma.documentMaster.findFirst({
-        where: { id, organizationId },
+        where: { id, organizationId, deletedAt: null },
         select: {
             id: true,
             name: true,
@@ -205,7 +208,7 @@ export async function updateDocumentMaster(params: {
     approved?: boolean;
 }): Promise<DocumentMasterDetail> {
     const existing = await prisma.documentMaster.findFirst({
-        where: { id: params.id, organizationId: params.organizationId },
+        where: { id: params.id, organizationId: params.organizationId, deletedAt: null },
         select: { id: true, revision: true },
     });
 
@@ -218,6 +221,7 @@ export async function updateDocumentMaster(params: {
             id: params.id,
             organizationId: params.organizationId,
             revision: params.revision ?? existing.revision,
+            deletedAt: null,
         },
         data: {
             name: params.name,
@@ -240,7 +244,7 @@ export async function setPrimaryDocumentMaster(
     organizationId: string,
 ): Promise<DocumentMasterDetail> {
     const master = await prisma.documentMaster.findFirst({
-        where: { id, organizationId },
+        where: { id, organizationId, deletedAt: null },
         select: { id: true, kind: true, isPrimary: true },
     });
     if (!master) {
@@ -265,7 +269,7 @@ export async function setPrimaryDocumentMaster(
                 data: { isPrimary: false },
             });
             await tx.documentMaster.update({
-                where: { id: master.id },
+                where: { id: master.id, deletedAt: null },
                 data: { isPrimary: true },
             });
         });
@@ -290,26 +294,20 @@ export async function deleteDocumentMaster(
     organizationId: string,
 ): Promise<void> {
     const master = await prisma.documentMaster.findFirst({
-        where: { id, organizationId },
+        where: { id, organizationId, deletedAt: null },
         select: { id: true },
     });
     if (!master) {
         throw new AppError(NOT_FOUND, "Dokument nicht gefunden.");
     }
 
-    const [contracts, certificates, settings] = await Promise.all([
-        prisma.employmentContract.count({ where: { masterId: id } }),
-        prisma.arbeitszeugnis.count({ where: { masterId: id } }),
-        prisma.automationDocumentSetting.count({
-            where: { documentMasterId: id },
-        }),
-    ]);
-    if (contracts > 0 || certificates > 0 || settings > 0) {
-        throw new AppError(
-            CONFLICT,
-            "Dieses Dokument wird noch verwendet und kann nicht gelöscht werden.",
-        );
-    }
-
-    await prisma.documentMaster.delete({ where: { id: master.id } });
+    await prisma.$transaction(async (tx) => {
+        await tx.automationDocumentSetting.deleteMany({
+            where: { organizationId, documentMasterId: id },
+        });
+        await tx.documentMaster.updateMany({
+            where: { id: master.id, organizationId, deletedAt: null },
+            data: { deletedAt: new Date(), isPrimary: false },
+        });
+    });
 }
