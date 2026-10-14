@@ -29,6 +29,7 @@ import { Route as SettingsDepartureMailRouteImport } from './routes/settings/dep
 import { Route as SettingsAutomationRouteImport } from './routes/settings/automation'
 import { Route as PasswordResetRouteImport } from './routes/password/reset'
 import { Route as PasswordForgotRouteImport } from './routes/password/forgot'
+import { Route as FragebogenPreviewRouteImport } from './routes/fragebogen/preview'
 import { Route as FragebogenTokenRouteImport } from './routes/fragebogen/$token'
 import { Route as SettingsTemplatesTemplateRouteImport } from './routes/settings/templates/template'
 import { Route as SettingsTemplatesIdRouteImport } from './routes/settings/templates/$id'
@@ -135,6 +136,11 @@ const PasswordForgotRoute = PasswordForgotRouteImport.update({
   path: '/password/forgot',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FragebogenPreviewRoute = FragebogenPreviewRouteImport.update({
+  id: '/fragebogen/preview',
+  path: '/fragebogen/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FragebogenTokenRoute = FragebogenTokenRouteImport.update({
   id: '/fragebogen/$token',
   path: '/fragebogen/$token',
@@ -172,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/tasks': typeof TasksRoute
   '/worker-lifycycle': typeof WorkerLifycycleRoute
   '/fragebogen/$token': typeof FragebogenTokenRoute
+  '/fragebogen/preview': typeof FragebogenPreviewRoute
   '/password/forgot': typeof PasswordForgotRoute
   '/password/reset': typeof PasswordResetRoute
   '/settings/automation': typeof SettingsAutomationRoute
@@ -199,6 +206,7 @@ export interface FileRoutesByTo {
   '/tasks': typeof TasksRoute
   '/worker-lifycycle': typeof WorkerLifycycleRoute
   '/fragebogen/$token': typeof FragebogenTokenRoute
+  '/fragebogen/preview': typeof FragebogenPreviewRoute
   '/password/forgot': typeof PasswordForgotRoute
   '/password/reset': typeof PasswordResetRoute
   '/settings/automation': typeof SettingsAutomationRoute
@@ -227,6 +235,7 @@ export interface FileRoutesById {
   '/tasks': typeof TasksRoute
   '/worker-lifycycle': typeof WorkerLifycycleRoute
   '/fragebogen/$token': typeof FragebogenTokenRoute
+  '/fragebogen/preview': typeof FragebogenPreviewRoute
   '/password/forgot': typeof PasswordForgotRoute
   '/password/reset': typeof PasswordResetRoute
   '/settings/automation': typeof SettingsAutomationRoute
@@ -256,6 +265,7 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/worker-lifycycle'
     | '/fragebogen/$token'
+    | '/fragebogen/preview'
     | '/password/forgot'
     | '/password/reset'
     | '/settings/automation'
@@ -283,6 +293,7 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/worker-lifycycle'
     | '/fragebogen/$token'
+    | '/fragebogen/preview'
     | '/password/forgot'
     | '/password/reset'
     | '/settings/automation'
@@ -310,6 +321,7 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/worker-lifycycle'
     | '/fragebogen/$token'
+    | '/fragebogen/preview'
     | '/password/forgot'
     | '/password/reset'
     | '/settings/automation'
@@ -338,6 +350,7 @@ export interface RootRouteChildren {
   TasksRoute: typeof TasksRoute
   WorkerLifycycleRoute: typeof WorkerLifycycleRoute
   FragebogenTokenRoute: typeof FragebogenTokenRoute
+  FragebogenPreviewRoute: typeof FragebogenPreviewRoute
   PasswordForgotRoute: typeof PasswordForgotRoute
   PasswordResetRoute: typeof PasswordResetRoute
   UserIdRoute: typeof UserIdRoute
@@ -486,6 +499,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PasswordForgotRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/fragebogen/preview': {
+      id: '/fragebogen/preview'
+      path: '/fragebogen/preview'
+      fullPath: '/fragebogen/preview'
+      preLoaderRoute: typeof FragebogenPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/fragebogen/$token': {
       id: '/fragebogen/$token'
       path: '/fragebogen/$token'
@@ -577,6 +597,7 @@ const rootRouteChildren: RootRouteChildren = {
   TasksRoute: TasksRoute,
   WorkerLifycycleRoute: WorkerLifycycleRoute,
   FragebogenTokenRoute: FragebogenTokenRoute,
+  FragebogenPreviewRoute: FragebogenPreviewRoute,
   PasswordForgotRoute: PasswordForgotRoute,
   PasswordResetRoute: PasswordResetRoute,
   UserIdRoute: UserIdRoute,

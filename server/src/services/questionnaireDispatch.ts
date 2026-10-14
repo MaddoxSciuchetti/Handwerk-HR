@@ -11,6 +11,7 @@ import {
     type QuestionnaireDefinition,
     type QuestionnaireFieldItem,
 } from "@/services/questionnaireDefinition";
+import { primaryEmploymentContract } from "@/services/documentMaster.service";
 import { questionnaireForOrganization } from "@/services/questionnaireTemplate";
 import AppError from "@/utils/AppError";
 import { getQuestionnaireTemplate } from "@/utils/emailTemplates";
@@ -163,13 +164,10 @@ export async function sendEngagementQuestionnaire(params: {
                 formDefinition: definition,
             },
         });
-        const master = await tx.documentMaster.findFirst({
-            where: {
-                organizationId: params.organizationId,
-                kind: "employment_contract",
-            },
-            orderBy: { updatedAt: "desc" },
-        });
+        const master = await primaryEmploymentContract(
+            params.organizationId,
+            tx,
+        );
         if (master) {
             await tx.employmentContract.create({
                 data: {

@@ -8,6 +8,7 @@ import { WORKERBYID } from '@/features/worker-task-management/consts/query-key.c
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { ChoiceLineEditor, choiceLines } from './ChoiceLineEditor';
 import { QuestionnaireQuestion } from './QuestionnaireQuestion';
 import type {
   QuestionnaireQuestion as QuestionnaireQuestionData,
@@ -166,13 +167,22 @@ export function QuestionnaireSendDialog({
       .split('\n')
       .map((option) => option.trim())
       .filter(Boolean);
-    if (type === 'single' && choices.length < 2) return;
+    let fieldOptions: string[] | undefined;
+    if (type === 'single') {
+      if (choices.length < 2) return;
+      fieldOptions = choices;
+    }
+    if (type === 'check') {
+      const checkboxChoices = choiceLines(options);
+      if (!checkboxChoices) return;
+      fieldOptions = checkboxChoices;
+    }
     const question: AddedQuestion = {
       key: `custom.${crypto.randomUUID()}`,
       label: name,
       section: 'Weitere Angaben',
       type,
-      options: type === 'single' ? choices : undefined,
+      options: fieldOptions,
     };
     setAdded([...addedQuestions, question]);
     setValues((current) => ({ ...current, [question.key]: '' }));
@@ -241,6 +251,24 @@ export function QuestionnaireSendDialog({
                           setValues((current) => ({ ...current, [question.key]: value }))
                         }
                       />
+                      {extra && !sent && extra.type === 'check' ? (
+                        <ChoiceLineEditor
+                          options={extra.options ?? []}
+                          onChange={(options) => {
+                            setAdded(
+                              addedQuestions.map((item) =>
+                                item.key === question.key ? { ...item, options } : item
+                              )
+                            );
+                            setValues((current) => ({
+                              ...current,
+                              [question.key]: options.includes(current[question.key] ?? '')
+                                ? (current[question.key] ?? '')
+                                : '',
+                            }));
+                          }}
+                        />
+                      ) : null}
                       {extra && !sent ? (
                         <Button
                           type="button"
@@ -286,13 +314,20 @@ export function QuestionnaireSendDialog({
                     </option>
                   ))}
                 </select>
-                {type === 'single' ? (
-                  <textarea
-                    className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    value={options}
-                    aria-label="Antworten"
-                    onChange={(event) => setOptions(event.target.value)}
-                  />
+                {type === 'single' || type === 'check' ? (
+                  <>
+                    <textarea
+                      className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      value={options}
+                      aria-label={type === 'check' ? 'Text neben den Kästchen' : 'Antworten'}
+                      onChange={(event) => setOptions(event.target.value)}
+                    />
+                    {type === 'check' ? (
+                      <p className="text-xs text-muted-foreground">
+                        Jede Zeile steht neben einem Kästchen. Mindestens zwei.
+                      </p>
+                    ) : null}
+                  </>
                 ) : null}
                 <Button type="button" className="self-start rounded-2xl" onClick={addQuestion}>
                   Hinzufügen
