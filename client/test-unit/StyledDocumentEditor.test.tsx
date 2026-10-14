@@ -117,7 +117,7 @@ it('shows the actual prepared PDF and requires an explicit approval', () => {
   );
   expect(screen.getByTitle('Finales PDF vor dem Versand')).toHaveAttribute(
     'src',
-    'https://signed.example/pdf-1#view=FitH&toolbar=1&navpanes=0&scrollbar=1'
+    'https://signed.example/pdf-1#view=FitH&zoom=page-width&toolbar=1&navpanes=0&scrollbar=1'
   );
   expect(screen.getByRole('checkbox')).not.toBeChecked();
   fireEvent.click(screen.getByRole('checkbox'));

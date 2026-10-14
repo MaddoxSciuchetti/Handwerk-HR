@@ -2,6 +2,7 @@ import { RadioGroup } from '@/components/ui/radio-group';
 import { GrowingItem, Items } from '@/features/settings/components/Table';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
+import { DocumentMasterDelete } from './components/DocumentMasterDelete';
 import { PrimaryContractMark } from './components/PrimaryContractMark';
 import { DOCUMENT_MASTER_KIND_LABELS } from './documentMaster.types';
 import type { DocumentMasterListItem } from './documentMaster.types';
@@ -71,6 +72,7 @@ export function DocumentMasterList({ masters }: DocumentMasterListProps) {
               <span className="typo-body-xs shrink-0 rounded-full border border-border bg-secondary px-3 py-1 text-secondary-foreground">
                 {DOCUMENT_MASTER_KIND_LABELS[master.kind]}
               </span>
+              <DocumentMasterDelete id={master.id} name={master.name} />
             </GrowingItem>
           </Items>
         ))}

@@ -74,6 +74,32 @@ function createDataTransfer() {
 }
 
 describe('mail message field', () => {
+  it('accepts typed messages without Microsoft data', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<WelcomeMailForm page={{ settings: null, groups: [], groupsError: null }} />);
+    const editor = screen.getByRole('textbox', { name: 'Nachricht' });
+    expect(editor).toHaveAttribute('contenteditable', 'true');
+    await user.type(editor, 'Willkommen im Team');
+    expect(editor).toHaveTextContent('Willkommen im Team');
+    await user.click(screen.getByRole('button', { name: 'Vorname' }));
+    expect(editor).toHaveTextContent('Willkommen im Team Vorname');
+  });
+
+  it('allows editing departure messages containing placeholder pills', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<DepartureMailForm page={page} />);
+    const editor = screen.getByRole('textbox', { name: 'Nachricht' });
+    await user.click(editor);
+    const caret = document.createRange();
+    caret.selectNodeContents(editor);
+    caret.collapse(false);
+    window.getSelection()?.removeAllRanges();
+    window.getSelection()?.addRange(caret);
+    await user.keyboard(', alles Gute!');
+    expect(editor).toHaveTextContent('Hallo Vorname, alles Gute!');
+    expect(editor.querySelector('[data-mail-placeholder="Vorname"]')).toBeTruthy();
+  });
+
   it('drops a placeholder pill into the message and saves the token', () => {
     renderWithProviders(<MessageHarness />);
     const dataTransfer = createDataTransfer();
@@ -108,6 +134,19 @@ describe('mail message field', () => {
     expect(
       screen.getByRole('textbox', { name: 'Nachricht' })
     ).toHaveTextContent('Hallo Vorname Eintritt');
+  });
+
+  it('allows editing the sender without Microsoft data while team selection and saving remain disabled', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<WelcomeMailForm page={{ settings: null, groups: [], groupsError: null }} />);
+
+    const sender = screen.getByRole('textbox', { name: 'Absender' });
+    expect(sender).toBeEnabled();
+    expect(sender).toHaveValue('');
+    await user.type(sender, 'personal@firma.de');
+    expect(sender).toHaveValue('personal@firma.de');
+    expect(screen.getByRole('combobox', { name: 'Team' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Speichern' })).toBeDisabled();
   });
 
   it('uses departure pills without the template explanation', () => {

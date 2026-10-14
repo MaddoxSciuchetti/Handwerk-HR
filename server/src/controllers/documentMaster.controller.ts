@@ -1,8 +1,9 @@
 import { generateDocumentPdf } from "@/services/documentPdf";
 import { documentFields } from "../../../shared/document";
-import { BAD_REQUEST, CREATED, OK } from "@/constants/http";
+import { BAD_REQUEST, CREATED, NO_CONTENT, OK } from "@/constants/http";
 import {
   createDocumentMaster,
+  deleteDocumentMaster,
   getDocumentMaster,
   listDocumentMasters,
   setPrimaryDocumentMaster,
@@ -24,11 +25,6 @@ const NAME_MAX = 200;
 
 function param(value: string | string[]): string {
   return Array.isArray(value) ? value[0] : value;
-}
-
-function nameFromFile(filename: string): string {
-  const base = filename.replace(/\.[^.]+$/, "").trim();
-  return (base || "Dokument").slice(0, NAME_MAX);
 }
 
 function requireName(name: string): string {
@@ -53,6 +49,7 @@ export const createMaster = catchErrors(async (req, res) => {
 
   const body = req.body as { kind?: string; name?: string };
   appAssert(body.kind, BAD_REQUEST, "Dokumentart fehlt.");
+  const name = requireName(typeof body.name === "string" ? body.name : "");
 
   const imported = await importStyledDocument(file);
   const document = parseStyledDocument({
@@ -66,12 +63,6 @@ export const createMaster = catchErrors(async (req, res) => {
     stored.success && stored.key,
     BAD_REQUEST,
     "Original konnte nicht gespeichert werden.",
-  );
-
-  const name = requireName(
-    typeof body.name === "string" && body.name.trim().length > 0
-      ? body.name
-      : nameFromFile(file.originalname),
   );
 
   const master = await createDocumentMaster({
@@ -126,6 +117,12 @@ export const updateMaster = catchErrors(async (req, res) => {
   });
 
   return res.status(OK).json(master);
+});
+
+export const deleteMaster = catchErrors(async (req, res) => {
+  appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
+  await deleteDocumentMaster(param(req.params.id), req.orgId);
+  return res.status(NO_CONTENT).send();
 });
 
 export const setPrimaryMaster = catchErrors(async (req, res) => {

@@ -34,10 +34,6 @@ function messageFrom(error: unknown): string {
   return 'Das Dokument konnte nicht angelegt werden.';
 }
 
-function nameFromFile(file: File): string {
-  return file.name.replace(/\.[^.]+$/, '').trim();
-}
-
 export function AddDocumentMasterDialog({
   onClose,
 }: AddDocumentMasterDialogProps) {
@@ -113,9 +109,6 @@ export function AddDocumentMasterDialog({
             onChange={(event) => {
               const next = event.target.files?.[0] ?? null;
               setFile(next);
-              if (next && name.trim().length === 0) {
-                setName(nameFromFile(next));
-              }
             }}
           />
         </div>
@@ -127,6 +120,7 @@ export function AddDocumentMasterDialog({
             value={name}
             required
             maxLength={200}
+            placeholder="Name der Vorlage eingeben"
             onChange={(event) => setName(event.target.value)}
           />
         </div>
@@ -137,7 +131,7 @@ export function AddDocumentMasterDialog({
           </p>
         ) : null}
 
-        <Button type="submit" disabled={createMaster.isPending || !file}>
+        <Button type="submit" disabled={createMaster.isPending || !file || !name.trim()}>
           {createMaster.isPending ? 'Wird gelesen…' : 'Anlegen'}
         </Button>
       </form>

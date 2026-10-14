@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import {
+    deleteDocumentMaster,
     primaryEmploymentContract,
     setPrimaryDocumentMaster,
 } from "@/services/documentMaster.service";
@@ -10,7 +11,11 @@ jest.mock("@/lib/prisma", () => ({
             findFirst: jest.fn(),
             updateMany: jest.fn(),
             update: jest.fn(),
+            delete: jest.fn(),
         },
+        employmentContract: { count: jest.fn() },
+        arbeitszeugnis: { count: jest.fn() },
+        automationDocumentSetting: { count: jest.fn() },
         $transaction: jest.fn(),
     },
 }));
@@ -93,4 +98,29 @@ it("rejects marking an Arbeitszeugnis as the contract template", async () => {
         "Nur ein Arbeitsvertrag",
     );
     expect(prisma.documentMaster.update).not.toHaveBeenCalled();
+});
+
+it("deletes a document that is not used by a contract or automation", async () => {
+    (prisma.documentMaster.findFirst as jest.Mock).mockResolvedValue({ id: "draft" });
+    (prisma.employmentContract.count as jest.Mock).mockResolvedValue(0);
+    (prisma.arbeitszeugnis.count as jest.Mock).mockResolvedValue(0);
+    (prisma.automationDocumentSetting.count as jest.Mock).mockResolvedValue(0);
+
+    await deleteDocumentMaster("draft", "org");
+
+    expect(prisma.documentMaster.delete).toHaveBeenCalledWith({
+        where: { id: "draft" },
+    });
+});
+
+it("keeps a document that is still used", async () => {
+    (prisma.documentMaster.findFirst as jest.Mock).mockResolvedValue({ id: "used" });
+    (prisma.employmentContract.count as jest.Mock).mockResolvedValue(1);
+    (prisma.arbeitszeugnis.count as jest.Mock).mockResolvedValue(0);
+    (prisma.automationDocumentSetting.count as jest.Mock).mockResolvedValue(0);
+
+    await expect(deleteDocumentMaster("used", "org")).rejects.toThrow(
+        "noch verwendet",
+    );
+    expect(prisma.documentMaster.delete).not.toHaveBeenCalled();
 });

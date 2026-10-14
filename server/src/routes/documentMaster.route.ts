@@ -4,6 +4,7 @@ import {
   getMaster,
   listMasters,
   setPrimaryMaster,
+  deleteMaster,
   updateMaster,
   getDocumentFontStatus,
   previewMasterPdf,
@@ -19,5 +20,6 @@ documentMasterRoutes.get("/:id/preview.pdf", previewMasterPdf);
 documentMasterRoutes.post("/:id/primary", setPrimaryMaster);
 documentMasterRoutes.get("/:id", getMaster);
 documentMasterRoutes.put("/:id", updateMaster);
+documentMasterRoutes.delete("/:id", deleteMaster);
 
 export { documentMasterRoutes };

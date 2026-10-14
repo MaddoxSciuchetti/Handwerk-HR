@@ -34,23 +34,23 @@ export function QuestionTitle({ label, onCommit }: QuestionTitleProps) {
     return (
       <button
         type="button"
-        className="w-fit rounded-md px-1 py-0.5 text-left text-sm hover:bg-muted"
+        className="w-fit rounded-md px-1 text-left text-sm leading-none font-medium hover:bg-muted"
         onClick={() => setEditing(true)}
       >
-        <span className="font-medium">Frage: </span>
-        {label}
+        Frage: {label}
       </button>
     );
   }
 
   return (
-    <label className="flex items-center gap-2 text-sm font-medium">
+    <label className="flex items-center gap-1 text-sm leading-none font-medium">
       Frage:
       <Input
         autoFocus
         value={draft}
         maxLength={400}
         aria-label="Frage"
+        className="h-auto w-auto min-w-40 rounded-md px-1 py-0 text-sm leading-none md:text-sm"
         onChange={(event) => setDraft(event.target.value)}
         onBlur={commit}
         onKeyDown={(event) => {

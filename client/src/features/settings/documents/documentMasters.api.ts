@@ -39,6 +39,10 @@ export function setPrimaryDocumentMaster(
   );
 }
 
+export function deleteDocumentMaster(id: string): Promise<void> {
+  return API.delete(`/document-masters/${id}`);
+}
+
 export function updateDocumentMaster(
   id: string,
   input: {

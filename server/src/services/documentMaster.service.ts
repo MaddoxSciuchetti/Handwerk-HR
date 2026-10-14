@@ -284,3 +284,32 @@ export async function setPrimaryDocumentMaster(
 
     return getDocumentMaster(id, organizationId);
 }
+
+export async function deleteDocumentMaster(
+    id: string,
+    organizationId: string,
+): Promise<void> {
+    const master = await prisma.documentMaster.findFirst({
+        where: { id, organizationId },
+        select: { id: true },
+    });
+    if (!master) {
+        throw new AppError(NOT_FOUND, "Dokument nicht gefunden.");
+    }
+
+    const [contracts, certificates, settings] = await Promise.all([
+        prisma.employmentContract.count({ where: { masterId: id } }),
+        prisma.arbeitszeugnis.count({ where: { masterId: id } }),
+        prisma.automationDocumentSetting.count({
+            where: { documentMasterId: id },
+        }),
+    ]);
+    if (contracts > 0 || certificates > 0 || settings > 0) {
+        throw new AppError(
+            CONFLICT,
+            "Dieses Dokument wird noch verwendet und kann nicht gelöscht werden.",
+        );
+    }
+
+    await prisma.documentMaster.delete({ where: { id: master.id } });
+}
