@@ -214,6 +214,68 @@
   }
 }
 
+@keyframes confirmation-slime-flow {
+  0% {
+    background-position:
+      0% 40%,
+      100% 60%;
+  }
+  42% {
+    background-position:
+      70% 60%,
+      20% 40%;
+  }
+  100% {
+    background-position:
+      0% 40%,
+      100% 60%;
+  }
+}
+
+@keyframes confirmation-slime-drift {
+  0% {
+    background-position:
+      0% 40%,
+      80% 20%,
+      40% 80%;
+  }
+  45% {
+    background-position:
+      28% 70%,
+      42% 48%,
+      72% 24%;
+  }
+  100% {
+    background-position:
+      0% 40%,
+      80% 20%,
+      40% 80%;
+  }
+}
+
+@keyframes confirmation-glitter-drift {
+  0% {
+    opacity: 0.55;
+    transform: translate3d(0, 0, 0);
+  }
+  35% {
+    opacity: 1;
+    transform: translate3d(
+      var(--glitter-x),
+      calc(var(--glitter-y) * -0.45),
+      0
+    );
+  }
+  68% {
+    opacity: 0.7;
+    transform: translate3d(calc(var(--glitter-x) * -0.7), var(--glitter-y), 0);
+  }
+  100% {
+    opacity: 0.55;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
 @layer components {
   .automation-task-row > [data-slot='table-cell'] {
     position: relative;
@@ -258,12 +320,150 @@
     border-right: 1px solid var(--automation-accent);
     border-radius: 0 var(--radius-xl) var(--radius-xl) 0;
   }
+
+  .confirmation-task-row > [data-slot='table-cell']:first-child {
+    position: relative;
+    z-index: 1;
+  }
+
+  .confirmation-task-decor {
+    position: absolute;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    border-radius: var(--radius-xl);
+  }
+
+  .confirmation-slime-body {
+    position: absolute;
+    inset: 2mm;
+    border-radius: calc(var(--radius-xl) - 2mm);
+    background:
+      radial-gradient(
+        ellipse 42% 120% at 18% 50%,
+        oklch(0.62 0.2 300 / 22%),
+        transparent 70%
+      ),
+      radial-gradient(
+        ellipse 36% 130% at 62% 42%,
+        oklch(0.5 0.22 285 / 18%),
+        transparent 72%
+      ),
+      radial-gradient(
+        ellipse 30% 110% at 84% 60%,
+        oklch(0.7 0.16 318 / 16%),
+        transparent 70%
+      );
+    background-repeat: no-repeat;
+    background-size:
+      170% 170%,
+      150% 160%,
+      180% 180%;
+    filter: blur(8px);
+    animation: confirmation-slime-drift 20s ease-in-out infinite;
+  }
+
+  .confirmation-slime-outline {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    padding: 2mm;
+    border-radius: inherit;
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask-composite: exclude;
+  }
+
+  .confirmation-slime-spin {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(
+        105deg,
+        transparent 0%,
+        oklch(0.86 0.12 302 / 85%) 46%,
+        transparent 78%
+      ),
+      linear-gradient(
+        90deg,
+        oklch(0.38 0.27 292) 0%,
+        oklch(0.56 0.27 310) 22%,
+        oklch(0.46 0.29 276) 44%,
+        oklch(0.7 0.23 326) 68%,
+        oklch(0.5 0.26 298) 84%,
+        oklch(0.38 0.27 292) 100%
+      );
+    background-repeat: no-repeat;
+    background-size:
+      180% 100%,
+      220% 100%;
+    animation: confirmation-slime-flow 24s ease-in-out infinite;
+  }
+
+  .confirmation-glitter {
+    position: absolute;
+    border-radius: 999px;
+    background: oklch(0.98 0.03 300);
+    box-shadow: 0 0 3px 0.5px oklch(0.86 0.14 305 / 90%);
+    animation-name: confirmation-glitter-drift;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+  }
+
+  .dark .confirmation-slime-body {
+    background:
+      radial-gradient(
+        ellipse 42% 120% at 18% 50%,
+        oklch(0.72 0.18 300 / 55%),
+        transparent 70%
+      ),
+      radial-gradient(
+        ellipse 36% 130% at 62% 42%,
+        oklch(0.58 0.22 282 / 48%),
+        transparent 72%
+      ),
+      radial-gradient(
+        ellipse 30% 110% at 84% 60%,
+        oklch(0.76 0.16 322 / 46%),
+        transparent 70%
+      );
+  }
+
+  .dark .confirmation-slime-spin {
+    background-image:
+      linear-gradient(
+        105deg,
+        transparent 0%,
+        oklch(0.9 0.1 302 / 90%) 46%,
+        transparent 78%
+      ),
+      linear-gradient(
+        90deg,
+        oklch(0.48 0.26 292) 0%,
+        oklch(0.66 0.24 312) 22%,
+        oklch(0.52 0.28 274) 44%,
+        oklch(0.76 0.2 328) 68%,
+        oklch(0.58 0.24 298) 84%,
+        oklch(0.48 0.26 292) 100%
+      );
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .automation-task-row > [data-slot='table-cell']::before,
   .automation-task-row > [data-slot='table-cell']::after {
     background: var(--automation-accent);
+    animation: none;
+  }
+
+  .confirmation-slime-body,
+  .confirmation-slime-spin,
+  .confirmation-glitter {
     animation: none;
   }
 }
