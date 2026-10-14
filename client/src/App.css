@@ -336,8 +336,8 @@
 
   .confirmation-slime-body {
     position: absolute;
-    inset: 2mm;
-    border-radius: calc(var(--radius-xl) - 2mm);
+    inset: 1mm;
+    border-radius: calc(var(--radius-xl) - 1mm);
     background:
       radial-gradient(
         ellipse 42% 120% at 18% 50%,
@@ -367,7 +367,7 @@
     position: absolute;
     inset: 0;
     overflow: hidden;
-    padding: 2mm;
+    padding: 1mm;
     border-radius: inherit;
     -webkit-mask:
       linear-gradient(#000 0 0) content-box,

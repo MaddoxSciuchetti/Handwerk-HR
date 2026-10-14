@@ -41,6 +41,8 @@ export function TaskItem({
   const isAutomationTask =
     storedTaskAutomation(task.automation) !== TASK_AUTOMATION_NONE;
   const isConfirmationTask = task.kind === 'contract_confirm';
+  const isContractActionTask =
+    isConfirmationTask || task.kind === 'contract_send';
 
   const openInEditMode = () => {
     onOpenEdit({
@@ -66,7 +68,7 @@ export function TaskItem({
 
   const SelectionIcon = isSelected ? SquareCheckIcon : SquareDashedIcon;
 
-  const showTemporaryEdge = task.isTemporary && !isConfirmationTask;
+  const showTemporaryEdge = task.isTemporary && !isContractActionTask;
   const temporaryEdge = showTemporaryEdge ? 'border-y-2 border-purple-500' : '';
 
   return (
@@ -75,8 +77,8 @@ export function TaskItem({
       data-confirmation-task={isConfirmationTask || undefined}
       className={cn(
         'group relative border-0 hover:bg-transparent',
-        isAutomationTask && !isConfirmationTask && 'automation-task-row',
-        isConfirmationTask && 'confirmation-task-row'
+        isAutomationTask && !isContractActionTask && 'automation-task-row',
+        isContractActionTask && 'confirmation-task-row'
       )}
     >
       <TableCell
@@ -87,7 +89,7 @@ export function TaskItem({
           showTemporaryEdge && 'rounded-l-xl border-l-2'
         )}
       >
-        {isConfirmationTask ? <ConfirmationTaskDecor /> : null}
+        {isContractActionTask ? <ConfirmationTaskDecor /> : null}
         <Button
           type="button"
           variant="ghost"
