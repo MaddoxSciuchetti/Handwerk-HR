@@ -55,7 +55,7 @@ export function TemplateTasks({ templateId, name }: TemplateTasksProps) {
           title={name}
           description="Füge Aufgaben zu dieser Vorlage hinzu"
         />
-        <Table className="min-h-0 flex-1 w-200">
+        <Table className="min-h-0 w-full flex-1">
           <TableHeader>
             <Button
               className="rounded-full"
