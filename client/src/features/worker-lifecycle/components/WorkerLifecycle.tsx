@@ -15,10 +15,13 @@ import EditModeBar from '@/features/all-tasks/components/EditModeBar';
 import useAuth from '@/features/user-profile/hooks/useAuth';
 import LifeCycleModal from '@/features/worker-lifecycle/components/LifeCycleModal';
 import useHome from '@/features/worker-lifecycle/hooks/useHome';
+import { useSwitchEngagementType } from '@/features/worker-lifecycle/hooks/useSwitchEngagementType';
 import { useWorkerFilter } from '@/features/worker-lifecycle/hooks/useWorkerFilter';
 import useWorkerMutations from '@/features/worker-lifecycle/hooks/useWorkerMutaitons';
+import type { EngagementType } from '@/features/worker-lifecycle/types/index.types';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import { useState, type Dispatch, type SetStateAction } from 'react';
+import EngagementTypeSwitch from './EngagementTypeSwitch';
 import GreetingHeader from './GreetingHeader';
 import ProjectItem, { type WorkerSelection } from './ProjectItem';
 import { WorkerSidebar } from './WorkerSidebar';
@@ -31,6 +34,9 @@ function WorkerLifeCycle() {
   const [largeEditMode, setLargeEditMode] = useState(false);
   const [editModeData, setEditModeData] = useState<WorkerSelection[]>([]);
   const { deleteWorkersMutation, isDeletingWorkers } = useWorkerMutations();
+  const { mutate: switchEngagementType, isPending: isSwitchingType } =
+    useSwitchEngagementType();
+  const isSelectionPending = isDeletingWorkers || isSwitchingType;
   const {
     filterLabel,
     filterOptions,
@@ -68,6 +74,26 @@ function WorkerLifeCycle() {
         setLargeEditMode(false);
       },
     });
+  };
+
+  const handleSwitchType = (type: EngagementType) => {
+    const items = editModeData
+      .filter((item) => item.engagementId.length > 0)
+      .map((item) => ({
+        workerId: item.engagementNumber,
+        engagementId: item.engagementId,
+      }));
+    if (!items.length) return;
+    switchEngagementType(
+      { items, type },
+      {
+        onSuccess: () => {
+          setEditModeData((prev) =>
+            prev.map((item) => ({ ...item, type }))
+          );
+        },
+      }
+    );
   };
 
   return (
@@ -136,9 +162,16 @@ function WorkerLifeCycle() {
           <EditModeBar
             selectedItems={editModeData}
             setSelectedItems={handleSetEditModeData}
-            isPending={isDeletingWorkers}
+            isPending={isSelectionPending}
             onDelete={handleDeleteSelected}
             onClose={() => setLargeEditMode(false)}
+            actions={
+              <EngagementTypeSwitch
+                selectedTypes={editModeData.map((item) => item.type)}
+                disabled={isSelectionPending}
+                onSwitch={handleSwitchType}
+              />
+            }
           />
         )}
       </div>

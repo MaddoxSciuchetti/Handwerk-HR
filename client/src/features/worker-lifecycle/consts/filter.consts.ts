@@ -1,4 +1,5 @@
 import { DropdownOption } from '@/components/ui/nested-dropdown';
+import { ENGAGEMENT_TYPE_OPTIONS } from './engagement-type.consts';
 
 const SORT_SUB_OPTIONS: DropdownOption[] = [
   { label: 'Neueste zuerst', value: 'desc' },
@@ -20,10 +21,6 @@ export const FILTER_OPTIONS: DropdownOption[] = [
   {
     label: 'Type',
     value: 'engagementType',
-    subOptions: [
-      { label: 'Onboarding', value: 'onboarding' },
-      { label: 'Offboarding', value: 'offboarding' },
-      { label: 'Transfer', value: 'transfer' },
-    ],
+    subOptions: ENGAGEMENT_TYPE_OPTIONS,
   },
 ];

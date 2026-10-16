@@ -1,4 +1,5 @@
 export const ENGAGEMENT_PROGRESS_STATUSES = [
+  'expected',
   'pending',
   'in_progress',
   'completed',
@@ -12,6 +13,7 @@ export const ENGAGEMENT_PROGRESS_OPTIONS: ReadonlyArray<{
   value: EngagementProgressValue;
   label: string;
 }> = [
+  { value: 'expected', label: 'Erwartet' },
   { value: 'pending', label: 'Ausstehend' },
   { value: 'in_progress', label: 'In Bearbeitung' },
   { value: 'completed', label: 'Abgeschlossen' },

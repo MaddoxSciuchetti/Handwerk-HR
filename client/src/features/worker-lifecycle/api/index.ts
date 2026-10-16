@@ -1,5 +1,5 @@
 import API from '@/config/apiClient';
-import { WorkerRecord } from '../types/index.types';
+import { EngagementType, WorkerRecord } from '../types/index.types';
 
 type WorkerRecordResponse = {
   success: boolean;
@@ -68,7 +68,7 @@ export const addWorker = async (
 export const updateEngagement = async (
   workerId: string,
   engagementId: string,
-  data: { status: string }
+  data: { status?: string; type?: EngagementType }
 ): Promise<void> => {
   await API.put(`worker/${workerId}/engagements/${engagementId}`, data);
 };

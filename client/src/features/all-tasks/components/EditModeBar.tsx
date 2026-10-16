@@ -1,4 +1,5 @@
 import { Trash2, X } from 'lucide-react';
+import type { ReactNode } from 'react';
 
 type EditModeBarProps<T> = {
   selectedItems: T[];
@@ -6,6 +7,7 @@ type EditModeBarProps<T> = {
   isPending: boolean;
   onDelete: () => void;
   onClose: () => void;
+  actions?: ReactNode;
 };
 
 function EditModeBar<T>({
@@ -14,12 +16,14 @@ function EditModeBar<T>({
   onDelete,
   onClose,
   setSelectedItems,
+  actions,
 }: EditModeBarProps<T>) {
   return (
     <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full border border-border bg-card px-4 py-2 shadow-lg">
       <span className="typo-body-sm whitespace-nowrap">
         {selectedItems.length} ausgewählt
       </span>
+      {actions}
       <button
         type="button"
         aria-label="Ausgewählte Aufgaben löschen"
