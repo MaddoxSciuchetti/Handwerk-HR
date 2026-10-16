@@ -2,9 +2,16 @@
 export type DocumentField = {
   key: string;
   label: string;
-  fieldType?: "text" | "date" | "checkbox";
+  fieldType?: "text" | "date" | "checkbox" | "points";
   required?: boolean;
 };
+
+export function descriptionPointLines(value: string | undefined) {
+  return (value ?? "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+}
 export type DocumentNode = {
   type: string;
   text?: string;
@@ -94,7 +101,7 @@ export function documentSegments(document: StyledDocument): LegacySegment[] {
     if (node.type === "text")
       result.push({ type: "text", text: node.text ?? "" });
     if (node.type === "hardBreak") result.push({ type: "text", text: "\n" });
-    if (node.type === "documentField")
+    if (node.type === "documentField" || node.type === "descriptionPoints")
       result.push({ type: "input", ...(node.attrs as DocumentField) });
     if (node.type === "lineGroup" && Array.isArray(node.attrs?.labels))
       for (const label of node.attrs.labels)
@@ -130,6 +137,8 @@ export function fieldComplete(
     return field.required
       ? value === "true"
       : value === "true" || value === "false";
+  if (field.fieldType === "points")
+    return !field.required || descriptionPointLines(value).length > 0;
   return !field.required || Boolean(value?.trim());
 }
 
@@ -138,6 +147,17 @@ export function filledDocument(
   values: Record<string, string>,
 ): StyledDocument {
   const fill = (node: DocumentNode): DocumentNode => {
+    if (node.type === "descriptionPoints") {
+      const lines = descriptionPointLines(values[String(node.attrs?.key)]);
+      if (lines.length === 0) return { type: "paragraph" };
+      return {
+        type: "bulletList",
+        content: lines.map((text) => ({
+          type: "listItem",
+          content: [{ type: "paragraph", content: [{ type: "text", text }] }],
+        })),
+      };
+    }
     if (node.type === "documentField")
       return {
         type: "text",

@@ -43,7 +43,12 @@ function leftoverFields(
     const fields: { key: string; label: string }[] = [];
     const seen = new Set<string>();
     for (const segment of segments) {
-        if (segment.type !== "input" || seen.has(segment.key) || filled.has(segment.key)) {
+        if (
+            segment.type !== "input" ||
+            segment.fieldType === "points" ||
+            seen.has(segment.key) ||
+            filled.has(segment.key)
+        ) {
             continue;
         }
         seen.add(segment.key);

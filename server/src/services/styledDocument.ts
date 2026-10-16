@@ -27,6 +27,7 @@ const nodeTypes = [
   "lineGroup",
   "lineLabel",
   "documentField",
+  "descriptionPoints",
   "pageField",
 ];
 export function parseStyledDocument(value: unknown): StyledDocument {
@@ -114,7 +115,7 @@ export function parseStyledDocument(value: unknown): StyledDocument {
           throw new Error("Ungültige Ausrichtung.");
       };
       validateStyle(node.attrs);
-      if (node.type === "documentField") {
+      if (node.type === "documentField" || node.type === "descriptionPoints") {
         const parsed = z
           .object({
             key: z
@@ -122,13 +123,22 @@ export function parseStyledDocument(value: unknown): StyledDocument {
               .max(120)
               .regex(/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$/),
             label: z.string().trim().min(1).max(120),
-            fieldType: z.enum(["text", "date", "checkbox"]).default("text"),
+            fieldType: z
+              .enum(["text", "date", "checkbox", "points"])
+              .default("text"),
             required: z.boolean().optional(),
           })
           .parse(node.attrs);
+        if (node.type === "documentField" && parsed.fieldType === "points")
+          throw new Error("Beschreibungspunkte stehen als eigener Block.");
+        const fieldType =
+          node.type === "descriptionPoints"
+            ? ("points" as const)
+            : parsed.fieldType;
         const field = {
           ...parsed,
-          required: parsed.required ?? parsed.fieldType !== "checkbox",
+          fieldType,
+          required: parsed.required ?? fieldType !== "checkbox",
         };
         const previous = fields.get(field.key);
         const signature = JSON.stringify({

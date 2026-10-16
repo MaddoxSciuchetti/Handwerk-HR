@@ -10,16 +10,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { contractFieldKey } from '../util/fieldKey.util';
+import { contractFieldKey, unusedFieldKey } from '../util/fieldKey.util';
 import { FIELD_DRAG_TYPE } from '../consts/editor.consts';
 
-type FieldType = 'text' | 'date' | 'checkbox';
+type FieldType = 'text' | 'date' | 'checkbox' | 'points';
 
 const FIELD_TYPES = [
   { value: 'text', label: 'Text' },
   { value: 'date', label: 'Datum' },
   { value: 'checkbox', label: 'Kontrollkästchen' },
+  { value: 'points', label: 'Beschreibungspunkte' },
 ] as const;
+
+function usedFieldKeys(editor: Editor) {
+  const keys: string[] = [];
+  editor.state.doc.descendants((node) => {
+    const key = node.attrs?.key;
+    if (typeof key === 'string' && key) keys.push(key);
+  });
+  return keys;
+}
 
 type DocumentFieldInsertProps = {
   editor: Editor;
@@ -30,33 +40,32 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
   const [fieldKey, setFieldKey] = useState('');
   const [fieldType, setFieldType] = useState<FieldType>('text');
   const [required, setRequired] = useState(true);
+  const nextField = () => {
+    const requested = contractFieldKey(label, fieldKey);
+    return {
+      key: fieldKey.trim()
+        ? requested
+        : unusedFieldKey(usedFieldKeys(editor), requested),
+      label: label.trim(),
+      fieldType,
+      required,
+    };
+  };
   const insertField = () => {
+    const field = nextField();
     editor
       .chain()
       .focus()
       .insertContent({
-        type: 'documentField',
-        attrs: {
-          key: contractFieldKey(label, fieldKey),
-          label: label.trim(),
-          fieldType,
-          required,
-        },
+        type: field.fieldType === 'points' ? 'descriptionPoints' : 'documentField',
+        attrs: field,
       })
       .run();
     setLabel('');
     setFieldKey('');
   };
   const startFieldDrag = (event: DragEvent<HTMLSpanElement>) => {
-    event.dataTransfer.setData(
-      FIELD_DRAG_TYPE,
-      JSON.stringify({
-        key: contractFieldKey(label, fieldKey),
-        label: label.trim(),
-        fieldType,
-        required,
-      })
-    );
+    event.dataTransfer.setData(FIELD_DRAG_TYPE, JSON.stringify(nextField()));
     event.dataTransfer.effectAllowed = 'copy';
   };
 
@@ -64,7 +73,9 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
     <>
       <Input
         aria-label="Feldbezeichnung"
-        placeholder="Vorname, Nachname …"
+        placeholder={
+          fieldType === 'points' ? 'Tätigkeiten, Aufgaben …' : 'Vorname, Nachname …'
+        }
         value={label}
         onChange={(event) => setLabel(event.target.value)}
         className="h-7 w-44"
@@ -109,7 +120,11 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
           checked={required}
           onChange={(event) => setRequired(event.target.checked)}
         />
-        {fieldType === 'checkbox' ? 'Muss angekreuzt sein' : 'Pflichtfeld'}
+        {fieldType === 'checkbox'
+          ? 'Muss angekreuzt sein'
+          : fieldType === 'points'
+            ? 'Mindestens ein Punkt'
+            : 'Pflichtfeld'}
       </Label>
       <Button
         type="button"
@@ -117,7 +132,7 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
         onClick={insertField}
         disabled={!label.trim()}
       >
-        Feld einsetzen
+        {fieldType === 'points' ? 'Punkteblock einsetzen' : 'Feld einsetzen'}
       </Button>
       {label.trim() ? (
         <span
@@ -125,7 +140,7 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
           className="inline-flex h-7 cursor-grab items-center rounded-lg border bg-background px-2 text-xs"
           onDragStart={startFieldDrag}
         >
-          Feld ins Dokument ziehen: {label}
+          {fieldType === 'points' ? 'Block' : 'Feld'} ins Dokument ziehen: {label}
         </span>
       ) : null}
     </>

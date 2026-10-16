@@ -37,17 +37,20 @@ export function insertDroppedDocumentField(
     return false;
   const pos = view.posAtCoords({ left: event.clientX, top: event.clientY });
   if (!pos) return false;
-  view.dispatch(
-    view.state.tr.insert(
-      pos.pos,
-      view.state.schema.nodes.documentField.create({
-        key: dragged.key,
-        label: dragged.label,
-        fieldType: dragged.fieldType ?? 'text',
-        required: dragged.required ?? dragged.fieldType !== 'checkbox',
-      })
-    )
-  );
+  const points = dragged.fieldType === 'points';
+  const nodeType = points
+    ? view.state.schema.nodes.descriptionPoints
+    : view.state.schema.nodes.documentField;
+  const node = nodeType.create({
+    key: dragged.key,
+    label: dragged.label,
+    fieldType: points ? 'points' : (dragged.fieldType ?? 'text'),
+    required: dragged.required ?? dragged.fieldType !== 'checkbox',
+  });
+  const $pos = view.state.doc.resolve(pos.pos);
+  const at = !points || $pos.parent.type.name === 'doc' ? pos.pos : $pos.after(1);
+  if (!view.state.doc.canReplaceWith(at, at, node.type)) return false;
+  view.dispatch(view.state.tr.insert(at, node));
   setDraggedContractInput(null);
   return true;
 }

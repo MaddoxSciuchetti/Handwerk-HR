@@ -88,6 +88,10 @@ function formatMatchValue(field: MatchField, raw: string) {
     return formatted.slice(0, 8000);
 }
 
+function userTypedPoints(segment: DocumentSegment) {
+    return segment.type === "input" && segment.fieldType === "points";
+}
+
 function blankConsumed(answers: QuestionnaireAnswers, consumed: Set<string>) {
     const copy = { ...answers };
     for (const key of consumed) {
@@ -111,7 +115,13 @@ export function deterministicContractValues(
         const segment = segments.find(
             (item) => item.type === "input" && item.key === field.contractFieldKey,
         );
-        if (!segment || segment.type !== "input" || filled.has(segment.key)) continue;
+        if (
+            !segment ||
+            segment.type !== "input" ||
+            userTypedPoints(segment) ||
+            filled.has(segment.key)
+        )
+            continue;
         const value = formatMatchValue(field, answerString(answers, field.key));
         if (!value) continue;
         filled.add(segment.key);
@@ -140,7 +150,8 @@ export function deterministicContractValues(
         if (!value) continue;
         const folded = fold(field.label);
         const segment = segments.find((item) => {
-            if (item.type !== "input" || filled.has(item.key)) return false;
+            if (item.type !== "input" || userTypedPoints(item) || filled.has(item.key))
+                return false;
             return fold(item.label) === folded || fold(item.key) === folded;
         });
         if (!segment || segment.type !== "input") continue;
@@ -173,7 +184,8 @@ export function contractValuesFromAnswers(
     const seen = new Set<string>();
 
     for (const segment of segments) {
-        if (segment.type !== "input" || seen.has(segment.key)) continue;
+        if (segment.type !== "input" || userTypedPoints(segment) || seen.has(segment.key))
+            continue;
         const field = matchAlias(segment.label, segment.key);
         if (!field) continue;
         const value = values[field]?.trim() ?? "";
@@ -237,6 +249,7 @@ export function valuesForDocumentSegments(
     for (const segment of segments) {
         if (segment.type !== "input" || seen.has(segment.key)) continue;
         seen.add(segment.key);
+        if (userTypedPoints(segment)) continue;
         const field = matchAlias(segment.label, segment.key);
         if (!field) {
             unresolved.push({ key: segment.key, label: segment.label });

@@ -407,6 +407,44 @@ it('lets a positioned line label be edited after Bearbeiten', async () => {
   optionsSpy.mockRestore();
 });
 
+it('lets the sender type Tätigkeitspunkte without a stored field value', async () => {
+  const value = fromSegments([{ type: 'text', text: 'Aufgaben' }]);
+  value.content.content!.push({
+    type: 'descriptionPoints',
+    attrs: {
+      key: 'contract.taetigkeiten',
+      label: 'Tätigkeiten',
+      fieldType: 'points',
+      required: true,
+    },
+  });
+  const onValueChange = vi.fn();
+  render(
+    <StyledDocumentReview
+      document={value}
+      values={{ 'contract.taetigkeiten': 'Montage' }}
+      onValueChange={onValueChange}
+      readOnly={false}
+    />
+  );
+  const point = await screen.findByRole('textbox', { name: 'Tätigkeiten 1' });
+  expect(point).toHaveValue('Montage');
+  fireEvent.change(point, { target: { value: 'Wartung' } });
+  expect(onValueChange).toHaveBeenCalledWith('contract.taetigkeiten', 'Wartung');
+  fireEvent.paste(point, {
+    clipboardData: { getData: () => 'Montage\nWartung' },
+  });
+  expect(onValueChange).toHaveBeenCalledWith(
+    'contract.taetigkeiten',
+    'Montage\nWartung'
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Punkt hinzufügen' }));
+  expect(onValueChange).toHaveBeenCalledWith(
+    'contract.taetigkeiten',
+    'Montage\n'
+  );
+});
+
 it('reviews a contract as separate pages with the letterhead on the sheet', async () => {
   const value = fromSegments([{ type: 'text', text: 'Vertragsseite' }]);
   value.header = {

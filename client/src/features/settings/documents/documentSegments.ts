@@ -4,6 +4,6 @@ export type DocumentSegment =
       type: 'input';
       key: string;
       label: string;
-      fieldType?: 'text' | 'date' | 'checkbox';
+      fieldType?: 'text' | 'date' | 'checkbox' | 'points';
       required?: boolean;
     };

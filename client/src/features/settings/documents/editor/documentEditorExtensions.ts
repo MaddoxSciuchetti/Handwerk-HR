@@ -3,6 +3,7 @@ import { TextStyle, FontFamily, Color } from '@tiptap/extension-text-style';
 import TextAlign from '@tiptap/extension-text-align';
 import { TableKit } from '@tiptap/extension-table';
 import Image from '@tiptap/extension-image';
+import { DescriptionPointsNode } from '../DescriptionPointsNode';
 import { DocumentFieldNode } from '../DocumentFieldNode';
 import { editorPagination } from '../editorPagination';
 import { PageBreak, PageField } from './pageNodes';
@@ -35,6 +36,7 @@ export function documentEditorExtensions(
     TableKit,
     Image.configure({ allowBase64: true }),
     DocumentFieldNode,
+    DescriptionPointsNode,
     PageField,
     PageBreak,
     LineLabel,

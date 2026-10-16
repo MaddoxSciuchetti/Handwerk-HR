@@ -13,3 +13,11 @@ export function fieldSlug(label: string) {
 export function contractFieldKey(label: string, fieldKey: string) {
   return fieldKey.trim() || `contract.${fieldSlug(label)}`;
 }
+
+export function unusedFieldKey(used: Iterable<string>, key: string) {
+  const taken = new Set(used);
+  if (!taken.has(key)) return key;
+  let index = 2;
+  while (taken.has(`${key}_${index}`)) index += 1;
+  return `${key}_${index}`;
+}

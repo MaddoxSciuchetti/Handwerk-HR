@@ -1,8 +1,11 @@
 import {
     acceptModelMatches,
+    contractValuesFromAnswers,
+    deterministicContractValues,
     unmatchedQuestionnaireAnswers,
 } from "@/services/contractFieldMatch";
 import type { DocumentSegment } from "@/services/documentBody";
+import type { QuestionnaireAnswers } from "@/services/questionnaireForm";
 
 const segments: DocumentSegment[] = [
     { type: "text", text: "Name: " },
@@ -52,6 +55,41 @@ describe("unmatchedQuestionnaireAnswers", () => {
         expect(unmatched).toEqual([
             { key: "birthday", label: "Geburtsdatum", value: "01.02.1990" },
         ]);
+    });
+});
+
+describe("description points", () => {
+    it("does not copy a questionnaire value into Tätigkeiten", () => {
+        const duties: DocumentSegment[] = [
+            {
+                type: "input",
+                key: "contract.taetigkeiten",
+                label: "Tätigkeit",
+                fieldType: "points",
+            },
+        ];
+        const answers = {
+            firstName: "Ada",
+            lastName: "Lovelace",
+            birthday: "",
+            street: "",
+            city: "",
+            postalCode: "",
+            jobTitle: "Monteurin",
+            children: [],
+            priorEmployment: [],
+        } as unknown as QuestionnaireAnswers;
+
+        expect(contractValuesFromAnswers(duties, answers)).toEqual([]);
+        expect(
+            deterministicContractValues(duties, answers, "", [
+                {
+                    key: "jobTitle",
+                    label: "Tätigkeit",
+                    contractFieldKey: "contract.taetigkeiten",
+                },
+            ]),
+        ).toEqual([]);
     });
 });
 

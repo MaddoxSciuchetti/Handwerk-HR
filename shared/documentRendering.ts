@@ -1,4 +1,5 @@
 import {
+  descriptionPointLines,
   documentFields,
   fieldComplete,
   type DocumentNode,
@@ -203,6 +204,15 @@ export function renderNode(
           "</span>";
     }
     return text;
+  }
+  if (node.type === "descriptionPoints") {
+    const lines = descriptionPointLines(values[String(node.attrs?.key)]);
+    if (lines.length === 0) return "";
+    return (
+      "<ul>" +
+      lines.map((line) => "<li>" + printText(line) + "</li>").join("") +
+      "</ul>"
+    );
   }
   if (node.type === "documentField") {
     const key = String(node.attrs?.key);
@@ -433,6 +443,14 @@ export function validateFieldValues(
       !["true", "false"].includes(result[field.key])
     )
       throw new Error("Ungültiges Kontrollkästchen.");
+    if (field.fieldType === "points") {
+      const lines = descriptionPointLines(result[field.key]);
+      if (lines.length > 40 || lines.some((line) => line.length > 500))
+        throw new Error(
+          "Zu viele oder zu lange Beschreibungspunkte: " + field.label,
+        );
+      result[field.key] = lines.join("\n");
+    }
     if (field.fieldType === "date" && result[field.key]) {
       const value = result[field.key];
       const iso = /^\d{2}\.\d{2}\.\d{4}$/.test(value)

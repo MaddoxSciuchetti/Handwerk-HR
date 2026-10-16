@@ -165,6 +165,42 @@ describe("styled document compatibility and rendering", () => {
       ),
     ).toHaveLength(2);
   });
+  it("renders description points as a list the sender fills in", () => {
+    const document = fromSegments([{ type: "text", text: "Der Arbeitnehmer:" }]);
+    document.content.content!.push({
+      type: "descriptionPoints",
+      attrs: {
+        key: "contract.taetigkeiten",
+        label: "Tätigkeiten",
+        fieldType: "points",
+        required: true,
+      },
+    });
+    const parsed = parseStyledDocument(document);
+    expect(documentFields(parsed)).toEqual([
+      expect.objectContaining({
+        key: "contract.taetigkeiten",
+        fieldType: "points",
+        required: true,
+      }),
+    ]);
+    expect(() =>
+      validateFieldValues(parsed, { "contract.taetigkeiten": "  " }),
+    ).toThrow("Tätigkeiten");
+    expect(
+      validateFieldValues(parsed, {
+        "contract.taetigkeiten": " Montage \n\n Wartung ",
+      }),
+    ).toEqual({ "contract.taetigkeiten": "Montage\nWartung" });
+    const html = renderNode(parsed.content, {
+      "contract.taetigkeiten": "Montage\nWartung <x>",
+    });
+    expect(html).toContain("<ul><li>Montage</li><li>Wartung &lt;x&gt;</li></ul>");
+    const filled = filledDocument(parsed, {
+      "contract.taetigkeiten": "Montage\nWartung",
+    });
+    expect(filled.content.content?.at(-1)?.type).toBe("bulletList");
+  });
   it("creates a text snapshot for certificate history without changing the master", () => {
     const document = template();
     const filled = filledDocument(document, { "contract.vorname": "Ada" });
