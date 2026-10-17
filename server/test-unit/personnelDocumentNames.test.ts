@@ -1,4 +1,5 @@
 import {
+    isAssignablePersonnelDocumentName,
     isPersonnelDocumentName,
     personnelDocumentLabel,
 } from "@/services/personnelDocumentNames";
@@ -9,6 +10,10 @@ describe("personnel document names", () => {
         expect(isPersonnelDocumentName("fuehrerschein")).toBe(true);
         expect(isPersonnelDocumentName("krankenkassenkarte")).toBe(true);
         expect(isPersonnelDocumentName("pass")).toBe(false);
+        expect(isPersonnelDocumentName("ordner")).toBe(true);
+        expect(isAssignablePersonnelDocumentName("personalausweis")).toBe(true);
+        expect(isAssignablePersonnelDocumentName("fragebogen")).toBe(false);
+        expect(isAssignablePersonnelDocumentName("ordner")).toBe(false);
     });
 
     it("labels each stored name in German", () => {
@@ -17,5 +22,6 @@ describe("personnel document names", () => {
         expect(personnelDocumentLabel("krankenkassenkarte")).toBe(
             "Krankenkassenkarte",
         );
+        expect(personnelDocumentLabel("ordner")).toBe("Ordner");
     });
 });

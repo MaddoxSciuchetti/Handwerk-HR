@@ -116,6 +116,10 @@ worker.get(
     personnelDocumentController.listPersonnelDocuments,
 );
 worker.post(
+    "/:workerId/engagements/:engagementId/personnel-folders",
+    personnelDocumentController.createPersonnelFolder,
+);
+worker.post(
     "/:workerId/engagements/:engagementId/personnel-documents",
     upload.single("file"),
     personnelDocumentController.uploadPersonnelDocument,

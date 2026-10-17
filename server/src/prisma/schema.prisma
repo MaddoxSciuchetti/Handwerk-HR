@@ -167,6 +167,7 @@ model WorkerEngagement {
   materials                EngagementMaterial[]
   materialDocuments        EngagementMaterialDocument[]
   personnelDocuments       EngagementPersonnelDocument[]
+  personnelFolders         EngagementPersonnelFolder[]
   mailForwarding           MailForwarding?
   clothing                 EngagementClothing[]
 
@@ -625,9 +626,24 @@ model EngagementMaterialDocument {
   @@map("engagement_material_documents")
 }
 
+model EngagementPersonnelFolder {
+  id           String   @id @default(uuid())
+  engagementId String   @map("engagement_id")
+  label        String   @db.VarChar(80)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  engagement WorkerEngagement             @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+  documents  EngagementPersonnelDocument[]
+
+  @@unique([engagementId, label])
+  @@index([engagementId])
+  @@map("engagement_personnel_folders")
+}
+
 model EngagementPersonnelDocument {
   id               String                @id @default(uuid())
   engagementId     String                @map("engagement_id")
+  folderId         String?               @map("folder_id")
   uploadedByUserId String                @map("uploaded_by_user_id")
   name             PersonnelDocumentName
   originalFileName String                @map("original_file_name") @db.VarChar(255)
@@ -636,10 +652,12 @@ model EngagementPersonnelDocument {
   fileSizeBytes    Int?                  @map("file_size_bytes")
   createdAt        DateTime              @default(now()) @map("created_at") @db.Timestamptz()
 
-  engagement WorkerEngagement @relation(fields: [engagementId], references: [id], onDelete: Cascade)
-  uploadedBy User             @relation(fields: [uploadedByUserId], references: [id], onDelete: Restrict)
+  engagement WorkerEngagement            @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+  folder     EngagementPersonnelFolder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  uploadedBy User                        @relation(fields: [uploadedByUserId], references: [id], onDelete: Restrict)
 
   @@index([engagementId])
+  @@index([folderId])
   @@map("engagement_personnel_documents")
 }
 
@@ -865,6 +883,7 @@ enum PersonnelDocumentName {
   fuehrerschein
   krankenkassenkarte
   fragebogen
+  ordner
 }
 
 enum EngagementType {

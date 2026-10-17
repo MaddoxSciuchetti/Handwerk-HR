@@ -59,7 +59,10 @@ it('opens saved answers for the selected engagement and renders a read-only prev
       ]}
     />
   );
-  await userEvent.click(screen.getByRole('button', { name: /01.11.2026/ }));
+  expect(screen.queryByText(/Ausgefüllt/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/Eintritt/)).not.toBeInTheDocument();
+  const entries = screen.getAllByRole('button', { name: 'Fragebogen' });
+  await userEvent.click(entries[1]);
   expect(await screen.findByText('Lovelace')).toBeInTheDocument();
   expect(screen.getByText('Personalbogen Baustelle')).toBeInTheDocument();
   expect(screen.getByText('ja')).toBeInTheDocument();

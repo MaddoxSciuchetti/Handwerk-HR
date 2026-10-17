@@ -1,8 +1,13 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
+import { FileText } from 'lucide-react';
 import { CertificatePreviewDialog } from './CertificatePreviewDialog';
+import { fileBoxTitle } from './fileBoxTitle';
+import { StoredFileBox } from './StoredFileBox';
 
 export type EngagementCertificateLink = {
   id: string;
+  engagementId: string;
   name: string;
   text: string;
 };
@@ -21,27 +26,24 @@ export function EngagementCertificateList({
 
   return (
     <>
-      <ul>
-        {certificates.map((certificate) => (
-          <li key={certificate.id}>
-            <button
-              type="button"
-              className="flex w-full items-center justify-between border-b border-border py-4 pr-2 pl-10 text-left hover:bg-muted/40"
-              onClick={() => setOpenId(certificate.id)}
-            >
-              <span className="text-sm font-medium">{certificate.name}</span>
-              <span className="text-xs text-muted-foreground">Versendet</span>
-            </button>
-          </li>
-        ))}
-      </ul>
-      {open ? (
-        <CertificatePreviewDialog
-          name={open.name}
-          text={open.text}
-          onClose={() => setOpenId(null)}
+      {certificates.map((certificate) => (
+        <StoredFileBox
+          key={certificate.id}
+          label={fileBoxTitle(certificate.name, 'Arbeitszeugnis')}
+          icon={FileText}
+          onOpen={() => setOpenId(certificate.id)}
         />
-      ) : null}
+      ))}
+      {open
+        ? createPortal(
+            <CertificatePreviewDialog
+              name={fileBoxTitle(open.name, 'Arbeitszeugnis')}
+              text={open.text}
+              onClose={() => setOpenId(null)}
+            />,
+            document.body
+          )
+        : null}
     </>
   );
 }

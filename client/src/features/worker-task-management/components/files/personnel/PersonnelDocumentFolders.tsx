@@ -1,13 +1,24 @@
 import type { EngagementType } from '@/features/worker-lifecycle/types/index.types';
 import { useState } from 'react';
-import type { PersonnelDocument } from '../../../api/personnelDocuments.api';
+import type {
+  PersonnelDocument,
+  PersonnelFolder,
+} from '../../../api/personnelDocuments.api';
 import {
   PERSONNEL_DOCUMENT_NAMES,
   type PersonnelDocumentName,
 } from '../../../personnel-documents/personnelDocumentNames';
 import { MaterialsEngagementPicker } from '../../materials/MaterialsEngagementPicker';
+import { EngagementCertificateList, type EngagementCertificateLink } from '../EngagementCertificateList';
+import { EngagementContractList, type EngagementContractLink } from '../EngagementContractList';
+import { EngagementQuestionnaireList, type EngagementQuestionnaireLink } from '../EngagementQuestionnaireList';
+import { AddPersonnelFolder } from './AddPersonnelFolder';
 import { OpenPersonnelFolder } from './OpenPersonnelFolder';
 import { PersonnelFolderCard } from './PersonnelFolderCard';
+
+type OpenFolder =
+  | { kind: 'builtin'; name: PersonnelDocumentName }
+  | { kind: 'custom'; id: string };
 
 type PersonnelDocumentFoldersProps = {
   workerId: string;
@@ -17,6 +28,10 @@ type PersonnelDocumentFoldersProps = {
     startDate: string | null;
   }>;
   documents: PersonnelDocument[];
+  folders: PersonnelFolder[];
+  questionnaires: EngagementQuestionnaireLink[];
+  contracts: EngagementContractLink[];
+  certificates: EngagementCertificateLink[];
   deletingId: string | null;
   onDelete: (documentId: string) => void;
 };
@@ -25,11 +40,15 @@ export function PersonnelDocumentFolders({
   workerId,
   engagements,
   documents,
+  folders,
+  questionnaires,
+  contracts,
+  certificates,
   deletingId,
   onDelete,
 }: PersonnelDocumentFoldersProps) {
   const [engagementId, setEngagementId] = useState(engagements[0]?.id ?? '');
-  const [openName, setOpenName] = useState<PersonnelDocumentName | null>(null);
+  const [openFolder, setOpenFolder] = useState<OpenFolder | null>(null);
   const selectedId =
     engagements.find((item) => item.id === engagementId)?.id ??
     engagements[0]?.id ??
@@ -37,9 +56,16 @@ export function PersonnelDocumentFolders({
   const selectedDocuments = documents.filter(
     (document) => document.engagementId === selectedId
   );
-  const openFolder = PERSONNEL_DOCUMENT_NAMES.find(
-    (item) => item.value === openName
+  const selectedFolders = folders.filter(
+    (folder) => folder.engagementId === selectedId
   );
+  const openBuiltin = PERSONNEL_DOCUMENT_NAMES.find(
+    (item) => openFolder?.kind === 'builtin' && item.value === openFolder.name
+  );
+  const openCustom =
+    openFolder?.kind === 'custom'
+      ? selectedFolders.find((folder) => folder.id === openFolder.id)
+      : undefined;
 
   if (engagements.length === 0) {
     return (
@@ -49,16 +75,19 @@ export function PersonnelDocumentFolders({
     );
   }
 
-  if (openFolder) {
+  if (openBuiltin || openCustom) {
+    const label = openBuiltin?.label ?? openCustom?.label ?? '';
+    const openDocuments = selectedDocuments.filter((document) =>
+      openCustom
+        ? document.folderId === openCustom.id
+        : !document.folderId && document.name === openBuiltin?.value
+    );
     return (
       <OpenPersonnelFolder
-        workerId={workerId}
-        label={openFolder.label}
-        documents={selectedDocuments.filter(
-          (document) => document.name === openFolder.value
-        )}
+        label={label}
+        documents={openDocuments}
         deletingId={deletingId}
-        onBack={() => setOpenName(null)}
+        onBack={() => setOpenFolder(null)}
         onDelete={onDelete}
       />
     );
@@ -66,30 +95,47 @@ export function PersonnelDocumentFolders({
 
   return (
     <div className="px-10 py-4">
-      <p className="mb-3 text-sm font-medium">Personal</p>
       <MaterialsEngagementPicker
         engagements={engagements}
         value={selectedId}
         onChange={(nextId) => {
           setEngagementId(nextId);
-          setOpenName(null);
+          setOpenFolder(null);
         }}
       />
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-        {PERSONNEL_DOCUMENT_NAMES.filter((item) => {
-          if (item.value !== 'fragebogen') return true;
-          return selectedDocuments.some((document) => document.name === 'fragebogen');
-        }).map((item) => (
+        <EngagementQuestionnaireList
+          workerId={workerId}
+          questionnaires={questionnaires.filter(
+            (item) => item.engagementId === selectedId
+          )}
+        />
+        <EngagementContractList
+          workerId={workerId}
+          contracts={contracts.filter((item) => item.engagementId === selectedId)}
+        />
+        <EngagementCertificateList
+          certificates={certificates.filter(
+            (item) => item.engagementId === selectedId
+          )}
+        />
+        {PERSONNEL_DOCUMENT_NAMES.filter((item) => item.value !== 'fragebogen').map(
+          (item) => (
+            <PersonnelFolderCard
+              key={item.value}
+              label={item.label}
+              onOpen={() => setOpenFolder({ kind: 'builtin', name: item.value })}
+            />
+          )
+        )}
+        {selectedFolders.map((folder) => (
           <PersonnelFolderCard
-            key={item.value}
-            label={item.label}
-            count={
-              selectedDocuments.filter((document) => document.name === item.value)
-                .length
-            }
-            onOpen={() => setOpenName(item.value)}
+            key={folder.id}
+            label={folder.label}
+            onOpen={() => setOpenFolder({ kind: 'custom', id: folder.id })}
           />
         ))}
+        <AddPersonnelFolder workerId={workerId} engagementId={selectedId} />
       </div>
     </div>
   );

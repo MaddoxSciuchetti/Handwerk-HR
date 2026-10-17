@@ -9,11 +9,25 @@ function param(req: Request, key: string): string {
 
 export const listPersonnelDocuments = catchErrors(
     async (req: Request, res: Response) => {
-        const data = await personnelDocumentService.listPersonnelDocuments({
+        const { documents, folders } =
+            await personnelDocumentService.listPersonnelDocuments({
+                organizationId: req.orgId,
+                workerId: param(req, "workerId"),
+            });
+        return res.status(200).json({ success: true, data: documents, folders });
+    },
+);
+
+export const createPersonnelFolder = catchErrors(
+    async (req: Request, res: Response) => {
+        const label = typeof req.body?.label === "string" ? req.body.label : "";
+        const data = await personnelDocumentService.createPersonnelFolder({
             organizationId: req.orgId,
             workerId: param(req, "workerId"),
+            engagementId: param(req, "engagementId"),
+            label,
         });
-        return res.status(200).json({ success: true, data });
+        return res.status(201).json({ success: true, data });
     },
 );
 
@@ -27,12 +41,15 @@ export const uploadPersonnelDocument = catchErrors(
         }
 
         const name = typeof req.body?.name === "string" ? req.body.name : "";
+        const folderId =
+            typeof req.body?.folderId === "string" ? req.body.folderId : "";
         const data = await personnelDocumentService.uploadPersonnelDocument({
             organizationId: req.orgId,
             workerId: param(req, "workerId"),
             engagementId: param(req, "engagementId"),
             uploadedByUserId: req.userId,
             name,
+            folderId,
             file,
         });
         return res.status(201).json({ success: true, data });
