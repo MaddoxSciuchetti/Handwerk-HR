@@ -1,11 +1,6 @@
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import TrashButton from '@/components/TrashButton';
-import {
-  Cell,
-  employeeTableGridClassName,
-  Items,
-} from '@/features/settings/components/Table';
-import { cn } from '@/lib/utils';
+import { TableCell, TableRow } from '@/components/ui/table';
 import { User } from '@/features/user-profile/types/auth.type';
 import { UseMutateFunction } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -32,43 +27,40 @@ const EmployeeItem = ({
   const closeDeleteModalHandler = () => setIsDeleteModalOpen(false);
 
   return (
-    <Items
-      state="hover"
-      className={cn('w-full cursor-pointer', employeeTableGridClassName)}
+    <TableRow
+      className="cursor-pointer hover:bg-transparent"
       onClick={() => onSelectEmployee(employee)}
     >
-      <div className="min-w-0 truncate pl-7">
+      <TableCell className="min-w-0 truncate whitespace-normal">
         <EmployeeName employee={employee} />
-      </div>
-      <div className="min-w-0 text-left tabular-nums">
+      </TableCell>
+      <TableCell className="text-left tabular-nums">
         <EmployeeOpenTasks openTaskCountsByEmployee={openTaskCount} />
-      </div>
-      <Cell className="min-w-0 w-auto max-w-full text-left">
+      </TableCell>
+      <TableCell className="text-left whitespace-normal">
         <EmployeeStatus employee={employee} />
-      </Cell>
-      <Cell className="min-w-0 w-auto max-w-full text-left">
+      </TableCell>
+      <TableCell className="text-left whitespace-normal">
         <EmployeeSubstitute employee={employee} />
-      </Cell>
-      <Cell className="min-w-0 w-auto max-w-full text-left">
-        <div onClick={(e) => e.stopPropagation()}>
-          <TrashButton
-            disabled={
-              employee.organizationMembers[0]?.membershipRole === 'admin'
-            }
-            description={'Löschen'}
-            onClick={() => setIsDeleteModalOpen(true)}
-          />
-          <DeleteConfirmModal
-            isOpen={isDeleteModalOpen}
-            onCancel={closeDeleteModalHandler}
-            onConfirm={() => {
-              handleDeleteEmployee(employee.id);
-              closeDeleteModalHandler();
-            }}
-          />
-        </div>
-      </Cell>
-    </Items>
+      </TableCell>
+      <TableCell className="text-left" onClick={(e) => e.stopPropagation()}>
+        <TrashButton
+          disabled={
+            employee.organizationMembers[0]?.membershipRole === 'admin'
+          }
+          description={'Löschen'}
+          onClick={() => setIsDeleteModalOpen(true)}
+        />
+        <DeleteConfirmModal
+          isOpen={isDeleteModalOpen}
+          onCancel={closeDeleteModalHandler}
+          onConfirm={() => {
+            handleDeleteEmployee(employee.id);
+            closeDeleteModalHandler();
+          }}
+        />
+      </TableCell>
+    </TableRow>
   );
 };
 

@@ -1,12 +1,11 @@
 import { Button } from '@/components/ui/button';
+import { TableCell, TableRow } from '@/components/ui/table';
 import { INTEGRATION_NONE } from '@/features/settings/integrations/integration.consts';
-import { Cell, GrowingItem, Items } from '@/features/settings/components/Table';
 
 import {
   TemplateTaskFormValues,
   TemplateTaskResponse,
 } from '@/features/worker-task-management/types/index.types';
-import { cn } from '@/lib/utils';
 import { PencilIcon, TrashIcon } from 'lucide-react';
 import { useDeleteTemplateTask } from '../hooks/useDeleteTemplateTask';
 export type TemplateTaskItemProps = {
@@ -24,73 +23,61 @@ export function TemplateTaskItem({
 }: TemplateTaskItemProps) {
   const { deleteTemplateTask } = useDeleteTemplateTask();
   return (
-    <div className="flex w-full min-w-0 flex-col gap-2">
+    <>
       {templateTasks.map((task) => (
-        <Items
-          key={task.id}
-          state="hover"
-          className={cn(
-            'group w-full min-w-0 cursor-pointer items-center justify-between gap-6'
-          )}
-        >
-          <GrowingItem
-            className={cn(
-              'min-w-0 flex-1 flex-col items-start gap-1',
-              'py-0 pl-0 pr-4'
-            )}
-          >
+        <TableRow key={task.id} className="group hover:bg-transparent">
+          <TableCell className="whitespace-normal">
             <p className="typo-body-sm text-text-primary">{task.taskName}</p>
+          </TableCell>
+          <TableCell className="whitespace-normal">
             {task.taskDescription ? (
               <p className="typo-body-xs text-text-secondary line-clamp-3">
                 {task.taskDescription}
               </p>
             ) : null}
-          </GrowingItem>
-          <Cell
-            className={cn(
-              'opacity-0 group-hover:opacity-100 w-auto flex gap-2 min-w-0 max-w-[min(100%,14rem)] shrink-0',
-              'text-right typo-body-sm font-normal text-text-primary'
-            )}
-          >
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              className="text-muted-foreground hover:text-foreground"
-              aria-label="Aufgabe bearbeiten"
-              onClick={() => {
-                setIsOpen(true);
-                setEditTemplateTask({
-                  taskId: task.id,
-                  taskName: task.taskName,
-                  taskDescription: task.taskDescription,
-                  defaultStatus: task.defaultStatus,
-                  defaultAssigneeUserId: task.defaultAssigneeUserId ?? '',
-                  orderIndex: task.orderIndex,
-                  integrationProvider:
-                    task.integrationProvider ?? INTEGRATION_NONE,
-                  sequence: task.sequence ?? INTEGRATION_NONE,
-                });
-                setTemplateTaskState('edit');
-              }}
-            >
-              <PencilIcon className="size-4" />
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              className="text-muted-foreground hover:text-destructive"
-              aria-label="Aufgabe löschen"
-              onClick={() => {
-                deleteTemplateTask(task.id);
-              }}
-            >
-              <TrashIcon className="size-4" />
-            </Button>
-          </Cell>
-        </Items>
+          </TableCell>
+          <TableCell className="pr-6 text-right">
+            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="text-muted-foreground hover:text-foreground"
+                aria-label="Aufgabe bearbeiten"
+                onClick={() => {
+                  setIsOpen(true);
+                  setEditTemplateTask({
+                    taskId: task.id,
+                    taskName: task.taskName,
+                    taskDescription: task.taskDescription,
+                    defaultStatus: task.defaultStatus,
+                    defaultAssigneeUserId: task.defaultAssigneeUserId ?? '',
+                    orderIndex: task.orderIndex,
+                    integrationProvider:
+                      task.integrationProvider ?? INTEGRATION_NONE,
+                    sequence: task.sequence ?? INTEGRATION_NONE,
+                  });
+                  setTemplateTaskState('edit');
+                }}
+              >
+                <PencilIcon className="size-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="text-muted-foreground hover:text-destructive"
+                aria-label="Aufgabe löschen"
+                onClick={() => {
+                  deleteTemplateTask(task.id);
+                }}
+              >
+                <TrashIcon className="size-4" />
+              </Button>
+            </div>
+          </TableCell>
+        </TableRow>
       ))}
-    </div>
+    </>
   );
 }

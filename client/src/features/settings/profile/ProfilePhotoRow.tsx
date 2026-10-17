@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { GrowingItem, Items } from '@/features/settings/components/Table';
+import { TableCell, TableRow } from '@/components/ui/table';
 import { AvatarCropModal } from '@/features/sidebar/profile-upload-modal/AvatarCropModal';
 import { Camera, UserRound } from 'lucide-react';
 import { useRef, useState } from 'react';
@@ -23,11 +23,11 @@ export function ProfilePhotoRow({
 
   return (
     <>
-      <Items state="default">
-        <GrowingItem>
+      <TableRow className="hover:bg-transparent">
+        <TableCell>
           <p className="typo-body-sm">Profil Foto</p>
-        </GrowingItem>
-        <div className="w-72">
+        </TableCell>
+        <TableCell className="w-72">
           <Button
             type="button"
             variant="ghost"
@@ -65,8 +65,8 @@ export function ProfilePhotoRow({
               event.currentTarget.value = '';
             }}
           />
-        </div>
-      </Items>
+        </TableCell>
+      </TableRow>
 
       {pendingFile && (
         <AvatarCropModal

@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { GrowingItem, Items } from '@/features/settings/components/Table';
+import { TableCell, TableRow } from '@/components/ui/table';
 
 type EditableTextRowProps = {
   label: string;
@@ -22,11 +22,11 @@ export function EditableTextRow({
   onBlur,
 }: EditableTextRowProps) {
   return (
-    <Items state="default">
-      <GrowingItem>
+    <TableRow className="hover:bg-transparent">
+      <TableCell>
         <p className="typo-body-sm">{label}</p>
-      </GrowingItem>
-      <div className="w-72">
+      </TableCell>
+      <TableCell className="w-72">
         {isEditing ? (
           <Input
             autoFocus
@@ -34,6 +34,7 @@ export function EditableTextRow({
             disabled={isDisabled}
             onBlur={onBlur}
             onChange={(event) => onChangeValue(event.target.value)}
+            className="shadow-none focus-visible:border-border focus-visible:ring-0"
             onKeyDown={(event) => {
               if (event.key === 'Enter') {
                 event.currentTarget.blur();
@@ -50,7 +51,7 @@ export function EditableTextRow({
             {value || '-'}
           </Button>
         )}
-      </div>
-    </Items>
+      </TableCell>
+    </TableRow>
   );
 }

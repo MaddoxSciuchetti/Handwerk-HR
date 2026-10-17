@@ -1,6 +1,7 @@
 import LoadingAlert from '@/components/alerts/LoadingAlert';
+import { Card, CardContent } from '@/components/ui/card';
+import { Table, TableBody } from '@/components/ui/table';
 import { SettingsPageHeader } from '@/features/settings/components/SettingsPageHeader';
-import { Table } from '@/features/settings/components/Table';
 import { User } from '@/features/user-profile/types/auth.type';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -83,9 +84,10 @@ function Profile() {
     <div className="mx-auto flex h-full flex-col overflow-auto rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
       <div className="flex h-full w-full flex-col items-stretch">
         <SettingsPageHeader title="Profil" />
-        <Table className="w-full">
-          {/* <TableDivider /> */}
-
+        <Card className="mt-5 w-full gap-0 border border-border py-0 shadow-none ring-0">
+          <CardContent className="px-2 py-2">
+          <Table>
+          <TableBody className="[&_tr]:border-0 [&_td]:px-2 [&_td]:py-4 [&_td:first-child]:pl-10">
           <EditableTextRow
             label="Display Name"
             value={values.displayName}
@@ -135,7 +137,10 @@ function Profile() {
             isUploading={isUploadingPhoto}
             onUploadPhoto={uploadPhoto}
           />
-        </Table>
+          </TableBody>
+          </Table>
+          </CardContent>
+        </Card>
         <Employees />
       </div>
     </div>

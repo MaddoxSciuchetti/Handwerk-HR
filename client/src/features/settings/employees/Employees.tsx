@@ -1,14 +1,14 @@
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
-  Cell,
-  employeeTableGridClassName,
-  ItemHeader,
   Table,
-  TableDivider,
+  TableBody,
+  TableHead,
   TableHeader,
-} from '@/features/settings/components/Table';
+  TableRow,
+} from '@/components/ui/table';
 import EmployeeItemList from '@/features/employee-overview/components/items/EmployeeItemList';
 import EmployeeSidebar from '@/features/employee-overview/components/sidebar/EmployeeSidebar';
 import useDeleteEmployee from '@/features/employee-overview/hooks/useDeleteEmployee';
@@ -17,6 +17,10 @@ import { EmployeeDataArray } from '@/features/employee-overview/schemas/schema';
 import { useState } from 'react';
 import { useSendInvite } from '../hooks/useSendInvite';
 import { SettingsHeader } from './SettingsHeader';
+import {
+  settingsTableBodyClassName,
+  settingsTableClassName,
+} from '@/features/settings/components/settingsTable';
 
 function Employees() {
   const { isPending, handleSendInvite, mitarbeiterEmail, setMitarbeiterEmail } =
@@ -35,39 +39,43 @@ function Employees() {
     <section className="mt-10 flex w-full flex-col items-stretch">
       <div className="flex w-full flex-col items-stretch">
         <SettingsHeader />
-        <Table className="w-full">
-          <TableHeader>
+        <Card className="mt-5 flex w-full flex-col gap-0 border border-border py-0 shadow-none ring-0">
+          <CardHeader className="flex flex-row items-center justify-end gap-3 px-6 py-3">
+            <Input
+              placeholder="Mitarbeite Email"
+              value={mitarbeiterEmail}
+              onChange={(e) => setMitarbeiterEmail(e.target.value)}
+              className="max-w-sm shadow-none focus-visible:border-border focus-visible:ring-0"
+            />
             <Button
-              className="rounded-full text-sm"
+              className="rounded-2xl text-sm"
               disabled={isPending}
               onClick={handleSendInvite}
             >
               {isPending ? 'Sende...' : 'Hinzufügen'}
             </Button>
-            <Input
-              placeholder="Mitarbeite Email"
-              value={mitarbeiterEmail}
-              onChange={(e) => setMitarbeiterEmail(e.target.value)}
-            />
-          </TableHeader>
-          <TableDivider />
-          <ItemHeader className={employeeTableGridClassName}>
-            <div className="typo-body-sm min-w-0 truncate pl-7 py-1">Name</div>
-            <div className="typo-body-xs text-left leading-tight">
-              Offene
-              <br />
-              Aufgaben
-            </div>
-            <div className="typo-body-sm text-left">Status</div>
-            <div className="typo-body-sm text-left">Vertretung</div>
-            <div className="typo-body-sm text-left">Aktionen</div>
-          </ItemHeader>
-          <EmployeeItemList
-            employees={EmployeeData ?? []}
-            handleDeleteEmployee={handleDeleteEmployee}
-            onSelectEmployee={setSelectedEmployee}
-          />
-        </Table>
+          </CardHeader>
+          <CardContent className="px-2 pb-2">
+            <Table className={settingsTableClassName}>
+              <TableHeader className="[&_tr]:border-b-0">
+                <TableRow className="border-0 hover:bg-transparent">
+                  <TableHead className="h-12 py-3 pl-10">Name</TableHead>
+                  <TableHead className="py-3 px-2">Offene Aufgaben</TableHead>
+                  <TableHead className="py-3 px-2">Status</TableHead>
+                  <TableHead className="py-3 px-2">Vertretung</TableHead>
+                  <TableHead className="py-3 px-2">Aktionen</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody className={settingsTableBodyClassName}>
+                <EmployeeItemList
+                  employees={EmployeeData ?? []}
+                  handleDeleteEmployee={handleDeleteEmployee}
+                  onSelectEmployee={setSelectedEmployee}
+                />
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       </div>
       <EmployeeSidebar
         employee={selectedEmployee}

@@ -1,12 +1,19 @@
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { ScrollableTableViewport } from '@/components/ui/scrollable-table-viewport';
 import {
   Table,
-  TableDivider,
+  TableBody,
+  TableHead,
   TableHeader,
-} from '@/features/settings/components/Table';
+  TableRow,
+} from '@/components/ui/table';
 import { SettingsPageHeader } from '@/features/settings/components/SettingsPageHeader';
+import {
+  settingsTableBodyClassName,
+  settingsTableClassName,
+} from '@/features/settings/components/settingsTable';
 import { TaskSidebar } from '@/features/worker-task-management/components/tasks/TaskSidebar';
 import { EMPTY_TEMPLATE_TASK } from '@/features/template-tasks/schemas/templateTaskForm.schema';
 import { TemplateTaskFormValues } from '@/features/worker-task-management/types/index.types';
@@ -55,10 +62,10 @@ export function TemplateTasks({ templateId, name }: TemplateTasksProps) {
           title={name}
           description="Füge Aufgaben zu dieser Vorlage hinzu"
         />
-        <Table className="min-h-0 w-full flex-1">
-          <TableHeader>
+        <Card className="mt-5 flex min-h-0 w-full flex-1 flex-col gap-0 border border-border py-0 shadow-none ring-0">
+          <CardHeader className="flex shrink-0 flex-row items-center justify-end px-6 py-3">
             <Button
-              className="rounded-full"
+              className="rounded-2xl"
               onClick={() => {
                 setEditTemplateTask(EMPTY_TEMPLATE_TASK);
                 setCreateOpenNonce((n) => n + 1);
@@ -68,17 +75,35 @@ export function TemplateTasks({ templateId, name }: TemplateTasksProps) {
             >
               Hinzufügen
             </Button>
-          </TableHeader>
-          <TableDivider />
-          <ScrollableTableViewport>
-            <TemplateTaskItem
-              templateTasks={templateTasks ?? []}
-              setIsOpen={setIsOpen}
-              setEditTemplateTask={setEditTemplateTask}
-              setTemplateTaskState={setTemplateTaskState}
-            />
-          </ScrollableTableViewport>
-        </Table>
+          </CardHeader>
+          <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-0">
+            <ScrollableTableViewport>
+              <Table className={settingsTableClassName}>
+                <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-b-0">
+                  <TableRow className="border-0 hover:bg-transparent">
+                    <TableHead className="h-12 bg-card py-3 pl-10">
+                      Aufgabe
+                    </TableHead>
+                    <TableHead className="bg-card py-3 px-2">
+                      Beschreibung
+                    </TableHead>
+                    <TableHead className="bg-card py-3 pr-6 text-right">
+                      Aktionen
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className={settingsTableBodyClassName}>
+                  <TemplateTaskItem
+                    templateTasks={templateTasks ?? []}
+                    setIsOpen={setIsOpen}
+                    setEditTemplateTask={setEditTemplateTask}
+                    setTemplateTaskState={setTemplateTaskState}
+                  />
+                </TableBody>
+              </Table>
+            </ScrollableTableViewport>
+          </CardContent>
+        </Card>
         <TaskSidebar
           key={
             templateTaskState === 'edit'

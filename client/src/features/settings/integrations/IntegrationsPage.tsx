@@ -8,8 +8,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArbeitszeugnisAutomationCard } from '@/features/settings/automation/ArbeitszeugnisAutomationCard';
-import { useArbeitszeugnisDocument } from '@/features/settings/automation/useArbeitszeugnisDocument';
 import { SettingsPageHeader } from '@/features/settings/components/SettingsPageHeader';
 import { cn } from '@/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -236,9 +234,8 @@ function CrewmeisterForm({
 
 export function IntegrationsPage() {
   const query = useQuery({ queryKey: QUERY_KEY, queryFn: getIntegrations });
-  const certificate = useArbeitszeugnisDocument();
 
-  if (query.isLoading || certificate.isLoading) {
+  if (query.isLoading) {
     return <LoadingAlert />;
   }
 
@@ -264,15 +261,6 @@ export function IntegrationsPage() {
           ) : null}
           <MicrosoftForm key={microsoft.tenantId} integration={microsoft} />
           <CrewmeisterForm key={crewmeister.crewId} integration={crewmeister} />
-          <div className="flex flex-col gap-3 px-3 py-6">
-            {certificate.isError || !certificate.data ? (
-              <p className="text-sm text-destructive">
-                Arbeitszeugnis konnte nicht geladen werden.
-              </p>
-            ) : (
-              <ArbeitszeugnisAutomationCard page={certificate.data} />
-            )}
-          </div>
         </div>
       )}
     </div>
