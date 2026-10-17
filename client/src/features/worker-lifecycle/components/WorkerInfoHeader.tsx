@@ -1,3 +1,5 @@
+import { SheetTitle } from '@/components/ui/sheet';
+
 type WorkerInfoHeaderProps = {
   isError: boolean;
 };
@@ -5,9 +7,9 @@ type WorkerInfoHeaderProps = {
 const WorkerInfoHeader = ({ isError }: WorkerInfoHeaderProps) => {
   return (
     <>
-      <h2 className="text-sm font-semibold text-foreground mb-6 tracking-tight">
+      <SheetTitle className="text-sm font-semibold tracking-tight">
         Handwerker Informationen
-      </h2>
+      </SheetTitle>
 
       {isError ? (
         <p className="text-xs text-(--destructive)">

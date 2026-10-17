@@ -33,9 +33,9 @@ const WorkerInfos = ({
       <div className="w-full">
         {workers.map((workerInfo, idx) => (
           <div key={`${workerInfo.label}-${idx}`}>
-            <div className="group flex items-center justify-between gap-4 py-3.5">
+            <div className="group grid grid-cols-1 items-center gap-2 py-3.5 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] sm:gap-4">
               <WorkerDescription workerInfo={workerInfo} />
-              <div className="w-96 shrink-0">
+              <div className="min-w-0 w-full">
                 <WorkerInput
                   workerInfo={workerInfo}
                   idx={idx}

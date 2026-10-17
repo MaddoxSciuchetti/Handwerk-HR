@@ -22,7 +22,7 @@ export function TaskSegmentToggle({
     <ToggleGroup
       type="single"
       value={value}
-      spacing={0}
+      spacing={1}
       aria-label="Ansicht umschalten"
       className="shrink-0 gap-0.5 rounded-full bg-muted p-0.5"
       onValueChange={(next) => {

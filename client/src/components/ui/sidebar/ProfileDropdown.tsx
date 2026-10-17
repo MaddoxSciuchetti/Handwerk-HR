@@ -1,8 +1,4 @@
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -10,7 +6,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { SidebarMenu, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar';
+import {
+  SidebarMenu,
+  SidebarMenuItem,
+  useSidebar,
+} from '@/components/ui/sidebar';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
   Tooltip,
@@ -99,7 +99,9 @@ export function ProfileDropdown({
                   {!isCollapsed ? (
                     <>
                       <div className="grid min-w-0 flex-1 text-left text-sm leading-tight">
-                        <span className="truncate font-medium">{displayLabel}</span>
+                        <span className="truncate font-medium">
+                          {displayLabel}
+                        </span>
                       </div>
                       <ChevronsUpDown className="ml-auto size-4 shrink-0 text-muted-foreground" />
                     </>
@@ -130,7 +132,7 @@ export function ProfileDropdown({
               <ToggleGroup
                 type="single"
                 value={theme}
-                spacing={0}
+                spacing={1}
                 aria-label="Erscheinungsbild"
                 className="mt-1.5 w-full min-w-0 rounded-full bg-muted p-px"
                 onValueChange={(next) => {
@@ -142,14 +144,22 @@ export function ProfileDropdown({
                   aria-label="Helles Design"
                   className={themeItemClassName}
                 >
-                  <Sun className="size-3.5 shrink-0" strokeWidth={2} aria-hidden />
+                  <Sun
+                    className="size-3.5 shrink-0"
+                    strokeWidth={2}
+                    aria-hidden
+                  />
                 </ToggleGroupItem>
                 <ToggleGroupItem
                   value="dark"
                   aria-label="Dunkles Design"
                   className={themeItemClassName}
                 >
-                  <Moon className="size-3.5 shrink-0" strokeWidth={2} aria-hidden />
+                  <Moon
+                    className="size-3.5 shrink-0"
+                    strokeWidth={2}
+                    aria-hidden
+                  />
                 </ToggleGroupItem>
               </ToggleGroup>
             </div>
