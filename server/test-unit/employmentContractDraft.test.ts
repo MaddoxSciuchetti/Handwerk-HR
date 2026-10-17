@@ -98,22 +98,14 @@ beforeEach(() => {
     );
     (prisma.documentMaster.findFirst as jest.Mock).mockResolvedValue(null);
 });
-it("points an unsent contract at the marked master before it can be sent", async () => {
+it("keeps a worker's selected template when the organisation default changes", async () => {
     (prisma.documentMaster.findFirst as jest.Mock).mockResolvedValue({
         id: "primary-master",
     });
-
-    await getEngagementContract(params);
-
-    expect(prisma.employmentContract.update).toHaveBeenCalledWith({
-        where: { id: "contract" },
-        data: {
-            masterId: "primary-master",
-            body: expect.anything(),
-            status: "draft",
-            matchedMasterRevision: null,
-        },
-    });
+    const view = await getEngagementContract(params);
+    expect(view?.masterId).toBe("master");
+    expect(prisma.documentMaster.findFirst).not.toHaveBeenCalled();
+    expect(prisma.employmentContract.update).not.toHaveBeenCalled();
 });
 
 it("keeps a sent contract on the master it was sent with", async () => {
@@ -325,4 +317,156 @@ describe("contract send task status", () => {
         );
         expect(prisma.issue.deleteMany).not.toHaveBeenCalled();
     });
+});
+
+it("returns placed questionnaire answers so clearing a local field can restore its sidebar chip", async () => {
+    contract.values = [{ key: "contract.vorname", value: "Lukas" }];
+    contract.engagement = {
+        questionnaireSubmission: {
+            status: "completed",
+            answers: [
+                { key: "firstName", value: "Lukas" },
+                { key: "lastName", value: "Muster" },
+            ],
+        },
+        worker: { email: "lukas@example.test" },
+    };
+    const view = await getEngagementContract(params);
+    expect(view?.values).toEqual({ "contract.vorname": "Lukas" });
+    expect(view?.unmatchedAnswers.map((answer) => answer.key)).toEqual([
+        "lastName",
+    ]);
+    expect(view?.questionnaireAnswers.map((answer) => answer.key)).toEqual([
+        "firstName",
+        "lastName",
+    ]);
+});
+
+describe("changing a worker's contract template", () => {
+    const replacement = {
+        id: "other-master",
+        name: "Anderer Arbeitsvertrag",
+        revision: 7,
+        body: fromSegments([
+            { type: "input", key: "other.name", label: "Name" },
+            { type: "input", key: "other.birthday", label: "Geburtsdatum" },
+            {
+                type: "input",
+                key: "contract.duties",
+                label: "Tätigkeiten",
+                fieldType: "points",
+            },
+        ]),
+    };
+    beforeEach(() => {
+        contract.engagement = {
+            questionnaireSubmission: {
+                status: "completed",
+                answers: [
+                    { key: "firstName", value: "Lukas" },
+                    { key: "lastName", value: "Muster" },
+                    { key: "birthday", value: "1990-04-01" },
+                ],
+            },
+            worker: { email: "lukas@example.test" },
+        };
+        contract.values = [
+            { key: "old.field", value: "Alte manuelle Eingabe" },
+            { key: "contract.duties", value: "Alte Tätigkeiten" },
+        ];
+        contract.outgoingPdfId = "old-pdf";
+        (prisma.documentMaster.findFirst as jest.Mock).mockResolvedValue(
+            replacement,
+        );
+        (prisma.employmentContract.update as jest.Mock).mockImplementation(
+            async ({ data }) => {
+                Object.assign(contract, data);
+                if (data.masterId === replacement.id)
+                    contract.master = replacement;
+                return contract;
+            },
+        );
+    });
+    it("applies questionnaire answers to the new template, drops old inputs and retains the choice on reopening", async () => {
+        const view = await resyncEngagementContractFromQuestionnaire({
+            ...params,
+            masterId: replacement.id,
+        });
+        expect(view).toMatchObject({
+            masterId: replacement.id,
+            name: replacement.name,
+            matchedMasterRevision: 7,
+            values: {
+                "other.name": "Lukas Muster",
+                "other.birthday": "01.04.1990",
+            },
+        });
+        expect(view.values).not.toHaveProperty("old.field");
+        expect(view.values).not.toHaveProperty("contract.duties");
+        expect(contract.outgoingPdfId).toBeNull();
+        expect(contract.status).toBe("draft");
+        expect((await getEngagementContract(params))?.masterId).toBe(
+            replacement.id,
+        );
+        expect(prisma.documentMaster.findFirst).toHaveBeenCalledWith(
+            expect.objectContaining({
+                where: expect.objectContaining({
+                    id: replacement.id,
+                    organizationId: "org",
+                    kind: "employment_contract",
+                    deletedAt: null,
+                }),
+            }),
+        );
+    });
+    it("rejects foreign, deleted or non-contract templates before changing the contract", async () => {
+        (prisma.documentMaster.findFirst as jest.Mock).mockResolvedValue(null);
+        await expect(
+            resyncEngagementContractFromQuestionnaire({
+                ...params,
+                masterId: "unavailable",
+            }),
+        ).rejects.toThrow("Vertragsvorlage nicht gefunden");
+        expect(prisma.employmentContract.update).not.toHaveBeenCalled();
+        expect(
+            prisma.employmentContractValue.deleteMany,
+        ).not.toHaveBeenCalled();
+    });
+    it.each(["sent", "signed"])("rejects a %s contract", async (state) => {
+        if (state === "signed") contract.status = "signed";
+        else contract.sentAt = new Date();
+        await expect(
+            resyncEngagementContractFromQuestionnaire({
+                ...params,
+                masterId: replacement.id,
+            }),
+        ).rejects.toThrow("bereits versendet");
+        expect(prisma.employmentContract.update).not.toHaveBeenCalled();
+    });
+    it("rejects a template changed during matching", async () => {
+        (prisma.documentMaster.findFirst as jest.Mock)
+            .mockResolvedValueOnce(replacement)
+            .mockResolvedValueOnce(null);
+        await expect(
+            resyncEngagementContractFromQuestionnaire({
+                ...params,
+                masterId: replacement.id,
+            }),
+        ).rejects.toThrow("hat sich geändert");
+        expect(prisma.employmentContract.update).not.toHaveBeenCalled();
+    });
+});
+
+it("rejects a draft save racing with a template switch instead of overwriting the new values", async () => {
+    (prisma.employmentContract.findUnique as jest.Mock).mockResolvedValue({
+        ...contract,
+        masterId: "other-master",
+    });
+    await expect(
+        saveEngagementContractDraft({
+            ...params,
+            values: { "contract.vorname": "Alt" },
+        }),
+    ).rejects.toThrow("inzwischen geändert");
+    expect(prisma.employmentContractValue.deleteMany).not.toHaveBeenCalled();
 });

@@ -257,6 +257,7 @@ function DocumentFieldView({ node, updateAttributes }: NodeViewProps) {
 
 export const DocumentFieldNode = Node.create({
   name: 'documentField',
+  selectable: false,
   group: 'inline',
   inline: true,
   atom: true,

@@ -53,6 +53,8 @@ export function TaskItem({
       assigneeUserId: task.assigneeUserId ?? '',
       status: task.status,
       automation: storedTaskAutomation(task.automation),
+      integrationProvider: task.integrationProvider ?? null,
+      sequence: task.sequence ?? null,
     });
   };
 

@@ -1,15 +1,16 @@
-import SmallWrapper from '@/components/modal/modalSizes/SmallWrapper';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import useAddNewTask from '../hooks/useAddNewTask';
 import useTemplateModalContext from '../hooks/useTemplateModalContext';
 import TaskForm from './shared/TaskForm';
 
 const AddTemplateModal = () => {
-  const { tab } = useTemplateModalContext();
+  const { tab, closeTask } = useTemplateModalContext();
   const { register, handleSubmit, control, errors, onSubmit } =
     useAddNewTask(tab);
   return (
     <>
-      <SmallWrapper className="min-h-60 max-h-60">
+      <Dialog open onOpenChange={(next) => { if (!next) closeTask(); }}>
+      <DialogContent className="min-h-60 max-h-60 overflow-y-auto">
         <TaskForm
           template_header={tab === 'ONBOARDING' ? 'Onboarding' : 'Offboarding'}
           templateHeaderAdjective="hinzufügen"
@@ -22,7 +23,8 @@ const AddTemplateModal = () => {
           descriptionFormName="description"
           templateTypeName="template_type"
         />
-      </SmallWrapper>
+      </DialogContent>
+      </Dialog>
     </>
   );
 };

@@ -41,12 +41,14 @@ const ResetPasswordForm = ({ code }: { code: string }) => {
               </AlertDescription>
             </Alert>
 
-            <button
+            <Button
+              type="button"
+              variant="link"
               onClick={() => navigate({ to: '/login' })}
-              className="cursor-pointer text-foreground"
+              className="h-auto p-0 text-foreground hover:bg-transparent hover:text-foreground hover:no-underline"
             >
               Sign in
-            </button>
+            </Button>
           </div>
         ) : (
           <div className="space-y-4 text-left">

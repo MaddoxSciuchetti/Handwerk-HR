@@ -6,13 +6,14 @@ export function LandingHeader() {
   return (
     <header className="sticky top-0 z-10 border-b border-border bg-background">
       <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-4">
-        <button
+        <Button
           type="button"
-          className="text-sm font-medium tracking-tight"
+          variant="ghost"
+          className="h-auto px-0 text-sm font-medium tracking-tight hover:bg-transparent hover:text-foreground"
           onClick={() => scrollToSection('top')}
         >
           Hadox
-        </button>
+        </Button>
         <nav className="flex items-center gap-2" aria-label="Page">
           <Button
             variant="ghost"

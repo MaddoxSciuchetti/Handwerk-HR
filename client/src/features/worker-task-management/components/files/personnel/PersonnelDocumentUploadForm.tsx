@@ -1,4 +1,3 @@
-import SmallWrapper from '@/components/modal/modalSizes/SmallWrapper';
 import { Button } from '@/components/ui/button';
 import { CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -58,7 +57,7 @@ export function PersonnelDocumentUploadForm({
   };
 
   return (
-    <SmallWrapper className="h-auto min-h-0 max-h-[85vh] overflow-y-auto">
+    <div className="flex h-auto min-h-0 max-h-[85vh] w-full flex-col overflow-y-auto">
       <CardContent className="flex w-full min-w-0 flex-col gap-4">
         {engagements.length === 0 ? (
           <p className="text-sm text-muted-foreground">
@@ -111,6 +110,6 @@ export function PersonnelDocumentUploadForm({
           </>
         )}
       </CardContent>
-    </SmallWrapper>
+    </div>
   );
 }

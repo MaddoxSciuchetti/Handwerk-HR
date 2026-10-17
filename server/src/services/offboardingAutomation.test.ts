@@ -26,6 +26,19 @@ jest.mock("@/lib/prisma", () => ({
 jest.mock("@/services/microsoft365Account", () => ({
     microsoftGraphToken: jest.fn(),
 }));
+
+jest.mock("@/services/integrations/runtime", () => ({
+    integrationsLive: () => true,
+    loadMicrosoft365Config: jest.fn(async () => ({
+        tenantId: "tenant",
+        clientId: "client",
+        clientSecret: "secret",
+        domain: "firma.de",
+        licenseSkuId: "sku",
+    })),
+    loadCrewmeisterToken: jest.fn(async () => null),
+    NOT_LIVE_MESSAGE: "Sequenzen werden in dieser Umgebung nicht ausgeführt.",
+}));
 jest.mock("@/constants/env", () => ({
     ...jest.requireActual("@/constants/env"),
     USE_MICROSOFT_MAIL: true,

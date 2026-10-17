@@ -139,7 +139,11 @@ it("accepts Carlito when Arial and Times files are absent", async () => {
         bytes: Buffer.from("font"),
         hash: "hash",
       },
-      { filename: "TimesNewRoman.ttf", bytes: Buffer.from("font"), hash: "hash" },
+      {
+        filename: "TimesNewRoman.ttf",
+        bytes: Buffer.from("font"),
+        hash: "hash",
+      },
     ],
     css: "",
     checks: [],
@@ -160,4 +164,65 @@ it("accepts the configured embedded Carlito replacement for Calibri", async () =
   await expect(
     generateDocumentPdf(document, { name: "Ada" }),
   ).resolves.toHaveProperty("bytes", bytes);
+});
+
+it("preserves inline sizes and spacing when substituting a font family", async () => {
+  (loadDocumentFonts as jest.Mock).mockResolvedValue({
+    assets: [
+      { filename: "Arial.ttf", bytes: Buffer.from("font"), hash: "hash" },
+    ],
+    css: '@font-face{font-family:"Carlito";src:url("Arial.ttf")}',
+    checks: [],
+    familyMap: { Arial: "Carlito" },
+  });
+  font.name = "Carlito";
+  const contract = structuredClone(document);
+  contract.content = {
+    type: "doc",
+    content: [
+      {
+        type: "lineGroup",
+        attrs: {
+          height: 9.45,
+          lines: [],
+          labels: [
+            {
+              text: "(Arbeitnehmer)",
+              left: 100,
+              top: 0,
+              fontFamily: "Arial",
+              fontSize: 7,
+              color: "#000000",
+            },
+          ],
+        },
+      },
+    ],
+  };
+  await generateDocumentPdf(contract, { name: "Ada" });
+  const files = (fetchMock.mock.calls[0][1].body as FormData).getAll(
+    "files",
+  ) as File[];
+  const html = await files.find((file) => file.name === "index.html")!.text();
+  // Capture one intact HTML attribute: an unescaped font quote truncates it.
+  const style = html.match(
+    /<span style="([^"]+)">\(Arbeitnehmer\)<\/span>/,
+  )?.[1];
+  expect(style).toContain("font-family:&quot;Carlito&quot;");
+  expect(style).toContain("font-size:7pt");
+  expect(style).toContain("line-height:1.2");
+  expect(style).toContain("color:#000000");
+});
+
+it("returns an actionable service error when the renderer is offline or times out", async () => {
+  fetchMock.mockRejectedValue(new TypeError("fetch failed"));
+  await expect(generateDocumentPdf(document, { name: "Ada" })).rejects.toMatchObject({
+    statusCode: 503,
+    message: expect.stringContaining("PDF-Dienst ist nicht erreichbar"),
+  });
+  fetchMock.mockRejectedValue(new DOMException("Timed out", "TimeoutError"));
+  await expect(generateDocumentPdf(document, { name: "Ada" })).rejects.toMatchObject({
+    statusCode: 503,
+    message: expect.stringContaining("erneut versuchen"),
+  });
 });

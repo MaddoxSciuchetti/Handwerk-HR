@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import { Trash2, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 
@@ -24,26 +25,30 @@ function EditModeBar<T>({
         {selectedItems.length} ausgewählt
       </span>
       {actions}
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="icon-sm"
         aria-label="Ausgewählte Aufgaben löschen"
         disabled={isPending || selectedItems.length === 0}
         onClick={onDelete}
-        className="rounded-full p-1 hover:bg-muted disabled:opacity-50"
+        className="rounded-full"
       >
         <Trash2 className="h-4 w-4" aria-hidden />
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
+        variant="ghost"
+        size="icon-sm"
         aria-label="Schließen"
         onClick={() => {
           setSelectedItems([]);
           onClose();
         }}
-        className="rounded-full p-1 hover:bg-muted"
+        className="rounded-full"
       >
         <X className="h-4 w-4" aria-hidden />
-      </button>
+      </Button>
     </div>
   );
 }

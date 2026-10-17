@@ -1,8 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import {
-    microsoft365Configured,
-    microsoftGraphToken,
-} from "@/services/microsoft365Account";
+    integrationsLive,
+    loadMicrosoft365Config,
+} from "@/services/integrations/runtime";
+import { microsoftGraphToken } from "@/services/microsoft365Account";
 import {
     applyWelcomeMailTemplate,
     formatWelcomeEntryDate,
@@ -57,7 +58,7 @@ export async function departureMailPage(
 ): Promise<WelcomeMailPage> {
     const [settings, listed] = await Promise.all([
         readDepartureMailSettings(organizationId),
-        listMicrosoftGroups(),
+        listMicrosoftGroups(organizationId),
     ]);
     return {
         settings,
@@ -100,14 +101,27 @@ export async function sendTeamDepartureMail(params: {
     if (worker.departureMailSentAt) return { status: "already_sent" };
 
     const settings = await readDepartureMailSettings(params.organizationId);
-    if (!teamMailSettingsComplete(settings) || !microsoft365Configured()) {
+    if (!teamMailSettingsComplete(settings)) {
         return {
             status: "failed",
             message: "Die Entlassungsmail ist nicht eingerichtet.",
         };
     }
+    if (!integrationsLive()) {
+        return {
+            status: "failed",
+            message: "Sequenzen werden in dieser Umgebung nicht ausgeführt.",
+        };
+    }
+    const config = await loadMicrosoft365Config(params.organizationId);
+    if (!config) {
+        return {
+            status: "failed",
+            message: "Microsoft 365 ist für diese Organisation nicht eingerichtet.",
+        };
+    }
 
-    const token = await microsoftGraphToken();
+    const token = await microsoftGraphToken(config);
     if (!token) {
         return {
             status: "failed",

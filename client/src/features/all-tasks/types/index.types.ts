@@ -28,6 +28,8 @@ export type IssueResponse = {
   templateItemId: string | null;
   status: IssueStatusValue;
   automation?: string | null;
+  integrationProvider?: 'microsoft_graph' | 'crewmeister' | null;
+  sequence?: string | null;
   kind: 'standard' | 'contract_send' | 'contract_confirm';
   isTemporary: boolean;
   assigneeOnly?: boolean;

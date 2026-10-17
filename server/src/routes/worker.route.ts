@@ -4,6 +4,7 @@ import { upload } from "../middleware/fileparser";
 
 import * as engagementClothingController from "../controllers/engagementClothing.controller";
 import * as engagementMaterialController from "../controllers/engagementMaterial.controller";
+import * as engagementTemplateDocumentController from "../controllers/engagementTemplateDocument.controller";
 import * as personnelDocumentController from "../controllers/personnelDocument.controller";
 import * as workerController from "../controllers/worker.controller";
 
@@ -65,8 +66,36 @@ worker.post(
     workerController.confirmEngagementContractForSend,
 );
 worker.post(
+    "/:workerId/engagements/:engagementId/contract/template",
+    workerController.selectEngagementContractTemplate,
+);
+worker.post(
     "/:workerId/engagements/:engagementId/contract/resync",
     workerController.resyncEngagementContractFromQuestionnaire,
+);
+worker.get(
+    "/:workerId/engagements/:engagementId/template-documents",
+    engagementTemplateDocumentController.listEngagementTemplateDocuments,
+);
+worker.post(
+    "/:workerId/engagements/:engagementId/template-documents",
+    engagementTemplateDocumentController.createEngagementTemplateDocument,
+);
+worker.get(
+    "/:workerId/engagements/:engagementId/template-documents/:documentId",
+    engagementTemplateDocumentController.getEngagementTemplateDocument,
+);
+worker.put(
+    "/:workerId/engagements/:engagementId/template-documents/:documentId",
+    engagementTemplateDocumentController.saveEngagementTemplateDocument,
+);
+worker.post(
+    "/:workerId/engagements/:engagementId/template-documents/:documentId/sync",
+    engagementTemplateDocumentController.syncEngagementTemplateDocument,
+);
+worker.post(
+    "/:workerId/engagements/:engagementId/template-documents/:documentId/print",
+    engagementTemplateDocumentController.printEngagementTemplateDocument,
 );
 worker.post(
     "/:workerId/engagements/:engagementId/contract/send",

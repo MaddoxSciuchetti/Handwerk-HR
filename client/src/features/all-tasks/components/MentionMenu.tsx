@@ -1,3 +1,5 @@
+import { Button } from '@/components/ui/button';
+
 type MentionChoice = {
   id: string;
   label: string;
@@ -24,14 +26,15 @@ export function MentionMenu({
     >
       {choices.map((choice, index) => (
         <li key={choice.id}>
-          <button
+          <Button
             type="button"
+            variant="ghost"
             role="option"
             aria-selected={index === activeIndex}
             className={
               index === activeIndex
-                ? 'w-full rounded-lg bg-muted px-2 py-1.5 text-left text-sm'
-                : 'w-full rounded-lg px-2 py-1.5 text-left text-sm hover:bg-muted'
+                ? 'h-auto w-full justify-start rounded-lg bg-muted px-2 py-1.5 text-left text-sm font-normal text-foreground hover:bg-muted hover:text-foreground'
+                : 'h-auto w-full justify-start rounded-lg bg-transparent px-2 py-1.5 text-left text-sm font-normal text-foreground hover:bg-muted hover:text-foreground'
             }
             onMouseDown={(event) => {
               event.preventDefault();
@@ -39,7 +42,7 @@ export function MentionMenu({
             }}
           >
             {choice.label}
-          </button>
+          </Button>
         </li>
       ))}
     </ul>

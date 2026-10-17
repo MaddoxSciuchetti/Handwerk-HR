@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import ModalOverlay from '@/components/modal/ModalOverlay';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { apiJson } from '@/config/apiClient';
 import queryClient from '@/config/query.client';
 import { ALL_WORKER_DATA } from '@/features/worker-lifecycle/consts/query-key.consts';
@@ -29,6 +29,8 @@ type DraftResponse = {
     engagementId: string;
     email: string | null;
     sent: boolean;
+    status?: 'sent' | 'completed' | null;
+    mockEnabled?: boolean;
     intro?: string;
     name?: string;
     questions: QuestionnaireQuestionData[];
@@ -39,7 +41,7 @@ type DraftResponse = {
 
 type SendResponse = {
   success: boolean;
-  data: { emailSent: boolean };
+  data: { emailSent: boolean; mockCompleted?: boolean };
 };
 
 type QuestionnaireSendDialogProps = {
@@ -106,6 +108,8 @@ export function QuestionnaireSendDialog({
       .map((question) => ({ ...question, required: true as const })),
   ];
   const sent = Boolean(draft.data?.data.sent);
+  const retryMock =
+    draft.data?.data.mockEnabled && draft.data.data.status === 'sent';
 
   useEffect(() => {
     if (serverQuestions.length === 0) return;
@@ -138,6 +142,14 @@ export function QuestionnaireSendDialog({
     onSuccess: (response) => {
       void queryClient.invalidateQueries({ queryKey: [ALL_WORKER_DATA] });
       void queryClient.invalidateQueries({ queryKey: [WORKERBYID] });
+      void queryClient.invalidateQueries({ queryKey: ['employment-contract'] });
+      if (response.data.mockCompleted) {
+        toast.success(
+          'Testfragebogen ausgefüllt. Der Vertrag kann bearbeitet werden.'
+        );
+        onClose();
+        return;
+      }
       if (!response.data.emailSent) {
         toast.error('Die E-Mail ist nicht rausgegangen. Senden erneut versuchen.');
         void draft.refetch();
@@ -203,7 +215,8 @@ export function QuestionnaireSendDialog({
   }, []);
 
   return (
-    <ModalOverlay handleToggle={() => void close()} size="max-w-3xl">
+    <Dialog open onOpenChange={(next) => { if (!next) void close(); }}>
+      <DialogContent className="w-full max-w-3xl border-0 bg-transparent p-0 shadow-none sm:max-w-3xl">
       <div className="flex max-h-[80vh] flex-col gap-4 overflow-y-auto rounded-2xl border border-border bg-card p-6 text-card-foreground">
         <h2 className="text-lg font-medium">Fragebogen senden</h2>
         {draft.isPending ? <p className="text-sm text-muted-foreground">Lädt…</p> : null}
@@ -213,6 +226,12 @@ export function QuestionnaireSendDialog({
         {draft.data ? (
           <>
             <p className="text-sm font-medium">{draft.data.data.name ?? 'Personalfragebogen'}</p>
+            {draft.data.data.mockEnabled ? (
+              <p role="status" className="rounded-lg border border-border bg-muted p-3 text-sm">
+                Testmodus: Senden füllt den Fragebogen mit Beispielantworten aus.
+                Es wird keine E-Mail verschickt.
+              </p>
+            ) : null}
             <p className="text-sm text-muted-foreground">
               An {draft.data.data.email ?? 'ohne E-Mail'}. Jedes Feld kann vorausgefüllt werden.
               Ausgefüllte Felder sind für den Handwerker danach gesperrt.
@@ -351,13 +370,14 @@ export function QuestionnaireSendDialog({
           <Button
             type="button"
             className="rounded-2xl"
-            disabled={!draft.data || sent || send.isPending}
+            disabled={!draft.data || (sent && !retryMock) || send.isPending}
             onClick={() => send.mutate()}
           >
             {send.isPending ? 'Sendet…' : 'Senden'}
           </Button>
         </div>
       </div>
-    </ModalOverlay>
+      </DialogContent>
+    </Dialog>
   );
 }

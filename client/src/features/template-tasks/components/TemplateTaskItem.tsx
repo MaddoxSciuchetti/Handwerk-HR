@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { INTEGRATION_NONE } from '@/features/settings/integrations/integration.consts';
 import { Cell, GrowingItem, Items } from '@/features/settings/components/Table';
 
 import {
@@ -66,6 +67,9 @@ export function TemplateTaskItem({
                   defaultStatus: task.defaultStatus,
                   defaultAssigneeUserId: task.defaultAssigneeUserId ?? '',
                   orderIndex: task.orderIndex,
+                  integrationProvider:
+                    task.integrationProvider ?? INTEGRATION_NONE,
+                  sequence: task.sequence ?? INTEGRATION_NONE,
                 });
                 setTemplateTaskState('edit');
               }}

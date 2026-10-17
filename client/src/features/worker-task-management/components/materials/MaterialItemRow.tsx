@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { TableCell, TableRow } from '@/components/ui/table';
 import { useState } from 'react';
 import type { EngagementMaterialItem } from '../../api/engagementMaterials.api';
 
@@ -46,30 +47,30 @@ export function MaterialItemRow({
     unitPrice !== item.unitPrice.replace('.', ',');
 
   return (
-    <tr className="border-b border-border last:border-0">
-      <td className="px-3 py-2">
+    <TableRow className="border-b border-border last:border-0">
+      <TableCell className="px-3 py-2">
         <Input
           value={name}
           onChange={(event) => setName(event.target.value)}
           aria-label="Name"
         />
-      </td>
-      <td className="px-3 py-2">
+      </TableCell>
+      <TableCell className="px-3 py-2">
         <Input
           value={articleNumber}
           onChange={(event) => setArticleNumber(event.target.value)}
           aria-label="Artikelnummer"
         />
-      </td>
-      <td className="px-3 py-2">
+      </TableCell>
+      <TableCell className="px-3 py-2">
         <Input
           value={quantity}
           inputMode="numeric"
           onChange={(event) => setQuantity(event.target.value)}
           aria-label="Menge"
         />
-      </td>
-      <td className="px-3 py-2">
+      </TableCell>
+      <TableCell className="px-3 py-2">
         <Input
           value={unitPrice}
           onChange={(event) => setUnitPrice(event.target.value)}
@@ -78,8 +79,8 @@ export function MaterialItemRow({
         <p className="mt-1 text-xs text-muted-foreground">
           {priceLabel(item.unitPrice)}
         </p>
-      </td>
-      <td className="px-3 py-2">
+      </TableCell>
+      <TableCell className="px-3 py-2">
         <div className="flex justify-end gap-2">
           <Button
             type="button"
@@ -109,7 +110,7 @@ export function MaterialItemRow({
             Löschen
           </Button>
         </div>
-      </td>
-    </tr>
+      </TableCell>
+    </TableRow>
   );
 }

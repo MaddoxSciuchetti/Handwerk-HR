@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { fillWorkerProfileFromQuestionnaires } from "@/services/questionnaireWorkerProfile";
 import { certificateText } from "@/services/arbeitszeugnis";
 import { issueVisibleToViewer } from "@/services/issueVisibility";
 import type {
@@ -296,7 +297,13 @@ export async function getWorkerById(
                         },
                     },
                     questionnaireSubmission: {
-                        select: { id: true, status: true, completedAt: true, formDefinition: true },
+                        select: {
+                            id: true,
+                            status: true,
+                            completedAt: true,
+                            formDefinition: true,
+                            answers: { select: { key: true, value: true } },
+                        },
                     },
                     issues: {
                         where: issueVisibleToViewer(viewerUserId),
@@ -340,6 +347,15 @@ export async function getWorkerById(
 
     if (!worker) return null;
 
+    const profile = fillWorkerProfileFromQuestionnaires(
+        worker,
+        worker.engagements.flatMap((engagement) =>
+            engagement.questionnaireSubmission
+                ? [engagement.questionnaireSubmission]
+                : [],
+        ),
+    );
+
     const documentsWithUrls = await Promise.all(
         worker.documents.map(async (doc) => ({
             ...doc,
@@ -348,7 +364,7 @@ export async function getWorkerById(
     );
 
     return {
-        ...worker,
+        ...profile,
         documents: documentsWithUrls,
         engagements: worker.engagements.map((engagement) => ({
             ...engagement,
@@ -760,6 +776,8 @@ async function applyIssueTemplateInTx(
                 description: item.description ?? undefined,
                 priority: "no_priority",
                 templateItemId: item.id,
+                integrationProvider: item.integrationProvider,
+                sequence: item.sequence,
             },
             select: { id: true },
         });

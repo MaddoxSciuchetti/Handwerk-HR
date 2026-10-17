@@ -122,53 +122,10 @@ async function loadContract(params: ContractParams) {
     });
 }
 
-async function alignUnsentContractToPrimary(
-    contract: NonNullable<Awaited<ReturnType<typeof loadContract>>>,
-    organizationId: string,
-) {
-    if (contract.sentAt || contract.status === "signed") return contract;
-    const primary = await prisma.documentMaster.findFirst({
-        where: {
-            organizationId,
-            kind: "employment_contract",
-            isPrimary: true,
-            deletedAt: null,
-        },
-        select: { id: true },
-    });
-    if (!primary || primary.id === contract.masterId) return contract;
-
-    await prisma.$transaction(async (tx) => {
-        await invalidatePreparedDocuments(
-            {
-                organizationId,
-                engagementId: contract.engagementId,
-                kind: "employment_contract",
-            },
-            tx,
-        );
-        const latest = await tx.employmentContract.findUnique({
-            where: { id: contract.id },
-            select: { sentAt: true, status: true },
-        });
-        if (!latest || latest.sentAt || latest.status === "signed") return;
-        await tx.employmentContract.update({
-            where: { id: contract.id },
-            data: {
-                masterId: primary.id,
-                body: Prisma.DbNull,
-                status: "draft",
-                matchedMasterRevision: null,
-            },
-        });
-    });
-    return reloadContract(contract.id);
-}
-
+// The organisation default is selected at creation. Reads must preserve the
+// template chosen for this particular worker's contract.
 async function findContract(params: ContractParams) {
-    const contract = await loadContract(params);
-    if (!contract) return null;
-    return alignUnsentContractToPrimary(contract, params.organizationId);
+    return loadContract(params);
 }
 
 function reloadContract(
@@ -221,6 +178,10 @@ function present(
         ),
         values,
         unmatchedAnswers,
+        questionnaireAnswers:
+            submission?.status === "completed"
+                ? unmatchedQuestionnaireAnswers([], {}, submission.answers, matchFields)
+                : [],
         masterRevision: contract.master.revision,
         matchedMasterRevision: contract.matchedMasterRevision,
         questionnaireCompleted: submission?.status === "completed",
@@ -290,6 +251,9 @@ export async function saveEngagementContractDraft(
                 CONFLICT,
                 "Der Vertrag wurde bereits versendet.",
             );
+        if (!latest || latest.masterId !== contract.masterId) {
+            throw new AppError(CONFLICT, "Die Vertragsvorlage wurde inzwischen geändert. Bitte erneut öffnen.");
+        }
         if (contract.body !== null) {
             await tx.employmentContract.update({
                 where: { id: contract.id },
@@ -322,6 +286,7 @@ export async function persistMatchedContractValues(
         contractId: string;
         entries: { key: string; value: string }[];
         masterRevision: number;
+        preserveDescriptionPoints?: boolean;
     },
 ) {
     const current = await tx.employmentContract.findUnique({
@@ -339,7 +304,8 @@ export async function persistMatchedContractValues(
     );
     const preserved = (current?.values ?? [])
         .filter(
-            (entry) => pointKeys.has(entry.key) && entry.value.trim().length > 0,
+            (entry) => params.preserveDescriptionPoints !== false &&
+                pointKeys.has(entry.key) && entry.value.trim().length > 0,
         )
         .map((entry) => ({ key: entry.key, value: entry.value }));
     const entries = [
@@ -366,7 +332,7 @@ export async function persistMatchedContractValues(
 }
 
 export async function resyncEngagementContractFromQuestionnaire(
-    params: ContractParams,
+    params: ContractParams & { masterId?: string },
 ) {
     const contract = await findContract(params);
     if (!contract) {
@@ -383,8 +349,20 @@ export async function resyncEngagementContractFromQuestionnaire(
         );
     }
 
+    const master = params.masterId
+        ? await prisma.documentMaster.findFirst({
+              where: {
+                  id: params.masterId,
+                  organizationId: params.organizationId,
+                  kind: "employment_contract",
+                  deletedAt: null,
+              },
+          })
+        : contract.master;
+    if (!master) throw new AppError(NOT_FOUND, "Vertragsvorlage nicht gefunden.");
+    const switchingTemplate = Boolean(params.masterId && master.id !== contract.masterId);
     const answers = questionnaireAnswersFromStored(submission.answers);
-    const segments = readDocumentSegments(contract.master.body);
+    const segments = readDocumentSegments(master.body);
     const entries = await matchQuestionnaireToContract(
         segments,
         answers,
@@ -410,10 +388,37 @@ export async function resyncEngagementContractFromQuestionnaire(
                 "Der Vertrag wurde bereits versendet.",
             );
         }
+        if (!latest || latest.masterId !== contract.masterId) {
+            throw new AppError(CONFLICT, "Die Vertragsvorlage wurde inzwischen geändert.");
+        }
+        if (params.masterId) {
+            const currentMaster = await tx.documentMaster.findFirst({
+                where: {
+                    id: master.id,
+                    organizationId: params.organizationId,
+                    kind: "employment_contract",
+                    deletedAt: null,
+                    revision: master.revision,
+                },
+            });
+            if (!currentMaster) throw new AppError(CONFLICT, "Die Vertragsvorlage hat sich geändert. Bitte erneut auswählen.");
+        }
+        if (switchingTemplate) {
+            await tx.employmentContract.update({
+                where: { id: contract.id },
+                data: {
+                    masterId: master.id,
+                    body: Prisma.DbNull,
+                    status: "draft",
+                    outgoingPdfId: null,
+                },
+            });
+        }
         await persistMatchedContractValues(tx, {
             contractId: contract.id,
             entries,
-            masterRevision: contract.master.revision,
+            masterRevision: master.revision,
+            preserveDescriptionPoints: !switchingTemplate,
         });
         return reloadContract(contract.id, tx);
     });

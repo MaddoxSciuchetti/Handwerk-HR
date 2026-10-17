@@ -3,6 +3,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SidebarMenu, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
   Tooltip,
   TooltipContent,
@@ -21,8 +23,10 @@ import { useThemeProvider } from '@/hooks/useThemeProvider';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { ChevronsUpDown, Settings } from 'lucide-react';
-import { ProfileThemeToggle } from './profileThemeToggle';
+import { ChevronsUpDown, Moon, Settings, Sun } from 'lucide-react';
+
+const themeItemClassName =
+  'h-7 min-h-7 min-w-0 flex-1 basis-0 rounded-full border-0 bg-transparent px-0 text-muted-foreground shadow-none hover:bg-transparent hover:text-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm';
 
 const getDisplayLabel = (user: ReturnType<typeof useAuth>['user']) => {
   if (!user) return '';
@@ -73,13 +77,13 @@ export function ProfileDropdown({
           <Tooltip>
             <DropdownMenuTrigger asChild>
               <TooltipTrigger asChild>
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
                   className={cn(
-                    'flex w-full min-w-0 items-center gap-2 bg-transparent p-0 text-left outline-none',
-                    'hover:bg-transparent focus-visible:outline-none focus-visible:ring-0',
-                    'data-[state=open]:bg-transparent',
-                    isCollapsed && 'size-8 justify-center'
+                    'h-auto w-full min-w-0 justify-start gap-2 bg-transparent p-0 text-left font-normal hover:bg-transparent hover:text-foreground',
+                    'focus-visible:ring-0 data-[state=open]:bg-transparent',
+                    isCollapsed && 'size-8 justify-center p-0'
                   )}
                 >
                   <Avatar className="size-8 shrink-0 rounded-full">
@@ -100,7 +104,7 @@ export function ProfileDropdown({
                       <ChevronsUpDown className="ml-auto size-4 shrink-0 text-muted-foreground" />
                     </>
                   ) : null}
-                </button>
+                </Button>
               </TooltipTrigger>
             </DropdownMenuTrigger>
             <TooltipContent side="right" hidden={!isCollapsed}>
@@ -118,12 +122,36 @@ export function ProfileDropdown({
               <Settings />
               Einstellungen
             </DropdownMenuItem>
-            <div className="px-2 py-1.5">
-              <ProfileThemeToggle
-                theme={theme}
-                setTheme={setTheme}
-                onDone={() => {}}
-              />
+            <div
+              className="px-2 py-1.5"
+              onClick={(event) => event.stopPropagation()}
+              onPointerDown={(event) => event.stopPropagation()}
+            >
+              <ToggleGroup
+                type="single"
+                value={theme}
+                spacing={0}
+                aria-label="Erscheinungsbild"
+                className="mt-1.5 w-full min-w-0 rounded-full bg-muted p-px"
+                onValueChange={(next) => {
+                  if (next === 'light' || next === 'dark') setTheme(next);
+                }}
+              >
+                <ToggleGroupItem
+                  value="light"
+                  aria-label="Helles Design"
+                  className={themeItemClassName}
+                >
+                  <Sun className="size-3.5 shrink-0" strokeWidth={2} aria-hidden />
+                </ToggleGroupItem>
+                <ToggleGroupItem
+                  value="dark"
+                  aria-label="Dunkles Design"
+                  className={themeItemClassName}
+                >
+                  <Moon className="size-3.5 shrink-0" strokeWidth={2} aria-hidden />
+                </ToggleGroupItem>
+              </ToggleGroup>
             </div>
           </DropdownMenuContent>
         </DropdownMenu>

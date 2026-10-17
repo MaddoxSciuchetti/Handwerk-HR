@@ -210,10 +210,11 @@ export function TaskChat({
                   {comment.body}
                 </p>
                 {mine ? (
-                  <button
+                  <Button
                     type="button"
+                    variant="link"
                     disabled={saveComment.isPending}
-                    className="shrink-0 text-xs font-normal text-muted-foreground opacity-0 hover:underline focus-visible:opacity-100 group-hover:opacity-100"
+                    className="h-auto shrink-0 p-0 text-xs font-normal text-muted-foreground opacity-0 hover:bg-transparent hover:text-muted-foreground hover:underline focus-visible:opacity-100 group-hover:opacity-100"
                     onClick={() => {
                       setEditingCommentId(comment.id);
                       setText(comment.body);
@@ -222,7 +223,7 @@ export function TaskChat({
                     }}
                   >
                     Bearbeiten
-                  </button>
+                  </Button>
                 ) : null}
               </div>
             );

@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { apiJson } from '@/config/apiClient';
-import ModalOverlay from '@/components/modal/ModalOverlay';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import type { CandidateItem } from '@/features/questionnaire/questionnairePreview';
 import { StoredFileBox } from './StoredFileBox';
@@ -77,7 +77,8 @@ function QuestionnairePreview({
   });
 
   return (
-    <ModalOverlay handleToggle={onClose} size="max-w-4xl">
+    <Dialog open onOpenChange={(next) => { if (!next) onClose(); }}>
+      <DialogContent className="w-full max-w-4xl border-0 bg-transparent p-0 shadow-none sm:max-w-4xl">
       <div className="flex max-h-[85vh] flex-col gap-4 overflow-hidden rounded-2xl bg-card p-6 text-card-foreground">
         <div className="pr-8">
           <h2 className="text-lg font-semibold">Fragebogen</h2>
@@ -180,7 +181,8 @@ function QuestionnairePreview({
           </div>
         ) : null}
       </div>
-    </ModalOverlay>
+      </DialogContent>
+    </Dialog>
   );
 }
 

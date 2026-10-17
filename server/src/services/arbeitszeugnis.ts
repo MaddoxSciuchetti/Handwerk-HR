@@ -6,6 +6,10 @@ import {
     textFromSegments,
     type DocumentSegment,
 } from "@/services/documentBody";
+import {
+    integrationsLive,
+    loadMicrosoft365Config,
+} from "@/services/integrations/runtime";
 import { microsoftGraphToken } from "@/services/microsoft365Account";
 import { formatWelcomeEntryDate } from "@/services/welcomeMail";
 import { Prisma } from "@prisma/client";
@@ -417,7 +421,12 @@ export async function sendArbeitszeugnis(params: {
     const from = USE_MICROSOFT_MAIL
         ? await senderAddress(params.organizationId)
         : "";
-    const token = USE_MICROSOFT_MAIL ? await microsoftGraphToken() : "";
+    const token =
+        USE_MICROSOFT_MAIL && integrationsLive()
+            ? await microsoftGraphToken(
+                  await loadMicrosoft365Config(params.organizationId),
+              )
+            : "";
     if (USE_MICROSOFT_MAIL && (!from || !token))
         return {
             status: "failed",

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { FieldGroup } from '@/components/ui/field';
 import { Label } from '@/components/ui/label';
 import TaskAutomation from '@/features/all-tasks/components/TaskAutomation';
+import { ARBEITSZEUGNIS } from '@/features/all-tasks/consts/task-automation.consts';
 import { EngagementTaskDeleteButton } from '@/features/all-tasks/components/EngagementTaskDeleteButton';
 import { TaskChat } from '@/features/all-tasks/components/TaskChat';
 import { TaskStatusSelect } from '@/features/all-tasks/components/ui/TaskStatusSelect';
@@ -19,7 +20,6 @@ import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { X } from 'lucide-react';
 import { useMemo, type Dispatch, type SetStateAction } from 'react';
-import { useWatch } from 'react-hook-form';
 import { useFetchEngagements } from '../hooks/useFetchEngagements';
 import { useTasks } from '../hooks/useTasks';
 import type { TaskEditState } from '../hooks/useTaskSidebar';
@@ -39,8 +39,11 @@ export function TaskSidebar({
   taskEditState,
   onOpenArbeitszeugnis,
 }: TaskSidebarProps) {
-  const { register, control, errors, setValue, onSubmit, isTaskSaving } =
-    useTasks(taskEditState, taskState, setIsOpen);
+  const { register, control, errors, onSubmit, isTaskSaving } = useTasks(
+    taskEditState,
+    taskState,
+    setIsOpen
+  );
 
   const { data: employees = [] } = useQuery(employeeQueries.getEmployees());
   const { data: engagements = [] } = useFetchEngagements();
@@ -56,15 +59,6 @@ export function TaskSidebar({
       })),
     [employees]
   );
-
-  const selectedEngagementId = useWatch({
-    control,
-    name: 'workerEngagementId',
-  });
-  const selectedEngagement = engagements.find(
-    (engagement) => engagement.id === selectedEngagementId
-  );
-  const showAutomation = selectedEngagement?.type === 'offboarding';
 
   const engagementOptions = useMemo(
     () =>
@@ -135,20 +129,26 @@ export function TaskSidebar({
                 </div>
               </div>
               {taskState === 'edit' &&
-              showAutomation &&
-              taskEditState.taskId ? (
+              taskEditState.taskId &&
+              taskEditState.sequence &&
+              taskEditState.integrationProvider ? (
                 <TaskAutomation
                   taskId={taskEditState.taskId}
-                  control={control}
-                  errors={errors}
-                  setValue={setValue}
+                  provider={taskEditState.integrationProvider}
+                  sequence={taskEditState.sequence}
                   disabled={isSubmitting}
-                  onOpenArbeitszeugnis={
-                    onOpenArbeitszeugnis
-                      ? () => onOpenArbeitszeugnis(taskEditState.taskId)
-                      : undefined
-                  }
                 />
+              ) : null}
+              {taskState === 'edit' &&
+              taskEditState.automation === ARBEITSZEUGNIS &&
+              onOpenArbeitszeugnis ? (
+                <Button
+                  type="button"
+                  className="rounded-2xl"
+                  onClick={() => onOpenArbeitszeugnis(taskEditState.taskId)}
+                >
+                  Arbeitszeugnis
+                </Button>
               ) : null}
 
               {taskState === 'edit' && taskEditState.taskId ? (

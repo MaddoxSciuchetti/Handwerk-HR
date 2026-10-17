@@ -52,12 +52,15 @@ function answerValues(
     email: string,
 ): Record<string, string> {
     const birthday = germanDate(answers.birthday);
-    const address = [answers.street, `${answers.postalCode} ${answers.city}`.trim()]
+    const street = answerString(answers, "street");
+    const postalCode = answerString(answers, "postalCode");
+    const city = answerString(answers, "city");
+    const address = [street, `${postalCode} ${city}`.trim()]
         .filter((part) => part.length > 0)
         .join(", ");
 
-    const firstName = answers.firstName.trim();
-    const lastName = answers.lastName.trim();
+    const firstName = answerString(answers, "firstName").trim();
+    const lastName = answerString(answers, "lastName").trim();
 
     return {
         firstName,
@@ -66,9 +69,9 @@ function answerValues(
         email: email.trim(),
         birthday,
         address,
-        street: answers.street,
-        postalCode: answers.postalCode,
-        city: answers.city,
+        street,
+        postalCode,
+        city,
         entryDate: germanDate(answers.entryDate),
         position: (answers.jobTitle ?? "").trim(),
     };
@@ -90,14 +93,6 @@ function formatMatchValue(field: MatchField, raw: string) {
 
 function userTypedPoints(segment: DocumentSegment) {
     return segment.type === "input" && segment.fieldType === "points";
-}
-
-function blankConsumed(answers: QuestionnaireAnswers, consumed: Set<string>) {
-    const copy = { ...answers };
-    for (const key of consumed) {
-        (copy as Record<string, unknown>)[key] = "";
-    }
-    return copy;
 }
 
 export function deterministicContractValues(
@@ -131,7 +126,7 @@ export function deterministicContractValues(
 
     for (const entry of contractValuesFromAnswers(
         segments,
-        blankConsumed(answers, consumed),
+        answers,
         email,
     )) {
         if (filled.has(entry.key)) continue;
@@ -300,7 +295,11 @@ export function unmatchedQuestionnaireAnswers(
         fields.filter((field) => field.type === "date").map((field) => field.key),
     );
     const byKey = new Map<string, string>();
+    const fileKeys = new Set(
+        fields.filter((field) => field.type === "file").map((field) => field.key),
+    );
     for (const answer of answers) {
+        if (fileKeys.has(answer.key)) continue;
         const value = displayAnswer(answer.key, answer.value, dates);
         if (value) byKey.set(answer.key, value);
     }
@@ -333,7 +332,6 @@ export function unmatchedQuestionnaireAnswers(
     return [...byKey].flatMap(([key, value]) => {
         if (consumed.has(key) || !value) return [];
         const label = questionnaireAnswerLabel(key, value, labels);
-        if (!label) return [];
-        return [{ key, label, value }];
+        return [{ key, label: label || key, value }];
     });
 }

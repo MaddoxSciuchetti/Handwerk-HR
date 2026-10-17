@@ -2,7 +2,15 @@ import { PersonnelDocumentFolders } from '@/features/worker-task-management/comp
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from 'test-unit/test-utils';
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
+
+vi.mock('@/features/worker-task-management/hooks/useTemplateDocuments', () => ({
+  useTemplateDocuments: () => ({ data: [] }),
+  useCreateTemplateDocument: () => ({ mutate: vi.fn(), isPending: false }),
+}));
+vi.mock('@/features/settings/documents/useDocumentMasters', () => ({
+  useDocumentMasters: () => ({ data: [], isPending: false, isError: false }),
+}));
 
 const engagement = {
   id: 'engagement-1',

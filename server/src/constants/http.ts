@@ -9,6 +9,7 @@ export const CONFLICT = 409;
 export const UNPROCESSABLE_CONTENT = 422;
 export const TOO_MANY_REQUESTS = 429;
 export const INTERNAL_SERVER_ERROR = 500;
+export const SERVICE_UNAVAILABLE = 503;
 
 export type HttpStatusCode =
   | typeof OK
@@ -20,4 +21,5 @@ export type HttpStatusCode =
   | typeof CONFLICT
   | typeof UNPROCESSABLE_CONTENT
   | typeof TOO_MANY_REQUESTS
-  | typeof INTERNAL_SERVER_ERROR;
+  | typeof INTERNAL_SERVER_ERROR
+  | typeof SERVICE_UNAVAILABLE;

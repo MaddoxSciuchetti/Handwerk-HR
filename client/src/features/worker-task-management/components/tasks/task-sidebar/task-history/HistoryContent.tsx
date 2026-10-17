@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/selfmade/button';
+import { Button } from '@/components/ui/button';
 import { TaskStatusIcon } from '@/features/all-tasks/components/ui/TaskStatusIcons';
 import {
   ISSUE_STATUSES,
@@ -143,8 +143,9 @@ function renderCommentEntry(
         {canEdit ? (
           <Button
             type="button"
-            size="small"
-            className="h-8 bg-transparent text-xs hover:bg-muted"
+            variant="ghost"
+            size="sm"
+            className="text-xs"
             onClick={() => onEditComment!(entry.id, entry.body)}
           >
             Bearbeiten

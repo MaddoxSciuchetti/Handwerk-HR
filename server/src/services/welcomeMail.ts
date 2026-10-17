@@ -1,8 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import {
-    microsoft365Configured,
-    microsoftGraphToken,
-} from "@/services/microsoft365Account";
+    integrationsLive,
+    loadMicrosoft365Config,
+    NOT_LIVE_MESSAGE,
+} from "@/services/integrations/runtime";
+import { microsoftGraphToken } from "@/services/microsoft365Account";
 
 const GRAPH = "https://graph.microsoft.com/v1.0";
 export const WELCOME_MAIL_TASK_TITLE = "Willkommensmail an das Team";
@@ -34,6 +36,7 @@ export type TeamWelcomeMailResult =
               | "already_sent"
               | "no_work_email"
               | "not_configured"
+              | "not_live"
               | "no_recipients"
               | "worker_missing";
       }
@@ -157,12 +160,18 @@ async function listGraph<T>(token: string, path: string) {
     return items;
 }
 
-export async function listMicrosoftGroups(): Promise<
+export async function listMicrosoftGroups(
+    organizationId: string,
+): Promise<
     | { groups: MicrosoftGroupOption[]; error: null }
     | { groups: []; error: string }
 > {
-    if (!microsoft365Configured()) return { groups: [], error: null };
-    const token = await microsoftGraphToken();
+    if (!integrationsLive()) {
+        return { groups: [], error: NOT_LIVE_MESSAGE };
+    }
+    const config = await loadMicrosoft365Config(organizationId);
+    if (!config) return { groups: [], error: null };
+    const token = await microsoftGraphToken(config);
     if (!token) {
         return {
             groups: [],
@@ -205,7 +214,7 @@ export async function welcomeMailPage(
 ): Promise<WelcomeMailPage> {
     const [settings, listed] = await Promise.all([
         readWelcomeMailSettings(organizationId),
-        listMicrosoftGroups(),
+        listMicrosoftGroups(organizationId),
     ]);
     return {
         settings,
@@ -343,11 +352,16 @@ export async function sendTeamWelcomeMail(params: {
     if (!workEmail) return { status: "skipped", reason: "no_work_email" };
 
     const settings = await readWelcomeMailSettings(params.organizationId);
-    if (!teamMailSettingsComplete(settings) || !microsoft365Configured()) {
+    if (!teamMailSettingsComplete(settings)) {
         return { status: "skipped", reason: "not_configured" };
     }
+    if (!integrationsLive()) {
+        return { status: "skipped", reason: "not_live" };
+    }
+    const config = await loadMicrosoft365Config(params.organizationId);
+    if (!config) return { status: "skipped", reason: "not_configured" };
 
-    const token = await microsoftGraphToken();
+    const token = await microsoftGraphToken(config);
     if (!token) {
         return {
             status: "failed",

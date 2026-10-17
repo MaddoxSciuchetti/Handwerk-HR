@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import { DescriptionField } from '@/types/api.types';
 import { Calendar, User, X } from 'lucide-react';
 
@@ -26,13 +27,15 @@ function TaskSidebarHeader({
           {selectedTask.description}
         </h2>
       </div>
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="icon-sm"
         onClick={() => setSelectedTaskId(null)}
-        className="mt-0.5 shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        className="mt-0.5 shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground"
       >
         <X className="h-4 w-4" />
-      </button>
+      </Button>
     </div>
   );
 }

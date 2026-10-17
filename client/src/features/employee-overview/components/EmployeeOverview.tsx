@@ -4,7 +4,7 @@ import useGetEmployees from '../hooks/useGetEmployees';
 
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import SearchHeaderResuable from '@/components/layout/headers/SearchHeaderResuable';
-import ModalOverlay from '@/components/modal/ModalOverlay';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useState } from 'react';
 import { useEmployeeModal } from '../hooks/useEmployeeModal';
 import { EmployeeDataArray } from '../schemas/schema';
@@ -33,33 +33,41 @@ function EmployeeOverview() {
     switch (modalState.kind) {
       case 'edit':
         return (
-          <ModalOverlay handleToggle={closeEmployee}>
+          <Dialog open onOpenChange={(next) => { if (!next) closeEmployee(); }}>
+            <DialogContent className="flex h-120 flex-col items-stretch justify-start overflow-hidden">
             <ModalEditMitarbeiter
               fullname={modalState.fullname}
               id={modalState.employeeId}
               toggleEmployeeModal={closeEmployee}
             />
-          </ModalOverlay>
+            </DialogContent>
+          </Dialog>
         );
       case 'create':
         return (
-          <ModalOverlay handleToggle={closeEmployee}>
+          <Dialog open onOpenChange={(next) => { if (!next) closeEmployee(); }}>
+            <DialogContent className="flex h-120 flex-col items-stretch justify-start overflow-hidden">
             <ModalMitarbeiter toggleModal={closeEmployee} />
-          </ModalOverlay>
+            </DialogContent>
+          </Dialog>
         );
 
       case 'employeecreate':
         return (
-          <ModalOverlay handleToggle={closeEmployee}>
+          <Dialog open onOpenChange={(next) => { if (!next) closeEmployee(); }}>
+            <DialogContent className="flex h-120 flex-col items-stretch justify-start overflow-hidden">
             <ViewEmployeeModal selectedOwner={modalState.owner} />
-          </ModalOverlay>
+            </DialogContent>
+          </Dialog>
         );
 
       case 'employeeinfo':
         return (
-          <ModalOverlay handleToggle={closeEmployee}>
-            <EmployeeInfoModal employeeId={modalState.employeeId} />;
-          </ModalOverlay>
+          <Dialog open onOpenChange={(next) => { if (!next) closeEmployee(); }}>
+            <DialogContent className="h-auto min-h-80 rounded-lg p-4 text-center sm:max-w-2xl">
+            <EmployeeInfoModal employeeId={modalState.employeeId} />
+            </DialogContent>
+          </Dialog>
         );
     }
   };

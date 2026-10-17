@@ -1,4 +1,5 @@
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import ResetPasswordForm from '@/features/auth/components/ResetPasswordForm';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { AlertCircle } from 'lucide-react';
@@ -30,12 +31,14 @@ const ResetPassword = () => {
         <p className="text-muted-foreground">
           The link is either invalid or expired.
         </p>
-        <button
+        <Button
+          type="button"
+          variant="link"
           onClick={() => navigate({ to: '/password/forgot' })}
-          className="text-primary underline hover:text-primary/80"
+          className="h-auto p-0 text-primary underline hover:bg-transparent hover:text-primary/80"
         >
           Request a new password reset link
-        </button>
+        </Button>
       </div>
     </DoorManWrapper>
   );

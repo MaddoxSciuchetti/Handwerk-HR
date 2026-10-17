@@ -8,8 +8,6 @@ import {
     findInboxReply,
     graphMailConfigured,
 } from "@/services/graphMail";
-import { provisionMicrosoft365Account } from "@/services/microsoft365Account";
-import { sendTeamWelcomeMail } from "@/services/welcomeMail";
 import { isQuestionnaireOrContractTemplateTask } from "@/services/onboardingTemplateTasks";
 import AppError from "@/utils/AppError";
 import { Prisma } from "@prisma/client";
@@ -439,6 +437,8 @@ async function createRemainingOnboardingTasks(
                 description: item.description ?? undefined,
                 priority: "no_priority",
                 templateItemId: item.id,
+                integrationProvider: item.integrationProvider,
+                sequence: item.sequence,
             },
             select: { id: true },
         });
@@ -549,42 +549,4 @@ export async function confirmReturnedEmploymentContract(params: {
     });
 
     if (!claimedConfirmation) return;
-
-    try {
-        const result = await provisionMicrosoft365Account({
-            organizationId: params.organizationId,
-            workerId: params.workerId,
-        });
-        if (result.status === "failed") {
-            console.error(
-                "Microsoft 365 Konto wurde nicht angelegt.",
-                result.message,
-            );
-            return;
-        }
-        const accountReady =
-            result.status === "created" ||
-            (result.status === "skipped" &&
-                result.reason === "already_provisioned");
-        if (!accountReady) return;
-
-        try {
-            const welcome = await sendTeamWelcomeMail({
-                organizationId: params.organizationId,
-                workerId: params.workerId,
-                engagementId: params.engagementId,
-                actorUserId: params.actorUserId,
-            });
-            if (welcome.status === "failed") {
-                console.error(
-                    "Willkommensmail wurde nicht gesendet.",
-                    welcome.message,
-                );
-            }
-        } catch (error) {
-            console.error("Willkommensmail wurde nicht gesendet.", error);
-        }
-    } catch (error) {
-        console.error("Microsoft 365 Konto wurde nicht angelegt.", error);
-    }
 }

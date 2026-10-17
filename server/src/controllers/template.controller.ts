@@ -87,8 +87,15 @@ export const deleteTemplate = catchErrors(async (req, res) => {
 export const createTemplateTask = catchErrors(async (req, res) => {
     const templateId = getParam(req.params.templateId);
     const orgId = req.orgId;
-    const { taskName, taskDescription, defaultStatus, defaultAssigneeUserId, orderIndex } =
-        req.body;
+    const {
+        taskName,
+        taskDescription,
+        defaultStatus,
+        defaultAssigneeUserId,
+        orderIndex,
+        integrationProvider,
+        sequence,
+    } = req.body;
     console.log(templateId);
     const task = await insertTemplateTask({
         templateId,
@@ -98,6 +105,11 @@ export const createTemplateTask = catchErrors(async (req, res) => {
         defaultStatus,
         defaultAssigneeUserId,
         orderIndex,
+        integrationProvider:
+            !integrationProvider || integrationProvider === "none"
+                ? null
+                : integrationProvider,
+        sequence: !sequence || sequence === "none" ? null : sequence,
     });
 
     return res.status(CREATED).json({
@@ -109,6 +121,8 @@ export const createTemplateTask = catchErrors(async (req, res) => {
         taskDescription: task.description,
         defaultStatus: task.defaultStatus,
         defaultAssigneeUserId: task.defaultAssigneeUserId,
+        integrationProvider: task.integrationProvider,
+        sequence: task.sequence,
     });
 });
 
@@ -129,20 +143,35 @@ export const getTemplateTasks = catchErrors(async (req, res) => {
         taskDescription: task.description,
         defaultStatus: task.defaultStatus,
         defaultAssigneeUserId: task.defaultAssigneeUserId,
+        integrationProvider: task.integrationProvider,
+        sequence: task.sequence,
     }));
     return res.status(OK).json(response);
 });
 
 export const updateTemplateTask = catchErrors(async (req, res) => {
     const id = getParam(req.params.id);
-    const { taskName, taskDescription, defaultStatus, defaultAssigneeUserId, orderIndex } =
-        req.body;
-    const updated = await modifyTemplateTask(id, {
+    const orgId = req.orgId;
+    const {
         taskName,
         taskDescription,
         defaultStatus,
         defaultAssigneeUserId,
         orderIndex,
+        integrationProvider,
+        sequence,
+    } = req.body;
+    const updated = await modifyTemplateTask(id, orgId, {
+        taskName,
+        taskDescription,
+        defaultStatus,
+        defaultAssigneeUserId,
+        orderIndex,
+        integrationProvider:
+            !integrationProvider || integrationProvider === "none"
+                ? null
+                : integrationProvider,
+        sequence: !sequence || sequence === "none" ? null : sequence,
     });
 
     return res.status(OK).json({
@@ -154,6 +183,8 @@ export const updateTemplateTask = catchErrors(async (req, res) => {
         taskDescription: updated.description,
         defaultStatus: updated.defaultStatus,
         defaultAssigneeUserId: updated.defaultAssigneeUserId,
+        integrationProvider: updated.integrationProvider,
+        sequence: updated.sequence,
     });
 });
 

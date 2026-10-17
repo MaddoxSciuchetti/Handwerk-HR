@@ -1,4 +1,4 @@
-import ModalOverlay from '@/components/modal/ModalOverlay';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import ErrorAlert from '@/components/alerts/ErrorAlert';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import type { EngagementType } from '@/features/worker-lifecycle/types/index.types';
@@ -85,14 +85,21 @@ function WorkerFileUploads({
       ) : null}
 
       {isUploadModalOpen && (
-        <ModalOverlay handleToggle={() => setIsUploadModalOpen(false)}>
+        <Dialog
+          open
+          onOpenChange={(next) => {
+            if (!next) setIsUploadModalOpen(false);
+          }}
+        >
+          <DialogContent className="h-auto max-h-[85vh] overflow-y-auto">
           <PersonnelDocumentUploadForm
             setModal={setIsUploadModalOpen}
             workerId={workerId}
             engagements={engagements}
             folders={folders}
           />
-        </ModalOverlay>
+          </DialogContent>
+        </Dialog>
       )}
     </>
   );

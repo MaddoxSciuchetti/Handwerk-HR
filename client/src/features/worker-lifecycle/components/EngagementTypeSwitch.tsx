@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,14 +25,16 @@ function EngagementTypeSwitch({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon-sm"
           aria-label="Typ wechseln"
           disabled={disabled || selectedTypes.length === 0}
-          className="rounded-full p-1 hover:bg-muted disabled:opacity-50"
+          className="rounded-full"
         >
           <ArrowRightLeft className="h-4 w-4" aria-hidden />
-        </button>
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent side="top" align="center">
         {options.map((option) => (

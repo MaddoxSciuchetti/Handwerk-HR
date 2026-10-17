@@ -1,5 +1,5 @@
 import LoadingAlert from '@/components/alerts/LoadingAlert';
-import ModalOverlay from '@/components/modal/ModalOverlay';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { FETCHDESCRIPTION } from '@/features/all-tasks/consts/query.consts';
 import {
@@ -185,11 +185,8 @@ export function ArbeitszeugnisSendDialog({
   };
 
   return (
-    <ModalOverlay
-      handleToggle={() => void close()}
-      className="p-3 sm:p-6"
-      size={documentPreviewModalSize}
-    >
+    <Dialog open onOpenChange={(next) => { if (!next) void close(); }}>
+      <DialogContent className={`w-full border-0 bg-transparent p-0 shadow-none sm:max-w-[min(96vw,90rem)] ${documentPreviewModalSize}`}>
       <div className={documentPreviewModalPanel}>
         {preview.isLoading ? <LoadingAlert className="min-h-40" /> : null}
         {preview.isError || (!preview.isLoading && !data) ? (
@@ -303,6 +300,7 @@ export function ArbeitszeugnisSendDialog({
           </>
         ) : null}
       </div>
-    </ModalOverlay>
+      </DialogContent>
+    </Dialog>
   );
 }

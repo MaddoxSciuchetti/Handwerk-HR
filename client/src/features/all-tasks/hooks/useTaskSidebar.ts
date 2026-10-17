@@ -12,6 +12,8 @@ export type TaskEditState = {
   assigneeUserId: string;
   status: IssueStatusValue | '';
   automation: TaskAutomationValue;
+  integrationProvider: string | null;
+  sequence: string | null;
 };
 
 export const EMPTY_TASK_EDIT_STATE: TaskEditState = {
@@ -21,6 +23,8 @@ export const EMPTY_TASK_EDIT_STATE: TaskEditState = {
   assigneeUserId: '',
   status: '',
   automation: TASK_AUTOMATION_NONE,
+  integrationProvider: null,
+  sequence: null,
 };
 
 export function useTaskSidebar() {

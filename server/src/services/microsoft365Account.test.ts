@@ -41,12 +41,16 @@ function jsonResponse(body: unknown, status = 200) {
     } as Response;
 }
 
+const config = {
+    tenantId: "tenant",
+    clientId: "client",
+    clientSecret: "secret",
+    domain: "firma.de",
+    licenseSkuId: "sku-1",
+};
+
 function configureEnv() {
-    process.env.MICROSOFT_365_TENANT_ID = "tenant";
-    process.env.MICROSOFT_365_CLIENT_ID = "client";
-    process.env.MICROSOFT_365_CLIENT_SECRET = "secret";
-    process.env.MICROSOFT_365_DOMAIN = "firma.de";
-    process.env.MICROSOFT_365_LICENSE_SKU_ID = "sku-1";
+    process.env.INTEGRATIONS_LIVE = "true";
 }
 
 function clearEnv() {
@@ -95,11 +99,37 @@ describe("microsoft 365 account", () => {
         const result = await provisionMicrosoft365Account({
             organizationId: "org-1",
             workerId: "worker-1",
+            config: null,
         });
 
         expect(result).toEqual({ status: "skipped", reason: "not_configured" });
         expect(fetchSpy).not.toHaveBeenCalled();
         expect(findWorker).not.toHaveBeenCalled();
+        fetchSpy.mockRestore();
+    });
+
+    it("does not call Graph when sequences are not live", async () => {
+        delete process.env.INTEGRATIONS_LIVE;
+        findWorker.mockResolvedValue({
+            id: "worker-1",
+            firstName: "Ada",
+            lastName: "Lovelace",
+            email: "ada@personal.test",
+            workEmail: null,
+            externalAccounts: [],
+        });
+        const fetchSpy = jest
+            .spyOn(global, "fetch")
+            .mockRejectedValue(new Error("should not call"));
+
+        const result = await provisionMicrosoft365Account({
+            organizationId: "org-1",
+            workerId: "worker-1",
+            config,
+        });
+
+        expect(result).toEqual({ status: "skipped", reason: "not_live" });
+        expect(fetchSpy).not.toHaveBeenCalled();
         fetchSpy.mockRestore();
     });
 
@@ -146,6 +176,7 @@ describe("microsoft 365 account", () => {
         const result = await provisionMicrosoft365Account({
             organizationId: "org-1",
             workerId: "worker-1",
+            config,
         });
 
         expect(result).toEqual({
@@ -218,6 +249,7 @@ describe("microsoft 365 account", () => {
         const result = await provisionMicrosoft365Account({
             organizationId: "org-1",
             workerId: "worker-1",
+            config,
         });
 
         expect(result).toMatchObject({
@@ -246,6 +278,7 @@ describe("microsoft 365 account", () => {
         const result = await provisionMicrosoft365Account({
             organizationId: "org-1",
             workerId: "worker-1",
+            config,
         });
 
         expect(result).toEqual({

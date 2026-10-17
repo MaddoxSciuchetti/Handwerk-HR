@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import type { DragEvent } from 'react';
 import { cn } from '@/lib/utils';
 import { MAIL_PLACEHOLDER_DRAG, mailPillClassName } from './mailPlaceholders';
@@ -20,15 +21,19 @@ export function MailPlaceholderPill({
   };
 
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
       draggable
-      className={cn(mailPillClassName, 'cursor-grab active:cursor-grabbing')}
+      className={cn(
+        mailPillClassName,
+        'cursor-grab hover:bg-muted hover:text-foreground active:cursor-grabbing'
+      )}
       onDragStart={startDrag}
       onPointerDown={onRememberCaret}
       onClick={() => onInsert(token)}
     >
       {token}
-    </button>
+    </Button>
   );
 }

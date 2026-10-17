@@ -1,4 +1,4 @@
-import SmallWrapper from '@/components/modal/modalSizes/SmallWrapper';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import useEditDescription from '../hooks/useEditDescription';
@@ -31,7 +31,8 @@ const EditTemplateModal = ({}: EditTemplateModalProps) => {
     closeTask();
   };
   return (
-    <SmallWrapper className="min-h-60 max-h-60 max-w-md">
+    <Dialog open onOpenChange={(next) => { if (!next) closeTask(); }}>
+    <DialogContent className="min-h-60 max-h-60 overflow-y-auto">
       <TaskForm
         template_header={tab === 'ONBOARDING' ? 'Onboarding' : 'Offboarding'}
         templateHeaderAdjective="editieren"
@@ -52,7 +53,8 @@ const EditTemplateModal = ({}: EditTemplateModalProps) => {
         }
         defaultOwner={modalState.kind === 'open-edit' ? modalState.owner : ''}
       />
-    </SmallWrapper>
+    </DialogContent>
+    </Dialog>
   );
 };
 

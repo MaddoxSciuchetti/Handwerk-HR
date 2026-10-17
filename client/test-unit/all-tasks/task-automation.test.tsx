@@ -1,40 +1,40 @@
 import TaskAutomation from '@/features/all-tasks/components/TaskAutomation';
-import type { TaskSidebarForm } from '@/features/all-tasks/types/index.types';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useForm } from 'react-hook-form';
 import { renderWithAppQueryClient } from 'test-unit/test-utils';
 import { describe, expect, it, vi } from 'vitest';
 
-const { runTaskAutomation } = vi.hoisted(() => ({
-  runTaskAutomation: vi.fn(),
+const { runIssueSequence } = vi.hoisted(() => ({
+  runIssueSequence: vi.fn(),
 }));
 
 vi.mock('@/features/all-tasks/api/tasks.api', () => ({
-  runTaskAutomation,
+  runIssueSequence,
+}));
+
+vi.mock('@/features/settings/integrations/integrations.api', () => ({
+  getIntegrations: vi.fn(async () => [
+    {
+      provider: 'microsoft_graph',
+      enabled: true,
+      tenantId: 'tenant',
+      clientId: 'client',
+      domain: 'firma.de',
+      licenseSkuId: 'sku',
+      crewId: '',
+      hasClientSecret: true,
+      hasToken: false,
+      live: true,
+    },
+  ]),
 }));
 
 function TaskAutomationHarness() {
-  const {
-    control,
-    formState: { errors },
-    setValue,
-  } = useForm<TaskSidebarForm>({
-    defaultValues: {
-      title: 'Microsoft sperren',
-      workerEngagementId: 'engagement-1',
-      assigneeUserId: 'user-1',
-      status: 'open',
-      automation: 'o365-block-signin',
-    },
-  });
-
   return (
     <TaskAutomation
       taskId="task-1"
-      control={control}
-      errors={errors}
-      setValue={setValue}
+      provider="microsoft_graph"
+      sequence="microsoft_deactivate_account"
       disabled={false}
     />
   );
@@ -43,7 +43,7 @@ function TaskAutomationHarness() {
 describe('TaskAutomation', () => {
   it('shows a purple loading indicator while an automation is running', async () => {
     let resolveAutomation: (() => void) | undefined;
-    runTaskAutomation.mockReturnValueOnce(
+    runIssueSequence.mockReturnValueOnce(
       new Promise<void>((resolve) => {
         resolveAutomation = resolve;
       })

@@ -1,10 +1,7 @@
 import { randomBytes } from "crypto";
-import {
-    MICROSOFT_365_ENV_KEYS,
-    microsoft365Env,
-    type Microsoft365EnvKey,
-} from "@/constants/env";
+import type { Microsoft365EnvKey } from "@/constants/env";
 import { prisma } from "@/lib/prisma";
+import { integrationsLive } from "@/services/integrations/runtime";
 import { sendMail } from "@/utils/sendMail";
 
 const GRAPH = "https://graph.microsoft.com/v1.0";
@@ -36,7 +33,7 @@ export type Microsoft365AutomationStatus = {
 };
 
 export type ProvisionMicrosoft365Result =
-    | { status: "skipped"; reason: "not_configured" }
+    | { status: "skipped"; reason: "not_configured" | "not_live" }
     | {
           status: "skipped";
           reason: "already_provisioned";
@@ -63,22 +60,38 @@ type GraphUser = {
     userPrincipalName?: string;
 };
 
-export function missingMicrosoft365Env(): Microsoft365EnvKey[] {
-    return MICROSOFT_365_ENV_KEYS.filter((key) => microsoft365Env(key).length === 0);
-}
-
-export function microsoft365Configured() {
-    return missingMicrosoft365Env().length === 0;
-}
-
-export function microsoft365AutomationStatus(): Microsoft365AutomationStatus {
+export async function microsoft365AutomationStatus(
+    organizationId: string,
+): Promise<Microsoft365AutomationStatus> {
+    const row = await prisma.organizationIntegration.findUnique({
+        where: {
+            organizationId_provider: {
+                organizationId,
+                provider: "microsoft_graph",
+            },
+        },
+        select: {
+            enabled: true,
+            tenantId: true,
+            clientId: true,
+            domain: true,
+            licenseSkuId: true,
+            clientSecretCiphertext: true,
+        },
+    });
+    const missing: Microsoft365EnvKey[] = [];
+    if (!row?.tenantId?.trim()) missing.push("MICROSOFT_365_TENANT_ID");
+    if (!row?.clientId?.trim()) missing.push("MICROSOFT_365_CLIENT_ID");
+    if (!row?.clientSecretCiphertext) missing.push("MICROSOFT_365_CLIENT_SECRET");
+    if (!row?.domain?.trim()) missing.push("MICROSOFT_365_DOMAIN");
+    if (!row?.licenseSkuId?.trim()) missing.push("MICROSOFT_365_LICENSE_SKU_ID");
     return {
         id: "microsoft-365",
-        name: "Microsoft 365 Konto anlegen",
+        name: "Microsoft 365",
         description:
-            "Erstellt nach der Vertragsbestätigung das Microsoft-365-Konto und speichert die Arbeits-E-Mail.",
-        configured: microsoft365Configured(),
-        missing: missingMicrosoft365Env(),
+            "Zugangsdaten liegen unter Integrationen. Ein Konto entsteht erst, wenn die Aufgabe ausgeführt wird.",
+        configured: Boolean(row?.enabled) && missing.length === 0,
+        missing,
         permissions: REQUIRED_PERMISSIONS,
     };
 }
@@ -110,17 +123,6 @@ export function buildUserPrincipalName(params: {
     return `${local}${suffix}@${domain}`;
 }
 
-function readConfig(): Microsoft365Config | null {
-    if (!microsoft365Configured()) return null;
-    return {
-        tenantId: microsoft365Env("MICROSOFT_365_TENANT_ID"),
-        clientId: microsoft365Env("MICROSOFT_365_CLIENT_ID"),
-        clientSecret: microsoft365Env("MICROSOFT_365_CLIENT_SECRET"),
-        domain: microsoft365Env("MICROSOFT_365_DOMAIN"),
-        licenseSkuId: microsoft365Env("MICROSOFT_365_LICENSE_SKU_ID"),
-    };
-}
-
 function temporaryPassword() {
     const alphabet =
         "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
@@ -142,8 +144,7 @@ async function readBody(response: Response) {
     }
 }
 
-export async function microsoftGraphToken() {
-    const config = readConfig();
+export async function microsoftGraphToken(config: Microsoft365Config | null) {
     if (!config) return null;
     return graphToken(config);
 }
@@ -319,8 +320,9 @@ function passwordMail(params: {
 export async function provisionMicrosoft365Account(params: {
     organizationId: string;
     workerId: string;
+    config: Microsoft365Config | null;
 }): Promise<ProvisionMicrosoft365Result> {
-    const config = readConfig();
+    const config = params.config;
     if (!config) return { status: "skipped", reason: "not_configured" };
 
     const worker = await prisma.worker.findFirst({
@@ -351,7 +353,11 @@ export async function provisionMicrosoft365Account(params: {
         };
     }
 
-    const token = await microsoftGraphToken();
+    if (!integrationsLive()) {
+        return { status: "skipped", reason: "not_live" };
+    }
+
+    const token = await microsoftGraphToken(config);
     if (!token) {
         return {
             status: "failed",

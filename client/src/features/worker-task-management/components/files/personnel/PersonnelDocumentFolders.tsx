@@ -11,6 +11,7 @@ import {
 import { MaterialsEngagementPicker } from '../../materials/MaterialsEngagementPicker';
 import { EngagementCertificateList, type EngagementCertificateLink } from '../EngagementCertificateList';
 import { EngagementContractList, type EngagementContractLink } from '../EngagementContractList';
+import { EngagementTemplateDocuments } from '../EngagementTemplateDocuments';
 import { EngagementQuestionnaireList, type EngagementQuestionnaireLink } from '../EngagementQuestionnaireList';
 import { AddPersonnelFolder } from './AddPersonnelFolder';
 import { OpenPersonnelFolder } from './OpenPersonnelFolder';
@@ -113,6 +114,10 @@ export function PersonnelDocumentFolders({
         <EngagementContractList
           workerId={workerId}
           contracts={contracts.filter((item) => item.engagementId === selectedId)}
+        />
+        <EngagementTemplateDocuments
+          workerId={workerId}
+          engagementId={selectedId}
         />
         <EngagementCertificateList
           certificates={certificates.filter(

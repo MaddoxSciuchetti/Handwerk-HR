@@ -1,4 +1,4 @@
-import { FRONTENDURL } from "@/constants/env";
+import { FRONTENDURL, QUESTIONNAIRE_MOCK_RESPONSES } from "@/constants/env";
 import { NOT_FOUND } from "@/constants/http";
 import { prisma } from "@/lib/prisma";
 import {
@@ -11,6 +11,7 @@ import {
     type QuestionnaireDefinition,
     type QuestionnaireFieldItem,
 } from "@/services/questionnaireDefinition";
+import { completeMockQuestionnaire } from "@/services/questionnaireMock";
 import { primaryEmploymentContract } from "@/services/documentMaster.service";
 import { questionnaireForOrganization } from "@/services/questionnaireTemplate";
 import AppError from "@/utils/AppError";
@@ -72,6 +73,8 @@ export async function getQuestionnaireDraft(params: {
         engagementId: engagement.id,
         email: engagement.worker.email,
         sent: Boolean(engagement.questionnaireSubmission),
+        status: engagement.questionnaireSubmission?.status ?? null,
+        mockEnabled: QUESTIONNAIRE_MOCK_RESPONSES,
         ...previewFrom(definition, draft.values, draft.questions),
     };
 }
@@ -125,6 +128,22 @@ async function deliverQuestionnaire(email: string | null, token: string) {
     }
 }
 
+async function finishDispatch(
+    email: string | null,
+    token: string,
+    engagementId: string,
+) {
+    if (QUESTIONNAIRE_MOCK_RESPONSES) {
+        await completeMockQuestionnaire(token, email ?? "");
+        return { emailSent: false, mockCompleted: true, engagementId };
+    }
+    return {
+        emailSent: await deliverQuestionnaire(email, token),
+        mockCompleted: false,
+        engagementId,
+    };
+}
+
 export async function sendEngagementQuestionnaire(params: {
     organizationId: string;
     createdByUserId: string;
@@ -132,11 +151,11 @@ export async function sendEngagementQuestionnaire(params: {
 }) {
     const engagement = await findEngagement(params.organizationId, params.engagementId);
     if (engagement.questionnaireSubmission) {
-        const emailSent = await deliverQuestionnaire(
+        return finishDispatch(
             engagement.worker.email,
             engagement.questionnaireSubmission.token,
+            engagement.id,
         );
-        return { emailSent, engagementId: engagement.id };
     }
 
     const draft = readEngagementDraft(engagement.questionnaireOverrides);
@@ -180,6 +199,5 @@ export async function sendEngagementQuestionnaire(params: {
         }
     });
 
-    const emailSent = await deliverQuestionnaire(engagement.worker.email, token);
-    return { emailSent, engagementId: engagement.id };
+    return finishDispatch(engagement.worker.email, token, engagement.id);
 }

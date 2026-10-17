@@ -1,6 +1,5 @@
 import LoadingAlert from '@/components/alerts/LoadingAlert';
-import ModalOverlay from '@/components/modal/ModalOverlay';
-import MediumWrapper from '@/components/modal/modalSizes/MediumWrapper';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useQuery } from '@tanstack/react-query';
 import { workerEngagementInfoItems } from '../consts/worker-engagement-info.consts';
 import { workerLifecycleQueries } from '../query-options/queries/worker-lifycycle.queries';
@@ -28,8 +27,8 @@ function WorkerEngagementInfoModal({
 
   return (
     <div onClick={(event) => event.stopPropagation()}>
-      <ModalOverlay size="max-w-2xl" handleToggle={onClose}>
-        <MediumWrapper width="w-full max-w-2xl" height="h-auto min-h-80">
+      <Dialog open onOpenChange={(next) => { if (!next) onClose(); }}>
+        <DialogContent className="h-auto min-h-80 rounded-lg p-4 text-center sm:max-w-2xl">
           <div className="flex w-full flex-col p-8 text-left">
             <WorkerInfoHeader isError={isError} />
             {isLoading ? (
@@ -54,8 +53,8 @@ function WorkerEngagementInfoModal({
               </div>
             )}
           </div>
-        </MediumWrapper>
-      </ModalOverlay>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

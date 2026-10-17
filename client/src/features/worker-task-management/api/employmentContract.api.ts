@@ -22,6 +22,7 @@ export type EmploymentContractDraft = {
   document: StyledDocument;
   values: Record<string, string>;
   unmatchedAnswers: UnmatchedQuestionnaireAnswer[];
+  questionnaireAnswers?: UnmatchedQuestionnaireAnswer[];
   masterRevision: number;
   matchedMasterRevision: number | null;
   questionnaireCompleted: boolean;
@@ -123,5 +124,17 @@ export function confirmEngagementContractForSend(
   return API.post<Record<string, never>, ContractResponse>(
     `worker/${workerId}/engagements/${engagementId}/contract/confirm-send`,
     {}
+  ).then((response) => response.data);
+}
+
+
+export function selectEngagementContractTemplate(
+  workerId: string,
+  engagementId: string,
+  masterId: string
+): Promise<EmploymentContractDraft> {
+  return API.post<{ masterId: string }, ContractResponse>(
+    `worker/${workerId}/engagements/${engagementId}/contract/template`,
+    { masterId }
   ).then((response) => response.data);
 }

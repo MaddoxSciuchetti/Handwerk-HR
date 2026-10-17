@@ -1,3 +1,10 @@
+import {
+  Table,
+  TableBody,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import type {
   EngagementMaterialDocument,
   EngagementMaterialItem,
@@ -41,17 +48,25 @@ function MaterialTable({
   }
 
   return (
-    <table className="w-full text-sm">
-      <thead>
-        <tr className="border-b border-border text-left text-muted-foreground">
-          <th className="px-3 py-2 font-medium">Name</th>
-          <th className="px-3 py-2 font-medium">Artikelnummer</th>
-          <th className="px-3 py-2 font-medium">Menge</th>
-          <th className="px-3 py-2 font-medium">Einzelpreis</th>
-          <th className="px-3 py-2" />
-        </tr>
-      </thead>
-      <tbody>
+    <Table>
+      <TableHeader>
+        <TableRow className="border-b border-border hover:bg-transparent">
+          <TableHead className="px-3 py-2 text-left font-medium text-muted-foreground">
+            Name
+          </TableHead>
+          <TableHead className="px-3 py-2 text-left font-medium text-muted-foreground">
+            Artikelnummer
+          </TableHead>
+          <TableHead className="px-3 py-2 text-left font-medium text-muted-foreground">
+            Menge
+          </TableHead>
+          <TableHead className="px-3 py-2 text-left font-medium text-muted-foreground">
+            Einzelpreis
+          </TableHead>
+          <TableHead className="px-3 py-2" />
+        </TableRow>
+      </TableHeader>
+      <TableBody>
         {items.map((item) => (
           <MaterialItemRow
             key={item.id}
@@ -62,8 +77,8 @@ function MaterialTable({
             onDelete={onDelete}
           />
         ))}
-      </tbody>
-    </table>
+      </TableBody>
+    </Table>
   );
 }
 

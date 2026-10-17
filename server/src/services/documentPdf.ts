@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { GOTENBERG_URL } from "@/constants/env";
-import { BAD_REQUEST } from "@/constants/http";
+import { BAD_REQUEST, SERVICE_UNAVAILABLE } from "@/constants/http";
 import AppError from "@/utils/AppError";
 import { loadDocumentFonts } from "@/services/documentFonts";
 import { DOCUMENT_CSS, renderNode } from "../../../shared/documentRendering";
@@ -119,7 +119,7 @@ export async function generateDocumentPdf(
       (current, name) =>
         current.replaceAll(
           "font-family:" + name,
-          'font-family:"' + familyMap[name] + '"',
+          'font-family:&quot;' + familyMap[name] + '&quot;',
         ),
       html,
     );
@@ -205,10 +205,18 @@ export async function generateDocumentPdf(
       JSON.stringify(fonts.checks) +
       ".map(font=>document.fonts.load(font)));return faces.every(list=>list.length>0&&list.every(face=>face.status==='loaded'))})()",
   );
-  const response = await fetch(
-    GOTENBERG_URL.replace(/\/$/, "") + "/forms/chromium/convert/html",
-    { method: "POST", body: form, signal: AbortSignal.timeout(60_000) },
-  );
+  let response: Response;
+  try {
+    response = await fetch(
+      GOTENBERG_URL.replace(/\/$/, "") + "/forms/chromium/convert/html",
+      { method: "POST", body: form, signal: AbortSignal.timeout(60_000) },
+    );
+  } catch {
+    throw new AppError(
+      SERVICE_UNAVAILABLE,
+      "Der PDF-Dienst ist nicht erreichbar oder antwortet nicht rechtzeitig. Bitte den PDF-Dienst starten und erneut versuchen.",
+    );
+  }
   if (!response.ok)
     throw new AppError(
       BAD_REQUEST,

@@ -13,13 +13,11 @@ import {
     presentQuestions,
     questionRequired,
     type QuestionnaireDefinition,
-    type QuestionnaireFieldItem,
 } from "@/services/questionnaireDefinition";
 import {
     encodeFileAnswer,
     fileAnswerForSubmission,
     flattenQuestionnaireAnswers,
-    workerTextFromAnswers,
     QUESTIONNAIRE_FIELDS,
     QUESTIONNAIRE_INTRO,
     QUESTIONNAIRE_REPEATERS,
@@ -27,21 +25,10 @@ import {
     type QuestionnaireAnswers,
     type QuestionnaireField,
 } from "@/services/questionnaireForm";
+import { workerProfileFromQuestionnaire } from "@/services/questionnaireWorkerProfile";
 import AppError from "@/utils/AppError";
 
 const CONTRACT_TASK_TITLE = "Arbeitsvertrag drucken";
-const birthdayRegex = /^\d{4}-\d{2}-\d{2}$/;
-
-function parseBirthday(value: string) {
-    if (!birthdayRegex.test(value)) {
-        throw new AppError(BAD_REQUEST, "Das Geburtsdatum ist ungültig.");
-    }
-    const birthday = new Date(`${value}T00:00:00.000Z`);
-    if (Number.isNaN(birthday.getTime())) {
-        throw new AppError(BAD_REQUEST, "Das Geburtsdatum ist ungültig.");
-    }
-    return birthday;
-}
 
 function storedDefinition(value: unknown): QuestionnaireDefinition | null {
     if (!value || typeof value !== "object" || Array.isArray(value)) return null;
@@ -101,13 +88,15 @@ export async function getPublicQuestionnaire(token: string) {
     };
 }
 
-function fieldsOf(definition: QuestionnaireDefinition | null): QuestionnaireField[] {
+type ProfileQuestionField = QuestionnaireField & { defaultValue?: string };
+
+function fieldsOf(definition: QuestionnaireDefinition | null): ProfileQuestionField[] {
     const fields = definition ? definitionFields(definition) : [...QUESTIONNAIRE_FIELDS];
     return fields.map((field) => ({ ...field, required: questionRequired(field) }));
 }
 
 function lockEmployerValues(
-    fields: Array<QuestionnaireField | QuestionnaireFieldItem>,
+    fields: ProfileQuestionField[],
     body: unknown,
 ) {
     const answers =
@@ -202,13 +191,7 @@ export async function submitPublicQuestionnaire(token: string, body: unknown) {
             answers,
         });
 
-        const workerFields = workerTextFromAnswers(fields, answers);
-        const workerData = {
-            ...workerFields.data,
-            ...(workerFields.birthday
-                ? { birthday: parseBirthday(workerFields.birthday) }
-                : {}),
-        };
+        const workerData = workerProfileFromQuestionnaire(fields, answers);
         if (Object.keys(workerData).length > 0) {
             await tx.worker.update({
                 where: { id: submission.engagement.workerId },

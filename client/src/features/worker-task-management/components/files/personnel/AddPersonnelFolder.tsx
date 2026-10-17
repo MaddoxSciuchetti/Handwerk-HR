@@ -1,5 +1,4 @@
-import ModalOverlay from '@/components/modal/ModalOverlay';
-import SmallWrapper from '@/components/modal/modalSizes/SmallWrapper';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,7 +6,6 @@ import { Label } from '@/components/ui/label';
 import { useCreatePersonnelFolder } from '@/features/worker-task-management/hooks/usePersonnelDocuments';
 import { FolderPlus } from 'lucide-react';
 import { useState } from 'react';
-import { createPortal } from 'react-dom';
 import { StoredFileBox } from '../StoredFileBox';
 
 type AddPersonnelFolderProps = {
@@ -42,10 +40,9 @@ export function AddPersonnelFolder({
         icon={FolderPlus}
         onOpen={() => setOpen(true)}
       />
-      {open
-        ? createPortal(
-            <ModalOverlay handleToggle={close}>
-              <SmallWrapper className="h-auto min-h-0">
+      {open ? (
+            <Dialog open onOpenChange={(next) => { if (!next) close(); }}>
+              <DialogContent className="h-auto">
                 <CardContent className="flex w-full min-w-0 flex-col gap-4">
                   <div className="flex flex-col gap-2">
                     <Label htmlFor="personnel-folder-name">Ordnername</Label>
@@ -69,9 +66,8 @@ export function AddPersonnelFolder({
                     {create.isPending ? 'Legt an...' : 'Hinzufügen'}
                   </Button>
                 </CardContent>
-              </SmallWrapper>
-            </ModalOverlay>,
-            document.body
+              </DialogContent>
+            </Dialog>
           )
         : null}
     </>

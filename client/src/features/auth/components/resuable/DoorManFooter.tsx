@@ -1,3 +1,5 @@
+import { Button } from '@/components/ui/button';
+
 type DoorManFooterProps = {
   description: string;
   action: string;
@@ -9,16 +11,17 @@ const DoorManFooter = ({ description, action, nav }: DoorManFooterProps) => {
     <div className="flex items-center justify-center gap-1 text-sm text-foreground">
       <p className="text-sm text-muted-foreground">
         {description}
-        <button
+        <Button
           type="button"
+          variant="link"
           onClick={(e) => {
             e.stopPropagation();
             nav();
           }}
-          className="cursor-pointer text-foreground underline hover:text-accent-foreground"
+          className="h-auto p-0 text-foreground underline hover:bg-transparent hover:text-accent-foreground"
         >
           {action}
-        </button>
+        </Button>
       </p>
     </div>
   );

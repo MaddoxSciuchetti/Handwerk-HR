@@ -1,4 +1,5 @@
 import LoadingAlert from '@/components/alerts/LoadingAlert';
+import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { verifyEmail } from '../api/auth.api';
@@ -33,20 +34,24 @@ function VerifyEmail() {
           {isError && (
             <p className="text-muted-foreground">
               The link is either invalid or expired.{' '}
-              <button
+              <Button
+                type="button"
+                variant="link"
                 onClick={() => navigate({ to: '/' })}
-                className="text-foreground underline hover:text-accent-foreground"
+                className="h-auto p-0 text-foreground underline hover:bg-transparent hover:text-accent-foreground"
               >
                 Get a new link
-              </button>
+              </Button>
             </p>
           )}
-          <button
+          <Button
+            type="button"
+            variant="link"
             onClick={() => navigate({ to: '/' })}
-            className="text-foreground hover:text-accent-foreground"
+            className="h-auto p-0 text-foreground hover:bg-transparent hover:text-accent-foreground hover:no-underline"
           >
             Jetzt Einloggen
-          </button>
+          </Button>
         </div>
       </div>
     </DoorManWrapper>

@@ -1,4 +1,4 @@
-import SmallWrapper from '@/components/modal/modalSizes/SmallWrapper';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { CardContent } from '@/components/ui/card';
 
@@ -36,7 +36,8 @@ export default function FileUploadForm({
   } = useFileSelect(setUploadedFiles, setFileProgresses);
 
   return (
-    <SmallWrapper className="h-auto min-h-0 max-h-[85vh] overflow-y-auto">
+    <Dialog open onOpenChange={(next) => { if (!next) setModal(false); }}>
+    <DialogContent className="h-auto max-h-[85vh] overflow-y-auto">
       <div className="flex w-full min-w-0 flex-col">
         {error ? <div>Try again</div> : ''}
         <CardContent className="flex w-full min-w-0 flex-col">
@@ -61,6 +62,7 @@ export default function FileUploadForm({
           </Button>
         </CardContent>
       </div>
-    </SmallWrapper>
+    </DialogContent>
+    </Dialog>
   );
 }

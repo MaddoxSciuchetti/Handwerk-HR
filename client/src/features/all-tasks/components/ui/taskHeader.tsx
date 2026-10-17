@@ -1,3 +1,5 @@
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+
 export function TaskHeader() {
   return (
     <div className="flex items-center justify-between">
@@ -17,33 +19,28 @@ export function TaskSegmentToggle({
   onChange: (next: Segment) => void;
 }) {
   return (
-    <div
-      className="flex shrink-0 items-center gap-0.5 rounded-full bg-muted p-0.5"
-      role="group"
+    <ToggleGroup
+      type="single"
+      value={value}
+      spacing={0}
       aria-label="Ansicht umschalten"
+      className="shrink-0 gap-0.5 rounded-full bg-muted p-0.5"
+      onValueChange={(next) => {
+        if (next === 'left' || next === 'right') onChange(next);
+      }}
     >
-      <button
-        type="button"
-        onClick={() => onChange('left')}
-        className={
-          value === 'left'
-            ? 'flex h-7 shrink-0 items-center justify-center rounded-full bg-background px-3 py-1 text-xs font-medium text-foreground shadow-[0px_1px_3px_0px_rgba(0,0,0,0.12)] dark:shadow-[0px_1px_3px_0px_rgba(0,0,0,0.4)]'
-            : 'flex h-7 shrink-0 items-center justify-center rounded-full bg-transparent px-3 py-1 text-xs font-medium text-foreground'
-        }
+      <ToggleGroupItem
+        value="left"
+        className="h-7 shrink-0 rounded-full border-0 bg-transparent px-3 text-xs font-medium text-foreground shadow-none hover:bg-transparent hover:text-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-[0px_1px_3px_0px_rgba(0,0,0,0.12)] dark:data-[state=on]:shadow-[0px_1px_3px_0px_rgba(0,0,0,0.4)]"
       >
         Alle Aufgaben
-      </button>
-      <button
-        type="button"
-        onClick={() => onChange('right')}
-        className={
-          value === 'right'
-            ? 'flex h-7 shrink-0 items-center justify-center rounded-full bg-background px-3 py-1 text-xs font-medium text-foreground shadow-[0px_1px_3px_0px_rgba(0,0,0,0.12)] dark:shadow-[0px_1px_3px_0px_rgba(0,0,0,0.4)]'
-            : 'flex h-7 shrink-0 items-center justify-center rounded-full bg-transparent px-3 py-1 text-xs font-medium text-foreground'
-        }
+      </ToggleGroupItem>
+      <ToggleGroupItem
+        value="right"
+        className="h-7 shrink-0 rounded-full border-0 bg-transparent px-3 text-xs font-medium text-foreground shadow-none hover:bg-transparent hover:text-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-[0px_1px_3px_0px_rgba(0,0,0,0.12)] dark:data-[state=on]:shadow-[0px_1px_3px_0px_rgba(0,0,0,0.4)]"
       >
         Meine Aufgaben
-      </button>
-    </div>
+      </ToggleGroupItem>
+    </ToggleGroup>
   );
 }

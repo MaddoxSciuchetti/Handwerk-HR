@@ -486,6 +486,22 @@ export const saveEngagementContractDraft = catchErrors(
     },
 );
 
+export const selectEngagementContractTemplate = catchErrors(
+    async (req: Request, res: Response) => {
+        const masterId = req.body?.masterId;
+        if (typeof masterId !== "string" || !masterId.trim() || masterId.length > 120) {
+            return res.status(400).json({ success: false, message: "Vertragsvorlage fehlt." });
+        }
+        const contract = await employmentContractService.resyncEngagementContractFromQuestionnaire({
+            organizationId: req.orgId,
+            workerId: param(req, "workerId"),
+            engagementId: param(req, "engagementId"),
+            masterId: masterId.trim(),
+        });
+        return res.status(200).json({ success: true, data: contract });
+    },
+);
+
 export const resyncEngagementContractFromQuestionnaire = catchErrors(
     async (req: Request, res: Response) => {
         const contract =

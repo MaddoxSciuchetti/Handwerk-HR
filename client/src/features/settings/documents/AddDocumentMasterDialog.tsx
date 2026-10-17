@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import ModalOverlay from '@/components/modal/ModalOverlay';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useNavigate } from '@tanstack/react-router';
 import { FormEvent, useState } from 'react';
 import {
@@ -145,7 +145,8 @@ export function AddDocumentMasterDialog({
   };
 
   return (
-    <ModalOverlay handleToggle={onClose} size="max-w-lg">
+    <Dialog open onOpenChange={(next) => { if (!next) onClose(); }}>
+      <DialogContent className="w-full max-w-lg border-0 bg-transparent p-0 shadow-none sm:max-w-lg">
       <form
         onSubmit={onSubmit}
         className="mx-auto flex w-full flex-col gap-4 rounded-xl border border-border bg-(--modal-surface) p-6 pt-10 text-foreground shadow-lg"
@@ -234,6 +235,7 @@ export function AddDocumentMasterDialog({
           {pending ? 'Wird gelesen…' : 'Anlegen'}
         </Button>
       </form>
-    </ModalOverlay>
+      </DialogContent>
+    </Dialog>
   );
 }

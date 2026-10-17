@@ -1,5 +1,5 @@
 import LoadingAlert from '@/components/alerts/LoadingAlert';
-import ModalOverlay from '@/components/modal/ModalOverlay';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { FETCHDESCRIPTION } from '@/features/all-tasks/consts/query.consts';
 import { ALL_WORKER_DATA } from '@/features/worker-lifecycle/consts/query-key.consts';
@@ -54,7 +54,8 @@ export function ContractConfirmDialog({
   });
 
   return (
-    <ModalOverlay handleToggle={onClose} size={documentPreviewModalSize}>
+    <Dialog open onOpenChange={(next) => { if (!next) onClose(); }}>
+      <DialogContent className={`w-full border-0 bg-transparent p-0 shadow-none sm:max-w-[min(96vw,90rem)] ${documentPreviewModalSize}`}>
       <div className={documentPreviewModalPanel}>
         {isLoading ? <LoadingAlert className="min-h-40" /> : null}
         {isError || (!isLoading && !data) ? (
@@ -103,6 +104,7 @@ export function ContractConfirmDialog({
           </>
         ) : null}
       </div>
-    </ModalOverlay>
+      </DialogContent>
+    </Dialog>
   );
 }

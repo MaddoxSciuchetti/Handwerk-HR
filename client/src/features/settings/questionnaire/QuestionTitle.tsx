@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useEffect, useRef, useState } from 'react';
 
@@ -32,13 +33,14 @@ export function QuestionTitle({ label, onCommit }: QuestionTitleProps) {
 
   if (!editing) {
     return (
-      <button
+      <Button
         type="button"
-        className="w-fit rounded-md px-1 text-left text-sm leading-none font-medium hover:bg-muted"
+        variant="ghost"
+        className="h-auto w-fit rounded-md px-1 text-left text-sm leading-none font-medium hover:bg-muted hover:text-foreground"
         onClick={() => setEditing(true)}
       >
         Frage: {label}
-      </button>
+      </Button>
     );
   }
 

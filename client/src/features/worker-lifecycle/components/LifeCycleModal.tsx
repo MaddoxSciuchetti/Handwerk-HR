@@ -1,5 +1,5 @@
 import { AddWorker } from '@/features/worker-lifecycle/schemas/zod.schemas';
-import ModalOverlay from '@/components/modal/ModalOverlay';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useEffect, useState } from 'react';
 import ModalContent from './lifycycle-modal-content/ModalContent';
 
@@ -23,7 +23,8 @@ const LifeCycleModal = ({ toggleModal, modal, onQuestionnaire }: LifeCycleModalP
   return (
     <>
       {modal && (
-        <ModalOverlay size={'max-w-2xl'} handleToggle={toggleModal}>
+        <Dialog open onOpenChange={(next) => { if (!next) toggleModal(); }}>
+          <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
           <ModalContent
             selectedOption={selectedOption}
             setSelectedOption={setSelectedOption}
@@ -31,7 +32,8 @@ const LifeCycleModal = ({ toggleModal, modal, onQuestionnaire }: LifeCycleModalP
             showInlineFormBackButton
             onQuestionnaire={onQuestionnaire}
           />
-        </ModalOverlay>
+          </DialogContent>
+        </Dialog>
       )}
     </>
   );

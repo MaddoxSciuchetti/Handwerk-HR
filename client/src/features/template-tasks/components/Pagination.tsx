@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import { Dispatch, MouseEvent, SetStateAction } from 'react';
 
 type PaginationProps = {
@@ -30,15 +31,22 @@ const Pagination = ({
   return (
     <ul className="flex gap-2 ">
       {pageNumbers.map((number) => (
-        <button
+        <Button
           key={number}
+          type="button"
+          variant="ghost"
+          size="sm"
           onClick={(e) => handlePageUpdate(number, e)}
           aria-label={`Seite ${number}`}
           aria-current={currentPage === number ? 'page' : undefined}
-          className={`page-item ${currentPage === number ? 'text-(--muted-foreground) underline' : 'text-(--foreground)'}`}
+          className={
+            currentPage === number
+              ? 'text-muted-foreground underline hover:bg-muted hover:text-muted-foreground'
+              : 'text-foreground hover:bg-muted hover:text-foreground'
+          }
         >
           {number}
-        </button>
+        </Button>
       ))}
     </ul>
   );

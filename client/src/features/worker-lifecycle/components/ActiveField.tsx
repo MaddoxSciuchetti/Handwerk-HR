@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/trycatch';
 import { Check, X } from 'lucide-react';
 import { Dispatch, MouseEvent, SetStateAction } from 'react';
@@ -30,19 +31,25 @@ const ActiveField = ({
           onClick={(e: MouseEvent<HTMLInputElement>) => e.stopPropagation()}
         />
         <span className="flex items-center justify-end gap-1">
-          <button
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
             onClick={() => setIsInputActive(false)}
-            className="cursor-pointer p-1 text-muted-foreground transition-colors hover:text-(--destructive)"
+            className="text-muted-foreground hover:bg-transparent hover:text-(--destructive)"
             aria-label="Abbrechen"
           >
             <X size={20} strokeWidth={1.75} />
-          </button>
-          <button
-            className="cursor-pointer p-1 text-muted-foreground transition-colors hover:text-(--chart-2)"
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="text-muted-foreground hover:bg-transparent hover:text-(--chart-2)"
             onClick={handleSubmit}
           >
             <Check size={20} strokeWidth={1.75} />
-          </button>
+          </Button>
         </span>
       </span>
     </div>

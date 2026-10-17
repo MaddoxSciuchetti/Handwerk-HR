@@ -128,6 +128,36 @@ function storedLabelText(label: Record<string, unknown>): string {
   return String(label.text ?? "");
 }
 
+// Positioned labels must use the same line box in the editor and Chromium.
+// Inheriting the body's 1.5 line height lets small signature captions escape
+// their reserved row and overlap the following paragraph.
+export const LINE_LABEL_LINE_HEIGHT = 1.2;
+
+export function lineGroupHeight(node: DocumentNode): number {
+  const labels = node.content?.filter((child) => child.type === "lineLabel");
+  const stored = Array.isArray(node.attrs?.labels) ? node.attrs.labels : [];
+  const extents = (
+    labels?.length
+      ? labels
+      : stored.map((attrs) => ({ type: "lineLabel", attrs }))
+  ).map((label: DocumentNode) => {
+    const attrs = label.attrs ?? {};
+    const sizes = (label.content ?? [])
+      .flatMap((part) =>
+        (part.marks ?? [])
+          .filter((mark) => mark.type === "textStyle")
+          .map((mark) => Number(mark.attrs?.fontSize)),
+      )
+      .filter(Number.isFinite);
+    const size = Math.max(Number(attrs.fontSize) || 11, ...sizes);
+    return (Number(attrs.top) || 0) + size * LINE_LABEL_LINE_HEIGHT;
+  });
+  return Math.max(
+    0,
+    Math.min(2000, Math.max(Number(node.attrs?.height) || 0, ...extents)),
+  );
+}
+
 function positionedLabelHtml(
   attrs: Record<string, unknown>,
   inner: string,
@@ -152,7 +182,9 @@ function positionedLabelHtml(
     escapeHtml(family) +
     ";font-size:" +
     fontSize +
-    "pt;color:" +
+    "pt;line-height:" +
+    LINE_LABEL_LINE_HEIGHT +
+    ";color:" +
     color +
     (attrs.centered === true ? ";transform:translateX(-50%)" : "") +
     (attrs.bold === true ? ";font-weight:700" : "") +
@@ -295,7 +327,7 @@ export function renderNode(
   if (node.type === "hardBreak") return "<br>";
   if (node.type === "pageBreak") return '<div class="page-break"></div>';
   if (node.type === "lineGroup") {
-    const height = Math.max(0, Math.min(2000, Number(node.attrs?.height) || 0));
+    const height = lineGroupHeight(node);
     const marginTop = Math.max(
       0,
       Math.min(2000, Number(node.attrs?.marginTop) || 0),

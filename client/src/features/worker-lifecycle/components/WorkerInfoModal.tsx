@@ -1,6 +1,5 @@
 import LoadingAlert from '@/components/alerts/LoadingAlert';
-import ModalOverlay from '@/components/modal/ModalOverlay';
-import MediumWrapper from '@/components/modal/modalSizes/MediumWrapper';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { LifecycleType } from '@/features/task-management/types/index.types';
 import { useState } from 'react';
 import useWorkerInfo from '../hooks/useWorkerInfo';
@@ -34,8 +33,8 @@ const WorkerInfoModal = ({
   }
 
   return (
-    <ModalOverlay size={'max-w-2xl'} handleToggle={onClose}>
-      <MediumWrapper width="w-full max-w-2xl" height="h-auto min-h-120">
+    <Dialog open onOpenChange={(next) => { if (!next) onClose(); }}>
+      <DialogContent className="h-auto min-h-120 rounded-lg p-4 text-center sm:max-w-2xl">
         <div
           className="flex w-full flex-col gap-3 p-8 text-left"
           onClick={() => setIsInputActive(false)}
@@ -57,8 +56,8 @@ const WorkerInfoModal = ({
             />
           ) : null}
         </div>
-      </MediumWrapper>
-    </ModalOverlay>
+      </DialogContent>
+    </Dialog>
   );
 };
 

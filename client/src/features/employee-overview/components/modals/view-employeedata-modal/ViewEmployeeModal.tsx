@@ -1,5 +1,4 @@
 import LoadingAlert from '@/components/alerts/LoadingAlert';
-import SmallWrapper from '@/components/modal/modalSizes/SmallWrapper';
 import { Button } from '@/components/ui/button';
 import { EmployeeTabsData } from '@/features/employee-overview/components/employees/EmployeeTabsData';
 import ReminderWindow from '@/features/employee-overview/components/modals/view-employeedata-modal/ReminderWindow';
@@ -18,7 +17,7 @@ const ViewEmployeeModal = ({ selectedOwner }: ViewEmployeeModalProps) => {
   if (isLoading) return <LoadingAlert />;
 
   return (
-    <SmallWrapper className="items-stretch justify-start overflow-hidden">
+    <>
       <div className="flex h-full w-full min-h-0 flex-col p-6">
         <div className="mb-4 flex items-center gap-2">
           {isReminderStep && (
@@ -49,7 +48,7 @@ const ViewEmployeeModal = ({ selectedOwner }: ViewEmployeeModalProps) => {
           )}
         </div>
       </div>
-    </SmallWrapper>
+    </>
   );
 };
 

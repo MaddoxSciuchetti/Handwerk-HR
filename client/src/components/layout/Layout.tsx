@@ -4,7 +4,7 @@ import FeatureModal from '@/features/sidebar/feature-modal/FeatureModal';
 import { useThemeProvider } from '@/hooks/useThemeProvider';
 import { Outlet, useLocation, useNavigate } from '@tanstack/react-router';
 import { useEffect, useMemo, useState } from 'react';
-import ModalOverlay from '../modal/ModalOverlay';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import AppSidebar from '../ui/sidebar/AppSidebar';
 import {
   SidebarInset,
@@ -79,13 +79,14 @@ function Layout() {
         </main>
       </SidebarInset>
       {modal && (
-        <ModalOverlay
-          handleToggle={handleOpenModal}
-          className="backdrop-blur-xs"
-          backdropClassName="bg-black/30"
-        >
-          <FeatureModal handleToggle={handleOpenModal} />
-        </ModalOverlay>
+        <Dialog open onOpenChange={(next) => { if (!next) handleOpenModal(); }}>
+          <DialogContent
+            overlayClassName="bg-black/30"
+            className="border-0 bg-transparent p-0 shadow-none"
+          >
+            <FeatureModal handleToggle={handleOpenModal} />
+          </DialogContent>
+        </Dialog>
       )}
     </>
   );

@@ -5,7 +5,10 @@ import {
     saveArbeitszeugnisValues,
     getAutomationDocument,
     getDepartureMail,
+    getIntegrations,
     getMicrosoft365Automation,
+    postIssueSequence,
+    putIntegration,
     getQuestionnaireTemplate,
     getWelcomeMail,
     postArbeitszeugnis,
@@ -19,6 +22,8 @@ import {
 const automationRoutes = Router();
 
 automationRoutes.get("/microsoft-365", getMicrosoft365Automation);
+automationRoutes.get("/integrations", getIntegrations);
+automationRoutes.put("/integrations/:provider", putIntegration);
 automationRoutes.get("/questionnaire", getQuestionnaireTemplate);
 automationRoutes.put("/questionnaire", putQuestionnaireTemplate);
 automationRoutes.get("/welcome-mail", getWelcomeMail);
@@ -41,5 +46,6 @@ automationRoutes.put(
 );
 automationRoutes.post("/issues/:issueId/arbeitszeugnis", postArbeitszeugnis);
 automationRoutes.post("/issues/:issueId/run", postTaskAutomation);
+automationRoutes.post("/issues/:issueId/sequence", postIssueSequence);
 
 export { automationRoutes };

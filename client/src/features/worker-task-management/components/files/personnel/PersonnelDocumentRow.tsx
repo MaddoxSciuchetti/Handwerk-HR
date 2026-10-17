@@ -32,9 +32,10 @@ export function PersonnelDocumentRow({
           X
         </Button>
       </div>
-      <button
+      <Button
         type="button"
-        className="flex flex-col items-start gap-3 text-left"
+        variant="ghost"
+        className="h-auto flex-col items-start gap-3 p-0 text-left font-normal hover:bg-transparent hover:text-foreground"
         aria-label={`${document.originalFileName} öffnen`}
         onClick={() => window.open(document.presignedUrl, '_blank')}
       >
@@ -50,7 +51,7 @@ export function PersonnelDocumentRow({
         <span className="block w-full truncate text-sm font-medium">
           {document.originalFileName}
         </span>
-      </button>
+      </Button>
     </div>
   );
 }

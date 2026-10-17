@@ -1,5 +1,5 @@
 import LoadingAlert from '@/components/alerts/LoadingAlert';
-import ModalOverlay from '@/components/modal/ModalOverlay';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -55,7 +55,8 @@ export function ContractDraftDialog({
   };
 
   return (
-    <ModalOverlay handleToggle={onClose} size={documentPreviewModalSize}>
+    <Dialog open onOpenChange={(next) => { if (!next) onClose(); }}>
+      <DialogContent className={`w-full border-0 bg-transparent p-0 shadow-none sm:max-w-[min(96vw,90rem)] ${documentPreviewModalSize}`}>
       <div className={documentPreviewModalPanel}>
         {isLoading ? <LoadingAlert className="min-h-40" /> : null}
         {isError || (!isLoading && !data) ? (
@@ -100,6 +101,7 @@ export function ContractDraftDialog({
           </>
         ) : null}
       </div>
-    </ModalOverlay>
+      </DialogContent>
+    </Dialog>
   );
 }

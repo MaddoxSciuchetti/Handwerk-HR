@@ -1,3 +1,4 @@
+import { lineGroupHeight } from '@shared/documentRendering';
 import { Node } from '@tiptap/core';
 import { DEFAULT_FONT_PT, LAYOUT_MAX_PT } from '../consts/editor.consts';
 import { finiteLayout, labelStyle, paintRules } from '../util/lineLayout.util';
@@ -74,7 +75,7 @@ export const LineGroup = Node.create({
   },
   parseHTML: () => [{ tag: 'div[data-line-group]' }],
   renderHTML({ node }) {
-    const height = finiteLayout(node.attrs.height, 0, LAYOUT_MAX_PT);
+    const height = lineGroupHeight(node.toJSON());
     const marginTop = finiteLayout(node.attrs.marginTop, 0, LAYOUT_MAX_PT);
     const marginBottom = finiteLayout(
       node.attrs.marginBottom,
@@ -104,8 +105,8 @@ export const LineGroup = Node.create({
       dom.append(rules, content);
       let lastStyle = '';
       let lastRules = '';
-      const paint = (current: { attrs: Record<string, unknown> }) => {
-        const height = finiteLayout(current.attrs.height, 0, LAYOUT_MAX_PT);
+      const paint = (current: typeof node) => {
+        const height = lineGroupHeight(current.toJSON());
         const marginTop = finiteLayout(
           current.attrs.marginTop,
           0,

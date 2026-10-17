@@ -59,6 +59,14 @@ export type TemplateTaskFormValues = {
   defaultStatus: IssueStatusValue;
   defaultAssigneeUserId: string;
   orderIndex: number;
+  integrationProvider: 'none' | 'microsoft_graph' | 'crewmeister';
+  sequence:
+    | 'none'
+    | 'microsoft_create_account'
+    | 'microsoft_send_onboarding_email'
+    | 'microsoft_send_offboarding_email'
+    | 'microsoft_deactivate_account'
+    | 'crewmeister_create_account';
 };
 
 export type TemplateTaskResponse = {
@@ -70,6 +78,14 @@ export type TemplateTaskResponse = {
   taskDescription: string;
   defaultStatus: IssueStatusValue;
   defaultAssigneeUserId: string | null;
+  integrationProvider?: 'microsoft_graph' | 'crewmeister' | null;
+  sequence?:
+    | 'microsoft_create_account'
+    | 'microsoft_send_onboarding_email'
+    | 'microsoft_send_offboarding_email'
+    | 'microsoft_deactivate_account'
+    | 'crewmeister_create_account'
+    | null;
 };
 
 export type TaskHistoryActor = {

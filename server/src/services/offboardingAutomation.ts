@@ -13,9 +13,11 @@ import {
 } from "@/services/arbeitszeugnis";
 import { sendTeamDepartureMail } from "@/services/departureMail";
 import {
-    microsoft365Configured,
-    microsoftGraphToken,
-} from "@/services/microsoft365Account";
+    integrationsLive,
+    loadMicrosoft365Config,
+    NOT_LIVE_MESSAGE,
+} from "@/services/integrations/runtime";
+import { microsoftGraphToken } from "@/services/microsoft365Account";
 
 const GRAPH = "https://graph.microsoft.com/v1.0";
 
@@ -66,7 +68,7 @@ async function readMicrosoftUser(token: string, key: string) {
     };
 }
 
-async function blockMicrosoftSignIn(token: string, userKey: string) {
+export async function blockMicrosoftSignIn(token: string, userKey: string) {
     const current = await readMicrosoftUser(token, userKey);
     if (current.status === "missing") {
         return {
@@ -276,14 +278,18 @@ export async function runTaskAutomation(params: {
         };
     }
 
-    if (!microsoft365Configured()) {
+    if (!integrationsLive()) {
+        return { status: "failed", message: NOT_LIVE_MESSAGE };
+    }
+    const config = await loadMicrosoft365Config(params.organizationId);
+    if (!config) {
         return {
             status: "failed",
-            message: "Microsoft 365 ist in dieser Umgebung nicht eingerichtet.",
+            message: "Microsoft 365 ist für diese Organisation nicht eingerichtet.",
         };
     }
 
-    const token = await microsoftGraphToken();
+    const token = await microsoftGraphToken(config);
     if (!token) {
         return {
             status: "failed",

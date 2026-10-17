@@ -168,19 +168,20 @@ function PaletteButton({
   onClick: () => void;
 }) {
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
       draggable
       onDragStart={(event) => {
         event.dataTransfer.setData(QUESTION_DRAG_TYPE, JSON.stringify(payload));
         event.dataTransfer.setData('text/plain', JSON.stringify(payload));
       }}
       onClick={onClick}
-      className="rounded-lg border border-border bg-card px-3 py-2 text-left text-sm hover:bg-muted"
+      className="h-auto rounded-lg border border-border bg-card px-3 py-2 text-left text-sm font-normal text-foreground hover:bg-muted hover:text-foreground"
     >
       {label}
       {detail ? <span className="mt-1 block text-xs text-muted-foreground">{detail}</span> : null}
-    </button>
+    </Button>
   );
 }
 

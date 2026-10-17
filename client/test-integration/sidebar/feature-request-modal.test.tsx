@@ -1,4 +1,4 @@
-import ModalOverlay from '@/components/modal/ModalOverlay';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import {
   Sidebar,
   SidebarFooter,
@@ -48,13 +48,14 @@ function FeedbackSidebarHarness() {
         </SidebarFooter>
       </Sidebar>
       {modalOpen && (
-        <ModalOverlay
-          handleToggle={toggleModal}
-          className="backdrop-blur-xs"
-          backdropClassName="bg-black/30"
-        >
-          <FeatureModal handleToggle={toggleModal} />
-        </ModalOverlay>
+        <Dialog open onOpenChange={(next) => { if (!next) toggleModal(); }}>
+          <DialogContent
+            overlayClassName="bg-black/30"
+            className="border-0 bg-transparent p-0 shadow-none"
+          >
+            <FeatureModal handleToggle={toggleModal} />
+          </DialogContent>
+        </Dialog>
       )}
     </SidebarProvider>
   );

@@ -201,3 +201,47 @@ it("draws a blank underline as one rule instead of a second text decoration", ()
   expect(html).toContain("border-bottom:0.5pt solid currentColor");
   expect(html).toContain("white-space:nowrap");
 });
+
+it("uses the same bounded line box for small signature captions in editor and PDF", () => {
+  const caption = {
+    type: "lineGroup",
+    attrs: {
+      height: 9.45,
+      lines: [],
+      labels: [
+        {
+          text: "(Arbeitnehmer)",
+          left: 100,
+          top: 0,
+          fontSize: 7,
+          color: "#000000",
+        },
+      ],
+    },
+  };
+  const normalized = normalizeLineLabels(caption);
+  expect(renderNode(caption, {})).toContain("line-height:1.2");
+  expect(renderNode(normalized, {})).toContain("line-height:1.2");
+  expect(renderNode(normalized, {})).toContain("height:9.45pt");
+});
+
+it("reserves room for labels that extend below a stored row after editing", () => {
+  const row = {
+    type: "lineGroup",
+    attrs: { height: 5, lines: [] },
+    content: [
+      {
+        type: "lineLabel",
+        attrs: { left: 0, top: 4, fontSize: 10 },
+        content: [
+          {
+            type: "text",
+            text: "Caption",
+            marks: [{ type: "textStyle", attrs: { fontSize: 20 } }],
+          },
+        ],
+      },
+    ],
+  };
+  expect(renderNode(row, {})).toContain("height:28pt");
+});

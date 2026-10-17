@@ -6,6 +6,11 @@ import {
     saveAutomationDocument,
 } from "@/services/automationDocument";
 import { microsoft365AutomationStatus } from "@/services/microsoft365Account";
+import { runIssueSequence } from "@/services/integrations/runSequence";
+import {
+    listOrganizationIntegrations,
+    saveOrganizationIntegration,
+} from "@/services/integrations/store";
 import {
     saveDepartureMailSettings,
     departureMailPage,
@@ -39,11 +44,65 @@ const teamMailInput = z.object({
     body: z.string().trim().min(1).max(20_000),
 }) satisfies z.ZodType<WelcomeMailSettingsRecord>;
 
-export const getMicrosoft365Automation = catchErrors(async (_req, res) => {
+export const getMicrosoft365Automation = catchErrors(async (req, res) => {
+    appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
     return res.status(200).json({
         success: true,
-        data: microsoft365AutomationStatus(),
+        data: await microsoft365AutomationStatus(req.orgId),
     });
+});
+
+const integrationInput = z.object({
+    enabled: z.boolean(),
+    tenantId: z.string().trim().max(255).optional(),
+    clientId: z.string().trim().max(255).optional(),
+    domain: z.string().trim().max(255).optional(),
+    licenseSkuId: z.string().trim().max(255).optional(),
+    crewId: z.string().trim().max(64).optional(),
+    clientSecret: z.string().max(2000).optional(),
+    token: z.string().max(8000).optional(),
+});
+
+export const getIntegrations = catchErrors(async (req, res) => {
+    appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
+    return res.status(200).json({
+        success: true,
+        data: await listOrganizationIntegrations(req.orgId),
+    });
+});
+
+export const putIntegration = catchErrors(async (req, res) => {
+    appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
+    const provider = z
+        .enum(["microsoft_graph", "crewmeister"])
+        .parse(req.params.provider);
+    const body = integrationInput.parse(req.body);
+    return res.status(200).json({
+        success: true,
+        data: await saveOrganizationIntegration({
+            organizationId: req.orgId,
+            provider,
+            ...body,
+        }),
+    });
+});
+
+export const postIssueSequence = catchErrors(async (req, res) => {
+    appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
+    appAssert(req.userId, BAD_REQUEST, "Benutzer fehlt.");
+    const result = await runIssueSequence({
+        organizationId: req.orgId,
+        issueId: String(req.params.issueId),
+        actorUserId: req.userId,
+    });
+    appAssert(
+        result.status === "completed",
+        BAD_REQUEST,
+        result.status === "failed"
+            ? result.message
+            : "Sequenz fehlgeschlagen.",
+    );
+    return res.status(200).json({ success: true, data: result });
 });
 
 export const getWelcomeMail = catchErrors(async (req, res) => {

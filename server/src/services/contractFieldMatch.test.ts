@@ -110,3 +110,75 @@ describe("acceptModelMatches", () => {
         ).toEqual([{ key: "contract.iban", value: "DE89" }]);
     });
 });
+
+describe("questionnaire answer reuse", () => {
+    it("keeps explicitly linked name parts available for a combined name field", () => {
+        const answers = {
+            firstName: "Lukas",
+            lastName: "Muster",
+            street: "",
+            postalCode: "",
+            city: "",
+        } as QuestionnaireAnswers;
+        expect(
+            deterministicContractValues(
+                [
+                    {
+                        type: "input",
+                        key: "contract.vorname",
+                        label: "Vorname",
+                    },
+                    { type: "input", key: "contract.name", label: "Name" },
+                ],
+                answers,
+                "",
+                [
+                    {
+                        key: "firstName",
+                        label: "Vorname",
+                        contractFieldKey: "contract.vorname",
+                    },
+                ],
+            ),
+        ).toEqual([
+            { key: "contract.vorname", value: "Lukas" },
+            { key: "contract.name", value: "Lukas Muster" },
+        ]);
+    });
+    it("keeps historical custom answers visible even when their label is unavailable", () => {
+        expect(
+            unmatchedQuestionnaireAnswers([], {}, [
+                { key: "custom.old-field", value: "Antwort" },
+            ]),
+        ).toEqual([
+            {
+                key: "custom.old-field",
+                label: "custom.old-field",
+                value: "Antwort",
+            },
+        ]);
+    });
+    it("excludes file answers from draggable contract text", () => {
+        expect(
+            unmatchedQuestionnaireAnswers(
+                [],
+                {},
+                [{ key: "custom.upload", value: "stored-file" }],
+                [{ key: "custom.upload", label: "Datei", type: "file" }],
+            ),
+        ).toEqual([]);
+    });
+});
+
+it("matches a custom-only questionnaire without requiring removed personal-data fields", () => {
+    expect(
+        deterministicContractValues(
+            [{ type: "input", key: "contract.schicht", label: "Schicht" }],
+            {
+                "custom.shift-choice": "Früh",
+            } as unknown as QuestionnaireAnswers,
+            "",
+            [{ key: "custom.shift-choice", label: "Schicht" }],
+        ),
+    ).toEqual([{ key: "contract.schicht", value: "Früh" }]);
+});

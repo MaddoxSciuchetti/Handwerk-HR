@@ -19,6 +19,18 @@ jest.mock("@/services/microsoft365Account", () => ({
     microsoftGraphToken: jest.fn(),
 }));
 
+jest.mock("@/services/integrations/runtime", () => ({
+    integrationsLive: () => true,
+    loadMicrosoft365Config: jest.fn(async () => ({
+        tenantId: "tenant",
+        clientId: "client",
+        clientSecret: "secret",
+        domain: "firma.de",
+        licenseSkuId: "sku",
+    })),
+    NOT_LIVE_MESSAGE: "Sequenzen werden in dieser Umgebung nicht ausgeführt.",
+}));
+
 const findWorker = prisma.worker.findFirst as jest.Mock;
 const findSettings = prisma.welcomeMailSettings.findUnique as jest.Mock;
 const transaction = prisma.$transaction as jest.Mock;

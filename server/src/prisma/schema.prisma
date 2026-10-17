@@ -119,6 +119,7 @@ model Organization {
   departureMailSettings     DepartureMailSettings?
   automationDocumentSettings AutomationDocumentSetting[]
   clothingStock              ClothingStockItem[]
+  integrations               OrganizationIntegration[]
 
 
   @@map("organizations")
@@ -168,6 +169,7 @@ model WorkerEngagement {
   materialDocuments        EngagementMaterialDocument[]
   personnelDocuments       EngagementPersonnelDocument[]
   personnelFolders         EngagementPersonnelFolder[]
+  templateDocuments        EngagementTemplateDocument[]
   mailForwarding           MailForwarding?
   clothing                 EngagementClothing[]
 
@@ -279,6 +281,8 @@ model TemplateItem {
   defaultPriority         IssuePriority?     @map("default_priority")
   defaultStatus           IssueStatus        @default(open) @map("default_status")
   defaultAssigneeUserId   String?            @map("default_assignee_user_id")
+  integrationProvider     IntegrationProvider? @map("integration_provider")
+  sequence                IntegrationSequence? @map("sequence")
   orderIndex              Int                @default(0) @map("order_index")
   createdAt               DateTime           @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt               DateTime           @updatedAt @map("updated_at") @db.Timestamptz()
@@ -302,6 +306,8 @@ model Issue {
   status             IssueStatus        @default(open)
   kind               IssueKind          @default(standard)
   automation         String?            @db.VarChar(64)
+  integrationProvider IntegrationProvider? @map("integration_provider")
+  sequence           IntegrationSequence? @map("sequence")
   isTemporary        Boolean            @default(false) @map("is_temporary")
   assigneeOnly       Boolean            @default(false) @map("assignee_only")
   title              String             @db.VarChar(400)
@@ -458,6 +464,7 @@ model DocumentMaster {
   organization               Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   employmentContracts        EmploymentContract[]
   arbeitszeugnisse           Arbeitszeugnis[]
+  templateDocuments          EngagementTemplateDocument[]
   automationDocumentSettings AutomationDocumentSetting[]
 
   @@index([organizationId])
@@ -504,6 +511,37 @@ model EmploymentContractValue {
 
   @@unique([employmentContractId, key])
   @@map("employment_contract_values")
+}
+
+model EngagementTemplateDocument {
+  id                    String   @id @default(uuid())
+  engagementId          String   @map("engagement_id")
+  masterId              String   @map("master_id")
+  matchedMasterRevision Int?     @map("matched_master_revision")
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  engagement WorkerEngagement                 @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+  master     DocumentMaster                   @relation(fields: [masterId], references: [id], onDelete: Restrict)
+  values     EngagementTemplateDocumentValue[]
+
+  @@unique([engagementId, masterId])
+  @@index([masterId])
+  @@map("engagement_template_documents")
+}
+
+model EngagementTemplateDocumentValue {
+  id         String   @id @default(uuid())
+  documentId String   @map("document_id")
+  key        String   @db.VarChar(120)
+  value      String   @db.VarChar(8000)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  document EngagementTemplateDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, key])
+  @@map("engagement_template_document_values")
 }
 
 model Arbeitszeugnis {
@@ -787,6 +825,28 @@ model DepartureMailSettings {
   @@map("departure_mail_settings")
 }
 
+model OrganizationIntegration {
+  id                     String              @id @default(uuid())
+  organizationId         String              @map("organization_id")
+  provider               IntegrationProvider
+  enabled                Boolean             @default(false)
+  tenantId               String?             @map("tenant_id") @db.VarChar(255)
+  clientId               String?             @map("client_id") @db.VarChar(255)
+  domain                 String?             @db.VarChar(255)
+  licenseSkuId           String?             @map("license_sku_id") @db.VarChar(255)
+  crewId                 String?             @map("crew_id") @db.VarChar(64)
+  clientSecretCiphertext String?             @map("client_secret_ciphertext") @db.Text
+  tokenCiphertext        String?             @map("token_ciphertext") @db.Text
+  createdAt              DateTime            @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt              DateTime            @updatedAt @map("updated_at") @db.Timestamptz()
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, provider])
+  @@index([organizationId])
+  @@map("organization_integrations")
+}
+
 model WorkerExternalAccount {
   id         String                  @id @default(uuid())
   workerId   String                  @map("worker_id")
@@ -925,6 +985,19 @@ enum EmploymentContractStatus {
 enum QuestionnaireSubmissionStatus {
   sent
   completed
+}
+
+enum IntegrationProvider {
+  microsoft_graph
+  crewmeister
+}
+
+enum IntegrationSequence {
+  microsoft_create_account
+  microsoft_send_onboarding_email
+  microsoft_send_offboarding_email
+  microsoft_deactivate_account
+  crewmeister_create_account
 }
 
 enum ExternalAccountProvider {

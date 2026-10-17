@@ -1,5 +1,5 @@
 import LoadingAlert from '@/components/alerts/LoadingAlert';
-import ModalOverlay from '@/components/modal/ModalOverlay';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import type { DocumentSegment } from '@/features/settings/documents/documentSegments';
 import { FETCHDESCRIPTION } from '@/features/all-tasks/consts/query.consts';
@@ -13,6 +13,7 @@ import {
   fetchPreparedEmploymentContractPdf,
   prepareEmploymentContractPdf,
   recordPrintedEmploymentContract,
+  selectEngagementContractTemplate,
 } from '../../api/employmentContract.api';
 import { printPdfBlob } from '../../printPdf';
 import { PreparedPdfPreview, type PreparedPdf } from './PreparedPdfPreview';
@@ -29,6 +30,7 @@ import {
   useResyncEmploymentContract,
   useSaveEmploymentContract,
 } from '../../hooks/useEmploymentContract';
+import { useDocumentMasters } from '@/features/settings/documents/useDocumentMasters';
 import { ContractDraftBody } from './ContractDraftBody';
 import {
   documentPreviewModalPanel,
@@ -47,7 +49,29 @@ function visibleUnmatchedAnswers(
     const value = (values[segment.key] ?? '').trim();
     if (value) placed.add(value);
   }
-  return answers.filter((answer) => !placed.has(answer.value.trim()));
+  const byKey = new Map(
+    answers.map((answer) => [answer.key, answer.value.trim()])
+  );
+  const consumed = new Set<string>();
+  const consumeCombined = (keys: string[], separator: string) => {
+    const combined = keys
+      .map((key) => byKey.get(key))
+      .filter(Boolean)
+      .join(separator);
+    if (combined && placed.has(combined))
+      keys.forEach((key) => consumed.add(key));
+  };
+  consumeCombined(['firstName', 'lastName'], ' ');
+  const locality = ['postalCode', 'city']
+    .map((key) => byKey.get(key))
+    .filter(Boolean)
+    .join(' ');
+  const address = [byKey.get('street'), locality].filter(Boolean).join(', ');
+  if (address && placed.has(address))
+    ['street', 'postalCode', 'city'].forEach((key) => consumed.add(key));
+  return answers.filter(
+    (answer) => !consumed.has(answer.key) && !placed.has(answer.value.trim())
+  );
 }
 
 type ContractSendDialogProps = {
@@ -69,6 +93,10 @@ export function ContractSendDialog({
     workerId,
     engagementId
   );
+  const templates = useDocumentMasters(
+    Boolean(data && !data.sentAt && data.status !== 'signed')
+  );
+  const [selectedMasterId, setSelectedMasterId] = useState('');
   const [values, setValues] = useState<Record<string, string>>({});
   const [prepared, setPrepared] = useState<PreparedPdf | null>(null);
   const [approved, setApproved] = useState(false);
@@ -76,14 +104,15 @@ export function ContractSendDialog({
   const saveDraft = useSaveEmploymentContract(workerId, engagementId);
   const resync = useResyncEmploymentContract(workerId, engagementId);
 
-  const initialized = useRef(false);
+  const edited = useRef(false);
   useEffect(() => {
-    if (!data || initialized.current) return;
-    initialized.current = true;
-    // Hydrate once; later query refreshes must not overwrite local corrections.
+    if (!data || edited.current) return;
+    // Cached data can predate questionnaire completion. Accept fresh server
+    // values until the user starts editing; then preserve local corrections.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setValues(data.values);
     setPrepared(data.prepared ?? null);
+    setApproved(false);
   }, [data]);
 
   const printContract = useMutation({
@@ -149,18 +178,58 @@ export function ContractSendDialog({
           'PDF konnte nicht erstellt werden'
       ),
   });
+  const switchTemplate = useMutation({
+    mutationFn: (masterId: string) =>
+      selectEngagementContractTemplate(workerId, engagementId, masterId),
+    onSuccess: (saved) => {
+      edited.current = false;
+      setValues(saved.values);
+      setPrepared(null);
+      setApproved(false);
+      setConfirmResync(false);
+      setSelectedMasterId('');
+      queryClient.setQueryData(
+        employmentContractKey(workerId, engagementId),
+        saved
+      );
+      void queryClient.invalidateQueries({ queryKey: [WORKERBYID] });
+      void queryClient.invalidateQueries({ queryKey: [ALL_WORKER_DATA] });
+      toast.success(
+        'Vertragsvorlage gewechselt und mit dem Fragebogen ausgefüllt.'
+      );
+    },
+    onError: (error) =>
+      toast.error(
+        (error as { message?: string }).message ??
+          'Vertragsvorlage konnte nicht gewechselt werden.'
+      ),
+  });
+  const changingTemplate = switchTemplate.isPending;
+  const pendingTemplateSelection = Boolean(
+    selectedMasterId && selectedMasterId !== data?.masterId
+  );
+  const templateChoices = (templates.data ?? []).filter(
+    (template) => template.kind === 'employment_contract'
+  );
+  const busy =
+    changingTemplate ||
+    printContract.isPending ||
+    prepare.isPending ||
+    resync.isPending ||
+    saveDraft.isPending;
   const blockedDelivery = ['sending', 'uncertain'].includes(
     prepared?.status ?? ''
   );
   const needsResync = Boolean(
     data?.followsMaster &&
-      data.questionnaireCompleted &&
-      !readOnly &&
-      data.masterRevision !== data.matchedMasterRevision
+    data.questionnaireCompleted &&
+    !readOnly &&
+    data.masterRevision !== data.matchedMasterRevision
   );
 
   const close = async () => {
-    if (printContract.isPending || prepare.isPending || resync.isPending) return;
+    if (printContract.isPending || prepare.isPending || resync.isPending)
+      return;
     if (
       !readOnly &&
       data &&
@@ -178,7 +247,7 @@ export function ContractSendDialog({
   const unmatched =
     data && !alreadySent && !readOnly
       ? visibleUnmatchedAnswers(
-          data.unmatchedAnswers ?? [],
+          data.questionnaireAnswers ?? data.unmatchedAnswers ?? [],
           data.segments,
           values
         )
@@ -207,7 +276,7 @@ export function ContractSendDialog({
   };
 
   const openMaster = () => {
-    if (!data || readOnly || saveDraft.isPending) return;
+    if (!data || readOnly || busy) return;
     saveDraft.mutate(values, {
       onSuccess: leaveForMaster,
       onError: () =>
@@ -216,11 +285,8 @@ export function ContractSendDialog({
   };
 
   return (
-    <ModalOverlay
-      handleToggle={() => void close()}
-      className="p-3 sm:p-6"
-      size={documentPreviewModalSize}
-    >
+    <Dialog open onOpenChange={(next) => { if (!next) void close(); }}>
+      <DialogContent className={`w-full border-0 bg-transparent p-0 shadow-none sm:max-w-[min(96vw,90rem)] ${documentPreviewModalSize}`}>
       <div className={documentPreviewModalPanel}>
         {isLoading ? <LoadingAlert className="min-h-40" /> : null}
         {isError || (!isLoading && !data) ? (
@@ -237,6 +303,67 @@ export function ContractSendDialog({
                   ? 'Der Vertrag wurde gedruckt.'
                   : 'Prüfen Sie den ausgefüllten Vertrag und drucken Sie ihn zur Unterschrift im Büro.'}
               </p>
+              {!readOnly && data.questionnaireCompleted ? (
+                <div className="mt-3 flex flex-col gap-2">
+                  <label
+                    htmlFor="contract-template"
+                    className="text-sm font-medium"
+                  >
+                    Vertragsvorlage
+                  </label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <select
+                      id="contract-template"
+                      className="h-9 min-w-60 rounded-md border border-input bg-background px-3 text-sm"
+                      value={selectedMasterId || data.masterId}
+                      disabled={
+                        busy ||
+                        blockedDelivery ||
+                        templates.isPending ||
+                        templates.isError
+                      }
+                      onChange={(event) =>
+                        setSelectedMasterId(event.target.value)
+                      }
+                    >
+                      {!templateChoices.some(
+                        (template) => template.id === data.masterId
+                      ) ? (
+                        <option value={data.masterId}>{data.name}</option>
+                      ) : null}
+                      {templateChoices.map((template) => (
+                        <option key={template.id} value={template.id}>
+                          {template.name}
+                        </option>
+                      ))}
+                    </select>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={
+                        busy ||
+                        blockedDelivery ||
+                        !selectedMasterId ||
+                        selectedMasterId === data.masterId
+                      }
+                      onClick={() => switchTemplate.mutate(selectedMasterId)}
+                    >
+                      {changingTemplate
+                        ? 'Wird neu ausgefüllt…'
+                        : 'Vorlage wechseln und neu ausfüllen'}
+                    </Button>
+                  </div>
+                  {templates.isError ? (
+                    <p className="text-sm text-destructive">
+                      Vertragsvorlagen konnten nicht geladen werden.
+                    </p>
+                  ) : null}
+                  <p className="text-xs text-muted-foreground">
+                    Die Antworten werden der neuen Vorlage zugeordnet. Manuelle
+                    Eingaben und das bisherige PDF werden ersetzt.
+                  </p>
+                </div>
+              ) : null}
               {needsResync ? (
                 <div className="mt-3 flex flex-col gap-2">
                   {confirmResync ? (
@@ -252,17 +379,18 @@ export function ContractSendDialog({
                         <Button
                           type="button"
                           variant="outline"
-                          disabled={resync.isPending}
+                          disabled={busy}
                           onClick={() => setConfirmResync(false)}
                         >
                           Abbrechen
                         </Button>
                         <Button
                           type="button"
-                          disabled={resync.isPending}
+                          disabled={busy}
                           onClick={() =>
                             resync.mutate(undefined, {
                               onSuccess: (saved) => {
+                                edited.current = false;
                                 setValues(saved.values);
                                 setPrepared(null);
                                 setApproved(false);
@@ -279,7 +407,9 @@ export function ContractSendDialog({
                             })
                           }
                         >
-                          {resync.isPending ? 'Wird abgeglichen…' : 'Werte ersetzen'}
+                          {resync.isPending
+                            ? 'Wird abgeglichen…'
+                            : 'Werte ersetzen'}
                         </Button>
                       </>
                     ) : (
@@ -333,12 +463,14 @@ export function ContractSendDialog({
                   values={values}
                   readOnly={
                     readOnly ||
+                    changingTemplate ||
                     prepare.isPending ||
                     printContract.isPending ||
                     resync.isPending
                   }
                   acceptAnswerDrop={unmatched.length > 0}
                   onValueChange={(key, value) => {
+                    edited.current = true;
                     setPrepared(null);
                     setApproved(false);
                     setValues((current) => ({ ...current, [key]: value }));
@@ -352,7 +484,7 @@ export function ContractSendDialog({
                   <Button
                     type="button"
                     variant="outline"
-                    disabled={printContract.isPending || blockedDelivery}
+                    disabled={busy || blockedDelivery}
                     onClick={() => {
                       setPrepared(null);
                       setApproved(false);
@@ -367,6 +499,7 @@ export function ContractSendDialog({
                       variant="outline"
                       disabled={
                         readOnly ||
+                        changingTemplate ||
                         saveDraft.isPending ||
                         prepare.isPending ||
                         resync.isPending
@@ -384,13 +517,11 @@ export function ContractSendDialog({
                         })
                       }
                     >
-                      {saveDraft.isPending
-                        ? 'Speichert…'
-                        : 'Entwurf speichern'}
+                      {saveDraft.isPending ? 'Speichert…' : 'Entwurf speichern'}
                     </Button>
                     <Button
                       type="button"
-                      disabled={!complete || prepare.isPending}
+                      disabled={!complete || busy || pendingTemplateSelection}
                       onClick={() => prepare.mutate()}
                     >
                       {prepare.isPending
@@ -405,7 +536,8 @@ export function ContractSendDialog({
                   disabled={
                     !prepared ||
                     !approved ||
-                    printContract.isPending ||
+                    busy ||
+                    pendingTemplateSelection ||
                     blockedDelivery
                   }
                   onClick={() => printContract.mutate()}
@@ -417,6 +549,7 @@ export function ContractSendDialog({
           </>
         ) : null}
       </div>
-    </ModalOverlay>
+      </DialogContent>
+    </Dialog>
   );
 }

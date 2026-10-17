@@ -13,6 +13,9 @@ const getEnv = (key: string, defaultValue?: string): string => {
 export const PORT = getEnv("PORT", "3000");
 export const FRONTENDURL = getEnv("FRONTEND_URL");
 export const NODE_ENV = getEnv("NODE_ENV", "development");
+// Explicit opt-in for development/staging questionnaire responses.
+export const QUESTIONNAIRE_MOCK_RESPONSES =
+    process.env.QUESTIONNAIRE_MOCK_RESPONSES?.trim().toLowerCase() === "true";
 export const APP_ORIGIN = getEnv("APP_ORIGIN");
 export const JWT_SECRET = getEnv("JWT_SECRET");
 export const JWT_REFRESH_SECRET = getEnv("JWT_REFRESH_SECRET");

@@ -1,5 +1,12 @@
+import { BAD_REQUEST } from "@/constants/http";
 import { prisma } from "@/lib/prisma";
-import type { IssueStatus } from "@prisma/client";
+import { sequenceMatchesProvider } from "@/services/integrations/catalog";
+import AppError from "@/utils/AppError";
+import type {
+    IntegrationProvider,
+    IntegrationSequence,
+    IssueStatus,
+} from "@prisma/client";
 
 
 export type InsertTemplateParams = {
@@ -17,6 +24,8 @@ export type InsertTemplateTaskParams = {
     defaultStatus?: IssueStatus;
     defaultAssigneeUserId?: string;
     orderIndex?: number;
+    integrationProvider?: IntegrationProvider | null;
+    sequence?: IntegrationSequence | null;
 };
 
 export type ModifyTemplateTaskParams = {
@@ -25,7 +34,51 @@ export type ModifyTemplateTaskParams = {
     defaultStatus?: IssueStatus;
     defaultAssigneeUserId?: string;
     orderIndex?: number;
+    integrationProvider?: IntegrationProvider | null;
+    sequence?: IntegrationSequence | null;
 };
+
+const taskSelect = {
+    id: true,
+    title: true,
+    description: true,
+    defaultStatus: true,
+    defaultAssigneeUserId: true,
+    orderIndex: true,
+    integrationProvider: true,
+    sequence: true,
+    createdAt: true,
+    updatedAt: true,
+} as const;
+
+async function assertSequence(params: {
+    organizationId: string;
+    integrationProvider: IntegrationProvider | null;
+    sequence: IntegrationSequence | null;
+}) {
+    if (!sequenceMatchesProvider(params.integrationProvider, params.sequence)) {
+        throw new AppError(
+            BAD_REQUEST,
+            "Die Sequenz gehört nicht zu dieser Integration.",
+        );
+    }
+    if (!params.integrationProvider) return;
+    const integration = await prisma.organizationIntegration.findUnique({
+        where: {
+            organizationId_provider: {
+                organizationId: params.organizationId,
+                provider: params.integrationProvider,
+            },
+        },
+        select: { enabled: true },
+    });
+    if (!integration?.enabled) {
+        throw new AppError(
+            BAD_REQUEST,
+            "Diese Integration ist nicht aktiv.",
+        );
+    }
+}
 
 
 export const insertTemplate = async (data: InsertTemplateParams) => {
@@ -157,6 +210,14 @@ export const insertTemplateTask = async (
     });
     if (!template) throw new Error("Template not found");
 
+    const integrationProvider = data.integrationProvider ?? null;
+    const sequence = data.sequence ?? null;
+    await assertSequence({
+        organizationId: data.organizationId,
+        integrationProvider,
+        sequence,
+    });
+
     return await prisma.templateItem.create({
         data: {
             issueTemplateId: data.templateId,
@@ -165,17 +226,10 @@ export const insertTemplateTask = async (
             defaultStatus: data.defaultStatus,
             defaultAssigneeUserId: data.defaultAssigneeUserId,
             orderIndex: data.orderIndex ?? 0,
+            integrationProvider,
+            sequence,
         },
-        select: {
-            id: true,
-            title: true,
-            description: true,
-            defaultStatus: true,
-            defaultAssigneeUserId: true,
-            orderIndex: true,
-            createdAt: true,
-            updatedAt: true,
-        },
+        select: taskSelect,
     });
 };
 
@@ -193,24 +247,23 @@ export const queryTemplateTasks = async (templateId: string, orgId: string) => {
     const tasks = await prisma.templateItem.findMany({
         where: { issueTemplateId: templateId },
         orderBy: { orderIndex: "asc" },
-        select: {
-            id: true,
-            title: true,
-            description: true,
-            defaultStatus: true,
-            defaultAssigneeUserId: true,
-            orderIndex: true,
-            createdAt: true,
-            updatedAt: true,
-        },
+        select: taskSelect,
     });
     return { tasks };
 };
 
 export const modifyTemplateTask = async (
     id: string,
+    organizationId: string,
     data: ModifyTemplateTaskParams,
 ) => {
+    const integrationProvider = data.integrationProvider ?? null;
+    const sequence = data.sequence ?? null;
+    await assertSequence({
+        organizationId,
+        integrationProvider,
+        sequence,
+    });
     return await prisma.templateItem.update({
         where: { id },
         data: {
@@ -219,17 +272,10 @@ export const modifyTemplateTask = async (
             defaultStatus: data.defaultStatus,
             defaultAssigneeUserId: data.defaultAssigneeUserId,
             orderIndex: data.orderIndex,
+            integrationProvider,
+            sequence,
         },
-        select: {
-            id: true,
-            title: true,
-            description: true,
-            defaultStatus: true,
-            defaultAssigneeUserId: true,
-            orderIndex: true,
-            createdAt: true,
-            updatedAt: true,
-        },
+        select: taskSelect,
     });
 };
 

@@ -1,4 +1,4 @@
-import SmallWrapper from '@/components/modal/modalSizes/SmallWrapper';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import TaskForm from '@/features/template-tasks/components/shared/TaskForm';
 import { addSchema } from '@/features/template-tasks/schemas/taskForm.schema';
 import { HandleAddSubmit } from '@/features/template-tasks/types/taskForm.types';
@@ -36,7 +36,8 @@ const AddWorkerTaskModal = ({ workerId, onClose }: AddWorkerTaskModalProps) => {
   };
 
   return (
-    <SmallWrapper className="min-h-60 max-h-60">
+    <Dialog open onOpenChange={(next) => { if (!next) onClose(); }}>
+    <DialogContent className="min-h-60 max-h-60 overflow-y-auto">
       <TaskForm
         templateHeaderAdjective="hinzufügen"
         buttonsaveText="New hinzufügen"
@@ -47,7 +48,8 @@ const AddWorkerTaskModal = ({ workerId, onClose }: AddWorkerTaskModalProps) => {
         descriptionFormName="description"
         templateTypeName="template_type"
       />
-    </SmallWrapper>
+    </DialogContent>
+    </Dialog>
   );
 };
 

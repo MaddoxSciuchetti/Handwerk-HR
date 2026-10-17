@@ -1,6 +1,6 @@
 import { LAYOUTITEMS } from '@/constants/layout.consts';
 import { MessageSquareIcon } from 'lucide-react';
-import { ProfileDropdown } from '../selfmade/profiledropdown';
+import { ProfileDropdown } from './ProfileDropdown';
 import {
   Sidebar,
   SidebarContent,

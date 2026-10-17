@@ -1,6 +1,5 @@
 import ErrorAlert from '@/components/alerts/ErrorAlert';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
-import MediumWrapper from '@/components/modal/modalSizes/MediumWrapper';
 import { employeeInfos } from '@/features/employee-overview/consts/employee-info.consts';
 import useEmployeeInfo from '@/features/employee-overview/hooks/useEmployeeInfo';
 import { EmployeeInfoItem } from '@/features/employee-overview/types/index.types';
@@ -14,7 +13,7 @@ const EmployeeInfoModal = ({ employeeId }: { employeeId: string }) => {
   if (isError) return <ErrorAlert />;
 
   return (
-    <MediumWrapper width="w-full max-w-2xl" height="h-auto min-h-80">
+    <>
       <div className="flex w-full flex-col p-8 text-left">
         <h2 className="mb-6 text-sm font-semibold tracking-tight text-foreground">
           Mitarbeiter Informationen
@@ -45,7 +44,7 @@ const EmployeeInfoModal = ({ employeeId }: { employeeId: string }) => {
           </div>
         )}
       </div>
-    </MediumWrapper>
+    </>
   );
 };
 

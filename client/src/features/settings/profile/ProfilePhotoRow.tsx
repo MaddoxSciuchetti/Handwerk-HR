@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { GrowingItem, Items } from '@/features/settings/components/Table';
 import { AvatarCropModal } from '@/features/sidebar/profile-upload-modal/AvatarCropModal';
@@ -27,9 +28,10 @@ export function ProfilePhotoRow({
           <p className="typo-body-sm">Profil Foto</p>
         </GrowingItem>
         <div className="w-72">
-          <button
+          <Button
             type="button"
-            className="group relative h-16 w-16 overflow-hidden rounded-full border border-border"
+            variant="ghost"
+            className="group relative h-16 w-16 overflow-hidden rounded-full border border-border p-0 hover:bg-muted"
             disabled={isUploading}
             aria-label="Profilfoto ändern"
             onClick={() => fileInputRef.current?.click()}
@@ -49,7 +51,7 @@ export function ProfilePhotoRow({
             <span className="absolute inset-0 flex items-center justify-center bg-black/35 opacity-0 transition-opacity group-hover:opacity-100">
               <Camera className="h-4 w-4 text-white" aria-hidden />
             </span>
-          </button>
+          </Button>
           <Input
             ref={fileInputRef}
             type="file"

@@ -1,3 +1,4 @@
+import { LINE_LABEL_LINE_HEIGHT } from '../../../../../../shared/documentRendering';
 import {
   DEFAULT_FONT_PT,
   LAYOUT_MAX_PT,
@@ -76,7 +77,7 @@ export function labelStyle(attrs: Record<string, unknown>) {
   return (
     'position:absolute;white-space:pre;outline:none;caret-color:currentColor;' +
     `cursor:text;left:${left}pt;top:${top}pt;font-family:${labelFontFamily(attrs.fontFamily)};` +
-    `font-size:${fontSize}pt;color:${hexColor(attrs.color)};` +
+    `font-size:${fontSize}pt;line-height:${LINE_LABEL_LINE_HEIGHT};color:${hexColor(attrs.color)};` +
     centered +
     bold +
     italic +

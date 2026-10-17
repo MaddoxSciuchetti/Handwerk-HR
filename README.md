@@ -54,6 +54,28 @@ STRIPE_WEBHOOK_SECRET=<Stripe webhook signing secret, or whsec_ placeholder for 
 
 If any of these are unset at runtime, the server throws a generic `Missing environment variable` error (the key name is not repeated in the message).
 
+### Simulated questionnaire replies
+
+Set `QUESTIONNAIRE_MOCK_RESPONSES=true` in `server/.env` (or your staging API's
+runtime environment), then restart the API. The default is off.
+
+Create onboarding with an email, then click **Senden** in the questionnaire dialog.
+The dialog shows **Testmodus**. No questionnaire email is sent: sample answers are
+submitted immediately through the normal validation/completion handler. This
+updates worker information, fills matching contract fields and creates the normal
+contract print task. Continue reviewing and preparing the contract as usual.
+
+The mock uses the actual sent form, respects prefilled values and supports custom
+questions. Names are derived from the email; address, birthday and other values
+are synthetic. Required file questions receive a generated test PDF through the
+normal upload path, so they require the usual working storage configuration.
+Contract templates and PDF preparation still use their usual configuration.
+
+Set the flag to `false` or remove it and restart the API to restore real email
+delivery. Test records remain ordinary saved onboarding records. This server-wide
+flag affects all questionnaire sends in that API environment; leave it off in
+production.
+
 Optional in `client/.env` if the API isn't on `localhost:3000`:
 
 ```

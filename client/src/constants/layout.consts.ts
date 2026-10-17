@@ -4,6 +4,7 @@ import {
   FileText,
   Inbox,
   Mail,
+  Plug,
   ScrollText,
   Shirt,
   Ticket,
@@ -55,6 +56,11 @@ export const SETTINGSITEMS = [
     title: 'Fragebogen',
     to: '/settings/questionnaire',
     icon: ClipboardList,
+  },
+  {
+    title: 'Integrationen',
+    to: '/settings/integrations',
+    icon: Plug,
   },
   {
     title: 'Automatisierung',

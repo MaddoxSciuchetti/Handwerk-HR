@@ -1,5 +1,10 @@
 import FormFields from '@/components/form/FormFields';
 import FormSelectOptions from '@/components/form/FormSelectOptions';
+import {
+  INTEGRATION_NONE,
+  INTEGRATION_SEQUENCES,
+} from '@/features/settings/integrations/integration.consts';
+import { getIntegrations } from '@/features/settings/integrations/integrations.api';
 import { TaskStatusSelect } from '@/features/all-tasks/components/ui/TaskStatusSelect';
 import { employeeQueries } from '@/features/employee-overview/query-options/queries/employee.queries';
 import { EMPTY_TEMPLATE_TASK } from '@/features/template-tasks/schemas/templateTaskForm.schema';
@@ -7,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
+import { useWatch } from 'react-hook-form';
 import { Check, X } from 'lucide-react';
 import { useMemo } from 'react';
 import { useSubmitTasks } from '../../hooks/useSubmitTasks';
@@ -38,6 +44,30 @@ export function TaskSidebar({
     editTemplateTask
   );
   const { data: employees = [] } = useQuery(employeeQueries.getEmployees());
+  const { data: integrations = [] } = useQuery({
+    queryKey: ['settings', 'integrations'],
+    queryFn: getIntegrations,
+  });
+  const integrationProvider = useWatch({ control, name: 'integrationProvider' });
+  const integrationOptions = [
+    { value: INTEGRATION_NONE, label: 'Keine' },
+    ...integrations
+      .filter((integration) => integration.enabled)
+      .map((integration) => ({
+        value: integration.provider,
+        label:
+          integration.provider === 'microsoft_graph' ? 'Microsoft' : 'Crewmeister',
+      })),
+  ];
+  const sequenceOptions = [
+    { value: INTEGRATION_NONE, label: 'Keine' },
+    ...INTEGRATION_SEQUENCES.filter(
+      (sequence) => sequence.provider === integrationProvider
+    ).map((sequence) => ({
+      value: sequence.value,
+      label: sequence.label,
+    })),
+  ];
 
   const assigneeOptions = useMemo(
     () =>
@@ -98,6 +128,24 @@ export function TaskSidebar({
               label="Verantwortlich"
               labelClassName="typo-body-base"
               placeholder="Verantwortlichen wählen"
+            />
+            <FormSelectOptions
+              errors={errors}
+              control={control}
+              data={integrationOptions}
+              name="integrationProvider"
+              label="Integration"
+              labelClassName="typo-body-base"
+              placeholder="Integration wählen"
+            />
+            <FormSelectOptions
+              errors={errors}
+              control={control}
+              data={sequenceOptions}
+              name="sequence"
+              label="Sequenz"
+              labelClassName="typo-body-base"
+              placeholder="Sequenz wählen"
             />
           </SidebarContent>
           <SidebarFooter className="p-6">

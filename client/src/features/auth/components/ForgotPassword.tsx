@@ -68,19 +68,23 @@ const ForgotPassword = () => {
 
         <p className="text-sm text-muted-foreground">
           Go back to{' '}
-          <button
+          <Button
+            type="button"
+            variant="link"
             onClick={() => navigate({ to: '/login' })}
-            className="text-foreground underline hover:text-accent-foreground"
+            className="h-auto p-0 text-foreground underline hover:bg-transparent hover:text-accent-foreground"
           >
             Sign in
-          </button>
+          </Button>
           &nbsp;or&nbsp;
-          <button
+          <Button
+            type="button"
+            variant="link"
             onClick={() => navigate({ to: '/signup' })}
-            className="text-foreground underline hover:text-accent-foreground"
+            className="h-auto p-0 text-foreground underline hover:bg-transparent hover:text-accent-foreground"
           >
             Sign up
-          </button>
+          </Button>
         </p>
       </div>
     </DoorManWrapper>

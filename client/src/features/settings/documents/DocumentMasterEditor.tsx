@@ -1,5 +1,6 @@
 import { DocumentPrintPreview } from './DocumentPrintPreview';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SettingsPageHeader } from '@/features/settings/components/SettingsPageHeader';
@@ -148,15 +149,16 @@ export function DocumentMasterEditor({
         title={DOCUMENT_MASTER_KIND_LABELS[data.kind]}
         action={
           returnContract ? (
-            <button
+            <Button
               type="button"
-              className="text-sm underline"
+              variant="link"
+              className="h-auto p-0 text-sm text-foreground underline hover:bg-transparent hover:text-foreground"
               onClick={returnToContract}
             >
               {returnKind === 'arbeitszeugnis'
                 ? 'Zurück zum Arbeitszeugnis'
                 : 'Zurück zum Vertrag'}
-            </button>
+            </Button>
           ) : (
             <Link to="/settings/documents" className="text-sm underline">
               Zurück

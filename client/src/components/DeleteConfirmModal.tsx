@@ -1,6 +1,5 @@
-import ModalOverlay from '@/components/modal/ModalOverlay';
-import SmallWrapper from '@/components/modal/modalSizes/SmallWrapper';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 type DeleteConfirmModalProps = {
   isOpen: boolean;
@@ -18,8 +17,8 @@ function DeleteConfirmModal({
   }
 
   return (
-    <ModalOverlay handleToggle={onCancel}>
-      <SmallWrapper className="h-auto min-h-0 max-h-none w-full max-w-sm p-5">
+    <Dialog open onOpenChange={(next) => { if (!next) onCancel(); }}>
+      <DialogContent className="h-auto max-w-sm p-5 sm:max-w-sm">
         <div className="flex w-full flex-col gap-4 text-left">
           <p className="text-sm font-semibold text-foreground">
             Bist du sicher?
@@ -47,8 +46,8 @@ function DeleteConfirmModal({
             </Button>
           </div>
         </div>
-      </SmallWrapper>
-    </ModalOverlay>
+      </DialogContent>
+    </Dialog>
   );
 }
 
