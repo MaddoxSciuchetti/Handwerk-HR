@@ -63,7 +63,9 @@ export function TaskChat({
   const comments = useMemo(
     () =>
       (historyData ?? [])
-        .filter((entry): entry is TaskHistoryCommentEntry => entry.kind === 'comment')
+        .filter(
+          (entry): entry is TaskHistoryCommentEntry => entry.kind === 'comment'
+        )
         .slice()
         .reverse(),
     [historyData]
@@ -184,8 +186,6 @@ export function TaskChat({
       <div className="flex min-h-24 flex-1 flex-col gap-2 overflow-y-auto">
         {isLoading ? (
           <p className="text-xs text-muted-foreground">Chat wird geladen…</p>
-        ) : comments.length === 0 ? (
-          <p className="text-xs text-muted-foreground">Noch keine Nachrichten</p>
         ) : (
           comments.map((comment) => {
             const mine = comment.user.id === currentUserId;
@@ -236,7 +236,7 @@ export function TaskChat({
           value={text}
           disabled={disabled || saveComment.isPending}
           rows={2}
-          placeholder="Nachricht… @ erwähnt einen Mitarbeiter"
+          placeholder="@ für Erwähnung"
           className="min-h-10 flex-1 resize-none rounded-none border-0 bg-transparent px-0 py-1.5 shadow-none focus-visible:border-transparent focus-visible:ring-0"
           onChange={(event) => {
             const next = event.target.value;
@@ -246,14 +246,19 @@ export function TaskChat({
           onKeyDown={onComposerKeyDown}
           onClick={(event) => {
             const target = event.currentTarget;
-            syncMenu(target.value, target.selectionStart ?? target.value.length);
+            syncMenu(
+              target.value,
+              target.selectionStart ?? target.value.length
+            );
           }}
         />
         <Button
           type="button"
           size="sm"
           className="shrink-0"
-          disabled={disabled || saveComment.isPending || text.trim().length === 0}
+          disabled={
+            disabled || saveComment.isPending || text.trim().length === 0
+          }
           onClick={() => void send()}
         >
           Senden

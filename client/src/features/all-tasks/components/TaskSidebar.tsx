@@ -39,11 +39,8 @@ export function TaskSidebar({
   taskEditState,
   onOpenArbeitszeugnis,
 }: TaskSidebarProps) {
-  const { register, control, errors, setValue, onSubmit, isTaskSaving } = useTasks(
-    taskEditState,
-    taskState,
-    setIsOpen
-  );
+  const { register, control, errors, setValue, onSubmit, isTaskSaving } =
+    useTasks(taskEditState, taskState, setIsOpen);
 
   const { data: employees = [] } = useQuery(employeeQueries.getEmployees());
   const { data: engagements = [] } = useFetchEngagements();
@@ -96,34 +93,50 @@ export function TaskSidebar({
             <X className="size-4" aria-hidden />
           </Button>
         </SidebarHeader>
-        <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <form
+          onSubmit={onSubmit}
+          className="flex min-h-0 flex-1 flex-col overflow-hidden"
+        >
           <SidebarContent className="mt-2 flex min-h-0 flex-1 flex-col overflow-y-auto p-6">
             <FieldGroup className="gap-4 pb-8">
-              <FormFields
-                errors={errors}
-                register={register}
-                name="title"
-                label="Aufgabe"
-                placeholder="Titel"
-              />
-              <FormSelectOptions
-                name="workerEngagementId"
-                control={control}
-                data={engagementOptions}
-                placeholder="Handwerker"
-                errors={errors}
-                label="Handwerker"
-              />
-              <FormSelectOptions
-                name="assigneeUserId"
-                control={control}
-                data={ownerOptions}
-                placeholder="Zuständig"
-                errors={errors}
-                label="Zuständigkeit"
-              />
-              <TaskStatusSelect control={control} errors={errors} />
-              {taskState === 'edit' && showAutomation && taskEditState.taskId ? (
+              <div className="grid grid-cols-2 items-start gap-4">
+                <FormFields
+                  errors={errors}
+                  register={register}
+                  name="title"
+                  label="Aufgabe"
+                  placeholder="Titel"
+                  className="h-8"
+                />
+                <div className="flex min-w-0 flex-col gap-2">
+                  <FormSelectOptions
+                    name="workerEngagementId"
+                    control={control}
+                    data={engagementOptions}
+                    placeholder="Handwerker"
+                    errors={errors}
+                    label="Handwerker"
+                    triggerClassName="min-w-0 [&_[data-slot=select-value]]:min-w-0 [&_[data-slot=select-value]]:truncate [&_[data-slot=select-value]]:block"
+                  />
+                </div>
+                <div className="flex min-w-0 flex-col gap-2">
+                  <FormSelectOptions
+                    name="assigneeUserId"
+                    control={control}
+                    data={ownerOptions}
+                    placeholder="Zuständig"
+                    errors={errors}
+                    label="Zuständigkeit"
+                    triggerClassName="min-w-0 [&_[data-slot=select-value]]:min-w-0 [&_[data-slot=select-value]]:truncate [&_[data-slot=select-value]]:block"
+                  />
+                </div>
+                <div className="flex min-w-0 flex-col gap-2">
+                  <TaskStatusSelect control={control} errors={errors} />
+                </div>
+              </div>
+              {taskState === 'edit' &&
+              showAutomation &&
+              taskEditState.taskId ? (
                 <TaskAutomation
                   taskId={taskEditState.taskId}
                   control={control}
