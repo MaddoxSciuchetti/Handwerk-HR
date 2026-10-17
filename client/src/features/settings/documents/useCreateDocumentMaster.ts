@@ -1,14 +1,13 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createDocumentMaster } from './documentMasters.api';
 import { DOCUMENT_MASTERS_KEY } from './documentMaster.keys';
-import type { DocumentMasterKind } from './documentMaster.types';
 
 export function useCreateDocumentMaster() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (input: {
-      kind: DocumentMasterKind;
+      kind: string;
       name: string;
       file: File;
     }) => createDocumentMaster(input),

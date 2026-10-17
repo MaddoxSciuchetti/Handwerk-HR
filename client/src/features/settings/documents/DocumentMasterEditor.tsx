@@ -13,7 +13,7 @@ import { fromSegments, type StyledDocument } from './styledDocument';
 import { apiJson } from '@/config/apiClient';
 import { useQuery } from '@tanstack/react-query';
 import {
-  DOCUMENT_MASTER_KIND_LABELS,
+  documentKindLabel,
   documentKindUsesEditor,
 } from './documentMaster.types';
 import type { DocumentMasterDetail } from './documentMaster.types';
@@ -146,7 +146,7 @@ export function DocumentMasterEditor({
       }
     >
       <SettingsPageHeader
-        title={DOCUMENT_MASTER_KIND_LABELS[data.kind]}
+        title={documentKindLabel(data.kind)}
         action={
           returnContract ? (
             <Button

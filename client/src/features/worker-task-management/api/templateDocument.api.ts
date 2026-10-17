@@ -1,5 +1,4 @@
 import API, { apiJson } from '@/config/apiClient';
-import type { DocumentMasterKind } from '@/features/settings/documents/documentMaster.types';
 import type { DocumentSegment } from '@/features/settings/documents/documentSegments';
 import type { StyledDocument } from '@/features/settings/documents/styledDocument';
 import type { UnmatchedQuestionnaireAnswer } from './employmentContract.api';
@@ -9,7 +8,7 @@ export type TemplateDocumentLink = {
   engagementId: string;
   masterId: string;
   name: string;
-  kind: DocumentMasterKind;
+  kind: string;
 };
 
 export type TemplateDocumentDraft = TemplateDocumentLink & {

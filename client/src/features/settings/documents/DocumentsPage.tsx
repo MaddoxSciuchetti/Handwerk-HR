@@ -7,7 +7,10 @@ import { useState } from 'react';
 import { AddDocumentMasterDialog } from './AddDocumentMasterDialog';
 import { DocumentMasterList } from './DocumentMasterList';
 import { DocumentSelectionBar } from './components/DocumentSelectionBar';
-import type { DocumentMasterListItem } from './documentMaster.types';
+import {
+  documentKindLabel,
+  type DocumentMasterListItem,
+} from './documentMaster.types';
 import { useDocumentMasters } from './useDocumentMasters';
 
 export function DocumentsPage() {
@@ -68,9 +71,11 @@ export function DocumentsPage() {
       {selected.length > 0 ? (
         <DocumentSelectionBar selected={selected} onChange={changeSelection} />
       ) : null}
-      {isOpen ? (
-        <AddDocumentMasterDialog onClose={() => setIsOpen(false)} />
-      ) : null}
+      <AddDocumentMasterDialog
+        isOpen={isOpen}
+        existingKinds={masters.map((master) => documentKindLabel(master.kind))}
+        onClose={() => setIsOpen(false)}
+      />
     </div>
   );
 }

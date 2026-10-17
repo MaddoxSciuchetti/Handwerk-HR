@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  DOCUMENT_MASTER_KIND_LABELS,
+  documentKindLabel,
   isTemplateDocumentKind,
 } from '@/features/settings/documents/documentMaster.types';
 import { useDocumentMasters } from '@/features/settings/documents/useDocumentMasters';
@@ -110,7 +110,7 @@ export function EngagementTemplateDocuments({
                 >
                   <span className="min-w-0 truncate">{master.name}</span>
                   <span className="shrink-0 text-xs text-muted-foreground">
-                    {DOCUMENT_MASTER_KIND_LABELS[master.kind]}
+                    {documentKindLabel(master.kind)}
                   </span>
                 </Button>
               ))}

@@ -24,13 +24,28 @@ export const TEMPLATE_DOCUMENT_KINDS = DOCUMENT_MASTER_KINDS.filter(
   (kind) => kind !== "employment_contract",
 );
 
-export function isTemplateDocumentKind(
-  kind: string,
-): kind is Exclude<DocumentMasterKind, "employment_contract"> {
-  return isDocumentMasterKind(kind) && kind !== "employment_contract";
+export function normalizeDocumentKind(value: string): string | null {
+  const trimmed = value.trim().replace(/\s+/g, " ");
+  if (trimmed.length === 0 || trimmed.length > 80) return null;
+  const known = DOCUMENT_MASTER_KINDS.find(
+    (kind) =>
+      kind === trimmed ||
+      DOCUMENT_MASTER_KIND_LABELS[kind].toLocaleLowerCase("de") ===
+        trimmed.toLocaleLowerCase("de"),
+  );
+  return known ?? trimmed;
+}
+
+export function documentKindLabel(kind: string): string {
+  return isDocumentMasterKind(kind) ? DOCUMENT_MASTER_KIND_LABELS[kind] : kind;
+}
+
+export function isTemplateDocumentKind(kind: string): boolean {
+  const normalized = normalizeDocumentKind(kind);
+  return normalized !== null && normalized !== "employment_contract";
 }
 
 /** Every stored template opens in the word editor and can hold variable fields. */
-export function documentKindUsesEditor(kind: string): kind is DocumentMasterKind {
-  return isDocumentMasterKind(kind);
+export function documentKindUsesEditor(kind: string): boolean {
+  return normalizeDocumentKind(kind) !== null;
 }

@@ -7,7 +7,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useNavigate } from '@tanstack/react-router';
 import type { MouseEvent } from 'react';
-import { DOCUMENT_MASTER_KIND_LABELS } from '../documentMaster.types';
+import { documentKindLabel } from '../documentMaster.types';
 import type { DocumentMasterListItem } from '../documentMaster.types';
 import { MainContractPill } from './MainContractPill';
 
@@ -72,7 +72,7 @@ export function DocumentMasterRow({
       </TableCell>
       <TableCell className="whitespace-normal">
         <span className="typo-body-xs inline-flex rounded-full border border-border bg-secondary px-3 py-1 text-secondary-foreground">
-          {DOCUMENT_MASTER_KIND_LABELS[master.kind]}
+          {documentKindLabel(master.kind)}
         </span>
       </TableCell>
     </TableRow>

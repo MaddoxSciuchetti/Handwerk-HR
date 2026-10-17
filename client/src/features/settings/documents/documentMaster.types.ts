@@ -7,15 +7,17 @@ export {
   DOCUMENT_MASTER_KIND_LABELS,
   DOCUMENT_MASTER_KINDS,
   TEMPLATE_DOCUMENT_KINDS,
+  documentKindLabel,
   documentKindUsesEditor,
   isDocumentMasterKind,
   isTemplateDocumentKind,
+  normalizeDocumentKind,
 } from '@shared/documentMasters';
 
 export type DocumentMasterListItem = {
   id: string;
   name: string;
-  kind: DocumentMasterKind;
+  kind: string;
   isPrimary: boolean;
   updatedAt: string;
 };

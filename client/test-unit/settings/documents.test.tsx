@@ -77,7 +77,7 @@ describe('document settings', () => {
     renderWithProviders(<AddDocumentMasterDialog onClose={vi.fn()} />);
 
     const typeSelect = screen.getByRole('combobox', { name: 'Art' });
-    expect(typeSelect).toHaveTextContent('Arbeitsvertrag');
+    expect(typeSelect).toHaveValue('Arbeitsvertrag');
 
     await user.click(typeSelect);
     expect(
@@ -91,6 +91,12 @@ describe('document settings', () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole('option', { name: 'KFZ-Überlassungsvertrag' })
+    ).toBeInTheDocument();
+
+    await user.clear(typeSelect);
+    await user.type(typeSelect, 'Abmahnung');
+    expect(
+      await screen.findByRole('option', { name: '„Abmahnung“ hinzufügen' })
     ).toBeInTheDocument();
   });
 

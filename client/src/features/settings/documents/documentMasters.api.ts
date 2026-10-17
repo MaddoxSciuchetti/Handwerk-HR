@@ -3,7 +3,6 @@ import type { DocumentSegment } from './documentSegments';
 import type { StyledDocument } from './styledDocument';
 import type {
   DocumentMasterDetail,
-  DocumentMasterKind,
   DocumentMasterListItem,
 } from './documentMaster.types';
 
@@ -20,7 +19,7 @@ export function getDocumentMaster(id: string): Promise<DocumentMasterDetail> {
 }
 
 export function createDocumentMaster(input: {
-  kind: DocumentMasterKind;
+  kind: string;
   name: string;
   file: File;
 }): Promise<DocumentMasterDetail> {

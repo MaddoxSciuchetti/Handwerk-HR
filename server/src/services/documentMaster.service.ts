@@ -4,10 +4,10 @@ import {
     readStyledDocument,
     type StyledDocument,
 } from "../../../shared/document";
-import { isDocumentMasterKind } from "../../../shared/documentMasters";
+import { normalizeDocumentKind } from "../../../shared/documentMasters";
 import { prisma } from "@/lib/prisma";
 import AppError from "@/utils/AppError";
-import { DocumentMasterKind, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import {
     documentBody,
     DocumentSegment,
@@ -19,7 +19,7 @@ import {
 export type DocumentMasterListItem = {
     id: string;
     name: string;
-    kind: DocumentMasterKind;
+    kind: string;
     isPrimary: boolean;
     updatedAt: Date;
 };
@@ -35,11 +35,12 @@ export type DocumentMasterDetail = DocumentMasterListItem & {
     importWarnings?: string[];
 };
 
-function asKind(kind: string): DocumentMasterKind {
-    if (!isDocumentMasterKind(kind)) {
+function asKind(kind: string): string {
+    const normalized = normalizeDocumentKind(kind);
+    if (!normalized) {
         throw new AppError(BAD_REQUEST, "Unbekannte Dokumentart.");
     }
-    return kind;
+    return normalized;
 }
 
 const masterSelect = {
@@ -53,7 +54,7 @@ const masterSelect = {
 function toDetail(master: {
     id: string;
     name: string;
-    kind: DocumentMasterKind;
+    kind: string;
     isPrimary: boolean;
     body: Parameters<typeof readDocumentSegments>[0];
     updatedAt: Date;
@@ -85,7 +86,7 @@ export async function primaryEmploymentContract(
     const marked = await db.documentMaster.findFirst({
         where: {
             organizationId,
-            kind: DocumentMasterKind.employment_contract,
+            kind: "employment_contract",
             isPrimary: true,
             deletedAt: null,
         },
@@ -94,7 +95,7 @@ export async function primaryEmploymentContract(
     return db.documentMaster.findFirst({
         where: {
             organizationId,
-            kind: DocumentMasterKind.employment_contract,
+            kind: "employment_contract",
             deletedAt: null,
         },
         orderBy: { updatedAt: "desc" },
@@ -125,7 +126,7 @@ export async function createDocumentMaster(params: {
     const marked = await prisma.documentMaster.findFirst({
         where: {
             organizationId: params.organizationId,
-            kind: DocumentMasterKind.employment_contract,
+            kind: "employment_contract",
             isPrimary: true,
             deletedAt: null,
         },
@@ -137,7 +138,7 @@ export async function createDocumentMaster(params: {
             kind,
             name: params.name,
             isPrimary:
-                kind === DocumentMasterKind.employment_contract && !marked,
+                kind === "employment_contract" && !marked,
             body: (params.document ??
                 documentBody(
                     segmentsFromText(params.text ?? ""),
@@ -246,7 +247,7 @@ export async function setPrimaryDocumentMaster(
     if (!master) {
         throw new AppError(NOT_FOUND, "Dokument nicht gefunden.");
     }
-    if (master.kind !== DocumentMasterKind.employment_contract) {
+    if (master.kind !== "employment_contract") {
         throw new AppError(
             BAD_REQUEST,
             "Nur ein Arbeitsvertrag kann die Versandvorlage sein.",
@@ -259,7 +260,7 @@ export async function setPrimaryDocumentMaster(
             await tx.documentMaster.updateMany({
                 where: {
                     organizationId,
-                    kind: DocumentMasterKind.employment_contract,
+                    kind: "employment_contract",
                     isPrimary: true,
                 },
                 data: { isPrimary: false },

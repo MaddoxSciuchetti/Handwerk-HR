@@ -449,7 +449,7 @@ model Absence {
 model DocumentMaster {
   id             String             @id @default(uuid())
   organizationId String             @map("organization_id")
-  kind           DocumentMasterKind
+  kind           String             @db.VarChar(80)
   name           String             @db.VarChar(200)
   body           Json
   revision       Int                @default(1)
@@ -986,14 +986,6 @@ enum EngagementProgress {
   in_progress
   completed
   cancelled
-}
-
-enum DocumentMasterKind {
-  employment_contract
-  arbeitszeugnis
-  verschwiegenheitsvereinbarung
-  dienstanweisung
-  kfz_ueberlassungsvertrag
 }
 
 enum EmploymentContractStatus {
