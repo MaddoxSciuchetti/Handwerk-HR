@@ -4,6 +4,7 @@ import {
     readStyledDocument,
     type StyledDocument,
 } from "../../../shared/document";
+import { isDocumentMasterKind } from "../../../shared/documentMasters";
 import { prisma } from "@/lib/prisma";
 import AppError from "@/utils/AppError";
 import { DocumentMasterKind, Prisma } from "@prisma/client";
@@ -14,11 +15,6 @@ import {
     segmentsFromText,
     textFromSegments,
 } from "./documentBody";
-
-const KINDS = new Set<string>([
-    DocumentMasterKind.employment_contract,
-    DocumentMasterKind.arbeitszeugnis,
-]);
 
 export type DocumentMasterListItem = {
     id: string;
@@ -40,10 +36,10 @@ export type DocumentMasterDetail = DocumentMasterListItem & {
 };
 
 function asKind(kind: string): DocumentMasterKind {
-    if (!KINDS.has(kind)) {
+    if (!isDocumentMasterKind(kind)) {
         throw new AppError(BAD_REQUEST, "Unbekannte Dokumentart.");
     }
-    return kind as DocumentMasterKind;
+    return kind;
 }
 
 const masterSelect = {

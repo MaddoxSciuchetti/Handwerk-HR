@@ -23,8 +23,9 @@ export function DocumentMasterList({ masters }: DocumentMasterListProps) {
   if (masters.length === 0) {
     return (
       <p className="px-3 py-6 text-sm text-muted-foreground">
-        Noch keine Dokumente. Lege einen Arbeitsvertrag oder ein Arbeitszeugnis
-        an.
+        Noch keine Dokumente. Laden Sie eine oder mehrere Vorlagen hoch, zum
+        Beispiel einen Arbeitsvertrag, eine Verschwiegenheitsvereinbarung oder
+        eine Dienstanweisung.
       </p>
     );
   }

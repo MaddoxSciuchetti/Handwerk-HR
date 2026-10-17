@@ -11,7 +11,10 @@ import { StyledDocumentEditor } from './StyledDocumentEditor';
 import { fromSegments, type StyledDocument } from './styledDocument';
 import { apiJson } from '@/config/apiClient';
 import { useQuery } from '@tanstack/react-query';
-import { DOCUMENT_MASTER_KIND_LABELS } from './documentMaster.types';
+import {
+  DOCUMENT_MASTER_KIND_LABELS,
+  documentKindUsesEditor,
+} from './documentMaster.types';
 import type { DocumentMasterDetail } from './documentMaster.types';
 import { DocumentMasterActions } from './components/DocumentMasterActions';
 import { PrimaryContractStatus } from './components/PrimaryContractStatus';
@@ -73,8 +76,7 @@ export function DocumentMasterEditor({
     ? peekContractSendReturn()?.kind
     : undefined;
   const isContract = data?.kind === 'employment_contract';
-  const usesSegments =
-    data?.kind === 'employment_contract' || data?.kind === 'arbeitszeugnis';
+  const usesSegments = data ? documentKindUsesEditor(data.kind) : false;
 
   const save = (approved = false) => {
     if (!data || performance.now() - editStartedAt.current < 400) return;

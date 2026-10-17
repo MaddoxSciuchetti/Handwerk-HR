@@ -911,6 +911,9 @@ enum EngagementProgress {
 enum DocumentMasterKind {
   employment_contract
   arbeitszeugnis
+  verschwiegenheitsvereinbarung
+  dienstanweisung
+  kfz_ueberlassungsvertrag
 }
 
 enum EmploymentContractStatus {

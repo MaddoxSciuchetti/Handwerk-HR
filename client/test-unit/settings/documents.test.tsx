@@ -32,7 +32,10 @@ vi.mock('@/features/settings/documents/documentMasters.api', () => ({
 }));
 
 describe('document settings', () => {
-  beforeEach(() => navigate.mockClear());
+  beforeEach(() => {
+    navigate.mockClear();
+    vi.mocked(createDocumentMaster).mockReset();
+  });
   it('requires a chosen name instead of copying a generated upload filename', async () => {
     const user = userEvent.setup();
     const file = new File(
@@ -80,6 +83,65 @@ describe('document settings', () => {
     expect(
       await screen.findByRole('option', { name: 'Arbeitszeugnis' })
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole('option', { name: 'Verschwiegenheitsvereinbarung' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('option', { name: 'Dienstanweisung' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('option', { name: 'KFZ-Überlassungsvertrag' })
+    ).toBeInTheDocument();
+  });
+
+  it('creates one template per uploaded file and keeps each chosen type', async () => {
+    const user = userEvent.setup();
+    const nda = new File(['nda'], 'geheimhaltung.docx', {
+      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    });
+    const instruction = new File(['order'], 'dienstanweisung.docx', {
+      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    });
+    vi.mocked(createDocumentMaster)
+      .mockResolvedValueOnce({
+        id: 'nda-1',
+      } as Awaited<ReturnType<typeof createDocumentMaster>>)
+      .mockResolvedValueOnce({
+        id: 'instruction-1',
+      } as Awaited<ReturnType<typeof createDocumentMaster>>);
+    renderWithProviders(<AddDocumentMasterDialog onClose={vi.fn()} />);
+
+    await user.upload(screen.getByLabelText('Datei'), [nda, instruction]);
+    await user.click(screen.getByRole('combobox', { name: 'Art 1' }));
+    await user.click(
+      await screen.findByRole('option', { name: 'Verschwiegenheitsvereinbarung' })
+    );
+    await user.click(screen.getByRole('combobox', { name: 'Art 2' }));
+    await user.click(
+      await screen.findByRole('option', { name: 'Dienstanweisung' })
+    );
+    await user.type(screen.getByRole('textbox', { name: 'Name 1' }), 'NDA Werkstatt');
+    await user.type(
+      screen.getByRole('textbox', { name: 'Name 2' }),
+      'Dienstanweisung Werkstatt'
+    );
+    fireEvent.submit(
+      screen.getByRole('button', { name: 'Anlegen' }).closest('form')!
+    );
+
+    await waitFor(() =>
+      expect(createDocumentMaster).toHaveBeenNthCalledWith(1, {
+        kind: 'verschwiegenheitsvereinbarung',
+        name: 'NDA Werkstatt',
+        file: nda,
+      })
+    );
+    expect(createDocumentMaster).toHaveBeenNthCalledWith(2, {
+      kind: 'dienstanweisung',
+      name: 'Dienstanweisung Werkstatt',
+      file: instruction,
+    });
+    expect(navigate).not.toHaveBeenCalled();
   });
 
   it('shows each document type as a rounded tag in the list', () => {

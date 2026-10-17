@@ -1,12 +1,14 @@
+import type { DocumentMasterKind } from '@shared/documentMasters';
 import type { DocumentSegment } from './documentSegments';
 import type { StyledDocument } from './styledDocument';
 
-export const DOCUMENT_MASTER_KINDS = [
-  'employment_contract',
-  'arbeitszeugnis',
-] as const;
-
-export type DocumentMasterKind = (typeof DOCUMENT_MASTER_KINDS)[number];
+export type { DocumentMasterKind };
+export {
+  DOCUMENT_MASTER_KIND_LABELS,
+  DOCUMENT_MASTER_KINDS,
+  documentKindUsesEditor,
+  isDocumentMasterKind,
+} from '@shared/documentMasters';
 
 export type DocumentMasterListItem = {
   id: string;
@@ -25,9 +27,4 @@ export type DocumentMasterDetail = DocumentMasterListItem & {
   sourceUrl?: string | null;
   sourceMime?: string | null;
   importWarnings?: string[];
-};
-
-export const DOCUMENT_MASTER_KIND_LABELS: Record<DocumentMasterKind, string> = {
-  employment_contract: 'Arbeitsvertrag',
-  arbeitszeugnis: 'Arbeitszeugnis',
 };
