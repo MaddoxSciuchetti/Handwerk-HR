@@ -2,7 +2,7 @@ import { Input } from '@/components/ui/input';
 import { renamePersonnelDocument } from '@/features/worker-task-management/api/personnelDocuments.api';
 import { PERSONNEL_DOCUMENTS } from '@/features/worker-task-management/consts/query-key.consts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 type PersonnelFileNameProps = {
@@ -18,10 +18,14 @@ export function PersonnelFileName({
 }: PersonnelFileNameProps) {
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState(name);
+  useEffect(() => {
+    setDraft(name);
+  }, [name]);
   const rename = useMutation({
     mutationFn: (next: string) =>
       renamePersonnelDocument(workerId, documentId, next),
-    onSuccess: async () => {
+    onSuccess: async (result) => {
+      setDraft(result.data.name);
       await queryClient.invalidateQueries({
         queryKey: [PERSONNEL_DOCUMENTS, workerId],
       });

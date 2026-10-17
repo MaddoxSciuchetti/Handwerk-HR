@@ -3,7 +3,7 @@ export type TemplateField = {
   key: string;
   label: string;
   section: string;
-  type: 'text' | 'date' | 'single' | 'check';
+  type: 'text' | 'date' | 'single' | 'check' | 'file';
   required?: boolean;
   options?: string[];
   max?: number;

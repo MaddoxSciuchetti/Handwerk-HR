@@ -43,6 +43,14 @@ worker.get(
     "/:workerId/engagements/:engagementId/questionnaire/completed",
     workerController.getCompletedEngagementQuestionnaire,
 );
+worker.post(
+    "/:workerId/engagements/:engagementId/questionnaire/files",
+    workerController.fileCompletedQuestionnaireFiles,
+);
+worker.patch(
+    "/:workerId/engagements/:engagementId/questionnaire/files",
+    workerController.renameCompletedQuestionnaireFile,
+);
 worker.get(
     "/:workerId/engagements/:engagementId/contract",
     workerController.getEngagementContract,

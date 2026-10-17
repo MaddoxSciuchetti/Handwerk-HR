@@ -20,12 +20,14 @@ const customTypes = [
   { type: 'date' as const, label: 'Datum' },
   { type: 'single' as const, label: 'Auswahl' },
   { type: 'check' as const, label: 'Checkbox' },
+  { type: 'file' as const, label: 'Dateiupload' },
 ];
 
 export function QuestionnairePalette({ catalog, items, onAdd }: QuestionnairePaletteProps) {
   const [label, setLabel] = useState('');
   const [type, setType] = useState<(typeof customTypes)[number]['type']>('text');
   const [options, setOptions] = useState('Ja\nNein');
+  const [required, setRequired] = useState(true);
   const placed = new Set(items.map((item) => item.key));
   const hoursPlaced = items.some(isHourField);
   const available = catalog.filter((item) => {
@@ -62,7 +64,7 @@ export function QuestionnairePalette({ catalog, items, onAdd }: QuestionnairePal
       label: name,
       section: 'Weitere Angaben',
       type,
-      required: true,
+      required: type === 'file' ? required : true,
       builtin: false,
       options: fieldOptions,
       max: type === 'text' ? 255 : undefined,
@@ -134,6 +136,17 @@ export function QuestionnairePalette({ catalog, items, onAdd }: QuestionnairePal
               </p>
             ) : null}
           </>
+        ) : null}
+        {type === 'file' ? (
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              className="size-4 accent-primary"
+              checked={required}
+              onChange={(event) => setRequired(event.target.checked)}
+            />
+            Pflichtfeld
+          </label>
         ) : null}
         <Button type="button" className="rounded-2xl" onClick={addCustom}>
           Hinzufügen

@@ -19,6 +19,19 @@ export const getQuestionnaire = catchErrors(async (req: Request, res: Response) 
     return res.status(200).json({ success: true, data: questionnaire });
 });
 
+export const uploadQuestionnaireFile = catchErrors(
+    async (req: Request, res: Response) => {
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: "Keine Datei ausgewählt." });
+        }
+        const result = await questionnaireService.storeQuestionnaireFile(
+            param(req, "token"),
+            req.file,
+        );
+        return res.status(200).json({ success: true, data: result });
+    },
+);
+
 export const submitQuestionnaire = catchErrors(
     async (req: Request, res: Response) => {
         const result = await questionnaireService.submitPublicQuestionnaire(

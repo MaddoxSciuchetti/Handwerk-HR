@@ -1,10 +1,15 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ClipboardCheck } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { apiJson } from '@/config/apiClient';
 import ModalOverlay from '@/components/modal/ModalOverlay';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import type { CandidateItem } from '@/features/questionnaire/questionnairePreview';
+import { QuestionnaireStoredFile } from './QuestionnaireStoredFile';
+import { fileQuestionnaireDocuments } from '../../api/questionnaireFiles.api';
+import { PERSONNEL_DOCUMENTS } from '../../consts/query-key.consts';
+import { toast } from 'sonner';
 
 export type EngagementQuestionnaireLink = {
   name?: string;
@@ -19,10 +24,12 @@ type CompletedQuestionnaire = {
   intro: string;
   items: CandidateItem[];
   answers: Record<string, string | Record<string, string>[]>;
+  files?: Record<string, { name: string; url: string; filed: boolean }>;
 };
 
 function displayValue(value: string | undefined, type: string) {
   if (!value) return '—';
+  if (type === 'file') return '—';
   if (type === 'date' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
     return value.split('-').reverse().join('.');
   }
@@ -50,6 +57,22 @@ function QuestionnairePreview({
         )
         .then((response) => response.data),
   });
+  const queryClient = useQueryClient();
+  const unfiled = Object.values(data?.files ?? {}).filter((file) => !file.filed);
+  const storeAll = useMutation({
+    mutationFn: () =>
+      fileQuestionnaireDocuments(workerId, questionnaire.engagementId),
+    onSuccess: async () => {
+      toast.success('Dateien abgelegt');
+      await queryClient.invalidateQueries({
+        queryKey: ['completed-questionnaire', workerId, questionnaire.engagementId],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: [PERSONNEL_DOCUMENTS, workerId],
+      });
+    },
+    onError: () => toast.error('Die Dateien konnten nicht abgelegt werden.'),
+  });
 
   return (
     <ModalOverlay handleToggle={onClose} size="max-w-4xl">
@@ -74,6 +97,18 @@ function QuestionnairePreview({
             <p className="text-sm whitespace-pre-wrap text-muted-foreground">
               {data.intro}
             </p>
+            {unfiled.length > 0 ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="rounded-2xl"
+                disabled={storeAll.isPending}
+                onClick={() => storeAll.mutate()}
+              >
+                {storeAll.isPending ? 'Legt ab…' : 'Alle Dateien ablegen'}
+              </Button>
+            ) : null}
             {data.items.map((item, index) => {
               const value = data.answers[item.key];
               if (item.kind === 'repeater') {
@@ -118,9 +153,22 @@ function QuestionnairePreview({
                       {item.label}
                     </dt>
                     <dd className="text-sm whitespace-pre-wrap break-words">
-                      {displayValue(
-                        typeof value === 'string' ? value : undefined,
-                        item.type
+                      {item.type === 'file' ? (
+                        data.files?.[item.key] ? (
+                          <QuestionnaireStoredFile
+                            workerId={workerId}
+                            engagementId={questionnaire.engagementId}
+                            questionKey={item.key}
+                            file={data.files[item.key]}
+                          />
+                        ) : (
+                          '—'
+                        )
+                      ) : (
+                        displayValue(
+                          typeof value === 'string' ? value : undefined,
+                          item.type
+                        )
                       )}
                     </dd>
                   </dl>

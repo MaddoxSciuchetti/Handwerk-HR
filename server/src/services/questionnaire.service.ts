@@ -1,5 +1,7 @@
+import { uploadFileToS3 } from "@/config/aws";
 import { BAD_REQUEST, NOT_FOUND } from "@/constants/http";
 import { prisma } from "@/lib/prisma";
+import { fileQuestionnaireAnswers } from "@/services/questionnaireFiles.service";
 import { matchQuestionnaireToContract } from "@/services/contractFieldMatchAi";
 import { readDocumentSegments } from "@/services/documentBody";
 import { persistMatchedContractValues } from "@/services/employmentContract.service";
@@ -9,10 +11,13 @@ import {
     parseQuestionnaireDefinition,
     isWorkerLocked,
     presentQuestions,
+    questionRequired,
     type QuestionnaireDefinition,
     type QuestionnaireFieldItem,
 } from "@/services/questionnaireDefinition";
 import {
+    encodeFileAnswer,
+    fileAnswerForSubmission,
     flattenQuestionnaireAnswers,
     workerTextFromAnswers,
     QUESTIONNAIRE_FIELDS,
@@ -70,11 +75,10 @@ function publicPayload(definition: QuestionnaireDefinition | null) {
                       label: item.label,
                       section: item.section,
                       type: item.type,
-                      required: item.required,
+                      required: questionRequired(item),
                       options: item.options,
                       max: item.max,
                       layout: item.layout,
-                      required: true,
                       employerFilled: isWorkerLocked(item),
                       defaultValue: item.defaultValue,
                   },
@@ -99,7 +103,7 @@ export async function getPublicQuestionnaire(token: string) {
 
 function fieldsOf(definition: QuestionnaireDefinition | null): QuestionnaireField[] {
     const fields = definition ? definitionFields(definition) : [...QUESTIONNAIRE_FIELDS];
-    return fields.map((field) => ({ ...field, required: true }));
+    return fields.map((field) => ({ ...field, required: questionRequired(field) }));
 }
 
 function lockEmployerValues(
@@ -144,7 +148,18 @@ export async function submitPublicQuestionnaire(token: string, body: unknown) {
     const answers = questionnaireAnswerSchema(fields, repeaterKeys).parse(
         lockEmployerValues(fields, body),
     ) as QuestionnaireAnswers;
-    const matchFields = fields.map((field) => ({
+    for (const field of fields) {
+        if (field.type !== "file") continue;
+        const value = String((answers as Record<string, unknown>)[field.key] ?? "");
+        if (value && !fileAnswerForSubmission(value, submission.id)) {
+            throw new AppError(BAD_REQUEST, "Die hochgeladene Datei gehört nicht zu diesem Formular.");
+        }
+    }
+    const matchAnswers = { ...answers } as QuestionnaireAnswers;
+    for (const field of fields) {
+        if (field.type === "file") delete (matchAnswers as Record<string, unknown>)[field.key];
+    }
+    const matchFields = fields.filter((field) => field.type !== "file").map((field) => ({
         key: field.key,
         label: field.label,
         type: field.type,
@@ -159,7 +174,7 @@ export async function submitPublicQuestionnaire(token: string, body: unknown) {
         contract?.status === "draft"
             ? await matchQuestionnaireToContract(
                   readDocumentSegments(contract.master.body),
-                  answers,
+                  matchAnswers,
                   submission.engagement.worker.email ?? "",
                   matchFields,
               )
@@ -178,6 +193,13 @@ export async function submitPublicQuestionnaire(token: string, body: unknown) {
                 key: answer.key,
                 value: answer.value,
             })),
+        });
+        await fileQuestionnaireAnswers(tx, {
+            engagementId: submission.engagementId,
+            submissionId: submission.id,
+            uploadedByUserId: submission.engagement.responsibleUserId,
+            fields,
+            answers,
         });
 
         const workerFields = workerTextFromAnswers(fields, answers);
@@ -227,4 +249,36 @@ export async function submitPublicQuestionnaire(token: string, body: unknown) {
     });
 
     return { status: "completed" as const };
+}
+
+const FILE_TYPES = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"]);
+
+function uploadedName(original: string) {
+    const base = original.split(/[/\\]/).pop() ?? "Datei";
+    const cleaned = base.replace(/[^\w.\- ()äöüÄÖÜß]+/g, "").slice(0, 180);
+    return cleaned || "Datei";
+}
+
+export async function storeQuestionnaireFile(token: string, file: Express.Multer.File) {
+    const submission = await prisma.questionnaireSubmission.findUnique({
+        where: { token },
+        select: { id: true, status: true },
+    });
+    if (!submission) throw new AppError(NOT_FOUND, "Formular nicht gefunden.");
+    if (submission.status !== "sent") {
+        throw new AppError(BAD_REQUEST, "Der Fragebogen wurde bereits abgeschickt.");
+    }
+    if (!file?.buffer?.length || !FILE_TYPES.has(file.mimetype)) {
+        throw new AppError(BAD_REQUEST, "Erlaubt sind PDF, JPEG, PNG und WebP.");
+    }
+    const stored = await uploadFileToS3(file, submission.id, "questionnaires");
+    if (!stored.success || !stored.key?.startsWith(`questionnaires/${submission.id}/`)) {
+        throw new AppError(BAD_REQUEST, "Die Datei konnte nicht gespeichert werden.");
+    }
+    return {
+        value: encodeFileAnswer(uploadedName(file.originalname), stored.key, {
+            mime: file.mimetype,
+            size: file.size,
+        }),
+    };
 }

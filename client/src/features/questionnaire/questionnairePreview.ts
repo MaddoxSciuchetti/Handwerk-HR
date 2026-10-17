@@ -11,6 +11,7 @@ export type PreviewField = {
   label: string;
   section: string;
   type: QuestionnaireQuestion['type'];
+  required?: boolean;
   options?: string[];
   max?: number;
   layout?: 'inline';
@@ -74,7 +75,7 @@ export function candidateItems(items: PreviewItem[]): CandidateItem[] {
       label: item.label,
       section: item.section,
       type: item.type,
-      required: true,
+      required: item.type === 'file' ? item.required !== false : true,
       options: item.options,
       max: item.max,
       layout: item.layout,

@@ -10,6 +10,10 @@ import {
 } from "@/services/questionnaireDispatch";
 import * as workerService from "../services/worker.service";
 import { getCompletedQuestionnaire } from "@/services/completedQuestionnaire.service";
+import {
+    fileCompletedQuestionnaire,
+    renameQuestionnaireFile,
+} from "@/services/questionnaireFiles.service";
 
 export const getCompletedEngagementQuestionnaire = catchErrors(
     async (req: Request, res: Response) => {
@@ -17,6 +21,36 @@ export const getCompletedEngagementQuestionnaire = catchErrors(
             organizationId: req.orgId,
             workerId: param(req, "workerId"),
             engagementId: param(req, "engagementId"),
+        });
+        return res.status(200).json({ success: true, data });
+    },
+);
+
+export const fileCompletedQuestionnaireFiles = catchErrors(
+    async (req: Request, res: Response) => {
+        const questionKey =
+            typeof req.body?.questionKey === "string" ? req.body.questionKey : undefined;
+        await fileCompletedQuestionnaire({
+            organizationId: req.orgId,
+            workerId: param(req, "workerId"),
+            engagementId: param(req, "engagementId"),
+            uploadedByUserId: req.userId,
+            questionKey,
+        });
+        return res.status(200).json({ success: true });
+    },
+);
+
+export const renameCompletedQuestionnaireFile = catchErrors(
+    async (req: Request, res: Response) => {
+        const questionKey = typeof req.body?.questionKey === "string" ? req.body.questionKey : "";
+        const name = typeof req.body?.name === "string" ? req.body.name : "";
+        const data = await renameQuestionnaireFile({
+            organizationId: req.orgId,
+            workerId: param(req, "workerId"),
+            engagementId: param(req, "engagementId"),
+            questionKey,
+            name,
         });
         return res.status(200).json({ success: true, data });
     },
