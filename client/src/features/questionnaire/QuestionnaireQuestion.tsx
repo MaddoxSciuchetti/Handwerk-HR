@@ -1,4 +1,8 @@
 import { Input } from '@/components/ui/input';
+import {
+  insuranceNumberInput,
+  isValidInsuranceNumber,
+} from '@shared/insuranceNumber';
 import { Label } from '@/components/ui/label';
 import type { ReactNode } from 'react';
 import type { QuestionnaireQuestion as QuestionnaireQuestionData } from './questionnaire.types';
@@ -131,9 +135,23 @@ export function QuestionnaireQuestion({
         required={question.required && !locked}
         disabled={locked}
         value={value}
+        maxLength={question.key === 'insuranceNumber' ? 12 : question.max}
         className={locked ? 'bg-muted text-muted-foreground' : undefined}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event) =>
+          onChange(
+            question.key === 'insuranceNumber'
+              ? insuranceNumberInput(event.target.value)
+              : event.target.value
+          )
+        }
       />
+      {question.key === 'insuranceNumber' &&
+      value.length === 12 &&
+      !isValidInsuranceNumber(value) ? (
+        <p className="text-sm text-destructive">
+          Die Versicherungsnummer hat nicht das richtige Format.
+        </p>
+      ) : null}
       {employerFilled ? <FieldLock /> : null}
     </div>
   );

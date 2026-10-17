@@ -115,6 +115,30 @@ describe("questionnaire definition", () => {
         });
     });
 
+    it("stores a Versicherungsnummer only in the official 12-character form", () => {
+        const definition = parseQuestionnaireDefinition({
+            items: [
+                {
+                    kind: "field",
+                    key: "insuranceNumber",
+                    defaultValue: "10 010490 A 443",
+                },
+            ],
+        });
+        expect(definition.items[0]).toMatchObject({ defaultValue: "10010490A443" });
+        expect(() =>
+            parseQuestionnaireDefinition({
+                items: [
+                    {
+                        kind: "field",
+                        key: "insuranceNumber",
+                        defaultValue: "10010490A444",
+                    },
+                ],
+            }),
+        ).toThrow("Versicherungsnummer");
+    });
+
     it("rejects a checkbox that has only one label", () => {
         expect(() =>
             parseQuestionnaireDefinition({

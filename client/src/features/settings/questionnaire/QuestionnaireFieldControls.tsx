@@ -1,4 +1,5 @@
 import { Input } from '@/components/ui/input';
+import { insuranceNumberInput } from '@shared/insuranceNumber';
 import { Label } from '@/components/ui/label';
 import { ChoiceLineEditor } from '@/features/questionnaire/ChoiceLineEditor';
 import { QuestionTitle } from './QuestionTitle';
@@ -130,7 +131,15 @@ function QuestionAnswer({
       type={field.type === 'date' ? 'date' : 'text'}
       value={field.defaultValue ?? ''}
       aria-label="Antwort"
-      onChange={(event) => onChange({ defaultValue: event.target.value })}
+      maxLength={field.key === 'insuranceNumber' ? 12 : field.max}
+      onChange={(event) =>
+        onChange({
+          defaultValue:
+            field.key === 'insuranceNumber'
+              ? insuranceNumberInput(event.target.value)
+              : event.target.value,
+        })
+      }
     />
   );
 }

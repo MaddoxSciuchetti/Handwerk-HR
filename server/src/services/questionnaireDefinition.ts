@@ -1,5 +1,6 @@
 import { BAD_REQUEST } from "@/constants/http";
 import AppError from "@/utils/AppError";
+import { isValidInsuranceNumber, insuranceNumberInput } from "../../../shared/insuranceNumber";
 import {
     QUESTIONNAIRE_FIELDS,
     QUESTIONNAIRE_INTRO,
@@ -167,6 +168,14 @@ export function presentQuestions(definition: QuestionnaireDefinition) {
 }
 
 function cleanDefault(field: QuestionnaireFieldItem, value: string) {
+    if (field.key === "insuranceNumber") {
+        const normalized = insuranceNumberInput(value);
+        if (!normalized) return undefined;
+        if (!isValidInsuranceNumber(normalized)) {
+            reject("Die Versicherungsnummer hat nicht das richtige Format.");
+        }
+        return normalized;
+    }
     const trimmed = value.trim().slice(0, field.max ?? 255);
     if (!trimmed) return undefined;
     if (field.type === "check") {

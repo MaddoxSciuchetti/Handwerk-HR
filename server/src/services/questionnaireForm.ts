@@ -1,4 +1,8 @@
 import z from "zod";
+import {
+    insuranceNumberInput,
+    isValidInsuranceNumber,
+} from "../../../shared/insuranceNumber";
 
 export const QUESTIONNAIRE_INTRO =
     "Dieser Personalfragebogen dient zur Vorerfassung von Personaldaten für das DATEV-Lohnabrechnungsprogramm. Zur Wahrung der Aufbewahrungsfrist wird der ausgefüllte Personalfragebogen von dem Arbeitgeber / der lohnabrechnenden Stelle gespeichert.";
@@ -97,7 +101,9 @@ export const QUESTIONNAIRE_FIELDS = [
         ["männlich", "weiblich", "unbestimmt", "divers"],
         { required: true },
     ),
-    text("insuranceNumber", "Versicherungsnummer gem. Sozialversicherungsausweis", "Persönliche Angaben"),
+    text("insuranceNumber", "Versicherungsnummer gem. Sozialversicherungsausweis", "Persönliche Angaben", {
+        max: 12,
+    }),
     text("birthPlace", "Geburtsort, -land", "Persönliche Angaben"),
     text("nationality", "Staatsangehörigkeit", "Persönliche Angaben"),
     text("employeeNumber", "Arbeitnehmernummer", "Persönliche Angaben", { max: 64 }),
@@ -235,6 +241,14 @@ function fieldSchema(field: QuestionnaireField) {
             .string()
             .trim()
             .refine((value) => value === "" || options.includes(value), "ungültige Auswahl")
+            .refine((value) => !field.required || value.length > 0, "erforderlich");
+    }
+    if (field.key === "insuranceNumber") {
+        return z
+            .string()
+            .trim()
+            .transform((value) => insuranceNumberInput(value))
+            .refine((value) => value === "" || isValidInsuranceNumber(value), "Versicherungsnummer")
             .refine((value) => !field.required || value.length > 0, "erforderlich");
     }
     if (field.type === "check") {

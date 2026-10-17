@@ -84,4 +84,29 @@ describe("questionnaire form", () => {
         expect(() => schema.parse({ shift: "Nacht" })).toThrow("ungültige Auswahl");
         expect(() => schema.parse({ shift: "" })).toThrow("erforderlich");
     });
+
+    it("accepts only a 12-character Versicherungsnummer with a valid check digit", () => {
+        const schema = questionnaireAnswerSchema(
+            [
+                {
+                    key: "insuranceNumber",
+                    label: "Versicherungsnummer",
+                    section: "Persönliche Angaben",
+                    type: "text",
+                    max: 12,
+                },
+            ],
+            [],
+        );
+
+        expect(schema.parse({ insuranceNumber: "10 010490 A 443" })).toMatchObject({
+            insuranceNumber: "10010490A443",
+        });
+        expect(() => schema.parse({ insuranceNumber: "10010490A444" })).toThrow(
+            "Versicherungsnummer",
+        );
+        expect(() => schema.parse({ insuranceNumber: "32010490A443" })).toThrow(
+            "Versicherungsnummer",
+        );
+    });
 });

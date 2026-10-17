@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { apiJson } from '@/config/apiClient';
+import { isValidInsuranceNumber } from '@shared/insuranceNumber';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { QuestionnaireQuestion } from './QuestionnaireQuestion';
@@ -93,9 +94,14 @@ export function QuestionnaireForm({ token, preview }: QuestionnaireFormProps) {
   });
 
   const done = submitted || data?.status === 'completed';
-  const missing = questions.some(
-    (question) => question.required && !(values[question.key] ?? '').trim()
-  );
+  const missing = questions.some((question) => {
+    const value = (values[question.key] ?? '').trim();
+    if (question.key === 'insuranceNumber') {
+      if (!value) return Boolean(question.required);
+      return !isValidInsuranceNumber(value);
+    }
+    return question.required && !value;
+  });
   const sections = data?.items
     ? data.items.reduce<Section[]>((list, item) => {
         if (item.kind === 'repeater') {
