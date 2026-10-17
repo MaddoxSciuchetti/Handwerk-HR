@@ -26,7 +26,7 @@ export default function WorkerInfoPanel({
       <SheetContent
         side="right"
         aria-describedby={undefined}
-        className="worker-info-panel gap-0 border-border data-[side=right]:w-full data-[side=right]:sm:max-w-2xl"
+        className="worker-info-panel gap-0 overflow-hidden rounded-4xl border border-border data-[side=right]:inset-y-1 data-[side=right]:right-1 data-[side=right]:h-auto data-[side=right]:w-[calc(100vw-0.5rem)] data-[side=right]:sm:max-w-2xl"
         onClick={(event) => event.stopPropagation()}
       >
         <SheetHeader className="shrink-0 border-b border-border/50 px-6 py-6 pr-14">
