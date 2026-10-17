@@ -9,7 +9,6 @@ import {
   Shirt,
   Ticket,
   UserRound,
-  Zap,
 } from 'lucide-react';
 
 export const LAYOUTITEMS = [
@@ -61,11 +60,6 @@ export const SETTINGSITEMS = [
     title: 'Integrationen',
     to: '/settings/integrations',
     icon: Plug,
-  },
-  {
-    title: 'Automatisierung',
-    to: '/settings/automation',
-    icon: Zap,
   },
   {
     title: 'Willkommensmail',

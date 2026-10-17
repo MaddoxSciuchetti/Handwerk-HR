@@ -1,10 +1,19 @@
 import LoadingAlert from '@/components/alerts/LoadingAlert';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ArbeitszeugnisAutomationCard } from '@/features/settings/automation/ArbeitszeugnisAutomationCard';
+import { useArbeitszeugnisDocument } from '@/features/settings/automation/useArbeitszeugnisDocument';
 import { SettingsPageHeader } from '@/features/settings/components/SettingsPageHeader';
+import { cn } from '@/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import {
   getIntegrations,
@@ -22,14 +31,49 @@ function EnabledSwitch({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="flex items-center gap-2 text-sm">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(event) => onChange(event.target.checked)}
-      />
-      {checked ? 'Aktiv' : 'Inaktiv'}
-    </label>
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        aria-label={checked ? 'Aktiv' : 'Inaktiv'}
+        onClick={() => onChange(!checked)}
+        className={cn(
+          'relative h-5 w-9 shrink-0 rounded-full border outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50',
+          checked ? 'border-primary bg-primary' : 'border-border bg-muted'
+        )}
+      >
+        <span
+          className={cn(
+            'absolute top-1/2 left-0.5 size-3.5 -translate-y-1/2 rounded-full transition-transform',
+            checked
+              ? 'translate-x-4 bg-primary-foreground'
+              : 'bg-foreground'
+          )}
+        />
+      </button>
+      <span className="text-sm text-muted-foreground">
+        {checked ? 'Aktiv' : 'Inaktiv'}
+      </span>
+    </div>
+  );
+}
+
+function CredentialFields({ children }: { children: ReactNode }) {
+  return (
+    <Accordion type="single" collapsible>
+      <AccordionItem value="credentials" className="border-0">
+        <AccordionTrigger
+          type="button"
+          className="w-fit flex-none gap-1.5 py-1 hover:no-underline"
+        >
+          Zugangsdaten
+        </AccordionTrigger>
+        <AccordionContent className="flex flex-col gap-3 pt-2 pb-0">
+          {children}
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
   );
 }
 
@@ -75,47 +119,51 @@ function MicrosoftForm({
     >
       <div className="flex items-center justify-between gap-4">
         <h2 className="text-base font-semibold">Microsoft</h2>
-        <EnabledSwitch checked={enabled} onChange={setEnabled} />
+        <div className="flex items-center gap-4">
+          <EnabledSwitch checked={enabled} onChange={setEnabled} />
+          <Button type="submit" disabled={save.isPending}>
+            Speichern
+          </Button>
+        </div>
       </div>
-      <Label htmlFor="microsoft-tenant">Tenant-ID</Label>
-      <Input
-        id="microsoft-tenant"
-        value={tenantId}
-        onChange={(event) => setTenantId(event.target.value)}
-      />
-      <Label htmlFor="microsoft-client">Client-ID</Label>
-      <Input
-        id="microsoft-client"
-        value={clientId}
-        onChange={(event) => setClientId(event.target.value)}
-      />
-      <Label htmlFor="microsoft-secret">
-        Client-Geheimnis
-        {integration.hasClientSecret ? ' (gespeichert)' : ''}
-      </Label>
-      <Input
-        id="microsoft-secret"
-        type="password"
-        autoComplete="new-password"
-        value={clientSecret}
-        placeholder={integration.hasClientSecret ? 'Unverändert lassen' : ''}
-        onChange={(event) => setClientSecret(event.target.value)}
-      />
-      <Label htmlFor="microsoft-domain">Domäne</Label>
-      <Input
-        id="microsoft-domain"
-        value={domain}
-        onChange={(event) => setDomain(event.target.value)}
-      />
-      <Label htmlFor="microsoft-sku">Lizenz-SKU</Label>
-      <Input
-        id="microsoft-sku"
-        value={licenseSkuId}
-        onChange={(event) => setLicenseSkuId(event.target.value)}
-      />
-      <Button type="submit" className="w-fit rounded-full" disabled={save.isPending}>
-        Speichern
-      </Button>
+      <CredentialFields>
+        <Label htmlFor="microsoft-tenant">Tenant-ID</Label>
+        <Input
+          id="microsoft-tenant"
+          value={tenantId}
+          onChange={(event) => setTenantId(event.target.value)}
+        />
+        <Label htmlFor="microsoft-client">Client-ID</Label>
+        <Input
+          id="microsoft-client"
+          value={clientId}
+          onChange={(event) => setClientId(event.target.value)}
+        />
+        <Label htmlFor="microsoft-secret">
+          Client-Geheimnis
+          {integration.hasClientSecret ? ' (gespeichert)' : ''}
+        </Label>
+        <Input
+          id="microsoft-secret"
+          type="password"
+          autoComplete="new-password"
+          value={clientSecret}
+          placeholder={integration.hasClientSecret ? 'Unverändert lassen' : ''}
+          onChange={(event) => setClientSecret(event.target.value)}
+        />
+        <Label htmlFor="microsoft-domain">Domäne</Label>
+        <Input
+          id="microsoft-domain"
+          value={domain}
+          onChange={(event) => setDomain(event.target.value)}
+        />
+        <Label htmlFor="microsoft-sku">Lizenz-SKU</Label>
+        <Input
+          id="microsoft-sku"
+          value={licenseSkuId}
+          onChange={(event) => setLicenseSkuId(event.target.value)}
+        />
+      </CredentialFields>
     </form>
   );
 }
@@ -154,38 +202,45 @@ function CrewmeisterForm({
     >
       <div className="flex items-center justify-between gap-4">
         <h2 className="text-base font-semibold">Crewmeister</h2>
-        <EnabledSwitch checked={enabled} onChange={setEnabled} />
+        <div className="flex items-center gap-4">
+          <EnabledSwitch checked={enabled} onChange={setEnabled} />
+          <Button type="submit" disabled={save.isPending}>
+            Speichern
+          </Button>
+        </div>
       </div>
-      <Label htmlFor="crewmeister-token">
-        Token{integration.hasToken ? ' (gespeichert)' : ''}
-      </Label>
-      <Input
-        id="crewmeister-token"
-        type="password"
-        autoComplete="new-password"
-        value={token}
-        placeholder={integration.hasToken ? 'Unverändert lassen' : ''}
-        onChange={(event) => setToken(event.target.value)}
-      />
-      <Label htmlFor="crewmeister-crew">
-        Crew-ID, wenn der Token mehrere Crews sieht
-      </Label>
-      <Input
-        id="crewmeister-crew"
-        value={crewId}
-        onChange={(event) => setCrewId(event.target.value)}
-      />
-      <Button type="submit" className="w-fit rounded-full" disabled={save.isPending}>
-        Speichern
-      </Button>
+      <CredentialFields>
+        <Label htmlFor="crewmeister-token">
+          Token{integration.hasToken ? ' (gespeichert)' : ''}
+        </Label>
+        <Input
+          id="crewmeister-token"
+          type="password"
+          autoComplete="new-password"
+          value={token}
+          placeholder={integration.hasToken ? 'Unverändert lassen' : ''}
+          onChange={(event) => setToken(event.target.value)}
+        />
+        <Label htmlFor="crewmeister-crew">
+          Crew-ID, wenn der Token mehrere Crews sieht
+        </Label>
+        <Input
+          id="crewmeister-crew"
+          value={crewId}
+          onChange={(event) => setCrewId(event.target.value)}
+        />
+      </CredentialFields>
     </form>
   );
 }
 
 export function IntegrationsPage() {
   const query = useQuery({ queryKey: QUERY_KEY, queryFn: getIntegrations });
+  const certificate = useArbeitszeugnisDocument();
 
-  if (query.isLoading) return <LoadingAlert />;
+  if (query.isLoading || certificate.isLoading) {
+    return <LoadingAlert />;
+  }
 
   const integrations = query.data ?? [];
   const microsoft = integrations.find(
@@ -209,6 +264,15 @@ export function IntegrationsPage() {
           ) : null}
           <MicrosoftForm key={microsoft.tenantId} integration={microsoft} />
           <CrewmeisterForm key={crewmeister.crewId} integration={crewmeister} />
+          <div className="flex flex-col gap-3 px-3 py-6">
+            {certificate.isError || !certificate.data ? (
+              <p className="text-sm text-destructive">
+                Arbeitszeugnis konnte nicht geladen werden.
+              </p>
+            ) : (
+              <ArbeitszeugnisAutomationCard page={certificate.data} />
+            )}
+          </div>
         </div>
       )}
     </div>
