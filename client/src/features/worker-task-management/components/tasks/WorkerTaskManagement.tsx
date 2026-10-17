@@ -284,7 +284,6 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
             </TabsContent>
             <TabsContent value="files" className="mt-0 flex min-h-0 flex-1 flex-col">
               <ScrollableTableViewport>
-                <div className={sectionHeaderClassName}>Name</div>
                 <WorkerFileUploads
                   workerId={workerId}
                   engagements={data.data.engagements.map((engagement) => ({
@@ -320,6 +319,7 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                       ? [
                           {
                             id: engagement.arbeitszeugnis.id,
+                            engagementId: engagement.id,
                             name: engagement.arbeitszeugnis.name,
                             text: engagement.arbeitszeugnis.text,
                           },

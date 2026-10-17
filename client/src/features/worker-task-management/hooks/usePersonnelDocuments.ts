@@ -1,13 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
+  createPersonnelFolder,
   deletePersonnelDocument,
   getPersonnelDocuments,
   uploadPersonnelDocument,
-  type PersonnelDocument,
+  type PersonnelLibrary,
 } from '../api/personnelDocuments.api';
 import { PERSONNEL_DOCUMENTS } from '../consts/query-key.consts';
-import type { PersonnelDocumentName } from '../personnel-documents/personnelDocumentNames';
 
 export function usePersonnelDocuments(workerId: string) {
   return useQuery({
@@ -16,20 +16,31 @@ export function usePersonnelDocuments(workerId: string) {
   });
 }
 
+export function useCreatePersonnelFolder(workerId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { engagementId: string; label: string }) =>
+      createPersonnelFolder(workerId, input.engagementId, input.label),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: [PERSONNEL_DOCUMENTS, workerId],
+      });
+    },
+    onError: (error: { message?: string }) => {
+      toast.error(error.message || 'Ordner konnte nicht angelegt werden.');
+    },
+  });
+}
+
 export function useUploadPersonnelDocument(workerId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: {
       engagementId: string;
-      name: PersonnelDocumentName;
+      name: string;
+      folderId?: string;
       file: File;
-    }) =>
-      uploadPersonnelDocument(
-        workerId,
-        input.engagementId,
-        input.name,
-        input.file
-      ),
+    }) => uploadPersonnelDocument(workerId, input.engagementId, input),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: [PERSONNEL_DOCUMENTS, workerId],
@@ -50,13 +61,18 @@ export function useDeletePersonnelDocument(workerId: string) {
       await queryClient.cancelQueries({
         queryKey: [PERSONNEL_DOCUMENTS, workerId],
       });
-      const previous = queryClient.getQueryData<PersonnelDocument[]>([
+      const previous = queryClient.getQueryData<PersonnelLibrary>([
         PERSONNEL_DOCUMENTS,
         workerId,
       ]);
-      queryClient.setQueryData<PersonnelDocument[]>(
+      queryClient.setQueryData<PersonnelLibrary>(
         [PERSONNEL_DOCUMENTS, workerId],
-        (current) => current?.filter((document) => document.id !== documentId) ?? []
+        (current) => ({
+          documents:
+            current?.documents.filter((document) => document.id !== documentId) ??
+            [],
+          folders: current?.folders ?? [],
+        })
       );
       return { previous };
     },

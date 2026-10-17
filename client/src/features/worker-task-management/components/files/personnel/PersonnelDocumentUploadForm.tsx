@@ -12,11 +12,9 @@ import {
 import type { EngagementType } from '@/features/worker-lifecycle/types/index.types';
 import { useState } from 'react';
 import { MaterialsEngagementPicker } from '../../materials/MaterialsEngagementPicker';
+import type { PersonnelFolder } from '../../../api/personnelDocuments.api';
 import { useUploadPersonnelDocument } from '../../../hooks/usePersonnelDocuments';
-import {
-  PERSONNEL_DOCUMENT_NAMES,
-  type PersonnelDocumentName,
-} from '../../../personnel-documents/personnelDocumentNames';
+import { PERSONNEL_DOCUMENT_NAMES } from '../../../personnel-documents/personnelDocumentNames';
 import { PersonnelFileDropzone } from './PersonnelFileDropzone';
 
 type PersonnelDocumentUploadFormProps = {
@@ -26,16 +24,18 @@ type PersonnelDocumentUploadFormProps = {
     type: EngagementType;
     startDate: string | null;
   }>;
+  folders: PersonnelFolder[];
   setModal: (open: boolean) => void;
 };
 
 export function PersonnelDocumentUploadForm({
   workerId,
   engagements,
+  folders,
   setModal,
 }: PersonnelDocumentUploadFormProps) {
   const [engagementId, setEngagementId] = useState(engagements[0]?.id ?? '');
-  const [name, setName] = useState<PersonnelDocumentName | ''>('');
+  const [name, setName] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const upload = useUploadPersonnelDocument(workerId);
   const selectedEngagement =
@@ -43,10 +43,16 @@ export function PersonnelDocumentUploadForm({
     engagements[0]?.id ??
     '';
 
+  const folderId = name.startsWith('folder:') ? name.slice('folder:'.length) : '';
   const submit = () => {
     if (!selectedEngagement || !name || !file) return;
     upload.mutate(
-      { engagementId: selectedEngagement, name, file },
+      {
+        engagementId: selectedEngagement,
+        name: folderId ? 'ordner' : name,
+        folderId: folderId || undefined,
+        file,
+      },
       { onSuccess: () => setModal(false) }
     );
   };
@@ -69,7 +75,7 @@ export function PersonnelDocumentUploadForm({
               <Label htmlFor="personnel-document-name">Dokumentname</Label>
               <Select
                 value={name || undefined}
-                onValueChange={(value) => setName(value as PersonnelDocumentName)}
+                onValueChange={setName}
               >
                 <SelectTrigger
                   id="personnel-document-name"
@@ -83,6 +89,13 @@ export function PersonnelDocumentUploadForm({
                       {item.label}
                     </SelectItem>
                   ))}
+                  {folders
+                    .filter((folder) => folder.engagementId === selectedEngagement)
+                    .map((folder) => (
+                      <SelectItem key={folder.id} value={`folder:${folder.id}`}>
+                        {folder.label}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>

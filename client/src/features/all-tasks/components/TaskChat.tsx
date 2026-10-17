@@ -161,7 +161,7 @@ export function TaskChat({
   };
 
   return (
-    <div className="flex flex-col gap-2 rounded-2xl border border-border p-3">
+    <div className="flex min-h-48 flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
         <Label htmlFor="task-chat">Chat</Label>
         {editingCommentId ? (
@@ -181,7 +181,7 @@ export function TaskChat({
           </Button>
         ) : null}
       </div>
-      <div className="flex max-h-40 min-h-16 flex-col gap-2 overflow-y-auto">
+      <div className="flex min-h-24 flex-1 flex-col gap-2 overflow-y-auto">
         {isLoading ? (
           <p className="text-xs text-muted-foreground">Chat wird geladen…</p>
         ) : comments.length === 0 ? (
@@ -222,7 +222,7 @@ export function TaskChat({
           })
         )}
       </div>
-      <div className="relative">
+      <div className="relative flex items-end gap-2 border-t border-border pt-2">
         {menu ? (
           <MentionMenu
             choices={choices}
@@ -237,6 +237,7 @@ export function TaskChat({
           disabled={disabled || saveComment.isPending}
           rows={2}
           placeholder="Nachricht… @ erwähnt einen Mitarbeiter"
+          className="min-h-10 flex-1 resize-none rounded-none border-0 bg-transparent px-0 py-1.5 shadow-none focus-visible:border-transparent focus-visible:ring-0"
           onChange={(event) => {
             const next = event.target.value;
             setText(next);
@@ -248,16 +249,16 @@ export function TaskChat({
             syncMenu(target.value, target.selectionStart ?? target.value.length);
           }}
         />
+        <Button
+          type="button"
+          size="sm"
+          className="shrink-0"
+          disabled={disabled || saveComment.isPending || text.trim().length === 0}
+          onClick={() => void send()}
+        >
+          Senden
+        </Button>
       </div>
-      <Button
-        type="button"
-        size="sm"
-        className="self-end rounded-2xl"
-        disabled={disabled || saveComment.isPending || text.trim().length === 0}
-        onClick={() => void send()}
-      >
-        Senden
-      </Button>
     </div>
   );
 }

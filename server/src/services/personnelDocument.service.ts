@@ -1,20 +1,23 @@
 import { generatePresignedUrl, uploadFileToS3 } from "@/config/aws";
-import { BAD_REQUEST, NOT_FOUND } from "@/constants/http";
+import { BAD_REQUEST, CONFLICT, NOT_FOUND } from "@/constants/http";
 import { prisma } from "@/lib/prisma";
+import { personnelFolderLabel } from "@/services/personnelFolderLabel";
 import {
-    isPersonnelDocumentName,
+    isAssignablePersonnelDocumentName,
     personnelDocumentLabel,
     type PersonnelDocumentName,
 } from "@/services/personnelDocumentNames";
 import { encodeFileAnswer, questionnaireFileName, readFileAnswer } from "@/services/questionnaireForm";
 import AppError from "@/utils/AppError";
 import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { Prisma } from "@prisma/client";
 
 const s3 = new S3Client({ region: process.env.AWS_REGION });
 
 export type PersonnelDocumentDto = {
     id: string;
     engagementId: string;
+    folderId: string | null;
     name: PersonnelDocumentName;
     label: string;
     originalFileName: string;
@@ -23,6 +26,43 @@ export type PersonnelDocumentDto = {
     createdAt: Date;
     presignedUrl: string;
 };
+
+export type PersonnelFolderDto = {
+    id: string;
+    engagementId: string;
+    label: string;
+};
+
+async function storedDocumentName(params: {
+    organizationId: string;
+    workerId: string;
+    engagementId: string;
+    name: string;
+    folderId?: string;
+}): Promise<{ name: PersonnelDocumentName; folderId: string | null }> {
+    if (params.folderId) {
+        const folder = await prisma.engagementPersonnelFolder.findFirst({
+            where: {
+                id: params.folderId,
+                engagementId: params.engagementId,
+                engagement: {
+                    workerId: params.workerId,
+                    organizationId: params.organizationId,
+                },
+            },
+            select: { id: true },
+        });
+        if (!folder) throw new AppError(NOT_FOUND, "Ordner nicht gefunden.");
+        return { name: "ordner", folderId: folder.id };
+    }
+    if (!isAssignablePersonnelDocumentName(params.name)) {
+        throw new AppError(
+            BAD_REQUEST,
+            "Wähle Personalausweis, Führerschein oder Krankenkassenkarte.",
+        );
+    }
+    return { name: params.name, folderId: null };
+}
 
 function originalName(file: Express.Multer.File): string {
     const base = file.originalname.split(/[/\\]/).pop()?.trim() ?? "";
@@ -51,18 +91,21 @@ async function requireEngagement(params: {
 async function toDto(document: {
     id: string;
     engagementId: string;
+    folderId: string | null;
     name: PersonnelDocumentName;
     originalFileName: string;
     mimeType: string | null;
     fileSizeBytes: number | null;
     createdAt: Date;
     fileUrl: string;
+    folder: { label: string } | null;
 }): Promise<PersonnelDocumentDto> {
     return {
         id: document.id,
         engagementId: document.engagementId,
+        folderId: document.folderId,
         name: document.name,
-        label: personnelDocumentLabel(document.name),
+        label: document.folder?.label ?? personnelDocumentLabel(document.name),
         originalFileName: document.originalFileName,
         mimeType: document.mimeType,
         fileSizeBytes: document.fileSizeBytes,
@@ -74,24 +117,74 @@ async function toDto(document: {
 export async function listPersonnelDocuments(params: {
     organizationId: string;
     workerId: string;
-}): Promise<PersonnelDocumentDto[]> {
+}): Promise<{ documents: PersonnelDocumentDto[]; folders: PersonnelFolderDto[] }> {
     const worker = await prisma.worker.findFirst({
         where: { id: params.workerId, organizationId: params.organizationId },
         select: { id: true },
     });
     if (!worker) throw new AppError(NOT_FOUND, "Mitarbeiter nicht gefunden.");
 
-    const documents = await prisma.engagementPersonnelDocument.findMany({
-        where: {
-            engagement: {
-                workerId: params.workerId,
-                organizationId: params.organizationId,
+    const [documents, folders] = await Promise.all([
+        prisma.engagementPersonnelDocument.findMany({
+            where: {
+                engagement: {
+                    workerId: params.workerId,
+                    organizationId: params.organizationId,
+                },
             },
-        },
-        orderBy: { createdAt: "desc" },
-    });
+            include: { folder: { select: { label: true } } },
+            orderBy: { createdAt: "desc" },
+        }),
+        prisma.engagementPersonnelFolder.findMany({
+            where: {
+                engagement: {
+                    workerId: params.workerId,
+                    organizationId: params.organizationId,
+                },
+            },
+            select: { id: true, engagementId: true, label: true },
+            orderBy: { createdAt: "asc" },
+        }),
+    ]);
 
-    return Promise.all(documents.map((document) => toDto(document)));
+    return {
+        documents: await Promise.all(documents.map((document) => toDto(document))),
+        folders,
+    };
+}
+
+export async function createPersonnelFolder(params: {
+    organizationId: string;
+    workerId: string;
+    engagementId: string;
+    label: string;
+}): Promise<PersonnelFolderDto> {
+    const label = personnelFolderLabel(params.label);
+    await requireEngagement(params);
+    const existing = await prisma.engagementPersonnelFolder.findFirst({
+        where: {
+            engagementId: params.engagementId,
+            label: { equals: label, mode: "insensitive" },
+        },
+        select: { id: true },
+    });
+    if (existing) {
+        throw new AppError(CONFLICT, "Dieser Ordner existiert bereits.");
+    }
+    try {
+        return await prisma.engagementPersonnelFolder.create({
+            data: { engagementId: params.engagementId, label },
+            select: { id: true, engagementId: true, label: true },
+        });
+    } catch (error) {
+        if (
+            error instanceof Prisma.PrismaClientKnownRequestError &&
+            error.code === "P2002"
+        ) {
+            throw new AppError(CONFLICT, "Dieser Ordner existiert bereits.");
+        }
+        throw error;
+    }
 }
 
 export async function uploadPersonnelDocument(params: {
@@ -100,19 +193,15 @@ export async function uploadPersonnelDocument(params: {
     engagementId: string;
     uploadedByUserId: string;
     name: string;
+    folderId?: string;
     file: Express.Multer.File;
 }): Promise<PersonnelDocumentDto> {
-    if (!isPersonnelDocumentName(params.name)) {
-        throw new AppError(
-            BAD_REQUEST,
-            "Wähle Personalausweis, Führerschein oder Krankenkassenkarte.",
-        );
-    }
     if (!params.file?.buffer?.length) {
         throw new AppError(BAD_REQUEST, "Datei fehlt.");
     }
 
     await requireEngagement(params);
+    const stored = await storedDocumentName(params);
 
     const upload = await uploadFileToS3(
         params.file,
@@ -126,13 +215,15 @@ export async function uploadPersonnelDocument(params: {
     const created = await prisma.engagementPersonnelDocument.create({
         data: {
             engagementId: params.engagementId,
+            folderId: stored.folderId,
             uploadedByUserId: params.uploadedByUserId,
-            name: params.name,
+            name: stored.name,
             originalFileName: originalName(params.file),
             fileUrl: upload.key,
             mimeType: params.file.mimetype?.slice(0, 128) || null,
             fileSizeBytes: params.file.size,
         },
+        include: { folder: { select: { label: true } } },
     });
 
     return toDto(created);

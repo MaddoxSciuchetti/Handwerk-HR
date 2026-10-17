@@ -4,7 +4,6 @@ import type { PersonnelDocument } from '../../../api/personnelDocuments.api';
 import { PersonnelDocumentRow } from './PersonnelDocumentRow';
 
 type OpenPersonnelFolderProps = {
-  workerId: string;
   label: string;
   documents: PersonnelDocument[];
   deletingId: string | null;
@@ -13,7 +12,6 @@ type OpenPersonnelFolderProps = {
 };
 
 export function OpenPersonnelFolder({
-  workerId,
   label,
   documents,
   deletingId,
@@ -32,23 +30,20 @@ export function OpenPersonnelFolder({
         <ChevronLeft className="h-4 w-4" />
         Alle Ordner
       </Button>
-      <div className="mb-2 flex items-center gap-2 text-sm font-medium">
+      <div className="mb-4 flex items-center gap-2 text-sm font-medium">
         <Folder className="h-4 w-4 text-muted-foreground" aria-hidden />
         {label}
       </div>
-      {documents.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Keine Datei</p>
-      ) : (
-        documents.map((document) => (
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+        {documents.map((document) => (
           <PersonnelDocumentRow
             key={document.id}
-            workerId={workerId}
             document={document}
             deleting={deletingId === document.id}
             onDelete={onDelete}
           />
-        ))
-      )}
+        ))}
+      </div>
     </div>
   );
 }

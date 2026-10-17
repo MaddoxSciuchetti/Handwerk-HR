@@ -1,10 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { FileText } from 'lucide-react';
 import type { PersonnelDocument } from '../../../api/personnelDocuments.api';
-import { PersonnelFileName } from './PersonnelFileName';
 
 type PersonnelDocumentRowProps = {
-  workerId: string;
   document: PersonnelDocument;
   deleting: boolean;
   onDelete: (documentId: string) => void;
@@ -15,16 +13,28 @@ function isImage(mimeType: string | null) {
 }
 
 export function PersonnelDocumentRow({
-  workerId,
   document,
   deleting,
   onDelete,
 }: PersonnelDocumentRowProps) {
   return (
-    <div className="flex items-center gap-3 py-2 pl-6 pr-2">
+    <div className="flex flex-col rounded-xl border border-border p-4 transition-colors hover:bg-(--dropdown-surface)">
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          size="icon-sm"
+          variant="ghost"
+          disabled={deleting}
+          aria-label={`${document.label} löschen`}
+          onClick={() => onDelete(document.id)}
+          className="cursor-pointer text-muted-foreground"
+        >
+          X
+        </Button>
+      </div>
       <button
         type="button"
-        className="flex shrink-0 items-center"
+        className="flex flex-col items-start gap-3 text-left"
         aria-label={`${document.originalFileName} öffnen`}
         onClick={() => window.open(document.presignedUrl, '_blank')}
       >
@@ -32,33 +42,15 @@ export function PersonnelDocumentRow({
           <img
             src={document.presignedUrl}
             alt=""
-            className="h-10 w-10 rounded-md object-cover"
+            className="h-8 w-8 rounded-md object-cover"
           />
         ) : (
-          <FileText className="h-5 w-5 text-muted-foreground" />
+          <FileText className="h-8 w-8 text-muted-foreground" aria-hidden />
         )}
-      </button>
-      <div className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-medium">
-          {document.label}
+        <span className="block w-full truncate text-sm font-medium">
+          {document.originalFileName}
         </span>
-        <PersonnelFileName
-          workerId={workerId}
-          documentId={document.id}
-          name={document.originalFileName}
-        />
-      </div>
-      <Button
-        type="button"
-        size="icon-sm"
-        variant="ghost"
-        disabled={deleting}
-        aria-label={`${document.label} löschen`}
-        onClick={() => onDelete(document.id)}
-        className="cursor-pointer text-muted-foreground"
-      >
-        X
-      </Button>
+      </button>
     </div>
   );
 }

@@ -1,11 +1,13 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ClipboardCheck } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { apiJson } from '@/config/apiClient';
 import ModalOverlay from '@/components/modal/ModalOverlay';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import type { CandidateItem } from '@/features/questionnaire/questionnairePreview';
+import { StoredFileBox } from './StoredFileBox';
 import { QuestionnaireStoredFile } from './QuestionnaireStoredFile';
 import { fileQuestionnaireDocuments } from '../../api/questionnaireFiles.api';
 import { PERSONNEL_DOCUMENTS } from '../../consts/query-key.consts';
@@ -196,47 +198,25 @@ export function EngagementQuestionnaireList({
 
   return (
     <>
-      <ul className="space-y-2 p-2">
-        {questionnaires.map((questionnaire) => (
-          <li key={questionnaire.id}>
-            <button
-              type="button"
-              onClick={() => setSelected(questionnaire)}
-              className="flex w-full items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4 text-left hover:bg-primary/10"
-            >
-              <ClipboardCheck
-                className="size-5 shrink-0 text-primary"
-                aria-hidden="true"
-              />
-              <div className="min-w-0 flex-1">
-                <span className="text-sm font-semibold text-primary">
-                  Fragebogen
-                </span>
-                {questionnaire.name ? (
-                  <p className="text-sm font-medium">{questionnaire.name}</p>
-                ) : null}
-                <p className="text-xs text-muted-foreground">
-                  {questionnaire.engagementLabel}
-                </p>
-              </div>
-              <span className="text-xs text-muted-foreground">
-                Ausgefüllt
-                {questionnaire.completedAt
-                  ? ` · ${new Date(questionnaire.completedAt).toLocaleDateString('de-DE')}`
-                  : ''}
-              </span>
-            </button>
-          </li>
-        ))}
-      </ul>
-      {selected ? (
-        <QuestionnairePreview
-          key={selected.id}
-          workerId={workerId}
-          questionnaire={selected}
-          onClose={() => setSelected(null)}
+      {questionnaires.map((questionnaire) => (
+        <StoredFileBox
+          key={questionnaire.id}
+          label="Fragebogen"
+          icon={FileText}
+          onOpen={() => setSelected(questionnaire)}
         />
-      ) : null}
+      ))}
+      {selected
+        ? createPortal(
+            <QuestionnairePreview
+              key={selected.id}
+              workerId={workerId}
+              questionnaire={selected}
+              onClose={() => setSelected(null)}
+            />,
+            document.body
+          )
+        : null}
     </>
   );
 }

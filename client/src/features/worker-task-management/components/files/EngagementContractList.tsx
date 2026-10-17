@@ -1,5 +1,8 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
+import { FileText } from 'lucide-react';
 import { ContractDraftDialog } from './ContractDraftDialog';
+import { StoredFileBox } from './StoredFileBox';
 import type { EmploymentContractStatus } from '../../api/employmentContract.api';
 
 export type EngagementContractLink = {
@@ -14,12 +17,6 @@ type EngagementContractListProps = {
   contracts: EngagementContractLink[];
 };
 
-const STATUS_LABEL = {
-  draft: 'Entwurf',
-  ready: 'Zum Versand',
-  signed: 'Unterschrieben',
-} as const;
-
 export function EngagementContractList({
   workerId,
   contracts,
@@ -30,29 +27,24 @@ export function EngagementContractList({
 
   return (
     <>
-      <ul>
-        {contracts.map((contract) => (
-          <li key={contract.id}>
-            <button
-              type="button"
-              className="flex w-full items-center justify-between border-b border-border py-4 pr-2 pl-10 text-left hover:bg-muted/40"
-              onClick={() => setOpenEngagementId(contract.engagementId)}
-            >
-              <span className="text-sm font-medium">{contract.name}</span>
-              <span className="text-xs text-muted-foreground">
-                {STATUS_LABEL[contract.status]}
-              </span>
-            </button>
-          </li>
-        ))}
-      </ul>
-      {openEngagementId ? (
-        <ContractDraftDialog
-          workerId={workerId}
-          engagementId={openEngagementId}
-          onClose={() => setOpenEngagementId(null)}
+      {contracts.map((contract) => (
+        <StoredFileBox
+          key={contract.id}
+          label="Vertrag"
+          icon={FileText}
+          onOpen={() => setOpenEngagementId(contract.engagementId)}
         />
-      ) : null}
+      ))}
+      {openEngagementId
+        ? createPortal(
+            <ContractDraftDialog
+              workerId={workerId}
+              engagementId={openEngagementId}
+              onClose={() => setOpenEngagementId(null)}
+            />,
+            document.body
+          )
+        : null}
     </>
   );
 }

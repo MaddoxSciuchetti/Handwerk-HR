@@ -9,16 +9,10 @@ import {
   useDeletePersonnelDocument,
   usePersonnelDocuments,
 } from '../../hooks/usePersonnelDocuments';
-import {
-  EngagementCertificateList,
-  type EngagementCertificateLink,
-} from './EngagementCertificateList';
-import {
-  EngagementContractList,
-  type EngagementContractLink,
-} from './EngagementContractList';
+import type { EngagementCertificateLink } from './EngagementCertificateList';
+import type { EngagementContractLink } from './EngagementContractList';
 import FilesContent from './FilesContent';
-import { EngagementQuestionnaireList, type EngagementQuestionnaireLink } from './EngagementQuestionnaireList';
+import type { EngagementQuestionnaireLink } from './EngagementQuestionnaireList';
 import { PersonnelDocumentFolders } from './personnel/PersonnelDocumentFolders';
 import { PersonnelDocumentUploadForm } from './personnel/PersonnelDocumentUploadForm';
 
@@ -51,28 +45,27 @@ function WorkerFileUploads({
   const deletePersonnelDocument = useDeletePersonnelDocument(workerId);
 
   const filteredFiles = useMemo(() => fetchFiles ?? [], [fetchFiles]);
-  const personnel = personnelDocuments.data ?? [];
+  const personnel = personnelDocuments.data?.documents ?? [];
+  const folders = personnelDocuments.data?.folders ?? [];
 
   return (
     <>
-      <EngagementQuestionnaireList workerId={workerId} questionnaires={questionnaires} />
-      <EngagementContractList workerId={workerId} contracts={contracts} />
-      <EngagementCertificateList certificates={certificates} />
-      {personnelDocuments.isLoading ? <LoadingAlert /> : null}
       {personnelDocuments.isError ? <ErrorAlert /> : null}
-      {personnelDocuments.isSuccess ? (
-        <PersonnelDocumentFolders
-          workerId={workerId}
-          engagements={engagements}
-          documents={personnel}
-          deletingId={
-            deletePersonnelDocument.isPending
-              ? deletePersonnelDocument.variables ?? null
-              : null
-          }
-          onDelete={(documentId) => deletePersonnelDocument.mutate(documentId)}
-        />
-      ) : null}
+      <PersonnelDocumentFolders
+        workerId={workerId}
+        engagements={engagements}
+        documents={personnel}
+        folders={folders}
+        questionnaires={questionnaires}
+        contracts={contracts}
+        certificates={certificates}
+        deletingId={
+          deletePersonnelDocument.isPending
+            ? deletePersonnelDocument.variables ?? null
+            : null
+        }
+        onDelete={(documentId) => deletePersonnelDocument.mutate(documentId)}
+      />
       {isLoading ? <LoadingAlert /> : null}
       {isError ? <ErrorAlert /> : null}
       {!isLoading && !isError && filteredFiles.length ? (
@@ -97,6 +90,7 @@ function WorkerFileUploads({
             setModal={setIsUploadModalOpen}
             workerId={workerId}
             engagements={engagements}
+            folders={folders}
           />
         </ModalOverlay>
       )}
