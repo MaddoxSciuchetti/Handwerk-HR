@@ -25,6 +25,7 @@ export default function WorkerInfoPanel({
     >
       <SheetContent
         side="right"
+        overlayClassName="bg-transparent supports-backdrop-filter:backdrop-blur-none"
         aria-describedby={undefined}
         className="worker-info-panel gap-0 overflow-hidden rounded-4xl border border-border data-[side=right]:inset-y-1 data-[side=right]:right-1 data-[side=right]:h-auto data-[side=right]:w-[calc(100vw-0.5rem)] data-[side=right]:sm:max-w-2xl"
         onClick={(event) => event.stopPropagation()}

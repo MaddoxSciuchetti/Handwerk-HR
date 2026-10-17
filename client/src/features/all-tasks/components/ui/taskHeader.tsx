@@ -31,13 +31,13 @@ export function TaskSegmentToggle({
     >
       <ToggleGroupItem
         value="left"
-        className="h-7 shrink-0 rounded-full border-0 bg-transparent px-3 text-xs font-medium text-foreground shadow-none hover:bg-transparent hover:text-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-[0px_1px_3px_0px_rgba(0,0,0,0.12)] dark:data-[state=on]:shadow-[0px_1px_3px_0px_rgba(0,0,0,0.4)]"
+        className="h-7 shrink-0 rounded-full border-0 bg-transparent px-3 text-xs font-medium text-foreground shadow-none hover:bg-transparent hover:text-foreground data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary data-[state=on]:hover:text-primary-foreground data-[state=on]:shadow-[0px_1px_3px_0px_rgba(0,0,0,0.12)] dark:data-[state=on]:shadow-[0px_1px_3px_0px_rgba(0,0,0,0.4)]"
       >
         Alle Aufgaben
       </ToggleGroupItem>
       <ToggleGroupItem
         value="right"
-        className="h-7 shrink-0 rounded-full border-0 bg-transparent px-3 text-xs font-medium text-foreground shadow-none hover:bg-transparent hover:text-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-[0px_1px_3px_0px_rgba(0,0,0,0.12)] dark:data-[state=on]:shadow-[0px_1px_3px_0px_rgba(0,0,0,0.4)]"
+        className="h-7 shrink-0 rounded-full border-0 bg-transparent px-3 text-xs font-medium text-foreground shadow-none hover:bg-transparent hover:text-foreground data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary data-[state=on]:hover:text-primary-foreground data-[state=on]:shadow-[0px_1px_3px_0px_rgba(0,0,0,0.12)] dark:data-[state=on]:shadow-[0px_1px_3px_0px_rgba(0,0,0,0.4)]"
       >
         Meine Aufgaben
       </ToggleGroupItem>

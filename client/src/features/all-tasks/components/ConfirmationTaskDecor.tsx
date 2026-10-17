@@ -81,7 +81,6 @@ export function ConfirmationTaskDecor() {
 
   return (
     <div ref={frameRef} className="confirmation-task-decor" aria-hidden>
-      <div className="confirmation-slime-body" />
       <div className="confirmation-slime-outline">
         <div className="confirmation-slime-spin" />
         <div className="confirmation-ring-dust" />

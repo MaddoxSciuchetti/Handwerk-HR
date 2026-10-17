@@ -87,9 +87,9 @@ export function TaskItem({
       <TableCell
         className={cn(
           'relative pl-10 pr-2 font-medium transition-colors group-hover:rounded-l-xl',
-          !isContractActionTask && 'group-hover:bg-muted/50',
+          'group-hover:bg-muted/50',
           isSelected && 'rounded-l-xl',
-          isSelected && !isContractActionTask && 'bg-muted/50',
+          isSelected && 'bg-muted/50',
           temporaryEdge,
           showTemporaryEdge && 'rounded-l-xl border-l-2'
         )}
@@ -153,17 +153,17 @@ export function TaskItem({
       <TableCell
         className={cn(
           'transition-colors',
-          !isContractActionTask && 'group-hover:bg-muted/50',
-          isSelected && !isContractActionTask && 'bg-muted/50',
+          'group-hover:bg-muted/50',
+          isSelected && 'bg-muted/50',
           temporaryEdge
         )}
       />
       <TableCell
         className={cn(
           'transition-colors group-hover:rounded-r-xl',
-          !isContractActionTask && 'group-hover:bg-muted/50',
+          'group-hover:bg-muted/50',
           isSelected && 'rounded-r-xl',
-          isSelected && !isContractActionTask && 'bg-muted/50',
+          isSelected && 'bg-muted/50',
           temporaryEdge,
           showTemporaryEdge && 'rounded-r-xl border-r-2'
         )}

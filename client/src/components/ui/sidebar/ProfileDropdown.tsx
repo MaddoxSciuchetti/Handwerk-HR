@@ -26,7 +26,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { ChevronsUpDown, Moon, Settings, Sun } from 'lucide-react';
 
 const themeItemClassName =
-  'h-7 min-h-7 min-w-0 flex-1 basis-0 rounded-full border-0 bg-transparent px-0 text-muted-foreground shadow-none hover:bg-transparent hover:text-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm';
+  'h-7 min-h-7 min-w-0 flex-1 basis-0 rounded-full border-0 bg-transparent px-0 text-muted-foreground shadow-none hover:bg-transparent hover:text-foreground data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary data-[state=on]:hover:text-primary-foreground data-[state=on]:shadow-sm';
 
 const getDisplayLabel = (user: ReturnType<typeof useAuth>['user']) => {
   if (!user) return '';
