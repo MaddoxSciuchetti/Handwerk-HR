@@ -43,7 +43,7 @@ export function PaymentPlanDisplay({
   const trialDaysLine = showTrial ? trialDaysRemainingLabel(trialEndsAt) : null;
 
   return (
-    <section className="flex h-full w-full flex-col items-center justify-center">
+    <section className="flex w-full flex-col items-stretch">
       <div className="flex w-full flex-col items-start gap-1">
         <SettingsPageHeader title="Zahlungen" />
         {showPastDueNotice ? (

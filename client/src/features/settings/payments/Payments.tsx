@@ -52,7 +52,7 @@ function Payments() {
 
   if (isSubscriptionPending) {
     return (
-      <div className="mx-auto flex h-full min-h-48 flex-col items-center justify-center rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
+      <div className="flex h-full w-full min-h-48 flex-col items-center justify-center rounded-2xl bg-card p-6 text-card-foreground">
         <Spinner className="size-8 text-muted-foreground" />
         <p className="mt-3 typo-body-sm text-muted-foreground">
           Abo wird geladen…
@@ -62,7 +62,7 @@ function Payments() {
   }
 
   return (
-    <div className="mx-auto flex h-full flex-col overflow-auto rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
+    <div className="flex h-full w-full flex-col overflow-auto rounded-2xl bg-card p-6 text-card-foreground">
       <PaymentPlanDisplay
         hasActiveSubscription={hasActiveSubscription}
         planName={planName}
