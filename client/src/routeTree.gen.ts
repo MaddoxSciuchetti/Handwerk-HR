@@ -36,6 +36,7 @@ import { Route as FragebogenPreviewRouteImport } from './routes/fragebogen/previ
 import { Route as FragebogenTokenRouteImport } from './routes/fragebogen/$token'
 import { Route as SettingsTemplatesTemplateRouteImport } from './routes/settings/templates/template'
 import { Route as SettingsTemplatesIdRouteImport } from './routes/settings/templates/$id'
+import { Route as SettingsMailTemplatesIdRouteImport } from './routes/settings/mail-templates/$id'
 import { Route as SettingsDocumentsIdRouteImport } from './routes/settings/documents/$id'
 import { Route as EmailVerifyCodeRouteImport } from './routes/email/verify/$code'
 
@@ -175,6 +176,11 @@ const SettingsTemplatesIdRoute = SettingsTemplatesIdRouteImport.update({
   path: '/templates/$id',
   getParentRoute: () => SettingsRoute,
 } as any)
+const SettingsMailTemplatesIdRoute = SettingsMailTemplatesIdRouteImport.update({
+  id: '/mail-templates/$id',
+  path: '/mail-templates/$id',
+  getParentRoute: () => SettingsRoute,
+} as any)
 const SettingsDocumentsIdRoute = SettingsDocumentsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -214,6 +220,7 @@ export interface FileRoutesByFullPath {
   '/user/$Id': typeof UserIdRoute
   '/email/verify/$code': typeof EmailVerifyCodeRoute
   '/settings/documents/$id': typeof SettingsDocumentsIdRoute
+  '/settings/mail-templates/$id': typeof SettingsMailTemplatesIdRoute
   '/settings/templates/$id': typeof SettingsTemplatesIdRoute
   '/settings/templates/template': typeof SettingsTemplatesTemplateRoute
 }
@@ -245,6 +252,7 @@ export interface FileRoutesByTo {
   '/user/$Id': typeof UserIdRoute
   '/email/verify/$code': typeof EmailVerifyCodeRoute
   '/settings/documents/$id': typeof SettingsDocumentsIdRoute
+  '/settings/mail-templates/$id': typeof SettingsMailTemplatesIdRoute
   '/settings/templates/$id': typeof SettingsTemplatesIdRoute
   '/settings/templates/template': typeof SettingsTemplatesTemplateRoute
 }
@@ -277,6 +285,7 @@ export interface FileRoutesById {
   '/user/$Id': typeof UserIdRoute
   '/email/verify/$code': typeof EmailVerifyCodeRoute
   '/settings/documents/$id': typeof SettingsDocumentsIdRoute
+  '/settings/mail-templates/$id': typeof SettingsMailTemplatesIdRoute
   '/settings/templates/$id': typeof SettingsTemplatesIdRoute
   '/settings/templates/template': typeof SettingsTemplatesTemplateRoute
 }
@@ -310,6 +319,7 @@ export interface FileRouteTypes {
     | '/user/$Id'
     | '/email/verify/$code'
     | '/settings/documents/$id'
+    | '/settings/mail-templates/$id'
     | '/settings/templates/$id'
     | '/settings/templates/template'
   fileRoutesByTo: FileRoutesByTo
@@ -341,6 +351,7 @@ export interface FileRouteTypes {
     | '/user/$Id'
     | '/email/verify/$code'
     | '/settings/documents/$id'
+    | '/settings/mail-templates/$id'
     | '/settings/templates/$id'
     | '/settings/templates/template'
   id:
@@ -372,6 +383,7 @@ export interface FileRouteTypes {
     | '/user/$Id'
     | '/email/verify/$code'
     | '/settings/documents/$id'
+    | '/settings/mail-templates/$id'
     | '/settings/templates/$id'
     | '/settings/templates/template'
   fileRoutesById: FileRoutesById
@@ -586,6 +598,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsTemplatesIdRouteImport
       parentRoute: typeof SettingsRoute
     }
+    '/settings/mail-templates/$id': {
+      id: '/settings/mail-templates/$id'
+      path: '/mail-templates/$id'
+      fullPath: '/settings/mail-templates/$id'
+      preLoaderRoute: typeof SettingsMailTemplatesIdRouteImport
+      parentRoute: typeof SettingsRoute
+    }
     '/settings/documents/$id': {
       id: '/settings/documents/$id'
       path: '/$id'
@@ -625,6 +644,7 @@ interface SettingsRouteChildren {
   SettingsProfileRoute: typeof SettingsProfileRoute
   SettingsQuestionnaireRoute: typeof SettingsQuestionnaireRoute
   SettingsWelcomeMailRoute: typeof SettingsWelcomeMailRoute
+  SettingsMailTemplatesIdRoute: typeof SettingsMailTemplatesIdRoute
   SettingsTemplatesIdRoute: typeof SettingsTemplatesIdRoute
   SettingsTemplatesTemplateRoute: typeof SettingsTemplatesTemplateRoute
 }
@@ -640,6 +660,7 @@ const SettingsRouteChildren: SettingsRouteChildren = {
   SettingsProfileRoute: SettingsProfileRoute,
   SettingsQuestionnaireRoute: SettingsQuestionnaireRoute,
   SettingsWelcomeMailRoute: SettingsWelcomeMailRoute,
+  SettingsMailTemplatesIdRoute: SettingsMailTemplatesIdRoute,
   SettingsTemplatesIdRoute: SettingsTemplatesIdRoute,
   SettingsTemplatesTemplateRoute: SettingsTemplatesTemplateRoute,
 }

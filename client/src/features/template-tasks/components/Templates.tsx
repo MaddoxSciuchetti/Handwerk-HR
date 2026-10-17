@@ -11,8 +11,8 @@ import {
 } from '@/components/ui/table';
 import { SettingsPageHeader } from '@/features/settings/components/SettingsPageHeader';
 import {
+  alignedSettingsTableClassName,
   settingsTableBodyClassName,
-  settingsTableClassName,
 } from '@/features/settings/components/settingsTable';
 
 import { TemplateSidebar } from '@/features/worker-task-management/components/tasks/task-sidebar/TemplateSidebar';
@@ -65,7 +65,12 @@ function Templates() {
             </CardHeader>
             <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-0">
               <ScrollableTableViewport>
-                <Table className={settingsTableClassName}>
+                <Table className={alignedSettingsTableClassName}>
+                  <colgroup>
+                    <col className="w-72" />
+                    <col />
+                    <col className="w-32" />
+                  </colgroup>
                   <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-b-0">
                     <TableRow className="border-0 hover:bg-transparent">
                       <TableHead className="h-12 bg-card py-3 pl-10">

@@ -1,63 +1,140 @@
-import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { ScrollableTableViewport } from '@/components/ui/scrollable-table-viewport';
 import {
   Table,
   TableBody,
-  TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
 import { SettingsPageHeader } from '@/features/settings/components/SettingsPageHeader';
 import {
+  alignedSettingsTableClassName,
   settingsTableBodyClassName,
-  settingsTableClassName,
 } from '@/features/settings/components/settingsTable';
-import { useNavigate } from '@tanstack/react-router';
+import { useMailTemplates } from '@/features/settings/mail-template/useMailTemplates';
+import { useState } from 'react';
+import { MailContentSidebar } from './MailContentSidebar';
+import {
+  MailTemplateSidebar,
+  type MailTemplateEditState,
+} from './MailTemplateSidebar';
+import { MailTemplateRow, type MailTemplateRowData } from './MailTemplateRow';
 
-const MAIL_TEMPLATES = [
+const SYSTEM_MAILS: MailTemplateRowData[] = [
   {
+    id: 'welcome',
     name: 'Willkommensmail',
+    description: 'E-Mail an das Team bei Eintritt',
+    kind: 'system',
     to: '/settings/welcome-mail',
   },
   {
+    id: 'departure',
     name: 'Entlassungsmail',
+    description: 'E-Mail an das Team bei Entlassung',
+    kind: 'system',
     to: '/settings/departure-mail',
   },
-] as const;
+];
+
+const EMPTY_EDIT: MailTemplateEditState = {
+  id: '',
+  name: '',
+  description: '',
+};
 
 export function MailTemplateTable() {
-  const navigate = useNavigate();
+  const { data: customTemplates } = useMailTemplates();
+  const [isOpen, setIsOpen] = useState(false);
+  const [mode, setMode] = useState<'create' | 'edit'>('create');
+  const [editState, setEditState] = useState<MailTemplateEditState>(EMPTY_EDIT);
+  const [createOpenNonce, setCreateOpenNonce] = useState(0);
+  const [contentOpen, setContentOpen] = useState(false);
+  const [openMail, setOpenMail] = useState<MailTemplateRowData | null>(null);
+
+  const rows: MailTemplateRowData[] = [
+    ...SYSTEM_MAILS,
+    ...(customTemplates ?? []).map((template) => ({
+      id: template.id,
+      name: template.name,
+      description: template.description,
+      kind: 'custom' as const,
+    })),
+  ];
 
   return (
     <section className="flex min-h-0 w-full flex-1 flex-col">
       <SettingsPageHeader title="E-Mails" />
       <Card className="mt-5 flex min-h-0 w-full flex-1 flex-col gap-0 border border-border py-0 shadow-none ring-0">
+        <CardHeader className="flex shrink-0 flex-row items-center justify-end px-6 py-3">
+          <Button
+            type="button"
+            className="rounded-2xl"
+            onClick={() => {
+              setContentOpen(false);
+              setEditState(EMPTY_EDIT);
+              setCreateOpenNonce((nonce) => nonce + 1);
+              setMode('create');
+              setIsOpen(true);
+            }}
+          >
+            Hinzufügen
+          </Button>
+        </CardHeader>
         <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-0">
           <ScrollableTableViewport>
-            <Table className={settingsTableClassName}>
+            <Table className={alignedSettingsTableClassName}>
+              <colgroup>
+                <col className="w-72" />
+                <col />
+                <col className="w-32" />
+              </colgroup>
               <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-b-0">
                 <TableRow className="border-0 hover:bg-transparent">
                   <TableHead className="h-12 bg-card py-3 pl-10">Name</TableHead>
+                  <TableHead className="bg-card py-3 px-2">
+                    Beschreibung
+                  </TableHead>
+                  <TableHead className="bg-card py-3 pr-6 text-right">
+                    Aktionen
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody className={settingsTableBodyClassName}>
-                {MAIL_TEMPLATES.map((mail) => (
-                  <TableRow
-                    key={mail.to}
-                    className="cursor-pointer hover:bg-transparent"
-                    onClick={() => navigate({ to: mail.to })}
-                  >
-                    <TableCell className="whitespace-normal">
-                      <p className="typo-body-sm text-text-primary">{mail.name}</p>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                <MailTemplateRow
+                  templates={rows}
+                  setIsOpen={(open) => {
+                    setContentOpen(false);
+                    setIsOpen(open);
+                  }}
+                  setMode={setMode}
+                  setEditState={setEditState}
+                  onOpen={(template) => {
+                    setIsOpen(false);
+                    setOpenMail(template);
+                    setContentOpen(true);
+                  }}
+                />
               </TableBody>
             </Table>
           </ScrollableTableViewport>
         </CardContent>
       </Card>
+      <MailTemplateSidebar
+        key={mode === 'edit' ? `edit-${editState.id}` : `create-${createOpenNonce}`}
+        isOpen={isOpen}
+        setIsOpen={setIsOpen}
+        mode={mode}
+        editState={editState}
+      />
+      <MailContentSidebar
+        key={openMail?.id ?? 'mail'}
+        isOpen={contentOpen}
+        setIsOpen={setContentOpen}
+        mail={openMail}
+      />
     </section>
   );
 }

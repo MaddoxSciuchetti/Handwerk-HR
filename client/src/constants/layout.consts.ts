@@ -38,7 +38,11 @@ export const SETTINGSITEMS = [
     title: 'Templates',
     to: '/settings/templates/template',
     icon: FileText,
-    activePaths: ['/settings/welcome-mail', '/settings/departure-mail'],
+    activePaths: [
+      '/settings/welcome-mail',
+      '/settings/departure-mail',
+      '/settings/mail-templates',
+    ],
   },
   {
     title: 'Dokumente',

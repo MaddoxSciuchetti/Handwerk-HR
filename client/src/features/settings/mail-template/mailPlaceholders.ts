@@ -16,5 +16,14 @@ export const departureMailPlaceholders = [
   'Entlassung',
 ] as const;
 
+export const customMailPlaceholders = [
+  'Vorname',
+  'Nachname',
+  'Arbeitsmail',
+  'Position',
+  'Eintritt',
+  'Entlassung',
+] as const;
+
 export const mailPillClassName =
   'inline-flex h-6 items-center rounded-full border border-border bg-card px-2.5 align-baseline text-xs font-medium text-foreground';

@@ -117,6 +117,7 @@ model Organization {
   questionnaire   Questionnaire?
   welcomeMailSettings       WelcomeMailSettings?
   departureMailSettings     DepartureMailSettings?
+  mailTemplates             MailTemplate[]
   automationDocumentSettings AutomationDocumentSetting[]
   clothingStock              ClothingStockItem[]
   integrations               OrganizationIntegration[]
@@ -807,6 +808,25 @@ model AutomationDocumentSetting {
   @@unique([organizationId, automation])
   @@index([documentMasterId])
   @@map("automation_document_settings")
+}
+
+model MailTemplate {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  name           String   @db.VarChar(200)
+  description    String   @db.VarChar(5000)
+  senderAddress  String   @default("") @map("sender_address") @db.VarChar(254)
+  groupId        String   @default("") @map("group_id") @db.VarChar(255)
+  groupName      String   @default("") @map("group_name") @db.VarChar(255)
+  subject        String   @default("") @db.VarChar(400)
+  body           String   @default("") @db.Text
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@map("mail_templates")
 }
 
 model DepartureMailSettings {

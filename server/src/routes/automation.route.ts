@@ -18,6 +18,14 @@ import {
     putQuestionnaireTemplate,
     putWelcomeMail,
 } from "@/controllers/automation.controller";
+import {
+    getMailTemplate,
+    getMailTemplates,
+    postMailTemplate,
+    putMailTemplateContent,
+    putMailTemplateDetails,
+    removeMailTemplate,
+} from "@/controllers/mailTemplate.controller";
 
 const automationRoutes = Router();
 
@@ -47,5 +55,11 @@ automationRoutes.put(
 automationRoutes.post("/issues/:issueId/arbeitszeugnis", postArbeitszeugnis);
 automationRoutes.post("/issues/:issueId/run", postTaskAutomation);
 automationRoutes.post("/issues/:issueId/sequence", postIssueSequence);
+automationRoutes.get("/mail-templates", getMailTemplates);
+automationRoutes.post("/mail-templates", postMailTemplate);
+automationRoutes.get("/mail-templates/:id", getMailTemplate);
+automationRoutes.put("/mail-templates/:id/details", putMailTemplateDetails);
+automationRoutes.put("/mail-templates/:id", putMailTemplateContent);
+automationRoutes.delete("/mail-templates/:id", removeMailTemplate);
 
 export { automationRoutes };
