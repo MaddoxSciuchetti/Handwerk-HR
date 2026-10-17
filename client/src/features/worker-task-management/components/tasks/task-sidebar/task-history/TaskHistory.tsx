@@ -7,12 +7,14 @@ type TaskHistoryProps = {
   taskId: string;
   currentUserId?: string;
   onEditComment?: (commentId: string, body: string) => void;
+  hideComments?: boolean;
 };
 
 const TaskHistory = ({
   taskId,
   currentUserId,
   onEditComment,
+  hideComments = false,
 }: TaskHistoryProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -41,6 +43,7 @@ const TaskHistory = ({
             taskId={taskId}
             currentUserId={currentUserId}
             onEditComment={onEditComment}
+            hideComments={hideComments}
           />
         </div>
       ) : null}

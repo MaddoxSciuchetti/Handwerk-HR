@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { certificateText } from "@/services/arbeitszeugnis";
+import { issueVisibleToViewer } from "@/services/issueVisibility";
 import type {
     ArchiveWorkerInput,
     CreateAbsenceInput,
@@ -179,6 +180,7 @@ export async function getWorkerData(params: GetWorkersInput) {
         limit = 25,
         search,
         status,
+        viewerUserId,
     } = params;
 
     const where = {
@@ -231,6 +233,7 @@ export async function getWorkerData(params: GetWorkersInput) {
                         },
                     },
                     issues: {
+                        where: issueVisibleToViewer(viewerUserId),
                         select: {
                             id: true,
                             status: true,
@@ -250,7 +253,11 @@ export async function getWorkerData(params: GetWorkersInput) {
     });
 }
 
-export async function getWorkerById(workerId: string, organizationId: string) {
+export async function getWorkerById(
+    workerId: string,
+    organizationId: string,
+    viewerUserId: string,
+) {
     const worker = await prisma.worker.findFirst({
         where: { id: workerId, organizationId },
         include: {
@@ -292,6 +299,7 @@ export async function getWorkerById(workerId: string, organizationId: string) {
                         select: { id: true, status: true, completedAt: true, formDefinition: true },
                     },
                     issues: {
+                        where: issueVisibleToViewer(viewerUserId),
                         orderBy: { createdAt: "desc" },
                         include: {
                             assignee: {
@@ -551,6 +559,7 @@ export async function createIssue(params: CreateIssueInput) {
         priority,
         dueDate,
         automation,
+        assigneeOnly,
     } = params;
 
     const engagement = await prisma.workerEngagement.findFirst({
@@ -571,6 +580,7 @@ export async function createIssue(params: CreateIssueInput) {
                 priority: priority ?? "no_priority",
                 dueDate,
                 automation,
+                assigneeOnly: assigneeOnly ?? false,
             },
             include: {
                 assignee: {
@@ -961,8 +971,9 @@ export async function listWorkerDocuments(params: {
 export async function getWorkerHistory(params: {
     workerId: string;
     organizationId: string;
+    viewerUserId: string;
 }) {
-    const { workerId, organizationId } = params;
+    const { workerId, organizationId, viewerUserId } = params;
     await assertOwnership(workerId, organizationId);
 
     const [engagements, documents] = await Promise.all([
@@ -974,6 +985,7 @@ export async function getWorkerHistory(params: {
                     select: { id: true, firstName: true, lastName: true },
                 },
                 issues: {
+                    where: issueVisibleToViewer(viewerUserId),
                     orderBy: { createdAt: "desc" },
                     include: {
                         assignee: {

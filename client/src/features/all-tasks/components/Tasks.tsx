@@ -42,7 +42,7 @@ function Tasks() {
   const filteredTasks = useMemo(() => {
     const visibleTasks =
       segment === 'left'
-        ? (data ?? [])
+        ? (data ?? []).filter((task) => !task.assigneeOnly)
         : (data?.filter((task) => task.assigneeUserId === user?.id) ?? []);
 
     return confirmationTasksFirst(visibleTasks);

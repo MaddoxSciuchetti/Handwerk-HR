@@ -37,15 +37,22 @@ export type SaveTaskCommentParams = {
   taskId: string;
   body: string;
   commentId?: string | null;
+  mentionUserIds?: string[];
+};
+
+export type SaveTaskCommentResult = {
+  mailFailed: boolean;
 };
 
 export const saveTaskComment = async ({
   taskId,
   body,
   commentId,
-}: SaveTaskCommentParams): Promise<unknown> => {
+  mentionUserIds,
+}: SaveTaskCommentParams): Promise<SaveTaskCommentResult> => {
   return API.post(`/tasks/${taskId}/comments`, {
     body,
     ...(commentId ? { commentId } : {}),
+    ...(mentionUserIds?.length ? { mentionUserIds } : {}),
   });
 };

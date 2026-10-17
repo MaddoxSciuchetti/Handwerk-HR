@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { issueVisibleToViewer } from "@/services/issueVisibility";
 import { AbsenceType } from "@prisma/client";
 
 export type UpdateAbsenceParams = {
@@ -17,7 +18,10 @@ export const computeIsAbsent = (
     return absences.some((a) => a.startDate <= now && a.endDate >= now);
 };
 
-export const queryEmployeeWorkerData = async (orgId: string) => {
+export const queryEmployeeWorkerData = async (
+    orgId: string,
+    viewerUserId: string,
+) => {
     return await prisma.workerEngagement.findMany({
         where: { organizationId: orgId },
         orderBy: { createdAt: "asc" },
@@ -67,6 +71,7 @@ export const queryEmployeeWorkerData = async (orgId: string) => {
                 },
             },
             issues: {
+                where: issueVisibleToViewer(viewerUserId),
                 select: {
                     id: true,
                     title: true,

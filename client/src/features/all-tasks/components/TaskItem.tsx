@@ -11,6 +11,7 @@ import type { TaskEditState } from '../hooks/useTaskSidebar';
 import type { IssueResponse } from '../types/index.types';
 import { getAssigneeLabel } from '../utilts/assignee.utils';
 import formatDateDe from '../utilts/date.utils';
+import { PriorityIndicator } from '../utilts/priority.utils';
 import { ConfirmationTaskDecor } from './ConfirmationTaskDecor';
 import { PillBadge } from './ui/PillBadge';
 import { SquareCheckIcon, SquareDashedIcon } from './ui/SelectIcons';
@@ -118,6 +119,12 @@ export function TaskItem({
               <span className="sr-only">, Bestätigungsaufgabe</span>
             ) : null}
           </p>
+          {task.priority === 'urgent' ? (
+            <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-red-600">
+              <PriorityIndicator priority="urgent" />
+              Dringend
+            </span>
+          ) : null}
           <Button
             type="button"
             variant="outline"

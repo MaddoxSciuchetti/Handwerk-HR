@@ -13,7 +13,7 @@ import catchErrors from "@/utils/catchErrors";
 
 export const getEmployeeWorkerData = catchErrors(async (req, res) => {
     const orgId = req.orgId;
-    const data = await queryEmployeeWorkerData(orgId);
+    const data = await queryEmployeeWorkerData(orgId, req.userId);
 
     const result = data.map((engagement) => ({
         ...engagement,

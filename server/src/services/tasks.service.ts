@@ -1,11 +1,17 @@
 import { issueStatusLabel } from "@/constants/issueStatus.consts";
+import { APP_ORIGIN } from "@/constants/env";
 import {
     isTaskAutomationId,
     taskAutomationName,
 } from "@/constants/taskAutomation.consts";
 import { prisma } from "@/lib/prisma";
 import type { IssueStatus } from "@prisma/client";
+import { issueVisibleToViewer } from "@/services/issueVisibility";
 import { createIssue, updateIssue } from "@/services/worker.service";
+import AppError from "@/utils/AppError";
+import { BAD_REQUEST } from "@/constants/http";
+import { getTaskMentionTemplate } from "@/utils/emailTemplates";
+import { sendMail } from "@/utils/sendMail";
 
 export type TaskHistoryChange = {
     field: string;
@@ -46,12 +52,13 @@ export type TaskHistoryCommentEntry = {
 
 export type TaskHistoryItem = TaskHistoryAuditEntry | TaskHistoryCommentEntry;
 
-export const queryTasks = async (orgId: string) => {
+export const queryTasks = async (orgId: string, viewerUserId: string) => {
     return prisma.issue.findMany({
         where: {
             workerEngagement: {
                 organizationId: orgId,
             },
+            ...issueVisibleToViewer(viewerUserId),
         },
         orderBy: { createdAt: "desc" },
         include: {
@@ -413,11 +420,36 @@ export async function getTaskHistoryInOrg(
     return merged;
 }
 
+const MENTION_TITLE_LIMIT = 120;
+
+export function mentionTaskTitle(body: string) {
+    const compact = body.replace(/\s+/g, " ").trim();
+    if (compact.length <= MENTION_TITLE_LIMIT) return compact;
+    return `${compact.slice(0, MENTION_TITLE_LIMIT - 1).trimEnd()}…`;
+}
+
+function mentionTaskDescription(sourceTitle: string, body: string) {
+    return `Erwähnt in: ${sourceTitle}\n\n${body.trim()}`.slice(0, 8000);
+}
+
+function tasksPageUrl() {
+    const origin = APP_ORIGIN.split(",")[0]?.trim().replace(/\/$/, "") ?? "";
+    return `${origin}/tasks`;
+}
+
+const commentUserSelect = {
+    id: true,
+    email: true,
+    firstName: true,
+    lastName: true,
+    avatarUrl: true,
+} as const;
+
 export async function upsertIssueCommentInOrg(
     orgId: string,
     userId: string,
     issueId: string,
-    payload: { body: string; commentId?: string | null },
+    payload: { body: string; commentId?: string | null; mentionUserIds?: string[] },
 ) {
     const body = payload.body.trim();
     if (!body) {
@@ -429,7 +461,7 @@ export async function upsertIssueCommentInOrg(
             id: issueId,
             workerEngagement: { organizationId: orgId },
         },
-        select: { id: true },
+        select: { id: true, title: true, workerEngagementId: true },
     });
     if (!issue) {
         throw new Error("Task not found for organization");
@@ -445,35 +477,90 @@ export async function upsertIssueCommentInOrg(
         if (existing.userId !== userId) {
             throw new Error("You can only edit your own comments");
         }
-        return prisma.comment.update({
+        const comment = await prisma.comment.update({
             where: { id: existing.id },
             data: { body },
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        email: true,
-                        firstName: true,
-                        lastName: true,
-                        avatarUrl: true,
-                    },
-                },
-            },
+            include: { user: { select: commentUserSelect } },
         });
+        return { comment, mailFailed: false };
     }
 
-    return prisma.comment.create({
+    const mentionIds = [
+        ...new Set(
+            (payload.mentionUserIds ?? []).filter(
+                (id): id is string => typeof id === "string" && id.length > 0 && id !== userId,
+            ),
+        ),
+    ];
+    const mentioned =
+        mentionIds.length === 0
+            ? []
+            : await prisma.user.findMany({
+                  where: {
+                      id: { in: mentionIds },
+                      organizationMembers: { some: { organizationId: orgId } },
+                  },
+                  select: {
+                      id: true,
+                      email: true,
+                      firstName: true,
+                      lastName: true,
+                  },
+              });
+    if (mentioned.length !== mentionIds.length) {
+        throw new AppError(BAD_REQUEST, "Erwähnter Mitarbeiter wurde nicht gefunden");
+    }
+
+    const comment = await prisma.comment.create({
         data: { issueId, userId, body },
-        include: {
-            user: {
-                select: {
-                    id: true,
-                    email: true,
-                    firstName: true,
-                    lastName: true,
-                    avatarUrl: true,
-                },
-            },
-        },
+        include: { user: { select: commentUserSelect } },
     });
+
+    if (mentioned.length === 0) {
+        return { comment, mailFailed: false };
+    }
+
+    const actor = await prisma.user.findFirst({
+        where: { id: userId },
+        select: { firstName: true, lastName: true, email: true },
+    });
+    const senderName =
+        `${actor?.firstName ?? ""} ${actor?.lastName ?? ""}`.trim() ||
+        actor?.email ||
+        "Ein Kollege";
+    const title = mentionTaskTitle(body);
+    const description = mentionTaskDescription(issue.title, body);
+    const actionUrl = tasksPageUrl();
+    let mailFailed = false;
+
+    for (const person of mentioned) {
+        await createIssue({
+            workerEngagementId: issue.workerEngagementId,
+            createdByUserId: userId,
+            assigneeUserId: person.id,
+            status: "open",
+            title,
+            description,
+            priority: "urgent",
+            assigneeOnly: true,
+        });
+        const recipientName =
+            `${person.firstName} ${person.lastName}`.trim() || person.email;
+        const template = getTaskMentionTemplate({
+            recipientName,
+            senderName,
+            sourceTitle: issue.title,
+            message: body,
+            actionUrl,
+        });
+        const sent = await sendMail({
+            to: person.email,
+            subject: template.subject,
+            text: template.text,
+            html: template.html,
+        });
+        if (sent.error) mailFailed = true;
+    }
+
+    return { comment, mailFailed };
 }

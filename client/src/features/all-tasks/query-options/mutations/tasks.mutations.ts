@@ -12,6 +12,7 @@ import {
   saveTaskComment,
   updateTask,
   type SaveTaskCommentParams,
+  type SaveTaskCommentResult,
   type UpdateTaskParams,
 } from '../../api/tasks.api';
 import { FETCHDESCRIPTION } from '../../consts/query.consts';
@@ -77,12 +78,21 @@ export const taskMutations = {
     }),
 
   saveTaskComment: () =>
-    mutationOptions<unknown, Error, SaveTaskCommentParams>({
+    mutationOptions<SaveTaskCommentResult, Error, SaveTaskCommentParams>({
       mutationFn: (params) => saveTaskComment(params),
-      onSuccess: (_, { taskId }) => {
+      onSuccess: (result, { taskId, mentionUserIds }) => {
         void queryClient.invalidateQueries({
           queryKey: [TASKHISTORY, taskId],
         });
+        if (mentionUserIds?.length) {
+          void queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] });
+        }
+        if (result.mailFailed) {
+          toast.error('Die E-Mail konnte nicht gesendet werden.');
+        }
+      },
+      onError: () => {
+        toast.error('Nachricht konnte nicht gesendet werden.');
       },
     }),
 };

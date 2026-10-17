@@ -11,7 +11,7 @@ import catchErrors from "@/utils/catchErrors";
 
 export const fetchTasks = catchErrors(async (req, res) => {
     const orgId = req.orgId;
-    const tasks = await queryTasks(orgId);
+    const tasks = await queryTasks(orgId, req.userId);
     return res.status(OK).json(tasks);
 });
 
@@ -41,16 +41,26 @@ export const upsertTaskComment = catchErrors(async (req, res) => {
     const orgId = req.orgId;
     const userId = req.userId;
     const issueId = String(req.params.id);
-    const raw = req.body as { body?: unknown; commentId?: unknown };
+    const raw = req.body as {
+        body?: unknown;
+        commentId?: unknown;
+        mentionUserIds?: unknown;
+    };
     const body =
         typeof raw.body === "string" ? raw.body : String(raw.body ?? "");
     const commentId =
         typeof raw.commentId === "string" && raw.commentId.length > 0
             ? raw.commentId
             : null;
+    const mentionUserIds = Array.isArray(raw.mentionUserIds)
+        ? raw.mentionUserIds.filter(
+              (id): id is string => typeof id === "string" && id.length > 0,
+          )
+        : [];
     const result = await upsertIssueCommentInOrg(orgId, userId, issueId, {
         body,
         commentId,
+        mentionUserIds,
     });
     return res.status(OK).json(result);
 });

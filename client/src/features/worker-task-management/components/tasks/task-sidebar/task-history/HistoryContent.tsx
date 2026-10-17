@@ -18,6 +18,7 @@ type HistoryContentProps = {
   taskId: string;
   currentUserId?: string;
   onEditComment?: (commentId: string, body: string) => void;
+  hideComments?: boolean;
 };
 
 const FIELD_LABELS: Record<string, string> = {
@@ -171,14 +172,18 @@ const HistoryContent = ({
   taskId,
   currentUserId,
   onEditComment,
+  hideComments = false,
 }: HistoryContentProps) => {
   const { historyData, isLoading } = useGetTaskHistory(taskId);
+  const entries = hideComments
+    ? (historyData ?? []).filter((entry) => entry.kind !== 'comment')
+    : (historyData ?? []);
 
   if (isLoading) {
     return <p className="mt-5 text-muted-foreground">Verlauf wird geladen…</p>;
   }
 
-  if (!historyData || historyData.length === 0) {
+  if (!entries.length) {
     return (
       <p className="mt-5 text-muted-foreground">
         Es wurden noch keine Änderungen oder Kommentare erfasst
@@ -193,7 +198,7 @@ const HistoryContent = ({
         className="absolute top-6 bottom-6 left-3 w-px -translate-x-1/2 bg-(--border)"
       />
       <div className="space-y-4">
-        {historyData.map((entry: TaskHistoryItem) => (
+        {entries.map((entry: TaskHistoryItem) => (
           <div key={`${entry.kind}-${entry.id}`} className="flex gap-3">
             <div className="flex w-6 shrink-0 justify-center">
               <div

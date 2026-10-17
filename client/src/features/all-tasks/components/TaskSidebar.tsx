@@ -4,9 +4,8 @@ import { Button } from '@/components/ui/button';
 import { FieldGroup } from '@/components/ui/field';
 import { Label } from '@/components/ui/label';
 import TaskAutomation from '@/features/all-tasks/components/TaskAutomation';
-import { TaskCommentBox } from '@/features/all-tasks/components/TaskCommentBox';
+import { TaskChat } from '@/features/all-tasks/components/TaskChat';
 import { TaskStatusSelect } from '@/features/all-tasks/components/ui/TaskStatusSelect';
-import { useSaveTaskComment } from '@/features/all-tasks/hooks/useSaveTaskComment';
 import { employeeQueries } from '@/features/employee-overview/query-options/queries/employee.queries';
 import useAuth from '@/features/user-profile/hooks/useAuth';
 import { SidebarAside } from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarAside';
@@ -17,7 +16,7 @@ import { SidebarPanel } from '@/features/worker-task-management/components/tasks
 import TaskHistory from '@/features/worker-task-management/components/tasks/task-sidebar/task-history/TaskHistory';
 import { useQuery } from '@tanstack/react-query';
 import { X } from 'lucide-react';
-import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
+import { useMemo, type Dispatch, type SetStateAction } from 'react';
 import { useWatch } from 'react-hook-form';
 import { useFetchEngagements } from '../hooks/useFetchEngagements';
 import { useTasks } from '../hooks/useTasks';
@@ -38,56 +37,17 @@ export function TaskSidebar({
   taskEditState,
   onOpenArbeitszeugnis,
 }: TaskSidebarProps) {
-  const [commentText, setCommentText] = useState('');
-  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
-  const saveComment = useSaveTaskComment();
-
-  useEffect(() => {
-    setCommentText('');
-    setEditingCommentId(null);
-  }, [taskEditState.taskId, taskState]);
-
-  const commentOptions =
-    taskState === 'edit'
-      ? {
-          getCommentDraft: () => ({
-            body: commentText,
-            commentId: editingCommentId,
-          }),
-          persistComment: async (args: {
-            taskId: string;
-            body: string;
-            commentId: string | null;
-          }) => {
-            await saveComment.mutateAsync(args);
-            setCommentText('');
-            setEditingCommentId(null);
-          },
-        }
-      : undefined;
-
   const { register, control, errors, setValue, onSubmit, isTaskSaving } = useTasks(
     taskEditState,
     taskState,
-    setIsOpen,
-    commentOptions
+    setIsOpen
   );
 
   const { data: employees = [] } = useQuery(employeeQueries.getEmployees());
   const { data: engagements = [] } = useFetchEngagements();
   const { user } = useAuth();
 
-  const isSubmitting = isTaskSaving || saveComment.isPending;
-
-  const handleEditComment = (commentId: string, body: string) => {
-    setEditingCommentId(commentId);
-    setCommentText(body);
-  };
-
-  const handleCancelCommentEdit = () => {
-    setEditingCommentId(null);
-    setCommentText('');
-  };
+  const isSubmitting = isTaskSaving;
 
   const ownerOptions = useMemo(
     () =>
@@ -178,17 +138,20 @@ export function TaskSidebar({
 
               {taskState === 'edit' && taskEditState.taskId ? (
                 <>
-                  <TaskCommentBox
-                    commentText={commentText}
-                    onCommentTextChange={setCommentText}
-                    editingCommentId={editingCommentId}
-                    onCancelEdit={handleCancelCommentEdit}
+                  <TaskChat
+                    taskId={taskEditState.taskId}
+                    coworkers={employees.map((employee) => ({
+                      id: employee.id,
+                      firstName: employee.firstName,
+                      lastName: employee.lastName,
+                    }))}
+                    currentUserId={user?.id}
                     disabled={isSubmitting}
                   />
                   <TaskHistory
                     taskId={taskEditState.taskId}
                     currentUserId={user?.id}
-                    onEditComment={handleEditComment}
+                    hideComments
                   />
                 </>
               ) : null}

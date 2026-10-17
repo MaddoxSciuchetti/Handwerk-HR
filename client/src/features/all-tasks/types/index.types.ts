@@ -30,6 +30,7 @@ export type IssueResponse = {
   automation?: string | null;
   kind: 'standard' | 'contract_send' | 'contract_confirm';
   isTemporary: boolean;
+  assigneeOnly?: boolean;
   workerEngagement?: { workerId: string };
   title: string;
   description: string | null;

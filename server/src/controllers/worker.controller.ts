@@ -97,6 +97,7 @@ export const getWorkerData = catchErrors(
 
         const result = await workerService.getWorkerData({
             organizationId,
+            viewerUserId: req.userId,
             status: status as any,
             search: search as string | undefined,
             page: page ? parseInt(page as string, 10) : 1,
@@ -116,6 +117,7 @@ export const getWorkerById = catchErrors(
         const worker = await workerService.getWorkerById(
             workerId,
             organizationId,
+            req.userId,
         );
         if (!worker) {
             return res
@@ -404,6 +406,7 @@ export const getWorkerHistory = catchErrors(
         const result = await workerService.getWorkerHistory({
             organizationId,
             workerId,
+            viewerUserId: req.userId,
         });
         return res.status(200).json({ success: true, data: result });
     },

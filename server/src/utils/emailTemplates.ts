@@ -28,6 +28,38 @@ export const getQuestionnaireTemplate = (url: string) => ({
     html: `<!doctype html><html lang="de-DE"><head><meta content="text/html; charset=utf-8" http-equiv="Content-Type"/><title>Personalfragebogen</title><style type="text/css">a:hover{text-decoration:underline!important}</style></head><body marginheight="0" topmargin="0" marginwidth="0" style="margin:0;background-color:#f2f3f8;" leftmargin="0"><table cellspacing="0" border="0" cellpadding="0" width="100%" bgcolor="#f2f3f8" style="font-family:'Open Sans',sans-serif;"><tr><td><table style="background-color:#f2f3f8;max-width:670px;margin:0 auto;" width="100%" border="0" align="center" cellpadding="0" cellspacing="0"><tr><td style="height:80px;">&nbsp;</td></tr><tr><td><table width="95%" border="0" align="center" cellpadding="0" cellspacing="0" style="max-width:670px;background:#fff;border-radius:3px;text-align:center;box-shadow:0 6px 18px 0 rgba(0,0,0,.06);"><tr><td style="height:40px;">&nbsp;</td></tr><tr><td style="padding:0 35px;"><h1 style="color:#1e1e2d;font-weight:500;margin:0;font-size:32px;font-family:'Rubik',sans-serif;">Personalfragebogen</h1><span style="display:inline-block;vertical-align:middle;margin:29px 0 26px;border-bottom:1px solid #cecece;width:100px;"></span><p style="color:#455056;font-size:15px;line-height:24px;margin:0;">Bitte ergänzen Sie Ihre Angaben über den folgenden Link. Wir benötigen Adresse, Geburtsdatum und Kleidergrößen.</p><a target="_blank" href="${url}" style="background:#2f89ff;text-decoration:none !important;font-weight:500;margin-top:24px;color:#fff;text-transform:uppercase;font-size:14px;padding:10px 24px;display:inline-block;border-radius:50px;">Fragebogen öffnen</a></td></tr><tr><td style="height:40px;">&nbsp;</td></tr></table></td></tr><tr><td style="height:20px;">&nbsp;</td></tr><tr><td style="height:80px;">&nbsp;</td></tr></table></td></tr></table></body></html>`,
 });
 
+function escapeHtml(value: string) {
+    return value
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+
+export const getTaskMentionTemplate = ({
+    recipientName,
+    senderName,
+    sourceTitle,
+    message,
+    actionUrl,
+}: {
+    recipientName: string;
+    senderName: string;
+    sourceTitle: string;
+    message: string;
+    actionUrl: string;
+}) => {
+    const safeRecipient = escapeHtml(recipientName);
+    const safeSender = escapeHtml(senderName);
+    const safeTitle = escapeHtml(sourceTitle);
+    const safeMessage = escapeHtml(message).replace(/\n/g, "<br>");
+    return {
+        subject: `Dringende Aufgabe: ${sourceTitle.replace(/\s+/g, " ").trim()}`,
+        text: `Hallo ${recipientName},\n\n${senderName} hat dich in der Aufgabe „${sourceTitle}“ erwähnt:\n\n${message}\n\nÖffne deine Aufgaben: ${actionUrl}`,
+        html: `<!doctype html><html lang="de-DE"><head><meta charset="utf-8"><title>Dringende Aufgabe</title></head><body style="margin:0;padding:24px;background:#f5f7fb;font-family:Arial,sans-serif;"><table width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td align="center"><table width="640" cellspacing="0" cellpadding="0" border="0" style="max-width:640px;background:#ffffff;border-radius:12px;padding:28px;"><tr><td><h1 style="margin:0 0 12px;color:#151a22;font-size:24px;">Dringende Aufgabe</h1><p style="margin:0 0 16px;color:#334155;line-height:1.6;">Hallo ${safeRecipient},</p><p style="margin:0 0 16px;color:#334155;line-height:1.6;">${safeSender} hat dich in der Aufgabe „${safeTitle}“ erwähnt.</p><p style="margin:0 0 24px;color:#334155;line-height:1.6;">${safeMessage}</p><a href="${escapeHtml(actionUrl)}" style="display:inline-block;background:#1d4ed8;color:#ffffff;text-decoration:none;font-weight:600;padding:10px 16px;border-radius:8px;">Zu meinen Aufgaben</a></td></tr></table></td></tr></table></body></html>`,
+    };
+};
+
 export const getWorkerLifecycleCreatedTemplate = ({
     workerName,
     lifecycleType,

@@ -65,6 +65,7 @@ export interface GetWorkersInput {
     page?: number;
     limit?: number;
     includeArchived?: boolean;
+    viewerUserId: string;
 }
 
 export interface ArchiveWorkerInput {
@@ -118,6 +119,7 @@ export interface CreateIssueInput {
     priority?: IssuePriority;
     dueDate?: Date;
     automation?: string | null;
+    assigneeOnly?: boolean;
 }
 
 export interface UpdateIssueInput {
