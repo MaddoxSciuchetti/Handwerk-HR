@@ -30,7 +30,7 @@ jest.mock("@/lib/prisma", () => ({
         },
         issueAuditLog: { create: jest.fn() },
         worker: { findFirst: jest.fn() },
-        preparedDocument: { findFirst: jest.fn() },
+        preparedDocument: { findFirst: jest.fn(), update: jest.fn() },
     },
 }));
 jest.mock("@/services/preparedDocument", () => ({
@@ -279,13 +279,50 @@ describe("contract send task status", () => {
         artifactId: "pdf",
     };
 
-    it("refuses to email the contract and leaves the onboarding tasks unchanged", async () => {
-        await expect(sendFilledEmploymentContract(sendParams)).rejects.toThrow(
-            "nicht per E-Mail",
-        );
+    it("marks the print task done without emailing the contract", async () => {
+        (prisma.issue.findFirst as jest.Mock).mockResolvedValue({
+            id: "send-task",
+            status: "in_progress",
+            kind: "contract_send",
+        });
+        (prisma.preparedDocument.findFirst as jest.Mock).mockResolvedValue({
+            id: "pdf",
+            masterId: "master",
+        });
+
+        await sendFilledEmploymentContract(sendParams);
+
         expect(sendPreparedDocument).not.toHaveBeenCalled();
-        expect(prisma.issue.update).not.toHaveBeenCalled();
-        expect(prisma.issueAuditLog.create).not.toHaveBeenCalled();
+        expect(prisma.preparedDocument.update).toHaveBeenCalledWith(
+            expect.objectContaining({
+                where: { id: "pdf" },
+                data: expect.objectContaining({
+                    status: "sent",
+                    providerId: "office-print",
+                }),
+            }),
+        );
+        expect(prisma.employmentContract.update).toHaveBeenCalledWith(
+            expect.objectContaining({
+                where: { id: "contract" },
+                data: expect.objectContaining({
+                    outgoingPdfId: "pdf",
+                    status: "ready",
+                }),
+            }),
+        );
+        expect(prisma.issue.update).toHaveBeenCalledWith({
+            where: { id: "send-task" },
+            data: { status: "done" },
+        });
+        expect(prisma.issueAuditLog.create).toHaveBeenCalledWith(
+            expect.objectContaining({
+                data: expect.objectContaining({
+                    issueId: "send-task",
+                    newValue: { status: "done" },
+                }),
+            }),
+        );
         expect(prisma.issue.deleteMany).not.toHaveBeenCalled();
     });
 });

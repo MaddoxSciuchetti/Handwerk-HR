@@ -69,6 +69,21 @@ export function fetchPreparedEmploymentContractPdf(
   );
 }
 
+export function recordPrintedEmploymentContract(
+  workerId: string,
+  engagementId: string,
+  issueId: string,
+  artifactId: string
+): Promise<EmploymentContractDraft> {
+  return API.post<
+    { issueId: string; artifactId: string },
+    ContractResponse
+  >(`worker/${workerId}/engagements/${engagementId}/contract/send`, {
+    issueId,
+    artifactId,
+  }).then((response) => response.data);
+}
+
 export function prepareEmploymentContractPdf(
   workerId: string,
   engagementId: string,

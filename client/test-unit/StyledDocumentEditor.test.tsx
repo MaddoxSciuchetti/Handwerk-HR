@@ -123,6 +123,28 @@ it('shows the actual prepared PDF and requires an explicit approval', () => {
   fireEvent.click(screen.getByRole('checkbox'));
   expect(approve).toHaveBeenCalledWith(true);
 });
+it('shows the prepared PDF at the same page size as the Word preview', () => {
+  render(
+    <PreparedPdfPreview
+      prepared={{
+        id: 'pdf-1',
+        previewUrl: 'https://signed.example/pdf-1',
+        contentHash: 'hash',
+        masterRevision: 1,
+      }}
+      approved={false}
+      onApprove={vi.fn()}
+      page={{ width: 210, height: 297 }}
+    />
+  );
+  const frame = screen.getByTitle('Finales PDF vor dem Versand');
+  expect(frame).toHaveStyle({ width: '210mm', height: '297mm' });
+  expect(frame).toHaveAttribute(
+    'src',
+    'https://signed.example/pdf-1#view=FitH&zoom=page-width&toolbar=0&navpanes=0&scrollbar=1'
+  );
+  expect(frame.parentElement?.parentElement).not.toHaveClass('max-w-3xl');
+});
 it('blocks approval for an uncertain provider outcome', () => {
   render(
     <PreparedPdfPreview

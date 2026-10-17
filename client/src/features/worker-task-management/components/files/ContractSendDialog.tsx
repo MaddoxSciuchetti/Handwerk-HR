@@ -2,6 +2,9 @@ import LoadingAlert from '@/components/alerts/LoadingAlert';
 import ModalOverlay from '@/components/modal/ModalOverlay';
 import { Button } from '@/components/ui/button';
 import type { DocumentSegment } from '@/features/settings/documents/documentSegments';
+import { FETCHDESCRIPTION } from '@/features/all-tasks/consts/query.consts';
+import { ALL_WORKER_DATA } from '@/features/worker-lifecycle/consts/query-key.consts';
+import { WORKERBYID } from '@/features/worker-task-management/consts/query-key.consts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
@@ -9,6 +12,7 @@ import { toast } from 'sonner';
 import {
   fetchPreparedEmploymentContractPdf,
   prepareEmploymentContractPdf,
+  recordPrintedEmploymentContract,
 } from '../../api/employmentContract.api';
 import { printPdfBlob } from '../../printPdf';
 import { PreparedPdfPreview, type PreparedPdf } from './PreparedPdfPreview';
@@ -26,6 +30,10 @@ import {
   useSaveEmploymentContract,
 } from '../../hooks/useEmploymentContract';
 import { ContractDraftBody } from './ContractDraftBody';
+import {
+  documentPreviewModalPanel,
+  documentPreviewModalSize,
+} from './documentPreviewModal';
 import { UnmatchedQuestionnaireAnswers } from './UnmatchedQuestionnaireAnswers';
 
 function visibleUnmatchedAnswers(
@@ -89,9 +97,19 @@ export function ContractSendDialog({
         throw new Error('PDF konnte nicht geladen werden');
       }
       await printPdfBlob(blob);
+      await recordPrintedEmploymentContract(
+        workerId,
+        engagementId,
+        issueId,
+        prepared!.id
+      );
     },
     onSuccess: () => {
-      toast.success('Druckdialog geöffnet');
+      void queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] });
+      void queryClient.invalidateQueries({ queryKey: [WORKERBYID] });
+      void queryClient.invalidateQueries({ queryKey: [ALL_WORKER_DATA] });
+      toast.success('Vertrag gedruckt. Die Aufgabe ist erledigt.');
+      onClose();
     },
     onError: (error) =>
       toast.error(
@@ -201,9 +219,9 @@ export function ContractSendDialog({
     <ModalOverlay
       handleToggle={() => void close()}
       className="p-3 sm:p-6"
-      size={prepared ? 'max-w-3xl' : 'max-w-7xl'}
+      size={documentPreviewModalSize}
     >
-      <div className="flex h-[85dvh] max-h-[85dvh] min-h-0 flex-col gap-4 overflow-hidden rounded-2xl bg-card p-4 text-card-foreground sm:p-6">
+      <div className={documentPreviewModalPanel}>
         {isLoading ? <LoadingAlert className="min-h-40" /> : null}
         {isError || (!isLoading && !data) ? (
           <p className="text-sm text-destructive">
@@ -216,7 +234,7 @@ export function ContractSendDialog({
               <h2 className="text-base font-medium">{data.name}</h2>
               <p className="text-sm text-muted-foreground">
                 {alreadySent
-                  ? 'Der Vertrag wurde versendet.'
+                  ? 'Der Vertrag wurde gedruckt.'
                   : 'Prüfen Sie den ausgefüllten Vertrag und drucken Sie ihn zur Unterschrift im Büro.'}
               </p>
               {needsResync ? (
@@ -294,6 +312,10 @@ export function ContractSendDialog({
                 onApprove={setApproved}
                 frameTitle="Arbeitsvertrag zum Drucken"
                 confirmLabel="Ich habe dieses PDF geprüft und drucke es zur Unterschrift im Büro."
+                page={{
+                  width: data.document.page.width,
+                  height: data.document.page.height,
+                }}
               />
             ) : (
               <div className="flex min-h-0 flex-1 gap-4 overflow-hidden">

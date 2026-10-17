@@ -487,14 +487,71 @@ export async function readPreparedEmploymentContractPdf(
 }
 
 export async function sendFilledEmploymentContract(
-    _params: ContractParams & {
+    params: ContractParams & {
         actorUserId: string;
         issueId: string;
         artifactId: string;
     },
 ) {
-    throw new AppError(
-        CONFLICT,
-        "Der Arbeitsvertrag wird im Büro gedruckt und nicht per E-Mail versendet.",
-    );
+    const contract = await findContract(params);
+    if (!contract) throw new AppError(NOT_FOUND, "Vertrag nicht gefunden.");
+
+    const issue = await prisma.issue.findFirst({
+        where: {
+            id: params.issueId,
+            workerEngagementId: params.engagementId,
+            kind: "contract_send",
+        },
+    });
+    if (!issue) throw new AppError(NOT_FOUND, "Aufgabe nicht gefunden.");
+
+    const artifact = await prisma.preparedDocument.findFirst({
+        where: {
+            id: params.artifactId,
+            masterId: contract.masterId,
+            organizationId: params.organizationId,
+            engagementId: params.engagementId,
+            kind: "employment_contract",
+        },
+    });
+    if (!artifact) throw new AppError(NOT_FOUND, "PDF nicht gefunden.");
+
+    const printedAt = new Date();
+    await prisma.$transaction(async (tx) => {
+        await tx.preparedDocument.update({
+            where: { id: artifact.id },
+            data: {
+                status: "sent",
+                sentAt: printedAt,
+                approvedBy: params.actorUserId,
+                approvedAt: printedAt,
+                providerId: "office-print",
+            },
+        });
+        await tx.employmentContract.update({
+            where: { id: contract.id },
+            data: {
+                sentAt: printedAt,
+                outgoingPdfId: artifact.id,
+                status: contract.status === "signed" ? "signed" : "ready",
+            },
+        });
+        if (issue.status !== "done") {
+            await tx.issue.update({
+                where: { id: issue.id },
+                data: { status: "done" },
+            });
+            await tx.issueAuditLog.create({
+                data: {
+                    issueId: issue.id,
+                    actorUserId: params.actorUserId,
+                    action: "issue.updated",
+                    oldValue: { status: issue.status },
+                    newValue: { status: "done" },
+                },
+            });
+        }
+    });
+
+    return getEngagementContract(params);
 }

@@ -52,6 +52,7 @@ export function DocumentEditorCanvas({
             ? {
                 zoom: zoom / 100,
                 width: document.page.width + 'mm',
+                minWidth: document.page.width + 'mm',
                 maxWidth: 'none',
                 flexShrink: 0,
                 position: 'relative' as const,

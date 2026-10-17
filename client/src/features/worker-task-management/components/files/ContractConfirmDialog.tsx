@@ -12,6 +12,10 @@ import {
   useEmploymentContract,
 } from '../../hooks/useEmploymentContract';
 import { ContractDraftBody } from './ContractDraftBody';
+import {
+  documentPreviewModalPanel,
+  documentPreviewModalSize,
+} from './documentPreviewModal';
 
 type ContractConfirmDialogProps = {
   workerId: string;
@@ -50,8 +54,8 @@ export function ContractConfirmDialog({
   });
 
   return (
-    <ModalOverlay handleToggle={onClose} size="max-w-3xl">
-      <div className="flex max-h-[85vh] flex-col gap-4 overflow-hidden rounded-2xl bg-card p-6 text-card-foreground">
+    <ModalOverlay handleToggle={onClose} size={documentPreviewModalSize}>
+      <div className={documentPreviewModalPanel}>
         {isLoading ? <LoadingAlert className="min-h-40" /> : null}
         {isError || (!isLoading && !data) ? (
           <p className="text-sm text-destructive">
@@ -60,31 +64,33 @@ export function ContractConfirmDialog({
         ) : null}
         {data ? (
           <>
-            <div className="pr-8">
+            <div className="shrink-0 pr-8">
               <h2 className="text-base font-medium">{data.name}</h2>
               <p className="text-sm text-muted-foreground">
                 Der unterschriebene Vertrag ist eingegangen. Bitte bestätigen
                 Sie ihn.
               </p>
             </div>
-            <ContractDraftBody
-              document={data.document}
-              segments={data.segments}
-              values={data.values}
-              readOnly
-              onValueChange={() => undefined}
-            />
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+              <ContractDraftBody
+                document={data.document}
+                segments={data.segments}
+                values={data.values}
+                readOnly
+                onValueChange={() => undefined}
+              />
+            </div>
             {data.signedFileUrl ? (
               <a
                 href={data.signedFileUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="text-sm underline"
+                className="shrink-0 text-sm underline"
               >
                 Unterschriebenes PDF öffnen
               </a>
             ) : null}
-            <div className="flex justify-end">
+            <div className="flex shrink-0 justify-end">
               <Button
                 type="button"
                 className="rounded-2xl"

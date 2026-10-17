@@ -6,7 +6,7 @@ export type PreparedPdf = {
   status?: string;
 };
 
-function viewerSrc(url: string) {
+function viewerSrc(url: string, pageSized: boolean) {
   const hashIndex = url.indexOf('#');
   const base = hashIndex === -1 ? url : url.slice(0, hashIndex);
   const params = new URLSearchParams(
@@ -14,7 +14,7 @@ function viewerSrc(url: string) {
   );
   params.set('view', 'FitH');
   params.set('zoom', 'page-width');
-  params.set('toolbar', '1');
+  params.set('toolbar', pageSized ? '0' : '1');
   params.set('navpanes', '0');
   params.set('scrollbar', '1');
   return `${base}#${params.toString()}`;
@@ -25,6 +25,8 @@ type PreparedPdfPreviewProps = {
   onApprove: (approved: boolean) => void;
   frameTitle?: string;
   confirmLabel?: string;
+  /** Paper size of the Word preview, in millimetres. */
+  page?: { width: number; height: number };
 };
 export function PreparedPdfPreview({
   prepared,
@@ -32,14 +34,31 @@ export function PreparedPdfPreview({
   onApprove,
   frameTitle = 'Finales PDF vor dem Versand',
   confirmLabel = 'Ich habe dieses PDF geprüft und bestätige den Versand.',
+  page,
 }: PreparedPdfPreviewProps) {
   return (
-    <div className="mx-auto flex min-h-0 w-full min-w-0 max-w-3xl flex-1 flex-col gap-3 overflow-hidden">
-      <div className="relative min-h-0 flex-1 overflow-hidden rounded-lg border bg-muted shadow-sm">
+    <div
+      className={
+        page
+          ? 'mx-auto flex min-h-0 w-full min-w-0 flex-1 flex-col gap-3 overflow-hidden'
+          : 'mx-auto flex min-h-0 w-full min-w-0 max-w-3xl flex-1 flex-col gap-3 overflow-hidden'
+      }
+    >
+      <div className="relative min-h-0 flex-1 overflow-auto rounded-lg border bg-muted shadow-sm">
         <iframe
           title={frameTitle}
-          src={viewerSrc(prepared.previewUrl)}
-          className="absolute inset-0 h-full w-full"
+          src={viewerSrc(prepared.previewUrl, Boolean(page))}
+          className={
+            page ? 'mx-auto block max-w-full' : 'absolute inset-0 h-full w-full'
+          }
+          style={
+            page
+              ? {
+                  width: page.width + 'mm',
+                  height: page.height + 'mm',
+                }
+              : undefined
+          }
         />
       </div>
       <a

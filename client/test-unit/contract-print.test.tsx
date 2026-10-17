@@ -7,6 +7,7 @@ import {
   fetchPreparedEmploymentContractPdf,
   getEngagementContract,
   prepareEmploymentContractPdf,
+  recordPrintedEmploymentContract,
   saveEngagementContractDraft,
 } from '@/features/worker-task-management/api/employmentContract.api';
 import { printPdfBlob } from '@/features/worker-task-management/printPdf';
@@ -24,6 +25,7 @@ vi.mock(
   () => ({
     fetchPreparedEmploymentContractPdf: vi.fn(),
     prepareEmploymentContractPdf: vi.fn(),
+    recordPrintedEmploymentContract: vi.fn(),
     getEngagementContract: vi.fn(),
     saveEngagementContractDraft: vi.fn(),
     resyncEngagementContractFromQuestionnaire: vi.fn(),
@@ -61,6 +63,8 @@ it('prints the reviewed contract instead of emailing it', async () => {
   vi.mocked(fetchPreparedEmploymentContractPdf).mockResolvedValue(
     new Blob(['%PDF'], { type: 'application/pdf' })
   );
+  vi.mocked(recordPrintedEmploymentContract).mockResolvedValue(draft);
+  const onClose = vi.fn();
   const user = userEvent.setup();
   const query = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -72,7 +76,7 @@ it('prints the reviewed contract instead of emailing it', async () => {
         workerId="worker"
         engagementId="engagement"
         issueId="issue"
-        onClose={() => undefined}
+        onClose={onClose}
       />
     </QueryClientProvider>
   );
@@ -100,6 +104,13 @@ it('prints the reviewed contract instead of emailing it', async () => {
     'pdf-1'
   );
   expect(printPdfBlob).toHaveBeenCalled();
+  expect(recordPrintedEmploymentContract).toHaveBeenCalledWith(
+    'worker',
+    'engagement',
+    'issue',
+    'pdf-1'
+  );
+  expect(onClose).toHaveBeenCalled();
 });
 
 it('saves the draft without preparing a pdf', async () => {

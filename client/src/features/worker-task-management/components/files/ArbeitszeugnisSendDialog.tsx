@@ -19,6 +19,10 @@ import { ContractDraftBody } from '@/features/worker-task-management/components/
 import { UnmatchedQuestionnaireAnswers } from '@/features/worker-task-management/components/files/UnmatchedQuestionnaireAnswers';
 import { PreparedPdfPreview, type PreparedPdf } from './PreparedPdfPreview';
 import {
+  documentPreviewModalPanel,
+  documentPreviewModalSize,
+} from './documentPreviewModal';
+import {
   documentFields,
   fieldComplete,
   fromSegments,
@@ -183,9 +187,10 @@ export function ArbeitszeugnisSendDialog({
   return (
     <ModalOverlay
       handleToggle={() => void close()}
-      size={showAside ? 'max-w-5xl' : 'max-w-3xl'}
+      className="p-3 sm:p-6"
+      size={documentPreviewModalSize}
     >
-      <div className="flex h-[85vh] max-h-[85vh] min-h-0 flex-col gap-4 overflow-hidden rounded-2xl bg-card p-6 text-card-foreground">
+      <div className={documentPreviewModalPanel}>
         {preview.isLoading ? <LoadingAlert className="min-h-40" /> : null}
         {preview.isError || (!preview.isLoading && !data) ? (
           <p className="text-sm text-destructive">
@@ -217,6 +222,10 @@ export function ArbeitszeugnisSendDialog({
                 prepared={prepared}
                 approved={approved}
                 onApprove={setApproved}
+                page={{
+                  width: data.document.page.width,
+                  height: data.document.page.height,
+                }}
               />
             ) : (
               <div className="flex min-h-0 flex-1 gap-4 overflow-hidden">

@@ -26,14 +26,33 @@ export function printPdfBlob(blob: Blob) {
         reject(new Error('Der Druckdialog konnte nicht geöffnet werden.'));
         return;
       }
+
+      let settled = false;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        frameWindow.removeEventListener('afterprint', finish);
+        window.removeEventListener('afterprint', finish);
+        iframe.remove();
+        URL.revokeObjectURL(url);
+        resolve();
+      };
+
+      frameWindow.addEventListener('afterprint', finish);
+      window.addEventListener('afterprint', finish);
       window.setTimeout(() => {
-        frameWindow.focus();
-        frameWindow.print();
-        window.setTimeout(() => {
+        try {
+          frameWindow.focus();
+          frameWindow.print();
+        } catch {
+          if (settled) return;
+          settled = true;
+          frameWindow.removeEventListener('afterprint', finish);
+          window.removeEventListener('afterprint', finish);
           iframe.remove();
           URL.revokeObjectURL(url);
-        }, 60_000);
-        resolve();
+          reject(new Error('Der Druckdialog konnte nicht geöffnet werden.'));
+        }
       }, 300);
     };
     iframe.src = url;
