@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { contractFieldKey, unusedFieldKey } from '../util/fieldKey.util';
+import { insertDocumentField } from '../util/insertDocumentField.util';
 import { FIELD_DRAG_TYPE } from '../consts/editor.consts';
 
 type FieldType = 'text' | 'date' | 'checkbox' | 'points';
@@ -39,6 +40,7 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
   const [label, setLabel] = useState('');
   const [fieldKey, setFieldKey] = useState('');
   const [fieldType, setFieldType] = useState<FieldType>('text');
+  const [checkboxGlyph, setCheckboxGlyph] = useState('☐');
   const [required, setRequired] = useState(true);
   const nextField = () => {
     const requested = contractFieldKey(label, fieldKey);
@@ -53,19 +55,26 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
   };
   const insertField = () => {
     const field = nextField();
-    editor
-      .chain()
-      .focus()
-      .insertContent({
-        type: field.fieldType === 'points' ? 'descriptionPoints' : 'documentField',
-        attrs: field,
-      })
-      .run();
+    if (field.fieldType === 'points') {
+      editor
+        .chain()
+        .focus()
+        .insertContent({ type: 'descriptionPoints', attrs: field })
+        .run();
+    } else {
+      insertDocumentField(editor, { ...field, checkboxGlyph });
+    }
     setLabel('');
     setFieldKey('');
   };
   const startFieldDrag = (event: DragEvent<HTMLSpanElement>) => {
-    event.dataTransfer.setData(FIELD_DRAG_TYPE, JSON.stringify(nextField()));
+    event.dataTransfer.setData(
+      FIELD_DRAG_TYPE,
+      JSON.stringify({
+        ...nextField(),
+        ...(fieldType === 'checkbox' ? { checkboxGlyph } : {}),
+      })
+    );
     event.dataTransfer.effectAllowed = 'copy';
   };
 
@@ -113,6 +122,24 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
           ))}
         </SelectContent>
       </Select>
+      {fieldType === 'checkbox' ? (
+        <>
+          <Select value={checkboxGlyph} onValueChange={setCheckboxGlyph}>
+            <SelectTrigger aria-label="Kästchenform" size="sm" className="w-16">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="☐">☐</SelectItem>
+              <SelectItem value="□">□</SelectItem>
+            </SelectContent>
+          </Select>
+          <span className="text-xs text-muted-foreground">
+            Vorhandenes Kästchen markieren und ersetzen, oder neues einsetzen.
+            Schlüssel: {contractFieldKey(label, fieldKey) || '…'} · true =
+            angekreuzt, false = leer
+          </span>
+        </>
+      ) : null}
       <Label className="h-7 gap-1.5 px-1 text-xs font-normal">
         <input
           type="checkbox"

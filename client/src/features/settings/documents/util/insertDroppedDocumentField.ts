@@ -11,6 +11,7 @@ type DroppedDocumentField = {
   label: string;
   fieldType?: string;
   required?: boolean;
+  checkboxGlyph?: string;
 };
 
 type DropSession = {
@@ -41,14 +42,22 @@ export function insertDroppedDocumentField(
   const nodeType = points
     ? view.state.schema.nodes.descriptionPoints
     : view.state.schema.nodes.documentField;
-  const node = nodeType.create({
-    key: dragged.key,
-    label: dragged.label,
-    fieldType: points ? 'points' : (dragged.fieldType ?? 'text'),
-    required: dragged.required ?? dragged.fieldType !== 'checkbox',
-  });
+  if (!nodeType) return false;
   const $pos = view.state.doc.resolve(pos.pos);
   const at = !points || $pos.parent.type.name === 'doc' ? pos.pos : $pos.after(1);
+  const node = nodeType.create(
+    {
+      key: dragged.key,
+      label: dragged.label,
+      fieldType: points ? 'points' : (dragged.fieldType ?? 'text'),
+      required: dragged.required ?? dragged.fieldType !== 'checkbox',
+      ...(dragged.fieldType === 'checkbox' && dragged.checkboxGlyph
+        ? { checkboxGlyph: dragged.checkboxGlyph }
+        : {}),
+    },
+    null,
+    points ? undefined : $pos.marks()
+  );
   if (!view.state.doc.canReplaceWith(at, at, node.type)) return false;
   view.dispatch(view.state.tr.insert(at, node));
   setDraggedContractInput(null);

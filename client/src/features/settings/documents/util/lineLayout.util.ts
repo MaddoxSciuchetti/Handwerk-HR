@@ -50,7 +50,8 @@ export function labelContent(label: Record<string, unknown>): EditorNode[] {
     if (props.underline === true) marks.push({ type: 'underline' });
     const style: Record<string, unknown> = {};
     const size = Number(props.fontSize);
-    if (size > 0) style.fontSize = `${size}pt`;
+    // Font sizes are numeric points throughout the document model.
+    if (size > 0) style.fontSize = size;
     if (typeof props.fontFamily === 'string')
       style.fontFamily = props.fontFamily;
     if (typeof props.color === 'string') style.color = props.color;
@@ -104,7 +105,11 @@ export function paintRules(target: HTMLElement, lines: unknown) {
 export function normalizeLineLabels<T>(node: T): T {
   if (!node || typeof node !== 'object') return node;
   const current = node as EditorNode;
-  const content = current.content?.map((child) => normalizeLineLabels(child));
+  // Word fields can leave empty runs after trimming cached or leading text.
+  // Keep blank paragraphs and whitespace, but never hand ProseMirror an empty text node.
+  const content = current.content
+    ?.filter((child) => child.type !== 'text' || child.text !== '')
+    .map((child) => normalizeLineLabels(child));
   if (current.type !== 'lineGroup') return { ...current, content } as T;
   const labels = Array.isArray(current.attrs?.labels)
     ? (current.attrs.labels as Record<string, unknown>[])

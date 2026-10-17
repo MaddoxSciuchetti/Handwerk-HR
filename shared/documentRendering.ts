@@ -113,7 +113,9 @@ export function lineLabelRunStyle(props: Record<string, unknown>): string {
 }
 
 function inlineText(node: DocumentNode): string {
-  return (node.content ?? []).map((child) => child.text ?? inlineText(child)).join("");
+  return (node.content ?? [])
+    .map((child) => child.text ?? inlineText(child))
+    .join("");
 }
 
 function storedLabelText(label: Record<string, unknown>): string {
@@ -216,6 +218,36 @@ export function renderNode(
   }
   if (node.type === "documentField") {
     const key = String(node.attrs?.key);
+    if (node.attrs?.fieldType === "checkbox" && node.attrs.checkboxGlyph) {
+      const glyph = String(node.attrs.checkboxGlyph);
+      const symbol =
+        (values[key] ?? node.attrs.checkboxValue) === "true"
+          ? glyph === "□"
+            ? "×"
+            : glyph === "☑"
+              ? "☑"
+              : "☒"
+          : glyph === "□"
+            ? "□"
+            : "☐";
+      return (
+        '<span style="position:relative;display:inline-block">' +
+        '<span style="visibility:' +
+        (symbol !== glyph && glyph !== "□" ? "hidden" : "visible") +
+        '">' +
+        renderNode({ type: "text", text: glyph, marks: node.marks }, values) +
+        "</span>" +
+        (symbol !== glyph
+          ? '<span style="position:absolute;inset:0;text-align:center">' +
+            renderNode(
+              { type: "text", text: symbol, marks: node.marks },
+              values,
+            ) +
+            "</span>"
+          : "") +
+        "</span>"
+      );
+    }
     if (node.attrs?.fieldType === "checkbox")
       return (
         '<span class="pdf-checkbox">' +
@@ -302,7 +334,9 @@ export function renderNode(
       contentLabels.length ? contentLabels : storedLabels.map(() => null)
     )
       .map((child, index) => {
-        const stored = storedLabels[index] as Record<string, unknown> | undefined;
+        const stored = storedLabels[index] as
+          | Record<string, unknown>
+          | undefined;
         if (
           stored &&
           (!child || inlineText(child) === storedLabelText(stored))
@@ -332,7 +366,9 @@ export function renderNode(
         if (!child) return "";
         return positionedLabelHtml(
           child.attrs ?? {},
-          (child.content ?? []).map((part) => renderNode(part, values)).join(""),
+          (child.content ?? [])
+            .map((part) => renderNode(part, values))
+            .join(""),
         );
       })
       .join("");

@@ -1,3 +1,5 @@
+import { resolve } from "node:path";
+
 const getEnv = (key: string, defaultValue?: string): string => {
     const value = process.env[key] || defaultValue;
 
@@ -38,8 +40,14 @@ export const GOOGLE_OAUTH_REDIRECT_URI =
 export const GOOGLE_OAUTH_REFRESH_TOKEN =
     process.env.GOOGLE_OAUTH_REFRESH_TOKEN?.trim() ?? "";
 export const OPENAI_API_KEY = process.env.OPENAI_API_KEY?.trim() ?? "";
-export const GOTENBERG_URL = process.env.GOTENBERG_URL?.trim() ?? "";
-export const DOCUMENT_FONT_DIR = process.env.DOCUMENT_FONT_DIR?.trim() ?? "";
+// Local document previews use the repository's private renderer and font assets.
+// Production still requires an explicitly configured renderer and font directory.
+export const GOTENBERG_URL =
+    process.env.GOTENBERG_URL?.trim() ||
+    (NODE_ENV === "development" ? "http://127.0.0.1:3001" : "");
+export const DOCUMENT_FONT_DIR =
+    process.env.DOCUMENT_FONT_DIR?.trim() ||
+    (NODE_ENV === "development" ? resolve("document-fonts") : "");
 
 export const MICROSOFT_365_ENV_KEYS = [
     "MICROSOFT_365_TENANT_ID",

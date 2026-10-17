@@ -1,7 +1,10 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useEditor, useEditorState } from '@tiptap/react';
 import type { StyledDocument } from '../styledDocument';
-import { lineLabelClick } from '../util/lineLabelSelection.util';
+import {
+  documentTextClick,
+  documentTextPointerDown,
+} from '../util/documentTextSelection.util';
 import { normalizeLineLabels } from '../util/lineLayout.util';
 import { insertDroppedDocumentField } from '../util/insertDroppedDocumentField';
 import { documentEditorExtensions } from '../editor/documentEditorExtensions';
@@ -54,9 +57,9 @@ export function useStyledDocumentEditor({
       });
     },
     editorProps: {
-      handleDOMEvents: {
-        mousedown: (view, event) => lineLabelClick(view, event),
-      },
+      handleDOMEvents: { mousedown: documentTextPointerDown },
+      handleClick: (view, _pos, event) => documentTextClick(view, event),
+      handleDoubleClick: (view, _pos, event) => documentTextClick(view, event),
       handleDrop: (view, event) =>
         insertDroppedDocumentField(view, event, latest.current),
     },

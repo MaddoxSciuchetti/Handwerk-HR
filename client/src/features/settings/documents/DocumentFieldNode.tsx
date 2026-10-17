@@ -104,11 +104,24 @@ function DocumentFieldView({ node, updateAttributes }: NodeViewProps) {
   const key = String(node.attrs.key);
   const label = String(node.attrs.label);
   const value =
-    context.values[key] ?? (node.attrs.fieldType === 'checkbox' ? 'false' : '');
+    context.values[key] ??
+    node.attrs.checkboxValue ??
+    (node.attrs.fieldType === 'checkbox' ? 'false' : '');
   const inputValue =
     node.attrs.fieldType === 'date' && /^\d{2}\.\d{2}\.\d{4}$/.test(value)
       ? value.split('.').reverse().join('-')
       : value;
+  const glyph = node.attrs.checkboxGlyph;
+  const checked = value === 'true';
+  const checkboxSymbol = checked
+    ? glyph === '□'
+      ? '×'
+      : glyph === '☑'
+        ? '☑'
+        : '☒'
+    : glyph === '□'
+      ? '□'
+      : '☐';
   return (
     <NodeViewWrapper
       as="span"
@@ -131,7 +144,63 @@ function DocumentFieldView({ node, updateAttributes }: NodeViewProps) {
         }
       }}
     >
-      {context.master ? (
+      {node.attrs.fieldType === 'checkbox' && glyph ? (
+        context.master ? (
+          <span
+            data-drag-handle
+            title={`${label} (${key})`}
+            aria-label={`${label} (${key})`}
+          >
+            {glyph}
+          </span>
+        ) : (
+          <span
+            style={{ position: 'relative', display: 'inline-block' }}
+            title={`${label} (${key})`}
+          >
+            <span
+              aria-hidden="true"
+              style={{
+                visibility:
+                  checkboxSymbol !== glyph && glyph !== '□'
+                    ? 'hidden'
+                    : 'visible',
+              }}
+            >
+              {glyph}
+            </span>
+            {checkboxSymbol !== glyph ? (
+              <span
+                aria-hidden="true"
+                style={{ position: 'absolute', inset: 0, textAlign: 'center' }}
+              >
+                {checkboxSymbol}
+              </span>
+            ) : null}
+            <input
+              type="checkbox"
+              aria-label={label}
+              checked={checked}
+              disabled={context.readOnly}
+              onChange={(event) =>
+                context.onValueChange(
+                  key,
+                  event.target.checked ? 'true' : 'false'
+                )
+              }
+              style={{
+                position: 'absolute',
+                inset: 0,
+                width: '100%',
+                height: '100%',
+                margin: 0,
+                opacity: 0,
+                cursor: context.readOnly ? 'default' : 'pointer',
+              }}
+            />
+          </span>
+        )
+      ) : context.master ? (
         <MasterDocumentField
           fieldKey={key}
           label={label}
@@ -199,6 +268,8 @@ export const DocumentFieldNode = Node.create({
       label: { default: '' },
       fieldType: { default: 'text' },
       required: { default: true },
+      checkboxGlyph: { default: null },
+      checkboxValue: { default: null },
     };
   },
   parseHTML() {

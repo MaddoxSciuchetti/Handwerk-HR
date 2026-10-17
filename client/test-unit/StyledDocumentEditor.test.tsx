@@ -176,7 +176,7 @@ it('keeps cursor and controlled text stable across typing, deletion and parent e
   expect(onChange).toHaveBeenCalledTimes(1);
   act(() => {
     editor.commands.setTextSelection({ from: 2, to: 4 });
-    editor.commands.deleteSelection();
+    editor.view.dispatch(editor.state.tr.deleteSelection());
   });
   expect(editor.state.selection.from).toBe(2);
   expect(editor.getText()).toContain('AhXa beta gamma');
@@ -486,4 +486,279 @@ it('reviews a contract as separate pages with the letterhead on the sheet', asyn
   expect(
     screen.queryByText('Ansichtszoom – verändert nicht das PDF')
   ).not.toBeInTheDocument();
+});
+
+it('places a caret inside positioned text even when coordinate lookup finds the group boundary', async () => {
+  const optionsSpy = vi.spyOn(Editor.prototype, 'setOptions');
+  const value = fromSegments([]);
+  value.content = {
+    type: 'doc',
+    content: [
+      {
+        type: 'lineGroup',
+        attrs: {
+          height: 16,
+          lines: [],
+          labels: [
+            { text: 'BSB Haustechnik GmbH', left: 20, top: 0, fontSize: 10 },
+          ],
+        },
+      },
+    ],
+  };
+  render(<StyledDocumentEditor document={value} master pageView />);
+  const label = await screen.findByText('BSB Haustechnik GmbH');
+  const editor = optionsSpy.mock.instances.at(-1) as Editor;
+  const range = window.document.createRange();
+  range.setStart(label.firstChild!, 7);
+  range.collapse(true);
+  const original = Object.getOwnPropertyDescriptor(
+    window.document,
+    'caretRangeFromPoint'
+  );
+  Object.defineProperty(window.document, 'caretRangeFromPoint', {
+    configurable: true,
+    value: () => range,
+  });
+  const coords = vi
+    .spyOn(editor.view, 'posAtCoords')
+    .mockReturnValue({ pos: 0, inside: 0 });
+  const click = (detail: number) => {
+    const event = new MouseEvent('click', {
+      bubbles: true,
+      cancelable: true,
+      detail,
+    });
+    Object.defineProperty(event, 'target', { value: label });
+    act(() => {
+      editor.view.someProp(
+        detail > 1 ? 'handleDoubleClick' : 'handleClick',
+        (handler) => handler(editor.view, 0, event)
+      );
+    });
+    return event;
+  };
+  try {
+    expect(click(1).defaultPrevented).toBe(true);
+    expect(editor.state.selection.$from.parentOffset).toBe(7);
+    expect(editor.state.selection.empty).toBe(true);
+    expect(coords).not.toHaveBeenCalled();
+    act(() => {
+      editor.commands.deleteRange({
+        from: editor.state.selection.from - 1,
+        to: editor.state.selection.from,
+      });
+    });
+    expect(label).toHaveTextContent('BSB Hastechnik GmbH');
+    range.setStart(label.firstChild!, 6);
+    range.collapse(true);
+    click(2);
+    expect(
+      editor.state.doc.textBetween(
+        editor.state.selection.from,
+        editor.state.selection.to
+      )
+    ).toBe('Hastechnik');
+    act(() => {
+      editor.view.dispatch(editor.state.tr.deleteSelection());
+    });
+    expect(label).toHaveTextContent('BSB GmbH');
+  } finally {
+    if (original)
+      Object.defineProperty(window.document, 'caretRangeFromPoint', original);
+    else
+      delete (window.document as Document & { caretRangeFromPoint?: unknown })
+        .caretRangeFromPoint;
+    coords.mockRestore();
+    optionsSpy.mockRestore();
+  }
+});
+
+it('keeps imported 8pt runs below a 14pt checkbox from expanding over an adjacent tab label', async () => {
+  const optionsSpy = vi.spyOn(Editor.prototype, 'setOptions');
+  const value = fromSegments([]);
+  value.content = {
+    type: 'doc',
+    content: [
+      {
+        type: 'lineGroup',
+        attrs: {
+          height: 20,
+          lines: [],
+          labels: [
+            {
+              left: 0,
+              top: 0,
+              fontFamily: 'Arial',
+              fontSize: 14,
+              text: '☐ in einem befristeten Arbeitsverhältnis',
+              runs: [
+                { text: '☐', props: { fontFamily: 'Arial', fontSize: 14 } },
+                {
+                  text: ' in einem ',
+                  props: { fontFamily: 'Arial', fontSize: 8, color: '#000000' },
+                },
+                {
+                  text: 'befristeten Arbeitsverhältnis',
+                  props: { fontFamily: 'Arial', fontSize: 8, bold: true },
+                },
+              ],
+            },
+            {
+              left: 369.35,
+              top: 0,
+              fontFamily: 'Arial',
+              fontSize: 8,
+              text: 'bis zum ',
+              runs: [
+                {
+                  text: 'bis zum ',
+                  props: { fontFamily: 'Arial', fontSize: 8 },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    ],
+  };
+  const onChange = vi.fn();
+  const { container } = render(
+    <StyledDocumentEditor
+      document={value}
+      master
+      pageView
+      onChange={onChange}
+    />
+  );
+  const caption = await screen.findByText('befristeten Arbeitsverhältnis');
+  expect(caption.closest('span')!.style.fontSize).toBe('8pt');
+  expect(screen.getByText('☐').closest('span')!.style.fontSize).toBe('14pt');
+  expect(screen.getByText('bis zum').closest('span')!.style.fontSize).toBe(
+    '8pt'
+  );
+  expect(container.innerHTML).not.toContain('ptpt');
+  const editor = optionsSpy.mock.instances.at(-1) as Editor;
+  let textPos = 0;
+  editor.state.doc.descendants((node, pos) => {
+    if (node.isText && node.text === 'befristeten Arbeitsverhältnis')
+      textPos = pos;
+  });
+  act(() => {
+    editor.view.dispatch(editor.state.tr.delete(textPos, textPos + 1));
+  });
+  const published = onChange.mock.calls.at(-1)![0];
+  const first = published.content.content[0].content[0];
+  expect(
+    first.content
+      .flatMap(
+        (run: { marks?: { type: string; attrs?: { fontSize?: unknown } }[] }) =>
+          run.marks ?? []
+      )
+      .filter((mark: { type: string }) => mark.type === 'textStyle')
+      .map((mark: { attrs: { fontSize: unknown } }) => mark.attrs.fontSize)
+  ).toEqual([14, 8, 8]);
+  expect(published.content.content[0].attrs.labels[1].left).toBe(369.35);
+  optionsSpy.mockRestore();
+});
+
+it.each(['□', '☐', '☒', '☑'])(
+  'replaces imported %s with a keyed checkbox without changing its marks or neighboring text',
+  async (glyph) => {
+    const optionsSpy = vi.spyOn(Editor.prototype, 'setOptions');
+    const value = fromSegments([]);
+    value.content.content = [
+      {
+        type: 'paragraph',
+        content: [
+          {
+            type: 'text',
+            text: glyph,
+            marks: [
+              {
+                type: 'textStyle',
+                attrs: { fontFamily: 'Arial', fontSize: 14, color: '#215e99' },
+              },
+            ],
+          },
+          {
+            type: 'text',
+            text: ' Fixed term',
+            marks: [{ type: 'textStyle', attrs: { fontSize: 8 } }],
+          },
+        ],
+      },
+    ];
+    render(<StyledDocumentEditor document={value} master onChange={vi.fn()} />);
+    await screen.findByText('Fixed term');
+    const editor = optionsSpy.mock.instances.at(-1) as Editor;
+    vi.spyOn(editor.view, 'scrollToSelection').mockImplementation(
+      () => undefined
+    );
+    const originalMarks = editor.getJSON().content![0].content![0].marks;
+    act(() => editor.commands.setTextSelection({ from: 1, to: 2 }));
+    fireEvent.change(screen.getByLabelText('Feldbezeichnung'), {
+      target: { value: 'Fixed term' },
+    });
+    fireEvent.change(screen.getByLabelText('Feldschlüssel'), {
+      target: { value: 'contract.fixed_term' },
+    });
+    fireEvent.click(screen.getByLabelText('Feldtyp'));
+    fireEvent.click(await screen.findByRole('option', { name: 'Kontrollkästchen' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Feld einsetzen' }));
+    const nodes = editor.getJSON().content![0].content!;
+    expect(nodes[0].attrs).toMatchObject({
+      key: 'contract.fixed_term',
+      fieldType: 'checkbox',
+      checkboxGlyph: glyph,
+      required: false,
+    });
+    expect(nodes[0].marks).toEqual(originalMarks);
+    expect(nodes[1].text).toBe(' Fixed term');
+    await waitFor(() =>
+      expect(
+        screen.getByTitle('Fixed term (contract.fixed_term)')
+      ).toHaveTextContent(glyph)
+    );
+    optionsSpy.mockRestore();
+  }
+);
+
+it('uses mapped checkbox values with the same glyph footprint and supports read-only viewing', async () => {
+  const value = fromSegments([
+    {
+      type: 'input',
+      key: 'contract.fixed_term',
+      label: 'Fixed term',
+      fieldType: 'checkbox',
+      required: false,
+    },
+  ]);
+  value.content.content![0].content![0].attrs!.checkboxGlyph = '□';
+  const onValueChange = vi.fn();
+  const { rerender } = render(
+    <StyledDocumentEditor
+      document={value}
+      values={{ 'contract.fixed_term': 'false' }}
+      onValueChange={onValueChange}
+    />
+  );
+  const checkbox = await screen.findByRole('checkbox', { name: 'Fixed term' });
+  expect(checkbox).not.toBeChecked();
+  expect(checkbox.parentElement).toHaveTextContent('□');
+  fireEvent.click(checkbox);
+  expect(onValueChange).toHaveBeenCalledWith('contract.fixed_term', 'true');
+  rerender(
+    <StyledDocumentEditor
+      document={value}
+      values={{ 'contract.fixed_term': 'true' }}
+      readOnly
+    />
+  );
+  await waitFor(() => expect(checkbox).toBeChecked());
+  expect(checkbox).toBeDisabled();
+  expect(checkbox.parentElement!.querySelector('span')).toHaveStyle({
+    visibility: 'visible',
+  });
+  expect(checkbox.parentElement).toHaveTextContent('□×');
 });

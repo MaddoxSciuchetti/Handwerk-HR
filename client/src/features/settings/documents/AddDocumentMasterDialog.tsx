@@ -104,7 +104,7 @@ export function AddDocumentMasterDialog({
           <Input
             id="document-file"
             type="file"
-            accept=".pdf,.docx,.txt,application/pdf,text/plain"
+            accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
             required
             onChange={(event) => {
               const next = event.target.files?.[0] ?? null;

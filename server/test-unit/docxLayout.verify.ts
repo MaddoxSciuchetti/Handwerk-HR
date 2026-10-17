@@ -20,7 +20,7 @@ const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
       <w:r><w:tab/></w:r><w:r><w:t>im folgenden Arbeitgeber genannt</w:t></w:r>
     </w:p>
     <w:p>
-      <w:r><w:t xml:space="preserve">Seite </w:t></w:r>
+      <w:r><w:t xml:space="preserve">   </w:t></w:r><w:r><w:t xml:space="preserve">Seite </w:t></w:r>
       <w:r><w:fldChar w:fldCharType="begin"/></w:r>
       <w:r><w:instrText xml:space="preserve"> PAGE </w:instrText></w:r>
       <w:r><w:fldChar w:fldCharType="separate"/></w:r>
@@ -134,7 +134,7 @@ console.log("docx layout checks passed");
 zip.file(
   "word/footer1.xml",
   `<w:ftr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:p>
-<w:r><w:t xml:space="preserve">Seite </w:t></w:r>
+<w:r><w:t xml:space="preserve">   </w:t></w:r><w:r><w:t xml:space="preserve">Seite </w:t></w:r>
 <w:fldSimple w:instr="PAGE"><w:r><w:t>1</w:t></w:r></w:fldSimple>
 <w:r><w:t xml:space="preserve"> von </w:t></w:r>
 <w:fldSimple w:instr="NUMPAGES"><w:r><w:t>1</w:t></w:r></w:fldSimple>
@@ -150,6 +150,11 @@ const pagination = native.document.footer.content?.find((node) =>
 );
 assert.equal(text(pagination!), "Seite page von pages");
 assert.equal(pagination?.attrs?.textAlign, "right");
+assert.ok(
+  pagination?.content?.every(
+    (node) => node.type !== "text" || node.text !== "",
+  ),
+);
 assert.ok(
   native.document.footer.content?.some((node) => text(node) === "11.10.2026"),
 );

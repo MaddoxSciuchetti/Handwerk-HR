@@ -61,12 +61,14 @@ export function DocumentMasterEditor({
     setName(data.name);
     setRevision(data.revision);
     setDocument(data.document ?? fromSegments(data.segments ?? []));
+    // Open imported masters as real editable text; PDF pages remain a preview.
+    if (!syncedMaster) setManualEditing(true);
     if (returnContract && !cancelledReturnEdit) setReturnEditing(true);
   }
   useEffect(() => {
-    if (returnEditing && editStartedAt.current === 0)
+    if (editing && editStartedAt.current === 0)
       editStartedAt.current = performance.now();
-  }, [returnEditing]);
+  }, [editing]);
   const returnKind = returnContract
     ? peekContractSendReturn()?.kind
     : undefined;

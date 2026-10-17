@@ -1069,7 +1069,9 @@ export async function restoreDocxStyles(
             const first = content.find((item) => item.type === "text");
             if (first?.text) first.text = first.text.replace(/^\s+/, "");
           }
-          node.content = content;
+          node.content = content.filter(
+            (item) => item.type !== "text" || item.text !== "",
+          );
         }
       }
     } else node.content?.forEach(apply);
@@ -1384,7 +1386,7 @@ export async function restoreDocxStyles(
           ): DocumentNode => ({
             type: "paragraph",
             attrs: { textAlign: align, marginTop: 0, marginBottom: 2 },
-            content: content.length ? content : [{ type: "text", text: "" }],
+            content,
           });
           const cell = (
             content: DocumentNode[],
