@@ -1,21 +1,50 @@
 import { useLayoutEffect, useRef } from 'react';
 
-const GLITTER = [
-  { left: '7%', top: '32%', size: 1.5, duration: 22, delay: -4, x: 10, y: -6 },
-  { left: '14%', top: '68%', size: 1.5, duration: 26, delay: -11, x: -8, y: 7 },
-  { left: '21%', top: '40%', size: 2, duration: 18, delay: -2, x: 12, y: 5 },
-  { left: '28%', top: '58%', size: 1.5, duration: 24, delay: -16, x: -6, y: -8 },
-  { left: '34%', top: '28%', size: 1.5, duration: 28, delay: -7, x: 7, y: 9 },
-  { left: '41%', top: '72%', size: 1.5, duration: 20, delay: -13, x: -11, y: -4 },
-  { left: '47%', top: '46%', size: 1.5, duration: 25, delay: -1, x: 9, y: -7 },
-  { left: '53%', top: '34%', size: 1.5, duration: 19, delay: -9, x: -5, y: 6 },
-  { left: '59%', top: '64%', size: 2, duration: 27, delay: -18, x: 8, y: -5 },
-  { left: '66%', top: '30%', size: 1.5, duration: 23, delay: -6, x: -9, y: 8 },
-  { left: '72%', top: '55%', size: 1.5, duration: 21, delay: -14, x: 6, y: -9 },
-  { left: '78%', top: '38%', size: 1.5, duration: 29, delay: -3, x: -7, y: 4 },
-  { left: '84%', top: '70%', size: 1.5, duration: 17, delay: -12, x: 11, y: -6 },
-  { left: '90%', top: '44%', size: 1.5, duration: 24, delay: -8, x: -4, y: 7 },
-] as const;
+type RingEdge = 'top' | 'right' | 'bottom' | 'left';
+type ParticleKind = 'dot' | 'spark' | 'star';
+
+type RingParticle = {
+  edge: RingEdge;
+  along: string;
+  across: string;
+  size: number;
+  duration: number;
+  delay: number;
+  travel: number;
+  kind: ParticleKind;
+  hue: number;
+};
+
+const EDGES: RingEdge[] = ['top', 'right', 'bottom', 'left'];
+const KINDS: ParticleKind[] = ['dot', 'spark', 'dot', 'star', 'spark'];
+const HUES = [300, 285, 318, 292, 276, 326];
+const SIZES = [0.6, 0.9, 1.1, 1.4, 1.8, 2.2];
+
+function buildRingParticles(): RingParticle[] {
+  const particles: RingParticle[] = [];
+  let n = 0;
+  for (const edge of EDGES) {
+    const count = edge === 'top' || edge === 'bottom' ? 46 : 14;
+    for (let index = 0; index < count; index += 1) {
+      n += 1;
+      const along = 3 + ((index * 29 + n * 11) % 94);
+      particles.push({
+        edge,
+        along: `${along}%`,
+        across: `${(n % 5) * 0.7}px`,
+        size: SIZES[n % SIZES.length],
+        duration: 6 + (n % 11) * 0.8,
+        delay: -((n * 1.3) % 14),
+        travel: (n % 2 === 0 ? 1 : -1) * (10 + (n % 16)),
+        kind: KINDS[n % KINDS.length],
+        hue: HUES[n % HUES.length],
+      });
+    }
+  }
+  return particles;
+}
+
+const RING_PARTICLES = buildRingParticles();
 
 function placeConfirmationFrame(frame: HTMLDivElement) {
   const cell = frame.parentElement;
@@ -53,24 +82,28 @@ export function ConfirmationTaskDecor() {
   return (
     <div ref={frameRef} className="confirmation-task-decor" aria-hidden>
       <div className="confirmation-slime-body" />
-      {GLITTER.map((speck) => (
-        <span
-          key={`${speck.left}-${speck.top}`}
-          className="confirmation-glitter"
-          style={{
-            left: speck.left,
-            top: speck.top,
-            width: speck.size,
-            height: speck.size,
-            animationDuration: `${speck.duration}s`,
-            animationDelay: `${speck.delay}s`,
-            ['--glitter-x' as string]: `${speck.x}px`,
-            ['--glitter-y' as string]: `${speck.y}px`,
-          }}
-        />
-      ))}
       <div className="confirmation-slime-outline">
         <div className="confirmation-slime-spin" />
+        <div className="confirmation-ring-dust" />
+        {RING_PARTICLES.map((particle) => (
+          <span
+            key={`${particle.edge}-${particle.along}-${particle.delay}`}
+            className="confirmation-particle"
+            data-edge={particle.edge}
+            data-kind={particle.kind}
+            style={{
+              ['--along' as string]: particle.along,
+              ['--across' as string]: particle.across,
+              ['--travel' as string]: `${particle.travel}px`,
+              width: particle.size,
+              height: particle.size,
+              color: `oklch(0.99 0.05 ${particle.hue})`,
+              background: '#fff',
+              animationDuration: `${particle.duration}s`,
+              animationDelay: `${particle.delay}s`,
+            }}
+          />
+        ))}
       </div>
     </div>
   );

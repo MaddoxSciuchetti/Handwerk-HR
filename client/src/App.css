@@ -214,24 +214,6 @@
   }
 }
 
-@keyframes confirmation-slime-flow {
-  0% {
-    background-position:
-      0% 40%,
-      100% 60%;
-  }
-  42% {
-    background-position:
-      70% 60%,
-      20% 40%;
-  }
-  100% {
-    background-position:
-      0% 40%,
-      100% 60%;
-  }
-}
-
 @keyframes confirmation-slime-drift {
   0% {
     background-position:
@@ -253,26 +235,44 @@
   }
 }
 
-@keyframes confirmation-glitter-drift {
+@keyframes confirmation-dust {
+  from {
+    background-position:
+      0 0,
+      5px 3px,
+      2px 6px;
+  }
+  to {
+    background-position:
+      88px 0,
+      -68px 3px,
+      42px -32px;
+  }
+}
+
+@keyframes confirmation-particle-flow {
   0% {
-    opacity: 0.55;
-    transform: translate3d(0, 0, 0);
+    opacity: 0.25;
+    transform: translate3d(0, 0, 0) scale(0.7);
   }
-  35% {
+  18% {
     opacity: 1;
-    transform: translate3d(
-      var(--glitter-x),
-      calc(var(--glitter-y) * -0.45),
-      0
-    );
   }
-  68% {
-    opacity: 0.7;
-    transform: translate3d(calc(var(--glitter-x) * -0.7), var(--glitter-y), 0);
+  46% {
+    opacity: 0.55;
+    transform: translate3d(
+        calc(var(--dx) * 0.55),
+        calc(var(--dy) * 0.55),
+        0
+      )
+      scale(1.35);
+  }
+  72% {
+    opacity: 0.95;
   }
   100% {
-    opacity: 0.55;
-    transform: translate3d(0, 0, 0);
+    opacity: 0.25;
+    transform: translate3d(var(--dx), var(--dy), 0) scale(0.8);
   }
 }
 
@@ -336,38 +336,16 @@
 
   .confirmation-slime-body {
     position: absolute;
-    inset: 1mm;
-    border-radius: calc(var(--radius-xl) - 1mm);
-    background:
-      radial-gradient(
-        ellipse 42% 120% at 18% 50%,
-        oklch(0.62 0.2 300 / 22%),
-        transparent 70%
-      ),
-      radial-gradient(
-        ellipse 36% 130% at 62% 42%,
-        oklch(0.5 0.22 285 / 18%),
-        transparent 72%
-      ),
-      radial-gradient(
-        ellipse 30% 110% at 84% 60%,
-        oklch(0.7 0.16 318 / 16%),
-        transparent 70%
-      );
-    background-repeat: no-repeat;
-    background-size:
-      170% 170%,
-      150% 160%,
-      180% 180%;
-    filter: blur(8px);
-    animation: confirmation-slime-drift 20s ease-in-out infinite;
+    inset: 2.2mm;
+    border-radius: calc(var(--radius-xl) - 2.2mm);
+    background: #fff;
   }
 
   .confirmation-slime-outline {
     position: absolute;
     inset: 0;
     overflow: hidden;
-    padding: 1mm;
+    padding: 2.2mm;
     border-radius: inherit;
     -webkit-mask:
       linear-gradient(#000 0 0) content-box,
@@ -381,75 +359,137 @@
 
   .confirmation-slime-spin {
     position: absolute;
-    inset: 0;
-    background-image:
-      linear-gradient(
-        105deg,
-        transparent 0%,
-        oklch(0.86 0.12 302 / 85%) 46%,
-        transparent 78%
-      ),
-      linear-gradient(
-        90deg,
-        oklch(0.38 0.27 292) 0%,
-        oklch(0.56 0.27 310) 22%,
-        oklch(0.46 0.29 276) 44%,
-        oklch(0.7 0.23 326) 68%,
-        oklch(0.5 0.26 298) 84%,
-        oklch(0.38 0.27 292) 100%
-      );
-    background-repeat: no-repeat;
-    background-size:
-      180% 100%,
-      220% 100%;
-    animation: confirmation-slime-flow 24s ease-in-out infinite;
-  }
-
-  .confirmation-glitter {
-    position: absolute;
-    border-radius: 999px;
-    background: oklch(0.98 0.03 300);
-    box-shadow: 0 0 3px 0.5px oklch(0.86 0.14 305 / 90%);
-    animation-name: confirmation-glitter-drift;
-    animation-timing-function: ease-in-out;
-    animation-iteration-count: infinite;
-  }
-
-  .dark .confirmation-slime-body {
+    inset: -20%;
     background:
       radial-gradient(
         ellipse 42% 120% at 18% 50%,
-        oklch(0.72 0.18 300 / 55%),
+        oklch(0.62 0.2 300 / 92%),
         transparent 70%
       ),
       radial-gradient(
         ellipse 36% 130% at 62% 42%,
-        oklch(0.58 0.22 282 / 48%),
+        oklch(0.5 0.22 285 / 88%),
         transparent 72%
       ),
       radial-gradient(
         ellipse 30% 110% at 84% 60%,
-        oklch(0.76 0.16 322 / 46%),
+        oklch(0.7 0.16 318 / 90%),
         transparent 70%
       );
+    background-repeat: no-repeat;
+    background-size:
+      170% 170%,
+      150% 160%,
+      180% 180%;
+    filter: blur(6px);
+    animation: confirmation-slime-drift 20s ease-in-out infinite;
+  }
+
+  .confirmation-ring-dust {
+    position: absolute;
+    inset: -30%;
+    background-image:
+      radial-gradient(circle, #fff 0 0.55px, transparent 1.15px),
+      radial-gradient(
+        circle,
+        oklch(0.94 0.08 310) 0 0.7px,
+        transparent 1.45px
+      ),
+      radial-gradient(circle, #fff 0 0.35px, transparent 0.9px);
+    background-size:
+      11px 9px,
+      17px 13px,
+      7px 8px;
+    background-position:
+      0 0,
+      5px 3px,
+      2px 6px;
+    animation: confirmation-dust 18s linear infinite;
+    opacity: 0.95;
+  }
+
+  .confirmation-particle {
+    position: absolute;
+    border-radius: 999px;
+    box-shadow:
+      0 0 1.5px 0.4px color-mix(in oklch, currentColor 90%, white),
+      0 0 4px 0.5px color-mix(in oklch, currentColor 55%, transparent);
+    animation-name: confirmation-particle-flow;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+    --dx: var(--travel);
+    --dy: 0px;
+  }
+
+  .confirmation-particle[data-edge='top'] {
+    top: var(--across);
+    left: var(--along);
+  }
+
+  .confirmation-particle[data-edge='bottom'] {
+    bottom: var(--across);
+    left: var(--along);
+  }
+
+  .confirmation-particle[data-edge='left'] {
+    top: var(--along);
+    left: var(--across);
+    --dx: 0px;
+    --dy: var(--travel);
+  }
+
+  .confirmation-particle[data-edge='right'] {
+    top: var(--along);
+    right: var(--across);
+    --dx: 0px;
+    --dy: var(--travel);
+  }
+
+  .confirmation-particle[data-kind='spark'] {
+    box-shadow:
+      0 0 2px 0.6px currentColor,
+      4px 0 0 -0.35px currentColor,
+      -3.5px 0 0 -0.4px currentColor,
+      0 3px 0 -0.45px currentColor,
+      0 -2.5px 0 -0.5px currentColor;
+  }
+
+  .confirmation-particle[data-kind='star'] {
+    border-radius: 1px;
+    clip-path: polygon(
+      50% 0%,
+      61% 35%,
+      100% 50%,
+      61% 65%,
+      50% 100%,
+      39% 65%,
+      0% 50%,
+      39% 35%
+    );
+    box-shadow: none;
+    filter: drop-shadow(0 0 1.5px currentColor);
+  }
+
+  .dark .confirmation-slime-body {
+    background: #fff;
   }
 
   .dark .confirmation-slime-spin {
-    background-image:
-      linear-gradient(
-        105deg,
-        transparent 0%,
-        oklch(0.9 0.1 302 / 90%) 46%,
-        transparent 78%
+    background:
+      radial-gradient(
+        ellipse 42% 120% at 18% 50%,
+        oklch(0.72 0.18 300 / 95%),
+        transparent 70%
       ),
-      linear-gradient(
-        90deg,
-        oklch(0.48 0.26 292) 0%,
-        oklch(0.66 0.24 312) 22%,
-        oklch(0.52 0.28 274) 44%,
-        oklch(0.76 0.2 328) 68%,
-        oklch(0.58 0.24 298) 84%,
-        oklch(0.48 0.26 292) 100%
+      radial-gradient(
+        ellipse 36% 130% at 62% 42%,
+        oklch(0.58 0.22 282 / 92%),
+        transparent 72%
+      ),
+      radial-gradient(
+        ellipse 30% 110% at 84% 60%,
+        oklch(0.76 0.16 322 / 94%),
+        transparent 70%
       );
   }
 }
@@ -461,9 +501,9 @@
     animation: none;
   }
 
-  .confirmation-slime-body,
   .confirmation-slime-spin,
-  .confirmation-glitter {
+  .confirmation-ring-dust,
+  .confirmation-particle {
     animation: none;
   }
 }
