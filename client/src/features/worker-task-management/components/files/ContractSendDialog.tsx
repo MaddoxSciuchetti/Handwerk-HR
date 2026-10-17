@@ -1,17 +1,16 @@
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import ModalOverlay from '@/components/modal/ModalOverlay';
 import { Button } from '@/components/ui/button';
-import { FETCHDESCRIPTION } from '@/features/all-tasks/consts/query.consts';
 import type { DocumentSegment } from '@/features/settings/documents/documentSegments';
-import { ALL_WORKER_DATA } from '@/features/worker-lifecycle/consts/query-key.consts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import {
-  sendFilledEmploymentContract,
+  fetchPreparedEmploymentContractPdf,
   prepareEmploymentContractPdf,
 } from '../../api/employmentContract.api';
+import { printPdfBlob } from '../../printPdf';
 import { PreparedPdfPreview, type PreparedPdf } from './PreparedPdfPreview';
 import {
   documentFields,
@@ -19,7 +18,6 @@ import {
   fromSegments,
 } from '@/features/settings/documents/styledDocument';
 import type { UnmatchedQuestionnaireAnswer } from '../../api/employmentContract.api';
-import { WORKERBYID } from '../../consts/query-key.consts';
 import { rememberContractSendReturn } from '../../contractSendReturn';
 import {
   employmentContractKey,
@@ -59,7 +57,7 @@ export function ContractSendDialog({
 }: ContractSendDialogProps) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { data, isLoading, isError, refetch } = useEmploymentContract(
+  const { data, isLoading, isError } = useEmploymentContract(
     workerId,
     engagementId
   );
@@ -80,34 +78,26 @@ export function ContractSendDialog({
     setPrepared(data.prepared ?? null);
   }, [data]);
 
-  const send = useMutation({
-    mutationFn: () =>
-      sendFilledEmploymentContract(
+  const printContract = useMutation({
+    mutationFn: async () => {
+      const blob = await fetchPreparedEmploymentContractPdf(
         workerId,
         engagementId,
-        issueId,
         prepared!.id
-      ),
-    onSuccess: (saved) => {
-      queryClient.setQueryData(
-        employmentContractKey(workerId, engagementId),
-        saved
       );
-      void queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] });
-      void queryClient.invalidateQueries({ queryKey: [WORKERBYID, workerId] });
-      void queryClient.invalidateQueries({ queryKey: [ALL_WORKER_DATA] });
-      toast.success('Vertrag wurde versendet');
-      onClose();
+      if (!(blob instanceof Blob)) {
+        throw new Error('PDF konnte nicht geladen werden');
+      }
+      await printPdfBlob(blob);
     },
-    onError: async (error) => {
+    onSuccess: () => {
+      toast.success('Druckdialog geöffnet');
+    },
+    onError: (error) =>
       toast.error(
         (error as { message?: string }).message ??
-          'Vertrag konnte nicht versendet werden'
-      );
-      setApproved(false);
-      const refreshed = await refetch();
-      setPrepared(refreshed.data?.prepared ?? null);
-    },
+          'Vertrag konnte nicht gedruckt werden'
+      ),
   });
 
   const complete = data
@@ -152,7 +142,7 @@ export function ContractSendDialog({
   );
 
   const close = async () => {
-    if (send.isPending || prepare.isPending || resync.isPending) return;
+    if (printContract.isPending || prepare.isPending || resync.isPending) return;
     if (
       !readOnly &&
       data &&
@@ -227,7 +217,7 @@ export function ContractSendDialog({
               <p className="text-sm text-muted-foreground">
                 {alreadySent
                   ? 'Der Vertrag wurde versendet.'
-                  : 'Prüfen Sie den Vertrag und bestätigen Sie den Versand.'}
+                  : 'Prüfen Sie den ausgefüllten Vertrag und drucken Sie ihn zur Unterschrift im Büro.'}
               </p>
               {needsResync ? (
                 <div className="mt-3 flex flex-col gap-2">
@@ -302,6 +292,8 @@ export function ContractSendDialog({
                 prepared={prepared}
                 approved={approved}
                 onApprove={setApproved}
+                frameTitle="Arbeitsvertrag zum Drucken"
+                confirmLabel="Ich habe dieses PDF geprüft und drucke es zur Unterschrift im Büro."
               />
             ) : (
               <div className="flex min-h-0 flex-1 gap-4 overflow-hidden">
@@ -320,7 +312,7 @@ export function ContractSendDialog({
                   readOnly={
                     readOnly ||
                     prepare.isPending ||
-                    send.isPending ||
+                    printContract.isPending ||
                     resync.isPending
                   }
                   acceptAnswerDrop={unmatched.length > 0}
@@ -333,12 +325,12 @@ export function ContractSendDialog({
               </div>
             )}
             {alreadySent ? null : (
-              <div className="flex shrink-0 justify-end">
+              <div className="flex shrink-0 justify-end gap-2">
                 {prepared ? (
                   <Button
                     type="button"
                     variant="outline"
-                    disabled={send.isPending || blockedDelivery}
+                    disabled={printContract.isPending || blockedDelivery}
                     onClick={() => {
                       setPrepared(null);
                       setApproved(false);
@@ -361,11 +353,14 @@ export function ContractSendDialog({
                   type="button"
                   className="rounded-2xl"
                   disabled={
-                    !prepared || !approved || send.isPending || blockedDelivery
+                    !prepared ||
+                    !approved ||
+                    printContract.isPending ||
+                    blockedDelivery
                   }
-                  onClick={() => send.mutate()}
+                  onClick={() => printContract.mutate()}
                 >
-                  {send.isPending ? 'Sendet…' : 'Vertrag versenden'}
+                  {printContract.isPending ? 'Druckt…' : 'Drucken'}
                 </Button>
               </div>
             )}

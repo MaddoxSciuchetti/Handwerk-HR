@@ -231,58 +231,13 @@ describe("contract send task status", () => {
         artifactId: "pdf",
     };
 
-    beforeEach(() => {
-        (prisma.issue.findFirst as jest.Mock).mockResolvedValue({ id: "send-task" });
-        (prisma.worker.findFirst as jest.Mock).mockResolvedValue({ email: "ada@example.com" });
-        (prisma.preparedDocument.findFirst as jest.Mock).mockResolvedValue({ id: "pdf" });
-        (prisma.issue.findMany as jest.Mock).mockResolvedValue([
-            { id: "contract-task", status: "open" },
-        ]);
-        (sendPreparedDocument as jest.Mock).mockImplementation(async ({ finalize }) => {
-            await finalize(prisma, body, {}, "pdf", "provider-id");
-        });
-    });
-
-    it("starts the engagement's open Arbeitsvertrag task after successful delivery and records the change", async () => {
-        await sendFilledEmploymentContract(sendParams);
-
-        expect(prisma.issue.findMany).toHaveBeenCalledWith({
-            where: {
-                workerEngagementId: "eng",
-                title: "Arbeitsvertrag",
-                kind: "standard",
-                status: "open",
-            },
-        });
-        expect(prisma.issue.update).toHaveBeenCalledWith({
-            where: { id: "contract-task" },
-            data: { status: "in_progress" },
-        });
-        expect(prisma.issueAuditLog.create).toHaveBeenCalledWith({
-            data: {
-                issueId: "contract-task",
-                actorUserId: "actor",
-                action: "issue.updated",
-                oldValue: { status: "open" },
-                newValue: { status: "in_progress" },
-            },
-        });
-        expect(prisma.issue.deleteMany).toHaveBeenCalledWith({ where: { id: "send-task" } });
-    });
-
-    it("leaves task status and send task unchanged when delivery fails", async () => {
-        (sendPreparedDocument as jest.Mock).mockRejectedValue(new Error("Delivery failed"));
-        await expect(sendFilledEmploymentContract(sendParams)).rejects.toThrow("Delivery failed");
+    it("refuses to email the contract and leaves the onboarding tasks unchanged", async () => {
+        await expect(sendFilledEmploymentContract(sendParams)).rejects.toThrow(
+            "nicht per E-Mail",
+        );
+        expect(sendPreparedDocument).not.toHaveBeenCalled();
         expect(prisma.issue.update).not.toHaveBeenCalled();
         expect(prisma.issueAuditLog.create).not.toHaveBeenCalled();
         expect(prisma.issue.deleteMany).not.toHaveBeenCalled();
-    });
-
-    it("does not change tasks or add audit entries if no open contract task remains", async () => {
-        (prisma.issue.findMany as jest.Mock).mockResolvedValue([]);
-        await sendFilledEmploymentContract(sendParams);
-        expect(prisma.issue.update).not.toHaveBeenCalled();
-        expect(prisma.issueAuditLog.create).not.toHaveBeenCalled();
-        expect(prisma.issue.deleteMany).toHaveBeenCalledWith({ where: { id: "send-task" } });
     });
 });

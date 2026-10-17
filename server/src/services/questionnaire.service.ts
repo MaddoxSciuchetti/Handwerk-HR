@@ -24,7 +24,7 @@ import {
 } from "@/services/questionnaireForm";
 import AppError from "@/utils/AppError";
 
-const CONTRACT_TASK_TITLE = "Arbeitsvertrag versenden";
+const CONTRACT_TASK_TITLE = "Arbeitsvertrag drucken";
 const birthdayRegex = /^\d{4}-\d{2}-\d{2}$/;
 
 function parseBirthday(value: string) {

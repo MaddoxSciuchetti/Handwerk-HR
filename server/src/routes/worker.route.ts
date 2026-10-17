@@ -10,6 +10,10 @@ worker.post(
     "/:workerId/engagements/:engagementId/contract/prepare-pdf",
     workerController.prepareEmploymentContractPdf,
 );
+worker.get(
+    "/:workerId/engagements/:engagementId/contract/prepared-pdf/:artifactId",
+    workerController.readPreparedEmploymentContractPdf,
+);
 
 worker.post("/", workerController.createWorker);
 worker.post("/fast-track", workerController.startExpectedOnboarding);
