@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { Check } from 'lucide-react';
+import { useRef, useState } from 'react';
 import {
   ISSUE_STATUS_OPTIONS,
   issueStatusLabel,
@@ -14,6 +15,24 @@ import {
 } from '../../consts/issue-status.consts';
 import { useQuickUpdateTaskStatus } from '../../hooks/useQuickUpdateTaskStatus';
 import { TaskStatusIcon } from './TaskStatusIcons';
+
+function blockClickOutsideMenu() {
+  const block = (event: Event) => {
+    const target = event.target;
+    if (
+      target instanceof Element &&
+      target.closest('[data-slot="dropdown-menu-item"], [role="menuitem"]')
+    ) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+  };
+  document.addEventListener('click', block, { capture: true, once: true });
+  window.setTimeout(() => {
+    document.removeEventListener('click', block, { capture: true });
+  }, 400);
+}
 
 type TaskStatusPickerProps = {
   taskId: string;
@@ -27,9 +46,28 @@ export function TaskStatusPicker({
   className,
 }: TaskStatusPickerProps) {
   const { mutate } = useQuickUpdateTaskStatus();
+  const [open, setOpen] = useState(false);
+  const chosen = useRef<IssueStatusValue | null>(null);
+
+  const choose = (next: IssueStatusValue) => {
+    blockClickOutsideMenu();
+    if (chosen.current === next) {
+      setOpen(false);
+      return;
+    }
+    chosen.current = next;
+    if (next !== status) mutate({ taskId, status: next });
+    setOpen(false);
+  };
 
   return (
-    <DropdownMenu>
+    <DropdownMenu
+      open={open}
+      onOpenChange={(next) => {
+        if (next) chosen.current = null;
+        setOpen(next);
+      }}
+    >
       <DropdownMenuTrigger asChild>
         <Button
           type="button"
@@ -55,10 +93,12 @@ export function TaskStatusPicker({
               key={option.value}
               aria-current={isSelected ? 'true' : undefined}
               className={cn('gap-2.5', isSelected && 'bg-accent/50')}
+              onPointerDown={(event) => {
+                if (event.button !== 0) return;
+                choose(option.value);
+              }}
               onSelect={() => {
-                if (!isSelected) {
-                  mutate({ taskId, status: option.value });
-                }
+                choose(option.value);
               }}
             >
               <TaskStatusIcon status={option.value} />
