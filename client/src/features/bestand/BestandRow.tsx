@@ -1,27 +1,42 @@
 import { Input } from '@/components/ui/input';
 import { TableCell, TableRow } from '@/components/ui/table';
-import TrashButton from '@/components/TrashButton';
-import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  SquareCheckIcon,
+  SquareDashedIcon,
+} from '@/features/all-tasks/components/ui/SelectIcons';
+import { cn } from '@/lib/utils';
+import { useState } from 'react';
 import type { ClothingStockItem } from './bestand.api';
 import { stockErrorMessage } from './stockError';
-import {
-  useDeleteClothingStockItem,
-  useUpdateClothingStockQuantity,
-} from './useBestand';
+import { useUpdateClothingStockQuantity } from './useBestand';
 
 type BestandRowProps = {
   item: ClothingStockItem;
+  isSelected: boolean;
+  onToggle: (id: string) => void;
+  selectionDisabled?: boolean;
 };
 
-export function BestandRow({ item }: BestandRowProps) {
+export function BestandRow({
+  item,
+  isSelected,
+  onToggle,
+  selectionDisabled,
+}: BestandRowProps) {
   const updateQuantity = useUpdateClothingStockQuantity();
-  const deleteItem = useDeleteClothingStockItem();
-  const [quantity, setQuantity] = useState(String(item.quantity));
+  const SelectionIcon = isSelected ? SquareCheckIcon : SquareDashedIcon;
+  const [draft, setDraft] = useState({
+    source: item.quantity,
+    value: String(item.quantity),
+  });
+  if (draft.source !== item.quantity) {
+    setDraft({ source: item.quantity, value: String(item.quantity) });
+  }
+  const quantity = draft.value;
+  const setQuantity = (value: string) =>
+    setDraft({ source: item.quantity, value });
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setQuantity(String(item.quantity));
-  }, [item.quantity]);
 
   const commitQuantity = () => {
     const parsed = Number(quantity);
@@ -38,15 +53,47 @@ export function BestandRow({ item }: BestandRowProps) {
       {
         onError: (mutationError) => {
           setQuantity(String(item.quantity));
-          setError(stockErrorMessage(mutationError, 'Anzahl konnte nicht gespeichert werden.'));
+          setError(
+            stockErrorMessage(
+              mutationError,
+              'Anzahl konnte nicht gespeichert werden.'
+            )
+          );
         },
       }
     );
   };
 
   return (
-    <TableRow data-testid={`bestand-row-${item.id}`}>
-      <TableCell className="pl-10 font-medium">{item.name}</TableCell>
+    <TableRow
+      data-testid={`bestand-row-${item.id}`}
+      data-selected={isSelected ? 'true' : undefined}
+      className="group border-0 hover:bg-transparent"
+    >
+      <TableCell className="relative font-medium">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          aria-pressed={isSelected}
+          aria-label={
+            isSelected
+              ? `${item.name} (${item.size || '—'}) aus der Auswahl entfernen`
+              : `${item.name} (${item.size || '—'}) auswählen`
+          }
+          disabled={selectionDisabled}
+          onClick={() => onToggle(item.id)}
+          className={cn(
+            'absolute left-2 top-1/2 -translate-y-1/2 rounded-2xl',
+            isSelected
+              ? 'opacity-100'
+              : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100'
+          )}
+        >
+          <SelectionIcon className="size-4" />
+        </Button>
+        {item.name}
+      </TableCell>
       <TableCell>{item.size || '—'}</TableCell>
       <TableCell>
         <Input
@@ -63,16 +110,11 @@ export function BestandRow({ item }: BestandRowProps) {
               event.currentTarget.blur();
             }
           }}
-          className="w-24"
+          className="w-24 shadow-none focus-visible:border-border focus-visible:ring-0"
         />
-        {error ? <p className="mt-1 text-xs text-destructive">{error}</p> : null}
-      </TableCell>
-      <TableCell className="pr-6 text-right">
-        <TrashButton
-          description={`${item.name} löschen`}
-          disabled={deleteItem.isPending}
-          onClick={() => deleteItem.mutate(item.id)}
-        />
+        {error ? (
+          <p className="mt-1 text-xs text-destructive">{error}</p>
+        ) : null}
       </TableCell>
     </TableRow>
   );

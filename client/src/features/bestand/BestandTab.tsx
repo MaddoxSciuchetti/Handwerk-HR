@@ -10,6 +10,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useState } from 'react';
+import {
+  settingsTableBodyClassName,
+  settingsTableClassName,
+} from '@/features/settings/components/settingsTable';
+import { cn } from '@/lib/utils';
+import { BestandSelectionBar } from './BestandSelectionBar';
+import type { ClothingStockItem } from './bestand.api';
 import { BestandAddSidebar } from './BestandAddSidebar';
 import { BestandRow } from './BestandRow';
 import { useClothingStock } from './useBestand';
@@ -17,6 +24,19 @@ import { useClothingStock } from './useBestand';
 export function BestandTab() {
   const stock = useClothingStock();
   const [addOpen, setAddOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [deleting, setDeleting] = useState(false);
+  const selected = (stock.data ?? []).filter((item) =>
+    selectedIds.includes(item.id)
+  );
+  const changeSelection = (items: ClothingStockItem[]) =>
+    setSelectedIds(items.map((item) => item.id));
+  const toggle = (id: string) =>
+    setSelectedIds((current) =>
+      current.includes(id)
+        ? current.filter((value) => value !== id)
+        : [...current, id]
+    );
 
   return (
     <Card
@@ -36,7 +56,10 @@ export function BestandTab() {
       </CardHeader>
       <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-0">
         {stock.isLoading ? (
-          <div className="flex flex-1 items-center justify-center py-16" role="status">
+          <div
+            className="flex flex-1 items-center justify-center py-16"
+            role="status"
+          >
             <Spinner className="w-8" />
           </div>
         ) : null}
@@ -47,22 +70,44 @@ export function BestandTab() {
         ) : null}
         {stock.data ? (
           <ScrollableTableViewport>
-            <Table>
+            <Table className={settingsTableClassName}>
               <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-0">
                 <TableRow className="border-0 hover:bg-transparent">
-                  <TableHead className="h-12 bg-card py-3 pl-10 pr-2">Artikel</TableHead>
+                  <TableHead className="h-12 bg-card py-3 pl-10 pr-2">
+                    Artikel
+                  </TableHead>
                   <TableHead className="bg-card py-3 px-2">Größe</TableHead>
-                  <TableHead className="bg-card py-3 px-2">Anzahl bei BSB</TableHead>
-                  <TableHead className="bg-card py-3 pr-6 text-right"> </TableHead>
+                  <TableHead className="bg-card py-3 px-2">
+                    Anzahl bei BSB
+                  </TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody className="[&_tr]:border-0 [&_td]:py-4 [&_td]:px-2">
+              <TableBody
+                className={cn(
+                  settingsTableBodyClassName,
+                  '[&_tr[data-selected=true]_td]:bg-muted/50'
+                )}
+              >
                 {stock.data.map((item) => (
-                  <BestandRow key={item.id} item={item} />
+                  <BestandRow
+                    key={item.id}
+                    item={item}
+                    isSelected={selectedIds.includes(item.id)}
+                    onToggle={toggle}
+                    selectionDisabled={deleting}
+                  />
                 ))}
               </TableBody>
             </Table>
           </ScrollableTableViewport>
+        ) : null}
+        {selected.length > 0 ? (
+          <BestandSelectionBar
+            selected={selected}
+            onChange={changeSelection}
+            deleting={deleting}
+            setDeleting={setDeleting}
+          />
         ) : null}
         <BestandAddSidebar open={addOpen} onOpenChange={setAddOpen} />
       </CardContent>
