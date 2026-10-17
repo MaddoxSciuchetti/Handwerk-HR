@@ -1,5 +1,5 @@
 import { filledDocument, fromSegments } from "../../shared/document";
-import { renderNode } from "../../shared/documentRendering";
+import { DOCUMENT_CSS, renderNode } from "../../shared/documentRendering";
 import { normalizeLineLabels } from "../../client/src/features/settings/documents/util/lineLayout.util";
 import { parseStyledDocument } from "@/services/styledDocument";
 
@@ -162,4 +162,42 @@ it("removes empty stored text runs without removing blank paragraphs, whitespace
     { type: "text", text: " " },
     { type: "pageField", attrs: { kind: "page" } },
   ]);
+});
+
+it("keeps a checkbox glyph's width so the line on its right stays put", () => {
+  const html = renderNode(
+    {
+      type: "paragraph",
+      content: [{ type: "text", text: "☐ bis zum" }],
+    },
+    {},
+  );
+  expect(html).toContain("visibility:hidden");
+  expect(html).toContain("☐");
+  expect(html).toContain("bis zum");
+  expect(html).not.toContain('width="0.8em"');
+  expect(DOCUMENT_CSS).toContain("line-height:1.5");
+});
+
+it("draws a blank underline as one rule instead of a second text decoration", () => {
+  const html = renderNode(
+    {
+      type: "paragraph",
+      content: [
+        {
+          type: "text",
+          text: "\u00a0",
+          marks: [
+            { type: "underline" },
+            { type: "textStyle", attrs: { blankUnderlineWidth: 80 } },
+          ],
+        },
+      ],
+    },
+    {},
+  );
+  expect(html).not.toContain("<u");
+  expect(html).toContain("width:80pt");
+  expect(html).toContain("border-bottom:0.5pt solid currentColor");
+  expect(html).toContain("white-space:nowrap");
 });

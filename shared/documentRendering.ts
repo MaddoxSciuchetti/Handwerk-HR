@@ -79,6 +79,8 @@ export function nodeStyle(node: DocumentNode): string {
       "width:" + Number(a.blankUnderlineWidth) + "pt",
       "border-bottom:0.5pt solid currentColor",
       "line-height:1",
+      "vertical-align:baseline",
+      "white-space:nowrap",
       "text-decoration:none",
     );
   if (
@@ -165,17 +167,23 @@ function positionedLabelHtml(
 }
 
 function printText(value: string | undefined): string {
-  return escapeHtml(value).replace(
-    /[☐☒☑]/g,
-    (glyph) =>
-      '<svg aria-label="' +
-      glyph +
-      '" viewBox="0 0 12 12" width="0.8em" height="0.8em" style="display:inline-block;vertical-align:baseline"><rect x="0.5" y="0.5" width="11" height="11" fill="none" stroke="currentColor"/>' +
-      (glyph === "☐"
+  return escapeHtml(value).replace(/[☐☒☑]/g, (glyph) => {
+    // Keep the original glyph's advance width. A smaller SVG shifts the
+    // underlined tab that sits to the right of a checkbox row.
+    const mark =
+      glyph === "☐"
         ? ""
-        : '<path d="M2 2L10 10M10 2L2 10" fill="none" stroke="currentColor"/>') +
-      "</svg>",
-  );
+        : '<path d="M2 2L10 10M10 2L2 10" fill="none" stroke="currentColor"/>';
+    return (
+      '<span style="position:relative;display:inline-block;line-height:1;vertical-align:baseline">' +
+      '<span style="visibility:hidden">' +
+      glyph +
+      "</span>" +
+      '<svg aria-hidden="true" viewBox="0 0 12 12" style="position:absolute;inset:0;width:100%;height:100%"><rect x="0.5" y="0.5" width="11" height="11" fill="none" stroke="currentColor"/>' +
+      mark +
+      "</svg></span>"
+    );
+  });
 }
 
 export function renderNode(
@@ -186,10 +194,16 @@ export function renderNode(
   const styled = style ? ' style="' + escapeHtml(style) + '"' : "";
   if (node.type === "text") {
     let text = printText(node.text);
+    const blankUnderline = (node.marks ?? []).some(
+      (mark) =>
+        mark.type === "textStyle" &&
+        Number(mark.attrs?.blankUnderlineWidth) > 0 &&
+        Number(mark.attrs?.blankUnderlineWidth) <= 200,
+    );
     for (const mark of node.marks ?? []) {
       if (mark.type === "bold") text = "<strong>" + text + "</strong>";
       if (mark.type === "italic") text = "<em>" + text + "</em>";
-      if (mark.type === "underline")
+      if (mark.type === "underline" && !blankUnderline)
         text =
           mark.attrs?.variant === "double"
             ? '<u style="text-decoration-style:double;text-underline-offset:0.12em">' +
@@ -452,7 +466,7 @@ export function renderNode(
 }
 
 export const DOCUMENT_CSS =
-  "body{color:#111;background:white;font-synthesis:none}p{margin:0 0 8pt;white-space:pre-wrap;overflow-wrap:anywhere;orphans:2;widows:2}h1,h2,h3,h4,h5,h6{break-after:avoid;margin:0 0 8pt;font-weight:700}h1{font-size:20pt}h2{font-size:16pt}h3{font-size:14pt}h4{font-size:12pt}h5{font-size:11pt}h6{font-size:10pt}ul,ol{margin:0 0 8pt;padding-left:20pt}blockquote{margin:0 0 8pt;padding-left:12pt;border-left:2pt solid #aaa}table{border-collapse:collapse;width:100%;table-layout:fixed}td,th{border:1px solid #aaa;padding:4pt;vertical-align:top;overflow-wrap:anywhere}tr{break-inside:avoid}table[data-border=box]{border:0.75pt solid #000}table[data-border=box] td,table[data-border=box] th{border:none;padding:1pt 4pt}table[data-border=none],table[data-border=none] td,table[data-border=none] th{border:none;padding:0}img{max-width:100%;height:auto}.page-break{break-before:page}.document-line-group{break-inside:avoid}u{text-underline-offset:0.12em}.pdf-checkbox{display:inline-flex;align-items:center;justify-content:center;width:10pt;height:10pt;border:1px solid black;vertical-align:middle}";
+  "body{color:#111;background:white;font-synthesis:none;line-height:1.5}p{margin:0 0 8pt;white-space:pre-wrap;overflow-wrap:anywhere;orphans:2;widows:2}h1,h2,h3,h4,h5,h6{break-after:avoid;margin:0 0 8pt;font-weight:700}h1{font-size:20pt}h2{font-size:16pt}h3{font-size:14pt}h4{font-size:12pt}h5{font-size:11pt}h6{font-size:10pt}ul,ol{margin:0 0 8pt;padding-left:20pt}blockquote{margin:0 0 8pt;padding-left:12pt;border-left:2pt solid #aaa}table{border-collapse:collapse;width:100%;table-layout:fixed}td,th{border:1px solid #aaa;padding:4pt;vertical-align:top;overflow-wrap:anywhere}tr{break-inside:avoid}table[data-border=box]{border:0.75pt solid #000}table[data-border=box] td,table[data-border=box] th{border:none;padding:1pt 4pt}table[data-border=none],table[data-border=none] td,table[data-border=none] th{border:none;padding:0}img{max-width:100%;height:auto}.page-break{break-before:page}.document-line-group{break-inside:avoid;line-height:1.5}u{text-underline-offset:0.12em}.pdf-checkbox{display:inline-flex;align-items:center;justify-content:center;width:10pt;height:10pt;border:1px solid black;vertical-align:middle}";
 
 export function validateFieldValues(
   document: StyledDocument,

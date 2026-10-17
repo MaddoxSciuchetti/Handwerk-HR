@@ -161,7 +161,8 @@ export async function generateDocumentPdf(
       new Blob([
         '<!doctype html><html><head><meta charset="utf-8"><style>' +
           DOCUMENT_CSS +
-          '</style></head><body style="margin:0;width:100%"><div style="box-sizing:border-box;width:100%;font-family:&quot;' +
+          "html,body{height:100%;overflow:hidden}img{max-height:100%;object-fit:contain;object-position:left bottom}" +
+          '</style></head><body style="margin:0;width:100%"><div style="box-sizing:border-box;width:100%;height:100%;overflow:hidden;font-family:&quot;' +
           printFamily(page.fontFamily) +
           '&quot;' +
           ";font-size:" +
