@@ -427,6 +427,11 @@ it('lets the sender type Tätigkeitspunkte without a stored field value', async 
       readOnly={false}
     />
   );
+  expect(
+    await screen.findByText(
+      'Diese Punkte gelten nur für dieses Arbeitsverhältnis.'
+    )
+  ).toBeTruthy();
   const point = await screen.findByRole('textbox', { name: 'Tätigkeiten 1' });
   expect(point).toHaveValue('Montage');
   fireEvent.change(point, { target: { value: 'Wartung' } });

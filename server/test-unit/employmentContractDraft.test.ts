@@ -207,6 +207,54 @@ it("replaces contract values from the Fragebogen and drops removed fields", asyn
     expect(view.masterRevision).toBe(4);
 });
 
+it("keeps engagement description points when the Fragebogen match replaces other fields", async () => {
+    contract.master = {
+        name: "Vertrag",
+        revision: 4,
+        body: fromSegments([
+            { type: "input", key: "contract.nachname", label: "Nachname" },
+            {
+                type: "input",
+                key: "contract.taetigkeiten",
+                label: "Tätigkeiten",
+                fieldType: "points",
+            },
+        ]),
+    };
+    contract.values = [
+        { key: "contract.nachname", value: "Alt" },
+        { key: "contract.taetigkeiten", value: "Montage\nWartung" },
+    ];
+    contract.engagement = {
+        questionnaireSubmission: {
+            status: "completed",
+            answers: [{ key: "lastName", value: "Lovelace" }],
+        },
+        worker: { email: "ada@example.com" },
+    };
+
+    const view = await resyncEngagementContractFromQuestionnaire(params);
+
+    expect(prisma.employmentContractValue.createMany).toHaveBeenCalledWith({
+        data: expect.arrayContaining([
+            {
+                employmentContractId: "contract",
+                key: "contract.nachname",
+                value: "Lovelace",
+            },
+            {
+                employmentContractId: "contract",
+                key: "contract.taetigkeiten",
+                value: "Montage\nWartung",
+            },
+        ]),
+    });
+    expect(view.values).toEqual({
+        "contract.nachname": "Lovelace",
+        "contract.taetigkeiten": "Montage\nWartung",
+    });
+});
+
 it("refuses to resync a contract that was already sent", async () => {
     contract.sentAt = new Date();
     contract.engagement = {

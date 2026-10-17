@@ -62,6 +62,9 @@ function DescriptionPointsView({ node, updateAttributes }: NodeViewProps) {
       ) : (
         <>
           <p className="mb-1 text-xs font-medium text-blue-950">{label}</p>
+          <p className="mb-1 text-xs text-blue-900/80">
+            Diese Punkte gelten nur für dieses Arbeitsverhältnis.
+          </p>
           <DescriptionPointsEditor
             label={label}
             value={context.values[key] ?? ''}

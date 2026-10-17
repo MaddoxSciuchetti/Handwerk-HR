@@ -6,6 +6,8 @@ import { ContractSendDialog } from '@/features/worker-task-management/components
 import {
   fetchPreparedEmploymentContractPdf,
   getEngagementContract,
+  prepareEmploymentContractPdf,
+  saveEngagementContractDraft,
 } from '@/features/worker-task-management/api/employmentContract.api';
 import { printPdfBlob } from '@/features/worker-task-management/printPdf';
 import { fromSegments } from '@/features/settings/documents/styledDocument';
@@ -98,4 +100,40 @@ it('prints the reviewed contract instead of emailing it', async () => {
     'pdf-1'
   );
   expect(printPdfBlob).toHaveBeenCalled();
+});
+
+it('saves the draft without preparing a pdf', async () => {
+  const saved = { ...draft, prepared: null, values: { 'contract.name': 'Ada' } };
+  vi.mocked(getEngagementContract).mockResolvedValue({
+    ...draft,
+    prepared: null,
+    values: {},
+  });
+  vi.mocked(saveEngagementContractDraft).mockResolvedValue(saved);
+  const user = userEvent.setup();
+  const query = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+
+  render(
+    <QueryClientProvider client={query}>
+      <ContractSendDialog
+        workerId="worker"
+        engagementId="engagement"
+        issueId="issue"
+        onClose={() => undefined}
+      />
+    </QueryClientProvider>
+  );
+
+  await user.click(
+    await screen.findByRole('button', { name: 'Entwurf speichern' })
+  );
+
+  expect(saveEngagementContractDraft).toHaveBeenCalledWith(
+    'worker',
+    'engagement',
+    {}
+  );
+  expect(prepareEmploymentContractPdf).not.toHaveBeenCalled();
 });

@@ -324,12 +324,35 @@ export async function persistMatchedContractValues(
         masterRevision: number;
     },
 ) {
+    const current = await tx.employmentContract.findUnique({
+        where: { id: params.contractId },
+        include: { master: true, values: true },
+    });
+    const pointKeys = new Set(
+        current
+            ? readDocumentSegments(current.master.body).flatMap((segment) =>
+                  segment.type === "input" && segment.fieldType === "points"
+                      ? [segment.key]
+                      : [],
+              )
+            : [],
+    );
+    const preserved = (current?.values ?? [])
+        .filter(
+            (entry) => pointKeys.has(entry.key) && entry.value.trim().length > 0,
+        )
+        .map((entry) => ({ key: entry.key, value: entry.value }));
+    const entries = [
+        ...params.entries.filter((entry) => !pointKeys.has(entry.key)),
+        ...preserved,
+    ];
+
     await tx.employmentContractValue.deleteMany({
         where: { employmentContractId: params.contractId },
     });
-    if (params.entries.length > 0) {
+    if (entries.length > 0) {
         await tx.employmentContractValue.createMany({
-            data: params.entries.map((entry) => ({
+            data: entries.map((entry) => ({
                 employmentContractId: params.contractId,
                 key: entry.key,
                 value: entry.value,

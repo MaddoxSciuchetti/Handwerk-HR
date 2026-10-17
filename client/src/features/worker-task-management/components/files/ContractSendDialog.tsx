@@ -339,15 +339,43 @@ export function ContractSendDialog({
                     Werte bearbeiten
                   </Button>
                 ) : (
-                  <Button
-                    type="button"
-                    disabled={!complete || prepare.isPending}
-                    onClick={() => prepare.mutate()}
-                  >
-                    {prepare.isPending
-                      ? 'PDF wird erstellt…'
-                      : 'Finales PDF erstellen und prüfen'}
-                  </Button>
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={
+                        readOnly ||
+                        saveDraft.isPending ||
+                        prepare.isPending ||
+                        resync.isPending
+                      }
+                      onClick={() =>
+                        saveDraft.mutate(values, {
+                          onSuccess: (saved) => {
+                            setValues(saved.values);
+                            toast.success('Entwurf gespeichert');
+                          },
+                          onError: () =>
+                            toast.error(
+                              'Entwurf konnte nicht gespeichert werden'
+                            ),
+                        })
+                      }
+                    >
+                      {saveDraft.isPending
+                        ? 'Speichert…'
+                        : 'Entwurf speichern'}
+                    </Button>
+                    <Button
+                      type="button"
+                      disabled={!complete || prepare.isPending}
+                      onClick={() => prepare.mutate()}
+                    >
+                      {prepare.isPending
+                        ? 'PDF wird erstellt…'
+                        : 'Finales PDF erstellen und prüfen'}
+                    </Button>
+                  </>
                 )}
                 <Button
                   type="button"
