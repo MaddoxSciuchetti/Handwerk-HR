@@ -6,7 +6,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { DOCUMENT_MASTER_KIND_LABELS } from '@/features/settings/documents/documentMaster.types';
+import {
+  DOCUMENT_MASTER_KIND_LABELS,
+  isTemplateDocumentKind,
+} from '@/features/settings/documents/documentMaster.types';
 import { useDocumentMasters } from '@/features/settings/documents/useDocumentMasters';
 import { FilePlus, FileText } from 'lucide-react';
 import { useState } from 'react';
@@ -29,7 +32,9 @@ export function EngagementTemplateDocuments({
   const create = useCreateTemplateDocument(workerId, engagementId);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
-  const choices = masters.data ?? [];
+  const choices = (masters.data ?? []).filter((master) =>
+    isTemplateDocumentKind(master.kind)
+  );
 
   const choose = (masterId: string) => {
     create.mutate(masterId, {
@@ -77,7 +82,7 @@ export function EngagementTemplateDocuments({
               <DialogTitle>Dokument aus Vorlage</DialogTitle>
               <DialogDescription>
                 Wählen Sie eine Vorlage. Das Dokument wird für dieses Engagement
-                angelegt.
+                angelegt und kann mit dem Fragebogen abgeglichen werden.
               </DialogDescription>
             </DialogHeader>
             {masters.isError ? (

@@ -156,35 +156,43 @@ describe('document settings', () => {
             updatedAt: '2026-10-11T00:00:00.000Z',
           },
         ]}
+        selectedIds={[]}
+        onToggle={() => undefined}
+        emptyLabel="Noch keine Vorlagen."
       />
     );
 
     expect(screen.getByText('Arbeitszeugnis')).toHaveClass('rounded-full');
   });
 
-  it('deletes a document from the list without opening it', async () => {
+  it('deletes a selected document without opening it', async () => {
     const user = userEvent.setup();
     vi.mocked(deleteDocumentMaster).mockResolvedValue();
-    renderWithProviders(
-      <DocumentMasterList
-        masters={[
-          {
-            id: 'master-1',
-            name: 'Qualifiziertes Zeugnis',
-            kind: 'arbeitszeugnis',
-            isPrimary: false,
-            updatedAt: '2026-10-11T00:00:00.000Z',
-          },
-        ]}
-      />
-    );
+    vi.mocked(listDocumentMasters).mockResolvedValue([
+      {
+        id: 'master-1',
+        name: 'Qualifiziertes Zeugnis',
+        kind: 'arbeitszeugnis',
+        isPrimary: false,
+        updatedAt: '2026-10-11T00:00:00.000Z',
+      },
+    ]);
+    renderWithProviders(<DocumentsPage />);
 
     await user.click(
-      screen.getByRole('button', { name: 'Qualifiziertes Zeugnis löschen' })
+      await screen.findByRole('button', { name: 'Qualifiziertes Zeugnis auswählen' })
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'Ausgewählte Dokumente löschen' })
     );
 
-    expect(deleteDocumentMaster).toHaveBeenCalledWith('master-1');
+    await waitFor(() =>
+      expect(deleteDocumentMaster).toHaveBeenCalledWith('master-1')
+    );
     expect(navigate).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole('button', { name: 'Als Hauptvertrag' })
+    ).not.toBeInTheDocument();
   });
 
   it('keeps a template visible until deletion succeeds and keeps it absent after reloading the list', async () => {
@@ -210,11 +218,14 @@ describe('document settings', () => {
     );
     const view = renderWithProviders(<DocumentsPage />);
     await user.click(
-      await screen.findByRole('button', { name: 'Alte Vorlage löschen' })
+      await screen.findByRole('button', { name: 'Alte Vorlage auswählen' })
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'Ausgewählte Dokumente löschen' })
     );
     expect(screen.getByText('Alte Vorlage')).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'Alte Vorlage löschen' })
+      screen.getByRole('button', { name: 'Ausgewählte Dokumente löschen' })
     ).toBeDisabled();
     finishDelete();
     await waitFor(() =>
@@ -222,7 +233,7 @@ describe('document settings', () => {
     );
     view.unmount();
     renderWithProviders(<DocumentsPage />);
-    expect(await screen.findByText(/Noch keine Dokumente/)).toBeInTheDocument();
+    expect(await screen.findByText('Noch keine Dokumente.')).toBeInTheDocument();
     expect(screen.queryByText('Alte Vorlage')).not.toBeInTheDocument();
   });
 
@@ -261,25 +272,21 @@ describe('document settings', () => {
 
     renderWithProviders(<DocumentsPage />);
 
+    expect(await screen.findByText('Hauptvertrag')).toBeInTheDocument();
     expect(
-      await screen.findByRole('radio', {
-        name: 'Rahmenvertrag als primären Mustervertrag für den Versand verwenden',
-      })
-    ).toBeChecked();
-    expect(screen.getByText('Für den Versand')).toBeInTheDocument();
+      screen.queryByRole('columnheader', { name: 'Hauptvertrag' })
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /löschen$/ })).not.toBeInTheDocument();
 
     await user.click(
-      screen.getByRole('radio', {
-        name: 'Saisonvertrag als primären Mustervertrag für den Versand verwenden',
-      })
+      screen.getByRole('button', { name: 'Saisonvertrag auswählen' })
     );
+    await user.click(screen.getByRole('button', { name: 'Als Hauptvertrag' }));
 
     expect(setPrimaryDocumentMaster).toHaveBeenCalledWith('next');
     expect(
-      await screen.findByRole('radio', {
-        name: 'Saisonvertrag als primären Mustervertrag für den Versand verwenden',
-      })
-    ).toBeChecked();
+      await screen.findByRole('button', { name: 'Als Hauptvertrag' })
+    ).toBeDisabled();
     expect(navigate).not.toHaveBeenCalled();
   });
 });

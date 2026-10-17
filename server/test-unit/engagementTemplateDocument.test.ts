@@ -72,7 +72,10 @@ beforeEach(() => {
     jest.clearAllMocks();
     (prisma.$transaction as jest.Mock).mockImplementation((callback) => callback(prisma));
     (prisma.workerEngagement.findFirst as jest.Mock).mockResolvedValue({ id: "eng" });
-    (prisma.documentMaster.findFirst as jest.Mock).mockResolvedValue({ id: "master" });
+    (prisma.documentMaster.findFirst as jest.Mock).mockResolvedValue({
+        id: "master",
+        kind: "kfz_ueberlassungsvertrag",
+    });
     (prisma.engagementTemplateDocument.findUnique as jest.Mock).mockResolvedValue({
         masterId: "master",
     });
@@ -114,6 +117,18 @@ it("creates a document from a template and reopens the same one", async () => {
     expect(again.created).toBe(false);
     expect(again.document.id).toBe("doc");
     expect(prisma.engagementTemplateDocument.create).toHaveBeenCalledTimes(1);
+});
+
+it("rejects the employment contract as an engagement template", async () => {
+    (prisma.documentMaster.findFirst as jest.Mock).mockResolvedValue({
+        id: "master",
+        kind: "employment_contract",
+    });
+
+    await expect(
+        createEngagementTemplateDocument({ ...params, masterId: "master" }),
+    ).rejects.toThrow("Arbeitsvertrag");
+    expect(prisma.engagementTemplateDocument.create).not.toHaveBeenCalled();
 });
 
 it("fills template fields from the completed questionnaire and keeps description points", async () => {

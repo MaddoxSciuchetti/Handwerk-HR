@@ -92,6 +92,13 @@ it('creates a template document, confirms sync, and prints the filled values', a
   vi.mocked(useDocumentMasters).mockReturnValue({
     data: [
       {
+        id: 'contract',
+        name: 'Arbeitsvertrag_Main',
+        kind: 'employment_contract',
+        isPrimary: true,
+        updatedAt: '2026-10-17T00:00:00.000Z',
+      },
+      {
         id: 'kfz',
         name: 'KFZ-Bescheinigung',
         kind: 'kfz_ueberlassungsvertrag',
@@ -121,6 +128,9 @@ it('creates a template document, confirms sync, and prints the filled values', a
   renderDocuments();
 
   await user.click(await screen.findByRole('button', { name: 'Aus Vorlage' }));
+  expect(
+    screen.queryByRole('button', { name: /Arbeitsvertrag_Main/ })
+  ).not.toBeInTheDocument();
   await user.click(
     await screen.findByRole('button', { name: /KFZ-Bescheinigung/ })
   );

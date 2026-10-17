@@ -14,12 +14,14 @@ import { FormEvent, useState } from 'react';
 import {
   DOCUMENT_MASTER_KIND_LABELS,
   DOCUMENT_MASTER_KINDS,
+  TEMPLATE_DOCUMENT_KINDS,
   type DocumentMasterKind,
 } from './documentMaster.types';
 import { useCreateDocumentMaster } from './useCreateDocumentMaster';
 
 type AddDocumentMasterDialogProps = {
   onClose: () => void;
+  purpose?: 'contract' | 'template';
 };
 
 type UploadDraft = {
@@ -41,12 +43,15 @@ function messageFrom(error: unknown): string {
   return 'Das Dokument konnte nicht angelegt werden.';
 }
 
-function draftsFromFiles(files: FileList): UploadDraft[] {
+function draftsFromFiles(
+  files: FileList,
+  kind: DocumentMasterKind
+): UploadDraft[] {
   return [...files].map((file, index) => ({
     key: `${file.name}-${file.size}-${file.lastModified}-${index}`,
     file,
     name: '',
-    kind: 'employment_contract',
+    kind,
   }));
 }
 
@@ -54,11 +59,13 @@ function DocumentKindSelect({
   id,
   label,
   value,
+  kinds,
   onChange,
 }: {
   id: string;
   label: string;
   value: DocumentMasterKind;
+  kinds: readonly DocumentMasterKind[];
   onChange: (kind: DocumentMasterKind) => void;
 }) {
   return (
@@ -67,7 +74,7 @@ function DocumentKindSelect({
       <Select
         value={value}
         onValueChange={(next) => {
-          const selectedKind = DOCUMENT_MASTER_KINDS.find(
+          const selectedKind = kinds.find(
             (option) => option === next
           );
           if (selectedKind) onChange(selectedKind);
@@ -77,7 +84,7 @@ function DocumentKindSelect({
           <SelectValue placeholder="Dokumentart wählen" />
         </SelectTrigger>
         <SelectContent>
-          {DOCUMENT_MASTER_KINDS.map((option) => (
+          {kinds.map((option) => (
             <SelectItem key={option} value={option}>
               {DOCUMENT_MASTER_KIND_LABELS[option]}
             </SelectItem>
@@ -90,10 +97,15 @@ function DocumentKindSelect({
 
 export function AddDocumentMasterDialog({
   onClose,
+  purpose,
 }: AddDocumentMasterDialogProps) {
   const navigate = useNavigate();
   const createMaster = useCreateDocumentMaster();
-  const [kind, setKind] = useState<DocumentMasterKind>('employment_contract');
+  const kinds =
+    purpose === 'template' ? TEMPLATE_DOCUMENT_KINDS : DOCUMENT_MASTER_KINDS;
+  const initialKind: DocumentMasterKind =
+    purpose === 'template' ? 'arbeitszeugnis' : 'employment_contract';
+  const [kind, setKind] = useState<DocumentMasterKind>(initialKind);
   const [name, setName] = useState('');
   const [drafts, setDrafts] = useState<UploadDraft[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -117,11 +129,17 @@ export function AddDocumentMasterDialog({
 
     const uploads = multiple
       ? drafts.map((draft) => ({
-          kind: draft.kind,
+          kind: purpose === 'contract' ? initialKind : draft.kind,
           name: draft.name.trim(),
           file: draft.file,
         }))
-      : [{ kind, name: name.trim(), file: drafts[0].file }];
+      : [
+          {
+            kind: purpose === 'contract' ? initialKind : kind,
+            name: name.trim(),
+            file: drafts[0].file,
+          },
+        ];
 
     setPending(true);
     setError(null);
@@ -152,19 +170,28 @@ export function AddDocumentMasterDialog({
         className="mx-auto flex w-full flex-col gap-4 rounded-xl border border-border bg-(--modal-surface) p-6 pt-10 text-foreground shadow-lg"
       >
         <div>
-          <h2 className="typo-h4 font-bold">Dokument hinzufügen</h2>
+          <h2 className="typo-h4 font-bold">
+            {purpose === 'contract'
+              ? 'Arbeitsvertrag hinzufügen'
+              : purpose === 'template'
+                ? 'Vorlage hinzufügen'
+                : 'Dokument hinzufügen'}
+          </h2>
           <p className="typo-body-sm text-muted-foreground">
-            Sie können mehrere Dateien auf einmal hochladen und jeder eine Art
-            geben. Jede Datei wird als bearbeitbare Vorlage geöffnet. Dort
-            können Sie variable Felder einfügen.
+            {purpose === 'contract'
+              ? 'Laden Sie einen oder mehrere Entwürfe des Arbeitsvertrags hoch.'
+              : purpose === 'template'
+                ? 'Diese Vorlagen können unter einem Engagement gewählt und mit dem Fragebogen abgeglichen werden.'
+                : 'Sie können mehrere Dateien auf einmal hochladen und jeder eine Art geben. Jede Datei wird als bearbeitbare Vorlage geöffnet. Dort können Sie variable Felder einfügen.'}
           </p>
         </div>
 
-        {multiple ? null : (
+        {multiple || purpose === 'contract' ? null : (
           <DocumentKindSelect
             id="document-kind"
             label="Art"
             value={kind}
+            kinds={kinds}
             onChange={setKind}
           />
         )}
@@ -179,7 +206,7 @@ export function AddDocumentMasterDialog({
             required={drafts.length === 0}
             onChange={(event) => {
               const next = event.target.files;
-              if (next && next.length > 0) setDrafts(draftsFromFiles(next));
+              if (next && next.length > 0) setDrafts(draftsFromFiles(next, initialKind));
             }}
           />
         </div>
@@ -190,14 +217,17 @@ export function AddDocumentMasterDialog({
               <legend className="typo-body-sm font-medium">
                 {draft.file.name}
               </legend>
-              <DocumentKindSelect
-                id={`document-kind-${draft.key}`}
-                label={`Art ${index + 1}`}
-                value={draft.kind}
-                onChange={(nextKind) =>
-                  updateDraft(draft.key, { kind: nextKind })
-                }
-              />
+              {purpose === 'contract' ? null : (
+                <DocumentKindSelect
+                  id={`document-kind-${draft.key}`}
+                  label={`Art ${index + 1}`}
+                  value={draft.kind}
+                  kinds={kinds}
+                  onChange={(nextKind) =>
+                    updateDraft(draft.key, { kind: nextKind })
+                  }
+                />
+              )}
               <div className="flex flex-col gap-2">
                 <Label htmlFor={`document-name-${draft.key}`}>
                   Name {index + 1}
