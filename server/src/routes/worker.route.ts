@@ -2,6 +2,7 @@ import express from "express";
 
 import { upload } from "../middleware/fileparser";
 
+import * as engagementClothingController from "../controllers/engagementClothing.controller";
 import * as engagementMaterialController from "../controllers/engagementMaterial.controller";
 import * as personnelDocumentController from "../controllers/personnelDocument.controller";
 import * as workerController from "../controllers/worker.controller";
@@ -91,6 +92,23 @@ worker.patch(
 worker.delete(
     "/:workerId/engagements/:engagementId/materials/:materialId",
     engagementMaterialController.deleteEngagementMaterial,
+);
+
+worker.get(
+    "/:workerId/engagements/:engagementId/clothing",
+    engagementClothingController.listEngagementClothingHandler,
+);
+worker.post(
+    "/:workerId/engagements/:engagementId/clothing",
+    engagementClothingController.postEngagementClothing,
+);
+worker.post(
+    "/:workerId/engagements/:engagementId/clothing/:clothingId/return",
+    engagementClothingController.returnEngagementClothingHandler,
+);
+worker.delete(
+    "/:workerId/engagements/:engagementId/clothing/:clothingId",
+    engagementClothingController.removeEngagementClothing,
 );
 
 worker.get(

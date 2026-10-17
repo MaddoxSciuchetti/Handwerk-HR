@@ -40,6 +40,16 @@ export function WorkerTabButtons({
       >
         Materialien
       </Button>
+      <Button
+        type="button"
+        variant={activeTab === 'clothing' ? 'default' : 'outline'}
+        size="sm"
+        className="rounded-2xl"
+        data-testid="clothing-tab-button"
+        onClick={() => onTabChange('clothing')}
+      >
+        Kleidung
+      </Button>
     </div>
   );
 }

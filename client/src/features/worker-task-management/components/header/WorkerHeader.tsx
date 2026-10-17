@@ -17,6 +17,7 @@ const titles: Record<WorkerTab, string> = {
   form: 'Aufgaben',
   files: 'Dateien',
   materials: 'Materialien',
+  clothing: 'Kleidung',
 };
 
 const WorkerHeader = ({

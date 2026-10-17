@@ -7,7 +7,7 @@ import {
   type ClothingStockInput,
 } from './bestand.api';
 
-const clothingStockKey = ['clothing-stock'] as const;
+export const clothingStockKey = ['clothing-stock'] as const;
 
 export function useClothingStock() {
   return useQuery({

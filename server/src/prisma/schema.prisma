@@ -168,6 +168,7 @@ model WorkerEngagement {
   materialDocuments        EngagementMaterialDocument[]
   personnelDocuments       EngagementPersonnelDocument[]
   mailForwarding           MailForwarding?
+  clothing                 EngagementClothing[]
 
   @@index([workerId])
   @@index([organizationId])
@@ -671,10 +672,37 @@ model ClothingStockItem {
   updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz()
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  clothingOrders EngagementClothing[]
 
   @@unique([organizationId, name, size])
   @@index([organizationId])
   @@map("clothing_stock_items")
+}
+
+enum ClothingSource {
+  storage
+  purchased
+}
+
+model EngagementClothing {
+  id               String         @id @default(uuid())
+  engagementId     String         @map("engagement_id")
+  stockItemId      String?        @map("stock_item_id")
+  name             String         @db.VarChar(255)
+  size             String         @default("") @db.VarChar(32)
+  productUrl       String?        @map("product_url") @db.VarChar(2048)
+  source           ClothingSource
+  quantity         Int
+  returnedQuantity Int            @default(0) @map("returned_quantity")
+  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime       @updatedAt @map("updated_at") @db.Timestamptz()
+
+  engagement WorkerEngagement   @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+  stockItem  ClothingStockItem? @relation(fields: [stockItemId], references: [id], onDelete: SetNull)
+
+  @@index([engagementId])
+  @@index([stockItemId])
+  @@map("engagement_clothing")
 }
 
 model WorkerWorkwear {

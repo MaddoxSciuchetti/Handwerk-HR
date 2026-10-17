@@ -29,6 +29,7 @@ import { ContractConfirmDialog } from '../files/ContractConfirmDialog';
 import { ContractSendDialog } from '../files/ContractSendDialog';
 import { ArbeitszeugnisSendDialog } from '../files/ArbeitszeugnisSendDialog';
 import WorkerFileUploads from '../files/WorkerFileUploads';
+import { ClothingTab } from '../clothing/ClothingTab';
 import { MaterialsTab } from '../materials/MaterialsTab';
 import { QuestionnaireSendDialog } from '@/features/questionnaire/QuestionnaireSendDialog';
 import WorkerHeader from '../header/WorkerHeader';
@@ -174,7 +175,12 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
         value={activeTab}
         defaultValue="form"
         onValueChange={(value) => {
-          if (value === 'form' || value === 'files' || value === 'materials') {
+          if (
+            value === 'form' ||
+            value === 'files' ||
+            value === 'materials' ||
+            value === 'clothing'
+          ) {
             setActiveTab(value);
           }
         }}
@@ -321,6 +327,21 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                 <MaterialsTab
                   workerId={workerId}
                   fileInputRef={materialFileInputRef}
+                  engagements={data.data.engagements.map((engagement) => ({
+                    id: engagement.id,
+                    type: engagement.type,
+                    startDate: engagement.startDate,
+                  }))}
+                />
+              </ScrollableTableViewport>
+            </TabsContent>
+            <TabsContent
+              value="clothing"
+              className="mt-0 flex min-h-0 flex-1 flex-col"
+            >
+              <ScrollableTableViewport>
+                <ClothingTab
+                  workerId={workerId}
                   engagements={data.data.engagements.map((engagement) => ({
                     id: engagement.id,
                     type: engagement.type,
