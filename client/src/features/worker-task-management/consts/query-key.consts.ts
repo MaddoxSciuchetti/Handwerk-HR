@@ -3,3 +3,4 @@ export const WORKERBYID = 'worker' as const;
 export const HISTORYDATA = 'historyData' as const;
 export const TASKHISTORY = 'taskHistory' as const;
 export const ENGAGEMENT_MATERIALS = 'engagementMaterials' as const;
+export const PERSONNEL_DOCUMENTS = 'personnelDocuments' as const;

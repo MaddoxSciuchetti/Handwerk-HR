@@ -35,6 +35,7 @@ model User {
   sentInvitations        Invitation[]          @relation("InvitedBy")
   createdWorkers         Worker[]              @relation("WorkerCreatedBy")
   uploadedDocuments      WorkerDocument[]
+  uploadedPersonnelDocuments EngagementPersonnelDocument[]
   responsibleEngagements WorkerEngagement[]
   createdIssues          Issue[]               @relation("IssueCreatedBy")
   assignedIssues         Issue[]               @relation("IssueAssignedTo")
@@ -164,6 +165,7 @@ model WorkerEngagement {
   questionnaireSubmission  QuestionnaireSubmission?
   materials                EngagementMaterial[]
   materialDocuments        EngagementMaterialDocument[]
+  personnelDocuments       EngagementPersonnelDocument[]
   mailForwarding           MailForwarding?
 
   @@index([workerId])
@@ -621,6 +623,24 @@ model EngagementMaterialDocument {
   @@map("engagement_material_documents")
 }
 
+model EngagementPersonnelDocument {
+  id               String                @id @default(uuid())
+  engagementId     String                @map("engagement_id")
+  uploadedByUserId String                @map("uploaded_by_user_id")
+  name             PersonnelDocumentName
+  originalFileName String                @map("original_file_name") @db.VarChar(255)
+  fileUrl          String                @map("file_url") @db.VarChar(2048)
+  mimeType         String?               @map("mime_type") @db.VarChar(128)
+  fileSizeBytes    Int?                  @map("file_size_bytes")
+  createdAt        DateTime              @default(now()) @map("created_at") @db.Timestamptz()
+
+  engagement WorkerEngagement @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+  uploadedBy User             @relation(fields: [uploadedByUserId], references: [id], onDelete: Restrict)
+
+  @@index([engagementId])
+  @@map("engagement_personnel_documents")
+}
+
 model EngagementMaterial {
   id               String   @id @default(uuid())
   engagementId     String   @map("engagement_id")
@@ -793,6 +813,13 @@ enum DocumentFileType {
   id
   certificate
   other
+}
+
+enum PersonnelDocumentName {
+  personalausweis
+  fuehrerschein
+  krankenkassenkarte
+  fragebogen
 }
 
 enum EngagementType {

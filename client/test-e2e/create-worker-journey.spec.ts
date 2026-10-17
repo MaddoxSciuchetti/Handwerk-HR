@@ -54,9 +54,8 @@ test.describe('Onboarding worker view journey', () => {
     await page.getByRole('tab', { name: 'Dateien' }).click();
 
     await page.getByTestId('open-file-upload').click();
-    await expect(
-      page.getByRole('button', { name: /Hochladen$/i })
-    ).toBeVisible();
+    await page.getByLabel('Dokumentname').click();
+    await page.getByRole('option', { name: 'Personalausweis' }).click();
 
     const fileBuffer = Buffer.from(PNG_B64, 'base64');
 
@@ -69,7 +68,9 @@ test.describe('Onboarding worker view journey', () => {
     const uploadResponse = page.waitForResponse(
       (res) =>
         res.request().method() === 'POST' &&
-        /\/worker\/[^/]+\/files\b/.test(res.url()) &&
+        /\/worker\/[^/]+\/engagements\/[^/]+\/personnel-documents\b/.test(
+          res.url()
+        ) &&
         res.status() >= 200 &&
         res.status() < 300,
       { timeout: 60_000 }
@@ -82,13 +83,15 @@ test.describe('Onboarding worker view journey', () => {
       timeout: 30_000,
     });
 
+    await page.getByRole('button', { name: 'Personalausweis', exact: true }).click();
+    await expect(page.getByText(TEST_FILE_NAME)).toBeVisible({
+      timeout: 15_000,
+    });
     await expect(
-      page.getByRole('button', { name: `${TEST_FILE_NAME} löschen` })
+      page.getByRole('button', { name: 'Personalausweis löschen' })
     ).toBeVisible({ timeout: 15_000 });
 
-    await page
-      .getByRole('button', { name: `${TEST_FILE_NAME} löschen` })
-      .click();
+    await page.getByRole('button', { name: 'Personalausweis löschen' }).click();
 
     await expect(page.getByText(TEST_FILE_NAME)).not.toBeVisible({
       timeout: 15_000,

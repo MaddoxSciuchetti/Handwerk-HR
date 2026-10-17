@@ -269,6 +269,11 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                 <div className={sectionHeaderClassName}>Name</div>
                 <WorkerFileUploads
                   workerId={workerId}
+                  engagements={data.data.engagements.map((engagement) => ({
+                    id: engagement.id,
+                    type: engagement.type,
+                    startDate: engagement.startDate,
+                  }))}
                   questionnaires={data.data.engagements.flatMap((engagement) =>
                     engagement.questionnaireSubmission?.status === 'completed'
                       ? [{

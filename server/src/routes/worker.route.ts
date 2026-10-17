@@ -3,6 +3,7 @@ import express from "express";
 import { upload } from "../middleware/fileparser";
 
 import * as engagementMaterialController from "../controllers/engagementMaterial.controller";
+import * as personnelDocumentController from "../controllers/personnelDocument.controller";
 import * as workerController from "../controllers/worker.controller";
 
 const worker = express.Router();
@@ -82,6 +83,24 @@ worker.patch(
 worker.delete(
     "/:workerId/engagements/:engagementId/materials/:materialId",
     engagementMaterialController.deleteEngagementMaterial,
+);
+
+worker.get(
+    "/:workerId/personnel-documents",
+    personnelDocumentController.listPersonnelDocuments,
+);
+worker.post(
+    "/:workerId/engagements/:engagementId/personnel-documents",
+    upload.single("file"),
+    personnelDocumentController.uploadPersonnelDocument,
+);
+worker.patch(
+    "/:workerId/personnel-documents/:documentId",
+    personnelDocumentController.renamePersonnelDocument,
+);
+worker.delete(
+    "/:workerId/personnel-documents/:documentId",
+    personnelDocumentController.deletePersonnelDocument,
 );
 
 worker.put(
