@@ -1,4 +1,4 @@
-import API from '@/config/apiClient';
+import API, { apiJson } from '@/config/apiClient';
 import type { DocumentSegment } from '@/features/settings/documents/documentSegments';
 import type { StyledDocument } from '@/features/settings/documents/styledDocument';
 import type { PreparedPdf } from '@/features/worker-task-management/components/files/PreparedPdfPreview';
@@ -58,19 +58,15 @@ export function saveEngagementContractDraft(
   ).then((response) => response.data);
 }
 
-export function sendFilledEmploymentContract(
+export function fetchPreparedEmploymentContractPdf(
   workerId: string,
   engagementId: string,
-  issueId: string,
   artifactId: string
-): Promise<EmploymentContractDraft> {
-  return API.post<{ issueId: string; artifactId: string }, ContractResponse>(
-    `worker/${workerId}/engagements/${engagementId}/contract/send`,
-    {
-      issueId,
-      artifactId,
-    }
-  ).then((response) => response.data);
+) {
+  return apiJson.get<Blob>(
+    `worker/${workerId}/engagements/${engagementId}/contract/prepared-pdf/${artifactId}`,
+    { responseType: 'blob' }
+  );
 }
 
 export function prepareEmploymentContractPdf(

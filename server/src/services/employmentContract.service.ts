@@ -14,11 +14,8 @@ import {
     readDocumentSegments,
     type DocumentSegment,
 } from "@/services/documentBody";
-import { generatePresignedUrl } from "@/config/aws";
-import { RESEND_INBOUND_ADDRESS, USE_MICROSOFT_MAIL } from "@/constants/env";
-import { sendGraphMail } from "@/services/graphMail";
+import { downloadStoredFile, generatePresignedUrl } from "@/config/aws";
 import AppError from "@/utils/AppError";
-import { sendMail } from "@/utils/sendMail";
 import { Prisma } from "@prisma/client";
 import {
     readStyledDocument,
@@ -26,11 +23,9 @@ import {
 } from "../../../shared/document";
 import {
     prepareDocument,
-    sendPreparedDocument,
     invalidatePreparedDocuments,
     outgoingPdfUrl,
     currentPreparation,
-    DeliveryRejected,
 } from "@/services/preparedDocument";
 
 const VALUE_MAX = 8000;
@@ -442,146 +437,41 @@ export async function prepareEmploymentContractPdf(
         where: { id: params.workerId, organizationId: params.organizationId },
         select: { email: true },
     });
-    if (!worker?.email) throw new AppError(BAD_REQUEST, "Empfänger fehlt.");
     return prepareDocument({
         ...params,
         kind: "employment_contract",
         masterId: contract.masterId,
-        recipient: worker.email,
+        recipient: worker?.email?.trim() || "buero",
     });
 }
 
-export async function sendFilledEmploymentContract(
-    params: ContractParams & {
-        actorUserId: string;
-        issueId: string;
-        artifactId: string;
-    },
+export async function readPreparedEmploymentContractPdf(
+    params: ContractParams & { artifactId: string },
 ) {
     const contract = await findContract(params);
     if (!contract) throw new AppError(NOT_FOUND, "Vertrag nicht gefunden.");
-    const issue = await prisma.issue.findFirst({
-        where: {
-            id: params.issueId,
-            workerEngagementId: params.engagementId,
-            kind: "contract_send",
-            workerEngagement: { organizationId: params.organizationId },
-        },
-    });
-    if (!issue) throw new AppError(NOT_FOUND, "Aufgabe nicht gefunden.");
-    const worker = await prisma.worker.findFirst({
-        where: { id: params.workerId, organizationId: params.organizationId },
-        select: { email: true },
-    });
-    if (!worker?.email) throw new AppError(BAD_REQUEST, "Empfänger fehlt.");
     const selected = await prisma.preparedDocument.findFirst({
         where: {
             id: params.artifactId,
             masterId: contract.masterId,
             organizationId: params.organizationId,
+            engagementId: params.engagementId,
+            kind: "employment_contract",
         },
     });
-    if (!selected)
-        throw new AppError(
-            CONFLICT,
-            "PDF gehört nicht zur ausgewählten Vorlage.",
-        );
-    await sendPreparedDocument({
-        organizationId: params.organizationId,
-        engagementId: params.engagementId,
-        kind: "employment_contract",
-        artifactId: params.artifactId,
-        actorUserId: params.actorUserId,
-        recipient: worker.email,
-        deliver: async (attachment, artifactId) => {
-            if (USE_MICROSOFT_MAIL) {
-                const sent = await sendGraphMail({
-                    to: worker.email,
-                    subject: "Ihr Arbeitsvertrag",
-                    html: "<p>Anbei Ihr Arbeitsvertrag als PDF.</p>",
-                    attachments: [attachment],
-                });
-                return sent.conversationId;
-            }
-            const token = artifactId;
-            const sent = await sendMail({
-                to: worker.email,
-                subject: `Ihr Arbeitsvertrag [${token}]`,
-                text: "Anbei Ihr Arbeitsvertrag als PDF. Referenz: " + token,
-                html:
-                    "<p>Anbei Ihr Arbeitsvertrag als PDF.</p><p>Referenz: " +
-                    token +
-                    "</p>",
-                headers: { "X-Handwerk-Contract": token },
-                attachments: [attachment],
-                idempotencyKey: artifactId,
-                ...(RESEND_INBOUND_ADDRESS
-                    ? { replyTo: RESEND_INBOUND_ADDRESS }
-                    : {}),
-            });
-            if (sent.error) {
-                if (
-                    [
-                        "validation_error",
-                        "invalid_parameter",
-                        "missing_required_field",
-                        "restricted_api_key",
-                        "invalid_api_key",
-                    ].includes(sent.error.name)
-                )
-                    throw new DeliveryRejected(sent.error.message);
-                throw new Error(sent.error.message);
-            }
-            return "resend:" + token;
-        },
-        finalize: async (tx, document, values, artifactId, providerId) => {
-            await tx.employmentContractValue.deleteMany({
-                where: { employmentContractId: contract.id },
-            });
-            const entries = Object.entries(values);
-            if (entries.length)
-                await tx.employmentContractValue.createMany({
-                    data: entries.map(([key, value]) => ({
-                        employmentContractId: contract.id,
-                        key,
-                        value,
-                    })),
-                });
-            await tx.employmentContract.update({
-                where: { id: contract.id },
-                data: {
-                    body: document as unknown as Prisma.InputJsonValue,
-                    outgoingPdfId: artifactId,
-                    status: "ready",
-                    sentAt: new Date(),
-                    conversationId: providerId,
-                },
-            });
-            const contractTasks = await tx.issue.findMany({
-                where: {
-                    workerEngagementId: params.engagementId,
-                    title: "Arbeitsvertrag",
-                    kind: "standard",
-                    status: "open",
-                },
-            });
-            for (const contractTask of contractTasks) {
-                await tx.issue.update({
-                    where: { id: contractTask.id },
-                    data: { status: "in_progress" },
-                });
-                await tx.issueAuditLog.create({
-                    data: {
-                        issueId: contractTask.id,
-                        actorUserId: params.actorUserId,
-                        action: "issue.updated",
-                        oldValue: { status: contractTask.status },
-                        newValue: { status: "in_progress" },
-                    },
-                });
-            }
-            await tx.issue.deleteMany({ where: { id: issue.id } });
-        },
-    });
-    return present((await findContract(params)) ?? contract);
+    if (!selected) throw new AppError(NOT_FOUND, "PDF nicht gefunden.");
+    return downloadStoredFile(selected.s3Key);
+}
+
+export async function sendFilledEmploymentContract(
+    _params: ContractParams & {
+        actorUserId: string;
+        issueId: string;
+        artifactId: string;
+    },
+) {
+    throw new AppError(
+        CONFLICT,
+        "Der Arbeitsvertrag wird im Büro gedruckt und nicht per E-Mail versendet.",
+    );
 }

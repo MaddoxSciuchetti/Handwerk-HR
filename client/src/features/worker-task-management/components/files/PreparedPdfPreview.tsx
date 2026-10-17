@@ -23,17 +23,21 @@ type PreparedPdfPreviewProps = {
   prepared: PreparedPdf;
   approved: boolean;
   onApprove: (approved: boolean) => void;
+  frameTitle?: string;
+  confirmLabel?: string;
 };
 export function PreparedPdfPreview({
   prepared,
   approved,
   onApprove,
+  frameTitle = 'Finales PDF vor dem Versand',
+  confirmLabel = 'Ich habe dieses PDF geprüft und bestätige den Versand.',
 }: PreparedPdfPreviewProps) {
   return (
     <div className="mx-auto flex min-h-0 w-full min-w-0 max-w-3xl flex-1 flex-col gap-3 overflow-hidden">
       <div className="relative min-h-0 flex-1 overflow-hidden rounded-lg border bg-muted shadow-sm">
         <iframe
-          title="Finales PDF vor dem Versand"
+          title={frameTitle}
           src={viewerSrc(prepared.previewUrl)}
           className="absolute inset-0 h-full w-full"
         />
@@ -58,7 +62,7 @@ export function PreparedPdfPreview({
             checked={approved}
             onChange={(event) => onApprove(event.target.checked)}
           />
-          Ich habe dieses PDF geprüft und bestätige den Versand.
+          {confirmLabel}
         </label>
       )}
     </div>

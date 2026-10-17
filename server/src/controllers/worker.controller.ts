@@ -500,6 +500,25 @@ export const confirmReturnedEmploymentContractHandler = catchErrors(
     },
 );
 
+export const readPreparedEmploymentContractPdf = catchErrors(
+    async (req: Request, res: Response) => {
+        const bytes =
+            await employmentContractService.readPreparedEmploymentContractPdf({
+                organizationId: req.orgId,
+                workerId: param(req, "workerId"),
+                engagementId: param(req, "engagementId"),
+                artifactId: param(req, "artifactId"),
+            });
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader(
+            "Content-Disposition",
+            'inline; filename="Arbeitsvertrag.pdf"',
+        );
+        res.setHeader("Cache-Control", "no-store");
+        return res.send(bytes);
+    },
+);
+
 export const sendFilledEmploymentContract = catchErrors(
     async (req: Request, res: Response) => {
         const issueId = String(req.body?.issueId ?? "").trim();
