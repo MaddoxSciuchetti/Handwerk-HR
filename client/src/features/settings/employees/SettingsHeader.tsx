@@ -1,5 +1,5 @@
-import { SettingsPageHeader } from '@/features/settings/components/SettingsPageHeader';
-
 export function SettingsHeader() {
-  return <SettingsPageHeader title="Mitarbeiter" />;
+  return (
+    <h2 className="typo-h4 font-bold">Meine Mitarbeiter</h2>
+  );
 }

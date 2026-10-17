@@ -48,11 +48,11 @@ test.describe('Create employee journey', () => {
     page,
     request,
   }) => {
-    await page.goto('/settings/employees');
-    await expect(page).toHaveURL(/\/settings\/employees$/);
+    await page.goto('/settings/profile');
+    await expect(page).toHaveURL(/\/settings\/profile$/);
 
     await expect(
-      page.getByRole('heading', { name: /Mitarbeiter/i })
+      page.getByRole('heading', { name: /Meine Mitarbeiter/i })
     ).toBeVisible();
 
     await page.getByPlaceholder('Mitarbeite Email').fill(inviteEmail);
@@ -138,8 +138,8 @@ test.describe('Create employee journey', () => {
     expect(verificationEmail?.html).toContain('/email/verify/');
     expect(verificationEmail?.html).toContain(employee.password);
 
-    await page.goto('/settings/employees');
-    await expect(page).toHaveURL(/\/settings\/employees$/);
+    await page.goto('/settings/profile');
+    await expect(page).toHaveURL(/\/settings\/profile$/);
 
     const employeeRow = page
       .locator('div.flex.items-center.relative.group')

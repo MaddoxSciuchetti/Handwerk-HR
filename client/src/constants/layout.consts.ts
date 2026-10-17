@@ -35,12 +35,6 @@ export const SETTINGSITEMS = [
     to: '/settings/profile',
     icon: UserRound,
   },
-
-  {
-    title: 'Mitarbeiter',
-    to: '/settings/employees',
-    icon: UserRound,
-  },
   {
     title: 'Templates',
     to: '/settings/templates/template',

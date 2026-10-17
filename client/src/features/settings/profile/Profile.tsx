@@ -4,6 +4,7 @@ import { Table } from '@/features/settings/components/Table';
 import { User } from '@/features/user-profile/types/auth.type';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import Employees from '@/features/settings/employees/Employees';
 import { EditableTextRow } from './EditableTextRow';
 import { ProfilePhotoRow } from './ProfilePhotoRow';
 import { ProfileUpdateInput, profileUpdateSchema } from './profile.schemas';
@@ -80,7 +81,7 @@ function Profile() {
 
   return (
     <div className="mx-auto flex h-full flex-col overflow-auto rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
-      <div className="flex h-full w-full flex-col items-center justify-center">
+      <div className="flex h-full w-full flex-col items-stretch">
         <SettingsPageHeader title="Profil" />
         <Table className="w-full">
           {/* <TableDivider /> */}
@@ -135,6 +136,7 @@ function Profile() {
             onUploadPhoto={uploadPhoto}
           />
         </Table>
+        <Employees />
       </div>
     </div>
   );

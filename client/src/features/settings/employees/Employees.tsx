@@ -27,11 +27,13 @@ function Employees() {
     EmployeeDataArray[number] | null
   >(null);
 
-  if (isLoading || isDeleting) return <LoadingAlert />;
+  if (isLoading || isDeleting) {
+    return <LoadingAlert className="mt-10 min-h-40" />;
+  }
 
   return (
-    <div className="mx-auto flex h-full flex-col overflow-auto rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
-      <div className="h-full w-full flex flex-col items-center justify-center">
+    <section className="mt-10 flex w-full flex-col items-stretch">
+      <div className="flex w-full flex-col items-stretch">
         <SettingsHeader />
         <Table className="w-full">
           <TableHeader>
@@ -72,7 +74,7 @@ function Employees() {
         isOpen={selectedEmployee !== null}
         onClose={() => setSelectedEmployee(null)}
       />
-    </div>
+    </section>
   );
 }
 
