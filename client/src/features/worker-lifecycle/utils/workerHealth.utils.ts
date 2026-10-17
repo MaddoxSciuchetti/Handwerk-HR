@@ -19,7 +19,9 @@ export function getWorkerIssueCount(worker: WorkerRecord): number {
 }
 
 export function getWorkerHealth(worker: WorkerRecord): WorkerHealth {
-  const issues = collectWorkerIssues(worker);
+  const issues = collectWorkerIssues(worker).filter(
+    (issue) => (issue.status as IssueStatusValue) !== 'cancelled'
+  );
   const totalCount = issues.length;
 
   if (totalCount === 0) {
