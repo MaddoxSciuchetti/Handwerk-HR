@@ -5,7 +5,6 @@ import { FieldGroup } from '@/components/ui/field';
 import { Label } from '@/components/ui/label';
 import TaskAutomation from '@/features/all-tasks/components/TaskAutomation';
 import { ARBEITSZEUGNIS } from '@/features/all-tasks/consts/task-automation.consts';
-import { EngagementTaskDeleteButton } from '@/features/all-tasks/components/EngagementTaskDeleteButton';
 import { TaskChat } from '@/features/all-tasks/components/TaskChat';
 import { TaskStatusSelect } from '@/features/all-tasks/components/ui/TaskStatusSelect';
 import { employeeQueries } from '@/features/employee-overview/query-options/queries/employee.queries';
@@ -16,7 +15,6 @@ import SidebarFooter from '@/features/worker-task-management/components/tasks/ta
 import SidebarHeader from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarHeader';
 import { SidebarPanel } from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarPanel';
 import TaskHistory from '@/features/worker-task-management/components/tasks/task-sidebar/task-history/TaskHistory';
-import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { X } from 'lucide-react';
 import { useMemo, type Dispatch, type SetStateAction } from 'react';
@@ -172,19 +170,7 @@ export function TaskSidebar({
               ) : null}
             </FieldGroup>
           </SidebarContent>
-          <SidebarFooter
-            className={cn(
-              'shrink-0 border-0 p-6',
-              taskState === 'edit' && 'w-full justify-between'
-            )}
-          >
-            {taskState === 'edit' && taskEditState.taskId ? (
-              <EngagementTaskDeleteButton
-                taskId={taskEditState.taskId}
-                disabled={isSubmitting}
-                onDeleted={() => setIsOpen(false)}
-              />
-            ) : null}
+          <SidebarFooter className="shrink-0 border-0 p-6">
             <Button
               type="submit"
               className="rounded-2xl"
