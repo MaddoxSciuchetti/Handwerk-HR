@@ -1,4 +1,5 @@
 import {
+    encodeFileAnswer,
     flattenQuestionnaireAnswers,
     QUESTIONNAIRE_FIELDS,
     questionnaireAnswerSchema,
@@ -108,5 +109,28 @@ describe("questionnaire form", () => {
         expect(() => schema.parse({ insuranceNumber: "32010490A443" })).toThrow(
             "Versicherungsnummer",
         );
+    });
+
+    it("accepts an uploaded file and allows an optional one to stay empty", () => {
+        const key = "questionnaires/11111111-1111-4111-8111-111111111111/1710000000000-22222222-2222-4222-8222-222222222222";
+        const schema = questionnaireAnswerSchema(
+            [
+                {
+                    key: "custom.license",
+                    label: "Führerschein",
+                    section: "Weitere Angaben",
+                    type: "file",
+                    required: false,
+                },
+            ],
+            [],
+        );
+        expect(schema.parse({ "custom.license": "" })).toMatchObject({
+            "custom.license": "",
+        });
+        expect(
+            schema.parse({ "custom.license": encodeFileAnswer("Führerschein.pdf", key) }),
+        ).toMatchObject({ "custom.license": encodeFileAnswer("Führerschein.pdf", key) });
+        expect(() => schema.parse({ "custom.license": "Führerschein.pdf" })).toThrow("Datei");
     });
 });

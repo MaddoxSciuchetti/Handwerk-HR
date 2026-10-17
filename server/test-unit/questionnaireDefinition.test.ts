@@ -139,6 +139,36 @@ describe("questionnaire definition", () => {
         ).toThrow("Versicherungsnummer");
     });
 
+    it("keeps a file question optional or required", () => {
+        const optional = parseQuestionnaireDefinition({
+            items: [
+                {
+                    kind: "field",
+                    key: "custom.drivers-license",
+                    label: "Führerschein",
+                    type: "file",
+                    required: false,
+                },
+            ],
+        });
+        expect(optional.items[0]).toMatchObject({
+            type: "file",
+            required: false,
+            contractFieldKey: undefined,
+        });
+        const required = parseQuestionnaireDefinition({
+            items: [
+                {
+                    kind: "field",
+                    key: "custom.drivers-license",
+                    label: "Führerschein",
+                    type: "file",
+                },
+            ],
+        });
+        expect(required.items[0]).toMatchObject({ type: "file", required: true });
+    });
+
     it("rejects a checkbox that has only one label", () => {
         expect(() =>
             parseQuestionnaireDefinition({

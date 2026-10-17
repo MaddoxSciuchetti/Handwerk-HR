@@ -26,7 +26,24 @@ export function QuestionnaireFieldControls({
         label={field.label}
         onCommit={(label) => onCommit({ ...field, label })}
       />
-      <QuestionAnswer field={field} onChange={patch} />
+      {field.type === 'file' ? (
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            className="size-4 accent-primary"
+            checked={field.required !== false}
+            onChange={(event) => patch({ required: event.target.checked })}
+          />
+          Pflichtfeld
+        </label>
+      ) : (
+        <QuestionAnswer field={field} onChange={patch} />
+      )}
+      {field.type === 'file' ? (
+        <p className="text-xs text-muted-foreground">
+          Die Datei wird beim Ausfüllen hochgeladen, zum Beispiel ein Führerschein.
+        </p>
+      ) : null}
       {field.type === 'check' && !field.builtin ? (
         <ChoiceLineEditor
           options={field.options ?? []}
@@ -40,6 +57,7 @@ export function QuestionnaireFieldControls({
           }
         />
       ) : null}
+      {field.type === 'file' ? null : (
       <div className="flex flex-col gap-2">
         <Label htmlFor={`${field.key}-contract`}>Vertragsfeld</Label>
         <select
@@ -56,6 +74,7 @@ export function QuestionnaireFieldControls({
           ))}
         </select>
       </div>
+      )}
     </div>
   );
 }

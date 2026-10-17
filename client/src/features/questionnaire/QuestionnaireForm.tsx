@@ -54,6 +54,7 @@ export function QuestionnaireForm({ token, preview }: QuestionnaireFormProps) {
   const [values, setValues] = useState<Record<string, string>>({});
   const [rows, setRows] = useState<Record<string, Record<string, string>[]>>({});
   const [submitted, setSubmitted] = useState(false);
+  const [uploads, setUploads] = useState(0);
 
   const questionnaire = useQuery({
     queryKey: ['fragebogen', token],
@@ -211,6 +212,10 @@ export function QuestionnaireForm({ token, preview }: QuestionnaireFormProps) {
                           question={question}
                           disabled={question.employerFilled}
                           employerFilled={question.employerFilled}
+                          uploadToken={token}
+                          onUploadBusy={(busy) =>
+                            setUploads((count) => count + (busy ? 1 : -1))
+                          }
                           value={values[question.key] ?? ''}
                           onChange={(value) =>
                             setValues((current) => ({
@@ -230,7 +235,11 @@ export function QuestionnaireForm({ token, preview }: QuestionnaireFormProps) {
                 Das Formular konnte nicht gesendet werden.
               </p>
             ) : null}
-            <Button type="submit" className="rounded-2xl" disabled={missing || submit.isPending}>
+            <Button
+              type="submit"
+              className="rounded-2xl"
+              disabled={missing || submit.isPending || uploads > 0}
+            >
               {submit.isPending ? 'Sendet…' : 'Absenden'}
             </Button>
           </form>

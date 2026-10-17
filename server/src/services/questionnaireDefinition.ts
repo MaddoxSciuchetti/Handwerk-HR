@@ -151,13 +151,18 @@ export function isWorkerLocked(field: { defaultValue?: string }) {
     return Boolean(field.defaultValue?.trim());
 }
 
+export function questionRequired(field: { type: string; required?: boolean }) {
+    if (field.type === "file") return field.required !== false;
+    return true;
+}
+
 export function presentQuestions(definition: QuestionnaireDefinition) {
     return definitionFields(definition).map((field) => ({
         key: field.key,
         label: field.label,
         section: field.section,
         type: field.type,
-        required: true,
+        required: questionRequired(field),
         options: field.options,
         max: field.max,
         layout: field.layout,
@@ -178,6 +183,7 @@ function cleanDefault(field: QuestionnaireFieldItem, value: string) {
     }
     const trimmed = value.trim().slice(0, field.max ?? 255);
     if (!trimmed) return undefined;
+    if (field.type === "file") return undefined;
     if (field.type === "check") {
         const options = field.options ?? [];
         if (options.length > 0) return options.includes(trimmed) ? trimmed : undefined;
@@ -247,9 +253,9 @@ function parseField(raw: object, seen: Set<string>): QuestionnaireFieldItem {
     const draft: QuestionnaireFieldItem = {
         ...base,
         label,
-        required: true,
+        required: questionRequired(base),
         employerFilled: false,
-        contractFieldKey,
+        contractFieldKey: base.type === "file" ? undefined : contractFieldKey,
         defaultValue: undefined,
     };
     const posted = "defaultValue" in raw && typeof raw.defaultValue === "string" ? raw.defaultValue : "";
@@ -288,7 +294,13 @@ function assertChoiceOptions(options: string[], message: string) {
 
 function customBase(raw: object, key: string): QuestionnaireFieldItem {
     const type = "type" in raw ? raw.type : "";
-    if (type !== "text" && type !== "date" && type !== "single" && type !== "check") {
+    if (
+        type !== "text" &&
+        type !== "date" &&
+        type !== "single" &&
+        type !== "check" &&
+        type !== "file"
+    ) {
         reject("Dieser Fragetyp ist nicht verfügbar.");
     }
     const options = choiceOptions(raw);
@@ -306,7 +318,7 @@ function customBase(raw: object, key: string): QuestionnaireFieldItem {
         type,
         options: type === "single" || (type === "check" && options.length > 0) ? options : undefined,
         max: type === "text" ? 255 : undefined,
-        required: true,
+        required: type === "file" ? !("required" in raw && raw.required === false) : true,
         builtin: false,
     };
 }
@@ -328,7 +340,12 @@ export function applyOverrides(
         items: definition.items.map((item) => {
             if (item.kind !== "field") return item;
             const next = cleanDefault(item, overrides[item.key] ?? item.defaultValue ?? "");
-            return { ...item, defaultValue: next, required: true, employerFilled: false };
+            return {
+                ...item,
+                defaultValue: next,
+                required: questionRequired(item),
+                employerFilled: false,
+            };
         }),
     };
 }

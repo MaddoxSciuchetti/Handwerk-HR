@@ -5,6 +5,7 @@ import {
 } from '@shared/insuranceNumber';
 import { Label } from '@/components/ui/label';
 import type { ReactNode } from 'react';
+import { QuestionnaireFileInput } from './QuestionnaireFileInput';
 import type { QuestionnaireQuestion as QuestionnaireQuestionData } from './questionnaire.types';
 
 type QuestionnaireQuestionProps = {
@@ -14,6 +15,8 @@ type QuestionnaireQuestionProps = {
   disabled?: boolean;
   employerFilled?: boolean;
   labelControl?: ReactNode;
+  uploadToken?: string;
+  onUploadBusy?: (busy: boolean) => void;
 };
 
 function QuestionText({
@@ -39,8 +42,22 @@ export function QuestionnaireQuestion({
   disabled = false,
   employerFilled = false,
   labelControl,
+  uploadToken,
+  onUploadBusy = () => undefined,
 }: QuestionnaireQuestionProps) {
   const locked = disabled;
+  if (question.type === 'file') {
+    return (
+      <QuestionnaireFileInput
+        question={question}
+        value={value}
+        token={uploadToken}
+        disabled={locked}
+        onChange={onChange}
+        onBusy={onUploadBusy}
+      />
+    );
+  }
   if (question.type === 'single') {
     return (
       <fieldset className="flex flex-col gap-2">

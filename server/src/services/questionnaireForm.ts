@@ -14,7 +14,7 @@ const HOURS_SECTION = "Ggf.Verteilung d. wöchentl. Arbeitszeit (Std.)";
 const VWL_SECTION = "VWL - nur notwendig, wenn Vertrag vorliegt";
 const SOCIAL_SECTION = "Sozialversicherung";
 
-type QuestionnaireFieldType = "text" | "date" | "single" | "check";
+type QuestionnaireFieldType = "text" | "date" | "single" | "check" | "file";
 
 export type QuestionnaireField = {
     key: string;
@@ -41,6 +41,54 @@ export type QuestionnaireRepeater = {
 };
 
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+const FILE_KEY = /^questionnaires\/[0-9a-f-]{36}\/\d{10,16}-[0-9a-f-]{36}$/;
+
+export function questionnaireFileName(value: string) {
+    return value.replace(/[\\/\u0000]/g, "").trim().slice(0, 180);
+}
+
+export function encodeFileAnswer(
+    name: string,
+    key: string,
+    extra?: { mime?: string; size?: number },
+) {
+    return JSON.stringify({
+        name,
+        key,
+        ...(extra?.mime ? { mime: extra.mime } : {}),
+        ...(typeof extra?.size === "number" ? { size: extra.size } : {}),
+    });
+}
+
+export function readFileAnswer(
+    value: string,
+): { name: string; key: string; mime?: string; size?: number } | null {
+    if (!value) return null;
+    let parsed: { name?: unknown; key?: unknown; mime?: unknown; size?: unknown };
+    try {
+        parsed = JSON.parse(value) as {
+            name?: unknown;
+            key?: unknown;
+            mime?: unknown;
+            size?: unknown;
+        };
+    } catch {
+        return null;
+    }
+    if (typeof parsed.name !== "string" || typeof parsed.key !== "string") return null;
+    const name = questionnaireFileName(parsed.name);
+    if (!name) return null;
+    if (!FILE_KEY.test(parsed.key)) return null;
+    const mime = typeof parsed.mime === "string" ? parsed.mime.slice(0, 128) : undefined;
+    const size = typeof parsed.size === "number" && parsed.size >= 0 ? parsed.size : undefined;
+    return { name, key: parsed.key, mime, size };
+}
+
+export function fileAnswerForSubmission(value: string, submissionId: string) {
+    const file = readFileAnswer(value);
+    if (!file || !file.key.startsWith(`questionnaires/${submissionId}/`)) return null;
+    return file;
+}
 const yesNo = ["ja", "nein"] as const;
 
 function text<Key extends string>(
@@ -250,6 +298,16 @@ function fieldSchema(field: QuestionnaireField) {
             .transform((value) => insuranceNumberInput(value))
             .refine((value) => value === "" || isValidInsuranceNumber(value), "Versicherungsnummer")
             .refine((value) => !field.required || value.length > 0, "erforderlich");
+    }
+    if (field.type === "file") {
+        return z
+            .string()
+            .trim()
+            .max(500)
+            .refine(
+                (value) => (value ? readFileAnswer(value) !== null : !field.required),
+                "Datei",
+            );
     }
     if (field.type === "check") {
         const options = field.options ?? [];
