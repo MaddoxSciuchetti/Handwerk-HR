@@ -17,6 +17,7 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LandingRouteImport } from './routes/landing'
 import { Route as HomeRouteImport } from './routes/home'
+import { Route as BestandRouteImport } from './routes/bestand'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UserIdRouteImport } from './routes/user/$Id'
 import { Route as SettingsWelcomeMailRouteImport } from './routes/settings/welcome-mail'
@@ -75,6 +76,11 @@ const LandingRoute = LandingRouteImport.update({
 const HomeRoute = HomeRouteImport.update({
   id: '/home',
   path: '/home',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BestandRoute = BestandRouteImport.update({
+  id: '/bestand',
+  path: '/bestand',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -176,6 +182,7 @@ const EmailVerifyCodeRoute = EmailVerifyCodeRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/bestand': typeof BestandRoute
   '/home': typeof HomeRoute
   '/landing': typeof LandingRoute
   '/login': typeof LoginRoute
@@ -205,6 +212,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/bestand': typeof BestandRoute
   '/home': typeof HomeRoute
   '/landing': typeof LandingRoute
   '/login': typeof LoginRoute
@@ -235,6 +243,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/bestand': typeof BestandRoute
   '/home': typeof HomeRoute
   '/landing': typeof LandingRoute
   '/login': typeof LoginRoute
@@ -266,6 +275,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/bestand'
     | '/home'
     | '/landing'
     | '/login'
@@ -295,6 +305,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/bestand'
     | '/home'
     | '/landing'
     | '/login'
@@ -324,6 +335,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/bestand'
     | '/home'
     | '/landing'
     | '/login'
@@ -354,6 +366,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BestandRoute: typeof BestandRoute
   HomeRoute: typeof HomeRoute
   LandingRoute: typeof LandingRoute
   LoginRoute: typeof LoginRoute
@@ -426,6 +439,13 @@ declare module '@tanstack/react-router' {
       path: '/home'
       fullPath: '/home'
       preLoaderRoute: typeof HomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bestand': {
+      id: '/bestand'
+      path: '/bestand'
+      fullPath: '/bestand'
+      preLoaderRoute: typeof BestandRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -609,6 +629,7 @@ const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BestandRoute: BestandRoute,
   HomeRoute: HomeRoute,
   LandingRoute: LandingRoute,
   LoginRoute: LoginRoute,

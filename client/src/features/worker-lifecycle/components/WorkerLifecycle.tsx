@@ -2,8 +2,6 @@ import ErrorAlert from '@/components/alerts/ErrorAlert';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BestandTab } from '@/features/bestand/BestandTab';
 import { NestedDropdown } from '@/components/ui/nested-dropdown';
 import { ScrollableTableViewport } from '@/components/ui/scrollable-table-viewport';
 import {
@@ -120,81 +118,59 @@ function WorkerLifeCycle() {
       ) : null}
       <div className="flex h-full min-h-0 w-full flex-col">
         <GreetingHeader firstname={user?.firstName || ''} />
-        <Tabs
-          defaultValue="handwerker"
-          className="mt-5 flex min-h-0 flex-1 flex-col gap-4"
-        >
-          <TabsList variant="line" className="h-9 w-fit shrink-0 justify-start gap-2 px-1">
-            <TabsTrigger value="handwerker" className="px-3 text-base">
-              Handwerker
-            </TabsTrigger>
-            <TabsTrigger
-              value="bestand"
-              className="px-3 text-base"
-              data-testid="bestand-tab-trigger"
-            >
-              Bestand
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="handwerker" className="flex min-h-0 flex-1 flex-col">
-            <Card className="flex min-h-0 flex-1 flex-col gap-0 border border-border py-0 shadow-none ring-0">
-              <CardHeader className="flex shrink-0 flex-row flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-3">
-                <CardTitle className="text-base font-medium">Handwerker</CardTitle>
-                <div className="flex shrink-0 items-center gap-3">
-                  <NestedDropdown
-                    options={filterOptions}
-                    value={filterLabel}
-                    onSelect={handleSelect}
-                    onSubSelect={handleSubSelect}
-                  />
-                  <Button
-                    type="button"
-                    className="rounded-2xl"
-                    onClick={handleSelectWorker}
-                  >
-                    Hinzufügen
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-0">
-                <ScrollableTableViewport>
-                  <Table>
-                    <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-0">
-                      <TableRow className="border-0 hover:bg-transparent">
-                        <TableHead className="h-12 bg-card py-3 pl-10 pr-2">
-                          Name
-                        </TableHead>
-                        <TableHead className="bg-card py-3 px-2">Type</TableHead>
-                        <TableHead className="bg-card py-3 px-2">
-                          Verantwortlich
-                        </TableHead>
-                        <TableHead className="bg-card py-3 px-2">Aufgaben</TableHead>
-                        <TableHead className="bg-card py-3 px-2">Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody className="[&_tr]:border-0 [&_td]:py-4 [&_td]:px-2 [&_td:first-child]:pl-10">
-                      {filteredWorkers.map((worker) => (
-                        <ProjectItem
-                          key={worker.id}
-                          worker={worker}
-                          gotopage={handleNavigate}
-                          isSelected={editModeData.some(
-                            (item) => item.engagementNumber === worker.id
-                          )}
-                          setLargeEditMode={setLargeEditMode}
-                          setEditModeData={handleSetEditModeData}
-                        />
-                      ))}
-                    </TableBody>
-                  </Table>
-                </ScrollableTableViewport>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="bestand" className="flex min-h-0 flex-1 flex-col">
-            <BestandTab />
-          </TabsContent>
-        </Tabs>
+        <Card className="mt-5 flex min-h-0 flex-1 flex-col gap-0 border border-border py-0 shadow-none ring-0">
+          <CardHeader className="flex shrink-0 flex-row flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-3">
+            <CardTitle className="text-base font-medium">Handwerker</CardTitle>
+            <div className="flex shrink-0 items-center gap-3">
+              <NestedDropdown
+                options={filterOptions}
+                value={filterLabel}
+                onSelect={handleSelect}
+                onSubSelect={handleSubSelect}
+              />
+              <Button
+                type="button"
+                className="rounded-2xl"
+                onClick={handleSelectWorker}
+              >
+                Hinzufügen
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-0">
+            <ScrollableTableViewport>
+              <Table>
+                <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-0">
+                  <TableRow className="border-0 hover:bg-transparent">
+                    <TableHead className="h-12 bg-card py-3 pl-10 pr-2">
+                      Name
+                    </TableHead>
+                    <TableHead className="bg-card py-3 px-2">Type</TableHead>
+                    <TableHead className="bg-card py-3 px-2">
+                      Verantwortlich
+                    </TableHead>
+                    <TableHead className="bg-card py-3 px-2">Aufgaben</TableHead>
+                    <TableHead className="bg-card py-3 px-2">Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="[&_tr]:border-0 [&_td]:py-4 [&_td]:px-2 [&_td:first-child]:pl-10">
+                  {filteredWorkers.map((worker) => (
+                    <ProjectItem
+                      key={worker.id}
+                      worker={worker}
+                      gotopage={handleNavigate}
+                      isSelected={editModeData.some(
+                        (item) => item.engagementNumber === worker.id
+                      )}
+                      setLargeEditMode={setLargeEditMode}
+                      setEditModeData={handleSetEditModeData}
+                    />
+                  ))}
+                </TableBody>
+              </Table>
+            </ScrollableTableViewport>
+          </CardContent>
+        </Card>
         <LifeCycleModal
           modal={modal}
           toggleModal={toggleModal}

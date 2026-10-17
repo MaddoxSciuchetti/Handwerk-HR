@@ -5,6 +5,7 @@ import {
   Inbox,
   Mail,
   ScrollText,
+  Shirt,
   Ticket,
   UserRound,
   Zap,
@@ -20,6 +21,11 @@ export const LAYOUTITEMS = [
     title: 'Aufgaben',
     to: '/tasks',
     icon: Ticket,
+  },
+  {
+    title: 'Bestand',
+    to: '/bestand',
+    icon: Shirt,
   },
 ];
 
