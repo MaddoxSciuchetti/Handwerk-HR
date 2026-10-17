@@ -22,6 +22,7 @@ const transaction = prisma.$transaction as jest.Mock;
 const mail = sendMail as jest.Mock;
 
 const ENV_KEYS = [
+    "INTEGRATIONS_LIVE",
     "MICROSOFT_365_TENANT_ID",
     "MICROSOFT_365_CLIENT_ID",
     "MICROSOFT_365_CLIENT_SECRET",

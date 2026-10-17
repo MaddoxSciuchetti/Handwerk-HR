@@ -1,13 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { decryptIntegrationSecret } from "@/services/integrations/secret";
 
-export type Microsoft365Credentials = {
-    tenantId: string;
-    clientId: string;
-    clientSecret: string;
-    domain: string;
-    licenseSkuId: string;
-};
+import type { Microsoft365Config } from "../microsoft365/types";
+
+export type Microsoft365Credentials = Microsoft365Config;
 
 export function integrationsLive() {
     return process.env.INTEGRATIONS_LIVE === "true";
