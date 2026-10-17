@@ -38,7 +38,7 @@ export function EngagementProgressIcon({
   className,
   ...props
 }: IconProps & { status: EngagementProgressValue }) {
-  const Icon = ENGAGEMENT_ICON_MAP[status];
+  const Icon = ENGAGEMENT_ICON_MAP[status] ?? TaskStatusOpenIcon;
   return <Icon className={className} {...props} />;
 }
 

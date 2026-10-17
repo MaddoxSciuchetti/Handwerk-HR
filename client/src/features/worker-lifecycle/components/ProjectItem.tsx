@@ -7,7 +7,7 @@ import {
 import { LifecycleType } from '@/features/worker-task-management/types/index.types';
 import { cn } from '@/lib/utils';
 import type { Dispatch, MouseEvent, SetStateAction } from 'react';
-import { WorkerRecord } from '../types/index.types';
+import { EngagementType, WorkerRecord } from '../types/index.types';
 import { getFirstFormType } from '../utils/formtype';
 import { getWorkerIssueCount } from '../utils/workerHealth.utils';
 import WorkerEngagementInfoButton from './WorkerEngagementInfoButton';
@@ -16,6 +16,8 @@ import { EngagementProgressPicker } from './ui/EngagementProgressPicker';
 export type WorkerSelection = {
   engagementNumber: string;
   engagementTitle: string;
+  engagementId: string;
+  type: EngagementType;
 };
 
 type ProjectItemProps = {
@@ -47,7 +49,15 @@ function ProjectItem({
     setEditModeData((prev) =>
       prev.some((item) => item.engagementNumber === worker.id)
         ? prev.filter((item) => item.engagementNumber !== worker.id)
-        : [...prev, { engagementNumber: worker.id, engagementTitle: fullname }]
+        : [
+            ...prev,
+            {
+              engagementNumber: worker.id,
+              engagementTitle: fullname,
+              engagementId: worker.engagements[0].id,
+              type: worker.engagements[0].type,
+            },
+          ]
     );
   };
 
