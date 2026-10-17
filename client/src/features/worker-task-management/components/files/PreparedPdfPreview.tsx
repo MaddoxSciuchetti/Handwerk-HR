@@ -21,8 +21,10 @@ function viewerSrc(url: string, pageSized: boolean) {
 }
 type PreparedPdfPreviewProps = {
   prepared: PreparedPdf;
-  approved: boolean;
-  onApprove: (approved: boolean) => void;
+  approved?: boolean;
+  onApprove?: (approved: boolean) => void;
+  showConfirmation?: boolean;
+  showOpenLink?: boolean;
   frameTitle?: string;
   confirmLabel?: string;
   /** Paper size of the Word preview, in millimetres. */
@@ -30,8 +32,10 @@ type PreparedPdfPreviewProps = {
 };
 export function PreparedPdfPreview({
   prepared,
-  approved,
+  approved = false,
   onApprove,
+  showConfirmation = true,
+  showOpenLink = true,
   frameTitle = 'Finales PDF vor dem Versand',
   confirmLabel = 'Ich habe dieses PDF geprüft und bestätige den Versand.',
   page,
@@ -61,29 +65,31 @@ export function PreparedPdfPreview({
           }
         />
       </div>
-      <a
-        href={prepared.previewUrl}
-        target="_blank"
-        rel="noreferrer"
-        className="shrink-0 text-sm underline"
-      >
-        PDF in neuem Fenster öffnen
-      </a>
+      {showOpenLink ? (
+        <a
+          href={prepared.previewUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="shrink-0 text-sm underline"
+        >
+          PDF in neuem Fenster öffnen
+        </a>
+      ) : null}
       {['sending', 'uncertain'].includes(prepared.status ?? '') ? (
         <p className="shrink-0 text-sm text-destructive">
           Versand läuft oder der Status ist unklar. Bitte den Postausgang prüfen
           lassen; erneuter Versand ist gesperrt.
         </p>
-      ) : (
+      ) : showConfirmation ? (
         <label className="flex shrink-0 items-center gap-2 text-sm">
           <input
             type="checkbox"
             checked={approved}
-            onChange={(event) => onApprove(event.target.checked)}
+            onChange={(event) => onApprove?.(event.target.checked)}
           />
           {confirmLabel}
         </label>
-      )}
+      ) : null}
     </div>
   );
 }
