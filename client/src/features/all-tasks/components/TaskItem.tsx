@@ -13,7 +13,6 @@ import { getAssigneeLabel } from '../utilts/assignee.utils';
 import formatDateDe from '../utilts/date.utils';
 import { PriorityIndicator } from '../utilts/priority.utils';
 import { ConfirmationTaskDecor } from './ConfirmationTaskDecor';
-import { EngagementTaskDeleteButton } from './EngagementTaskDeleteButton';
 import { PillBadge } from './ui/PillBadge';
 import { SquareCheckIcon, SquareDashedIcon } from './ui/SelectIcons';
 import { TaskStatusPicker } from './ui/TaskStatusPicker';
@@ -145,7 +144,6 @@ export function TaskItem({
             >
             Bearbeiten
           </Button>
-          <EngagementTaskDeleteButton taskId={task.id} />
         </div>
       </TableCell>
       <TableCell
