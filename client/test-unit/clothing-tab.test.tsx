@@ -84,11 +84,43 @@ describe('WorkerHeader clothing action', () => {
         onExportFiles={vi.fn()}
         onUploadMaterials={vi.fn()}
         onAddClothing={vi.fn()}
+        onSendQuestionnaire={vi.fn()}
       />
     );
 
     expect(screen.getByText('Kleidung')).toBeInTheDocument();
     expect(screen.getByTestId('open-clothing-add')).toHaveTextContent('Hinzufügen');
     expect(screen.queryByText(/Bestellte Kleidung/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Fragebogen senden' })).not.toBeInTheDocument();
+  });
+
+  it('offers the questionnaire only on Aufgaben', () => {
+    const { rerender } = render(
+      <WorkerHeader
+        activeTab="form"
+        openForCreate={vi.fn()}
+        onOpenFileUpload={vi.fn()}
+        onExportFiles={vi.fn()}
+        onUploadMaterials={vi.fn()}
+        onAddClothing={vi.fn()}
+        onSendQuestionnaire={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Fragebogen senden' })).toBeInTheDocument();
+
+    rerender(
+      <WorkerHeader
+        activeTab="files"
+        openForCreate={vi.fn()}
+        onOpenFileUpload={vi.fn()}
+        onExportFiles={vi.fn()}
+        onUploadMaterials={vi.fn()}
+        onAddClothing={vi.fn()}
+        onSendQuestionnaire={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByRole('button', { name: 'Fragebogen senden' })).not.toBeInTheDocument();
   });
 });

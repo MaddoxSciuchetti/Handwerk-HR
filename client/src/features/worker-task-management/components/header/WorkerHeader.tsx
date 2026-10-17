@@ -38,7 +38,7 @@ const WorkerHeader = ({
     <>
       <CardTitle className="text-base font-medium">{titles[activeTab]}</CardTitle>
       <div className="flex h-8 shrink-0 items-center gap-3">
-        {onSendQuestionnaire ? (
+        {activeTab === 'form' && onSendQuestionnaire ? (
           <Button type="button" className="rounded-2xl" onClick={onSendQuestionnaire}>
             Fragebogen senden
           </Button>

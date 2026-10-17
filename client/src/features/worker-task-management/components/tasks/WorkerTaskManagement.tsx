@@ -184,6 +184,7 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
           ) {
             setActiveTab(value);
             if (value !== 'clothing') setClothingAddOpen(false);
+            if (value !== 'form') setQuestionnaireEngagementId(null);
           }
         }}
         className="flex min-h-0 flex-1 flex-col"
@@ -193,6 +194,7 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
           onTabChange={(tab) => {
             setActiveTab(tab);
             if (tab !== 'clothing') setClothingAddOpen(false);
+            if (tab !== 'form') setQuestionnaireEngagementId(null);
           }}
         />
         <Card className="mt-3 flex min-h-0 flex-1 flex-col gap-0 border border-border py-0 shadow-none ring-0">
