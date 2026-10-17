@@ -1,4 +1,5 @@
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 import { Upload } from 'lucide-react';
 import type { RefObject } from 'react';
 
@@ -6,16 +7,21 @@ type MaterialsDropzoneProps = {
   inputRef: RefObject<HTMLInputElement | null>;
   disabled: boolean;
   onFile: (file: File) => void;
+  className?: string;
 };
 
 export function MaterialsDropzone({
   inputRef,
   disabled,
   onFile,
+  className,
 }: MaterialsDropzoneProps) {
   return (
     <div
-      className="mb-4 flex cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-border p-6 text-center"
+      className={cn(
+        'flex cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-border p-8 text-center',
+        className
+      )}
       onClick={() => {
         if (!disabled) inputRef.current?.click();
       }}

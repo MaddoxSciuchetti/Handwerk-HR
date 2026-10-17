@@ -50,22 +50,25 @@ export function MaterialsTab({
   const unassigned = materials.data?.unassigned ?? [];
   const hasRows = documents.length > 0 || unassigned.length > 0;
 
+  const dropzone = selectedId ? (
+    <MaterialsDropzone
+      inputRef={fileInputRef}
+      disabled={upload.isPending}
+      onFile={(file) => upload.mutate(file)}
+      className={hasRows ? 'mb-4' : 'w-full max-w-sm'}
+    />
+  ) : (
+    <p className="text-sm text-muted-foreground">Kein Engagement vorhanden.</p>
+  );
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col px-4 py-4" data-testid="materials-tab">
+    <div className="flex min-h-full flex-1 flex-col px-4 py-4" data-testid="materials-tab">
       <MaterialsEngagementPicker
         engagements={engagements}
         value={selectedId ?? ''}
         onChange={setEngagementId}
       />
-      {selectedId ? (
-        <MaterialsDropzone
-          inputRef={fileInputRef}
-          disabled={upload.isPending}
-          onFile={(file) => upload.mutate(file)}
-        />
-      ) : (
-        <p className="text-sm text-muted-foreground">Kein Engagement vorhanden.</p>
-      )}
+      {hasRows ? dropzone : null}
       {upload.isPending ? (
         <p className="mb-4 text-sm text-muted-foreground">
           Materialien werden gelesen…
@@ -92,11 +95,9 @@ export function MaterialsTab({
           onSave={(values) => update.mutate(values)}
           onDelete={(materialId) => remove.mutate(materialId)}
         />
-      ) : materials.isSuccess ? (
-        <p className="text-sm text-muted-foreground">
-          Noch keine Materialien. Lade eine Rechnung oder ein Foto hoch.
-        </p>
-      ) : null}
+      ) : (
+        <div className="flex flex-1 items-center justify-center py-8">{dropzone}</div>
+      )}
     </div>
   );
 }

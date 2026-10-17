@@ -335,7 +335,7 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
               value="materials"
               className="mt-0 flex min-h-0 flex-1 flex-col"
             >
-              <ScrollableTableViewport>
+              <ScrollableTableViewport className="flex flex-col">
                 <MaterialsTab
                   workerId={workerId}
                   fileInputRef={materialFileInputRef}
