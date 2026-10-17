@@ -43,6 +43,7 @@ const sectionHeaderClassName = 'h-12 py-3 pl-10 pr-2 text-sm font-medium';
 
 const TaskManagement = ({ workerId }: TaskManagementProps) => {
   const [activeTab, setActiveTab] = useState<WorkerTab>('form');
+  const [clothingAddOpen, setClothingAddOpen] = useState(false);
   const [isFileUploadOpen, setIsFileUploadOpen] = useState(false);
   const materialFileInputRef = useRef<HTMLInputElement>(null);
   const [contractSend, setContractSend] = useState<{
@@ -182,11 +183,18 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
             value === 'clothing'
           ) {
             setActiveTab(value);
+            if (value !== 'clothing') setClothingAddOpen(false);
           }
         }}
         className="flex min-h-0 flex-1 flex-col"
       >
-        <WorkerTabButtons activeTab={activeTab} onTabChange={setActiveTab} />
+        <WorkerTabButtons
+          activeTab={activeTab}
+          onTabChange={(tab) => {
+            setActiveTab(tab);
+            if (tab !== 'clothing') setClothingAddOpen(false);
+          }}
+        />
         <Card className="mt-3 flex min-h-0 flex-1 flex-col gap-0 border border-border py-0 shadow-none ring-0">
           <CardHeader className="flex min-h-14 shrink-0 flex-row flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-3">
             <WorkerHeader
@@ -206,6 +214,8 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
               onExportFiles={() => void handleZipExport(fetchFiles)}
               onUploadMaterials={() => materialFileInputRef.current?.click()}
               materialsUploadDisabled={data.data.engagements.length === 0}
+              onAddClothing={() => setClothingAddOpen(true)}
+              clothingAddDisabled={data.data.engagements.length === 0}
               onSendQuestionnaire={
                 pendingQuestionnaire
                   ? () => setQuestionnaireEngagementId(pendingQuestionnaire.id)
@@ -342,6 +352,8 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
               <ScrollableTableViewport>
                 <ClothingTab
                   workerId={workerId}
+                  addOpen={clothingAddOpen}
+                  onAddOpenChange={setClothingAddOpen}
                   engagements={data.data.engagements.map((engagement) => ({
                     id: engagement.id,
                     type: engagement.type,

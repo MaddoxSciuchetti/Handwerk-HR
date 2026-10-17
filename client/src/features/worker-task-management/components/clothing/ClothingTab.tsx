@@ -9,7 +9,7 @@ import {
   useReturnEngagementClothing,
 } from '../../hooks/useEngagementClothing';
 import { MaterialsEngagementPicker } from '../materials/MaterialsEngagementPicker';
-import { ClothingAddForm } from './ClothingAddForm';
+import { ClothingAddSidebar } from './ClothingAddSidebar';
 import { ClothingOrderTable } from './ClothingOrderTable';
 
 type ClothingTabProps = {
@@ -19,9 +19,16 @@ type ClothingTabProps = {
     type: EngagementType;
     startDate: string | null;
   }>;
+  addOpen: boolean;
+  onAddOpenChange: (open: boolean) => void;
 };
 
-export function ClothingTab({ workerId, engagements }: ClothingTabProps) {
+export function ClothingTab({
+  workerId,
+  engagements,
+  addOpen,
+  onAddOpenChange,
+}: ClothingTabProps) {
   const [engagementId, setEngagementId] = useState<string | null>(
     engagements[0]?.id ?? null
   );
@@ -47,18 +54,6 @@ export function ClothingTab({ workerId, engagements }: ClothingTabProps) {
         value={selectedId}
         onChange={setEngagementId}
       />
-      <p className="mb-4 text-sm text-muted-foreground">
-        Bestellte Kleidung für den Handwerker. Ein Artikel aus dem Bestand
-        reduziert den Bestand. Zurückgegebene Artikel kommen wieder in den Bestand.
-      </p>
-      <ClothingAddForm
-        stock={stock.data ?? []}
-        pending={createItem.isPending}
-        onAdd={(input) => createItem.mutateAsync(input)}
-      />
-      {clothing.isLoading ? (
-        <p className="text-sm text-muted-foreground">Kleidung wird geladen…</p>
-      ) : null}
       {clothing.isError ? (
         <p className="text-sm text-destructive">Kleidung konnte nicht geladen werden.</p>
       ) : null}
@@ -80,6 +75,13 @@ export function ClothingTab({ workerId, engagements }: ClothingTabProps) {
           onDelete={(clothingId) => removeItem.mutate(clothingId)}
         />
       ) : null}
+      <ClothingAddSidebar
+        open={addOpen}
+        onOpenChange={onAddOpenChange}
+        stock={stock.data ?? []}
+        pending={createItem.isPending}
+        onAdd={(input) => createItem.mutateAsync(input)}
+      />
     </div>
   );
 }

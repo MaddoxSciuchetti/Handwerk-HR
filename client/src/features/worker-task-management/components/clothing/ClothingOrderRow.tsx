@@ -76,7 +76,7 @@ export function ClothingOrderRow({
       <TableCell>{item.quantity}</TableCell>
       <TableCell>
         {outstanding < 1 ? (
-          <span className="text-sm text-muted-foreground">Zurück im Bestand</span>
+          <span>Zurück im Bestand</span>
         ) : (
           <div className="flex flex-wrap items-center gap-2">
             {outstanding > 1 ? (
@@ -103,11 +103,6 @@ export function ClothingOrderRow({
             </Button>
           </div>
         )}
-        {item.returnedQuantity > 0 && outstanding > 0 ? (
-          <p className="mt-1 text-xs text-muted-foreground">
-            {item.returnedQuantity} von {item.quantity} zurück
-          </p>
-        ) : null}
         {error ? <p className="mt-1 text-xs text-destructive">{error}</p> : null}
       </TableCell>
       <TableCell className="pr-6 text-right">

@@ -1,7 +1,6 @@
 import {
   Table,
   TableBody,
-  TableCell,
   TableHead,
   TableHeader,
   TableRow,
@@ -38,24 +37,16 @@ export function ClothingOrderTable({
         </TableRow>
       </TableHeader>
       <TableBody className="[&_tr]:border-0 [&_td]:py-4 [&_td]:px-2">
-        {items.length === 0 ? (
-          <TableRow className="hover:bg-transparent">
-            <TableCell colSpan={7} className="px-8 py-8 text-sm text-muted-foreground">
-              Noch keine Kleidung für dieses Engagement.
-            </TableCell>
-          </TableRow>
-        ) : (
-          items.map((item) => (
-            <ClothingOrderRow
-              key={item.id}
-              item={item}
-              returning={returningId === item.id}
-              deleting={deletingId === item.id}
-              onReturn={(quantity) => onReturn(item.id, quantity)}
-              onDelete={() => onDelete(item.id)}
-            />
-          ))
-        )}
+        {items.map((item) => (
+          <ClothingOrderRow
+            key={item.id}
+            item={item}
+            returning={returningId === item.id}
+            deleting={deletingId === item.id}
+            onReturn={(quantity) => onReturn(item.id, quantity)}
+            onDelete={() => onDelete(item.id)}
+          />
+        ))}
       </TableBody>
     </Table>
   );

@@ -10,6 +10,8 @@ type WorkerHeaderProps = {
   onExportFiles: () => void;
   onUploadMaterials: () => void;
   materialsUploadDisabled?: boolean;
+  onAddClothing: () => void;
+  clothingAddDisabled?: boolean;
   onSendQuestionnaire?: () => void;
 };
 
@@ -28,6 +30,8 @@ const WorkerHeader = ({
   onExportFiles,
   onUploadMaterials,
   materialsUploadDisabled = false,
+  onAddClothing,
+  clothingAddDisabled = false,
   onSendQuestionnaire,
 }: WorkerHeaderProps) => {
   return (
@@ -78,6 +82,17 @@ const WorkerHeader = ({
             onClick={onUploadMaterials}
           >
             Hochladen
+          </Button>
+        ) : null}
+        {activeTab === 'clothing' ? (
+          <Button
+            type="button"
+            className="rounded-2xl"
+            data-testid="open-clothing-add"
+            disabled={clothingAddDisabled}
+            onClick={onAddClothing}
+          >
+            Hinzufügen
           </Button>
         ) : null}
       </div>
