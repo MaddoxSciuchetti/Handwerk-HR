@@ -25,6 +25,7 @@ import { getDocumentFont } from "./controllers/documentMaster.controller";
 import { templateRoutes } from "./routes/template.route";
 import testRoutes from "./routes/test.route";
 import { userRoutes } from "./routes/user.route";
+import { clothingStockRoutes } from "./routes/clothingStock.route";
 import { worker } from "./routes/worker.route";
 import { startReturnedContractPolling } from "./services/signedContractReturn.service";
 
@@ -110,6 +111,12 @@ app.use("/employee", authenticate, requireSubscriptionAccess, employeeRoutes);
 app.use("/index", authenticate, requireSubscriptionAccess, indexRoutes);
 
 app.use("/worker", authenticate, requireSubscriptionAccess, worker);
+app.use(
+    "/clothing-stock",
+    authenticate,
+    requireSubscriptionAccess,
+    clothingStockRoutes,
+);
 
 app.use("/tasks", authenticate, requireSubscriptionAccess, taskRoutes);
 

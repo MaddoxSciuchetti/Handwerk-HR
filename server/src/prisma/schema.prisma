@@ -118,6 +118,7 @@ model Organization {
   welcomeMailSettings       WelcomeMailSettings?
   departureMailSettings     DepartureMailSettings?
   automationDocumentSettings AutomationDocumentSetting[]
+  clothingStock              ClothingStockItem[]
 
 
   @@map("organizations")
@@ -658,6 +659,22 @@ model EngagementMaterial {
   @@index([engagementId])
   @@index([sourceDocumentId])
   @@map("engagement_materials")
+}
+
+model ClothingStockItem {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  name           String   @db.VarChar(255)
+  size           String   @default("") @db.VarChar(32)
+  quantity       Int
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, name, size])
+  @@index([organizationId])
+  @@map("clothing_stock_items")
 }
 
 model WorkerWorkwear {
