@@ -6,6 +6,10 @@ import {
 } from '@/features/worker-task-management/consts/query-key.consts';
 import { mutationOptions } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import type {
+  TaskHistoryActor,
+  TaskHistoryItem,
+} from '@/features/worker-task-management/types/index.types';
 import {
   createTask,
   deleteTasks,
@@ -37,7 +41,12 @@ export const taskMutations = {
     }),
 
   updateTask: () =>
-    mutationOptions<unknown, Error, UpdateTaskParams, { previous: TaskCacheSnapshot }>({
+    mutationOptions<
+      unknown,
+      Error,
+      UpdateTaskParams,
+      { previous: TaskCacheSnapshot }
+    >({
       mutationFn: ({ taskId, data }) => updateTask({ taskId, data }),
       onMutate: async ({ taskId, data }) => {
         const previous = await snapshotTaskCaches();
@@ -77,13 +86,68 @@ export const taskMutations = {
       },
     }),
 
-  saveTaskComment: () =>
-    mutationOptions<SaveTaskCommentResult, Error, SaveTaskCommentParams>({
+  saveTaskComment: (actor?: TaskHistoryActor) =>
+    mutationOptions<
+      SaveTaskCommentResult,
+      Error,
+      SaveTaskCommentParams,
+      {
+        optimisticId: string;
+        previousComment?: TaskHistoryItem;
+      }
+    >({
       mutationFn: (params) => saveTaskComment(params),
-      onSuccess: (result, { taskId, mentionUserIds }) => {
-        void queryClient.invalidateQueries({
-          queryKey: [TASKHISTORY, taskId],
-        });
+      onMutate: async ({ taskId, body, commentId }) => {
+        const queryKey = [TASKHISTORY, taskId];
+        await queryClient.cancelQueries({ queryKey });
+        const optimisticId = commentId || `pending-${crypto.randomUUID()}`;
+        const previous =
+          queryClient.getQueryData<TaskHistoryItem[]>(queryKey) ?? [];
+        const previousComment = previous.find(
+          (entry) => entry.id === commentId && entry.kind === 'comment'
+        );
+        const now = new Date().toISOString();
+        if (previousComment?.kind === 'comment') {
+          queryClient.setQueryData<TaskHistoryItem[]>(
+            queryKey,
+            previous.map((entry) =>
+              entry === previousComment
+                ? { ...previousComment, body, updatedAt: now }
+                : entry
+            )
+          );
+        } else if (actor && !commentId) {
+          queryClient.setQueryData<TaskHistoryItem[]>(queryKey, [
+            {
+              kind: 'comment',
+              id: optimisticId,
+              body,
+              createdAt: now,
+              updatedAt: now,
+              user: actor,
+            },
+            ...previous,
+          ]);
+        }
+        return { optimisticId, previousComment };
+      },
+      onSuccess: (result, { taskId, mentionUserIds }, context) => {
+        queryClient.setQueryData<TaskHistoryItem[]>(
+          [TASKHISTORY, taskId],
+          (previous = []) => {
+            const comment: TaskHistoryItem = {
+              ...result.comment,
+              kind: 'comment',
+            };
+            const remaining = previous.filter(
+              (entry) =>
+                entry.id !== context?.optimisticId && entry.id !== comment.id
+            );
+            return [comment, ...remaining].sort((a, b) =>
+              b.createdAt.localeCompare(a.createdAt)
+            );
+          }
+        );
         if (mentionUserIds?.length) {
           void queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] });
         }
@@ -91,8 +155,24 @@ export const taskMutations = {
           toast.error('Die E-Mail konnte nicht gesendet werden.');
         }
       },
-      onError: () => {
+      onError: (_error, { taskId }, context) => {
+        if (context) {
+          queryClient.setQueryData<TaskHistoryItem[]>(
+            [TASKHISTORY, taskId],
+            (previous = []) =>
+              previous.flatMap((entry) =>
+                entry.id === context.optimisticId
+                  ? context.previousComment
+                    ? [context.previousComment]
+                    : []
+                  : [entry]
+              )
+          );
+        }
         toast.error('Nachricht konnte nicht gesendet werden.');
+      },
+      onSettled: (_result, _error, { taskId }) => {
+        void queryClient.invalidateQueries({ queryKey: [TASKHISTORY, taskId] });
       },
     }),
 };

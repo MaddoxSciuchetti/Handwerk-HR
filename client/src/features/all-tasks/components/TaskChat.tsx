@@ -114,6 +114,9 @@ export function TaskChat({
       : mentions
           .filter((mention) => text.includes(`@${mention.label}`))
           .map((mention) => mention.userId);
+    const draft = text;
+    setText('');
+    setMenu(null);
     try {
       await saveComment.mutateAsync({
         taskId,
@@ -122,6 +125,7 @@ export function TaskChat({
         mentionUserIds,
       });
     } catch {
+      setText(draft);
       return;
     }
     setText('');
@@ -193,20 +197,23 @@ export function TaskChat({
               <div
                 key={comment.id}
                 className={cn(
-                  'max-w-[85%] rounded-2xl px-3 py-2 text-sm',
+                  'group flex max-w-full items-baseline gap-2 rounded-lg px-2 py-1 text-sm font-normal',
                   mine
-                    ? 'self-end bg-primary text-primary-foreground'
+                    ? 'self-end bg-muted text-foreground'
                     : 'self-start bg-muted text-foreground'
                 )}
               >
-                <p className="text-xs font-medium opacity-80">
+                <p className="shrink-0 text-xs font-normal text-muted-foreground">
                   {actorLabel(comment.user)}
                 </p>
-                <p className="whitespace-pre-wrap">{comment.body}</p>
+                <p className="min-w-0 whitespace-pre-wrap wrap-anywhere font-normal">
+                  {comment.body}
+                </p>
                 {mine ? (
                   <button
                     type="button"
-                    className="mt-1 text-xs underline opacity-80"
+                    disabled={saveComment.isPending}
+                    className="shrink-0 text-xs font-normal text-muted-foreground opacity-0 hover:underline focus-visible:opacity-100 group-hover:opacity-100"
                     onClick={() => {
                       setEditingCommentId(comment.id);
                       setText(comment.body);
@@ -222,7 +229,7 @@ export function TaskChat({
           })
         )}
       </div>
-      <div className="relative flex items-end gap-2 border-t border-border pt-2">
+      <div className="relative flex items-center gap-2">
         {menu ? (
           <MentionMenu
             choices={choices}
@@ -235,9 +242,9 @@ export function TaskChat({
           id="task-chat"
           value={text}
           disabled={disabled || saveComment.isPending}
-          rows={2}
+          rows={1}
           placeholder="@ für Erwähnung"
-          className="min-h-10 flex-1 resize-none rounded-none border-0 bg-transparent px-0 py-1.5 shadow-none focus-visible:border-transparent focus-visible:ring-0"
+          className="h-8 min-h-8 min-w-0 flex-1 resize-none field-sizing-fixed rounded-none border-0 bg-transparent px-0 py-1.5 shadow-none focus-visible:border-transparent focus-visible:ring-0"
           onChange={(event) => {
             const next = event.target.value;
             setText(next);
