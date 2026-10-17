@@ -50,6 +50,8 @@ export function SettingsSidebar({
             label: item.title,
             icon: item.icon,
             to: item.to,
+            activePaths:
+              'activePaths' in item ? item.activePaths : undefined,
           }))}
         />
       </SidebarContent>

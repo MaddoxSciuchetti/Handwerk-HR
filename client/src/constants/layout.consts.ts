@@ -3,7 +3,6 @@ import {
   CreditCard,
   FileText,
   Inbox,
-  Mail,
   Plug,
   ScrollText,
   Shirt,
@@ -39,6 +38,7 @@ export const SETTINGSITEMS = [
     title: 'Templates',
     to: '/settings/templates/template',
     icon: FileText,
+    activePaths: ['/settings/welcome-mail', '/settings/departure-mail'],
   },
   {
     title: 'Dokumente',
@@ -54,16 +54,6 @@ export const SETTINGSITEMS = [
     title: 'Integrationen',
     to: '/settings/integrations',
     icon: Plug,
-  },
-  {
-    title: 'Willkommensmail',
-    to: '/settings/welcome-mail',
-    icon: Mail,
-  },
-  {
-    title: 'Infomail Entlassung',
-    to: '/settings/departure-mail',
-    icon: Mail,
   },
   {
     title: 'Zahlungen',

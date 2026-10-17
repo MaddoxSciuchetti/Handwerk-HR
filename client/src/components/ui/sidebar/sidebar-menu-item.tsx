@@ -13,6 +13,7 @@ export type SideBarMenuLinkItem = {
   to: string;
   search?: Record<string, unknown>;
   disabled?: boolean;
+  activePaths?: readonly string[];
 };
 
 export type SideBarMenuProps<T extends SideBarMenuLinkItem> = {
@@ -33,7 +34,10 @@ function SideBarMenu<TItem extends SideBarMenuLinkItem>({
   return (
     <SidebarMenu>
       {items.map((item) => {
-        const isActive = isActiveRoute(pathname, item.to);
+        const isActive =
+          isActiveRoute(pathname, item.to) ||
+          (item.activePaths?.some((path) => isActiveRoute(pathname, path)) ??
+            false);
         const Icon = item.icon;
 
         if (item.disabled) {
