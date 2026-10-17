@@ -1,5 +1,5 @@
 import LoadingAlert from '@/components/alerts/LoadingAlert';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import type { DocumentSegment } from '@/features/settings/documents/documentSegments';
 import { FETCHDESCRIPTION } from '@/features/all-tasks/consts/query.consts';
@@ -27,7 +27,6 @@ import { rememberContractSendReturn } from '../../contractSendReturn';
 import {
   employmentContractKey,
   useEmploymentContract,
-  useResyncEmploymentContract,
   useSaveEmploymentContract,
 } from '../../hooks/useEmploymentContract';
 import { useDocumentMasters } from '@/features/settings/documents/useDocumentMasters';
@@ -96,13 +95,9 @@ export function ContractSendDialog({
   const templates = useDocumentMasters(
     Boolean(data && !data.sentAt && data.status !== 'signed')
   );
-  const [selectedMasterId, setSelectedMasterId] = useState('');
   const [values, setValues] = useState<Record<string, string>>({});
   const [prepared, setPrepared] = useState<PreparedPdf | null>(null);
-  const [approved, setApproved] = useState(false);
-  const [confirmResync, setConfirmResync] = useState(false);
   const saveDraft = useSaveEmploymentContract(workerId, engagementId);
-  const resync = useResyncEmploymentContract(workerId, engagementId);
 
   const edited = useRef(false);
   useEffect(() => {
@@ -112,15 +107,15 @@ export function ContractSendDialog({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setValues(data.values);
     setPrepared(data.prepared ?? null);
-    setApproved(false);
   }, [data]);
 
   const printContract = useMutation({
     mutationFn: async () => {
+      const pdf = prepared ?? (await prepare.mutateAsync());
       const blob = await fetchPreparedEmploymentContractPdf(
         workerId,
         engagementId,
-        prepared!.id
+        pdf.id
       );
       if (!(blob instanceof Blob)) {
         throw new Error('PDF konnte nicht geladen werden');
@@ -130,7 +125,7 @@ export function ContractSendDialog({
         workerId,
         engagementId,
         issueId,
-        prepared!.id
+        pdf.id
       );
     },
     onSuccess: () => {
@@ -165,7 +160,6 @@ export function ContractSendDialog({
       prepareEmploymentContractPdf(workerId, engagementId, values),
     onSuccess: (pdf) => {
       setPrepared(pdf);
-      setApproved(false);
       queryClient.setQueryData(
         employmentContractKey(workerId, engagementId),
         (previous: typeof data) =>
@@ -178,6 +172,25 @@ export function ContractSendDialog({
           'PDF konnte nicht erstellt werden'
       ),
   });
+  const savePdf = useMutation({
+    mutationFn: async () => {
+      if (!prepared) return;
+      const blob = await fetchPreparedEmploymentContractPdf(
+        workerId,
+        engagementId,
+        prepared.id
+      );
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${data?.name ?? 'Arbeitsvertrag'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    },
+    onError: () => toast.error('PDF konnte nicht gespeichert werden'),
+  });
   const switchTemplate = useMutation({
     mutationFn: (masterId: string) =>
       selectEngagementContractTemplate(workerId, engagementId, masterId),
@@ -185,9 +198,6 @@ export function ContractSendDialog({
       edited.current = false;
       setValues(saved.values);
       setPrepared(null);
-      setApproved(false);
-      setConfirmResync(false);
-      setSelectedMasterId('');
       queryClient.setQueryData(
         employmentContractKey(workerId, engagementId),
         saved
@@ -205,31 +215,20 @@ export function ContractSendDialog({
       ),
   });
   const changingTemplate = switchTemplate.isPending;
-  const pendingTemplateSelection = Boolean(
-    selectedMasterId && selectedMasterId !== data?.masterId
-  );
   const templateChoices = (templates.data ?? []).filter(
     (template) => template.kind === 'employment_contract'
   );
   const busy =
     changingTemplate ||
+    savePdf.isPending ||
     printContract.isPending ||
     prepare.isPending ||
-    resync.isPending ||
     saveDraft.isPending;
   const blockedDelivery = ['sending', 'uncertain'].includes(
     prepared?.status ?? ''
   );
-  const needsResync = Boolean(
-    data?.followsMaster &&
-    data.questionnaireCompleted &&
-    !readOnly &&
-    data.masterRevision !== data.matchedMasterRevision
-  );
-
   const close = async () => {
-    if (printContract.isPending || prepare.isPending || resync.isPending)
-      return;
+    if (busy) return;
     if (
       !readOnly &&
       data &&
@@ -285,270 +284,188 @@ export function ContractSendDialog({
   };
 
   return (
-    <Dialog open onOpenChange={(next) => { if (!next) void close(); }}>
-      <DialogContent className={`w-full border-0 bg-transparent p-0 shadow-none sm:max-w-[min(96vw,90rem)] ${documentPreviewModalSize}`}>
-      <div className={documentPreviewModalPanel}>
-        {isLoading ? <LoadingAlert className="min-h-40" /> : null}
-        {isError || (!isLoading && !data) ? (
-          <p className="text-sm text-destructive">
-            Der Vertrag konnte nicht geladen werden.
-          </p>
-        ) : null}
-        {data ? (
-          <>
-            <div className="shrink-0 pr-8">
-              <h2 className="text-base font-medium">{data.name}</h2>
-              <p className="text-sm text-muted-foreground">
-                {alreadySent
-                  ? 'Der Vertrag wurde gedruckt.'
-                  : 'Prüfen Sie den ausgefüllten Vertrag und drucken Sie ihn zur Unterschrift im Büro.'}
-              </p>
-              {!readOnly && data.questionnaireCompleted ? (
-                <div className="mt-3 flex flex-col gap-2">
-                  <label
-                    htmlFor="contract-template"
-                    className="text-sm font-medium"
-                  >
-                    Vertragsvorlage
-                  </label>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <select
-                      id="contract-template"
-                      className="h-9 min-w-60 rounded-md border border-input bg-background px-3 text-sm"
-                      value={selectedMasterId || data.masterId}
-                      disabled={
-                        busy ||
-                        blockedDelivery ||
-                        templates.isPending ||
-                        templates.isError
-                      }
-                      onChange={(event) =>
-                        setSelectedMasterId(event.target.value)
-                      }
+    <Dialog
+      open
+      onOpenChange={(next) => {
+        if (!next) void close();
+      }}
+    >
+      <DialogContent
+        aria-describedby={undefined}
+        className={`w-full border-0 bg-transparent p-0 shadow-none sm:max-w-[min(96vw,90rem)] ${documentPreviewModalSize}`}
+      >
+        <div className={documentPreviewModalPanel}>
+          {isLoading ? <LoadingAlert className="min-h-40" /> : null}
+          {isError || (!isLoading && !data) ? (
+            <p className="text-sm text-destructive">
+              Der Vertrag konnte nicht geladen werden.
+            </p>
+          ) : null}
+          {data ? (
+            <>
+              <div className="shrink-0 pr-8">
+                <DialogTitle className="text-base font-medium">
+                  {data.name}
+                </DialogTitle>
+                {!readOnly && data.questionnaireCompleted ? (
+                  <div className="mt-3 flex flex-col gap-2">
+                    <label
+                      htmlFor="contract-template"
+                      className="text-sm font-medium"
                     >
-                      {!templateChoices.some(
-                        (template) => template.id === data.masterId
-                      ) ? (
-                        <option value={data.masterId}>{data.name}</option>
-                      ) : null}
-                      {templateChoices.map((template) => (
-                        <option key={template.id} value={template.id}>
-                          {template.name}
-                        </option>
-                      ))}
-                    </select>
+                      Vertragsvorlage
+                    </label>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <select
+                        id="contract-template"
+                        className="h-9 min-w-60 rounded-md border border-input bg-background px-3 text-sm"
+                        value={data.masterId}
+                        disabled={
+                          busy ||
+                          blockedDelivery ||
+                          templates.isPending ||
+                          templates.isError
+                        }
+                        onChange={(event) =>
+                          switchTemplate.mutate(event.target.value)
+                        }
+                      >
+                        {!templateChoices.some(
+                          (template) => template.id === data.masterId
+                        ) ? (
+                          <option value={data.masterId}>{data.name}</option>
+                        ) : null}
+                        {templateChoices.map((template) => (
+                          <option key={template.id} value={template.id}>
+                            {template.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {templates.isError ? (
+                      <p className="text-sm text-destructive">
+                        Vertragsvorlagen konnten nicht geladen werden.
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+              {data.outgoingFileUrl ? (
+                <a
+                  href={data.outgoingFileUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-sm underline"
+                >
+                  Versendetes Original-PDF öffnen
+                </a>
+              ) : null}
+              {prepared ? (
+                <PreparedPdfPreview
+                  prepared={prepared}
+                  showConfirmation={false}
+                  showOpenLink={false}
+                  frameTitle="Arbeitsvertrag zum Drucken"
+                  page={{
+                    width: data.document.page.width,
+                    height: data.document.page.height,
+                  }}
+                />
+              ) : (
+                <div className="flex min-h-0 flex-1 gap-4 overflow-hidden">
+                  {unmatched.length > 0 ? (
+                    <UnmatchedQuestionnaireAnswers
+                      answers={unmatched}
+                      saving={saveDraft.isPending}
+                      onEditMaster={openMaster}
+                      description=""
+                    />
+                  ) : null}
+                  <ContractDraftBody
+                    document={data.document}
+                    segments={data.segments}
+                    values={values}
+                    readOnly={
+                      readOnly ||
+                      changingTemplate ||
+                      prepare.isPending ||
+                      printContract.isPending
+                    }
+                    acceptAnswerDrop={unmatched.length > 0}
+                    onValueChange={(key, value) => {
+                      edited.current = true;
+                      setPrepared(null);
+                      setValues((current) => ({ ...current, [key]: value }));
+                    }}
+                  />
+                </div>
+              )}
+              {alreadySent ? null : (
+                <div className="flex shrink-0 justify-end gap-2">
+                  {prepared ? (
                     <Button
                       type="button"
                       variant="outline"
-                      disabled={
-                        busy ||
-                        blockedDelivery ||
-                        !selectedMasterId ||
-                        selectedMasterId === data.masterId
-                      }
-                      onClick={() => switchTemplate.mutate(selectedMasterId)}
+                      disabled={busy || blockedDelivery}
+                      onClick={() => {
+                        setPrepared(null);
+                      }}
                     >
-                      {changingTemplate
-                        ? 'Wird neu ausgefüllt…'
-                        : 'Vorlage wechseln und neu ausfüllen'}
+                      Bearbeiten
                     </Button>
-                  </div>
-                  {templates.isError ? (
-                    <p className="text-sm text-destructive">
-                      Vertragsvorlagen konnten nicht geladen werden.
-                    </p>
-                  ) : null}
-                  <p className="text-xs text-muted-foreground">
-                    Die Antworten werden der neuen Vorlage zugeordnet. Manuelle
-                    Eingaben und das bisherige PDF werden ersetzt.
-                  </p>
-                </div>
-              ) : null}
-              {needsResync ? (
-                <div className="mt-3 flex flex-col gap-2">
-                  {confirmResync ? (
-                    <p className="text-sm text-muted-foreground">
-                      Erneut abgleichen ersetzt alle Eingaben im Vertrag durch
-                      die Antworten des Fragebogens, auch Werte, die von Hand
-                      geändert wurden.
-                    </p>
-                  ) : null}
-                  <div className="flex gap-2">
-                    {confirmResync ? (
-                      <>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          disabled={busy}
-                          onClick={() => setConfirmResync(false)}
-                        >
-                          Abbrechen
-                        </Button>
-                        <Button
-                          type="button"
-                          disabled={busy}
-                          onClick={() =>
-                            resync.mutate(undefined, {
-                              onSuccess: (saved) => {
-                                edited.current = false;
-                                setValues(saved.values);
-                                setPrepared(null);
-                                setApproved(false);
-                                setConfirmResync(false);
-                                toast.success(
-                                  'Vertrag wurde erneut mit dem Fragebogen abgeglichen'
-                                );
-                              },
-                              onError: (error) =>
-                                toast.error(
-                                  (error as { message?: string }).message ??
-                                    'Abgleich ist fehlgeschlagen'
-                                ),
-                            })
-                          }
-                        >
-                          {resync.isPending
-                            ? 'Wird abgeglichen…'
-                            : 'Werte ersetzen'}
-                        </Button>
-                      </>
-                    ) : (
+                  ) : (
+                    <>
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() => setConfirmResync(true)}
+                        disabled={
+                          readOnly ||
+                          changingTemplate ||
+                          saveDraft.isPending ||
+                          prepare.isPending
+                        }
+                        onClick={() =>
+                          saveDraft.mutate(values, {
+                            onSuccess: (saved) => {
+                              setValues(saved.values);
+                              toast.success('Entwurf gespeichert');
+                            },
+                            onError: () =>
+                              toast.error(
+                                'Entwurf konnte nicht gespeichert werden'
+                              ),
+                          })
+                        }
                       >
-                        Erneut abgleichen
+                        {saveDraft.isPending ? 'Speichert…' : 'Speichern'}
                       </Button>
-                    )}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-            {data.outgoingFileUrl ? (
-              <a
-                href={data.outgoingFileUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-sm underline"
-              >
-                Versendetes Original-PDF öffnen
-              </a>
-            ) : null}
-            {prepared ? (
-              <PreparedPdfPreview
-                prepared={prepared}
-                approved={approved}
-                onApprove={setApproved}
-                frameTitle="Arbeitsvertrag zum Drucken"
-                confirmLabel="Ich habe dieses PDF geprüft und drucke es zur Unterschrift im Büro."
-                page={{
-                  width: data.document.page.width,
-                  height: data.document.page.height,
-                }}
-              />
-            ) : (
-              <div className="flex min-h-0 flex-1 gap-4 overflow-hidden">
-                {unmatched.length > 0 ? (
-                  <UnmatchedQuestionnaireAnswers
-                    answers={unmatched}
-                    saving={saveDraft.isPending}
-                    onEditMaster={openMaster}
-                    description=""
-                  />
-                ) : null}
-                <ContractDraftBody
-                  document={data.document}
-                  segments={data.segments}
-                  values={values}
-                  readOnly={
-                    readOnly ||
-                    changingTemplate ||
-                    prepare.isPending ||
-                    printContract.isPending ||
-                    resync.isPending
-                  }
-                  acceptAnswerDrop={unmatched.length > 0}
-                  onValueChange={(key, value) => {
-                    edited.current = true;
-                    setPrepared(null);
-                    setApproved(false);
-                    setValues((current) => ({ ...current, [key]: value }));
-                  }}
-                />
-              </div>
-            )}
-            {alreadySent ? null : (
-              <div className="flex shrink-0 justify-end gap-2">
-                {prepared ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={busy || blockedDelivery}
-                    onClick={() => {
-                      setPrepared(null);
-                      setApproved(false);
-                    }}
-                  >
-                    Werte bearbeiten
-                  </Button>
-                ) : (
-                  <>
+                    </>
+                  )}
+                  {prepared ? (
                     <Button
                       type="button"
                       variant="outline"
-                      disabled={
-                        readOnly ||
-                        changingTemplate ||
-                        saveDraft.isPending ||
-                        prepare.isPending ||
-                        resync.isPending
-                      }
-                      onClick={() =>
-                        saveDraft.mutate(values, {
-                          onSuccess: (saved) => {
-                            setValues(saved.values);
-                            toast.success('Entwurf gespeichert');
-                          },
-                          onError: () =>
-                            toast.error(
-                              'Entwurf konnte nicht gespeichert werden'
-                            ),
-                        })
-                      }
+                      disabled={busy || blockedDelivery}
+                      onClick={() => savePdf.mutate()}
                     >
-                      {saveDraft.isPending ? 'Speichert…' : 'Entwurf speichern'}
+                      {savePdf.isPending ? 'Speichert…' : 'Speichern'}
                     </Button>
-                    <Button
-                      type="button"
-                      disabled={!complete || busy || pendingTemplateSelection}
-                      onClick={() => prepare.mutate()}
-                    >
-                      {prepare.isPending
-                        ? 'PDF wird erstellt…'
-                        : 'Finales PDF erstellen und prüfen'}
-                    </Button>
-                  </>
-                )}
-                <Button
-                  type="button"
-                  className="rounded-2xl"
-                  disabled={
-                    !prepared ||
-                    !approved ||
-                    busy ||
-                    pendingTemplateSelection ||
-                    blockedDelivery
-                  }
-                  onClick={() => printContract.mutate()}
-                >
-                  {printContract.isPending ? 'Druckt…' : 'Drucken'}
-                </Button>
-              </div>
-            )}
-          </>
-        ) : null}
-      </div>
+                  ) : null}
+                  <Button
+                    type="button"
+                    className="rounded-2xl"
+                    disabled={!complete || busy || blockedDelivery}
+                    onClick={() => printContract.mutate()}
+                  >
+                    {printContract.isPending || prepare.isPending
+                      ? 'Druckt…'
+                      : 'Drucken'}
+                  </Button>
+                </div>
+              )}
+            </>
+          ) : null}
+        </div>
       </DialogContent>
     </Dialog>
   );

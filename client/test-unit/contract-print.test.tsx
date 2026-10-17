@@ -1,7 +1,7 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { expect, it, vi } from 'vitest';
+import { beforeEach, expect, it, vi } from 'vitest';
 import { ContractSendDialog } from '@/features/worker-task-management/components/files/ContractSendDialog';
 import {
   fetchPreparedEmploymentContractPdf,
@@ -13,6 +13,8 @@ import {
 } from '@/features/worker-task-management/api/employmentContract.api';
 import { printPdfBlob } from '@/features/worker-task-management/printPdf';
 import { fromSegments } from '@/features/settings/documents/styledDocument';
+
+beforeEach(() => vi.clearAllMocks());
 
 vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => vi.fn(),
@@ -103,7 +105,7 @@ const draft = {
   },
 };
 
-it('prints the reviewed contract instead of emailing it', async () => {
+it('prints the contract without a review checkbox', async () => {
   vi.mocked(getEngagementContract).mockResolvedValue(draft);
   vi.mocked(fetchPreparedEmploymentContractPdf).mockResolvedValue(
     new Blob(['%PDF'], { type: 'application/pdf' })
@@ -126,21 +128,15 @@ it('prints the reviewed contract instead of emailing it', async () => {
     </QueryClientProvider>
   );
 
+  const print = await screen.findByRole('button', { name: 'Drucken' });
+  expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   expect(
-    await screen.findByText(
-      'Prüfen Sie den ausgefüllten Vertrag und drucken Sie ihn zur Unterschrift im Büro.'
-    )
-  ).toBeInTheDocument();
-  expect(
-    screen.queryByRole('button', { name: 'Vertrag versenden' })
+    screen.queryByText(/Prüfen Sie den ausgefüllten Vertrag/)
   ).not.toBeInTheDocument();
-  const print = screen.getByRole('button', { name: 'Drucken' });
-  expect(print).toBeDisabled();
-  await user.click(
-    screen.getByRole('checkbox', {
-      name: 'Ich habe dieses PDF geprüft und drucke es zur Unterschrift im Büro.',
-    })
-  );
+  expect(
+    screen.queryByText('PDF in neuem Fenster öffnen')
+  ).not.toBeInTheDocument();
+  expect(print).toBeEnabled();
   await user.click(print);
 
   expect(fetchPreparedEmploymentContractPdf).toHaveBeenCalledWith(
@@ -186,9 +182,7 @@ it('saves the draft without preparing a pdf', async () => {
     </QueryClientProvider>
   );
 
-  await user.click(
-    await screen.findByRole('button', { name: 'Entwurf speichern' })
-  );
+  await user.click(await screen.findByRole('button', { name: 'Speichern' }));
 
   expect(saveEngagementContractDraft).toHaveBeenCalledWith(
     'worker',
@@ -263,7 +257,7 @@ it('hydrates fresh questionnaire values after opening with an empty cached draft
   );
 });
 
-it('switches the prefilled contract template, rematches answers, and clears the old PDF approval', async () => {
+it('syncs a newly selected template immediately and clears the old PDF', async () => {
   const fresh = {
     ...draft,
     masterId: 'other-master',
@@ -298,9 +292,6 @@ it('switches the prefilled contract template, rematches answers, and clears the 
     screen.queryByRole('option', { name: 'Zeugnis' })
   ).not.toBeInTheDocument();
   await user.selectOptions(select, 'other-master');
-  await user.click(
-    screen.getByRole('button', { name: 'Vorlage wechseln und neu ausfüllen' })
-  );
   await waitFor(() =>
     expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue(
       'Lukas Muster'
@@ -317,7 +308,7 @@ it('switches the prefilled contract template, rematches answers, and clears the 
   expect(
     screen.queryByTitle('Arbeitsvertrag zum Drucken')
   ).not.toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Drucken' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Drucken' })).toBeEnabled();
 });
 
 it('does not offer a template switch for a printed contract', async () => {
@@ -338,8 +329,88 @@ it('does not offer a template switch for a printed contract', async () => {
       />
     </QueryClientProvider>
   );
-  await screen.findByText('Der Vertrag wurde gedruckt.');
+  await screen.findByTitle('Arbeitsvertrag zum Drucken');
   expect(
     screen.queryByRole('combobox', { name: 'Vertragsvorlage' })
   ).not.toBeInTheDocument();
+});
+
+it('prepares current edits before printing', async () => {
+  vi.mocked(getEngagementContract).mockResolvedValue({
+    ...draft,
+    prepared: null,
+  });
+  vi.mocked(prepareEmploymentContractPdf).mockResolvedValue(draft.prepared);
+  vi.mocked(fetchPreparedEmploymentContractPdf).mockResolvedValue(
+    new Blob(['%PDF'], { type: 'application/pdf' })
+  );
+  vi.mocked(recordPrintedEmploymentContract).mockResolvedValue(draft);
+  const query = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  render(
+    <QueryClientProvider client={query}>
+      <ContractSendDialog
+        workerId="worker"
+        engagementId="engagement"
+        issueId="issue"
+        onClose={() => undefined}
+      />
+    </QueryClientProvider>
+  );
+  await userEvent
+    .setup()
+    .click(await screen.findByRole('button', { name: 'Drucken' }));
+  await waitFor(() =>
+    expect(recordPrintedEmploymentContract).toHaveBeenCalledWith(
+      'worker',
+      'engagement',
+      'issue',
+      'pdf-1'
+    )
+  );
+  expect(prepareEmploymentContractPdf).toHaveBeenCalledWith(
+    'worker',
+    'engagement',
+    {}
+  );
+});
+
+it('downloads the prepared PDF without recording it as printed', async () => {
+  vi.mocked(getEngagementContract).mockResolvedValue(draft);
+  vi.mocked(fetchPreparedEmploymentContractPdf).mockResolvedValue(
+    new Blob(['%PDF'], { type: 'application/pdf' })
+  );
+  const create = vi
+    .spyOn(URL, 'createObjectURL')
+    .mockReturnValue('blob:contract');
+  const click = vi
+    .spyOn(HTMLAnchorElement.prototype, 'click')
+    .mockImplementation(() => {});
+  const query = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  const onClose = vi.fn();
+  render(
+    <QueryClientProvider client={query}>
+      <ContractSendDialog
+        workerId="worker"
+        engagementId="engagement"
+        issueId="issue"
+        onClose={onClose}
+      />
+    </QueryClientProvider>
+  );
+  await userEvent
+    .setup()
+    .click(await screen.findByRole('button', { name: 'Speichern' }));
+  await waitFor(() => expect(click).toHaveBeenCalled());
+  expect(click.mock.instances[0]).toHaveAttribute(
+    'download',
+    'Arbeitsvertrag.pdf'
+  );
+  expect(recordPrintedEmploymentContract).not.toHaveBeenCalled();
+  expect(onClose).not.toHaveBeenCalled();
+  create.mockRestore();
+  click.mockRestore();
 });
