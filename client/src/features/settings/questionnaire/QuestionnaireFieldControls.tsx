@@ -41,7 +41,9 @@ export function QuestionnaireFieldControls({
       <NewQuestionForm
         field={field}
         onCancel={() => setEditing(false)}
-        onAdd={(next) => {
+        onAdd={(items) => {
+          const next = items[0];
+          if (!next || next.kind !== 'field') return;
           onChange(next);
           setEditing(false);
         }}

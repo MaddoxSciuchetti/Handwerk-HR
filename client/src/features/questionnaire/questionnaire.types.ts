@@ -19,6 +19,7 @@ export type QuestionnaireRepeater = {
   key: string;
   section: string;
   afterSection: string;
+  allowMoreRows?: boolean;
   columns: {
     key: string;
     label: string;

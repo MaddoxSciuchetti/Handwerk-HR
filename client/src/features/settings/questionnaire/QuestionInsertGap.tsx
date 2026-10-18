@@ -2,12 +2,13 @@ import { cn } from '@/lib/utils';
 import { Plus } from 'lucide-react';
 import { useState, type DragEvent } from 'react';
 import { NewQuestionForm } from './NewQuestionForm';
-import type { TemplateField } from './questionnaireTemplate.types';
+import type { TemplateItem } from './questionnaireTemplate.types';
 
 type QuestionInsertGapProps = {
   open: boolean;
   onOpen: () => void;
-  onAdd: (field: TemplateField) => void;
+  onAdd: (fields: TemplateItem[]) => void;
+  existingKeys: string[];
   onDrop: (event: DragEvent) => void;
 };
 
@@ -15,6 +16,7 @@ export function QuestionInsertGap({
   open,
   onOpen,
   onAdd,
+  existingKeys,
   onDrop,
 }: QuestionInsertGapProps) {
   const [near, setNear] = useState(false);
@@ -33,7 +35,7 @@ export function QuestionInsertGap({
       }}
     >
       {open ? (
-        <NewQuestionForm onAdd={onAdd} />
+        <NewQuestionForm existingKeys={existingKeys} onAdd={onAdd} />
       ) : (
         <button
           type="button"

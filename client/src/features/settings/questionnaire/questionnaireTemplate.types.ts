@@ -13,13 +13,15 @@ export type TemplateField = {
   defaultValue?: string;
   builtin?: boolean;
   contractFieldKey?: string;
+  officeOnly?: boolean;
 };
 
 export type TemplateRepeater = {
   kind: 'repeater';
-  key: 'children' | 'priorEmployment';
+  key: string;
   section: string;
   columns: { key: string; label: string; type: 'text' | 'date' }[];
+  allowMoreRows?: boolean;
 };
 
 export type TemplateItem = TemplateField | TemplateRepeater;
@@ -37,14 +39,6 @@ export type QuestionnaireTemplatePage = {
   contractFields: ContractFieldOption[];
 };
 
-export const HOUR_KEYS = [
-  'hoursMonday',
-  'hoursTuesday',
-  'hoursWednesday',
-  'hoursThursday',
-  'hoursFriday',
-  'hoursSaturday',
-  'hoursSunday',
-] as const;
+export { WEEKDAY_HOUR_KEYS as HOUR_KEYS } from '@shared/weeklyHours';
 
 export const QUESTION_DRAG_TYPE = 'application/x-fragebogen-item';

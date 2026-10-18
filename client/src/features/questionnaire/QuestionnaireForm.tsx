@@ -4,10 +4,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { apiJson } from '@/config/apiClient';
 import { isValidInsuranceNumber } from '@shared/insuranceNumber';
+import {
+  HOURS_DISTRIBUTION_KEY,
+  WEEKDAY_HOUR_KEYS,
+  isWeekdayHourKey,
+  isWeeklyHoursKey,
+  normalizeHour,
+} from '@shared/weeklyHours';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { QuestionnaireQuestion } from './QuestionnaireQuestion';
+import { WeeklyHoursAnswer } from './WeeklyHoursAnswer';
 import { QuestionnaireRepeatableRows } from './QuestionnaireRepeatableRows';
+import { QuestionnaireTableRows } from './QuestionnaireTableRows';
 import type { CandidateItem } from './questionnairePreview';
 import type {
   QuestionnaireQuestion as QuestionnaireQuestionData,
@@ -44,6 +53,29 @@ type Section = {
   questions: QuestionnaireQuestionData[];
   repeater?: QuestionnaireRepeater;
 };
+
+function unanswered(
+  question: QuestionnaireQuestionData,
+  values: Record<string, string>,
+  questions: QuestionnaireQuestionData[],
+) {
+  const value = (values[question.key] ?? '').trim();
+  if (isWeekdayHourKey(question.key)) {
+    const office = questions.some((item) => isWeekdayHourKey(item.key) && item.employerFilled);
+    const open = office || values[HOURS_DISTRIBUTION_KEY] === 'ja';
+    if (!open) return false;
+    return value.length > 0 && normalizeHour(value) === null;
+  }
+  if (question.key === HOURS_DISTRIBUTION_KEY) {
+    if (questions.some((item) => isWeekdayHourKey(item.key) && item.employerFilled)) return false;
+    return Boolean(question.required) && value !== 'ja' && value !== 'nein';
+  }
+  if (question.key === 'insuranceNumber') {
+    if (!value) return Boolean(question.required);
+    return !isValidInsuranceNumber(value);
+  }
+  return Boolean(question.required) && !value;
+}
 
 function filledRows(rows: Record<string, string>[]) {
   return rows.filter((row) =>
@@ -85,9 +117,26 @@ export function QuestionnaireForm({ token, preview, embedded }: QuestionnaireFor
 
   const submit = useMutation({
     mutationFn: () => {
+      const officeHours = questions.some(
+        (question) => isWeekdayHourKey(question.key) && question.employerFilled
+      );
+      const payload = { ...values };
+      if (
+        questions.some((question) => isWeekdayHourKey(question.key)) &&
+        payload[HOURS_DISTRIBUTION_KEY] !== 'ja' &&
+        !officeHours
+      ) {
+        for (const key of WEEKDAY_HOUR_KEYS) payload[key] = '';
+      }
       if (preview) return Promise.resolve({ success: true, data: { status: 'completed' as const } });
+      const tables = Object.fromEntries(
+        Object.entries(rows).flatMap(([key, value]) =>
+          key.startsWith('rows.') ? [[key, filledRows(value)]] : []
+        )
+      );
       return apiJson.post<QuestionnaireResponse>(`fragebogen/${token}`, {
-        ...values,
+        ...payload,
+        ...tables,
         children: filledRows(rows.children ?? []),
         priorEmployment: filledRows(rows.priorEmployment ?? []),
       });
@@ -96,15 +145,9 @@ export function QuestionnaireForm({ token, preview, embedded }: QuestionnaireFor
   });
 
   const done = submitted || data?.status === 'completed';
-  const missing = questions.some((question) => {
-    if (question.bsbOnly || question.employerFilled) return false;
-    const value = (values[question.key] ?? '').trim();
-    if (question.key === 'insuranceNumber') {
-      if (!value) return Boolean(question.required);
-      return !isValidInsuranceNumber(value);
-    }
-    return question.required && !value;
-  });
+  const missing = questions.some(
+    (question) => !question.bsbOnly && unanswered(question, values, questions)
+  );
   const sections = data?.items
     ? data.items.reduce<Section[]>((list, item) => {
         if (item.kind === 'repeater') {
@@ -163,22 +206,67 @@ export function QuestionnaireForm({ token, preview, embedded }: QuestionnaireFor
             {sections.map((section, index) => (
               <div key={`${index}-${section.title}`} className="flex flex-col gap-4">
                 {section.repeater ? (
-                  <QuestionnaireRepeatableRows
-                    repeater={section.repeater}
-                    rows={rows[section.repeater.key] ?? []}
-                    onChange={(next) =>
-                      setRows((current) => ({
-                        ...current,
-                        [section.repeater!.key]: next,
-                      }))
-                    }
-                  />
+                  section.repeater.key.startsWith('rows.') ? (
+                    <QuestionnaireTableRows
+                      repeater={section.repeater}
+                      rows={rows[section.repeater.key] ?? []}
+                      onChange={(next) =>
+                        setRows((current) => ({
+                          ...current,
+                          [section.repeater!.key]: next,
+                        }))
+                      }
+                    />
+                  ) : (
+                    <QuestionnaireRepeatableRows
+                      repeater={section.repeater}
+                      rows={rows[section.repeater.key] ?? []}
+                      onChange={(next) =>
+                        setRows((current) => ({
+                          ...current,
+                          [section.repeater!.key]: next,
+                        }))
+                      }
+                    />
+                  )
                 ) : (
                   <>
-                    <h2 className="pt-2 text-base font-medium text-foreground">
-                      {section.title}
-                    </h2>
-                    {section.questions.every((question) => question.layout === 'inline') ? (
+                    {section.questions.some((question) => isWeeklyHoursKey(question.key)) ? (
+                      <WeeklyHoursAnswer
+                        questions={questions}
+                        values={values}
+                        onChange={(key, value) =>
+                          setValues((current) => ({ ...current, [key]: value }))
+                        }
+                      />
+                    ) : (
+                      <h2 className="pt-2 text-base font-medium text-foreground">
+                        {section.title}
+                      </h2>
+                    )}
+                    {section.questions.some((question) => isWeeklyHoursKey(question.key)) ? (
+                      section.questions
+                        .filter((question) => !isWeeklyHoursKey(question.key))
+                        .map((question) => (
+                          <QuestionnaireQuestion
+                            key={question.key}
+                            question={question}
+                            disabled={question.employerFilled}
+                            employerFilled={question.employerFilled}
+                            uploadToken={token}
+                            onUploadBusy={(busy) =>
+                              setUploads((count) => count + (busy ? 1 : -1))
+                            }
+                            value={values[question.key] ?? ''}
+                            onChange={(value) =>
+                              setValues((current) => ({
+                                ...current,
+                                [question.key]: value,
+                              }))
+                            }
+                          />
+                        ))
+                    ) : section.questions.every((question) => question.layout === 'inline') ? (
                       <>
                       <div className="grid grid-cols-4 gap-3 sm:grid-cols-7">
                         {section.questions.map((question) => (

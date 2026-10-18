@@ -3,8 +3,9 @@ import { useState, type DragEvent } from 'react';
 import { flushSync } from 'react-dom';
 import { QuestionInsertGap } from './QuestionInsertGap';
 import { QuestionnaireFieldControls } from './QuestionnaireFieldControls';
-import type { QuestionnaireBlock } from './questionnaireBlocks';
-import { isHourField } from './questionnaireBlocks';
+import { isWeeklyHoursItem, type QuestionnaireBlock } from './questionnaireBlocks';
+import { TableQuestionCard } from './TableQuestionCard';
+import { WeeklyHoursEditor } from './WeeklyHoursEditor';
 import { useQuestionnaireDragPreview } from './useQuestionnaireDragPreview';
 import './questionnaire-sort.css';
 import {
@@ -12,6 +13,7 @@ import {
   type ContractFieldOption,
   type TemplateField,
   type TemplateItem,
+  type TemplateRepeater,
 } from './questionnaireTemplate.types';
 
 export type DragPayload = {
@@ -25,6 +27,7 @@ type QuestionnaireStackProps = {
   onDrop: (index: number, payload: DragPayload) => void;
   onInsert: (index: number, items: TemplateItem[]) => void;
   onChangeField: (field: TemplateField) => void;
+  onChangeRepeater: (repeater: TemplateRepeater) => void;
   onCommitField: (field: TemplateField) => void;
   onRemove: (id: string) => void;
 };
@@ -35,6 +38,7 @@ export function QuestionnaireStack({
   onDrop,
   onInsert,
   onChangeField,
+  onChangeRepeater,
   onCommitField,
   onRemove,
 }: QuestionnaireStackProps) {
@@ -52,12 +56,14 @@ export function QuestionnaireStack({
     if (payload) onDrop(target, payload);
   };
 
+  const placed = blocks.flatMap((block) => block.items.map((item) => item.key));
   const gap = (index: number) => (
     <QuestionInsertGap
       open={insertAt === index}
+      existingKeys={placed}
       onOpen={() => setInsertAt(index)}
-      onAdd={(field) => {
-        onInsert(index, [field]);
+      onAdd={(fields) => {
+        onInsert(index, fields);
         setInsertAt(null);
       }}
       onDrop={(event) => dropAt(index, event)}
@@ -136,9 +142,13 @@ export function QuestionnaireStack({
             className="min-w-0 cursor-grab rounded-2xl border border-border bg-card px-5 py-4 active:cursor-grabbing"
           >
             <div className="mb-3 flex items-start justify-between gap-3">
-              <p className="text-xs text-muted-foreground">
-                {blockLabel(block.items[0])}
-              </p>
+              {block.items[0] && isWeeklyHoursItem(block.items[0]) ? (
+                <span className="sr-only">Arbeitszeit pro Woche</span>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  {blockLabel(block.items[0])}
+                </p>
+              )}
               <Button
                 type="button"
                 variant="ghost"
@@ -154,7 +164,9 @@ export function QuestionnaireStack({
               block={block}
               contractFields={contractFields}
               onChangeField={onChangeField}
+              onChangeRepeater={onChangeRepeater}
               onCommitField={onCommitField}
+              onAdd={(field) => onInsert(index, [field])}
             />
           </article>
           {gap(index + 1)}
@@ -169,35 +181,35 @@ function BlockBody({
   block,
   contractFields,
   onChangeField,
+  onChangeRepeater,
   onCommitField,
+  onAdd,
 }: {
   block: QuestionnaireBlock;
   contractFields: ContractFieldOption[];
   onChangeField: (field: TemplateField) => void;
+  onChangeRepeater: (repeater: TemplateRepeater) => void;
   onCommitField: (field: TemplateField) => void;
+  onAdd: (field: TemplateField) => void;
 }) {
   const first = block.items[0];
+  if (first?.kind === 'repeater' && first.key.startsWith('rows.')) {
+    return <TableQuestionCard repeater={first} onChange={onChangeRepeater} />;
+  }
   if (first?.kind === 'repeater') {
     return <p className="text-sm font-medium">{first.section}</p>;
   }
-  if (first && isHourField(first)) {
+  if (first && isWeeklyHoursItem(first)) {
+    const fields = block.items.flatMap((item) =>
+      item.kind === 'field' ? [item] : []
+    );
     return (
-      <div className="flex flex-col gap-4">
-        <p className="text-sm font-medium">Wochenstunden</p>
-        {block.items
-          .flatMap((item) =>
-            item.kind === 'field' && isHourField(item) ? [item] : []
-          )
-          .map((field) => (
-            <QuestionnaireFieldControls
-              key={field.key}
-              field={field}
-              contractFields={contractFields}
-              onChange={onChangeField}
-              onCommit={onCommitField}
-            />
-          ))}
-      </div>
+      <WeeklyHoursEditor
+        fields={fields}
+        contractFields={contractFields}
+        onChange={onChangeField}
+        onAdd={onAdd}
+      />
     );
   }
   if (first?.kind === 'field') {
@@ -215,8 +227,8 @@ function BlockBody({
 
 function blockLabel(item: QuestionnaireBlock['items'][number] | undefined) {
   if (!item) return 'Frage';
-  if (item.kind === 'repeater') return 'Block';
-  if (isHourField(item)) return 'Arbeitszeit';
+  if (item.kind === 'repeater') return item.key.startsWith('rows.') ? 'Tabelle' : 'Block';
+  if (isWeeklyHoursItem(item)) return 'Arbeitszeit pro Woche';
   return item.section;
 }
 

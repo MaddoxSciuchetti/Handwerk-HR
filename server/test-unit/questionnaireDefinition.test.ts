@@ -49,10 +49,14 @@ describe("questionnaire definition", () => {
             (item) => item.kind === "field" && hours.has(item.key),
         );
         expect(hourItems).toHaveLength(7);
-        expect(hourItems.every((item) => item.kind === "field" && item.required)).toBe(true);
+        expect(hourItems.every((item) => item.kind === "field" && item.required)).toBe(false);
         expect(hourItems.every((item) => item.kind === "field" && item.employerFilled)).toBe(
             false,
         );
+        const distribution = definition.items.find(
+            (item) => item.kind === "field" && item.key === "hoursDistribution",
+        );
+        expect(distribution).toMatchObject({ kind: "field", required: false, type: "single" });
 
         const extent = definition.items.find(
             (item) => item.kind === "field" && item.key === "employmentExtent",
@@ -199,6 +203,58 @@ describe("questionnaire definition", () => {
                 ],
             }),
         ).toThrow("Eine Checkbox braucht zwei bis acht Beschriftungen.");
+    });
+
+    it("stores zero hours separately from a blank day and an office-only week", () => {
+        const definition = parseQuestionnaireDefinition({
+            items: [
+                {
+                    kind: "field",
+                    key: "hoursMonday",
+                    defaultValue: "0",
+                    bsbOnly: true,
+                    contractFieldKey: "arbeitszeit.mo",
+                },
+                { kind: "field", key: "hoursTuesday", defaultValue: "7,5" },
+                { kind: "field", key: "hoursDistribution", required: true },
+            ],
+        });
+        expect(definition.items[0]).toMatchObject({
+            defaultValue: "0",
+            bsbOnly: true,
+            required: false,
+            contractFieldKey: "arbeitszeit.mo",
+        });
+        expect(definition.items[1]).toMatchObject({ defaultValue: "7,5", bsbOnly: false });
+        expect(definition.items[2]).toMatchObject({ required: true });
+    });
+
+    it("keeps a custom table and whether more rows are allowed", () => {
+        const definition = parseQuestionnaireDefinition({
+            items: [
+                {
+                    kind: "repeater",
+                    key: "rows.kinder-liste",
+                    section: "Kinder, für die eine Elterneigenschaft nachgewiesen werden kann",
+                    allowMoreRows: true,
+                    columns: [
+                        { key: "name", label: "Name", type: "text" },
+                        { key: "vorname", label: "Vorname", type: "text" },
+                        { key: "geburtsdatum", label: "Geburtsdatum (TT.MM.JJJJ)", type: "date" },
+                    ],
+                },
+            ],
+        });
+        expect(definition.items[0]).toMatchObject({
+            kind: "repeater",
+            key: "rows.kinder-liste",
+            allowMoreRows: true,
+            columns: [
+                { key: "name", label: "Name" },
+                { key: "vorname", label: "Vorname" },
+                { key: "geburtsdatum", label: "Geburtsdatum (TT.MM.JJJJ)", type: "date" },
+            ],
+        });
     });
 
     it("keeps a renamed builtin question", () => {

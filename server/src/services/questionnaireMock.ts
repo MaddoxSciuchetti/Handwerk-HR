@@ -55,6 +55,7 @@ export function mockQuestionnaireValues(
         vwlContractNumber: "MOCK-VWL-001",
         vwlIban: "DE89370400440532013000",
         vwlBic: "COBADEFFXXX",
+        hoursDistribution: "ja",
         hoursMonday: "8",
         hoursTuesday: "8",
         hoursWednesday: "8",
