@@ -7,16 +7,23 @@ import {
   weeklyHoursReference,
   weekdayHoursTotal,
 } from '@shared/weeklyHours';
+import { BsbPreviewFlag } from './BsbPreviewFlag';
 import { WeeklyHoursDays } from './WeeklyHoursDays';
 import type { QuestionnaireQuestion } from './questionnaire.types';
 
 type WeeklyHoursAnswerProps = {
   questions: QuestionnaireQuestion[];
   values: Record<string, string>;
+  showBsbFlag?: boolean;
   onChange: (key: string, value: string) => void;
 };
 
-export function WeeklyHoursAnswer({ questions, values, onChange }: WeeklyHoursAnswerProps) {
+export function WeeklyHoursAnswer({
+  questions,
+  values,
+  showBsbFlag = false,
+  onChange,
+}: WeeklyHoursAnswerProps) {
   const days = questions.filter((question) => isWeekdayHourKey(question.key));
   const office = days.some((day) => day.employerFilled);
   const choice = values[HOURS_DISTRIBUTION_KEY] ?? '';
@@ -30,7 +37,10 @@ export function WeeklyHoursAnswer({ questions, values, onChange }: WeeklyHoursAn
   return (
     <fieldset className="flex flex-col gap-4">
       {office ? (
-        <legend className="text-sm font-medium">Wöchentliche Arbeitszeit</legend>
+        <legend className="flex flex-wrap items-center gap-2 text-sm font-medium">
+          Wöchentliche Arbeitszeit
+          {showBsbFlag ? <BsbPreviewFlag /> : null}
+        </legend>
       ) : (
         <legend className="text-sm font-medium">{WEEKLY_HOURS_PROMPT}</legend>
       )}

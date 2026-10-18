@@ -125,6 +125,7 @@ it('shows an empty BSB-only required field as locked and optional in the candida
   renderWithProviders(
     <QuestionnaireForm preview={{ intro: '', items: candidateItems(items) }} />
   );
-  expect(screen.getByRole('textbox', { name: 'Gehalt' })).toBeDisabled();
+  expect(screen.getByRole('textbox', { name: /Gehalt/ })).toBeDisabled();
+  expect(screen.getByText('Von BSB für die Person')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Absenden' })).toBeEnabled();
 });

@@ -5,6 +5,7 @@ import {
 } from '@shared/insuranceNumber';
 import { Label } from '@/components/ui/label';
 import type { ReactNode } from 'react';
+import { BsbPreviewFlag } from './BsbPreviewFlag';
 import { QuestionnaireFileInput } from './QuestionnaireFileInput';
 import type { QuestionnaireQuestion as QuestionnaireQuestionData } from './questionnaire.types';
 
@@ -14,6 +15,7 @@ type QuestionnaireQuestionProps = {
   onChange: (value: string) => void;
   disabled?: boolean;
   employerFilled?: boolean;
+  showBsbFlag?: boolean;
   labelControl?: ReactNode;
   uploadToken?: string;
   onUploadBusy?: (busy: boolean) => void;
@@ -22,16 +24,22 @@ type QuestionnaireQuestionProps = {
 function QuestionText({
   question,
   labelControl,
+  showBsbFlag = false,
 }: {
   question: QuestionnaireQuestionData;
   labelControl?: ReactNode;
+  showBsbFlag?: boolean;
 }) {
-  if (labelControl) return labelControl;
   return (
-    <>
-      {question.label}
-      {question.required && !question.bsbOnly ? ' *' : ''}
-    </>
+    <span className="inline-flex flex-wrap items-center gap-2">
+      {labelControl ?? (
+        <span>
+          {question.label}
+          {question.required && !question.bsbOnly ? ' *' : ''}
+        </span>
+      )}
+      {showBsbFlag ? <BsbPreviewFlag /> : null}
+    </span>
   );
 }
 
@@ -41,6 +49,7 @@ export function QuestionnaireQuestion({
   onChange,
   disabled = false,
   employerFilled = false,
+  showBsbFlag = false,
   labelControl,
   uploadToken,
   onUploadBusy = () => undefined,
@@ -54,6 +63,7 @@ export function QuestionnaireQuestion({
   if (question.type === 'file') {
     return (
       <div className="flex flex-col gap-2">
+        {showBsbFlag ? <BsbPreviewFlag /> : null}
         <QuestionnaireFileInput
           question={question}
           value={value}
@@ -71,7 +81,11 @@ export function QuestionnaireQuestion({
       <fieldset className="flex flex-col gap-2">
         {question.label || labelControl ? (
           <legend className="text-sm font-medium">
-            <QuestionText question={question} labelControl={labelControl} />
+            <QuestionText
+              question={question}
+              labelControl={labelControl}
+              showBsbFlag={showBsbFlag}
+            />
           </legend>
         ) : null}
         <div className="grid gap-2 sm:grid-cols-2">
@@ -106,7 +120,11 @@ export function QuestionnaireQuestion({
       <fieldset className="flex flex-col gap-2">
         {question.label || labelControl ? (
           <legend className="text-sm font-medium">
-            <QuestionText question={question} labelControl={labelControl} />
+            <QuestionText
+              question={question}
+              labelControl={labelControl}
+              showBsbFlag={showBsbFlag}
+            />
           </legend>
         ) : null}
         <div className="flex flex-wrap gap-x-6 gap-y-2">
@@ -143,7 +161,11 @@ export function QuestionnaireQuestion({
             onChange={(event) => onChange(event.target.checked ? 'ja' : '')}
           />
           <span>
-            <QuestionText question={question} labelControl={labelControl} />
+            <QuestionText
+              question={question}
+              labelControl={labelControl}
+              showBsbFlag={showBsbFlag}
+            />
           </span>
         </label>
         {lockHint}
@@ -154,7 +176,11 @@ export function QuestionnaireQuestion({
   return (
     <div className="flex flex-col gap-2">
       <Label htmlFor={question.key}>
-        <QuestionText question={question} labelControl={labelControl} />
+        <QuestionText
+          question={question}
+          labelControl={labelControl}
+          showBsbFlag={showBsbFlag}
+        />
       </Label>
       <Input
         id={question.key}

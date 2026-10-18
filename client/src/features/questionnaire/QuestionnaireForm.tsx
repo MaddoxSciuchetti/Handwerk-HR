@@ -13,6 +13,7 @@ import {
 } from '@shared/weeklyHours';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
+import { BsbPreviewFlag } from './BsbPreviewFlag';
 import { QuestionnaireQuestion } from './QuestionnaireQuestion';
 import { WeeklyHoursAnswer } from './WeeklyHoursAnswer';
 import { QuestionnaireRepeatableRows } from './QuestionnaireRepeatableRows';
@@ -235,6 +236,12 @@ export function QuestionnaireForm({ token, preview, embedded }: QuestionnaireFor
                       <WeeklyHoursAnswer
                         questions={questions}
                         values={values}
+                        showBsbFlag={
+                          Boolean(preview) &&
+                          section.questions.some(
+                            (question) => isWeekdayHourKey(question.key) && question.bsbOnly
+                          )
+                        }
                         onChange={(key, value) =>
                           setValues((current) => ({ ...current, [key]: value }))
                         }
@@ -253,6 +260,7 @@ export function QuestionnaireForm({ token, preview, embedded }: QuestionnaireFor
                             question={question}
                             disabled={question.employerFilled}
                             employerFilled={question.employerFilled}
+                            showBsbFlag={Boolean(preview) && question.bsbOnly}
                             uploadToken={token}
                             onUploadBusy={(busy) =>
                               setUploads((count) => count + (busy ? 1 : -1))
@@ -268,6 +276,9 @@ export function QuestionnaireForm({ token, preview, embedded }: QuestionnaireFor
                         ))
                     ) : section.questions.every((question) => question.layout === 'inline') ? (
                       <>
+                      {preview && section.questions.some((question) => question.bsbOnly) ? (
+                        <BsbPreviewFlag />
+                      ) : null}
                       <div className="grid grid-cols-4 gap-3 sm:grid-cols-7">
                         {section.questions.map((question) => (
                           <div key={question.key} className="flex flex-col gap-2">
@@ -302,6 +313,7 @@ export function QuestionnaireForm({ token, preview, embedded }: QuestionnaireFor
                           question={question}
                           disabled={question.employerFilled || question.bsbOnly}
                           employerFilled={question.employerFilled}
+                          showBsbFlag={Boolean(preview) && question.bsbOnly}
                           uploadToken={token}
                           onUploadBusy={(busy) =>
                             setUploads((count) => count + (busy ? 1 : -1))
