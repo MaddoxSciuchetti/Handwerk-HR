@@ -24,6 +24,7 @@ vi.mock('@/features/settings/integrations/integrations.api', () => ({
       crewId: '',
       hasClientSecret: true,
       hasToken: false,
+      ready: true,
       live: true,
     },
   ]),

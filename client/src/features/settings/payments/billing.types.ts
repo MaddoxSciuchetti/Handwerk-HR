@@ -12,6 +12,7 @@ export type BillingSubscription = {
   cardLast4: string | null;
   cardExpMonth: number | null;
   cardExpYear: number | null;
+  hasStripeSubscription?: boolean;
 };
 
 export type BillingInvoiceStatus =

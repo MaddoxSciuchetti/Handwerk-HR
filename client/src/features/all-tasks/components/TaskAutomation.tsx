@@ -38,16 +38,7 @@ function TaskAutomation({
   const integration = integrations.data?.find(
     (item) => item.provider === provider
   );
-  const credentialsReady =
-    provider === 'microsoft_graph'
-      ? Boolean(
-          integration?.hasClientSecret &&
-            integration.tenantId &&
-            integration.clientId &&
-            integration.domain &&
-            integration.licenseSkuId
-        )
-      : Boolean(integration?.hasToken);
+  const credentialsReady = Boolean(integration?.ready);
   const blockedReason = !integration?.enabled
     ? 'Die Integration ist deaktiviert.'
     : !credentialsReady

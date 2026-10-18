@@ -1,5 +1,6 @@
 import { generatePresignedUrl, uploadFileToS3 } from "@/config/aws";
 import { NOT_FOUND, OK } from "@/constants/http";
+import { prisma } from "@/lib/prisma";
 import { updateProfileInformationSchema } from "@/schemas/user.schemas";
 import {
     insertProfilePhoto,
@@ -16,7 +17,15 @@ export const getUser = catchErrors(async (req, res) => {
     const user = await queryUser(id);
     appAssert(user, NOT_FOUND, "User not found");
 
-    return res.status(OK).json(user);
+    const membership = await prisma.organizationMember.findFirst({
+        where: { userId: id, organizationId: req.orgId, status: "active" },
+        select: { membershipRole: true },
+    });
+
+    return res.status(OK).json({
+        ...user,
+        membershipRole: membership?.membershipRole ?? "worker",
+    });
 });
 
 export const uploadProfilePhoto = catchErrors(async (req, res) => {

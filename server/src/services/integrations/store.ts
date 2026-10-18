@@ -18,6 +18,7 @@ export type IntegrationView = {
     crewId: string;
     hasClientSecret: boolean;
     hasToken: boolean;
+    ready: boolean;
     live: boolean;
 };
 
@@ -46,7 +47,28 @@ function view(
         crewId: row?.crewId ?? "",
         hasClientSecret: Boolean(row?.clientSecretCiphertext),
         hasToken: Boolean(row?.tokenCiphertext),
+        ready:
+            provider === "microsoft_graph"
+                ? Boolean(
+                      row?.tenantId &&
+                          row.clientId &&
+                          row.domain &&
+                          row.licenseSkuId &&
+                          row.clientSecretCiphertext,
+                  )
+                : Boolean(row?.tokenCiphertext),
         live: integrationsLive(),
+    };
+}
+
+export function redactIntegrationSecrets(integration: IntegrationView): IntegrationView {
+    return {
+        ...integration,
+        tenantId: "",
+        clientId: "",
+        domain: "",
+        licenseSkuId: "",
+        crewId: "",
     };
 }
 
