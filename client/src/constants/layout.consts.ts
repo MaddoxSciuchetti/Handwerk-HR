@@ -58,10 +58,12 @@ export const SETTINGSITEMS = [
     title: 'Integrationen',
     to: '/settings/integrations',
     icon: Plug,
+    adminOnly: true,
   },
   {
     title: 'Zahlungen',
     to: '/settings/payments',
     icon: CreditCard,
+    adminOnly: true,
   },
 ];

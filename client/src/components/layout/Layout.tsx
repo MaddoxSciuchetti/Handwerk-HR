@@ -1,4 +1,5 @@
 import { useBillingSubscription } from '@/features/settings/payments/hooks/useBillingSubscription';
+import useAuth from '@/features/user-profile/hooks/useAuth';
 import { isSubscriptionLocked } from '@/features/settings/payments/util/subscriptionAccess.util';
 import { MentionNotice } from '@/features/all-tasks/components/MentionNotice';
 import FeatureModal from '@/features/sidebar/feature-modal/FeatureModal';
@@ -20,6 +21,8 @@ function Layout() {
   const [isSettingOpen, setIsSettingOpen] = useState<boolean>(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
+  const isAdmin = user?.membershipRole === 'admin';
   const { data: subscription, isFetched, isError } = useBillingSubscription();
 
   const subscriptionLocked = useMemo(
@@ -35,12 +38,12 @@ function Layout() {
   }, [location.pathname]);
 
   useEffect(() => {
-    if (!subscriptionLocked) return;
+    if (!subscriptionLocked || !isAdmin) return;
     const path = location.pathname;
     if (path === '/settings/payments' || path === '/settings/plans') return;
     navigate({ to: '/settings/payments' });
     setIsSettingOpen(true);
-  }, [subscriptionLocked, location.pathname, navigate]);
+  }, [subscriptionLocked, isAdmin, location.pathname, navigate]);
 
   const handleOpenModal = () => {
     setModal((prev) => !prev);
@@ -75,7 +78,16 @@ function Layout() {
         </header>
         <main className="flex min-h-0 grow flex-col gap-4 bg-background p-4 lg:items-center">
           <div className="h-full w-full min-h-0 min-w-0 grow overflow-hidden">
-            <Outlet />
+            {subscriptionLocked && !isAdmin ? (
+              <div className="flex h-full items-center justify-center rounded-2xl bg-card p-6 text-card-foreground">
+                <p className="max-w-md text-center text-sm text-muted-foreground">
+                  Das Abo ist inaktiv. Ein Administrator kann die Zahlung
+                  aktualisieren.
+                </p>
+              </div>
+            ) : (
+              <Outlet />
+            )}
           </div>
         </main>
       </SidebarInset>

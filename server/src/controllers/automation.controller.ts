@@ -9,8 +9,10 @@ import { microsoft365AutomationStatus } from "@/services/microsoft365Account";
 import { runIssueSequence } from "@/services/integrations/runSequence";
 import {
     listOrganizationIntegrations,
+    redactIntegrationSecrets,
     saveOrganizationIntegration,
 } from "@/services/integrations/store";
+import { assertOrgAdmin } from "@/utils/assertOrgOwner";
 import {
     saveDepartureMailSettings,
     departureMailPage,
@@ -65,14 +67,19 @@ const integrationInput = z.object({
 
 export const getIntegrations = catchErrors(async (req, res) => {
     appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
+    const integrations = await listOrganizationIntegrations(req.orgId);
     return res.status(200).json({
         success: true,
-        data: await listOrganizationIntegrations(req.orgId),
+        data:
+            req.membershipRole === "admin"
+                ? integrations
+                : integrations.map(redactIntegrationSecrets),
     });
 });
 
 export const putIntegration = catchErrors(async (req, res) => {
     appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
+    assertOrgAdmin(req.membershipRole);
     const provider = z
         .enum(["microsoft_graph", "crewmeister"])
         .parse(req.params.provider);

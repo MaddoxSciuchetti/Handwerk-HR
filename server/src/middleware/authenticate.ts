@@ -25,7 +25,7 @@ const authenticate: RequestHandler = async (req, res, next) => {
 
         const member = await prisma.organizationMember.findFirst({
             where: { userId: payload.userId, status: "active" },
-            select: { organizationId: true },
+            select: { organizationId: true, membershipRole: true },
             orderBy: { joinedAt: "asc" },
         });
 
@@ -37,6 +37,7 @@ const authenticate: RequestHandler = async (req, res, next) => {
             req.tokenId = payload.tokenId;
         }
         req.orgId = member?.organizationId;
+        req.membershipRole = member?.membershipRole;
 
         next();
     } catch (err) {

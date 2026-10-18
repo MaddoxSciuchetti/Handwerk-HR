@@ -12,6 +12,7 @@ export type User = {
   displayName?: string;
   avatarUrl?: string;
   presignedUrl?: string;
+  membershipRole?: 'admin' | 'worker';
 };
 
 export type Auth = {

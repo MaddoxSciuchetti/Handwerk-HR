@@ -1,4 +1,4 @@
-import type { User as DbUser } from "@prisma/client";
+import type { OrgMemberRole, User as DbUser } from "@prisma/client";
 
 declare global {
     namespace Express {
@@ -7,6 +7,7 @@ declare global {
             tokenId?: string;
             sessionId?: string;
             orgId: string;
+            membershipRole?: OrgMemberRole;
         }
     }
 }

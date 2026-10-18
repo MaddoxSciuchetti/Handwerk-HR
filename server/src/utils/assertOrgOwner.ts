@@ -1,6 +1,11 @@
 import { FORBIDDEN, UNAUTHORIZED } from "@/constants/http";
 import { prisma } from "@/lib/prisma";
 import appAssert from "@/utils/appAssert";
+import type { OrgMemberRole } from "@prisma/client";
+
+export function assertOrgAdmin(role: OrgMemberRole | undefined) {
+    appAssert(role === "admin", FORBIDDEN, "Nur Organisationsinhaber können das.");
+}
 
 export async function assertOrgOwner(
     userId: string,

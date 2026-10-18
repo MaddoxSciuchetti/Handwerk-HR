@@ -38,6 +38,7 @@ it('keeps the integrations heading while loading rows, then reveals the settings
       crewId: '',
       hasClientSecret: false,
       hasToken: false,
+      ready: false,
       live: false,
     }))
   );

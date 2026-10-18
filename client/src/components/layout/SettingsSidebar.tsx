@@ -1,5 +1,6 @@
 import { SETTINGSITEMS } from '@/constants/layout.consts';
 import { Button } from '@/components/ui/button';
+import useAuth from '@/features/user-profile/hooks/useAuth';
 import {
   Sidebar,
   SidebarContent,
@@ -17,6 +18,8 @@ export function SettingsSidebar({
   setIsSettingOpen: (isSettingOpen: boolean) => void;
 }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = user?.membershipRole === 'admin';
 
   const leaveSettings = () => {
     if (subscriptionLocked) return;
@@ -24,9 +27,12 @@ export function SettingsSidebar({
     navigate({ to: '/worker-lifycycle' });
   };
 
+  const visibleItems = SETTINGSITEMS.filter(
+    (item) => !('adminOnly' in item && item.adminOnly) || isAdmin
+  );
   const itemsSource = subscriptionLocked
-    ? SETTINGSITEMS.filter((item) => item.to === '/settings/payments')
-    : SETTINGSITEMS;
+    ? visibleItems.filter((item) => item.to === '/settings/payments')
+    : visibleItems;
 
   return (
     <Sidebar collapsible="icon">
