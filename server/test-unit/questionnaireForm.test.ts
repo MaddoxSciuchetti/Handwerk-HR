@@ -133,4 +133,60 @@ describe("questionnaire form", () => {
         ).toMatchObject({ "custom.license": encodeFileAnswer("Führerschein.pdf", key) });
         expect(() => schema.parse({ "custom.license": "Führerschein.pdf" })).toThrow("Datei");
     });
+
+    it("keeps zero hours and stores a decimal comma", () => {
+        const schema = questionnaireAnswerSchema(
+            [
+                {
+                    key: "hoursMonday",
+                    label: "Mo",
+                    section: "Ggf.Verteilung d. wöchentl. Arbeitszeit (Std.)",
+                    type: "text",
+                },
+                {
+                    key: "hoursTuesday",
+                    label: "Di",
+                    section: "Ggf.Verteilung d. wöchentl. Arbeitszeit (Std.)",
+                    type: "text",
+                },
+            ],
+            [],
+        );
+        expect(schema.parse({ hoursMonday: "0", hoursTuesday: "7.5" })).toEqual({
+            hoursMonday: "0",
+            hoursTuesday: "7,5",
+        });
+        expect(schema.parse({ hoursMonday: "", hoursTuesday: "" })).toEqual({
+            hoursMonday: "",
+            hoursTuesday: "",
+        });
+        expect(() => schema.parse({ hoursMonday: "30", hoursTuesday: "" })).toThrow("Stunden");
+    });
+
+    it("stores only the filled cells of an extra table row", () => {
+        const key = "rows.kinder-liste";
+        const schema = questionnaireAnswerSchema(
+            [],
+            [
+                {
+                    key,
+                    columns: [
+                        { key: "name", type: "text" },
+                        { key: "geburtsdatum", type: "date" },
+                    ],
+                },
+            ],
+        );
+        const parsed = schema.parse({
+            [key]: [{ name: "Lovelace", geburtsdatum: "2018-04-01" }, { name: "", geburtsdatum: "" }],
+        });
+        expect(
+            flattenQuestionnaireAnswers(parsed as QuestionnaireAnswers, [], [
+                { key, columns: [{ key: "name" }, { key: "geburtsdatum" }] },
+            ]),
+        ).toEqual([
+            { key: `${key}.1.name`, value: "Lovelace" },
+            { key: `${key}.1.geburtsdatum`, value: "2018-04-01" },
+        ]);
+    });
 });

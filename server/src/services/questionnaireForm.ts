@@ -3,6 +3,14 @@ import {
     insuranceNumberInput,
     isValidInsuranceNumber,
 } from "../../../shared/insuranceNumber";
+import {
+    HOURS_DISTRIBUTION_KEY,
+    WEEKLY_HOURS_PROMPT,
+    WEEKLY_HOURS_SECTION,
+    WEEKDAYS,
+    isWeekdayHourKey,
+    normalizeHour,
+} from "../../../shared/weeklyHours";
 
 export const QUESTIONNAIRE_INTRO =
     "Dieser Personalfragebogen dient zur Vorerfassung von Personaldaten für das DATEV-Lohnabrechnungsprogramm. Zur Wahrung der Aufbewahrungsfrist wird der ausgefüllte Personalfragebogen von dem Arbeitgeber / der lohnabrechnenden Stelle gespeichert.";
@@ -10,7 +18,7 @@ export const QUESTIONNAIRE_INTRO =
 const DECLARATION =
     "Erklärung der beschäftigten Person: Ich versichere, dass die vorstehenden Angaben der Wahrheit entsprechen. Ich verpflichte mich, meinem Arbeitgeber alle Änderungen, insbesondere in Bezug auf weitere Beschäftigungen (in Bezug auf Art, Dauer und Entgelt) unverzüglich mitzuteilen.";
 
-const HOURS_SECTION = "Ggf.Verteilung d. wöchentl. Arbeitszeit (Std.)";
+const HOURS_SECTION = WEEKLY_HOURS_SECTION;
 const VWL_SECTION = "VWL - nur notwendig, wenn Vertrag vorliegt";
 const SOCIAL_SECTION = "Sozialversicherung";
 
@@ -34,10 +42,11 @@ export type QuestionnaireColumn = {
 };
 
 export type QuestionnaireRepeater = {
-    key: "children" | "priorEmployment";
+    key: string;
     section: string;
     afterSection: string;
     columns: readonly QuestionnaireColumn[];
+    allowMoreRows?: boolean;
 };
 
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
@@ -129,7 +138,7 @@ function check<Key extends string>(
 }
 
 function weekday<Key extends string>(key: Key, label: string) {
-    return text(key, label, HOURS_SECTION, { max: 8, layout: "inline" });
+    return text(key, label, HOURS_SECTION, { max: 8, layout: "inline", required: false });
 }
 
 export const QUESTIONNAIRE_FIELDS = [
@@ -185,13 +194,10 @@ export const QUESTIONNAIRE_FIELDS = [
     date("trainingStart", "Beginn der Ausbildung", "Beschäftigung"),
     date("trainingEnd", "Voraussichtliches Ende der Ausbildung", "Beschäftigung"),
     date("constructionSince", "Im Baugewerbe beschäftigt seit", "Beschäftigung"),
-    weekday("hoursMonday", "Mo"),
-    weekday("hoursTuesday", "Di"),
-    weekday("hoursWednesday", "Mi"),
-    weekday("hoursThursday", "Do"),
-    weekday("hoursFriday", "Fr"),
-    weekday("hoursSaturday", "Sa"),
-    weekday("hoursSunday", "So"),
+    single(HOURS_DISTRIBUTION_KEY, WEEKLY_HOURS_PROMPT, HOURS_SECTION, ["ja", "nein"], {
+        required: false,
+    }),
+    ...WEEKDAYS.map((day) => weekday(day.key, day.label)),
 
     text("taxId", "Identifikationsnr.", "Steuer", { max: 32 }),
     text("taxClass", "Steuerklasse/Faktor", "Steuer", { max: 32 }),
@@ -324,6 +330,13 @@ function fieldSchema(field: QuestionnaireField) {
             .refine((value) => value === "" || value === "ja", "ungültige Auswahl")
             .refine((value) => !field.required || value === "ja", "erforderlich");
     }
+    if (isWeekdayHourKey(field.key)) {
+        return z
+            .string()
+            .trim()
+            .refine((value) => normalizeHour(value) !== null, "Stunden")
+            .transform((value) => normalizeHour(value) ?? "");
+    }
     return z
         .string()
         .trim()
@@ -331,18 +344,55 @@ function fieldSchema(field: QuestionnaireField) {
         .refine((value) => !field.required || value.length > 0, "erforderlich");
 }
 
+type AnswerRepeater =
+    | string
+    | { key: string; columns?: readonly { key: string; type?: "text" | "date" }[] };
+
+function repeaterKey(repeater: AnswerRepeater) {
+    return typeof repeater === "string" ? repeater : repeater.key;
+}
+
+function customRowSchema(columns: readonly { key: string; type?: "text" | "date" }[]) {
+    return z.object(
+        Object.fromEntries(
+            columns.map((column) => [
+                column.key,
+                column.type === "date"
+                    ? z
+                          .string()
+                          .trim()
+                          .default("")
+                          .refine((value) => value === "" || datePattern.test(value), "Datum")
+                    : z.string().trim().max(255).default(""),
+            ]),
+        ),
+    );
+}
+
 export function questionnaireAnswerSchema(
     fields: readonly QuestionnaireField[] = QUESTIONNAIRE_FIELDS,
-    repeaterKeys: readonly string[] = ["children", "priorEmployment"],
+    repeaters: readonly AnswerRepeater[] = ["children", "priorEmployment"],
 ) {
+    const keys = repeaters.map(repeaterKey);
+    const tables = Object.fromEntries(
+        repeaters.flatMap((repeater) => {
+            const key = repeaterKey(repeater);
+            if (!key.startsWith("rows.")) return [];
+            const columns = typeof repeater === "string" ? [] : (repeater.columns ?? []);
+            const row =
+                columns.length > 0
+                    ? customRowSchema(columns)
+                    : z.record(z.string(), z.string().trim().max(255));
+            return [[key, z.array(row).max(10).default([])]];
+        }),
+    );
     return z.object({
         ...Object.fromEntries(fields.map((field) => [field.key, fieldSchema(field)])),
-        ...(repeaterKeys.includes("children")
-            ? { children: z.array(childSchema).max(10).default([]) }
-            : {}),
-        ...(repeaterKeys.includes("priorEmployment")
+        ...(keys.includes("children") ? { children: z.array(childSchema).max(10).default([]) } : {}),
+        ...(keys.includes("priorEmployment")
             ? { priorEmployment: z.array(priorSchema).max(8).default([]) }
             : {}),
+        ...tables,
     });
 }
 
@@ -416,6 +466,7 @@ export function questionnaireAnswersFromStored(
 export function flattenQuestionnaireAnswers(
     answers: QuestionnaireAnswers,
     fields: readonly { key: string }[] = QUESTIONNAIRE_FIELDS,
+    repeaters: readonly { key: string; columns: readonly { key: string }[] }[] = [],
 ) {
     const known = new Set(fields.map((field) => field.key));
     const rows: { key: string; value: string }[] = fields.map((field) => ({
@@ -436,6 +487,27 @@ export function flattenQuestionnaireAnswers(
             { key: `child.${number}.birthday`, value: child.birthday },
         );
     });
+    for (const repeater of repeaters) {
+        if (!repeater.key.startsWith("rows.")) continue;
+        const table = (answers as Record<string, unknown>)[repeater.key];
+        if (!Array.isArray(table)) continue;
+        table.forEach((row, index) => {
+            if (!row || typeof row !== "object") return;
+            const record = row as Record<string, unknown>;
+            const values = repeater.columns.map((column) => {
+                const cell = record[column.key];
+                return typeof cell === "string" ? cell : "";
+            });
+            if (!filled(values)) return;
+            const number = index + 1;
+            for (const column of repeater.columns) {
+                const cell = record[column.key];
+                const value = typeof cell === "string" ? cell.trim() : "";
+                if (!value) continue;
+                rows.push({ key: `${repeater.key}.${number}.${column.key}`, value });
+            }
+        });
+    }
     (answers.priorEmployment ?? []).forEach((prior, index) => {
         if (!filled([prior.from, prior.until, prior.kind])) return;
         const number = index + 1;

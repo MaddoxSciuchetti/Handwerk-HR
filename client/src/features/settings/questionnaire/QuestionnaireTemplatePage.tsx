@@ -22,6 +22,7 @@ import {
 import type {
   TemplateField,
   TemplateItem,
+  TemplateRepeater,
 } from './questionnaireTemplate.types';
 
 const templateKey = ['automation', 'questionnaire'] as const;
@@ -111,6 +112,14 @@ export function QuestionnaireTemplatePage() {
     setItems(itemsFromBlocks(current));
   };
 
+  const changeRepeater = (repeater: TemplateRepeater) => {
+    setItems((current) =>
+      current.map((item) =>
+        item.kind === 'repeater' && item.key === repeater.key ? repeater : item
+      )
+    );
+  };
+
   const changeField = (field: TemplateField) => {
     setItems((current) =>
       current.map((item) =>
@@ -182,6 +191,7 @@ export function QuestionnaireTemplatePage() {
               onDrop={drop}
               onInsert={insertItems}
               onChangeField={changeField}
+              onChangeRepeater={changeRepeater}
               onCommitField={commitField}
               onRemove={remove}
             />

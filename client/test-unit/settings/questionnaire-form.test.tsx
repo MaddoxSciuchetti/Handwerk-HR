@@ -82,6 +82,87 @@ describe('QuestionnaireForm', () => {
     expect(screen.getByRole('checkbox', { name: 'Spät' })).toBeInTheDocument();
   });
 
+  it('asks before showing the weekday hours and totals a decimal week', async () => {
+    vi.mocked(apiJson.get).mockResolvedValue({
+      success: true,
+      data: {
+        status: 'sent',
+        intro: '',
+        questions: [
+          {
+            key: 'weeklyHours',
+            label: 'Wochenstunden',
+            section: 'Beschäftigung',
+            type: 'text',
+          },
+          {
+            key: 'hoursDistribution',
+            label: 'Soll die Arbeitszeit auf bestimmte Wochentage verteilt werden?',
+            section: 'Ggf.Verteilung d. wöchentl. Arbeitszeit (Std.)',
+            type: 'single',
+            options: ['ja', 'nein'],
+          },
+          ...['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((label, index) => ({
+            key: ['hoursMonday', 'hoursTuesday', 'hoursWednesday', 'hoursThursday', 'hoursFriday', 'hoursSaturday', 'hoursSunday'][index],
+            label,
+            section: 'Ggf.Verteilung d. wöchentl. Arbeitszeit (Std.)',
+            type: 'text',
+            layout: 'inline',
+          })),
+        ],
+      },
+    });
+    const user = userEvent.setup();
+    renderWithProviders(<QuestionnaireForm token="token" />);
+
+    expect(
+      await screen.findByText('Soll die Arbeitszeit auf bestimmte Wochentage verteilt werden?')
+    ).toBeInTheDocument();
+    expect(screen.queryByLabelText('Mo Stunden')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('radio', { name: 'Ja' }));
+    await user.type(screen.getByLabelText('Mo Stunden'), '7,5');
+    await user.type(screen.getByLabelText('Di Stunden'), '8');
+    expect(screen.getByText('Summe: 15,5 Std.')).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText('Wochenstunden'), '40');
+    expect(screen.getByText(/weicht von/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('radio', { name: 'Nein' }));
+    expect(screen.queryByLabelText('Mo Stunden')).not.toBeInTheDocument();
+  });
+
+  it('shows table columns and adds a row only when more rows are allowed', async () => {
+    const table = {
+      kind: 'repeater' as const,
+      key: 'rows.kinder-liste',
+      section: 'Kinder, für die eine Elterneigenschaft nachgewiesen werden kann',
+      allowMoreRows: true,
+      columns: [
+        { key: 'name', label: 'Name', type: 'text' as const },
+        { key: 'vorname', label: 'Vorname', type: 'text' as const },
+        { key: 'geburtsdatum', label: 'Geburtsdatum (TT.MM.JJJJ)', type: 'date' as const },
+      ],
+    };
+    renderWithProviders(
+      <QuestionnaireForm
+        preview={{
+          intro: '',
+          items: [table],
+        }}
+      />
+    );
+    expect(
+      screen.getByRole('heading', {
+        name: 'Kinder, für die eine Elterneigenschaft nachgewiesen werden kann',
+      })
+    ).toBeInTheDocument();
+    expect(screen.getByText('Geburtsdatum (TT.MM.JJJJ)')).toBeInTheDocument();
+    expect(screen.getAllByLabelText(/Zeile 1/)).toHaveLength(3);
+    await userEvent.click(screen.getByRole('button', { name: 'Weitere Zeile' }));
+    expect(screen.getByLabelText('Name Zeile 2')).toBeInTheDocument();
+  });
+
   it('shows a drafted question the way the candidate would see it', () => {
     vi.mocked(apiJson.get).mockClear();
     renderWithProviders(

@@ -9,7 +9,7 @@ import {
     definitionFields,
     definitionRepeaters,
     parseQuestionnaireDefinition,
-    isWorkerLocked,
+    fieldIsLocked,
     presentQuestions,
     questionRequired,
     type QuestionnaireDefinition,
@@ -25,6 +25,7 @@ import {
     type QuestionnaireAnswers,
     type QuestionnaireField,
 } from "@/services/questionnaireForm";
+import { clearUndistributedWeekdays } from "../../../shared/weeklyHours";
 import { workerProfileFromQuestionnaire } from "@/services/questionnaireWorkerProfile";
 import AppError from "@/utils/AppError";
 
@@ -66,7 +67,7 @@ function publicPayload(definition: QuestionnaireDefinition | null) {
                       options: item.options,
                       max: item.max,
                       layout: item.layout,
-                      employerFilled: isWorkerLocked(item),
+                      employerFilled: fieldIsLocked(item),
                       defaultValue: item.defaultValue,
                   },
         ),
@@ -88,7 +89,10 @@ export async function getPublicQuestionnaire(token: string) {
     };
 }
 
-type ProfileQuestionField = QuestionnaireField & { defaultValue?: string };
+type ProfileQuestionField = QuestionnaireField & {
+    defaultValue?: string;
+    officeOnly?: boolean;
+};
 
 function fieldsOf(definition: QuestionnaireDefinition | null): ProfileQuestionField[] {
     const fields = definition ? definitionFields(definition) : [...QUESTIONNAIRE_FIELDS];
@@ -104,7 +108,7 @@ function lockEmployerValues(
             ? { ...(body as Record<string, unknown>) }
             : {};
     for (const field of fields) {
-        if (!isWorkerLocked(field)) continue;
+        if (!fieldIsLocked(field)) continue;
         answers[field.key] = field.defaultValue ?? "";
     }
     return answers;
@@ -131,12 +135,15 @@ export async function submitPublicQuestionnaire(token: string, body: unknown) {
 
     const definition = storedDefinition(submission.formDefinition);
     const fields = fieldsOf(definition);
-    const repeaterKeys = definition
-        ? definitionRepeaters(definition).map((repeater) => repeater.key)
+    const repeaters = definition
+        ? definitionRepeaters(definition)
         : ["children", "priorEmployment"];
-    const answers = questionnaireAnswerSchema(fields, repeaterKeys).parse(
-        lockEmployerValues(fields, body),
-    ) as QuestionnaireAnswers;
+    const answers = clearUndistributedWeekdays(
+        fields,
+        questionnaireAnswerSchema(fields, repeaters).parse(
+            lockEmployerValues(fields, body),
+        ) as QuestionnaireAnswers,
+    );
     for (const field of fields) {
         if (field.type !== "file") continue;
         const value = String((answers as Record<string, unknown>)[field.key] ?? "");
@@ -177,7 +184,11 @@ export async function submitPublicQuestionnaire(token: string, body: unknown) {
         if (claimed.count === 0) return;
 
         await tx.questionnaireAnswer.createMany({
-            data: flattenQuestionnaireAnswers(answers, fields).map((answer) => ({
+            data: flattenQuestionnaireAnswers(
+                answers,
+                fields,
+                definition ? definitionRepeaters(definition) : [],
+            ).map((answer) => ({
                 submissionId: submission.id,
                 key: answer.key,
                 value: answer.value,

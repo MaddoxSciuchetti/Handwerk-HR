@@ -5,9 +5,17 @@ import {
     QUESTIONNAIRE_FIELDS,
     QUESTIONNAIRE_INTRO,
     QUESTIONNAIRE_REPEATERS,
+    type QuestionnaireColumn,
     type QuestionnaireField,
     type QuestionnaireRepeater,
 } from "@/services/questionnaireForm";
+import {
+    HOURS_DISTRIBUTION_KEY,
+    WEEKDAY_HOUR_KEYS,
+    isWeekdayHourKey,
+    isWeeklyHoursKey,
+    normalizeHour,
+} from "../../../shared/weeklyHours";
 
 export type QuestionnaireFieldItem = {
     kind: "field";
@@ -23,13 +31,15 @@ export type QuestionnaireFieldItem = {
     defaultValue?: string;
     builtin?: boolean;
     contractFieldKey?: string;
+    officeOnly?: boolean;
 };
 
 export type QuestionnaireRepeaterItem = {
     kind: "repeater";
-    key: QuestionnaireRepeater["key"];
+    key: string;
     section: string;
-    columns: QuestionnaireRepeater["columns"];
+    columns: QuestionnaireColumn[];
+    allowMoreRows?: boolean;
 };
 
 export type QuestionnaireItem = QuestionnaireFieldItem | QuestionnaireRepeaterItem;
@@ -40,17 +50,9 @@ export type QuestionnaireDefinition = {
     items: QuestionnaireItem[];
 };
 
-const HOUR_KEYS = [
-    "hoursMonday",
-    "hoursTuesday",
-    "hoursWednesday",
-    "hoursThursday",
-    "hoursFriday",
-    "hoursSaturday",
-    "hoursSunday",
-] as const;
-
 const CUSTOM_KEY = /^custom\.[a-z0-9-]{8,80}$/;
+const CUSTOM_ROWS = /^rows\.[a-z0-9-]{8,80}$/;
+const COLUMN_KEY = /^[a-z][a-z0-9]{0,30}$/;
 const CONTRACT_KEY = /^[a-zA-Z0-9._-]{1,120}$/;
 const CUSTOM_SECTION = "Weitere Angaben";
 
@@ -80,9 +82,9 @@ function fieldItem(
         max: field.max,
         layout: field.layout,
         builtin: true,
-        ...extra,
-        required: true,
+        required: isWeeklyHoursKey(field.key) ? field.required === true : true,
         employerFilled: false,
+        ...extra,
     };
 }
 
@@ -142,6 +144,7 @@ export function definitionRepeaters(definition: QuestionnaireDefinition): Questi
             section: item.section,
             afterSection: previous && previous.kind === "field" ? previous.section : "",
             columns: item.columns,
+            allowMoreRows: item.allowMoreRows,
         });
     });
     return repeaters;
@@ -151,7 +154,23 @@ export function isWorkerLocked(field: { defaultValue?: string }) {
     return Boolean(field.defaultValue?.trim());
 }
 
-export function questionRequired(field: { type: string; required?: boolean; builtin?: boolean }) {
+export function fieldIsLocked(field: {
+    key: string;
+    defaultValue?: string;
+    officeOnly?: boolean;
+}) {
+    if (isWeekdayHourKey(field.key)) return field.officeOnly === true;
+    return isWorkerLocked(field);
+}
+
+export function questionRequired(field: {
+    key?: string;
+    type: string;
+    required?: boolean;
+    builtin?: boolean;
+}) {
+    if (field.key && isWeekdayHourKey(field.key)) return false;
+    if (field.key === HOURS_DISTRIBUTION_KEY) return field.required === true;
     if (field.type === "file" || field.builtin === false) return field.required !== false;
     return true;
 }
@@ -166,7 +185,7 @@ export function presentQuestions(definition: QuestionnaireDefinition) {
         options: field.options,
         max: field.max,
         layout: field.layout,
-        employerFilled: isWorkerLocked(field),
+        employerFilled: fieldIsLocked(field),
         defaultValue: field.defaultValue,
         builtin: field.builtin,
     }));
@@ -180,6 +199,11 @@ function cleanDefault(field: QuestionnaireFieldItem, value: string) {
             reject("Die Versicherungsnummer hat nicht das richtige Format.");
         }
         return normalized;
+    }
+    if (isWeekdayHourKey(field.key)) {
+        const hours = normalizeHour(value);
+        if (hours === null) reject("Die Stunden sind ungültig.");
+        return hours;
     }
     const trimmed = value.trim().slice(0, field.max ?? 255);
     if (!trimmed) return undefined;
@@ -223,8 +247,9 @@ function parseItem(raw: unknown, seen: Set<string>): QuestionnaireItem {
 }
 
 function parseRepeater(raw: object, seen: Set<string>): QuestionnaireRepeaterItem {
-    const key = "key" in raw ? raw.key : "";
-    const source = catalogByKey.get(String(key));
+    const key = "key" in raw && typeof raw.key === "string" ? raw.key.trim() : "";
+    if (CUSTOM_ROWS.test(key)) return parseCustomTable(raw, key, seen);
+    const source = catalogByKey.get(key);
     if (!source || source.kind !== "repeater") reject("Dieser Block ist nicht verfügbar.");
     if (seen.has(source.key)) reject("Jede Frage darf nur einmal vorkommen.");
     seen.add(source.key);
@@ -234,6 +259,39 @@ function parseRepeater(raw: object, seen: Set<string>): QuestionnaireRepeaterIte
         afterSection: "",
         columns: [...source.columns],
     });
+}
+
+function parseCustomTable(raw: object, key: string, seen: Set<string>): QuestionnaireRepeaterItem {
+    if (seen.has(key)) reject("Jede Frage darf nur einmal vorkommen.");
+    seen.add(key);
+    const section = "section" in raw && typeof raw.section === "string" ? raw.section.trim() : "";
+    if (!section || section.length > 400) reject("Jede Tabelle braucht eine Beschriftung.");
+    if (!("columns" in raw) || !Array.isArray(raw.columns)) reject("Eine Tabelle braucht Spalten.");
+    const columns = raw.columns.map((column) => readColumn(column));
+    if (columns.length < 1 || columns.length > 6) reject("Eine Tabelle braucht eine bis sechs Spalten.");
+    if (new Set(columns.map((column) => column.key)).size !== columns.length) {
+        reject("Jede Spalte braucht einen eigenen Schlüssel.");
+    }
+    if (new Set(columns.map((column) => column.label)).size !== columns.length) {
+        reject("Jede Spalte darf nur einmal vorkommen.");
+    }
+    return {
+        kind: "repeater",
+        key,
+        section,
+        columns,
+        allowMoreRows: "allowMoreRows" in raw && raw.allowMoreRows === true ? true : undefined,
+    };
+}
+
+function readColumn(raw: unknown): QuestionnaireColumn {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) reject("Eine Spalte ist ungültig.");
+    const column = raw as { key?: unknown; label?: unknown; type?: unknown };
+    const label = typeof column.label === "string" ? column.label.trim() : "";
+    const key = typeof column.key === "string" ? column.key.trim() : "";
+    if (!label || label.length > 80 || !COLUMN_KEY.test(key)) reject("Eine Spalte ist ungültig.");
+    if (column.type !== "text" && column.type !== "date") reject("Eine Spalte ist ungültig.");
+    return { key, label, type: column.type };
 }
 
 function parseField(raw: object, seen: Set<string>): QuestionnaireFieldItem {
@@ -253,8 +311,9 @@ function parseField(raw: object, seen: Set<string>): QuestionnaireFieldItem {
     const draft: QuestionnaireFieldItem = {
         ...base,
         label,
-        required: questionRequired(base),
+        required: isWeeklyHoursKey(key) ? readRequired(raw, base.required === true) : questionRequired(base),
         employerFilled: false,
+        officeOnly: isWeekdayHourKey(key) && readOfficeOnly(raw) ? true : undefined,
         contractFieldKey: base.type === "file" ? undefined : contractFieldKey,
         defaultValue: undefined,
     };
@@ -323,6 +382,15 @@ function customBase(raw: object, key: string): QuestionnaireFieldItem {
     };
 }
 
+function readRequired(raw: object, fallback: boolean) {
+    if (!("required" in raw) || typeof raw.required !== "boolean") return fallback;
+    return raw.required;
+}
+
+function readOfficeOnly(raw: object) {
+    return "officeOnly" in raw && raw.officeOnly === true;
+}
+
 function readContractKey(raw: object) {
     if (!("contractFieldKey" in raw) || typeof raw.contractFieldKey !== "string") return undefined;
     const key = raw.contractFieldKey.trim();
@@ -344,7 +412,7 @@ export function applyOverrides(
                 ...item,
                 defaultValue: next,
                 required: questionRequired(item),
-                employerFilled: false,
+                employerFilled: fieldIsLocked({ ...item, defaultValue: next }),
             };
         }),
     };
@@ -403,5 +471,5 @@ export function readOverrides(value: unknown): Record<string, string> {
 }
 
 export function hourKeys() {
-    return HOUR_KEYS;
+    return WEEKDAY_HOUR_KEYS;
 }

@@ -1,14 +1,13 @@
-import { HOUR_KEYS, type TemplateItem } from './questionnaireTemplate.types';
+import { isWeeklyHoursKey } from '@shared/weeklyHours';
+import type { TemplateItem } from './questionnaireTemplate.types';
 
 export type QuestionnaireBlock = {
   id: string;
   items: TemplateItem[];
 };
 
-const hourKeySet = new Set<string>(HOUR_KEYS);
-
-export function isHourField(item: TemplateItem) {
-  return item.kind === 'field' && hourKeySet.has(item.key);
+export function isWeeklyHoursItem(item: TemplateItem) {
+  return item.kind === 'field' && isWeeklyHoursKey(item.key);
 }
 
 export function blocksFromItems(items: TemplateItem[]): QuestionnaireBlock[] {
@@ -17,9 +16,9 @@ export function blocksFromItems(items: TemplateItem[]): QuestionnaireBlock[] {
   while (index < items.length) {
     const item = items[index];
     if (!item) break;
-    if (isHourField(item)) {
+    if (isWeeklyHoursItem(item)) {
       const hours: TemplateItem[] = [];
-      while (index < items.length && items[index] && isHourField(items[index])) {
+      while (index < items.length && items[index] && isWeeklyHoursItem(items[index]!)) {
         hours.push(items[index]!);
         index += 1;
       }

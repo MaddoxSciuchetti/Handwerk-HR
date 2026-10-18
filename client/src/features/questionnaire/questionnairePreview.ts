@@ -1,3 +1,4 @@
+import { HOURS_DISTRIBUTION_KEY, isWeekdayHourKey } from '@shared/weeklyHours';
 import type {
   QuestionnaireQuestion,
   QuestionnaireRepeater,
@@ -17,6 +18,7 @@ export type PreviewField = {
   max?: number;
   layout?: 'inline';
   defaultValue?: string;
+  officeOnly?: boolean;
 };
 
 export type PreviewRepeater = {
@@ -24,6 +26,7 @@ export type PreviewRepeater = {
   key: string;
   section: string;
   columns: QuestionnaireRepeater['columns'];
+  allowMoreRows?: boolean;
 };
 
 export type PreviewItem = PreviewField | PreviewRepeater;
@@ -72,6 +75,7 @@ export function candidateItems(items: PreviewItem[]): CandidateItem[] {
         section: item.section,
         afterSection: '',
         columns: item.columns,
+        allowMoreRows: item.allowMoreRows,
       };
     }
     const preset = item.defaultValue?.trim() ?? '';
@@ -81,15 +85,18 @@ export function candidateItems(items: PreviewItem[]): CandidateItem[] {
       label: item.label,
       section: item.section,
       type: item.type,
-      required:
-        item.type === 'file' || item.builtin === false
-          ? item.required !== false
-          : true,
+      required: isWeekdayHourKey(item.key)
+        ? false
+        : item.key === HOURS_DISTRIBUTION_KEY
+          ? item.required === true
+          : item.type === 'file' || item.builtin === false
+            ? item.required !== false
+            : true,
       options: item.options,
       max: item.max,
       layout: item.layout,
       defaultValue: preset || undefined,
-      employerFilled: preset.length > 0,
+      employerFilled: isWeekdayHourKey(item.key) ? item.officeOnly === true : preset.length > 0,
     };
   });
 }
