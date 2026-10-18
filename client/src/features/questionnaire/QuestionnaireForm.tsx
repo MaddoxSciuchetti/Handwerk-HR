@@ -31,6 +31,7 @@ type QuestionnaireResponse = {
 
 type QuestionnaireFormProps = {
   token?: string;
+  embedded?: boolean;
   preview?: {
     name?: string;
     intro?: string;
@@ -50,7 +51,7 @@ function filledRows(rows: Record<string, string>[]) {
   );
 }
 
-export function QuestionnaireForm({ token, preview }: QuestionnaireFormProps) {
+export function QuestionnaireForm({ token, preview, embedded }: QuestionnaireFormProps) {
   const [values, setValues] = useState<Record<string, string>>({});
   const [rows, setRows] = useState<Record<string, Record<string, string>[]>>({});
   const [submitted, setSubmitted] = useState(false);
@@ -136,8 +137,8 @@ export function QuestionnaireForm({ token, preview }: QuestionnaireFormProps) {
   }
 
   return (
-    <div className="h-full overflow-y-auto px-4 py-8">
-      <div className="mx-auto w-full max-w-3xl rounded-lg border border-border bg-card p-8 text-card-foreground shadow-lg">
+    <div className={embedded ? undefined : "h-full overflow-y-auto px-4 py-8"}>
+      <div className={embedded ? "w-full" : "mx-auto w-full max-w-3xl rounded-lg border border-border bg-card p-8 text-card-foreground shadow-lg"}>
         <h1 className="text-xl font-medium">{data?.name ?? 'Personalfragebogen'}</h1>
         {!preview && questionnaire.isPending ? <LoadingAlert className="min-h-40" /> : null}
         {!preview && questionnaire.isError ? (
@@ -153,13 +154,13 @@ export function QuestionnaireForm({ token, preview }: QuestionnaireFormProps) {
             className="mt-6 flex flex-col gap-4"
             onSubmit={(event) => {
               event.preventDefault();
-              if (missing || submit.isPending) return;
+              if (embedded || missing || submit.isPending) return;
               submit.mutate();
             }}
           >
             {data.intro ? <p className="text-sm text-muted-foreground">{data.intro}</p> : null}
-            {sections.map((section) => (
-              <div key={section.title} className="flex flex-col gap-4">
+            {sections.map((section, index) => (
+              <div key={`${index}-${section.title}`} className="flex flex-col gap-4">
                 {section.repeater ? (
                   <QuestionnaireRepeatableRows
                     repeater={section.repeater}
@@ -235,13 +236,13 @@ export function QuestionnaireForm({ token, preview }: QuestionnaireFormProps) {
                 Das Formular konnte nicht gesendet werden.
               </p>
             ) : null}
-            <Button
+            {!embedded ? <Button
               type="submit"
               className="rounded-2xl"
               disabled={missing || submit.isPending || uploads > 0}
             >
               {submit.isPending ? 'Sendet…' : 'Absenden'}
-            </Button>
+            </Button> : null}
           </form>
         ) : null}
       </div>

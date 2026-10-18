@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Spinner } from '@/components/ui/spinner';
+import { TableSkeletonRows } from '@/components/ui/table-skeleton';
 import { ScrollableTableViewport } from '@/components/ui/scrollable-table-viewport';
 import {
   Table,
@@ -21,7 +21,7 @@ import { BestandAddSidebar } from './BestandAddSidebar';
 import { BestandRow } from './BestandRow';
 import { useClothingStock } from './useBestand';
 
-export function BestandTab() {
+export function BestandTab({ isLoading = false }: { isLoading?: boolean }) {
   const stock = useClothingStock();
   const [addOpen, setAddOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -43,7 +43,7 @@ export function BestandTab() {
       className="flex min-h-0 flex-1 flex-col gap-0 border border-border py-0 shadow-none ring-0"
       data-testid="bestand-tab"
     >
-      <CardHeader className="flex min-h-14 shrink-0 flex-row flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-3">
+      <CardHeader className="flex min-h-14 shrink-0 flex-row flex-wrap items-center justify-between gap-4 px-6 py-3">
         <CardTitle className="text-base font-medium">Bestand</CardTitle>
         <Button
           type="button"
@@ -55,22 +55,17 @@ export function BestandTab() {
         </Button>
       </CardHeader>
       <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-0">
-        {stock.isLoading ? (
-          <div
-            className="flex flex-1 items-center justify-center py-16"
-            role="status"
-          >
-            <Spinner className="w-8" />
-          </div>
-        ) : null}
         {stock.isError ? (
           <p className="px-8 py-6 text-sm text-destructive">
             Bestand konnte nicht geladen werden.
           </p>
         ) : null}
-        {stock.data ? (
+        {isLoading || stock.isLoading || stock.data ? (
           <ScrollableTableViewport>
-            <Table className={settingsTableClassName}>
+            <Table
+              aria-busy={isLoading || stock.isLoading}
+              className={settingsTableClassName}
+            >
               <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-0">
                 <TableRow className="border-0 hover:bg-transparent">
                   <TableHead className="h-12 bg-card py-3 pl-10 pr-2">
@@ -88,15 +83,19 @@ export function BestandTab() {
                   '[&_tr[data-selected=true]_td]:bg-muted/50'
                 )}
               >
-                {stock.data.map((item) => (
-                  <BestandRow
-                    key={item.id}
-                    item={item}
-                    isSelected={selectedIds.includes(item.id)}
-                    onToggle={toggle}
-                    selectionDisabled={deleting}
-                  />
-                ))}
+                {isLoading || stock.isLoading ? (
+                  <TableSkeletonRows variant="stock" />
+                ) : (
+                  stock.data?.map((item) => (
+                    <BestandRow
+                      key={item.id}
+                      item={item}
+                      isSelected={selectedIds.includes(item.id)}
+                      onToggle={toggle}
+                      selectionDisabled={deleting}
+                    />
+                  ))
+                )}
               </TableBody>
             </Table>
           </ScrollableTableViewport>

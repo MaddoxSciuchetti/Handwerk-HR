@@ -1,0 +1,37 @@
+.right-sidebar[data-state='open'] {
+  animation: right-sidebar-in 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.right-sidebar[data-state='closed'] {
+  animation: right-sidebar-out 180ms ease-in both;
+}
+
+.right-sidebar[aria-hidden='true'] {
+  visibility: hidden;
+  transition: visibility 0s 180ms;
+}
+
+@keyframes right-sidebar-in {
+  from {
+    transform: translateX(calc(100% + 0.25rem));
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes right-sidebar-out {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(100% + 0.25rem));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .right-sidebar[data-state] {
+    animation: none;
+    transition: none;
+  }
+}

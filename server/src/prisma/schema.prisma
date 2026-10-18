@@ -48,6 +48,7 @@ model User {
   substitutingFor        Absence[]             @relation("SubstituteAbsences")
   subscriptionAuditLogs  SubscriptionAuditLog[]
   confirmedEmploymentContracts EmploymentContract[] @relation("EmploymentContractConfirmedBy")
+  orgChatMessages        OrgChatMessage[]
 
   @@map("users")
 }
@@ -121,6 +122,8 @@ model Organization {
   automationDocumentSettings AutomationDocumentSetting[]
   clothingStock              ClothingStockItem[]
   integrations               OrganizationIntegration[]
+  chatMessages               OrgChatMessage[]
+  mentionIssues              Issue[]                    @relation("OrgMentionIssues")
 
 
   @@map("organizations")
@@ -154,6 +157,7 @@ model WorkerEngagement {
   type              EngagementType
   startDate         DateTime?          @map("start_date") @db.Date
   endDate           DateTime?          @map("end_date") @db.Date
+  startedAt         DateTime           @default(now()) @map("started_at") @db.Timestamptz()
   completedAt       DateTime?          @map("completed_at") @db.Timestamptz()
   questionnaireOverrides Json?         @map("questionnaire_overrides")
   createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz()
@@ -300,7 +304,8 @@ model TemplateItem {
 
 model Issue {
   id                 String             @id @default(uuid())
-  workerEngagementId String             @map("worker_engagement_id")
+  workerEngagementId String?            @map("worker_engagement_id")
+  organizationId     String?            @map("organization_id")
   createdByUserId    String             @map("created_by_user_id")
   assigneeUserId     String?            @map("assignee_user_id")
   templateItemId     String?            @map("template_item_id")
@@ -315,10 +320,13 @@ model Issue {
   description        String?            @db.VarChar(8000)
   priority           IssuePriority      @default(no_priority)
   dueDate            DateTime?          @map("due_date") @db.Date
+  startedAt          DateTime           @default(now()) @map("started_at") @db.Timestamptz()
+  completedAt        DateTime?          @map("completed_at") @db.Timestamptz()
   createdAt          DateTime           @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt          DateTime           @updatedAt @map("updated_at") @db.Timestamptz()
 
-  workerEngagement   WorkerEngagement   @relation(fields: [workerEngagementId], references: [id], onDelete: Cascade)
+  workerEngagement   WorkerEngagement?  @relation(fields: [workerEngagementId], references: [id], onDelete: Cascade)
+  organization       Organization?      @relation("OrgMentionIssues", fields: [organizationId], references: [id], onDelete: Cascade)
   createdBy          User               @relation("IssueCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
   assignee           User?              @relation("IssueAssignedTo", fields: [assigneeUserId], references: [id], onDelete: SetNull)
   templateItem       TemplateItem?      @relation(fields: [templateItemId], references: [id], onDelete: SetNull)
@@ -326,9 +334,24 @@ model Issue {
   auditLogs          IssueAuditLog[]
 
   @@index([workerEngagementId])
+  @@index([organizationId])
   @@index([assigneeUserId])
   @@index([status])
   @@map("issues")
+}
+
+model OrgChatMessage {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  userId         String   @map("user_id")
+  body           String   @db.VarChar(10000)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, createdAt])
+  @@map("org_chat_messages")
 }
 
 model IssueAuditLog {

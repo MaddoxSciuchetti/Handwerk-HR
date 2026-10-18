@@ -151,8 +151,8 @@ export function isWorkerLocked(field: { defaultValue?: string }) {
     return Boolean(field.defaultValue?.trim());
 }
 
-export function questionRequired(field: { type: string; required?: boolean }) {
-    if (field.type === "file") return field.required !== false;
+export function questionRequired(field: { type: string; required?: boolean; builtin?: boolean }) {
+    if (field.type === "file" || field.builtin === false) return field.required !== false;
     return true;
 }
 
@@ -318,7 +318,7 @@ function customBase(raw: object, key: string): QuestionnaireFieldItem {
         type,
         options: type === "single" || (type === "check" && options.length > 0) ? options : undefined,
         max: type === "text" ? 255 : undefined,
-        required: type === "file" ? !("required" in raw && raw.required === false) : true,
+        required: !("required" in raw && raw.required === false),
         builtin: false,
     };
 }
@@ -375,18 +375,21 @@ export function withAddedQuestions(
 export function readEngagementDraft(value: unknown): {
     values: Record<string, string>;
     questions: QuestionnaireFieldItem[];
+    definition?: QuestionnaireDefinition;
 } {
     if (!value || typeof value !== "object" || Array.isArray(value)) {
         return { values: {}, questions: [] };
     }
     const body = value as Record<string, unknown>;
     const nested =
+        body.definition !== undefined ||
         Array.isArray(body.questions) ||
         (Boolean(body.values) && typeof body.values === "object" && !Array.isArray(body.values));
     if (!nested) return { values: readOverrides(value), questions: [] };
     return {
         values: readOverrides(body.values),
         questions: parseCustomQuestions(body.questions ?? []),
+        definition: body.definition === undefined ? undefined : parseQuestionnaireDefinition(body.definition),
     };
 }
 

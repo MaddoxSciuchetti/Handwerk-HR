@@ -13,7 +13,6 @@ export function StyledDocumentReview(props: StyledDocumentReviewProps) {
       {...props}
       section="content"
       pageView
-      showZoomNote={false}
     />
   );
 }

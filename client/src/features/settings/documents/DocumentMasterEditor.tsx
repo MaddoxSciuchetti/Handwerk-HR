@@ -1,29 +1,21 @@
 import { DocumentPrintPreview } from './DocumentPrintPreview';
-import LoadingAlert from '@/components/alerts/LoadingAlert';
+import { DocumentMasterEditorSkeleton } from './components/DocumentEditorSkeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { SettingsPageHeader } from '@/features/settings/components/SettingsPageHeader';
 import { peekContractSendReturn } from '@/features/worker-task-management/contractSendReturn';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { ArrowLeft } from 'lucide-react';
 import { StyledDocumentEditor } from './StyledDocumentEditor';
 import { fromSegments, type StyledDocument } from './styledDocument';
-import { apiJson } from '@/config/apiClient';
-import { useQuery } from '@tanstack/react-query';
-import {
-  documentKindLabel,
-  documentKindUsesEditor,
-} from './documentMaster.types';
+import { documentKindUsesEditor } from './documentMaster.types';
 import type { DocumentMasterDetail } from './documentMaster.types';
 import { DocumentMasterActions } from './components/DocumentMasterActions';
 import { PrimaryContractStatus } from './components/PrimaryContractStatus';
 import { DocumentEditorCorner } from './components/DocumentEditorCorner';
-import {
-  DocumentFontNotice,
-  type DocumentFontStatus,
-} from './DocumentFontNotice';
 import { useDocumentMaster } from './useDocumentMaster';
 import { useSaveDocumentMaster } from './useSaveDocumentMaster';
 import { useSetPrimaryDocumentMaster } from './useSetPrimaryDocumentMaster';
@@ -39,6 +31,8 @@ export function DocumentMasterEditor({
 }: DocumentMasterEditorProps) {
   const { data, isLoading, isError } = useDocumentMaster(id);
   const saveMaster = useSaveDocumentMaster(id);
+  const renameMaster = useSaveDocumentMaster(id);
+  const pendingRename = useRef<Promise<DocumentMasterDetail> | null>(null);
   const setPrimary = useSetPrimaryDocumentMaster();
   const navigate = useNavigate();
   const [name, setName] = useState('');
@@ -47,16 +41,11 @@ export function DocumentMasterEditor({
   const [syncedMaster, setSyncedMaster] = useState<DocumentMasterDetail | null>(
     null
   );
-  const fonts = useQuery({
-    queryKey: ['document-font-status'],
-    queryFn: () =>
-      apiJson.get<DocumentFontStatus>('/document-masters/font-status'),
-  });
   const [manualEditing, setManualEditing] = useState(false);
   const [returnEditing, setReturnEditing] = useState(false);
-  const [cancelledReturnEdit, setCancelledReturnEdit] = useState(false);
   const editing = manualEditing || returnEditing;
   const [showOriginal, setShowOriginal] = useState(false);
+  const [previewDocument, setPreviewDocument] = useState<StyledDocument | null>(null);
   const [expanded, setExpanded] = useState(false);
   const editStartedAt = useRef(0);
   // Keep the form on the latest saved master until the user starts editing.
@@ -67,7 +56,7 @@ export function DocumentMasterEditor({
     setDocument(data.document ?? fromSegments(data.segments ?? []));
     // Open imported masters as real editable text; PDF pages remain a preview.
     if (!syncedMaster) setManualEditing(true);
-    if (returnContract && !cancelledReturnEdit) setReturnEditing(true);
+    if (returnContract) setReturnEditing(true);
   }
   useEffect(() => {
     if (editing && editStartedAt.current === 0)
@@ -79,10 +68,45 @@ export function DocumentMasterEditor({
   const isContract = data?.kind === 'employment_contract';
   const usesSegments = data ? documentKindUsesEditor(data.kind) : false;
 
-  const save = (approved = false) => {
+  const saveName = () => {
+    const nextName = name.trim();
+    if (!data || renameMaster.isPending || nextName === data.name) return;
+    if (!nextName) {
+      setName(data.name);
+      return;
+    }
+    setName(nextName);
+    // Rename using the saved content so unsaved document edits stay local.
+    const request = renameMaster.mutateAsync({
+      name: nextName,
+      document: data.document ?? fromSegments(data.segments ?? []),
+      revision,
+      approved: Boolean(data.approvedAt),
+    });
+    pendingRename.current = request;
+    void request.then(
+      (saved) => {
+        setRevision(saved.revision);
+        toast.success('Name gespeichert');
+      },
+      () => toast.error('Name konnte nicht gespeichert werden')
+    ).finally(() => {
+      if (pendingRename.current === request) pendingRename.current = null;
+    });
+  };
+
+  const save = async () => {
     if (!data || performance.now() - editStartedAt.current < 400) return;
+    let saveRevision = revision;
+    if (pendingRename.current) {
+      try {
+        saveRevision = (await pendingRename.current).revision;
+      } catch {
+        return;
+      }
+    }
     saveMaster.mutate(
-      { name: name.trim(), document, revision, approved },
+      { name: name.trim(), document, revision: saveRevision, approved: true },
       {
         onSuccess: (saved) => {
           // Saving is not leaving the editor: keep the same DOM, selection,
@@ -115,13 +139,10 @@ export function DocumentMasterEditor({
     });
   };
 
-  const startEditing = () => {
-    editStartedAt.current = performance.now();
-    setManualEditing(true);
-  };
+
 
   if (isLoading) {
-    return <LoadingAlert />;
+    return <DocumentMasterEditorSkeleton />;
   }
 
   if (isError || !data) {
@@ -145,72 +166,77 @@ export function DocumentMasterEditor({
           : 'mx-auto flex h-full min-h-0 min-w-0 w-full flex-col gap-3 overflow-y-auto rounded-2xl bg-card p-4 text-card-foreground'
       }
     >
-      <SettingsPageHeader
-        title={documentKindLabel(data.kind)}
-        action={
-          returnContract ? (
-            <Button
-              type="button"
-              variant="link"
-              className="h-auto p-0 text-sm text-foreground underline hover:bg-transparent hover:text-foreground"
-              onClick={returnToContract}
-            >
-              {returnKind === 'arbeitszeugnis'
-                ? 'Zurück zum Arbeitszeugnis'
-                : 'Zurück zum Vertrag'}
-            </Button>
-          ) : (
-            <Link to="/settings/documents" className="text-sm underline">
-              Zurück
-            </Link>
-          )
-        }
-      />
-      <div className="flex min-h-0 flex-1 flex-col gap-3">
-        <details className="shrink-0 text-sm text-muted-foreground">
-          <summary className="cursor-pointer">
-            Importprüfung und Schriftstatus
-          </summary>
-          <p className="text-sm text-muted-foreground">
-            {data.approvedAt
-              ? 'Vorlage freigegeben. Änderungen benötigen eine neue Freigabe.'
-              : 'Bitte Import und Formatierung anhand des Originals prüfen und freigeben.'}
-          </p>
-          {data.importWarnings?.map((warning) => (
-            <p key={warning} className="text-sm text-muted-foreground">
-              {warning}
-            </p>
-          ))}
-        </details>
-        <DocumentFontNotice status={fonts.data} />
-        {editing ? (
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="master-name">Name</Label>
-            <Input
-              id="master-name"
-              value={name}
-              required
-              maxLength={200}
-              onChange={(event) => setName(event.target.value)}
-            />
-          </div>
+      <Dialog open={previewDocument !== null} onOpenChange={(open) => { if (!open) setPreviewDocument(null); }}>
+        <DialogContent className="flex h-[90vh] max-w-[95vw] flex-col overflow-hidden bg-card sm:max-w-[95vw]">
+          <DialogTitle>PDF-Vorschau</DialogTitle>
+          <DialogDescription className="sr-only">Vorschau des aktuellen Vertrags als PDF.</DialogDescription>
+          {previewDocument ? <DocumentPrintPreview id={id} revision={revision} document={previewDocument} /> : null}
+        </DialogContent>
+      </Dialog>
+      <div className="shrink-0">
+        {returnContract ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={returnKind === 'arbeitszeugnis' ? 'Zurück zum Arbeitszeugnis' : 'Zurück zum Vertrag'}
+            onClick={returnToContract}
+          >
+            <ArrowLeft className="size-4" aria-hidden="true" />
+          </Button>
         ) : (
-          <h2 className="text-lg font-semibold">{name}</h2>
+          <Button variant="ghost" size="icon" asChild>
+            <Link to="/settings/documents" aria-label="Zurück">
+              <ArrowLeft className="size-4" aria-hidden="true" />
+            </Link>
+          </Button>
         )}
-        {isContract ? (
-          <PrimaryContractStatus
-            isPrimary={data.isPrimary}
-            pending={setPrimary.isPending}
-            onSelect={() =>
-              setPrimary.mutate(data.id, {
-                onError: () =>
-                  toast.error(
-                    'Die Versandvorlage konnte nicht gespeichert werden'
-                  ),
-              })
-            }
+      </div>
+      <div className="flex min-h-0 flex-1 flex-col gap-3">
+        <div className="flex flex-wrap items-end gap-3">
+          {editing ? (
+            <div className="flex w-full max-w-sm min-w-0 items-center gap-3">
+              <Label htmlFor="master-name" className="shrink-0">Name</Label>
+              <Input
+                id="master-name"
+                className="min-w-0 flex-1"
+                value={name}
+                required
+                maxLength={200}
+                disabled={renameMaster.isPending || saveMaster.isPending}
+                onChange={(event) => setName(event.target.value)}
+                onBlur={saveName}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault();
+                    event.currentTarget.blur();
+                  }
+                }}
+              />
+            </div>
+          ) : (
+            <h2 className="text-lg font-semibold">{name}</h2>
+          )}
+          {isContract ? (
+            <PrimaryContractStatus
+              isPrimary={data.isPrimary}
+              pending={setPrimary.isPending}
+              onSelect={() =>
+                setPrimary.mutate(data.id, {
+                  onError: () =>
+                    toast.error(
+                      'Die Versandvorlage konnte nicht gespeichert werden'
+                    ),
+                })
+              }
+            />
+          ) : null}
+          <DocumentMasterActions
+            pending={saveMaster.isPending || !name.trim()}
+            onSave={save}
+            onPreview={() => setPreviewDocument(document)}
           />
-        ) : null}
+        </div>
         {returnContract && isContract ? (
           <p className="text-sm text-muted-foreground">
             Ergänzen Sie die fehlende Eingabe, speichern Sie den Mustervertrag
@@ -241,10 +267,6 @@ export function DocumentMasterEditor({
                 src={data.sourceUrl}
                 className="min-h-96 w-2/5 shrink-0 rounded border"
               />
-            ) : data.sourceUrl && data.sourceMime !== 'application/pdf' ? (
-              <a href={data.sourceUrl} target="_blank" rel="noreferrer">
-                Original öffnen
-              </a>
             ) : null}
             <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
               {editing ? (
@@ -264,8 +286,8 @@ export function DocumentMasterEditor({
                   onToggleOriginal={() => setShowOriginal((show) => !show)}
                 />
               ) : (
-                <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border bg-background shadow-sm">
-                  <div className="flex justify-end border-b bg-muted/40 px-2 py-2">
+                <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
+                  <div className="flex justify-end bg-card px-2 py-2">
                     <DocumentEditorCorner
                       expanded={expanded}
                       onToggleExpanded={() => setExpanded((open) => !open)}
@@ -283,19 +305,6 @@ export function DocumentMasterEditor({
             </div>
           </div>
         ) : null}
-        <DocumentMasterActions
-          editing={editing}
-          pending={saveMaster.isPending}
-          onSave={save}
-          onCancel={() => {
-            setName(data.name);
-            setDocument(data.document ?? fromSegments(data.segments ?? []));
-            setManualEditing(false);
-            setReturnEditing(false);
-            setCancelledReturnEdit(true);
-          }}
-          onEdit={startEditing}
-        />
       </div>
     </div>
   );

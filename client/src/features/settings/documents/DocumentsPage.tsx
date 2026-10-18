@@ -1,4 +1,3 @@
-import LoadingAlert from '@/components/alerts/LoadingAlert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { ScrollableTableViewport } from '@/components/ui/scrollable-table-viewport';
@@ -32,10 +31,6 @@ export function DocumentsPage() {
     setSelectedIds(next.map((master) => master.id));
   };
 
-  if (isLoading) {
-    return <LoadingAlert />;
-  }
-
   return (
     <div className="mx-auto flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
       <div className="flex h-full min-h-0 w-full flex-col items-center">
@@ -58,6 +53,7 @@ export function DocumentsPage() {
                 </p>
               ) : (
                 <DocumentMasterList
+                  isLoading={isLoading}
                   masters={masters}
                   selectedIds={selectedIds}
                   onToggle={toggle}

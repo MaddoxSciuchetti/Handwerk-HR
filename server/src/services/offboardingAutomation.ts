@@ -228,7 +228,7 @@ export async function runTaskAutomation(params: {
             },
         },
     });
-    if (!issue) {
+    if (!issue?.workerEngagement) {
         return { status: "failed", message: "Aufgabe nicht gefunden." };
     }
 
@@ -333,7 +333,7 @@ export async function arbeitszeugnisPreview(params: {
         params.organizationId,
         params.issueId,
     );
-    if (!issue)
+    if (!issue?.workerEngagement)
         return {
             status: "failed" as const,
             message: "Aufgabe nicht gefunden.",
@@ -354,7 +354,8 @@ export async function confirmArbeitszeugnis(params: {
         params.organizationId,
         params.issueId,
     );
-    if (!issue) return { status: "failed", message: "Aufgabe nicht gefunden." };
+    if (!issue?.workerEngagement)
+        return { status: "failed", message: "Aufgabe nicht gefunden." };
 
     const mailed = await sendArbeitszeugnis({
         organizationId: params.organizationId,
@@ -388,7 +389,7 @@ export async function prepareLetterForIssue(
         params.organizationId,
         params.issueId,
     );
-    if (!issue)
+    if (!issue?.workerEngagement)
         return {
             status: "failed" as const,
             message: "Aufgabe nicht gefunden.",

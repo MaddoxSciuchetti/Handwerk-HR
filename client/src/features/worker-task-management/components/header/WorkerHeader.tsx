@@ -4,6 +4,7 @@ import type { WorkerTab } from '../../types/index.types';
 
 type WorkerHeaderProps = {
   activeTab: WorkerTab;
+  isLoading?: boolean;
   openForCreate: () => void;
   hideCreate?: boolean;
   onOpenFileUpload: () => void;
@@ -24,6 +25,7 @@ const titles: Record<WorkerTab, string> = {
 
 const WorkerHeader = ({
   activeTab,
+  isLoading = false,
   openForCreate,
   hideCreate = false,
   onOpenFileUpload,
@@ -36,15 +38,26 @@ const WorkerHeader = ({
 }: WorkerHeaderProps) => {
   return (
     <>
-      <CardTitle className="text-base font-medium">{titles[activeTab]}</CardTitle>
+      <CardTitle className="text-base font-medium">
+        {titles[activeTab]}
+      </CardTitle>
       <div className="flex h-8 shrink-0 items-center gap-3">
         {activeTab === 'form' && onSendQuestionnaire ? (
-          <Button type="button" className="rounded-2xl" onClick={onSendQuestionnaire}>
+          <Button
+            type="button"
+            className="rounded-2xl"
+            onClick={onSendQuestionnaire}
+          >
             Fragebogen senden
           </Button>
         ) : null}
         {activeTab === 'form' && !hideCreate ? (
-          <Button type="button" className="rounded-2xl" onClick={openForCreate}>
+          <Button
+            type="button"
+            className="rounded-2xl"
+            onClick={openForCreate}
+            disabled={isLoading}
+          >
             Aufgabe hinzufügen
           </Button>
         ) : null}
@@ -56,6 +69,7 @@ const WorkerHeader = ({
               size="sm"
               className="rounded-2xl"
               data-testid="open-file-upload"
+              disabled={isLoading}
               onClick={onOpenFileUpload}
             >
               Hochladen
@@ -65,6 +79,7 @@ const WorkerHeader = ({
               variant="outline"
               size="sm"
               className="rounded-2xl"
+              disabled={isLoading}
               onClick={onExportFiles}
             >
               Exportieren
@@ -78,7 +93,7 @@ const WorkerHeader = ({
             size="sm"
             className="rounded-2xl"
             data-testid="open-materials-upload"
-            disabled={materialsUploadDisabled}
+            disabled={isLoading || materialsUploadDisabled}
             onClick={onUploadMaterials}
           >
             Hochladen
@@ -89,7 +104,7 @@ const WorkerHeader = ({
             type="button"
             className="rounded-2xl"
             data-testid="open-clothing-add"
-            disabled={clothingAddDisabled}
+            disabled={isLoading || clothingAddDisabled}
             onClick={onAddClothing}
           >
             Hinzufügen

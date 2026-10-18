@@ -1,3 +1,6 @@
+import { useState } from 'react';
+import { PdfSkeleton } from '@/components/ui/pdf-skeleton';
+
 export type PreparedPdf = {
   id: string;
   previewUrl: string;
@@ -40,6 +43,9 @@ export function PreparedPdfPreview({
   confirmLabel = 'Ich habe dieses PDF geprüft und bestätige den Versand.',
   page,
 }: PreparedPdfPreviewProps) {
+  const [loadedUrl, setLoadedUrl] = useState<string | null>(null);
+  const loading = loadedUrl !== prepared.previewUrl;
+
   return (
     <div
       className={
@@ -49,7 +55,13 @@ export function PreparedPdfPreview({
       }
     >
       <div className="relative min-h-0 flex-1 overflow-auto rounded-lg border bg-muted shadow-sm">
+        {loading ? (
+          <PdfSkeleton page={page} className="absolute inset-0 z-10 border-0" />
+        ) : null}
         <iframe
+          key={prepared.previewUrl}
+          onLoad={() => setLoadedUrl(prepared.previewUrl)}
+          aria-busy={loading}
           title={frameTitle}
           src={viewerSrc(prepared.previewUrl, Boolean(page))}
           className={

@@ -44,31 +44,48 @@ export function ClothingTab({
   const removeItem = useDeleteEngagementClothing(workerId, selectedId);
 
   if (!selectedId) {
-    return <p className="text-sm text-muted-foreground">Kein Engagement vorhanden.</p>;
+    return (
+      <p className="text-sm text-muted-foreground">
+        Kein Engagement vorhanden.
+      </p>
+    );
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col px-4 py-4" data-testid="clothing-tab">
+    <div
+      className="flex min-h-0 flex-1 flex-col px-4 py-4"
+      data-testid="clothing-tab"
+    >
       <MaterialsEngagementPicker
         engagements={engagements}
         value={selectedId}
         onChange={setEngagementId}
       />
       {clothing.isError ? (
-        <p className="text-sm text-destructive">Kleidung konnte nicht geladen werden.</p>
+        <p className="text-sm text-destructive">
+          Kleidung konnte nicht geladen werden.
+        </p>
       ) : null}
       {removeItem.isError ? (
         <p className="mb-4 text-sm text-destructive">
-          {stockErrorMessage(removeItem.error, 'Kleidung konnte nicht entfernt werden.')}
+          {stockErrorMessage(
+            removeItem.error,
+            'Kleidung konnte nicht entfernt werden.'
+          )}
         </p>
       ) : null}
-      {clothing.data ? (
+      {clothing.isLoading || clothing.data ? (
         <ClothingOrderTable
-          items={clothing.data}
+          isLoading={clothing.isLoading}
+          items={clothing.data ?? []}
           returningId={
-            returnItem.isPending ? returnItem.variables?.clothingId ?? null : null
+            returnItem.isPending
+              ? (returnItem.variables?.clothingId ?? null)
+              : null
           }
-          deletingId={removeItem.isPending ? removeItem.variables ?? null : null}
+          deletingId={
+            removeItem.isPending ? (removeItem.variables ?? null) : null
+          }
           onReturn={(clothingId, quantity) =>
             returnItem.mutateAsync({ clothingId, quantity })
           }

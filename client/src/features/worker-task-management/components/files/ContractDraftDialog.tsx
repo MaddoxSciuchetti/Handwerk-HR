@@ -1,4 +1,4 @@
-import LoadingAlert from '@/components/alerts/LoadingAlert';
+import { PdfSkeleton } from '@/components/ui/pdf-skeleton';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
@@ -58,7 +58,7 @@ export function ContractDraftDialog({
     <Dialog open onOpenChange={(next) => { if (!next) onClose(); }}>
       <DialogContent className={`w-full border-0 bg-transparent p-0 shadow-none sm:max-w-[min(96vw,90rem)] ${documentPreviewModalSize}`}>
       <div className={documentPreviewModalPanel}>
-        {isLoading ? <LoadingAlert className="min-h-40" /> : null}
+        {isLoading ? <PdfSkeleton /> : null}
         {isError || (!isLoading && !data) ? (
           <p className="text-sm text-destructive">
             Der Vertrag konnte nicht geladen werden.

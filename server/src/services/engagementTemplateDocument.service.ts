@@ -15,7 +15,7 @@ import {
 import { parseStyledDocument } from "@/services/styledDocument";
 import AppError from "@/utils/AppError";
 import { Prisma } from "@prisma/client";
-import { readStyledDocument } from "../../../shared/document";
+import { readStyledDocument, resolveCurrentDateValues } from "../../../shared/document";
 import { validateFieldValues } from "../../../shared/documentRendering";
 
 const VALUE_MAX = 8000;
@@ -125,7 +125,7 @@ function present(document: StoredDocument) {
         kind: document.master.kind,
         segments,
         document: readStyledDocument(document.master.body),
-        values,
+        values: resolveCurrentDateValues(readStyledDocument(document.master.body), values),
         unmatchedAnswers,
         questionnaireAnswers:
             submission?.status === "completed"

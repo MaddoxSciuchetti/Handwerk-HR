@@ -1,3 +1,5 @@
+import { Skeleton } from '@/components/ui/skeleton';
+import { TableSkeletonRows } from '@/components/ui/table-skeleton';
 import {
   Table,
   TableBody,
@@ -28,18 +30,20 @@ type MaterialsTableProps = {
 
 function MaterialTable({
   items,
+  isLoading = false,
   savingId,
   deletingId,
   onSave,
   onDelete,
 }: {
   items: EngagementMaterialItem[];
+  isLoading?: boolean;
   savingId: string | null;
   deletingId: string | null;
   onSave: MaterialsTableProps['onSave'];
   onDelete: MaterialsTableProps['onDelete'];
 }) {
-  if (items.length === 0) {
+  if (!isLoading && items.length === 0) {
     return (
       <p className="px-3 py-4 text-sm text-muted-foreground">
         Keine Positionen erkannt.
@@ -48,7 +52,7 @@ function MaterialTable({
   }
 
   return (
-    <Table>
+    <Table aria-busy={isLoading}>
       <TableHeader>
         <TableRow className="border-b border-border hover:bg-transparent">
           <TableHead className="px-3 py-2 text-left font-medium text-muted-foreground">
@@ -67,16 +71,24 @@ function MaterialTable({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {items.map((item) => (
-          <MaterialItemRow
-            key={item.id}
-            item={item}
-            saving={savingId === item.id}
-            deleting={deletingId === item.id}
-            onSave={onSave}
-            onDelete={onDelete}
+        {isLoading ? (
+          <TableSkeletonRows
+            variant="materials"
+            rows={4}
+            cellClassName="px-3 py-2"
           />
-        ))}
+        ) : (
+          items.map((item) => (
+            <MaterialItemRow
+              key={item.id}
+              item={item}
+              saving={savingId === item.id}
+              deleting={deletingId === item.id}
+              onSave={onSave}
+              onDelete={onDelete}
+            />
+          ))
+        )}
       </TableBody>
     </Table>
   );
@@ -132,5 +144,27 @@ export function MaterialsTable({
         </section>
       ) : null}
     </div>
+  );
+}
+
+export function MaterialsTableSkeleton() {
+  return (
+    <section className="overflow-hidden rounded-md border border-border">
+      <div
+        className="flex items-center justify-between gap-3 border-b border-border px-3 py-2"
+        aria-hidden="true"
+      >
+        <Skeleton className="h-5 w-40" />
+        <Skeleton className="h-5 w-24" />
+      </div>
+      <MaterialTable
+        isLoading
+        items={[]}
+        savingId={null}
+        deletingId={null}
+        onSave={() => undefined}
+        onDelete={() => undefined}
+      />
+    </section>
   );
 }

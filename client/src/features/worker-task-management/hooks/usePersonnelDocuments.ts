@@ -12,6 +12,7 @@ import { PERSONNEL_DOCUMENTS } from '../consts/query-key.consts';
 export function usePersonnelDocuments(workerId: string) {
   return useQuery({
     queryKey: [PERSONNEL_DOCUMENTS, workerId],
+    staleTime: 30_000,
     queryFn: () => getPersonnelDocuments(workerId),
   });
 }

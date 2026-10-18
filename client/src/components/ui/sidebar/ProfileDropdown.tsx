@@ -20,10 +20,10 @@ import {
 import useAuth from '@/features/user-profile/hooks/useAuth';
 import { userProfileQueries } from '@/features/user-profile/query-options/queries/user-profile.queries';
 import { useThemeProvider } from '@/hooks/useThemeProvider';
-import { cn } from '@/lib/utils';
-import { useQuery } from '@tanstack/react-query';
+import { logout } from '@/features/auth/api/auth.api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { ChevronsUpDown, Moon, Settings, Sun } from 'lucide-react';
+import { ChevronsUpDown, LogOut, Moon, Settings, Sun } from 'lucide-react';
 
 const themeItemClassName =
   'h-7 min-h-7 min-w-0 flex-1 basis-0 rounded-full border-0 bg-transparent px-0 text-muted-foreground shadow-none hover:bg-transparent hover:text-foreground data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary data-[state=on]:hover:text-primary-foreground data-[state=on]:shadow-sm';
@@ -61,7 +61,15 @@ export function ProfileDropdown({
     retry: false,
   });
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const displayLabel = getDisplayLabel(user);
+  const { mutate: signOut, isPending: isSigningOut } = useMutation({
+    mutationFn: logout,
+    onSettled: () => {
+      queryClient.clear();
+      navigate({ to: '/login' });
+    },
+  });
 
   const openSettings = () => {
     setIsSettingOpen(true);
@@ -80,11 +88,8 @@ export function ProfileDropdown({
                 <Button
                   type="button"
                   variant="ghost"
-                  className={cn(
-                    'h-auto w-full min-w-0 justify-start gap-2 bg-transparent p-0 text-left font-normal hover:bg-transparent hover:text-foreground',
-                    'focus-visible:ring-0 data-[state=open]:bg-transparent',
-                    isCollapsed && 'size-8 justify-center p-0'
-                  )}
+                  aria-label={displayLabel || 'Profile'}
+                  className="h-8 w-full min-w-0 justify-start gap-2 overflow-hidden bg-transparent p-0 text-left font-normal hover:bg-transparent hover:text-foreground focus-visible:ring-0 data-[state=open]:bg-transparent"
                 >
                   <Avatar className="size-8 shrink-0 rounded-full">
                     <AvatarImage
@@ -96,16 +101,17 @@ export function ProfileDropdown({
                       {getInitials(displayLabel || 'U')}
                     </AvatarFallback>
                   </Avatar>
-                  {!isCollapsed ? (
-                    <>
-                      <div className="grid min-w-0 flex-1 text-left text-sm leading-tight">
-                        <span className="truncate font-medium">
-                          {displayLabel}
-                        </span>
-                      </div>
-                      <ChevronsUpDown className="ml-auto size-4 shrink-0 text-muted-foreground" />
-                    </>
-                  ) : null}
+                  <div
+                    className="flex min-w-0 flex-1 items-center gap-2 transition-opacity duration-150 motion-reduce:transition-none group-data-[collapsible=icon]:opacity-0"
+                    aria-hidden={isCollapsed}
+                  >
+                    <div className="grid min-w-0 flex-1 text-left text-sm leading-tight">
+                      <span className="truncate font-medium">
+                        {displayLabel}
+                      </span>
+                    </div>
+                    <ChevronsUpDown className="ml-auto size-4 shrink-0 text-muted-foreground" />
+                  </div>
                 </Button>
               </TooltipTrigger>
             </DropdownMenuTrigger>
@@ -123,6 +129,13 @@ export function ProfileDropdown({
             <DropdownMenuItem onClick={openSettings}>
               <Settings />
               Einstellungen
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              disabled={isSigningOut}
+              onClick={() => signOut()}
+            >
+              <LogOut />
+              Abmelden
             </DropdownMenuItem>
             <div
               className="px-2 py-1.5"

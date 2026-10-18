@@ -19,6 +19,7 @@ import AppError from "@/utils/AppError";
 import { Prisma } from "@prisma/client";
 import {
     readStyledDocument,
+    resolveCurrentDateValues,
     type StyledDocument,
 } from "../../../shared/document";
 import {
@@ -176,7 +177,9 @@ function present(
                 ? contract.master.body
                 : (contract.body ?? contract.master.body),
         ),
-        values,
+        values: followsMaster
+            ? resolveCurrentDateValues(readStyledDocument(contract.master.body), values)
+            : values,
         unmatchedAnswers,
         questionnaireAnswers:
             submission?.status === "completed"
@@ -232,7 +235,11 @@ export async function saveEngagementContractDraft(
     }
 
     const segments = readDocumentSegments(contract.master.body);
-    const entries = readDraftValues(params.values, inputKeys(segments));
+    const manualEntries = readDraftValues(params.values, inputKeys(segments));
+    const entries = Object.entries(resolveCurrentDateValues(
+        readStyledDocument(contract.master.body),
+        Object.fromEntries(manualEntries.map((entry) => [entry.key, entry.value])),
+    )).map(([key, value]) => ({ key, value }));
 
     const saved = await prisma.$transaction(async (tx) => {
         await invalidatePreparedDocuments(

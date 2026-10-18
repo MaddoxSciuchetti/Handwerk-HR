@@ -169,6 +169,21 @@ describe("questionnaire definition", () => {
         expect(required.items[0]).toMatchObject({ type: "file", required: true });
     });
 
+    it("keeps a custom text question optional when it is not required", () => {
+        const definition = parseQuestionnaireDefinition({
+            items: [
+                {
+                    kind: "field",
+                    key: "custom.optional-note",
+                    label: "Hinweis",
+                    type: "text",
+                    required: false,
+                },
+            ],
+        });
+        expect(definition.items[0]).toMatchObject({ type: "text", required: false, builtin: false });
+    });
+
     it("rejects a checkbox that has only one label", () => {
         expect(() =>
             parseQuestionnaireDefinition({

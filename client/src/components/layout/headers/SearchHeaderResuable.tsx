@@ -28,7 +28,7 @@ const SearchHeaderResuable = <T extends string | number>({
         id="employee-search"
         value={search}
         onChange={(e) => setSearch?.(e.target.value as T)}
-        className="rounded-xl"
+        className="rounded-xl shadow-none focus-visible:border-border focus-visible:ring-0"
         placeholder="Suche bei Namen"
       />
       <Button

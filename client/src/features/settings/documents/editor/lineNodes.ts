@@ -1,10 +1,52 @@
-import { lineGroupHeight } from '@shared/documentRendering';
+import { lineGroupHeight, LINE_LABEL_LINE_HEIGHT } from '@shared/documentRendering';
+import { canSplit } from '@tiptap/pm/transform';
+import { TextSelection } from '@tiptap/pm/state';
 import { Node } from '@tiptap/core';
 import { DEFAULT_FONT_PT, LAYOUT_MAX_PT } from '../consts/editor.consts';
 import { finiteLayout, labelStyle, paintRules } from '../util/lineLayout.util';
 
 export const LineLabel = Node.create({
   name: 'lineLabel',
+  priority: 1000,
+  addKeyboardShortcuts() {
+    return {
+      Enter: () => this.editor.commands.command(({ tr, dispatch }) => {
+        const { $from, $to } = tr.selection;
+        if ($from.parent.type.name !== 'lineLabel' || !$from.sameParent($to)) return false;
+        const groupDepth = $from.depth - 1;
+        if ($from.node(groupDepth).type.name !== 'lineGroup') return false;
+        const groupPos = $from.before(groupDepth);
+        const labelIndex = $from.index(groupDepth);
+        const rowTop = Number($from.parent.attrs.top) || 0;
+        const step = (Number($from.parent.attrs.fontSize) || DEFAULT_FONT_PT) * LINE_LABEL_LINE_HEIGHT;
+        tr.deleteSelection();
+        const pos = tr.selection.from;
+        if (!canSplit(tr.doc, pos)) return false;
+        if (!dispatch) return true;
+        tr.split(pos);
+        const group = tr.doc.nodeAt(groupPos)!;
+        group.forEach((label, offset, index) => {
+          if (index === labelIndex || (Number(label.attrs.top) || 0) < rowTop) return;
+          tr.setNodeMarkup(groupPos + 1 + offset, undefined, {
+            ...label.attrs,
+            top: (Number(label.attrs.top) || 0) + step,
+          });
+        });
+        tr.setNodeMarkup(groupPos, undefined, {
+          ...group.attrs,
+          height: lineGroupHeight(group.toJSON()) + step,
+          // Stored import runs no longer describe the edited rows.
+          labels: [],
+          lines: (group.attrs.lines as Record<string, unknown>[]).map((line) => ({
+            ...line,
+            top: (Number(line.top) || 0) >= rowTop ? (Number(line.top) || 0) + step : line.top,
+          })),
+        });
+        tr.setSelection(TextSelection.create(tr.doc, pos + 2)).scrollIntoView();
+        return true;
+      }),
+    };
+  },
   group: 'block',
   content: 'inline*',
   selectable: false,

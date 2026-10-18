@@ -1,5 +1,8 @@
 import ErrorAlert from '@/components/alerts/ErrorAlert';
-import LoadingAlert from '@/components/alerts/LoadingAlert';
+import { TableSkeletonRows } from '@/components/ui/table-skeleton';
+import { PersonnelFoldersSkeleton } from '../files/FileSkeletons';
+import { ClothingOrderTable } from '../clothing/ClothingOrderTable';
+import { MaterialsTableSkeleton } from '../materials/MaterialsTable';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { ScrollableTableViewport } from '@/components/ui/scrollable-table-viewport';
 import {
@@ -19,7 +22,13 @@ import {
   clearContractSendReturn,
   peekContractSendReturn,
 } from '../../contractSendReturn';
-import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
 import useFilteredData from '../../hooks/useFilteredData';
 import useGetWorkerFiles from '../../hooks/useGetWorkerFiles';
 import useTaskData from '../../hooks/useTaskData';
@@ -34,6 +43,8 @@ import { MaterialsTab } from '../materials/MaterialsTab';
 import { QuestionnaireSendDialog } from '@/features/questionnaire/QuestionnaireSendDialog';
 import WorkerHeader from '../header/WorkerHeader';
 import { WorkerTabButtons } from '../header/WorkerTabButtons';
+import { engagementsAwaitingTemplate } from '../../pendingTemplate';
+import { TemplateApplyPrompt } from './TemplateApplyPrompt';
 
 type TaskManagementProps = {
   workerId: string;
@@ -56,9 +67,9 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
   } | null>(null);
 
   const [zeugnisIssueId, setZeugnisIssueId] = useState<string | null>(null);
-  const [questionnaireEngagementId, setQuestionnaireEngagementId] = useState<string | null>(
-    null
-  );
+  const [questionnaireEngagementId, setQuestionnaireEngagementId] = useState<
+    string | null
+  >(null);
 
   useEffect(() => {
     const pending = peekContractSendReturn();
@@ -124,15 +135,20 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
     sidebarProps.taskState,
   ]);
 
-  if (isLoading) return <LoadingAlert />;
-  if (!data)
+  if (!data && !isLoading)
     return <ErrorAlert message="The tasks could not load, reload page" />;
 
-  const waiting = data.data.engagements.some(
+  const templateTargets = engagementsAwaitingTemplate(displayData, {
+    workerId,
+    label: `${data?.data.firstName ?? ''} ${data?.data.lastName ?? ''}`.trim(),
+  });
+  const engagements = data?.data.engagements ?? [];
+  const waiting = engagements.some(
     (engagement) => engagement.status === 'expected'
   );
-  const pendingQuestionnaire = data.data.engagements.find(
-    (engagement) => engagement.status === 'expected' && !engagement.questionnaireSubmission
+  const pendingQuestionnaire = engagements.find(
+    (engagement) =>
+      engagement.status === 'expected' && !engagement.questionnaireSubmission
   );
 
   return (
@@ -149,7 +165,7 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
           issueId={contractSend.issueId}
           onClose={() => setContractSend(null)}
         />
-        ) : null}
+      ) : null}
       {zeugnisIssueId ? (
         <ArbeitszeugnisSendDialog
           issueId={zeugnisIssueId}
@@ -201,13 +217,14 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
           <CardHeader className="flex min-h-14 shrink-0 flex-row flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-3">
             <WorkerHeader
               activeTab={activeTab}
+              isLoading={isLoading}
               openForCreate={() =>
                 openForCreate({
                   workerEngagementId:
-                    data.data.engagements.find(
+                    engagements.find(
                       (engagement) => engagement.type === 'offboarding'
                     )?.id ??
-                    data.data.engagements[0]?.id ??
+                    engagements[0]?.id ??
                     '',
                 })
               }
@@ -215,9 +232,9 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
               onOpenFileUpload={() => setIsFileUploadOpen(true)}
               onExportFiles={() => void handleZipExport(fetchFiles)}
               onUploadMaterials={() => materialFileInputRef.current?.click()}
-              materialsUploadDisabled={data.data.engagements.length === 0}
+              materialsUploadDisabled={engagements.length === 0}
               onAddClothing={() => setClothingAddOpen(true)}
-              clothingAddDisabled={data.data.engagements.length === 0}
+              clothingAddDisabled={engagements.length === 0}
               onSendQuestionnaire={
                 pendingQuestionnaire
                   ? () => setQuestionnaireEngagementId(pendingQuestionnaire.id)
@@ -226,9 +243,12 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
             />
           </CardHeader>
           <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-0">
-            <TabsContent value="form" className="mt-0 flex min-h-0 flex-1 flex-col">
+            <TabsContent
+              value="form"
+              className="mt-0 flex min-h-0 flex-1 flex-col"
+            >
               <ScrollableTableViewport>
-                <Table>
+                <Table aria-busy={isLoading}>
                   <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-0">
                     <TableRow className="border-0 hover:bg-transparent">
                       <TableHead
@@ -243,7 +263,9 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                     </TableRow>
                   </TableHeader>
                   <TableBody className="[&_tr]:border-0 [&_td]:py-4 [&_td]:px-2 [&_td:first-child]:pl-10">
-                    {displayData.length ? (
+                    {isLoading ? (
+                      <TableSkeletonRows variant="tasks" />
+                    ) : displayData.length ? (
                       displayData.map((task) => (
                         <TaskItem
                           key={task.id}
@@ -282,53 +304,63 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                 </Table>
               </ScrollableTableViewport>
             </TabsContent>
-            <TabsContent value="files" className="mt-0 flex min-h-0 flex-1 flex-col">
+            <TabsContent
+              value="files"
+              className="mt-0 flex min-h-0 flex-1 flex-col"
+            >
               <ScrollableTableViewport>
-                <WorkerFileUploads
-                  workerId={workerId}
-                  engagements={data.data.engagements.map((engagement) => ({
-                    id: engagement.id,
-                    type: engagement.type,
-                    startDate: engagement.startDate,
-                  }))}
-                  questionnaires={data.data.engagements.flatMap((engagement) =>
-                    engagement.questionnaireSubmission?.status === 'completed'
-                      ? [{
-                          id: engagement.questionnaireSubmission.id,
-                          engagementId: engagement.id,
-                          name: engagement.questionnaireSubmission.name,
-                          engagementLabel: `${engagement.type === 'onboarding' ? 'Eintritt' : engagement.type === 'offboarding' ? 'Austritt' : 'Wechsel'}${engagement.startDate ? ` · ${new Date(engagement.startDate).toLocaleDateString('de-DE')}` : ''}`,
-                          completedAt: engagement.questionnaireSubmission.completedAt,
-                        }]
-                      : []
-                  )}
-                  contracts={data.data.engagements.flatMap((engagement) =>
-                    engagement.employmentContract
-                      ? [
-                          {
-                            engagementId: engagement.id,
-                            id: engagement.employmentContract.id,
-                            name: engagement.employmentContract.master.name,
-                            status: engagement.employmentContract.status,
-                          },
-                        ]
-                      : []
-                  )}
-                  certificates={data.data.engagements.flatMap((engagement) =>
-                    engagement.arbeitszeugnis
-                      ? [
-                          {
-                            id: engagement.arbeitszeugnis.id,
-                            engagementId: engagement.id,
-                            name: engagement.arbeitszeugnis.name,
-                            text: engagement.arbeitszeugnis.text,
-                          },
-                        ]
-                      : []
-                  )}
-                  isUploadModalOpen={isFileUploadOpen}
-                  setIsUploadModalOpen={setIsFileUploadOpen}
-                />
+                {isLoading ? (
+                  <PersonnelFoldersSkeleton />
+                ) : (
+                  <WorkerFileUploads
+                    workerId={workerId}
+                    engagements={engagements.map((engagement) => ({
+                      id: engagement.id,
+                      type: engagement.type,
+                      startDate: engagement.startDate,
+                    }))}
+                    questionnaires={engagements.flatMap((engagement) =>
+                      engagement.questionnaireSubmission?.status === 'completed'
+                        ? [
+                            {
+                              id: engagement.questionnaireSubmission.id,
+                              engagementId: engagement.id,
+                              name: engagement.questionnaireSubmission.name,
+                              engagementLabel: `${engagement.type === 'onboarding' ? 'Eintritt' : engagement.type === 'offboarding' ? 'Austritt' : 'Wechsel'}${engagement.startDate ? ` · ${new Date(engagement.startDate).toLocaleDateString('de-DE')}` : ''}`,
+                              completedAt:
+                                engagement.questionnaireSubmission.completedAt,
+                            },
+                          ]
+                        : []
+                    )}
+                    contracts={engagements.flatMap((engagement) =>
+                      engagement.employmentContract
+                        ? [
+                            {
+                              engagementId: engagement.id,
+                              id: engagement.employmentContract.id,
+                              name: engagement.employmentContract.master.name,
+                              status: engagement.employmentContract.status,
+                            },
+                          ]
+                        : []
+                    )}
+                    certificates={engagements.flatMap((engagement) =>
+                      engagement.arbeitszeugnis
+                        ? [
+                            {
+                              id: engagement.arbeitszeugnis.id,
+                              engagementId: engagement.id,
+                              name: engagement.arbeitszeugnis.name,
+                              text: engagement.arbeitszeugnis.text,
+                            },
+                          ]
+                        : []
+                    )}
+                    isUploadModalOpen={isFileUploadOpen}
+                    setIsUploadModalOpen={setIsFileUploadOpen}
+                  />
+                )}
               </ScrollableTableViewport>
             </TabsContent>
             <TabsContent
@@ -336,15 +368,21 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
               className="mt-0 flex min-h-0 flex-1 flex-col"
             >
               <ScrollableTableViewport className="flex flex-col">
-                <MaterialsTab
-                  workerId={workerId}
-                  fileInputRef={materialFileInputRef}
-                  engagements={data.data.engagements.map((engagement) => ({
-                    id: engagement.id,
-                    type: engagement.type,
-                    startDate: engagement.startDate,
-                  }))}
-                />
+                {isLoading ? (
+                  <div className="px-4 py-4">
+                    <MaterialsTableSkeleton />
+                  </div>
+                ) : (
+                  <MaterialsTab
+                    workerId={workerId}
+                    fileInputRef={materialFileInputRef}
+                    engagements={engagements.map((engagement) => ({
+                      id: engagement.id,
+                      type: engagement.type,
+                      startDate: engagement.startDate,
+                    }))}
+                  />
+                )}
               </ScrollableTableViewport>
             </TabsContent>
             <TabsContent
@@ -352,16 +390,29 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
               className="mt-0 flex min-h-0 flex-1 flex-col"
             >
               <ScrollableTableViewport>
-                <ClothingTab
-                  workerId={workerId}
-                  addOpen={clothingAddOpen}
-                  onAddOpenChange={setClothingAddOpen}
-                  engagements={data.data.engagements.map((engagement) => ({
-                    id: engagement.id,
-                    type: engagement.type,
-                    startDate: engagement.startDate,
-                  }))}
-                />
+                {isLoading ? (
+                  <div className="px-4 py-4">
+                    <ClothingOrderTable
+                      isLoading
+                      items={[]}
+                      returningId={null}
+                      deletingId={null}
+                      onReturn={async () => undefined}
+                      onDelete={() => undefined}
+                    />
+                  </div>
+                ) : (
+                  <ClothingTab
+                    workerId={workerId}
+                    addOpen={clothingAddOpen}
+                    onAddOpenChange={setClothingAddOpen}
+                    engagements={engagements.map((engagement) => ({
+                      id: engagement.id,
+                      type: engagement.type,
+                      startDate: engagement.startDate,
+                    }))}
+                  />
+                )}
               </ScrollableTableViewport>
             </TabsContent>
           </CardContent>
@@ -372,6 +423,8 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
             setLargeEditMode={setLargeEditMode}
             setEditModeData={handleSetEditModeData}
           />
+        ) : templateTargets.length > 0 ? (
+          <TemplateApplyPrompt targets={templateTargets} />
         ) : null}
       </Tabs>
     </div>

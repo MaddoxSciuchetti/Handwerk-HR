@@ -94,3 +94,64 @@ it('can retry a pending mock after reopening the send dialog', async () => {
   await userEvent.click(send);
   await waitFor(() => expect(onClose).toHaveBeenCalled());
 });
+
+it('opens the real preview and edits questions only through the engagement editor', async () => {
+  const user = userEvent.setup();
+  const onClose = vi.fn();
+  renderWithProviders(
+    <QuestionnaireSendDialog engagementId="engagement" onClose={onClose} />
+  );
+  await screen.findByRole('heading', { name: 'Personalfragebogen' });
+  expect(screen.queryByText('Neue Frage')).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('button', { name: 'Absenden' })
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('button', { name: 'Frage hier einfügen' })
+  ).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Bearbeiten' }));
+  expect(screen.getByText('Frage: Vorname')).toBeInTheDocument();
+  await user.type(screen.getByRole('textbox', { name: 'Antwort' }), 'Lukas');
+  await user.click(screen.getByRole('button', { name: 'Frage hier einfügen' }));
+  await user.type(screen.getByPlaceholderText('Frage'), 'Zusatzfrage');
+  await user.click(screen.getByRole('button', { name: 'Hinzufügen' }));
+  await user.click(screen.getByRole('button', { name: 'Fertig' }));
+  expect(screen.getByLabelText(/^Vorname/)).toHaveValue('Lukas');
+  expect(screen.getByLabelText(/^Vorname/)).toBeDisabled();
+  expect(screen.getByLabelText(/^Zusatzfrage/)).toBeInTheDocument();
+  expect(screen.queryByText('Neue Frage')).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Schließen' }));
+  await waitFor(() => expect(onClose).toHaveBeenCalled());
+  expect(apiJson.put).toHaveBeenCalledWith(
+    '/worker/engagements/engagement/questionnaire',
+    expect.objectContaining({
+      definition: expect.objectContaining({
+        items: [
+          expect.objectContaining({ key: 'firstName', defaultValue: 'Lukas' }),
+          expect.objectContaining({ label: 'Zusatzfrage', builtin: false }),
+        ],
+      }),
+    })
+  );
+  expect(
+    vi
+      .mocked(apiJson.put)
+      .mock.calls.every(
+        ([path]) => path === '/worker/engagements/engagement/questionnaire'
+      )
+  ).toBe(true);
+});
+
+it('does not offer editing after sending', async () => {
+  vi.mocked(apiJson.get).mockResolvedValue({
+    ...draft,
+    data: { ...draft.data, sent: true },
+  });
+  renderWithProviders(
+    <QuestionnaireSendDialog engagementId="engagement" onClose={vi.fn()} />
+  );
+  await screen.findByRole('heading', { name: 'Personalfragebogen' });
+  expect(
+    screen.queryByRole('button', { name: 'Bearbeiten' })
+  ).not.toBeInTheDocument();
+});

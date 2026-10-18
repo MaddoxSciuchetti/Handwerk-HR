@@ -1,4 +1,4 @@
-import LoadingAlert from '@/components/alerts/LoadingAlert';
+import { TableSkeletonRows } from '@/components/ui/table-skeleton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { ScrollableTableViewport } from '@/components/ui/scrollable-table-viewport';
@@ -40,9 +40,6 @@ export function TemplateTasks({ templateId, name }: TemplateTasksProps) {
   /** Bumps on each "Hinzufügen" so create mode remounts with a clean form. */
   const [createOpenNonce, setCreateOpenNonce] = useState(0);
 
-  if (isLoading) {
-    return <LoadingAlert />;
-  }
   return (
     <div className="mx-auto flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
       <div className="flex h-full min-h-0 w-full flex-col items-center">
@@ -78,7 +75,7 @@ export function TemplateTasks({ templateId, name }: TemplateTasksProps) {
           </CardHeader>
           <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-0">
             <ScrollableTableViewport>
-              <Table className={settingsTableClassName}>
+              <Table aria-busy={isLoading} className={settingsTableClassName}>
                 <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-b-0">
                   <TableRow className="border-0 hover:bg-transparent">
                     <TableHead className="h-12 bg-card py-3 pl-10">
@@ -93,12 +90,16 @@ export function TemplateTasks({ templateId, name }: TemplateTasksProps) {
                   </TableRow>
                 </TableHeader>
                 <TableBody className={settingsTableBodyClassName}>
-                  <TemplateTaskItem
-                    templateTasks={templateTasks ?? []}
-                    setIsOpen={setIsOpen}
-                    setEditTemplateTask={setEditTemplateTask}
-                    setTemplateTaskState={setTemplateTaskState}
-                  />
+                  {isLoading ? (
+                    <TableSkeletonRows variant="templates" />
+                  ) : (
+                    <TemplateTaskItem
+                      templateTasks={templateTasks ?? []}
+                      setIsOpen={setIsOpen}
+                      setEditTemplateTask={setEditTemplateTask}
+                      setTemplateTaskState={setTemplateTaskState}
+                    />
+                  )}
                 </TableBody>
               </Table>
             </ScrollableTableViewport>

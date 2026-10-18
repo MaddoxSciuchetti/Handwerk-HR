@@ -75,6 +75,7 @@ export function TaskChat({
     if (!menu) return [];
     const query = menu.query.toLowerCase();
     return coworkers
+      .filter((coworker) => coworker.id !== currentUserId)
       .map((coworker) => ({ id: coworker.id, label: coworkerLabel(coworker) }))
       .filter((choice) => choice.label.toLowerCase().includes(query));
   }, [coworkers, menu]);

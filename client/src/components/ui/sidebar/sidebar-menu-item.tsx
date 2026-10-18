@@ -14,6 +14,7 @@ export type SideBarMenuLinkItem = {
   search?: Record<string, unknown>;
   disabled?: boolean;
   activePaths?: readonly string[];
+  badge?: number;
 };
 
 export type SideBarMenuProps<T extends SideBarMenuLinkItem> = {
@@ -56,7 +57,7 @@ function SideBarMenu<TItem extends SideBarMenuLinkItem>({
         }
 
         return (
-          <SidebarMenuItem key={item.id}>
+          <SidebarMenuItem key={item.id} className="relative">
             <SidebarMenuButton
               asChild
               isActive={isActive}
@@ -70,6 +71,14 @@ function SideBarMenu<TItem extends SideBarMenuLinkItem>({
                 <span>{item.label}</span>
               </Link>
             </SidebarMenuButton>
+            {item.badge ? (
+              <span
+                className="pointer-events-none absolute top-1.5 right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[11px] font-semibold text-primary-foreground group-data-[collapsible=icon]:top-0 group-data-[collapsible=icon]:right-0"
+                aria-label={`${item.badge} Erwähnungen`}
+              >
+                {item.badge}
+              </span>
+            ) : null}
           </SidebarMenuItem>
         );
       })}

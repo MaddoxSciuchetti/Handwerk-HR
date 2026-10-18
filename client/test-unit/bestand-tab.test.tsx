@@ -135,3 +135,24 @@ it('keeps failed deletions selected and edits quantities independently of select
   );
   expect(screen.queryByText('1 ausgewählt')).not.toBeInTheDocument();
 });
+
+it('keeps the stock headers and controls while replacing loading rows, then shows the data', () => {
+  stock.data = [{ id: 'hose', name: 'Hose', size: 'S', quantity: 2 }];
+  const view = render(<BestandTab isLoading />);
+  expect(screen.getByRole('table')).toHaveAttribute('aria-busy', 'true');
+  expect(
+    screen.getByRole('columnheader', { name: 'Artikel' })
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole('columnheader', { name: 'Größe' })
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole('columnheader', { name: 'Anzahl bei BSB' })
+  ).toBeInTheDocument();
+  expect(screen.getByTestId('open-bestand-add')).toBeInTheDocument();
+  expect(screen.getByRole('status')).toHaveTextContent('Daten werden geladen');
+  expect(screen.queryByTestId('bestand-row-hose')).not.toBeInTheDocument();
+  view.rerender(<BestandTab />);
+  expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  expect(screen.getByTestId('bestand-row-hose')).toBeInTheDocument();
+});

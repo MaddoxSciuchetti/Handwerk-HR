@@ -1,5 +1,5 @@
 import { generateDocumentPdf } from "@/services/documentPdf";
-import { documentFields } from "../../../shared/document";
+import { documentFields, resolveCurrentDateValues } from "../../../shared/document";
 import { BAD_REQUEST, CREATED, NO_CONTENT, OK } from "@/constants/http";
 import {
   createDocumentMaster,
@@ -144,7 +144,9 @@ export const getDocumentFont = catchErrors(async (req, res) => {
 export const previewMasterPdf = catchErrors(async (req, res) => {
   appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
   const master = await getDocumentMaster(param(req.params.id), req.orgId);
-  const document = master.document;
+  const document = req.method === "POST"
+    ? parseStyledDocument(req.body?.document)
+    : master.document;
   appAssert(document, BAD_REQUEST, "Dokument fehlt.");
   const values = Object.fromEntries(
     documentFields(document).map((field) => [
@@ -152,7 +154,7 @@ export const previewMasterPdf = catchErrors(async (req, res) => {
       field.fieldType === "checkbox" ? "false" : field.label,
     ]),
   );
-  const result = await generateDocumentPdf(document, values);
+  const result = await generateDocumentPdf(document, resolveCurrentDateValues(document, values));
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader(
     "Content-Disposition",

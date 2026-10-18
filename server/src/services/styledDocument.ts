@@ -127,6 +127,7 @@ export function parseStyledDocument(value: unknown): StyledDocument {
               .enum(["text", "date", "checkbox", "points"])
               .default("text"),
             required: z.boolean().optional(),
+            dateMode: z.literal("today").nullish(),
             checkboxGlyph: z.enum(["☐", "□", "☒", "☑"]).nullish(),
             checkboxValue: z.enum(["true", "false"]).nullish(),
           })
@@ -137,6 +138,8 @@ export function parseStyledDocument(value: unknown): StyledDocument {
           node.type === "descriptionPoints"
             ? ("points" as const)
             : parsed.fieldType;
+        if (parsed.dateMode === "today" && fieldType !== "date")
+          throw new Error("Das aktuelle Datum ist nur für Datumsfelder verfügbar.");
         const field = {
           ...parsed,
           fieldType,
@@ -146,6 +149,7 @@ export function parseStyledDocument(value: unknown): StyledDocument {
         const signature = JSON.stringify({
           fieldType: field.fieldType,
           required: field.required,
+          dateMode: field.dateMode ?? null,
         });
         if (previous && previous !== signature)
           throw new Error("Wiederholte Felder müssen identisch sein.");

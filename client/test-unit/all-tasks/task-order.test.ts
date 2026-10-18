@@ -19,6 +19,8 @@ function makeTask(
     description: null,
     priority: 'medium',
     dueDate: null,
+    startedAt: '2026-01-01T00:00:00.000Z',
+    completedAt: null,
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
   };

@@ -1,3 +1,4 @@
+import { Input } from '@/components/ui/input';
 import type { EngagementType } from '@/features/worker-lifecycle/types/index.types';
 import { useState, type RefObject } from 'react';
 import {
@@ -6,9 +7,8 @@ import {
   useUpdateEngagementMaterial,
   useUploadEngagementMaterial,
 } from '../../hooks/useEngagementMaterials';
-import { MaterialsDropzone } from './MaterialsDropzone';
 import { MaterialsEngagementPicker } from './MaterialsEngagementPicker';
-import { MaterialsTable } from './MaterialsTable';
+import { MaterialsTable, MaterialsTableSkeleton } from './MaterialsTable';
 
 type MaterialsTabProps = {
   workerId: string;
@@ -50,53 +50,69 @@ export function MaterialsTab({
   const unassigned = materials.data?.unassigned ?? [];
   const hasRows = documents.length > 0 || unassigned.length > 0;
 
-  const dropzone = selectedId ? (
-    <MaterialsDropzone
-      inputRef={fileInputRef}
-      disabled={upload.isPending}
-      onFile={(file) => upload.mutate(file)}
-      className={hasRows ? 'mb-4' : 'w-full max-w-sm'}
-    />
-  ) : (
-    <p className="text-sm text-muted-foreground">Kein Engagement vorhanden.</p>
-  );
-
   return (
-    <div className="flex min-h-full flex-1 flex-col px-4 py-4" data-testid="materials-tab">
+    <div
+      className="flex min-h-full flex-1 flex-col px-4 py-4"
+      data-testid="materials-tab"
+    >
+      {selectedId ? (
+        <Input
+          ref={fileInputRef}
+          type="file"
+          className="hidden"
+          accept="image/*,.pdf,application/pdf"
+          data-testid="materials-file-input"
+          disabled={upload.isPending}
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) upload.mutate(file);
+            event.target.value = '';
+          }}
+        />
+      ) : null}
       <MaterialsEngagementPicker
         engagements={engagements}
         value={selectedId ?? ''}
         onChange={setEngagementId}
       />
-      {hasRows ? dropzone : null}
       {upload.isPending ? (
         <p className="mb-4 text-sm text-muted-foreground">
           Materialien werden gelesen…
         </p>
       ) : null}
       {upload.isError ? (
-        <p className="mb-4 text-sm text-destructive">{errorMessage(upload.error)}</p>
+        <p className="mb-4 text-sm text-destructive">
+          {errorMessage(upload.error)}
+        </p>
       ) : null}
       {update.isError ? (
-        <p className="mb-4 text-sm text-destructive">{errorMessage(update.error)}</p>
+        <p className="mb-4 text-sm text-destructive">
+          {errorMessage(update.error)}
+        </p>
+      ) : null}
+
+      {materials.isError ? (
+        <p className="text-sm text-destructive">
+          {errorMessage(materials.error)}
+        </p>
       ) : null}
       {materials.isLoading ? (
-        <p className="text-sm text-muted-foreground">Materialien werden geladen…</p>
-      ) : null}
-      {materials.isError ? (
-        <p className="text-sm text-destructive">{errorMessage(materials.error)}</p>
-      ) : null}
-      {hasRows ? (
+        <MaterialsTableSkeleton />
+      ) : hasRows ? (
         <MaterialsTable
           documents={documents}
           unassigned={unassigned}
-          savingId={update.isPending ? update.variables?.materialId ?? null : null}
-          deletingId={remove.isPending ? remove.variables ?? null : null}
+          savingId={
+            update.isPending ? (update.variables?.materialId ?? null) : null
+          }
+          deletingId={remove.isPending ? (remove.variables ?? null) : null}
           onSave={(values) => update.mutate(values)}
           onDelete={(materialId) => remove.mutate(materialId)}
         />
-      ) : (
-        <div className="flex flex-1 items-center justify-center py-8">{dropzone}</div>
+      ) : selectedId ? null : (
+        <p className="text-sm text-muted-foreground">
+          Kein Engagement vorhanden.
+        </p>
       )}
     </div>
   );

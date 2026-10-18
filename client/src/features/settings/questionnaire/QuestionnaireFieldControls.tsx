@@ -1,7 +1,15 @@
 import { Input } from '@/components/ui/input';
 import { insuranceNumberInput } from '@shared/insuranceNumber';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { ChoiceLineEditor } from '@/features/questionnaire/ChoiceLineEditor';
+import { PflichtfeldSwitch } from './PflichtfeldSwitch';
 import { QuestionTitle } from './QuestionTitle';
 import type { ContractFieldOption, TemplateField } from './questionnaireTemplate.types';
 
@@ -21,24 +29,25 @@ export function QuestionnaireFieldControls({
   const patch = (next: Partial<TemplateField>) => onChange({ ...field, ...next });
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex min-w-0 flex-col gap-3">
       <QuestionTitle
         label={field.label}
         onCommit={(label) => onCommit({ ...field, label })}
       />
       {field.type === 'file' ? (
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            className="size-4 accent-primary"
-            checked={field.required !== false}
-            onChange={(event) => patch({ required: event.target.checked })}
-          />
-          Pflichtfeld
-        </label>
+        <PflichtfeldSwitch
+          checked={field.required !== false}
+          onChange={(required) => patch({ required })}
+        />
       ) : (
         <QuestionAnswer field={field} onChange={patch} />
       )}
+      {field.builtin === false && field.type !== 'file' ? (
+        <PflichtfeldSwitch
+          checked={field.required !== false}
+          onChange={(required) => patch({ required })}
+        />
+      ) : null}
       {field.type === 'file' ? (
         <p className="text-xs text-muted-foreground">
           Die Datei wird beim Ausfüllen hochgeladen, zum Beispiel ein Führerschein.
@@ -58,22 +67,30 @@ export function QuestionnaireFieldControls({
         />
       ) : null}
       {field.type === 'file' ? null : (
-      <div className="flex flex-col gap-2">
-        <Label htmlFor={`${field.key}-contract`}>Vertragsfeld</Label>
-        <select
-          id={`${field.key}-contract`}
-          className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-          value={field.contractFieldKey ?? ''}
-          onChange={(event) => patch({ contractFieldKey: event.target.value })}
-        >
-          <option value="">Keins</option>
-          {contractFields.map((option) => (
-            <option key={option.key} value={option.key}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </div>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor={`${field.key}-contract`}>Vertragsfeld</Label>
+          <Select
+            value={field.contractFieldKey || '__none__'}
+            onValueChange={(value) =>
+              patch({ contractFieldKey: value === '__none__' ? '' : value })
+            }
+          >
+            <SelectTrigger
+              id={`${field.key}-contract`}
+              className="h-9 w-full bg-background"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent position="popper" align="start">
+              <SelectItem value="__none__">Keins</SelectItem>
+              {contractFields.map((option) => (
+                <SelectItem key={option.key} value={option.key}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       )}
     </div>
   );

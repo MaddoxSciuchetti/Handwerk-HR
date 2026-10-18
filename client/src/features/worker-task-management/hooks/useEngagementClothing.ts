@@ -19,6 +19,7 @@ export function useEngagementClothing(
 ) {
   return useQuery({
     queryKey: engagementClothingKey(workerId, engagementId),
+    staleTime: 30_000,
     queryFn: () => getEngagementClothing(workerId, engagementId!),
     enabled: Boolean(engagementId),
   });

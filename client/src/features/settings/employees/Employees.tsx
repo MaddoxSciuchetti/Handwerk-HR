@@ -1,4 +1,4 @@
-import LoadingAlert from '@/components/alerts/LoadingAlert';
+import { TableSkeletonRows } from '@/components/ui/table-skeleton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -31,10 +31,6 @@ function Employees() {
     EmployeeDataArray[number] | null
   >(null);
 
-  if (isLoading || isDeleting) {
-    return <LoadingAlert className="mt-10 min-h-40" />;
-  }
-
   return (
     <section className="mt-10 flex w-full flex-col items-stretch">
       <div className="flex w-full flex-col items-stretch">
@@ -56,7 +52,10 @@ function Employees() {
             </Button>
           </CardHeader>
           <CardContent className="px-2 pb-2">
-            <Table className={settingsTableClassName}>
+            <Table
+              aria-busy={isLoading || isDeleting}
+              className={settingsTableClassName}
+            >
               <TableHeader className="[&_tr]:border-b-0">
                 <TableRow className="border-0 hover:bg-transparent">
                   <TableHead className="h-12 py-3 pl-10">Name</TableHead>
@@ -67,11 +66,15 @@ function Employees() {
                 </TableRow>
               </TableHeader>
               <TableBody className={settingsTableBodyClassName}>
-                <EmployeeItemList
-                  employees={EmployeeData ?? []}
-                  handleDeleteEmployee={handleDeleteEmployee}
-                  onSelectEmployee={setSelectedEmployee}
-                />
+                {isLoading || isDeleting ? (
+                  <TableSkeletonRows variant="employees" />
+                ) : (
+                  <EmployeeItemList
+                    employees={EmployeeData ?? []}
+                    handleDeleteEmployee={handleDeleteEmployee}
+                    onSelectEmployee={setSelectedEmployee}
+                  />
+                )}
               </TableBody>
             </Table>
           </CardContent>

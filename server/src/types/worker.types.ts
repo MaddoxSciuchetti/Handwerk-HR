@@ -109,7 +109,8 @@ export interface UpdateEngagementInput {
 
 
 export interface CreateIssueInput {
-    workerEngagementId: string; // required — no workerId on Issue
+    workerEngagementId?: string;
+    organizationId?: string;
     createdByUserId: string; // required
     status?: IssueStatus;
     title: string;

@@ -64,3 +64,34 @@ it('keeps the edited name when opening the preview and disables saving an empty 
     'Montage'
   );
 });
+
+it('keeps the questionnaire layout and disables actions while questions load', async () => {
+  let complete!: (value: unknown) => void;
+  vi.mocked(apiJson.get).mockReturnValueOnce(
+    new Promise((resolve) => {
+      complete = resolve;
+    })
+  );
+  renderWithProviders(<QuestionnaireTemplatePage />);
+  expect(
+    screen.getByRole('heading', { name: 'Fragebogen' })
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole('status', { name: 'Fragebogen wird geladen' })
+  ).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Speichern' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Vorschau' })).toBeDisabled();
+  complete({
+    success: true,
+    data: {
+      name: 'Personalfragebogen',
+      intro: '',
+      items,
+      catalog: items,
+      contractFields: [],
+    },
+  });
+  await screen.findByRole('textbox', { name: 'Name des Fragebogens' });
+  expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Speichern' })).toBeEnabled();
+});

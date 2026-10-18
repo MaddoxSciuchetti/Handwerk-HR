@@ -12,7 +12,6 @@ type DocumentEditorCanvasProps = {
   pageView: boolean;
   zoom: number;
   pageCount: number;
-  flush?: boolean;
   children: ReactNode;
 };
 
@@ -23,7 +22,6 @@ export function DocumentEditorCanvas({
   pageView,
   zoom,
   pageCount,
-  flush = false,
   children,
 }: DocumentEditorCanvasProps) {
   const pageSheets =
@@ -35,8 +33,8 @@ export function DocumentEditorCanvas({
     <div
       className={
         pageView
-          ? `document-editor-canvas min-h-0 min-w-0 flex-1 overflow-auto bg-muted p-4${flush ? '' : ' rounded border'}`
-          : `styled-document min-h-0 flex-1 overflow-auto p-5${flush ? '' : ' rounded border'}`
+          ? `document-editor-canvas min-h-0 min-w-0 flex-1 overflow-auto bg-card p-4`
+          : `styled-document min-h-0 flex-1 overflow-auto p-5`
       }
     >
       <div

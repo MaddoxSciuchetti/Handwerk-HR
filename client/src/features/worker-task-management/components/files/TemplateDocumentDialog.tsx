@@ -1,4 +1,4 @@
-import LoadingAlert from '@/components/alerts/LoadingAlert';
+import { PdfSkeleton } from '@/components/ui/pdf-skeleton';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -107,7 +107,7 @@ export function TemplateDocumentDialog({
           documentPreviewModalSize
         )}
       >
-        {isLoading ? <LoadingAlert className="min-h-40" /> : null}
+        {isLoading ? <PdfSkeleton /> : null}
         {isError || (!isLoading && !data) ? (
           <p className="text-sm text-destructive">
             Das Dokument konnte nicht geladen werden.

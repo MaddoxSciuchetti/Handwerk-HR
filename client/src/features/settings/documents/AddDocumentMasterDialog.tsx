@@ -7,8 +7,9 @@ import SidebarFooter from '@/features/worker-task-management/components/tasks/ta
 import SidebarHeader from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarHeader';
 import { SidebarPanel } from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarPanel';
 import { useNavigate } from '@tanstack/react-router';
-import { Check, X } from 'lucide-react';
-import { FormEvent, useState } from 'react';
+import { Check, Upload, X } from 'lucide-react';
+import { FormEvent, useRef, useState } from 'react';
+import { cn } from '@/lib/utils';
 import {
   DOCUMENT_MASTER_KINDS,
   TEMPLATE_DOCUMENT_KINDS,
@@ -180,6 +181,8 @@ export function AddDocumentMasterDialog({
   const [drafts, setDrafts] = useState<UploadDraft[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [dragging, setDragging] = useState(false);
   const multiple = drafts.length > 1;
   const kindsReady = multiple
     ? drafts.every((draft) => normalizeDocumentKind(draft.kindLabel))
@@ -189,6 +192,16 @@ export function AddDocumentMasterDialog({
     (multiple
       ? drafts.every((draft) => draft.name.trim().length > 0)
       : drafts.length === 1 && name.trim().length > 0);
+
+  const selectFiles = (files: FileList | null) => {
+    if (!files?.length) return;
+    if ([...files].some((file) => !/\.(pdf|docx|txt)$/i.test(file.name))) {
+      setError('Bitte PDF-, Word- (.docx) oder Textdateien (.txt) auswählen.');
+      return;
+    }
+    setError(null);
+    setDrafts(draftsFromFiles(files, initialLabel));
+  };
 
   const updateDraft = (key: string, patch: Partial<UploadDraft>) => {
     setDrafts((current) =>
@@ -289,19 +302,50 @@ export function AddDocumentMasterDialog({
 
             <div className="flex flex-col gap-2">
               <Label htmlFor="document-file">Datei</Label>
-              <Input
+              <input
+                ref={fileInput}
                 id="document-file"
                 type="file"
+                className="sr-only"
+                tabIndex={-1}
                 multiple
+                disabled={pending}
                 accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
-                required={drafts.length === 0}
                 onChange={(event) => {
-                  const next = event.target.files;
-                  if (next && next.length > 0) {
-                    setDrafts(draftsFromFiles(next, initialLabel));
-                  }
+                  selectFiles(event.target.files);
+                  event.target.value = '';
                 }}
               />
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => fileInput.current?.click()}
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  if (!pending) setDragging(true);
+                }}
+                onDragLeave={(event) => {
+                  if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false);
+                }}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  setDragging(false);
+                  if (!pending) selectFiles(event.dataTransfer.files);
+                }}
+                className={cn(
+                  'flex min-h-36 w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-card px-5 py-6 text-center transition-colors hover:border-foreground/50 focus-visible:border-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50',
+                  dragging && 'border-foreground/50'
+                )}
+              >
+                <Upload className="size-5 text-muted-foreground" aria-hidden />
+                <span className="text-sm font-medium">Dateien hier ablegen oder auswählen</span>
+                <span className="text-xs text-muted-foreground">PDF, Word (.docx) oder Text (.txt)</span>
+                {drafts.length > 0 ? (
+                  <span className="max-w-full break-all text-sm" aria-live="polite">
+                    {drafts.map((draft) => draft.file.name).join(', ')}
+                  </span>
+                ) : null}
+              </button>
             </div>
 
             {multiple ? (

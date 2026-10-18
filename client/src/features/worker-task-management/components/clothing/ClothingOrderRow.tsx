@@ -88,7 +88,7 @@ export function ClothingOrderRow({
                 step={1}
                 value={amount}
                 onChange={(event) => setAmount(event.target.value)}
-                className="w-20"
+                className="w-20 shadow-none focus-visible:border-border focus-visible:ring-0"
               />
             ) : null}
             <Button

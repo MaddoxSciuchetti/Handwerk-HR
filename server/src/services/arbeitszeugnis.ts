@@ -23,6 +23,7 @@ import {
 } from "@/services/preparedDocument";
 import {
     readStyledDocument,
+    resolveCurrentDateValues,
     filledDocument,
     type StyledDocument,
 } from "../../../shared/document";
@@ -312,7 +313,7 @@ export async function previewArbeitszeugnis(params: {
             engagementId: engagement.id,
             segments,
             document: readStyledDocument(master.body),
-            values,
+            values: resolveCurrentDateValues(readStyledDocument(master.body), values),
             unmatched: unplacedLetterValues(fields, values),
             unresolved: filled.unresolved,
             alreadySent: false,

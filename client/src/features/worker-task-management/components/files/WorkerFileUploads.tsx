@@ -1,6 +1,6 @@
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import ErrorAlert from '@/components/alerts/ErrorAlert';
-import LoadingAlert from '@/components/alerts/LoadingAlert';
+import { FileCardsSkeleton, PersonnelFoldersSkeleton } from './FileSkeletons';
 import type { EngagementType } from '@/features/worker-lifecycle/types/index.types';
 import { useMemo } from 'react';
 import useDeleteWorkerFile from '../../hooks/useDeleteWorkerFile';
@@ -51,22 +51,26 @@ function WorkerFileUploads({
   return (
     <>
       {personnelDocuments.isError ? <ErrorAlert /> : null}
-      <PersonnelDocumentFolders
-        workerId={workerId}
-        engagements={engagements}
-        documents={personnel}
-        folders={folders}
-        questionnaires={questionnaires}
-        contracts={contracts}
-        certificates={certificates}
-        deletingId={
-          deletePersonnelDocument.isPending
-            ? deletePersonnelDocument.variables ?? null
-            : null
-        }
-        onDelete={(documentId) => deletePersonnelDocument.mutate(documentId)}
-      />
-      {isLoading ? <LoadingAlert /> : null}
+      {personnelDocuments.isLoading ? (
+        <PersonnelFoldersSkeleton />
+      ) : (
+        <PersonnelDocumentFolders
+          workerId={workerId}
+          engagements={engagements}
+          documents={personnel}
+          folders={folders}
+          questionnaires={questionnaires}
+          contracts={contracts}
+          certificates={certificates}
+          deletingId={
+            deletePersonnelDocument.isPending
+              ? (deletePersonnelDocument.variables ?? null)
+              : null
+          }
+          onDelete={(documentId) => deletePersonnelDocument.mutate(documentId)}
+        />
+      )}
+      {isLoading ? <FileCardsSkeleton /> : null}
       {isError ? <ErrorAlert /> : null}
       {!isLoading && !isError && filteredFiles.length ? (
         <FilesContent fetchFiles={filteredFiles} deleteFiles={deleteFiles} />
@@ -92,12 +96,12 @@ function WorkerFileUploads({
           }}
         >
           <DialogContent className="h-auto max-h-[85vh] overflow-y-auto">
-          <PersonnelDocumentUploadForm
-            setModal={setIsUploadModalOpen}
-            workerId={workerId}
-            engagements={engagements}
-            folders={folders}
-          />
+            <PersonnelDocumentUploadForm
+              setModal={setIsUploadModalOpen}
+              workerId={workerId}
+              engagements={engagements}
+              folders={folders}
+            />
           </DialogContent>
         </Dialog>
       )}

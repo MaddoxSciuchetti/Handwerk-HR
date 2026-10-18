@@ -11,19 +11,13 @@ export function PrimaryContractStatus({
   pending,
   onSelect,
 }: PrimaryContractStatusProps) {
-  if (isPrimary) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        Diese Vorlage ist der primäre Mustervertrag und wird für den Versand
-        verwendet.
-      </p>
-    );
-  }
+  if (isPrimary) return null;
 
   return (
     <Button
       type="button"
       variant="outline"
+      className="h-8 shrink-0"
       disabled={pending}
       onClick={onSelect}
     >

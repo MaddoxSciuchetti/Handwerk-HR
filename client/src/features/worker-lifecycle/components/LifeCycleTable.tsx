@@ -1,6 +1,7 @@
 import {
   Table,
   TableBody,
+  TableCell,
   TableHead,
   TableHeader,
   TableRow,
@@ -50,14 +51,14 @@ function LifeCycleTable({ filtered, mode, gotopage }: LifeCycleTableProps) {
                 ))
               ) : (
                 <TableRow>
-                  <td
+                  <TableCell
                     colSpan={4}
                     className="py-10 text-center text-sm text-muted-foreground"
                   >
                     {mode === 'archived'
                       ? 'Es gibt aktuell keine archivierten Handwerker.'
                       : 'Keine Handwerker gefunden.'}
-                  </td>
+                  </TableCell>
                 </TableRow>
               )}
             </TableBody>

@@ -12,6 +12,7 @@ type DroppedDocumentField = {
   fieldType?: string;
   required?: boolean;
   checkboxGlyph?: string;
+  dateMode?: 'today' | null;
 };
 
 type DropSession = {
@@ -44,13 +45,16 @@ export function insertDroppedDocumentField(
     : view.state.schema.nodes.documentField;
   if (!nodeType) return false;
   const $pos = view.state.doc.resolve(pos.pos);
-  const at = !points || $pos.parent.type.name === 'doc' ? pos.pos : $pos.after(1);
+  const at =
+    !points || $pos.parent.type.name === 'doc' ? pos.pos : $pos.after(1);
   const node = nodeType.create(
     {
       key: dragged.key,
       label: dragged.label,
       fieldType: points ? 'points' : (dragged.fieldType ?? 'text'),
       required: dragged.required ?? dragged.fieldType !== 'checkbox',
+      dateMode:
+        dragged.fieldType === 'date' ? (dragged.dateMode ?? null) : null,
       ...(dragged.fieldType === 'checkbox' && dragged.checkboxGlyph
         ? { checkboxGlyph: dragged.checkboxGlyph }
         : {}),

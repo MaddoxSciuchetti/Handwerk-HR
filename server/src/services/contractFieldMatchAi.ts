@@ -1,3 +1,4 @@
+import { isCurrentDateField } from "../../../shared/document";
 import type { DocumentSegment } from "@/services/documentBody";
 import {
     acceptModelMatches,
@@ -46,6 +47,7 @@ function leftoverFields(
         if (
             segment.type !== "input" ||
             segment.fieldType === "points" ||
+            isCurrentDateField(segment) ||
             seen.has(segment.key) ||
             filled.has(segment.key)
         ) {

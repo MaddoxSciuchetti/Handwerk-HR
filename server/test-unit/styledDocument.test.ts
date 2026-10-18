@@ -287,3 +287,40 @@ describe("styled document compatibility and rendering", () => {
     );
   });
 });
+
+describe("automatic current-date fields", () => {
+  afterEach(() => jest.useRealTimers());
+
+  const datedTemplate = () => fromSegments([
+    { type: "input", key: "contract.today", label: "Vertragsdatum", fieldType: "date", dateMode: "today" },
+    { type: "input", key: "contract.start", label: "Eintrittsdatum", fieldType: "date" },
+  ]);
+
+  it("persists the setting and resolves the German calendar date on each use, ignoring stale draft values", () => {
+    jest.useFakeTimers().setSystemTime(new Date("2026-10-17T22:30:00Z"));
+    const document = parseStyledDocument(datedTemplate());
+    expect(documentFields(document)[0].dateMode).toBe("today");
+    const first = validateFieldValues(document, { "contract.today": "2000-01-01", "contract.start": "2026-11-01" });
+    expect(first).toEqual({ "contract.today": "2026-10-18", "contract.start": "2026-11-01" });
+    const snapshot = filledDocument(document, first);
+    expect(renderNode(document.content, first)).toContain("18.10.2026");
+    jest.setSystemTime(new Date("2026-10-19T10:00:00Z"));
+    expect(validateFieldValues(document, first)["contract.today"]).toBe("2026-10-19");
+    expect(renderNode(snapshot.content, {})).toContain("2026-10-18");
+  });
+
+  it("fills automatic dates without a supplied value, while ordinary dates remain required", () => {
+    const document = datedTemplate();
+    expect(() => validateFieldValues(document, {})).toThrow("Eintrittsdatum");
+    expect(validateFieldValues(document, { "contract.start": "2026-11-01" })["contract.today"]).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it("rejects automatic dates on non-date fields and inconsistent repeated keys", () => {
+    const document = datedTemplate();
+    document.content.content![0].content![0].attrs!.fieldType = "text";
+    expect(() => parseStyledDocument(document)).toThrow();
+    const repeated = datedTemplate();
+    repeated.content.content![0].content!.push({ type: "documentField", attrs: { key: "contract.today", label: "Date", fieldType: "date" } });
+    expect(() => parseStyledDocument(repeated)).toThrow("Wiederholte Felder");
+  });
+});

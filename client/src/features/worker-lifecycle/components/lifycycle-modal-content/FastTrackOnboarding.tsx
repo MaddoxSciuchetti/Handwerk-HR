@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/input';
 import API from '@/config/apiClient';
 import queryClient from '@/config/query.client';
 import { useMutation } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { toast } from 'sonner';
 import { ALL_WORKER_DATA } from '../../consts/query-key.consts';
 
@@ -23,6 +23,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function FastTrackOnboarding({ onCreated }: FastTrackOnboardingProps) {
   const [email, setEmail] = useState('');
+  const emailId = useId();
   const { mutate, isPending } = useMutation({
     mutationFn: (value: string) =>
       API.post<FastTrackResponse>('/worker/fast-track', { email: value }),
@@ -48,27 +49,31 @@ export function FastTrackOnboarding({ onCreated }: FastTrackOnboardingProps) {
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <form
+      className="flex shrink-0 items-center gap-2"
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (!isPending) send();
+      }}
+    >
+      <label htmlFor={emailId} className="sr-only">
+        E-Mail des Mitarbeiters
+      </label>
       <Input
+        id={emailId}
+        className="flex-1 focus-visible:ring-2 focus-visible:ring-inset"
         type="email"
+        autoComplete="email"
+        required
+        disabled={isPending}
         value={email}
         placeholder="E-Mail"
         maxLength={254}
         onChange={(event) => setEmail(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key !== 'Enter') return;
-          event.preventDefault();
-          send();
-        }}
       />
-      <Button
-        type="button"
-        className="rounded-2xl"
-        disabled={isPending}
-        onClick={send}
-      >
+      <Button type="submit" className="rounded-2xl" disabled={isPending}>
         {isPending ? 'Legt an…' : 'Anlegen'}
       </Button>
-    </div>
+    </form>
   );
 }

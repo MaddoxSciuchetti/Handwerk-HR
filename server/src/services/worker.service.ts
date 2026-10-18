@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { templateItemsForEngagement } from "@/services/onboardingTemplateTasks";
 import { fillWorkerProfileFromQuestionnaires } from "@/services/questionnaireWorkerProfile";
 import { certificateText } from "@/services/arbeitszeugnis";
 import { issueVisibleToViewer } from "@/services/issueVisibility";
@@ -566,6 +567,7 @@ export async function deleteEngagement(params: {
 export async function createIssue(params: CreateIssueInput) {
     const {
         workerEngagementId,
+        organizationId,
         createdByUserId,
         status,
         title,
@@ -578,15 +580,22 @@ export async function createIssue(params: CreateIssueInput) {
         assigneeOnly,
     } = params;
 
-    const engagement = await prisma.workerEngagement.findFirst({
-        where: { id: workerEngagementId },
-    });
-    if (!engagement) throw new Error("WorkerEngagement not found");
+    if (!workerEngagementId && !organizationId) {
+        throw new Error("WorkerEngagement not found");
+    }
+
+    if (workerEngagementId) {
+        const engagement = await prisma.workerEngagement.findFirst({
+            where: { id: workerEngagementId },
+        });
+        if (!engagement) throw new Error("WorkerEngagement not found");
+    }
 
     return prisma.$transaction(async (tx) => {
         const issue = await tx.issue.create({
             data: {
                 workerEngagementId,
+                organizationId,
                 createdByUserId,
                 status: status ?? "open",
                 title,
@@ -751,10 +760,16 @@ async function applyIssueTemplateInTx(
         workerEngagementId: string;
         templateId: string;
         actorUserId: string;
+        remainingOnly?: boolean;
     },
 ) {
-    const { organizationId, workerEngagementId, templateId, actorUserId } =
-        params;
+    const {
+        organizationId,
+        workerEngagementId,
+        templateId,
+        actorUserId,
+        remainingOnly = false,
+    } = params;
 
     const template = await tx.issueTemplate.findFirst({
         where: { id: templateId, organizationId },
@@ -764,8 +779,24 @@ async function applyIssueTemplateInTx(
     });
     if (!template) throw new Error("Template not found");
 
+    const existing = remainingOnly
+        ? await tx.issue.findMany({
+              where: {
+                  workerEngagementId,
+                  templateItemId: { not: null },
+              },
+              select: { templateItemId: true },
+          })
+        : [];
+    const items = templateItemsForEngagement(template.items, {
+        remainingOnly,
+        existingTemplateItemIds: existing.flatMap((issue) =>
+            issue.templateItemId ? [issue.templateItemId] : [],
+        ),
+    });
+
     const created = [] as { id: string }[];
-    for (const item of template.items) {
+    for (const item of items) {
         const issue = await tx.issue.create({
             data: {
                 workerEngagementId,
@@ -806,6 +837,7 @@ export async function applyIssueTemplate(params: {
     workerEngagementId: string;
     templateId: string;
     actorUserId: string;
+    remainingOnly?: boolean;
 }) {
     const {
         workerId,
@@ -813,6 +845,7 @@ export async function applyIssueTemplate(params: {
         workerEngagementId,
         templateId,
         actorUserId,
+        remainingOnly = false,
     } = params;
 
     await assertOwnership(workerId, organizationId);
@@ -833,6 +866,7 @@ export async function applyIssueTemplate(params: {
             workerEngagementId: engagement.id,
             templateId,
             actorUserId,
+            remainingOnly,
         }),
     );
 }

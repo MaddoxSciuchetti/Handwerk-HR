@@ -12,7 +12,6 @@ import type { IssueResponse } from '../types/index.types';
 import { getAssigneeLabel } from '../utilts/assignee.utils';
 import formatDateDe from '../utilts/date.utils';
 import { PriorityIndicator } from '../utilts/priority.utils';
-import { ConfirmationTaskDecor } from './ConfirmationTaskDecor';
 import { PillBadge } from './ui/PillBadge';
 import { SquareCheckIcon, SquareDashedIcon } from './ui/SelectIcons';
 import { TaskStatusPicker } from './ui/TaskStatusPicker';
@@ -71,30 +70,23 @@ export function TaskItem({
 
   const SelectionIcon = isSelected ? SquareCheckIcon : SquareDashedIcon;
 
-  const showTemporaryEdge = task.isTemporary && !isContractActionTask;
-  const temporaryEdge = showTemporaryEdge ? 'border-y-2 border-purple-500' : '';
-
   return (
     <TableRow
       data-automation-task={isAutomationTask || undefined}
       data-confirmation-task={isConfirmationTask || undefined}
       className={cn(
-        'group relative border-0 hover:bg-transparent',
-        isAutomationTask && !isContractActionTask && 'automation-task-row',
-        isContractActionTask && 'confirmation-task-row'
+        'group relative border-0 hover:bg-transparent has-aria-expanded:bg-transparent',
+        isAutomationTask && !isContractActionTask && 'automation-task-row'
       )}
     >
       <TableCell
         className={cn(
-          'relative pl-10 pr-2 font-medium transition-colors group-hover:rounded-l-xl',
+          'w-px relative pl-10 pr-2 font-medium transition-colors group-hover:rounded-l-xl',
           'group-hover:bg-muted/50',
           isSelected && 'rounded-l-xl',
-          isSelected && 'bg-muted/50',
-          temporaryEdge,
-          showTemporaryEdge && 'rounded-l-xl border-l-2'
+          isSelected && 'bg-muted/50'
         )}
       >
-        {isContractActionTask ? <ConfirmationTaskDecor /> : null}
         <Button
           type="button"
           variant="ghost"
@@ -111,6 +103,14 @@ export function TaskItem({
         </Button>
         <div className="relative z-10 flex min-w-0 items-center gap-2.5">
           <TaskStatusPicker taskId={task.id} status={task.status} />
+          {task.assigneeOnly ? (
+            <span
+              className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground"
+              aria-label="1 Erwähnung"
+            >
+              1
+            </span>
+          ) : null}
           <p className="min-w-0 truncate text-sm">
             {task.title}
             {task.isTemporary ? (
@@ -129,43 +129,41 @@ export function TaskItem({
               Dringend
             </span>
           ) : null}
-          <Button
-            type="button"
-            variant="outline"
-            size="xs"
-            className="shrink-0 rounded-2xl"
-            onClick={() => {
-              if (task.kind === 'contract_send' && task.status !== 'done') {
-                onOpenContractSend?.(task);
-                return;
-              }
-              if (task.kind === 'contract_confirm') {
-                onOpenContractConfirm?.(task);
-                return;
-              }
-              openInEditMode();
-            }}
-            >
-            Bearbeiten
-          </Button>
         </div>
       </TableCell>
       <TableCell
         className={cn(
-          'transition-colors',
+          'w-px transition-colors',
           'group-hover:bg-muted/50',
-          isSelected && 'bg-muted/50',
-          temporaryEdge
+          isSelected && 'bg-muted/50'
         )}
-      />
+      >
+        <Button
+          type="button"
+          variant="outline"
+          size="xs"
+          className="shrink-0 rounded-2xl"
+          onClick={() => {
+            if (task.kind === 'contract_send' && task.status !== 'done') {
+              onOpenContractSend?.(task);
+              return;
+            }
+            if (task.kind === 'contract_confirm') {
+              onOpenContractConfirm?.(task);
+              return;
+            }
+            openInEditMode();
+          }}
+        >
+          Bearbeiten
+        </Button>
+      </TableCell>
       <TableCell
         className={cn(
           'transition-colors group-hover:rounded-r-xl',
           'group-hover:bg-muted/50',
           isSelected && 'rounded-r-xl',
-          isSelected && 'bg-muted/50',
-          temporaryEdge,
-          showTemporaryEdge && 'rounded-r-xl border-r-2'
+          isSelected && 'bg-muted/50'
         )}
       >
         <div className="flex items-center justify-end gap-2">

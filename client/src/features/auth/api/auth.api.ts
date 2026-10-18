@@ -31,6 +31,9 @@ export const getUser = async (): Promise<User> => {
 export const login = async (data: LoginRequest): Promise<LoginResponse> => {
   return API.post<LoginRequest, LoginResponse>('/auth/v2/login', data);
 };
+
+export const logout = async (): Promise<{ message: string }> =>
+  API.get('/auth/v2/logout');
 export const signup = async (
   data: RegisterRequest
 ): Promise<RegisterResponse> => {

@@ -15,9 +15,11 @@ function useHome() {
     setModal((prev) => !prev);
   };
 
-  const { data: workers, error } = useQuery(
-    workerLifecycleQueries.workerData()
-  );
+  const {
+    data: workers,
+    error,
+    isLoading,
+  } = useQuery(workerLifecycleQueries.workerData());
 
   const handleNavigate = (
     taskId: string,
@@ -36,6 +38,7 @@ function useHome() {
 
   return {
     workers,
+    isLoading,
     handleNavigate,
     modal,
     mode,

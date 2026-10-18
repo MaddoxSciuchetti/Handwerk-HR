@@ -203,7 +203,8 @@ export async function runIssueSequence(params: {
             },
         },
     });
-    if (!issue) return { status: "failed", message: "Aufgabe nicht gefunden." };
+    if (!issue?.workerEngagement)
+        return { status: "failed", message: "Aufgabe nicht gefunden." };
     if (!issue.sequence || !issue.integrationProvider) {
         return {
             status: "failed",

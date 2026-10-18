@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { FieldGroup } from '@/components/ui/field';
 import { Label } from '@/components/ui/label';
 import TaskAutomation from '@/features/all-tasks/components/TaskAutomation';
-import { ARBEITSZEUGNIS } from '@/features/all-tasks/consts/task-automation.consts';
 import { TaskChat } from '@/features/all-tasks/components/TaskChat';
+import { ARBEITSZEUGNIS } from '@/features/all-tasks/consts/task-automation.consts';
 import { TaskStatusSelect } from '@/features/all-tasks/components/ui/TaskStatusSelect';
 import { employeeQueries } from '@/features/employee-overview/query-options/queries/employee.queries';
 import useAuth from '@/features/user-profile/hooks/useAuth';
@@ -16,8 +16,10 @@ import SidebarHeader from '@/features/worker-task-management/components/tasks/ta
 import { SidebarPanel } from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarPanel';
 import TaskHistory from '@/features/worker-task-management/components/tasks/task-sidebar/task-history/TaskHistory';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
 import { X } from 'lucide-react';
 import { useMemo, type Dispatch, type SetStateAction } from 'react';
+import { useWatch } from 'react-hook-form';
 import { useFetchEngagements } from '../hooks/useFetchEngagements';
 import { useTasks } from '../hooks/useTasks';
 import type { TaskEditState } from '../hooks/useTaskSidebar';
@@ -42,12 +44,34 @@ export function TaskSidebar({
     taskState,
     setIsOpen
   );
+  const navigate = useNavigate();
+  const selectedEngagementId = useWatch({
+    control,
+    name: 'workerEngagementId',
+  });
 
   const { data: employees = [] } = useQuery(employeeQueries.getEmployees());
   const { data: engagements = [] } = useFetchEngagements();
   const { user } = useAuth();
+  const selectedEngagement = engagements.find(
+    (engagement) => engagement.id === selectedEngagementId
+  );
 
   const isSubmitting = isTaskSaving;
+
+  const openHandwerker = () => {
+    if (!selectedEngagement) return;
+    const workerName =
+      `${selectedEngagement.workerFirstName} ${selectedEngagement.workerLastName}`.trim();
+    navigate({
+      to: '/user/$Id',
+      params: { Id: selectedEngagement.workerId },
+      search: {
+        workerName,
+        prevPage: 'Aufgaben',
+      },
+    });
+  };
 
   const ownerOptions = useMemo(
     () =>
@@ -70,10 +94,23 @@ export function TaskSidebar({
   return (
     <SidebarAside className="p-2" isOpen={isOpen}>
       <SidebarPanel className="w-full">
-        <SidebarHeader className="flex items-center justify-between p-6">
-          <Label className="text-base font-semibold">
-            {taskState === 'edit' ? 'Aufgabe bearbeiten' : 'Aufgabe'}
-          </Label>
+        <SidebarHeader className="flex items-center justify-between gap-3 p-6">
+          <div className="flex min-w-0 items-center gap-3">
+            <Label className="text-base font-semibold">
+              {taskState === 'edit' ? 'Aufgabe bearbeiten' : 'Aufgabe'}
+            </Label>
+            {taskState === 'edit' && selectedEngagement ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="rounded-2xl"
+                onClick={openHandwerker}
+              >
+                Zum Handwerker
+              </Button>
+            ) : null}
+          </div>
           <Button
             type="button"
             variant="ghost"

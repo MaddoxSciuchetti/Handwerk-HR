@@ -39,6 +39,7 @@ export function useEngagementMaterials(
 ) {
   return useQuery({
     queryKey: [ENGAGEMENT_MATERIALS, workerId, engagementId],
+    staleTime: 30_000,
     queryFn: () => getEngagementMaterials(workerId, engagementId!),
     enabled: Boolean(engagementId),
   });

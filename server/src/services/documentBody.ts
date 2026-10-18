@@ -15,6 +15,7 @@ export type DocumentSegment =
           label: string;
           fieldType?: "text" | "date" | "checkbox" | "points";
           required?: boolean;
+      dateMode?: "today" | null;
       };
 
 export function textFromSegments(segments: DocumentSegment[]): string {

@@ -1,7 +1,8 @@
 import { createHash } from "node:crypto";
-import { fromSegments } from "../../shared/document";
+import { fromSegments, currentDocumentDate } from "../../shared/document";
 import {
     sendPreparedDocument,
+    currentPreparation,
     prepareDocument,
     DeliveryRejected,
 } from "@/services/preparedDocument";
@@ -309,4 +310,13 @@ describe("approved PDF delivery", () => {
         await expect(prepareDocument(input)).rejects.toThrow("gespeichert");
         expect(prisma.preparedDocument.create).not.toHaveBeenCalled();
     });
+});
+
+
+it("requires a fresh preview when an automatic date belongs to an earlier day", async () => {
+    const snapshot = fromSegments([{ type: "input", key: "contract.today", label: "Datum", fieldType: "date", dateMode: "today" }]);
+    (prisma.preparedDocument.findFirst as jest.Mock).mockResolvedValue({ ...artifact(), snapshot, values: { "contract.today": "2000-01-01" } });
+    expect(await currentPreparation(scope)).toBeNull();
+    (prisma.preparedDocument.findFirst as jest.Mock).mockResolvedValue({ ...artifact(), snapshot, values: { "contract.today": currentDocumentDate() } });
+    expect(await currentPreparation(scope)).toMatchObject({ id: "pdf-1" });
 });

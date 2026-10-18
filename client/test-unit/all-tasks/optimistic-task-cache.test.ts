@@ -29,6 +29,8 @@ function makeTask(id: string, title = id): IssueResponse {
     description: null,
     priority: 'medium',
     dueDate: null,
+    startedAt: '2026-01-01T00:00:00.000Z',
+    completedAt: null,
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
   };
@@ -49,6 +51,8 @@ function makeWorker(): WorkerRecord {
         id: 'engagement-1',
         type: 'onboarding',
         status: 'in_progress',
+        startedAt: '2026-01-01T00:00:00.000Z',
+        completedAt: null,
         startDate: null,
         endDate: null,
         responsibleUser: {

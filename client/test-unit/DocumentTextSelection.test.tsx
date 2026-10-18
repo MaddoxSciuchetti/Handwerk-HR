@@ -380,3 +380,144 @@ it.each([
     }
   }
 );
+
+it.each(['Body', 'Label', 'Table'])(
+  'supports dragging and Option word selection next to a field in %s',
+  async (prefix) => {
+    const spy = vi.spyOn(Editor.prototype, 'setOptions');
+    const onChange = vi.fn();
+    render(
+      <StyledDocumentEditor document={fixture()} master onChange={onChange} />
+    );
+    const target = await screen.findByText(`${prefix}, Wort!`);
+    const editor = spy.mock.instances.at(-1) as Editor;
+    editor.setOptions({
+      editorProps: {
+        ...editor.options.editorProps,
+        handleScrollToSelection: () => true,
+      },
+    });
+    const start = editor.view.posAtDOM(target.firstChild!, 0);
+    act(() =>
+      editor.commands.insertContentAt(start, {
+        type: 'documentField',
+        attrs: { key: 'contract.name', label: 'Name' },
+      })
+    );
+    const original = editor.getJSON();
+    onChange.mockClear();
+    const walker = document.createTreeWalker(target, NodeFilter.SHOW_TEXT);
+    let text = walker.nextNode()!;
+    while (text.textContent !== `${prefix}, Wort!`) text = walker.nextNode()!;
+    const descriptor = Object.getOwnPropertyDescriptor(
+      document,
+      'caretPositionFromPoint'
+    );
+    Object.defineProperty(document, 'caretPositionFromPoint', {
+      configurable: true,
+      value: (x: number) => ({ offsetNode: text, offset: x - 10 }),
+    });
+    const key = (key: string, shiftKey = false) =>
+      act(() => {
+        const event = new KeyboardEvent('keydown', {
+          key,
+          altKey: true,
+          shiftKey,
+          cancelable: true,
+        });
+        expect(
+          editor.view.someProp('handleKeyDown', (handler) =>
+            handler(editor.view, event)
+          )
+        ).toBe(true);
+        expect(event.defaultPrevented).toBe(true);
+      });
+    try {
+      for (const [anchor, head] of [
+        [0, 3],
+        [3, 0],
+      ]) {
+        act(() => {
+          target.dispatchEvent(
+            new MouseEvent('mousedown', {
+              bubbles: true,
+              cancelable: true,
+              clientX: anchor + 10,
+              clientY: 10,
+              button: 0,
+              buttons: 1,
+              detail: 1,
+            })
+          );
+          document.dispatchEvent(
+            new MouseEvent('mousemove', {
+              bubbles: true,
+              cancelable: true,
+              clientX: head + 10,
+              clientY: 10,
+              buttons: 1,
+            })
+          );
+          document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+        });
+        expect(editor.state.selection.anchor).toBe(start + 1 + anchor);
+        expect(editor.state.selection.head).toBe(start + 1 + head);
+        expect(window.getSelection()!.toString()).toBe(
+          String(prefix).slice(0, 3)
+        );
+        const previous = editor.state.selection;
+        act(() =>
+          document.dispatchEvent(
+            new MouseEvent('mousemove', {
+              clientX: 11,
+              clientY: 10,
+              buttons: 1,
+            })
+          )
+        );
+        expect(editor.state.selection).toBe(previous);
+      }
+      act(() => editor.commands.setTextSelection(start + 1));
+      key('ArrowRight', true);
+      expect(
+        editor.state.doc.textBetween(
+          editor.state.selection.from,
+          editor.state.selection.to
+        )
+      ).toBe(prefix);
+      key('ArrowLeft', true);
+      expect(editor.state.selection.empty).toBe(true);
+      key('ArrowLeft', true);
+      expect(editor.state.selection.anchor).toBe(start + 1);
+      expect(editor.state.selection.head).toBe(start);
+      key('ArrowRight', true);
+      expect(editor.state.selection.empty).toBe(true);
+      key('ArrowLeft');
+      expect(editor.state.selection.head).toBe(start);
+      key('ArrowRight');
+      expect(editor.state.selection.head).toBe(start + 1);
+      key('ArrowRight');
+      expect(editor.state.selection.head).toBe(
+        start + 1 + String(prefix).length
+      );
+      key('ArrowRight', true);
+      expect(
+        editor.state.doc.textBetween(
+          editor.state.selection.from,
+          editor.state.selection.to
+        )
+      ).toBe(', Wort');
+      key('ArrowLeft');
+      expect(editor.state.selection.head).toBe(
+        start + 1 + String(prefix).length + 2
+      );
+      expect(editor.getJSON()).toEqual(original);
+      expect(onChange).not.toHaveBeenCalled();
+    } finally {
+      if (descriptor)
+        Object.defineProperty(document, 'caretPositionFromPoint', descriptor);
+      else Reflect.deleteProperty(document, 'caretPositionFromPoint');
+      spy.mockRestore();
+    }
+  }
+);

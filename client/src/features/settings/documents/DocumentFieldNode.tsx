@@ -1,4 +1,5 @@
 import { useContext, useEffect, useRef, type DragEvent } from 'react';
+import { currentDocumentDate } from '@shared/document';
 import { Node, mergeAttributes } from '@tiptap/core';
 import {
   NodeViewWrapper,
@@ -63,12 +64,16 @@ function MasterDocumentField({
   fieldType,
   readOnly,
   onRename,
+  useToday,
+  onUseTodayChange,
 }: {
   fieldKey: string;
   label: string;
   fieldType: string;
   readOnly: boolean;
   onRename: (label: string) => void;
+  useToday: boolean;
+  onUseTodayChange: (checked: boolean) => void;
 }) {
   const rename = () => {
     if (readOnly) return;
@@ -79,7 +84,14 @@ function MasterDocumentField({
     if (next?.trim()) onRename(next.trim());
   };
   return (
-    <DocumentFieldDetails fieldKey={fieldKey} label={label}>
+    <DocumentFieldDetails
+      fieldKey={fieldKey}
+      label={label}
+      useToday={useToday}
+      onUseTodayChange={
+        fieldType === 'date' && !readOnly ? onUseTodayChange : undefined
+      }
+    >
       <span data-drag-handle className="inline" onDoubleClick={rename}>
         {fieldType === 'checkbox' ? (
           <span
@@ -92,6 +104,7 @@ function MasterDocumentField({
         ) : (
           <span className="mx-0.5 rounded border bg-blue-50 px-1 text-blue-900">
             {label}
+            {useToday ? ' (heute)' : ''}
           </span>
         )}
       </span>
@@ -99,14 +112,18 @@ function MasterDocumentField({
   );
 }
 
-function DocumentFieldView({ node, updateAttributes }: NodeViewProps) {
+function DocumentFieldView({ node, updateAttributes, editor }: NodeViewProps) {
   const context = useContext(DocumentValuesContext);
   const key = String(node.attrs.key);
   const label = String(node.attrs.label);
+  const useToday =
+    node.attrs.fieldType === 'date' && node.attrs.dateMode === 'today';
   const value =
-    context.values[key] ??
-    node.attrs.checkboxValue ??
-    (node.attrs.fieldType === 'checkbox' ? 'false' : '');
+    useToday && (!context.readOnly || !context.values[key])
+      ? currentDocumentDate()
+      : (context.values[key] ??
+        node.attrs.checkboxValue ??
+        (node.attrs.fieldType === 'checkbox' ? 'false' : ''));
   const inputValue =
     node.attrs.fieldType === 'date' && /^\d{2}\.\d{2}\.\d{4}$/.test(value)
       ? value.split('.').reverse().join('-')
@@ -131,13 +148,14 @@ function DocumentFieldView({ node, updateAttributes }: NodeViewProps) {
         if (
           !context.master &&
           !context.readOnly &&
+          !useToday &&
           getDraggedQuestionnaireAnswer()
         )
           e.preventDefault();
       }}
       onDrop={(e: DragEvent<HTMLSpanElement>) => {
         const answer = getDraggedQuestionnaireAnswer();
-        if (answer && !context.master && !context.readOnly) {
+        if (answer && !context.master && !context.readOnly && !useToday) {
           e.preventDefault();
           context.onValueChange(key, answer.value);
           setDraggedQuestionnaireAnswer(null);
@@ -207,6 +225,22 @@ function DocumentFieldView({ node, updateAttributes }: NodeViewProps) {
           fieldType={String(node.attrs.fieldType)}
           readOnly={context.readOnly}
           onRename={(next) => updateAttributes({ label: next })}
+          useToday={useToday}
+          onUseTodayChange={(checked) => {
+            const transaction = editor.state.tr;
+            editor.state.doc.descendants((field, pos) => {
+              if (
+                field.type.name === 'documentField' &&
+                field.attrs.key === key &&
+                field.attrs.fieldType === 'date'
+              )
+                transaction.setNodeMarkup(pos, undefined, {
+                  ...field.attrs,
+                  dateMode: checked ? 'today' : null,
+                });
+            });
+            editor.view.dispatch(transaction);
+          }}
         />
       ) : node.attrs.fieldType === 'text' ? (
         <InlineValue
@@ -232,18 +266,22 @@ function DocumentFieldView({ node, updateAttributes }: NodeViewProps) {
           type={node.attrs.fieldType === 'date' ? 'date' : 'text'}
           value={inputValue}
           placeholder={label}
-          readOnly={context.readOnly}
+          readOnly={context.readOnly || useToday}
           size={Math.max(value.length, label.length, 4)}
           className="mx-0.5 max-w-full border-b border-blue-400 bg-blue-50 px-0.5 outline-none"
           style={{ font: 'inherit', color: 'inherit' }}
           onChange={(e) => context.onValueChange(key, e.target.value)}
           onDragOver={(e) => {
-            if (!context.readOnly && getDraggedQuestionnaireAnswer())
+            if (
+              !context.readOnly &&
+              !useToday &&
+              getDraggedQuestionnaireAnswer()
+            )
               e.preventDefault();
           }}
           onDrop={(e) => {
             const answer = getDraggedQuestionnaireAnswer();
-            if (answer && !context.readOnly) {
+            if (answer && !context.readOnly && !useToday) {
               e.preventDefault();
               context.onValueChange(key, answer.value);
               setDraggedQuestionnaireAnswer(null);
@@ -271,6 +309,7 @@ export const DocumentFieldNode = Node.create({
       required: { default: true },
       checkboxGlyph: { default: null },
       checkboxValue: { default: null },
+      dateMode: { default: null },
     };
   },
   parseHTML() {

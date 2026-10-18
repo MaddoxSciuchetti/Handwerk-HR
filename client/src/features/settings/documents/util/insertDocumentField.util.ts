@@ -8,6 +8,7 @@ export function insertDocumentField(
     fieldType: string;
     required: boolean;
     checkboxGlyph?: string;
+    dateMode?: 'today' | null;
   }
 ) {
   const { selection } = editor.state;

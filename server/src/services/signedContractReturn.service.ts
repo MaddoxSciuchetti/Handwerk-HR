@@ -410,6 +410,14 @@ async function createRemainingOnboardingTasks(
         actorUserId: string;
     },
 ) {
+    const alreadyChosen = await tx.issue.count({
+        where: {
+            workerEngagementId: params.workerEngagementId,
+            templateItemId: { not: null },
+        },
+    });
+    if (alreadyChosen > 0) return;
+
     const templates = await tx.issueTemplate.findMany({
         where: { organizationId: params.organizationId, isActive: true },
         include: { items: { orderBy: { orderIndex: "asc" } } },

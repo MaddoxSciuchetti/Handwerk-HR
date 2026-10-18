@@ -1,3 +1,4 @@
+import { getLifecycleStatistics as fetchLifecycleStatistics } from "@/services/lifecycleStatistics";
 import { uploadFileToS3 } from "@/config/aws";
 import * as employmentContractService from "@/services/employmentContract.service";
 import { confirmReturnedEmploymentContract } from "@/services/signedContractReturn.service";
@@ -97,6 +98,7 @@ export const saveEngagementQuestionnaire = catchErrors(
             engagementId: param(req, "engagementId"),
             values: req.body?.values ?? req.body,
             questions: req.body?.questions,
+            definition: req.body?.definition,
         });
         return res.status(200).json({ success: true, data: draft });
     },
@@ -318,13 +320,14 @@ export const applyIssueTemplate = catchErrors(
         const organizationId = req.orgId;
         const workerId = param(req, "workerId");
         const templateId = param(req, "templateId");
-        const { workerEngagementId } = req.body;
+        const { workerEngagementId, remainingOnly } = req.body;
         const result = await workerService.applyIssueTemplate({
             workerId,
             organizationId,
             templateId,
             workerEngagementId,
             actorUserId: req.userId!,
+            remainingOnly: remainingOnly === true,
         });
         return res.status(200).json({ success: true, data: result });
     },
@@ -616,3 +619,8 @@ export const prepareEmploymentContractPdf = catchErrors(
         return res.json({ success: true, data: prepared });
     },
 );
+
+export const getLifecycleStatistics = catchErrors(async (req: Request, res: Response) => {
+    const data = await fetchLifecycleStatistics(req.orgId, req.userId);
+    return res.status(200).json({ success: true, data });
+});

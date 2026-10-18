@@ -1,6 +1,7 @@
 import '@/App.css';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import DropdownActionTrigger from '@/components/DropdownActionTrigger';
+import { TableCell, TableRow } from '@/components/ui/table';
 import useFetchProcessData from '@/features/employee-overview/hooks/useFetchProcessData';
 import { LifecycleType } from '@/features/task-management/types/index.types';
 import { useState } from 'react';
@@ -59,8 +60,8 @@ export function Worker_Item({
   const color = calculatePercent(completedCount, totalCount);
 
   return (
-    <tr className="group rounded-2xl py-5 transition-colors  ">
-      <td className="text-sm font-semibold">
+    <TableRow>
+      <TableCell className="py-4 pl-10 text-sm font-semibold whitespace-normal">
         <WorkerItemInfo
           setIsInfoModalOpen={setIsInfoModalOpen}
           gotopage={gotopage}
@@ -69,24 +70,22 @@ export function Worker_Item({
           vorname={vorname}
           nachname={nachname}
         />
-      </td>
-      <td
+      </TableCell>
+      <TableCell
         className={
           form_type === 'Onboarding'
-            ? 'text-sm underline text-(--lifecycle-onboarding-text) justify-center items-center py-5'
-            : 'text-sm underline text-(--lifecycle-offboarding-text) justify-center items-center py-5'
+            ? 'px-2 py-4 text-sm text-(--lifecycle-onboarding-text) underline'
+            : 'px-2 py-4 text-sm text-(--lifecycle-offboarding-text) underline'
         }
         lang="en"
       >
         {form_type}
-      </td>
-
-      <th className="">
+      </TableCell>
+      <TableCell className="px-2 py-4">
         <span className={color}>{processLoading ? '...' : completedCount}</span>
         <span className="font-medium text-foreground">/{totalCount}</span>
-      </th>
-
-      <td>
+      </TableCell>
+      <TableCell className="px-2 py-4">
         <DropdownActionTrigger
           description="Aktionen"
           disabled={false}
@@ -121,7 +120,7 @@ export function Worker_Item({
           lifecycleType={form_type}
           onClose={() => setIsInfoModalOpen(false)}
         />
-      </td>
-    </tr>
+      </TableCell>
+    </TableRow>
   );
 }

@@ -1,4 +1,4 @@
-import LoadingAlert from '@/components/alerts/LoadingAlert';
+import { ContractPreviewSkeleton } from './ContractPreviewSkeleton';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import type { DocumentSegment } from '@/features/settings/documents/documentSegments';
@@ -295,7 +295,7 @@ export function ContractSendDialog({
         className={`w-full border-0 bg-transparent p-0 shadow-none sm:max-w-[min(96vw,90rem)] ${documentPreviewModalSize}`}
       >
         <div className={documentPreviewModalPanel}>
-          {isLoading ? <LoadingAlert className="min-h-40" /> : null}
+          {isLoading ? <ContractPreviewSkeleton /> : null}
           {isError || (!isLoading && !data) ? (
             <p className="text-sm text-destructive">
               Der Vertrag konnte nicht geladen werden.

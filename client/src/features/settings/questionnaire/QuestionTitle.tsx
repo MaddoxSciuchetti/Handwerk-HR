@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { useEffect, useRef, useState } from 'react';
 
 type QuestionTitleProps = {
@@ -36,23 +36,26 @@ export function QuestionTitle({ label, onCommit }: QuestionTitleProps) {
       <Button
         type="button"
         variant="ghost"
-        className="h-auto w-fit rounded-md px-1 text-left text-sm leading-none font-medium hover:bg-muted hover:text-foreground"
+        className="h-auto min-w-0 max-w-full self-start justify-start rounded-md px-1 py-0 text-left text-sm leading-6 font-medium whitespace-normal hover:bg-muted hover:text-foreground"
         onClick={() => setEditing(true)}
       >
-        Frage: {label}
+        <span className="min-w-0 whitespace-normal [overflow-wrap:anywhere]">
+          Frage: {label}
+        </span>
       </Button>
     );
   }
 
   return (
-    <label className="flex items-center gap-1 text-sm leading-none font-medium">
-      Frage:
-      <Input
+    <label className="flex w-full min-w-0 items-start gap-1 text-sm leading-6 font-medium">
+      <span className="shrink-0">Frage:</span>
+      <Textarea
+        rows={1}
         autoFocus
         value={draft}
         maxLength={400}
         aria-label="Frage"
-        className="h-auto w-auto min-w-40 rounded-md px-1 py-0 text-sm leading-none md:text-sm"
+        className="min-h-6 min-w-0 flex-1 resize-none rounded-md px-1 py-0 text-sm leading-6 [overflow-wrap:anywhere] md:text-sm"
         onChange={(event) => setDraft(event.target.value)}
         onBlur={commit}
         onKeyDown={(event) => {

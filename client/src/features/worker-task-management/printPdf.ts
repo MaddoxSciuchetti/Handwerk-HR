@@ -11,48 +11,51 @@ export function printPdfBlob(blob: Blob) {
   document.body.appendChild(iframe);
 
   return new Promise<void>((resolve, reject) => {
-    const fail = window.setTimeout(() => {
+    let removed = false;
+    let frameWindow: Window | null = null;
+    let releaseTimer = 0;
+
+    const removeFrame = () => {
+      if (removed) return;
+      removed = true;
+      window.clearTimeout(releaseTimer);
+      frameWindow?.removeEventListener('afterprint', removeFrame);
+      window.removeEventListener('afterprint', removeFrame);
       iframe.remove();
       URL.revokeObjectURL(url);
+    };
+
+    const fail = window.setTimeout(() => {
+      removeFrame();
       reject(new Error('Der Druckdialog konnte nicht geöffnet werden.'));
     }, 10000);
 
     iframe.onload = () => {
       window.clearTimeout(fail);
-      const frameWindow = iframe.contentWindow;
+      frameWindow = iframe.contentWindow;
       if (!frameWindow) {
-        iframe.remove();
-        URL.revokeObjectURL(url);
+        removeFrame();
         reject(new Error('Der Druckdialog konnte nicht geöffnet werden.'));
         return;
       }
 
-      let settled = false;
-      const finish = () => {
-        if (settled) return;
-        settled = true;
-        frameWindow.removeEventListener('afterprint', finish);
-        window.removeEventListener('afterprint', finish);
-        iframe.remove();
-        URL.revokeObjectURL(url);
-        resolve();
-      };
-
-      frameWindow.addEventListener('afterprint', finish);
-      window.addEventListener('afterprint', finish);
       window.setTimeout(() => {
         try {
-          frameWindow.focus();
-          frameWindow.print();
+          frameWindow?.focus();
+          frameWindow?.print();
         } catch {
-          if (settled) return;
-          settled = true;
-          frameWindow.removeEventListener('afterprint', finish);
-          window.removeEventListener('afterprint', finish);
-          iframe.remove();
-          URL.revokeObjectURL(url);
+          removeFrame();
           reject(new Error('Der Druckdialog konnte nicht geöffnet werden.'));
+          return;
         }
+
+        // Chrome's PDF viewer never fires `afterprint` for a blob iframe, so
+        // the preview must not wait on it. Keep the frame until the dialog
+        // closes; removing it now cancels the print.
+        frameWindow?.addEventListener('afterprint', removeFrame);
+        window.addEventListener('afterprint', removeFrame);
+        releaseTimer = window.setTimeout(removeFrame, 60_000);
+        resolve();
       }, 300);
     };
     iframe.src = url;

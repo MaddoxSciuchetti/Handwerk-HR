@@ -4,6 +4,10 @@ import { FETCHDESCRIPTION } from '../consts/query.consts';
 
 export const tasksQueries = {
   fetchTasks: () => {
-    return queryOptions({ queryKey: [FETCHDESCRIPTION], queryFn: getTasks });
+    return queryOptions({
+      queryKey: [FETCHDESCRIPTION],
+      queryFn: getTasks,
+      refetchInterval: 5000,
+    });
   },
 };

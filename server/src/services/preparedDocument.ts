@@ -10,7 +10,7 @@ import AppError from "@/utils/AppError";
 import { generateDocumentPdf } from "@/services/documentPdf";
 import { parseStyledDocument } from "@/services/styledDocument";
 import { validateFieldValues } from "../../../shared/documentRendering";
-import { documentFields, type StyledDocument } from "../../../shared/document";
+import { documentFields, resolveCurrentDateValues, type StyledDocument } from "../../../shared/document";
 import { Prisma } from "@prisma/client";
 
 export type PreparedScope = {
@@ -63,6 +63,14 @@ export async function currentPreparation(scope: PreparedScope) {
             },
         });
         if (!master) return null;
+        // Reusing the template on a later day requires a freshly generated PDF.
+        // Already sent PDFs keep their immutable artifact and recorded values.
+        if (artifact.snapshot && artifact.values) {
+            const saved = artifact.values as Record<string, string>;
+            const current = resolveCurrentDateValues(artifact.snapshot as unknown as StyledDocument, saved);
+            if (Object.entries(current).some(([key, value]) => saved[key] !== value))
+                return null;
+        }
     }
     return {
         id: artifact.id,

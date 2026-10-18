@@ -1,3 +1,4 @@
+import { DocumentEditorSkeleton } from './components/DocumentEditorSkeleton';
 import { EditorContent } from '@tiptap/react';
 import { DocumentValuesContext } from './DocumentValuesContext';
 import type { StyledDocument } from './styledDocument';
@@ -17,7 +18,6 @@ type StyledDocumentEditorProps = {
   readOnly?: boolean;
   section?: 'content' | 'header' | 'footer';
   pageView?: boolean;
-  showZoomNote?: boolean;
   expanded?: boolean;
   onToggleExpanded?: () => void;
   showOriginalToggle?: boolean;
@@ -34,7 +34,6 @@ export function StyledDocumentEditor({
   readOnly = false,
   section = 'content',
   pageView = false,
-  showZoomNote = true,
   expanded = false,
   onToggleExpanded,
   showOriginalToggle = false,
@@ -44,7 +43,17 @@ export function StyledDocumentEditor({
   const { editor, zoom, setZoom, pageCount, toolbar } = useStyledDocumentEditor(
     { document, onChange, master, readOnly, section, pageView }
   );
-  if (!editor || !toolbar) return null;
+  if (!editor || !toolbar) return (
+    <DocumentEditorSkeleton
+      document={document}
+      master={master}
+      readOnly={readOnly}
+      section={section}
+      pageView={pageView}
+      showCorner={Boolean(onToggleExpanded)}
+      showOriginalToggle={showOriginalToggle}
+    />
+  );
   const showToolbar = master && !readOnly;
   const framed = showToolbar || Boolean(onToggleExpanded);
 
@@ -55,24 +64,26 @@ export function StyledDocumentEditor({
       <div
         className={
           framed
-            ? 'flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl border bg-background shadow-sm'
+            ? 'flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-card'
             : 'flex min-h-0 min-w-0 flex-1 flex-col gap-2'
         }
       >
         {framed ? (
-          <div className="flex shrink-0 items-start gap-2 border-b bg-muted/40 px-2 py-2">
+          <div className="flex shrink-0 items-start gap-2 bg-card px-2 py-2">
             <div className="flex min-w-0 flex-1 flex-col gap-2">
               {showToolbar ? (
-                <>
-                  <div className="flex flex-wrap items-center gap-1">
-                    <DocumentEditorToolbar editor={editor} toolbar={toolbar} />
-                  </div>
-                  <div className="flex flex-wrap items-center gap-1.5 border-t border-border/70 pt-2">
-                    <DocumentFieldInsert editor={editor} />
-                  </div>
-                </>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <DocumentEditorToolbar editor={editor} toolbar={toolbar} />
+                  {pageView ? (
+                    <DocumentEditorZoom zoom={zoom} onZoomChange={setZoom} />
+                  ) : null}
+                  <DocumentFieldInsert editor={editor} />
+                </div>
               ) : null}
             </div>
+            {pageView && !showToolbar ? (
+              <DocumentEditorZoom zoom={zoom} onZoomChange={setZoom} />
+            ) : null}
             {onToggleExpanded ? (
               <DocumentEditorCorner
                 expanded={expanded}
@@ -84,12 +95,11 @@ export function StyledDocumentEditor({
             ) : null}
           </div>
         ) : null}
-        {pageView ? (
-          <div className={framed ? 'px-3 pt-2' : undefined}>
+        {pageView && !framed ? (
+          <div>
             <DocumentEditorZoom
               zoom={zoom}
               onZoomChange={setZoom}
-              note={showZoomNote}
             />
           </div>
         ) : null}
@@ -100,7 +110,6 @@ export function StyledDocumentEditor({
           pageView={pageView}
           zoom={zoom}
           pageCount={pageCount}
-          flush={framed}
         >
           <EditorContent editor={editor} className="relative" />
         </DocumentEditorCanvas>

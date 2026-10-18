@@ -1,5 +1,7 @@
 import {
   descriptionPointLines,
+  currentDocumentDate,
+  isCurrentDateField,
   documentFields,
   fieldComplete,
   type DocumentNode,
@@ -302,7 +304,11 @@ export function renderNode(
           : "") +
         "</span>"
       );
-    let value = values[key] ?? "";
+    let value =
+      values[key] ??
+      (node.attrs?.fieldType === "date" && node.attrs?.dateMode === "today"
+        ? currentDocumentDate()
+        : "");
     if (node.attrs?.fieldType === "date" && /^\d{4}-\d{2}-\d{2}$/.test(value))
       value = value.split("-").reverse().join(".");
     return renderNode({ type: "text", text: value, marks: node.marks }, values);
@@ -515,7 +521,9 @@ export function validateFieldValues(
       throw new Error("Ungültiger Feldwert: " + key);
     result[key] = value.trim();
   }
+  const today = currentDocumentDate();
   for (const field of fields) {
+    if (isCurrentDateField(field)) result[field.key] = today;
     if (field.fieldType !== "checkbox" && result[field.key] === undefined)
       result[field.key] = "";
     if (field.fieldType === "checkbox" && result[field.key] === undefined)

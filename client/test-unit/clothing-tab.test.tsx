@@ -1,32 +1,40 @@
 import { ClothingTab } from '@/features/worker-task-management/components/clothing/ClothingTab';
 import WorkerHeader from '@/features/worker-task-management/components/header/WorkerHeader';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const clothingState = vi.hoisted(() => ({ isLoading: false }));
+beforeEach(() => {
+  clothingState.isLoading = false;
+});
 
 vi.mock('@/features/bestand/useBestand', () => ({
   useClothingStock: () => ({ data: [] }),
 }));
 
-vi.mock('@/features/worker-task-management/hooks/useEngagementClothing', () => ({
-  useEngagementClothing: () => ({
-    data: [],
-    isLoading: false,
-    isError: false,
-  }),
-  useCreateEngagementClothing: () => ({
-    mutateAsync: vi.fn(),
-    isPending: false,
-  }),
-  useDeleteEngagementClothing: () => ({
-    mutate: vi.fn(),
-    isPending: false,
-    isError: false,
-  }),
-  useReturnEngagementClothing: () => ({
-    mutateAsync: vi.fn(),
-    isPending: false,
-  }),
-}));
+vi.mock(
+  '@/features/worker-task-management/hooks/useEngagementClothing',
+  () => ({
+    useEngagementClothing: () => ({
+      data: [],
+      isLoading: clothingState.isLoading,
+      isError: false,
+    }),
+    useCreateEngagementClothing: () => ({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    }),
+    useDeleteEngagementClothing: () => ({
+      mutate: vi.fn(),
+      isPending: false,
+      isError: false,
+    }),
+    useReturnEngagementClothing: () => ({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    }),
+  })
+);
 
 const engagements = [
   { id: 'eng-1', type: 'onboarding' as const, startDate: '2026-01-01' },
@@ -50,7 +58,9 @@ describe('ClothingTab', () => {
       'aria-hidden',
       'true'
     );
-    expect(screen.queryByRole('button', { name: 'Hinzufügen' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Hinzufügen' })
+    ).not.toBeInTheDocument();
   });
 
   it('shows the clothing fields in the sidebar without placeholder subtext', () => {
@@ -67,10 +77,14 @@ describe('ClothingTab', () => {
       'aria-hidden',
       'false'
     );
-    expect(screen.getByLabelText('Bezeichnung')).not.toHaveAttribute('placeholder');
+    expect(screen.getByLabelText('Bezeichnung')).not.toHaveAttribute(
+      'placeholder'
+    );
     expect(screen.getByLabelText('Größe')).not.toHaveAttribute('placeholder');
     expect(screen.getByLabelText('Link')).not.toHaveAttribute('placeholder');
-    expect(screen.getByRole('button', { name: 'Hinzufügen' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Hinzufügen' })
+    ).toBeInTheDocument();
   });
 });
 
@@ -89,9 +103,13 @@ describe('WorkerHeader clothing action', () => {
     );
 
     expect(screen.getByText('Kleidung')).toBeInTheDocument();
-    expect(screen.getByTestId('open-clothing-add')).toHaveTextContent('Hinzufügen');
+    expect(screen.getByTestId('open-clothing-add')).toHaveTextContent(
+      'Hinzufügen'
+    );
     expect(screen.queryByText(/Bestellte Kleidung/)).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Fragebogen senden' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Fragebogen senden' })
+    ).not.toBeInTheDocument();
   });
 
   it('offers the questionnaire only on Aufgaben', () => {
@@ -107,7 +125,9 @@ describe('WorkerHeader clothing action', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: 'Fragebogen senden' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Fragebogen senden' })
+    ).toBeInTheDocument();
 
     rerender(
       <WorkerHeader
@@ -121,6 +141,34 @@ describe('WorkerHeader clothing action', () => {
       />
     );
 
-    expect(screen.queryByRole('button', { name: 'Fragebogen senden' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Fragebogen senden' })
+    ).not.toBeInTheDocument();
   });
+});
+
+it('retains clothing columns during loading and removes skeletons after an empty result', () => {
+  clothingState.isLoading = true;
+  const props = {
+    workerId: 'worker-1',
+    engagements,
+    addOpen: false,
+    onAddOpenChange: vi.fn(),
+  };
+  const { rerender } = render(<ClothingTab {...props} />);
+  expect(screen.getByRole('table')).toHaveAttribute('aria-busy', 'true');
+  expect(screen.getByRole('status')).toHaveTextContent('Daten werden geladen');
+  for (const name of [
+    'Artikel',
+    'Größe',
+    'Link',
+    'Herkunft',
+    'Anzahl',
+    'Rückgabe',
+  ])
+    expect(screen.getByRole('columnheader', { name })).toBeInTheDocument();
+  clothingState.isLoading = false;
+  rerender(<ClothingTab {...props} />);
+  expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  expect(screen.getByRole('table')).toHaveAttribute('aria-busy', 'false');
 });

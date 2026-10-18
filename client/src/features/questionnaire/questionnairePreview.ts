@@ -7,6 +7,7 @@ const PREVIEW_KEY = 'fragebogen-preview';
 
 export type PreviewField = {
   kind: 'field';
+  builtin?: boolean;
   key: string;
   label: string;
   section: string;
@@ -46,7 +47,12 @@ export function readQuestionnaireDraft(): QuestionnairePreviewDraft | null {
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as QuestionnairePreviewDraft;
-    if (!parsed || !Array.isArray(parsed.items) || typeof parsed.intro !== 'string') return null;
+    if (
+      !parsed ||
+      !Array.isArray(parsed.items) ||
+      typeof parsed.intro !== 'string'
+    )
+      return null;
     return parsed;
   } catch {
     return null;
@@ -75,7 +81,10 @@ export function candidateItems(items: PreviewItem[]): CandidateItem[] {
       label: item.label,
       section: item.section,
       type: item.type,
-      required: item.type === 'file' ? item.required !== false : true,
+      required:
+        item.type === 'file' || item.builtin === false
+          ? item.required !== false
+          : true,
       options: item.options,
       max: item.max,
       layout: item.layout,

@@ -42,7 +42,7 @@ export function DocumentMasterRow({
         })
       }
     >
-      <TableCell className="relative">
+      <TableCell className="w-10 !p-0" onClick={toggle}>
         <Button
           type="button"
           variant="ghost"
@@ -55,7 +55,7 @@ export function DocumentMasterRow({
           }
           onClick={toggle}
           className={cn(
-            'absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-2xl',
+            'h-full min-h-12 w-10 border-0 bg-transparent shadow-none hover:bg-transparent focus-visible:border-transparent focus-visible:ring-0 dark:hover:bg-transparent',
             isSelected
               ? 'opacity-100'
               : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100'
@@ -63,6 +63,8 @@ export function DocumentMasterRow({
         >
           <SelectionIcon className="size-4" />
         </Button>
+      </TableCell>
+      <TableCell>
         <div className="flex min-w-0 items-center gap-2">
           <p className="typo-body-sm min-w-0 truncate text-text-primary">
             {master.name}

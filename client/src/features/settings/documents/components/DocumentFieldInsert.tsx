@@ -2,7 +2,6 @@ import { useState, type DragEvent } from 'react';
 import type { Editor } from '@tiptap/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -41,7 +40,7 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
   const [fieldKey, setFieldKey] = useState('');
   const [fieldType, setFieldType] = useState<FieldType>('text');
   const [checkboxGlyph, setCheckboxGlyph] = useState('☐');
-  const [required, setRequired] = useState(true);
+  const [useToday, setUseToday] = useState(false);
   const nextField = () => {
     const requested = contractFieldKey(label, fieldKey);
     return {
@@ -50,7 +49,8 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
         : unusedFieldKey(usedFieldKeys(editor), requested),
       label: label.trim(),
       fieldType,
-      required,
+      required: fieldType !== 'checkbox',
+      dateMode: fieldType === 'date' && useToday ? ('today' as const) : null,
     };
   };
   const insertField = () => {
@@ -83,7 +83,9 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
       <Input
         aria-label="Feldbezeichnung"
         placeholder={
-          fieldType === 'points' ? 'Tätigkeiten, Aufgaben …' : 'Vorname, Nachname …'
+          fieldType === 'points'
+            ? 'Tätigkeiten, Aufgaben …'
+            : 'Vorname, Nachname …'
         }
         value={label}
         onChange={(event) => setLabel(event.target.value)}
@@ -108,7 +110,6 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
         onValueChange={(value) => {
           const next = value as FieldType;
           setFieldType(next);
-          setRequired(next !== 'checkbox');
         }}
       >
         <SelectTrigger aria-label="Feldtyp" size="sm" className="w-40">
@@ -122,6 +123,16 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
           ))}
         </SelectContent>
       </Select>
+      {fieldType === 'date' ? (
+        <label className="inline-flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={useToday}
+            onChange={(event) => setUseToday(event.target.checked)}
+          />
+          Immer aktuelles Datum verwenden
+        </label>
+      ) : null}
       {fieldType === 'checkbox' ? (
         <>
           <Select value={checkboxGlyph} onValueChange={setCheckboxGlyph}>
@@ -140,19 +151,6 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
           </span>
         </>
       ) : null}
-      <Label className="h-7 gap-1.5 px-1 text-xs font-normal">
-        <input
-          type="checkbox"
-          className="size-3.5 accent-primary"
-          checked={required}
-          onChange={(event) => setRequired(event.target.checked)}
-        />
-        {fieldType === 'checkbox'
-          ? 'Muss angekreuzt sein'
-          : fieldType === 'points'
-            ? 'Mindestens ein Punkt'
-            : 'Pflichtfeld'}
-      </Label>
       <Button
         type="button"
         size="sm"
@@ -167,7 +165,8 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
           className="inline-flex h-7 cursor-grab items-center rounded-lg border bg-background px-2 text-xs"
           onDragStart={startFieldDrag}
         >
-          {fieldType === 'points' ? 'Block' : 'Feld'} ins Dokument ziehen: {label}
+          {fieldType === 'points' ? 'Block' : 'Feld'} ins Dokument ziehen:{' '}
+          {label}
         </span>
       ) : null}
     </>

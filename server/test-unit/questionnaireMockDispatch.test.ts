@@ -1,6 +1,7 @@
 import {
     getQuestionnaireDraft,
     sendEngagementQuestionnaire,
+    saveQuestionnaireDraft,
 } from "@/services/questionnaireDispatch";
 import { prisma } from "@/lib/prisma";
 import { sendMail } from "@/utils/sendMail";
@@ -15,7 +16,7 @@ jest.mock("@/constants/env", () => ({
 }));
 jest.mock("@/lib/prisma", () => ({
     prisma: {
-        workerEngagement: { findFirst: jest.fn() },
+        workerEngagement: { findFirst: jest.fn(), update: jest.fn() },
         questionnaireSubmission: { create: jest.fn() },
         issue: { createMany: jest.fn() },
         employmentContract: { create: jest.fn() },
@@ -28,6 +29,7 @@ jest.mock("@/services/questionnaireMock", () => ({
 }));
 jest.mock("@/services/questionnaireTemplate", () => ({
     questionnaireForOrganization: jest.fn(),
+    employmentContractFields: jest.fn().mockResolvedValue([]),
 }));
 jest.mock("@/services/documentMaster.service", () => ({
     primaryEmploymentContract: jest.fn(),
@@ -42,6 +44,7 @@ let engagement: any;
 beforeEach(() => {
     jest.resetAllMocks();
     flags.QUESTIONNAIRE_MOCK_RESPONSES = false;
+    jest.requireMock("@/services/questionnaireTemplate").employmentContractFields.mockResolvedValue([]);
     engagement = {
         id: "engagement",
         worker: { id: "worker", email: "lukas@example.test" },
@@ -116,4 +119,32 @@ it("reports a failed simulated submission instead of claiming success", async ()
         "Storage unavailable",
     );
     expect(sendMail).not.toHaveBeenCalled();
+});
+
+it("persists an engagement definition and dispatches it without changing the organization template", async () => {
+    const template = seedQuestionnaireDefinition();
+    const local = {
+        name: template.name,
+        items: [
+            { kind: "field", key: "custom.12345678", label: "Nur dieser Einsatz", section: "Weitere Angaben", type: "text", required: false },
+            { ...template.items.find((item) => item.key === "firstName"), label: "Angepasster Vorname", contractFieldKey: "firstName" },
+        ],
+    };
+    (prisma.workerEngagement.update as jest.Mock).mockImplementation(async ({ data }) => {
+        engagement.questionnaireOverrides = data.questionnaireOverrides;
+        return engagement;
+    });
+    const saved = await saveQuestionnaireDraft({ ...params, definition: local, values: { firstName: "Lukas" }, questions: [] });
+    expect(saved.items.map((item) => item.key)).toEqual(["custom.12345678", "firstName"]);
+    expect(saved.items[1]).toMatchObject({ label: "Angepasster Vorname", defaultValue: "Lukas", contractFieldKey: "firstName" });
+    // A later template change must not replace the engagement's saved questions.
+    (questionnaireForOrganization as jest.Mock).mockResolvedValue({ ...template, name: "Neue Vorlage" });
+    expect((await getQuestionnaireDraft(params)).items).toEqual(saved.items);
+    await sendEngagementQuestionnaire(params);
+    expect(prisma.questionnaireSubmission.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({ formDefinition: expect.objectContaining({ items: saved.items }) }),
+    }));
+    expect(template.items[0]).not.toHaveProperty("defaultValue");
+    expect(template.items[0]).not.toHaveProperty("contractFieldKey");
+    expect(template.items).toHaveLength(seedQuestionnaireDefinition().items.length);
 });

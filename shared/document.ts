@@ -4,7 +4,39 @@ export type DocumentField = {
   label: string;
   fieldType?: "text" | "date" | "checkbox" | "points";
   required?: boolean;
+  dateMode?: "today" | null;
 };
+
+/** Resolve business dates consistently in the app's German time zone. */
+export function currentDocumentDate(now = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Berlin",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const part = (type: string) =>
+    parts.find((item) => item.type === type)!.value;
+  return `${part("year")}-${part("month")}-${part("day")}`;
+}
+
+export function isCurrentDateField(
+  field: Pick<DocumentField, "fieldType" | "dateMode">,
+) {
+  return field.fieldType === "date" && field.dateMode === "today";
+}
+
+export function resolveCurrentDateValues(
+  document: StyledDocument,
+  values: Record<string, string>,
+  now = new Date(),
+): Record<string, string> {
+  const result = { ...values };
+  const today = currentDocumentDate(now);
+  for (const field of documentFields(document))
+    if (isCurrentDateField(field)) result[field.key] = today;
+  return result;
+}
 
 export function descriptionPointLines(value: string | undefined) {
   return (value ?? "")
@@ -37,7 +69,8 @@ export type StyledDocument = {
   importWarnings?: string[];
 };
 export type LegacySegment =
-  { type: "text"; text: string } | ({ type: "input" } & DocumentField);
+  | { type: "text"; text: string }
+  | ({ type: "input" } & DocumentField);
 
 export const DEFAULT_PAGE: StyledDocument["page"] = {
   width: 210,
@@ -133,6 +166,7 @@ export function fieldComplete(
   field: DocumentField,
   value: string | undefined,
 ): boolean {
+  if (isCurrentDateField(field)) return true;
   if (field.fieldType === "checkbox")
     return field.required
       ? value === "true"

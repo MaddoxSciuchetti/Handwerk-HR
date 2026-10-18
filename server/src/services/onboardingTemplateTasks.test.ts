@@ -1,4 +1,7 @@
-import { isQuestionnaireOrContractTemplateTask } from "@/services/onboardingTemplateTasks";
+import {
+    isQuestionnaireOrContractTemplateTask,
+    templateItemsForEngagement,
+} from "@/services/onboardingTemplateTasks";
 
 describe("isQuestionnaireOrContractTemplateTask", () => {
     it("skips the questionnaire and contract steps that already exist", () => {
@@ -25,5 +28,32 @@ describe("isQuestionnaireOrContractTemplateTask", () => {
         expect(
             isQuestionnaireOrContractTemplateTask("Arbeitskleidung"),
         ).toBe(false);
+    });
+});
+
+describe("templateItemsForEngagement", () => {
+    const items = [
+        { id: "q", title: "Fragebogen" },
+        { id: "c", title: "Arbeitsvertrag drucken" },
+        { id: "w", title: "Willkommensmail an das Team" },
+        { id: "k", title: "Arbeitskleidung" },
+    ];
+
+    it("keeps every new item when the template is chosen up front", () => {
+        expect(
+            templateItemsForEngagement(items, {
+                remainingOnly: false,
+                existingTemplateItemIds: [],
+            }).map((item) => item.id),
+        ).toEqual(["q", "c", "w", "k"]);
+    });
+
+    it("fills only the steps the fast track has not created yet", () => {
+        expect(
+            templateItemsForEngagement(items, {
+                remainingOnly: true,
+                existingTemplateItemIds: ["k"],
+            }).map((item) => item.id),
+        ).toEqual(["w"]);
     });
 });

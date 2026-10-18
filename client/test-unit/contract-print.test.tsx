@@ -376,6 +376,33 @@ it('prepares current edits before printing', async () => {
   );
 });
 
+it('keeps the field column in the contract preview skeleton', () => {
+  vi.mocked(getEngagementContract).mockReturnValue(new Promise(() => undefined));
+  const query = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  render(
+    <QueryClientProvider client={query}>
+      <ContractSendDialog
+        workerId="worker"
+        engagementId="engagement"
+        issueId="issue"
+        onClose={() => undefined}
+      />
+    </QueryClientProvider>
+  );
+
+  const preview = screen.getByRole('status', {
+    name: 'Vertragsvorschau wird geladen',
+  });
+  expect(
+    preview.querySelector('[data-testid="contract-preview-fields"]')
+  ).toBeInTheDocument();
+  expect(
+    preview.querySelector('[aria-label="PDF wird geladen"]')
+  ).toBeInTheDocument();
+});
+
 it('downloads the prepared PDF without recording it as printed', async () => {
   vi.mocked(getEngagementContract).mockResolvedValue(draft);
   vi.mocked(fetchPreparedEmploymentContractPdf).mockResolvedValue(

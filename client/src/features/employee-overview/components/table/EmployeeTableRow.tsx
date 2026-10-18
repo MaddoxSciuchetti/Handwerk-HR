@@ -1,5 +1,6 @@
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import TrashButton from '@/components/TrashButton';
+import { TableCell, TableRow } from '@/components/ui/table';
 import { User } from '@/features/user-profile/types/auth.type';
 import { UseMutateFunction } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -26,29 +27,27 @@ export const EmployeeRow = ({
   const closeDeleteModalHandler = () => setIsDeleteModalOpen(false);
 
   return (
-    <tr
-      className="group cursor-pointer py-5 transition-colors hover:bg-accent/40"
+    <TableRow
+      className="cursor-pointer"
       onClick={() => onSelectEmployee(employee)}
     >
-      <td className="text-sm font-semibold py-5 rounded-l-xl">
-        <div className="flex items-center gap-3">
-          <EmployeeName employee={employee} />
-        </div>
-      </td>
-      <td>
+      <TableCell className="whitespace-normal py-4 pl-10 text-sm font-semibold">
+        <EmployeeName employee={employee} />
+      </TableCell>
+      <TableCell className="px-2 py-4">
         <EmployeeOpenTasks
           openTaskCountsByEmployee={
             openTaskCountsByEmployee.get(employee.id) ?? 0
           }
         />
-      </td>
-      <td className="">
+      </TableCell>
+      <TableCell className="px-2 py-4 whitespace-normal">
         <EmployeeStatus employee={employee} />
-      </td>
-      <td className="">
+      </TableCell>
+      <TableCell className="px-2 py-4 whitespace-normal">
         <EmployeeSubstitute employee={employee} />
-      </td>
-      <td className="rounded-r-xl" onClick={(e) => e.stopPropagation()}>
+      </TableCell>
+      <TableCell className="px-2 py-4" onClick={(e) => e.stopPropagation()}>
         <TrashButton
           disabled={employee.organizationMembers[0]?.membershipRole === 'admin'}
           description={'Löschen'}
@@ -62,7 +61,7 @@ export const EmployeeRow = ({
             closeDeleteModalHandler();
           }}
         />
-      </td>
-    </tr>
+      </TableCell>
+    </TableRow>
   );
 };

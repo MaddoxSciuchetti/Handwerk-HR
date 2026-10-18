@@ -1,5 +1,5 @@
 import ErrorAlert from '@/components/alerts/ErrorAlert';
-import LoadingAlert from '@/components/alerts/LoadingAlert';
+import { TableSkeletonRows } from '@/components/ui/table-skeleton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { NestedDropdown } from '@/components/ui/nested-dropdown';
@@ -24,16 +24,24 @@ import { useState, type Dispatch, type SetStateAction } from 'react';
 import { QuestionnaireSendDialog } from '@/features/questionnaire/QuestionnaireSendDialog';
 import EngagementTypeSwitch from './EngagementTypeSwitch';
 import GreetingHeader from './GreetingHeader';
+import { LifecycleStatistics } from './LifecycleStatistics';
 import ProjectItem, { type WorkerSelection } from './ProjectItem';
 import { WorkerSidebar } from './WorkerSidebar';
 
 function WorkerLifeCycle() {
   const { user, isLoading, isError } = useAuth();
-  const { error, workers, modal, toggleModal, handleNavigate } = useHome();
+  const {
+    error,
+    workers,
+    modal,
+    toggleModal,
+    handleNavigate,
+    isLoading: workersLoading,
+  } = useHome();
   const [isWorkerSidebarOpen, setIsWorkerSidebarOpen] = useState(false);
-  const [questionnaireEngagementId, setQuestionnaireEngagementId] = useState<string | null>(
-    null
-  );
+  const [questionnaireEngagementId, setQuestionnaireEngagementId] = useState<
+    string | null
+  >(null);
 
   const [largeEditMode, setLargeEditMode] = useState(false);
   const [editModeData, setEditModeData] = useState<WorkerSelection[]>([]);
@@ -51,8 +59,7 @@ function WorkerLifeCycle() {
 
   useBodyScrollLock();
 
-  if (isLoading) return <LoadingAlert />;
-  if (isError || !user) return <ErrorAlert />;
+  if (isError || (!isLoading && !user)) return <ErrorAlert />;
   if (error) return <ErrorAlert message={error.message} />;
 
   const handleSelectWorker = () => setIsWorkerSidebarOpen(true);
@@ -95,9 +102,7 @@ function WorkerLifeCycle() {
       { items, type },
       {
         onSuccess: () => {
-          setEditModeData((prev) =>
-            prev.map((item) => ({ ...item, type }))
-          );
+          setEditModeData((prev) => prev.map((item) => ({ ...item, type })));
         },
       }
     );
@@ -108,7 +113,9 @@ function WorkerLifeCycle() {
       <WorkerSidebar
         isOpen={isWorkerSidebarOpen}
         setIsOpen={setIsWorkerSidebarOpen}
-        onQuestionnaire={(draft) => setQuestionnaireEngagementId(draft.engagementId)}
+        onQuestionnaire={(draft) =>
+          setQuestionnaireEngagementId(draft.engagementId)
+        }
       />
       {questionnaireEngagementId ? (
         <QuestionnaireSendDialog
@@ -116,10 +123,14 @@ function WorkerLifeCycle() {
           onClose={() => setQuestionnaireEngagementId(null)}
         />
       ) : null}
-      <div className="flex h-full min-h-0 w-full flex-col">
-        <GreetingHeader firstname={user?.firstName || ''} />
-        <Card className="mt-5 flex min-h-0 flex-1 flex-col gap-0 border border-border py-0 shadow-none ring-0">
-          <CardHeader className="flex shrink-0 flex-row flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-3">
+      <div className="flex h-full min-h-0 w-full flex-col overflow-y-auto">
+        <GreetingHeader
+          firstname={user?.firstName || ''}
+          isLoading={isLoading}
+        />
+        <LifecycleStatistics />
+        <Card className="mt-5 flex min-h-64 shrink-0 flex-1 flex-col gap-0 border border-border py-0 shadow-none ring-0">
+          <CardHeader className="flex shrink-0 flex-row flex-wrap items-center justify-between gap-4 px-6 py-3">
             <CardTitle className="text-base font-medium">Handwerker</CardTitle>
             <div className="flex shrink-0 items-center gap-3">
               <NestedDropdown
@@ -139,8 +150,8 @@ function WorkerLifeCycle() {
           </CardHeader>
           <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-0">
             <ScrollableTableViewport>
-              <Table>
-                <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-0">
+              <Table aria-busy={isLoading || workersLoading}>
+                <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-b-0">
                   <TableRow className="border-0 hover:bg-transparent">
                     <TableHead className="h-12 bg-card py-3 pl-10 pr-2">
                       Name
@@ -149,23 +160,29 @@ function WorkerLifeCycle() {
                     <TableHead className="bg-card py-3 px-2">
                       Verantwortlich
                     </TableHead>
-                    <TableHead className="bg-card py-3 px-2">Aufgaben</TableHead>
+                    <TableHead className="bg-card py-3 px-2">
+                      Aufgaben
+                    </TableHead>
                     <TableHead className="bg-card py-3 px-2">Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody className="[&_tr]:border-0 [&_td]:py-4 [&_td]:px-2 [&_td:first-child]:pl-10">
-                  {filteredWorkers.map((worker) => (
-                    <ProjectItem
-                      key={worker.id}
-                      worker={worker}
-                      gotopage={handleNavigate}
-                      isSelected={editModeData.some(
-                        (item) => item.engagementNumber === worker.id
-                      )}
-                      setLargeEditMode={setLargeEditMode}
-                      setEditModeData={handleSetEditModeData}
-                    />
-                  ))}
+                  {isLoading || workersLoading ? (
+                    <TableSkeletonRows variant="workers" />
+                  ) : (
+                    filteredWorkers.map((worker) => (
+                      <ProjectItem
+                        key={worker.id}
+                        worker={worker}
+                        gotopage={handleNavigate}
+                        isSelected={editModeData.some(
+                          (item) => item.engagementNumber === worker.id
+                        )}
+                        setLargeEditMode={setLargeEditMode}
+                        setEditModeData={handleSetEditModeData}
+                      />
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </ScrollableTableViewport>
@@ -174,7 +191,9 @@ function WorkerLifeCycle() {
         <LifeCycleModal
           modal={modal}
           toggleModal={toggleModal}
-          onQuestionnaire={(draft) => setQuestionnaireEngagementId(draft.engagementId)}
+          onQuestionnaire={(draft) =>
+            setQuestionnaireEngagementId(draft.engagementId)
+          }
         />
         {largeEditMode && (
           <EditModeBar

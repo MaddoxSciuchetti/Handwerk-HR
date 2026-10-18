@@ -1,7 +1,10 @@
+import { PdfSkeleton } from '@/components/ui/pdf-skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiJson } from '@/config/apiClient';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
+import type { StyledDocument } from './styledDocument';
 
 function PrintPage({
   pdf,
@@ -15,6 +18,8 @@ function PrintPage({
   height: number;
 }) {
   const canvas = useRef<HTMLCanvasElement>(null);
+  const [renderedPdf, setRenderedPdf] = useState<PDFDocumentProxy | null>(null);
+  const [failedPdf, setFailedPdf] = useState<PDFDocumentProxy | null>(null);
   useEffect(() => {
     let cancelled = false;
     let task: { cancel: () => void } | undefined;
@@ -27,9 +32,13 @@ function PrintPage({
         canvas.current.height = viewport.height;
         task = page.render({ canvas: canvas.current, viewport });
         await (task as ReturnType<typeof page.render>).promise;
+        if (!cancelled) setRenderedPdf(pdf);
       })
       .catch((error) => {
-        if (!cancelled) console.error('Print page failed', error);
+        if (!cancelled) {
+          console.error('Print page failed', error);
+          setFailedPdf(pdf);
+        }
       });
     return () => {
       cancelled = true;
@@ -41,15 +50,25 @@ function PrintPage({
       <p className="mb-2 text-center text-xs text-muted-foreground">
         Seite {number} von {pdf.numPages}
       </p>
-      <canvas
-        ref={canvas}
-        aria-label={`Druckseite ${number}`}
-        className="block bg-white shadow-md"
-        style={{
-          width: (width * 25.4) / 72 + 'mm',
-          height: (height * 25.4) / 72 + 'mm',
-        }}
-      />
+      <div className="relative">
+        {failedPdf === pdf ? (
+          <p role="alert">Druckseite konnte nicht geladen werden.</p>
+        ) : renderedPdf !== pdf ? (
+          <PdfSkeleton
+            page={{ width: (width * 25.4) / 72, height: (height * 25.4) / 72 }}
+            className="absolute inset-0 border-0 bg-card p-0"
+          />
+        ) : null}
+        <canvas
+          ref={canvas}
+          aria-label={`Druckseite ${number}`}
+          className="block bg-white shadow-md"
+          style={{
+            width: (width * 25.4) / 72 + 'mm',
+            height: (height * 25.4) / 72 + 'mm',
+          }}
+        />
+      </div>
     </section>
   );
 }
@@ -57,19 +76,27 @@ function PrintPage({
 export function DocumentPrintPreview({
   id,
   revision,
+  document,
 }: {
   id: string;
   revision: number;
+  document?: StyledDocument;
 }) {
   const [zoom, setZoom] = useState(100);
   const result = useQuery({
-    queryKey: ['document-print-preview', id, revision],
+    queryKey: ['document-print-preview', id, revision, document],
     queryFn: async () => {
       let bytes: Blob;
       try {
-        bytes = await apiJson.get<Blob>(`/document-masters/${id}/preview.pdf`, {
-          responseType: 'blob',
-        });
+        bytes = document
+          ? await apiJson.post<Blob>(
+              `/document-masters/${id}/preview.pdf`,
+              { document },
+              { responseType: 'blob' }
+            )
+          : await apiJson.get<Blob>(`/document-masters/${id}/preview.pdf`, {
+              responseType: 'blob',
+            });
       } catch (error) {
         const message =
           error &&
@@ -112,8 +139,7 @@ export function DocumentPrintPreview({
     [result.data]
   );
   if (result.isError) {
-    const detail =
-      result.error instanceof Error ? result.error.message : '';
+    const detail = result.error instanceof Error ? result.error.message : '';
     return (
       <p role="alert">
         Druckvorschau konnte nicht erstellt werden.
@@ -123,7 +149,22 @@ export function DocumentPrintPreview({
       </p>
     );
   }
-  if (!result.data) return <p role="status">Druckseiten werden erstellt…</p>;
+  if (!result.data)
+    return (
+      <>
+        <div
+          className="flex shrink-0 items-center justify-between gap-2 text-sm"
+          aria-hidden="true"
+        >
+          <Skeleton className="h-5 w-64" />
+          <Skeleton className="h-5 w-16" />
+        </div>
+        <PdfSkeleton
+          page={document?.page}
+          className="min-h-[60vh] rounded-none border-0 bg-card"
+        />
+      </>
+    );
   return (
     <>
       <div className="flex shrink-0 items-center justify-between gap-2 text-sm">
@@ -142,7 +183,7 @@ export function DocumentPrintPreview({
           ))}
         </select>
       </div>
-      <div className="min-h-[60vh] min-w-0 flex-1 overflow-auto rounded border bg-muted p-4">
+      <div className="min-h-[60vh] min-w-0 flex-1 overflow-auto bg-card p-4">
         <div style={{ zoom: zoom / 100 }}>
           {result.data.pages.map((page) => (
             <PrintPage key={page.number} pdf={result.data.pdf} {...page} />

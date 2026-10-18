@@ -6,6 +6,7 @@ import {
   act,
 } from '@testing-library/react';
 import { useState } from 'react';
+import userEvent from '@testing-library/user-event';
 import { Editor } from '@tiptap/core';
 import { vi, it, expect } from 'vitest';
 import { StyledDocumentEditor } from '@/features/settings/documents/StyledDocumentEditor';
@@ -788,4 +789,68 @@ it('uses mapped checkbox values with the same glyph footprint and supports read-
     visibility: 'visible',
   });
   expect(checkbox.parentElement).toHaveTextContent('□×');
+});
+
+it('moves positioned contract text and following content down when Enter splits a line', async () => {
+  const optionsSpy = vi.spyOn(Editor.prototype, 'setOptions');
+  const value = fromSegments([]);
+  value.content = { type: 'doc', content: [
+    { type: 'lineGroup', attrs: { height: 30, lines: [{ left: 0, top: 20, width: 50 }], labels: [] }, content: [
+      { type: 'lineLabel', attrs: { top: 0, left: 10, fontSize: 10 }, content: [{ type: 'text', text: 'Contract clause' }] },
+      { type: 'lineLabel', attrs: { top: 18, left: 10, fontSize: 10 }, content: [{ type: 'text', text: 'Following line' }] },
+    ] },
+    { type: 'paragraph', content: [{ type: 'text', text: 'Next paragraph' }] },
+  ] };
+  render(<StyledDocumentEditor document={value} master />);
+  await screen.findByText('Contract clause');
+  const editor = optionsSpy.mock.instances.at(-1) as Editor;
+  act(() => { editor.commands.setTextSelection(2); });
+  fireEvent.keyDown(editor.view.dom, { key: 'Enter', code: 'Enter' });
+  const group = editor.getJSON().content![0];
+  expect(group.content![0].content ?? []).toHaveLength(0);
+  expect(group.content![1].attrs!.top).toBe(12);
+  expect(group.content![2].attrs!.top).toBe(30);
+  expect(group.attrs!.height).toBe(42);
+  expect(group.attrs!.lines[0].top).toBe(32);
+  expect(editor.state.selection.$from.parent.textContent).toBe('Contract clause');
+  optionsSpy.mockRestore();
+});
+
+
+it('retains the highlighted replacement text while entering a new field and changing its type', async () => {
+  const optionsSpy = vi.spyOn(Editor.prototype, 'setOptions');
+  const user = userEvent.setup();
+  const value = fromSegments([{ type: 'text', text: 'Before replace me after' }]);
+  const { container } = render(<StyledDocumentEditor document={value} master />);
+  await screen.findByText('Before replace me after');
+  const editor = optionsSpy.mock.instances.at(-1) as Editor;
+  vi.spyOn(editor.view, 'scrollToSelection').mockImplementation(() => undefined);
+  act(() => {
+    editor.commands.focus();
+    editor.commands.setTextSelection({ from: 8, to: 18 });
+  });
+  const label = screen.getByRole('textbox', { name: 'Feldbezeichnung' });
+  await user.click(label);
+  await user.type(label, 'Vorname');
+  expect(editor.view.hasFocus()).toBe(false);
+  expect(container.querySelector('.tiptap')).not.toHaveClass('ProseMirror-focused');
+  expect(container.querySelector('.document-retained-selection')).toHaveTextContent('replace me');
+  expect(editor.state.selection.from).toBe(8);
+  expect(editor.state.selection.to).toBe(18);
+  await user.type(screen.getByRole('textbox', { name: 'Feldschlüssel' }), 'contract.first_name');
+  await user.click(screen.getByRole('combobox', { name: 'Feldtyp' }));
+  await user.click(await screen.findByRole('option', { name: 'Datum' }));
+  expect(container.querySelector('.document-retained-selection')).toHaveTextContent('replace me');
+  await user.click(screen.getByRole('button', { name: 'Feld einsetzen' }));
+  const nodes = editor.getJSON().content![0].content!;
+  expect(nodes[0].text).toBe('Before ');
+  expect(nodes[1]).toMatchObject({ type: 'documentField', attrs: { key: 'contract.first_name', label: 'Vorname', fieldType: 'date' } });
+  expect(nodes[2].text).toBe(' after');
+  expect(container.querySelector('.document-retained-selection')).toBeNull();
+  expect(JSON.stringify(editor.getJSON())).not.toContain('document-retained-selection');
+  act(() => editor.commands.undo());
+  expect(editor.getText()).toBe('Before replace me after');
+  act(() => editor.commands.setTextSelection(1));
+  expect(container.querySelector('.document-retained-selection')).toBeNull();
+  optionsSpy.mockRestore();
 });

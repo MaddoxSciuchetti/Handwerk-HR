@@ -48,6 +48,8 @@ export function TaskStatusPicker({
   const { mutate } = useQuickUpdateTaskStatus();
   const [open, setOpen] = useState(false);
   const chosen = useRef<IssueStatusValue | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const openedWithPointer = useRef(false);
 
   const choose = (next: IssueStatusValue) => {
     blockClickOutsideMenu();
@@ -70,11 +72,24 @@ export function TaskStatusPicker({
     >
       <DropdownMenuTrigger asChild>
         <Button
+          ref={triggerRef}
           type="button"
           variant="ghost"
           size="icon-xs"
           aria-label={`Status: ${issueStatusLabel(status)}. Zum Ändern klicken.`}
-          className={cn('rounded-full hover:bg-muted/80', className)}
+          className={cn(
+            'rounded-full bg-transparent shadow-none hover:bg-transparent aria-expanded:bg-transparent dark:hover:bg-transparent dark:aria-expanded:bg-transparent',
+            className
+          )}
+          onPointerDown={(event) => {
+            openedWithPointer.current =
+              event.pointerType === 'mouse' ||
+              event.pointerType === 'pen' ||
+              event.pointerType === 'touch';
+          }}
+          onKeyDown={() => {
+            openedWithPointer.current = false;
+          }}
           onClick={(e) => e.stopPropagation()}
         >
           <TaskStatusIcon status={status} />
@@ -84,6 +99,11 @@ export function TaskStatusPicker({
         align="start"
         className="min-w-44"
         onClick={(e) => e.stopPropagation()}
+        onCloseAutoFocus={(event) => {
+          if (!openedWithPointer.current) return;
+          event.preventDefault();
+          triggerRef.current?.blur();
+        }}
       >
         {ISSUE_STATUS_OPTIONS.map((option) => {
           const isSelected = option.value === status;

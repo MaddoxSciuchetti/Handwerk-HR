@@ -1,3 +1,4 @@
+import { DocumentTextSelection } from '../util/documentTextSelection.util';
 import StarterKit from '@tiptap/starter-kit';
 import { TextStyle, FontFamily, Color } from '@tiptap/extension-text-style';
 import TextAlign from '@tiptap/extension-text-align';
@@ -29,6 +30,7 @@ export function documentEditorExtensions(
       codeBlock: false,
       horizontalRule: false,
     }),
+    DocumentTextSelection,
     TextStyle,
     FontFamily,
     Color,

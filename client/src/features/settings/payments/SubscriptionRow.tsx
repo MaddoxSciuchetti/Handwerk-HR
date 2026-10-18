@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { GrowingItem, Items } from '@/features/settings/components/Table';
+import { TableCell, TableRow } from '@/components/ui/table';
 
 type SubscriptionRowProps = {
   planName: string;
@@ -13,13 +13,14 @@ export function SubscriptionRow({
   onChangePaymentMethod,
 }: SubscriptionRowProps) {
   return (
-    <Items state="default">
-      <GrowingItem>
+    <TableRow className="hover:bg-transparent">
+      <TableCell className="whitespace-normal">
         <div className="flex flex-col">
           <p className="typo-body-sm font-medium">Aktuelles Abo</p>
           <p className="typo-caption text-muted-foreground">{planName}</p>
         </div>
-      </GrowingItem>
+      </TableCell>
+      <TableCell className="pr-6 text-right">
       <Button
         size="sm"
         className="rounded-full text-xs"
@@ -28,6 +29,7 @@ export function SubscriptionRow({
       >
         {isLoading ? 'Weiterleitung…' : 'Zahlungsmethode ändern'}
       </Button>
-    </Items>
+      </TableCell>
+    </TableRow>
   );
 }

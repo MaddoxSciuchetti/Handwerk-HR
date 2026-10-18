@@ -1,4 +1,5 @@
-import LoadingAlert from '@/components/alerts/LoadingAlert';
+import { Skeleton } from '@/components/ui/skeleton';
+import { QuestionnaireSkeleton } from './QuestionnaireSkeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,7 +13,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { paletteItems, QuestionnairePalette } from './QuestionnairePalette';
 import { QuestionnaireStack, type DragPayload } from './QuestionnaireStack';
 import { blocksFromItems, itemsFromBlocks } from './questionnaireBlocks';
 import {
@@ -77,8 +77,7 @@ export function QuestionnaireTemplatePage() {
     void navigate({ to: '/fragebogen/preview' });
   };
 
-  if (template.isPending) return <LoadingAlert />;
-  if (template.isError || !template.data) {
+  if (!template.isPending && (template.isError || !template.data)) {
     return (
       <p className="p-6 text-sm text-destructive">
         Fragebogen konnte nicht geladen werden.
@@ -86,34 +85,29 @@ export function QuestionnaireTemplatePage() {
     );
   }
 
-  const catalog = template.data.catalog;
   const blocks = blocksFromItems(items);
 
-  const addItems = (next: TemplateItem[]) => {
+  const insertItems = (index: number, next: TemplateItem[]) => {
     const placed = new Set(items.map((item) => item.key));
-    setItems([...items, ...next.filter((item) => !placed.has(item.key))]);
+    const incoming = next.filter((item) => !placed.has(item.key));
+    if (incoming.length === 0) return;
+    const offset = blocks
+      .slice(0, index)
+      .reduce((sum, block) => sum + block.items.length, 0);
+    const current = [...items];
+    current.splice(offset, 0, ...incoming);
+    setItems(current);
   };
 
   const drop = (index: number, payload: DragPayload) => {
+    if (payload.source !== 'stack') return;
     const current = blocksFromItems(items);
-    if (payload.source === 'stack') {
-      const from = current.findIndex((block) => block.id === payload.id);
-      if (from < 0) return;
-      const [moved] = current.splice(from, 1);
-      if (!moved) return;
-      const target = from < index ? index - 1 : index;
-      current.splice(target, 0, moved);
-      setItems(itemsFromBlocks(current));
-      return;
-    }
-    const incoming = paletteItems(catalog, payload.id).filter(
-      (item) => !items.some((placed) => placed.key === item.key)
-    );
-    if (incoming.length === 0) return;
-    current.splice(index, 0, {
-      id: payload.id,
-      items: incoming,
-    });
+    const from = current.findIndex((block) => block.id === payload.id);
+    if (from < 0) return;
+    const [moved] = current.splice(from, 1);
+    if (!moved) return;
+    const target = from < index ? index - 1 : index;
+    current.splice(target, 0, moved);
     setItems(itemsFromBlocks(current));
   };
 
@@ -138,7 +132,7 @@ export function QuestionnaireTemplatePage() {
   };
 
   return (
-    <div className="mx-auto flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
+    <div className="mx-auto h-full min-h-0 overflow-x-hidden overflow-y-auto rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
           <SettingsPageHeader title="Fragebogen" />
@@ -148,6 +142,7 @@ export function QuestionnaireTemplatePage() {
             type="button"
             variant="outline"
             className="rounded-2xl"
+            disabled={template.isPending}
             onClick={openPreview}
           >
             Vorschau
@@ -155,37 +150,43 @@ export function QuestionnaireTemplatePage() {
           <Button
             type="button"
             className="rounded-2xl"
-            disabled={save.isPending || !name.trim()}
+            disabled={template.isPending || save.isPending || !name.trim()}
             onClick={() => save.mutate(itemsRef.current)}
           >
             {save.isPending ? 'Speichert…' : 'Speichern'}
           </Button>
         </div>
       </div>
-      <div className="mt-4 flex max-w-xl flex-col gap-2">
-        <Label htmlFor="questionnaire-name">Name des Fragebogens</Label>
-        <Input
-          id="questionnaire-name"
-          value={name}
-          required
-          maxLength={200}
-          onChange={(event) => setName(event.target.value)}
-        />
-      </div>
-      <div className="mt-4 grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[18rem_minmax(0,1fr)]">
-        <QuestionnairePalette
-          catalog={catalog}
-          items={items}
-          onAdd={addItems}
-        />
-        <QuestionnaireStack
-          blocks={blocks}
-          contractFields={template.data.contractFields}
-          onDrop={drop}
-          onChangeField={changeField}
-          onCommitField={commitField}
-          onRemove={remove}
-        />
+      <div className="mx-auto mt-4 w-full max-w-3xl">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="questionnaire-name">Name des Fragebogens</Label>
+          {template.isPending ? (
+            <Skeleton className="h-9 w-full" />
+          ) : (
+            <Input
+              id="questionnaire-name"
+              value={name}
+              required
+              maxLength={200}
+              onChange={(event) => setName(event.target.value)}
+            />
+          )}
+        </div>
+        <div className="mt-4">
+          {template.isPending ? (
+            <QuestionnaireSkeleton />
+          ) : (
+            <QuestionnaireStack
+              blocks={blocks}
+              contractFields={template.data?.contractFields ?? []}
+              onDrop={drop}
+              onInsert={insertItems}
+              onChangeField={changeField}
+              onCommitField={commitField}
+              onRemove={remove}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

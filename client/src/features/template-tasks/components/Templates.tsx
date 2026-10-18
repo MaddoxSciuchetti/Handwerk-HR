@@ -1,4 +1,4 @@
-import LoadingAlert from '@/components/alerts/LoadingAlert';
+import { TableSkeletonRows } from '@/components/ui/table-skeleton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { ScrollableTableViewport } from '@/components/ui/scrollable-table-viewport';
@@ -40,10 +40,6 @@ function Templates() {
   );
   const [createOpenNonce, setCreateOpenNonce] = useState(0);
 
-  if (isLoading) {
-    return <LoadingAlert />;
-  }
-
   return (
     <div className="mx-auto flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
       <div className="flex h-full min-h-0 w-full flex-col items-center gap-5">
@@ -65,7 +61,10 @@ function Templates() {
             </CardHeader>
             <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-0">
               <ScrollableTableViewport>
-                <Table className={alignedSettingsTableClassName}>
+                <Table
+                  aria-busy={isLoading}
+                  className={alignedSettingsTableClassName}
+                >
                   <colgroup>
                     <col className="w-72" />
                     <col />
@@ -85,12 +84,16 @@ function Templates() {
                     </TableRow>
                   </TableHeader>
                   <TableBody className={settingsTableBodyClassName}>
-                    <TemplateItem
-                      templates={templates ?? []}
-                      setIsEditTemplate={setIsEditTemplate}
-                      setIsOpen={setIsOpen}
-                      setTemplateState={setTemplateState}
-                    />
+                    {isLoading ? (
+                      <TableSkeletonRows variant="templates" />
+                    ) : (
+                      <TemplateItem
+                        templates={templates ?? []}
+                        setIsEditTemplate={setIsEditTemplate}
+                        setIsOpen={setIsOpen}
+                        setTemplateState={setTemplateState}
+                      />
+                    )}
                   </TableBody>
                 </Table>
               </ScrollableTableViewport>

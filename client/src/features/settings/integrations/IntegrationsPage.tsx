@@ -1,4 +1,4 @@
-import LoadingAlert from '@/components/alerts/LoadingAlert';
+import { IntegrationsSkeleton } from './IntegrationsSkeleton';
 import {
   Accordion,
   AccordionContent,
@@ -44,9 +44,7 @@ function EnabledSwitch({
         <span
           className={cn(
             'absolute top-1/2 left-0.5 size-3.5 -translate-y-1/2 rounded-full transition-transform',
-            checked
-              ? 'translate-x-4 bg-primary-foreground'
-              : 'bg-foreground'
+            checked ? 'translate-x-4 bg-primary-foreground' : 'bg-foreground'
           )}
         />
       </button>
@@ -59,7 +57,7 @@ function EnabledSwitch({
 
 function CredentialFields({ children }: { children: ReactNode }) {
   return (
-    <Accordion type="single" collapsible>
+    <Accordion type="single" collapsible className="min-w-0">
       <AccordionItem value="credentials" className="border-0">
         <AccordionTrigger
           type="button"
@@ -103,21 +101,23 @@ function MicrosoftForm({
       toast.success('Microsoft wurde gespeichert.');
     },
     onError: (error: { message?: string }) => {
-      toast.error(error.message || 'Microsoft konnte nicht gespeichert werden.');
+      toast.error(
+        error.message || 'Microsoft konnte nicht gespeichert werden.'
+      );
     },
   });
 
   return (
     <form
-      className="flex flex-col gap-3 border-b border-border px-3 py-6"
+      className="flex min-w-0 flex-col gap-3 border-b border-border px-3 py-6"
       onSubmit={(event) => {
         event.preventDefault();
         save.mutate();
       }}
     >
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-base font-semibold">Microsoft</h2>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3">
           <EnabledSwitch checked={enabled} onChange={setEnabled} />
           <Button type="submit" disabled={save.isPending}>
             Speichern
@@ -192,15 +192,15 @@ function CrewmeisterForm({
 
   return (
     <form
-      className="flex flex-col gap-3 px-3 py-6"
+      className="flex min-w-0 flex-col gap-3 px-3 py-6"
       onSubmit={(event) => {
         event.preventDefault();
         save.mutate();
       }}
     >
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-base font-semibold">Crewmeister</h2>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3">
           <EnabledSwitch checked={enabled} onChange={setEnabled} />
           <Button type="submit" disabled={save.isPending}>
             Speichern
@@ -235,30 +235,25 @@ function CrewmeisterForm({
 export function IntegrationsPage() {
   const query = useQuery({ queryKey: QUERY_KEY, queryFn: getIntegrations });
 
-  if (query.isLoading) {
-    return <LoadingAlert />;
-  }
-
   const integrations = query.data ?? [];
   const microsoft = integrations.find(
     (item) => item.provider === 'microsoft_graph'
   );
-  const crewmeister = integrations.find((item) => item.provider === 'crewmeister');
+  const crewmeister = integrations.find(
+    (item) => item.provider === 'crewmeister'
+  );
 
   return (
-    <div className="mx-auto flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
+    <div className="mx-auto flex h-full min-h-0 min-w-0 w-full max-w-full flex-col overflow-hidden rounded-2xl bg-card p-4 text-card-foreground sm:p-6 md:max-w-8xl">
       <SettingsPageHeader title="Integrationen" />
-      {query.isError || !microsoft || !crewmeister ? (
+      {query.isLoading ? (
+        <IntegrationsSkeleton />
+      ) : query.isError || !microsoft || !crewmeister ? (
         <p className="px-3 py-6 text-sm text-destructive">
           Integrationen konnten nicht geladen werden.
         </p>
       ) : (
-        <div className="min-h-0 w-full flex-1 overflow-y-auto">
-          {!microsoft.live ? (
-            <p className="px-3 pt-4 text-sm text-muted-foreground">
-              Sequenzen werden in dieser Umgebung nicht ausgeführt.
-            </p>
-          ) : null}
+        <div className="min-h-0 min-w-0 w-full flex-1 overflow-y-auto">
           <MicrosoftForm key={microsoft.tenantId} integration={microsoft} />
           <CrewmeisterForm key={crewmeister.crewId} integration={crewmeister} />
         </div>

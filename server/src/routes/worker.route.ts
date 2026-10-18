@@ -33,6 +33,7 @@ worker.post(
     workerController.sendEngagementQuestionnaireHandler,
 );
 worker.get("/", workerController.getWorkerData);
+worker.get("/statistics", workerController.getLifecycleStatistics);
 worker.get("/:workerId", workerController.getWorkerById);
 worker.put("/:workerId", workerController.updateWorker);
 worker.delete("/:workerId", workerController.deleteWorker);

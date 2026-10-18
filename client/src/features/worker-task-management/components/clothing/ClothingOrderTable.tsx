@@ -1,3 +1,4 @@
+import { TableSkeletonRows } from '@/components/ui/table-skeleton';
 import {
   Table,
   TableBody,
@@ -10,6 +11,7 @@ import { ClothingOrderRow } from './ClothingOrderRow';
 
 type ClothingOrderTableProps = {
   items: EngagementClothingItem[];
+  isLoading?: boolean;
   returningId: string | null;
   deletingId: string | null;
   onReturn: (clothingId: string, quantity: number) => Promise<unknown>;
@@ -18,16 +20,19 @@ type ClothingOrderTableProps = {
 
 export function ClothingOrderTable({
   items,
+  isLoading = false,
   returningId,
   deletingId,
   onReturn,
   onDelete,
 }: ClothingOrderTableProps) {
   return (
-    <Table>
+    <Table aria-busy={isLoading}>
       <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-0">
         <TableRow className="border-0 hover:bg-transparent">
-          <TableHead className="h-12 bg-card py-3 pl-10 pr-2">Artikel</TableHead>
+          <TableHead className="h-12 bg-card py-3 pl-10 pr-2">
+            Artikel
+          </TableHead>
           <TableHead className="bg-card py-3 px-2">Größe</TableHead>
           <TableHead className="bg-card py-3 px-2">Link</TableHead>
           <TableHead className="bg-card py-3 px-2">Herkunft</TableHead>
@@ -36,17 +41,21 @@ export function ClothingOrderTable({
           <TableHead className="bg-card py-3 pr-6 text-right"> </TableHead>
         </TableRow>
       </TableHeader>
-      <TableBody className="[&_tr]:border-0 [&_td]:py-4 [&_td]:px-2">
-        {items.map((item) => (
-          <ClothingOrderRow
-            key={item.id}
-            item={item}
-            returning={returningId === item.id}
-            deleting={deletingId === item.id}
-            onReturn={(quantity) => onReturn(item.id, quantity)}
-            onDelete={() => onDelete(item.id)}
-          />
-        ))}
+      <TableBody className="[&_tr]:border-0 [&_td]:py-4 [&_td]:px-2 [&_td:first-child]:pl-10 [&_td:last-child]:pr-6">
+        {isLoading ? (
+          <TableSkeletonRows variant="clothing" />
+        ) : (
+          items.map((item) => (
+            <ClothingOrderRow
+              key={item.id}
+              item={item}
+              returning={returningId === item.id}
+              deleting={deletingId === item.id}
+              onReturn={(quantity) => onReturn(item.id, quantity)}
+              onDelete={() => onDelete(item.id)}
+            />
+          ))
+        )}
       </TableBody>
     </Table>
   );

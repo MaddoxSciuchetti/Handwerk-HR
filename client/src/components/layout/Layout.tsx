@@ -1,5 +1,6 @@
 import { useBillingSubscription } from '@/features/settings/payments/hooks/useBillingSubscription';
 import { isSubscriptionLocked } from '@/features/settings/payments/util/subscriptionAccess.util';
+import { MentionNotice } from '@/features/all-tasks/components/MentionNotice';
 import FeatureModal from '@/features/sidebar/feature-modal/FeatureModal';
 import { useThemeProvider } from '@/hooks/useThemeProvider';
 import { Outlet, useLocation, useNavigate } from '@tanstack/react-router';
@@ -78,6 +79,7 @@ function Layout() {
           </div>
         </main>
       </SidebarInset>
+      <MentionNotice />
       {modal && (
         <Dialog open onOpenChange={(next) => { if (!next) handleOpenModal(); }}>
           <DialogContent

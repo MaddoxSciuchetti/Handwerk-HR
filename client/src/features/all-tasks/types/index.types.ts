@@ -21,7 +21,7 @@ export type IssueAssignee = {
 
 export type IssueResponse = {
   id: string;
-  workerEngagementId: string;
+  workerEngagementId: string | null;
   createdByUserId: string;
   assigneeUserId: string | null;
   assignee?: IssueAssignee | null;
@@ -33,11 +33,16 @@ export type IssueResponse = {
   kind: 'standard' | 'contract_send' | 'contract_confirm';
   isTemporary: boolean;
   assigneeOnly?: boolean;
-  workerEngagement?: { workerId: string };
+  workerEngagement?: {
+    workerId: string;
+    worker?: { firstName: string; lastName: string } | null;
+  } | null;
   title: string;
   description: string | null;
   priority: 'urgent' | 'high' | 'medium' | 'low' | 'no_priority';
   dueDate: string | null;
+  startedAt: string;
+  completedAt: string | null;
   createdAt: string;
   updatedAt: string;
 };

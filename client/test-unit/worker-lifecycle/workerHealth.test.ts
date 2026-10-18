@@ -19,6 +19,8 @@ function workerWithStatuses(
         id: 'engagement-1',
         type: 'onboarding',
         status: 'in_progress',
+        startedAt: '2026-01-01T00:00:00.000Z',
+        completedAt: null,
         startDate: null,
         endDate: null,
         responsibleUser: {

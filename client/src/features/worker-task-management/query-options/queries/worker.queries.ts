@@ -16,6 +16,7 @@ export const workerQueries = {
   getFiles: (workerId: string) =>
     queryOptions<File_Request[], Error, File_Request[]>({
       queryKey: [HISTORYDATA, workerId] as const,
+      staleTime: 30_000,
       queryFn: () => getWorkerFiles(workerId),
     }),
   getTaskHistory: (taskId: string) =>
@@ -28,6 +29,7 @@ export const workerQueries = {
   taskData: (workerId: string) =>
     queryOptions<WorkerDetailResponse, Error>({
       queryKey: [WORKERBYID, workerId],
+      staleTime: 30_000,
       queryFn: () => getWorkerById(workerId),
     }),
 };

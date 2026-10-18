@@ -76,6 +76,8 @@ export type WorkerEngagement = {
   id: string;
   type: EngagementType;
   status: EngagementProgressValue;
+  startedAt: string;
+  completedAt: string | null;
   startDate: string | null;
   endDate: string | null;
   responsibleUser: {

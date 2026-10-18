@@ -55,10 +55,15 @@ export type TaskHistoryItem = TaskHistoryAuditEntry | TaskHistoryCommentEntry;
 export const queryTasks = async (orgId: string, viewerUserId: string) => {
     return prisma.issue.findMany({
         where: {
-            workerEngagement: {
-                organizationId: orgId,
-            },
-            ...issueVisibleToViewer(viewerUserId),
+            AND: [
+                {
+                    OR: [
+                        { workerEngagement: { organizationId: orgId } },
+                        { organizationId: orgId },
+                    ],
+                },
+                issueVisibleToViewer(viewerUserId),
+            ],
         },
         orderBy: { createdAt: "desc" },
         include: {
@@ -70,7 +75,12 @@ export const queryTasks = async (orgId: string, viewerUserId: string) => {
                 },
             },
             workerEngagement: {
-                select: { workerId: true },
+                select: {
+                    workerId: true,
+                    worker: {
+                        select: { firstName: true, lastName: true },
+                    },
+                },
             },
         },
     });
@@ -131,7 +141,10 @@ export async function deleteTasksInOrg(orgId: string, taskIds: string[]) {
     return prisma.issue.deleteMany({
         where: {
             id: { in: taskIds },
-            workerEngagement: { organizationId: orgId },
+            OR: [
+                { workerEngagement: { organizationId: orgId } },
+                { organizationId: orgId },
+            ],
         },
     });
 }
@@ -145,7 +158,10 @@ export async function updateTaskInOrg(
     const existing = await prisma.issue.findFirst({
         where: {
             id: taskId,
-            workerEngagement: { organizationId: orgId },
+            OR: [
+                { workerEngagement: { organizationId: orgId } },
+                { organizationId: orgId },
+            ],
         },
         select: { id: true, workerEngagementId: true },
     });
@@ -168,6 +184,20 @@ export async function updateTaskInOrg(
         isTaskAutomationId(body.automation)
     ) {
         automation = body.automation;
+    }
+
+    if (!existing.workerEngagementId) {
+        return prisma.issue.update({
+            where: { id: existing.id },
+            data: {
+                ...(body.title !== undefined ? { title: body.title } : {}),
+                ...(body.status !== undefined ? { status: body.status } : {}),
+                ...(body.assigneeUserId !== undefined
+                    ? { assigneeUserId: body.assigneeUserId }
+                    : {}),
+                ...(automation !== undefined ? { automation } : {}),
+            },
+        });
     }
 
     return updateIssue({
@@ -535,7 +565,8 @@ export async function upsertIssueCommentInOrg(
 
     for (const person of mentioned) {
         await createIssue({
-            workerEngagementId: issue.workerEngagementId,
+            workerEngagementId: issue.workerEngagementId ?? undefined,
+            organizationId: issue.workerEngagementId ? undefined : orgId,
             createdByUserId: userId,
             assigneeUserId: person.id,
             status: "open",

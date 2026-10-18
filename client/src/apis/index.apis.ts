@@ -2,7 +2,7 @@ import API from '@/config/apiClient';
 import { TFeatureForm } from '@/features/sidebar/schemas/sidebar.schemas';
 import { FileResponse } from '@/types/api.types';
 
-export const logout = async () => API.get('/auth/logout');
+export const logout = async () => API.get('/auth/v2/logout');
 
 export const createWorkerFile = async (
   files: File[],

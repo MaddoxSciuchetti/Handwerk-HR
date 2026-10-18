@@ -1,3 +1,4 @@
+import { isCurrentDateField } from "../../../shared/document";
 import type { DocumentSegment } from "@/services/documentBody";
 import {
     answerString,
@@ -91,8 +92,8 @@ function formatMatchValue(field: MatchField, raw: string) {
     return formatted.slice(0, 8000);
 }
 
-function userTypedPoints(segment: DocumentSegment) {
-    return segment.type === "input" && segment.fieldType === "points";
+function skipQuestionnaireMatch(segment: DocumentSegment) {
+    return segment.type === "input" && (segment.fieldType === "points" || isCurrentDateField(segment));
 }
 
 export function deterministicContractValues(
@@ -113,7 +114,7 @@ export function deterministicContractValues(
         if (
             !segment ||
             segment.type !== "input" ||
-            userTypedPoints(segment) ||
+            skipQuestionnaireMatch(segment) ||
             filled.has(segment.key)
         )
             continue;
@@ -145,7 +146,7 @@ export function deterministicContractValues(
         if (!value) continue;
         const folded = fold(field.label);
         const segment = segments.find((item) => {
-            if (item.type !== "input" || userTypedPoints(item) || filled.has(item.key))
+            if (item.type !== "input" || skipQuestionnaireMatch(item) || filled.has(item.key))
                 return false;
             return fold(item.label) === folded || fold(item.key) === folded;
         });
@@ -179,7 +180,7 @@ export function contractValuesFromAnswers(
     const seen = new Set<string>();
 
     for (const segment of segments) {
-        if (segment.type !== "input" || userTypedPoints(segment) || seen.has(segment.key))
+        if (segment.type !== "input" || skipQuestionnaireMatch(segment) || seen.has(segment.key))
             continue;
         const field = matchAlias(segment.label, segment.key);
         if (!field) continue;
@@ -244,7 +245,7 @@ export function valuesForDocumentSegments(
     for (const segment of segments) {
         if (segment.type !== "input" || seen.has(segment.key)) continue;
         seen.add(segment.key);
-        if (userTypedPoints(segment)) continue;
+        if (skipQuestionnaireMatch(segment)) continue;
         const field = matchAlias(segment.label, segment.key);
         if (!field) {
             unresolved.push({ key: segment.key, label: segment.label });

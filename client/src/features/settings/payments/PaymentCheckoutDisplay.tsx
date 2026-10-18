@@ -1,4 +1,5 @@
-import { Table } from '@/features/settings/components/Table';
+import { Card, CardContent } from '@/components/ui/card';
+import { Table, TableBody } from '@/components/ui/table';
 import type { ReactNode } from 'react';
 import { SettingsPageHeader } from '@/features/settings/components/SettingsPageHeader';
 import { Link } from '@tanstack/react-router';
@@ -69,25 +70,31 @@ export function PaymentPlanDisplay({
           Pläne vergleichen
         </Link>
       </div>
-      <Table className="w-full">
-        {hasActiveSubscription ? (
-          <SubscriptionRow
-            planName={planName}
-            isLoading={isPortalLoading}
-            onChangePaymentMethod={onManageBilling}
-          />
-        ) : (
-          PAYMENT_PLANS.map((plan) => (
-            <PlanRow
-              key={plan.id}
-              name={plan.name}
-              price={plan.price}
-              isLoading={pendingPriceId === plan.priceId}
-              onSubscribe={() => onSubscribe(plan.priceId)}
-            />
-          ))
-        )}
-      </Table>
+      <Card className="mt-5 w-full gap-0 border border-border py-0 shadow-none ring-0">
+        <CardContent className="px-2 py-2">
+          <Table>
+            <TableBody className="[&_tr]:border-0 [&_td]:px-2 [&_td]:py-4 [&_td:first-child]:pl-10">
+              {hasActiveSubscription ? (
+                <SubscriptionRow
+                  planName={planName}
+                  isLoading={isPortalLoading}
+                  onChangePaymentMethod={onManageBilling}
+                />
+              ) : (
+                PAYMENT_PLANS.map((plan) => (
+                  <PlanRow
+                    key={plan.id}
+                    name={plan.name}
+                    price={plan.price}
+                    isLoading={pendingPriceId === plan.priceId}
+                    onSubscribe={() => onSubscribe(plan.priceId)}
+                  />
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
       {children}
     </section>
   );

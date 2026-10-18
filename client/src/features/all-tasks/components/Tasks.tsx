@@ -1,4 +1,4 @@
-import LoadingAlert from '@/components/alerts/LoadingAlert';
+import { TableSkeletonRows } from '@/components/ui/table-skeleton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollableTableViewport } from '@/components/ui/scrollable-table-viewport';
@@ -32,6 +32,8 @@ import { ArbeitszeugnisSendDialog } from '@/features/worker-task-management/comp
 import { TaskItem } from './TaskItem';
 import { TaskSidebar } from './TaskSidebar';
 import { Segment, TaskSegmentToggle } from './ui/taskHeader';
+import { engagementsAwaitingTemplate } from '@/features/worker-task-management/pendingTemplate';
+import { TemplateApplyPrompt } from '@/features/worker-task-management/components/tasks/TemplateApplyPrompt';
 
 function Tasks() {
   const { user } = useAuth();
@@ -42,7 +44,7 @@ function Tasks() {
   const filteredTasks = useMemo(() => {
     const visibleTasks =
       segment === 'left'
-        ? (data ?? []).filter((task) => !task.assigneeOnly)
+        ? (data ?? [])
         : (data?.filter((task) => task.assigneeUserId === user?.id) ?? []);
 
     return confirmationTasksFirst(visibleTasks);
@@ -91,7 +93,7 @@ function Tasks() {
     });
   };
 
-  if (isLoading) return <LoadingAlert />;
+  const templateTargets = engagementsAwaitingTemplate(filteredTasks);
 
   return (
     <div className="mx-auto flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
@@ -126,7 +128,7 @@ function Tasks() {
         ) : null}
         <GreetingHeader firstname={user?.firstName ?? ''} />
         <Card className="mt-5 flex min-h-0 flex-1 flex-col gap-0 border border-border py-0 shadow-none ring-0">
-          <CardHeader className="flex shrink-0 flex-row flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-3">
+          <CardHeader className="flex shrink-0 flex-row flex-wrap items-center justify-between gap-4 px-6 py-3">
             <CardTitle className="text-base font-medium">
               Alle Aufgaben
             </CardTitle>
@@ -143,61 +145,67 @@ function Tasks() {
           </CardHeader>
           <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-0">
             <ScrollableTableViewport>
-              <Table>
+              <Table aria-busy={isLoading}>
                 <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-0">
                   <TableRow className="border-0 hover:bg-transparent">
-                    <TableHead className="h-12 bg-card py-3 pl-10 pr-2">
+                    <TableHead className="w-px h-12 bg-card py-3 pl-10 pr-2">
                       Titel
                     </TableHead>
-                    <TableHead className="bg-card py-3 px-2" />
+                    <TableHead className="w-px bg-card py-3 px-2" />
                     <TableHead className="bg-card py-3 px-2 text-right">
                       Beschreibung
                     </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody className="[&_tr]:border-0 [&_td]:py-4 [&_td]:px-2 [&_td:first-child]:pl-10">
-                  {filteredTasks?.map((task) => (
-                    <TaskItem
-                      key={task.id}
-                      task={task}
-                      isSelected={editModeData.some(
-                        (item) => item.taskNumber === task.id
-                      )}
-                      onOpenEdit={openForEdit}
-                      onOpenContractSend={(task) => {
-                        const taskWorkerId = task.workerEngagement?.workerId;
-                        if (!taskWorkerId) return;
-                        setContractSend({
-                          workerId: taskWorkerId,
-                          engagementId: task.workerEngagementId,
-                          issueId: task.id,
-                        });
-                      }}
-                      onOpenContractConfirm={(task) => {
-                        const taskWorkerId = task.workerEngagement?.workerId;
-                        if (!taskWorkerId) return;
-                        setContractConfirm({
-                          workerId: taskWorkerId,
-                          engagementId: task.workerEngagementId,
-                          issueId: task.id,
-                        });
-                      }}
-                      setLargeEditMode={setLargeEditMode}
-                      setEditModeData={handleSetEditModeData}
-                    />
-                  ))}
+                  {isLoading ? (
+                    <TableSkeletonRows variant="tasks" />
+                  ) : (
+                    filteredTasks?.map((task) => (
+                      <TaskItem
+                        key={task.id}
+                        task={task}
+                        isSelected={editModeData.some(
+                          (item) => item.taskNumber === task.id
+                        )}
+                        onOpenEdit={openForEdit}
+                        onOpenContractSend={(task) => {
+                          const taskWorkerId = task.workerEngagement?.workerId;
+                          if (!taskWorkerId) return;
+                          setContractSend({
+                            workerId: taskWorkerId,
+                            engagementId: task.workerEngagementId,
+                            issueId: task.id,
+                          });
+                        }}
+                        onOpenContractConfirm={(task) => {
+                          const taskWorkerId = task.workerEngagement?.workerId;
+                          if (!taskWorkerId) return;
+                          setContractConfirm({
+                            workerId: taskWorkerId,
+                            engagementId: task.workerEngagementId,
+                            issueId: task.id,
+                          });
+                        }}
+                        setLargeEditMode={setLargeEditMode}
+                        setEditModeData={handleSetEditModeData}
+                      />
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </ScrollableTableViewport>
           </CardContent>
         </Card>
-        {largeEditMode && (
+        {largeEditMode ? (
           <LargeEditMode
             editModeData={editModeData}
             setLargeEditMode={setLargeEditMode}
             setEditModeData={handleSetEditModeData}
           />
-        )}
+        ) : templateTargets.length > 0 ? (
+          <TemplateApplyPrompt targets={templateTargets} />
+        ) : null}
       </div>
     </div>
   );

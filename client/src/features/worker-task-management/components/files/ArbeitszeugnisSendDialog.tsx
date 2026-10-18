@@ -1,4 +1,4 @@
-import LoadingAlert from '@/components/alerts/LoadingAlert';
+import { PdfSkeleton } from '@/components/ui/pdf-skeleton';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { FETCHDESCRIPTION } from '@/features/all-tasks/consts/query.consts';
@@ -188,7 +188,7 @@ export function ArbeitszeugnisSendDialog({
     <Dialog open onOpenChange={(next) => { if (!next) void close(); }}>
       <DialogContent className={`w-full border-0 bg-transparent p-0 shadow-none sm:max-w-[min(96vw,90rem)] ${documentPreviewModalSize}`}>
       <div className={documentPreviewModalPanel}>
-        {preview.isLoading ? <LoadingAlert className="min-h-40" /> : null}
+        {preview.isLoading ? <PdfSkeleton /> : null}
         {preview.isError || (!preview.isLoading && !data) ? (
           <p className="text-sm text-destructive">
             Das Arbeitszeugnis konnte nicht geladen werden.

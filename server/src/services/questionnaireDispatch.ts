@@ -6,6 +6,7 @@ import {
     definitionFields,
     definitionRepeaters,
     presentQuestions,
+    parseQuestionnaireDefinition,
     readEngagementDraft,
     withAddedQuestions,
     type QuestionnaireDefinition,
@@ -13,7 +14,7 @@ import {
 } from "@/services/questionnaireDefinition";
 import { completeMockQuestionnaire } from "@/services/questionnaireMock";
 import { primaryEmploymentContract } from "@/services/documentMaster.service";
-import { questionnaireForOrganization } from "@/services/questionnaireTemplate";
+import { employmentContractFields, questionnaireForOrganization } from "@/services/questionnaireTemplate";
 import AppError from "@/utils/AppError";
 import { getQuestionnaireTemplate } from "@/utils/emailTemplates";
 import { sendMail } from "@/utils/sendMail";
@@ -29,7 +30,7 @@ async function findEngagement(organizationId: string, engagementId: string) {
         where: { id: engagementId, organizationId, type: "onboarding" },
         include: {
             worker: { select: { id: true, email: true } },
-            questionnaireSubmission: { select: { id: true, token: true, status: true } },
+            questionnaireSubmission: { select: { id: true, token: true, status: true, formDefinition: true } },
         },
     });
     if (!engagement) throw new AppError(NOT_FOUND, "Einsatz nicht gefunden.");
@@ -45,6 +46,7 @@ function previewFrom(
     return {
         name: merged.name ?? "Personalfragebogen",
         intro: merged.intro,
+        items: merged.items,
         questions: presentQuestions(merged).map((question) => ({
             ...question,
             officeEditable: true,
@@ -75,7 +77,14 @@ export async function getQuestionnaireDraft(params: {
         sent: Boolean(engagement.questionnaireSubmission),
         status: engagement.questionnaireSubmission?.status ?? null,
         mockEnabled: QUESTIONNAIRE_MOCK_RESPONSES,
-        ...previewFrom(definition, draft.values, draft.questions),
+        contractFields: await employmentContractFields(params.organizationId),
+        ...previewFrom(
+            engagement.questionnaireSubmission?.formDefinition
+                ? parseQuestionnaireDefinition(engagement.questionnaireSubmission.formDefinition)
+                : draft.definition ?? definition,
+            draft.values,
+            draft.questions,
+        ),
     };
 }
 
@@ -84,6 +93,7 @@ export async function saveQuestionnaireDraft(params: {
     engagementId: string;
     values: unknown;
     questions?: unknown;
+    definition?: unknown;
 }) {
     const engagement = await findEngagement(params.organizationId, params.engagementId);
     if (engagement.questionnaireSubmission) {
@@ -94,7 +104,10 @@ export async function saveQuestionnaireDraft(params: {
     const questions =
         params.questions === undefined ? current.questions : parseAdded(params.questions);
     const posted = readEngagementDraft({ values: params.values }).values;
-    const merged = withAddedQuestions(definition, questions);
+    const localDefinition = params.definition === undefined
+        ? current.definition
+        : parseQuestionnaireDefinition(params.definition);
+    const merged = withAddedQuestions(localDefinition ?? definition, questions);
     const overrides: Record<string, string> = {};
     for (const field of definitionFields(merged)) {
         if (!(field.key in posted)) continue;
@@ -102,7 +115,9 @@ export async function saveQuestionnaireDraft(params: {
     }
     await prisma.workerEngagement.update({
         where: { id: engagement.id },
-        data: { questionnaireOverrides: { values: overrides, questions } },
+        data: { questionnaireOverrides: { values: overrides, questions,
+            ...(localDefinition ? { definition: localDefinition } : {}),
+        } },
     });
     return getQuestionnaireDraft(params);
 }
@@ -161,7 +176,7 @@ export async function sendEngagementQuestionnaire(params: {
     const draft = readEngagementDraft(engagement.questionnaireOverrides);
     const definition = applyOverrides(
         withAddedQuestions(
-            await questionnaireForOrganization(params.organizationId),
+            draft.definition ?? await questionnaireForOrganization(params.organizationId),
             draft.questions,
         ),
         draft.values,

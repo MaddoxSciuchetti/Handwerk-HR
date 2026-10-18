@@ -1,27 +1,32 @@
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Pencil, Check } from 'lucide-react';
+import { QuestionnaireForm } from './QuestionnaireForm';
+import { candidateItems } from './questionnairePreview';
+import {
+  QuestionnaireStack,
+  type DragPayload,
+} from '@/features/settings/questionnaire/QuestionnaireStack';
+import {
+  blocksFromItems,
+  itemsFromBlocks,
+} from '@/features/settings/questionnaire/questionnaireBlocks';
+import type {
+  ContractFieldOption,
+  TemplateItem,
+  TemplateField,
+} from '@/features/settings/questionnaire/questionnaireTemplate.types';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { apiJson } from '@/config/apiClient';
 import queryClient from '@/config/query.client';
 import { ALL_WORKER_DATA } from '@/features/worker-lifecycle/consts/query-key.consts';
 import { WORKERBYID } from '@/features/worker-task-management/consts/query-key.consts';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { toast } from 'sonner';
-import { ChoiceLineEditor, choiceLines } from './ChoiceLineEditor';
-import { QuestionnaireQuestion } from './QuestionnaireQuestion';
 import type {
   QuestionnaireQuestion as QuestionnaireQuestionData,
   QuestionnaireRepeater,
 } from './questionnaire.types';
-
-type AddedQuestion = {
-  key: string;
-  label: string;
-  section: string;
-  type: QuestionnaireQuestionData['type'];
-  options?: string[];
-};
 
 type DraftResponse = {
   success: boolean;
@@ -35,7 +40,8 @@ type DraftResponse = {
     name?: string;
     questions: QuestionnaireQuestionData[];
     repeaters: QuestionnaireRepeater[];
-    addedQuestions?: AddedQuestion[];
+    items?: TemplateItem[];
+    contractFields?: ContractFieldOption[];
   };
 };
 
@@ -49,87 +55,74 @@ type QuestionnaireSendDialogProps = {
   onClose: () => void;
 };
 
-const customTypes = [
-  { type: 'text' as const, label: 'Textfeld' },
-  { type: 'date' as const, label: 'Datum' },
-  { type: 'single' as const, label: 'Auswahl' },
-  { type: 'check' as const, label: 'Checkbox' },
-];
-
-function questionPayload(question: AddedQuestion) {
-  return {
-    kind: 'field' as const,
-    key: question.key,
-    label: question.label,
-    section: question.section,
-    type: question.type,
-    options: question.options,
-    required: true,
-    builtin: false,
-  };
-}
-
 export function QuestionnaireSendDialog({
   engagementId,
   onClose,
 }: QuestionnaireSendDialogProps) {
-  const [values, setValues] = useState<Record<string, string>>({});
-  const [added, setAdded] = useState<AddedQuestion[] | null>(null);
-  const [label, setLabel] = useState('');
-  const [type, setType] = useState<(typeof customTypes)[number]['type']>('text');
-  const [options, setOptions] = useState('Ja\nNein');
+  const cache = useQueryClient();
+  const [editing, setEditing] = useState(false);
+  const [localItems, setLocalItems] = useState<TemplateItem[] | null>(null);
   const draft = useQuery({
     queryKey: ['questionnaire-draft', engagementId],
     queryFn: () =>
-      apiJson.get<DraftResponse>(`/worker/engagements/${engagementId}/questionnaire`),
+      apiJson.get<DraftResponse>(
+        `/worker/engagements/${engagementId}/questionnaire`
+      ),
   });
-  const serverQuestions = draft.data?.data.questions ?? [];
-  const serverAdded = draft.data?.data.addedQuestions ?? [];
-  const addedQuestions = added ?? serverAdded;
-  const dropped = new Set(
-    added
-      ? serverAdded
-          .map((question) => question.key)
-          .filter((key) => !added.some((question) => question.key === key))
-      : []
-  );
-  const addedByKey = new Map(addedQuestions.map((question) => [question.key, question]));
-  const questions = [
-    ...serverQuestions
-      .filter((question) => !dropped.has(question.key))
-      .map((question) => {
-        const extra = addedByKey.get(question.key);
-        return extra
-          ? { ...question, label: extra.label, options: extra.options, required: true }
-          : { ...question, required: true as const };
-      }),
-    ...addedQuestions
-      .filter((question) => !serverQuestions.some((item) => item.key === question.key))
-      .map((question) => ({ ...question, required: true as const })),
-  ];
+  const data = draft.data?.data;
+  const items: TemplateItem[] = localItems ??
+    data?.items ?? [
+      ...(data?.questions ?? []).map((question) => ({
+        ...question,
+        kind: 'field' as const,
+      })),
+      ...(data?.repeaters ?? []).map((repeater) => ({
+        ...repeater,
+        kind: 'repeater' as const,
+        key: repeater.key as 'children' | 'priorEmployment',
+      })),
+    ];
+  const blocks = blocksFromItems(items);
+  const changeField = (field: TemplateField) =>
+    setLocalItems(items.map((item) => (item.key === field.key ? field : item)));
+  const insertItems = (index: number, incoming: TemplateItem[]) => {
+    const placed = new Set(items.map((item) => item.key));
+    const offset = blocks
+      .slice(0, index)
+      .reduce((sum, block) => sum + block.items.length, 0);
+    const next = [...items];
+    next.splice(offset, 0, ...incoming.filter((item) => !placed.has(item.key)));
+    setLocalItems(next);
+  };
+  const drop = (index: number, payload: DragPayload) => {
+    if (payload.source !== 'stack') return;
+    const next = [...blocks];
+    const from = next.findIndex((block) => block.id === payload.id);
+    if (from < 0) return;
+    const [moved] = next.splice(from, 1);
+    next.splice(from < index ? index - 1 : index, 0, moved!);
+    setLocalItems(itemsFromBlocks(next));
+  };
   const sent = Boolean(draft.data?.data.sent);
   const retryMock =
     draft.data?.data.mockEnabled && draft.data.data.status === 'sent';
 
-  useEffect(() => {
-    if (serverQuestions.length === 0) return;
-    setValues((current) => {
-      const next = Object.fromEntries(
-        serverQuestions.map((question) => [question.key, question.defaultValue ?? ''])
-      );
-      return { ...next, ...current };
-    });
-  }, [serverQuestions]);
-
-  const payloadValues = () =>
-    Object.fromEntries(questions.map((question) => [question.key, values[question.key] ?? '']));
-
   const persist = useMutation({
     mutationFn: () =>
-      apiJson.put<DraftResponse>(`/worker/engagements/${engagementId}/questionnaire`, {
-        values: payloadValues(),
-        questions: addedQuestions.map(questionPayload),
-      }),
+      apiJson.put<DraftResponse>(
+        `/worker/engagements/${engagementId}/questionnaire`,
+        {
+          values: Object.fromEntries(
+            items.flatMap((item) =>
+              item.kind === 'field' ? [[item.key, item.defaultValue ?? '']] : []
+            )
+          ),
+          questions: [],
+          definition: { name: data?.name ?? 'Personalfragebogen', items },
+        }
+      ),
+    onSuccess: (response) =>
+      cache.setQueryData(['questionnaire-draft', engagementId], response),
   });
 
   const send = useMutation({
@@ -151,7 +144,9 @@ export function QuestionnaireSendDialog({
         return;
       }
       if (!response.data.emailSent) {
-        toast.error('Die E-Mail ist nicht rausgegangen. Senden erneut versuchen.');
+        toast.error(
+          'Die E-Mail ist nicht rausgegangen. Senden erneut versuchen.'
+        );
         void draft.refetch();
         return;
       }
@@ -162,7 +157,7 @@ export function QuestionnaireSendDialog({
   });
 
   const close = async () => {
-    if (!sent) {
+    if (data && !sent) {
       try {
         await persist.mutateAsync();
       } catch {
@@ -173,210 +168,139 @@ export function QuestionnaireSendDialog({
     onClose();
   };
 
-  const addQuestion = () => {
-    const name = label.trim();
-    if (!name || sent) return;
-    const choices = options
-      .split('\n')
-      .map((option) => option.trim())
-      .filter(Boolean);
-    let fieldOptions: string[] | undefined;
-    if (type === 'single') {
-      if (choices.length < 2) return;
-      fieldOptions = choices;
-    }
-    if (type === 'check') {
-      const checkboxChoices = choiceLines(options);
-      if (!checkboxChoices) return;
-      fieldOptions = checkboxChoices;
-    }
-    const question: AddedQuestion = {
-      key: `custom.${crypto.randomUUID()}`,
-      label: name,
-      section: 'Weitere Angaben',
-      type,
-      options: fieldOptions,
-    };
-    setAdded([...addedQuestions, question]);
-    setValues((current) => ({ ...current, [question.key]: '' }));
-    setLabel('');
-  };
-
-  const sections = questions.reduce<
-    { title: string; questions: QuestionnaireQuestionData[] }[]
-  >((list, question) => {
-    const current = list.at(-1);
-    if (!current || current.title !== question.section) {
-      list.push({ title: question.section, questions: [question] });
-    } else {
-      current.questions.push(question);
-    }
-    return list;
-  }, []);
-
   return (
-    <Dialog open onOpenChange={(next) => { if (!next) void close(); }}>
-      <DialogContent className="w-full max-w-3xl border-0 bg-transparent p-0 shadow-none sm:max-w-3xl">
-      <div className="flex max-h-[80vh] flex-col gap-4 overflow-y-auto rounded-2xl border border-border bg-card p-6 text-card-foreground">
-        <h2 className="text-lg font-medium">Fragebogen senden</h2>
-        {draft.isPending ? <p className="text-sm text-muted-foreground">Lädt…</p> : null}
-        {draft.isError ? (
-          <p className="text-sm text-destructive">Der Fragebogen konnte nicht geladen werden.</p>
-        ) : null}
-        {draft.data ? (
-          <>
-            <p className="text-sm font-medium">{draft.data.data.name ?? 'Personalfragebogen'}</p>
-            {draft.data.data.mockEnabled ? (
-              <p role="status" className="rounded-lg border border-border bg-muted p-3 text-sm">
-                Testmodus: Senden füllt den Fragebogen mit Beispielantworten aus.
-                Es wird keine E-Mail verschickt.
+    <Dialog
+      open
+      onOpenChange={(next) => {
+        if (!next && !persist.isPending && !send.isPending) void close();
+      }}
+    >
+      <DialogContent aria-describedby={undefined} className="w-full max-w-3xl border-0 bg-transparent p-0 shadow-none sm:max-w-3xl">
+        <div className="flex h-[80vh] flex-col gap-4 overflow-hidden rounded-2xl border border-border bg-card p-6 text-card-foreground">
+          <div className="flex shrink-0 items-center justify-between gap-3 pr-6">
+            <DialogTitle className="text-lg font-medium">
+              Fragebogen senden
+            </DialogTitle>
+            {data && !sent ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={persist.isPending || send.isPending}
+                aria-pressed={editing}
+                aria-label={editing ? 'Fertig' : 'Bearbeiten'}
+                className="gap-1.5 transition-colors duration-200 motion-reduce:transition-none"
+                onClick={() => setEditing(!editing)}
+              >
+                <span aria-hidden="true" className="relative size-4 shrink-0">
+                  <Pencil
+                    className={`absolute inset-0 size-4 transition-[opacity,transform] duration-[240ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${editing ? 'scale-75 -rotate-45 opacity-0' : 'scale-100 rotate-0 opacity-100'}`}
+                  />
+                  <Check
+                    className={`absolute inset-0 size-4 transition-[opacity,transform] duration-[240ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${editing ? 'scale-100 rotate-0 opacity-100' : 'scale-75 rotate-45 opacity-0'}`}
+                  />
+                </span>
+                <span aria-hidden="true" className="grid text-left">
+                  <span
+                    className={`[grid-area:1/1] transition-[opacity,transform] duration-[240ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${editing ? '-translate-y-0.5 opacity-0' : 'translate-y-0 opacity-100'}`}
+                  >
+                    Bearbeiten
+                  </span>
+                  <span
+                    className={`[grid-area:1/1] transition-[opacity,transform] duration-[240ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${editing ? 'translate-y-0 opacity-100' : 'translate-y-0.5 opacity-0'}`}
+                  >
+                    Fertig
+                  </span>
+                </span>
+              </Button>
+            ) : null}
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            {draft.isPending ? (
+              <p className="text-sm text-muted-foreground">Lädt…</p>
+            ) : null}
+            {draft.isError ? (
+              <p className="text-sm text-destructive">
+                Der Fragebogen konnte nicht geladen werden.
               </p>
             ) : null}
-            <p className="text-sm text-muted-foreground">
-              An {draft.data.data.email ?? 'ohne E-Mail'}. Jedes Feld kann vorausgefüllt werden.
-              Ausgefüllte Felder sind für den Handwerker danach gesperrt.
-            </p>
-            {draft.data.data.intro ? (
-              <p className="text-sm text-muted-foreground">{draft.data.data.intro}</p>
-            ) : null}
-            {sections.map((section) => (
-              <section key={section.title} className="flex flex-col gap-3">
-                <h3 className="text-base font-medium">{section.title}</h3>
-                {section.questions.map((question) => {
-                  const extra = addedByKey.get(question.key);
-                  return (
-                    <div key={question.key} className="flex flex-col gap-2">
-                      <QuestionnaireQuestion
-                        question={question}
-                        value={values[question.key] ?? ''}
-                        disabled={sent}
-                        labelControl={
-                          extra && !sent ? (
-                            <Input
-                              aria-label="Frage"
-                              value={extra.label}
-                              maxLength={400}
-                              onChange={(event) =>
-                                setAdded(
-                                  addedQuestions.map((item) =>
-                                    item.key === question.key
-                                      ? { ...item, label: event.target.value }
-                                      : item
-                                  )
-                                )
-                              }
-                            />
-                          ) : undefined
-                        }
-                        onChange={(value) =>
-                          setValues((current) => ({ ...current, [question.key]: value }))
-                        }
-                      />
-                      {extra && !sent && extra.type === 'check' ? (
-                        <ChoiceLineEditor
-                          options={extra.options ?? []}
-                          onChange={(options) => {
-                            setAdded(
-                              addedQuestions.map((item) =>
-                                item.key === question.key ? { ...item, options } : item
-                              )
-                            );
-                            setValues((current) => ({
-                              ...current,
-                              [question.key]: options.includes(current[question.key] ?? '')
-                                ? (current[question.key] ?? '')
-                                : '',
-                            }));
-                          }}
-                        />
-                      ) : null}
-                      {extra && !sent ? (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="self-start rounded-2xl"
-                          onClick={() =>
-                            setAdded(addedQuestions.filter((item) => item.key !== question.key))
-                          }
-                        >
-                          Frage entfernen
-                        </Button>
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </section>
-            ))}
-            {(draft.data.data.repeaters ?? []).map((repeater) => (
-              <p key={repeater.key} className="text-sm text-muted-foreground">
-                {repeater.section} — wird vom Handwerker ausgefüllt
-              </p>
-            ))}
-            {sent ? null : (
-              <div className="flex flex-col gap-2 border-t border-border pt-4">
-                <h3 className="text-sm font-medium">Neue Frage</h3>
-                <Input
-                  value={label}
-                  placeholder="Frage"
-                  maxLength={400}
-                  onChange={(event) => setLabel(event.target.value)}
-                />
-                <select
-                  className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                  value={type}
-                  onChange={(event) =>
-                    setType(event.target.value as (typeof customTypes)[number]['type'])
-                  }
-                >
-                  {customTypes.map((option) => (
-                    <option key={option.type} value={option.type}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                {type === 'single' || type === 'check' ? (
-                  <>
-                    <textarea
-                      className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      value={options}
-                      aria-label={type === 'check' ? 'Text neben den Kästchen' : 'Antworten'}
-                      onChange={(event) => setOptions(event.target.value)}
-                    />
-                    {type === 'check' ? (
-                      <p className="text-xs text-muted-foreground">
-                        Jede Zeile steht neben einem Kästchen. Mindestens zwei.
-                      </p>
-                    ) : null}
-                  </>
+            {draft.data ? (
+              <>
+                {draft.data.data.mockEnabled ? (
+                  <p
+                    role="status"
+                    className="rounded-lg border border-border bg-muted p-3 text-sm"
+                  >
+                    Testmodus: Senden füllt den Fragebogen mit Beispielantworten
+                    aus. Es wird keine E-Mail verschickt.
+                  </p>
                 ) : null}
-                <Button type="button" className="self-start rounded-2xl" onClick={addQuestion}>
-                  Hinzufügen
-                </Button>
-              </div>
-            )}
-          </>
-        ) : null}
-        <div className="flex justify-end gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            className="rounded-2xl"
-            disabled={persist.isPending || send.isPending}
-            onClick={() => void close()}
-          >
-            Schließen
-          </Button>
-          <Button
-            type="button"
-            className="rounded-2xl"
-            disabled={!draft.data || (sent && !retryMock) || send.isPending}
-            onClick={() => send.mutate()}
-          >
-            {send.isPending ? 'Sendet…' : 'Senden'}
-          </Button>
+                <p className="my-4 text-sm text-muted-foreground">
+                  An {data?.email ?? 'ohne E-Mail'}.
+                </p>
+                {editing ? (
+                  <>
+                    <p className="mb-4 text-xs text-muted-foreground">
+                      Änderungen gelten nur für diesen Einsatz.
+                    </p>
+                    <h1 className="mb-4 text-xl font-medium">
+                      {data?.name ?? 'Personalfragebogen'}
+                    </h1>
+                    <QuestionnaireStack
+                      blocks={blocks}
+                      contractFields={data?.contractFields ?? []}
+                      onDrop={drop}
+                      onInsert={insertItems}
+                      onChangeField={changeField}
+                      onCommitField={changeField}
+                      onRemove={(id) =>
+                        setLocalItems(
+                          itemsFromBlocks(
+                            blocks.filter((block) => block.id !== id)
+                          )
+                        )
+                      }
+                    />
+                  </>
+                ) : (
+                  <QuestionnaireForm
+                    embedded
+                    preview={{
+                      name: data?.name,
+                      intro: data?.intro,
+                      items: candidateItems(items),
+                    }}
+                  />
+                )}
+              </>
+            ) : null}
+          </div>
+          <div className="flex shrink-0 justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-2xl"
+              disabled={persist.isPending || send.isPending}
+              onClick={() => void close()}
+            >
+              Schließen
+            </Button>
+            <Button
+              type="button"
+              className="rounded-2xl"
+              disabled={
+                !draft.data ||
+                (sent && !retryMock) ||
+                persist.isPending ||
+                send.isPending ||
+                items.length === 0
+              }
+              onClick={() => send.mutate()}
+            >
+              {send.isPending ? 'Sendet…' : 'Senden'}
+            </Button>
+          </div>
         </div>
-      </div>
       </DialogContent>
     </Dialog>
   );
