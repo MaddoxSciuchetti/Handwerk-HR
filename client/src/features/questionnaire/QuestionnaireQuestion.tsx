@@ -86,9 +86,8 @@ export function QuestionnaireQuestion({
                 className="size-4 accent-primary"
                 checked={value === option}
                 disabled={locked}
-                onClick={(event) => {
+                onClick={() => {
                   if (locked || value !== option) return;
-                  event.preventDefault();
                   onChange('');
                 }}
                 onChange={() => onChange(option)}

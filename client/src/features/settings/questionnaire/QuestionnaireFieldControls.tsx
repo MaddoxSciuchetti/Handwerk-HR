@@ -150,9 +150,8 @@ function QuestionAnswer({
               name={`${field.key}-default`}
               className="size-4 accent-primary"
               checked={field.defaultValue === option}
-              onClick={(event) => {
+              onClick={() => {
                 if (field.defaultValue !== option) return;
-                event.preventDefault();
                 onChange({ defaultValue: '' });
               }}
               onChange={() => onChange({ defaultValue: option })}

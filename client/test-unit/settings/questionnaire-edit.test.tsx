@@ -228,3 +228,24 @@ it('saves the BSB-only toggle and keeps the field editable for the office', asyn
     expect(savedItems[0]).toMatchObject({ bsbOnly: false, required: true })
   );
 });
+
+it('clears a selected radio answer when clicked again and saves the cleared default', async () => {
+  const user = userEvent.setup();
+  renderWithProviders(<QuestionnaireTemplatePage />);
+  const selected = await screen.findByRole('radio', { name: 'Befristet' });
+  const other = screen.getByRole('radio', { name: 'Nicht Befristet' });
+  expect(selected).toBeChecked();
+  await user.click(selected);
+  expect(selected).not.toBeChecked();
+  expect(other).not.toBeChecked();
+  await user.click(other);
+  expect(other).toBeChecked();
+  await user.click(screen.getByText('Nicht Befristet', { selector: 'label' }));
+  expect(other).not.toBeChecked();
+  await user.click(selected);
+  expect(selected).toBeChecked();
+  await user.click(selected);
+  expect(selected).not.toBeChecked();
+  await user.click(screen.getByRole('button', { name: 'Speichern' }));
+  await waitFor(() => expect(savedItems[0]).toHaveProperty('defaultValue', ''));
+});
