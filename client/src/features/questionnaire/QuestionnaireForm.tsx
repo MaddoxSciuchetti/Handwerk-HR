@@ -97,6 +97,7 @@ export function QuestionnaireForm({ token, preview, embedded }: QuestionnaireFor
 
   const done = submitted || data?.status === 'completed';
   const missing = questions.some((question) => {
+    if (question.bsbOnly || question.employerFilled) return false;
     const value = (values[question.key] ?? '').trim();
     if (question.key === 'insuranceNumber') {
       if (!value) return Boolean(question.required);
@@ -185,10 +186,10 @@ export function QuestionnaireForm({ token, preview, embedded }: QuestionnaireFor
                             <Label htmlFor={question.key}>{question.label}</Label>
                             <Input
                               id={question.key}
-                              disabled={question.employerFilled}
+                              disabled={question.employerFilled || question.bsbOnly}
                               value={values[question.key] ?? ''}
                               className={
-                                question.employerFilled
+                                question.employerFilled || question.bsbOnly
                                   ? 'bg-muted text-muted-foreground'
                                   : undefined
                               }
@@ -202,8 +203,8 @@ export function QuestionnaireForm({ token, preview, embedded }: QuestionnaireFor
                           </div>
                         ))}
                       </div>
-                      {section.questions.some((question) => question.employerFilled) ? (
-                        <p className="text-xs text-muted-foreground">Vom Betrieb ausgefüllt</p>
+                      {section.questions.some((question) => question.employerFilled || question.bsbOnly) ? (
+                        <p className="text-xs text-muted-foreground">{section.questions.some((question) => question.bsbOnly) ? 'Nur von BSB auszufüllen' : 'Vom Betrieb ausgefüllt'}</p>
                       ) : null}
                       </>
                     ) : (
@@ -211,7 +212,7 @@ export function QuestionnaireForm({ token, preview, embedded }: QuestionnaireFor
                         <QuestionnaireQuestion
                           key={question.key}
                           question={question}
-                          disabled={question.employerFilled}
+                          disabled={question.employerFilled || question.bsbOnly}
                           employerFilled={question.employerFilled}
                           uploadToken={token}
                           onUploadBusy={(busy) =>

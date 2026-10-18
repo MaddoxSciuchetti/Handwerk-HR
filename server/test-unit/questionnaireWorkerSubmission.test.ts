@@ -1,4 +1,4 @@
-import { submitPublicQuestionnaire } from "@/services/questionnaire.service";
+import { getPublicQuestionnaire, submitPublicQuestionnaire } from "@/services/questionnaire.service";
 import { prisma } from "@/lib/prisma";
 
 jest.mock("@/lib/prisma", () => ({
@@ -70,5 +70,115 @@ it("persists the worker information fields when a questionnaire is completed", a
             entryDate: new Date("2026-11-01T00:00:00Z"),
             position: "Monteur",
         },
+    });
+});
+
+it.each(["", "BSB-Wert"])(
+    "protects a BSB-only answer (%s) while accepting a worker submission",
+    async (preset) => {
+        jest.clearAllMocks();
+        (
+            prisma.questionnaireSubmission.findUnique as jest.Mock
+        ).mockResolvedValue({
+            id: "submission",
+            engagementId: "engagement",
+            status: "sent",
+            formDefinition: {
+                items: [
+                    {
+                        kind: "field",
+                        key: "custom.bsb-salary",
+                        label: "BSB-Angabe",
+                        type: "text",
+                        required: true,
+                        bsbOnly: true,
+                        defaultValue: preset,
+                    },
+                    {
+                        kind: "field",
+                        key: "custom.worker-name",
+                        label: "Angabe",
+                        type: "text",
+                        required: true,
+                    },
+                ],
+            },
+            engagement: {
+                workerId: "worker",
+                responsibleUserId: "user",
+                worker: { email: "worker@example.test" },
+                employmentContract: null,
+            },
+        });
+        (
+            prisma.questionnaireSubmission.updateMany as jest.Mock
+        ).mockResolvedValue({ count: 1 });
+        (prisma.$transaction as jest.Mock).mockImplementation((callback) =>
+            callback(prisma),
+        );
+        await expect(
+            submitPublicQuestionnaire("token", {
+                "custom.bsb-salary": "Vom Empfänger geändert",
+                "custom.worker-name": "Muster",
+            }),
+        ).resolves.toEqual({ status: "completed" });
+        expect(prisma.questionnaireAnswer.createMany).toHaveBeenCalledWith({
+            data: expect.arrayContaining([
+                {
+                    submissionId: "submission",
+                    key: "custom.worker-name",
+                    value: "Muster",
+                },
+            ]),
+        });
+        const stored = (prisma.questionnaireAnswer.createMany as jest.Mock).mock
+            .calls[0][0].data;
+        expect(
+            stored.find(
+                (entry: { key: string }) => entry.key === "custom.bsb-salary",
+            )?.value ?? "",
+        ).toBe(preset);
+        expect(stored).not.toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({ value: "Vom Empfänger geändert" }),
+            ]),
+        );
+    },
+);
+
+it("publishes BSB-only fields as locked and optional in both public form representations", async () => {
+    (prisma.questionnaireSubmission.findUnique as jest.Mock).mockResolvedValue({
+        status: "sent",
+        formDefinition: {
+            items: [
+                {
+                    kind: "field",
+                    key: "custom.bsb-salary",
+                    label: "Gehalt",
+                    type: "text",
+                    required: true,
+                    bsbOnly: true,
+                },
+            ],
+        },
+    });
+    const payload = await getPublicQuestionnaire("token");
+    expect(payload).toMatchObject({
+        questions: [
+            expect.objectContaining({
+                key: "custom.bsb-salary",
+                required: false,
+                employerFilled: true,
+                bsbOnly: true,
+            }),
+        ],
+        items: [
+            expect.objectContaining({
+                key: "custom.bsb-salary",
+                required: false,
+                employerFilled: true,
+                bsbOnly: true,
+            }),
+        ],
     });
 });

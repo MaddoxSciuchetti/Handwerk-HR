@@ -17,6 +17,7 @@ export type PreviewField = {
   max?: number;
   layout?: 'inline';
   defaultValue?: string;
+  bsbOnly?: boolean;
 };
 
 export type PreviewRepeater = {
@@ -81,15 +82,17 @@ export function candidateItems(items: PreviewItem[]): CandidateItem[] {
       label: item.label,
       section: item.section,
       type: item.type,
-      required:
-        item.type === 'file' || item.builtin === false
+      required: item.bsbOnly
+        ? false
+        : item.type === 'file' || item.builtin === false
           ? item.required !== false
           : true,
       options: item.options,
       max: item.max,
       layout: item.layout,
       defaultValue: preset || undefined,
-      employerFilled: preset.length > 0,
+      employerFilled: item.bsbOnly === true || preset.length > 0,
+      bsbOnly: item.bsbOnly,
     };
   });
 }

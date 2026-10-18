@@ -32,6 +32,7 @@ export function NewQuestionForm({
     field?.options?.join('\n') ?? (field?.type === 'check' ? '' : 'Ja\nNein')
   );
   const [required, setRequired] = useState(field?.required !== false);
+  const [bsbOnly, setBsbOnly] = useState(field?.bsbOnly === true);
   const [error, setError] = useState('');
   const custom =
     !field || field.builtin === false || field.key.startsWith('custom.');
@@ -75,6 +76,7 @@ export function NewQuestionForm({
       section: field?.section ?? 'Weitere Angaben',
       type,
       required: custom ? required : field?.required,
+      bsbOnly,
       builtin: field ? field.builtin : false,
       options: fieldOptions,
       max: type === 'text' ? (field?.max ?? 255) : undefined,
@@ -136,6 +138,11 @@ export function NewQuestionForm({
       {custom ? (
         <PflichtfeldSwitch checked={required} onChange={setRequired} />
       ) : null}
+      <PflichtfeldSwitch
+        label="Nur von BSB auszufüllen"
+        checked={bsbOnly}
+        onChange={setBsbOnly}
+      />
       {error ? (
         <p role="alert" className="text-sm text-destructive">
           {error}

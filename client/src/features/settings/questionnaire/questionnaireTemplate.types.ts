@@ -9,6 +9,7 @@ export type TemplateField = {
   max?: number;
   layout?: 'inline';
   employerFilled?: boolean;
+  bsbOnly?: boolean;
   defaultValue?: string;
   builtin?: boolean;
   contractFieldKey?: string;

@@ -2,6 +2,7 @@ import { deterministicContractValues } from "@/services/contractFieldMatch";
 import {
     hourKeys,
     isWorkerLocked,
+    presentQuestions,
     parseQuestionnaireDefinition,
     readEngagementDraft,
     seedQuestionnaireDefinition,
@@ -280,3 +281,40 @@ describe("deterministic contract matching", () => {
         expect(entries.some((entry) => entry.value === "Bitte früh")).toBe(false);
     });
 });
+
+it.each(["firstName", "custom.bsb-salary"])(
+    "preserves the BSB-only flag for %s in templates, drafts and public questions",
+    (key) => {
+        const definition = parseQuestionnaireDefinition({
+            items: [
+                {
+                    kind: "field",
+                    key,
+                    label: "BSB-Angabe",
+                    type: "text",
+                    required: true,
+                    bsbOnly: true,
+                },
+            ],
+        });
+        expect(definition.items[0]).toMatchObject({
+            bsbOnly: true,
+            required: true,
+        });
+        const draft = applyOverrides(definition, {});
+        expect(draft.items[0]).toMatchObject({ bsbOnly: true, required: true });
+        expect(presentQuestions(draft)[0]).toMatchObject({
+            bsbOnly: true,
+            employerFilled: true,
+            required: false,
+        });
+        expect(isWorkerLocked({ bsbOnly: true })).toBe(true);
+        const unlocked = parseQuestionnaireDefinition({
+            items: [{ ...definition.items[0], bsbOnly: false }],
+        });
+        expect(presentQuestions(unlocked)[0]).toMatchObject({
+            employerFilled: false,
+            required: true,
+        });
+    },
+);

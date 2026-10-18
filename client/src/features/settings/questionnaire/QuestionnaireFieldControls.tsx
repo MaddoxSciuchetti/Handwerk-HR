@@ -65,6 +65,11 @@ export function QuestionnaireFieldControls({
       >
         Bearbeiten
       </Button>
+      <PflichtfeldSwitch
+        label="Nur von BSB auszufüllen"
+        checked={field.bsbOnly === true}
+        onChange={(bsbOnly) => patch({ bsbOnly })}
+      />
       {field.type === 'file' ? (
         <PflichtfeldSwitch
           checked={field.required !== false}

@@ -194,3 +194,37 @@ it('edits builtin labels without offering unsupported type or choice changes', a
     defaultValue: 'Ada',
   });
 });
+
+it('saves the BSB-only toggle and keeps the field editable for the office', async () => {
+  const user = userEvent.setup();
+  const view = renderWithProviders(<QuestionnaireTemplatePage />);
+  const toggle = await screen.findByRole('switch', {
+    name: 'Nur von BSB auszufüllen',
+  });
+  expect(toggle).toHaveAttribute('aria-checked', 'false');
+  await user.click(toggle);
+  expect(screen.getByRole('radio', { name: 'Befristet' })).toBeEnabled();
+  await user.click(screen.getByRole('button', { name: 'Speichern' }));
+  await waitFor(() =>
+    expect(savedItems[0]).toMatchObject({ bsbOnly: true, required: true })
+  );
+  view.unmount();
+  renderWithProviders(<QuestionnaireTemplatePage />);
+  expect(
+    await screen.findByRole('switch', { name: 'Nur von BSB auszufüllen' })
+  ).toHaveAttribute('aria-checked', 'true');
+  await user.click(
+    screen.getByRole('button', { name: 'Frage bearbeiten: Arbeitsverhältnis' })
+  );
+  expect(
+    screen.getByRole('switch', { name: 'Nur von BSB auszufüllen' })
+  ).toHaveAttribute('aria-checked', 'true');
+  await user.click(
+    screen.getByRole('switch', { name: 'Nur von BSB auszufüllen' })
+  );
+  await user.click(screen.getByRole('button', { name: 'Übernehmen' }));
+  await user.click(screen.getByRole('button', { name: 'Speichern' }));
+  await waitFor(() =>
+    expect(savedItems[0]).toMatchObject({ bsbOnly: false, required: true })
+  );
+});

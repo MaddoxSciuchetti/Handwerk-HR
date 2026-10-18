@@ -20,6 +20,7 @@ export type QuestionnaireFieldItem = {
     max?: number;
     layout?: "inline";
     employerFilled?: boolean;
+    bsbOnly?: boolean;
     defaultValue?: string;
     builtin?: boolean;
     contractFieldKey?: string;
@@ -147,8 +148,8 @@ export function definitionRepeaters(definition: QuestionnaireDefinition): Questi
     return repeaters;
 }
 
-export function isWorkerLocked(field: { defaultValue?: string }) {
-    return Boolean(field.defaultValue?.trim());
+export function isWorkerLocked(field: { defaultValue?: string; bsbOnly?: boolean }) {
+    return field.bsbOnly === true || Boolean(field.defaultValue?.trim());
 }
 
 export function questionRequired(field: { type: string; required?: boolean; builtin?: boolean }) {
@@ -162,11 +163,12 @@ export function presentQuestions(definition: QuestionnaireDefinition) {
         label: field.label,
         section: field.section,
         type: field.type,
-        required: questionRequired(field),
+        required: questionRequired(field) && !field.bsbOnly,
         options: field.options,
         max: field.max,
         layout: field.layout,
         employerFilled: isWorkerLocked(field),
+        bsbOnly: field.bsbOnly,
         defaultValue: field.defaultValue,
         builtin: field.builtin,
     }));
@@ -256,6 +258,7 @@ function parseField(raw: object, seen: Set<string>): QuestionnaireFieldItem {
         required: questionRequired(base),
         employerFilled: false,
         contractFieldKey: base.type === "file" ? undefined : contractFieldKey,
+        bsbOnly: "bsbOnly" in raw && raw.bsbOnly === true,
         defaultValue: undefined,
     };
     const posted = "defaultValue" in raw && typeof raw.defaultValue === "string" ? raw.defaultValue : "";

@@ -8,10 +8,10 @@ export type QuestionnaireQuestion = {
   defaultValue?: string;
   layout?: 'inline';
   employerFilled?: boolean;
+  bsbOnly?: boolean;
   officeEditable?: boolean;
   builtin?: boolean;
   contractFieldKey?: string;
-  builtin?: boolean;
   max?: number;
 };
 
