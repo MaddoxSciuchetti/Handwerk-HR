@@ -92,7 +92,7 @@ export function TaskSidebar({
   );
 
   return (
-    <SidebarAside className="p-2" isOpen={isOpen}>
+    <SidebarAside className="p-2" isOpen={isOpen} onClose={() => setIsOpen(false)}>
       <SidebarPanel className="w-full">
         <SidebarHeader className="flex items-center justify-between gap-3 p-6">
           <div className="flex min-w-0 items-center gap-3">

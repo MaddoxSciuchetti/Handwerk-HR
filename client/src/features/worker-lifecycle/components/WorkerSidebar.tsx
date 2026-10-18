@@ -32,7 +32,7 @@ export function WorkerSidebar({ isOpen, setIsOpen, onQuestionnaire }: WorkerSide
   const isFormStep = selectedOption !== null;
 
   return (
-    <SidebarAside className="p-2" isOpen={isOpen}>
+    <SidebarAside className="p-2" isOpen={isOpen} onClose={close}>
       <SidebarPanel className="w-full">
         <SidebarHeader className="flex items-center justify-between p-6">
           {isFormStep ? (

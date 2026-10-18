@@ -13,7 +13,7 @@ type BestandAddSidebarProps = {
 
 export function BestandAddSidebar({ open, onOpenChange }: BestandAddSidebarProps) {
   return (
-    <SidebarAside className="p-2" isOpen={open} data-testid="bestand-add-sidebar">
+    <SidebarAside className="p-2" isOpen={open} onClose={() => onOpenChange(false)} data-testid="bestand-add-sidebar">
       <SidebarPanel className="w-full">
         <SidebarHeader className="flex items-center justify-between p-6">
           <Label className="text-base font-semibold">Bestand</Label>

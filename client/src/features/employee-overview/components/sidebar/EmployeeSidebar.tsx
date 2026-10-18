@@ -38,7 +38,7 @@ const EmployeeSidebar = ({
       : 'Mitarbeiter';
 
   return (
-    <SidebarAside className="p-2" isOpen={isOpen}>
+    <SidebarAside className="p-2" isOpen={isOpen} onClose={onClose}>
       <SidebarPanel className="w-full">
         <SidebarHeader className="flex items-center justify-between p-6">
           <div className="flex items-center gap-2">
