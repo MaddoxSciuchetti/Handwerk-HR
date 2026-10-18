@@ -13,7 +13,6 @@ import {
 } from '@shared/weeklyHours';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { BsbPreviewFlag } from './BsbPreviewFlag';
 import { QuestionnaireQuestion } from './QuestionnaireQuestion';
 import { WeeklyHoursAnswer } from './WeeklyHoursAnswer';
 import { QuestionnaireRepeatableRows } from './QuestionnaireRepeatableRows';
@@ -47,6 +46,7 @@ type QuestionnaireFormProps = {
     intro?: string;
     items: CandidateItem[];
   };
+  onPresetChange?: (key: string, value: string) => void;
 };
 
 type Section = {
@@ -84,7 +84,12 @@ function filledRows(rows: Record<string, string>[]) {
   );
 }
 
-export function QuestionnaireForm({ token, preview, embedded }: QuestionnaireFormProps) {
+export function QuestionnaireForm({
+  token,
+  preview,
+  embedded,
+  onPresetChange,
+}: QuestionnaireFormProps) {
   const [values, setValues] = useState<Record<string, string>>({});
   const [rows, setRows] = useState<Record<string, Record<string, string>[]>>({});
   const [submitted, setSubmitted] = useState(false);
@@ -144,6 +149,14 @@ export function QuestionnaireForm({ token, preview, embedded }: QuestionnaireFor
     },
     onSuccess: () => setSubmitted(true),
   });
+
+  const remember = (key: string, value: string) => {
+    setValues((current) => ({ ...current, [key]: value }));
+    const question = questions.find((item) => item.key === key);
+    if (preview && question?.bsbOnly) onPresetChange?.(key, value);
+  };
+  const fillsBsb = (question: QuestionnaireQuestionData) =>
+    Boolean(preview) && question.bsbOnly === true && question.type !== 'file';
 
   const done = submitted || data?.status === 'completed';
   const missing = questions.some(
@@ -236,15 +249,10 @@ export function QuestionnaireForm({ token, preview, embedded }: QuestionnaireFor
                       <WeeklyHoursAnswer
                         questions={questions}
                         values={values}
-                        showBsbFlag={
-                          Boolean(preview) &&
-                          section.questions.some(
-                            (question) => isWeekdayHourKey(question.key) && question.bsbOnly
-                          )
-                        }
-                        onChange={(key, value) =>
-                          setValues((current) => ({ ...current, [key]: value }))
-                        }
+                        fillBsb={section.questions.some(
+                          (question) => isWeekdayHourKey(question.key) && fillsBsb(question)
+                        )}
+                        onChange={remember}
                       />
                     ) : (
                       <h2 className="pt-2 text-base font-medium text-foreground">
@@ -258,51 +266,44 @@ export function QuestionnaireForm({ token, preview, embedded }: QuestionnaireFor
                           <QuestionnaireQuestion
                             key={question.key}
                             question={question}
-                            disabled={question.employerFilled}
+                            disabled={question.employerFilled && !fillsBsb(question)}
                             employerFilled={question.employerFilled}
-                            showBsbFlag={Boolean(preview) && question.bsbOnly}
+                            fillable={fillsBsb(question)}
                             uploadToken={token}
                             onUploadBusy={(busy) =>
                               setUploads((count) => count + (busy ? 1 : -1))
                             }
                             value={values[question.key] ?? ''}
-                            onChange={(value) =>
-                              setValues((current) => ({
-                                ...current,
-                                [question.key]: value,
-                              }))
-                            }
+                            onChange={(value) => remember(question.key, value)}
                           />
                         ))
                     ) : section.questions.every((question) => question.layout === 'inline') ? (
                       <>
-                      {preview && section.questions.some((question) => question.bsbOnly) ? (
-                        <BsbPreviewFlag />
-                      ) : null}
                       <div className="grid grid-cols-4 gap-3 sm:grid-cols-7">
-                        {section.questions.map((question) => (
+                        {section.questions.map((question) => {
+                          const open = fillsBsb(question);
+                          const locked = !open && (question.employerFilled || question.bsbOnly);
+                          return (
                           <div key={question.key} className="flex flex-col gap-2">
                             <Label htmlFor={question.key}>{question.label}</Label>
                             <Input
                               id={question.key}
-                              disabled={question.employerFilled || question.bsbOnly}
+                              disabled={locked}
                               value={values[question.key] ?? ''}
                               className={
-                                question.employerFilled || question.bsbOnly
-                                  ? 'bg-muted text-muted-foreground'
-                                  : undefined
+                                open
+                                  ? 'bg-muted dark:bg-muted'
+                                  : locked
+                                    ? 'bg-muted text-muted-foreground'
+                                    : undefined
                               }
-                              onChange={(event) =>
-                                setValues((current) => ({
-                                  ...current,
-                                  [question.key]: event.target.value,
-                                }))
-                              }
+                              onChange={(event) => remember(question.key, event.target.value)}
                             />
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
-                      {section.questions.some((question) => question.employerFilled || question.bsbOnly) ? (
+                      {section.questions.some((question) => !fillsBsb(question) && (question.employerFilled || question.bsbOnly)) ? (
                         <p className="text-xs text-muted-foreground">{section.questions.some((question) => question.bsbOnly) ? 'Nur von BSB auszufüllen' : 'Vom Betrieb ausgefüllt'}</p>
                       ) : null}
                       </>
@@ -311,20 +312,15 @@ export function QuestionnaireForm({ token, preview, embedded }: QuestionnaireFor
                         <QuestionnaireQuestion
                           key={question.key}
                           question={question}
-                          disabled={question.employerFilled || question.bsbOnly}
+                          disabled={(question.employerFilled || question.bsbOnly) && !fillsBsb(question)}
                           employerFilled={question.employerFilled}
-                          showBsbFlag={Boolean(preview) && question.bsbOnly}
+                          fillable={fillsBsb(question)}
                           uploadToken={token}
                           onUploadBusy={(busy) =>
                             setUploads((count) => count + (busy ? 1 : -1))
                           }
                           value={values[question.key] ?? ''}
-                          onChange={(value) =>
-                            setValues((current) => ({
-                              ...current,
-                              [question.key]: value,
-                            }))
-                          }
+                          onChange={(value) => remember(question.key, value)}
                         />
                       ))
                     )}

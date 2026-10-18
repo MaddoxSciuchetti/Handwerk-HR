@@ -14,6 +14,7 @@ type WeeklyHoursDaysProps = {
   values: Record<string, string | undefined>;
   onChange: (key: string, value: string) => void;
   disabled?: boolean;
+  highlighted?: boolean;
   variant: 'editor' | 'form';
 };
 
@@ -21,6 +22,7 @@ export function WeeklyHoursDays({
   values,
   onChange,
   disabled = false,
+  highlighted = false,
   variant,
 }: WeeklyHoursDaysProps) {
   const total = weekdayHoursTotal(values);
@@ -56,7 +58,13 @@ export function WeeklyHoursDays({
                 value={value}
                 aria-invalid={invalid}
                 aria-label={`${day.label} Stunden`}
-                className={cn('sm:w-full', variant === 'form' && 'w-24', disabled && 'bg-muted text-muted-foreground')}
+                className={cn(
+                  'sm:w-full',
+                  variant === 'form' && 'w-24',
+                  (disabled || highlighted) && 'bg-muted',
+                  highlighted && 'dark:bg-muted',
+                  disabled && 'text-muted-foreground'
+                )}
                 onChange={(event) => onChange(day.key, hourInput(event.target.value))}
               />
             </div>

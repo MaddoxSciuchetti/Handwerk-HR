@@ -142,6 +142,44 @@ it('opens the real preview and edits questions only through the engagement edito
   ).toBe(true);
 });
 
+it('keeps a BSB answer typed in the preview for this engagement', async () => {
+  vi.mocked(apiJson.get).mockResolvedValue({
+    ...draft,
+    data: {
+      ...draft.data,
+      questions: [
+        {
+          key: 'salary',
+          label: 'Gehalt',
+          section: 'BSB',
+          type: 'text',
+          bsbOnly: true,
+        },
+      ],
+    },
+  });
+  const user = userEvent.setup();
+  const onClose = vi.fn();
+  renderWithProviders(
+    <QuestionnaireSendDialog engagementId="engagement" onClose={onClose} />
+  );
+  const salary = await screen.findByRole('textbox', { name: 'Gehalt' });
+  expect(salary).toBeEnabled();
+  expect(salary).toHaveClass('bg-muted');
+  await user.type(salary, '3200');
+  await user.click(screen.getByRole('button', { name: 'Schließen' }));
+  await waitFor(() => expect(onClose).toHaveBeenCalled());
+  expect(apiJson.put).toHaveBeenCalledWith(
+    '/worker/engagements/engagement/questionnaire',
+    expect.objectContaining({
+      values: expect.objectContaining({ salary: '3200' }),
+      definition: expect.objectContaining({
+        items: [expect.objectContaining({ key: 'salary', bsbOnly: true, defaultValue: '3200' })],
+      }),
+    })
+  );
+});
+
 it('does not offer editing after sending', async () => {
   vi.mocked(apiJson.get).mockResolvedValue({
     ...draft,

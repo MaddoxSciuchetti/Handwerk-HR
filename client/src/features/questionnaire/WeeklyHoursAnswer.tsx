@@ -7,21 +7,20 @@ import {
   weeklyHoursReference,
   weekdayHoursTotal,
 } from '@shared/weeklyHours';
-import { BsbPreviewFlag } from './BsbPreviewFlag';
 import { WeeklyHoursDays } from './WeeklyHoursDays';
 import type { QuestionnaireQuestion } from './questionnaire.types';
 
 type WeeklyHoursAnswerProps = {
   questions: QuestionnaireQuestion[];
   values: Record<string, string>;
-  showBsbFlag?: boolean;
+  fillBsb?: boolean;
   onChange: (key: string, value: string) => void;
 };
 
 export function WeeklyHoursAnswer({
   questions,
   values,
-  showBsbFlag = false,
+  fillBsb = false,
   onChange,
 }: WeeklyHoursAnswerProps) {
   const days = questions.filter((question) => isWeekdayHourKey(question.key));
@@ -37,10 +36,7 @@ export function WeeklyHoursAnswer({
   return (
     <fieldset className="flex flex-col gap-4">
       {office ? (
-        <legend className="flex flex-wrap items-center gap-2 text-sm font-medium">
-          Wöchentliche Arbeitszeit
-          {showBsbFlag ? <BsbPreviewFlag /> : null}
-        </legend>
+        <legend className="text-sm font-medium">Wöchentliche Arbeitszeit</legend>
       ) : (
         <legend className="text-sm font-medium">{WEEKLY_HOURS_PROMPT}</legend>
       )}
@@ -72,11 +68,14 @@ export function WeeklyHoursAnswer({
         <WeeklyHoursDays
           variant="form"
           values={values}
-          disabled={office}
+          disabled={office && !fillBsb}
+          highlighted={fillBsb}
           onChange={onChange}
         />
       ) : null}
-      {office ? <p className="text-xs text-muted-foreground">Vom Betrieb ausgefüllt</p> : null}
+      {office && !fillBsb ? (
+        <p className="text-xs text-muted-foreground">Vom Betrieb ausgefüllt</p>
+      ) : null}
       {mismatch && reference ? (
         <p className="text-sm text-destructive">
           Die Summe {formatHours(total)} Std. weicht von „{reference.label}“ (
