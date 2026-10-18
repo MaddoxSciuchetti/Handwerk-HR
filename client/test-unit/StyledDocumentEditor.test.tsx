@@ -13,6 +13,7 @@ import { StyledDocumentEditor } from '@/features/settings/documents/StyledDocume
 import { StyledDocumentReview } from '@/features/settings/documents/StyledDocumentReview';
 import { fromSegments } from '@/features/settings/documents/styledDocument';
 import { PreparedPdfPreview } from '@/features/worker-task-management/components/files/PreparedPdfPreview';
+import { setDraggedQuestionnaireAnswer } from '@/features/worker-task-management/components/files/questionnaireAnswerDrag';
 
 const document = fromSegments([
   { type: 'text', text: 'Vertrag mit ' },
@@ -983,5 +984,39 @@ it.each(['raw', 'raw without label', 'field'])(
       kind !== 'field' ? 'text' : 'documentField'
     );
     spy.mockRestore();
+  }
+);
+
+it.each([
+  ['ja', 'true', null],
+  ['nein', 'false', null],
+  ['ja', 'true', '□'],
+  ['nein', 'false', '□'],
+])(
+  'converts dropped questionnaire answer %s into checkbox value %s (glyph %s)',
+  async (answer, expected, glyph) => {
+    const value = fromSegments([
+      {
+        type: 'input',
+        key: 'contract.accept',
+        label: 'Bestätigung',
+        fieldType: 'checkbox',
+      },
+    ]);
+    value.content.content![0].content![0].attrs!.checkboxGlyph = glyph;
+    const onValueChange = vi.fn();
+    render(
+      <StyledDocumentEditor document={value} onValueChange={onValueChange} />
+    );
+    const checkbox = await screen.findByRole('checkbox', {
+      name: 'Bestätigung',
+    });
+    setDraggedQuestionnaireAnswer({ value: answer! });
+    try {
+      fireEvent.drop(checkbox);
+      expect(onValueChange).toHaveBeenCalledWith('contract.accept', expected);
+    } finally {
+      setDraggedQuestionnaireAnswer(null);
+    }
   }
 );

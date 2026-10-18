@@ -82,37 +82,47 @@ export function editorPagination(
               const px = CSS_PX_PER_INCH / MM_PER_INCH;
               const body = (layout.height - layout.top - layout.bottom) * px;
               const pitch = layout.height * px + PAGE_SHEET_GAP_PX;
-              const origin = view.dom.getBoundingClientRect().top;
               const spacers = Array.from(
                 view.dom.querySelectorAll<HTMLElement>('[data-editor-page-gap]')
               );
               const blocks: PageBlock[] = [];
-              view.state.doc.forEach((node, offset) => {
-                const add = (pos: number, isBreak = false) => {
-                  const element = view.nodeDOM(pos);
-                  if (!(element instanceof HTMLElement)) return;
-                  const rect = element.getBoundingClientRect();
-                  const prior = spacers.reduce(
-                    (sum, spacer) =>
-                      Number(spacer.dataset.position) <= pos
-                        ? sum + Number(spacer.dataset.height)
-                        : sum,
-                    0
-                  );
-                  blocks.push({
-                    pos,
-                    top: (rect.top - origin) / layout.zoom - prior,
-                    height: isBreak ? 0 : rect.height / layout.zoom,
-                    break: isBreak,
-                  });
-                };
-                if (
-                  node.type.name === 'orderedList' ||
-                  node.type.name === 'bulletList'
-                )
-                  node.forEach((_item, index) => add(offset + 1 + index));
-                else add(offset, node.type.name === 'pageBreak');
+              // Measure natural flow, not the previous pagination result. Gap
+              // widgets affect margin collapse and table/list geometry, so
+              // subtracting their heights can feed those changes back forever.
+              const displays = spacers.map((spacer) => spacer.style.display);
+              spacers.forEach((spacer) => {
+                spacer.style.display = 'none';
               });
+              try {
+                const origin = view.dom.getBoundingClientRect().top;
+                // Subpixel noise at different zoom/scroll positions must not
+                // replace otherwise identical decorations on every resize.
+                const pixels = (value: number) =>
+                  Math.round((value / layout.zoom) * 64) / 64;
+                view.state.doc.forEach((node, offset) => {
+                  const add = (pos: number, isBreak = false) => {
+                    const element = view.nodeDOM(pos);
+                    if (!(element instanceof HTMLElement)) return;
+                    const rect = element.getBoundingClientRect();
+                    blocks.push({
+                      pos,
+                      top: pixels(rect.top - origin),
+                      height: isBreak ? 0 : pixels(rect.height),
+                      break: isBreak,
+                    });
+                  };
+                  if (
+                    node.type.name === 'orderedList' ||
+                    node.type.name === 'bulletList'
+                  )
+                    node.forEach((_item, index) => add(offset + 1 + index));
+                  else add(offset, node.type.name === 'pageBreak');
+                });
+              } finally {
+                spacers.forEach((spacer, index) => {
+                  spacer.style.display = displays[index];
+                });
+              }
               const result = paginateBlocks(blocks, body, pitch);
               onPages(result.pages);
               const next = JSON.stringify(result.gaps);

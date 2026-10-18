@@ -1,5 +1,8 @@
 import { useContext, useEffect, useRef, type DragEvent } from 'react';
-import { currentDocumentDate } from '@shared/document';
+import {
+  currentDocumentDate,
+  normalizeDocumentFieldValue,
+} from '@shared/document';
 import { Node, mergeAttributes } from '@tiptap/core';
 import {
   NodeViewWrapper,
@@ -32,11 +35,24 @@ function InlineValue({ label, value, readOnly, onChange }: InlineValueProps) {
       role="textbox"
       aria-label={label}
       aria-readonly={readOnly}
+      title={value || label}
       data-placeholder={label}
       contentEditable={!readOnly}
       suppressContentEditableWarning
-      className="document-inline-value mx-0.5 border-b border-blue-400 bg-blue-50 px-0.5 outline-none"
-      style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}
+      className="document-inline-value mx-0.5 border-b border-blue-400 bg-blue-50 px-0.5 outline-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      style={{
+        display: 'inline-block',
+        maxWidth: '100%',
+        verticalAlign: 'bottom',
+        whiteSpace: 'nowrap',
+        overflowWrap: 'normal',
+        overflowX: readOnly ? 'hidden' : 'auto',
+        textOverflow: readOnly ? 'ellipsis' : 'clip',
+      }}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' && !event.nativeEvent.isComposing)
+          event.preventDefault();
+      }}
       onInput={(e) => onChange(e.currentTarget.innerText)}
       onPaste={(e) => {
         e.preventDefault();
@@ -45,7 +61,7 @@ function InlineValue({ label, value, readOnly, onChange }: InlineValueProps) {
         const range = selection.getRangeAt(0);
         range.deleteContents();
         const text = window.document.createTextNode(
-          e.clipboardData.getData('text/plain')
+          e.clipboardData.getData('text/plain').replace(/\r\n|[\r\n]/g, ' ')
         );
         range.insertNode(text);
         range.setStartAfter(text);
@@ -92,7 +108,11 @@ function MasterDocumentField({
         fieldType === 'date' && !readOnly ? onUseTodayChange : undefined
       }
     >
-      <span data-drag-handle className="inline" onDoubleClick={rename}>
+      <span
+        data-drag-handle
+        className="inline-block max-w-full align-bottom"
+        onDoubleClick={rename}
+      >
         {fieldType === 'checkbox' ? (
           <span
             role="checkbox"
@@ -102,7 +122,10 @@ function MasterDocumentField({
             className="mx-0.5 inline-block size-3.5 rounded-[2px] border border-current bg-blue-50 align-[-0.125em]"
           />
         ) : (
-          <span className="mx-0.5 rounded border bg-blue-50 px-1 text-blue-900">
+          <span
+            title={label}
+            className="mx-0.5 inline-block max-w-full overflow-hidden rounded border bg-blue-50 px-1 align-bottom text-ellipsis whitespace-nowrap text-blue-900"
+          >
             {label}
             {useToday ? ' (heute)' : ''}
           </span>
@@ -142,7 +165,8 @@ function DocumentFieldView({ node, updateAttributes, editor }: NodeViewProps) {
   return (
     <NodeViewWrapper
       as="span"
-      className="inline"
+      className="inline-block max-w-full align-baseline whitespace-nowrap"
+      style={{ whiteSpace: 'nowrap' }}
       contentEditable={false}
       onDragOver={(e: DragEvent<HTMLSpanElement>) => {
         if (
@@ -157,7 +181,10 @@ function DocumentFieldView({ node, updateAttributes, editor }: NodeViewProps) {
         const answer = getDraggedQuestionnaireAnswer();
         if (answer && !context.master && !context.readOnly && !useToday) {
           e.preventDefault();
-          context.onValueChange(key, answer.value);
+          context.onValueChange(
+            key,
+            normalizeDocumentFieldValue(node.attrs.fieldType, answer.value)
+          );
           setDraggedQuestionnaireAnswer(null);
         }
       }}
@@ -283,7 +310,10 @@ function DocumentFieldView({ node, updateAttributes, editor }: NodeViewProps) {
             const answer = getDraggedQuestionnaireAnswer();
             if (answer && !context.readOnly && !useToday) {
               e.preventDefault();
-              context.onValueChange(key, answer.value);
+              context.onValueChange(
+                key,
+                normalizeDocumentFieldValue(node.attrs.fieldType, answer.value)
+              );
               setDraggedQuestionnaireAnswer(null);
             }
           }}

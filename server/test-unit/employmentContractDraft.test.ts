@@ -7,6 +7,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { fromSegments } from "../../shared/document";
 import { sendPreparedDocument } from "@/services/preparedDocument";
+import { QUESTIONNAIRE_FIELDS } from "@/services/questionnaireForm";
 
 jest.mock("@/lib/prisma", () => ({
     prisma: {
@@ -470,3 +471,49 @@ it("rejects a draft save racing with a template switch instead of overwriting th
     ).rejects.toThrow("inzwischen geändert");
     expect(prisma.employmentContractValue.deleteMany).not.toHaveBeenCalled();
 });
+
+it.each([
+    ["ja", "true"],
+    ["nein", "false"],
+])(
+    "persists questionnaire checkbox answer %s as %s when refreshing the contract",
+    async (answer, expected) => {
+        const field = QUESTIONNAIRE_FIELDS.find(
+            (field) =>
+                field.type === "single" &&
+                field.options?.includes("ja") &&
+                field.options?.includes("nein"),
+        )!;
+        contract.master = {
+            name: "Vertrag",
+            revision: 4,
+            body: fromSegments([
+                {
+                    type: "input",
+                    key: "contract.checkbox",
+                    label: field.label,
+                    fieldType: "checkbox",
+                    required: false,
+                },
+            ]),
+        };
+        contract.engagement = {
+            questionnaireSubmission: {
+                status: "completed",
+                answers: [{ key: field.key, value: answer }],
+            },
+            worker: { email: "test@example.com" },
+        };
+        const view = await resyncEngagementContractFromQuestionnaire(params);
+        expect(prisma.employmentContractValue.createMany).toHaveBeenCalledWith({
+            data: [
+                {
+                    employmentContractId: "contract",
+                    key: "contract.checkbox",
+                    value: expected,
+                },
+            ],
+        });
+        expect(view.values).toEqual({ "contract.checkbox": expected });
+    },
+);

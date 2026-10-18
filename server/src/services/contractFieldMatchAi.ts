@@ -41,7 +41,7 @@ function leftoverFields(
     segments: DocumentSegment[],
     filled: Set<string>,
 ) {
-    const fields: { key: string; label: string }[] = [];
+    const fields: { key: string; label: string; fieldType?: string }[] = [];
     const seen = new Set<string>();
     for (const segment of segments) {
         if (
@@ -54,13 +54,17 @@ function leftoverFields(
             continue;
         }
         seen.add(segment.key);
-        fields.push({ key: segment.key, label: segment.label });
+        fields.push({
+            key: segment.key,
+            label: segment.label,
+            fieldType: segment.fieldType,
+        });
     }
     return fields;
 }
 
 async function askModel(
-    fields: { key: string; label: string }[],
+    fields: { key: string; label: string; fieldType?: string }[],
     answers: { key: string; label: string; value: string }[],
 ) {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
