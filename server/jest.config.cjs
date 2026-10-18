@@ -18,12 +18,13 @@ module.exports = {
         "^.+\\.ts$": [
             "ts-jest",
             {
-                tsconfig: "tsconfig.json",
+                tsconfig: "tsconfig.jest.json",
                 useESM: false,
             },
         ],
     },
     clearMocks: true,
     setupFiles: ["<rootDir>/jest.setup.cjs"],
+    maxWorkers: 2,
     ...(runningCoverage ? { maxWorkers: 1 } : {}),
 };
