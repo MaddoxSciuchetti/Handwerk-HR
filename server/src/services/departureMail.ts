@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { microsoftSimulationEnabled } from "@/constants/env";
 import {
     integrationsLive,
     loadMicrosoft365Config,
@@ -64,6 +65,7 @@ export async function departureMailPage(
         settings,
         groups: listed.groups,
         groupsError: listed.error,
+        simulated: microsoftSimulationEnabled(),
     };
 }
 
@@ -107,7 +109,7 @@ export async function sendTeamDepartureMail(params: {
             message: "Die Entlassungsmail ist nicht eingerichtet.",
         };
     }
-    if (!integrationsLive()) {
+    if (!integrationsLive() && !microsoftSimulationEnabled()) {
         return {
             status: "failed",
             message: "Sequenzen werden in dieser Umgebung nicht ausgeführt.",

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { microsoftSimulationEnabled } from "@/constants/env";
 import { createCrewmeisterAccount } from "@/services/integrations/crewmeisterAccount";
 import {
     integrationsLive,
@@ -99,10 +100,10 @@ async function runMicrosoft(
             config,
         }));
     }
-    if (!config || !integrationsLive()) {
+    if (!config || (!integrationsLive() && !microsoftSimulationEnabled())) {
         return {
             status: "failed",
-            message: !integrationsLive()
+            message: !integrationsLive() && !microsoftSimulationEnabled()
                 ? NOT_LIVE_MESSAGE
                 : "Microsoft 365 ist für diese Organisation nicht eingerichtet.",
         };

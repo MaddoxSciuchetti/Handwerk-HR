@@ -1,3 +1,4 @@
+import { microsoftSimulationEnabled } from "@/constants/env";
 import { prisma } from "@/lib/prisma";
 import {
     listMicrosoftGroups,
@@ -90,6 +91,7 @@ export async function mailTemplatePage(
         settings,
         groups: listed.groups,
         groupsError: listed.error,
+        simulated: microsoftSimulationEnabled(),
     };
 }
 

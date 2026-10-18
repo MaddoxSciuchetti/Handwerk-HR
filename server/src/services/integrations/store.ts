@@ -1,4 +1,5 @@
 import { BAD_REQUEST } from "@/constants/http";
+import { microsoftSimulationEnabled } from "@/constants/env";
 import { prisma } from "@/lib/prisma";
 import { integrationsLive } from "@/services/integrations/runtime";
 import {
@@ -19,6 +20,7 @@ export type IntegrationView = {
     hasClientSecret: boolean;
     hasToken: boolean;
     live: boolean;
+    simulated: boolean;
 };
 
 const providers: IntegrationProvider[] = ["microsoft_graph", "crewmeister"];
@@ -47,6 +49,7 @@ function view(
         hasClientSecret: Boolean(row?.clientSecretCiphertext),
         hasToken: Boolean(row?.tokenCiphertext),
         live: integrationsLive(),
+        simulated: provider === "microsoft_graph" && microsoftSimulationEnabled(),
     };
 }
 
@@ -102,7 +105,7 @@ export async function saveOrganizationIntegration(params: {
         throw error;
     }
 
-    if (params.enabled && params.provider === "microsoft_graph") {
+    if (params.enabled && params.provider === "microsoft_graph" && !microsoftSimulationEnabled()) {
         const tenantId = (params.tenantId ?? existing?.tenantId ?? "").trim();
         const clientId = (params.clientId ?? existing?.clientId ?? "").trim();
         const domain = (params.domain ?? existing?.domain ?? "").trim();

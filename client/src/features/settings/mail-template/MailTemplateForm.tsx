@@ -1,3 +1,4 @@
+import { MicrosoftSimulationNotice } from '@/features/settings/integrations/MicrosoftSimulationNotice';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -83,6 +84,7 @@ export function MailTemplateForm({ templateId, page }: MailTemplateFormProps) {
             }))
           }
         />
+        {page.simulated && <MicrosoftSimulationNotice />}
         {page.groupsError ? (
           <p className="text-sm text-destructive">{page.groupsError}</p>
         ) : null}

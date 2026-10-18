@@ -1,5 +1,7 @@
 import { randomBytes } from "crypto";
 import type { Microsoft365EnvKey } from "@/constants/env";
+import { microsoftSimulationEnabled } from "@/constants/env";
+import { microsoftGraphFetch, SIMULATION_TOKEN } from "@/services/integrations/microsoftSimulation";
 import { prisma } from "@/lib/prisma";
 import { integrationsLive } from "@/services/integrations/runtime";
 import { sendMail } from "@/utils/sendMail";
@@ -90,7 +92,7 @@ export async function microsoft365AutomationStatus(
         name: "Microsoft 365",
         description:
             "Zugangsdaten liegen unter Integrationen. Ein Konto entsteht erst, wenn die Aufgabe ausgeführt wird.",
-        configured: Boolean(row?.enabled) && missing.length === 0,
+        configured: Boolean(row?.enabled) && (microsoftSimulationEnabled() || missing.length === 0),
         missing,
         permissions: REQUIRED_PERMISSIONS,
     };
@@ -146,6 +148,7 @@ async function readBody(response: Response) {
 
 export async function microsoftGraphToken(config: Microsoft365Config | null) {
     if (!config) return null;
+    if (microsoftSimulationEnabled()) return SIMULATION_TOKEN;
     return graphToken(config);
 }
 
@@ -187,7 +190,7 @@ async function graphRequest(
     path: string,
     init?: RequestInit,
 ) {
-    const response = await fetch(`${GRAPH}${path}`, {
+    const response = await microsoftGraphFetch(`${GRAPH}${path}`, {
         ...init,
         headers: {
             Authorization: `Bearer ${token}`,
@@ -353,7 +356,7 @@ export async function provisionMicrosoft365Account(params: {
         };
     }
 
-    if (!integrationsLive()) {
+    if (!integrationsLive() && !microsoftSimulationEnabled()) {
         return { status: "skipped", reason: "not_live" };
     }
 
@@ -424,6 +427,14 @@ export async function provisionMicrosoft365Account(params: {
     });
     let passwordMailSent = false;
     try {
+        if (microsoftSimulationEnabled()) {
+            return {
+                status: "created",
+                workEmail: created.workEmail,
+                externalId: created.externalId,
+                passwordMailSent: false,
+            };
+        }
         const sent = await sendMail({
             to: worker.email,
             subject: template.subject,

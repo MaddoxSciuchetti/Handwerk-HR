@@ -1,0 +1,100 @@
+import { createHash, randomUUID } from "node:crypto";
+import { microsoftSimulationEnabled } from "@/constants/env";
+
+export const SIMULATION_TOKEN = "simulation-microsoft-token";
+export const SIMULATION_CONFIG = {
+    tenantId: "simulation",
+    clientId: "simulation",
+    clientSecret: "simulation",
+    domain: "staging.example.test",
+    licenseSkuId: "simulation",
+};
+
+const accountEnabled = new Map<string, boolean>();
+
+function simulatedUserId(key: string) {
+    return key.startsWith("simulation-microsoft-")
+        ? key
+        : `simulation-microsoft-${createHash("sha256").update(key).digest("hex").slice(0, 24)}`;
+}
+
+/** All simulated operations terminate here; unknown operations never fall through to fetch. */
+export async function microsoftGraphFetch(
+    url: string,
+    init?: RequestInit,
+): Promise<Response> {
+    if (!microsoftSimulationEnabled()) {
+        if (
+            url.includes("simulation-microsoft-") ||
+            new Headers(init?.headers).get("Authorization") ===
+                `Bearer ${SIMULATION_TOKEN}`
+        ) {
+            throw new Error(
+                "Simulierte Microsoft-Daten können nicht live verwendet werden.",
+            );
+        }
+        return fetch(url, init);
+    }
+
+    const path = new URL(url).pathname.replace(/^\/v1\.0/, "");
+    const method = init?.method ?? "GET";
+    if (method === "GET" && path === "/groups") {
+        return Response.json({
+            value: [
+                {
+                    id: "simulation-microsoft-office",
+                    displayName: "Büro (Test)",
+                },
+                {
+                    id: "simulation-microsoft-field",
+                    displayName: "Handwerk (Test)",
+                },
+            ],
+        });
+    }
+    if (
+        method === "GET" &&
+        /^\/groups\/[^/]+\/transitiveMembers\/microsoft\.graph\.user$/.test(
+            path,
+        )
+    ) {
+        return Response.json({
+            value: [{ mail: "team@staging.example.test" }],
+        });
+    }
+    if (method === "POST" && /^\/users\/[^/]+\/sendMail$/.test(path)) {
+        return new Response(null, { status: 202 });
+    }
+    if (method === "POST" && path === "/users") {
+        const body = JSON.parse(String(init?.body));
+        const id = `simulation-microsoft-${randomUUID()}`;
+        accountEnabled.set(id, true);
+        return Response.json(
+            { id, userPrincipalName: body.userPrincipalName },
+            { status: 201 },
+        );
+    }
+    const user = path.match(/^\/users\/([^/]+)(\/assignLicense)?$/);
+    if (user) {
+        const id = simulatedUserId(decodeURIComponent(user[1]));
+        if (method === "GET" && !user[2]) {
+            return Response.json({
+                id,
+                accountEnabled: accountEnabled.get(id) ?? true,
+            });
+        }
+        if (method === "PATCH" && !user[2]) {
+            const body = JSON.parse(String(init?.body));
+            accountEnabled.set(id, body.accountEnabled !== false);
+            return new Response(null, { status: 204 });
+        }
+        if (method === "POST" && user[2]) return Response.json({ id });
+        if (method === "DELETE" && !user[2]) {
+            accountEnabled.delete(id);
+            return new Response(null, { status: 204 });
+        }
+    }
+    throw new Error(
+        `Microsoft-Simulation unterstützt diese Operation nicht: ${method} ${path}`,
+    );
+}

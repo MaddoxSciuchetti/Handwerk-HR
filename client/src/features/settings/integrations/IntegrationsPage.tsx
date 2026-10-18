@@ -1,4 +1,5 @@
 import { IntegrationsSkeleton } from './IntegrationsSkeleton';
+import { MicrosoftSimulationNotice } from './MicrosoftSimulationNotice';
 import {
   Accordion,
   AccordionContent,
@@ -124,6 +125,7 @@ function MicrosoftForm({
           </Button>
         </div>
       </div>
+      {integration.simulated && <MicrosoftSimulationNotice />}
       <CredentialFields>
         <Label htmlFor="microsoft-tenant">Tenant-ID</Label>
         <Input
@@ -254,6 +256,14 @@ export function IntegrationsPage() {
         </p>
       ) : (
         <div className="min-h-0 min-w-0 w-full flex-1 overflow-y-auto">
+          {integrations.some(
+            (integration) => !integration.live && !integration.simulated
+          ) && (
+            <p role="note" className="px-3 pt-4 text-sm text-muted-foreground">
+              Zugangsdaten können gespeichert werden. Live-Sequenzen werden in
+              dieser Umgebung nicht ausgeführt.
+            </p>
+          )}
           <MicrosoftForm key={microsoft.tenantId} integration={microsoft} />
           <CrewmeisterForm key={crewmeister.crewId} integration={crewmeister} />
         </div>

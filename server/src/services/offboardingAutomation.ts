@@ -5,6 +5,8 @@ import {
     isTaskAutomationId,
 } from "@/constants/taskAutomation.consts";
 import { prisma } from "@/lib/prisma";
+import { microsoftSimulationEnabled } from "@/constants/env";
+import { microsoftGraphFetch } from "@/services/integrations/microsoftSimulation";
 import {
     previewArbeitszeugnis,
     sendArbeitszeugnis,
@@ -31,7 +33,7 @@ type GraphUser = {
 };
 
 async function graphJson(token: string, path: string, init?: RequestInit) {
-    const response = await fetch(`${GRAPH}${path}`, {
+    const response = await microsoftGraphFetch(`${GRAPH}${path}`, {
         ...init,
         headers: {
             Authorization: `Bearer ${token}`,
@@ -278,7 +280,7 @@ export async function runTaskAutomation(params: {
         };
     }
 
-    if (!integrationsLive()) {
+    if (!integrationsLive() && !microsoftSimulationEnabled()) {
         return { status: "failed", message: NOT_LIVE_MESSAGE };
     }
     const config = await loadMicrosoft365Config(params.organizationId);

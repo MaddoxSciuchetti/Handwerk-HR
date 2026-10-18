@@ -54,6 +54,49 @@ STRIPE_WEBHOOK_SECRET=<Stripe webhook signing secret, or whsec_ placeholder for 
 
 If any of these are unset at runtime, the server throws a generic `Missing environment variable` error (the key name is not repeated in the message).
 
+### Integration credentials and staging tests
+
+The API requires `INTEGRATION_SECRET_KEY` to encrypt saved Microsoft client secrets
+and Crewmeister tokens, including dummy credentials on staging. Generate a random
+key (for example, `openssl rand -hex 32`), set it in the backend service's runtime
+environment, and restart the API. Keep the key stable across deployments; changing
+it makes existing saved secrets unreadable. Use a separate key for each environment.
+
+Saving only checks that required fields are filled; it does not authenticate with
+Microsoft or Crewmeister. Placeholder values can test saving and reloading settings.
+They cannot test a real provider connection.
+
+`INTEGRATIONS_LIVE` defaults to off. Credentials can still be saved, but sequences
+are blocked rather than simulated. To test actual provider operations on staging,
+use valid credentials for dedicated test accounts/tenants and explicitly set
+`INTEGRATIONS_LIVE=true` on that API service. This enables real provider requests,
+including account changes and emails, for all organizations using that service.
+
+For Microsoft workflow tests without real credentials, set this on the staging
+**backend** and restart/redeploy the API:
+
+```env
+MICROSOFT_SIMULATION=true
+INTEGRATIONS_LIVE=false
+```
+
+Enable Microsoft under Integrationen and save; credential fields may be left
+empty in simulation. If you enter a secret, storing it still requires
+`INTEGRATION_SECRET_KEY`. Configure mail templates with a test sender such as
+`admin@staging.example.test`, select one of the sample teams, and save the subject
+and message. Microsoft account creation/deactivation and onboarding/offboarding
+team emails can then be run through their normal task sequences.
+
+The UI shows Testmodus. Accounts use `staging.example.test` and simulated external
+IDs. Microsoft requests and account password emails are not sent. Sequences still
+update staging employee data, sent markers, task completion, and audit history;
+use disposable staging records. This does not simulate other providers or document
+delivery through Resend. Crewmeister remains subject to `INTEGRATIONS_LIVE`.
+Simulation takes precedence over live Microsoft execution even if
+`INTEGRATIONS_LIVE=true`. Unknown simulated Graph operations fail without network
+access. Remove `MICROSOFT_SIMULATION` or set it to `false` and restart to return to
+normal Microsoft behavior. Keep simulation off in production.
+
 ### Simulated questionnaire replies
 
 Set `QUESTIONNAIRE_MOCK_RESPONSES=true` in `server/.env` (or your staging API's

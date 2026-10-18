@@ -11,6 +11,7 @@ export type OrganizationIntegration = {
   hasClientSecret: boolean;
   hasToken: boolean;
   live: boolean;
+  simulated?: boolean;
 };
 
 type IntegrationsResponse = {

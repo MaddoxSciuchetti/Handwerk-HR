@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { MicrosoftSimulationNotice } from '@/features/settings/integrations/MicrosoftSimulationNotice';
 import { Spinner } from '@/components/ui/spinner';
 import {
   integrationLabel,
@@ -39,20 +40,21 @@ function TaskAutomation({
     (item) => item.provider === provider
   );
   const credentialsReady =
-    provider === 'microsoft_graph'
+    integration?.simulated ||
+    (provider === 'microsoft_graph'
       ? Boolean(
           integration?.hasClientSecret &&
-            integration.tenantId &&
-            integration.clientId &&
-            integration.domain &&
-            integration.licenseSkuId
+          integration.tenantId &&
+          integration.clientId &&
+          integration.domain &&
+          integration.licenseSkuId
         )
-      : Boolean(integration?.hasToken);
+      : Boolean(integration?.hasToken));
   const blockedReason = !integration?.enabled
     ? 'Die Integration ist deaktiviert.'
     : !credentialsReady
       ? 'Die Zugangsdaten sind unvollständig.'
-      : integration.live
+      : integration.live || integration.simulated
         ? ''
         : 'Sequenzen werden in dieser Umgebung nicht ausgeführt.';
 
@@ -75,7 +77,11 @@ function TaskAutomation({
     void queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] });
     void queryClient.invalidateQueries({ queryKey: [WORKERBYID] });
     void queryClient.invalidateQueries({ queryKey: [TASKHISTORY, taskId] });
-    toast.success('Die Sequenz wurde ausgeführt. Die Aufgabe ist erledigt.');
+    toast.success(
+      integration?.simulated
+        ? 'Die Sequenz wurde simuliert. Die Testaufgabe ist erledigt.'
+        : 'Die Sequenz wurde ausgeführt. Die Aufgabe ist erledigt.'
+    );
   };
 
   return (
@@ -83,6 +89,7 @@ function TaskAutomation({
       <p className="text-sm text-muted-foreground">
         {integrationLabel(provider)} · {sequenceLabel(sequence)}
       </p>
+      {integration?.simulated && <MicrosoftSimulationNotice />}
       {blockedReason ? (
         <p className="text-sm text-muted-foreground">{blockedReason}</p>
       ) : null}

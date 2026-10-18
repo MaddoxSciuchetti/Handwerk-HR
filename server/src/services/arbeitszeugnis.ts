@@ -1,3 +1,5 @@
+import { microsoftSimulationEnabled } from "@/constants/env";
+import { microsoftGraphFetch } from "@/services/integrations/microsoftSimulation";
 import { ARBEITSZEUGNIS } from "@/constants/taskAutomation.consts";
 import { prisma } from "@/lib/prisma";
 import { valuesForDocumentSegments } from "@/services/contractFieldMatch";
@@ -423,7 +425,7 @@ export async function sendArbeitszeugnis(params: {
         ? await senderAddress(params.organizationId)
         : "";
     const token =
-        USE_MICROSOFT_MAIL && integrationsLive()
+        USE_MICROSOFT_MAIL && (integrationsLive() || microsoftSimulationEnabled())
             ? await microsoftGraphToken(
                   await loadMicrosoft365Config(params.organizationId),
               )
@@ -462,7 +464,7 @@ export async function sendArbeitszeugnis(params: {
                 }
                 return "resend:" + artifactId;
             }
-            const response = await fetch(
+            const response = await microsoftGraphFetch(
                 `${GRAPH}/users/${encodeURIComponent(from)}/sendMail`,
                 {
                     method: "POST",

@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { microsoftSimulationEnabled } from "@/constants/env";
+import { microsoftGraphFetch } from "@/services/integrations/microsoftSimulation";
 import {
     integrationsLive,
     loadMicrosoft365Config,
@@ -26,6 +28,7 @@ export type WelcomeMailPage = {
     settings: WelcomeMailSettingsRecord | null;
     groups: MicrosoftGroupOption[];
     groupsError: string | null;
+    simulated?: boolean;
 };
 
 export type TeamWelcomeMailResult =
@@ -127,7 +130,7 @@ export function teamMailSettingsComplete(
 }
 
 async function graphJson(token: string, url: string, init?: RequestInit) {
-    const response = await fetch(url, {
+    const response = await microsoftGraphFetch(url, {
         ...init,
         headers: {
             Authorization: `Bearer ${token}`,
@@ -166,7 +169,7 @@ export async function listMicrosoftGroups(
     | { groups: MicrosoftGroupOption[]; error: null }
     | { groups: []; error: string }
 > {
-    if (!integrationsLive()) {
+    if (!integrationsLive() && !microsoftSimulationEnabled()) {
         return { groups: [], error: NOT_LIVE_MESSAGE };
     }
     const config = await loadMicrosoft365Config(organizationId);
@@ -220,6 +223,7 @@ export async function welcomeMailPage(
         settings,
         groups: listed.groups,
         groupsError: listed.error,
+        simulated: microsoftSimulationEnabled(),
     };
 }
 
@@ -355,7 +359,7 @@ export async function sendTeamWelcomeMail(params: {
     if (!teamMailSettingsComplete(settings)) {
         return { status: "skipped", reason: "not_configured" };
     }
-    if (!integrationsLive()) {
+    if (!integrationsLive() && !microsoftSimulationEnabled()) {
         return { status: "skipped", reason: "not_live" };
     }
     const config = await loadMicrosoft365Config(params.organizationId);

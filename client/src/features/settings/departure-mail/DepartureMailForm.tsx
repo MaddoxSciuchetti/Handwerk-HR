@@ -1,3 +1,4 @@
+import { MicrosoftSimulationNotice } from '@/features/settings/integrations/MicrosoftSimulationNotice';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,7 +27,7 @@ const emptyDraft: WelcomeMailSettings = {
 export function DepartureMailForm({ page }: DepartureMailFormProps) {
   const save = useSaveDepartureMail();
   const [draft, setDraft] = useState<WelcomeMailSettings>(
-    page.settings ?? emptyDraft,
+    page.settings ?? emptyDraft
   );
 
   const canSave =
@@ -81,6 +82,7 @@ export function DepartureMailForm({ page }: DepartureMailFormProps) {
             }))
           }
         />
+        {page.simulated && <MicrosoftSimulationNotice />}
         {page.groupsError ? (
           <p className="text-sm text-destructive">{page.groupsError}</p>
         ) : null}
