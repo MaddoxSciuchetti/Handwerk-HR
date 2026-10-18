@@ -99,6 +99,12 @@ function skipQuestionnaireMatch(segment: DocumentSegment) {
     return segment.type === "input" && (segment.fieldType === "points" || isCurrentDateField(segment));
 }
 
+function canCopyAnswer(segment: DocumentSegment, value: string) {
+    if (segment.type !== "input" || segment.fieldType !== "checkbox") return true;
+    const normalized = normalizeDocumentFieldValue("checkbox", value);
+    return normalized === "true" || normalized === "false";
+}
+
 export function deterministicContractValues(
     segments: DocumentSegment[],
     answers: QuestionnaireAnswers,
@@ -122,7 +128,7 @@ export function deterministicContractValues(
         )
             continue;
         const value = formatMatchValue(field, answerString(answers, field.key));
-        if (!value) continue;
+        if (!value || !canCopyAnswer(segment, value)) continue;
         filled.add(segment.key);
         consumed.add(field.key);
         entries.push({
@@ -156,7 +162,7 @@ export function deterministicContractValues(
                 return false;
             return fold(item.label) === folded || fold(item.key) === folded;
         });
-        if (!segment || segment.type !== "input") continue;
+        if (!segment || segment.type !== "input" || !canCopyAnswer(segment, value)) continue;
         filled.add(segment.key);
         consumed.add(field.key);
         entries.push({
@@ -194,7 +200,7 @@ export function contractValuesFromAnswers(
         const field = matchAlias(segment.label, segment.key);
         if (!field) continue;
         const value = values[field]?.trim() ?? "";
-        if (!value) continue;
+        if (!value || !canCopyAnswer(segment, value)) continue;
         seen.add(segment.key);
         entries.push({
             key: segment.key,
@@ -242,6 +248,54 @@ export function acceptModelMatches(
     }
 
     return entries;
+}
+
+/** Validate AI output against both the template and an identified source answer.
+ * Text must be copied; only checkbox propositions may become booleans. */
+export function acceptSemanticModelMatches(
+    fields: { key: string; fieldType?: string }[],
+    answers: { key: string; value: string }[],
+    raw: unknown,
+): { key: string; value: string }[] {
+    if (
+        !raw ||
+        typeof raw !== "object" ||
+        !("matches" in raw) ||
+        !Array.isArray(raw.matches)
+    )
+        return [];
+    const allowedFields = new Map(fields.map((field) => [field.key, field]));
+    const sources = new Map(
+        answers.map((answer) => [answer.key, answer.value.trim()]),
+    );
+    const seen = new Set<string>();
+    return raw.matches.flatMap((item: unknown) => {
+        if (!item || typeof item !== "object" || Array.isArray(item)) return [];
+        const match = item as Record<string, unknown>;
+        if (
+            match.confidence !== "high" ||
+            typeof match.key !== "string" ||
+            typeof match.answerKey !== "string" ||
+            typeof match.value !== "string"
+        )
+            return [];
+        const field = allowedFields.get(match.key);
+        const source = sources.get(match.answerKey);
+        const value = match.value.trim();
+        if (
+            !field ||
+            !source ||
+            seen.has(match.key) ||
+            !value ||
+            value.length > 8000
+        )
+            return [];
+        if (field.fieldType === "checkbox") {
+            if (value !== "true" && value !== "false") return [];
+        } else if (value !== source) return [];
+        seen.add(match.key);
+        return [{ key: match.key, value }];
+    });
 }
 
 export function valuesForDocumentSegments(

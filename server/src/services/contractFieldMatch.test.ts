@@ -303,7 +303,9 @@ it.each([
                                 matches: [
                                     {
                                         key: "contract.confirmed",
-                                        value: answer,
+                                        value: expected,
+                                        answerKey: "custom.confirmed",
+                                        confidence: "high",
                                     },
                                 ],
                             }),
