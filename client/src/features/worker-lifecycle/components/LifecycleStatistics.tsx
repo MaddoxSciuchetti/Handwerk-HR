@@ -46,37 +46,20 @@ export function LifecycleStatistics() {
     },
     refetchInterval: 60_000,
   });
-  const countDetail = (count?: Count) =>
-    count
-      ? count.overdue
-        ? `${count.overdue} überfällig`
-        : count.value === 0
-          ? 'Alles erledigt'
-          : ''
-      : '—';
-  const durationDetail = (duration?: Duration) =>
-    duration?.isRunning
-      ? ''
-      : duration?.count
-        ? `${duration.count} abgeschlossen · ${duration.level === 'orange' ? 'Frist überschritten' : duration.level === 'green' ? 'Fristen eingehalten' : 'Ohne Fristbewertung'}`
-        : '';
   const cards = [
     {
       label: 'Offene Handwerker',
       value: data?.openWorkers.value,
-      detail: countDetail(data?.openWorkers),
       level: data?.openWorkers.level,
     },
     {
       label: 'Offene Aufgaben',
       value: data?.openTasks.value,
-      detail: countDetail(data?.openTasks),
       level: data?.openTasks.level,
     },
     {
       label: 'Ø Onboarding',
       value: formatDuration(data?.onboarding.averageMs ?? null),
-      detail: durationDetail(data?.onboarding),
       level: data?.onboarding.level,
     },
     {
@@ -84,7 +67,6 @@ export function LifecycleStatistics() {
         ? 'Ø bisherige Offboarding-Dauer'
         : 'Ø Offboarding',
       value: formatDuration(data?.offboarding.averageMs ?? null),
-      detail: durationDetail(data?.offboarding),
       level: data?.offboarding.level,
     },
     {
@@ -92,7 +74,6 @@ export function LifecycleStatistics() {
         ? 'Ø bisherige Aufgabendauer'
         : 'Ø Zeit pro Aufgabe',
       value: formatDuration(data?.taskDuration.averageMs ?? null),
-      detail: durationDetail(data?.taskDuration),
       level: data?.taskDuration.level,
     },
   ];
@@ -100,31 +81,28 @@ export function LifecycleStatistics() {
     <section
       aria-label="Statistiken"
       aria-busy={isPending}
-      className="mt-5 shrink-0"
+      className="mt-4 shrink-0"
     >
-      <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 xl:grid-cols-5">
-        {cards.map(({ label, value, detail, level }) => (
+      <div className="grid grid-cols-1 gap-2 min-[480px]:grid-cols-2 xl:grid-cols-5">
+        {cards.map(({ label, value, level }) => (
           <div
             key={label}
-            className="min-w-0 rounded-xl border border-border bg-card p-4 text-card-foreground"
+            className="min-w-0 rounded-lg border border-border bg-card px-3 py-2.5 text-card-foreground"
           >
-            <div className="flex items-center justify-between gap-2 text-xs font-medium text-muted-foreground">
-              <span>{label}</span>
+            <div className="text-[11px] font-medium leading-tight text-muted-foreground">
+              {label}
             </div>
             {isPending ? (
-              <Skeleton className="my-3 h-8 w-20 rounded-lg" />
+              <Skeleton className="mt-1.5 h-6 w-16 rounded-md" />
             ) : (
               <div
                 className={cn(
-                  'mt-3 text-3xl font-semibold tracking-tight tabular-nums',
+                  'mt-1 text-xl font-semibold leading-none tracking-tight tabular-nums',
                   tones[isError ? 'neutral' : (level ?? 'neutral')]
                 )}
               >
                 {isError ? '—' : (value ?? '—')}
               </div>
-            )}
-            {!isError && !isPending && detail && (
-              <p className="mt-2 text-xs text-muted-foreground">{detail}</p>
             )}
           </div>
         ))}
