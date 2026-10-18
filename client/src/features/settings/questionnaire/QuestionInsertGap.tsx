@@ -21,6 +21,7 @@ export function QuestionInsertGap({
 
   return (
     <div
+      data-question-insert-gap=""
       className={open ? 'py-4' : 'flex h-14 items-center justify-center'}
       onMouseEnter={() => setNear(true)}
       onMouseLeave={() => setNear(false)}

@@ -1,0 +1,40 @@
+.questionnaire-sort-stack {
+  position: relative;
+  isolation: isolate;
+}
+.questionnaire-sort-item {
+  position: relative;
+}
+.questionnaire-sort-stack[data-sorting='true'] .questionnaire-sort-item {
+  transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+.questionnaire-sort-placeholder {
+  position: absolute;
+  inset: 0 0 auto;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--border, #a1a1aa);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--muted, #f4f4f5) 75%, transparent);
+  color: var(--muted-foreground, #71717a);
+  font-size: 0.875rem;
+  pointer-events: none;
+  transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.questionnaire-sort-stack[data-sorting='true'] [data-question-insert-gap] {
+  pointer-events: none;
+}
+.questionnaire-sort-stack[data-sorting='true']
+  [data-question-insert-gap]
+  > button {
+  visibility: hidden;
+}
+@media (prefers-reduced-motion: reduce) {
+  .questionnaire-sort-stack[data-sorting='true'] .questionnaire-sort-item,
+  .questionnaire-sort-placeholder {
+    transition: none;
+  }
+}
