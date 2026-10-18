@@ -1,4 +1,7 @@
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { useState } from 'react';
+import { NewQuestionForm } from './NewQuestionForm';
 import { insuranceNumberInput } from '@shared/insuranceNumber';
 import { Label } from '@/components/ui/label';
 import {
@@ -11,7 +14,10 @@ import {
 import { ChoiceLineEditor } from '@/features/questionnaire/ChoiceLineEditor';
 import { PflichtfeldSwitch } from './PflichtfeldSwitch';
 import { QuestionTitle } from './QuestionTitle';
-import type { ContractFieldOption, TemplateField } from './questionnaireTemplate.types';
+import type {
+  ContractFieldOption,
+  TemplateField,
+} from './questionnaireTemplate.types';
 
 type QuestionnaireFieldControlsProps = {
   field: TemplateField;
@@ -26,7 +32,21 @@ export function QuestionnaireFieldControls({
   onChange,
   onCommit,
 }: QuestionnaireFieldControlsProps) {
-  const patch = (next: Partial<TemplateField>) => onChange({ ...field, ...next });
+  const [editing, setEditing] = useState(false);
+  const patch = (next: Partial<TemplateField>) =>
+    onChange({ ...field, ...next });
+
+  if (editing)
+    return (
+      <NewQuestionForm
+        field={field}
+        onCancel={() => setEditing(false)}
+        onAdd={(next) => {
+          onChange(next);
+          setEditing(false);
+        }}
+      />
+    );
 
   return (
     <div className="flex min-w-0 flex-col gap-3">
@@ -34,6 +54,17 @@ export function QuestionnaireFieldControls({
         label={field.label}
         onCommit={(label) => onCommit({ ...field, label })}
       />
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        data-no-drag
+        className="self-start rounded-2xl"
+        aria-label={`Frage bearbeiten: ${field.label}`}
+        onClick={() => setEditing(true)}
+      >
+        Bearbeiten
+      </Button>
       {field.type === 'file' ? (
         <PflichtfeldSwitch
           checked={field.required !== false}
@@ -50,7 +81,8 @@ export function QuestionnaireFieldControls({
       ) : null}
       {field.type === 'file' ? (
         <p className="text-xs text-muted-foreground">
-          Die Datei wird beim Ausfüllen hochgeladen, zum Beispiel ein Führerschein.
+          Die Datei wird beim Ausfüllen hochgeladen, zum Beispiel ein
+          Führerschein.
         </p>
       ) : null}
       {field.type === 'check' && !field.builtin ? (
@@ -137,7 +169,9 @@ function QuestionAnswer({
               className="mt-0.5 size-4 shrink-0 accent-primary"
               checked={field.defaultValue === option}
               onChange={() =>
-                onChange({ defaultValue: field.defaultValue === option ? '' : option })
+                onChange({
+                  defaultValue: field.defaultValue === option ? '' : option,
+                })
               }
             />
             {option}
@@ -154,7 +188,9 @@ function QuestionAnswer({
           type="checkbox"
           className="size-4 accent-primary"
           checked={field.defaultValue === 'ja'}
-          onChange={(event) => onChange({ defaultValue: event.target.checked ? 'ja' : '' })}
+          onChange={(event) =>
+            onChange({ defaultValue: event.target.checked ? 'ja' : '' })
+          }
         />
         Bereits angekreuzt
       </label>
