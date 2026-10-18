@@ -40,7 +40,7 @@ type DocumentFieldInsertProps = {
 
 export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
   const [label, setLabel] = useState('');
-  const [fieldKey, setFieldKey] = useState('');
+  const [fieldKey, setFieldKey] = useState<string | null>(null);
   const [fieldType, setFieldType] = useState<FieldType>('text');
   const [checkboxGlyph, setCheckboxGlyph] = useState<string>();
   const labelInput = useRef<HTMLInputElement>(null);
@@ -61,13 +61,18 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
     label.trim() ||
     (fieldType === 'checkbox' && (selectedCheckbox || selectedGlyph))
   );
+  const suggestedFieldKey = label.trim()
+    ? fieldType === 'checkbox' && selectedCheckbox
+      ? String(selectedCheckbox.attrs.key)
+      : unusedFieldKey(usedFieldKeys(editor), contractFieldKey(label, ''))
+    : '';
   const nextField = () => {
     const nextLabel =
       label.trim() ||
       (fieldType === 'checkbox' && selectedGlyph ? 'Kontrollkästchen' : '');
-    const requested = contractFieldKey(nextLabel, fieldKey);
+    const requested = contractFieldKey(nextLabel, fieldKey ?? '');
     return {
-      key: fieldKey.trim()
+      key: fieldKey?.trim()
         ? requested
         : unusedFieldKey(usedFieldKeys(editor), requested),
       label: nextLabel,
@@ -82,14 +87,14 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
         ...nextField(),
         ...selectedCheckbox.attrs,
         label: label.trim() || String(selectedCheckbox.attrs.label),
-        key: fieldKey.trim()
+        key: fieldKey?.trim()
           ? contractFieldKey(label, fieldKey)
           : String(selectedCheckbox.attrs.key),
         fieldType: 'checkbox',
         checkboxGlyph,
       });
       setLabel('');
-      setFieldKey('');
+      setFieldKey(null);
       return;
     }
     if (!canInsert) return;
@@ -104,7 +109,7 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
       insertDocumentField(editor, { ...field, checkboxGlyph });
     }
     setLabel('');
-    setFieldKey('');
+    setFieldKey(null);
   };
   const insertOnEnter = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key !== 'Enter' || event.nativeEvent.isComposing) return;
@@ -143,7 +148,7 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
       <Input
         aria-label="Feldschlüssel"
         placeholder="Schlüssel (automatisch)"
-        value={fieldKey}
+        value={fieldKey ?? suggestedFieldKey}
         onKeyDown={insertOnEnter}
         onChange={(event) =>
           setFieldKey(
@@ -213,7 +218,7 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
           </Select>
           <span className="text-xs text-muted-foreground">
             Vorhandenes Kästchen markieren und ersetzen, oder neues einsetzen.
-            Schlüssel: {contractFieldKey(label, fieldKey) || '…'} · true =
+            Schlüssel: {contractFieldKey(label, fieldKey ?? '') || '…'} · true =
             angekreuzt, false = leer
           </span>
         </>

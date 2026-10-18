@@ -837,7 +837,10 @@ it('retains the highlighted replacement text while entering a new field and chan
   expect(container.querySelector('.document-retained-selection')).toHaveTextContent('replace me');
   expect(editor.state.selection.from).toBe(8);
   expect(editor.state.selection.to).toBe(18);
-  await user.type(screen.getByRole('textbox', { name: 'Feldschlüssel' }), 'contract.first_name');
+  const keyInput = screen.getByRole('textbox', { name: 'Feldschlüssel' });
+  expect(keyInput).toHaveValue('contract.vorname');
+  await user.clear(keyInput);
+  await user.type(keyInput, 'contract.first_name');
   await user.click(screen.getByRole('combobox', { name: 'Feldtyp' }));
   await user.click(await screen.findByRole('option', { name: 'Datum' }));
   expect(container.querySelector('.document-retained-selection')).toHaveTextContent('replace me');
@@ -873,15 +876,21 @@ it('places a named field with Enter and ignores empty or composing Enter', async
   fireEvent.keyDown(label, { key: 'Enter' });
   expect(editor.getText()).toBe('Before replace after');
   fireEvent.change(label, { target: { value: 'Vorname' } });
+  const keyInput = screen.getByRole('textbox', { name: 'Feldschlüssel' });
+  expect(keyInput).toHaveValue('contract.vorname');
+  fireEvent.change(label, { target: { value: 'Nachname' } });
+  expect(keyInput).toHaveValue('contract.nachname');
+  fireEvent.change(label, { target: { value: 'Vorname' } });
   fireEvent.keyDown(label, { key: 'Enter', isComposing: true });
   expect(editor.getText()).toBe('Before replace after');
   fireEvent.keyDown(label, { key: 'Enter' });
   expect(editor.getJSON().content![0].content).toMatchObject([
     { type: 'text', text: 'Before ' },
-    { type: 'documentField', attrs: { label: 'Vorname' } },
+    { type: 'documentField', attrs: { label: 'Vorname', key: 'contract.vorname' } },
     { type: 'text', text: ' after' },
   ]);
   expect(label).toHaveValue('');
+  expect(keyInput).toHaveValue('');
   expect(editor.state.selection.from).toBe(9);
   spy.mockRestore();
 });
