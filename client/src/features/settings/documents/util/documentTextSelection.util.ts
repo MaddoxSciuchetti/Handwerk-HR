@@ -220,26 +220,123 @@ export function documentTextClick(view: EditorView, event: MouseEvent) {
   return handled;
 }
 
-// Handle word motion in the document model: native movement can stop at the
+const verticalCarets = new WeakMap<
+  EditorView,
+  { selection: TextSelection; x: number }
+>();
+
+function verticalTextCaret(view: EditorView, down: boolean) {
+  const selection = view.state.selection;
+  if (!(selection instanceof TextSelection)) return undefined;
+  const current = view.coordsAtPos(selection.head);
+  const previous = verticalCarets.get(view);
+  const x = previous?.selection === selection ? previous.x : current.left;
+  const y = (current.top + current.bottom) / 2;
+  let best: { pos: number; dy: number; dx: number } | undefined;
+  // Use rendered caret positions so lists, wrapped text, tables and imported
+  // positioned labels follow their visual rows, including field-only rows.
+  view.state.doc.descendants((node, pos) => {
+    if (!node.isTextblock) return;
+    const dom = view.nodeDOM(pos);
+    if (dom instanceof Element) {
+      const rect = dom.getBoundingClientRect();
+      if (rect.height > 0) {
+        const near = down ? rect.top - y : y - rect.bottom;
+        const far = down ? rect.bottom - y : y - rect.top;
+        if (far <= 1 || (best && near > best.dy + 1)) return false;
+      }
+    }
+    for (let offset = 0; offset <= node.content.size; offset += 1) {
+      const caret = view.coordsAtPos(pos + 1 + offset);
+      const dy = ((caret.top + caret.bottom) / 2 - y) * (down ? 1 : -1);
+      if (dy <= 1) continue;
+      const dx = Math.abs(caret.left - x);
+      if (
+        !best ||
+        dy < best.dy - 1 ||
+        (Math.abs(dy - best.dy) <= 1 && dx < best.dx)
+      )
+        best = { pos: pos + 1 + offset, dy, dx };
+    }
+    return false;
+  });
+  return best ? { head: best.pos, x } : undefined;
+}
+
+// Handle motion in the document model: native movement can stop at the
 // contenteditable=false wrappers of inline fields, especially in placed labels.
 export function documentTextKeyDown(view: EditorView, event: KeyboardEvent) {
   if (
     !view.editable ||
     event.isComposing ||
-    event.metaKey ||
-    !['ArrowLeft', 'ArrowRight'].includes(event.key)
-  )
-    return false;
-  const mac = /Mac|iPhone|iPad/.test(
-    view.dom.ownerDocument.defaultView?.navigator.platform ?? ''
-  );
-  if (
-    !(event.altKey && !event.ctrlKey) &&
-    !(event.ctrlKey && !event.altKey && !mac)
+    !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)
   )
     return false;
   const selection = view.state.selection;
   if (!(selection instanceof TextSelection)) return false;
+  if (event.metaKey) {
+    if (event.altKey || event.ctrlKey) return false;
+    verticalCarets.delete(view);
+    let head: number;
+    if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+      head = (
+        event.key === 'ArrowUp'
+          ? TextSelection.atStart(view.state.doc)
+          : TextSelection.atEnd(view.state.doc)
+      ).head;
+    } else {
+      const right = event.key === 'ArrowRight';
+      const current = view.coordsAtPos(selection.head);
+      const y = (current.top + current.bottom) / 2;
+      const { $head } = selection;
+      head = $head.pos;
+      let edge = current.left;
+      for (let offset = 0; offset <= $head.parent.content.size; offset += 1) {
+        const pos = $head.start() + offset;
+        const caret = view.coordsAtPos(pos);
+        if (Math.abs((caret.top + caret.bottom) / 2 - y) > 1) continue;
+        if (right ? caret.left >= edge : caret.left <= edge) {
+          head = pos;
+          edge = caret.left;
+        }
+      }
+    }
+    view.dispatch(
+      view.state.tr
+        .setSelection(
+          TextSelection.create(
+            view.state.doc,
+            event.shiftKey ? selection.anchor : head,
+            head
+          )
+        )
+        .scrollIntoView()
+    );
+    event.preventDefault();
+    return true;
+  }
+  if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+    if (event.altKey || event.ctrlKey) return false;
+    const target = verticalTextCaret(view, event.key === 'ArrowDown');
+    if (!target) return false;
+    const next = TextSelection.create(
+      view.state.doc,
+      event.shiftKey ? selection.anchor : target.head,
+      target.head
+    );
+    view.dispatch(view.state.tr.setSelection(next).scrollIntoView());
+    verticalCarets.set(view, { selection: next, x: target.x });
+    event.preventDefault();
+    return true;
+  }
+  verticalCarets.delete(view);
+  const mac = /Mac|iPhone|iPad/.test(
+    view.dom.ownerDocument.defaultView?.navigator.platform ?? ''
+  );
+  const wordMotion =
+    (event.altKey && !event.ctrlKey) ||
+    (event.ctrlKey && !event.altKey && !mac);
+  if ((event.altKey || event.ctrlKey) && !wordMotion) return false;
   const right = event.key === 'ArrowRight';
   const $head = selection.$head;
   const text = $head.parent.textBetween(
@@ -254,12 +351,26 @@ export function documentTextKeyDown(view: EditorView, event: KeyboardEvent) {
   const step = right ? 1 : -1;
   // Word motion skips separators (including punctuation), but treats each
   // inline field as a single stop instead of entering its rendered label.
-  while (char(offset) && !word.test(char(offset)) && char(offset) !== '\ufffc')
-    offset += step;
-  if (char(offset) === '\ufffc') offset += step;
-  else while (char(offset) && word.test(char(offset))) offset += step;
+  if (wordMotion) {
+    while (
+      char(offset) &&
+      !word.test(char(offset)) &&
+      char(offset) !== '\ufffc'
+    )
+      offset += step;
+    if (char(offset) === '\ufffc') offset += step;
+    else while (char(offset) && word.test(char(offset))) offset += step;
+  } else if (char(offset)) {
+    // Keep surrogate pairs together when moving one character.
+    const character = right
+      ? [...text.slice(offset)][0]
+      : [...text.slice(0, offset)].at(-1);
+    offset += step * (character?.length ?? 1);
+  }
   let head = $head.start() + offset;
-  if (head === $head.pos) {
+  if (!wordMotion && !event.shiftKey && !selection.empty)
+    head = right ? selection.to : selection.from;
+  if (head === $head.pos && (selection.empty || wordMotion || event.shiftKey)) {
     const next = TextSelection.findFrom(
       view.state.doc.resolve(right ? $head.after() : $head.before()),
       step,

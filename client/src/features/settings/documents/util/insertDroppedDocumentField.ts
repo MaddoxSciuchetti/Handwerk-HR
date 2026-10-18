@@ -1,6 +1,7 @@
 import type { EditorView } from 'prosemirror-view';
 import { tryCatchSync } from '@/lib/trycatch';
 import { FIELD_DRAG_TYPE } from '../consts/editor.consts';
+import { readableCheckboxMarks } from './insertDocumentField.util';
 import {
   getDraggedContractInput,
   setDraggedContractInput,
@@ -60,7 +61,11 @@ export function insertDroppedDocumentField(
         : {}),
     },
     null,
-    points ? undefined : $pos.marks()
+    points
+      ? undefined
+      : dragged.fieldType === 'checkbox'
+        ? readableCheckboxMarks($pos.marks(), view.state.schema)
+        : $pos.marks()
   );
   if (!view.state.doc.canReplaceWith(at, at, node.type)) return false;
   view.dispatch(view.state.tr.insert(at, node));

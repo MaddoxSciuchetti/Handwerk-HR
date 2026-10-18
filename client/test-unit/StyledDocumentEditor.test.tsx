@@ -854,3 +854,125 @@ it('retains the highlighted replacement text while entering a new field and chan
   expect(container.querySelector('.document-retained-selection')).toBeNull();
   optionsSpy.mockRestore();
 });
+
+it('places a named field with Enter and ignores empty or composing Enter', async () => {
+  const spy = vi.spyOn(Editor.prototype, 'setOptions');
+  render(
+    <StyledDocumentEditor
+      document={fromSegments([{ type: 'text', text: 'Before replace after' }])}
+      master
+    />
+  );
+  await screen.findByText('Before replace after');
+  const editor = spy.mock.instances.at(-1) as Editor;
+  vi.spyOn(editor.view, 'scrollToSelection').mockImplementation(
+    () => undefined
+  );
+  act(() => editor.commands.setTextSelection({ from: 8, to: 15 }));
+  const label = screen.getByRole('textbox', { name: 'Feldbezeichnung' });
+  fireEvent.keyDown(label, { key: 'Enter' });
+  expect(editor.getText()).toBe('Before replace after');
+  fireEvent.change(label, { target: { value: 'Vorname' } });
+  fireEvent.keyDown(label, { key: 'Enter', isComposing: true });
+  expect(editor.getText()).toBe('Before replace after');
+  fireEvent.keyDown(label, { key: 'Enter' });
+  expect(editor.getJSON().content![0].content).toMatchObject([
+    { type: 'text', text: 'Before ' },
+    { type: 'documentField', attrs: { label: 'Vorname' } },
+    { type: 'text', text: ' after' },
+  ]);
+  expect(label).toHaveValue('');
+  expect(editor.state.selection.from).toBe(9);
+  spy.mockRestore();
+});
+
+it.each(['raw', 'raw without label', 'field'])(
+  'replaces a selected %s checkbox with the chosen shape on Enter at a readable size',
+  async (kind) => {
+    const spy = vi.spyOn(Editor.prototype, 'setOptions');
+    const user = userEvent.setup();
+    const value = fromSegments([]);
+    value.content = {
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            kind !== 'field'
+              ? {
+                  type: 'text',
+                  text: '□',
+                  marks: [
+                    {
+                      type: 'textStyle',
+                      attrs: { fontSize: 8, color: '#215e99' },
+                    },
+                  ],
+                }
+              : {
+                  type: 'documentField',
+                  attrs: {
+                    key: 'contract.fixed_term',
+                    label: 'Fixed term',
+                    fieldType: 'checkbox',
+                    checkboxGlyph: '□',
+                    required: false,
+                  },
+                  marks: [
+                    {
+                      type: 'textStyle',
+                      attrs: { fontSize: 8, color: '#215e99' },
+                    },
+                  ],
+                },
+            {
+              type: 'text',
+              text: ' Small surrounding text',
+              marks: [{ type: 'textStyle', attrs: { fontSize: 8 } }],
+            },
+          ],
+        },
+      ],
+    };
+    render(<StyledDocumentEditor document={value} master />);
+    await screen.findByText('Small surrounding text');
+    const editor = spy.mock.instances.at(-1) as Editor;
+    vi.spyOn(editor.view, 'scrollToSelection').mockImplementation(
+      () => undefined
+    );
+    act(() => editor.commands.setTextSelection({ from: 1, to: 2 }));
+    const label = screen.getByRole('textbox', { name: 'Feldbezeichnung' });
+    if (kind === 'raw') await user.type(label, 'Fixed term');
+    await user.click(screen.getByRole('combobox', { name: 'Feldtyp' }));
+    await user.click(screen.getByRole('option', { name: 'Kontrollkästchen' }));
+    await user.click(screen.getByRole('combobox', { name: 'Kästchenform' }));
+    await user.click(screen.getByRole('option', { name: '☐' }));
+    expect(label).toHaveFocus();
+    await user.keyboard('{Enter}');
+    const nodes = editor.getJSON().content![0].content!;
+    expect(nodes).toHaveLength(2);
+    expect(nodes[0]).toMatchObject({
+      type: 'documentField',
+      attrs: {
+        key:
+          kind === 'raw without label'
+            ? 'contract.kontrollkastchen'
+            : 'contract.fixed_term',
+        label: kind === 'raw without label' ? 'Kontrollkästchen' : 'Fixed term',
+        checkboxGlyph: '☐',
+        fieldType: 'checkbox',
+      },
+      marks: [{ type: 'textStyle', attrs: { fontSize: 14, color: '#215e99' } }],
+    });
+    expect(nodes[1]).toMatchObject({
+      type: 'text',
+      text: ' Small surrounding text',
+      marks: [{ type: 'textStyle', attrs: { fontSize: 8 } }],
+    });
+    act(() => editor.commands.undo());
+    expect(editor.getJSON().content![0].content![0].type).toBe(
+      kind !== 'field' ? 'text' : 'documentField'
+    );
+    spy.mockRestore();
+  }
+);
