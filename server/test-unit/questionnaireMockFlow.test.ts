@@ -5,7 +5,10 @@ import { questionnaireForOrganization } from "@/services/questionnaireTemplate";
 import { primaryEmploymentContract } from "@/services/documentMaster.service";
 import { persistMatchedContractValues } from "@/services/employmentContract.service";
 import { matchQuestionnaireToContract } from "@/services/contractFieldMatchAi";
-import { deterministicContractValues } from "@/services/contractFieldMatch";
+import {
+    contractValuesFromAnswers,
+    deterministicContractValues,
+} from "@/services/contractFieldMatch";
 import { fromSegments } from "../../shared/document";
 
 jest.mock("@/constants/env", () => ({
@@ -111,10 +114,20 @@ it("runs send -> simulated reply -> worker and contract updates -> print task, a
         },
     );
     (matchQuestionnaireToContract as jest.Mock).mockImplementation(
-        async (...args) =>
-            deterministicContractValues(
-                ...(args as Parameters<typeof deterministicContractValues>),
-            ),
+        async (...args: Parameters<typeof deterministicContractValues>) => {
+            const [segments, answers, email, fields] = args;
+            const bound = new Set(
+                deterministicContractValues(segments, answers, email, fields).map(
+                    (entry) => entry.key,
+                ),
+            );
+            return [
+                ...deterministicContractValues(segments, answers, email, fields),
+                ...contractValuesFromAnswers(segments, answers, email).filter(
+                    (entry) => !bound.has(entry.key),
+                ),
+            ];
+        },
     );
     const params = {
         organizationId: "org",
