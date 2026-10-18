@@ -2,6 +2,7 @@ import { isCurrentDateField } from "../../../shared/document";
 import type { DocumentSegment } from "@/services/documentBody";
 import {
     acceptModelMatches,
+    composedQuestionnaireValues,
     deterministicContractValues,
     unmatchedQuestionnaireAnswers,
     type MatchField,
@@ -41,7 +42,7 @@ function leftoverFields(
     segments: DocumentSegment[],
     filled: Set<string>,
 ) {
-    const fields: { key: string; label: string }[] = [];
+    const fields: { key: string; label: string; type?: string }[] = [];
     const seen = new Set<string>();
     for (const segment of segments) {
         if (
@@ -54,13 +55,56 @@ function leftoverFields(
             continue;
         }
         seen.add(segment.key);
-        fields.push({ key: segment.key, label: segment.label });
+        fields.push({
+            key: segment.key,
+            label: segment.label,
+            type: segment.fieldType,
+        });
     }
     return fields;
 }
 
+function consumedAnswerKeys(
+    fields: MatchField[],
+    placed: { key: string }[],
+) {
+    const filled = new Set(placed.map((entry) => entry.key));
+    const consumed = new Set<string>();
+    for (const field of fields) {
+        if (field.contractFieldKey && filled.has(field.contractFieldKey)) {
+            consumed.add(field.key);
+        }
+    }
+    return consumed;
+}
+
+function candidateAnswers(
+    answers: QuestionnaireAnswers,
+    email: string,
+    matchFields: MatchField[],
+    consumed: Set<string>,
+    placed: Set<string>,
+) {
+    const rows = unmatchedQuestionnaireAnswers(
+        [],
+        {},
+        flattenQuestionnaireAnswers(
+            answers,
+            matchFields.length > 0 ? matchFields : undefined,
+        ),
+        matchFields,
+    ).filter((answer) => !consumed.has(answer.key));
+    const seen = new Set(rows.map((row) => row.value));
+    for (const composed of composedQuestionnaireValues(answers, email)) {
+        if (placed.has(composed.value) || seen.has(composed.value)) continue;
+        seen.add(composed.value);
+        rows.push(composed);
+    }
+    return rows;
+}
+
 async function askModel(
-    fields: { key: string; label: string }[],
+    fields: { key: string; label: string; type?: string }[],
     answers: { key: string; label: string; value: string }[],
 ) {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -72,6 +116,7 @@ async function askModel(
         body: JSON.stringify({
             model: MODEL,
             temperature: 0,
+            max_tokens: 4000,
             response_format: {
                 type: "json_schema",
                 json_schema: {
@@ -84,7 +129,7 @@ async function askModel(
                 {
                     role: "system",
                     content:
-                        "Du ordnest Antworten eines Personalfragebogens den noch leeren Eingabefeldern eines Arbeitsvertrags zu. Gib nur Zuordnungen zurück, deren value exakt einem der gegebenen Antwortwerte entspricht. Erfinde keinen Text und ändere keine Werte. Lass Felder weg, die nicht eindeutig passen.",
+                        "Du ordnest Antworten eines Personalfragebogens den noch leeren Eingabefeldern eines Arbeitsvertrags zu. Der value muss exakt einem gegebenen Antwortwert entsprechen. Erfinde keinen Text und formuliere nichts um. Ordne jedes Feld zu, dessen Bezeichnung oder Bedeutung einer Antwort entspricht, auch wenn die Beschriftung anders formuliert ist (Name, Anschrift, Geburtsdatum, IBAN, Steuer, Beruf, Eintritt, Stunden, Geschlecht, Versicherung). Zusammengesetzte Antworten (Vor- und Nachname, Anschrift, PLZ und Ort, E-Mail) sind für kombinierte Felder da. Kinder und frühere Beschäftigungen nur den Feldern zuordnen, die sich darauf beziehen. Wochentagsstunden nur dem gleichnamigen Tag zuordnen. Einen Wert nur dann mehrfach verwenden, wenn mehrere Felder dieselbe Angabe meinen. Kontrollkästchen bekommen ja oder nein. Felder ohne passende Antwort weglassen.",
                 },
                 {
                     role: "user",
@@ -116,15 +161,13 @@ export async function matchQuestionnaireToContract(
     );
     const filled = new Set(placedEntries.map((entry) => entry.key));
     const fields = leftoverFields(segments, filled);
-    const placed = Object.fromEntries(placedEntries.map((entry) => [entry.key, entry.value]));
-    const leftovers = unmatchedQuestionnaireAnswers(
-        segments,
-        placed,
-        flattenQuestionnaireAnswers(
-            answers,
-            matchFields.length > 0 ? matchFields : undefined,
-        ),
+    const placed = new Set(placedEntries.map((entry) => entry.value));
+    const leftovers = candidateAnswers(
+        answers,
+        email,
         matchFields,
+        consumedAnswerKeys(matchFields, placedEntries),
+        placed,
     );
     if (!openAiKey() || fields.length === 0 || leftovers.length === 0) return placedEntries;
 

@@ -388,10 +388,36 @@ describe("changing a worker's contract template", () => {
         );
     });
     it("applies questionnaire answers to the new template, drops old inputs and retains the choice on reopening", async () => {
-        const view = await resyncEngagementContractFromQuestionnaire({
-            ...params,
-            masterId: replacement.id,
-        });
+        const previousKey = process.env.OPENAI_API_KEY;
+        process.env.OPENAI_API_KEY = "test-key";
+        const fetchMock = jest.spyOn(global, "fetch").mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                choices: [
+                    {
+                        message: {
+                            content: JSON.stringify({
+                                matches: [
+                                    { key: "other.name", value: "Lukas Muster" },
+                                    { key: "other.birthday", value: "01.04.1990" },
+                                ],
+                            }),
+                        },
+                    },
+                ],
+            }),
+        } as Response);
+        let view: Awaited<ReturnType<typeof resyncEngagementContractFromQuestionnaire>>;
+        try {
+            view = await resyncEngagementContractFromQuestionnaire({
+                ...params,
+                masterId: replacement.id,
+            });
+        } finally {
+            fetchMock.mockRestore();
+            if (previousKey === undefined) delete process.env.OPENAI_API_KEY;
+            else process.env.OPENAI_API_KEY = previousKey;
+        }
         expect(view).toMatchObject({
             masterId: replacement.id,
             name: replacement.name,

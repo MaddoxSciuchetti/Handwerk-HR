@@ -109,13 +109,35 @@ describe("acceptModelMatches", () => {
             }),
         ).toEqual([{ key: "contract.iban", value: "DE89" }]);
     });
+
+    it("stores a copied ja on a checkbox and a german date from an ISO copy", () => {
+        expect(
+            acceptModelMatches(
+                [
+                    { key: "contract.accepted", type: "checkbox" },
+                    { key: "contract.birthday", type: "date" },
+                ],
+                [{ value: "ja" }, { value: "01.04.1990" }],
+                {
+                    matches: [
+                        { key: "contract.accepted", value: "ja" },
+                        { key: "contract.birthday", value: "1990-04-01" },
+                    ],
+                },
+            ),
+        ).toEqual([
+            { key: "contract.accepted", value: "true" },
+            { key: "contract.birthday", value: "01.04.1990" },
+        ]);
+    });
 });
 
 describe("questionnaire answer reuse", () => {
-    it("keeps explicitly linked name parts available for a combined name field", () => {
+    it("copies only the contract field the questionnaire binds directly", () => {
         const answers = {
             firstName: "Lukas",
             lastName: "Muster",
+            otherJobs: "ja",
             street: "",
             postalCode: "",
             city: "",
@@ -129,6 +151,12 @@ describe("questionnaire answer reuse", () => {
                         label: "Vorname",
                     },
                     { type: "input", key: "contract.name", label: "Name" },
+                    {
+                        type: "input",
+                        key: "contract.accepted",
+                        label: "Angenommen",
+                        fieldType: "checkbox",
+                    },
                 ],
                 answers,
                 "",
@@ -138,11 +166,16 @@ describe("questionnaire answer reuse", () => {
                         label: "Vorname",
                         contractFieldKey: "contract.vorname",
                     },
+                    {
+                        key: "otherJobs",
+                        label: "Weitere Beschäftigungen",
+                        contractFieldKey: "contract.accepted",
+                    },
                 ],
             ),
         ).toEqual([
             { key: "contract.vorname", value: "Lukas" },
-            { key: "contract.name", value: "Lukas Muster" },
+            { key: "contract.accepted", value: "true" },
         ]);
     });
     it("keeps historical custom answers visible even when their label is unavailable", () => {
@@ -170,15 +203,25 @@ describe("questionnaire answer reuse", () => {
     });
 });
 
-it("matches a custom-only questionnaire without requiring removed personal-data fields", () => {
+it("matches a custom answer only when the questionnaire binds that contract field", () => {
+    const answers = {
+        "custom.shift-choice": "Früh",
+    } as unknown as QuestionnaireAnswers;
+    const segments: DocumentSegment[] = [
+        { type: "input", key: "contract.schicht", label: "Schicht" },
+    ];
     expect(
-        deterministicContractValues(
-            [{ type: "input", key: "contract.schicht", label: "Schicht" }],
+        deterministicContractValues(segments, answers, "", [
+            { key: "custom.shift-choice", label: "Schicht" },
+        ]),
+    ).toEqual([]);
+    expect(
+        deterministicContractValues(segments, answers, "", [
             {
-                "custom.shift-choice": "Früh",
-            } as unknown as QuestionnaireAnswers,
-            "",
-            [{ key: "custom.shift-choice", label: "Schicht" }],
-        ),
+                key: "custom.shift-choice",
+                label: "Schicht",
+                contractFieldKey: "contract.schicht",
+            },
+        ]),
     ).toEqual([{ key: "contract.schicht", value: "Früh" }]);
 });

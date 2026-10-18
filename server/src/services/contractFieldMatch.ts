@@ -92,6 +92,24 @@ function formatMatchValue(field: MatchField, raw: string) {
     return formatted.slice(0, 8000);
 }
 
+function checkboxStorage(value: string) {
+    const folded = value.trim().toLowerCase();
+    if (folded === "ja" || folded === "yes" || folded === "true") return "true";
+    if (folded === "nein" || folded === "no" || folded === "false") return "false";
+    return "";
+}
+
+export function valueForContractField(
+    segment: DocumentSegment,
+    field: MatchField,
+    raw: string,
+) {
+    const formatted = formatMatchValue(field, raw);
+    if (!formatted || segment.type !== "input") return "";
+    if (segment.fieldType === "checkbox") return checkboxStorage(formatted);
+    return formatted;
+}
+
 function skipQuestionnaireMatch(segment: DocumentSegment) {
     return segment.type === "input" && (segment.fieldType === "points" || isCurrentDateField(segment));
 }
@@ -102,9 +120,9 @@ export function deterministicContractValues(
     email = "",
     fields: MatchField[] = [],
 ) {
+    void email;
     const entries: { key: string; value: string }[] = [];
     const filled = new Set<string>();
-    const consumed = new Set<string>();
 
     for (const field of fields) {
         if (!field.contractFieldKey) continue;
@@ -118,45 +136,55 @@ export function deterministicContractValues(
             filled.has(segment.key)
         )
             continue;
-        const value = formatMatchValue(field, answerString(answers, field.key));
+        const value = valueForContractField(
+            segment,
+            field,
+            answerString(answers, field.key),
+        );
         if (!value) continue;
         filled.add(segment.key);
-        consumed.add(field.key);
-        entries.push({ key: segment.key, value });
-    }
-
-    for (const entry of contractValuesFromAnswers(
-        segments,
-        answers,
-        email,
-    )) {
-        if (filled.has(entry.key)) continue;
-        filled.add(entry.key);
-        entries.push(entry);
-        for (const field of fields) {
-            if (consumed.has(field.key)) continue;
-            const value = formatMatchValue(field, answerString(answers, field.key));
-            if (value && value === entry.value) consumed.add(field.key);
-        }
-    }
-
-    for (const field of fields) {
-        if (consumed.has(field.key) || !field.label.trim()) continue;
-        const value = formatMatchValue(field, answerString(answers, field.key));
-        if (!value) continue;
-        const folded = fold(field.label);
-        const segment = segments.find((item) => {
-            if (item.type !== "input" || skipQuestionnaireMatch(item) || filled.has(item.key))
-                return false;
-            return fold(item.label) === folded || fold(item.key) === folded;
-        });
-        if (!segment || segment.type !== "input") continue;
-        filled.add(segment.key);
-        consumed.add(field.key);
         entries.push({ key: segment.key, value });
     }
 
     return entries;
+}
+
+export function composedQuestionnaireValues(
+    answers: QuestionnaireAnswers,
+    email = "",
+) {
+    const values = answerValues(answers, email);
+    const locality = [values.postalCode, values.city].filter((part) => part.length > 0).join(" ");
+    const rows: { key: string; label: string; value: string }[] = [];
+    if (
+        values.fullName &&
+        values.fullName !== values.firstName &&
+        values.fullName !== values.lastName
+    ) {
+        rows.push({
+            key: "composed.fullName",
+            label: "Vor- und Nachname",
+            value: values.fullName,
+        });
+    }
+    if (values.address && values.address !== values.street) {
+        rows.push({
+            key: "composed.address",
+            label: "Anschrift",
+            value: values.address,
+        });
+    }
+    if (locality && locality !== values.postalCode && locality !== values.city) {
+        rows.push({
+            key: "composed.locality",
+            label: "PLZ und Ort",
+            value: locality,
+        });
+    }
+    if (values.email) {
+        rows.push({ key: "composed.email", label: "E-Mail", value: values.email });
+    }
+    return rows;
 }
 
 function matchAlias(label: string, key: string) {
@@ -193,8 +221,15 @@ export function contractValuesFromAnswers(
     return entries;
 }
 
+function canonicalMatchValue(value: string) {
+    const trimmed = value.trim();
+    const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(trimmed);
+    if (iso) return `${iso[3]}.${iso[2]}.${iso[1]}`;
+    return trimmed;
+}
+
 export function acceptModelMatches(
-    fields: { key: string }[],
+    fields: { key: string; type?: string }[],
     answers: { value: string }[],
     raw: unknown,
 ): { key: string; value: string }[] {
@@ -204,12 +239,15 @@ export function acceptModelMatches(
             : null;
     if (!record || !Array.isArray(record.matches)) return [];
 
-    const allowedKeys = new Set(fields.map((field) => field.key));
-    const allowedValues = new Set(
-        answers
-            .map((answer) => answer.value.trim())
-            .filter((value) => value.length > 0),
-    );
+    const fieldByKey = new Map(fields.map((field) => [field.key, field]));
+    const allowedValues = new Map<string, string>();
+    for (const answer of answers) {
+        const trimmed = answer.value.trim();
+        if (!trimmed) continue;
+        const canonical = canonicalMatchValue(trimmed);
+        if (!allowedValues.has(canonical)) allowedValues.set(canonical, trimmed.slice(0, 8000));
+        if (!allowedValues.has(trimmed)) allowedValues.set(trimmed, trimmed.slice(0, 8000));
+    }
     const seen = new Set<string>();
     const entries: { key: string; value: string }[] = [];
 
@@ -217,13 +255,23 @@ export function acceptModelMatches(
         if (!item || typeof item !== "object" || Array.isArray(item)) continue;
         const key = "key" in item ? item.key : null;
         const value = "value" in item ? item.value : null;
-        if (typeof key !== "string" || typeof value !== "string") continue;
+        if (typeof key !== "string" || typeof value !== "string" || seen.has(key)) continue;
+        const field = fieldByKey.get(key);
+        if (!field) continue;
         const trimmed = value.trim().slice(0, 8000);
-        if (!allowedKeys.has(key) || !allowedValues.has(trimmed) || seen.has(key)) {
+        const stored =
+            allowedValues.get(trimmed) ??
+            allowedValues.get(canonicalMatchValue(trimmed));
+        if (!stored) continue;
+        if (field.type === "checkbox") {
+            const checkbox = checkboxStorage(stored);
+            if (!checkbox) continue;
+            seen.add(key);
+            entries.push({ key, value: checkbox });
             continue;
         }
         seen.add(key);
-        entries.push({ key, value: trimmed });
+        entries.push({ key, value: stored });
     }
 
     return entries;

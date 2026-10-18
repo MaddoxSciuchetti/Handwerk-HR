@@ -304,7 +304,7 @@ describe("deterministic contract matching", () => {
         { type: "input" as const, key: "contract.vorname", label: "Vorname" },
     ];
 
-    it("fills a bound value and a same-label question, and leaves a different name open", () => {
+    it("fills only the field the questionnaire binds and leaves the rest unbound", () => {
         const entries = deterministicContractValues(
             segments,
             {
@@ -326,13 +326,6 @@ describe("deterministic contract matching", () => {
             ],
         );
 
-        expect(entries).toEqual(
-            expect.arrayContaining([
-                { key: "contract.stunden", value: "40" },
-                { key: "contract.schuhe", value: "42" },
-                { key: "contract.vorname", value: "Ada" },
-            ]),
-        );
-        expect(entries.some((entry) => entry.value === "Bitte früh")).toBe(false);
+        expect(entries).toEqual([{ key: "contract.stunden", value: "40" }]);
     });
 });
