@@ -1,8 +1,8 @@
 import { Label } from '@/components/ui/label';
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -134,13 +134,25 @@ export function EngagementMailRecipients({
           ) : (
             choices.map((choice) => {
               const key = recipientKey(choice);
+              const pressed = selectedKeys.has(key);
               return (
-                <DropdownMenuCheckboxItem
+                <DropdownMenuItem
                   key={key}
-                  checked={selectedKeys.has(key)}
-                  onSelect={(event) => event.preventDefault()}
-                  onCheckedChange={() => toggle(choice)}
+                  aria-checked={pressed}
+                  role="menuitemcheckbox"
+                  onSelect={(event) => {
+                    event.preventDefault();
+                    toggle(choice);
+                  }}
                 >
+                  <span
+                    aria-hidden
+                    className={
+                      pressed
+                        ? 'size-3.5 shrink-0 rounded-sm bg-primary'
+                        : 'size-3.5 shrink-0 rounded-sm ring-1 ring-foreground/30'
+                    }
+                  />
                   <span className="min-w-0">
                     <span className="block truncate">{choice.label}</span>
                     {choice.address ? (
@@ -149,7 +161,7 @@ export function EngagementMailRecipients({
                       </span>
                     ) : null}
                   </span>
-                </DropdownMenuCheckboxItem>
+                </DropdownMenuItem>
               );
             })
           )}
