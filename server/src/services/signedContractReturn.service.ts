@@ -447,6 +447,7 @@ async function createRemainingOnboardingTasks(
                 templateItemId: item.id,
                 integrationProvider: item.integrationProvider,
                 sequence: item.sequence,
+                mailTemplateId: item.mailTemplateId,
             },
             select: { id: true },
         });

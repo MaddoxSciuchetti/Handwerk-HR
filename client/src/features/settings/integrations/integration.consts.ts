@@ -12,14 +12,9 @@ export const INTEGRATION_SEQUENCES = [
     label: 'Konto anlegen',
   },
   {
-    value: 'microsoft_send_onboarding_email',
+    value: 'microsoft_send_email',
     provider: 'microsoft_graph',
-    label: 'Onboarding-E-Mail senden',
-  },
-  {
-    value: 'microsoft_send_offboarding_email',
-    provider: 'microsoft_graph',
-    label: 'Offboarding-E-Mail senden',
+    label: 'E-Mail senden',
   },
   {
     value: 'microsoft_deactivate_account',
@@ -46,7 +41,16 @@ export function integrationLabel(provider: string | null | undefined) {
   );
 }
 
+export function isMailSequence(sequence: string | null | undefined) {
+  return (
+    sequence === 'microsoft_send_email' ||
+    sequence === 'microsoft_send_onboarding_email' ||
+    sequence === 'microsoft_send_offboarding_email'
+  );
+}
+
 export function sequenceLabel(sequence: string | null | undefined) {
+  if (isMailSequence(sequence)) return 'E-Mail senden';
   return (
     INTEGRATION_SEQUENCES.find((item) => item.value === sequence)?.label ??
     'Sequenz'

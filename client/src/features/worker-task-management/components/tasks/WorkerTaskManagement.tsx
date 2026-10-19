@@ -44,6 +44,7 @@ import { QuestionnaireSendDialog } from '@/features/questionnaire/QuestionnaireS
 import WorkerHeader from '../header/WorkerHeader';
 import { WorkerTabButtons } from '../header/WorkerTabButtons';
 import { engagementsAwaitingTemplate } from '../../pendingTemplate';
+import { EngagementMailRecipients } from './EngagementMailRecipients';
 import { TemplateApplyPrompt } from './TemplateApplyPrompt';
 
 type TaskManagementProps = {
@@ -247,6 +248,17 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
               value="form"
               className="mt-0 flex min-h-0 flex-1 flex-col"
             >
+              {engagements.length > 0 ? (
+                <div className="flex shrink-0 flex-col gap-3 border-b border-border px-6 py-3">
+                  {engagements.map((engagement) => (
+                    <EngagementMailRecipients
+                      key={engagement.id}
+                      engagementId={engagement.id}
+                      title={`${engagement.type === 'onboarding' ? 'Eintritt' : engagement.type === 'offboarding' ? 'Austritt' : 'Wechsel'} · Empfänger`}
+                    />
+                  ))}
+                </div>
+              ) : null}
               <ScrollableTableViewport>
                 <Table aria-busy={isLoading}>
                   <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-0">

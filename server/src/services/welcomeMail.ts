@@ -271,6 +271,61 @@ async function closeWelcomeMailTask(params: {
     });
 }
 
+export async function microsoftGroupRecipientAddresses(
+    token: string,
+    groupId: string,
+) {
+    const members = await listGraph<GraphMember>(
+        token,
+        `/groups/${encodeURIComponent(groupId)}/transitiveMembers/microsoft.graph.user?$select=mail,userPrincipalName&$top=999`,
+    );
+    if (!members) return null;
+    return welcomeRecipientAddresses(members);
+}
+
+export async function sendGraphMail(params: {
+    token: string;
+    senderAddress: string;
+    recipients: string[];
+    subject: string;
+    text: string;
+    rejectedLog: string;
+    failureMessage: string;
+}): Promise<
+    | { status: "sent" }
+    | { status: "skipped"; reason: "no_recipients" }
+    | { status: "failed"; message: string }
+> {
+    if (params.recipients.length === 0) {
+        return { status: "skipped", reason: "no_recipients" };
+    }
+    const { response } = await graphJson(
+        params.token,
+        `${GRAPH}/users/${encodeURIComponent(params.senderAddress)}/sendMail`,
+        {
+            method: "POST",
+            body: JSON.stringify({
+                message: {
+                    subject: params.subject,
+                    body: {
+                        contentType: "HTML",
+                        content: welcomeHtml(params.text),
+                    },
+                    toRecipients: params.recipients.map((address) => ({
+                        emailAddress: { address },
+                    })),
+                },
+                saveToSentItems: true,
+            }),
+        },
+    );
+    if (!response.ok) {
+        console.error(params.rejectedLog, response.status);
+        return { status: "failed", message: params.failureMessage };
+    }
+    return { status: "sent" };
+}
+
 export async function sendGraphMailToGroup(params: {
     token: string;
     senderAddress: string;
@@ -285,45 +340,112 @@ export async function sendGraphMailToGroup(params: {
     | { status: "skipped"; reason: "no_recipients" }
     | { status: "failed"; message: string }
 > {
-    const members = await listGraph<GraphMember>(
+    const recipients = await microsoftGroupRecipientAddresses(
         params.token,
-        `/groups/${encodeURIComponent(params.groupId)}/transitiveMembers/microsoft.graph.user?$select=mail,userPrincipalName&$top=999`,
+        params.groupId,
     );
-    if (!members) {
+    if (!recipients) {
         return { status: "failed", message: params.failureMessage.members };
     }
-
-    const recipients = welcomeRecipientAddresses(members);
     if (recipients.length === 0) {
         console.error(params.emptyLog);
         return { status: "skipped", reason: "no_recipients" };
     }
+    return sendGraphMail({
+        token: params.token,
+        senderAddress: params.senderAddress,
+        recipients,
+        subject: params.subject,
+        text: params.text,
+        rejectedLog: params.rejectedLog,
+        failureMessage: params.failureMessage.rejected,
+    });
+}
 
-    const { response } = await graphJson(
-        params.token,
-        `${GRAPH}/users/${encodeURIComponent(params.senderAddress)}/sendMail`,
-        {
-            method: "POST",
-            body: JSON.stringify({
-                message: {
-                    subject: params.subject,
-                    body: {
-                        contentType: "HTML",
-                        content: welcomeHtml(params.text),
-                    },
-                    toRecipients: recipients.map((address) => ({
-                        emailAddress: { address },
-                    })),
-                },
-                saveToSentItems: true,
-            }),
-        },
-    );
-    if (!response.ok) {
-        console.error(params.rejectedLog, response.status);
-        return { status: "failed", message: params.failureMessage.rejected };
+export type MicrosoftChannelOption = {
+    id: string;
+    displayName: string;
+    email: string;
+    teamName: string;
+};
+
+export async function listMailEnabledChannels(
+    organizationId: string,
+): Promise<
+    | { channels: MicrosoftChannelOption[]; error: null }
+    | { channels: MicrosoftChannelOption[]; error: string }
+> {
+    if (!integrationsLive()) {
+        return { channels: [], error: NOT_LIVE_MESSAGE };
     }
-    return { status: "sent" };
+    const config = await loadMicrosoft365Config(organizationId);
+    if (!config) return { channels: [], error: null };
+    const token = await microsoftGraphToken(config);
+    if (!token) {
+        return {
+            channels: [],
+            error: "Microsoft Graph hat die Anmeldung abgelehnt.",
+        };
+    }
+    const groups = await listGraph<{
+        id?: string;
+        displayName?: string;
+        resourceProvisioningOptions?: string[];
+    }>(
+        token,
+        "/groups?$select=id,displayName,resourceProvisioningOptions&$top=999",
+    );
+    if (!groups) {
+        return {
+            channels: [],
+            error: "Microsoft Graph hat die Kanäle nicht geliefert.",
+        };
+    }
+    const teams = groups.filter(
+        (group) =>
+            group.id &&
+            group.displayName &&
+            group.resourceProvisioningOptions?.includes("Team"),
+    );
+    const channels: MicrosoftChannelOption[] = [];
+    for (const team of teams.slice(0, 25)) {
+        const teamId = team.id?.trim() ?? "";
+        const { response, payload } = await graphJson(
+            token,
+            `${GRAPH}/teams/${encodeURIComponent(teamId)}/channels?$select=id,displayName,email`,
+        );
+        if (response.status === 403) {
+            return {
+                channels,
+                error: "Microsoft Graph hat die Kanäle nicht geliefert.",
+            };
+        }
+        if (!response.ok) continue;
+        const list = payload as GraphList<{
+            id?: string;
+            displayName?: string;
+            email?: string;
+        }> | null;
+        for (const channel of list?.value ?? []) {
+            const email = channel.email?.trim() ?? "";
+            const id = channel.id?.trim() ?? "";
+            const displayName = channel.displayName?.trim() ?? "";
+            if (!id || !displayName || !email.includes("@")) continue;
+            channels.push({
+                id,
+                displayName,
+                email,
+                teamName: team.displayName?.trim() ?? "",
+            });
+        }
+    }
+    channels.sort((left, right) =>
+        `${left.teamName} ${left.displayName}`.localeCompare(
+            `${right.teamName} ${right.displayName}`,
+            "de",
+        ),
+    );
+    return { channels, error: null };
 }
 
 export async function sendTeamWelcomeMail(params: {

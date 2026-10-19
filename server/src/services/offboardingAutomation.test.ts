@@ -15,6 +15,9 @@ jest.mock("@/lib/prisma", () => ({
         worker: { findFirst: jest.fn(), update: jest.fn() },
         departureMailSettings: { findUnique: jest.fn() },
         welcomeMailSettings: { findUnique: jest.fn() },
+        mailTemplate: { findFirst: jest.fn() },
+        engagementMailRecipient: { findMany: jest.fn() },
+        organizationMember: { findFirst: jest.fn() },
         workerEngagement: { findFirst: jest.fn() },
         automationDocumentSetting: { findUnique: jest.fn() },
         arbeitszeugnis: { upsert: jest.fn() },
@@ -251,12 +254,31 @@ describe("offboarding microsoft automation", () => {
                 }
                 throw new Error(`unexpected ${init?.method ?? "GET"} ${url}`);
             });
+        (prisma.mailTemplate.findFirst as jest.Mock).mockResolvedValue({
+            id: "template-departure",
+            name: "Entlassungsmail",
+            subject: departureSettings.subject,
+            body: departureSettings.body,
+        });
+        (prisma.engagementMailRecipient.findMany as jest.Mock).mockResolvedValue([
+            {
+                kind: "microsoft_group",
+                label: "BSB",
+                address: null,
+                workerId: null,
+                groupId: "group-bsb",
+            },
+        ]);
+        (prisma.organizationMember.findFirst as jest.Mock).mockResolvedValue({
+            user: { email: "admin@firma.de" },
+        });
 
         const result = await runTaskAutomation({
             organizationId: "org-1",
             issueId: "issue-1",
             actorUserId: "user-1",
             automation: "team-departure-mail",
+            senderAddress: "admin@firma.de",
         });
 
         expect(result).toEqual({ status: "completed", alreadyBlocked: false });

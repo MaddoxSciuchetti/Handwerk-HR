@@ -1,9 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import {
-    listMicrosoftGroups,
-    type WelcomeMailPage,
-    type WelcomeMailSettingsRecord,
-} from "@/services/welcomeMail";
 
 const listSelect = {
     id: true,
@@ -12,12 +7,14 @@ const listSelect = {
 } as const;
 
 const contentSelect = {
-    senderAddress: true,
-    groupId: true,
-    groupName: true,
     subject: true,
     body: true,
 } as const;
+
+export type MailTemplateContent = {
+    subject: string;
+    body: string;
+};
 
 export type MailTemplateListItem = {
     id: string;
@@ -25,8 +22,9 @@ export type MailTemplateListItem = {
     description: string;
 };
 
-export type MailTemplatePage = WelcomeMailPage & {
+export type MailTemplatePage = {
     template: MailTemplateListItem;
+    settings: MailTemplateContent;
 };
 
 export async function listMailTemplates(
@@ -75,29 +73,18 @@ export async function mailTemplatePage(
         select: { ...listSelect, ...contentSelect },
     });
     if (!template) return null;
-    const listed = await listMicrosoftGroups(organizationId);
-    const { senderAddress, groupId, groupName, subject, body, ...meta } =
-        template;
-    const settings: WelcomeMailSettingsRecord = {
-        senderAddress,
-        groupId,
-        groupName,
-        subject,
-        body,
-    };
+    const { subject, body, ...meta } = template;
     return {
         template: meta,
-        settings,
-        groups: listed.groups,
-        groupsError: listed.error,
+        settings: { subject, body },
     };
 }
 
 export async function saveMailTemplateContent(
     organizationId: string,
     id: string,
-    input: WelcomeMailSettingsRecord,
-): Promise<WelcomeMailSettingsRecord | null> {
+    input: MailTemplateContent,
+): Promise<MailTemplateContent | null> {
     const existing = await prisma.mailTemplate.findFirst({
         where: { id, organizationId },
         select: { id: true },

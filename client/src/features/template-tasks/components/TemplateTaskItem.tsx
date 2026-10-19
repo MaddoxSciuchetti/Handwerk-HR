@@ -56,6 +56,7 @@ export function TemplateTaskItem({
                     integrationProvider:
                       task.integrationProvider ?? INTEGRATION_NONE,
                     sequence: task.sequence ?? INTEGRATION_NONE,
+                    mailTemplateId: task.mailTemplateId ?? '',
                   });
                   setTemplateTaskState('edit');
                 }}

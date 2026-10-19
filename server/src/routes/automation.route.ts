@@ -7,7 +7,10 @@ import {
     getDepartureMail,
     getIntegrations,
     getMicrosoft365Automation,
+    getEngagementMailRecipients,
+    getIssueMailPreview,
     postIssueSequence,
+    putEngagementMailRecipients,
     putIntegration,
     getQuestionnaireTemplate,
     getWelcomeMail,
@@ -55,6 +58,15 @@ automationRoutes.put(
 automationRoutes.post("/issues/:issueId/arbeitszeugnis", postArbeitszeugnis);
 automationRoutes.post("/issues/:issueId/run", postTaskAutomation);
 automationRoutes.post("/issues/:issueId/sequence", postIssueSequence);
+automationRoutes.get("/issues/:issueId/mail-preview", getIssueMailPreview);
+automationRoutes.get(
+    "/engagements/:engagementId/mail-recipients",
+    getEngagementMailRecipients,
+);
+automationRoutes.put(
+    "/engagements/:engagementId/mail-recipients",
+    putEngagementMailRecipients,
+);
 automationRoutes.get("/mail-templates", getMailTemplates);
 automationRoutes.post("/mail-templates", postMailTemplate);
 automationRoutes.get("/mail-templates/:id", getMailTemplate);
