@@ -319,6 +319,7 @@ model Issue {
   integrationProvider IntegrationProvider? @map("integration_provider")
   sequence           IntegrationSequence? @map("sequence")
   mailTemplateId     String?            @map("mail_template_id")
+  mailSenderAddress  String?            @map("mail_sender_address") @db.VarChar(254)
   isTemporary        Boolean            @default(false) @map("is_temporary")
   assigneeOnly       Boolean            @default(false) @map("assignee_only")
   title              String             @db.VarChar(400)

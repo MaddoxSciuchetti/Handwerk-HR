@@ -1,3 +1,7 @@
+import {
+  QUESTIONNAIRE_DECLARATION_HEADING,
+  QUESTIONNAIRE_DECLARATION_TEXT,
+} from '@shared/questionnaireDeclaration';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -105,10 +109,11 @@ export function QuestionnaireForm({
   const data = preview
     ? { status: 'sent' as const, name: preview.name, intro: preview.intro, items: preview.items }
     : questionnaire.data?.data;
-  const questions =
+  const questions = (
     data?.items?.flatMap((item) => (item.kind === 'field' ? [item] : [])) ??
     data?.questions ??
-    [];
+    []
+  ).filter((question) => question.key !== 'declaration');
   const repeaters = data?.repeaters ?? [];
 
   useEffect(() => {
@@ -159,11 +164,13 @@ export function QuestionnaireForm({
     Boolean(preview) && question.bsbOnly === true && question.type !== 'file';
 
   const done = submitted || data?.status === 'completed';
-  const missing = questions.some(
-    (question) => !question.bsbOnly && unanswered(question, values, questions)
-  );
+  const missing =
+    values.declaration !== 'ja' ||
+    questions.some(
+      (question) => !question.bsbOnly && unanswered(question, values, questions)
+    );
   const sections = data?.items
-    ? data.items.reduce<Section[]>((list, item) => {
+    ? data.items.filter((item) => item.key !== 'declaration').reduce<Section[]>((list, item) => {
         if (item.kind === 'repeater') {
           list.push({ title: item.section, questions: [], repeater: item });
           return list;
@@ -328,6 +335,26 @@ export function QuestionnaireForm({
                 )}
               </div>
             ))}
+            <label className="mt-4 flex items-start gap-3 border-t border-border pt-4 text-sm text-foreground">
+              <input
+                type="checkbox"
+                name="declaration"
+                required
+                className="mt-1 size-4 shrink-0 accent-primary"
+                checked={values.declaration === 'ja'}
+                disabled={submit.isPending}
+                onChange={(event) =>
+                  setValues((current) => ({
+                    ...current,
+                    declaration: event.target.checked ? 'ja' : '',
+                  }))
+                }
+              />
+              <span>
+                <strong>{QUESTIONNAIRE_DECLARATION_HEADING}</strong>{' '}
+                {QUESTIONNAIRE_DECLARATION_TEXT} *
+              </span>
+            </label>
             {submit.isError ? (
               <p className="text-sm text-destructive">
                 Das Formular konnte nicht gesendet werden.

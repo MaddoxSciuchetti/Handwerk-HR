@@ -201,4 +201,26 @@ describe('QuestionnaireForm', () => {
     await user.click(male);
     expect(male).not.toBeChecked();
   });
+  it('requires an unchecked declaration at the end even for a custom questionnaire', async () => {
+    vi.mocked(apiJson.post).mockClear();
+    vi.mocked(apiJson.get).mockResolvedValue({ success: true, data: { status: 'sent', items: [] } });
+    vi.mocked(apiJson.post).mockResolvedValue({ success: true, data: { status: 'completed' } });
+    const user = userEvent.setup();
+    renderWithProviders(<QuestionnaireForm token="custom-token" />);
+    const declaration = await screen.findByRole('checkbox', { name: /Erklärung der beschäftigten Person/ });
+    const button = screen.getByRole('button', { name: 'Absenden' });
+    expect(declaration).not.toBeChecked();
+    expect(declaration).toBeRequired();
+    expect(button).toBeDisabled();
+    expect(screen.getByText(/Ich verpflichte mich, meinem Arbeitgeber alle Änderungen/)).toBeInTheDocument();
+    await user.click(declaration);
+    expect(button).toBeEnabled();
+    await user.click(declaration);
+    expect(button).toBeDisabled();
+    await user.click(declaration);
+    await user.click(button);
+    expect(await screen.findByText('Danke, Ihre Angaben wurden übermittelt.')).toBeInTheDocument();
+    expect(apiJson.post).toHaveBeenCalledWith('fragebogen/custom-token', expect.objectContaining({ declaration: 'ja' }));
+  });
+
 });

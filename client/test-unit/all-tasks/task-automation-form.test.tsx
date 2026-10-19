@@ -1,0 +1,132 @@
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useTasks } from '@/features/all-tasks/hooks/useTasks';
+import {
+  EMPTY_TASK_EDIT_STATE,
+  type TaskEditState,
+} from '@/features/all-tasks/hooks/useTaskSidebar';
+
+const { createTask, updateTask, close } = vi.hoisted(() => ({
+  createTask: vi.fn(),
+  updateTask: vi.fn(),
+  close: vi.fn(),
+}));
+vi.mock('@/features/all-tasks/hooks/useCreateTask', () => ({
+  useCreateTask: () => ({ mutateAsync: createTask, isPending: false }),
+}));
+vi.mock('@/features/all-tasks/hooks/useUpdateTask', () => ({
+  useUpdateTask: () => ({ mutateAsync: updateTask, isPending: false }),
+}));
+
+function Form({
+  seed,
+  mode = 'create',
+}: {
+  seed?: Partial<TaskEditState>;
+  mode?: 'create' | 'edit';
+}) {
+  const { register, onSubmit, errors } = useTasks(
+    {
+      ...EMPTY_TASK_EDIT_STATE,
+      title: 'Test',
+      workerEngagementId: 'engagement-1',
+      assigneeUserId: 'user-1',
+      ...seed,
+    },
+    mode,
+    close
+  );
+  return (
+    <form onSubmit={onSubmit}>
+      <select aria-label="Automation" {...register('sequence')}>
+        <option value="none">Keine</option>
+        <option value="microsoft_send_email">E-Mail senden</option>
+        <option value="microsoft_deactivate_account">Konto deaktivieren</option>
+      </select>
+      <input aria-label="E-Mail-Vorlage" {...register('mailTemplateId')} />
+      <input aria-label="Absender" {...register('mailSenderAddress')} />
+      {errors.mailTemplateId ? <p>{errors.mailTemplateId.message}</p> : null}
+      {errors.mailSenderAddress ? (
+        <p>{errors.mailSenderAddress.message}</p>
+      ) : null}
+      <button type="submit">Speichern</button>
+    </form>
+  );
+}
+
+beforeEach(() => vi.clearAllMocks());
+
+describe('task automation form', () => {
+  it('saves the selected function on a new task', async () => {
+    render(<Form />);
+    fireEvent.change(screen.getByRole('combobox'), {
+      target: { value: 'microsoft_deactivate_account' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Speichern' }));
+    await waitFor(() =>
+      expect(createTask).toHaveBeenCalledWith(
+        expect.objectContaining({ sequence: 'microsoft_deactivate_account' })
+      )
+    );
+    expect(close).toHaveBeenCalledWith(false);
+  });
+
+  it('requires a template before saving email automation', async () => {
+    render(<Form />);
+    fireEvent.change(screen.getByRole('combobox'), {
+      target: { value: 'microsoft_send_email' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Speichern' }));
+    expect(
+      await screen.findByText('Bitte wähle eine E-Mail-Vorlage')
+    ).toBeInTheDocument();
+    expect(createTask).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByRole('textbox', { name: 'E-Mail-Vorlage' }), {
+      target: { value: 'mail-1' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Speichern' }));
+    expect(
+      await screen.findByText('Bitte wähle einen Absender')
+    ).toBeInTheDocument();
+    fireEvent.change(screen.getByRole('textbox', { name: 'Absender' }), {
+      target: { value: 'absender@firma.de' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Speichern' }));
+    await waitFor(() =>
+      expect(createTask).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sequence: 'microsoft_send_email',
+          mailTemplateId: 'mail-1',
+          mailSenderAddress: 'absender@firma.de',
+        })
+      )
+    );
+  });
+
+  it('restores the saved selection and allows removing it', async () => {
+    render(
+      <Form
+        mode="edit"
+        seed={{
+          taskId: 'task-1',
+          sequence: 'microsoft_send_email',
+          mailTemplateId: 'mail-1',
+        }}
+      />
+    );
+    expect(screen.getByRole('combobox')).toHaveValue('microsoft_send_email');
+    expect(screen.getByRole('textbox', { name: 'E-Mail-Vorlage' })).toHaveValue(
+      'mail-1'
+    );
+    fireEvent.change(screen.getByRole('combobox'), {
+      target: { value: 'none' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Speichern' }));
+    await waitFor(() =>
+      expect(updateTask).toHaveBeenCalledWith({
+        taskId: 'task-1',
+        data: expect.objectContaining({ sequence: 'none' }),
+      })
+    );
+  });
+});

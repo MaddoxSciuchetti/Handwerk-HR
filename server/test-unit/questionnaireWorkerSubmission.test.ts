@@ -55,8 +55,11 @@ it("persists the worker information fields when a questionnaire is completed", a
     (prisma.$transaction as jest.Mock).mockImplementation((callback) =>
         callback(prisma),
     );
-    await expect(submitPublicQuestionnaire("token", body)).resolves.toEqual({
+    await expect(submitPublicQuestionnaire("token", { ...body, declaration: "ja" })).resolves.toEqual({
         status: "completed",
+    });
+    expect(prisma.questionnaireAnswer.createMany).toHaveBeenCalledWith({
+        data: expect.arrayContaining([{ submissionId: "submission", key: "declaration", value: "ja" }]),
     });
     expect(prisma.worker.update).toHaveBeenCalledWith({
         where: { id: "worker" },
@@ -118,6 +121,7 @@ it.each(["", "BSB-Wert"])(
         );
         await expect(
             submitPublicQuestionnaire("token", {
+                declaration: "ja",
                 "custom.bsb-salary": "Vom Empfänger geändert",
                 "custom.worker-name": "Muster",
             }),
@@ -164,21 +168,30 @@ it("publishes BSB-only fields as locked and optional in both public form represe
     });
     const payload = await getPublicQuestionnaire("token");
     expect(payload).toMatchObject({
-        questions: [
+        questions: expect.arrayContaining([
             expect.objectContaining({
                 key: "custom.bsb-salary",
                 required: false,
                 employerFilled: true,
                 bsbOnly: true,
             }),
-        ],
-        items: [
+            expect.objectContaining({ key: "declaration", required: true }),
+        ]),
+        items: expect.arrayContaining([
             expect.objectContaining({
                 key: "custom.bsb-salary",
                 required: false,
                 employerFilled: true,
                 bsbOnly: true,
             }),
-        ],
+            expect.objectContaining({ key: "declaration", required: true }),
+        ]),
     });
+});
+
+it.each([undefined, '', 'nein', true, 'true'])("rejects a submission without explicit declaration confirmation (%s)", async (declaration) => {
+    (prisma.questionnaireSubmission.findUnique as jest.Mock).mockResolvedValue({ status: "sent" });
+    const transactionCalls = (prisma.$transaction as jest.Mock).mock.calls.length;
+    await expect(submitPublicQuestionnaire("token", { declaration })).rejects.toThrow("Bitte bestätigen Sie die Erklärung der beschäftigten Person.");
+    expect(prisma.$transaction).toHaveBeenCalledTimes(transactionCalls);
 });

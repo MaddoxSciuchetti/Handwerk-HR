@@ -30,21 +30,6 @@ export const runIssueSequence = async (
   });
 };
 
-export type MailSendPreview = {
-  templateName: string;
-  subject: string;
-  body: string;
-  recipients: Array<{ label: string }>;
-  senders: Array<{ email: string; name: string }>;
-};
-
-export function getMailSendPreview(taskId: string) {
-  return API.get(`/automation/issues/${taskId}/mail-preview`) as Promise<{
-    success: boolean;
-    data: MailSendPreview;
-  }>;
-}
-
 export const runTaskAutomation = async (params: {
   taskId: string;
   automation: string;

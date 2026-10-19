@@ -44,6 +44,21 @@ type SaveResponse = {
   data: MailRecipient[];
 };
 
+export type MicrosoftMailAddress = {
+  email: string;
+  label: string;
+  kind: 'mailbox' | 'channel';
+};
+
+export function getMicrosoftMailAddresses() {
+  return apiJson
+    .get<{
+      success: boolean;
+      data: { addresses: MicrosoftMailAddress[]; error: string | null };
+    }>('/automation/microsoft-addresses')
+    .then((response) => response.data);
+}
+
 export function engagementMailKey(engagementId: string) {
   return ['engagement-mail-recipients', engagementId] as const;
 }

@@ -1,3 +1,4 @@
+import { QUESTIONNAIRE_DECLARATION } from "../../../shared/questionnaireDeclaration";
 import { uploadFileToS3 } from "@/config/aws";
 import { BAD_REQUEST, NOT_FOUND } from "@/constants/http";
 import { prisma } from "@/lib/prisma";
@@ -45,16 +46,16 @@ function publicPayload(definition: QuestionnaireDefinition | null) {
         return {
             name: "Personalfragebogen",
             intro: QUESTIONNAIRE_INTRO,
-            questions: QUESTIONNAIRE_FIELDS.map((field) => ({ ...field, required: true })),
+            questions: [...QUESTIONNAIRE_FIELDS.filter((field) => field.key !== "declaration").map((field) => ({ ...field, required: true })), QUESTIONNAIRE_DECLARATION],
             repeaters: QUESTIONNAIRE_REPEATERS,
         };
     }
     return {
         name: definition.name ?? "Personalfragebogen",
         intro: definition.intro,
-        questions: presentQuestions(definition),
+        questions: [...presentQuestions(definition).filter((field) => field.key !== "declaration"), QUESTIONNAIRE_DECLARATION],
         repeaters: definitionRepeaters(definition),
-        items: definition.items.map((item) =>
+        items: [...definition.items.filter((item) => item.key !== "declaration").map((item) =>
             item.kind === "repeater"
                 ? item
                 : {
@@ -71,7 +72,7 @@ function publicPayload(definition: QuestionnaireDefinition | null) {
                       bsbOnly: item.bsbOnly,
                       defaultValue: item.defaultValue,
                   },
-        ),
+        ), { kind: "field" as const, ...QUESTIONNAIRE_DECLARATION, employerFilled: false }],
     };
 }
 
@@ -98,7 +99,12 @@ type ProfileQuestionField = QuestionnaireField & {
 
 function fieldsOf(definition: QuestionnaireDefinition | null): ProfileQuestionField[] {
     const fields: ProfileQuestionField[] = definition ? definitionFields(definition) : [...QUESTIONNAIRE_FIELDS];
-    return fields.map((field) => ({ ...field, required: questionRequired(field) && !field.bsbOnly }));
+    return [
+        ...fields
+            .filter((field) => field.key !== "declaration")
+            .map((field) => ({ ...field, required: questionRequired(field) && !field.bsbOnly })),
+        QUESTIONNAIRE_DECLARATION,
+    ];
 }
 
 function lockEmployerValues(
@@ -133,6 +139,10 @@ export async function submitPublicQuestionnaire(token: string, body: unknown) {
     }
     if (submission.status !== "sent") {
         return { status: "completed" as const };
+    }
+
+    if (!body || typeof body !== "object" || Array.isArray(body) || (body as Record<string, unknown>).declaration !== "ja") {
+        throw new AppError(BAD_REQUEST, "Bitte bestätigen Sie die Erklärung der beschäftigten Person.");
     }
 
     const definition = storedDefinition(submission.formDefinition);

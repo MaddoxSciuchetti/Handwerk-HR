@@ -3,7 +3,17 @@ import FormSelectOptions from '@/components/form/FormSelectOptions';
 import { Button } from '@/components/ui/button';
 import { FieldGroup } from '@/components/ui/field';
 import { Label } from '@/components/ui/label';
+import { MailSenderSelect } from '@/features/all-tasks/components/MailSenderSelect';
 import TaskAutomation from '@/features/all-tasks/components/TaskAutomation';
+import { EngagementMailRecipients } from '@/features/worker-task-management/components/tasks/EngagementMailRecipients';
+import {
+  INTEGRATION_SEQUENCES,
+  integrationLabel,
+  isMailSequence,
+  sequenceLabel,
+} from '@/features/settings/integrations/integration.consts';
+import { getIntegrations } from '@/features/settings/integrations/integrations.api';
+import { useMailTemplates } from '@/features/settings/mail-template/useMailTemplates';
 import { TaskChat } from '@/features/all-tasks/components/TaskChat';
 import { ARBEITSZEUGNIS } from '@/features/all-tasks/consts/task-automation.consts';
 import { TaskStatusSelect } from '@/features/all-tasks/components/ui/TaskStatusSelect';
@@ -45,6 +55,38 @@ export function TaskSidebar({
     setIsOpen
   );
   const navigate = useNavigate();
+  const sequence = useWatch({ control, name: 'sequence' });
+  const mailSenderAddress = useWatch({ control, name: 'mailSenderAddress' });
+  const workerEngagementId = useWatch({
+    control,
+    name: 'workerEngagementId',
+  });
+  const { data: mailTemplates = [] } = useMailTemplates();
+  const { data: integrations = [] } = useQuery({
+    queryKey: ['settings', 'integrations'],
+    queryFn: getIntegrations,
+  });
+  const automationOptions = [
+    { value: 'none', label: 'Keine' },
+    ...INTEGRATION_SEQUENCES.filter((item) =>
+      integrations.some(
+        (integration) =>
+          integration.provider === item.provider && integration.enabled
+      )
+    ).map((item) => ({
+      value: item.value,
+      label: `${integrationLabel(item.provider)} · ${item.label}`,
+    })),
+  ];
+  if (
+    taskEditState.sequence &&
+    !automationOptions.some((item) => item.value === taskEditState.sequence)
+  ) {
+    automationOptions.push({
+      value: taskEditState.sequence,
+      label: sequenceLabel(taskEditState.sequence),
+    });
+  }
   const selectedEngagementId = useWatch({
     control,
     name: 'workerEngagementId',
@@ -163,6 +205,41 @@ export function TaskSidebar({
                   <TaskStatusSelect control={control} errors={errors} />
                 </div>
               </div>
+              <div className="flex flex-col gap-2">
+                <FormSelectOptions
+                  name="sequence"
+                  control={control}
+                  errors={errors}
+                  data={automationOptions}
+                  label="Automation"
+                  placeholder="Automation wählen"
+                />
+              </div>
+              {sequence === 'microsoft_send_email' ? (
+                <>
+                  <div className="flex flex-col gap-2">
+                    <FormSelectOptions
+                      name="mailTemplateId"
+                      control={control}
+                      errors={errors}
+                      data={mailTemplates.map((template) => ({
+                        value: template.id,
+                        label: template.name,
+                      }))}
+                      label="E-Mail-Vorlage"
+                      placeholder="Vorlage wählen"
+                    />
+                  </div>
+                  <MailSenderSelect
+                    control={control}
+                    errors={errors}
+                    current={mailSenderAddress}
+                  />
+                </>
+              ) : null}
+              {isMailSequence(sequence) && workerEngagementId ? (
+                <EngagementMailRecipients engagementId={workerEngagementId} />
+              ) : null}
               {taskState === 'edit' &&
               taskEditState.taskId &&
               taskEditState.sequence &&
@@ -171,6 +248,7 @@ export function TaskSidebar({
                   taskId={taskEditState.taskId}
                   provider={taskEditState.integrationProvider}
                   sequence={taskEditState.sequence}
+                  senderAddress={mailSenderAddress}
                   disabled={isSubmitting}
                 />
               ) : null}
