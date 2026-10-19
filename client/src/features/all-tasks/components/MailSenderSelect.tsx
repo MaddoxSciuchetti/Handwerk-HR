@@ -17,7 +17,7 @@ export function MailSenderSelect({
   current,
 }: MailSenderSelectProps) {
   const addresses = useQuery({
-    queryKey: ['microsoft-mail-addresses'],
+    queryKey: ['bsb-mail-addresses'],
     queryFn: getMicrosoftMailAddresses,
   });
   const options = useMemo(() => {
@@ -40,9 +40,7 @@ export function MailSenderSelect({
         data={options}
         label="Absender"
         placeholder={
-          addresses.isLoading
-            ? 'Microsoft wird abgefragt…'
-            : 'Absender wählen'
+          addresses.isLoading ? 'Absender werden geladen…' : 'Absender wählen'
         }
       />
       {addresses.data?.error ? (

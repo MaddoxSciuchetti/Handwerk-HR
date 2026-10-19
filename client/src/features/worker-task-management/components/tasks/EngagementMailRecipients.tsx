@@ -22,29 +22,6 @@ type EngagementMailRecipientsProps = {
 };
 
 function choicesFromPage(page: EngagementMailPage): MailRecipient[] {
-  const workers = page.workers.flatMap((worker) => {
-    const name = `${worker.firstName} ${worker.lastName}`.trim();
-    const rows: MailRecipient[] = [];
-    if (worker.email.trim()) {
-      rows.push({
-        kind: 'worker_private',
-        label: `${name} · E-Mail`,
-        address: worker.email.trim(),
-        workerId: worker.id,
-        groupId: null,
-      });
-    }
-    if (worker.workEmail?.trim()) {
-      rows.push({
-        kind: 'worker_work',
-        label: `${name} · Arbeits-E-Mail`,
-        address: worker.workEmail.trim(),
-        workerId: worker.id,
-        groupId: null,
-      });
-    }
-    return rows;
-  });
   const groups = page.groups.map((group) => ({
     kind: 'microsoft_group' as const,
     label: group.displayName,
@@ -60,12 +37,15 @@ function choicesFromPage(page: EngagementMailPage): MailRecipient[] {
     groupId: channel.id,
   }));
   const listed = new Set(
-    [...workers, ...groups, ...channels].map((choice) => recipientKey(choice))
+    [...groups, ...channels].map((choice) => recipientKey(choice))
   );
   const kept = page.selected.filter(
-    (choice) => !listed.has(recipientKey(choice))
+    (choice) =>
+      choice.kind !== 'worker_private' &&
+      choice.kind !== 'worker_work' &&
+      !listed.has(recipientKey(choice))
   );
-  return [...workers, ...groups, ...channels, ...kept];
+  return [...groups, ...channels, ...kept];
 }
 
 export function EngagementMailRecipients({
@@ -87,7 +67,10 @@ export function EngagementMailRecipients({
     },
   });
 
-  const selected = page.data?.selected ?? [];
+  const selected = (page.data?.selected ?? []).filter(
+    (choice) =>
+      choice.kind !== 'worker_private' && choice.kind !== 'worker_work'
+  );
   const choices = page.data ? choicesFromPage(page.data) : [];
   const selectedKeys = new Set(selected.map((choice) => recipientKey(choice)));
   const summary = selected.map((choice) => choice.label).join(', ');
