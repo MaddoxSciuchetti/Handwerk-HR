@@ -48,13 +48,13 @@ beforeEach(() => {
 it('limits suggestions and searches all groups and licensed users by name or email', async () => {
   const user = userEvent.setup();
   renderWithProviders(<EngagementMailRecipients engagementId="engagement-1" />);
-  await user.click(
-    await screen.findByRole('button', { name: 'Empfänger wählen' })
-  );
+  await user.click(screen.getByRole('combobox', { name: 'Empfänger suchen' }));
+  await screen.findByRole('checkbox', { name: /Ada Müller/ });
   expect(screen.getAllByRole('checkbox')).toHaveLength(10);
   expect(screen.getByRole('status')).toHaveTextContent('10 von 16');
-  const search = screen.getByRole('textbox', { name: 'Empfänger suchen' });
+  const search = screen.getByRole('combobox', { name: 'Empfänger suchen' });
   await user.type(search, 'Team 14');
+  expect(search).toHaveFocus();
   await user.click(screen.getByRole('checkbox', { name: 'Team 14' }));
   await waitFor(() =>
     expect(saveEngagementMailRecipients).toHaveBeenCalledTimes(1)
@@ -97,11 +97,9 @@ it('limits suggestions and searches all groups and licensed users by name or ema
 it('shows a no-match message without losing selections', async () => {
   const user = userEvent.setup();
   renderWithProviders(<EngagementMailRecipients engagementId="engagement-1" />);
-  await user.click(
-    await screen.findByRole('button', { name: 'Empfänger wählen' })
-  );
+  await user.click(screen.getByRole('combobox', { name: 'Empfänger suchen' }));
   await user.type(
-    screen.getByRole('textbox', { name: 'Empfänger suchen' }),
+    screen.getByRole('combobox', { name: 'Empfänger suchen' }),
     'no-such-recipient'
   );
   expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
@@ -109,4 +107,20 @@ it('shows a no-match message without losing selections', async () => {
     screen.getByText('Keine passenden Empfänger gefunden.')
   ).toBeInTheDocument();
   expect(saveEngagementMailRecipients).not.toHaveBeenCalled();
+});
+
+it('supports typing in the closed field and keyboard navigation without submitting the task', async () => {
+  const user = userEvent.setup();
+  renderWithProviders(<EngagementMailRecipients engagementId="engagement-1" />);
+  const input = screen.getByRole('combobox', { name: 'Empfänger suchen' });
+  expect(input).toHaveAttribute('aria-expanded', 'false');
+  await user.type(input, 'ada@bsb');
+  const choice = await screen.findByRole('checkbox', { name: /Ada Müller/ });
+  expect(input).toHaveValue('ada@bsb');
+  expect(input).toHaveFocus();
+  await user.keyboard('{ArrowDown}');
+  expect(choice).toHaveFocus();
+  await user.keyboard(' ');
+  await waitFor(() => expect(choice).toBeChecked());
+  expect(screen.getByText('Ausgewählt: Ada Müller')).toBeInTheDocument();
 });
