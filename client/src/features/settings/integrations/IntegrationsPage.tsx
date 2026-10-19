@@ -96,9 +96,16 @@ function MicrosoftForm({
         licenseSkuId,
         clientSecret,
       }),
-    onSuccess: async () => {
+    onSuccess: (saved) => {
       setClientSecret('');
-      await queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      queryClient.setQueryData<OrganizationIntegration[]>(
+        QUERY_KEY,
+        (current) =>
+          current?.map((item) =>
+            item.provider === saved.provider ? saved : item
+          )
+      );
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       toast.success('Microsoft wurde gespeichert.');
     },
     onError: (error: { message?: string }) => {
@@ -180,9 +187,16 @@ function CrewmeisterForm({
   const save = useMutation({
     mutationFn: () =>
       saveIntegration('crewmeister', { enabled, token, crewId }),
-    onSuccess: async () => {
+    onSuccess: (saved) => {
       setToken('');
-      await queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      queryClient.setQueryData<OrganizationIntegration[]>(
+        QUERY_KEY,
+        (current) =>
+          current?.map((item) =>
+            item.provider === saved.provider ? saved : item
+          )
+      );
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       toast.success('Crewmeister wurde gespeichert.');
     },
     onError: (error: { message?: string }) => {
@@ -264,8 +278,11 @@ export function IntegrationsPage() {
               dieser Umgebung nicht ausgeführt.
             </p>
           )}
-          <MicrosoftForm key={microsoft.tenantId} integration={microsoft} />
-          <CrewmeisterForm key={crewmeister.crewId} integration={crewmeister} />
+          <MicrosoftForm key={microsoft.provider} integration={microsoft} />
+          <CrewmeisterForm
+            key={crewmeister.provider}
+            integration={crewmeister}
+          />
         </div>
       )}
     </div>
