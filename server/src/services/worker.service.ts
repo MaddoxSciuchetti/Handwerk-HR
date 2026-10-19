@@ -1,3 +1,6 @@
+import { BAD_REQUEST } from "@/constants/http";
+import AppError from "@/utils/AppError";
+import { listBsbMailAddresses } from "@/services/engagementMail";
 import { prisma } from "@/lib/prisma";
 import { templateItemsForEngagement } from "@/services/onboardingTemplateTasks";
 import { fillWorkerProfileFromQuestionnaires } from "@/services/questionnaireWorkerProfile";
@@ -140,7 +143,13 @@ export async function startExpectedOnboarding(params: {
     organizationId: string;
     createdByUserId: string;
     email: string;
+    senderAddress: string;
 }) {
+    const senderAddress = params.senderAddress.trim().toLowerCase();
+    const { addresses } = await listBsbMailAddresses(params.organizationId);
+    if (!addresses.some((address) => address.email === senderAddress)) {
+        throw new AppError(BAD_REQUEST, "Bitte einen gültigen Absender wählen.");
+    }
     const email = params.email.trim().toLowerCase();
     const { firstName, lastName } = placeholderNamesFromEmail(email);
     const created = await prisma.$transaction(async (tx) => {
@@ -162,6 +171,7 @@ export async function startExpectedOnboarding(params: {
                 responsibleUserId: params.createdByUserId,
                 status: "expected",
                 type: "onboarding",
+                questionnaireSenderAddress: senderAddress,
             },
         });
 
