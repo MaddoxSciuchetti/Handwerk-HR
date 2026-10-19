@@ -5,6 +5,7 @@ import {
   INTEGRATION_SEQUENCES,
 } from '@/features/settings/integrations/integration.consts';
 import { getIntegrations } from '@/features/settings/integrations/integrations.api';
+import { useMailTemplates } from '@/features/settings/mail-template/useMailTemplates';
 import { TaskStatusSelect } from '@/features/all-tasks/components/ui/TaskStatusSelect';
 import { employeeQueries } from '@/features/employee-overview/query-options/queries/employee.queries';
 import { EMPTY_TEMPLATE_TASK } from '@/features/template-tasks/schemas/templateTaskForm.schema';
@@ -49,6 +50,8 @@ export function TaskSidebar({
     queryFn: getIntegrations,
   });
   const integrationProvider = useWatch({ control, name: 'integrationProvider' });
+  const sequence = useWatch({ control, name: 'sequence' });
+  const { data: mailTemplates = [] } = useMailTemplates();
   const integrationOptions = [
     { value: INTEGRATION_NONE, label: 'Keine' },
     ...integrations
@@ -147,6 +150,20 @@ export function TaskSidebar({
               labelClassName="typo-body-base"
               placeholder="Sequenz wählen"
             />
+            {sequence === 'microsoft_send_email' ? (
+              <FormSelectOptions
+                errors={errors}
+                control={control}
+                data={mailTemplates.map((template) => ({
+                  value: template.id,
+                  label: template.name,
+                }))}
+                name="mailTemplateId"
+                label="E-Mail-Vorlage"
+                labelClassName="typo-body-base"
+                placeholder="Vorlage wählen"
+              />
+            ) : null}
           </SidebarContent>
           <SidebarFooter className="p-6">
             <Button type="submit" className="rounded-full">

@@ -26,6 +26,7 @@ export type InsertTemplateTaskParams = {
     orderIndex?: number;
     integrationProvider?: IntegrationProvider | null;
     sequence?: IntegrationSequence | null;
+    mailTemplateId?: string | null;
 };
 
 export type ModifyTemplateTaskParams = {
@@ -36,6 +37,7 @@ export type ModifyTemplateTaskParams = {
     orderIndex?: number;
     integrationProvider?: IntegrationProvider | null;
     sequence?: IntegrationSequence | null;
+    mailTemplateId?: string | null;
 };
 
 const taskSelect = {
@@ -47,6 +49,7 @@ const taskSelect = {
     orderIndex: true,
     integrationProvider: true,
     sequence: true,
+    mailTemplateId: true,
     createdAt: true,
     updatedAt: true,
 } as const;
@@ -55,12 +58,25 @@ async function assertSequence(params: {
     organizationId: string;
     integrationProvider: IntegrationProvider | null;
     sequence: IntegrationSequence | null;
+    mailTemplateId: string | null;
 }) {
     if (!sequenceMatchesProvider(params.integrationProvider, params.sequence)) {
         throw new AppError(
             BAD_REQUEST,
             "Die Sequenz gehört nicht zu dieser Integration.",
         );
+    }
+    if (params.sequence === "microsoft_send_email") {
+        if (!params.mailTemplateId) {
+            throw new AppError(BAD_REQUEST, "Bitte wähle eine E-Mail-Vorlage.");
+        }
+        const template = await prisma.mailTemplate.findFirst({
+            where: { id: params.mailTemplateId, organizationId: params.organizationId },
+            select: { id: true },
+        });
+        if (!template) {
+            throw new AppError(BAD_REQUEST, "Die E-Mail-Vorlage wurde nicht gefunden.");
+        }
     }
     if (!params.integrationProvider) return;
     const integration = await prisma.organizationIntegration.findUnique({
@@ -212,10 +228,13 @@ export const insertTemplateTask = async (
 
     const integrationProvider = data.integrationProvider ?? null;
     const sequence = data.sequence ?? null;
+    const mailTemplateId =
+        sequence === "microsoft_send_email" ? (data.mailTemplateId ?? null) : null;
     await assertSequence({
         organizationId: data.organizationId,
         integrationProvider,
         sequence,
+        mailTemplateId,
     });
 
     return await prisma.templateItem.create({
@@ -228,6 +247,7 @@ export const insertTemplateTask = async (
             orderIndex: data.orderIndex ?? 0,
             integrationProvider,
             sequence,
+            mailTemplateId,
         },
         select: taskSelect,
     });
@@ -259,10 +279,13 @@ export const modifyTemplateTask = async (
 ) => {
     const integrationProvider = data.integrationProvider ?? null;
     const sequence = data.sequence ?? null;
+    const mailTemplateId =
+        sequence === "microsoft_send_email" ? (data.mailTemplateId ?? null) : null;
     await assertSequence({
         organizationId,
         integrationProvider,
         sequence,
+        mailTemplateId,
     });
     return await prisma.templateItem.update({
         where: { id },
@@ -274,6 +297,7 @@ export const modifyTemplateTask = async (
             orderIndex: data.orderIndex,
             integrationProvider,
             sequence,
+            mailTemplateId,
         },
         select: taskSelect,
     });

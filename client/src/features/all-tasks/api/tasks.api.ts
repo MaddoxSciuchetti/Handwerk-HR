@@ -21,9 +21,29 @@ export const updateTask = async ({
   return API.patch(`/tasks/${taskId}`, data);
 };
 
-export const runIssueSequence = async (taskId: string): Promise<unknown> => {
-  return API.post(`/automation/issues/${taskId}/sequence`);
+export const runIssueSequence = async (
+  taskId: string,
+  senderAddress?: string
+): Promise<unknown> => {
+  return API.post(`/automation/issues/${taskId}/sequence`, {
+    ...(senderAddress ? { senderAddress } : {}),
+  });
 };
+
+export type MailSendPreview = {
+  templateName: string;
+  subject: string;
+  body: string;
+  recipients: Array<{ label: string }>;
+  senders: Array<{ email: string; name: string }>;
+};
+
+export function getMailSendPreview(taskId: string) {
+  return API.get(`/automation/issues/${taskId}/mail-preview`) as Promise<{
+    success: boolean;
+    data: MailSendPreview;
+  }>;
+}
 
 export const runTaskAutomation = async (params: {
   taskId: string;

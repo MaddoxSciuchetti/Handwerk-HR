@@ -177,6 +177,7 @@ model WorkerEngagement {
   templateDocuments        EngagementTemplateDocument[]
   mailForwarding           MailForwarding?
   clothing                 EngagementClothing[]
+  mailRecipients           EngagementMailRecipient[]
 
   @@index([workerId])
   @@index([organizationId])
@@ -288,16 +289,19 @@ model TemplateItem {
   defaultAssigneeUserId   String?            @map("default_assignee_user_id")
   integrationProvider     IntegrationProvider? @map("integration_provider")
   sequence                IntegrationSequence? @map("sequence")
+  mailTemplateId          String?            @map("mail_template_id")
   orderIndex              Int                @default(0) @map("order_index")
   createdAt               DateTime           @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt               DateTime           @updatedAt @map("updated_at") @db.Timestamptz()
 
   issueTemplate           IssueTemplate      @relation(fields: [issueTemplateId], references: [id], onDelete: Cascade)
   defaultAssignee         User?              @relation("TemplateItemDefaultAssignee", fields: [defaultAssigneeUserId], references: [id], onDelete: SetNull)
+  mailTemplate            MailTemplate?      @relation(fields: [mailTemplateId], references: [id], onDelete: SetNull)
   issues                  Issue[]
 
   @@index([issueTemplateId])
   @@index([defaultAssigneeUserId])
+  @@index([mailTemplateId])
   @@map("template_items")
 }
 
@@ -314,6 +318,7 @@ model Issue {
   automation         String?            @db.VarChar(64)
   integrationProvider IntegrationProvider? @map("integration_provider")
   sequence           IntegrationSequence? @map("sequence")
+  mailTemplateId     String?            @map("mail_template_id")
   isTemporary        Boolean            @default(false) @map("is_temporary")
   assigneeOnly       Boolean            @default(false) @map("assignee_only")
   title              String             @db.VarChar(400)
@@ -330,6 +335,7 @@ model Issue {
   createdBy          User               @relation("IssueCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
   assignee           User?              @relation("IssueAssignedTo", fields: [assigneeUserId], references: [id], onDelete: SetNull)
   templateItem       TemplateItem?      @relation(fields: [templateItemId], references: [id], onDelete: SetNull)
+  mailTemplate       MailTemplate?      @relation(fields: [mailTemplateId], references: [id], onDelete: SetNull)
   comments           Comment[]
   auditLogs          IssueAuditLog[]
 
@@ -337,6 +343,7 @@ model Issue {
   @@index([organizationId])
   @@index([assigneeUserId])
   @@index([status])
+  @@index([mailTemplateId])
   @@map("issues")
 }
 
@@ -843,13 +850,33 @@ model MailTemplate {
   groupName      String   @default("") @map("group_name") @db.VarChar(255)
   subject        String   @default("") @db.VarChar(400)
   body           String   @default("") @db.Text
+  origin         String?  @db.VarChar(32)
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz()
 
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  templateItems TemplateItem[]
+  issues        Issue[]
 
+  @@unique([organizationId, origin])
   @@index([organizationId])
   @@map("mail_templates")
+}
+
+model EngagementMailRecipient {
+  id           String                      @id @default(uuid())
+  engagementId String                      @map("engagement_id")
+  kind         EngagementMailRecipientKind
+  label        String                      @db.VarChar(255)
+  address      String?                     @db.VarChar(254)
+  workerId     String?                     @map("worker_id")
+  groupId      String?                     @map("group_id") @db.VarChar(255)
+  createdAt    DateTime                    @default(now()) @map("created_at") @db.Timestamptz()
+
+  engagement WorkerEngagement @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+
+  @@index([engagementId])
+  @@map("engagement_mail_recipients")
 }
 
 model DepartureMailSettings {
@@ -1031,8 +1058,16 @@ enum IntegrationSequence {
   microsoft_create_account
   microsoft_send_onboarding_email
   microsoft_send_offboarding_email
+  microsoft_send_email
   microsoft_deactivate_account
   crewmeister_create_account
+}
+
+enum EngagementMailRecipientKind {
+  worker_private
+  worker_work
+  microsoft_group
+  teams_channel
 }
 
 enum ExternalAccountProvider {

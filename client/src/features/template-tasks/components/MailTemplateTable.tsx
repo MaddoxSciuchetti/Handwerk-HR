@@ -22,23 +22,6 @@ import {
 } from './MailTemplateSidebar';
 import { MailTemplateRow, type MailTemplateRowData } from './MailTemplateRow';
 
-const SYSTEM_MAILS: MailTemplateRowData[] = [
-  {
-    id: 'welcome',
-    name: 'Willkommensmail',
-    description: 'E-Mail an das Team bei Eintritt',
-    kind: 'system',
-    to: '/settings/welcome-mail',
-  },
-  {
-    id: 'departure',
-    name: 'Entlassungsmail',
-    description: 'E-Mail an das Team bei Entlassung',
-    kind: 'system',
-    to: '/settings/departure-mail',
-  },
-];
-
 const EMPTY_EDIT: MailTemplateEditState = {
   id: '',
   name: '',
@@ -54,15 +37,13 @@ export function MailTemplateTable() {
   const [contentOpen, setContentOpen] = useState(false);
   const [openMail, setOpenMail] = useState<MailTemplateRowData | null>(null);
 
-  const rows: MailTemplateRowData[] = [
-    ...SYSTEM_MAILS,
-    ...(customTemplates ?? []).map((template) => ({
+  const rows: MailTemplateRowData[] = (customTemplates ?? []).map(
+    (template) => ({
       id: template.id,
       name: template.name,
       description: template.description,
-      kind: 'custom' as const,
-    })),
-  ];
+    })
+  );
 
   return (
     <section className="flex min-h-0 w-full flex-1 flex-col">

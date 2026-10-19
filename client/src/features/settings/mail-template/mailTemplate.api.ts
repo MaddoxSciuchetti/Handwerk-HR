@@ -1,8 +1,9 @@
 import { apiJson } from '@/config/apiClient';
-import type {
-  WelcomeMailPageData,
-  WelcomeMailSettings,
-} from '@/features/settings/welcome-mail/welcomeMail.api';
+
+export type MailTemplateContent = {
+  subject: string;
+  body: string;
+};
 
 export type MailTemplateListItem = {
   id: string;
@@ -10,8 +11,9 @@ export type MailTemplateListItem = {
   description: string;
 };
 
-export type MailTemplatePageData = WelcomeMailPageData & {
+export type MailTemplatePageData = {
   template: MailTemplateListItem;
+  settings: MailTemplateContent;
 };
 
 type ListResponse = {
@@ -31,7 +33,7 @@ type PageResponse = {
 
 type SettingsResponse = {
   success: boolean;
-  data: WelcomeMailSettings;
+  data: MailTemplateContent;
 };
 
 export function listMailTemplates() {
@@ -64,7 +66,7 @@ export function getMailTemplate(id: string) {
     .then((response) => response.data);
 }
 
-export function saveMailTemplate(id: string, input: WelcomeMailSettings) {
+export function saveMailTemplate(id: string, input: MailTemplateContent) {
   return apiJson
     .put<SettingsResponse>(`/automation/mail-templates/${id}`, input)
     .then((response) => response.data);
