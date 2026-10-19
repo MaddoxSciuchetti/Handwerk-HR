@@ -1,5 +1,6 @@
 import { deterministicContractValues } from "@/services/contractFieldMatch";
 import {
+    fieldIsLocked,
     hourKeys,
     isWorkerLocked,
     presentQuestions,
@@ -9,6 +10,7 @@ import {
     applyOverrides,
     withAddedQuestions,
 } from "@/services/questionnaireDefinition";
+import { personalbogenItems } from "@/services/personalbogenDefinition";
 import {
     QUESTIONNAIRE_FIELDS,
     workerTextFromAnswers,
@@ -262,6 +264,50 @@ describe("questionnaire definition", () => {
             items: [{ kind: "field", key: "firstName", label: "Rufname" }],
         });
         expect(definition.items[0]).toMatchObject({ key: "firstName", label: "Rufname" });
+    });
+
+    it("builds the DATEV personalbogen and locks the grey fields for the office", () => {
+        const definition = parseQuestionnaireDefinition({
+            name: "Personalfragebogen",
+            items: personalbogenItems(),
+        });
+        const byKey = new Map(definition.items.map((item) => [item.key, item]));
+        expect(byKey.get("custom.schwerbehindert")).toMatchObject({
+            section: "Persönliche Angaben",
+            bsbOnly: true,
+        });
+        expect(byKey.get("custom.beschaeftigungsbetrieb")).toMatchObject({
+            defaultValue: "BSB Haustechnik GmbH",
+            bsbOnly: false,
+        });
+        expect(byKey.get("hoursMonday")).toMatchObject({ bsbOnly: true });
+        expect(byKey.get("children")).toMatchObject({
+            kind: "repeater",
+            columns: [
+                { key: "lastName", label: "Name" },
+                { key: "firstName", label: "Vorname" },
+                { key: "birthday" },
+            ],
+        });
+        expect(byKey.get("rows.entlohnung")).toMatchObject({
+            kind: "repeater",
+            columns: [
+                { key: "bezeichnung", officeOnly: true },
+                { key: "betrag", officeOnly: true },
+                { key: "gueltigab", officeOnly: true },
+                { key: "stundenlohn", officeOnly: true },
+                { key: "stundenlohnab", officeOnly: true },
+            ],
+        });
+        const prior = byKey.get("priorEmployment");
+        expect(prior?.kind === "repeater" && prior.columns.map((column) => column.key)).toEqual([
+            "from",
+            "until",
+            "kind",
+            "days",
+        ]);
+        expect(fieldIsLocked({ key: "custom.kostenstelle", officeOnly: true })).toBe(true);
+        expect(definition.items.length).toBeLessThanOrEqual(80);
     });
 
     it("locks only answers the office actually filled in", () => {

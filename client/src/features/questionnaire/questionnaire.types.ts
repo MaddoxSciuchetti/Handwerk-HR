@@ -24,5 +24,6 @@ export type QuestionnaireRepeater = {
     key: string;
     label: string;
     type: 'text' | 'date';
+    officeOnly?: boolean;
   }[];
 };

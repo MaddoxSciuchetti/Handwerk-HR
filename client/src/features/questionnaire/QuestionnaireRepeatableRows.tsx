@@ -39,7 +39,9 @@ export function QuestionnaireRepeatableRows({
               <Input
                 id={`${repeater.key}-${index}-${column.key}`}
                 type={column.type === 'date' ? 'date' : 'text'}
+                disabled={column.officeOnly === true}
                 value={row[column.key] ?? ''}
+                className={column.officeOnly ? 'bg-muted text-muted-foreground' : undefined}
                 onChange={(event) => update(index, column.key, event.target.value)}
               />
             </div>
@@ -55,6 +57,9 @@ export function QuestionnaireRepeatableRows({
           </div>
         </div>
       ))}
+      {repeater.columns.some((column) => column.officeOnly) ? (
+        <p className="text-xs text-muted-foreground">Vom Betrieb ausgefüllt</p>
+      ) : null}
       <div>
         <Button
           type="button"
