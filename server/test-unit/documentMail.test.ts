@@ -72,3 +72,20 @@ it("attaches identical PDF bytes to Resend with idempotency and reply tracking",
         { idempotencyKey: "pdf-1" },
     );
 });
+
+it("uses the selected sender for Resend", async () => {
+    (resend.emails.send as jest.Mock).mockResolvedValue({ data: { id: "mail-2" }, error: null });
+    await sendMail({ to: "ada@example.de", senderAddress: "office@example.de", subject: "Fragebogen", text: "Link", html: "Link" });
+    expect(resend.emails.send).toHaveBeenLastCalledWith(expect.objectContaining({ from: "office@example.de" }), undefined);
+});
+
+it("creates and sends Graph mail using the selected mailbox", async () => {
+    const mock = jest.spyOn(global, "fetch")
+        .mockResolvedValueOnce({ ok: true, status: 201, text: async () => JSON.stringify({ id: "draft", conversationId: "conversation" }) } as Response)
+        .mockResolvedValueOnce({ ok: true, status: 202 } as Response);
+    await sendGraphMail({ to: "ada@example.de", senderAddress: "office@example.de", subject: "Fragebogen", html: "Link" });
+    expect(mock.mock.calls.map(([url]) => url)).toEqual([
+        "https://graph.microsoft.com/v1.0/users/office%40example.de/messages",
+        "https://graph.microsoft.com/v1.0/users/office%40example.de/messages/draft/send",
+    ]);
+});

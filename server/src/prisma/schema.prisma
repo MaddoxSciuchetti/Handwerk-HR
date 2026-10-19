@@ -159,6 +159,7 @@ model WorkerEngagement {
   endDate           DateTime?          @map("end_date") @db.Date
   startedAt         DateTime           @default(now()) @map("started_at") @db.Timestamptz()
   completedAt       DateTime?          @map("completed_at") @db.Timestamptz()
+  questionnaireSenderAddress String?   @map("questionnaire_sender_address") @db.VarChar(254)
   questionnaireOverrides Json?         @map("questionnaire_overrides")
   createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz()

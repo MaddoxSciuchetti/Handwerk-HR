@@ -71,10 +71,23 @@ export const startExpectedOnboarding = catchErrors(
                 .json({ success: false, message: "E-Mail fehlt." });
         }
 
+        const senderAddress = typeof req.body?.senderAddress === "string"
+            ? req.body.senderAddress.trim() : "";
+        if (
+            senderAddress.length > 254 ||
+            !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(senderAddress)
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "Bitte einen gültigen Absender wählen.",
+            });
+        }
+
         const result = await workerService.startExpectedOnboarding({
             organizationId: req.orgId,
             createdByUserId: req.userId,
             email,
+            senderAddress,
         });
 
         return res.status(201).json({ success: true, data: result });
