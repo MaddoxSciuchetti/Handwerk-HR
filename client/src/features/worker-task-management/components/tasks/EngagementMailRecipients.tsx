@@ -227,12 +227,6 @@ export function EngagementMailRecipients({
               })
             )}
           </div>
-          {matches.length > visible.length ? (
-            <p className="px-2 text-xs text-muted-foreground" role="status">
-              {visible.length} von {matches.length} Empfängern. Suche
-              verfeinern, um weitere zu finden.
-            </p>
-          ) : null}
         </PopoverContent>
       </Popover>
       {summary ? (
