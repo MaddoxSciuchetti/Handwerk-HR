@@ -1,5 +1,4 @@
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useGetTaskHistory } from '@/features/worker-task-management/hooks/useGetTaskHistory';
 import type { TaskHistoryCommentEntry } from '@/features/worker-task-management/types/index.types';
@@ -168,10 +167,9 @@ export function TaskChat({
   };
 
   return (
-    <div className="flex min-h-48 flex-col gap-3">
-      <div className="flex items-center justify-between gap-2">
-        <Label htmlFor="task-chat">Chat</Label>
-        {editingCommentId ? (
+    <div className="flex min-h-48 flex-col gap-3 rounded-xl border border-border p-3">
+      {editingCommentId ? (
+        <div className="flex items-center justify-end gap-2">
           <Button
             type="button"
             variant="link"
@@ -186,8 +184,8 @@ export function TaskChat({
           >
             Bearbeiten abbrechen
           </Button>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
       <div className="flex min-h-24 flex-1 flex-col gap-2 overflow-y-auto">
         {isLoading ? (
           <p className="text-xs text-muted-foreground">Chat wird geladen…</p>
@@ -242,11 +240,12 @@ export function TaskChat({
         <Textarea
           ref={composerRef}
           id="task-chat"
+          aria-label="Nachricht"
           value={text}
           disabled={disabled || saveComment.isPending}
           rows={1}
           placeholder="@ für Erwähnung"
-          className="h-8 min-h-8 min-w-0 flex-1 resize-none field-sizing-fixed rounded-lg border border-input bg-transparent px-3 py-1.5 shadow-none"
+          className="h-8 min-h-8 min-w-0 flex-1 resize-none field-sizing-fixed rounded-xl border border-input bg-transparent px-3 py-1.5 shadow-none focus-visible:border-ring/50 focus-visible:ring-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           onChange={(event) => {
             const next = event.target.value;
             setText(next);
