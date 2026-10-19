@@ -2,10 +2,11 @@ import { Label } from '@/components/ui/label';
 import {
   Popover,
   PopoverContent,
+  PopoverAnchor,
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
-import { useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import {
   engagementMailKey,
   getEngagementMailRecipients,
@@ -14,7 +15,6 @@ import {
   type EngagementMailPage,
   type MailRecipient,
 } from '@/features/worker-task-management/api/engagementMail.api';
-import { cn } from '@/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronDownIcon } from 'lucide-react';
 
@@ -54,7 +54,7 @@ function choicesFromPage(page: EngagementMailPage): MailRecipient[] {
       choice.kind !== 'worker_work' &&
       !listed.has(recipientKey(choice))
   );
-  return [...groups, ...channels, ...users, ...kept];
+  return [...users, ...groups, ...channels, ...kept];
 }
 
 export function EngagementMailRecipients({
@@ -62,6 +62,10 @@ export function EngagementMailRecipients({
 }: EngagementMailRecipientsProps) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
+  const [open, setOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const optionsRef = useRef<HTMLDivElement>(null);
+  const optionsId = useId();
   const page = useQuery({
     queryKey: engagementMailKey(engagementId),
     queryFn: () => getEngagementMailRecipients(engagementId),
@@ -106,51 +110,85 @@ export function EngagementMailRecipients({
 
   return (
     <div className="flex flex-col gap-2">
-      <Label className="ds-label-base">Empfänger</Label>
+      <Label htmlFor={`${optionsId}-input`} className="ds-label-base">
+        Empfänger
+      </Label>
       <Popover
-        onOpenChange={(open) => {
-          if (!open) setSearch('');
+        open={open}
+        onOpenChange={(nextOpen) => {
+          setOpen(nextOpen);
+          if (!nextOpen) setSearch('');
         }}
       >
-        <PopoverTrigger asChild>
-          <button
-            type="button"
-            className="flex h-8 w-full items-center justify-between gap-1.5 rounded-xl border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={page.isLoading}
-          >
-            <span
-              className={cn(
-                'min-w-0 truncate text-left',
-                !summary && 'text-muted-foreground'
-              )}
-            >
-              {page.isLoading
-                ? 'Empfänger werden geladen…'
-                : summary || 'Empfänger wählen'}
-            </span>
-            <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground" />
-          </button>
-        </PopoverTrigger>
+        <PopoverAnchor asChild>
+          <div className="relative">
+            <Input
+              ref={inputRef}
+              id={`${optionsId}-input`}
+              role="combobox"
+              aria-label="Empfänger suchen"
+              aria-expanded={open}
+              aria-controls={optionsId}
+              aria-haspopup="dialog"
+              aria-autocomplete="list"
+              autoComplete="off"
+              placeholder="Name oder E-Mail eingeben…"
+              className="h-8 rounded-xl pr-9"
+              value={search}
+              onFocus={() => setOpen(true)}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setOpen(true);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'ArrowDown') {
+                  event.preventDefault();
+                  setOpen(true);
+                  optionsRef.current
+                    ?.querySelector<HTMLInputElement>('input:not(:disabled)')
+                    ?.focus();
+                }
+                if (event.key === 'Escape') {
+                  setOpen(false);
+                  setSearch('');
+                }
+                if (event.key === 'Enter') event.preventDefault();
+              }}
+            />
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                aria-label="Empfängeroptionen öffnen"
+                className="absolute inset-y-0 right-0 flex w-9 items-center justify-center rounded-r-xl text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <ChevronDownIcon className="size-4" />
+              </button>
+            </PopoverTrigger>
+          </div>
+        </PopoverAnchor>
         <PopoverContent
           align="start"
           className="w-(--radix-popover-trigger-width) gap-2"
+          onOpenAutoFocus={(event) => event.preventDefault()}
+          onCloseAutoFocus={(event) => event.preventDefault()}
+          onInteractOutside={(event) => {
+            if (event.target === inputRef.current) event.preventDefault();
+          }}
         >
-          <Input
-            aria-label="Empfänger suchen"
-            placeholder="Name, E-Mail oder Gruppe suchen…"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
           <div
+            ref={optionsRef}
+            id={optionsId}
             className="max-h-64 overflow-y-auto"
             role="group"
             aria-label="Empfängeroptionen"
           >
             {visible.length === 0 ? (
               <p className="px-2 py-1.5 text-sm text-muted-foreground">
-                {search.trim()
-                  ? 'Keine passenden Empfänger gefunden.'
-                  : 'Keine E-Mail-Adressen oder Gruppen gefunden.'}
+                {page.isLoading
+                  ? 'Empfänger werden geladen…'
+                  : search.trim()
+                    ? 'Keine passenden Empfänger gefunden.'
+                    : 'Keine E-Mail-Adressen oder Gruppen gefunden.'}
               </p>
             ) : (
               visible.map((choice) => {
@@ -188,6 +226,9 @@ export function EngagementMailRecipients({
           ) : null}
         </PopoverContent>
       </Popover>
+      {summary ? (
+        <p className="text-xs text-muted-foreground">Ausgewählt: {summary}</p>
+      ) : null}
       {page.isError ? (
         <p className="text-xs text-destructive">
           Empfänger konnten nicht geladen werden.
