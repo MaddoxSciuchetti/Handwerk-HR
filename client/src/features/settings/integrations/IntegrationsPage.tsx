@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { SettingsPageHeader } from '@/features/settings/components/SettingsPageHeader';
 import { cn } from '@/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState, type ReactNode } from 'react';
+import { useState, type ComponentProps, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import {
   getIntegrations,
@@ -21,6 +21,17 @@ import {
 } from './integrations.api';
 
 const QUERY_KEY = ['settings', 'integrations'];
+
+function CredentialInput({ className, ...props }: ComponentProps<typeof Input>) {
+  return (
+    <Input
+      autoComplete="off"
+      spellCheck={false}
+      className={cn('focus-visible:ring-0', className)}
+      {...props}
+    />
+  );
+}
 
 function EnabledSwitch({
   checked,
@@ -135,13 +146,13 @@ function MicrosoftForm({
       {integration.simulated && <MicrosoftSimulationNotice />}
       <CredentialFields>
         <Label htmlFor="microsoft-tenant">Tenant-ID</Label>
-        <Input
+        <CredentialInput
           id="microsoft-tenant"
           value={tenantId}
           onChange={(event) => setTenantId(event.target.value)}
         />
         <Label htmlFor="microsoft-client">Client-ID</Label>
-        <Input
+        <CredentialInput
           id="microsoft-client"
           value={clientId}
           onChange={(event) => setClientId(event.target.value)}
@@ -150,7 +161,7 @@ function MicrosoftForm({
           Client-Geheimnis
           {integration.hasClientSecret ? ' (gespeichert)' : ''}
         </Label>
-        <Input
+        <CredentialInput
           id="microsoft-secret"
           type="password"
           autoComplete="new-password"
@@ -159,13 +170,13 @@ function MicrosoftForm({
           onChange={(event) => setClientSecret(event.target.value)}
         />
         <Label htmlFor="microsoft-domain">Domäne</Label>
-        <Input
+        <CredentialInput
           id="microsoft-domain"
           value={domain}
           onChange={(event) => setDomain(event.target.value)}
         />
         <Label htmlFor="microsoft-sku">Lizenz-SKU</Label>
-        <Input
+        <CredentialInput
           id="microsoft-sku"
           value={licenseSkuId}
           onChange={(event) => setLicenseSkuId(event.target.value)}
@@ -227,7 +238,7 @@ function CrewmeisterForm({
         <Label htmlFor="crewmeister-token">
           Token{integration.hasToken ? ' (gespeichert)' : ''}
         </Label>
-        <Input
+        <CredentialInput
           id="crewmeister-token"
           type="password"
           autoComplete="new-password"
@@ -238,7 +249,7 @@ function CrewmeisterForm({
         <Label htmlFor="crewmeister-crew">
           Crew-ID, wenn der Token mehrere Crews sieht
         </Label>
-        <Input
+        <CredentialInput
           id="crewmeister-crew"
           value={crewId}
           onChange={(event) => setCrewId(event.target.value)}
