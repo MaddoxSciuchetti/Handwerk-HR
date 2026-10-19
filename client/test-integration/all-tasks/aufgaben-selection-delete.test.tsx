@@ -86,14 +86,13 @@ describe('Aufgaben (all tasks) — row selection & bulk delete', () => {
     expect(selectBtn.className).toMatch(/group-hover:opacity-100/);
   });
 
-  it('marks integration functions as automation tasks', async () => {
+  it('does not outline integration sequences with the automation line', async () => {
     taskStore.remaining[0].integrationProvider = 'microsoft_graph';
     taskStore.remaining[0].sequence = 'microsoft_deactivate_account';
     renderWithAppQueryClient(<Tasks />);
     await screen.findByText('Alpha Aufgabe');
-    expect(getTaskRowByTitle('Alpha Aufgabe')).toHaveAttribute(
-      'data-automation-task',
-      'true'
+    expect(getTaskRowByTitle('Alpha Aufgabe')).not.toHaveAttribute(
+      'data-automation-task'
     );
   });
 
