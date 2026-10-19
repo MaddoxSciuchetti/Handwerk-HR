@@ -150,7 +150,10 @@ async function graphJson(token: string, url: string, init?: RequestInit) {
 async function listGraph<T>(token: string, path: string) {
     const items: T[] = [];
     let url: string | null = `${GRAPH}${path}`;
-    for (let page = 0; page < 10 && url; page += 1) {
+    const visited = new Set<string>();
+    while (url) {
+        if (visited.has(url)) return null;
+        visited.add(url);
         const { response, payload } = await graphJson(token, url);
         if (!response.ok) {
             console.error("Microsoft Graph request failed", response.status);
@@ -378,6 +381,41 @@ export type MicrosoftMailAddress = {
     label: string;
     kind: "mailbox" | "channel";
 };
+
+export type LicensedMicrosoftUser = {
+    id: string;
+    displayName: string;
+    email: string;
+};
+
+export async function readLicensedMicrosoftUsers(token: string): Promise<LicensedMicrosoftUser[] | null> {
+    const users = await listGraph<{
+        id?: string;
+        displayName?: string;
+        mail?: string;
+        userPrincipalName?: string;
+        assignedLicenses?: Array<{ skuId?: string }>;
+    }>(token, "/users?$select=id,displayName,mail,userPrincipalName,assignedLicenses&$top=999");
+    if (!users) return null;
+    const seen = new Set<string>();
+    return users.flatMap((user) => {
+        if (!user.id || !user.assignedLicenses?.length) return [];
+        const email = (user.mail?.trim() || user.userPrincipalName?.trim() || "").toLowerCase();
+        if (!email.includes("@") || seen.has(email)) return [];
+        seen.add(email);
+        return [{ id: user.id, displayName: user.displayName?.trim() || email, email }];
+    }).sort((left, right) => left.displayName.localeCompare(right.displayName, "de"));
+}
+
+export async function listLicensedMicrosoftUsers(organizationId: string) {
+    if (!integrationsLive()) return { users: [], error: NOT_LIVE_MESSAGE };
+    const config = await loadMicrosoft365Config(organizationId);
+    if (!config) return { users: [], error: null };
+    const token = await microsoftGraphToken(config);
+    if (!token) return { users: [], error: "Microsoft Graph hat die Anmeldung abgelehnt." };
+    const users = await readLicensedMicrosoftUsers(token);
+    return { users: users ?? [], error: users ? null : "Microsoft Graph hat die lizenzierten Benutzer nicht geliefert." };
+}
 
 export async function listMicrosoftMailAddresses(
     organizationId: string,

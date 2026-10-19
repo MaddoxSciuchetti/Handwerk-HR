@@ -4,7 +4,8 @@ export type MailRecipientKind =
   | 'worker_private'
   | 'worker_work'
   | 'microsoft_group'
-  | 'teams_channel';
+  | 'teams_channel'
+  | 'microsoft_user';
 
 export type MailRecipient = {
   kind: MailRecipientKind;
@@ -12,6 +13,7 @@ export type MailRecipient = {
   address: string | null;
   workerId: string | null;
   groupId: string | null;
+  microsoftUserId?: string | null;
 };
 
 export type EngagementMailPage = {
@@ -25,6 +27,8 @@ export type EngagementMailPage = {
   }>;
   groups: Array<{ id: string; displayName: string }>;
   groupsError: string | null;
+  licensedUsers?: Array<{ id: string; displayName: string; email: string }>;
+  licensedUsersError?: string | null;
   channels: Array<{
     id: string;
     displayName: string;
@@ -65,7 +69,9 @@ export function engagementMailKey(engagementId: string) {
 
 export function getEngagementMailRecipients(engagementId: string) {
   return apiJson
-    .get<PageResponse>(`/automation/engagements/${engagementId}/mail-recipients`)
+    .get<PageResponse>(
+      `/automation/engagements/${engagementId}/mail-recipients`
+    )
     .then((response) => response.data);
 }
 
@@ -82,5 +88,7 @@ export function saveEngagementMailRecipients(
 }
 
 export function recipientKey(recipient: MailRecipient) {
+  if (recipient.kind === 'microsoft_user')
+    return `microsoft_user:${recipient.microsoftUserId}`;
   return `${recipient.kind}:${recipient.workerId ?? ''}:${recipient.groupId ?? ''}`;
 }

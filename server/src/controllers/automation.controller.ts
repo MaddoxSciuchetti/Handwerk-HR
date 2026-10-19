@@ -348,11 +348,13 @@ const mailRecipientInput = z.object({
                     "worker_work",
                     "microsoft_group",
                     "teams_channel",
+                    "microsoft_user",
                 ]),
                 label: z.string().trim().max(255),
                 address: z.string().trim().max(254).nullable().optional(),
                 workerId: z.string().trim().max(64).nullable().optional(),
                 groupId: z.string().trim().max(255).nullable().optional(),
+                microsoftUserId: z.string().trim().max(64).nullable().optional(),
             }),
         )
         .max(50),

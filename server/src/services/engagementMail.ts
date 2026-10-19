@@ -13,6 +13,8 @@ import {
     formatWelcomeEntryDate,
     listMailEnabledChannels,
     listMicrosoftGroups,
+    listLicensedMicrosoftUsers,
+    readLicensedMicrosoftUsers,
     microsoftGroupRecipientAddresses,
     sendGraphMail,
     type MicrosoftChannelOption,
@@ -37,6 +39,7 @@ export type MailRecipientInput = {
     address?: string | null;
     workerId?: string | null;
     groupId?: string | null;
+    microsoftUserId?: string | null;
 };
 
 export type StoredMailRecipient = {
@@ -45,6 +48,7 @@ export type StoredMailRecipient = {
     address: string | null;
     workerId: string | null;
     groupId: string | null;
+    microsoftUserId?: string | null;
 };
 
 export type MailSenderOption = {
@@ -75,6 +79,7 @@ const recipientSelect = {
     address: true,
     workerId: true,
     groupId: true,
+    microsoftUserId: true,
 } as const;
 
 function rememberMail(seen: Set<string>, email: string | null | undefined) {
@@ -170,11 +175,12 @@ export async function readEngagementMailRecipients(
 }
 
 export async function engagementMailOptions(organizationId: string) {
-    const [stored, workerMails, groups, channels] = await Promise.all([
+    const [stored, workerMails, groups, channels, licensed] = await Promise.all([
         listBsbMailAddresses(organizationId),
         storedWorkerMails(organizationId),
         listMicrosoftGroups(organizationId),
         listMailEnabledChannels(organizationId),
+        listLicensedMicrosoftUsers(organizationId),
     ]);
     const bsbMails = new Set([
         ...stored.addresses.map((address) => address.email),
@@ -182,6 +188,8 @@ export async function engagementMailOptions(organizationId: string) {
     ]);
     return {
         workers: [],
+        licensedUsers: licensed.users,
+        licensedUsersError: licensed.error,
         groups: groups.groups,
         groupsError: groups.error,
         channels: channels.channels.filter(
@@ -247,9 +255,24 @@ async function normalizeRecipients(
           })
         : [];
     const byId = new Map(workers.map((worker) => [worker.id, worker]));
+    const licensed = recipients.some((recipient) => recipient.kind === "microsoft_user")
+        ? await listLicensedMicrosoftUsers(organizationId)
+        : { users: [], error: null };
+    if (licensed.error) throw new AppError(BAD_REQUEST, licensed.error);
+    const licensedById = new Map(licensed.users.map((user) => [user.id, user]));
     const seen = new Set<string>();
     const rows: StoredMailRecipient[] = [];
     for (const recipient of recipients) {
+        if (recipient.kind === "microsoft_user") {
+            const user = licensedById.get(recipient.microsoftUserId ?? "");
+            if (!user) throw new AppError(BAD_REQUEST, "Lizenzierter Microsoft-Benutzer nicht gefunden.");
+            const key = `microsoft_user:${user.id}`;
+            if (seen.has(key)) continue;
+            seen.add(key);
+            rows.push({ kind: "microsoft_user", label: user.displayName, address: user.email,
+                microsoftUserId: user.id, workerId: null, groupId: null });
+            continue;
+        }
         if (recipient.kind === "worker_private" || recipient.kind === "worker_work") {
             const worker = recipient.workerId
                 ? byId.get(recipient.workerId)
@@ -337,7 +360,17 @@ async function resolveRecipientAddresses(params: {
     recipients: StoredMailRecipient[];
 }): Promise<{ addresses: string[] } | { message: string }> {
     const addresses = new Set<string>();
+    const licensedUsers = params.recipients.some((recipient) => recipient.kind === "microsoft_user")
+        ? await readLicensedMicrosoftUsers(params.token)
+        : [];
+    if (!licensedUsers) return { message: "Microsoft Graph hat die lizenzierten Benutzer nicht geliefert." };
     for (const recipient of params.recipients) {
+        if (recipient.kind === "microsoft_user") {
+            const user = licensedUsers.find((user) => user.id === recipient.microsoftUserId);
+            if (!user) return { message: `${recipient.label} hat kein gültiges lizenziertes Microsoft-Konto mehr.` };
+            addresses.add(user.email);
+            continue;
+        }
         if (recipient.kind === "microsoft_group") {
             const groupId = recipient.groupId?.trim() ?? "";
             if (!groupId) {

@@ -872,6 +872,7 @@ model EngagementMailRecipient {
   address      String?                     @db.VarChar(254)
   workerId     String?                     @map("worker_id")
   groupId      String?                     @map("group_id") @db.VarChar(255)
+  microsoftUserId String?                  @map("microsoft_user_id") @db.VarChar(64)
   createdAt    DateTime                    @default(now()) @map("created_at") @db.Timestamptz()
 
   engagement WorkerEngagement @relation(fields: [engagementId], references: [id], onDelete: Cascade)
@@ -1069,6 +1070,7 @@ enum EngagementMailRecipientKind {
   worker_work
   microsoft_group
   teams_channel
+  microsoft_user
 }
 
 enum ExternalAccountProvider {
