@@ -19,6 +19,7 @@ import { ARBEITSZEUGNIS } from '@/features/all-tasks/consts/task-automation.cons
 import { TaskStatusSelect } from '@/features/all-tasks/components/ui/TaskStatusSelect';
 import { employeeQueries } from '@/features/employee-overview/query-options/queries/employee.queries';
 import useAuth from '@/features/user-profile/hooks/useAuth';
+import { cn } from '@/lib/utils';
 import { SidebarAside } from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarAside';
 import SidebarContent from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarContent';
 import SidebarFooter from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarFooter';
@@ -205,64 +206,73 @@ export function TaskSidebar({
                   <TaskStatusSelect control={control} errors={errors} />
                 </div>
               </div>
-              <div className="flex flex-col gap-2">
-                <FormSelectOptions
-                  name="sequence"
-                  control={control}
-                  errors={errors}
-                  data={automationOptions}
-                  label="Automation"
-                  placeholder="Automation wählen"
-                />
-              </div>
-              {sequence === 'microsoft_send_email' ? (
-                <>
-                  <div className="flex flex-col gap-2">
-                    <FormSelectOptions
-                      name="mailTemplateId"
-                      control={control}
-                      errors={errors}
-                      data={mailTemplates.map((template) => ({
-                        value: template.id,
-                        label: template.name,
-                      }))}
-                      label="E-Mail-Vorlage"
-                      placeholder="Vorlage wählen"
-                    />
-                  </div>
-                  <MailSenderSelect
+              <div
+                className={cn(
+                  'flex flex-col gap-4',
+                  ((sequence && sequence !== 'none') ||
+                    taskEditState.automation === ARBEITSZEUGNIS) &&
+                    'rounded-2xl border border-border bg-muted/50 p-4'
+                )}
+              >
+                <div className="flex flex-col gap-2">
+                  <FormSelectOptions
+                    name="sequence"
                     control={control}
                     errors={errors}
-                    current={mailSenderAddress}
+                    data={automationOptions}
+                    label="Automation"
+                    placeholder="Automation wählen"
                   />
-                </>
-              ) : null}
-              {isMailSequence(sequence) && workerEngagementId ? (
-                <EngagementMailRecipients engagementId={workerEngagementId} />
-              ) : null}
-              {taskState === 'edit' &&
-              taskEditState.taskId &&
-              taskEditState.sequence &&
-              taskEditState.integrationProvider ? (
-                <TaskAutomation
-                  taskId={taskEditState.taskId}
-                  provider={taskEditState.integrationProvider}
-                  sequence={taskEditState.sequence}
-                  senderAddress={mailSenderAddress}
-                  disabled={isSubmitting}
-                />
-              ) : null}
-              {taskState === 'edit' &&
-              taskEditState.automation === ARBEITSZEUGNIS &&
-              onOpenArbeitszeugnis ? (
-                <Button
-                  type="button"
-                  className="rounded-2xl"
-                  onClick={() => onOpenArbeitszeugnis(taskEditState.taskId)}
-                >
-                  Arbeitszeugnis
-                </Button>
-              ) : null}
+                </div>
+                {sequence === 'microsoft_send_email' ? (
+                  <>
+                    <div className="flex flex-col gap-2">
+                      <FormSelectOptions
+                        name="mailTemplateId"
+                        control={control}
+                        errors={errors}
+                        data={mailTemplates.map((template) => ({
+                          value: template.id,
+                          label: template.name,
+                        }))}
+                        label="E-Mail-Vorlage"
+                        placeholder="Vorlage wählen"
+                      />
+                    </div>
+                    <MailSenderSelect
+                      control={control}
+                      errors={errors}
+                      current={mailSenderAddress}
+                    />
+                  </>
+                ) : null}
+                {isMailSequence(sequence) && workerEngagementId ? (
+                  <EngagementMailRecipients engagementId={workerEngagementId} />
+                ) : null}
+                {taskState === 'edit' &&
+                taskEditState.taskId &&
+                taskEditState.sequence &&
+                taskEditState.integrationProvider ? (
+                  <TaskAutomation
+                    taskId={taskEditState.taskId}
+                    provider={taskEditState.integrationProvider}
+                    sequence={taskEditState.sequence}
+                    senderAddress={mailSenderAddress}
+                    disabled={isSubmitting}
+                  />
+                ) : null}
+                {taskState === 'edit' &&
+                taskEditState.automation === ARBEITSZEUGNIS &&
+                onOpenArbeitszeugnis ? (
+                  <Button
+                    type="button"
+                    className="rounded-2xl"
+                    onClick={() => onOpenArbeitszeugnis(taskEditState.taskId)}
+                  >
+                    Arbeitszeugnis
+                  </Button>
+                ) : null}
+              </div>
 
               {taskState === 'edit' && taskEditState.taskId ? (
                 <>
