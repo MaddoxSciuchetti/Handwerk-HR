@@ -246,7 +246,7 @@ export function TaskChat({
           disabled={disabled || saveComment.isPending}
           rows={1}
           placeholder="@ für Erwähnung"
-          className="h-8 min-h-8 min-w-0 flex-1 resize-none field-sizing-fixed rounded-none border-0 bg-transparent px-0 py-1.5 shadow-none focus-visible:border-transparent focus-visible:ring-0"
+          className="h-8 min-h-8 min-w-0 flex-1 resize-none field-sizing-fixed rounded-lg border border-input bg-transparent px-3 py-1.5 shadow-none"
           onChange={(event) => {
             const next = event.target.value;
             setText(next);
