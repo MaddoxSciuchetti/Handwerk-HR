@@ -2,10 +2,6 @@ import { Button } from '@/components/ui/button';
 import { MicrosoftSimulationNotice } from '@/features/settings/integrations/MicrosoftSimulationNotice';
 import { Spinner } from '@/components/ui/spinner';
 import {
-  integrationLabel,
-  sequenceLabel,
-} from '@/features/settings/integrations/integration.consts';
-import {
   TASKHISTORY,
   WORKERBYID,
 } from '@/features/worker-task-management/consts/query-key.consts';
@@ -28,7 +24,6 @@ type TaskAutomationProps = {
 function TaskAutomation({
   taskId,
   provider,
-  sequence,
   disabled,
   senderAddress,
 }: TaskAutomationProps) {
@@ -82,9 +77,6 @@ function TaskAutomation({
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-sm text-muted-foreground">
-        {integrationLabel(provider)} · {sequenceLabel(sequence)}
-      </p>
       {integration?.simulated && <MicrosoftSimulationNotice />}
       {blockedReason ? (
         <p className="text-sm text-muted-foreground">{blockedReason}</p>

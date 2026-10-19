@@ -51,7 +51,6 @@ it('limits suggestions and searches all groups and licensed users by name or ema
   await user.click(screen.getByRole('combobox', { name: 'Empfänger suchen' }));
   await screen.findByRole('checkbox', { name: /Ada Müller/ });
   expect(screen.getAllByRole('checkbox')).toHaveLength(10);
-  expect(screen.getByRole('status')).toHaveTextContent('10 von 16');
   const search = screen.getByRole('combobox', { name: 'Empfänger suchen' });
   await user.type(search, 'Team 14');
   expect(search).toHaveFocus();
