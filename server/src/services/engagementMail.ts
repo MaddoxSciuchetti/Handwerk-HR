@@ -77,6 +77,54 @@ const recipientSelect = {
     groupId: true,
 } as const;
 
+function rememberMail(seen: Set<string>, email: string | null | undefined) {
+    const value = email?.trim().toLowerCase() ?? "";
+    if (!value.includes("@") || seen.has(value)) return "";
+    seen.add(value);
+    return value;
+}
+
+export async function listBsbMailAddresses(organizationId: string) {
+    const members = await prisma.organizationMember.findMany({
+        where: {
+            organizationId,
+            status: "active",
+            user: { status: "active" },
+        },
+        select: {
+            user: { select: { email: true, firstName: true, lastName: true } },
+        },
+        orderBy: [{ user: { lastName: "asc" } }, { user: { firstName: "asc" } }],
+    });
+    const seen = new Set<string>();
+    const addresses: Array<{ email: string; label: string; kind: "mailbox" }> = [];
+    for (const member of members) {
+        const value = rememberMail(seen, member.user.email);
+        if (!value) continue;
+        const name = `${member.user.firstName} ${member.user.lastName}`.trim();
+        addresses.push({
+            email: value,
+            label: name ? `${name} · ${value}` : value,
+            kind: "mailbox",
+        });
+    }
+    addresses.sort((left, right) => left.label.localeCompare(right.label, "de"));
+    return { addresses, error: null };
+}
+
+async function storedWorkerMails(organizationId: string) {
+    const workers = await prisma.worker.findMany({
+        where: { organizationId },
+        select: { email: true, workEmail: true },
+    });
+    const seen = new Set<string>();
+    for (const worker of workers) {
+        rememberMail(seen, worker.email);
+        rememberMail(seen, worker.workEmail);
+    }
+    return seen;
+}
+
 export async function listMailSenders(
     organizationId: string,
 ): Promise<MailSenderOption[]> {
@@ -122,26 +170,23 @@ export async function readEngagementMailRecipients(
 }
 
 export async function engagementMailOptions(organizationId: string) {
-    const [workers, groups, channels] = await Promise.all([
-        prisma.worker.findMany({
-            where: { organizationId },
-            select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                email: true,
-                workEmail: true,
-            },
-            orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
-        }),
+    const [stored, workerMails, groups, channels] = await Promise.all([
+        listBsbMailAddresses(organizationId),
+        storedWorkerMails(organizationId),
         listMicrosoftGroups(organizationId),
         listMailEnabledChannels(organizationId),
     ]);
+    const bsbMails = new Set([
+        ...stored.addresses.map((address) => address.email),
+        ...workerMails,
+    ]);
     return {
-        workers,
+        workers: [],
         groups: groups.groups,
         groupsError: groups.error,
-        channels: channels.channels,
+        channels: channels.channels.filter(
+            (channel) => !bsbMails.has(channel.email.trim().toLowerCase()),
+        ),
         channelsError: channels.error,
     };
 }
