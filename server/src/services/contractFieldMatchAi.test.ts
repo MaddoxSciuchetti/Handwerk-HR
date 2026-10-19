@@ -103,4 +103,68 @@ describe("matchQuestionnaireToContract", () => {
         ).resolves.toEqual([{ key: "contract.iban", value: "DE89" }]);
         expect(fetchMock).not.toHaveBeenCalled();
     });
+
+    it("fills Anrede from Geschlecht without asking the model", async () => {
+        process.env.OPENAI_API_KEY = "test-key";
+        const fetchMock = jest.spyOn(global, "fetch");
+        await expect(
+            matchQuestionnaireToContract(
+                [{ type: "input", key: "contract.anrede", label: "Anrede" }],
+                { sex: "weiblich", firstName: "Ada" } as QuestionnaireAnswers,
+            ),
+        ).resolves.toEqual([{ key: "contract.anrede", value: "Frau" }]);
+        expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("lets the model set Anrede from the first name when Geschlecht does not decide it", async () => {
+        process.env.OPENAI_API_KEY = "test-key";
+        const fetchMock = jest.spyOn(global, "fetch").mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                choices: [
+                    {
+                        message: {
+                            content: JSON.stringify({
+                                matches: [{ key: "contract.anrede", value: "Herr" }],
+                            }),
+                        },
+                    },
+                ],
+            }),
+        } as Response);
+
+        const result = await matchQuestionnaireToContract(
+            [
+                { type: "input", key: "contract.vorname", label: "Vorname" },
+                { type: "input", key: "contract.anrede", label: "Anrede" },
+            ],
+            { firstName: "Max", sex: "divers" } as QuestionnaireAnswers,
+            "",
+            [
+                {
+                    key: "firstName",
+                    label: "Vorname",
+                    contractFieldKey: "contract.vorname",
+                },
+            ],
+        );
+
+        const request = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
+        const payload = JSON.parse(request.messages[1].content) as {
+            fields: { key: string }[];
+            answers: { key: string; value: string }[];
+        };
+        expect(request.messages[0].content).toContain("Ausnahme ist allein die Anrede");
+        expect(payload.fields.map((field) => field.key)).toEqual(["contract.anrede"]);
+        expect(payload.answers).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({ key: "firstName", value: "Max" }),
+                expect.objectContaining({ key: "sex", value: "divers" }),
+            ]),
+        );
+        expect(result).toEqual([
+            { key: "contract.vorname", value: "Max" },
+            { key: "contract.anrede", value: "Herr" },
+        ]);
+    });
 });

@@ -110,6 +110,25 @@ describe("acceptModelMatches", () => {
         ).toEqual([{ key: "contract.iban", value: "DE89" }]);
     });
 
+    it("accepts Herr or Frau only on a salutation field", () => {
+        expect(
+            acceptModelMatches(
+                [
+                    { key: "contract.anrede", label: "Anrede" },
+                    { key: "contract.iban", label: "IBAN" },
+                ],
+                [{ value: "Max" }],
+                {
+                    matches: [
+                        { key: "contract.anrede", value: "Herr" },
+                        { key: "contract.iban", value: "Herr" },
+                        { key: "contract.anrede", value: "Maximilian" },
+                    ],
+                },
+            ),
+        ).toEqual([{ key: "contract.anrede", value: "Herr" }]);
+    });
+
     it("stores a copied ja on a checkbox and a german date from an ISO copy", () => {
         expect(
             acceptModelMatches(
@@ -177,6 +196,21 @@ describe("questionnaire answer reuse", () => {
             { key: "contract.vorname", value: "Lukas" },
             { key: "contract.accepted", value: "true" },
         ]);
+    });
+
+    it("fills a salutation from Geschlecht and leaves divers empty", () => {
+        const segments = [
+            { type: "input" as const, key: "contract.anrede", label: "Anrede" },
+        ];
+        expect(
+            deterministicContractValues(segments, { sex: "männlich" } as QuestionnaireAnswers),
+        ).toEqual([{ key: "contract.anrede", value: "Herr" }]);
+        expect(
+            deterministicContractValues(segments, { sex: "weiblich" } as QuestionnaireAnswers),
+        ).toEqual([{ key: "contract.anrede", value: "Frau" }]);
+        expect(
+            deterministicContractValues(segments, { sex: "divers" } as QuestionnaireAnswers),
+        ).toEqual([]);
     });
     it("keeps historical custom answers visible even when their label is unavailable", () => {
         expect(

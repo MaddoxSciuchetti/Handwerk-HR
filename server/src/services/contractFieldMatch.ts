@@ -114,6 +114,20 @@ function skipQuestionnaireMatch(segment: DocumentSegment) {
     return segment.type === "input" && (segment.fieldType === "points" || isCurrentDateField(segment));
 }
 
+export function isSalutationField(field: { key: string; label?: string }) {
+    const label = fold(field.label ?? "");
+    const key = fold(field.key.split(".").at(-1) ?? field.key);
+    if (label.includes("anrede") || key.includes("anrede")) return true;
+    return label === "herrfrau" || label === "herroderfrau" || key === "herrfrau";
+}
+
+export function salutationFromSex(value: string) {
+    const folded = fold(value);
+    if (folded === "maennlich" || folded === "mann" || folded === "herr") return "Herr";
+    if (folded === "weiblich" || folded === "frau") return "Frau";
+    return "";
+}
+
 export function deterministicContractValues(
     segments: DocumentSegment[],
     answers: QuestionnaireAnswers,
@@ -144,6 +158,21 @@ export function deterministicContractValues(
         if (!value) continue;
         filled.add(segment.key);
         entries.push({ key: segment.key, value });
+    }
+
+    const salutation = salutationFromSex(answerString(answers, "sex"));
+    if (salutation) {
+        for (const segment of segments) {
+            if (
+                segment.type !== "input" ||
+                skipQuestionnaireMatch(segment) ||
+                filled.has(segment.key) ||
+                !isSalutationField(segment)
+            )
+                continue;
+            filled.add(segment.key);
+            entries.push({ key: segment.key, value: salutation });
+        }
     }
 
     return entries;
@@ -228,8 +257,14 @@ function canonicalMatchValue(value: string) {
     return trimmed;
 }
 
+function acceptedSalutation(value: string) {
+    const trimmed = value.trim();
+    if (trimmed === "Herr" || trimmed === "Frau") return trimmed;
+    return "";
+}
+
 export function acceptModelMatches(
-    fields: { key: string; type?: string }[],
+    fields: { key: string; label?: string; type?: string }[],
     answers: { value: string }[],
     raw: unknown,
 ): { key: string; value: string }[] {
@@ -262,7 +297,13 @@ export function acceptModelMatches(
         const stored =
             allowedValues.get(trimmed) ??
             allowedValues.get(canonicalMatchValue(trimmed));
-        if (!stored) continue;
+        if (!stored) {
+            const salutation = isSalutationField(field) ? acceptedSalutation(trimmed) : "";
+            if (!salutation) continue;
+            seen.add(key);
+            entries.push({ key, value: salutation });
+            continue;
+        }
         if (field.type === "checkbox") {
             const checkbox = checkboxStorage(stored);
             if (!checkbox) continue;

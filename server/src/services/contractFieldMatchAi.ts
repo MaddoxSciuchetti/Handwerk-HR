@@ -4,10 +4,12 @@ import {
     acceptModelMatches,
     composedQuestionnaireValues,
     deterministicContractValues,
+    isSalutationField,
     unmatchedQuestionnaireAnswers,
     type MatchField,
 } from "@/services/contractFieldMatch";
 import {
+    answerString,
     flattenQuestionnaireAnswers,
     type QuestionnaireAnswers,
 } from "@/services/questionnaireForm";
@@ -103,6 +105,25 @@ function candidateAnswers(
     return rows;
 }
 
+function withSalutationContext(
+    fields: { key: string; label: string }[],
+    rows: { key: string; label: string; value: string }[],
+    answers: QuestionnaireAnswers,
+) {
+    if (!fields.some((field) => isSalutationField(field))) return rows;
+    const seen = new Set(rows.map((row) => row.key));
+    const extra = rows.slice();
+    const firstName = answerString(answers, "firstName").trim();
+    const sex = answerString(answers, "sex").trim();
+    if (firstName && !seen.has("firstName")) {
+        extra.push({ key: "firstName", label: "Vorname", value: firstName });
+    }
+    if (sex && !seen.has("sex")) {
+        extra.push({ key: "sex", label: "Geschlecht", value: sex });
+    }
+    return extra;
+}
+
 async function askModel(
     fields: { key: string; label: string; type?: string }[],
     answers: { key: string; label: string; value: string }[],
@@ -129,7 +150,7 @@ async function askModel(
                 {
                     role: "system",
                     content:
-                        "Du ordnest Antworten eines Personalfragebogens den noch leeren Eingabefeldern eines Arbeitsvertrags zu. Der value muss exakt einem gegebenen Antwortwert entsprechen. Erfinde keinen Text und formuliere nichts um. Ordne jedes Feld zu, dessen Bezeichnung oder Bedeutung einer Antwort entspricht, auch wenn die Beschriftung anders formuliert ist (Name, Anschrift, Geburtsdatum, IBAN, Steuer, Beruf, Eintritt, Stunden, Geschlecht, Versicherung). Zusammengesetzte Antworten (Vor- und Nachname, Anschrift, PLZ und Ort, E-Mail) sind für kombinierte Felder da. Kinder und frühere Beschäftigungen nur den Feldern zuordnen, die sich darauf beziehen. Wochentagsstunden nur dem gleichnamigen Tag zuordnen. Einen Wert nur dann mehrfach verwenden, wenn mehrere Felder dieselbe Angabe meinen. Kontrollkästchen bekommen ja oder nein. Felder ohne passende Antwort weglassen.",
+                        "Du ordnest Antworten eines Personalfragebogens den noch leeren Eingabefeldern eines Arbeitsvertrags zu. Der value muss exakt einem gegebenen Antwortwert entsprechen. Erfinde keinen Text und formuliere nichts um. Ausnahme ist allein die Anrede: dort darfst du Herr oder Frau setzen, aus Geschlecht männlich bzw. weiblich, und wenn das Geschlecht fehlt, unbestimmt oder divers ist, aus einem eindeutig männlichen oder weiblichen Vornamen. Bei unklarem Namen die Anrede weglassen. Ordne jedes Feld zu, dessen Bezeichnung oder Bedeutung einer Antwort entspricht, auch wenn die Beschriftung anders formuliert ist (Name, Anschrift, Geburtsdatum, IBAN, Steuer, Beruf, Eintritt, Stunden, Geschlecht, Versicherung). Zusammengesetzte Antworten (Vor- und Nachname, Anschrift, PLZ und Ort, E-Mail) sind für kombinierte Felder da. Kinder und frühere Beschäftigungen nur den Feldern zuordnen, die sich darauf beziehen. Wochentagsstunden nur dem gleichnamigen Tag zuordnen. Einen Wert nur dann mehrfach verwenden, wenn mehrere Felder dieselbe Angabe meinen. Kontrollkästchen bekommen ja oder nein. Felder ohne passende Antwort weglassen.",
                 },
                 {
                     role: "user",
@@ -162,12 +183,16 @@ export async function matchQuestionnaireToContract(
     const filled = new Set(placedEntries.map((entry) => entry.key));
     const fields = leftoverFields(segments, filled);
     const placed = new Set(placedEntries.map((entry) => entry.value));
-    const leftovers = candidateAnswers(
+    const leftovers = withSalutationContext(
+        fields,
+        candidateAnswers(
+            answers,
+            email,
+            matchFields,
+            consumedAnswerKeys(matchFields, placedEntries),
+            placed,
+        ),
         answers,
-        email,
-        matchFields,
-        consumedAnswerKeys(matchFields, placedEntries),
-        placed,
     );
     if (!openAiKey() || fields.length === 0 || leftovers.length === 0) return placedEntries;
 
