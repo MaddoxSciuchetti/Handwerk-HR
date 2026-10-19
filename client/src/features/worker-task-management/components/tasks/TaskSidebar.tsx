@@ -1,5 +1,6 @@
 import FormFields from '@/components/form/FormFields';
 import FormSelectOptions from '@/components/form/FormSelectOptions';
+import { AutomationRequirementNotice } from '@/features/settings/integrations/AutomationRequirementNotice';
 import {
   INTEGRATION_NONE,
   INTEGRATION_SEQUENCES,
@@ -166,6 +167,7 @@ export function TaskSidebar({
                 labelClassName="typo-body-base"
                 placeholder="Sequenz wählen"
               />
+              <AutomationRequirementNotice sequence={sequence} />
               {sequence === 'microsoft_send_email' ? (
                 <FormSelectOptions
                   errors={errors}

@@ -132,10 +132,15 @@ export function EngagementMailRecipients({
               aria-haspopup="dialog"
               aria-autocomplete="list"
               autoComplete="off"
-              placeholder="Name oder E-Mail eingeben…"
+              placeholder={
+                open
+                  ? 'Name, E-Mail oder Gruppe suchen…'
+                  : summary || 'Empfänger wählen'
+              }
               className="h-8 rounded-xl pr-9"
               value={search}
               onFocus={() => setOpen(true)}
+              onClick={() => setOpen(true)}
               onChange={(event) => {
                 setSearch(event.target.value);
                 setOpen(true);
@@ -168,8 +173,12 @@ export function EngagementMailRecipients({
         </PopoverAnchor>
         <PopoverContent
           align="start"
-          className="w-(--radix-popover-trigger-width) gap-2"
-          onOpenAutoFocus={(event) => event.preventDefault()}
+          side="top"
+          className="max-h-(--radix-popover-content-available-height) w-(--radix-popover-trigger-width) gap-2 overflow-y-auto"
+          onOpenAutoFocus={(event) => {
+            event.preventDefault();
+            inputRef.current?.focus();
+          }}
           onCloseAutoFocus={(event) => event.preventDefault()}
           onInteractOutside={(event) => {
             if (event.target === inputRef.current) event.preventDefault();
