@@ -1,3 +1,4 @@
+import { QUESTIONNAIRE_DECLARATION } from "../../../shared/questionnaireDeclaration";
 import z from "zod";
 import {
     insuranceNumberInput,
@@ -15,8 +16,7 @@ import {
 export const QUESTIONNAIRE_INTRO =
     "Dieser Personalfragebogen dient zur Vorerfassung von Personaldaten für das DATEV-Lohnabrechnungsprogramm. Zur Wahrung der Aufbewahrungsfrist wird der ausgefüllte Personalfragebogen von dem Arbeitgeber / der lohnabrechnenden Stelle gespeichert.";
 
-const DECLARATION =
-    "Erklärung der beschäftigten Person: Ich versichere, dass die vorstehenden Angaben der Wahrheit entsprechen. Ich verpflichte mich, meinem Arbeitgeber alle Änderungen, insbesondere in Bezug auf weitere Beschäftigungen (in Bezug auf Art, Dauer und Entgelt) unverzüglich mitzuteilen.";
+const DECLARATION = QUESTIONNAIRE_DECLARATION.label;
 
 const HOURS_SECTION = WEEKLY_HOURS_SECTION;
 const VWL_SECTION = "VWL - nur notwendig, wenn Vertrag vorliegt";

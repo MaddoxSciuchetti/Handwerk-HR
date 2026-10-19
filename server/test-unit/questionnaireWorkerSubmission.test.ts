@@ -55,8 +55,11 @@ it("persists the worker information fields when a questionnaire is completed", a
     (prisma.$transaction as jest.Mock).mockImplementation((callback) =>
         callback(prisma),
     );
-    await expect(submitPublicQuestionnaire("token", body)).resolves.toEqual({
+    await expect(submitPublicQuestionnaire("token", { ...body, declaration: "ja" })).resolves.toEqual({
         status: "completed",
+    });
+    expect(prisma.questionnaireAnswer.createMany).toHaveBeenCalledWith({
+        data: expect.arrayContaining([{ submissionId: "submission", key: "declaration", value: "ja" }]),
     });
     expect(prisma.worker.update).toHaveBeenCalledWith({
         where: { id: "worker" },
@@ -71,4 +74,11 @@ it("persists the worker information fields when a questionnaire is completed", a
             position: "Monteur",
         },
     });
+});
+
+it.each([undefined, '', 'nein', true, 'true'])("rejects a submission without explicit declaration confirmation (%s)", async (declaration) => {
+    (prisma.questionnaireSubmission.findUnique as jest.Mock).mockResolvedValue({ status: "sent" });
+    const transactionCalls = (prisma.$transaction as jest.Mock).mock.calls.length;
+    await expect(submitPublicQuestionnaire("token", { declaration })).rejects.toThrow("Bitte bestätigen Sie die Erklärung der beschäftigten Person.");
+    expect(prisma.$transaction).toHaveBeenCalledTimes(transactionCalls);
 });
