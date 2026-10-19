@@ -10,7 +10,10 @@ function SidebarContent({
 }: SidebarContentProps) {
   return (
     <div
-      className={cn('flex min-h-0  grow overflow-y-auto', className)}
+      className={cn(
+        'flex min-h-0 grow overflow-y-auto overscroll-y-contain [scrollbar-gutter:stable] [overflow-anchor:none]',
+        className
+      )}
       {...props}
     >
       {children}
