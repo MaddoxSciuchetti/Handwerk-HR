@@ -86,6 +86,16 @@ describe('Aufgaben (all tasks) — row selection & bulk delete', () => {
     expect(selectBtn.className).toMatch(/group-hover:opacity-100/);
   });
 
+  it('does not outline integration sequences with the automation line', async () => {
+    taskStore.remaining[0].integrationProvider = 'microsoft_graph';
+    taskStore.remaining[0].sequence = 'microsoft_deactivate_account';
+    renderWithAppQueryClient(<Tasks />);
+    await screen.findByText('Alpha Aufgabe');
+    expect(getTaskRowByTitle('Alpha Aufgabe')).not.toHaveAttribute(
+      'data-automation-task'
+    );
+  });
+
   it('marks only configured automation tasks for the animated purple outline', async () => {
     taskStore.remaining[0].automation = 'o365-block-signin';
     renderWithAppQueryClient(<Tasks />);

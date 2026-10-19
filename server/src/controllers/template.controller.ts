@@ -95,6 +95,7 @@ export const createTemplateTask = catchErrors(async (req, res) => {
         orderIndex,
         integrationProvider,
         sequence,
+        mailTemplateId,
     } = req.body;
     console.log(templateId);
     const task = await insertTemplateTask({
@@ -110,6 +111,10 @@ export const createTemplateTask = catchErrors(async (req, res) => {
                 ? null
                 : integrationProvider,
         sequence: !sequence || sequence === "none" ? null : sequence,
+        mailTemplateId:
+            typeof mailTemplateId === "string" && mailTemplateId.trim()
+                ? mailTemplateId.trim()
+                : null,
     });
 
     return res.status(CREATED).json({
@@ -123,6 +128,7 @@ export const createTemplateTask = catchErrors(async (req, res) => {
         defaultAssigneeUserId: task.defaultAssigneeUserId,
         integrationProvider: task.integrationProvider,
         sequence: task.sequence,
+        mailTemplateId: task.mailTemplateId,
     });
 });
 
@@ -145,6 +151,7 @@ export const getTemplateTasks = catchErrors(async (req, res) => {
         defaultAssigneeUserId: task.defaultAssigneeUserId,
         integrationProvider: task.integrationProvider,
         sequence: task.sequence,
+        mailTemplateId: task.mailTemplateId,
     }));
     return res.status(OK).json(response);
 });
@@ -160,6 +167,7 @@ export const updateTemplateTask = catchErrors(async (req, res) => {
         orderIndex,
         integrationProvider,
         sequence,
+        mailTemplateId,
     } = req.body;
     const updated = await modifyTemplateTask(id, orgId, {
         taskName,
@@ -172,6 +180,10 @@ export const updateTemplateTask = catchErrors(async (req, res) => {
                 ? null
                 : integrationProvider,
         sequence: !sequence || sequence === "none" ? null : sequence,
+        mailTemplateId:
+            typeof mailTemplateId === "string" && mailTemplateId.trim()
+                ? mailTemplateId.trim()
+                : null,
     });
 
     return res.status(OK).json({
@@ -185,6 +197,7 @@ export const updateTemplateTask = catchErrors(async (req, res) => {
         defaultAssigneeUserId: updated.defaultAssigneeUserId,
         integrationProvider: updated.integrationProvider,
         sequence: updated.sequence,
+        mailTemplateId: updated.mailTemplateId,
     });
 });
 

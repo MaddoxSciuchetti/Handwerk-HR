@@ -7,7 +7,7 @@ import {
   saveMailTemplate,
   updateMailTemplateDetails,
 } from './mailTemplate.api';
-import type { WelcomeMailSettings } from '@/features/settings/welcome-mail/welcomeMail.api';
+import type { MailTemplateContent } from './mailTemplate.api';
 
 export const mailTemplatesKey = ['automation', 'mail-templates'] as const;
 
@@ -61,7 +61,7 @@ export function useUpdateMailTemplateDetails() {
 export function useSaveMailTemplate(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: WelcomeMailSettings) => saveMailTemplate(id, input),
+    mutationFn: (input: MailTemplateContent) => saveMailTemplate(id, input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: mailTemplateKey(id) });
     },

@@ -13,7 +13,7 @@ import {
     prepareArbeitszeugnisPdf,
     saveArbeitszeugnisDraft,
 } from "@/services/arbeitszeugnis";
-import { sendTeamDepartureMail } from "@/services/departureMail";
+import { sendIssueMail } from "@/services/engagementMail";
 import {
     integrationsLive,
     loadMicrosoft365Config,
@@ -196,6 +196,7 @@ export async function runTaskAutomation(params: {
     issueId: string;
     actorUserId: string;
     automation: string;
+    senderAddress?: string | null;
 }): Promise<RunTaskAutomationResult> {
     if (!isTaskAutomationId(params.automation)) {
         return {
@@ -240,9 +241,12 @@ export async function runTaskAutomation(params: {
     });
 
     if (params.automation === TEAM_DEPARTURE_MAIL) {
-        const mailed = await sendTeamDepartureMail({
+        const mailed = await sendIssueMail({
             organizationId: params.organizationId,
-            workerId: issue.workerEngagement.worker.id,
+            issueId: issue.id,
+            senderAddress: params.senderAddress,
+            origin: "departure",
+            once: "departure",
         });
         if (mailed.status === "failed") return mailed;
         await markIssueDone({

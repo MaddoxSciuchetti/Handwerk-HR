@@ -105,6 +105,26 @@ function canCopyAnswer(segment: DocumentSegment, value: string) {
     return normalized === "true" || normalized === "false";
 }
 
+export function isSalutationField(field: { key: string; label?: string }) {
+    const label = fold(field.label ?? "");
+    const key = fold(field.key.split(".").at(-1) ?? field.key);
+    if (label.includes("anrede") || key.includes("anrede")) return true;
+    return label === "herrfrau" || label === "herroderfrau" || key === "herrfrau";
+}
+
+export function salutationFromSex(value: string) {
+    const folded = fold(value);
+    if (folded === "maennlich" || folded === "mann" || folded === "herr") return "Herr";
+    if (folded === "weiblich" || folded === "frau") return "Frau";
+    return "";
+}
+
+function acceptedSalutation(value: string) {
+    const trimmed = value.trim();
+    if (trimmed === "Herr" || trimmed === "Frau") return trimmed;
+    return "";
+}
+
 export function deterministicContractValues(
     segments: DocumentSegment[],
     answers: QuestionnaireAnswers,
@@ -171,6 +191,21 @@ export function deterministicContractValues(
         });
     }
 
+    const salutation = salutationFromSex(answerString(answers, "sex"));
+    if (salutation) {
+        for (const segment of segments) {
+            if (
+                segment.type !== "input" ||
+                skipQuestionnaireMatch(segment) ||
+                filled.has(segment.key) ||
+                !isSalutationField(segment)
+            )
+                continue;
+            filled.add(segment.key);
+            entries.push({ key: segment.key, value: salutation });
+        }
+    }
+
     return entries;
 }
 
@@ -212,7 +247,7 @@ export function contractValuesFromAnswers(
 }
 
 export function acceptModelMatches(
-    fields: { key: string; fieldType?: string }[],
+    fields: { key: string; label?: string; fieldType?: string }[],
     answers: { value: string }[],
     raw: unknown,
 ): { key: string; value: string }[] {
@@ -237,13 +272,15 @@ export function acceptModelMatches(
         const value = "value" in item ? item.value : null;
         if (typeof key !== "string" || typeof value !== "string") continue;
         const trimmed = value.trim().slice(0, 8000);
-        if (!allowedFields.has(key) || !allowedValues.has(trimmed) || seen.has(key)) {
+        const field = allowedFields.get(key);
+        const salutation = field && isSalutationField(field) ? acceptedSalutation(trimmed) : "";
+        if (!field || seen.has(key) || (!allowedValues.has(trimmed) && !salutation)) {
             continue;
         }
         seen.add(key);
         entries.push({
             key,
-            value: normalizeDocumentFieldValue(allowedFields.get(key)?.fieldType, trimmed),
+            value: salutation || normalizeDocumentFieldValue(field.fieldType, trimmed),
         });
     }
 
@@ -253,7 +290,7 @@ export function acceptModelMatches(
 /** Validate AI output against both the template and an identified source answer.
  * Text must be copied; only checkbox propositions may become booleans. */
 export function acceptSemanticModelMatches(
-    fields: { key: string; fieldType?: string }[],
+    fields: { key: string; label?: string; fieldType?: string }[],
     answers: { key: string; value: string }[],
     raw: unknown,
 ): { key: string; value: string }[] {
@@ -292,6 +329,8 @@ export function acceptSemanticModelMatches(
             return [];
         if (field.fieldType === "checkbox") {
             if (value !== "true" && value !== "false") return [];
+        } else if (isSalutationField(field) && acceptedSalutation(value)) {
+            // Anrede may be Herr or Frau derived from Geschlecht or the first name.
         } else if (value !== source) return [];
         seen.add(match.key);
         return [{ key: match.key, value }];

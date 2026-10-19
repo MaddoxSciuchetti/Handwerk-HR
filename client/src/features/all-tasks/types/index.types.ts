@@ -30,6 +30,8 @@ export type IssueResponse = {
   automation?: string | null;
   integrationProvider?: 'microsoft_graph' | 'crewmeister' | null;
   sequence?: string | null;
+  mailTemplateId?: string | null;
+  mailSenderAddress?: string | null;
   kind: 'standard' | 'contract_send' | 'contract_confirm';
   isTemporary: boolean;
   assigneeOnly?: boolean;
@@ -53,4 +55,7 @@ export type TaskSidebarForm = {
   assigneeUserId: string;
   status: IssueStatusValue;
   automation: TaskAutomationValue;
+  sequence: string;
+  mailTemplateId: string;
+  mailSenderAddress: string;
 };

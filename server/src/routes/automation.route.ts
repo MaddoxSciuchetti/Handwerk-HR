@@ -7,7 +7,11 @@ import {
     getDepartureMail,
     getIntegrations,
     getMicrosoft365Automation,
+    getEngagementMailRecipients,
+    getIssueMailPreview,
+    getMicrosoftMailAddresses,
     postIssueSequence,
+    putEngagementMailRecipients,
     putIntegration,
     getQuestionnaireTemplate,
     getWelcomeMail,
@@ -30,6 +34,7 @@ import {
 const automationRoutes = Router();
 
 automationRoutes.get("/microsoft-365", getMicrosoft365Automation);
+automationRoutes.get("/microsoft-addresses", getMicrosoftMailAddresses);
 automationRoutes.get("/integrations", getIntegrations);
 automationRoutes.put("/integrations/:provider", putIntegration);
 automationRoutes.get("/questionnaire", getQuestionnaireTemplate);
@@ -55,6 +60,15 @@ automationRoutes.put(
 automationRoutes.post("/issues/:issueId/arbeitszeugnis", postArbeitszeugnis);
 automationRoutes.post("/issues/:issueId/run", postTaskAutomation);
 automationRoutes.post("/issues/:issueId/sequence", postIssueSequence);
+automationRoutes.get("/issues/:issueId/mail-preview", getIssueMailPreview);
+automationRoutes.get(
+    "/engagements/:engagementId/mail-recipients",
+    getEngagementMailRecipients,
+);
+automationRoutes.put(
+    "/engagements/:engagementId/mail-recipients",
+    putEngagementMailRecipients,
+);
 automationRoutes.get("/mail-templates", getMailTemplates);
 automationRoutes.post("/mail-templates", postMailTemplate);
 automationRoutes.get("/mail-templates/:id", getMailTemplate);

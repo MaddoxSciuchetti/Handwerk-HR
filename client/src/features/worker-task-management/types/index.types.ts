@@ -63,10 +63,10 @@ export type TemplateTaskFormValues = {
   sequence:
     | 'none'
     | 'microsoft_create_account'
-    | 'microsoft_send_onboarding_email'
-    | 'microsoft_send_offboarding_email'
+    | 'microsoft_send_email'
     | 'microsoft_deactivate_account'
     | 'crewmeister_create_account';
+  mailTemplateId: string;
 };
 
 export type TemplateTaskResponse = {
@@ -81,11 +81,11 @@ export type TemplateTaskResponse = {
   integrationProvider?: 'microsoft_graph' | 'crewmeister' | null;
   sequence?:
     | 'microsoft_create_account'
-    | 'microsoft_send_onboarding_email'
-    | 'microsoft_send_offboarding_email'
+    | 'microsoft_send_email'
     | 'microsoft_deactivate_account'
     | 'crewmeister_create_account'
     | null;
+  mailTemplateId?: string | null;
 };
 
 export type TaskHistoryActor = {

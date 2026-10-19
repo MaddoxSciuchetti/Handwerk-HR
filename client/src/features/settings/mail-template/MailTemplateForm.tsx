@@ -1,43 +1,32 @@
-import { MicrosoftSimulationNotice } from '@/features/settings/integrations/MicrosoftSimulationNotice';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { WelcomeMailGroupSelect } from '@/features/settings/welcome-mail/WelcomeMailGroupSelect';
-import type {
-  WelcomeMailPageData,
-  WelcomeMailSettings,
-} from '@/features/settings/welcome-mail/welcomeMail.api';
 import { useEffect, useState } from 'react';
 import { MailMessageField } from './MailMessageField';
 import { customMailPlaceholders } from './mailPlaceholders';
+import type { MailTemplateContent } from './mailTemplate.api';
 import { useSaveMailTemplate } from './useMailTemplates';
 
 type MailTemplateFormProps = {
   templateId: string;
-  page: WelcomeMailPageData;
+  page: { settings: MailTemplateContent | null };
 };
 
-const emptyDraft: WelcomeMailSettings = {
-  senderAddress: '',
-  groupId: '',
-  groupName: '',
+const emptyDraft: MailTemplateContent = {
   subject: '',
   body: '',
 };
 
 export function MailTemplateForm({ templateId, page }: MailTemplateFormProps) {
   const save = useSaveMailTemplate(templateId);
-  const [draft, setDraft] = useState<WelcomeMailSettings>(emptyDraft);
+  const [draft, setDraft] = useState<MailTemplateContent>(emptyDraft);
 
   useEffect(() => {
     setDraft(page.settings ?? emptyDraft);
   }, [page.settings]);
 
   const canSave =
-    draft.senderAddress.trim().length > 0 &&
-    draft.groupId.trim().length > 0 &&
-    draft.subject.trim().length > 0 &&
-    draft.body.trim().length > 0;
+    draft.subject.trim().length > 0 && draft.body.trim().length > 0;
 
   return (
     <form
@@ -46,49 +35,11 @@ export function MailTemplateForm({ templateId, page }: MailTemplateFormProps) {
         event.preventDefault();
         if (!canSave || save.isPending) return;
         save.mutate({
-          senderAddress: draft.senderAddress.trim(),
-          groupId: draft.groupId.trim(),
-          groupName: draft.groupName.trim(),
           subject: draft.subject.trim(),
           body: draft.body.trim(),
         });
       }}
     >
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="mail-template-sender">Absender</Label>
-        <Input
-          id="mail-template-sender"
-          type="email"
-          autoComplete="off"
-          value={draft.senderAddress}
-          placeholder="admin@firma.de"
-          onChange={(event) =>
-            setDraft((current) => ({
-              ...current,
-              senderAddress: event.target.value,
-            }))
-          }
-        />
-      </div>
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="mail-template-group">Team</Label>
-        <WelcomeMailGroupSelect
-          groups={page.groups}
-          groupId={draft.groupId}
-          groupName={draft.groupName}
-          onChange={(group) =>
-            setDraft((current) => ({
-              ...current,
-              groupId: group.id,
-              groupName: group.displayName,
-            }))
-          }
-        />
-        {page.simulated && <MicrosoftSimulationNotice />}
-        {page.groupsError ? (
-          <p className="text-sm text-destructive">{page.groupsError}</p>
-        ) : null}
-      </div>
       <div className="flex flex-col gap-2">
         <Label htmlFor="mail-template-subject">Betreff</Label>
         <Input

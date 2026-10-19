@@ -3,15 +3,12 @@ import { TableCell, TableRow } from '@/components/ui/table';
 import { useDeleteMailTemplate } from '@/features/settings/mail-template/useMailTemplates';
 import { PencilIcon, TrashIcon } from 'lucide-react';
 import type { Dispatch, SetStateAction } from 'react';
-import { toast } from 'sonner';
 import type { MailTemplateEditState } from './MailTemplateSidebar';
 
 export type MailTemplateRowData = {
   id: string;
   name: string;
   description: string;
-  kind: 'system' | 'custom';
-  to?: '/settings/welcome-mail' | '/settings/departure-mail';
 };
 
 type MailTemplateRowProps = {
@@ -58,10 +55,6 @@ export function MailTemplateRow({
                 onClick={(event) => {
                   event.stopPropagation();
                   event.preventDefault();
-                  if (template.kind === 'system') {
-                    onOpen(template);
-                    return;
-                  }
                   setMode('edit');
                   setEditState({
                     id: template.id,
@@ -82,12 +75,6 @@ export function MailTemplateRow({
                 onClick={(event) => {
                   event.preventDefault();
                   event.stopPropagation();
-                  if (template.kind === 'system') {
-                    toast.error(
-                      'Diese E-Mail gehört zur Automatisierung und kann nicht gelöscht werden.'
-                    );
-                    return;
-                  }
                   remove(template.id);
                 }}
               >

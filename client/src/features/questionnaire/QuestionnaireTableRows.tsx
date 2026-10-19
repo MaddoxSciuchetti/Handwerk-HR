@@ -50,8 +50,10 @@ export function QuestionnaireTableRows({
                 <Input
                   aria-label={`${column.label} Zeile ${index + 1}`}
                   type={column.type === 'date' ? 'date' : 'text'}
+                  disabled={column.officeOnly === true}
                   value={row[column.key] ?? ''}
                   placeholder={column.label}
+                  className={column.officeOnly ? 'bg-muted text-muted-foreground' : undefined}
                   onChange={(event) => update(index, column.key, event.target.value)}
                 />
               </div>
@@ -73,6 +75,9 @@ export function QuestionnaireTableRows({
             </Button>
           ))}
         </div>
+      ) : null}
+      {repeater.columns.some((column) => column.officeOnly) ? (
+        <p className="text-xs text-muted-foreground">Vom Betrieb ausgefüllt</p>
       ) : null}
       {canAdd ? (
         <div>

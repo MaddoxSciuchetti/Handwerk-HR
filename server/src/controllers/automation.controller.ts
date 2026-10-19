@@ -6,6 +6,13 @@ import {
     saveAutomationDocument,
 } from "@/services/automationDocument";
 import { microsoft365AutomationStatus } from "@/services/microsoft365Account";
+import {
+    engagementMailOptions,
+    listBsbMailAddresses,
+    mailSendPreview,
+    readEngagementMailRecipients,
+    saveEngagementMailRecipients,
+} from "@/services/engagementMail";
 import { runIssueSequence } from "@/services/integrations/runSequence";
 import {
     listOrganizationIntegrations,
@@ -94,13 +101,20 @@ export const putIntegration = catchErrors(async (req, res) => {
     });
 });
 
+const senderAddressInput = z.string().trim().email().max(254);
+
 export const postIssueSequence = catchErrors(async (req, res) => {
     appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
     appAssert(req.userId, BAD_REQUEST, "Benutzer fehlt.");
+    const senderAddress =
+        req.body?.senderAddress == null
+            ? undefined
+            : senderAddressInput.parse(req.body.senderAddress);
     const result = await runIssueSequence({
         organizationId: req.orgId,
         issueId: String(req.params.issueId),
         actorUserId: req.userId,
+        senderAddress,
     });
     appAssert(
         result.status === "completed",
@@ -110,6 +124,14 @@ export const postIssueSequence = catchErrors(async (req, res) => {
             : "Sequenz fehlgeschlagen.",
     );
     return res.status(200).json({ success: true, data: result });
+});
+
+export const getMicrosoftMailAddresses = catchErrors(async (req, res) => {
+    appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
+    return res.status(200).json({
+        success: true,
+        data: await listBsbMailAddresses(req.orgId),
+    });
 });
 
 export const getWelcomeMail = catchErrors(async (req, res) => {
@@ -202,11 +224,16 @@ export const postTaskAutomation = catchErrors(async (req, res) => {
         BAD_REQUEST,
         "Bitte eine Automatisierung wählen.",
     );
+    const senderAddress =
+        req.body?.senderAddress == null
+            ? undefined
+            : senderAddressInput.parse(req.body.senderAddress);
     const result = await runTaskAutomation({
         organizationId: req.orgId,
         issueId: String(req.params.issueId),
         actorUserId: req.userId,
         automation,
+        senderAddress,
     });
     appAssert(
         result.status === "completed",
@@ -296,4 +323,61 @@ export const putDepartureMail = catchErrors(async (req, res) => {
         success: true,
         data: await saveDepartureMailSettings(req.orgId, input),
     });
+});
+
+export const getIssueMailPreview = catchErrors(async (req, res) => {
+    appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
+    const preview = await mailSendPreview({
+        organizationId: req.orgId,
+        issueId: String(req.params.issueId),
+    });
+    const previewError =
+        preview.status === "failed"
+            ? preview.message
+            : "Die E-Mail konnte nicht geladen werden.";
+    appAssert(preview.status === "ready", BAD_REQUEST, previewError);
+    return res.status(200).json({ success: true, data: preview });
+});
+
+const mailRecipientInput = z.object({
+    recipients: z
+        .array(
+            z.object({
+                kind: z.enum([
+                    "worker_private",
+                    "worker_work",
+                    "microsoft_group",
+                    "teams_channel",
+                ]),
+                label: z.string().trim().max(255),
+                address: z.string().trim().max(254).nullable().optional(),
+                workerId: z.string().trim().max(64).nullable().optional(),
+                groupId: z.string().trim().max(255).nullable().optional(),
+            }),
+        )
+        .max(50),
+});
+
+export const getEngagementMailRecipients = catchErrors(async (req, res) => {
+    appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
+    const engagementId = String(req.params.engagementId);
+    const selected = await readEngagementMailRecipients(req.orgId, engagementId);
+    appAssert(selected, BAD_REQUEST, "Engagement nicht gefunden.");
+    const options = await engagementMailOptions(req.orgId);
+    return res.status(200).json({
+        success: true,
+        data: { selected, ...options },
+    });
+});
+
+export const putEngagementMailRecipients = catchErrors(async (req, res) => {
+    appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
+    const input = mailRecipientInput.parse(req.body);
+    const selected = await saveEngagementMailRecipients({
+        organizationId: req.orgId,
+        engagementId: String(req.params.engagementId),
+        recipients: input.recipients,
+    });
+    appAssert(selected, BAD_REQUEST, "Engagement nicht gefunden.");
+    return res.status(200).json({ success: true, data: selected });
 });

@@ -54,6 +54,8 @@ export function TaskItem({
       automation: storedTaskAutomation(task.automation),
       integrationProvider: task.integrationProvider ?? null,
       sequence: task.sequence ?? null,
+      mailTemplateId: task.mailTemplateId ?? null,
+      mailSenderAddress: task.mailSenderAddress ?? null,
     });
   };
 

@@ -21,8 +21,13 @@ export const updateTask = async ({
   return API.patch(`/tasks/${taskId}`, data);
 };
 
-export const runIssueSequence = async (taskId: string): Promise<unknown> => {
-  return API.post(`/automation/issues/${taskId}/sequence`);
+export const runIssueSequence = async (
+  taskId: string,
+  senderAddress?: string
+): Promise<unknown> => {
+  return API.post(`/automation/issues/${taskId}/sequence`, {
+    ...(senderAddress ? { senderAddress } : {}),
+  });
 };
 
 export const runTaskAutomation = async (params: {

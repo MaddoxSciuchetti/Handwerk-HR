@@ -22,6 +22,7 @@ type TaskAutomationProps = {
   provider: string;
   sequence: string;
   disabled: boolean;
+  senderAddress?: string;
 };
 
 function TaskAutomation({
@@ -29,6 +30,7 @@ function TaskAutomation({
   provider,
   sequence,
   disabled,
+  senderAddress,
 }: TaskAutomationProps) {
   const queryClient = useQueryClient();
   const [isRunning, setIsRunning] = useState(false);
@@ -53,7 +55,9 @@ function TaskAutomation({
   const onGo = async () => {
     if (disabled || isRunning || blockedReason) return;
     setIsRunning(true);
-    const [, error] = await tryCatch(runIssueSequence(taskId));
+    const [, error] = await tryCatch(
+      runIssueSequence(taskId, senderAddress?.trim() || undefined)
+    );
     setIsRunning(false);
     if (error) {
       const message =

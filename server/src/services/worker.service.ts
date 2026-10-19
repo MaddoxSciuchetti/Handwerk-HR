@@ -577,6 +577,10 @@ export async function createIssue(params: CreateIssueInput) {
         priority,
         dueDate,
         automation,
+        integrationProvider,
+        sequence,
+        mailTemplateId,
+        mailSenderAddress,
         assigneeOnly,
     } = params;
 
@@ -605,6 +609,10 @@ export async function createIssue(params: CreateIssueInput) {
                 priority: priority ?? "no_priority",
                 dueDate,
                 automation,
+                integrationProvider,
+                sequence,
+                mailTemplateId,
+                mailSenderAddress,
                 assigneeOnly: assigneeOnly ?? false,
             },
             include: {
@@ -649,6 +657,10 @@ export async function updateIssue(params: UpdateIssueInput) {
         priority,
         dueDate,
         automation,
+        integrationProvider,
+        sequence,
+        mailTemplateId,
+        mailSenderAddress,
     } = params;
 
     const existing = await prisma.issue.findFirst({
@@ -664,6 +676,10 @@ export async function updateIssue(params: UpdateIssueInput) {
     if (priority !== undefined) data.priority = priority;
     if (dueDate !== undefined) data.dueDate = dueDate;
     if (automation !== undefined) data.automation = automation;
+    if (integrationProvider !== undefined) data.integrationProvider = integrationProvider;
+    if (sequence !== undefined) data.sequence = sequence;
+    if (mailTemplateId !== undefined) data.mailTemplateId = mailTemplateId;
+    if (mailSenderAddress !== undefined) data.mailSenderAddress = mailSenderAddress;
 
     const keys = Object.keys(data);
     if (keys.length === 0) {
@@ -809,6 +825,7 @@ async function applyIssueTemplateInTx(
                 templateItemId: item.id,
                 integrationProvider: item.integrationProvider,
                 sequence: item.sequence,
+                mailTemplateId: item.mailTemplateId,
             },
             select: { id: true },
         });

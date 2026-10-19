@@ -243,3 +243,59 @@ it("skips AI when there is no key or no unfilled field", async () => {
     await matchQuestionnaireToContract([segments[0]], answers, "", fields);
     expect(fetchMock).not.toHaveBeenCalled();
 });
+
+it("fills Anrede from Geschlecht without asking the model", async () => {
+    process.env.OPENAI_API_KEY = "test-key";
+    await expect(
+        matchQuestionnaireToContract(
+            [{ type: "input", key: "contract.anrede", label: "Anrede" }],
+            { sex: "weiblich", firstName: "Ada" } as QuestionnaireAnswers,
+        ),
+    ).resolves.toEqual([{ key: "contract.anrede", value: "Frau" }]);
+    expect(fetchMock).not.toHaveBeenCalled();
+});
+
+it("lets the model set Anrede from the first name when Geschlecht does not decide it", async () => {
+    modelResult([
+        {
+            key: "contract.anrede",
+            value: "Herr",
+            answerKey: "firstName",
+            confidence: "high",
+        },
+    ]);
+
+    const result = await matchQuestionnaireToContract(
+        [
+            { type: "input", key: "contract.vorname", label: "Vorname" },
+            { type: "input", key: "contract.anrede", label: "Anrede" },
+        ],
+        { firstName: "Max", sex: "divers" } as QuestionnaireAnswers,
+        "",
+        [
+            {
+                key: "firstName",
+                label: "Vorname",
+                contractFieldKey: "contract.vorname",
+            },
+        ],
+    );
+
+    const request = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
+    const payload = JSON.parse(request.messages[1].content) as {
+        fields: { key: string }[];
+        answers: { key: string; value: string }[];
+    };
+    expect(request.messages[0].content).toContain("Ausnahme ist allein die Anrede");
+    expect(payload.fields.map((field) => field.key)).toEqual(["contract.anrede"]);
+    expect(payload.answers).toEqual(
+        expect.arrayContaining([
+            expect.objectContaining({ key: "firstName", value: "Max" }),
+            expect.objectContaining({ key: "sex", value: "divers" }),
+        ]),
+    );
+    expect(result).toEqual([
+        { key: "contract.vorname", value: "Max" },
+        { key: "contract.anrede", value: "Herr" },
+    ]);
+});

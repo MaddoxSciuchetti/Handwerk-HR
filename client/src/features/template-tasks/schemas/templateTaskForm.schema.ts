@@ -28,6 +28,7 @@ export const templateTaskFormSchema = z.object({
     INTEGRATION_NONE,
     ...INTEGRATION_SEQUENCES.map((item) => item.value),
   ]),
+  mailTemplateId: z.string(),
 }).superRefine((value, context) => {
   if (value.integrationProvider === INTEGRATION_NONE) {
     if (value.sequence !== INTEGRATION_NONE) {
@@ -57,6 +58,16 @@ export const templateTaskFormSchema = z.object({
       message: 'Die Sequenz gehört nicht zu dieser Integration',
     });
   }
+  if (
+    value.sequence === 'microsoft_send_email' &&
+    value.mailTemplateId.trim().length === 0
+  ) {
+    context.addIssue({
+      code: 'custom',
+      path: ['mailTemplateId'],
+      message: 'Bitte wähle eine E-Mail-Vorlage',
+    });
+  }
 });
 
 export type TemplateTaskFormSchema = z.infer<typeof templateTaskFormSchema>;
@@ -70,4 +81,5 @@ export const EMPTY_TEMPLATE_TASK: TemplateTaskFormSchema = {
   orderIndex: 0,
   integrationProvider: INTEGRATION_NONE,
   sequence: INTEGRATION_NONE,
+  mailTemplateId: '',
 };

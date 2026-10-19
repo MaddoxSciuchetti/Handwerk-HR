@@ -1,12 +1,8 @@
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { DepartureMailForm } from '@/features/settings/departure-mail/DepartureMailForm';
-import { useDepartureMail } from '@/features/settings/departure-mail/useDepartureMail';
 import { MailTemplateForm } from '@/features/settings/mail-template/MailTemplateForm';
 import { useMailTemplate } from '@/features/settings/mail-template/useMailTemplates';
-import { WelcomeMailForm } from '@/features/settings/welcome-mail/WelcomeMailForm';
-import { useWelcomeMail } from '@/features/settings/welcome-mail/useWelcomeMail';
 import { SidebarAside } from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarAside';
 import SidebarContent from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarContent';
 import SidebarHeader from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarHeader';
@@ -45,55 +41,11 @@ export function MailContentSidebar({
           </Button>
         </SidebarHeader>
         <SidebarContent className="p-4">
-          {mail?.kind === 'system' && mail.to === '/settings/welcome-mail' ? (
-            <WelcomeMailEditor />
-          ) : null}
-          {mail?.kind === 'system' && mail.to === '/settings/departure-mail' ? (
-            <DepartureMailEditor />
-          ) : null}
-          {mail?.kind === 'custom' ? (
-            <CustomMailEditor templateId={mail.id} />
-          ) : null}
+          {mail ? <CustomMailEditor templateId={mail.id} /> : null}
         </SidebarContent>
       </SidebarPanel>
     </SidebarAside>
   );
-}
-
-function WelcomeMailEditor() {
-  const { data, isLoading, isError } = useWelcomeMail();
-
-  if (isLoading) {
-    return <LoadingAlert />;
-  }
-
-  if (isError || !data) {
-    return (
-      <p className="text-sm text-destructive">
-        Willkommensmail konnte nicht geladen werden.
-      </p>
-    );
-  }
-
-  return <WelcomeMailForm page={data} />;
-}
-
-function DepartureMailEditor() {
-  const { data, isLoading, isError } = useDepartureMail();
-
-  if (isLoading) {
-    return <LoadingAlert />;
-  }
-
-  if (isError || !data) {
-    return (
-      <p className="text-sm text-destructive">
-        Die Entlassungsmail konnte nicht geladen werden.
-      </p>
-    );
-  }
-
-  return <DepartureMailForm page={data} />;
 }
 
 function CustomMailEditor({ templateId }: { templateId: string }) {

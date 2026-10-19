@@ -5,6 +5,7 @@ import {
   INTEGRATION_SEQUENCES,
 } from '@/features/settings/integrations/integration.consts';
 import { getIntegrations } from '@/features/settings/integrations/integrations.api';
+import { useMailTemplates } from '@/features/settings/mail-template/useMailTemplates';
 import { TaskStatusSelect } from '@/features/all-tasks/components/ui/TaskStatusSelect';
 import { employeeQueries } from '@/features/employee-overview/query-options/queries/employee.queries';
 import { EMPTY_TEMPLATE_TASK } from '@/features/template-tasks/schemas/templateTaskForm.schema';
@@ -48,7 +49,12 @@ export function TaskSidebar({
     queryKey: ['settings', 'integrations'],
     queryFn: getIntegrations,
   });
-  const integrationProvider = useWatch({ control, name: 'integrationProvider' });
+  const integrationProvider = useWatch({
+    control,
+    name: 'integrationProvider',
+  });
+  const sequence = useWatch({ control, name: 'sequence' });
+  const { data: mailTemplates = [] } = useMailTemplates();
   const integrationOptions = [
     { value: INTEGRATION_NONE, label: 'Keine' },
     ...integrations
@@ -56,7 +62,9 @@ export function TaskSidebar({
       .map((integration) => ({
         value: integration.provider,
         label:
-          integration.provider === 'microsoft_graph' ? 'Microsoft' : 'Crewmeister',
+          integration.provider === 'microsoft_graph'
+            ? 'Microsoft'
+            : 'Crewmeister',
       })),
   ];
   const sequenceOptions = [
@@ -98,7 +106,10 @@ export function TaskSidebar({
             <X className="h-4 w-4" aria-hidden />
           </Button>
         </SidebarHeader>
-        <form onSubmit={onSubmit} className={cn('flex min-h-0 flex-1 flex-col')}>
+        <form
+          onSubmit={onSubmit}
+          className={cn('flex min-h-0 flex-1 flex-col')}
+        >
           <SidebarContent className="mt-2 flex flex-col gap-4 p-6">
             <FormFields
               errors={errors}
@@ -129,24 +140,47 @@ export function TaskSidebar({
               labelClassName="typo-body-base"
               placeholder="Verantwortlichen wählen"
             />
-            <FormSelectOptions
-              errors={errors}
-              control={control}
-              data={integrationOptions}
-              name="integrationProvider"
-              label="Integration"
-              labelClassName="typo-body-base"
-              placeholder="Integration wählen"
-            />
-            <FormSelectOptions
-              errors={errors}
-              control={control}
-              data={sequenceOptions}
-              name="sequence"
-              label="Sequenz"
-              labelClassName="typo-body-base"
-              placeholder="Sequenz wählen"
-            />
+            <div
+              className={cn(
+                'flex flex-col gap-4',
+                integrationProvider &&
+                  integrationProvider !== INTEGRATION_NONE &&
+                  'rounded-2xl border border-border bg-muted/50 p-4'
+              )}
+            >
+              <FormSelectOptions
+                errors={errors}
+                control={control}
+                data={integrationOptions}
+                name="integrationProvider"
+                label="Integration"
+                labelClassName="typo-body-base"
+                placeholder="Integration wählen"
+              />
+              <FormSelectOptions
+                errors={errors}
+                control={control}
+                data={sequenceOptions}
+                name="sequence"
+                label="Sequenz"
+                labelClassName="typo-body-base"
+                placeholder="Sequenz wählen"
+              />
+              {sequence === 'microsoft_send_email' ? (
+                <FormSelectOptions
+                  errors={errors}
+                  control={control}
+                  data={mailTemplates.map((template) => ({
+                    value: template.id,
+                    label: template.name,
+                  }))}
+                  name="mailTemplateId"
+                  label="E-Mail-Vorlage"
+                  labelClassName="typo-body-base"
+                  placeholder="Vorlage wählen"
+                />
+              ) : null}
+            </div>
           </SidebarContent>
           <SidebarFooter className="p-6">
             <Button type="submit" className="rounded-full">

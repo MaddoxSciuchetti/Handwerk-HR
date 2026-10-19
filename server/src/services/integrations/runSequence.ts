@@ -8,9 +8,8 @@ import {
     NOT_LIVE_MESSAGE,
 } from "@/services/integrations/runtime";
 import { provisionMicrosoft365Account, microsoftGraphToken } from "@/services/microsoft365Account";
+import { isMailSequence, sendIssueMail } from "@/services/engagementMail";
 import { blockMicrosoftSignIn } from "@/services/offboardingAutomation";
-import { sendTeamDepartureMail } from "@/services/departureMail";
-import { sendTeamWelcomeMail } from "@/services/welcomeMail";
 import type { IntegrationSequence } from "@prisma/client";
 
 export type SequenceRunResult =
@@ -90,6 +89,7 @@ async function runMicrosoft(
         actorUserId: string;
         issueId: string;
         previousStatus: string;
+        senderAddress?: string | null;
     },
 ): Promise<SequenceRunResult> {
     const config = await loadMicrosoft365Config(params.organizationId);
@@ -108,21 +108,11 @@ async function runMicrosoft(
                 : "Microsoft 365 ist für diese Organisation nicht eingerichtet.",
         };
     }
-    if (sequence === "microsoft_send_onboarding_email") {
-        return finish(
-            params,
-            await sendTeamWelcomeMail({
-                organizationId: params.organizationId,
-                workerId: params.workerId,
-                engagementId: params.engagementId,
-                actorUserId: params.actorUserId,
-            }),
-        );
-    }
-    if (sequence === "microsoft_send_offboarding_email") {
-        const mailed = await sendTeamDepartureMail({
+    if (isMailSequence(sequence)) {
+        const mailed = await sendIssueMail({
             organizationId: params.organizationId,
-            workerId: params.workerId,
+            issueId: params.issueId,
+            senderAddress: params.senderAddress,
         });
         if (mailed.status === "failed") return mailed;
         await markDone(params);
@@ -185,6 +175,7 @@ export async function runIssueSequence(params: {
     organizationId: string;
     issueId: string;
     actorUserId: string;
+    senderAddress?: string | null;
 }): Promise<SequenceRunResult> {
     const issue = await prisma.issue.findFirst({
         where: {
@@ -220,6 +211,7 @@ export async function runIssueSequence(params: {
         actorUserId: params.actorUserId,
         issueId: issue.id,
         previousStatus: issue.status,
+        senderAddress: params.senderAddress,
     };
 
     if (issue.integrationProvider === "crewmeister") {
