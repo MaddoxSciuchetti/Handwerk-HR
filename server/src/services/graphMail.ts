@@ -15,9 +15,9 @@ export function graphMailConfigured() {
     return MICROSOFT_GRAPH_TOKEN.length > 0;
 }
 
-function mailboxPath() {
-    if (!MICROSOFT_GRAPH_MAILBOX) return "/me";
-    return `/users/${encodeURIComponent(MICROSOFT_GRAPH_MAILBOX)}`;
+function mailboxPath(senderAddress = MICROSOFT_GRAPH_MAILBOX) {
+    if (!senderAddress) return "/me";
+    return `/users/${encodeURIComponent(senderAddress)}`;
 }
 
 async function graphFetch(path: string, init?: RequestInit) {
@@ -56,11 +56,12 @@ async function graphFetch(path: string, init?: RequestInit) {
 
 export async function sendGraphMail(params: {
     to: string;
+    senderAddress?: string;
     subject: string;
     html: string;
     attachments?: PdfAttachment[];
 }) {
-    const draft = (await graphFetch(`${mailboxPath()}/messages`, {
+    const draft = (await graphFetch(`${mailboxPath(params.senderAddress)}/messages`, {
         method: "POST",
         body: JSON.stringify({
             subject: params.subject,
@@ -87,7 +88,7 @@ export async function sendGraphMail(params: {
     }
 
     await graphFetch(
-        `${mailboxPath()}/messages/${encodeURIComponent(draft.id)}/send`,
+        `${mailboxPath(params.senderAddress)}/messages/${encodeURIComponent(draft.id)}/send`,
         { method: "POST" },
     );
 

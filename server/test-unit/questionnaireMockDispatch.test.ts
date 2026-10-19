@@ -148,3 +148,13 @@ it("persists an engagement definition and dispatches it without changing the org
     expect(template.items[0]).not.toHaveProperty("contractFieldKey");
     expect(template.items).toHaveLength(seedQuestionnaireDefinition().items.length);
 });
+
+it.each([false, true])("uses the saved sender for questionnaire delivery (resend: %s)", async (resend) => {
+    engagement.questionnaireSenderAddress = "office@example.test";
+    if (resend) engagement.questionnaireSubmission = { token: "existing-token", status: "sent" };
+    await sendEngagementQuestionnaire(params);
+    expect(sendMail).toHaveBeenCalledWith(expect.objectContaining({
+        to: "lukas@example.test",
+        senderAddress: "office@example.test",
+    }));
+});
