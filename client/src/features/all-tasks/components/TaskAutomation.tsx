@@ -2,10 +2,8 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import {
   integrationLabel,
-  isMailSequence,
   sequenceLabel,
 } from '@/features/settings/integrations/integration.consts';
-import { MailSendDialog } from './MailSendDialog';
 import {
   TASKHISTORY,
   WORKERBYID,
@@ -23,6 +21,7 @@ type TaskAutomationProps = {
   provider: string;
   sequence: string;
   disabled: boolean;
+  senderAddress?: string;
 };
 
 function TaskAutomation({
@@ -30,10 +29,10 @@ function TaskAutomation({
   provider,
   sequence,
   disabled,
+  senderAddress,
 }: TaskAutomationProps) {
   const queryClient = useQueryClient();
   const [isRunning, setIsRunning] = useState(false);
-  const [mailOpen, setMailOpen] = useState(false);
   const integrations = useQuery({
     queryKey: ['settings', 'integrations'],
     queryFn: getIntegrations,
@@ -50,10 +49,12 @@ function TaskAutomation({
         ? ''
         : 'Sequenzen werden in dieser Umgebung nicht ausgeführt.';
 
-  const onGo = async (senderAddress?: string) => {
+  const onGo = async () => {
     if (disabled || isRunning || blockedReason) return;
     setIsRunning(true);
-    const [, error] = await tryCatch(runIssueSequence(taskId, senderAddress));
+    const [, error] = await tryCatch(
+      runIssueSequence(taskId, senderAddress?.trim() || undefined)
+    );
     setIsRunning(false);
     if (error) {
       const message =
@@ -66,7 +67,6 @@ function TaskAutomation({
       toast.error(message);
       return;
     }
-    setMailOpen(false);
     void queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] });
     void queryClient.invalidateQueries({ queryKey: [WORKERBYID] });
     void queryClient.invalidateQueries({ queryKey: [TASKHISTORY, taskId] });
@@ -86,13 +86,7 @@ function TaskAutomation({
         className="rounded-2xl"
         disabled={disabled || isRunning || Boolean(blockedReason)}
         aria-busy={isRunning}
-        onClick={() => {
-          if (isMailSequence(sequence)) {
-            setMailOpen(true);
-            return;
-          }
-          void onGo();
-        }}
+        onClick={() => void onGo()}
       >
         {isRunning ? (
           <>
@@ -103,15 +97,6 @@ function TaskAutomation({
           'Go'
         )}
       </Button>
-      {isMailSequence(sequence) ? (
-        <MailSendDialog
-          taskId={taskId}
-          open={mailOpen}
-          pending={isRunning}
-          onOpenChange={setMailOpen}
-          onConfirm={(senderAddress) => void onGo(senderAddress)}
-        />
-      ) : null}
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import type { Dispatch, SetStateAction } from 'react';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import type { IssueStatusValue } from '../consts/issue-status.consts';
 import {
   storedTaskAutomation,
@@ -54,6 +55,9 @@ export function useTasks(
       assigneeUserId: taskEditState.assigneeUserId,
       status: taskEditState.status || 'open',
       automation: taskEditState.automation || TASK_AUTOMATION_NONE,
+      sequence: taskEditState.sequence || TASK_AUTOMATION_NONE,
+      mailTemplateId: taskEditState.mailTemplateId || '',
+      mailSenderAddress: taskEditState.mailSenderAddress || '',
     },
     resolver: zodResolver(taskFormSchema),
   });
@@ -68,7 +72,13 @@ export function useTasks(
       try {
         await createTaskAsync(data);
         setIsOpen(false);
-      } catch {}
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : 'Aufgabe konnte nicht erstellt werden.'
+        );
+      }
       return;
     }
     try {

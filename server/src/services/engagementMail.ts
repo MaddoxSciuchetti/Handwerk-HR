@@ -411,7 +411,7 @@ export async function sendIssueMail(params: {
         engagementId: loaded.engagementId,
         worker: loaded.worker,
         template: loaded.template,
-        senderAddress: params.senderAddress,
+        senderAddress: params.senderAddress?.trim() || loaded.mailSenderAddress,
     });
     if (sent.status !== "sent") return sent;
     if (params.once === "departure") {
@@ -437,6 +437,7 @@ async function loadIssueMail(
             id: true,
             sequence: true,
             mailTemplateId: true,
+            mailSenderAddress: true,
             workerEngagement: {
                 select: {
                     id: true,
@@ -483,6 +484,7 @@ async function loadIssueMail(
                 engagementId: issue.workerEngagement.id,
                 worker,
                 template: { id: "", name: "", subject: "-", body: "-" },
+                mailSenderAddress: issue.mailSenderAddress,
             };
         }
         return { message: "Für diese Aufgabe ist keine E-Mail-Vorlage hinterlegt." };
@@ -491,6 +493,7 @@ async function loadIssueMail(
         engagementId: issue.workerEngagement.id,
         worker,
         template,
+        mailSenderAddress: issue.mailSenderAddress,
     };
 }
 
@@ -502,26 +505,8 @@ async function deliverMail(params: {
     senderAddress?: string | null;
 }): Promise<{ status: "sent" } | { status: "failed"; message: string }> {
     const senderAddress = params.senderAddress?.trim() ?? "";
-    if (!senderAddress) {
+    if (!senderAddress.includes("@")) {
         return { status: "failed", message: "Bitte einen Absender wählen." };
-    }
-    const sender = await prisma.organizationMember.findFirst({
-        where: {
-            organizationId: params.organizationId,
-            status: "active",
-            user: {
-                status: "active",
-                isVerified: true,
-                email: { equals: senderAddress, mode: "insensitive" },
-            },
-        },
-        select: { user: { select: { email: true } } },
-    });
-    if (!sender) {
-        return {
-            status: "failed",
-            message: "Dieser Absender ist kein angemeldetes Organisationsmitglied.",
-        };
     }
     const recipients = await prisma.engagementMailRecipient.findMany({
         where: { engagementId: params.engagementId },
@@ -559,7 +544,7 @@ async function deliverMail(params: {
     const values = mailValues(params.worker);
     const sent = await sendGraphMail({
         token,
-        senderAddress: sender.user.email.trim(),
+        senderAddress,
         recipients: resolved.addresses,
         subject: filledSubject(params.template.subject, values),
         text: applyEngagementMailTemplate(params.template.body, values),

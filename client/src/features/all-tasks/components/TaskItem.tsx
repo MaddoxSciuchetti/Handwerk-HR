@@ -39,6 +39,7 @@ export function TaskItem({
 }: TaskItemProps) {
   const dateSource = task.dueDate ?? task.createdAt;
   const isAutomationTask =
+    Boolean(task.integrationProvider && task.sequence) ||
     storedTaskAutomation(task.automation) !== TASK_AUTOMATION_NONE;
   const isConfirmationTask = task.kind === 'contract_confirm';
   const isContractActionTask =
@@ -54,6 +55,8 @@ export function TaskItem({
       automation: storedTaskAutomation(task.automation),
       integrationProvider: task.integrationProvider ?? null,
       sequence: task.sequence ?? null,
+      mailTemplateId: task.mailTemplateId ?? null,
+      mailSenderAddress: task.mailSenderAddress ?? null,
     });
   };
 

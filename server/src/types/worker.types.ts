@@ -5,6 +5,8 @@ import type {
     EngagementType,
     IssuePriority,
     IssueStatus,
+    IntegrationProvider,
+    IntegrationSequence,
     WorkerStatus,
 } from "@prisma/client";
 
@@ -120,6 +122,10 @@ export interface CreateIssueInput {
     priority?: IssuePriority;
     dueDate?: Date;
     automation?: string | null;
+    integrationProvider?: IntegrationProvider | null;
+    sequence?: IntegrationSequence | null;
+    mailTemplateId?: string | null;
+    mailSenderAddress?: string | null;
     assigneeOnly?: boolean;
 }
 
@@ -135,6 +141,10 @@ export interface UpdateIssueInput {
     priority?: IssuePriority;
     dueDate?: Date;
     automation?: string | null;
+    integrationProvider?: IntegrationProvider | null;
+    sequence?: IntegrationSequence | null;
+    mailTemplateId?: string | null;
+    mailSenderAddress?: string | null;
 }
 
 

@@ -369,6 +369,62 @@ export type MicrosoftChannelOption = {
     teamName: string;
 };
 
+export type MicrosoftMailAddress = {
+    email: string;
+    label: string;
+    kind: "mailbox" | "channel";
+};
+
+export async function listMicrosoftMailAddresses(
+    organizationId: string,
+): Promise<{ addresses: MicrosoftMailAddress[]; error: string | null }> {
+    if (!integrationsLive()) {
+        return { addresses: [], error: NOT_LIVE_MESSAGE };
+    }
+    const config = await loadMicrosoft365Config(organizationId);
+    if (!config) return { addresses: [], error: null };
+    const token = await microsoftGraphToken(config);
+    if (!token) {
+        return {
+            addresses: [],
+            error: "Microsoft Graph hat die Anmeldung abgelehnt.",
+        };
+    }
+    const [users, channels] = await Promise.all([
+        listGraph<{
+            displayName?: string;
+            mail?: string;
+            userPrincipalName?: string;
+        }>(token, "/users?$select=displayName,mail,userPrincipalName&$top=999"),
+        listMailEnabledChannels(organizationId),
+    ]);
+    const addresses: MicrosoftMailAddress[] = [];
+    const seen = new Set<string>();
+    for (const user of users ?? []) {
+        const email = (user.mail?.trim() || user.userPrincipalName?.trim() || "")
+            .toLowerCase();
+        if (!email.includes("@") || seen.has(email)) continue;
+        seen.add(email);
+        const name = user.displayName?.trim() || email;
+        addresses.push({ email, label: `${name} · ${email}`, kind: "mailbox" });
+    }
+    for (const channel of channels.channels) {
+        const email = channel.email.trim().toLowerCase();
+        if (!email.includes("@") || seen.has(email)) continue;
+        seen.add(email);
+        addresses.push({
+            email,
+            label: `${channel.teamName} · ${channel.displayName} · ${email}`,
+            kind: "channel",
+        });
+    }
+    addresses.sort((left, right) => left.label.localeCompare(right.label, "de"));
+    const error = !users
+        ? "Microsoft Graph hat die E-Mail-Adressen nicht geliefert."
+        : channels.error;
+    return { addresses, error };
+}
+
 export async function listMailEnabledChannels(
     organizationId: string,
 ): Promise<

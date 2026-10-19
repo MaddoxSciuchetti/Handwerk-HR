@@ -7,23 +7,46 @@ import {
   TEAM_DEPARTURE_MAIL,
 } from '../consts/task-automation.consts';
 
-export const taskFormSchema = z.object({
-  title: z.string().trim().min(1, { message: 'Bitte gib einen Titel ein' }),
-  workerEngagementId: z
-    .string()
-    .min(1, { message: 'Bitte wähle einen Handwerker aus' }),
-  assigneeUserId: z
-    .string()
-    .min(1, { message: 'Bitte wähle eine Zuständigkeit aus' }),
-  status: z.enum(ISSUE_STATUSES, {
-    message: 'Bitte wähle einen Status aus',
-  }),
-  automation: z.enum([
-    TASK_AUTOMATION_NONE,
-    O365_BLOCK_SIGN_IN,
-    TEAM_DEPARTURE_MAIL,
-    ARBEITSZEUGNIS,
-  ]),
-});
+export const taskFormSchema = z
+  .object({
+    title: z.string().trim().min(1, { message: 'Bitte gib einen Titel ein' }),
+    workerEngagementId: z
+      .string()
+      .min(1, { message: 'Bitte wähle einen Handwerker aus' }),
+    assigneeUserId: z
+      .string()
+      .min(1, { message: 'Bitte wähle eine Zuständigkeit aus' }),
+    status: z.enum(ISSUE_STATUSES, {
+      message: 'Bitte wähle einen Status aus',
+    }),
+    sequence: z.string(),
+    mailTemplateId: z.string(),
+    mailSenderAddress: z.string(),
+    automation: z.enum([
+      TASK_AUTOMATION_NONE,
+      O365_BLOCK_SIGN_IN,
+      TEAM_DEPARTURE_MAIL,
+      ARBEITSZEUGNIS,
+    ]),
+  })
+  .superRefine((data, ctx) => {
+    if (data.sequence === 'microsoft_send_email' && !data.mailTemplateId) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['mailTemplateId'],
+        message: 'Bitte wähle eine E-Mail-Vorlage',
+      });
+    }
+    if (
+      data.sequence === 'microsoft_send_email' &&
+      !data.mailSenderAddress.trim()
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['mailSenderAddress'],
+        message: 'Bitte wähle einen Absender',
+      });
+    }
+  });
 
 export type TaskFormSchema = z.infer<typeof taskFormSchema>;

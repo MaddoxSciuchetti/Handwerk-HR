@@ -5,6 +5,8 @@ import {
     taskAutomationName,
 } from "@/constants/taskAutomation.consts";
 import { prisma } from "@/lib/prisma";
+import { INTEGRATION_SEQUENCES, SEQUENCE_PROVIDER } from "@/services/integrations/catalog";
+import type { IntegrationSequence } from "@prisma/client";
 import type { IssueStatus } from "@prisma/client";
 import { issueVisibleToViewer } from "@/services/issueVisibility";
 import { createIssue, updateIssue } from "@/services/worker.service";
@@ -86,6 +88,59 @@ export const queryTasks = async (orgId: string, viewerUserId: string) => {
     });
 };
 
+async function taskSequenceFields(
+    orgId: string,
+    body: { sequence?: unknown; mailTemplateId?: unknown; mailSenderAddress?: unknown },
+) {
+    if (body.sequence === undefined) return {};
+    if (body.sequence === null || body.sequence === "none" || body.sequence === "") {
+        return {
+            integrationProvider: null,
+            sequence: null,
+            mailTemplateId: null,
+            mailSenderAddress: null,
+        };
+    }
+    if (!INTEGRATION_SEQUENCES.includes(body.sequence as IntegrationSequence)) {
+        throw new AppError(BAD_REQUEST, "Ungültige Automation.");
+    }
+    const sequence = body.sequence as IntegrationSequence;
+    const integrationProvider = SEQUENCE_PROVIDER[sequence];
+    const integration = await prisma.organizationIntegration.findUnique({
+        where: { organizationId_provider: { organizationId: orgId, provider: integrationProvider } },
+        select: { enabled: true },
+    });
+    if (!integration?.enabled) {
+        throw new AppError(BAD_REQUEST, "Diese Integration ist nicht aktiv.");
+    }
+    const mailTemplateId = sequence === "microsoft_send_email"
+        ? (typeof body.mailTemplateId === "string" ? body.mailTemplateId.trim() : "")
+        : null;
+    if (sequence === "microsoft_send_email") {
+        if (!mailTemplateId) {
+            throw new AppError(BAD_REQUEST, "Bitte wähle eine E-Mail-Vorlage.");
+        }
+        const template = await prisma.mailTemplate.findFirst({
+            where: { id: mailTemplateId, organizationId: orgId },
+            select: { id: true },
+        });
+        if (!template) {
+            throw new AppError(BAD_REQUEST, "Die E-Mail-Vorlage wurde nicht gefunden.");
+        }
+    }
+    const rawSender =
+        typeof body.mailSenderAddress === "string" ? body.mailSenderAddress.trim() : "";
+    const mailSenderAddress =
+        sequence === "microsoft_send_email" ? rawSender : null;
+    if (
+        sequence === "microsoft_send_email" &&
+        (!mailSenderAddress || !mailSenderAddress.includes("@") || mailSenderAddress.length > 254)
+    ) {
+        throw new AppError(BAD_REQUEST, "Bitte wähle einen Absender.");
+    }
+    return { integrationProvider, sequence, mailTemplateId, mailSenderAddress, automation: null };
+}
+
 export async function createTaskInOrg(
     orgId: string,
     userId: string,
@@ -97,6 +152,9 @@ export async function createTaskInOrg(
         assigneeUserId?: string;
         workerEngagementId?: string;
         automation?: string | null;
+        sequence?: string | null;
+        mailTemplateId?: string | null;
+        mailSenderAddress?: string | null;
     };
     const workerEngagementId = body.workerEngagementId?.trim() ?? "";
     if (!workerEngagementId) {
@@ -124,6 +182,7 @@ export async function createTaskInOrg(
         automation = body.automation;
     }
 
+    const sequenceFields = await taskSequenceFields(orgId, body);
     const title = body.title?.trim() || "Neue Aufgabe";
 
     return createIssue({
@@ -133,6 +192,7 @@ export async function createTaskInOrg(
         title,
         assigneeUserId: body.assigneeUserId || undefined,
         automation,
+        ...sequenceFields,
     });
 }
 
@@ -174,6 +234,9 @@ export async function updateTaskInOrg(
         status?: IssueStatus;
         assigneeUserId?: string;
         automation?: string | null;
+        sequence?: string | null;
+        mailTemplateId?: string | null;
+        mailSenderAddress?: string | null;
     };
 
     let automation: string | null | undefined;
@@ -186,6 +249,11 @@ export async function updateTaskInOrg(
         automation = body.automation;
     }
 
+    const sequenceFields = await taskSequenceFields(orgId, body);
+    if (sequenceFields.sequence && !existing.workerEngagementId) {
+        throw new AppError(BAD_REQUEST, "Bitte wähle einen Handwerker aus.");
+    }
+
     if (!existing.workerEngagementId) {
         return prisma.issue.update({
             where: { id: existing.id },
@@ -196,6 +264,7 @@ export async function updateTaskInOrg(
                     ? { assigneeUserId: body.assigneeUserId }
                     : {}),
                 ...(automation !== undefined ? { automation } : {}),
+                ...sequenceFields,
             },
         });
     }
@@ -208,6 +277,7 @@ export async function updateTaskInOrg(
         status: body.status,
         assigneeUserId: body.assigneeUserId,
         automation,
+        ...sequenceFields,
     });
 }
 
@@ -220,6 +290,10 @@ const HUMAN_READABLE_FIELDS = new Set([
     "priority",
     "dueDate",
     "automation",
+    "integrationProvider",
+    "sequence",
+    "mailTemplateId",
+    "mailSenderAddress",
 ]);
 
 const PRIORITY_LABELS: Record<string, string> = {

@@ -9,6 +9,7 @@ import {
     getMicrosoft365Automation,
     getEngagementMailRecipients,
     getIssueMailPreview,
+    getMicrosoftMailAddresses,
     postIssueSequence,
     putEngagementMailRecipients,
     putIntegration,
@@ -33,6 +34,7 @@ import {
 const automationRoutes = Router();
 
 automationRoutes.get("/microsoft-365", getMicrosoft365Automation);
+automationRoutes.get("/microsoft-addresses", getMicrosoftMailAddresses);
 automationRoutes.get("/integrations", getIntegrations);
 automationRoutes.put("/integrations/:provider", putIntegration);
 automationRoutes.get("/questionnaire", getQuestionnaireTemplate);

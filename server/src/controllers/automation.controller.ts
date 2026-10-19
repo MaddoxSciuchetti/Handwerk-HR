@@ -30,6 +30,7 @@ import {
     prepareLetterForIssue,
 } from "@/services/offboardingAutomation";
 import {
+    listMicrosoftMailAddresses,
     saveWelcomeMailSettings,
     welcomeMailPage,
     type WelcomeMailSettingsRecord,
@@ -123,6 +124,14 @@ export const postIssueSequence = catchErrors(async (req, res) => {
             : "Sequenz fehlgeschlagen.",
     );
     return res.status(200).json({ success: true, data: result });
+});
+
+export const getMicrosoftMailAddresses = catchErrors(async (req, res) => {
+    appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
+    return res.status(200).json({
+        success: true,
+        data: await listMicrosoftMailAddresses(req.orgId),
+    });
 });
 
 export const getWelcomeMail = catchErrors(async (req, res) => {
