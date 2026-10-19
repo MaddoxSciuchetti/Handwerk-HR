@@ -96,7 +96,9 @@ export function candidateItems(items: PreviewItem[]): CandidateItem[] {
       max: item.max,
       layout: item.layout,
       defaultValue: preset || undefined,
-      employerFilled: isWeekdayHourKey(item.key) ? item.officeOnly === true : preset.length > 0,
+      employerFilled:
+        item.officeOnly === true ||
+        (!isWeekdayHourKey(item.key) && preset.length > 0),
     };
   });
 }

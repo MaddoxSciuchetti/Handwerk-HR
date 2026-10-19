@@ -66,6 +66,11 @@ export function QuestionnaireFieldControls({
           }
         />
       ) : null}
+      <PflichtfeldSwitch
+        label="Nur vom Betrieb"
+        checked={field.officeOnly === true}
+        onChange={(checked) => patch({ officeOnly: checked || undefined })}
+      />
       {field.type === 'file' ? null : (
         <div className="flex flex-col gap-2">
           <Label htmlFor={`${field.key}-contract`}>Vertragsfeld</Label>

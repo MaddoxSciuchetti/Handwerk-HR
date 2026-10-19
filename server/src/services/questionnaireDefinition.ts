@@ -159,7 +159,8 @@ export function fieldIsLocked(field: {
     defaultValue?: string;
     officeOnly?: boolean;
 }) {
-    if (isWeekdayHourKey(field.key)) return field.officeOnly === true;
+    if (field.officeOnly === true) return true;
+    if (isWeekdayHourKey(field.key)) return false;
     return isWorkerLocked(field);
 }
 
@@ -291,7 +292,16 @@ function readColumn(raw: unknown): QuestionnaireColumn {
     const key = typeof column.key === "string" ? column.key.trim() : "";
     if (!label || label.length > 80 || !COLUMN_KEY.test(key)) reject("Eine Spalte ist ungültig.");
     if (column.type !== "text" && column.type !== "date") reject("Eine Spalte ist ungültig.");
-    return { key, label, type: column.type };
+    return {
+        key,
+        label,
+        type: column.type,
+        officeOnly: columnOfficeOnly(column) ? true : undefined,
+    };
+}
+
+function columnOfficeOnly(column: object) {
+    return "officeOnly" in column && column.officeOnly === true;
 }
 
 function parseField(raw: object, seen: Set<string>): QuestionnaireFieldItem {
@@ -313,7 +323,7 @@ function parseField(raw: object, seen: Set<string>): QuestionnaireFieldItem {
         label,
         required: isWeeklyHoursKey(key) ? readRequired(raw, base.required === true) : questionRequired(base),
         employerFilled: false,
-        officeOnly: isWeekdayHourKey(key) && readOfficeOnly(raw) ? true : undefined,
+        officeOnly: readOfficeOnly(raw) ? true : undefined,
         contractFieldKey: base.type === "file" ? undefined : contractFieldKey,
         defaultValue: undefined,
     };
@@ -326,8 +336,18 @@ function parseField(raw: object, seen: Set<string>): QuestionnaireFieldItem {
         draft.max = catalog.max;
         draft.layout = catalog.layout;
         draft.builtin = true;
+    } else {
+        const section = readSection(raw);
+        if (section) draft.section = section;
     }
     return draft;
+}
+
+function readSection(raw: object) {
+    if (!("section" in raw) || typeof raw.section !== "string") return "";
+    const section = raw.section.trim();
+    if (section.length > 400) reject("Der Abschnitt ist zu lang.");
+    return section;
 }
 
 function choiceOptions(raw: object) {

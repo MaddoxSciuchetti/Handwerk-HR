@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { PflichtfeldSwitch } from './PflichtfeldSwitch';
 import type { TemplateRepeater } from './questionnaireTemplate.types';
 
 type TableQuestionCardProps = {
@@ -27,6 +28,19 @@ export function TableQuestionCard({ repeater, onChange }: TableQuestionCardProps
           ))}
         </div>
       </div>
+      <PflichtfeldSwitch
+        label="Nur vom Betrieb"
+        checked={repeater.columns.every((column) => column.officeOnly === true)}
+        onChange={(checked) =>
+          onChange({
+            ...repeater,
+            columns: repeater.columns.map((column) => ({
+              ...column,
+              officeOnly: checked || undefined,
+            })),
+          })
+        }
+      />
       <Button
         type="button"
         data-no-drag

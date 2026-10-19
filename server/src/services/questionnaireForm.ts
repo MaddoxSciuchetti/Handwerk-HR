@@ -39,6 +39,7 @@ export type QuestionnaireColumn = {
     key: string;
     label: string;
     type: "text" | "date";
+    officeOnly?: boolean;
 };
 
 export type QuestionnaireRepeater = {
@@ -241,6 +242,12 @@ export const QUESTIONNAIRE_REPEATERS: QuestionnaireRepeater[] = [
             { key: "from", label: "Zeitraum von", type: "date" },
             { key: "until", label: "Zeitraum bis", type: "date" },
             { key: "kind", label: "Art der Beschäftigung", type: "text" },
+            {
+                key: "days",
+                label: "Anzahl der Beschäftigungstage",
+                type: "text",
+                officeOnly: true,
+            },
         ],
     },
 ];
@@ -267,6 +274,7 @@ const priorSchema = z.object({
         .default("")
         .refine((value) => value === "" || datePattern.test(value), "Datum"),
     kind: z.string().trim().max(255).default(""),
+    days: z.string().trim().max(32).default(""),
 });
 
 export type QuestionnaireChild = z.infer<typeof childSchema>;
@@ -452,8 +460,9 @@ export function questionnaireAnswersFromStored(
             from: byKey.get(`prior.${index}.from`) ?? "",
             until: byKey.get(`prior.${index}.until`) ?? "",
             kind: byKey.get(`prior.${index}.kind`) ?? "",
+            days: byKey.get(`prior.${index}.days`) ?? "",
         };
-        if (filled([prior.from, prior.until, prior.kind])) {
+        if (filled([prior.from, prior.until, prior.kind, prior.days])) {
             priorEmployment.push(prior);
         }
     }
@@ -509,12 +518,13 @@ export function flattenQuestionnaireAnswers(
         });
     }
     (answers.priorEmployment ?? []).forEach((prior, index) => {
-        if (!filled([prior.from, prior.until, prior.kind])) return;
+        if (!filled([prior.from, prior.until, prior.kind, prior.days ?? ""])) return;
         const number = index + 1;
         rows.push(
             { key: `prior.${number}.from`, value: prior.from },
             { key: `prior.${number}.until`, value: prior.until },
             { key: `prior.${number}.kind`, value: prior.kind },
+            { key: `prior.${number}.days`, value: prior.days ?? "" },
         );
     });
     return rows.filter((row) => row.value.trim().length > 0);
@@ -530,6 +540,7 @@ const priorLabels = {
     from: "Zeitraum von",
     until: "Zeitraum bis",
     kind: "Art der Beschäftigung",
+    days: "Anzahl der Beschäftigungstage",
 } as const;
 
 export function questionnaireAnswerLabel(
@@ -542,7 +553,7 @@ export function questionnaireAnswerLabel(
     if (field) return field.label || value;
     const child = /^child\.\d+\.(lastName|firstName|birthday)$/.exec(key);
     if (child) return childLabels[child[1] as keyof typeof childLabels];
-    const prior = /^prior\.\d+\.(from|until|kind)$/.exec(key);
+    const prior = /^prior\.\d+\.(from|until|kind|days)$/.exec(key);
     if (prior) return priorLabels[prior[1] as keyof typeof priorLabels];
     return null;
 }
