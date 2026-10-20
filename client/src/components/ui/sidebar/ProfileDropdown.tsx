@@ -120,7 +120,7 @@ export function ProfileDropdown({
             </TooltipContent>
           </Tooltip>
           <DropdownMenuContent
-            className="min-w-56 rounded-lg"
+            className={isCollapsed ? 'min-w-56 rounded-lg' : 'min-w-0 rounded-lg'}
             side="bottom"
             align="start"
             sideOffset={8}
