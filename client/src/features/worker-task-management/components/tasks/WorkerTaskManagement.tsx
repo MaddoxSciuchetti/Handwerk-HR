@@ -50,7 +50,7 @@ type TaskManagementProps = {
   workerId: string;
 };
 
-const sectionHeaderClassName = 'h-12 py-3 pl-10 pr-2 text-sm font-medium';
+const sectionHeaderClassName = 'h-12 py-3 pl-12 pr-2 text-sm font-medium';
 
 const TaskManagement = ({ workerId }: TaskManagementProps) => {
   const [activeTab, setActiveTab] = useState<WorkerTab>('form');

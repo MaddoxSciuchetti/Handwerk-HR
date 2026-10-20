@@ -102,7 +102,8 @@ function WorkerLifeCycle() {
       { items, type },
       {
         onSuccess: () => {
-          setEditModeData((prev) => prev.map((item) => ({ ...item, type })));
+          setEditModeData([]);
+          setLargeEditMode(false);
         },
       }
     );
@@ -153,7 +154,7 @@ function WorkerLifeCycle() {
               <Table aria-busy={isLoading || workersLoading}>
                 <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-b-0">
                   <TableRow className="border-0 hover:bg-transparent">
-                    <TableHead className="h-12 bg-card py-3 pl-10 pr-2">
+                    <TableHead className="h-12 bg-card py-3 pl-12 pr-2">
                       Name
                     </TableHead>
                     <TableHead className="bg-card py-3 px-2">Type</TableHead>

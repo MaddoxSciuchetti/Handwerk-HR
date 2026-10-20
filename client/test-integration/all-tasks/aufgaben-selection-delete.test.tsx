@@ -84,6 +84,8 @@ describe('Aufgaben (all tasks) — row selection & bulk delete', () => {
 
     expect(selectBtn.classList.contains('opacity-0')).toBe(true);
     expect(selectBtn.className).toMatch(/group-hover:opacity-100/);
+    expect(selectBtn.className).toMatch(/inset-y-0/);
+    expect(selectBtn.className).toMatch(/\bw-10\b/);
   });
 
   it('does not outline integration sequences with the automation line', async () => {
