@@ -1,4 +1,18 @@
 import { Button } from '@/components/ui/button';
+import { Plus, LoaderCircle } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import {
+  DEFAULT_DESCRIPTION_SENTENCES,
+  descriptionSentenceKey,
+  mergeDescriptionSentences,
+} from '@shared/descriptionSentences';
+import {
+  descriptionSentencesKey,
+  getDescriptionSentences,
+  saveDescriptionSentence,
+} from '../descriptionSentences.api';
+import { DescriptionSentenceSelect } from './DescriptionSentenceSelect';
 
 type DescriptionPointsEditorProps = {
   label: string;
@@ -17,6 +31,26 @@ export function DescriptionPointsEditor({
   readOnly,
   onChange,
 }: DescriptionPointsEditorProps) {
+  const queryClient = useQueryClient();
+  const sentences = useQuery({
+    queryKey: descriptionSentencesKey,
+    queryFn: getDescriptionSentences,
+    enabled: !readOnly,
+  });
+  const options = mergeDescriptionSentences(
+    sentences.data ?? DEFAULT_DESCRIPTION_SENTENCES
+  );
+  const save = useMutation({
+    mutationFn: saveDescriptionSentence,
+    onMutate: () =>
+      queryClient.cancelQueries({ queryKey: descriptionSentencesKey }),
+    onSuccess: (saved) => {
+      queryClient.setQueryData(descriptionSentencesKey, saved);
+      toast.success('Beschreibungspunkt für spätere Verwendung gespeichert');
+    },
+    onError: () =>
+      toast.error('Beschreibungspunkt konnte nicht gespeichert werden'),
+  });
   const lines = linesOf(value);
   const write = (next: string[]) => onChange(next.join('\n'));
 
@@ -41,14 +75,13 @@ export function DescriptionPointsEditor({
     >
       {lines.map((line, index) => (
         <div key={index} className="flex items-center gap-1">
-          <input
-            aria-label={`${label} ${index + 1}`}
+          <DescriptionSentenceSelect
+            label={`${label} ${index + 1}`}
             value={line}
-            placeholder="Beschreibungspunkt"
-            className="min-w-0 flex-1 border-b border-blue-400 bg-transparent px-1 text-sm outline-none"
-            onChange={(event) => {
+            options={options}
+            onChange={(value) => {
               const next = [...lines];
-              next[index] = event.target.value;
+              next[index] = value;
               write(next);
             }}
             onPaste={(event) => {
@@ -63,6 +96,32 @@ export function DescriptionPointsEditor({
           <Button
             type="button"
             variant="ghost"
+            size="icon-sm"
+            aria-label={`Punkt ${index + 1} als Vorlage speichern`}
+            title="Satz für spätere Verwendung speichern"
+            disabled={
+              save.isPending ||
+              !line.trim() ||
+              options.some(
+                (option) =>
+                  descriptionSentenceKey(option) ===
+                  descriptionSentenceKey(line)
+              )
+            }
+            onClick={() => save.mutate(line)}
+          >
+            {save.isPending && save.variables === line ? (
+              <LoaderCircle
+                aria-hidden="true"
+                className="size-4 animate-spin"
+              />
+            ) : (
+              <Plus aria-hidden="true" className="size-4" />
+            )}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
             size="sm"
             aria-label={`Punkt ${index + 1} entfernen`}
             onClick={() => write(lines.filter((_, item) => item !== index))}
@@ -71,6 +130,11 @@ export function DescriptionPointsEditor({
           </Button>
         </div>
       ))}
+      {sentences.isError ? (
+        <p className="text-xs text-destructive">
+          Gespeicherte Sätze konnten nicht geladen werden.
+        </p>
+      ) : null}
       <Button
         type="button"
         variant="outline"
