@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { apiJson } from '@/config/apiClient';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import type { CandidateItem } from '@/features/questionnaire/questionnairePreview';
 import { StoredFileBox } from './StoredFileBox';
@@ -12,6 +12,7 @@ import { QuestionnaireStoredFile } from './QuestionnaireStoredFile';
 import { fileQuestionnaireDocuments } from '../../api/questionnaireFiles.api';
 import { PERSONNEL_DOCUMENTS } from '../../consts/query-key.consts';
 import { toast } from 'sonner';
+import { CompletedQuestionnaireEditor } from './CompletedQuestionnaireEditor';
 
 export type EngagementQuestionnaireLink = {
   name?: string;
@@ -21,7 +22,9 @@ export type EngagementQuestionnaireLink = {
   completedAt?: string | null;
 };
 
-type CompletedQuestionnaire = {
+export type CompletedQuestionnaire = {
+  revision: number;
+  updatedAt?: string;
   name?: string;
   intro: string;
   items: CandidateItem[];
@@ -59,6 +62,8 @@ function QuestionnairePreview({
         )
         .then((response) => response.data),
   });
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
   const queryClient = useQueryClient();
   const unfiled = Object.values(data?.files ?? {}).filter((file) => !file.filed);
   const storeAll = useMutation({
@@ -77,11 +82,11 @@ function QuestionnairePreview({
   });
 
   return (
-    <Dialog open onOpenChange={(next) => { if (!next) onClose(); }}>
-      <DialogContent className="w-full max-w-4xl border-0 bg-transparent p-0 shadow-none sm:max-w-4xl">
+    <Dialog open onOpenChange={(next) => { if (!next && !saving) onClose(); }}>
+      <DialogContent aria-describedby={undefined} className="w-full max-w-4xl border-0 bg-transparent p-0 shadow-none sm:max-w-4xl">
       <div className="flex max-h-[85vh] flex-col gap-4 overflow-hidden rounded-2xl bg-card p-6 text-card-foreground">
         <div className="pr-8">
-          <h2 className="text-lg font-semibold">Fragebogen</h2>
+          <DialogTitle className="text-lg font-semibold">Fragebogen</DialogTitle>
           {data?.name ? (
             <p className="text-sm font-medium">{data.name}</p>
           ) : null}
@@ -89,13 +94,21 @@ function QuestionnairePreview({
             {questionnaire.engagementLabel} · Ausgefüllt
           </p>
         </div>
+        {data && !editing ? (
+          <div><Button type="button" variant="outline" onClick={() => setEditing(true)}>Bearbeiten</Button></div>
+        ) : null}
         {isLoading ? <LoadingAlert /> : null}
         {isError ? (
           <p role="alert" className="text-sm text-destructive">
             Der ausgefüllte Fragebogen konnte nicht geladen werden.
           </p>
         ) : null}
-        {data ? (
+        {data && editing ? (
+          <div className="overflow-auto">
+            <CompletedQuestionnaireEditor workerId={workerId} engagementId={questionnaire.engagementId}
+              questionnaire={data} onDone={() => setEditing(false)} onBusy={setSaving} />
+          </div>
+        ) : data ? (
           <div className="space-y-6 overflow-auto">
             <p className="text-sm whitespace-pre-wrap text-muted-foreground">
               {data.intro}

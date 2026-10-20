@@ -99,6 +99,8 @@ const contractInclude = {
             questionnaireSubmission: {
                 select: {
                     status: true,
+                    id: true,
+                    revision: true,
                     formDefinition: true,
                     answers: {
                         select: { key: true, value: true },
@@ -188,6 +190,10 @@ function present(
         masterRevision: contract.master.revision,
         matchedMasterRevision: contract.matchedMasterRevision,
         questionnaireCompleted: submission?.status === "completed",
+        questionnaireRevision: submission?.revision ?? 0,
+        matchedQuestionnaireRevision: contract.matchedQuestionnaireRevision ?? 0,
+        questionnaireSyncNeeded: submission?.status === "completed" &&
+            (submission.revision ?? 0) > (contract.matchedQuestionnaireRevision ?? 0),
         sentAt: contract.sentAt?.toISOString() ?? null,
         signedFileUrl: null as string | null,
         outgoingFileUrl: null as string | null,
@@ -378,6 +384,13 @@ export async function resyncEngagementContractFromQuestionnaire(
     );
 
     const saved = await prisma.$transaction(async (tx) => {
+        // Claim the exact questionnaire revision used for matching. A concurrent
+        // correction must never be marked as synchronized without being applied.
+        const claimed = await tx.questionnaireSubmission.updateMany({
+            where: { id: submission.id, revision: submission.revision, status: "completed" },
+            data: { revision: submission.revision },
+        });
+        if (claimed.count !== 1) throw new AppError(CONFLICT, "Der Fragebogen wurde inzwischen geändert. Bitte erneut synchronisieren.");
         await invalidatePreparedDocuments(
             {
                 organizationId: params.organizationId,
@@ -426,6 +439,15 @@ export async function resyncEngagementContractFromQuestionnaire(
             entries,
             masterRevision: master.revision,
             preserveDescriptionPoints: !switchingTemplate,
+        });
+        await tx.employmentContract.update({
+            where: { id: contract.id },
+            data: {
+                matchedQuestionnaireRevision: submission.revision,
+                status: "draft",
+                body: Prisma.DbNull,
+                outgoingPdfId: null,
+            },
         });
         return reloadContract(contract.id, tx);
     });

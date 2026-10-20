@@ -28,6 +28,8 @@ export async function getCompletedQuestionnaire(params: {
     },
     select: {
       id: true,
+      revision: true,
+      updatedAt: true,
       completedAt: true,
       formDefinition: true,
       answers: { select: { key: true, value: true } },
@@ -71,6 +73,8 @@ export async function getCompletedQuestionnaire(params: {
   }
   return {
     id: submission.id,
+    revision: submission.revision,
+    updatedAt: submission.updatedAt,
     name: 'name' in definition ? definition.name ?? "Personalfragebogen" : "Personalfragebogen",
     completedAt: submission.completedAt,
     intro:
