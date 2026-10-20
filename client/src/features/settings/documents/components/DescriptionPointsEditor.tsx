@@ -1,5 +1,4 @@
 import { Button } from '@/components/ui/button';
-import { Plus, LoaderCircle } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
@@ -79,6 +78,18 @@ export function DescriptionPointsEditor({
             label={`${label} ${index + 1}`}
             value={line}
             options={options}
+            saveLabel={`Punkt ${index + 1} als Vorlage speichern`}
+            canSave={
+              Boolean(line.trim()) &&
+              !save.isPending &&
+              !options.some(
+                (option) =>
+                  descriptionSentenceKey(option) ===
+                  descriptionSentenceKey(line)
+              )
+            }
+            saving={save.isPending && save.variables === line}
+            onSave={() => save.mutate(line)}
             onChange={(value) => {
               const next = [...lines];
               next[index] = value;
@@ -93,32 +104,6 @@ export function DescriptionPointsEditor({
               write(next);
             }}
           />
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label={`Punkt ${index + 1} als Vorlage speichern`}
-            title="Satz für spätere Verwendung speichern"
-            disabled={
-              save.isPending ||
-              !line.trim() ||
-              options.some(
-                (option) =>
-                  descriptionSentenceKey(option) ===
-                  descriptionSentenceKey(line)
-              )
-            }
-            onClick={() => save.mutate(line)}
-          >
-            {save.isPending && save.variables === line ? (
-              <LoaderCircle
-                aria-hidden="true"
-                className="size-4 animate-spin"
-              />
-            ) : (
-              <Plus aria-hidden="true" className="size-4" />
-            )}
-          </Button>
           <Button
             type="button"
             variant="ghost"

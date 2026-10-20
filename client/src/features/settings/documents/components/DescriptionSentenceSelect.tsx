@@ -1,5 +1,5 @@
 import { useId, useRef, useState, type ClipboardEvent } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, LoaderCircle, Plus } from 'lucide-react';
 import {
   Popover,
   PopoverAnchor,
@@ -12,7 +12,14 @@ type Props = {
   options: readonly string[];
   onChange: (value: string) => void;
   onPaste: (event: ClipboardEvent<HTMLInputElement>) => void;
+  saveLabel: string;
+  canSave: boolean;
+  saving: boolean;
+  onSave: () => void;
 };
+
+const iconMotion =
+  'absolute inset-0 size-4 transition-[opacity,transform] duration-[240ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none';
 
 export function DescriptionSentenceSelect({
   label,
@@ -20,6 +27,10 @@ export function DescriptionSentenceSelect({
   options,
   onChange,
   onPaste,
+  saveLabel,
+  canSave,
+  saving,
+  onSave,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState('');
@@ -38,6 +49,8 @@ export function DescriptionSentenceSelect({
     setFilter('');
     setActive(-1);
   };
+  const adding = value.trim().length > 0;
+  const mode = saving ? 'saving' : adding ? 'add' : 'browse';
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -103,11 +116,18 @@ export function DescriptionSentenceSelect({
           />
           <button
             type="button"
-            aria-label={`${label}: Vorschläge anzeigen`}
-            aria-expanded={open}
-            className="inline-flex size-8 shrink-0 items-center justify-center text-muted-foreground"
+            aria-label={adding ? saveLabel : `${label}: Vorschläge anzeigen`}
+            aria-expanded={adding ? undefined : open}
+            aria-busy={saving || undefined}
+            title={adding ? 'Satz für spätere Verwendung speichern' : undefined}
+            disabled={adding && (!canSave || saving)}
+            className="inline-flex size-8 shrink-0 items-center justify-center text-muted-foreground transition-colors duration-200 hover:text-foreground disabled:opacity-40 motion-reduce:transition-none"
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => {
+              if (adding) {
+                if (canSave && !saving) onSave();
+                return;
+              }
               const nextOpen = !open;
               inputRef.current?.focus();
               setFilter('');
@@ -115,7 +135,17 @@ export function DescriptionSentenceSelect({
               setOpen(nextOpen);
             }}
           >
-            <ChevronDown aria-hidden="true" className="size-4" />
+            <span aria-hidden="true" className="relative size-4">
+              <ChevronDown
+                className={`${iconMotion} ${mode === 'browse' ? 'scale-100 rotate-0 opacity-100' : 'scale-75 rotate-90 opacity-0'}`}
+              />
+              <Plus
+                className={`${iconMotion} ${mode === 'add' ? 'scale-100 rotate-0 opacity-100' : mode === 'saving' ? 'scale-75 rotate-90 opacity-0' : 'scale-75 -rotate-90 opacity-0'}`}
+              />
+              <LoaderCircle
+                className={`${iconMotion} ${mode === 'saving' ? 'scale-100 rotate-0 animate-spin opacity-100' : 'scale-75 -rotate-90 opacity-0'}`}
+              />
+            </span>
           </button>
         </div>
       </PopoverAnchor>
