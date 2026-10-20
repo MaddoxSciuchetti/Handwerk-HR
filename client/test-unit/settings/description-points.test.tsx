@@ -69,7 +69,7 @@ it('accepts free text and saves it with + so another point can reuse it', async 
   await user.type(first, 'Prüfen von Anlagen');
   expect(saveDescriptionSentence).not.toHaveBeenCalled();
   await user.click(
-    screen.getByRole('button', { name: 'Punkt 1 als Vorlage speichern' })
+    screen.getByRole('button', { name: '+ für Hinzufügen' })
   );
   await waitFor(() =>
     expect(saveDescriptionSentence).toHaveBeenCalledWith(
@@ -96,7 +96,7 @@ it('supports keyboard selection and does not allow saving duplicates', async () 
     DEFAULT_DESCRIPTION_SENTENCES[0]
   );
   expect(
-    screen.getByRole('button', { name: 'Punkt 1 als Vorlage speichern' })
+    screen.getByRole('button', { name: '+ für Hinzufügen' })
   ).toBeDisabled();
 });
 
@@ -135,7 +135,7 @@ it('keeps custom text and allows retrying when saving a sentence fails', async (
   const point = screen.getByRole('combobox', { name: 'Tätigkeiten 1' });
   await user.type(point, 'Eigene Tätigkeit');
   const save = screen.getByRole('button', {
-    name: 'Punkt 1 als Vorlage speichern',
+    name: '+ für Hinzufügen',
   });
   await user.click(save);
   await waitFor(() =>
