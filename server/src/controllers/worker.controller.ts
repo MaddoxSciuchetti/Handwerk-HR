@@ -10,6 +10,7 @@ import {
     sendEngagementQuestionnaire,
 } from "@/services/questionnaireDispatch";
 import * as workerService from "../services/worker.service";
+import { saveCompletedQuestionnaire } from "@/services/questionnaireCorrections.service";
 import { getCompletedQuestionnaire } from "@/services/completedQuestionnaire.service";
 import {
     fileCompletedQuestionnaire,
@@ -23,6 +24,19 @@ export const getCompletedEngagementQuestionnaire = catchErrors(
             workerId: param(req, "workerId"),
             engagementId: param(req, "engagementId"),
         });
+        return res.status(200).json({ success: true, data });
+    },
+);
+
+export const saveCompletedEngagementQuestionnaire = catchErrors(
+    async (req: Request, res: Response) => {
+        const params = {
+            organizationId: req.orgId,
+            workerId: param(req, "workerId"),
+            engagementId: param(req, "engagementId"),
+        };
+        await saveCompletedQuestionnaire({ ...params, changedByUserId: req.userId, input: req.body });
+        const data = await getCompletedQuestionnaire(params);
         return res.status(200).json({ success: true, data });
     },
 );

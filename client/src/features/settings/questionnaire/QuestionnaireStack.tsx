@@ -1,11 +1,14 @@
-import { Button } from '@/components/ui/button';
-import { Fragment, useState, type DragEvent } from 'react';
+import { X } from 'lucide-react';
+import { useState, type DragEvent } from 'react';
+import { flushSync } from 'react-dom';
 import { QuestionInsertGap } from './QuestionInsertGap';
 import { QuestionnaireFieldControls } from './QuestionnaireFieldControls';
 import type { QuestionnaireBlock } from './questionnaireBlocks';
 import { isWeeklyHoursItem } from './questionnaireBlocks';
 import { TableQuestionCard } from './TableQuestionCard';
 import { WeeklyHoursEditor } from './WeeklyHoursEditor';
+import { useQuestionnaireDragPreview } from './useQuestionnaireDragPreview';
+import './questionnaire-sort.css';
 import {
   QUESTION_DRAG_TYPE,
   type ContractFieldOption,
@@ -41,37 +44,86 @@ export function QuestionnaireStack({
   onRemove,
 }: QuestionnaireStackProps) {
   const [insertAt, setInsertAt] = useState<number | null>(null);
+  const { rootRef, preview, start, cancel, over, finish } =
+    useQuestionnaireDragPreview();
 
   const dropAt = (index: number, event: DragEvent) => {
-    const payload = readPayload(event);
-    if (payload) onDrop(index, payload);
+    event.preventDefault();
+    event.stopPropagation();
+    const payload: DragPayload | null = preview
+      ? { source: 'stack', id: preview.id }
+      : readPayload(event);
+    const target = finish(index, event);
+    if (payload) onDrop(target, payload);
   };
+
+  const gap = (index: number) => (
+    <QuestionInsertGap
+      open={insertAt === index}
+      onOpen={() => setInsertAt(index)}
+      onClose={() => setInsertAt(null)}
+      existingKeys={blocks.flatMap((block) =>
+        block.items.map((item) => item.key)
+      )}
+      onAdd={(fields) => {
+        onInsert(index, fields);
+        setInsertAt(null);
+      }}
+      onDrop={(event) => dropAt(index, event)}
+    />
+  );
 
   return (
     <div
-      className="flex flex-col"
-      onDragOver={(event) => event.preventDefault()}
+      ref={rootRef}
+      className="questionnaire-sort-stack flex flex-col"
+      data-sorting={Boolean(preview)}
+      onDragOver={(event) => {
+        event.preventDefault();
+        over(event);
+      }}
       onDrop={(event) => dropAt(blocks.length, event)}
+      onDragEnd={cancel}
     >
+      {preview ? (
+        <>
+          <div
+            className="questionnaire-sort-placeholder"
+            data-questionnaire-drop-preview=""
+            aria-hidden="true"
+            style={{
+              height: preview.height,
+              transform: `translateY(${preview.top}px)`,
+            }}
+          >
+            Hier ablegen
+          </div>
+          <span className="sr-only" role="status">
+            Position {preview.position} von {preview.total}
+          </span>
+        </>
+      ) : null}
       {blocks.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           Ziehen Sie Felder hierher. Sie stehen untereinander.
         </p>
       ) : null}
       {blocks.map((block, index) => (
-        <Fragment key={block.id}>
-          {index > 0 ? (
-            <QuestionInsertGap
-              open={insertAt === index}
-              onOpen={() => setInsertAt(index)}
-              existingKeys={blocks.flatMap((block) => block.items.map((item) => item.key))}
-              onAdd={(fields) => {
-                onInsert(index, fields);
-                setInsertAt(null);
-              }}
-              onDrop={(event) => dropAt(index, event)}
-            />
-          ) : null}
+        <div
+          key={block.id}
+          data-questionnaire-sort-item={block.id}
+          className="questionnaire-sort-item min-w-0"
+          style={
+            preview
+              ? {
+                  transform: `translateY(${preview.offsets.get(block.id) ?? 0}px)`,
+                  // WebKit cancels native dragging when its source is fully
+                  // invisible or stops accepting pointer events.
+                  opacity: preview.id === block.id ? 0.001 : 1,
+                }
+              : undefined
+          }
+        >
           <article
             draggable
             onDragStart={(event) => {
@@ -79,40 +131,29 @@ export function QuestionnaireStack({
                 event.preventDefault();
                 return;
               }
+              flushSync(() => setInsertAt(null));
               const payload: DragPayload = { source: 'stack', id: block.id };
+              event.dataTransfer.effectAllowed = 'move';
               event.dataTransfer.setData(
                 QUESTION_DRAG_TYPE,
                 JSON.stringify(payload)
               );
               event.dataTransfer.setData('text/plain', JSON.stringify(payload));
+              start(block.id, event);
             }}
-            onDragOver={(event) => event.preventDefault()}
-            onDrop={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              dropAt(index, event);
-            }}
-            className="min-w-0 rounded-2xl border border-border px-5 py-4"
+            onDrop={(event) => dropAt(index, event)}
+            className="relative min-w-0 cursor-default rounded-2xl border border-border bg-card py-5 pr-12 pl-5 outline-none"
           >
-            <div className="mb-3 flex items-start justify-between gap-3">
-              {block.items[0] && isWeeklyHoursItem(block.items[0]) ? (
-                <span className="sr-only">Arbeitszeit pro Woche</span>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  {blockLabel(block.items[0])}
-                </p>
-              )}
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                data-no-drag
-                className="rounded-2xl"
-                onClick={() => onRemove(block.id)}
-              >
-                Entfernen
-              </Button>
-            </div>
+            <button
+              type="button"
+              data-no-drag
+              aria-label="Entfernen"
+              title="Entfernen"
+              className="absolute top-3 right-3 inline-flex size-6 items-center justify-center rounded-md text-destructive outline-none hover:bg-destructive/10 focus-visible:bg-destructive/10"
+              onClick={() => onRemove(block.id)}
+            >
+              <X aria-hidden="true" className="size-4" strokeWidth={1.75} />
+            </button>
             <BlockBody
               block={block}
               contractFields={contractFields}
@@ -122,18 +163,10 @@ export function QuestionnaireStack({
               onAdd={(field) => onInsert(index, [field])}
             />
           </article>
-        </Fragment>
+          {gap(index + 1)}
+        </div>
       ))}
-      <QuestionInsertGap
-        open={insertAt === blocks.length}
-        onOpen={() => setInsertAt(blocks.length)}
-        existingKeys={blocks.flatMap((block) => block.items.map((item) => item.key))}
-        onAdd={(fields) => {
-          onInsert(blocks.length, fields);
-          setInsertAt(null);
-        }}
-        onDrop={(event) => dropAt(blocks.length, event)}
-      />
+      {blocks.length === 0 ? gap(0) : null}
     </div>
   );
 }
@@ -186,18 +219,13 @@ function BlockBody({
   return null;
 }
 
-function blockLabel(item: QuestionnaireBlock['items'][number] | undefined) {
-  if (!item) return 'Frage';
-  if (item.kind === 'repeater') return item.key.startsWith('rows.') ? 'Tabelle' : 'Block';
-  if (isWeeklyHoursItem(item)) return 'Arbeitszeit pro Woche';
-  return item.section;
-}
-
 function dragStartsOnControl(event: DragEvent) {
   const target = event.target;
   if (!(target instanceof Element)) return false;
   return Boolean(
-    target.closest('input, textarea, select, [role="switch"], [data-no-drag]')
+    target.closest(
+      'input, textarea, select, button, [role="switch"], [role="combobox"], [data-no-drag]'
+    )
   );
 }
 

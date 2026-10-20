@@ -1,9 +1,5 @@
-import { Button } from '@/components/ui/button';
 import { TableCell, TableRow } from '@/components/ui/table';
-import {
-  SquareCheckIcon,
-  SquareDashedIcon,
-} from '@/features/all-tasks/components/ui/SelectIcons';
+import { RowSelectButton } from '@/features/all-tasks/components/ui/RowSelectButton';
 import { LifecycleType } from '@/features/worker-task-management/types/index.types';
 import { cn } from '@/lib/utils';
 import type { Dispatch, MouseEvent, SetStateAction } from 'react';
@@ -12,6 +8,11 @@ import { getFirstFormType } from '../utils/formtype';
 import { getWorkerIssueCount } from '../utils/workerHealth.utils';
 import WorkerEngagementInfoButton from './WorkerEngagementInfoButton';
 import { EngagementProgressPicker } from './ui/EngagementProgressPicker';
+import EngagementTypeSwitch from './EngagementTypeSwitch';
+import {
+  ResponsibleUserPicker,
+  type ResponsibleUserOption,
+} from './ResponsibleUserPicker';
 
 export type WorkerSelection = {
   engagementNumber: string;
@@ -30,6 +31,11 @@ type ProjectItemProps = {
   isSelected: boolean;
   setLargeEditMode: Dispatch<SetStateAction<boolean>>;
   setEditModeData: Dispatch<SetStateAction<WorkerSelection[]>>;
+  onTypeChange: (type: EngagementType) => void;
+  isChangingType: boolean;
+  responsibleUsers: ResponsibleUserOption[];
+  onResponsibleChange: (userId: string) => void;
+  isChangingResponsible: boolean;
 };
 
 function ProjectItem({
@@ -38,6 +44,11 @@ function ProjectItem({
   isSelected,
   setLargeEditMode,
   setEditModeData,
+  onTypeChange,
+  isChangingType,
+  responsibleUsers,
+  onResponsibleChange,
+  isChangingResponsible,
 }: ProjectItemProps) {
   const form_type = getFirstFormType(worker);
   const fullname = `${worker.firstName} ${worker.lastName}`;
@@ -61,13 +72,18 @@ function ProjectItem({
     );
   };
 
-  const SelectionIcon = isSelected ? SquareCheckIcon : SquareDashedIcon;
   const issueCount = getWorkerIssueCount(worker);
 
   return (
     <TableRow
       className="group relative cursor-pointer border-0 hover:bg-transparent"
-      onClick={() => gotopage(worker.id, form_type, fullname)}
+      onClick={(event) => {
+        const target = event.target;
+        if (target instanceof Element && target.closest('[data-row-select]')) {
+          return;
+        }
+        gotopage(worker.id, form_type, fullname);
+      }}
     >
       <TableCell
         className={cn(
@@ -75,21 +91,8 @@ function ProjectItem({
           isSelected && 'rounded-l-xl bg-muted/50'
         )}
       >
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-xs"
-          aria-pressed={isSelected}
-          aria-label={isSelected ? 'Auswahl entfernen' : 'Auswählen'}
-          onClick={toggleSelection}
-          className={cn(
-            'absolute left-2 top-1/2 -translate-y-1/2 rounded-2xl',
-            isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-          )}
-        >
-          <SelectionIcon className="size-4" />
-        </Button>
-        <span className="inline-flex items-center gap-2">
+        <RowSelectButton isSelected={isSelected} onClick={toggleSelection} />
+        <span className="inline-flex items-center gap-2 pl-2">
           {worker.firstName}
           <WorkerEngagementInfoButton workerId={worker.id} />
         </span>
@@ -100,7 +103,14 @@ function ProjectItem({
           isSelected && 'bg-muted/50'
         )}
       >
-        {worker.engagements[0].type}
+        <div onClick={(event) => event.stopPropagation()}>
+          <EngagementTypeSwitch
+            value={worker.engagements[0].type}
+            workerName={fullname.trim()}
+            disabled={isChangingType}
+            onSwitch={onTypeChange}
+          />
+        </div>
       </TableCell>
       <TableCell
         className={cn(
@@ -108,7 +118,15 @@ function ProjectItem({
           isSelected && 'bg-muted/50'
         )}
       >
-        {worker.engagements[0].responsibleUser.firstName}
+        <div onClick={(event) => event.stopPropagation()}>
+          <ResponsibleUserPicker
+            value={worker.engagements[0].responsibleUser}
+            options={responsibleUsers}
+            workerName={fullname.trim()}
+            disabled={isChangingResponsible}
+            onChange={onResponsibleChange}
+          />
+        </div>
       </TableCell>
       <TableCell
         className={cn(

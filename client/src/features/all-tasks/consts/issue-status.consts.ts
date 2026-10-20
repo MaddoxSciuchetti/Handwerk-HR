@@ -3,6 +3,7 @@ export const ISSUE_STATUSES = [
   'in_progress',
   'done',
   'cancelled',
+  'not_applicable',
 ] as const;
 
 export type IssueStatusValue = (typeof ISSUE_STATUSES)[number];
@@ -15,6 +16,7 @@ export const ISSUE_STATUS_OPTIONS: ReadonlyArray<{
   { value: 'in_progress', label: 'In Bearbeitung' },
   { value: 'done', label: 'Erledigt' },
   { value: 'cancelled', label: 'Abgebrochen' },
+  { value: 'not_applicable', label: 'Nicht zutreffend' },
 ];
 
 export function issueStatusLabel(status: IssueStatusValue | string): string {

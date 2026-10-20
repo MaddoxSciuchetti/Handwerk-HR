@@ -45,10 +45,13 @@ export function NestedDropdown({
           className={cn('w-60 justify-between rounded-2xl font-normal', className)}
         >
           <span className="truncate">{value || placeholder}</span>
-          <ChevronDownIcon className="size-4 opacity-50" />
+          <ChevronDownIcon className="size-4 opacity-50" aria-hidden />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-60">
+      <DropdownMenuContent
+        align="end"
+        className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-0"
+      >
         {options.map((option) => {
           if (option.value === '__divider__') {
             return <DropdownMenuSeparator key={option.value} />;
@@ -57,7 +60,7 @@ export function NestedDropdown({
           if (option.subOptions?.length) {
             return (
               <DropdownMenuSub key={option.value}>
-                <DropdownMenuSubTrigger>
+                <DropdownMenuSubTrigger className="[&>svg:last-child]:hidden">
                   {option.icon ? (
                     <option.icon className="size-4" aria-hidden />
                   ) : null}

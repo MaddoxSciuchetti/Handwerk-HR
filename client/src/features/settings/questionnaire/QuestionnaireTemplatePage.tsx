@@ -5,75 +5,63 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SettingsPageHeader } from '@/features/settings/components/SettingsPageHeader';
 import {
-  forgetQuestionnaireDraft,
   readQuestionnaireDraft,
   rememberQuestionnaireDraft,
 } from '@/features/questionnaire/questionnairePreview';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
+import { useState } from 'react';
+import { LoaderCircle } from 'lucide-react';
 import { QuestionnaireStack, type DragPayload } from './QuestionnaireStack';
 import { blocksFromItems, itemsFromBlocks } from './questionnaireBlocks';
+import { getQuestionnaireTemplate } from './questionnaireTemplate.api';
 import {
-  getQuestionnaireTemplate,
-  saveQuestionnaireTemplate,
-} from './questionnaireTemplate.api';
+  templateKey,
+  useQuestionnaireAutosave,
+} from './useQuestionnaireAutosave';
 import type {
   TemplateField,
   TemplateItem,
   TemplateRepeater,
 } from './questionnaireTemplate.types';
 
-const templateKey = ['automation', 'questionnaire'] as const;
-
 export function QuestionnaireTemplatePage() {
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const template = useQuery({
     queryKey: templateKey,
     queryFn: getQuestionnaireTemplate,
   });
-  const draftOnOpen = useRef(readQuestionnaireDraft());
-  const [name, setName] = useState(
-    draftOnOpen.current?.name ?? 'Personalfragebogen'
-  );
+  const [draftOnOpen] = useState(readQuestionnaireDraft);
+  const [name, setName] = useState(draftOnOpen?.name ?? 'Personalfragebogen');
   const [items, setItems] = useState<TemplateItem[]>(
-    () => (draftOnOpen.current?.items as TemplateItem[] | undefined) ?? []
+    () => (draftOnOpen?.items as TemplateItem[] | undefined) ?? []
   );
-  const itemsRef = useRef(items);
-  itemsRef.current = items;
+  const [initialized, setInitialized] = useState(false);
+  // Seed the editor once. Refetches and save responses must not replace local edits.
+  if (template.data && !initialized) {
+    setInitialized(true);
+    setItems(
+      (draftOnOpen?.items as TemplateItem[] | undefined) ?? template.data.items
+    );
+    setName(draftOnOpen?.name ?? template.data.name ?? 'Personalfragebogen');
+  }
 
-  useEffect(() => {
-    if (!template.data) return;
-    const draft = draftOnOpen.current;
-    if (draft) {
-      draftOnOpen.current = null;
-      setItems(draft.items as TemplateItem[]);
-      setName(draft.name ?? template.data.name ?? 'Personalfragebogen');
-      return;
-    }
-    setItems(template.data.items);
-    setName(template.data.name ?? 'Personalfragebogen');
-  }, [template.data]);
-
-  const save = useMutation({
-    mutationFn: (next: TemplateItem[]) =>
-      saveQuestionnaireTemplate(next, name.trim()),
-    onSuccess: async () => {
-      forgetQuestionnaireDraft();
-      await queryClient.invalidateQueries({ queryKey: templateKey });
-      toast.success('Fragebogen gespeichert');
-    },
-    onError: () => toast.error('Fragebogen konnte nicht gespeichert werden'),
-  });
+  const save = useQuestionnaireAutosave(
+    template.data
+      ? {
+          name: template.data.name ?? 'Personalfragebogen',
+          items: template.data.items,
+        }
+      : null,
+    initialized ? { name: name.trim(), items } : null
+  );
 
   const openPreview = () => {
     if (!template.data) return;
     rememberQuestionnaireDraft({
       name: name.trim(),
       intro: template.data.intro,
-      items: itemsRef.current,
+      items,
     });
     void navigate({ to: '/fragebogen/preview' });
   };
@@ -128,14 +116,6 @@ export function QuestionnaireTemplatePage() {
     );
   };
 
-  const commitField = (field: TemplateField) => {
-    const next = itemsRef.current.map((item) =>
-      item.kind === 'field' && item.key === field.key ? field : item
-    );
-    setItems(next);
-    save.mutate(next);
-  };
-
   const remove = (id: string) => {
     setItems(itemsFromBlocks(blocks.filter((block) => block.id !== id)));
   };
@@ -158,11 +138,22 @@ export function QuestionnaireTemplatePage() {
           </Button>
           <Button
             type="button"
-            className="rounded-2xl"
-            disabled={template.isPending || save.isPending || !name.trim()}
-            onClick={() => save.mutate(itemsRef.current)}
+            className="min-w-24 rounded-2xl"
+            aria-label="Speichern"
+            aria-busy={save.status === 'pending' && !!name.trim()}
+            disabled={template.isPending || !name.trim()}
+            onClick={save.saveNow}
           >
-            {save.isPending ? 'Speichert…' : 'Speichern'}
+            {save.status === 'pending' && name.trim() ? (
+              <span role="status" aria-label="Wird gespeichert">
+                <LoaderCircle
+                  aria-hidden="true"
+                  className="size-4 animate-spin"
+                />
+              </span>
+            ) : (
+              'Speichern'
+            )}
           </Button>
         </div>
       </div>
@@ -192,7 +183,7 @@ export function QuestionnaireTemplatePage() {
               onInsert={insertItems}
               onChangeField={changeField}
               onChangeRepeater={changeRepeater}
-              onCommitField={commitField}
+              onCommitField={changeField}
               onRemove={remove}
             />
           )}

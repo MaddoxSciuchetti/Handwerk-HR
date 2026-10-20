@@ -44,16 +44,26 @@ export function useSwitchEngagementType() {
         )
       ),
     onMutate: async ({ items, type }) => {
-      await queryClient.cancelQueries({ queryKey: [ALL_WORKER_DATA] });
-
       const previousWorkers = queryClient.getQueryData<WorkerRecord[]>([
         ALL_WORKER_DATA,
       ]);
+      const nextWorkers = previousWorkers
+        ? patchEngagementType(previousWorkers, items, type)
+        : undefined;
 
-      if (previousWorkers) {
+      if (nextWorkers) {
         queryClient.setQueryData<WorkerRecord[]>(
           [ALL_WORKER_DATA],
-          patchEngagementType(previousWorkers, items, type)
+          nextWorkers
+        );
+      }
+
+      await queryClient.cancelQueries({ queryKey: [ALL_WORKER_DATA] });
+
+      if (nextWorkers) {
+        queryClient.setQueryData<WorkerRecord[]>(
+          [ALL_WORKER_DATA],
+          nextWorkers
         );
       }
 

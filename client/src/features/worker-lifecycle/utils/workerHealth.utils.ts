@@ -15,12 +15,14 @@ function collectWorkerIssues(worker: WorkerRecord) {
 }
 
 export function getWorkerIssueCount(worker: WorkerRecord): number {
-  return collectWorkerIssues(worker).length;
+  return collectWorkerIssues(worker).filter(
+    (issue) => issue.status !== 'not_applicable'
+  ).length;
 }
 
 export function getWorkerHealth(worker: WorkerRecord): WorkerHealth {
   const issues = collectWorkerIssues(worker).filter(
-    (issue) => (issue.status as IssueStatusValue) !== 'cancelled'
+    (issue) => !['cancelled', 'not_applicable'].includes(issue.status)
   );
   const totalCount = issues.length;
 

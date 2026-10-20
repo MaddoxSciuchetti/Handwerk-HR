@@ -1,17 +1,12 @@
 import { Input } from '@/components/ui/input';
 import { insuranceNumberInput } from '@shared/insuranceNumber';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { ChoiceLineEditor } from '@/features/questionnaire/ChoiceLineEditor';
 import { PflichtfeldSwitch } from './PflichtfeldSwitch';
 import { QuestionTitle } from './QuestionTitle';
-import type { ContractFieldOption, TemplateField } from './questionnaireTemplate.types';
+import type {
+  ContractFieldOption,
+  TemplateField,
+} from './questionnaireTemplate.types';
 
 type QuestionnaireFieldControlsProps = {
   field: TemplateField;
@@ -22,35 +17,33 @@ type QuestionnaireFieldControlsProps = {
 
 export function QuestionnaireFieldControls({
   field,
-  contractFields,
   onChange,
   onCommit,
 }: QuestionnaireFieldControlsProps) {
-  const patch = (next: Partial<TemplateField>) => onChange({ ...field, ...next });
+  const patch = (next: Partial<TemplateField>) =>
+    onChange({ ...field, ...next });
 
   return (
     <div className="flex min-w-0 flex-col gap-3">
       <QuestionTitle
         label={field.label}
+        onChange={(label) => patch({ label })}
         onCommit={(label) => onCommit({ ...field, label })}
       />
-      {field.type === 'file' ? (
-        <PflichtfeldSwitch
-          checked={field.required !== false}
-          onChange={(required) => patch({ required })}
-        />
-      ) : (
-        <QuestionAnswer field={field} onChange={patch} />
-      )}
-      {field.builtin === false && field.type !== 'file' ? (
-        <PflichtfeldSwitch
-          checked={field.required !== false}
-          onChange={(required) => patch({ required })}
-        />
+      {field.type !== 'file' ? (
+        <div className="flex min-w-0 items-start gap-2">
+          <span className="w-16 shrink-0 pt-1 text-sm leading-6 font-medium">
+            Antwort:
+          </span>
+          <div className="min-w-0 flex-1">
+            <QuestionAnswer field={field} onChange={patch} />
+          </div>
+        </div>
       ) : null}
       {field.type === 'file' ? (
         <p className="text-xs text-muted-foreground">
-          Die Datei wird beim Ausfüllen hochgeladen, zum Beispiel ein Führerschein.
+          Die Datei wird beim Ausfüllen hochgeladen, zum Beispiel ein
+          Führerschein.
         </p>
       ) : null}
       {field.type === 'check' && !field.builtin ? (
@@ -66,37 +59,19 @@ export function QuestionnaireFieldControls({
           }
         />
       ) : null}
-      <PflichtfeldSwitch
-        label="Nur vom Betrieb"
-        checked={field.officeOnly === true}
-        onChange={(checked) => patch({ officeOnly: checked || undefined })}
-      />
-      {field.type === 'file' ? null : (
-        <div className="flex flex-col gap-2">
-          <Label htmlFor={`${field.key}-contract`}>Vertragsfeld</Label>
-          <Select
-            value={field.contractFieldKey || '__none__'}
-            onValueChange={(value) =>
-              patch({ contractFieldKey: value === '__none__' ? '' : value })
-            }
-          >
-            <SelectTrigger
-              id={`${field.key}-contract`}
-              className="h-9 w-full bg-background"
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent position="popper" align="start">
-              <SelectItem value="__none__">Keins</SelectItem>
-              {contractFields.map((option) => (
-                <SelectItem key={option.key} value={option.key}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        {field.type === 'file' || field.builtin === false ? (
+          <PflichtfeldSwitch
+            checked={field.required !== false}
+            onChange={(required) => patch({ required })}
+          />
+        ) : null}
+        <PflichtfeldSwitch
+          label="Nur vom Betrieb"
+          checked={field.officeOnly === true}
+          onChange={(checked) => patch({ officeOnly: checked || undefined })}
+        />
+      </div>
     </div>
   );
 }
@@ -142,7 +117,9 @@ function QuestionAnswer({
               className="mt-0.5 size-4 shrink-0 accent-primary"
               checked={field.defaultValue === option}
               onChange={() =>
-                onChange({ defaultValue: field.defaultValue === option ? '' : option })
+                onChange({
+                  defaultValue: field.defaultValue === option ? '' : option,
+                })
               }
             />
             {option}
@@ -159,7 +136,9 @@ function QuestionAnswer({
           type="checkbox"
           className="size-4 accent-primary"
           checked={field.defaultValue === 'ja'}
-          onChange={(event) => onChange({ defaultValue: event.target.checked ? 'ja' : '' })}
+          onChange={(event) =>
+            onChange({ defaultValue: event.target.checked ? 'ja' : '' })
+          }
         />
         Bereits angekreuzt
       </label>
@@ -169,6 +148,7 @@ function QuestionAnswer({
   return (
     <Input
       id={`${field.key}-default`}
+      className="h-8 min-w-0 focus-visible:border-input focus-visible:ring-0"
       type={field.type === 'date' ? 'date' : 'text'}
       value={field.defaultValue ?? ''}
       aria-label="Antwort"

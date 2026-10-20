@@ -22,6 +22,7 @@ jest.mock("@/lib/prisma", () => ({
         },
         $transaction: jest.fn(),
         documentMaster: { findFirst: jest.fn() },
+        questionnaireSubmission: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
         issue: {
             findFirst: jest.fn(),
             findMany: jest.fn(),
@@ -67,7 +68,7 @@ beforeEach(() => {
         sentAt: null,
         master: { name: "Vertrag", body },
         values: [],
-        engagement: { questionnaireSubmission: null },
+        engagement: { questionnaireSubmission: null, worker: { email: "ada@example.com" } },
     };
     (prisma.$transaction as jest.Mock).mockImplementation((callback) =>
         callback(prisma),
@@ -173,7 +174,9 @@ it("replaces contract values from the Fragebogen and drops removed fields", asyn
     ];
     contract.engagement = {
         questionnaireSubmission: {
+            id: "submission", revision: 0,
             status: "completed",
+            formDefinition: { intro: "", items: [{ kind: "field", key: "lastName", label: "Nachname", section: "Person", type: "text", contractFieldKey: "contract.nachname" }] },
             answers: [
                 { key: "lastName", value: "Lovelace" },
                 { key: "firstName", value: "Ada" },
@@ -219,7 +222,9 @@ it("keeps engagement description points when the Fragebogen match replaces other
     ];
     contract.engagement = {
         questionnaireSubmission: {
+            id: "submission", revision: 0,
             status: "completed",
+            formDefinition: { intro: "", items: [{ kind: "field", key: "lastName", label: "Nachname", section: "Person", type: "text", contractFieldKey: "contract.nachname" }] },
             answers: [{ key: "lastName", value: "Lovelace" }],
         },
         worker: { email: "ada@example.com" },
@@ -494,5 +499,31 @@ it("rejects a draft save racing with a template switch instead of overwriting th
             values: { "contract.vorname": "Alt" },
         }),
     ).rejects.toThrow("inzwischen geändert");
+    expect(prisma.employmentContractValue.deleteMany).not.toHaveBeenCalled();
+});
+
+it("reports newer questionnaire revisions until the contract has been synchronized", async () => {
+    contract.matchedQuestionnaireRevision = 1;
+    contract.engagement.questionnaireSubmission = {
+        id: "submission", revision: 2, status: "completed", formDefinition: { intro: "", items: [{ kind: "field", key: "firstName", label: "Vorname", section: "Person", type: "text", contractFieldKey: "contract.vorname" }] },
+        answers: [{ key: "firstName", value: "Augusta" }],
+    };
+    expect((await getEngagementContract(params))?.questionnaireSyncNeeded).toBe(true);
+    const synced = await resyncEngagementContractFromQuestionnaire(params);
+    expect(synced.values).toEqual({ "contract.vorname": "Augusta" });
+    expect(synced.questionnaireSyncNeeded).toBe(false);
+    expect(synced.matchedQuestionnaireRevision).toBe(2);
+    expect(prisma.questionnaireSubmission.updateMany).toHaveBeenCalledWith({
+        where: { id: "submission", revision: 2, status: "completed" }, data: { revision: 2 },
+    });
+});
+
+it("does not mark a newer correction as synchronized when matching used an older revision", async () => {
+    contract.engagement.questionnaireSubmission = {
+        id: "submission", revision: 2, status: "completed", formDefinition: null,
+        answers: [{ key: "firstName", value: "Augusta" }],
+    };
+    (prisma.questionnaireSubmission.updateMany as jest.Mock).mockResolvedValueOnce({ count: 0 });
+    await expect(resyncEngagementContractFromQuestionnaire(params)).rejects.toThrow("inzwischen geändert");
     expect(prisma.employmentContractValue.deleteMany).not.toHaveBeenCalled();
 });

@@ -31,6 +31,7 @@ import {
 } from '../../hooks/useEmploymentContract';
 import { useDocumentMasters } from '@/features/settings/documents/useDocumentMasters';
 import { ContractDraftBody } from './ContractDraftBody';
+import { ContractQuestionnaireSync } from './ContractQuestionnaireSync';
 import {
   documentPreviewModalPanel,
   documentPreviewModalSize,
@@ -95,6 +96,7 @@ export function ContractSendDialog({
   const templates = useDocumentMasters(
     Boolean(data && !data.sentAt && data.status !== 'signed')
   );
+  const [syncing, setSyncing] = useState(false);
   const [values, setValues] = useState<Record<string, string>>({});
   const [prepared, setPrepared] = useState<PreparedPdf | null>(null);
   const saveDraft = useSaveEmploymentContract(workerId, engagementId);
@@ -219,6 +221,7 @@ export function ContractSendDialog({
     (template) => template.kind === 'employment_contract'
   );
   const busy =
+    syncing ||
     changingTemplate ||
     savePdf.isPending ||
     printContract.isPending ||
@@ -350,6 +353,12 @@ export function ContractSendDialog({
                   </div>
                 ) : null}
               </div>
+              <ContractQuestionnaireSync workerId={workerId} engagementId={engagementId}
+                contract={data} onBusy={setSyncing} disabled={busy || blockedDelivery} onSynced={(saved) => {
+                  edited.current = false;
+                  setValues(saved.values);
+                  setPrepared(null);
+                }} />
               {data.outgoingFileUrl ? (
                 <a
                   href={data.outgoingFileUrl}
@@ -387,6 +396,7 @@ export function ContractSendDialog({
                     values={values}
                     readOnly={
                       readOnly ||
+                      syncing ||
                       changingTemplate ||
                       prepare.isPending ||
                       printContract.isPending

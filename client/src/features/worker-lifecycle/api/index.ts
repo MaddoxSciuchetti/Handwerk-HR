@@ -68,7 +68,7 @@ export const addWorker = async (
 export const updateEngagement = async (
   workerId: string,
   engagementId: string,
-  data: { status?: string; type?: EngagementType }
+  data: { status?: string; type?: EngagementType; responsibleUserId?: string }
 ): Promise<void> => {
   await API.put(`worker/${workerId}/engagements/${engagementId}`, data);
 };

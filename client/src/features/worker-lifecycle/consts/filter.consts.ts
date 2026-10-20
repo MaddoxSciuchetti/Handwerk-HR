@@ -7,7 +7,12 @@ const SORT_SUB_OPTIONS: DropdownOption[] = [
 ];
 
 export const FILTER_OPTIONS: DropdownOption[] = [
-  { label: 'All', value: 'all' },
+  {
+    label: 'Typ',
+    value: 'engagementType',
+    subOptions: ENGAGEMENT_TYPE_OPTIONS,
+  },
+  { label: 'Alle', value: 'all' },
   {
     label: 'Hinzugefügt',
     value: 'createdAt',
@@ -18,9 +23,4 @@ export const FILTER_OPTIONS: DropdownOption[] = [
     value: 'status',
   },
   { label: 'Verantwortlich', value: 'responsible' },
-  {
-    label: 'Type',
-    value: 'engagementType',
-    subOptions: ENGAGEMENT_TYPE_OPTIONS,
-  },
 ];

@@ -46,6 +46,7 @@ export function useWorkerFilter(workers: WorkerRecord[] | undefined) {
   );
 
   return {
+    employees,
     filterLabel,
     filterOptions,
     filteredWorkers,
