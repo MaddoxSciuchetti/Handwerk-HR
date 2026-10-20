@@ -4,6 +4,7 @@ import {
   getMaster,
   listMasters,
   setPrimaryMaster,
+  duplicateMaster,
   deleteMaster,
   updateMaster,
   getDocumentFontStatus,
@@ -27,6 +28,7 @@ documentMasterRoutes.post("/", upload.single("file"), createMaster);
 documentMasterRoutes.get("/:id/preview.pdf", previewMasterPdf);
 documentMasterRoutes.post("/:id/preview.pdf", previewMasterPdf);
 documentMasterRoutes.post("/:id/primary", setPrimaryMaster);
+documentMasterRoutes.post("/:id/duplicate", duplicateMaster);
 documentMasterRoutes.get("/:id", getMaster);
 documentMasterRoutes.put("/:id", updateMaster);
 documentMasterRoutes.delete("/:id", deleteMaster);

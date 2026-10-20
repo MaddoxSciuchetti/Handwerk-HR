@@ -30,6 +30,14 @@ export function createDocumentMaster(input: {
   return API.post<FormData, DocumentMasterDetail>('/document-masters', form);
 }
 
+export function duplicateDocumentMaster(
+  id: string
+): Promise<DocumentMasterDetail> {
+  return API.post<undefined, DocumentMasterDetail>(
+    `/document-masters/${id}/duplicate`
+  );
+}
+
 export function setPrimaryDocumentMaster(
   id: string
 ): Promise<DocumentMasterDetail> {

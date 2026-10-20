@@ -64,9 +64,11 @@ export function DocumentsPage() {
           </CardContent>
         </Card>
       </div>
-      {selected.length > 0 ? (
-        <DocumentSelectionBar selected={selected} onChange={changeSelection} />
-      ) : null}
+        <DocumentSelectionBar
+          masters={masters}
+          selected={selected}
+          onChange={changeSelection}
+        />
       <AddDocumentMasterDialog
         isOpen={isOpen}
         existingKinds={masters.map((master) => documentKindLabel(master.kind))}
