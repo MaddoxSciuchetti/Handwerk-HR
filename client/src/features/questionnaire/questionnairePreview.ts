@@ -19,6 +19,7 @@ export type PreviewField = {
   layout?: 'inline';
   defaultValue?: string;
   bsbOnly?: boolean;
+  officeOnly?: boolean;
 };
 
 export type PreviewRepeater = {
@@ -79,13 +80,14 @@ export function candidateItems(items: PreviewItem[]): CandidateItem[] {
       };
     }
     const preset = item.defaultValue?.trim() ?? '';
+    const officeOnly = item.officeOnly === true || item.bsbOnly === true;
     return {
       kind: 'field',
       key: item.key,
       label: item.label,
       section: item.section,
       type: item.type,
-      required: item.bsbOnly
+      required: officeOnly
         ? false
         : isWeekdayHourKey(item.key)
           ? false
@@ -99,8 +101,8 @@ export function candidateItems(items: PreviewItem[]): CandidateItem[] {
       layout: item.layout,
       defaultValue: preset || undefined,
       employerFilled:
-        item.bsbOnly === true || (!isWeekdayHourKey(item.key) && preset.length > 0),
-      bsbOnly: item.bsbOnly,
+        officeOnly || (!isWeekdayHourKey(item.key) && preset.length > 0),
+      bsbOnly: officeOnly || undefined,
     };
   });
 }

@@ -38,3 +38,13 @@
     transition: none;
   }
 }
+
+/* Keep focus inside the controls without an outer glow on questionnaire items. */
+.questionnaire-sort-stack
+  :is(input, textarea, button, [role='combobox']):focus {
+  outline: none;
+  box-shadow: none;
+}
+.questionnaire-sort-stack [role='combobox']:focus {
+  border-color: var(--border);
+}

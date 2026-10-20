@@ -1,9 +1,10 @@
-import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
 import { useState, type DragEvent } from 'react';
 import { flushSync } from 'react-dom';
 import { QuestionInsertGap } from './QuestionInsertGap';
 import { QuestionnaireFieldControls } from './QuestionnaireFieldControls';
-import { isWeeklyHoursItem, type QuestionnaireBlock } from './questionnaireBlocks';
+import type { QuestionnaireBlock } from './questionnaireBlocks';
+import { isWeeklyHoursItem } from './questionnaireBlocks';
 import { TableQuestionCard } from './TableQuestionCard';
 import { WeeklyHoursEditor } from './WeeklyHoursEditor';
 import { useQuestionnaireDragPreview } from './useQuestionnaireDragPreview';
@@ -56,12 +57,14 @@ export function QuestionnaireStack({
     if (payload) onDrop(target, payload);
   };
 
-  const placed = blocks.flatMap((block) => block.items.map((item) => item.key));
   const gap = (index: number) => (
     <QuestionInsertGap
       open={insertAt === index}
-      existingKeys={placed}
       onOpen={() => setInsertAt(index)}
+      onClose={() => setInsertAt(null)}
+      existingKeys={blocks.flatMap((block) =>
+        block.items.map((item) => item.key)
+      )}
       onAdd={(fields) => {
         onInsert(index, fields);
         setInsertAt(null);
@@ -139,27 +142,18 @@ export function QuestionnaireStack({
               start(block.id, event);
             }}
             onDrop={(event) => dropAt(index, event)}
-            className="min-w-0 cursor-grab rounded-2xl border border-border bg-card px-5 py-4 active:cursor-grabbing"
+            className="relative min-w-0 cursor-default rounded-2xl border border-border bg-card py-5 pr-12 pl-5 outline-none"
           >
-            <div className="mb-3 flex items-start justify-between gap-3">
-              {block.items[0] && isWeeklyHoursItem(block.items[0]) ? (
-                <span className="sr-only">Arbeitszeit pro Woche</span>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  {blockLabel(block.items[0])}
-                </p>
-              )}
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                data-no-drag
-                className="rounded-2xl"
-                onClick={() => onRemove(block.id)}
-              >
-                Entfernen
-              </Button>
-            </div>
+            <button
+              type="button"
+              data-no-drag
+              aria-label="Entfernen"
+              title="Entfernen"
+              className="absolute top-3 right-3 inline-flex size-6 items-center justify-center rounded-md text-destructive outline-none hover:bg-destructive/10 focus-visible:bg-destructive/10"
+              onClick={() => onRemove(block.id)}
+            >
+              <X aria-hidden="true" className="size-4" strokeWidth={1.75} />
+            </button>
             <BlockBody
               block={block}
               contractFields={contractFields}
@@ -223,13 +217,6 @@ function BlockBody({
     );
   }
   return null;
-}
-
-function blockLabel(item: QuestionnaireBlock['items'][number] | undefined) {
-  if (!item) return 'Frage';
-  if (item.kind === 'repeater') return item.key.startsWith('rows.') ? 'Tabelle' : 'Block';
-  if (isWeeklyHoursItem(item)) return 'Arbeitszeit pro Woche';
-  return item.section;
 }
 
 function dragStartsOnControl(event: DragEvent) {

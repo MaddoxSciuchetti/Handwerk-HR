@@ -13,7 +13,7 @@ import { getAssigneeLabel } from '../utilts/assignee.utils';
 import formatDateDe from '../utilts/date.utils';
 import { PriorityIndicator } from '../utilts/priority.utils';
 import { PillBadge } from './ui/PillBadge';
-import { SquareCheckIcon, SquareDashedIcon } from './ui/SelectIcons';
+import { RowSelectButton } from './ui/RowSelectButton';
 import { TaskStatusPicker } from './ui/TaskStatusPicker';
 
 type TaskItemProps = {
@@ -71,8 +71,6 @@ export function TaskItem({
     );
   };
 
-  const SelectionIcon = isSelected ? SquareCheckIcon : SquareDashedIcon;
-
   return (
     <TableRow
       data-automation-task={isAutomationTask || undefined}
@@ -90,21 +88,8 @@ export function TaskItem({
           isSelected && 'bg-muted/50'
         )}
       >
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-xs"
-          aria-pressed={isSelected}
-          aria-label={isSelected ? 'Auswahl entfernen' : 'Auswählen'}
-          onClick={toggleSelection}
-          className={cn(
-            'absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-2xl',
-            isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-          )}
-        >
-          <SelectionIcon className="size-4" />
-        </Button>
-        <div className="relative z-10 flex min-w-0 items-center gap-2.5">
+        <RowSelectButton isSelected={isSelected} onClick={toggleSelection} />
+        <div className="relative z-10 flex min-w-0 items-center gap-2.5 pl-2">
           <TaskStatusPicker taskId={task.id} status={task.status} />
           {task.hasMention ? (
             <span

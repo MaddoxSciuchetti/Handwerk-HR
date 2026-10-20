@@ -7,7 +7,10 @@ type TableQuestionCardProps = {
   onChange: (repeater: TemplateRepeater) => void;
 };
 
-export function TableQuestionCard({ repeater, onChange }: TableQuestionCardProps) {
+export function TableQuestionCard({
+  repeater,
+  onChange,
+}: TableQuestionCardProps) {
   const allowMoreRows = repeater.allowMoreRows === true;
 
   return (
@@ -16,7 +19,9 @@ export function TableQuestionCard({ repeater, onChange }: TableQuestionCardProps
       <div className="overflow-hidden rounded-md border border-border">
         <div
           className="grid"
-          style={{ gridTemplateColumns: `repeat(${repeater.columns.length}, minmax(0, 1fr))` }}
+          style={{
+            gridTemplateColumns: `repeat(${repeater.columns.length}, minmax(0, 1fr))`,
+          }}
         >
           {repeater.columns.map((column) => (
             <div
@@ -28,29 +33,38 @@ export function TableQuestionCard({ repeater, onChange }: TableQuestionCardProps
           ))}
         </div>
       </div>
-      <PflichtfeldSwitch
-        label="Nur von BSB auszufüllen"
-        checked={repeater.columns.every((column) => column.officeOnly === true)}
-        onChange={(checked) =>
-          onChange({
-            ...repeater,
-            columns: repeater.columns.map((column) => ({
-              ...column,
-              officeOnly: checked || undefined,
-            })),
-          })
-        }
-      />
-      <Button
-        type="button"
-        data-no-drag
-        variant={allowMoreRows ? 'default' : 'outline'}
-        aria-pressed={allowMoreRows}
-        className="w-fit rounded-2xl"
-        onClick={() => onChange({ ...repeater, allowMoreRows: !allowMoreRows || undefined })}
-      >
-        Weitere Zeilen erlauben
-      </Button>
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+        <PflichtfeldSwitch
+          label="Nur vom Betrieb"
+          checked={repeater.columns.every(
+            (column) => column.officeOnly === true
+          )}
+          onChange={(checked) =>
+            onChange({
+              ...repeater,
+              columns: repeater.columns.map((column) => ({
+                ...column,
+                officeOnly: checked || undefined,
+              })),
+            })
+          }
+        />
+        <Button
+          type="button"
+          data-no-drag
+          variant={allowMoreRows ? 'default' : 'outline'}
+          aria-pressed={allowMoreRows}
+          className="w-fit rounded-2xl"
+          onClick={() =>
+            onChange({
+              ...repeater,
+              allowMoreRows: !allowMoreRows || undefined,
+            })
+          }
+        >
+          Weitere Zeilen erlauben
+        </Button>
+      </div>
     </div>
   );
 }

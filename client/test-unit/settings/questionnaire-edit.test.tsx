@@ -199,33 +199,34 @@ it('saves the BSB-only toggle and keeps the field editable for the office', asyn
   const user = userEvent.setup();
   const view = renderWithProviders(<QuestionnaireTemplatePage />);
   const toggle = await screen.findByRole('switch', {
-    name: 'Nur von BSB auszufüllen',
+    name: 'Nur vom Betrieb',
   });
   expect(toggle).toHaveAttribute('aria-checked', 'false');
   await user.click(toggle);
   expect(screen.getByRole('radio', { name: 'Befristet' })).toBeEnabled();
   await user.click(screen.getByRole('button', { name: 'Speichern' }));
   await waitFor(() =>
-    expect(savedItems[0]).toMatchObject({ bsbOnly: true, required: true })
+    expect(savedItems[0]).toMatchObject({ officeOnly: true, required: true })
   );
   view.unmount();
   renderWithProviders(<QuestionnaireTemplatePage />);
   expect(
-    await screen.findByRole('switch', { name: 'Nur von BSB auszufüllen' })
+    await screen.findByRole('switch', { name: 'Nur vom Betrieb' })
   ).toHaveAttribute('aria-checked', 'true');
   await user.click(
     screen.getByRole('button', { name: 'Frage bearbeiten: Arbeitsverhältnis' })
   );
   expect(
-    screen.getByRole('switch', { name: 'Nur von BSB auszufüllen' })
+    screen.getByRole('switch', { name: 'Nur vom Betrieb' })
   ).toHaveAttribute('aria-checked', 'true');
-  await user.click(
-    screen.getByRole('switch', { name: 'Nur von BSB auszufüllen' })
-  );
+  await user.click(screen.getByRole('switch', { name: 'Nur vom Betrieb' }));
   await user.click(screen.getByRole('button', { name: 'Übernehmen' }));
   await user.click(screen.getByRole('button', { name: 'Speichern' }));
   await waitFor(() =>
-    expect(savedItems[0]).toMatchObject({ bsbOnly: false, required: true })
+    expect(savedItems[0]).toMatchObject({
+      officeOnly: undefined,
+      required: true,
+    })
   );
 });
 

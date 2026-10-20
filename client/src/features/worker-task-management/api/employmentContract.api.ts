@@ -26,6 +26,9 @@ export type EmploymentContractDraft = {
   masterRevision: number;
   matchedMasterRevision: number | null;
   questionnaireCompleted: boolean;
+  questionnaireRevision?: number;
+  matchedQuestionnaireRevision?: number;
+  questionnaireSyncNeeded?: boolean;
   sentAt: string | null;
   signedFileUrl: string | null;
   outgoingFileUrl?: string | null;

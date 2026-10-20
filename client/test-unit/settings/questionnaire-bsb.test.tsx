@@ -100,12 +100,15 @@ it('disables all BSB-only question types and allows recipients to submit without
     screen.getByRole('textbox', { name: 'Nachname *' }),
     'Muster'
   );
+  await user.click(
+    screen.getByRole('checkbox', { name: /Erklärung der beschäftigten Person/ })
+  );
   expect(screen.getByRole('button', { name: 'Absenden' })).toBeEnabled();
   await user.click(screen.getByRole('button', { name: 'Absenden' }));
   await screen.findByText('Danke, Ihre Angaben wurden übermittelt.');
 });
 
-it('shows an empty BSB-only required field as locked and optional in the candidate preview', () => {
+it('shows an empty BSB-only required field as editable for the office in the candidate preview', async () => {
   const items: PreviewItem[] = [
     {
       kind: 'field',
@@ -129,5 +132,8 @@ it('shows an empty BSB-only required field as locked and optional in the candida
   expect(salary).toBeEnabled();
   expect(salary).toHaveClass('bg-muted');
   expect(screen.queryByText('Von BSB für die Person')).not.toBeInTheDocument();
+  await userEvent.click(
+    screen.getByRole('checkbox', { name: /Erklärung der beschäftigten Person/ })
+  );
   expect(screen.getByRole('button', { name: 'Absenden' })).toBeEnabled();
 });

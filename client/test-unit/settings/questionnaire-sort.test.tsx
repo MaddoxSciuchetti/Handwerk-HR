@@ -26,7 +26,7 @@ const initial: TemplateItem[] = ['Alpha', 'Beta', 'Gamma'].map((label) => ({
   builtin: false,
 }));
 const heights: Record<string, number> = { Alpha: 100, Beta: 180, Gamma: 80 };
-let frames: Map<number, FrameRequestCallback>;
+let frames: Map<number, (time: number) => void>;
 let nextId: number;
 let rects: ReturnType<typeof vi.spyOn>;
 const drop = vi.fn();
@@ -50,6 +50,7 @@ function Harness({ scroll = false }: { scroll?: boolean }) {
         }}
         onInsert={vi.fn()}
         onChangeField={vi.fn()}
+        onChangeRepeater={vi.fn()}
         onCommitField={vi.fn()}
         onRemove={vi.fn()}
       />
@@ -98,7 +99,7 @@ beforeEach(() => {
   frames = new Map();
   nextId = 0;
   drop.mockClear();
-  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+  vi.stubGlobal('requestAnimationFrame', (callback: (time: number) => void) => {
     frames.set(++nextId, callback);
     return nextId;
   });
@@ -152,6 +153,12 @@ it('opens a full-height gap, moves neighbours smoothly, and commits the previewe
   render(<Harness />);
   const transfer = dt();
   dragEvent(card('Alpha'), 'dragstart', 20, transfer);
+  const overlay = document.querySelector<HTMLElement>(
+    '[data-questionnaire-drag-overlay]'
+  )!;
+  expect(overlay).toHaveAttribute('aria-hidden', 'true');
+  expect(overlay.style.opacity).toBe('1');
+  expect(overlay.style.background).toBe('var(--card,white)');
   const preview = document.querySelector<HTMLElement>(
     '[data-questionnaire-drop-preview]'
   )!;
@@ -159,6 +166,8 @@ it('opens a full-height gap, moves neighbours smoothly, and commits the previewe
   expect(Number(item('Alpha').style.opacity)).toBeLessThan(0.01);
   dragEvent(card('Beta'), 'dragover', 300, transfer);
   frame();
+  expect(overlay.style.top).toBe('280px');
+  expect(overlay.style.opacity).toBe('1');
   expect(screen.getByRole('status')).toHaveTextContent('Position 2 von 3');
   expect(item('Beta').style.transform).toBe('translateY(-156px)');
   expect(preview.style.transform).toBe('translateY(236px)');
@@ -168,6 +177,7 @@ it('opens a full-height gap, moves neighbours smoothly, and commits the previewe
     expect(screen.getByRole('status')).toHaveTextContent('Position 2 von 3');
   }
   dragEvent(card('Beta'), 'drop', 300, transfer);
+  expect(overlay).not.toBeInTheDocument();
   expect(drop).toHaveBeenCalledExactlyOnceWith(2, {
     source: 'stack',
     id: 'Alpha',
@@ -258,12 +268,12 @@ it('removes the drag image and animation loop if the stack unmounts during dragg
   const transfer = dt();
   dragEvent(card('Alpha'), 'dragstart', 20, transfer);
   expect(
-    document.querySelector('[aria-hidden="true"][style*="-10000px"]')
+    document.querySelector('[data-questionnaire-drag-overlay]')
   ).toBeInTheDocument();
   view.unmount();
   expect(frames.size).toBe(0);
   expect(
-    document.querySelector('[aria-hidden="true"][style*="-10000px"]')
+    document.querySelector('[data-questionnaire-drag-overlay]')
   ).not.toBeInTheDocument();
 });
 

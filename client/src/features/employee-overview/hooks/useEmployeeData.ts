@@ -4,7 +4,11 @@ import { adminQueries } from '../query-options/queries/admin.queries';
 import { IssueData, WorkerEngagement } from '../schemas/employeeform.schemas';
 import { EmployeeWorker } from '../types/employeeform.types';
 
-const CLOSED_STATUSES = new Set<IssueData['status']>(['done', 'cancelled']);
+const CLOSED_STATUSES = new Set<IssueData['status']>([
+  'done',
+  'cancelled',
+  'not_applicable',
+]);
 
 const isOpenIssue = (issue: IssueData) => !CLOSED_STATUSES.has(issue.status);
 

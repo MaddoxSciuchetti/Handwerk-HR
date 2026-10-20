@@ -420,3 +420,16 @@ it.each(["firstName", "custom.bsb-salary"])(
         });
     },
 );
+
+
+it("keeps unified office-only controls compatible with staging questionnaire flags", () => {
+    const definition = parseQuestionnaireDefinition({ intro: "", items: [{
+        kind: "field", key: "custom.abcdefgh", label: "Office", section: "Person",
+        type: "text", officeOnly: true,
+    }] });
+    expect(definition.items[0]).toMatchObject({ officeOnly: true, bsbOnly: true });
+    const cleared = parseQuestionnaireDefinition({ intro: "", items: [{
+        ...definition.items[0], officeOnly: undefined, bsbOnly: undefined,
+    }] });
+    expect(cleared.items[0]).toMatchObject({ officeOnly: undefined, bsbOnly: false });
+});

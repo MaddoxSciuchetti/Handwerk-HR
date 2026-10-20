@@ -520,6 +520,7 @@ model EmploymentContract {
   conversationId    String?                  @unique @map("conversation_id") @db.VarChar(512)
   sentAt                DateTime?                @map("sent_at") @db.Timestamptz()
   matchedMasterRevision Int?                     @map("matched_master_revision")
+  matchedQuestionnaireRevision Int @default(0) @map("matched_questionnaire_revision")
   confirmedAt           DateTime?                @map("confirmed_at") @db.Timestamptz()
   confirmedByUserId     String?                  @map("confirmed_by_user_id")
   createdAt         DateTime                 @default(now()) @map("created_at") @db.Timestamptz()
@@ -655,6 +656,7 @@ model QuestionnaireQuestion {
 }
 
 model QuestionnaireSubmission {
+  revision Int @default(0)
   id           String                        @id @default(uuid())
   engagementId String                        @unique @map("engagement_id")
   token          String                        @unique @db.VarChar(64)
@@ -665,9 +667,23 @@ model QuestionnaireSubmission {
   updatedAt    DateTime                      @updatedAt @map("updated_at") @db.Timestamptz()
 
   engagement WorkerEngagement      @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+  changes    QuestionnaireChange[]
   answers    QuestionnaireAnswer[]
 
   @@map("questionnaire_submissions")
+}
+
+model QuestionnaireChange {
+  id String @id @default(uuid())
+  submissionId String @map("submission_id")
+  revision Int
+  changedByUserId String @map("changed_by_user_id")
+  changes Json
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  submission QuestionnaireSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@unique([submissionId, revision])
+  @@map("questionnaire_changes")
 }
 
 model QuestionnaireAnswer {
@@ -1093,6 +1109,7 @@ enum IssueStatus {
   in_progress
   done
   cancelled
+  not_applicable
 }
 
 enum IssueKind {

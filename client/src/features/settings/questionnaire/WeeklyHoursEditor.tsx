@@ -10,7 +10,10 @@ import {
 import { useState } from 'react';
 import { PflichtfeldSwitch } from './PflichtfeldSwitch';
 import { WeekdayAssign } from './WeekdayAssign';
-import type { ContractFieldOption, TemplateField } from './questionnaireTemplate.types';
+import type {
+  ContractFieldOption,
+  TemplateField,
+} from './questionnaireTemplate.types';
 
 type WeeklyHoursEditorProps = {
   fields: TemplateField[];
@@ -30,9 +33,13 @@ export function WeeklyHoursEditor({
     const field = fields.find((item) => item.key === day.key);
     return field ? [field] : [];
   });
-  const distribution = fields.find((field) => field.key === HOURS_DISTRIBUTION_KEY);
-  const values = Object.fromEntries(days.map((day) => [day.key, day.defaultValue ?? '']));
-  const officeOnly = days.some((day) => day.bsbOnly);
+  const distribution = fields.find(
+    (field) => field.key === HOURS_DISTRIBUTION_KEY
+  );
+  const values = Object.fromEntries(
+    days.map((day) => [day.key, day.defaultValue ?? ''])
+  );
+  const officeOnly = days.some((day) => day.officeOnly ?? day.bsbOnly);
 
   const ensureDistribution = (required: boolean) => {
     if (distribution) {
@@ -78,18 +85,25 @@ export function WeeklyHoursEditor({
       />
       {editing ? (
         <div className="flex flex-col gap-4 border-t border-border pt-4">
-          <PflichtfeldSwitch
-            checked={distribution?.required === true}
-            onChange={ensureDistribution}
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+            <PflichtfeldSwitch
+              checked={distribution?.required === true}
+              onChange={ensureDistribution}
+            />
+            <PflichtfeldSwitch
+              label="Nur vom Betrieb"
+              checked={officeOnly}
+              onChange={(checked) => {
+                for (const day of days)
+                  onChange({ ...day, officeOnly: checked || undefined, bsbOnly: undefined });
+              }}
+            />
+          </div>
+          <WeekdayAssign
+            days={days}
+            contractFields={contractFields}
+            onChange={onChange}
           />
-          <PflichtfeldSwitch
-            label="Nur von BSB auszufüllen"
-            checked={officeOnly}
-            onChange={(checked) => {
-              for (const day of days) onChange({ ...day, bsbOnly: checked });
-            }}
-          />
-          <WeekdayAssign days={days} contractFields={contractFields} onChange={onChange} />
         </div>
       ) : null}
     </div>

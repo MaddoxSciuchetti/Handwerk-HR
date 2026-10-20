@@ -46,6 +46,10 @@ worker.get(
     "/:workerId/engagements/:engagementId/questionnaire/completed",
     workerController.getCompletedEngagementQuestionnaire,
 );
+worker.put(
+    "/:workerId/engagements/:engagementId/questionnaire/completed",
+    workerController.saveCompletedEngagementQuestionnaire,
+);
 worker.post(
     "/:workerId/engagements/:engagementId/questionnaire/files",
     workerController.fileCompletedQuestionnaireFiles,

@@ -327,7 +327,8 @@ function parseField(raw: object, seen: Set<string>): QuestionnaireFieldItem {
         required: isWeeklyHoursKey(key) ? readRequired(raw, base.required === true) : questionRequired(base),
         employerFilled: false,
         contractFieldKey: base.type === "file" ? undefined : contractFieldKey,
-        bsbOnly: ("bsbOnly" in raw && raw.bsbOnly === true) || readOfficeOnly(raw),
+        bsbOnly: ("bsbOnly" in raw && typeof raw.bsbOnly === "boolean" ? raw.bsbOnly : readOfficeOnly(raw)),
+        officeOnly: (("bsbOnly" in raw && typeof raw.bsbOnly === "boolean" ? raw.bsbOnly : readOfficeOnly(raw))) ? true : undefined,
         defaultValue: undefined,
     };
     const posted = "defaultValue" in raw && typeof raw.defaultValue === "string" ? raw.defaultValue : "";

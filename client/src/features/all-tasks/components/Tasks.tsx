@@ -150,7 +150,7 @@ function Tasks() {
               <Table aria-busy={isLoading}>
                 <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-0">
                   <TableRow className="border-0 hover:bg-transparent">
-                    <TableHead className="w-px h-12 bg-card py-3 pl-10 pr-2">
+                    <TableHead className="w-px h-12 bg-card py-3 pl-12 pr-2">
                       Titel
                     </TableHead>
                     <TableHead className="w-px bg-card py-3 px-2" />

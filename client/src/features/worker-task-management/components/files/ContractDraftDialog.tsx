@@ -8,6 +8,7 @@ import {
   useSaveEmploymentContract,
 } from '../../hooks/useEmploymentContract';
 import { ContractDraftBody } from './ContractDraftBody';
+import { ContractQuestionnaireSync } from './ContractQuestionnaireSync';
 import {
   documentPreviewModalPanel,
   documentPreviewModalSize,
@@ -37,6 +38,7 @@ export function ContractDraftDialog({
     engagementId
   );
   const saveDraft = useSaveEmploymentContract(workerId, engagementId);
+  const [syncing, setSyncing] = useState(false);
   const [values, setValues] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -55,7 +57,7 @@ export function ContractDraftDialog({
   };
 
   return (
-    <Dialog open onOpenChange={(next) => { if (!next) onClose(); }}>
+    <Dialog open onOpenChange={(next) => { if (!next && !syncing && !saveDraft.isPending) onClose(); }}>
       <DialogContent className={`w-full border-0 bg-transparent p-0 shadow-none sm:max-w-[min(96vw,90rem)] ${documentPreviewModalSize}`}>
       <div className={documentPreviewModalPanel}>
         {isLoading ? <PdfSkeleton /> : null}
@@ -72,6 +74,8 @@ export function ContractDraftDialog({
                 {STATUS_LABEL[data.status]}
               </p>
             </div>
+            <ContractQuestionnaireSync workerId={workerId} engagementId={engagementId}
+              contract={data} onBusy={setSyncing} disabled={saveDraft.isPending || syncing} onSynced={(saved) => setValues(saved.values)} />
             {data.followsMaster ? null : (
               <p className="shrink-0 text-sm text-muted-foreground">{FROZEN_NOTE}</p>
             )}
@@ -80,7 +84,7 @@ export function ContractDraftDialog({
                 document={data.document}
                 segments={data.segments}
                 values={values}
-                readOnly={readOnly}
+                readOnly={readOnly || syncing}
                 onValueChange={(key, value) =>
                   setValues((current) => ({ ...current, [key]: value }))
                 }
@@ -91,7 +95,7 @@ export function ContractDraftDialog({
                 <Button
                   type="button"
                   className="rounded-2xl"
-                  disabled={saveDraft.isPending}
+                  disabled={saveDraft.isPending || syncing}
                   onClick={save}
                 >
                   {saveDraft.isPending ? 'Speichert…' : 'Entwurf speichern'}

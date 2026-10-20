@@ -42,10 +42,10 @@ export function EngagementProgressPicker({
       <DropdownMenuTrigger asChild>
         <Button
           type="button"
-          variant="ghost"
+          variant="outline"
           aria-label={`Status: ${engagementProgressLabel(status)}. ${health.percentage ?? 0}% der Aufgaben erledigt. Zum Ändern klicken.`}
           className={cn(
-            'h-7 gap-1.5 rounded-full border border-border bg-card px-2.5 text-xs font-medium shadow-none hover:bg-muted',
+            'h-7 gap-1.5 rounded-full border border-border bg-muted px-2.5 text-xs font-medium shadow-none hover:bg-muted focus-visible:border-border focus-visible:ring-0 aria-expanded:bg-muted dark:border-border dark:bg-muted dark:hover:bg-muted',
             className
           )}
           onClick={(e) => e.stopPropagation()}
