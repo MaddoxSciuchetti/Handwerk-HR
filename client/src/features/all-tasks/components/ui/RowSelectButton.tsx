@@ -28,7 +28,7 @@ export function RowSelectButton({
       onPointerDown={(event) => event.stopPropagation()}
       onClick={onClick}
       className={cn(
-        'absolute inset-y-0 left-0 z-20 h-auto w-10 rounded-none p-0',
+        'absolute inset-y-0 left-0 z-20 h-auto w-10 rounded-none p-0 transition-none active:not-aria-[haspopup]:translate-y-0',
         'border-0 bg-transparent shadow-none hover:bg-transparent focus-visible:ring-2 dark:hover:bg-transparent',
         isSelected
           ? 'opacity-100'
@@ -36,7 +36,7 @@ export function RowSelectButton({
       )}
     >
       <span aria-hidden className="absolute inset-y-0 left-0 -right-2" />
-      <SelectionIcon className="relative size-6" />
+      <SelectionIcon className="relative size-[1.35rem]" />
     </Button>
   );
 }
