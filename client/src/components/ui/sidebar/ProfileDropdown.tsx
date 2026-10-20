@@ -89,7 +89,7 @@ export function ProfileDropdown({
                   type="button"
                   variant="ghost"
                   aria-label={displayLabel || 'Profile'}
-                  className="h-8 w-full min-w-0 justify-start gap-2 overflow-hidden bg-transparent p-0 text-left font-normal hover:bg-transparent hover:text-foreground focus-visible:ring-0 data-[state=open]:bg-transparent"
+                  className="h-8 w-full min-w-0 cursor-pointer justify-start gap-2 overflow-hidden bg-transparent p-0 text-left font-normal ring-1 ring-border hover:bg-transparent hover:text-foreground aria-expanded:bg-transparent focus-visible:border-transparent focus-visible:ring-1 focus-visible:ring-border data-[state=open]:bg-transparent dark:hover:bg-transparent"
                 >
                   <Avatar className="size-8 shrink-0 rounded-full">
                     <AvatarImage
