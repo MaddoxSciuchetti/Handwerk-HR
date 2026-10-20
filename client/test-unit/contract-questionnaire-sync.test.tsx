@@ -72,7 +72,7 @@ it('keeps the prompt available after a failed sync', async () => {
 });
 
 it('does not offer to overwrite sent or signed contracts', () => {
-  renderWithProviders(
+  const { container } = renderWithProviders(
     <ContractQuestionnaireSync
       workerId="worker"
       engagementId="eng"
@@ -80,7 +80,7 @@ it('does not offer to overwrite sent or signed contracts', () => {
       onSynced={vi.fn()}
     />
   );
-  expect(screen.getByText(/bereits versendet/)).toBeInTheDocument();
+  expect(container).toBeEmptyDOMElement();
   expect(
     screen.queryByRole('button', { name: 'Sync?' })
   ).not.toBeInTheDocument();

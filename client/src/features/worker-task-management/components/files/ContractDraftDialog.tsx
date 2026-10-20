@@ -68,14 +68,22 @@ export function ContractDraftDialog({
         ) : null}
         {data ? (
           <>
-            <div className="shrink-0 pr-8">
-              <h2 className="text-base font-medium">{data.name}</h2>
-              <p className="text-sm text-muted-foreground">
-                {STATUS_LABEL[data.status]}
-              </p>
+            <div className="flex shrink-0 items-center gap-2 pr-8">
+              <div>
+                <h2 className="text-base font-medium">{data.name}</h2>
+                <p className="text-sm text-muted-foreground">
+                  {STATUS_LABEL[data.status]}
+                </p>
+              </div>
+              <ContractQuestionnaireSync
+                workerId={workerId}
+                engagementId={engagementId}
+                contract={data}
+                onBusy={setSyncing}
+                disabled={saveDraft.isPending || syncing}
+                onSynced={(saved) => setValues(saved.values)}
+              />
             </div>
-            <ContractQuestionnaireSync workerId={workerId} engagementId={engagementId}
-              contract={data} onBusy={setSyncing} disabled={saveDraft.isPending || syncing} onSynced={(saved) => setValues(saved.values)} />
             {data.followsMaster ? null : (
               <p className="shrink-0 text-sm text-muted-foreground">{FROZEN_NOTE}</p>
             )}
