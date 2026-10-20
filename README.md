@@ -54,6 +54,39 @@ STRIPE_WEBHOOK_SECRET=<Stripe webhook signing secret, or whsec_ placeholder for 
 
 If any of these are unset at runtime, the server throws a generic `Missing environment variable` error (the key name is not repeated in the message).
 
+### Microsoft mail token renewal
+
+For automatic Microsoft Graph mail authentication, configure these on the backend:
+
+```env
+USE_MICROSOFT_MAIL=true
+MICROSOFT_365_TENANT_ID=<Microsoft tenant ID>
+MICROSOFT_365_CLIENT_ID=<application client ID>
+MICROSOFT_365_CLIENT_SECRET=<client secret value>
+# Optional fallback when no sender is selected for the operation:
+MICROSOFT_GRAPH_MAILBOX=<sender mailbox address>
+```
+
+The mail service obtains an application token, caches it in memory, and renews it
+on the next mail operation starting one minute before expiry. Concurrent operations
+share token acquisition. A Graph 401 triggers one renewal and one retry of the
+rejected request; timeouts, permission failures and other errors are not retried.
+No periodic timer or user sign-in is needed. Client secrets still need rotation
+before their own expiration.
+
+Grant the Entra application Microsoft Graph **application** permissions
+`Mail.ReadWrite` and `Mail.Send` with administrator consent, and access to the
+sender mailbox. This service creates a draft before sending to retain conversation
+tracking. A questionnaire's selected sender overrides `MICROSOFT_GRAPH_MAILBOX`.
+Application authentication requires an explicit mailbox and cannot use `/me`.
+
+These credentials must be backend environment variables; the organization credentials
+saved under Settings → Integrations serve the separate account/workflow integration.
+When all three application credential variables are absent, the legacy
+`MICROSOFT_GRAPH_TOKEN` remains supported but cannot renew itself. Application
+credentials take precedence over that static token; incomplete credentials fail
+rather than silently falling back. Restart/redeploy after changing the environment.
+
 ### Integration credentials and staging tests
 
 The API requires `INTEGRATION_SECRET_KEY` to encrypt saved Microsoft client secrets

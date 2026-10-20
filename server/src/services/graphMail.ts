@@ -4,18 +4,23 @@ import {
     MICROSOFT_GRAPH_TOKEN,
 } from "@/constants/env";
 import AppError from "@/utils/AppError";
+import { createGraphMailTokenProvider, graphMailCredentials } from "./graphMailToken";
 import {
     DeliveryRejected,
     type PdfAttachment,
 } from "@/services/documentDelivery";
 
 const GRAPH = "https://graph.microsoft.com/v1.0";
+const tokens = createGraphMailTokenProvider(graphMailCredentials, () => MICROSOFT_GRAPH_TOKEN);
 
 export function graphMailConfigured() {
-    return MICROSOFT_GRAPH_TOKEN.length > 0;
+    return tokens.canRenew() || MICROSOFT_GRAPH_TOKEN.length > 0;
 }
 
 function mailboxPath(senderAddress = MICROSOFT_GRAPH_MAILBOX) {
+    if (!senderAddress && tokens.canRenew()) {
+        throw new AppError(BAD_REQUEST, "Microsoft-Mail benötigt eine Absenderadresse oder MICROSOFT_GRAPH_MAILBOX.");
+    }
     if (!senderAddress) return "/me";
     return `/users/${encodeURIComponent(senderAddress)}`;
 }
@@ -24,25 +29,38 @@ async function graphFetch(path: string, init?: RequestInit) {
     if (!graphMailConfigured()) {
         throw new AppError(
             BAD_REQUEST,
-            "Microsoft-Token fehlt in der Umgebung.",
+            "Microsoft-Mail benötigt Anwendungszugangsdaten oder einen Graph-Token in der Umgebung.",
         );
     }
 
-    const response = await fetch(`${GRAPH}${path}`, {
+    let token = await tokens.getToken();
+    const request = (accessToken: string) => fetch(`${GRAPH}${path}`, {
         ...init,
         signal: init?.signal ?? AbortSignal.timeout(30_000),
         headers: {
-            Authorization: `Bearer ${MICROSOFT_GRAPH_TOKEN}`,
+            Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
             ...(init?.headers ?? {}),
         },
     });
+    let response = await request(token);
+    // Retry only a definitive authentication rejection, never a timeout or ambiguous send failure.
+    if (response.status === 401 && tokens.canRenew()) {
+        await response.body?.cancel();
+        token = await tokens.getToken(token);
+        response = await request(token);
+    }
 
     if (response.status === 202 || response.status === 204) return null;
 
     const text = await response.text();
     if (!response.ok) {
-        console.error("Microsoft Graph request failed", response.status);
+        let code: string | undefined;
+        try {
+            const candidate = JSON.parse(text)?.error?.code;
+            if (typeof candidate === "string" && /^[A-Za-z0-9_.-]{1,100}$/.test(candidate)) code = candidate;
+        } catch { /* Non-JSON provider response. */ }
+        console.error("Microsoft Graph request failed", response.status, code ?? "UnknownError");
         if (response.status >= 400 && response.status < 500)
             throw new DeliveryRejected("Microsoft Graph rejected delivery");
         throw new AppError(
