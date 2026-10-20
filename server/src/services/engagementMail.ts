@@ -1,5 +1,6 @@
 import type { EngagementMailRecipientKind } from "@prisma/client";
 import { BAD_REQUEST } from "@/constants/http";
+import { microsoftSimulationEnabled } from "@/constants/env";
 import { prisma } from "@/lib/prisma";
 import AppError from "@/utils/AppError";
 import {
@@ -600,7 +601,7 @@ async function deliverMail(params: {
             message: "Für dieses Engagement sind keine Empfänger gewählt.",
         };
     }
-    if (!integrationsLive()) {
+    if (!integrationsLive() && !microsoftSimulationEnabled()) {
         return { status: "failed", message: NOT_LIVE_MESSAGE };
     }
     const config = await loadMicrosoft365Config(params.organizationId);
