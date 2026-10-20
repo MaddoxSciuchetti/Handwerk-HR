@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { MouseEvent } from 'react';
-import { SquareCheckIcon, SquareDashedIcon } from './SelectIcons';
+import { SquareCheckIcon, SquareIcon } from './SelectIcons';
 
 type RowSelectButtonProps = {
   isSelected: boolean;
@@ -16,7 +16,7 @@ export function RowSelectButton({
   selectedLabel = 'Auswahl entfernen',
   idleLabel = 'Auswählen',
 }: RowSelectButtonProps) {
-  const SelectionIcon = isSelected ? SquareCheckIcon : SquareDashedIcon;
+  const SelectionIcon = isSelected ? SquareCheckIcon : SquareIcon;
 
   return (
     <Button
@@ -36,7 +36,7 @@ export function RowSelectButton({
       )}
     >
       <span aria-hidden className="absolute inset-y-0 left-0 -right-2" />
-      <SelectionIcon className="relative size-[1.35rem]" />
+      <SelectionIcon className="relative size-[1.215rem]" />
     </Button>
   );
 }

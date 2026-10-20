@@ -3,7 +3,7 @@ import type { SVGProps } from 'react';
 
 type IconProps = SVGProps<SVGSVGElement>;
 
-export function SquareDashedIcon({ className, ...props }: IconProps) {
+export function SquareIcon({ className, ...props }: IconProps) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -16,9 +16,13 @@ export function SquareDashedIcon({ className, ...props }: IconProps) {
       className={cn('shrink-0', className)}
       {...props}
     >
-      <rect x={3} y={3} width={18} height={18} rx={2} strokeDasharray="3 3" />
+      <rect x={3} y={3} width={18} height={18} rx={2} />
     </svg>
   );
+}
+
+export function SquareDashedIcon(props: IconProps) {
+  return <SquareIcon strokeDasharray="3 3" {...props} />;
 }
 
 export function SquareCheckIcon({ className, ...props }: IconProps) {

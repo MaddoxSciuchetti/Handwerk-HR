@@ -134,12 +134,14 @@ function WorkerLifeCycle() {
               <NestedDropdown
                 options={filterOptions}
                 value={filterLabel}
+                placeholder="Filter"
+                className="w-28 border-border bg-muted shadow-none hover:bg-muted focus-visible:border-border focus-visible:ring-0 aria-expanded:bg-muted dark:border-border dark:bg-muted dark:hover:bg-muted"
                 onSelect={handleSelect}
                 onSubSelect={handleSubSelect}
               />
               <Button
                 type="button"
-                className="rounded-2xl"
+                className="rounded-2xl border-primary"
                 onClick={handleSelectWorker}
               >
                 Hinzufügen
