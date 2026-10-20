@@ -117,6 +117,7 @@ describe("task mention badges", () => {
         const tasks = await queryTasks("org-1", "coworker");
 
         expect(findTasks).toHaveBeenCalledWith(expect.objectContaining({
+            where: expect.objectContaining({ assigneeOnly: false }),
             include: expect.objectContaining({
                 _count: { select: { comments: { where: { mentionedUserIds: { has: "coworker" } } } } },
             }),

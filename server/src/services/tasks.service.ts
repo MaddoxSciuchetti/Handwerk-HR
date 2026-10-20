@@ -57,6 +57,8 @@ export type TaskHistoryItem = TaskHistoryAuditEntry | TaskHistoryCommentEntry;
 export const queryTasks = async (orgId: string, viewerUserId: string) => {
     const tasks = await prisma.issue.findMany({
         where: {
+            // Legacy mention notifications are not standalone tasks.
+            assigneeOnly: false,
             AND: [
                 {
                     OR: [
@@ -541,14 +543,6 @@ export async function getTaskHistoryInOrg(
         (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
     );
     return merged;
-}
-
-const MENTION_TITLE_LIMIT = 120;
-
-export function mentionTaskTitle(body: string) {
-    const compact = body.replace(/\s+/g, " ").trim();
-    if (compact.length <= MENTION_TITLE_LIMIT) return compact;
-    return `${compact.slice(0, MENTION_TITLE_LIMIT - 1).trimEnd()}…`;
 }
 
 function tasksPageUrl() {

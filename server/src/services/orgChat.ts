@@ -1,8 +1,6 @@
 import { APP_ORIGIN } from "@/constants/env";
 import { BAD_REQUEST } from "@/constants/http";
 import { prisma } from "@/lib/prisma";
-import { createIssue } from "@/services/worker.service";
-import { mentionTaskTitle } from "@/services/tasks.service";
 import AppError from "@/utils/AppError";
 import { getTaskMentionTemplate } from "@/utils/emailTemplates";
 import { sendMail } from "@/utils/sendMail";
@@ -92,21 +90,10 @@ export async function postOrgChatMessage(
         `${actor?.firstName ?? ""} ${actor?.lastName ?? ""}`.trim() ||
         actor?.email ||
         "Ein Kollege";
-    const title = mentionTaskTitle(body);
     const actionUrl = tasksPageUrl();
     let mailFailed = false;
 
     for (const person of mentioned) {
-        await createIssue({
-            organizationId: orgId,
-            createdByUserId: userId,
-            assigneeUserId: person.id,
-            status: "open",
-            title,
-            description: body.slice(0, 8000),
-            priority: "urgent",
-            assigneeOnly: true,
-        });
         const recipientName =
             `${person.firstName} ${person.lastName}`.trim() || person.email;
         const template = getTaskMentionTemplate({

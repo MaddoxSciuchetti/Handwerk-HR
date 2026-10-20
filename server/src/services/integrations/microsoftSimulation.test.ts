@@ -24,6 +24,8 @@ jest.mock("@/lib/prisma", () => ({
         workerExternalAccount: { upsert: jest.fn() },
         welcomeMailSettings: { findUnique: jest.fn() },
         departureMailSettings: { findUnique: jest.fn() },
+        mailTemplate: { findFirst: jest.fn() },
+        engagementMailRecipient: { findMany: jest.fn() },
         issue: { findFirst: jest.fn(), findMany: jest.fn(), update: jest.fn() },
         issueAuditLog: { create: jest.fn() },
         $transaction: jest.fn(),
@@ -77,6 +79,12 @@ describe("Microsoft staging simulation", () => {
         (
             prisma.departureMailSettings.findUnique as jest.Mock
         ).mockResolvedValue(settings);
+        (prisma.mailTemplate.findFirst as jest.Mock).mockResolvedValue({
+            id: "template-1", name: "Test", subject: settings.subject, body: settings.body,
+        });
+        (prisma.engagementMailRecipient.findMany as jest.Mock).mockResolvedValue([
+            { kind: "microsoft_group", groupId: settings.groupId, label: settings.groupName },
+        ]);
         (prisma.worker.findFirst as jest.Mock).mockResolvedValue({
             id: "worker-1",
             firstName: "Ada",
@@ -152,6 +160,8 @@ describe("Microsoft staging simulation", () => {
                 status: "open",
                 integrationProvider: "microsoft_graph",
                 sequence,
+                mailTemplateId: "template-1",
+                mailSenderAddress: settings.senderAddress,
                 workerEngagement: { id: "engagement-1", workerId: "worker-1" },
             });
             if (sequence === "microsoft_deactivate_account") {
