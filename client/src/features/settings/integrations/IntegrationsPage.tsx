@@ -1,11 +1,5 @@
 import { IntegrationsSkeleton } from './IntegrationsSkeleton';
 import { MicrosoftSimulationNotice } from './MicrosoftSimulationNotice';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type ComponentProps, type ReactNode } from 'react';
 import { toast } from 'sonner';
+import { ChevronRight } from 'lucide-react';
 import {
   getIntegrations,
   saveIntegration,
@@ -22,7 +17,10 @@ import {
 
 const QUERY_KEY = ['settings', 'integrations'];
 
-function CredentialInput({ className, ...props }: ComponentProps<typeof Input>) {
+function CredentialInput({
+  className,
+  ...props
+}: ComponentProps<typeof Input>) {
   return (
     <Input
       autoComplete="off"
@@ -41,15 +39,18 @@ function EnabledSwitch({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <div className="flex items-center gap-2">
-      <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        aria-label={checked ? 'Aktiv' : 'Inaktiv'}
-        onClick={() => onChange(!checked)}
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={checked ? 'Aktiv' : 'Inaktiv'}
+      onClick={() => onChange(!checked)}
+      className="flex items-center gap-2 rounded-md py-2 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+    >
+      <span
+        aria-hidden="true"
         className={cn(
-          'relative h-5 w-9 shrink-0 rounded-full border outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50',
+          'relative h-5 w-9 shrink-0 rounded-full border transition-colors',
           checked ? 'border-primary bg-primary' : 'border-border bg-muted'
         )}
       >
@@ -59,29 +60,62 @@ function EnabledSwitch({
             checked ? 'translate-x-4 bg-primary-foreground' : 'bg-foreground'
           )}
         />
-      </button>
+      </span>
       <span className="text-sm text-muted-foreground">
         {checked ? 'Aktiv' : 'Inaktiv'}
       </span>
-    </div>
+    </button>
   );
 }
 
-function CredentialFields({ children }: { children: ReactNode }) {
+function IntegrationHeading({
+  title,
+  expanded,
+  onToggle,
+  controls,
+}: {
+  title: string;
+  expanded: boolean;
+  onToggle: () => void;
+  controls: string;
+}) {
   return (
-    <Accordion type="single" collapsible className="min-w-0">
-      <AccordionItem value="credentials" className="border-0">
-        <AccordionTrigger
-          type="button"
-          className="w-fit flex-none gap-1.5 py-1 hover:no-underline"
-        >
-          Zugangsdaten
-        </AccordionTrigger>
-        <AccordionContent className="flex flex-col gap-3 pt-2 pb-0">
-          {children}
-        </AccordionContent>
-      </AccordionItem>
-    </Accordion>
+    <h2 className="text-base font-semibold">
+      <button
+        type="button"
+        aria-expanded={expanded}
+        aria-controls={controls}
+        onClick={onToggle}
+        className="flex cursor-pointer items-center gap-2 rounded-md py-2 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+      >
+        <ChevronRight
+          aria-hidden="true"
+          className={cn(
+            'size-4 transition-transform',
+            expanded && 'rotate-90'
+          )}
+        />
+        {title}
+      </button>
+    </h2>
+  );
+}
+
+function CredentialFields({
+  expanded,
+  id,
+  children,
+}: {
+  expanded: boolean;
+  id: string;
+  children: ReactNode;
+}) {
+  return (
+    <div id={id} hidden={!expanded}>
+      {expanded && (
+        <div className="flex min-w-0 flex-col gap-3 pt-2">{children}</div>
+      )}
+    </div>
   );
 }
 
@@ -92,6 +126,7 @@ function MicrosoftForm({
 }) {
   const queryClient = useQueryClient();
   const [enabled, setEnabled] = useState(integration.enabled);
+  const [expanded, setExpanded] = useState(false);
   const [tenantId, setTenantId] = useState(integration.tenantId);
   const [clientId, setClientId] = useState(integration.clientId);
   const [domain, setDomain] = useState(integration.domain);
@@ -135,7 +170,12 @@ function MicrosoftForm({
       }}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-base font-semibold">Microsoft</h2>
+        <IntegrationHeading
+          title="Microsoft"
+          expanded={expanded}
+          onToggle={() => setExpanded((current) => !current)}
+          controls="microsoft-credentials"
+        />
         <div className="flex flex-wrap items-center gap-3">
           <EnabledSwitch checked={enabled} onChange={setEnabled} />
           <Button type="submit" disabled={save.isPending}>
@@ -144,7 +184,7 @@ function MicrosoftForm({
         </div>
       </div>
       {integration.simulated && <MicrosoftSimulationNotice />}
-      <CredentialFields>
+      <CredentialFields expanded={expanded} id="microsoft-credentials">
         <Label htmlFor="microsoft-tenant">Tenant-ID</Label>
         <CredentialInput
           id="microsoft-tenant"
@@ -193,6 +233,7 @@ function CrewmeisterForm({
 }) {
   const queryClient = useQueryClient();
   const [enabled, setEnabled] = useState(integration.enabled);
+  const [expanded, setExpanded] = useState(false);
   const [token, setToken] = useState('');
   const [crewId, setCrewId] = useState(integration.crewId);
   const save = useMutation({
@@ -226,7 +267,12 @@ function CrewmeisterForm({
       }}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-base font-semibold">Crewmeister</h2>
+        <IntegrationHeading
+          title="Crewmeister"
+          expanded={expanded}
+          onToggle={() => setExpanded((current) => !current)}
+          controls="crewmeister-credentials"
+        />
         <div className="flex flex-wrap items-center gap-3">
           <EnabledSwitch checked={enabled} onChange={setEnabled} />
           <Button type="submit" disabled={save.isPending}>
@@ -234,7 +280,7 @@ function CrewmeisterForm({
           </Button>
         </div>
       </div>
-      <CredentialFields>
+      <CredentialFields expanded={expanded} id="crewmeister-credentials">
         <Label htmlFor="crewmeister-token">
           Token{integration.hasToken ? ' (gespeichert)' : ''}
         </Label>

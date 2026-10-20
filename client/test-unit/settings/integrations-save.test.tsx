@@ -53,11 +53,20 @@ it.each([
     const heading = await screen.findByRole('heading', { name: title });
     const form = heading.closest('form')!;
     const fields = within(form);
-    await user.click(fields.getByRole('button', { name: 'Zugangsdaten' }));
+    expect(fields.queryByLabelText(fieldLabel)).not.toBeInTheDocument();
+    expect(
+      fields.queryByRole('button', { name: 'Zugangsdaten' })
+    ).not.toBeInTheDocument();
+    const disclosure = fields.getByRole('button', { name: title });
+    await user.click(disclosure);
+    expect(disclosure).toHaveAttribute('aria-expanded', 'true');
+    expect(fields.getByRole('switch')).toHaveAttribute('aria-checked', 'false');
+    expect(saveIntegration).not.toHaveBeenCalled();
     const input = fields.getByLabelText(fieldLabel);
     await user.type(input, 'first-value');
     await user.type(fields.getByLabelText(secretLabel), 'temporary-secret');
     await user.click(fields.getByRole('switch'));
+    expect(fields.getByLabelText(fieldLabel)).toBeVisible();
 
     const saved = {
       ...emptyIntegration(provider),
@@ -102,5 +111,10 @@ it.each([
         [provider === 'microsoft_graph' ? 'clientSecret' : 'token']: '',
       })
     );
+    await user.click(disclosure);
+    expect(fields.queryByLabelText(fieldLabel)).not.toBeInTheDocument();
+    expect(fields.getByRole('switch')).toHaveAttribute('aria-checked', 'true');
+    await user.click(disclosure);
+    expect(fields.getByLabelText(fieldLabel)).toHaveValue('edited-value');
   }
 );
