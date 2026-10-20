@@ -110,7 +110,7 @@ it('opens the real preview and edits questions only through the engagement edito
     screen.queryByRole('button', { name: 'Frage hier einfügen' })
   ).not.toBeInTheDocument();
   await user.click(screen.getByRole('button', { name: 'Bearbeiten' }));
-  expect(screen.getByText('Frage: Vorname')).toBeInTheDocument();
+  expect(screen.getByRole('textbox', { name: 'Frage' })).toBeInTheDocument();
   await user.type(screen.getByRole('textbox', { name: 'Antwort' }), 'Lukas');
   await user.click(screen.getByRole('button', { name: 'Frage hier einfügen' }));
   await user.type(screen.getByPlaceholderText('Frage'), 'Zusatzfrage');
