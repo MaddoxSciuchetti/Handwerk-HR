@@ -53,3 +53,40 @@ it('requires an explicit sender and submits it with the employee email', async (
     expect(onCreated).toHaveBeenCalledWith({ engagementId: 'engagement' })
   );
 });
+
+it('uses the staging default without a sender selector', async () => {
+  vi.mocked(getMicrosoftMailAddresses).mockResolvedValue({
+    addresses: [],
+    error: null,
+    defaultSenderAddress: 'hello@example.test',
+  });
+  vi.mocked(API.post).mockResolvedValue({
+    data: { worker: { id: 'worker' }, engagement: { id: 'engagement' } },
+  });
+  render(
+    <QueryClientProvider
+      client={
+        new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      }
+    >
+      <FastTrackOnboarding onCreated={vi.fn()} />
+    </QueryClientProvider>
+  );
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: 'Anlegen' })).toBeEnabled()
+  );
+  expect(
+    screen.queryByRole('combobox', { name: 'Absender' })
+  ).not.toBeInTheDocument();
+  await userEvent.type(
+    screen.getByLabelText('E-Mail des Mitarbeiters'),
+    'ada@example.test'
+  );
+  await userEvent.click(screen.getByRole('button', { name: 'Anlegen' }));
+  await waitFor(() =>
+    expect(API.post).toHaveBeenCalledWith('/worker/fast-track', {
+      email: 'ada@example.test',
+      senderAddress: 'hello@example.test',
+    })
+  );
+});

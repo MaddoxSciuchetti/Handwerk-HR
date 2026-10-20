@@ -158,3 +158,14 @@ it.each([false, true])("uses the saved sender for questionnaire delivery (resend
         senderAddress: "office@example.test",
     }));
 });
+
+it('overrides a legacy saved sender with the staging default on retry', async () => {
+    engagement.questionnaireSubmission = { id: 'submission', token: 'retry-token', status: 'sent' };
+    engagement.questionnaireSenderAddress = 'old@example.test';
+    jest.spyOn(require('@/services/questionnaireSender'), 'defaultQuestionnaireSender').mockReturnValue('hello@example.test');
+    (sendMail as jest.Mock).mockResolvedValue({ data: { id: 'mail' }, error: null });
+    try {
+        await sendEngagementQuestionnaire(params);
+        expect(sendMail).toHaveBeenCalledWith(expect.objectContaining({ senderAddress: 'hello@example.test', to: 'lukas@example.test' }));
+    } finally { jest.restoreAllMocks(); }
+});

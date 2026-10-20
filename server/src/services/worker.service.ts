@@ -1,5 +1,6 @@
 import { BAD_REQUEST } from "@/constants/http";
 import AppError from "@/utils/AppError";
+import { defaultQuestionnaireSender } from "@/services/questionnaireSender";
 import { listBsbMailAddresses } from "@/services/engagementMail";
 import { prisma } from "@/lib/prisma";
 import { templateItemsForEngagement } from "@/services/onboardingTemplateTasks";
@@ -143,12 +144,15 @@ export async function startExpectedOnboarding(params: {
     organizationId: string;
     createdByUserId: string;
     email: string;
-    senderAddress: string;
+    senderAddress?: string;
 }) {
-    const senderAddress = params.senderAddress.trim().toLowerCase();
-    const { addresses } = await listBsbMailAddresses(params.organizationId);
-    if (!addresses.some((address) => address.email === senderAddress)) {
-        throw new AppError(BAD_REQUEST, "Bitte einen gültigen Absender wählen.");
+    const defaultSender = defaultQuestionnaireSender();
+    const senderAddress = (defaultSender ?? params.senderAddress ?? "").trim().toLowerCase();
+    if (!defaultSender) {
+        const { addresses } = await listBsbMailAddresses(params.organizationId);
+        if (!addresses.some((address) => address.email === senderAddress)) {
+            throw new AppError(BAD_REQUEST, "Bitte einen gültigen Absender wählen.");
+        }
     }
     const email = params.email.trim().toLowerCase();
     const { firstName, lastName } = placeholderNamesFromEmail(email);

@@ -1,3 +1,4 @@
+import { defaultQuestionnaireSender } from "@/services/questionnaireSender";
 import { FRONTENDURL, QUESTIONNAIRE_MOCK_RESPONSES } from "@/constants/env";
 import { NOT_FOUND } from "@/constants/http";
 import { prisma } from "@/lib/prisma";
@@ -134,10 +135,11 @@ async function deliverQuestionnaire(
     if (!email) return false;
     const formUrl = `${FRONTENDURL.replace(/\/$/, "")}/fragebogen/${token}`;
     const template = getQuestionnaireTemplate(formUrl);
+    const effectiveSender = defaultQuestionnaireSender() ?? senderAddress;
     try {
         const sent = await sendMail({
             to: email,
-            ...(senderAddress ? { senderAddress } : {}),
+            ...(effectiveSender ? { senderAddress: effectiveSender } : {}),
             subject: template.subject,
             text: template.text,
             html: template.html,
