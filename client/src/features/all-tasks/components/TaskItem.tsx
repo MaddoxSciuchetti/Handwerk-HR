@@ -106,7 +106,7 @@ export function TaskItem({
         </Button>
         <div className="relative z-10 flex min-w-0 items-center gap-2.5">
           <TaskStatusPicker taskId={task.id} status={task.status} />
-          {task.hasMention || task.assigneeOnly ? (
+          {task.hasMention ? (
             <span
               className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground"
               aria-label="1 Erwähnung"

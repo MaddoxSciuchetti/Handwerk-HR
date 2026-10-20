@@ -52,6 +52,7 @@ describe('task mentions', () => {
         [
           { ...task, hasMention: true },
           { ...task, id: 'no-mention', hasMention: false },
+          { ...task, id: 'legacy-mention', assigneeOnly: true, assigneeUserId: 'recipient' },
           { ...task, id: 'done', hasMention: true, status: 'done' },
         ],
         'recipient'
