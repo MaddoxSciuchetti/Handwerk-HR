@@ -14,6 +14,7 @@ jest.mock("@/lib/prisma", () => ({
     prisma: {
         issue: { findFirst: jest.fn(), update: jest.fn() },
         worker: { findFirst: jest.fn(), update: jest.fn() },
+        workerExternalAccount: { upsert: jest.fn() },
         departureMailSettings: { findUnique: jest.fn() },
         welcomeMailSettings: { findUnique: jest.fn() },
         mailTemplate: { findFirst: jest.fn() },
@@ -199,6 +200,36 @@ describe("offboarding microsoft automation", () => {
             expect(token).not.toHaveBeenCalled();
             expect(fetchMock).not.toHaveBeenCalled();
             expect(transaction).not.toHaveBeenCalled();
+        },
+    );
+
+    it.each(["automation", "sequence"])(
+        "uses the ID saved on the task in the %s path",
+        async (path) => {
+            const microsoftAccountId = "12345678-1234-1234-1234-123456789abc";
+            findIssue.mockResolvedValue({
+                ...issue,
+                microsoftAccountId,
+                sequence: "microsoft_deactivate_account",
+                integrationProvider: "microsoft_graph",
+                workerEngagement: { ...issue.workerEngagement, workerId: "worker-1" },
+            });
+            findWorker.mockResolvedValue(issue.workerEngagement.worker);
+            const fetchMock = jest.spyOn(global, "fetch")
+                .mockResolvedValueOnce(jsonResponse({ id: microsoftAccountId, accountEnabled: true }))
+                .mockResolvedValueOnce(jsonResponse(null, 204))
+                .mockResolvedValueOnce(jsonResponse({ id: microsoftAccountId, accountEnabled: false }));
+            const params = { organizationId: "org-1", issueId: "issue-1", actorUserId: "user-1" };
+            const result = path === "sequence"
+                ? await runIssueSequence(params)
+                : await runTaskAutomation({ ...params, automation: "o365-block-signin" });
+            expect(result.status).toBe("completed");
+            expect(fetchMock).toHaveBeenNthCalledWith(1,
+                `https://graph.microsoft.com/v1.0/users/${microsoftAccountId}?$select=id,accountEnabled`,
+                expect.anything());
+            expect(fetchMock).toHaveBeenNthCalledWith(2,
+                `https://graph.microsoft.com/v1.0/users/${microsoftAccountId}`,
+                expect.objectContaining({ method: "PATCH", body: JSON.stringify({ accountEnabled: false }) }));
         },
     );
 

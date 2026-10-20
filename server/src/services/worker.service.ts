@@ -591,6 +591,7 @@ export async function createIssue(params: CreateIssueInput) {
         sequence,
         mailTemplateId,
         mailSenderAddress,
+        microsoftAccountId,
         assigneeOnly,
     } = params;
 
@@ -623,6 +624,7 @@ export async function createIssue(params: CreateIssueInput) {
                 sequence,
                 mailTemplateId,
                 mailSenderAddress,
+                microsoftAccountId,
                 assigneeOnly: assigneeOnly ?? false,
             },
             include: {
@@ -671,6 +673,7 @@ export async function updateIssue(params: UpdateIssueInput) {
         sequence,
         mailTemplateId,
         mailSenderAddress,
+        microsoftAccountId,
     } = params;
 
     const existing = await prisma.issue.findFirst({
@@ -690,6 +693,7 @@ export async function updateIssue(params: UpdateIssueInput) {
     if (sequence !== undefined) data.sequence = sequence;
     if (mailTemplateId !== undefined) data.mailTemplateId = mailTemplateId;
     if (mailSenderAddress !== undefined) data.mailSenderAddress = mailSenderAddress;
+    if (microsoftAccountId !== undefined) data.microsoftAccountId = microsoftAccountId;
 
     const keys = Object.keys(data);
     if (keys.length === 0) {

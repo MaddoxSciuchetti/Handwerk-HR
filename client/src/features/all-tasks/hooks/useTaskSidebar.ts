@@ -16,6 +16,7 @@ export type TaskEditState = {
   sequence: string | null;
   mailTemplateId?: string | null;
   mailSenderAddress?: string | null;
+  microsoftAccountId?: string | null;
 };
 
 export const EMPTY_TASK_EDIT_STATE: TaskEditState = {

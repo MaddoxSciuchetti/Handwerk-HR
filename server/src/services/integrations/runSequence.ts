@@ -90,6 +90,7 @@ async function runMicrosoft(
         issueId: string;
         previousStatus: string;
         senderAddress?: string | null;
+        microsoftAccountId?: string | null;
     },
 ): Promise<SequenceRunResult> {
     const config = await loadMicrosoft365Config(params.organizationId);
@@ -132,7 +133,10 @@ async function runMicrosoft(
             },
         },
     });
-    const userKey = worker?.externalAccounts[0]?.externalId.trim() || "";
+    const userKey =
+        params.microsoftAccountId?.trim() ||
+        worker?.externalAccounts[0]?.externalId.trim() ||
+        "";
     if (!userKey) {
         return {
             status: "failed",
@@ -182,6 +186,7 @@ export async function runIssueSequence(params: {
             id: true,
             status: true,
             sequence: true,
+            microsoftAccountId: true,
             integrationProvider: true,
             workerEngagement: {
                 select: {
@@ -207,6 +212,7 @@ export async function runIssueSequence(params: {
         actorUserId: params.actorUserId,
         issueId: issue.id,
         previousStatus: issue.status,
+        microsoftAccountId: issue.microsoftAccountId,
         senderAddress: params.senderAddress,
     };
 

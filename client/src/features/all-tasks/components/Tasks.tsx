@@ -45,7 +45,9 @@ function Tasks() {
     const visibleTasks =
       segment === 'left'
         ? (data ?? [])
-        : (data?.filter((task) => task.assigneeUserId === user?.id) ?? []);
+        : (data?.filter(
+            (task) => task.assigneeUserId === user?.id || task.hasMention
+          ) ?? []);
 
     return confirmationTasksFirst(visibleTasks);
   }, [data, segment, user?.id]);

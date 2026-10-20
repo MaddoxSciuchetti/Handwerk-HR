@@ -1,11 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { createIssue } from "@/services/worker.service";
-import { upsertIssueCommentInOrg } from "@/services/tasks.service";
+import { queryTasks, upsertIssueCommentInOrg } from "@/services/tasks.service";
 import { sendMail } from "@/utils/sendMail";
 
 jest.mock("@/lib/prisma", () => ({
     prisma: {
-        issue: { findFirst: jest.fn() },
+        issue: { findFirst: jest.fn(), findMany: jest.fn() },
         comment: { findFirst: jest.fn(), create: jest.fn(), update: jest.fn() },
         user: { findFirst: jest.fn(), findMany: jest.fn() },
     },
@@ -52,7 +52,7 @@ describe("task mention comments", () => {
         createMentionTask.mockResolvedValue({ id: "task-1" });
     });
 
-    it("creates one urgent assignee-only task and sends one email", async () => {
+    it("stores the mention on the source comment without creating a task and sends one email", async () => {
         findUsers.mockResolvedValue([
             {
                 id: "coworker",
@@ -67,19 +67,15 @@ describe("task mention comments", () => {
             mentionUserIds: ["coworker"],
         });
 
-        expect(createMentionTask).toHaveBeenCalledTimes(1);
-        expect(createMentionTask).toHaveBeenCalledWith(
-            expect.objectContaining({
-                workerEngagementId: "eng-1",
-                createdByUserId: "sender",
-                assigneeUserId: "coworker",
-                status: "open",
-                priority: "urgent",
-                assigneeOnly: true,
-                title: "Bitte @Otto Berg schauen",
-                description: expect.stringContaining("Vertrag prüfen"),
-            }),
-        );
+        expect(createMentionTask).not.toHaveBeenCalled();
+        expect(createComment).toHaveBeenCalledWith(expect.objectContaining({
+            data: {
+                issueId: "issue-1",
+                userId: "sender",
+                body: "Bitte @Otto Berg schauen",
+                mentionedUserIds: ["coworker"],
+            },
+        }));
         expect(mail).toHaveBeenCalledTimes(1);
         expect(mail).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -106,5 +102,28 @@ describe("task mention comments", () => {
             }),
         );
         expect(result.mailFailed).toBe(false);
+    });
+});
+
+
+describe("task mention badges", () => {
+    it("marks the original task for the current viewer without exposing comment recipients", async () => {
+        const findTasks = prisma.issue.findMany as jest.Mock;
+        findTasks.mockResolvedValue([
+            { ...sourceIssue, assigneeUserId: "someone-else", _count: { comments: 2 } },
+            { id: "other-task", _count: { comments: 0 } },
+        ]);
+
+        const tasks = await queryTasks("org-1", "coworker");
+
+        expect(findTasks).toHaveBeenCalledWith(expect.objectContaining({
+            include: expect.objectContaining({
+                _count: { select: { comments: { where: { mentionedUserIds: { has: "coworker" } } } } },
+            }),
+        }));
+        expect(tasks).toEqual([
+            { ...sourceIssue, assigneeUserId: "someone-else", hasMention: true },
+            { id: "other-task", hasMention: false },
+        ]);
     });
 });

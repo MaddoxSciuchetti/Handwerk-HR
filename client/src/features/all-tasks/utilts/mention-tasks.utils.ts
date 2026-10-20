@@ -7,8 +7,8 @@ export function openMentionTasks(
   if (!userId) return [];
   return (tasks ?? []).filter(
     (task) =>
-      task.assigneeOnly &&
-      task.assigneeUserId === userId &&
+      (task.hasMention ||
+        (task.assigneeOnly && task.assigneeUserId === userId)) &&
       task.status !== 'done'
   );
 }

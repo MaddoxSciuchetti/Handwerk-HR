@@ -3,6 +3,7 @@ import type { UnmatchedQuestionnaireAnswer } from '../../api/employmentContract.
 import {
   QUESTIONNAIRE_ANSWER_DRAG_TYPE,
   setDraggedQuestionnaireAnswer,
+  setQuestionnaireAnswerDragImage,
 } from './questionnaireAnswerDrag';
 
 type UnmatchedQuestionnaireAnswersProps = {
@@ -19,7 +20,7 @@ export function UnmatchedQuestionnaireAnswers({
   answers,
   onEditMaster,
   saving,
-  description = 'Diese Angaben aus dem Fragebogen konnten keinem Feld zugeordnet werden. Ziehen Sie eine Angabe auf das passende Feld im Vertrag.',
+  description = 'Diese Angaben aus dem Fragebogen konnten keinem Feld zugeordnet werden. Ziehen Sie eine Angabe auf ein markiertes Feld im Vertrag. Eine grüne Umrandung zeigt, wo Sie loslassen können.',
   unresolvedLabels = [],
   masterHint = 'Fehlt das Feld im Vertrag, ergänzen Sie die Eingabe im Mustervertrag und kehren Sie danach hierher zurück.',
   masterAction = 'Mustervertrag ergänzen',
@@ -58,6 +59,7 @@ export function UnmatchedQuestionnaireAnswers({
                   answer.value
                 );
                 event.dataTransfer.effectAllowed = 'copy';
+                setQuestionnaireAnswerDragImage(event);
               }}
               onDragEnd={() => {
                 queueMicrotask(() => setDraggedQuestionnaireAnswer(null));
@@ -73,9 +75,7 @@ export function UnmatchedQuestionnaireAnswers({
         ))}
       </ul>
       <div className="mt-auto flex flex-col gap-2 border-t border-border pt-3">
-        <p className="text-xs leading-5 text-muted-foreground">
-          {masterHint}
-        </p>
+        <p className="text-xs leading-5 text-muted-foreground">{masterHint}</p>
         <Button
           type="button"
           variant="outline"

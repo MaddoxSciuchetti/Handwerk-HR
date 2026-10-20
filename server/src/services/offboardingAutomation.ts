@@ -71,7 +71,7 @@ async function readMicrosoftUser(token: string, key: string) {
 }
 
 export async function blockMicrosoftSignIn(token: string, userKey: string) {
-    const current = await readMicrosoftUser(token, userKey);
+    const current = await   readMicrosoftUser(token, userKey);
     if (current.status === "missing") {
         return {
             ok: false as const,
@@ -213,6 +213,7 @@ export async function runTaskAutomation(params: {
         select: {
             id: true,
             status: true,
+            microsoftAccountId: true,
             workerEngagement: {
                 select: {
                     id: true,
@@ -271,7 +272,10 @@ export async function runTaskAutomation(params: {
     }
 
     const worker = issue.workerEngagement.worker;
-    const userKey = worker.externalAccounts[0]?.externalId.trim() || "";
+    const userKey =
+        issue.microsoftAccountId?.trim() ||
+        worker.externalAccounts[0]?.externalId.trim() ||
+        "";
     if (!userKey) {
         return {
             status: "failed",

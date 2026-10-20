@@ -321,6 +321,7 @@ model Issue {
   integrationProvider IntegrationProvider? @map("integration_provider")
   sequence           IntegrationSequence? @map("sequence")
   mailTemplateId     String?            @map("mail_template_id")
+  microsoftAccountId String?            @map("microsoft_account_id") @db.VarChar(36)
   mailSenderAddress  String?            @map("mail_sender_address") @db.VarChar(254)
   isTemporary        Boolean            @default(false) @map("is_temporary")
   assigneeOnly       Boolean            @default(false) @map("assignee_only")
@@ -381,6 +382,7 @@ model IssueAuditLog {
 }
 
 model Comment {
+  mentionedUserIds String[] @default([]) @map("mentioned_user_ids")
   id        String   @id @default(uuid())
   issueId   String   @map("issue_id")
   userId    String   @map("user_id")

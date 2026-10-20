@@ -5,6 +5,7 @@ import { FieldGroup } from '@/components/ui/field';
 import { Label } from '@/components/ui/label';
 import { MailSenderSelect } from '@/features/all-tasks/components/MailSenderSelect';
 import TaskAutomation from '@/features/all-tasks/components/TaskAutomation';
+import { MicrosoftAccountIdField } from './MicrosoftAccountIdField';
 import { AutomationRequirementNotice } from '@/features/settings/integrations/AutomationRequirementNotice';
 import { EngagementMailRecipients } from '@/features/worker-task-management/components/tasks/EngagementMailRecipients';
 import {
@@ -58,6 +59,7 @@ export function TaskSidebar({
   );
   const navigate = useNavigate();
   const sequence = useWatch({ control, name: 'sequence' });
+  const microsoftAccountId = useWatch({ control, name: 'microsoftAccountId' });
   const mailSenderAddress = useWatch({ control, name: 'mailSenderAddress' });
   const workerEngagementId = useWatch({
     control,
@@ -136,7 +138,11 @@ export function TaskSidebar({
   );
 
   return (
-    <SidebarAside className="p-2" isOpen={isOpen} onClose={() => setIsOpen(false)}>
+    <SidebarAside
+      className="p-2"
+      isOpen={isOpen}
+      onClose={() => setIsOpen(false)}
+    >
       <SidebarPanel className="w-full">
         <SidebarHeader className="flex items-center justify-between gap-3 p-6">
           <div className="flex min-w-0 items-center gap-3">
@@ -226,6 +232,11 @@ export function TaskSidebar({
                   />
                   <AutomationRequirementNotice sequence={sequence} />
                 </div>
+                <MicrosoftAccountIdField
+                  sequence={sequence}
+                  register={register}
+                  errors={errors}
+                />
                 {sequence === 'microsoft_send_email' ? (
                   <>
                     <div className="flex flex-col gap-2">
@@ -260,7 +271,13 @@ export function TaskSidebar({
                     provider={taskEditState.integrationProvider}
                     sequence={taskEditState.sequence}
                     senderAddress={mailSenderAddress}
-                    disabled={isSubmitting}
+                    disabled={
+                      isSubmitting ||
+                      sequence !== taskEditState.sequence ||
+                      (sequence === 'microsoft_deactivate_account' &&
+                        (microsoftAccountId?.trim() || '') !==
+                          (taskEditState.microsoftAccountId?.trim() || ''))
+                    }
                   />
                 ) : null}
                 {taskState === 'edit' &&
