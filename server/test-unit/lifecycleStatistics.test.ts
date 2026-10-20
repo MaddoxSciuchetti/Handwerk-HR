@@ -8,6 +8,11 @@ test('empty data has no invented duration', () => {
     expect(result.onboarding).toEqual({ averageMs: null, count: 0, level: 'neutral' });
     expect(result.openWorkers.value).toBe(0);
 });
+test('excludes non-applicable tasks from open totals and running durations', () => {
+    const result = summarizeLifecycleStatistics([], [issue({ status: 'not_applicable', completedAt: null })], date('2026-10-05'));
+    expect(result.openTasks).toEqual({ value: 0, overdue: 0, level: 'green' });
+    expect(result.taskDuration).toEqual({ averageMs: null, count: 0, level: 'neutral' });
+});
 test('counts unique active workers and ignores cancelled, completed and archived work', () => {
     const active = worker([engagement({ status: 'pending', completedAt: null }), engagement({ status: 'in_progress' })]);
     const result = summarizeLifecycleStatistics([active, worker(), { ...active, status: 'inactive' }], [issue({ status: 'open' }), issue({ status: 'cancelled' }), issue({ status: 'open', workerEngagement: { status: 'completed', worker: { status: 'active' } } })], date('2026-10-05'));

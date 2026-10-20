@@ -1087,6 +1087,7 @@ enum IssueStatus {
   in_progress
   done
   cancelled
+  not_applicable
 }
 
 enum IssueKind {
