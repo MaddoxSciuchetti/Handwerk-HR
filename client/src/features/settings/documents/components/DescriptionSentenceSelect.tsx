@@ -119,7 +119,7 @@ export function DescriptionSentenceSelect({
             aria-label={adding ? saveLabel : `${label}: Vorschläge anzeigen`}
             aria-expanded={adding ? undefined : open}
             aria-busy={saving || undefined}
-            title={adding ? 'Satz für spätere Verwendung speichern' : undefined}
+            title={adding ? '+ für Hinzufügen' : undefined}
             disabled={adding && (!canSave || saving)}
             className="inline-flex size-8 shrink-0 items-center justify-center text-muted-foreground transition-colors duration-200 hover:text-foreground disabled:opacity-40 motion-reduce:transition-none"
             onMouseDown={(event) => event.preventDefault()}
@@ -178,7 +178,7 @@ export function DescriptionSentenceSelect({
         ))}
         {matches.length === 0 ? (
           <p className="px-2 py-1.5 text-xs text-muted-foreground">
-            Eigener Satz — mit + für später speichern.
+            Eigener Satz — + für Hinzufügen.
           </p>
         ) : null}
       </PopoverContent>

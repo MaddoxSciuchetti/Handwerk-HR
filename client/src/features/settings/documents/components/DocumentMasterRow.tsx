@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { TableCell, TableRow } from '@/components/ui/table';
 import {
   SquareCheckIcon,
-  SquareDashedIcon,
+  SquareIcon,
 } from '@/features/all-tasks/components/ui/SelectIcons';
 import { cn } from '@/lib/utils';
 import { useNavigate } from '@tanstack/react-router';
@@ -23,7 +23,7 @@ export function DocumentMasterRow({
   onToggle,
 }: DocumentMasterRowProps) {
   const navigate = useNavigate();
-  const SelectionIcon = isSelected ? SquareCheckIcon : SquareDashedIcon;
+  const SelectionIcon = isSelected ? SquareCheckIcon : SquareIcon;
 
   const toggle = (event: MouseEvent) => {
     event.stopPropagation();

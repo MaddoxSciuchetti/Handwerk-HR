@@ -78,7 +78,7 @@ export function DescriptionPointsEditor({
             label={`${label} ${index + 1}`}
             value={line}
             options={options}
-            saveLabel={`Punkt ${index + 1} als Vorlage speichern`}
+            saveLabel="+ für Hinzufügen"
             canSave={
               Boolean(line.trim()) &&
               !save.isPending &&

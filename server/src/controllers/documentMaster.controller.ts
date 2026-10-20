@@ -4,6 +4,7 @@ import { BAD_REQUEST, CREATED, NO_CONTENT, OK } from "@/constants/http";
 import {
   createDocumentMaster,
   deleteDocumentMaster,
+  duplicateDocumentMaster,
   getDocumentMaster,
   listDocumentMasters,
   setPrimaryDocumentMaster,
@@ -123,6 +124,12 @@ export const deleteMaster = catchErrors(async (req, res) => {
   appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
   await deleteDocumentMaster(param(req.params.id), req.orgId);
   return res.status(NO_CONTENT).send();
+});
+
+export const duplicateMaster = catchErrors(async (req, res) => {
+  appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
+  const master = await duplicateDocumentMaster(param(req.params.id), req.orgId);
+  return res.status(CREATED).json(master);
 });
 
 export const setPrimaryMaster = catchErrors(async (req, res) => {
