@@ -90,6 +90,7 @@ async function runMicrosoft(
         issueId: string;
         previousStatus: string;
         senderAddress?: string | null;
+        microsoftAccountId?: string | null;
     },
 ): Promise<SequenceRunResult> {
     const config = await loadMicrosoft365Config(params.organizationId);
@@ -125,7 +126,6 @@ async function runMicrosoft(
         where: { id: params.workerId, organizationId: params.organizationId },
         select: {
             id: true,
-            workEmail: true,
             externalAccounts: {
                 where: { provider: "microsoft_365" },
                 select: { externalId: true },
@@ -134,13 +134,13 @@ async function runMicrosoft(
         },
     });
     const userKey =
+        params.microsoftAccountId?.trim() ||
         worker?.externalAccounts[0]?.externalId.trim() ||
-        worker?.workEmail?.trim() ||
         "";
     if (!userKey) {
         return {
             status: "failed",
-            message: "Für diesen Mitarbeiter ist kein Microsoft-365-Konto hinterlegt.",
+            message: "Für diesen Mitarbeiter ist keine Microsoft-365-ID hinterlegt.",
         };
     }
     const token = await microsoftGraphToken(config);
@@ -186,6 +186,7 @@ export async function runIssueSequence(params: {
             id: true,
             status: true,
             sequence: true,
+            microsoftAccountId: true,
             integrationProvider: true,
             workerEngagement: {
                 select: {
@@ -211,6 +212,7 @@ export async function runIssueSequence(params: {
         actorUserId: params.actorUserId,
         issueId: issue.id,
         previousStatus: issue.status,
+        microsoftAccountId: issue.microsoftAccountId,
         senderAddress: params.senderAddress,
     };
 

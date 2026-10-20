@@ -7,9 +7,9 @@ import { Info } from 'lucide-react';
 
 const REQUIREMENT_NOTES: Record<string, { summary: string; details: string }> = {
   microsoft_deactivate_account: {
-    summary: 'Microsoft-ID erforderlich (Onboarding abgeschlossen).',
+    summary: 'Microsoft-Konto-ID für die Ausführung erforderlich.',
     details:
-      'Damit das richtige Microsoft-Konto deaktiviert werden kann, muss die Microsoft-ID beim Handwerker hinterlegt sein. Dafür muss der Handwerker zuvor das Onboarding abgeschlossen haben.',
+      'Die Microsoft-Konto-ID muss beim Handwerker hinterlegt oder in der Aufgabe eingegeben sein. Ohne ID wird die Deaktivierung nicht ausgeführt.',
   },
   microsoft_create_account: {
     summary: 'Freie Microsoft-Lizenz erforderlich.',

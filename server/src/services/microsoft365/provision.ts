@@ -27,7 +27,7 @@ export function createMicrosoft365Provisioner(
             return {
                 status: "skipped",
                 reason: "already_provisioned",
-                workEmail: worker.workEmail ?? "",
+                workEmail: worker.microsoftEmail ?? "",
             };
         }
 
@@ -59,10 +59,17 @@ export function createMicrosoft365Provisioner(
             licenseSkuId: config.licenseSkuId,
         });
         if (!licensed) {
-            await dependencies.graph.deleteUser(token, created.externalId);
+            let deleted = false;
+            try {
+                deleted = await dependencies.graph.deleteUser(token, created.externalId);
+            } catch {
+                // A network failure leaves the deletion outcome unknown.
+            }
             return {
                 status: "failed",
-                message: "Microsoft Graph hat die Lizenz abgelehnt.",
+                message: deleted
+                    ? "Microsoft Graph hat die Lizenz abgelehnt."
+                    : `Microsoft Graph hat die Lizenz abgelehnt. Die Löschung des neu erstellten Kontos ${created.workEmail} (ID: ${created.externalId}) wurde nicht bestätigt. Bitte prüfe das Konto in Microsoft 365, bevor du die Kontoerstellung erneut ausführst.`,
             };
         }
 

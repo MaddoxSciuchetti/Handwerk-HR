@@ -1,5 +1,4 @@
 import { Button } from '@/components/ui/button';
-import { FETCHDESCRIPTION } from '@/features/all-tasks/consts/query.consts';
 import { employeeQueries } from '@/features/employee-overview/query-options/queries/employee.queries';
 import useAuth from '@/features/user-profile/hooks/useAuth';
 import { cn } from '@/lib/utils';
@@ -33,16 +32,13 @@ export function CornerChat() {
   });
   const send = useMutation({
     mutationFn: postOrgChat,
-    onSuccess: (result, variables) => {
+    onSuccess: (result) => {
       queryClient.setQueryData<OrgChatMessage[]>([ORG_CHAT], (previous = []) => [
         ...previous.filter((message) => message.id !== result.message.id),
         result.message,
       ]);
       if (result.mailFailed) {
         toast.error('Die E-Mail konnte nicht gesendet werden.');
-      }
-      if (variables.mentionUserIds?.length) {
-        void queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] });
       }
     },
     onError: () => {

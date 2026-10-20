@@ -1,5 +1,6 @@
 import type { EngagementMailRecipientKind } from "@prisma/client";
 import { BAD_REQUEST } from "@/constants/http";
+import { microsoftSimulationEnabled } from "@/constants/env";
 import { prisma } from "@/lib/prisma";
 import AppError from "@/utils/AppError";
 import {
@@ -120,12 +121,13 @@ export async function listBsbMailAddresses(organizationId: string) {
 async function storedWorkerMails(organizationId: string) {
     const workers = await prisma.worker.findMany({
         where: { organizationId },
-        select: { email: true, workEmail: true },
+        select: { email: true, workEmail: true, microsoftEmail: true },
     });
     const seen = new Set<string>();
     for (const worker of workers) {
         rememberMail(seen, worker.email);
         rememberMail(seen, worker.workEmail);
+        rememberMail(seen, worker.microsoftEmail);
     }
     return seen;
 }
@@ -251,6 +253,7 @@ async function normalizeRecipients(
                   lastName: true,
                   email: true,
                   workEmail: true,
+                  microsoftEmail: true,
               },
           })
         : [];
@@ -348,6 +351,7 @@ type MailWorker = {
     firstName: string;
     lastName: string;
     workEmail: string | null;
+    microsoftEmail?: string | null;
     position: string | null;
     entryDate: Date | null;
     exitDate: Date | null;
@@ -397,7 +401,7 @@ async function resolveRecipientAddresses(params: {
                           id: recipient.workerId,
                           organizationId: params.organizationId,
                       },
-                      select: { email: true, workEmail: true },
+                      select: { email: true, workEmail: true, microsoftEmail: true },
                   })
                 : null;
             const address =
@@ -535,6 +539,7 @@ async function loadIssueMail(
             firstName: true,
             lastName: true,
             workEmail: true,
+            microsoftEmail: true,
             position: true,
             entryDate: true,
             exitDate: true,
@@ -596,7 +601,7 @@ async function deliverMail(params: {
             message: "Für dieses Engagement sind keine Empfänger gewählt.",
         };
     }
-    if (!integrationsLive()) {
+    if (!integrationsLive() && !microsoftSimulationEnabled()) {
         return { status: "failed", message: NOT_LIVE_MESSAGE };
     }
     const config = await loadMicrosoft365Config(params.organizationId);
@@ -640,7 +645,7 @@ function mailValues(worker: MailWorker) {
     return {
         firstName: worker.firstName.trim(),
         lastName: worker.lastName.trim(),
-        workEmail: worker.workEmail?.trim() ?? "",
+        workEmail: worker.microsoftEmail?.trim() || worker.workEmail?.trim() || "",
         position: worker.position?.trim() ?? "",
         entryDate: formatWelcomeEntryDate(worker.entryDate),
         exitDate: formatWelcomeEntryDate(worker.exitDate),

@@ -71,7 +71,7 @@ async function readMicrosoftUser(token: string, key: string) {
 }
 
 export async function blockMicrosoftSignIn(token: string, userKey: string) {
-    const current = await readMicrosoftUser(token, userKey);
+    const current = await   readMicrosoftUser(token, userKey);
     if (current.status === "missing") {
         return {
             ok: false as const,
@@ -213,13 +213,13 @@ export async function runTaskAutomation(params: {
         select: {
             id: true,
             status: true,
+            microsoftAccountId: true,
             workerEngagement: {
                 select: {
                     id: true,
                     worker: {
                         select: {
                             id: true,
-                            workEmail: true,
                             externalAccounts: {
                                 where: { provider: "microsoft_365" },
                                 select: { externalId: true },
@@ -273,14 +273,14 @@ export async function runTaskAutomation(params: {
 
     const worker = issue.workerEngagement.worker;
     const userKey =
+        issue.microsoftAccountId?.trim() ||
         worker.externalAccounts[0]?.externalId.trim() ||
-        worker.workEmail?.trim() ||
         "";
     if (!userKey) {
         return {
             status: "failed",
             message:
-                "Für diesen Mitarbeiter ist kein Microsoft-365-Konto hinterlegt.",
+                "Für diesen Mitarbeiter ist keine Microsoft-365-ID hinterlegt.",
         };
     }
 

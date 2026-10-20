@@ -52,6 +52,7 @@ type LetterWorker = {
     lastName: string;
     email: string;
     workEmail: string | null;
+    microsoftEmail?: string | null;
     phoneNumber: string | null;
     birthday: Date | null;
     position: string | null;
@@ -81,7 +82,7 @@ function letterFields(params: {
             .filter((part) => part.length > 0)
             .join(" "),
         email: params.worker.email.trim(),
-        workEmail: params.worker.workEmail?.trim() ?? "",
+        workEmail: params.worker.microsoftEmail?.trim() || params.worker.workEmail?.trim() || "",
         position: params.worker.position?.trim() ?? "",
         phone: params.worker.phoneNumber?.trim() ?? "",
         birthday: formatWelcomeEntryDate(params.worker.birthday),
@@ -182,6 +183,7 @@ async function loadLetter(params: {
                     lastName: true,
                     email: true,
                     workEmail: true,
+                    microsoftEmail: true,
                     phoneNumber: true,
                     birthday: true,
                     position: true,

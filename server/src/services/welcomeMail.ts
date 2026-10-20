@@ -559,6 +559,7 @@ export async function sendTeamWelcomeMail(params: {
             firstName: true,
             lastName: true,
             workEmail: true,
+            microsoftEmail: true,
             position: true,
             entryDate: true,
             welcomeMailSentAt: true,
@@ -568,7 +569,7 @@ export async function sendTeamWelcomeMail(params: {
     if (worker.welcomeMailSentAt) {
         return { status: "skipped", reason: "already_sent" };
     }
-    const workEmail = worker.workEmail?.trim() ?? "";
+    const workEmail = worker.microsoftEmail?.trim() || worker.workEmail?.trim() || "";
     if (!workEmail) return { status: "skipped", reason: "no_work_email" };
 
     const settings = await readWelcomeMailSettings(params.organizationId);

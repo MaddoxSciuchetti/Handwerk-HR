@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, type DragEvent } from 'react';
+import { useContext, useEffect, useRef } from 'react';
 import {
   currentDocumentDate,
   normalizeDocumentFieldValue,
@@ -9,10 +9,7 @@ import {
   ReactNodeViewRenderer,
   type NodeViewProps,
 } from '@tiptap/react';
-import {
-  getDraggedQuestionnaireAnswer,
-  setDraggedQuestionnaireAnswer,
-} from '@/features/worker-task-management/components/files/questionnaireAnswerDrag';
+import { useQuestionnaireAnswerDrop } from '@/features/worker-task-management/components/files/questionnaireAnswerDrag';
 
 import { DocumentFieldDetails } from './components/DocumentFieldDetails';
 import { DocumentValuesContext } from './DocumentValuesContext';
@@ -162,32 +159,21 @@ function DocumentFieldView({ node, updateAttributes, editor }: NodeViewProps) {
     : glyph === '□'
       ? '□'
       : '☐';
+  const answerDrop = useQuestionnaireAnswerDrop<HTMLSpanElement>(
+    !context.master && !context.readOnly && !useToday,
+    (answer) =>
+      context.onValueChange(
+        key,
+        normalizeDocumentFieldValue(node.attrs.fieldType, answer)
+      )
+  );
   return (
     <NodeViewWrapper
       as="span"
-      className="inline-block max-w-full align-baseline whitespace-nowrap"
+      {...answerDrop}
+      className={`inline-block max-w-full align-baseline whitespace-nowrap ${answerDrop.className}`}
       style={{ whiteSpace: 'nowrap' }}
       contentEditable={false}
-      onDragOver={(e: DragEvent<HTMLSpanElement>) => {
-        if (
-          !context.master &&
-          !context.readOnly &&
-          !useToday &&
-          getDraggedQuestionnaireAnswer()
-        )
-          e.preventDefault();
-      }}
-      onDrop={(e: DragEvent<HTMLSpanElement>) => {
-        const answer = getDraggedQuestionnaireAnswer();
-        if (answer && !context.master && !context.readOnly && !useToday) {
-          e.preventDefault();
-          context.onValueChange(
-            key,
-            normalizeDocumentFieldValue(node.attrs.fieldType, answer.value)
-          );
-          setDraggedQuestionnaireAnswer(null);
-        }
-      }}
     >
       {node.attrs.fieldType === 'checkbox' && glyph ? (
         context.master ? (
@@ -298,25 +284,6 @@ function DocumentFieldView({ node, updateAttributes, editor }: NodeViewProps) {
           className="mx-0.5 max-w-full border-b border-blue-400 bg-blue-50 px-0.5 outline-none"
           style={{ font: 'inherit', color: 'inherit' }}
           onChange={(e) => context.onValueChange(key, e.target.value)}
-          onDragOver={(e) => {
-            if (
-              !context.readOnly &&
-              !useToday &&
-              getDraggedQuestionnaireAnswer()
-            )
-              e.preventDefault();
-          }}
-          onDrop={(e) => {
-            const answer = getDraggedQuestionnaireAnswer();
-            if (answer && !context.readOnly && !useToday) {
-              e.preventDefault();
-              context.onValueChange(
-                key,
-                normalizeDocumentFieldValue(node.attrs.fieldType, answer.value)
-              );
-              setDraggedQuestionnaireAnswer(null);
-            }
-          }}
         />
       )}
     </NodeViewWrapper>

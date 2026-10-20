@@ -17,7 +17,7 @@ const worker: ProvisioningWorker = {
     firstName: "Ada",
     lastName: "Lovelace",
     email: "ada@personal.test",
-    workEmail: null,
+    microsoftEmail: null,
     externalAccounts: [],
 };
 const account = { externalId: "graph-1", workEmail: "ada.lovelace@firma.de" };
@@ -116,7 +116,7 @@ it("skips a locally linked account without sending a new password", async () => 
     const { dependencies: d, provision } = setup();
     d.repository.findWorker.mockResolvedValue({
         ...worker,
-        workEmail: account.workEmail,
+        microsoftEmail: account.workEmail,
         externalAccounts: [{ externalId: account.externalId }],
     });
     expect(await provision(input)).toEqual({
@@ -177,7 +177,10 @@ it("reports failure even when cleanup is rejected", async () => {
     const { dependencies: d, provision } = setup();
     d.graph.assignLicense.mockResolvedValue(false);
     d.graph.deleteUser.mockResolvedValue(false);
-    expect(await provision(input)).toMatchObject({ status: "failed" });
+    expect(await provision(input)).toEqual({
+        status: "failed",
+        message: expect.stringContaining(`ID: ${account.externalId}`),
+    });
     expect(d.repository.saveAccount).not.toHaveBeenCalled();
 });
 

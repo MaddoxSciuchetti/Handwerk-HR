@@ -64,14 +64,19 @@ export function MentionNotice() {
   const count = notice.length;
 
   return (
-    <Dialog open={count > 0} onOpenChange={(open) => { if (!open) dismiss(); }}>
+    <Dialog
+      open={count > 0}
+      onOpenChange={(open) => {
+        if (!open) dismiss();
+      }}
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Du wurdest erwähnt</DialogTitle>
           <DialogDescription>
             {count === 1
-              ? '1 neue Aufgabe wartet auf dich.'
-              : `${count} neue Aufgaben warten auf dich.`}
+              ? 'Du wurdest in 1 Aufgabe erwähnt.'
+              : `Du wurdest in ${count} Aufgaben erwähnt.`}
           </DialogDescription>
         </DialogHeader>
         <ul className="flex flex-col gap-2">

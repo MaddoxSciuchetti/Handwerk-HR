@@ -92,6 +92,7 @@ export async function sendTeamDepartureMail(params: {
             firstName: true,
             lastName: true,
             workEmail: true,
+            microsoftEmail: true,
             position: true,
             exitDate: true,
             departureMailSentAt: true,
@@ -134,7 +135,7 @@ export async function sendTeamDepartureMail(params: {
     const values = {
         firstName: worker.firstName.trim(),
         lastName: worker.lastName.trim(),
-        workEmail: worker.workEmail?.trim() ?? "",
+        workEmail: worker.microsoftEmail?.trim() || worker.workEmail?.trim() || "",
         position: worker.position?.trim() ?? "",
         exitDate: formatWelcomeEntryDate(worker.exitDate),
     };

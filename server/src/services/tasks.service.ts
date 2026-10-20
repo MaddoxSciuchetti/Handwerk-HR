@@ -55,8 +55,10 @@ export type TaskHistoryCommentEntry = {
 export type TaskHistoryItem = TaskHistoryAuditEntry | TaskHistoryCommentEntry;
 
 export const queryTasks = async (orgId: string, viewerUserId: string) => {
-    return prisma.issue.findMany({
+    const tasks = await prisma.issue.findMany({
         where: {
+            // Legacy mention notifications are not standalone tasks.
+            assigneeOnly: false,
             AND: [
                 {
                     OR: [
@@ -69,6 +71,11 @@ export const queryTasks = async (orgId: string, viewerUserId: string) => {
         },
         orderBy: { createdAt: "desc" },
         include: {
+            _count: {
+                select: {
+                    comments: { where: { mentionedUserIds: { has: viewerUserId } } },
+                },
+            },
             assignee: {
                 select: {
                     id: true,
@@ -86,11 +93,15 @@ export const queryTasks = async (orgId: string, viewerUserId: string) => {
             },
         },
     });
+    return tasks.map(({ _count, ...task }) => ({
+        ...task,
+        hasMention: _count.comments > 0,
+    }));
 };
 
 async function taskSequenceFields(
     orgId: string,
-    body: { sequence?: unknown; mailTemplateId?: unknown; mailSenderAddress?: unknown },
+    body: { sequence?: unknown; mailTemplateId?: unknown; mailSenderAddress?: unknown; microsoftAccountId?: unknown },
 ) {
     if (body.sequence === undefined) return {};
     if (body.sequence === null || body.sequence === "none" || body.sequence === "") {
@@ -99,6 +110,7 @@ async function taskSequenceFields(
             sequence: null,
             mailTemplateId: null,
             mailSenderAddress: null,
+            microsoftAccountId: null,
         };
     }
     if (!INTEGRATION_SEQUENCES.includes(body.sequence as IntegrationSequence)) {
@@ -138,7 +150,13 @@ async function taskSequenceFields(
     ) {
         throw new AppError(BAD_REQUEST, "Bitte wähle einen Absender.");
     }
-    return { integrationProvider, sequence, mailTemplateId, mailSenderAddress, automation: null };
+    const microsoftAccountId = sequence === "microsoft_deactivate_account"
+        ? (typeof body.microsoftAccountId === "string" ? body.microsoftAccountId.trim() || null : undefined)
+        : null;
+    if (microsoftAccountId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(microsoftAccountId)) {
+        throw new AppError(BAD_REQUEST, "Bitte gib eine gültige Microsoft-Konto-ID ein.");
+    }
+    return { integrationProvider, sequence, mailTemplateId, mailSenderAddress, microsoftAccountId, automation: null };
 }
 
 export async function createTaskInOrg(
@@ -155,6 +173,7 @@ export async function createTaskInOrg(
         sequence?: string | null;
         mailTemplateId?: string | null;
         mailSenderAddress?: string | null;
+        microsoftAccountId?: string | null;
     };
     const workerEngagementId = body.workerEngagementId?.trim() ?? "";
     if (!workerEngagementId) {
@@ -237,6 +256,7 @@ export async function updateTaskInOrg(
         sequence?: string | null;
         mailTemplateId?: string | null;
         mailSenderAddress?: string | null;
+        microsoftAccountId?: string | null;
     };
 
     let automation: string | null | undefined;
@@ -294,6 +314,7 @@ const HUMAN_READABLE_FIELDS = new Set([
     "sequence",
     "mailTemplateId",
     "mailSenderAddress",
+    "microsoftAccountId",
 ]);
 
 const PRIORITY_LABELS: Record<string, string> = {
@@ -524,18 +545,6 @@ export async function getTaskHistoryInOrg(
     return merged;
 }
 
-const MENTION_TITLE_LIMIT = 120;
-
-export function mentionTaskTitle(body: string) {
-    const compact = body.replace(/\s+/g, " ").trim();
-    if (compact.length <= MENTION_TITLE_LIMIT) return compact;
-    return `${compact.slice(0, MENTION_TITLE_LIMIT - 1).trimEnd()}…`;
-}
-
-function mentionTaskDescription(sourceTitle: string, body: string) {
-    return `Erwähnt in: ${sourceTitle}\n\n${body.trim()}`.slice(0, 8000);
-}
-
 function tasksPageUrl() {
     const origin = APP_ORIGIN.split(",")[0]?.trim().replace(/\/$/, "") ?? "";
     return `${origin}/tasks`;
@@ -616,7 +625,7 @@ export async function upsertIssueCommentInOrg(
     }
 
     const comment = await prisma.comment.create({
-        data: { issueId, userId, body },
+        data: { issueId, userId, body, mentionedUserIds: mentionIds },
         include: { user: { select: commentUserSelect } },
     });
 
@@ -632,23 +641,10 @@ export async function upsertIssueCommentInOrg(
         `${actor?.firstName ?? ""} ${actor?.lastName ?? ""}`.trim() ||
         actor?.email ||
         "Ein Kollege";
-    const title = mentionTaskTitle(body);
-    const description = mentionTaskDescription(issue.title, body);
     const actionUrl = tasksPageUrl();
     let mailFailed = false;
 
     for (const person of mentioned) {
-        await createIssue({
-            workerEngagementId: issue.workerEngagementId ?? undefined,
-            organizationId: issue.workerEngagementId ? undefined : orgId,
-            createdByUserId: userId,
-            assigneeUserId: person.id,
-            status: "open",
-            title,
-            description,
-            priority: "urgent",
-            assigneeOnly: true,
-        });
         const recipientName =
             `${person.firstName} ${person.lastName}`.trim() || person.email;
         const template = getTaskMentionTemplate({
