@@ -344,6 +344,18 @@ export function ContractSendDialog({
                           </option>
                         ))}
                       </select>
+                      <ContractQuestionnaireSync
+                        workerId={workerId}
+                        engagementId={engagementId}
+                        contract={data}
+                        onBusy={setSyncing}
+                        disabled={busy || blockedDelivery}
+                        onSynced={(saved) => {
+                          edited.current = false;
+                          setValues(saved.values);
+                          setPrepared(null);
+                        }}
+                      />
                     </div>
                     {templates.isError ? (
                       <p className="text-sm text-destructive">
@@ -353,12 +365,6 @@ export function ContractSendDialog({
                   </div>
                 ) : null}
               </div>
-              <ContractQuestionnaireSync workerId={workerId} engagementId={engagementId}
-                contract={data} onBusy={setSyncing} disabled={busy || blockedDelivery} onSynced={(saved) => {
-                  edited.current = false;
-                  setValues(saved.values);
-                  setPrepared(null);
-                }} />
               {data.outgoingFileUrl ? (
                 <a
                   href={data.outgoingFileUrl}
