@@ -1,3 +1,4 @@
+import { runIssueSequence } from "@/services/integrations/runSequence";
 import { sendPreparedDocument } from "@/services/preparedDocument";
 import { readStyledDocument } from "../../../shared/document";
 import { certificateText } from "@/services/arbeitszeugnis";
@@ -155,6 +156,51 @@ describe("offboarding microsoft automation", () => {
     afterEach(() => {
         jest.restoreAllMocks();
     });
+
+    it.each([
+        { externalAccounts: [] },
+        { externalAccounts: [{ externalId: "   " }] },
+    ])(
+        "rejects deactivation without a Microsoft ID even when a work email exists (%j)",
+        async ({ externalAccounts }) => {
+            findIssue.mockResolvedValue({
+                ...issue,
+                sequence: "microsoft_deactivate_account",
+                integrationProvider: "microsoft_graph",
+                workerEngagement: {
+                    ...issue.workerEngagement,
+                    workerId: "worker-1",
+                    worker: { ...issue.workerEngagement.worker, externalAccounts },
+                },
+            });
+            findWorker.mockResolvedValue({
+                ...issue.workerEngagement.worker,
+                externalAccounts,
+            });
+            const fetchMock = jest.spyOn(global, "fetch");
+
+            expect(await runTaskAutomation({
+                organizationId: "org-1",
+                issueId: "issue-1",
+                actorUserId: "user-1",
+                automation: "o365-block-signin",
+            })).toEqual({
+                status: "failed",
+                message: "Für diesen Mitarbeiter ist keine Microsoft-365-ID hinterlegt.",
+            });
+            expect(await runIssueSequence({
+                organizationId: "org-1",
+                issueId: "issue-1",
+                actorUserId: "user-1",
+            })).toEqual({
+                status: "failed",
+                message: "Für diesen Mitarbeiter ist keine Microsoft-365-ID hinterlegt.",
+            });
+            expect(token).not.toHaveBeenCalled();
+            expect(fetchMock).not.toHaveBeenCalled();
+            expect(transaction).not.toHaveBeenCalled();
+        },
+    );
 
     it("blocks sign-in and marks the chosen task done", async () => {
         const fetchMock = jest

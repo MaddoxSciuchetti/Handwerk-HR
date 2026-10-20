@@ -154,6 +154,12 @@ describe("Microsoft staging simulation", () => {
                 sequence,
                 workerEngagement: { id: "engagement-1", workerId: "worker-1" },
             });
+            if (sequence === "microsoft_deactivate_account") {
+                (prisma.worker.findFirst as jest.Mock).mockResolvedValue({
+                    id: "worker-1",
+                    externalAccounts: [{ externalId: "simulation-microsoft-worker-1" }],
+                });
+            }
             expect(await runIssueSequence(context)).toEqual({
                 status: "completed",
             });

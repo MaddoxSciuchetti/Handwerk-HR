@@ -125,7 +125,6 @@ async function runMicrosoft(
         where: { id: params.workerId, organizationId: params.organizationId },
         select: {
             id: true,
-            workEmail: true,
             externalAccounts: {
                 where: { provider: "microsoft_365" },
                 select: { externalId: true },
@@ -133,14 +132,11 @@ async function runMicrosoft(
             },
         },
     });
-    const userKey =
-        worker?.externalAccounts[0]?.externalId.trim() ||
-        worker?.workEmail?.trim() ||
-        "";
+    const userKey = worker?.externalAccounts[0]?.externalId.trim() || "";
     if (!userKey) {
         return {
             status: "failed",
-            message: "Für diesen Mitarbeiter ist kein Microsoft-365-Konto hinterlegt.",
+            message: "Für diesen Mitarbeiter ist keine Microsoft-365-ID hinterlegt.",
         };
     }
     const token = await microsoftGraphToken(config);
