@@ -6,6 +6,7 @@ import {
   act,
 } from '@testing-library/react';
 import { useState } from 'react';
+import { renderWithProviders } from 'test-unit/test-utils';
 import userEvent from '@testing-library/user-event';
 import { Editor } from '@tiptap/core';
 import { vi, it, expect } from 'vitest';
@@ -14,6 +15,12 @@ import { StyledDocumentReview } from '@/features/settings/documents/StyledDocume
 import { fromSegments } from '@/features/settings/documents/styledDocument';
 import { PreparedPdfPreview } from '@/features/worker-task-management/components/files/PreparedPdfPreview';
 import { setDraggedQuestionnaireAnswer } from '@/features/worker-task-management/components/files/questionnaireAnswerDrag';
+
+vi.mock('@/features/settings/documents/descriptionSentences.api', () => ({
+  descriptionSentencesKey: ['documents', 'description-sentences'],
+  getDescriptionSentences: vi.fn().mockResolvedValue([]),
+  saveDescriptionSentence: vi.fn(),
+}));
 
 const document = fromSegments([
   { type: 'text', text: 'Vertrag mit ' },
@@ -443,7 +450,7 @@ it('lets the sender type Tätigkeitspunkte without a stored field value', async 
     },
   });
   const onValueChange = vi.fn();
-  render(
+  renderWithProviders(
     <StyledDocumentReview
       document={value}
       values={{ 'contract.taetigkeiten': 'Montage' }}
@@ -453,10 +460,10 @@ it('lets the sender type Tätigkeitspunkte without a stored field value', async 
   );
   expect(
     await screen.findByText(
-      'Diese Punkte gelten nur für dieses Arbeitsverhältnis.'
+      'Satz auswählen oder eigenen Text eingeben. Mit + für später speichern.'
     )
   ).toBeTruthy();
-  const point = await screen.findByRole('textbox', { name: 'Tätigkeiten 1' });
+  const point = await screen.findByRole('combobox', { name: 'Tätigkeiten 1' });
   expect(point).toHaveValue('Montage');
   fireEvent.change(point, { target: { value: 'Wartung' } });
   expect(onValueChange).toHaveBeenCalledWith('contract.taetigkeiten', 'Wartung');

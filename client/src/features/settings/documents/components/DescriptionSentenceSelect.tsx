@@ -1,0 +1,157 @@
+import { useId, useRef, useState, type ClipboardEvent } from 'react';
+import { ChevronDown } from 'lucide-react';
+import {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+} from '@/components/ui/popover';
+
+type Props = {
+  label: string;
+  value: string;
+  options: readonly string[];
+  onChange: (value: string) => void;
+  onPaste: (event: ClipboardEvent<HTMLInputElement>) => void;
+};
+
+export function DescriptionSentenceSelect({
+  label,
+  value,
+  options,
+  onChange,
+  onPaste,
+}: Props) {
+  const [open, setOpen] = useState(false);
+  const [filter, setFilter] = useState('');
+  const [active, setActive] = useState(-1);
+  const listId = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const anchorRef = useRef<HTMLDivElement>(null);
+  const matches = options.filter((option) =>
+    option
+      .toLocaleLowerCase('de-DE')
+      .includes(filter.toLocaleLowerCase('de-DE'))
+  );
+  const choose = (sentence: string) => {
+    onChange(sentence);
+    setOpen(false);
+    setFilter('');
+    setActive(-1);
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverAnchor asChild>
+        <div
+          ref={anchorRef}
+          className="flex min-w-0 flex-1 items-center rounded-md border border-input bg-background"
+        >
+          <input
+            ref={inputRef}
+            role="combobox"
+            aria-label={label}
+            aria-expanded={open}
+            aria-controls={listId}
+            aria-autocomplete="list"
+            aria-activedescendant={
+              open && active >= 0 && active < matches.length
+                ? `${listId}-${active}`
+                : undefined
+            }
+            value={value}
+            maxLength={500}
+            placeholder="Satz wählen oder eigenen Text eingeben"
+            className="h-8 min-w-0 flex-1 bg-transparent px-2 text-sm outline-none"
+            onFocus={() => {
+              setFilter('');
+              setActive(-1);
+              setOpen(true);
+            }}
+            onChange={(event) => {
+              onChange(event.target.value);
+              setFilter(event.target.value);
+              setActive(-1);
+              setOpen(true);
+            }}
+            onPaste={onPaste}
+            onKeyDown={(event) => {
+              if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                event.preventDefault();
+                setOpen(true);
+                setActive((current) =>
+                  matches.length === 0
+                    ? -1
+                    : event.key === 'ArrowDown'
+                      ? (current + 1) % matches.length
+                      : current <= 0
+                        ? matches.length - 1
+                        : current - 1
+                );
+              } else if (
+                event.key === 'Enter' &&
+                open &&
+                active >= 0 &&
+                matches[active]
+              ) {
+                event.preventDefault();
+                choose(matches[active]);
+              } else if (event.key === 'Escape') {
+                event.preventDefault();
+                setOpen(false);
+              }
+            }}
+          />
+          <button
+            type="button"
+            aria-label={`${label}: Vorschläge anzeigen`}
+            aria-expanded={open}
+            className="inline-flex size-8 shrink-0 items-center justify-center text-muted-foreground"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => {
+              const nextOpen = !open;
+              inputRef.current?.focus();
+              setFilter('');
+              setActive(-1);
+              setOpen(nextOpen);
+            }}
+          >
+            <ChevronDown aria-hidden="true" className="size-4" />
+          </button>
+        </div>
+      </PopoverAnchor>
+      <PopoverContent
+        role="listbox"
+        id={listId}
+        aria-label={`${label}: Sätze`}
+        align="start"
+        className="z-[100] max-h-60 w-[var(--radix-popover-trigger-width)] min-w-64 max-w-[calc(100vw-2rem)] gap-0 overflow-y-auto p-1"
+        onOpenAutoFocus={(event) => event.preventDefault()}
+        onCloseAutoFocus={(event) => event.preventDefault()}
+        onInteractOutside={(event) => {
+          if (anchorRef.current?.contains(event.target as Node))
+            event.preventDefault();
+        }}
+      >
+        {matches.map((option, index) => (
+          <button
+            key={option}
+            type="button"
+            role="option"
+            id={`${listId}-${index}`}
+            aria-selected={option === value}
+            className={`w-full rounded-md px-2 py-1.5 text-left text-sm whitespace-normal hover:bg-muted ${active === index ? 'bg-muted' : ''}`}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => choose(option)}
+          >
+            {option}
+          </button>
+        ))}
+        {matches.length === 0 ? (
+          <p className="px-2 py-1.5 text-xs text-muted-foreground">
+            Eigener Satz — mit + für später speichern.
+          </p>
+        ) : null}
+      </PopoverContent>
+    </Popover>
+  );
+}

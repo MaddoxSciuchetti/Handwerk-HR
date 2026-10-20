@@ -11,7 +11,15 @@ import {
 } from "@/controllers/documentMaster.controller";
 import { upload } from "@/middleware/fileparser";
 
+import {
+  getDescriptionSentences,
+  createDescriptionSentence,
+} from "@/controllers/descriptionSentences.controller";
+
 const documentMasterRoutes = Router();
+
+documentMasterRoutes.get("/description-sentences", getDescriptionSentences);
+documentMasterRoutes.post("/description-sentences", createDescriptionSentence);
 
 documentMasterRoutes.get("/", listMasters);
 documentMasterRoutes.get("/font-status", getDocumentFontStatus);
