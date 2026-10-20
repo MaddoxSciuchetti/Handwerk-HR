@@ -48,7 +48,8 @@ const worker = {
     id: "worker-1",
     firstName: "Ada",
     lastName: "Lovelace",
-    workEmail: "ada.lovelace@firma.de",
+    workEmail: "ada@communication.test",
+    microsoftEmail: "ada.lovelace@firma.de",
     position: "Maler",
     entryDate: new Date("2026-04-01T00:00:00.000Z"),
     welcomeMailSentAt: null,
@@ -184,6 +185,8 @@ describe("welcome mail", () => {
         expect(body.saveToSentItems).toBe(true);
         expect(body.message.subject).toBe("Willkommen Ada");
         expect(body.message.body.content).toContain("01.04.2026");
+        expect(body.message.body.content).toContain("ada.lovelace@firma.de");
+        expect(body.message.body.content).not.toContain("ada@communication.test");
         expect(body.message.toRecipients.map((item) => item.emailAddress.address)).toEqual([
             "a@firma.de",
             "b@firma.de",

@@ -10,7 +10,7 @@ export const microsoft365Repository: ProvisioningRepository = {
                 firstName: true,
                 lastName: true,
                 email: true,
-                workEmail: true,
+                microsoftEmail: true,
                 externalAccounts: {
                     where: { provider: "microsoft_365" },
                     select: { externalId: true },
@@ -23,7 +23,7 @@ export const microsoft365Repository: ProvisioningRepository = {
         await prisma.$transaction(async (tx) => {
             await tx.worker.update({
                 where: { id: workerId },
-                data: { workEmail: account.workEmail },
+                data: { microsoftEmail: account.workEmail },
             });
             await tx.workerExternalAccount.upsert({
                 where: {

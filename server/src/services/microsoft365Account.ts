@@ -335,7 +335,7 @@ export async function provisionMicrosoft365Account(params: {
             firstName: true,
             lastName: true,
             email: true,
-            workEmail: true,
+            microsoftEmail: true,
             externalAccounts: {
                 where: { provider: "microsoft_365" },
                 select: { externalId: true },
@@ -352,7 +352,7 @@ export async function provisionMicrosoft365Account(params: {
         return {
             status: "skipped",
             reason: "already_provisioned",
-            workEmail: worker.workEmail ?? "",
+            workEmail: worker.microsoftEmail ?? "",
         };
     }
 
@@ -384,21 +384,32 @@ export async function provisionMicrosoft365Account(params: {
         licenseSkuId: config.licenseSkuId,
     });
     if (!licensed) {
-        await graphRequest(
-            token,
-            `/users/${encodeURIComponent(created.externalId)}`,
-            { method: "DELETE" },
-        );
+        let deleted = false;
+        try {
+            const { response } = await graphRequest(
+                token,
+                `/users/${encodeURIComponent(created.externalId)}`,
+                { method: "DELETE" },
+            );
+            deleted = response.status === 204;
+            if (!deleted) {
+                console.error("Microsoft 365 account cleanup not confirmed", response.status);
+            }
+        } catch {
+            console.error("Microsoft 365 account cleanup request failed");
+        }
         return {
             status: "failed",
-            message: "Microsoft Graph hat die Lizenz abgelehnt.",
+            message: deleted
+                ? "Microsoft Graph hat die Lizenz abgelehnt."
+                : `Microsoft Graph hat die Lizenz abgelehnt. Die Löschung des neu erstellten Kontos ${created.workEmail} (ID: ${created.externalId}) wurde nicht bestätigt. Bitte prüfe das Konto in Microsoft 365, bevor du die Kontoerstellung erneut ausführst.`,
         };
     }
 
     await prisma.$transaction(async (tx) => {
         await tx.worker.update({
             where: { id: worker.id },
-            data: { workEmail: created.workEmail },
+            data: { microsoftEmail: created.workEmail },
         });
         await tx.workerExternalAccount.upsert({
             where: {

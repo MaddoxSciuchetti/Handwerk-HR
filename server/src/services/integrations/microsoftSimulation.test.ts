@@ -172,7 +172,7 @@ describe("Microsoft staging simulation", () => {
                 expect(prisma.worker.update).toHaveBeenCalledWith(
                     expect.objectContaining({
                         data: {
-                            workEmail: "ada.lovelace@staging.example.test",
+                            microsoftEmail: "ada.lovelace@staging.example.test",
                         },
                     }),
                 );
