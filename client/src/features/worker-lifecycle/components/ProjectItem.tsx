@@ -8,6 +8,11 @@ import { getFirstFormType } from '../utils/formtype';
 import { getWorkerIssueCount } from '../utils/workerHealth.utils';
 import WorkerEngagementInfoButton from './WorkerEngagementInfoButton';
 import { EngagementProgressPicker } from './ui/EngagementProgressPicker';
+import EngagementTypeSwitch from './EngagementTypeSwitch';
+import {
+  ResponsibleUserPicker,
+  type ResponsibleUserOption,
+} from './ResponsibleUserPicker';
 
 export type WorkerSelection = {
   engagementNumber: string;
@@ -26,6 +31,11 @@ type ProjectItemProps = {
   isSelected: boolean;
   setLargeEditMode: Dispatch<SetStateAction<boolean>>;
   setEditModeData: Dispatch<SetStateAction<WorkerSelection[]>>;
+  onTypeChange: (type: EngagementType) => void;
+  isChangingType: boolean;
+  responsibleUsers: ResponsibleUserOption[];
+  onResponsibleChange: (userId: string) => void;
+  isChangingResponsible: boolean;
 };
 
 function ProjectItem({
@@ -34,6 +44,11 @@ function ProjectItem({
   isSelected,
   setLargeEditMode,
   setEditModeData,
+  onTypeChange,
+  isChangingType,
+  responsibleUsers,
+  onResponsibleChange,
+  isChangingResponsible,
 }: ProjectItemProps) {
   const form_type = getFirstFormType(worker);
   const fullname = `${worker.firstName} ${worker.lastName}`;
@@ -88,7 +103,14 @@ function ProjectItem({
           isSelected && 'bg-muted/50'
         )}
       >
-        {worker.engagements[0].type}
+        <div onClick={(event) => event.stopPropagation()}>
+          <EngagementTypeSwitch
+            value={worker.engagements[0].type}
+            workerName={fullname.trim()}
+            disabled={isChangingType}
+            onSwitch={onTypeChange}
+          />
+        </div>
       </TableCell>
       <TableCell
         className={cn(
@@ -96,7 +118,15 @@ function ProjectItem({
           isSelected && 'bg-muted/50'
         )}
       >
-        {worker.engagements[0].responsibleUser.firstName}
+        <div onClick={(event) => event.stopPropagation()}>
+          <ResponsibleUserPicker
+            value={worker.engagements[0].responsibleUser}
+            options={responsibleUsers}
+            workerName={fullname.trim()}
+            disabled={isChangingResponsible}
+            onChange={onResponsibleChange}
+          />
+        </div>
       </TableCell>
       <TableCell
         className={cn(

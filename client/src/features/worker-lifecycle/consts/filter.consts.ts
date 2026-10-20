@@ -19,7 +19,7 @@ export const FILTER_OPTIONS: DropdownOption[] = [
   },
   { label: 'Verantwortlich', value: 'responsible' },
   {
-    label: 'Type',
+    label: 'Typ',
     value: 'engagementType',
     subOptions: ENGAGEMENT_TYPE_OPTIONS,
   },

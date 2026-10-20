@@ -18,15 +18,18 @@ import useHome from '@/features/worker-lifecycle/hooks/useHome';
 import { useSwitchEngagementType } from '@/features/worker-lifecycle/hooks/useSwitchEngagementType';
 import { useWorkerFilter } from '@/features/worker-lifecycle/hooks/useWorkerFilter';
 import useWorkerMutations from '@/features/worker-lifecycle/hooks/useWorkerMutaitons';
-import type { EngagementType } from '@/features/worker-lifecycle/types/index.types';
+import type {
+  EngagementType,
+  WorkerRecord,
+} from '@/features/worker-lifecycle/types/index.types';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import { useState, type Dispatch, type SetStateAction } from 'react';
 import { QuestionnaireSendDialog } from '@/features/questionnaire/QuestionnaireSendDialog';
-import EngagementTypeSwitch from './EngagementTypeSwitch';
 import GreetingHeader from './GreetingHeader';
 import { LifecycleStatistics } from './LifecycleStatistics';
 import ProjectItem, { type WorkerSelection } from './ProjectItem';
 import { WorkerSidebar } from './WorkerSidebar';
+import { useChangeResponsibleUser } from '../hooks/useChangeResponsibleUser';
 
 function WorkerLifeCycle() {
   const { user, isLoading, isError } = useAuth();
@@ -48,8 +51,12 @@ function WorkerLifeCycle() {
   const { deleteWorkersMutation, isDeletingWorkers } = useWorkerMutations();
   const { mutate: switchEngagementType, isPending: isSwitchingType } =
     useSwitchEngagementType();
-  const isSelectionPending = isDeletingWorkers || isSwitchingType;
+  const { mutate: changeResponsibleUser, isPending: isChangingResponsible } =
+    useChangeResponsibleUser();
+  const isSelectionPending =
+    isDeletingWorkers || isSwitchingType || isChangingResponsible;
   const {
+    employees,
     filterLabel,
     filterOptions,
     filteredWorkers,
@@ -90,23 +97,13 @@ function WorkerLifeCycle() {
     });
   };
 
-  const handleSwitchType = (type: EngagementType) => {
-    const items = editModeData
-      .filter((item) => item.engagementId.length > 0)
-      .map((item) => ({
-        workerId: item.engagementNumber,
-        engagementId: item.engagementId,
-      }));
-    if (!items.length) return;
-    switchEngagementType(
-      { items, type },
-      {
-        onSuccess: () => {
-          setEditModeData([]);
-          setLargeEditMode(false);
-        },
-      }
-    );
+  const handleSwitchType = (worker: WorkerRecord, type: EngagementType) => {
+    const engagement = worker.engagements[0];
+    if (!engagement || engagement.type === type || isSelectionPending) return;
+    switchEngagementType({
+      items: [{ workerId: worker.id, engagementId: engagement.id }],
+      type,
+    });
   };
 
   return (
@@ -157,7 +154,7 @@ function WorkerLifeCycle() {
                     <TableHead className="h-12 bg-card py-3 pl-12 pr-2">
                       Name
                     </TableHead>
-                    <TableHead className="bg-card py-3 px-2">Type</TableHead>
+                    <TableHead className="bg-card py-3 px-2">Typ</TableHead>
                     <TableHead className="bg-card py-3 px-2">
                       Verantwortlich
                     </TableHead>
@@ -181,6 +178,23 @@ function WorkerLifeCycle() {
                         )}
                         setLargeEditMode={setLargeEditMode}
                         setEditModeData={handleSetEditModeData}
+                        onTypeChange={(type) => handleSwitchType(worker, type)}
+                        isChangingType={isSelectionPending}
+                        responsibleUsers={employees}
+                        isChangingResponsible={isSelectionPending}
+                        onResponsibleChange={(userId) => {
+                          const engagement = worker.engagements[0];
+                          if (
+                            isSelectionPending ||
+                            engagement.responsibleUser.id === userId
+                          )
+                            return;
+                          changeResponsibleUser({
+                            workerId: worker.id,
+                            engagementId: engagement.id,
+                            userId,
+                          });
+                        }}
                       />
                     ))
                   )}
@@ -203,13 +217,6 @@ function WorkerLifeCycle() {
             isPending={isSelectionPending}
             onDelete={handleDeleteSelected}
             onClose={() => setLargeEditMode(false)}
-            actions={
-              <EngagementTypeSwitch
-                selectedTypes={editModeData.map((item) => item.type)}
-                disabled={isSelectionPending}
-                onSwitch={handleSwitchType}
-              />
-            }
           />
         )}
       </div>
