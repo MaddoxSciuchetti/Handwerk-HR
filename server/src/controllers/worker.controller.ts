@@ -2,6 +2,7 @@ import { getLifecycleStatistics as fetchLifecycleStatistics } from "@/services/l
 import { uploadFileToS3 } from "@/config/aws";
 import * as employmentContractService from "@/services/employmentContract.service";
 import { confirmReturnedEmploymentContract } from "@/services/signedContractReturn.service";
+import { defaultQuestionnaireSender } from "@/services/questionnaireSender";
 import catchErrors from "@/utils/catchErrors";
 import { Request, Response } from "express";
 import {
@@ -71,8 +72,8 @@ export const startExpectedOnboarding = catchErrors(
                 .json({ success: false, message: "E-Mail fehlt." });
         }
 
-        const senderAddress = typeof req.body?.senderAddress === "string"
-            ? req.body.senderAddress.trim() : "";
+        const senderAddress = defaultQuestionnaireSender() ?? (typeof req.body?.senderAddress === "string"
+            ? req.body.senderAddress.trim() : "");
         if (
             senderAddress.length > 254 ||
             !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(senderAddress)

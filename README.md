@@ -191,3 +191,13 @@ For raw SQL changes (triggers, check constraints, anything Prisma can't express 
 ## Production / Render
 
 The backend builds with `npm run build` and starts with `npm start`. Migrations are applied with `npx prisma migrate deploy`. Set the same environment variables listed above in the Render service config.
+
+### Staging questionnaire sender
+
+The staging backend uses `EMAIL_SENDER` (set this to the verified `hello@…`
+address) automatically for short onboarding and questionnaire sends, including
+retries of existing records. No organization sender selection is required.
+Staging is identified by `APP_ENV=staging`, `NODE_ENV=staging`, the Render service
+`BSB-Onboarding-Backend-Development`, or the configured frontend URL
+`https://bsb-onboarding-frontend-development.onrender.com`. Production keeps its
+organization sender selection. This does not change the configured mail provider.

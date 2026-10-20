@@ -26,3 +26,12 @@ it('rejects an unavailable sender before creating a worker', async () => {
     await expect(startExpectedOnboarding({ ...params, senderAddress: 'stranger@example.test' })).rejects.toThrow('Bitte einen gültigen Absender wählen.');
     expect(prisma.$transaction).not.toHaveBeenCalled();
 });
+
+it('uses the staging default without an organization sender', async () => {
+    jest.spyOn(require('@/services/questionnaireSender'), 'defaultQuestionnaireSender').mockReturnValue('hello@example.test');
+    try {
+        await startExpectedOnboarding({ ...params, senderAddress: undefined });
+        expect(listBsbMailAddresses).not.toHaveBeenCalled();
+        expect(prisma.workerEngagement.create).toHaveBeenCalledWith({ data: expect.objectContaining({ questionnaireSenderAddress: 'hello@example.test' }) });
+    } finally { jest.restoreAllMocks(); }
+});

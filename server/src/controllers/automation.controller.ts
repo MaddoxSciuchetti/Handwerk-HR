@@ -1,3 +1,4 @@
+import { defaultQuestionnaireSender } from "@/services/questionnaireSender";
 import { BAD_REQUEST } from "@/constants/http";
 import { isTaskAutomationId } from "@/constants/taskAutomation.consts";
 import {
@@ -128,9 +129,10 @@ export const postIssueSequence = catchErrors(async (req, res) => {
 
 export const getMicrosoftMailAddresses = catchErrors(async (req, res) => {
     appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
+    const defaultSenderAddress = defaultQuestionnaireSender();
     return res.status(200).json({
         success: true,
-        data: await listBsbMailAddresses(req.orgId),
+        data: { ...await listBsbMailAddresses(req.orgId), defaultSenderAddress },
     });
 });
 

@@ -41,9 +41,10 @@ export function FastTrackOnboarding({ onCreated }: FastTrackOnboardingProps) {
   const senders =
     addresses.data?.addresses.filter((address) => address.kind === 'mailbox') ??
     [];
-  const senderSelected = senders.some(
-    (sender) => sender.email === senderAddress
-  );
+  const defaultSender = addresses.data?.defaultSenderAddress;
+  const senderSelected =
+    Boolean(defaultSender) ||
+    senders.some((sender) => sender.email === senderAddress);
   const { mutate, isPending } = useMutation({
     mutationFn: (value: { email: string; senderAddress: string }) =>
       API.post<FastTrackResponse>('/worker/fast-track', value),
@@ -69,7 +70,7 @@ export function FastTrackOnboarding({ onCreated }: FastTrackOnboardingProps) {
       toast.error('Bitte einen Absender wählen');
       return;
     }
-    mutate({ email: value, senderAddress });
+    mutate({ email: value, senderAddress: defaultSender || senderAddress });
   };
 
   return (
@@ -80,46 +81,50 @@ export function FastTrackOnboarding({ onCreated }: FastTrackOnboardingProps) {
         if (!isPending) send();
       }}
     >
-      <label htmlFor={senderId} className="sr-only">
-        Absender
-      </label>
-      <Select
-        value={senderAddress}
-        onValueChange={setSenderAddress}
-        required
-        disabled={isPending || addresses.isLoading}
-      >
-        <SelectTrigger
-          id={senderId}
-          className="w-full"
-          aria-label="Absender"
-          aria-required="true"
-        >
-          <SelectValue
-            placeholder={
-              addresses.isLoading
-                ? 'Absender werden geladen…'
-                : 'Absender wählen'
-            }
-          />
-        </SelectTrigger>
-        <SelectContent>
-          {senders.map((sender) => (
-            <SelectItem key={sender.email} value={sender.email}>
-              {sender.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      {(addresses.isError ||
-        addresses.data?.error ||
-        (!addresses.isLoading && senders.length === 0)) && (
-        <p role="alert" className="w-full text-sm text-destructive">
-          {addresses.data?.error ||
-            (addresses.isError
-              ? 'Absender konnten nicht geladen werden.'
-              : 'Keine Absender verfügbar.')}
-        </p>
+      {!defaultSender && (
+        <>
+          <label htmlFor={senderId} className="sr-only">
+            Absender
+          </label>
+          <Select
+            value={senderAddress}
+            onValueChange={setSenderAddress}
+            required
+            disabled={isPending || addresses.isLoading}
+          >
+            <SelectTrigger
+              id={senderId}
+              className="w-full"
+              aria-label="Absender"
+              aria-required="true"
+            >
+              <SelectValue
+                placeholder={
+                  addresses.isLoading
+                    ? 'Absender werden geladen…'
+                    : 'Absender wählen'
+                }
+              />
+            </SelectTrigger>
+            <SelectContent>
+              {senders.map((sender) => (
+                <SelectItem key={sender.email} value={sender.email}>
+                  {sender.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {(addresses.isError ||
+            addresses.data?.error ||
+            (!addresses.isLoading && senders.length === 0)) && (
+            <p role="alert" className="w-full text-sm text-destructive">
+              {addresses.data?.error ||
+                (addresses.isError
+                  ? 'Absender konnten nicht geladen werden.'
+                  : 'Keine Absender verfügbar.')}
+            </p>
+          )}
+        </>
       )}
       <label htmlFor={emailId} className="sr-only">
         E-Mail des Mitarbeiters

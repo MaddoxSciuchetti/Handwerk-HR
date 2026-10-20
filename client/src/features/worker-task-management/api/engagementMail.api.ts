@@ -58,7 +58,11 @@ export function getMicrosoftMailAddresses() {
   return apiJson
     .get<{
       success: boolean;
-      data: { addresses: MicrosoftMailAddress[]; error: string | null };
+      data: {
+        addresses: MicrosoftMailAddress[];
+        error: string | null;
+        defaultSenderAddress?: string | null;
+      };
     }>('/automation/microsoft-addresses')
     .then((response) => response.data);
 }
