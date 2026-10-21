@@ -4,9 +4,8 @@ import { CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useCreatePersonnelFolder } from '@/features/worker-task-management/hooks/usePersonnelDocuments';
-import { FolderPlus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
-import { StoredFileBox } from '../StoredFileBox';
 
 type AddPersonnelFolderProps = {
   workerId: string;
@@ -35,11 +34,17 @@ export function AddPersonnelFolder({
 
   return (
     <>
-      <StoredFileBox
-        label="Ordner hinzufügen"
-        icon={FolderPlus}
-        onOpen={() => setOpen(true)}
-      />
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="ml-auto"
+        aria-label="Ordner hinzufügen"
+        title="Ordner hinzufügen"
+        onClick={() => setOpen(true)}
+      >
+        <Plus aria-hidden="true" />
+      </Button>
       {open ? (
             <Dialog open onOpenChange={(next) => { if (!next) close(); }}>
               <DialogContent className="h-auto">
