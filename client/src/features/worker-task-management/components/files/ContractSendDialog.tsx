@@ -321,7 +321,7 @@ export function ContractSendDialog({
                     <div className="flex flex-wrap items-center gap-2">
                       <select
                         id="contract-template"
-                        className="h-9 min-w-60 rounded-md border border-input bg-background px-3 text-sm"
+                        className="h-9 w-60 min-w-0 max-w-full shrink-0 truncate rounded-md border border-input bg-background px-3 text-sm"
                         value={data.masterId}
                         disabled={
                           busy ||

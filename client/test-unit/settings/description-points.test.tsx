@@ -68,9 +68,7 @@ it('accepts free text and saves it with + so another point can reuse it', async 
   });
   await user.type(first, 'Prüfen von Anlagen');
   expect(saveDescriptionSentence).not.toHaveBeenCalled();
-  await user.click(
-    screen.getByRole('button', { name: '+ für Hinzufügen' })
-  );
+  await user.click(screen.getByRole('button', { name: '+ für Hinzufügen' }));
   await waitFor(() =>
     expect(saveDescriptionSentence).toHaveBeenCalledWith(
       'Prüfen von Anlagen',
@@ -98,6 +96,61 @@ it('supports keyboard selection and does not allow saving duplicates', async () 
   expect(
     screen.getByRole('button', { name: '+ für Hinzufügen' })
   ).toBeDisabled();
+});
+
+it('cycles visible suggestions with Tab and Shift+Tab and selects with Enter', async () => {
+  const user = userEvent.setup();
+  renderWithProviders(<Harness />);
+  const point = screen.getByRole('combobox', { name: 'Tätigkeiten 1' });
+  await user.click(point);
+  const options = await screen.findAllByRole('option');
+  await user.tab();
+  expect(point).toHaveFocus();
+  expect(point).toHaveAttribute('aria-activedescendant', options[0].id);
+  await user.tab({ shift: true });
+  expect(point).toHaveAttribute('aria-activedescendant', options.at(-1)!.id);
+  await user.tab();
+  await user.tab();
+  await user.keyboard('{Enter}');
+  expect(point).toHaveValue(DEFAULT_DESCRIPTION_SENTENCES[1]);
+  expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+  expect(saveDescriptionSentence).not.toHaveBeenCalled();
+});
+
+it('adds new text with Enter and selects existing text without saving a duplicate', async () => {
+  vi.mocked(saveDescriptionSentence).mockResolvedValue([
+    ...DEFAULT_DESCRIPTION_SENTENCES,
+    'Prüfen von Anlagen',
+  ]);
+  const user = userEvent.setup();
+  renderWithProviders(<Harness />);
+  const point = screen.getByRole('combobox', { name: 'Tätigkeiten 1' });
+  await user.type(point, 'Prüfen von Anlagen{Enter}');
+  await waitFor(() => expect(saveDescriptionSentence).toHaveBeenCalledTimes(1));
+  expect(saveDescriptionSentence).toHaveBeenCalledWith(
+    'Prüfen von Anlagen',
+    expect.anything()
+  );
+  await user.clear(point);
+  await user.type(point, '  montage von hygieneartikeln  {Enter}');
+  expect(point).toHaveValue(DEFAULT_DESCRIPTION_SENTENCES[0]);
+  expect(saveDescriptionSentence).toHaveBeenCalledTimes(1);
+});
+
+it('tabs through only filtered suggestions and lets Tab leave an empty result list', async () => {
+  const user = userEvent.setup();
+  renderWithProviders(<Harness />);
+  const point = screen.getByRole('combobox', { name: 'Tätigkeiten 1' });
+  await user.type(point, 'Wartung');
+  const option = await screen.findByRole('option');
+  await user.tab();
+  expect(point).toHaveAttribute('aria-activedescendant', option.id);
+  await user.keyboard('{Enter}');
+  expect(point).toHaveValue(DEFAULT_DESCRIPTION_SENTENCES[1]);
+  await user.clear(point);
+  await user.type(point, 'Unbekannter Satz');
+  await user.tab();
+  expect(point).not.toHaveFocus();
 });
 
 it('preserves multiline paste and still renders plain bullets in read-only mode', () => {
