@@ -423,7 +423,7 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
             setLargeEditMode={setLargeEditMode}
             setEditModeData={handleSetEditModeData}
           />
-        ) : templateTargets.length > 0 ? (
+        ) : activeTab === 'form' && templateTargets.length > 0 ? (
           <TemplateApplyPrompt targets={templateTargets} />
         ) : null}
       </Tabs>

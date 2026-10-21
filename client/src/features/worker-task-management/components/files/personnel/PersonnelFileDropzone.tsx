@@ -41,6 +41,7 @@ export function PersonnelFileDropzone({
       </p>
       <Input
         type="file"
+        aria-label="Datei auswählen"
         id="fileUpload"
         ref={inputRef}
         className="hidden"

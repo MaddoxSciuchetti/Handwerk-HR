@@ -96,14 +96,17 @@ export function PersonnelDocumentFolders({
 
   return (
     <div className="px-10 py-4">
-      <MaterialsEngagementPicker
-        engagements={engagements}
-        value={selectedId}
-        onChange={(nextId) => {
-          setEngagementId(nextId);
-          setOpenFolder(null);
-        }}
-      />
+      <div className="mb-4 flex items-start justify-between gap-4 [&>div]:mb-0">
+        <MaterialsEngagementPicker
+          engagements={engagements}
+          value={selectedId}
+          onChange={(nextId) => {
+            setEngagementId(nextId);
+            setOpenFolder(null);
+          }}
+        />
+        <AddPersonnelFolder workerId={workerId} engagementId={selectedId} />
+      </div>
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
         <EngagementQuestionnaireList
           workerId={workerId}
@@ -140,7 +143,6 @@ export function PersonnelDocumentFolders({
             onOpen={() => setOpenFolder({ kind: 'custom', id: folder.id })}
           />
         ))}
-        <AddPersonnelFolder workerId={workerId} engagementId={selectedId} />
       </div>
     </div>
   );

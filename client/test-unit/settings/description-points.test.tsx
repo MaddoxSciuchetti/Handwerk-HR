@@ -165,6 +165,64 @@ it('preserves multiline paste and still renders plain bullets in read-only mode'
   expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
 });
 
+it('adds and focuses the next point on a second Enter after selecting a sentence', async () => {
+  const user = userEvent.setup();
+  renderWithProviders(<Harness initial={'\nFollowing point'} />);
+  const first = screen.getByRole('combobox', { name: 'Tätigkeiten 1' });
+  await user.click(first);
+  await user.keyboard('{Tab}{Enter}');
+  expect(screen.getAllByRole('combobox')).toHaveLength(2);
+  expect(first).toHaveValue(DEFAULT_DESCRIPTION_SENTENCES[0]);
+  await user.keyboard('{Enter}');
+  expect(screen.getAllByRole('combobox')).toHaveLength(3);
+  expect(screen.getByRole('combobox', { name: 'Tätigkeiten 2' })).toHaveFocus();
+  expect(screen.getByRole('combobox', { name: 'Tätigkeiten 2' })).toHaveValue(
+    ''
+  );
+  expect(screen.getByRole('combobox', { name: 'Tätigkeiten 3' })).toHaveValue(
+    'Following point'
+  );
+  expect(saveDescriptionSentence).not.toHaveBeenCalled();
+});
+
+it('adds the next point on a second Enter after creating a sentence', async () => {
+  vi.mocked(saveDescriptionSentence).mockResolvedValue([
+    ...DEFAULT_DESCRIPTION_SENTENCES,
+    'New sentence',
+  ]);
+  const user = userEvent.setup();
+  renderWithProviders(<Harness />);
+  const first = screen.getByRole('combobox', { name: 'Tätigkeiten 1' });
+  await user.type(first, 'New sentence{Enter}');
+  await waitFor(() =>
+    expect(
+      screen.getByRole('button', { name: '+ für Hinzufügen' })
+    ).toBeDisabled()
+  );
+  expect(screen.getAllByRole('combobox')).toHaveLength(1);
+  await user.keyboard('{Enter}');
+  expect(screen.getAllByRole('combobox')).toHaveLength(2);
+  expect(screen.getByRole('combobox', { name: 'Tätigkeiten 2' })).toHaveFocus();
+  expect(saveDescriptionSentence).toHaveBeenCalledTimes(1);
+});
+
+it('retries failed sentence creation with Enter without adding another point', async () => {
+  const { toast } = await import('sonner');
+  vi.mocked(saveDescriptionSentence).mockRejectedValue(new Error('Offline'));
+  const user = userEvent.setup();
+  renderWithProviders(<Harness />);
+  await user.type(screen.getByRole('combobox'), 'Unsaved sentence{Enter}');
+  await waitFor(() =>
+    expect(
+      screen.getByRole('button', { name: '+ für Hinzufügen' })
+    ).toBeEnabled()
+  );
+  await user.keyboard('{Enter}');
+  await waitFor(() => expect(saveDescriptionSentence).toHaveBeenCalledTimes(2));
+  expect(screen.getAllByRole('combobox')).toHaveLength(1);
+  expect(toast.error).toHaveBeenCalled();
+});
+
 it('loads saved sentences again when the editor is reopened', async () => {
   vi.mocked(getDescriptionSentences).mockResolvedValue([
     ...DEFAULT_DESCRIPTION_SENTENCES,

@@ -17,6 +17,7 @@ type Props = {
   canSave: boolean;
   saving: boolean;
   onSave: () => void;
+  onAddPoint: () => void;
 };
 
 const iconMotion =
@@ -32,6 +33,7 @@ export function DescriptionSentenceSelect({
   canSave,
   saving,
   onSave,
+  onAddPoint,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState('');
@@ -116,6 +118,7 @@ export function DescriptionSentenceSelect({
                 );
               } else if (event.key === 'Enter') {
                 event.preventDefault();
+                if (event.repeat || saving) return;
                 const selected =
                   open && active >= 0 ? matches[active] : undefined;
                 const existing = options.find(
@@ -124,7 +127,9 @@ export function DescriptionSentenceSelect({
                     descriptionSentenceKey(value)
                 );
                 const sentence = selected ?? existing;
-                if (sentence) {
+                if (!open && existing) {
+                  onAddPoint();
+                } else if (sentence) {
                   choose(sentence);
                 } else if (canSave && !saving) {
                   onSave();
@@ -148,7 +153,11 @@ export function DescriptionSentenceSelect({
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => {
               if (adding) {
-                if (canSave && !saving) onSave();
+                if (canSave && !saving) {
+                  onSave();
+                  setOpen(false);
+                  setActive(-1);
+                }
                 return;
               }
               const nextOpen = !open;

@@ -1,5 +1,4 @@
 import { Button } from '@/components/ui/button';
-import { CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -42,7 +41,9 @@ export function PersonnelDocumentUploadForm({
     engagements[0]?.id ??
     '';
 
-  const folderId = name.startsWith('folder:') ? name.slice('folder:'.length) : '';
+  const folderId = name.startsWith('folder:')
+    ? name.slice('folder:'.length)
+    : '';
   const submit = () => {
     if (!selectedEngagement || !name || !file) return;
     upload.mutate(
@@ -57,59 +58,58 @@ export function PersonnelDocumentUploadForm({
   };
 
   return (
-    <div className="flex h-auto min-h-0 max-h-[85vh] w-full flex-col overflow-y-auto">
-      <CardContent className="flex w-full min-w-0 flex-col gap-4">
-        {engagements.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Kein Engagement vorhanden.
-          </p>
-        ) : (
-          <>
-            <MaterialsEngagementPicker
-              engagements={engagements}
-              value={selectedEngagement}
-              onChange={setEngagementId}
-            />
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="personnel-document-name">Dokumentname</Label>
-              <Select
-                value={name || undefined}
-                onValueChange={setName}
+    <div className="flex w-full min-w-0 flex-col gap-4">
+      {engagements.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          Kein Engagement vorhanden.
+        </p>
+      ) : (
+        <>
+          <MaterialsEngagementPicker
+            engagements={engagements}
+            value={selectedEngagement}
+            onChange={setEngagementId}
+          />
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="personnel-document-name">Dokumentname</Label>
+            <Select value={name || undefined} onValueChange={setName}>
+              <SelectTrigger
+                id="personnel-document-name"
+                aria-label="Dokumentname"
               >
-                <SelectTrigger
-                  id="personnel-document-name"
-                  aria-label="Dokumentname"
-                >
-                  <SelectValue placeholder="Name wählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PERSONNEL_DOCUMENT_NAMES.filter((item) => item.value !== 'fragebogen').map((item) => (
-                    <SelectItem key={item.value} value={item.value}>
-                      {item.label}
+                <SelectValue placeholder="Name wählen" />
+              </SelectTrigger>
+              <SelectContent>
+                {PERSONNEL_DOCUMENT_NAMES.filter(
+                  (item) => item.value !== 'fragebogen'
+                ).map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+                {folders
+                  .filter(
+                    (folder) => folder.engagementId === selectedEngagement
+                  )
+                  .map((folder) => (
+                    <SelectItem key={folder.id} value={`folder:${folder.id}`}>
+                      {folder.label}
                     </SelectItem>
                   ))}
-                  {folders
-                    .filter((folder) => folder.engagementId === selectedEngagement)
-                    .map((folder) => (
-                      <SelectItem key={folder.id} value={`folder:${folder.id}`}>
-                        {folder.label}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <PersonnelFileDropzone file={file} onFile={setFile} />
-            <Button
-              type="button"
-              variant="outline"
-              disabled={!name || !file || upload.isPending}
-              onClick={submit}
-            >
-              {upload.isPending ? 'Hochladen...' : 'Hochladen'}
-            </Button>
-          </>
-        )}
-      </CardContent>
+              </SelectContent>
+            </Select>
+          </div>
+          <PersonnelFileDropzone file={file} onFile={setFile} />
+          <Button
+            type="button"
+            className="bg-black text-white hover:bg-black/90"
+            disabled={!name || !file || upload.isPending}
+            onClick={submit}
+          >
+            {upload.isPending ? 'Hochladen...' : 'Hochladen'}
+          </Button>
+        </>
+      )}
     </div>
   );
 }

@@ -32,8 +32,6 @@ import { ArbeitszeugnisSendDialog } from '@/features/worker-task-management/comp
 import { TaskItem } from './TaskItem';
 import { TaskSidebar } from './TaskSidebar';
 import { Segment, TaskSegmentToggle } from './ui/taskHeader';
-import { engagementsAwaitingTemplate } from '@/features/worker-task-management/pendingTemplate';
-import { TemplateApplyPrompt } from '@/features/worker-task-management/components/tasks/TemplateApplyPrompt';
 
 function Tasks() {
   const { user } = useAuth();
@@ -94,8 +92,6 @@ function Tasks() {
       return next;
     });
   };
-
-  const templateTargets = engagementsAwaitingTemplate(filteredTasks);
 
   return (
     <div className="mx-auto flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
@@ -205,8 +201,6 @@ function Tasks() {
             setLargeEditMode={setLargeEditMode}
             setEditModeData={handleSetEditModeData}
           />
-        ) : templateTargets.length > 0 ? (
-          <TemplateApplyPrompt targets={templateTargets} />
         ) : null}
       </div>
     </div>

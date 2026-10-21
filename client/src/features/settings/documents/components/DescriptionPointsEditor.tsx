@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { useEffect, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
@@ -30,6 +31,15 @@ export function DescriptionPointsEditor({
   readOnly,
   onChange,
 }: DescriptionPointsEditorProps) {
+  const editorRef = useRef<HTMLDivElement>(null);
+  const pendingFocus = useRef<number | null>(null);
+  useEffect(() => {
+    if (pendingFocus.current === null) return;
+    editorRef.current
+      ?.querySelectorAll<HTMLInputElement>('input[role="combobox"]')
+      [pendingFocus.current]?.focus();
+    pendingFocus.current = null;
+  }, [value]);
   const queryClient = useQueryClient();
   const sentences = useQuery({
     queryKey: descriptionSentencesKey,
@@ -68,6 +78,7 @@ export function DescriptionPointsEditor({
 
   return (
     <div
+      ref={editorRef}
       className="flex flex-col gap-1.5"
       onMouseDown={(event) => event.stopPropagation()}
       onKeyDown={(event) => event.stopPropagation()}
@@ -90,6 +101,12 @@ export function DescriptionPointsEditor({
             }
             saving={save.isPending && save.variables === line}
             onSave={() => save.mutate(line)}
+            onAddPoint={() => {
+              const next = [...lines];
+              next.splice(index + 1, 0, '');
+              pendingFocus.current = index + 1;
+              write(next);
+            }}
             onChange={(value) => {
               const next = [...lines];
               next[index] = value;
