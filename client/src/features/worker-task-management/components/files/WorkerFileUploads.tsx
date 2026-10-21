@@ -103,7 +103,7 @@ function WorkerFileUploads({
           <SheetContent
             side="right"
             aria-describedby={undefined}
-            className="gap-0 overflow-hidden rounded-4xl border border-border data-[side=right]:inset-y-1 data-[side=right]:right-1 data-[side=right]:h-auto data-[side=right]:w-[calc(100vw-0.5rem)] data-[side=right]:sm:max-w-lg"
+            className="gap-0 overflow-hidden rounded-4xl border border-border data-[side=right]:inset-y-1 data-[side=right]:right-1 data-[side=right]:h-auto"
           >
             <SheetHeader className="shrink-0 border-b border-border/50 px-6 py-6 pr-14">
               <SheetTitle>Datei hochladen</SheetTitle>

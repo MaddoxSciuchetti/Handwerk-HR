@@ -24,7 +24,7 @@ const titles: Record<WorkerTab, string> = {
 };
 
 const headerActionClassName =
-  'h-7 w-36 rounded-2xl bg-black text-[0.8rem] text-white hover:bg-black/90';
+  'h-7 w-32 rounded-2xl bg-black px-2 text-[0.8rem] text-white hover:bg-black/90';
 
 const WorkerHeader = ({
   activeTab,

@@ -66,9 +66,15 @@ it('opens the upload side panel from the header and uploads the chosen document'
   await user.click(
     within(panel).getByRole('combobox', { name: 'Dokumentname' })
   );
+  expect(panel).toBeVisible();
+  expect(within(panel).getByText('Datei hochladen')).toBeVisible();
   await user.click(
     await screen.findByRole('option', { name: 'Personalausweis' })
   );
+  expect(panel).toBeVisible();
+  expect(
+    within(panel).getByRole('combobox', { name: 'Dokumentname' })
+  ).toHaveTextContent('Personalausweis');
   const file = new File(['document'], 'identity.pdf', {
     type: 'application/pdf',
   });
