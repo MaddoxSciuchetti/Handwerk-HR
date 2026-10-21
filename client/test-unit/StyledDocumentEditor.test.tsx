@@ -459,7 +459,7 @@ it('lets the sender type Tätigkeitspunkte without a stored field value', async 
   );
   expect(
     await screen.findByText(
-      'Satz auswählen oder eigenen Text eingeben. + für Hinzufügen.'
+      'Satz auswählen oder eigenen Text eingeben. Tab für Vorschläge, Enter zum Auswählen oder Hinzufügen.'
     )
   ).toBeTruthy();
   const point = await screen.findByRole('combobox', { name: 'Tätigkeiten 1' });

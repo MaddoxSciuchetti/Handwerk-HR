@@ -1,4 +1,5 @@
-import { useId, useRef, useState, type ClipboardEvent } from 'react';
+import { useEffect, useId, useRef, useState, type ClipboardEvent } from 'react';
+import { descriptionSentenceKey } from '@shared/descriptionSentences';
 import { ChevronDown, LoaderCircle, Plus } from 'lucide-react';
 import {
   Popover,
@@ -38,6 +39,13 @@ export function DescriptionSentenceSelect({
   const listId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const anchorRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (open && active >= 0) {
+      document.getElementById(`${listId}-${active}`)?.scrollIntoView?.({
+        block: 'nearest',
+      });
+    }
+  }, [open, active, listId]);
   const matches = options.filter((option) =>
     option
       .toLocaleLowerCase('de-DE')
@@ -88,26 +96,41 @@ export function DescriptionSentenceSelect({
             }}
             onPaste={onPaste}
             onKeyDown={(event) => {
-              if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+              if (event.nativeEvent.isComposing) return;
+              if (
+                event.key === 'ArrowDown' ||
+                event.key === 'ArrowUp' ||
+                (event.key === 'Tab' && open && matches.length > 0)
+              ) {
                 event.preventDefault();
                 setOpen(true);
+                const backwards = event.key === 'ArrowUp' || event.shiftKey;
                 setActive((current) =>
                   matches.length === 0
                     ? -1
-                    : event.key === 'ArrowDown'
+                    : !backwards
                       ? (current + 1) % matches.length
                       : current <= 0
                         ? matches.length - 1
                         : current - 1
                 );
-              } else if (
-                event.key === 'Enter' &&
-                open &&
-                active >= 0 &&
-                matches[active]
-              ) {
+              } else if (event.key === 'Enter') {
                 event.preventDefault();
-                choose(matches[active]);
+                const selected =
+                  open && active >= 0 ? matches[active] : undefined;
+                const existing = options.find(
+                  (option) =>
+                    descriptionSentenceKey(option) ===
+                    descriptionSentenceKey(value)
+                );
+                const sentence = selected ?? existing;
+                if (sentence) {
+                  choose(sentence);
+                } else if (canSave && !saving) {
+                  onSave();
+                  setOpen(false);
+                  setActive(-1);
+                }
               } else if (event.key === 'Escape') {
                 event.preventDefault();
                 setOpen(false);
@@ -167,6 +190,7 @@ export function DescriptionSentenceSelect({
             key={option}
             type="button"
             role="option"
+            tabIndex={-1}
             id={`${listId}-${index}`}
             aria-selected={option === value}
             className={`w-full rounded-md px-2 py-1.5 text-left text-sm whitespace-normal hover:bg-muted ${active === index ? 'bg-muted' : ''}`}
@@ -178,7 +202,7 @@ export function DescriptionSentenceSelect({
         ))}
         {matches.length === 0 ? (
           <p className="px-2 py-1.5 text-xs text-muted-foreground">
-            Eigener Satz — + für Hinzufügen.
+            Eigener Satz — Enter oder + zum Hinzufügen.
           </p>
         ) : null}
       </PopoverContent>
