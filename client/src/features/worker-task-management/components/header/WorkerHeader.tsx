@@ -23,6 +23,9 @@ const titles: Record<WorkerTab, string> = {
   clothing: 'Kleidung',
 };
 
+const headerActionClassName =
+  'h-7 w-36 rounded-2xl bg-black text-[0.8rem] text-white hover:bg-black/90';
+
 const WorkerHeader = ({
   activeTab,
   isLoading = false,
@@ -45,7 +48,7 @@ const WorkerHeader = ({
         {activeTab === 'form' && onSendQuestionnaire ? (
           <Button
             type="button"
-            className="rounded-2xl"
+            className={headerActionClassName}
             onClick={onSendQuestionnaire}
           >
             Fragebogen senden
@@ -54,7 +57,7 @@ const WorkerHeader = ({
         {activeTab === 'form' && !hideCreate ? (
           <Button
             type="button"
-            className="rounded-2xl"
+            className={headerActionClassName}
             onClick={openForCreate}
             disabled={isLoading}
           >
@@ -65,20 +68,16 @@ const WorkerHeader = ({
           <>
             <Button
               type="button"
-              variant="outline"
-              size="sm"
-              className="rounded-2xl"
+              className={headerActionClassName}
               data-testid="open-file-upload"
               disabled={isLoading}
               onClick={onOpenFileUpload}
             >
-              Hochladen
+              Hinzufügen
             </Button>
             <Button
               type="button"
-              variant="outline"
-              size="sm"
-              className="rounded-2xl"
+              className={headerActionClassName}
               disabled={isLoading}
               onClick={onExportFiles}
             >
@@ -89,20 +88,18 @@ const WorkerHeader = ({
         {activeTab === 'materials' ? (
           <Button
             type="button"
-            variant="outline"
-            size="sm"
-            className="rounded-2xl"
+            className={headerActionClassName}
             data-testid="open-materials-upload"
             disabled={isLoading || materialsUploadDisabled}
             onClick={onUploadMaterials}
           >
-            Hochladen
+            Hinzufügen
           </Button>
         ) : null}
         {activeTab === 'clothing' ? (
           <Button
             type="button"
-            className="rounded-2xl"
+            className={headerActionClassName}
             data-testid="open-clothing-add"
             disabled={isLoading || clothingAddDisabled}
             onClick={onAddClothing}

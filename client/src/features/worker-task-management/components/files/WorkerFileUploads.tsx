@@ -1,4 +1,9 @@
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import ErrorAlert from '@/components/alerts/ErrorAlert';
 import { FileCardsSkeleton, PersonnelFoldersSkeleton } from './FileSkeletons';
 import type { EngagementType } from '@/features/worker-lifecycle/types/index.types';
@@ -89,21 +94,30 @@ function WorkerFileUploads({
       ) : null}
 
       {isUploadModalOpen && (
-        <Dialog
+        <Sheet
           open
           onOpenChange={(next) => {
             if (!next) setIsUploadModalOpen(false);
           }}
         >
-          <DialogContent className="h-auto max-h-[85vh] overflow-y-auto">
-            <PersonnelDocumentUploadForm
-              setModal={setIsUploadModalOpen}
-              workerId={workerId}
-              engagements={engagements}
-              folders={folders}
-            />
-          </DialogContent>
-        </Dialog>
+          <SheetContent
+            side="right"
+            aria-describedby={undefined}
+            className="gap-0 overflow-hidden rounded-4xl border border-border data-[side=right]:inset-y-1 data-[side=right]:right-1 data-[side=right]:h-auto data-[side=right]:w-[calc(100vw-0.5rem)] data-[side=right]:sm:max-w-lg"
+          >
+            <SheetHeader className="shrink-0 border-b border-border/50 px-6 py-6 pr-14">
+              <SheetTitle>Datei hochladen</SheetTitle>
+            </SheetHeader>
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-4">
+              <PersonnelDocumentUploadForm
+                setModal={setIsUploadModalOpen}
+                workerId={workerId}
+                engagements={engagements}
+                folders={folders}
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
       )}
     </>
   );
