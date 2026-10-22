@@ -6,6 +6,7 @@ type TableSkeletonVariant =
   | 'clothing'
   | 'materials'
   | 'workers'
+  | 'team'
   | 'tasks'
   | 'employees'
   | 'stock'
@@ -60,6 +61,13 @@ export function TableSkeletonRows({
           line('w-24'),
           line('w-5'),
           <Skeleton className="h-7 w-16 rounded-full" />,
+        ];
+      case 'team':
+        return [
+          <div className="inline-flex h-8 items-center gap-2">
+            {name}
+            <Skeleton className="size-4 rounded-full" />
+          </div>,
         ];
       case 'tasks':
         return [

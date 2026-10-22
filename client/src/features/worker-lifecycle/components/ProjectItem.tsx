@@ -21,43 +21,46 @@ export type WorkerSelection = {
   type: EngagementType;
 };
 
-type ProjectItemProps = {
+type ProjectItemSharedProps = {
   worker: WorkerRecord;
   gotopage: (
     taskId: string,
     form_type: LifecycleType,
     workerName: string
   ) => void;
-  isSelected: boolean;
-  setLargeEditMode: Dispatch<SetStateAction<boolean>>;
-  setEditModeData: Dispatch<SetStateAction<WorkerSelection[]>>;
-  onTypeChange: (type: EngagementType) => void;
-  isChangingType: boolean;
-  responsibleUsers: ResponsibleUserOption[];
-  onResponsibleChange: (userId: string) => void;
-  isChangingResponsible: boolean;
 };
 
-function ProjectItem({
-  worker,
-  gotopage,
-  isSelected,
-  setLargeEditMode,
-  setEditModeData,
-  onTypeChange,
-  isChangingType,
-  responsibleUsers,
-  onResponsibleChange,
-  isChangingResponsible,
-}: ProjectItemProps) {
+type ProjectItemProps = ProjectItemSharedProps &
+  (
+    | {
+        variant?: 'lifecycle';
+        isSelected: boolean;
+        setLargeEditMode: Dispatch<SetStateAction<boolean>>;
+        setEditModeData: Dispatch<SetStateAction<WorkerSelection[]>>;
+        onTypeChange: (type: EngagementType) => void;
+        isChangingType: boolean;
+        responsibleUsers: ResponsibleUserOption[];
+        onResponsibleChange: (userId: string) => void;
+        isChangingResponsible: boolean;
+      }
+    | {
+        variant: 'team';
+        marked?: boolean;
+      }
+  );
+
+function ProjectItem(props: ProjectItemProps) {
+  const { worker, gotopage } = props;
+  const isTeam = props.variant === 'team';
   const form_type = getFirstFormType(worker);
   const fullname = `${worker.firstName} ${worker.lastName}`;
 
   const toggleSelection = (e: MouseEvent) => {
+    if (props.variant === 'team') return;
     e.stopPropagation();
     e.preventDefault();
-    setLargeEditMode(true);
-    setEditModeData((prev) =>
+    props.setLargeEditMode(true);
+    props.setEditModeData((prev) =>
       prev.some((item) => item.engagementNumber === worker.id)
         ? prev.filter((item) => item.engagementNumber !== worker.id)
         : [
@@ -87,51 +90,66 @@ function ProjectItem({
     >
       <TableCell
         className={cn(
-          'relative pl-10 pr-2 font-medium transition-colors group-hover:rounded-l-xl group-hover:bg-muted/50',
-          isSelected && 'rounded-l-xl bg-muted/50'
+          'relative font-medium transition-colors group-hover:bg-muted/50',
+          isTeam
+            ? 'rounded-xl px-6 group-hover:rounded-xl'
+            : 'pl-10 pr-2 group-hover:rounded-l-xl',
+          !isTeam && props.isSelected && 'rounded-l-xl bg-muted/50'
         )}
       >
-        <RowSelectButton isSelected={isSelected} onClick={toggleSelection} />
-        <span className="inline-flex items-center gap-2 pl-2">
+        {isTeam ? null : (
+          <RowSelectButton
+            isSelected={props.isSelected}
+            onClick={toggleSelection}
+          />
+        )}
+        <span className={cn('inline-flex items-center gap-2', !isTeam && 'pl-2')}>
           {worker.firstName}
+          {isTeam && props.marked ? (
+            <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-normal text-muted-foreground">
+              Nächstes Jubiläum
+            </span>
+          ) : null}
           <WorkerEngagementInfoButton workerId={worker.id} />
         </span>
       </TableCell>
+      {isTeam ? null : (
+        <>
       <TableCell
         className={cn(
           'transition-colors group-hover:bg-muted/50',
-          isSelected && 'bg-muted/50'
+          props.isSelected && 'bg-muted/50'
         )}
       >
         <div onClick={(event) => event.stopPropagation()}>
           <EngagementTypeSwitch
             value={worker.engagements[0].type}
             workerName={fullname.trim()}
-            disabled={isChangingType}
-            onSwitch={onTypeChange}
+            disabled={props.isChangingType}
+            onSwitch={props.onTypeChange}
           />
         </div>
       </TableCell>
       <TableCell
         className={cn(
           'transition-colors group-hover:bg-muted/50',
-          isSelected && 'bg-muted/50'
+          props.isSelected && 'bg-muted/50'
         )}
       >
         <div onClick={(event) => event.stopPropagation()}>
           <ResponsibleUserPicker
             value={worker.engagements[0].responsibleUser}
-            options={responsibleUsers}
+            options={props.responsibleUsers}
             workerName={fullname.trim()}
-            disabled={isChangingResponsible}
-            onChange={onResponsibleChange}
+            disabled={props.isChangingResponsible}
+            onChange={props.onResponsibleChange}
           />
         </div>
       </TableCell>
       <TableCell
         className={cn(
           'text-sm tabular-nums text-muted-foreground transition-colors group-hover:bg-muted/50',
-          isSelected && 'bg-muted/50'
+          props.isSelected && 'bg-muted/50'
         )}
       >
         {issueCount}
@@ -139,7 +157,7 @@ function ProjectItem({
       <TableCell
         className={cn(
           'transition-colors group-hover:rounded-r-xl group-hover:bg-muted/50',
-          isSelected && 'rounded-r-xl bg-muted/50'
+          props.isSelected && 'rounded-r-xl bg-muted/50'
         )}
       >
         <div onClick={(e) => e.stopPropagation()}>
@@ -151,6 +169,8 @@ function ProjectItem({
           />
         </div>
       </TableCell>
+        </>
+      )}
     </TableRow>
   );
 }

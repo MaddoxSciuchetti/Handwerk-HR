@@ -139,6 +139,9 @@ async function main() {
             },
         });
 
+        const { seedTeamRoster } = await import("./team-roster");
+        await seedTeamRoster(prisma, organization.id, user.id);
+
         console.log(
             `Seed complete. User: ${user.email} | Org: ${organization.slug} (${organization.id})`,
         );
