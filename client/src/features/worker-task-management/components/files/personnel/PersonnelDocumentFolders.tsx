@@ -13,7 +13,6 @@ import { EngagementCertificateList, type EngagementCertificateLink } from '../En
 import { EngagementContractList, type EngagementContractLink } from '../EngagementContractList';
 import { EngagementTemplateDocuments } from '../EngagementTemplateDocuments';
 import { EngagementQuestionnaireList, type EngagementQuestionnaireLink } from '../EngagementQuestionnaireList';
-import { AddPersonnelFolder } from './AddPersonnelFolder';
 import { OpenPersonnelFolder } from './OpenPersonnelFolder';
 import { PersonnelFolderCard } from './PersonnelFolderCard';
 
@@ -35,7 +34,8 @@ type PersonnelDocumentFoldersProps = {
   certificates: EngagementCertificateLink[];
   deletingId: string | null;
   onDelete: (documentId: string) => void;
-  onAddFile: () => void;
+  engagementId: string;
+  onEngagementChange: (engagementId: string) => void;
 };
 
 export function PersonnelDocumentFolders({
@@ -48,9 +48,9 @@ export function PersonnelDocumentFolders({
   certificates,
   deletingId,
   onDelete,
-  onAddFile,
+  engagementId,
+  onEngagementChange,
 }: PersonnelDocumentFoldersProps) {
-  const [engagementId, setEngagementId] = useState(engagements[0]?.id ?? '');
   const [openFolder, setOpenFolder] = useState<OpenFolder | null>(null);
   const selectedId =
     engagements.find((item) => item.id === engagementId)?.id ??
@@ -98,21 +98,18 @@ export function PersonnelDocumentFolders({
 
   return (
     <div className="px-10 py-4">
-      <div className="mb-4 flex items-start justify-between gap-4 [&>div]:mb-0">
-        <MaterialsEngagementPicker
-          engagements={engagements}
-          value={selectedId}
-          onChange={(nextId) => {
-            setEngagementId(nextId);
-            setOpenFolder(null);
-          }}
-        />
-        <AddPersonnelFolder
-          workerId={workerId}
-          engagementId={selectedId}
-          onAddFile={onAddFile}
-        />
-      </div>
+      {engagements.length > 1 ? (
+        <div className="mb-4 flex items-start justify-between gap-4 [&>div]:mb-0">
+          <MaterialsEngagementPicker
+            engagements={engagements}
+            value={selectedId}
+            onChange={(nextId) => {
+              onEngagementChange(nextId);
+              setOpenFolder(null);
+            }}
+          />
+        </div>
+      ) : null}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
         <EngagementQuestionnaireList
           workerId={workerId}

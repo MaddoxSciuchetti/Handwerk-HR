@@ -45,7 +45,8 @@ it('shows the questionnaire, contract, and folders as file boxes', async () => {
       certificates={[]}
       deletingId={null}
       onDelete={() => undefined}
-      onAddFile={() => undefined}
+      engagementId={engagement.id}
+      onEngagementChange={() => undefined}
     />
   );
 
@@ -53,7 +54,7 @@ it('shows the questionnaire, contract, and folders as file boxes', async () => {
   expect(screen.getByRole('button', { name: 'Vertrag' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Personalausweis' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Zeugnisse' })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Hinzufügen' })).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Hinzufügen' })).not.toBeInTheDocument();
   expect(screen.queryByText('Leer')).not.toBeInTheDocument();
   expect(screen.queryByText('Personalfragebogen')).not.toBeInTheDocument();
   expect(screen.queryByText(/Ausgefüllt/)).not.toBeInTheDocument();
@@ -67,33 +68,3 @@ it('shows the questionnaire, contract, and folders as file boxes', async () => {
   expect(screen.queryByText(/Datei/)).not.toBeInTheDocument();
 });
 
-it('asks for a file or a folder from the plus menu', async () => {
-  const onAddFile = vi.fn();
-  const user = userEvent.setup();
-  renderWithProviders(
-    <PersonnelDocumentFolders
-      workerId="worker"
-      engagements={[engagement]}
-      documents={[]}
-      folders={[]}
-      questionnaires={[]}
-      contracts={[]}
-      certificates={[]}
-      deletingId={null}
-      onDelete={() => undefined}
-      onAddFile={onAddFile}
-    />
-  );
-
-  await user.click(screen.getByRole('button', { name: 'Hinzufügen' }));
-
-  expect(screen.getByRole('menuitem', { name: 'Datei' })).toBeInTheDocument();
-  expect(screen.getByRole('menuitem', { name: 'Ordner' })).toBeInTheDocument();
-
-  await user.click(screen.getByRole('menuitem', { name: 'Datei' }));
-  expect(onAddFile).toHaveBeenCalledOnce();
-
-  await user.click(screen.getByRole('button', { name: 'Hinzufügen' }));
-  await user.click(screen.getByRole('menuitem', { name: 'Ordner' }));
-  expect(screen.getByLabelText('Ordnername')).toBeInTheDocument();
-});

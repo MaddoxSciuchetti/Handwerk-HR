@@ -7,7 +7,7 @@ import {
 import ErrorAlert from '@/components/alerts/ErrorAlert';
 import { FileCardsSkeleton, PersonnelFoldersSkeleton } from './FileSkeletons';
 import type { EngagementType } from '@/features/worker-lifecycle/types/index.types';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import useDeleteWorkerFile from '../../hooks/useDeleteWorkerFile';
 import useGetWorkerFiles from '../../hooks/useGetWorkerFiles';
 import {
@@ -18,6 +18,7 @@ import type { EngagementCertificateLink } from './EngagementCertificateList';
 import type { EngagementContractLink } from './EngagementContractList';
 import FilesContent from './FilesContent';
 import type { EngagementQuestionnaireLink } from './EngagementQuestionnaireList';
+import { AddPersonnelFolder } from './personnel/AddPersonnelFolder';
 import { PersonnelDocumentFolders } from './personnel/PersonnelDocumentFolders';
 import { PersonnelDocumentUploadForm } from './personnel/PersonnelDocumentUploadForm';
 
@@ -33,6 +34,8 @@ type WorkerFileUploadsProps = {
   questionnaires?: EngagementQuestionnaireLink[];
   isUploadModalOpen: boolean;
   setIsUploadModalOpen: (open: boolean) => void;
+  createFolderOpen: boolean;
+  setCreateFolderOpen: (open: boolean) => void;
 };
 
 function WorkerFileUploads({
@@ -43,6 +46,8 @@ function WorkerFileUploads({
   questionnaires = [],
   isUploadModalOpen,
   setIsUploadModalOpen,
+  createFolderOpen,
+  setCreateFolderOpen,
 }: WorkerFileUploadsProps) {
   const { fetchFiles, isLoading, isError } = useGetWorkerFiles(workerId);
   const { deleteFiles } = useDeleteWorkerFile(workerId);
@@ -52,6 +57,11 @@ function WorkerFileUploads({
   const filteredFiles = useMemo(() => fetchFiles ?? [], [fetchFiles]);
   const personnel = personnelDocuments.data?.documents ?? [];
   const folders = personnelDocuments.data?.folders ?? [];
+  const [engagementId, setEngagementId] = useState(engagements[0]?.id ?? '');
+  const selectedEngagementId =
+    engagements.find((item) => item.id === engagementId)?.id ??
+    engagements[0]?.id ??
+    '';
 
   return (
     <>
@@ -73,7 +83,8 @@ function WorkerFileUploads({
               : null
           }
           onDelete={(documentId) => deletePersonnelDocument.mutate(documentId)}
-          onAddFile={() => setIsUploadModalOpen(true)}
+          engagementId={selectedEngagementId}
+          onEngagementChange={setEngagementId}
         />
       )}
       {isLoading ? <FileCardsSkeleton /> : null}
@@ -94,6 +105,12 @@ function WorkerFileUploads({
         </div>
       ) : null}
 
+      <AddPersonnelFolder
+        open={createFolderOpen}
+        workerId={workerId}
+        engagementId={selectedEngagementId}
+        onOpenChange={setCreateFolderOpen}
+      />
       {isUploadModalOpen && (
         <Sheet
           open
