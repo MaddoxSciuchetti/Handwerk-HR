@@ -135,7 +135,11 @@ export function TaskSidebar({
   );
 
   return (
-    <SidebarAside className="p-2" isOpen={isOpen} onClose={() => setIsOpen(false)}>
+    <SidebarAside
+      className="p-2"
+      isOpen={isOpen}
+      onClose={() => setIsOpen(false)}
+    >
       <SidebarPanel className="w-full">
         <SidebarHeader className="flex items-center justify-between gap-3 p-6">
           <div className="flex min-w-0 items-center gap-3">
@@ -224,7 +228,8 @@ export function TaskSidebar({
                     placeholder="Automation wählen"
                   />
                 </div>
-                {sequence === 'microsoft_send_email' ? (
+                {sequence === 'microsoft_send_email' ||
+                sequence === 'microsoft_send_teams_message' ? (
                   <>
                     <div className="flex flex-col gap-2">
                       <FormSelectOptions
@@ -235,15 +240,21 @@ export function TaskSidebar({
                           value: template.id,
                           label: template.name,
                         }))}
-                        label="E-Mail-Vorlage"
+                        label={
+                          sequence === 'microsoft_send_teams_message'
+                            ? 'Nachrichtenvorlage'
+                            : 'E-Mail-Vorlage'
+                        }
                         placeholder="Vorlage wählen"
                       />
                     </div>
-                    <MailSenderSelect
-                      control={control}
-                      errors={errors}
-                      current={mailSenderAddress}
-                    />
+                    {sequence === 'microsoft_send_email' && (
+                      <MailSenderSelect
+                        control={control}
+                        errors={errors}
+                        current={mailSenderAddress}
+                      />
+                    )}
                   </>
                 ) : null}
                 {isMailSequence(sequence) && workerEngagementId ? (

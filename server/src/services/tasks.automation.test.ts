@@ -80,3 +80,15 @@ it('preserves automations for callers that omit the selection', async () => {
     await updateTaskInOrg('org-1', 'user-1', 'task-1', { title: 'Renamed' });
     expect(updateIssue).toHaveBeenCalledWith(expect.not.objectContaining({ sequence: expect.anything() }));
 });
+
+it('creates a Teams action with a message body and no Outlook sender', async () => {
+    (prisma.mailTemplate.findFirst as jest.Mock).mockResolvedValue({ id: 'mail-1', body: 'Hallo {{Vorname}}' });
+    await createTaskInOrg('org-1', 'user-1', { ...payload, sequence: 'microsoft_send_teams_message', mailTemplateId: 'mail-1' });
+    expect(createIssue).toHaveBeenCalledWith(expect.objectContaining({ sequence: 'microsoft_send_teams_message', mailTemplateId: 'mail-1', mailSenderAddress: null }));
+});
+
+it('rejects a Teams action with an empty template body', async () => {
+    (prisma.mailTemplate.findFirst as jest.Mock).mockResolvedValue({ id: 'mail-1', body: ' ' });
+    await expect(createTaskInOrg('org-1', 'user-1', { ...payload, sequence: 'microsoft_send_teams_message', mailTemplateId: 'mail-1' })).rejects.toThrow('Nachrichtenvorlage mit Inhalt');
+    expect(createIssue).not.toHaveBeenCalled();
+});

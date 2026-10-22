@@ -87,7 +87,11 @@ export function TaskSidebar({
   );
 
   return (
-    <SidebarAside className="p-2" isOpen={isOpen} onClose={() => setIsOpen(false)}>
+    <SidebarAside
+      className="p-2"
+      isOpen={isOpen}
+      onClose={() => setIsOpen(false)}
+    >
       <SidebarPanel className="w-full">
         <SidebarHeader className="flex items-center justify-between p-6">
           <Label className="typo-body-lg font-bold">
@@ -166,7 +170,8 @@ export function TaskSidebar({
                 labelClassName="typo-body-base"
                 placeholder="Sequenz wählen"
               />
-              {sequence === 'microsoft_send_email' ? (
+              {sequence === 'microsoft_send_email' ||
+              sequence === 'microsoft_send_teams_message' ? (
                 <FormSelectOptions
                   errors={errors}
                   control={control}
@@ -175,7 +180,11 @@ export function TaskSidebar({
                     label: template.name,
                   }))}
                   name="mailTemplateId"
-                  label="E-Mail-Vorlage"
+                  label={
+                    sequence === 'microsoft_send_teams_message'
+                      ? 'Nachrichtenvorlage'
+                      : 'E-Mail-Vorlage'
+                  }
                   labelClassName="typo-body-base"
                   placeholder="Vorlage wählen"
                 />

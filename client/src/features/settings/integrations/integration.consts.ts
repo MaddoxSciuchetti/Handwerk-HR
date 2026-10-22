@@ -7,6 +7,11 @@ export const INTEGRATION_PROVIDERS = [
 
 export const INTEGRATION_SEQUENCES = [
   {
+    value: 'microsoft_send_teams_message',
+    provider: 'microsoft_graph',
+    label: 'Teams-Nachricht senden',
+  },
+  {
     value: 'microsoft_create_account',
     provider: 'microsoft_graph',
     label: 'Konto anlegen',

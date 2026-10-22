@@ -735,7 +735,7 @@ it.each(['□', '☐', '☒', '☑'])(
     fireEvent.change(screen.getByLabelText('Feldbezeichnung'), {
       target: { value: 'Fixed term' },
     });
-    fireEvent.change(screen.getByLabelText('Feldschlüssel'), {
+    fireEvent.change(screen.getByLabelText('Feldverknüpfung (optional)'), {
       target: { value: 'contract.fixed_term' },
     });
     fireEvent.click(screen.getByLabelText('Feldtyp'));
@@ -844,7 +844,8 @@ it('retains the highlighted replacement text while entering a new field and chan
   expect(container.querySelector('.document-retained-selection')).toHaveTextContent('replace me');
   expect(editor.state.selection.from).toBe(8);
   expect(editor.state.selection.to).toBe(18);
-  await user.type(screen.getByRole('textbox', { name: 'Feldschlüssel' }), 'contract.first_name');
+  await user.clear(screen.getByRole('textbox', { name: 'Feldverknüpfung (optional)' }));
+  await user.type(screen.getByRole('textbox', { name: 'Feldverknüpfung (optional)' }), 'contract.first_name');
   await user.click(screen.getByRole('combobox', { name: 'Feldtyp' }));
   await user.click(await screen.findByRole('option', { name: 'Datum' }));
   expect(container.querySelector('.document-retained-selection')).toHaveTextContent('replace me');
@@ -860,4 +861,115 @@ it('retains the highlighted replacement text while entering a new field and chan
   act(() => editor.commands.setTextSelection(1));
   expect(container.querySelector('.document-retained-selection')).toBeNull();
   optionsSpy.mockRestore();
+});
+
+it.each(['paragraph', 'lineLabel', 'tableCell'])(
+  'drops a field at a text position inside a %s and publishes it',
+  async (parent) => {
+    const optionsSpy = vi.spyOn(Editor.prototype, 'setOptions');
+    const value = fromSegments([{ type: 'text', text: 'Before replacement after' }]);
+    if (parent === 'lineLabel') {
+      value.content = { type: 'doc', content: [{ type: 'lineGroup', content: [
+        { type: 'lineLabel', content: [{ type: 'text', text: 'Before replacement after' }] },
+      ] }] };
+    } else if (parent === 'tableCell') {
+      value.content = { type: 'doc', content: [{ type: 'table', content: [
+        { type: 'tableRow', content: [{ type: 'tableCell', content: value.content.content }] },
+      ] }] };
+    }
+    const onChange = vi.fn();
+    render(<StyledDocumentEditor document={value} master onChange={onChange} />);
+    await screen.findByText('Before replacement after');
+    const editor = optionsSpy.mock.instances.at(-1) as Editor;
+    editor.setOptions({ editorProps: { handleScrollToSelection: () => true } });
+    let pos = 0;
+    editor.state.doc.descendants((node, at) => { if (node.isText) pos = at + 7; });
+    vi.spyOn(editor.view, 'posAtCoords').mockReturnValue({ pos, inside: -1 });
+    fireEvent.change(screen.getByLabelText('Feldbezeichnung'), { target: { value: 'Vorname' } });
+    const data = new Map<string, string>();
+    const dataTransfer = {
+      setData: (type: string, content: string) => data.set(type, content),
+      getData: (type: string) => data.get(type) ?? '',
+      types: ['application/x-bsb-field'],
+      effectAllowed: '',
+    };
+    fireEvent.dragStart(screen.getByTitle('Feld ziehen: Vorname'), { dataTransfer });
+    fireEvent.drop(editor.view.dom, { dataTransfer });
+    expect(JSON.stringify(editor.getJSON())).toContain('contract.vorname');
+    expect(editor.getText()).toContain('Before');
+    expect(editor.getText()).toContain('replacement after');
+    expect(JSON.stringify(onChange.mock.calls.at(-1)?.[0])).toContain('contract.vorname');
+    act(() => { editor.commands.undo(); });
+    expect(JSON.stringify(editor.getJSON())).not.toContain('contract.vorname');
+    optionsSpy.mockRestore();
+  }
+);
+
+it('accepts a field dropped onto blank paper and keeps a long drag label bounded', async () => {
+  const optionsSpy = vi.spyOn(Editor.prototype, 'setOptions');
+  const { container } = render(<StyledDocumentEditor document={fromSegments([])} master pageView />);
+  await screen.findByLabelText('Feldbezeichnung');
+  const editor = optionsSpy.mock.instances.at(-1) as Editor;
+  editor.setOptions({ editorProps: { handleScrollToSelection: () => true } });
+  vi.spyOn(editor.view, 'posAtCoords').mockReturnValue(null);
+  const label = 'A very long field label '.repeat(5).trim();
+  fireEvent.change(screen.getByLabelText('Feldbezeichnung'), { target: { value: label } });
+  const chip = screen.getByTitle(`Feld ziehen: ${label}`);
+  expect(chip).toHaveClass('max-w-full');
+  expect(chip.lastElementChild).toHaveClass('truncate');
+  const data = new Map<string, string>();
+  const dataTransfer = {
+    setData: (type: string, content: string) => data.set(type, content),
+    getData: (type: string) => data.get(type) ?? '',
+    types: ['application/x-bsb-field'],
+    effectAllowed: '',
+  };
+  fireEvent.dragStart(chip, { dataTransfer });
+  fireEvent.drop(container.querySelector('.document-editor-paper')!, { dataTransfer });
+  expect(JSON.stringify(editor.getJSON())).toContain(label);
+  expect(screen.getByRole('combobox', { name: 'Dokumentzoom' }).parentElement)
+    .not.toContainElement(screen.getByLabelText('Feldbezeichnung'));
+  optionsSpy.mockRestore();
+});
+
+it.each([
+  { fieldType: 'checkbox', checkboxGlyph: '□', required: false },
+  { fieldType: 'date', dateMode: 'today', required: true },
+  { fieldType: 'points', required: true },
+])('preserves the attributes of a dropped $fieldType field', async (attrs) => {
+  const optionsSpy = vi.spyOn(Editor.prototype, 'setOptions');
+  render(<StyledDocumentEditor document={fromSegments([{ type: 'text', text: 'Contract clause' }])} master />);
+  await screen.findByText('Contract clause');
+  const editor = optionsSpy.mock.instances.at(-1) as Editor;
+  editor.setOptions({ editorProps: { handleScrollToSelection: () => true } });
+  vi.spyOn(editor.view, 'posAtCoords').mockReturnValue({ pos: 8, inside: -1 });
+  const field = { key: 'contract.test', label: 'Test field', ...attrs };
+  fireEvent.drop(editor.view.dom, { dataTransfer: {
+    types: ['application/x-bsb-field'],
+    getData: (type: string) => type === 'application/x-bsb-field' ? JSON.stringify(field) : '',
+  } });
+  const inserted: { attrs: Record<string, unknown> }[] = [];
+  editor.state.doc.descendants((node) => { if (node.attrs.key === field.key) inserted.push(node); });
+  expect(inserted).toHaveLength(1);
+  expect(inserted[0].attrs).toMatchObject(field);
+  optionsSpy.mockRestore();
+});
+
+it('shows an optional auto-filled field link, allows overrides, and restores automatic generation when cleared', async () => {
+  render(<StyledDocumentEditor document={document} master />);
+  const label = await screen.findByRole('textbox', { name: 'Feldbezeichnung' });
+  const link = screen.getByRole('textbox', { name: 'Feldverknüpfung (optional)' });
+  expect(link).toBeVisible();
+  expect(link).not.toBeRequired();
+  expect(screen.queryByText(/Platzhalter einfügen:/)).not.toBeInTheDocument();
+  fireEvent.change(label, { target: { value: 'Vorname' } });
+  expect(link).toHaveValue('contract.vorname_2');
+  fireEvent.change(label, { target: { value: 'Nachname' } });
+  expect(link).toHaveValue('contract.nachname');
+  fireEvent.change(link, { target: { value: 'contract.custom' } });
+  fireEvent.change(label, { target: { value: 'Geburtsort' } });
+  expect(link).toHaveValue('contract.custom');
+  fireEvent.change(link, { target: { value: '' } });
+  fireEvent.blur(link);
+  expect(link).toHaveValue('contract.geburtsort');
 });

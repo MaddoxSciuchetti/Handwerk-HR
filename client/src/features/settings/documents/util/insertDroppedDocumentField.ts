@@ -1,4 +1,7 @@
 import type { EditorView } from 'prosemirror-view';
+import { Fragment, Slice } from '@tiptap/pm/model';
+import { TextSelection } from '@tiptap/pm/state';
+import { dropPoint } from '@tiptap/pm/transform';
 import { tryCatchSync } from '@/lib/trycatch';
 import { FIELD_DRAG_TYPE } from '../consts/editor.consts';
 import {
@@ -16,7 +19,6 @@ type DroppedDocumentField = {
 };
 
 type DropSession = {
-  onChange?: (document: unknown) => void;
   master: boolean;
   readOnly: boolean;
 };
@@ -24,7 +26,8 @@ type DropSession = {
 export function insertDroppedDocumentField(
   view: EditorView,
   event: DragEvent,
-  session: DropSession
+  session: DropSession,
+  fallbackToEnd = false
 ) {
   let dragged: DroppedDocumentField | null = getDraggedContractInput();
   const payload = event.dataTransfer?.getData(FIELD_DRAG_TYPE);
@@ -35,9 +38,10 @@ export function insertDroppedDocumentField(
     if (error) return false;
     dragged = parsed;
   }
-  if (!dragged || !session.onChange || !session.master || session.readOnly)
-    return false;
-  const pos = view.posAtCoords({ left: event.clientX, top: event.clientY });
+  if (!dragged || !session.master || session.readOnly) return false;
+  const pos =
+    view.posAtCoords({ left: event.clientX, top: event.clientY }) ??
+    (fallbackToEnd ? { pos: TextSelection.atEnd(view.state.doc).from } : null);
   if (!pos) return false;
   const points = dragged.fieldType === 'points';
   const nodeType = points
@@ -45,8 +49,6 @@ export function insertDroppedDocumentField(
     : view.state.schema.nodes.documentField;
   if (!nodeType) return false;
   const $pos = view.state.doc.resolve(pos.pos);
-  const at =
-    !points || $pos.parent.type.name === 'doc' ? pos.pos : $pos.after(1);
   const node = nodeType.create(
     {
       key: dragged.key,
@@ -62,8 +64,19 @@ export function insertDroppedDocumentField(
     null,
     points ? undefined : $pos.marks()
   );
-  if (!view.state.doc.canReplaceWith(at, at, node.type)) return false;
-  view.dispatch(view.state.tr.insert(at, node));
+  // Positions are document offsets; canReplaceWith expects child indexes.
+  // dropPoint also finds a valid block boundary for description points.
+  const at = dropPoint(
+    view.state.doc,
+    pos.pos,
+    new Slice(Fragment.from(node), 0, 0)
+  );
+  if (at === null) return false;
+  const tr = view.state.tr.replaceRangeWith(at, at, node);
+  tr.setSelection(TextSelection.near(tr.doc.resolve(tr.mapping.map(at, 1))));
+  event.preventDefault();
+  view.dispatch(tr.scrollIntoView());
+  view.focus();
   setDraggedContractInput(null);
   return true;
 }

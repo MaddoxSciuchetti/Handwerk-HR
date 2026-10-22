@@ -135,7 +135,7 @@ function WorkerLifeCycle() {
                 options={filterOptions}
                 value={filterLabel}
                 placeholder="Filter"
-                className="w-28 border-border bg-muted shadow-none hover:bg-muted focus-visible:border-border focus-visible:ring-0 aria-expanded:bg-muted dark:border-border dark:bg-muted dark:hover:bg-muted"
+                className="border-border bg-muted shadow-none hover:bg-muted focus-visible:border-border focus-visible:ring-0 aria-expanded:bg-muted dark:border-border dark:bg-muted dark:hover:bg-muted"
                 onSelect={handleSelect}
                 onSubSelect={handleSubSelect}
               />

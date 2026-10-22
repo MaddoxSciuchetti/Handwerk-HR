@@ -15,6 +15,10 @@ enum OrgMemberRole {
 
 
 model User {
+  microsoftConnections MicrosoftUserConnection[]
+  microsoftAuthAttempts MicrosoftAuthAttempt[]
+  microsoftConnectionEvents MicrosoftConnectionEvent[]
+  teamsSends TeamsSend[]
   id                     String               @id @default(uuid())
   firstName              String               @map("first_name") @db.VarChar(120)
   lastName               String               @map("last_name") @db.VarChar(120)
@@ -88,6 +92,10 @@ model NewVerificationCode {
 
 
 model Organization {
+  microsoftConnections MicrosoftUserConnection[]
+  microsoftAuthAttempts MicrosoftAuthAttempt[]
+  microsoftConnectionEvents MicrosoftConnectionEvent[]
+  teamsSends TeamsSend[]
   id              String                 @id @default(uuid())
   createdByUserId String?                @map("created_by_user_id")
   name            String                @db.VarChar(255)
@@ -308,6 +316,7 @@ model TemplateItem {
 
 
 model Issue {
+  teamsSend TeamsSend?
   id                 String             @id @default(uuid())
   workerEngagementId String?            @map("worker_engagement_id")
   organizationId     String?            @map("organization_id")
@@ -1077,6 +1086,7 @@ enum IntegrationSequence {
   microsoft_send_onboarding_email
   microsoft_send_offboarding_email
   microsoft_send_email
+  microsoft_send_teams_message
   microsoft_deactivate_account
   crewmeister_create_account
 }
@@ -1151,4 +1161,94 @@ model DescriptionSentence {
 
   @@unique([organizationId, normalized])
   @@map("description_sentences")
+}
+
+
+model MicrosoftUserConnection {
+  id String @id @default(uuid())
+  organizationId String @map("organization_id")
+  userId String @map("user_id")
+  tenantId String @map("tenant_id")
+  clientId String @map("client_id")
+  homeAccountId String @map("home_account_id")
+  microsoftUserId String @map("microsoft_user_id")
+  displayName String @map("display_name")
+  username String
+  scopes String[]
+  cacheCiphertext String @map("cache_ciphertext") @db.Text
+  reconnectRequired Boolean @default(false) @map("reconnect_required")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([organizationId, userId])
+  @@map("microsoft_user_connections")
+}
+
+model MicrosoftAuthAttempt {
+  id String @id
+  organizationId String @map("organization_id")
+  userId String @map("user_id")
+  tenantId String @map("tenant_id")
+  clientId String @map("client_id")
+  consumedAt DateTime? @map("consumed_at") @db.Timestamptz()
+  browserHash String @map("browser_hash")
+  verifierCiphertext String @map("verifier_ciphertext") @db.Text
+  nonce String
+  expiresAt DateTime @map("expires_at") @db.Timestamptz()
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([expiresAt])
+  @@map("microsoft_auth_attempts")
+}
+
+model MicrosoftConnectionEvent {
+  id String @id @default(uuid())
+  organizationId String @map("organization_id")
+  userId String @map("user_id")
+  action String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([organizationId, userId])
+  @@map("microsoft_connection_events")
+}
+
+model TeamsSend {
+  id String @id @default(uuid())
+  issueId String @unique @map("issue_id")
+  organizationId String @map("organization_id")
+  actorUserId String @map("actor_user_id")
+  idempotencyKey String @unique @map("idempotency_key")
+  microsoftUserId String @map("microsoft_user_id")
+  tenantId String @map("tenant_id")
+  senderName String @map("sender_name")
+  body String @db.Text
+  status String @default("pending")
+  leaseUntil DateTime? @map("lease_until") @db.Timestamptz()
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  actor User @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
+  destinations TeamsSendDestination[]
+  @@map("teams_sends")
+}
+
+model TeamsSendDestination {
+  id String @id @default(uuid())
+  sendId String @map("send_id")
+  teamId String @map("team_id")
+  channelId String @map("channel_id")
+  label String
+  status String @default("pending")
+  graphMessageId String? @map("graph_message_id")
+  messageUrl String? @map("message_url")
+  error String?
+  retryAfter DateTime? @map("retry_after") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+  send TeamsSend @relation(fields: [sendId], references: [id], onDelete: Cascade)
+  @@unique([sendId, teamId, channelId])
+  @@map("teams_send_destinations")
 }

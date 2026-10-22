@@ -32,7 +32,7 @@ export function EditableTextRow({
           placeholder={label}
           onBlur={onBlur}
           onChange={(event) => onChangeValue(event.target.value)}
-          className="h-8 bg-muted text-sm shadow-none focus-visible:border-border focus-visible:ring-0 dark:bg-muted"
+          className="h-8 border-transparent bg-muted/50 text-sm shadow-none focus:border-border focus:bg-muted focus-visible:border-border focus-visible:ring-0 dark:bg-muted/50 dark:focus:bg-muted"
           onKeyDown={(event) => {
             if (event.key === 'Enter') {
               event.preventDefault();

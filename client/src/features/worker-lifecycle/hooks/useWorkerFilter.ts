@@ -37,7 +37,7 @@ export function useWorkerFilter(workers: WorkerRecord[] | undefined) {
   const handleSubSelect = (sub: DropdownOption, parent: DropdownOption) => {
     setFilterMode(parent.value as FilterMode);
     setFilterValue(sub.value);
-    setFilterLabel(`${parent.label}: ${sub.label}`);
+    setFilterLabel(sub.label);
   };
 
   const filteredWorkers = useMemo(

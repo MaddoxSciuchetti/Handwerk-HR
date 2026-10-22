@@ -58,7 +58,7 @@ function WorkerEmailField({ workerId, email }: WorkerEmailFieldProps) {
           disabled={isPending}
           value={draft}
           placeholder="E-Mail"
-          className="h-8 bg-muted text-right text-sm dark:bg-muted"
+          className="h-8 border-transparent bg-muted/50 text-right text-sm shadow-none focus:border-border focus:bg-muted focus-visible:border-border focus-visible:ring-0 dark:bg-muted/50 dark:focus:bg-muted"
           onChange={(event) => {
             setDraft(event.target.value);
             setErrorMessage('');

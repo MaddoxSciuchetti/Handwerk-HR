@@ -8,6 +8,7 @@ import { DocumentFieldInsert } from './components/DocumentFieldInsert';
 import { DocumentEditorZoom } from './components/DocumentEditorZoom';
 import { DocumentEditorCanvas } from './components/DocumentEditorCanvas';
 import { DocumentEditorCorner } from './components/DocumentEditorCorner';
+import { insertDroppedDocumentField } from './util/insertDroppedDocumentField';
 
 type StyledDocumentEditorProps = {
   document: StyledDocument;
@@ -43,17 +44,18 @@ export function StyledDocumentEditor({
   const { editor, zoom, setZoom, pageCount, toolbar } = useStyledDocumentEditor(
     { document, onChange, master, readOnly, section, pageView }
   );
-  if (!editor || !toolbar) return (
-    <DocumentEditorSkeleton
-      document={document}
-      master={master}
-      readOnly={readOnly}
-      section={section}
-      pageView={pageView}
-      showCorner={Boolean(onToggleExpanded)}
-      showOriginalToggle={showOriginalToggle}
-    />
-  );
+  if (!editor || !toolbar)
+    return (
+      <DocumentEditorSkeleton
+        document={document}
+        master={master}
+        readOnly={readOnly}
+        section={section}
+        pageView={pageView}
+        showCorner={Boolean(onToggleExpanded)}
+        showOriginalToggle={showOriginalToggle}
+      />
+    );
   const showToolbar = master && !readOnly;
   const framed = showToolbar || Boolean(onToggleExpanded);
 
@@ -74,14 +76,11 @@ export function StyledDocumentEditor({
               {showToolbar ? (
                 <div className="flex flex-wrap items-center gap-1.5">
                   <DocumentEditorToolbar editor={editor} toolbar={toolbar} />
-                  {pageView ? (
-                    <DocumentEditorZoom zoom={zoom} onZoomChange={setZoom} />
-                  ) : null}
-                  <DocumentFieldInsert editor={editor} />
                 </div>
               ) : null}
+              {showToolbar ? <DocumentFieldInsert editor={editor} /> : null}
             </div>
-            {pageView && !showToolbar ? (
+            {pageView ? (
               <DocumentEditorZoom zoom={zoom} onZoomChange={setZoom} />
             ) : null}
             {onToggleExpanded ? (
@@ -97,10 +96,7 @@ export function StyledDocumentEditor({
         ) : null}
         {pageView && !framed ? (
           <div>
-            <DocumentEditorZoom
-              zoom={zoom}
-              onZoomChange={setZoom}
-            />
+            <DocumentEditorZoom zoom={zoom} onZoomChange={setZoom} />
           </div>
         ) : null}
         <DocumentEditorCanvas
@@ -110,6 +106,19 @@ export function StyledDocumentEditor({
           pageView={pageView}
           zoom={zoom}
           pageCount={pageCount}
+          onFieldDrop={
+            showToolbar
+              ? (event) => {
+                  if (!event.defaultPrevented)
+                    insertDroppedDocumentField(
+                      editor.view,
+                      event.nativeEvent,
+                      { master, readOnly },
+                      true
+                    );
+                }
+              : undefined
+          }
         >
           <EditorContent editor={editor} className="relative" />
         </DocumentEditorCanvas>

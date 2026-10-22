@@ -32,6 +32,7 @@ type EditorToolbarState = {
   fontSize: number;
   alignment: string;
   orderedListStart: number | null;
+  inTable: boolean;
 };
 
 type DocumentEditorToolbarProps = {
@@ -109,18 +110,20 @@ export function DocumentEditorToolbar({
 
   return (
     <>
-      {actions.map((action) => (
-        <Button
-          key={action.label}
-          type="button"
-          variant="outline"
-          size="sm"
-          onMouseDown={(event) => event.preventDefault()}
-          onClick={action.run}
-        >
-          {action.label}
-        </Button>
-      ))}
+      {actions
+        .filter((action) => !action.tableOnly || toolbar.inTable)
+        .map((action) => (
+          <Button
+            key={action.label}
+            type="button"
+            variant="outline"
+            size="sm"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={action.run}
+          >
+            {action.label}
+          </Button>
+        ))}
       {toolbar.orderedListStart !== null ? (
         <Input
           aria-label="Nummerierungsbeginn"

@@ -113,17 +113,20 @@ async function taskSequenceFields(
     if (!integration?.enabled) {
         throw new AppError(BAD_REQUEST, "Diese Integration ist nicht aktiv.");
     }
-    const mailTemplateId = sequence === "microsoft_send_email"
+    const mailTemplateId = (sequence === "microsoft_send_email" || sequence === "microsoft_send_teams_message")
         ? (typeof body.mailTemplateId === "string" ? body.mailTemplateId.trim() : "")
         : null;
-    if (sequence === "microsoft_send_email") {
+    if (sequence === "microsoft_send_email" || sequence === "microsoft_send_teams_message") {
         if (!mailTemplateId) {
             throw new AppError(BAD_REQUEST, "Bitte wähle eine E-Mail-Vorlage.");
         }
         const template = await prisma.mailTemplate.findFirst({
             where: { id: mailTemplateId, organizationId: orgId },
-            select: { id: true },
+            select: { id: true, ...(sequence === "microsoft_send_teams_message" ? { body: true } : {}) },
         });
+        if (sequence === "microsoft_send_teams_message" && !template?.body.trim()) {
+            throw new AppError(BAD_REQUEST, "Bitte eine Nachrichtenvorlage mit Inhalt wählen.");
+        }
         if (!template) {
             throw new AppError(BAD_REQUEST, "Die E-Mail-Vorlage wurde nicht gefunden.");
         }
