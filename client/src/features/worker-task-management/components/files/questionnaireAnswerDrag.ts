@@ -37,7 +37,7 @@ export function setDraggedQuestionnaireAnswer(
     const over = (event: globalThis.DragEvent) => {
       const next = dropTarget(event);
       if (event.dataTransfer)
-        event.dataTransfer.dropEffect = next ? 'copy' : 'none';
+        event.dataTransfer.dropEffect = next ? 'move' : 'none';
       if (!next) event.stopPropagation();
       if (target !== next) {
         target = next;
@@ -102,7 +102,7 @@ export function useQuestionnaireAnswerDrop<T extends HTMLElement>(
       if (!enabled || !getDraggedQuestionnaireAnswer()) return;
       event.preventDefault();
       event.stopPropagation();
-      event.dataTransfer.dropEffect = 'copy';
+      event.dataTransfer.dropEffect = 'move';
     },
     onDrop: (event: DragEvent<T>) => {
       const answer = getDraggedQuestionnaireAnswer();
