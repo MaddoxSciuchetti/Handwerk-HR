@@ -59,7 +59,7 @@ export function UnmatchedQuestionnaireAnswers({
                   QUESTIONNAIRE_ANSWER_DRAG_TYPE,
                   answer.value
                 );
-                event.dataTransfer.effectAllowed = 'copy';
+                event.dataTransfer.effectAllowed = 'move';
                 dragPreview.start(event);
               }}
               onDragEnd={() => {
