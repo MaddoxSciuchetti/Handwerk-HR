@@ -267,7 +267,7 @@ export function AddDocumentMasterDialog({
   };
 
   return (
-    <SidebarAside className="p-2" isOpen={isOpen}>
+    <SidebarAside className="p-2" isOpen={isOpen} onClose={onClose}>
       <SidebarPanel className="w-full">
         <SidebarHeader className="flex items-center justify-between p-6">
           <Label className="typo-body-lg font-bold">

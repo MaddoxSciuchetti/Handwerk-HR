@@ -15,7 +15,9 @@ function Harness() {
       <button type="button" onClick={() => setIsOpen(false)}>
         Close
       </button>
-      <SidebarAside isOpen={isOpen}>Panel</SidebarAside>
+      <SidebarAside isOpen={isOpen} onClose={() => setIsOpen(false)}>
+        Panel
+      </SidebarAside>
     </>
   );
 }
@@ -33,5 +35,30 @@ describe('SidebarAside', () => {
 
     await user.click(screen.getByRole('button', { name: 'Close' }));
     expect(panel).toHaveAttribute('data-state', 'closed');
+  });
+
+  it('closes on Escape', async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.keyboard('{Escape}');
+
+    expect(screen.getByText('Panel')).toHaveAttribute('data-state', 'closed');
+  });
+
+  it('leaves Escape to an overlay that already handled it', async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+
+    const claimEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') event.preventDefault();
+    };
+    document.addEventListener('keydown', claimEscape, { capture: true });
+    await user.keyboard('{Escape}');
+    document.removeEventListener('keydown', claimEscape, { capture: true });
+
+    expect(screen.getByText('Panel')).toHaveAttribute('data-state', 'open');
   });
 });
