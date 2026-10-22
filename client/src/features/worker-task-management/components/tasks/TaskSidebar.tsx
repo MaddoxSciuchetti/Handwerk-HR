@@ -88,7 +88,11 @@ export function TaskSidebar({
   );
 
   return (
-    <SidebarAside className="p-2" isOpen={isOpen} onClose={() => setIsOpen(false)}>
+    <SidebarAside
+      className="p-2"
+      isOpen={isOpen}
+      onClose={() => setIsOpen(false)}
+    >
       <SidebarPanel className="w-full">
         <SidebarHeader className="flex items-center justify-between p-6">
           <Label className="typo-body-lg font-bold">

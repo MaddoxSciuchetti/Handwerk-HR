@@ -5,6 +5,7 @@ import {
   Inbox,
   Plug,
   ScrollText,
+  Settings2,
   Shirt,
   Ticket,
   UserRound,
@@ -35,6 +36,11 @@ export const LAYOUTITEMS = [
 ];
 
 export const SETTINGSITEMS = [
+  {
+    title: 'Allgemein',
+    to: '/settings/general',
+    icon: Settings2,
+  },
   {
     title: 'Profil',
     to: '/settings/profile',

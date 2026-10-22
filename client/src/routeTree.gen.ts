@@ -27,6 +27,7 @@ import { Route as SettingsProfileRouteImport } from './routes/settings/profile'
 import { Route as SettingsPlansRouteImport } from './routes/settings/plans'
 import { Route as SettingsPaymentsRouteImport } from './routes/settings/payments'
 import { Route as SettingsIntegrationsRouteImport } from './routes/settings/integrations'
+import { Route as SettingsGeneralRouteImport } from './routes/settings/general'
 import { Route as SettingsEmployeesRouteImport } from './routes/settings/employees'
 import { Route as SettingsDocumentsRouteImport } from './routes/settings/documents'
 import { Route as SettingsDepartureMailRouteImport } from './routes/settings/departure-mail'
@@ -131,6 +132,11 @@ const SettingsIntegrationsRoute = SettingsIntegrationsRouteImport.update({
   path: '/integrations',
   getParentRoute: () => SettingsRoute,
 } as any)
+const SettingsGeneralRoute = SettingsGeneralRouteImport.update({
+  id: '/general',
+  path: '/general',
+  getParentRoute: () => SettingsRoute,
+} as any)
 const SettingsEmployeesRoute = SettingsEmployeesRouteImport.update({
   id: '/employees',
   path: '/employees',
@@ -218,6 +224,7 @@ export interface FileRoutesByFullPath {
   '/settings/departure-mail': typeof SettingsDepartureMailRoute
   '/settings/documents': typeof SettingsDocumentsRouteWithChildren
   '/settings/employees': typeof SettingsEmployeesRoute
+  '/settings/general': typeof SettingsGeneralRoute
   '/settings/integrations': typeof SettingsIntegrationsRoute
   '/settings/payments': typeof SettingsPaymentsRoute
   '/settings/plans': typeof SettingsPlansRoute
@@ -251,6 +258,7 @@ export interface FileRoutesByTo {
   '/settings/departure-mail': typeof SettingsDepartureMailRoute
   '/settings/documents': typeof SettingsDocumentsRouteWithChildren
   '/settings/employees': typeof SettingsEmployeesRoute
+  '/settings/general': typeof SettingsGeneralRoute
   '/settings/integrations': typeof SettingsIntegrationsRoute
   '/settings/payments': typeof SettingsPaymentsRoute
   '/settings/plans': typeof SettingsPlansRoute
@@ -285,6 +293,7 @@ export interface FileRoutesById {
   '/settings/departure-mail': typeof SettingsDepartureMailRoute
   '/settings/documents': typeof SettingsDocumentsRouteWithChildren
   '/settings/employees': typeof SettingsEmployeesRoute
+  '/settings/general': typeof SettingsGeneralRoute
   '/settings/integrations': typeof SettingsIntegrationsRoute
   '/settings/payments': typeof SettingsPaymentsRoute
   '/settings/plans': typeof SettingsPlansRoute
@@ -320,6 +329,7 @@ export interface FileRouteTypes {
     | '/settings/departure-mail'
     | '/settings/documents'
     | '/settings/employees'
+    | '/settings/general'
     | '/settings/integrations'
     | '/settings/payments'
     | '/settings/plans'
@@ -353,6 +363,7 @@ export interface FileRouteTypes {
     | '/settings/departure-mail'
     | '/settings/documents'
     | '/settings/employees'
+    | '/settings/general'
     | '/settings/integrations'
     | '/settings/payments'
     | '/settings/plans'
@@ -386,6 +397,7 @@ export interface FileRouteTypes {
     | '/settings/departure-mail'
     | '/settings/documents'
     | '/settings/employees'
+    | '/settings/general'
     | '/settings/integrations'
     | '/settings/payments'
     | '/settings/plans'
@@ -548,6 +560,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsIntegrationsRouteImport
       parentRoute: typeof SettingsRoute
     }
+    '/settings/general': {
+      id: '/settings/general'
+      path: '/general'
+      fullPath: '/settings/general'
+      preLoaderRoute: typeof SettingsGeneralRouteImport
+      parentRoute: typeof SettingsRoute
+    }
     '/settings/employees': {
       id: '/settings/employees'
       path: '/employees'
@@ -658,6 +677,7 @@ interface SettingsRouteChildren {
   SettingsDepartureMailRoute: typeof SettingsDepartureMailRoute
   SettingsDocumentsRoute: typeof SettingsDocumentsRouteWithChildren
   SettingsEmployeesRoute: typeof SettingsEmployeesRoute
+  SettingsGeneralRoute: typeof SettingsGeneralRoute
   SettingsIntegrationsRoute: typeof SettingsIntegrationsRoute
   SettingsPaymentsRoute: typeof SettingsPaymentsRoute
   SettingsPlansRoute: typeof SettingsPlansRoute
@@ -674,6 +694,7 @@ const SettingsRouteChildren: SettingsRouteChildren = {
   SettingsDepartureMailRoute: SettingsDepartureMailRoute,
   SettingsDocumentsRoute: SettingsDocumentsRouteWithChildren,
   SettingsEmployeesRoute: SettingsEmployeesRoute,
+  SettingsGeneralRoute: SettingsGeneralRoute,
   SettingsIntegrationsRoute: SettingsIntegrationsRoute,
   SettingsPaymentsRoute: SettingsPaymentsRoute,
   SettingsPlansRoute: SettingsPlansRoute,

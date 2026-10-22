@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, DragEventHandler } from 'react';
 import { renderNode } from '@shared/documentRendering';
-import { PAGE_SHEET_GAP_PX } from '../consts/editor.consts';
+import { FIELD_DRAG_TYPE, PAGE_SHEET_GAP_PX } from '../consts/editor.consts';
 import type { StyledDocument } from '../styledDocument';
 
 type DocumentSection = 'content' | 'header' | 'footer';
@@ -13,6 +13,7 @@ type DocumentEditorCanvasProps = {
   zoom: number;
   pageCount: number;
   children: ReactNode;
+  onFieldDrop?: DragEventHandler<HTMLDivElement>;
 };
 
 export function DocumentEditorCanvas({
@@ -23,6 +24,7 @@ export function DocumentEditorCanvas({
   zoom,
   pageCount,
   children,
+  onFieldDrop,
 }: DocumentEditorCanvasProps) {
   const pageSheets =
     pageView && section === 'content'
@@ -38,6 +40,17 @@ export function DocumentEditorCanvas({
       }
     >
       <div
+        onDrop={onFieldDrop}
+        onDragOver={
+          onFieldDrop
+            ? (event) => {
+                if (event.dataTransfer.types.includes(FIELD_DRAG_TYPE)) {
+                  event.preventDefault();
+                  event.dataTransfer.dropEffect = 'copy';
+                }
+              }
+            : undefined
+        }
         className={
           pageView
             ? `styled-document document-editor-paper${section === 'content' ? ' document-editor-paginated' : ''}`

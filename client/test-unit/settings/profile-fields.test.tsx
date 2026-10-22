@@ -35,7 +35,7 @@ vi.mock('@/features/settings/profile/useProfileSettings', () => ({
 }));
 
 describe('profile settings fields', () => {
-  it('shows each value in a gray input before it is clicked', () => {
+  it('shows a subtle gray input that becomes stronger on focus', () => {
     render(
       <Table>
         <TableBody>
@@ -52,7 +52,12 @@ describe('profile settings fields', () => {
 
     const field = screen.getByRole('textbox', { name: 'Email Adresse' });
     expect(field).toHaveValue('ada@firma.de');
-    expect(field).toHaveClass('bg-muted');
+    expect(field).toHaveClass(
+      'border-transparent',
+      'bg-muted/50',
+      'focus:bg-muted'
+    );
+    expect(field).not.toHaveClass('bg-muted');
   });
 
   it('does not validate when an empty display name is only clicked', async () => {
