@@ -16,6 +16,9 @@ vi.mock('@/features/settings/documents/descriptionSentences.api', () => ({
   getDescriptionSentences: vi.fn(),
   saveDescriptionSentence: vi.fn(),
 }));
+vi.mock('@/features/user-profile/hooks/useAuth', () => ({
+  default: () => ({ user: undefined }),
+}));
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 
 function SharedViews() {

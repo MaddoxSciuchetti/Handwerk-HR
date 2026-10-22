@@ -152,8 +152,8 @@ describe('Teams sending', () => {
     });
     renderWithProviders(<TeamsSendForm taskId="task-a" />);
     expect(
-      await screen.findByRole('link', { name: 'Zu den Profileinstellungen' })
-    ).toHaveAttribute('href', '/settings/profile');
+      await screen.findByRole('link', { name: 'Zu den allgemeinen Einstellungen' })
+    ).toHaveAttribute('href', '/settings/general');
     expect(
       screen.getByRole('button', { name: 'Nachricht senden' })
     ).toBeDisabled();

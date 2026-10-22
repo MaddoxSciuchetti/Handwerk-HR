@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import useAuth from '@/features/user-profile/hooks/useAuth';
+import { TeamsConnectionCard } from '@/features/microsoft-teams/TeamsConnectionCard';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
@@ -19,6 +21,7 @@ import {
 
 export function GeneralSettings() {
   const [draft, setDraft] = useState('');
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const sentences = useQuery({
     queryKey: descriptionSentencesKey,
@@ -50,7 +53,7 @@ export function GeneralSettings() {
   return (
     <div className="mx-auto flex h-full flex-col overflow-auto rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
       <SettingsPageHeader title="Allgemein" />
-      <Card className="mt-5 w-full max-w-2xl border border-border shadow-none ring-0">
+      <Card className="mt-5 w-full max-w-2xl shrink-0 border border-border shadow-none ring-0">
         <CardContent className="space-y-4">
           <form
             className="space-y-2"
@@ -91,12 +94,13 @@ export function GeneralSettings() {
           ) : (
             <ul
               aria-label="Gespeicherte Beschreibungen"
-              className="divide-y divide-border"
+              tabIndex={0}
+              className="max-h-30 overflow-y-auto overscroll-contain divide-y divide-border rounded-sm focus-visible:outline-2 focus-visible:outline-ring"
             >
               {sentences.data.map((value) => (
                 <li
                   key={descriptionSentenceKey(value)}
-                  className="py-2 text-sm break-words"
+                  className="flex min-h-10 items-center py-2 text-sm break-words [overflow-wrap:anywhere]"
                 >
                   {value}
                 </li>
@@ -105,6 +109,11 @@ export function GeneralSettings() {
           )}
         </CardContent>
       </Card>
+      {user && (
+        <div className="w-full max-w-2xl shrink-0">
+          <TeamsConnectionCard user={user} />
+        </div>
+      )}
     </div>
   );
 }
