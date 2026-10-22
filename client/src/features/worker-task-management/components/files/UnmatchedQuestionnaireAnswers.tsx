@@ -1,9 +1,9 @@
 import { Button } from '@/components/ui/button';
+import { useAnswerDragPreview } from './useAnswerDragPreview';
 import type { UnmatchedQuestionnaireAnswer } from '../../api/employmentContract.api';
 import {
   QUESTIONNAIRE_ANSWER_DRAG_TYPE,
   setDraggedQuestionnaireAnswer,
-  setQuestionnaireAnswerDragImage,
 } from './questionnaireAnswerDrag';
 
 type UnmatchedQuestionnaireAnswersProps = {
@@ -25,6 +25,7 @@ export function UnmatchedQuestionnaireAnswers({
   masterHint = 'Fehlt das Feld im Vertrag, ergänzen Sie die Eingabe im Mustervertrag und kehren Sie danach hierher zurück.',
   masterAction = 'Mustervertrag ergänzen',
 }: UnmatchedQuestionnaireAnswersProps) {
+  const dragPreview = useAnswerDragPreview();
   return (
     <aside className="flex w-60 shrink-0 flex-col gap-3 overflow-auto">
       <div>
@@ -59,9 +60,10 @@ export function UnmatchedQuestionnaireAnswers({
                   answer.value
                 );
                 event.dataTransfer.effectAllowed = 'copy';
-                setQuestionnaireAnswerDragImage(event);
+                dragPreview.start(event);
               }}
               onDragEnd={() => {
+                dragPreview.stop();
                 queueMicrotask(() => setDraggedQuestionnaireAnswer(null));
               }}
               className="block cursor-grab rounded-md border border-border bg-muted px-2 py-1.5 active:cursor-grabbing"
