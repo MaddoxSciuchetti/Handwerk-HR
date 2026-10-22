@@ -29,6 +29,7 @@ import GreetingHeader from './GreetingHeader';
 import { LifecycleStatistics } from './LifecycleStatistics';
 import ProjectItem, { type WorkerSelection } from './ProjectItem';
 import { WorkerSidebar } from './WorkerSidebar';
+import { WorkerSelectAllCheckbox } from './WorkerSelectAllCheckbox';
 import { useChangeResponsibleUser } from '../hooks/useChangeResponsibleUser';
 
 function WorkerLifeCycle() {
@@ -153,7 +154,15 @@ function WorkerLifeCycle() {
               <Table aria-busy={isLoading || workersLoading}>
                 <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-b-0">
                   <TableRow className="border-0 hover:bg-transparent">
-                    <TableHead className="h-12 bg-card py-3 pl-12 pr-2">
+                    <TableHead className="relative h-12 bg-card py-3 pl-12 pr-2">
+                      <div className="absolute inset-y-0 left-0 flex w-10 items-center justify-center">
+                        <WorkerSelectAllCheckbox
+                          workers={filteredWorkers}
+                          selected={editModeData}
+                          onChange={handleSetEditModeData}
+                          disabled={isLoading || workersLoading || isSelectionPending}
+                        />
+                      </div>
                       Name
                     </TableHead>
                     <TableHead className="bg-card py-3 px-2">Typ</TableHead>

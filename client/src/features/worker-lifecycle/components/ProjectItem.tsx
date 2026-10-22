@@ -99,6 +99,8 @@ function ProjectItem(props: ProjectItemProps) {
       >
         {isTeam ? null : (
           <RowSelectButton
+            alwaysVisible
+            compact
             isSelected={props.isSelected}
             onClick={toggleSelection}
           />
