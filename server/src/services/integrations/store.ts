@@ -130,16 +130,11 @@ export async function saveOrganizationIntegration(params: {
     if (params.enabled && params.provider === "microsoft_graph" && !microsoftSimulationEnabled()) {
         const tenantId = (params.tenantId ?? existing?.tenantId ?? "").trim();
         const clientId = (params.clientId ?? existing?.clientId ?? "").trim();
-        const domain = (params.domain ?? existing?.domain ?? "").trim();
-        const licenseSkuId = (
-            params.licenseSkuId ??
-            existing?.licenseSkuId ??
-            ""
-        ).trim();
-        if (!tenantId || !clientId || !domain || !licenseSkuId) {
+        // Teams needs an app registration, while account provisioning separately requires domain/SKU.
+        if (!tenantId || !clientId) {
             throw new AppError(
                 BAD_REQUEST,
-                "Tenant, Client, Domäne und Lizenz-SKU sind erforderlich.",
+                "Tenant und Client sind erforderlich.",
             );
         }
         requireSecret(Boolean(clientSecretCiphertext), secret);

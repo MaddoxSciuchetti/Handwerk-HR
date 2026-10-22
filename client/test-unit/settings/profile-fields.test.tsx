@@ -2,6 +2,7 @@ import { EditableTextRow } from '@/features/settings/profile/EditableTextRow';
 import Profile from '@/features/settings/profile/Profile';
 import { Table, TableBody } from '@/components/ui/table';
 import { render, screen } from '@testing-library/react';
+import { renderWithProviders } from 'test-unit/test-utils';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -56,7 +57,7 @@ describe('profile settings fields', () => {
 
   it('does not validate when an empty display name is only clicked', async () => {
     const user = userEvent.setup();
-    render(<Profile />);
+    renderWithProviders(<Profile />);
 
     const field = screen.getByRole('textbox', { name: 'Display Name' });
     await user.click(field);

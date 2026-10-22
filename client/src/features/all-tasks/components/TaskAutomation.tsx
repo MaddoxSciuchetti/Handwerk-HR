@@ -1,3 +1,4 @@
+import { TeamsSendAction } from '@/features/microsoft-teams/TeamsSendAction';
 import { Button } from '@/components/ui/button';
 import { MicrosoftSimulationNotice } from '@/features/settings/integrations/MicrosoftSimulationNotice';
 import { Spinner } from '@/components/ui/spinner';
@@ -21,7 +22,7 @@ type TaskAutomationProps = {
   senderAddress?: string;
 };
 
-function TaskAutomation({
+function ExistingTaskAutomation({
   taskId,
   provider,
   disabled,
@@ -101,4 +102,11 @@ function TaskAutomation({
   );
 }
 
+function TaskAutomation(props: TaskAutomationProps) {
+  return props.sequence === 'microsoft_send_teams_message' ? (
+    <TeamsSendAction taskId={props.taskId} disabled={props.disabled} />
+  ) : (
+    <ExistingTaskAutomation {...props} />
+  );
+}
 export default TaskAutomation;

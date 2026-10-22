@@ -237,7 +237,7 @@ export function TaskSidebar({
                   register={register}
                   errors={errors}
                 />
-                {sequence === 'microsoft_send_email' ? (
+                {(sequence === 'microsoft_send_email' || sequence === 'microsoft_send_teams_message') ? (
                   <>
                     <div className="flex flex-col gap-2">
                       <FormSelectOptions
@@ -248,15 +248,15 @@ export function TaskSidebar({
                           value: template.id,
                           label: template.name,
                         }))}
-                        label="E-Mail-Vorlage"
+                        label={sequence === 'microsoft_send_teams_message' ? 'Nachrichtenvorlage' : 'E-Mail-Vorlage'}
                         placeholder="Vorlage wählen"
                       />
                     </div>
-                    <MailSenderSelect
+                    {sequence === 'microsoft_send_email' && <MailSenderSelect
                       control={control}
                       errors={errors}
                       current={mailSenderAddress}
-                    />
+                    />}
                   </>
                 ) : null}
                 {isMailSequence(sequence) && workerEngagementId ? (
