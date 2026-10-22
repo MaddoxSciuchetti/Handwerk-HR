@@ -31,7 +31,16 @@ import {
     removeMailTemplate,
 } from "@/controllers/mailTemplate.controller";
 
+import { getConnection, deleteConnection, postConnection, getChannels, getTeamsPreview, postTeamsSend, postDeliveryReview } from "@/controllers/microsoftTeams.controller";
 const automationRoutes = Router();
+automationRoutes.get("/microsoft-teams/connection", getConnection);
+automationRoutes.post("/microsoft-teams/connection", postConnection);
+automationRoutes.delete("/microsoft-teams/connection", deleteConnection);
+automationRoutes.get("/microsoft-teams/channels", getChannels);
+automationRoutes.get("/issues/:issueId/teams-preview", getTeamsPreview);
+automationRoutes.post("/issues/:issueId/teams-send", postTeamsSend);
+automationRoutes.post("/issues/:issueId/teams-review", postDeliveryReview);
+
 
 automationRoutes.get("/microsoft-365", getMicrosoft365Automation);
 automationRoutes.get("/microsoft-addresses", getMicrosoftMailAddresses);

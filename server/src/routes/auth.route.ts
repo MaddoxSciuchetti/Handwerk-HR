@@ -1,7 +1,9 @@
 import { Router } from "express";
 
 import * as AuthV2 from "../controllers/auth.controller";
+import { microsoftCallback } from "@/controllers/microsoftTeams.controller";
 const authRoutes = Router();
+authRoutes.get("/microsoft/callback", microsoftCallback);
 
 authRoutes.post("/v2/register", AuthV2.register);
 authRoutes.post("/v2/register/org", AuthV2.registerOrg);

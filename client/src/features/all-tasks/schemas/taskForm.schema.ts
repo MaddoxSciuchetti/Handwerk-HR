@@ -30,7 +30,11 @@ export const taskFormSchema = z
     ]),
   })
   .superRefine((data, ctx) => {
-    if (data.sequence === 'microsoft_send_email' && !data.mailTemplateId) {
+    if (
+      (data.sequence === 'microsoft_send_email' ||
+        data.sequence === 'microsoft_send_teams_message') &&
+      !data.mailTemplateId
+    ) {
       ctx.addIssue({
         code: 'custom',
         path: ['mailTemplateId'],

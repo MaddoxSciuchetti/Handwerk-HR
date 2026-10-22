@@ -28,6 +28,7 @@
     "dependencies": {
         "@aws-sdk/client-s3": "^3.980.0",
         "@aws-sdk/s3-request-presigner": "^3.980.0",
+        "@azure/msal-node": "^7.1.1",
         "@hono/node-server": "^2.0.3",
         "@hono/trpc-server": "^0.4.2",
         "@prisma/adapter-pg": "^7.2.0",
