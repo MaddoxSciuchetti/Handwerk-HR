@@ -6,7 +6,7 @@ export const ENGAGEMENT_TYPE_OPTIONS: {
 }[] = [
   { label: 'Onboarding', value: 'onboarding' },
   { label: 'Offboarding', value: 'offboarding' },
-  { label: 'Transfer', value: 'transfer' },
+  { label: 'Team', value: 'transfer' },
 ];
 
 export function switchableEngagementTypes(selectedTypes: EngagementType[]) {

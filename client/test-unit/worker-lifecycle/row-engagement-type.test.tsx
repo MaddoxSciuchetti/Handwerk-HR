@@ -95,7 +95,7 @@ describe('worker row type picker', () => {
       screen.getByRole('button', { name: 'Typ für Maddox Example ändern' })
     );
     expect(
-      screen.getByRole('menuitemradio', { name: 'Transfer' })
+      screen.getByRole('menuitemradio', { name: 'Team' })
     ).toHaveAttribute('aria-checked', 'true');
     await user.click(
       screen.getByRole('menuitemradio', { name: 'Offboarding' })
@@ -109,7 +109,7 @@ describe('worker row type picker', () => {
     await user.click(
       screen.getByRole('button', { name: 'Typ für Maddox Example ändern' })
     );
-    await user.click(screen.getByRole('menuitemradio', { name: 'Transfer' }));
+    await user.click(screen.getByRole('menuitemradio', { name: 'Team' }));
     expect(changeType).not.toHaveBeenCalled();
   });
 

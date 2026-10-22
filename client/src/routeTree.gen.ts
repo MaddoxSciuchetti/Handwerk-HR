@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WorkerLifycycleRouteImport } from './routes/worker-lifycycle'
+import { Route as TeamRouteImport } from './routes/team'
 import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -43,6 +44,11 @@ import { Route as EmailVerifyCodeRouteImport } from './routes/email/verify/$code
 const WorkerLifycycleRoute = WorkerLifycycleRouteImport.update({
   id: '/worker-lifycycle',
   path: '/worker-lifycycle',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeamRoute = TeamRouteImport.update({
+  id: '/team',
+  path: '/team',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TasksRoute = TasksRouteImport.update({
@@ -202,6 +208,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRouteWithChildren
   '/signup': typeof SignupRoute
   '/tasks': typeof TasksRoute
+  '/team': typeof TeamRoute
   '/worker-lifycycle': typeof WorkerLifycycleRoute
   '/fragebogen/$token': typeof FragebogenTokenRoute
   '/fragebogen/preview': typeof FragebogenPreviewRoute
@@ -234,6 +241,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRouteWithChildren
   '/signup': typeof SignupRoute
   '/tasks': typeof TasksRoute
+  '/team': typeof TeamRoute
   '/worker-lifycycle': typeof WorkerLifycycleRoute
   '/fragebogen/$token': typeof FragebogenTokenRoute
   '/fragebogen/preview': typeof FragebogenPreviewRoute
@@ -267,6 +275,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRouteWithChildren
   '/signup': typeof SignupRoute
   '/tasks': typeof TasksRoute
+  '/team': typeof TeamRoute
   '/worker-lifycycle': typeof WorkerLifycycleRoute
   '/fragebogen/$token': typeof FragebogenTokenRoute
   '/fragebogen/preview': typeof FragebogenPreviewRoute
@@ -301,6 +310,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/tasks'
+    | '/team'
     | '/worker-lifycycle'
     | '/fragebogen/$token'
     | '/fragebogen/preview'
@@ -333,6 +343,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/tasks'
+    | '/team'
     | '/worker-lifycycle'
     | '/fragebogen/$token'
     | '/fragebogen/preview'
@@ -365,6 +376,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/tasks'
+    | '/team'
     | '/worker-lifycycle'
     | '/fragebogen/$token'
     | '/fragebogen/preview'
@@ -398,6 +410,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRouteWithChildren
   SignupRoute: typeof SignupRoute
   TasksRoute: typeof TasksRoute
+  TeamRoute: typeof TeamRoute
   WorkerLifycycleRoute: typeof WorkerLifycycleRoute
   FragebogenTokenRoute: typeof FragebogenTokenRoute
   FragebogenPreviewRoute: typeof FragebogenPreviewRoute
@@ -414,6 +427,13 @@ declare module '@tanstack/react-router' {
       path: '/worker-lifycycle'
       fullPath: '/worker-lifycycle'
       preLoaderRoute: typeof WorkerLifycycleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/team': {
+      id: '/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof TeamRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tasks': {
@@ -679,6 +699,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRouteWithChildren,
   SignupRoute: SignupRoute,
   TasksRoute: TasksRoute,
+  TeamRoute: TeamRoute,
   WorkerLifycycleRoute: WorkerLifycycleRoute,
   FragebogenTokenRoute: FragebogenTokenRoute,
   FragebogenPreviewRoute: FragebogenPreviewRoute,

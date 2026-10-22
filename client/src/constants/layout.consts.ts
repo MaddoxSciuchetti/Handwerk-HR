@@ -8,6 +8,7 @@ import {
   Shirt,
   Ticket,
   UserRound,
+  Users,
 } from 'lucide-react';
 
 export const LAYOUTITEMS = [
@@ -15,6 +16,11 @@ export const LAYOUTITEMS = [
     title: 'Handwerker',
     to: '/worker-lifycycle',
     icon: Inbox,
+  },
+  {
+    title: 'Team',
+    to: '/team',
+    icon: Users,
   },
   {
     title: 'Aufgaben',

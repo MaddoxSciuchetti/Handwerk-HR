@@ -1,13 +1,11 @@
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TableCell, TableRow } from '@/components/ui/table';
 
 type EditableTextRowProps = {
   label: string;
   value: string;
-  isEditing: boolean;
   isDisabled?: boolean;
-  onClickValue: () => void;
+  type?: 'text' | 'email';
   onChangeValue: (value: string) => void;
   onBlur: () => void;
 };
@@ -15,9 +13,8 @@ type EditableTextRowProps = {
 export function EditableTextRow({
   label,
   value,
-  isEditing,
   isDisabled = false,
-  onClickValue,
+  type = 'text',
   onChangeValue,
   onBlur,
 }: EditableTextRowProps) {
@@ -27,30 +24,22 @@ export function EditableTextRow({
         <p className="typo-body-sm">{label}</p>
       </TableCell>
       <TableCell className="w-72">
-        {isEditing ? (
-          <Input
-            autoFocus
-            value={value}
-            disabled={isDisabled}
-            onBlur={onBlur}
-            onChange={(event) => onChangeValue(event.target.value)}
-            className="shadow-none focus-visible:border-border focus-visible:ring-0"
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                event.currentTarget.blur();
-              }
-            }}
-          />
-        ) : (
-          <Button
-            type="button"
-            variant="ghost"
-            className="h-auto w-full justify-start rounded-md px-3 py-1.5 text-left font-normal typo-body-sm hover:bg-accent"
-            onClick={onClickValue}
-          >
-            {value || '-'}
-          </Button>
-        )}
+        <Input
+          type={type}
+          aria-label={label}
+          value={value}
+          disabled={isDisabled}
+          placeholder={label}
+          onBlur={onBlur}
+          onChange={(event) => onChangeValue(event.target.value)}
+          className="h-8 bg-muted text-sm shadow-none focus-visible:border-border focus-visible:ring-0 dark:bg-muted"
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              event.currentTarget.blur();
+            }
+          }}
+        />
       </TableCell>
     </TableRow>
   );

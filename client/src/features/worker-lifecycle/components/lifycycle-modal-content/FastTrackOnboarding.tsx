@@ -131,7 +131,7 @@ export function FastTrackOnboarding({ onCreated }: FastTrackOnboardingProps) {
       </label>
       <Input
         id={emailId}
-        className="flex-1 focus-visible:ring-2 focus-visible:ring-inset"
+        className="flex-1"
         type="email"
         autoComplete="email"
         required

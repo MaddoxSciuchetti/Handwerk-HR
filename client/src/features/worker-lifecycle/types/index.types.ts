@@ -97,6 +97,9 @@ export type WorkerRecord = {
   email: string;
   position: string | null;
   status: WorkerStatus;
+  birthday?: string | null;
+  entryDate?: string | null;
+  exitDate?: string | null;
   createdAt: string;
   updatedAt: string;
   engagements: WorkerEngagement[];

@@ -37,7 +37,7 @@ export function TemplateSelect<T extends FieldValues>({
             }
             disabled={isLoading}
           >
-            <SelectTrigger className="h-8 w-full rounded-lg border-input shadow-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-inset">
+            <SelectTrigger className="h-8 w-full rounded-lg border-input shadow-none">
               <SelectValue
                 placeholder={
                   isLoading

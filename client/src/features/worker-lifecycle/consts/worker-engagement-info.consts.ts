@@ -1,15 +1,21 @@
 import { formatDate } from '../utils/dateCalculation';
+import {
+  formatCompanyAnniversary,
+  nextCompanyAnniversary,
+} from '../utils/companyAnniversary';
+import { showsCompanyAnniversary } from '../utils/teamMembers';
 import type { WorkerDetailResponse } from '../types/index.types';
 
 export type WorkerEngagementInfoItem = {
   label: string;
   value: string;
+  editable?: 'email';
 };
 
 const PHASE_LABELS: Record<string, string> = {
   onboarding: 'Onboarding',
   offboarding: 'Offboarding',
-  transfer: 'Transfer',
+  transfer: 'Team',
 };
 
 function displayText(value: string | null | undefined) {
@@ -48,10 +54,10 @@ export function workerEngagementInfoItems(
     0
   );
 
-  return [
+  const items: WorkerEngagementInfoItem[] = [
     { label: 'Vorname', value: displayText(worker.firstName) },
     { label: 'Nachname', value: displayText(worker.lastName) },
-    { label: 'E-Mail', value: displayText(worker.email) },
+    { label: 'E-Mail', value: worker.email ?? '', editable: 'email' },
     { label: 'Arbeits-E-Mail', value: displayText(worker.workEmail) },
     { label: 'Microsoft-E-Mail', value: displayText(worker.microsoftEmail) },
     { label: 'Geburtsdatum', value: displayDate(worker.birthday) },
@@ -59,6 +65,16 @@ export function workerEngagementInfoItems(
     { label: 'Hosengröße', value: workwearSize(worker, 'Hose') },
     { label: 'T-Shirt-Größe', value: workwearSize(worker, 'T-Shirt') },
     { label: 'Eintrittsdatum', value: displayDate(worker.entryDate) },
+  ];
+
+  if (showsCompanyAnniversary(worker)) {
+    items.push({
+      label: 'Firmenjubiläum',
+      value: formatCompanyAnniversary(nextCompanyAnniversary(worker.entryDate)),
+    });
+  }
+
+  items.push(
     { label: 'Position', value: displayText(worker.position) },
     { label: 'Austrittsdatum', value: displayDate(worker.exitDate) },
     {
@@ -68,5 +84,7 @@ export function workerEngagementInfoItems(
         : '—',
     },
     { label: 'Aufgaben', value: String(taskCount) },
-  ];
+  );
+
+  return items;
 }

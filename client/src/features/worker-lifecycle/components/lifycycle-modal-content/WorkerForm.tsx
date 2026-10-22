@@ -85,7 +85,7 @@ export const WorkerForm = ({
           {memoizedInputs.map((input) => (
             <FormFields
               key={input.name}
-                className="h-8 rounded-lg border-input bg-transparent focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-inset"
+                className="h-8 rounded-lg border-input bg-transparent"
               errors={errors}
               register={register}
               name={input.name}

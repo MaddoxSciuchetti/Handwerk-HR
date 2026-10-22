@@ -15,6 +15,9 @@ export function SidebarAside({
   ...props
 }: SidebarAsideProps) {
   const sidebarRef = useRef<HTMLElement>(null);
+  const hasOpened = useRef(isOpen);
+  if (isOpen) hasOpened.current = true;
+  const motionState = isOpen ? 'open' : hasOpened.current ? 'closed' : 'idle';
 
   useEffect(() => {
     if (!isOpen) return;
@@ -44,7 +47,7 @@ export function SidebarAside({
       data-sidebar-aside=""
       aria-hidden={!isOpen}
       inert={!isOpen}
-      data-state={isOpen ? 'open' : 'closed'}
+      data-state={motionState}
       className={cn(
         'right-sidebar fixed right-1 top-1 bottom-1 z-50 overflow-hidden rounded-4xl border border-border bg-(--card)',
         !isOpen && 'pointer-events-none',
