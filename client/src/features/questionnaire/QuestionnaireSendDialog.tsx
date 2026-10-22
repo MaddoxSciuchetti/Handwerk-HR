@@ -14,6 +14,7 @@ import type {
   ContractFieldOption,
   TemplateItem,
   TemplateField,
+  TemplateRepeater,
 } from '@/features/settings/questionnaire/questionnaireTemplate.types';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { apiJson } from '@/config/apiClient';
@@ -84,7 +85,15 @@ export function QuestionnaireSendDialog({
     ];
   const blocks = blocksFromItems(items);
   const changeField = (field: TemplateField) =>
-    setLocalItems(items.map((item) => (item.key === field.key ? field : item)));
+    setLocalItems((current) =>
+      (current ?? items).map((item) => (item.key === field.key ? field : item))
+    );
+  const changeRepeater = (repeater: TemplateRepeater) =>
+    setLocalItems((current) =>
+      (current ?? items).map((item) =>
+        item.key === repeater.key ? repeater : item
+      )
+    );
   const insertItems = (index: number, incoming: TemplateItem[]) => {
     const placed = new Set(items.map((item) => item.key));
     const offset = blocks
@@ -175,7 +184,10 @@ export function QuestionnaireSendDialog({
         if (!next && !persist.isPending && !send.isPending) void close();
       }}
     >
-      <DialogContent aria-describedby={undefined} className="w-full max-w-3xl border-0 bg-transparent p-0 shadow-none sm:max-w-3xl">
+      <DialogContent
+        aria-describedby={undefined}
+        className="w-full max-w-3xl border-0 bg-transparent p-0 shadow-none sm:max-w-3xl"
+      >
         <div className="flex h-[80vh] flex-col gap-4 overflow-hidden rounded-2xl border border-border bg-card p-6 text-card-foreground">
           <div className="flex shrink-0 items-center justify-between gap-3 pr-6">
             <DialogTitle className="text-lg font-medium">
@@ -252,6 +264,7 @@ export function QuestionnaireSendDialog({
                       onDrop={drop}
                       onInsert={insertItems}
                       onChangeField={changeField}
+                      onChangeRepeater={changeRepeater}
                       onCommitField={changeField}
                       onRemove={(id) =>
                         setLocalItems(

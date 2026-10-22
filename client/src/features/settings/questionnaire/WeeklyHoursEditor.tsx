@@ -83,20 +83,20 @@ export function WeeklyHoursEditor({
           onChange({ ...field, defaultValue: value });
         }}
       />
+      <PflichtfeldSwitch
+        label="Nur vom Betrieb"
+        checked={officeOnly}
+        onChange={(checked) => {
+          for (const day of days)
+            onChange({ ...day, officeOnly: checked || undefined });
+        }}
+      />
       {editing ? (
         <div className="flex flex-col gap-4 border-t border-border pt-4">
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
             <PflichtfeldSwitch
               checked={distribution?.required === true}
               onChange={ensureDistribution}
-            />
-            <PflichtfeldSwitch
-              label="Nur vom Betrieb"
-              checked={officeOnly}
-              onChange={(checked) => {
-                for (const day of days)
-                  onChange({ ...day, officeOnly: checked || undefined });
-              }}
             />
           </div>
           <WeekdayAssign

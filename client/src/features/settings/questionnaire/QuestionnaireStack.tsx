@@ -187,11 +187,8 @@ function BlockBody({
   onAdd: (field: TemplateField) => void;
 }) {
   const first = block.items[0];
-  if (first?.kind === 'repeater' && first.key.startsWith('rows.')) {
-    return <TableQuestionCard repeater={first} onChange={onChangeRepeater} />;
-  }
   if (first?.kind === 'repeater') {
-    return <p className="text-sm font-medium">{first.section}</p>;
+    return <TableQuestionCard repeater={first} onChange={onChangeRepeater} />;
   }
   if (first && isWeeklyHoursItem(first)) {
     const fields = block.items.flatMap((item) =>
