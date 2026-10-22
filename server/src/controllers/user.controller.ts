@@ -25,6 +25,7 @@ export const getUser = catchErrors(async (req, res) => {
     return res.status(OK).json({
         ...user,
         membershipRole: membership?.membershipRole ?? "worker",
+        organizationId: req.orgId,
     });
 });
 

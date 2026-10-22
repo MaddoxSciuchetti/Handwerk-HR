@@ -149,13 +149,13 @@ function MicrosoftForm({
           placeholder={integration.hasClientSecret ? 'Unverändert lassen' : ''}
           onChange={(event) => setClientSecret(event.target.value)}
         />
-        <Label htmlFor="microsoft-domain">Domäne</Label>
+        <Label htmlFor="microsoft-domain">Domäne (für Kontoanlage)</Label>
         <Input
           id="microsoft-domain"
           value={domain}
           onChange={(event) => setDomain(event.target.value)}
         />
-        <Label htmlFor="microsoft-sku">Lizenz-SKU</Label>
+        <Label htmlFor="microsoft-sku">Lizenz-SKU (für Kontoanlage)</Label>
         <Input
           id="microsoft-sku"
           value={licenseSkuId}

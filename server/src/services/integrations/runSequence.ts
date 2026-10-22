@@ -91,6 +91,7 @@ async function runMicrosoft(
         senderAddress?: string | null;
     },
 ): Promise<SequenceRunResult> {
+    if (sequence === "microsoft_send_teams_message") return { status: "failed", message: "Bitte die Teams-Vorschau öffnen und Kanäle auswählen." };
     const config = await loadMicrosoft365Config(params.organizationId);
     if (sequence === "microsoft_create_account") {
         return finish(params, await provisionMicrosoft365Account({
