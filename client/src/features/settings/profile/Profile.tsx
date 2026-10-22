@@ -1,4 +1,3 @@
-import { TeamsConnectionCard } from '@/features/microsoft-teams/TeamsConnectionCard';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody } from '@/components/ui/table';
@@ -135,7 +134,6 @@ function Profile() {
           </Table>
           </CardContent>
         </Card>
-        <TeamsConnectionCard user={user} />
         <Employees />
       </div>
     </div>

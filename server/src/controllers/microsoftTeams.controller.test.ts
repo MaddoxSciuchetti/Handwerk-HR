@@ -53,7 +53,7 @@ it("accepts a bound callback without needing an unexpired app-session cookie and
     });
     expect(result.status).toBe(303);
     expect(result.headers.location).toBe(
-        "http://localhost:5173/settings/profile?microsoft=connected",
+        "http://localhost:5173/settings/general?microsoft=connected",
     );
     expect(result.headers.location).not.toContain("private-auth-code");
     expect(result.headers["cache-control"]).toBe("no-store");
