@@ -1,5 +1,12 @@
 import { Button } from '@/components/ui/button';
 import { CardTitle } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Plus } from 'lucide-react';
 import type { WorkerTab } from '../../types/index.types';
 
 type WorkerHeaderProps = {
@@ -8,6 +15,7 @@ type WorkerHeaderProps = {
   openForCreate: () => void;
   hideCreate?: boolean;
   onOpenFileUpload: () => void;
+  onAddFolder?: () => void;
   onExportFiles: () => void;
   onUploadMaterials: () => void;
   materialsUploadDisabled?: boolean;
@@ -32,6 +40,7 @@ const WorkerHeader = ({
   openForCreate,
   hideCreate = false,
   onOpenFileUpload,
+  onAddFolder,
   onExportFiles,
   onUploadMaterials,
   materialsUploadDisabled = false,
@@ -66,15 +75,28 @@ const WorkerHeader = ({
         ) : null}
         {activeTab === 'files' ? (
           <>
-            <Button
-              type="button"
-              className={headerActionClassName}
-              data-testid="open-file-upload"
-              disabled={isLoading}
-              onClick={onOpenFileUpload}
-            >
-              Hinzufügen
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  size="icon"
+                  data-testid="open-file-upload"
+                  disabled={isLoading}
+                  aria-label="Hinzufügen"
+                  className="size-7 rounded-2xl bg-black text-white hover:bg-black/90"
+                >
+                  <Plus aria-hidden="true" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onSelect={onOpenFileUpload}>
+                  Datei
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => onAddFolder?.()}>
+                  Ordner
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button
               type="button"
               className={headerActionClassName}

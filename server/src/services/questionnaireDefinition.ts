@@ -257,12 +257,26 @@ function parseRepeater(raw: object, seen: Set<string>): QuestionnaireRepeaterIte
     if (!source || source.kind !== "repeater") reject("Dieser Block ist nicht verfügbar.");
     if (seen.has(source.key)) reject("Jede Frage darf nur einmal vorkommen.");
     seen.add(source.key);
-    return repeaterItem({
-        key: source.key,
-        section: source.section,
-        afterSection: "",
-        columns: [...source.columns],
-    });
+    const postedColumns = "columns" in raw && Array.isArray(raw.columns) ? raw.columns : [];
+    return {
+        ...repeaterItem({
+            key: source.key,
+            section: source.section,
+            afterSection: "",
+            columns: source.columns.map((column) => {
+                const posted = postedColumns.find(
+                    (entry) => entry && typeof entry === "object" && entry.key === column.key,
+                );
+                return {
+                    ...column,
+                    officeOnly: posted && typeof posted.officeOnly === "boolean"
+                        ? posted.officeOnly
+                        : column.officeOnly,
+                };
+            }),
+        }),
+        allowMoreRows: "allowMoreRows" in raw && raw.allowMoreRows === true ? true : undefined,
+    };
 }
 
 function parseCustomTable(raw: object, key: string, seen: Set<string>): QuestionnaireRepeaterItem {

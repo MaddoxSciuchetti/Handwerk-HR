@@ -56,6 +56,7 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
   const [activeTab, setActiveTab] = useState<WorkerTab>('form');
   const [clothingAddOpen, setClothingAddOpen] = useState(false);
   const [isFileUploadOpen, setIsFileUploadOpen] = useState(false);
+  const [createFolderOpen, setCreateFolderOpen] = useState(false);
   const materialFileInputRef = useRef<HTMLInputElement>(null);
   const [contractSend, setContractSend] = useState<{
     engagementId: string;
@@ -230,6 +231,7 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
               }
               hideCreate={waiting}
               onOpenFileUpload={() => setIsFileUploadOpen(true)}
+              onAddFolder={() => setCreateFolderOpen(true)}
               onExportFiles={() => void handleZipExport(fetchFiles)}
               onUploadMaterials={() => materialFileInputRef.current?.click()}
               materialsUploadDisabled={engagements.length === 0}
@@ -359,6 +361,8 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                     )}
                     isUploadModalOpen={isFileUploadOpen}
                     setIsUploadModalOpen={setIsFileUploadOpen}
+                    createFolderOpen={createFolderOpen}
+                    setCreateFolderOpen={setCreateFolderOpen}
                   />
                 )}
               </ScrollableTableViewport>

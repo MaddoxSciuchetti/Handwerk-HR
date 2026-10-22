@@ -193,3 +193,53 @@ it('does not offer editing after sending', async () => {
     screen.queryByRole('button', { name: 'Bearbeiten' })
   ).not.toBeInTheDocument();
 });
+
+it('preserves all weekday and built-in table office-only edits for an individual engagement', async () => {
+  const { weeklyHoursFields } =
+    await import('@/features/settings/questionnaire/weeklyHoursFields');
+  vi.mocked(apiJson.get).mockResolvedValueOnce({
+    ...draft,
+    data: {
+      ...draft.data,
+      items: [
+        ...weeklyHoursFields(),
+        {
+          kind: 'repeater',
+          key: 'children',
+          section: 'Kinder',
+          columns: [{ key: 'lastName', label: 'Name', type: 'text' }],
+        },
+      ],
+    },
+  });
+  const user = userEvent.setup();
+  const onClose = vi.fn();
+  renderWithProviders(
+    <QuestionnaireSendDialog engagementId="engagement" onClose={onClose} />
+  );
+  await user.click(await screen.findByRole('button', { name: 'Bearbeiten' }));
+  const switches = screen.getAllByRole('switch', { name: 'Nur vom Betrieb' });
+  expect(switches).toHaveLength(2);
+  await user.click(switches[0]);
+  await user.click(switches[1]);
+  await user.click(screen.getByRole('button', { name: 'Schließen' }));
+  await waitFor(() => expect(onClose).toHaveBeenCalled());
+  expect(apiJson.put).toHaveBeenCalledWith(
+    '/worker/engagements/engagement/questionnaire',
+    expect.objectContaining({
+      definition: expect.objectContaining({
+        items: [
+          ...weeklyHoursFields().map((field, index) =>
+            index === 0
+              ? field
+              : expect.objectContaining({ key: field.key, officeOnly: true })
+          ),
+          expect.objectContaining({
+            key: 'children',
+            columns: [expect.objectContaining({ officeOnly: true })],
+          }),
+        ],
+      }),
+    })
+  );
+});

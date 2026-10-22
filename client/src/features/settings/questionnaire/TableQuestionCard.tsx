@@ -44,7 +44,7 @@ export function TableQuestionCard({
               ...repeater,
               columns: repeater.columns.map((column) => ({
                 ...column,
-                officeOnly: checked || undefined,
+                officeOnly: checked,
               })),
             })
           }

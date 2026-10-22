@@ -217,7 +217,6 @@ it('autosaves checkbox options and weekly hour edits', async () => {
     name: 'Text neben den Kästchen',
   });
   await user.type(options, '\nNacht');
-  await user.click(screen.getByRole('button', { name: 'Bearbeiten' }));
   await user.click(
     screen.getAllByRole('switch', { name: 'Nur vom Betrieb' })[1]
   );
@@ -246,3 +245,41 @@ it('autosaves cancellation of a question title back to its original text', async
   await expectSaved({ items });
   expect(screen.getByRole('textbox', { name: 'Frage' })).toHaveValue('Vorname');
 });
+
+it.each(['children', 'priorEmployment'])(
+  'shows and saves the office-only switch for the built-in %s table',
+  async (key) => {
+    const repeater: TemplateItem = {
+      kind: 'repeater',
+      key,
+      section: 'Vorhandene Tabelle',
+      columns: [{ key: 'name', label: 'Name', type: 'text' }],
+    };
+    vi.mocked(apiJson.get).mockResolvedValueOnce({
+      success: true,
+      data: { ...template, items: [repeater] },
+    });
+    const user = userEvent.setup();
+    renderWithProviders(<QuestionnaireTemplatePage />);
+    await user.click(
+      await screen.findByRole('switch', { name: 'Nur vom Betrieb' })
+    );
+    await expectSaved({
+      items: [
+        expect.objectContaining({
+          key,
+          columns: [expect.objectContaining({ officeOnly: true })],
+        }),
+      ],
+    });
+    await user.click(screen.getByRole('switch', { name: 'Nur vom Betrieb' }));
+    await expectSaved({
+      items: [
+        expect.objectContaining({
+          key,
+          columns: [expect.objectContaining({ officeOnly: false })],
+        }),
+      ],
+    });
+  }
+);

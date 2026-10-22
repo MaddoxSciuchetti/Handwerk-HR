@@ -45,6 +45,8 @@ it('shows the questionnaire, contract, and folders as file boxes', async () => {
       certificates={[]}
       deletingId={null}
       onDelete={() => undefined}
+      engagementId={engagement.id}
+      onEngagementChange={() => undefined}
     />
   );
 
@@ -52,7 +54,7 @@ it('shows the questionnaire, contract, and folders as file boxes', async () => {
   expect(screen.getByRole('button', { name: 'Vertrag' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Personalausweis' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Zeugnisse' })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Ordner hinzufügen' })).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Hinzufügen' })).not.toBeInTheDocument();
   expect(screen.queryByText('Leer')).not.toBeInTheDocument();
   expect(screen.queryByText('Personalfragebogen')).not.toBeInTheDocument();
   expect(screen.queryByText(/Ausgefüllt/)).not.toBeInTheDocument();

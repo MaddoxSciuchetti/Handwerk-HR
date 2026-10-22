@@ -38,6 +38,7 @@ it('opens the upload side panel from the header and uploads the chosen document'
           activeTab="files"
           openForCreate={vi.fn()}
           onOpenFileUpload={() => setOpen(true)}
+          onAddFolder={() => undefined}
           onExportFiles={exportFiles}
           onUploadMaterials={vi.fn()}
           onAddClothing={vi.fn()}
@@ -51,6 +52,8 @@ it('opens the upload side panel from the header and uploads the chosen document'
           certificates={[]}
           isUploadModalOpen={open}
           setIsUploadModalOpen={setOpen}
+          createFolderOpen={false}
+          setCreateFolderOpen={() => undefined}
         />
       </>
     );
@@ -60,6 +63,7 @@ it('opens the upload side panel from the header and uploads the chosen document'
   await user.click(screen.getByRole('button', { name: 'Exportieren' }));
   expect(exportFiles).toHaveBeenCalledOnce();
   await user.click(screen.getByRole('button', { name: 'Hinzufügen' }));
+  await user.click(screen.getByRole('menuitem', { name: 'Datei' }));
   const panel = screen.getByRole('dialog', { name: 'Datei hochladen' });
   expect(panel).toHaveAttribute('data-slot', 'sheet-content');
   expect(panel).toHaveAttribute('data-side', 'right');
