@@ -35,6 +35,7 @@ type PersonnelDocumentFoldersProps = {
   certificates: EngagementCertificateLink[];
   deletingId: string | null;
   onDelete: (documentId: string) => void;
+  onAddFile: () => void;
 };
 
 export function PersonnelDocumentFolders({
@@ -47,6 +48,7 @@ export function PersonnelDocumentFolders({
   certificates,
   deletingId,
   onDelete,
+  onAddFile,
 }: PersonnelDocumentFoldersProps) {
   const [engagementId, setEngagementId] = useState(engagements[0]?.id ?? '');
   const [openFolder, setOpenFolder] = useState<OpenFolder | null>(null);
@@ -105,7 +107,11 @@ export function PersonnelDocumentFolders({
             setOpenFolder(null);
           }}
         />
-        <AddPersonnelFolder workerId={workerId} engagementId={selectedId} />
+        <AddPersonnelFolder
+          workerId={workerId}
+          engagementId={selectedId}
+          onAddFile={onAddFile}
+        />
       </div>
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
         <EngagementQuestionnaireList

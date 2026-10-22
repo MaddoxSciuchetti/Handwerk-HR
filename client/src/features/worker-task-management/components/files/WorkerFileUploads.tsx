@@ -73,6 +73,7 @@ function WorkerFileUploads({
               : null
           }
           onDelete={(documentId) => deletePersonnelDocument.mutate(documentId)}
+          onAddFile={() => setIsUploadModalOpen(true)}
         />
       )}
       {isLoading ? <FileCardsSkeleton /> : null}
