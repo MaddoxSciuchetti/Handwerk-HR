@@ -90,7 +90,7 @@ function Profile() {
 
   return (
     <div className="mx-auto flex h-full flex-col overflow-auto rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
-      <div className="flex h-full w-full flex-col items-stretch">
+      <div className="w-full shrink-0">
         <SettingsPageHeader title="Profil" />
         <Card className="mt-5 w-full gap-0 border border-border py-0 shadow-none ring-0">
           <CardContent className="px-2 py-2">
