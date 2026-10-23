@@ -23,6 +23,10 @@ const callbackMessages: Record<string, string> = {
     'Die Microsoft-Einstellungen wurden geändert. Bitte erneut verbinden.',
   connection_failed:
     'Die Microsoft-Anmeldung ist fehlgeschlagen. Bitte erneut versuchen.',
+  token_exchange_failed:
+    'Microsoft konnte nicht verbunden werden. Bitte erneut verbinden.',
+  connection_save_failed:
+    'Verbindung konnte nicht gespeichert werden. Bitte erneut verbinden.',
 };
 export function TeamsConnectionCard({ user }: { user: User }) {
   const queryClient = useQueryClient();

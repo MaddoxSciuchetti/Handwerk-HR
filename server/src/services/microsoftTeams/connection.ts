@@ -1,9 +1,10 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
+import { setTimeout as delay } from "node:timers/promises";
 import {
     ConfidentialClientApplication,
     InteractionRequiredAuthError,
 } from "@azure/msal-node";
-import type { MicrosoftAuthAttempt, Prisma } from "@prisma/client";
+import { Prisma, type MicrosoftAuthAttempt } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
     decryptIntegrationSecret,
@@ -246,7 +247,7 @@ type MicrosoftIdentity = ReturnType<typeof validateMicrosoftIdentity>;
 export async function finishConnection(input: MicrosoftCallbackInput) {
     const { actor, attempt, code } = await validateCallbackAttempt(input);
     const exchange = await prepareTokenExchange(actor, attempt, code);
-    const result = await exchange.client.acquireTokenByCode(exchange.request);
+    const result = await exchangeAuthorizationCode(exchange);
     const identity = validateMicrosoftIdentity(result, attempt, exchange.config);
     assertTeamsPermissions(identity.scopes);
     await saveMicrosoftConnection(actor, input.state, exchange, identity);
@@ -326,6 +327,20 @@ async function prepareTokenExchange(
     };
 }
 
+async function exchangeAuthorizationCode({ client, request }: TokenExchange) {
+    try {
+        return await client.acquireTokenByCode(request);
+    } catch {
+        // Microsoft may have redeemed the code even when its response is lost.
+        // Never retry the exchange or make the consumed attempt reusable.
+        throw new TeamsError(
+            "token_exchange_failed",
+            "Microsoft konnte nicht verbunden werden. Bitte erneut verbinden.",
+            503,
+        );
+    }
+}
+
 function validateMicrosoftIdentity(
     result: MicrosoftTokenResult,
     attempt: SignInAttempt,
@@ -372,6 +387,47 @@ function assertTeamsPermissions(scopes: string[]) {
 }
 
 async function saveMicrosoftConnection(
+    actor: Actor,
+    state: string,
+    exchange: TokenExchange,
+    identity: MicrosoftIdentity,
+) {
+    const retryDelays = [150, 300];
+    for (let attempt = 0; ; attempt++) {
+        try {
+            await saveConnectionTransaction(actor, state, exchange, identity);
+            return;
+        } catch (error) {
+            // Cancellation, membership and configuration checks must stop retries.
+            if (error instanceof TeamsError) throw error;
+            if (
+                attempt >= retryDelays.length ||
+                !isRetryableConnectionSaveError(error)
+            ) {
+                throw new TeamsError(
+                    "connection_save_failed",
+                    "Verbindung konnte nicht gespeichert werden. Bitte erneut verbinden.",
+                    503,
+                );
+            }
+            await delay(retryDelays[attempt]);
+        }
+    }
+}
+
+function isRetryableConnectionSaveError(error: unknown) {
+    if (error instanceof Prisma.PrismaClientInitializationError) {
+        return ["P1001", "P1002"].includes(error.errorCode ?? "");
+    }
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        // Retry unavailable connections, pool timeouts and rolled-back conflicts.
+        // Connection loss during commit can be ambiguous and is not retried.
+        return ["P1001", "P1002", "P2024", "P2034"].includes(error.code);
+    }
+    return false;
+}
+
+async function saveConnectionTransaction(
     actor: Actor,
     state: string,
     { config, client }: TokenExchange,
