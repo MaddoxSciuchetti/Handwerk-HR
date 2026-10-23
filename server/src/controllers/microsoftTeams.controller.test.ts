@@ -1,15 +1,24 @@
 import express from "express";
 import cookieParser from "cookie-parser";
 import request from "supertest";
-import { microsoftCallback, postTeamsSend } from "./microsoftTeams.controller";
 import {
+    deleteConnection,
+    microsoftCallback,
+    postConnection,
+    postTeamsSend,
+} from "./microsoftTeams.controller";
+import {
+    disconnectAndGetStatus,
     finishConnection,
+    startConnection,
     TeamsError,
 } from "@/services/microsoftTeams/connection";
 import { sendTeams } from "@/services/microsoftTeams/messages";
 jest.mock("@/services/microsoftTeams/connection", () => ({
     ...jest.requireActual("@/services/microsoftTeams/connection"),
     finishConnection: jest.fn(),
+    startConnection: jest.fn(),
+    disconnectAndGetStatus: jest.fn(),
 }));
 jest.mock("@/services/microsoftTeams/messages", () => ({
     sendTeams: jest.fn(),
@@ -25,6 +34,13 @@ function app() {
     const application = express();
     application.use(express.json(), cookieParser());
     application.get("/auth/microsoft/callback", microsoftCallback);
+    application.use((req, _res, next) => {
+        req.orgId = "org";
+        req.userId = "alice";
+        next();
+    });
+    application.post("/connection", postConnection);
+    application.delete("/connection", deleteConnection);
     application.post(
         "/send",
         (req, _res, next) => {
@@ -37,6 +53,36 @@ function app() {
     return application;
 }
 beforeEach(() => jest.clearAllMocks());
+
+it("starts a connection using the authenticated actor and keeps the browser secret in an HTTP-only cookie", async () => {
+    const url = "https://login.microsoftonline.com/authorize";
+    (startConnection as jest.Mock).mockResolvedValue({
+        url,
+        browserSecret: "private-browser-secret",
+    });
+    const result = await request(app()).post("/connection").send({ userId: "bob" });
+    expect(startConnection).toHaveBeenCalledWith({
+        organizationId: "org",
+        userId: "alice",
+    });
+    expect(result.status).toBe(200);
+    expect(result.body).toEqual({ success: true, data: { url } });
+    expect(result.headers["set-cookie"][0]).toContain("HttpOnly");
+    expect(result.headers["set-cookie"][0]).toContain("Path=/auth/microsoft/callback");
+});
+
+it("delegates disconnect and status retrieval to the service", async () => {
+    const status = { status: "disconnected", account: null };
+    (disconnectAndGetStatus as jest.Mock).mockResolvedValue(status);
+    const result = await request(app()).delete("/connection");
+    expect(disconnectAndGetStatus).toHaveBeenCalledWith({
+        organizationId: "org",
+        userId: "alice",
+    });
+    expect(result.status).toBe(200);
+    expect(result.body).toEqual({ success: true, data: status });
+});
+
 it("accepts a bound callback without needing an unexpired app-session cookie and redirects without codes/tokens", async () => {
     (finishConnection as jest.Mock).mockResolvedValue({
         userId: "alice",

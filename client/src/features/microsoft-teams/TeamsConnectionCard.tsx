@@ -78,10 +78,6 @@ export function TeamsConnectionCard({ user }: { user: User }) {
       aria-label="Persönliche Microsoft Teams Verbindung"
     >
       <h2 className="text-base font-semibold">Microsoft Teams</h2>
-      <p className="text-sm text-muted-foreground">
-        Verbinde dein Microsoft-Konto, um Kanalnachrichten unter deinem Namen zu
-        senden.
-      </p>
       {callbackMessage && (
         <p role="status" className="text-sm">
           {callbackMessage}
@@ -94,12 +90,6 @@ export function TeamsConnectionCard({ user }: { user: User }) {
       )}
       {state?.status === 'reconnect_required' && (
         <p role="status">Erneute Verbindung erforderlich.</p>
-      )}
-      {state && !state.ready && (
-        <p className="text-sm">
-          Die Administration muss Microsoft Teams für diese Organisation
-          einrichten.
-        </p>
       )}
       {connection.isPending && (
         <p className="text-sm">Verbindung wird geladen…</p>
