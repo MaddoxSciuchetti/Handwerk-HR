@@ -21,6 +21,8 @@ type MaterialsEngagementPickerProps = {
   }>;
   value: string;
   onChange: (engagementId: string) => void;
+  className?: string;
+  triggerClassName?: string;
 };
 
 function formatStart(startDate: string | null) {
@@ -34,13 +36,15 @@ export function MaterialsEngagementPicker({
   engagements,
   value,
   onChange,
+  className = 'mb-4 max-w-xs',
+  triggerClassName,
 }: MaterialsEngagementPickerProps) {
   if (engagements.length < 2) return null;
 
   return (
-    <div className="mb-4 max-w-xs">
+    <div className={className}>
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger aria-label="Engagement">
+        <SelectTrigger aria-label="Engagement" className={triggerClassName}>
           <SelectValue placeholder="Engagement" />
         </SelectTrigger>
         <SelectContent>

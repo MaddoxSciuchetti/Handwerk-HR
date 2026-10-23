@@ -30,6 +30,9 @@ export function DocumentsPage() {
   const changeSelection = (next: DocumentMasterListItem[]) => {
     setSelectedIds(next.map((master) => master.id));
   };
+  const selectAll = (checked: boolean) => {
+    setSelectedIds(checked ? masters.map((master) => master.id) : []);
+  };
 
   return (
     <div className="mx-auto flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
@@ -57,6 +60,7 @@ export function DocumentsPage() {
                   masters={masters}
                   selectedIds={selectedIds}
                   onToggle={toggle}
+                  onSelectAll={selectAll}
                   emptyLabel="Noch keine Dokumente."
                 />
               )}

@@ -72,20 +72,41 @@ describe('Aufgaben (all tasks) — row selection & bulk delete', () => {
     vi.clearAllMocks();
   });
 
-  it('uses opacity + group-hover classes so the checkbox is hidden until row hover (CSS in real browsers)', async () => {
+  it('keeps the row checkbox visible and selects every task from the column header', async () => {
+    const user = userEvent.setup();
     renderWithAppQueryClient(<Tasks />);
 
     await screen.findByText('Alpha Aufgabe');
 
     const row = getTaskRowByTitle('Alpha Aufgabe');
-    const selectBtn = within(row).getByRole('button', {
+    const selectControl = within(row).getByRole('checkbox', {
       name: /Auswählen/i,
     });
+    const selectSlot = selectControl.parentElement;
 
-    expect(selectBtn.classList.contains('opacity-0')).toBe(true);
-    expect(selectBtn.className).toMatch(/group-hover:opacity-100/);
-    expect(selectBtn.className).toMatch(/inset-y-0/);
-    expect(selectBtn.className).toMatch(/\bw-10\b/);
+    expect(selectSlot).not.toHaveClass('opacity-0');
+    expect(selectSlot?.className).toMatch(/inset-y-0/);
+    expect(selectSlot?.className).toMatch(/\bw-10\b/);
+
+    await user.click(
+      screen.getByRole('checkbox', { name: 'Alle Aufgaben auswählen' })
+    );
+    expect(await screen.findByText(/2 ausgewählt/i)).toBeInTheDocument();
+    expect(
+      within(getTaskRowByTitle('Alpha Aufgabe')).getByRole('checkbox', {
+        name: /Auswahl entfernen/i,
+      })
+    ).toBeChecked();
+    expect(
+      within(getTaskRowByTitle('Beta Aufgabe')).getByRole('checkbox', {
+        name: /Auswahl entfernen/i,
+      })
+    ).toBeChecked();
+
+    await user.click(
+      screen.getByRole('checkbox', { name: 'Alle Aufgaben abwählen' })
+    );
+    expect(screen.queryByText(/ausgewählt/i)).not.toBeInTheDocument();
   });
 
   it('does not outline integration sequences with the automation line', async () => {
@@ -138,14 +159,18 @@ describe('Aufgaben (all tasks) — row selection & bulk delete', () => {
     await screen.findByText('Alpha Aufgabe');
 
     const row = getTaskRowByTitle('Alpha Aufgabe');
-    const selectBtn = within(row).getByRole('button', {
+    const selectControl = within(row).getByRole('checkbox', {
       name: /Auswählen/i,
     });
 
-    await user.click(selectBtn);
+    await user.click(selectControl);
 
-    expect(selectBtn).toHaveAttribute('aria-pressed', 'true');
-    expect(selectBtn.classList.contains('opacity-100')).toBe(true);
+    const selected = within(getTaskRowByTitle('Alpha Aufgabe')).getByRole(
+      'checkbox',
+      { name: /Auswahl entfernen/i }
+    );
+    expect(selected).toBeChecked();
+    expect(selected.parentElement).not.toHaveClass('opacity-0');
   });
 
   it('opens the bottom bar after selecting a row, deletes via the bar, and removes the task from the list', async () => {
@@ -156,7 +181,7 @@ describe('Aufgaben (all tasks) — row selection & bulk delete', () => {
     await screen.findByText('Beta Aufgabe');
 
     const alphaRow = getTaskRowByTitle('Alpha Aufgabe');
-    const selectAlpha = within(alphaRow).getByRole('button', {
+    const selectAlpha = within(alphaRow).getByRole('checkbox', {
       name: /Auswählen/i,
     });
 
