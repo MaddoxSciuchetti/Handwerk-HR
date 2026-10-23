@@ -1,3 +1,4 @@
+import { executionStatus, executionError } from "./issueExecutionStatus";
 import { prisma } from "@/lib/prisma";
 import { createCrewmeisterAccount } from "@/services/integrations/crewmeisterAccount";
 import {
@@ -6,7 +7,10 @@ import {
     loadMicrosoft365Config,
     NOT_LIVE_MESSAGE,
 } from "@/services/integrations/runtime";
-import { provisionMicrosoft365Account, microsoftGraphToken } from "@/services/microsoft365Account";
+import {
+    provisionMicrosoft365Account,
+    microsoftGraphToken,
+} from "@/services/microsoft365Account";
 import { isMailSequence, sendIssueMail } from "@/services/engagementMail";
 import { blockMicrosoftSignIn } from "@/services/offboardingAutomation";
 import type { IntegrationSequence } from "@prisma/client";
@@ -14,29 +18,6 @@ import type { IntegrationSequence } from "@prisma/client";
 export type SequenceRunResult =
     | { status: "completed" }
     | { status: "failed"; message: string };
-
-async function markDone(params: {
-    issueId: string;
-    previousStatus: string;
-    actorUserId: string;
-}) {
-    if (params.previousStatus === "done") return;
-    await prisma.$transaction(async (tx) => {
-        await tx.issue.update({
-            where: { id: params.issueId },
-            data: { status: "done" },
-        });
-        await tx.issueAuditLog.create({
-            data: {
-                issueId: params.issueId,
-                actorUserId: params.actorUserId,
-                action: "issue.updated",
-                oldValue: { status: params.previousStatus },
-                newValue: { status: "done" },
-            },
-        });
-    });
-}
 
 function skippedMessage(reason: string) {
     if (reason === "not_live") return NOT_LIVE_MESSAGE;
@@ -50,14 +31,11 @@ function skippedMessage(reason: string) {
     return "Die Sequenz wurde nicht ausgeführt.";
 }
 
-async function finish(
-    params: {
-        issueId: string;
-        previousStatus: string;
-        actorUserId: string;
-    },
-    result: { status: string; reason?: string; message?: string },
-): Promise<SequenceRunResult> {
+function finish(result: {
+    status: string;
+    reason?: string;
+    message?: string;
+}): SequenceRunResult {
     if (result.status === "failed") {
         return {
             status: "failed",
@@ -70,10 +48,18 @@ async function finish(
         result.reason !== "already_created" &&
         result.reason !== "already_sent"
     ) {
-        return { status: "failed", message: skippedMessage(result.reason ?? "") };
+        return {
+            status: "failed",
+            message: skippedMessage(result.reason ?? ""),
+        };
     }
-    if (result.status === "already_sent" || result.status === "sent" || result.status === "created" || result.status === "completed" || result.status === "skipped") {
-        await markDone(params);
+    if (
+        result.status === "already_sent" ||
+        result.status === "sent" ||
+        result.status === "created" ||
+        result.status === "completed" ||
+        result.status === "skipped"
+    ) {
         return { status: "completed" };
     }
     return { status: "failed", message: "Die Sequenz wurde nicht ausgeführt." };
@@ -91,14 +77,20 @@ async function runMicrosoft(
         senderAddress?: string | null;
     },
 ): Promise<SequenceRunResult> {
-    if (sequence === "microsoft_send_teams_message") return { status: "failed", message: "Bitte die Teams-Vorschau öffnen und Kanäle auswählen." };
+    if (sequence === "microsoft_send_teams_message")
+        return {
+            status: "failed",
+            message: "Bitte die Teams-Vorschau öffnen und Kanäle auswählen.",
+        };
     const config = await loadMicrosoft365Config(params.organizationId);
     if (sequence === "microsoft_create_account") {
-        return finish(params, await provisionMicrosoft365Account({
-            organizationId: params.organizationId,
-            workerId: params.workerId,
-            config,
-        }));
+        return finish(
+            await provisionMicrosoft365Account({
+                organizationId: params.organizationId,
+                workerId: params.workerId,
+                config,
+            }),
+        );
     }
     if (!config || !integrationsLive()) {
         return {
@@ -115,7 +107,6 @@ async function runMicrosoft(
             senderAddress: params.senderAddress,
         });
         if (mailed.status === "failed") return mailed;
-        await markDone(params);
         return { status: "completed" };
     }
     if (sequence !== "microsoft_deactivate_account") {
@@ -140,7 +131,8 @@ async function runMicrosoft(
     if (!userKey) {
         return {
             status: "failed",
-            message: "Für diesen Mitarbeiter ist kein Microsoft-365-Konto hinterlegt.",
+            message:
+                "Für diesen Mitarbeiter ist kein Microsoft-365-Konto hinterlegt.",
         };
     }
     const token = await microsoftGraphToken(config);
@@ -167,11 +159,10 @@ async function runMicrosoft(
         },
         update: { externalId: blocked.externalId, status: "disabled" },
     });
-    await markDone(params);
     return { status: "completed" };
 }
 
-export async function runIssueSequence(params: {
+async function executeIssueSequence(params: {
     organizationId: string;
     issueId: string;
     actorUserId: string;
@@ -216,11 +207,13 @@ export async function runIssueSequence(params: {
 
     if (issue.integrationProvider === "crewmeister") {
         if (issue.sequence !== "crewmeister_create_account") {
-            return { status: "failed", message: "Diese Sequenz gibt es nicht." };
+            return {
+                status: "failed",
+                message: "Diese Sequenz gibt es nicht.",
+            };
         }
         const auth = await loadCrewmeisterToken(params.organizationId);
         return finish(
-            context,
             await createCrewmeisterAccount({
                 organizationId: params.organizationId,
                 workerId: context.workerId,
@@ -231,4 +224,32 @@ export async function runIssueSequence(params: {
     }
 
     return runMicrosoft(issue.sequence, context);
+}
+
+export async function runIssueSequence(
+    params: Parameters<typeof executeIssueSequence>[0],
+): Promise<SequenceRunResult> {
+    const issue = await prisma.issue.findFirst({
+        where: {
+            id: params.issueId,
+            workerEngagement: { organizationId: params.organizationId },
+        },
+        select: { id: true, status: true },
+    });
+    if (!issue) return { status: "failed", message: "Aufgabe nicht gefunden." };
+    if (issue.status === "done") return { status: "completed" };
+    await executionStatus(issue.id, params.actorUserId, "in_progress");
+    let result: SequenceRunResult;
+    try {
+        result = await executeIssueSequence(params);
+    } catch (error) {
+        result = { status: "failed", message: executionError(error) };
+    }
+    await executionStatus(
+        issue.id,
+        params.actorUserId,
+        result.status === "completed" ? "done" : "error",
+        result.status === "failed" ? result.message : undefined,
+    );
+    return result;
 }

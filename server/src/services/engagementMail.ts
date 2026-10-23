@@ -227,7 +227,7 @@ export async function saveEngagementMailRecipients(params: {
     });
 }
 
-async function normalizeRecipients(
+export async function normalizeRecipients(
     organizationId: string,
     recipients: MailRecipientInput[],
 ): Promise<StoredMailRecipient[]> {
@@ -410,7 +410,9 @@ export async function mailSendPreview(params: {
         return { status: "failed", message: loaded.message ?? "Aufgabe nicht gefunden." };
     }
     const [recipients, senders] = await Promise.all([
-        prisma.engagementMailRecipient.findMany({
+        Array.isArray(loaded.automationRecipients)
+            ? Promise.resolve(loaded.automationRecipients as StoredMailRecipient[])
+            : prisma.engagementMailRecipient.findMany({
             where: { engagementId: loaded.engagementId },
             select: recipientSelect,
             orderBy: { createdAt: "asc" },
@@ -454,6 +456,7 @@ export async function sendIssueMail(params: {
     const sent = await deliverMail({
         organizationId: params.organizationId,
         engagementId: loaded.engagementId,
+        recipients: Array.isArray(loaded.automationRecipients) ? loaded.automationRecipients as StoredMailRecipient[] : undefined,
         worker: loaded.worker,
         template: loaded.template,
         senderAddress: params.senderAddress?.trim() || loaded.mailSenderAddress,
@@ -483,6 +486,7 @@ async function loadIssueMail(
             sequence: true,
             mailTemplateId: true,
             mailSenderAddress: true,
+            automationRecipients: true,
             workerEngagement: {
                 select: {
                     id: true,
@@ -530,6 +534,7 @@ async function loadIssueMail(
                 worker,
                 template: { id: "", name: "", subject: "-", body: "-" },
                 mailSenderAddress: issue.mailSenderAddress,
+                automationRecipients: issue.automationRecipients,
             };
         }
         return { message: "Für diese Aufgabe ist keine E-Mail-Vorlage hinterlegt." };
@@ -539,10 +544,12 @@ async function loadIssueMail(
         worker,
         template,
         mailSenderAddress: issue.mailSenderAddress,
+        automationRecipients: issue.automationRecipients,
     };
 }
 
 async function deliverMail(params: {
+    recipients?: StoredMailRecipient[];
     organizationId: string;
     engagementId: string;
     worker: MailWorker;
@@ -553,7 +560,7 @@ async function deliverMail(params: {
     if (!senderAddress.includes("@")) {
         return { status: "failed", message: "Bitte einen Absender wählen." };
     }
-    const recipients = await prisma.engagementMailRecipient.findMany({
+    const recipients = params.recipients ?? await prisma.engagementMailRecipient.findMany({
         where: { engagementId: params.engagementId },
         select: recipientSelect,
     });

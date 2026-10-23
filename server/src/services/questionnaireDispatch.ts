@@ -22,7 +22,7 @@ import { randomUUID } from "crypto";
 
 const EXPECTED_ONBOARDING_TASKS = [
     { title: "Fragebogen", status: "in_progress" },
-    { title: "Arbeitsvertrag", status: "open" },
+    { title: "Arbeitsvertrag unterschrieben", status: "open" },
 ] as const;
 
 async function findEngagement(organizationId: string, engagementId: string) {

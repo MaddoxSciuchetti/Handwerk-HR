@@ -8,9 +8,8 @@ import {
     findInboxReply,
     graphMailConfigured,
 } from "@/services/graphMail";
-import { isQuestionnaireOrContractTemplateTask } from "@/services/onboardingTemplateTasks";
 import AppError from "@/utils/AppError";
-import { Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 
 const CONFIRM_TASK_TITLE = "Arbeitsvertrag bestätigen";
 const POLL_MS = 60_000;
@@ -64,7 +63,7 @@ async function openConfirmTask(engagementId: string, actorUserId: string) {
         const closedEarly = await tx.issue.findMany({
             where: {
                 workerEngagementId: engagementId,
-                title: "Arbeitsvertrag",
+                title: { in: ["Arbeitsvertrag", "Arbeitsvertrag unterschrieben"] },
                 kind: "standard",
                 status: "done",
             },
@@ -402,71 +401,6 @@ export function startReturnedContractPolling() {
     timer.unref();
 }
 
-async function createRemainingOnboardingTasks(
-    tx: Prisma.TransactionClient,
-    params: {
-        organizationId: string;
-        workerEngagementId: string;
-        actorUserId: string;
-    },
-) {
-    const alreadyChosen = await tx.issue.count({
-        where: {
-            workerEngagementId: params.workerEngagementId,
-            templateItemId: { not: null },
-        },
-    });
-    if (alreadyChosen > 0) return;
-
-    const templates = await tx.issueTemplate.findMany({
-        where: { organizationId: params.organizationId, isActive: true },
-        include: { items: { orderBy: { orderIndex: "asc" } } },
-        orderBy: { updatedAt: "desc" },
-    });
-    const template =
-        templates.find((candidate) =>
-            candidate.items.some((item) =>
-                isQuestionnaireOrContractTemplateTask(item.title),
-            ),
-        ) ?? templates[0];
-    if (!template) return;
-
-    const items = template.items.filter(
-        (item) => !isQuestionnaireOrContractTemplateTask(item.title),
-    );
-    for (const item of items) {
-        const issue = await tx.issue.create({
-            data: {
-                workerEngagementId: params.workerEngagementId,
-                createdByUserId: params.actorUserId,
-                assigneeUserId: item.defaultAssigneeUserId ?? undefined,
-                status: item.defaultStatus ?? "open",
-                title: item.title,
-                description: item.description ?? undefined,
-                priority: "no_priority",
-                templateItemId: item.id,
-                integrationProvider: item.integrationProvider,
-                sequence: item.sequence,
-                mailTemplateId: item.mailTemplateId,
-            },
-            select: { id: true },
-        });
-        await tx.issueAuditLog.create({
-            data: {
-                issueId: issue.id,
-                actorUserId: params.actorUserId,
-                action: "issue.created",
-                newValue: {
-                    title: item.title,
-                    status: item.defaultStatus ?? "open",
-                    assigneeUserId: item.defaultAssigneeUserId,
-                    templateItemId: item.id,
-                },
-            },
-        });
-    }
-}
-
 export async function confirmReturnedEmploymentContract(params: {
     organizationId: string;
     workerId: string;
@@ -524,7 +458,7 @@ export async function confirmReturnedEmploymentContract(params: {
         const contractTasks = await tx.issue.findMany({
             where: {
                 workerEngagementId: contract.engagementId,
-                title: "Arbeitsvertrag",
+                title: { in: ["Arbeitsvertrag", "Arbeitsvertrag unterschrieben"] },
                 kind: "standard",
                 status: { not: "done" },
             },
@@ -544,11 +478,6 @@ export async function confirmReturnedEmploymentContract(params: {
                 },
             });
         }
-        await createRemainingOnboardingTasks(tx, {
-            organizationId: params.organizationId,
-            workerEngagementId: contract.engagementId,
-            actorUserId: params.actorUserId,
-        });
         if (contract.engagement.status === "expected") {
             await tx.workerEngagement.update({
                 where: { id: contract.engagementId },

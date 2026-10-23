@@ -92,3 +92,19 @@ it('rejects a Teams action with an empty template body', async () => {
     await expect(createTaskInOrg('org-1', 'user-1', { ...payload, sequence: 'microsoft_send_teams_message', mailTemplateId: 'mail-1' })).rejects.toThrow('Nachrichtenvorlage mit Inhalt');
     expect(createIssue).not.toHaveBeenCalled();
 });
+
+it('validates a changed engagement against the organization before moving a task', async () => {
+    await updateTaskInOrg('org-1', 'user-1', 'task-1', { workerEngagementId: 'engagement-2' });
+    expect(prisma.workerEngagement.findFirst).toHaveBeenCalledWith({
+        where: { id: 'engagement-2', organizationId: 'org-1' }, select: { id: true },
+    });
+    expect(updateIssue).toHaveBeenCalledWith(expect.objectContaining({
+        workerEngagementId: 'engagement-1', newWorkerEngagementId: 'engagement-2',
+    }));
+});
+
+it('rejects moving a task to an engagement outside the organization', async () => {
+    (prisma.workerEngagement.findFirst as jest.Mock).mockResolvedValue(null);
+    await expect(updateTaskInOrg('org-1', 'user-1', 'task-1', { workerEngagementId: 'foreign' })).rejects.toThrow('Engagement nicht gefunden.');
+    expect(updateIssue).not.toHaveBeenCalled();
+});

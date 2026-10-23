@@ -63,6 +63,9 @@ function ExistingTaskAutomation({
       runIssueSequence(taskId, senderAddress?.trim() || undefined)
     );
     setIsRunning(false);
+    void queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] });
+    void queryClient.invalidateQueries({ queryKey: [WORKERBYID] });
+    void queryClient.invalidateQueries({ queryKey: [TASKHISTORY, taskId] });
     if (error) {
       const message =
         error &&
