@@ -15,6 +15,7 @@ import { EngagementTemplateDocuments } from '../EngagementTemplateDocuments';
 import { EngagementQuestionnaireList, type EngagementQuestionnaireLink } from '../EngagementQuestionnaireList';
 import { OpenPersonnelFolder } from './OpenPersonnelFolder';
 import { PersonnelFolderCard } from './PersonnelFolderCard';
+import { PersonnelDocumentRow } from './PersonnelDocumentRow';
 
 type OpenFolder =
   | { kind: 'builtin'; name: PersonnelDocumentName }
@@ -117,6 +118,16 @@ export function PersonnelDocumentFolders({
             (item) => item.engagementId === selectedId
           )}
         />
+        {selectedDocuments
+          .filter((document) => document.name === 'fragebogen' && !document.folderId)
+          .map((document) => (
+            <PersonnelDocumentRow
+              key={document.id}
+              document={document}
+              deleting={deletingId === document.id}
+              onDelete={onDelete}
+            />
+          ))}
         <EngagementContractList
           workerId={workerId}
           contracts={contracts.filter((item) => item.engagementId === selectedId)}
