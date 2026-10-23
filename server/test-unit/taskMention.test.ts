@@ -6,6 +6,7 @@ import { sendMail } from "@/utils/sendMail";
 jest.mock("@/lib/prisma", () => ({
     prisma: {
         issue: { findFirst: jest.fn() },
+        issueMention: { upsert: jest.fn() },
         comment: { findFirst: jest.fn(), create: jest.fn(), update: jest.fn() },
         user: { findFirst: jest.fn(), findMany: jest.fn() },
     },
@@ -29,6 +30,7 @@ const createComment = prisma.comment.create as jest.Mock;
 const findUsers = prisma.user.findMany as jest.Mock;
 const findUser = prisma.user.findFirst as jest.Mock;
 const createMentionTask = createIssue as jest.Mock;
+const recordMention = prisma.issueMention.upsert as jest.Mock;
 const mail = sendMail as jest.Mock;
 
 const sourceIssue = {
@@ -49,10 +51,10 @@ describe("task mention comments", () => {
             email: "mia@firma.de",
         });
         mail.mockResolvedValue({ data: { id: "mail-1" }, error: null });
-        createMentionTask.mockResolvedValue({ id: "task-1" });
+        recordMention.mockResolvedValue({ id: "mention-1" });
     });
 
-    it("creates one urgent assignee-only task and sends one email", async () => {
+    it("marks the existing task for the tagged person and sends one email", async () => {
         findUsers.mockResolvedValue([
             {
                 id: "coworker",
@@ -67,17 +69,12 @@ describe("task mention comments", () => {
             mentionUserIds: ["coworker"],
         });
 
-        expect(createMentionTask).toHaveBeenCalledTimes(1);
-        expect(createMentionTask).toHaveBeenCalledWith(
+        expect(createMentionTask).not.toHaveBeenCalled();
+        expect(recordMention).toHaveBeenCalledWith(
             expect.objectContaining({
-                workerEngagementId: "eng-1",
-                createdByUserId: "sender",
-                assigneeUserId: "coworker",
-                status: "open",
-                priority: "urgent",
-                assigneeOnly: true,
-                title: "Bitte @Otto Berg schauen",
-                description: expect.stringContaining("Vertrag prüfen"),
+                where: { issueId_userId: { issueId: "issue-1", userId: "coworker" } },
+                create: { issueId: "issue-1", userId: "coworker" },
+                update: { seenAt: null },
             }),
         );
         expect(mail).toHaveBeenCalledTimes(1);
@@ -91,7 +88,7 @@ describe("task mention comments", () => {
         expect(result.mailFailed).toBe(false);
     });
 
-    it("stores a self-mention without a task or an email", async () => {
+    it("stores a self-mention without a marker or an email", async () => {
         const result = await upsertIssueCommentInOrg("org-1", "sender", "issue-1", {
             body: "Notiz an mich",
             mentionUserIds: ["sender"],
@@ -99,6 +96,7 @@ describe("task mention comments", () => {
 
         expect(findUsers).not.toHaveBeenCalled();
         expect(createMentionTask).not.toHaveBeenCalled();
+        expect(recordMention).not.toHaveBeenCalled();
         expect(mail).not.toHaveBeenCalled();
         expect(createComment).toHaveBeenCalledWith(
             expect.objectContaining({

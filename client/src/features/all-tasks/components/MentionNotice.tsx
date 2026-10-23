@@ -7,7 +7,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import useAuth from '@/features/user-profile/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useMemo, useState } from 'react';
@@ -35,13 +34,9 @@ function rememberMentionIds(ids: string[]) {
 }
 
 export function MentionNotice() {
-  const { user } = useAuth();
   const navigate = useNavigate();
   const { data } = useQuery(tasksQueries.fetchTasks());
-  const mentions = useMemo(
-    () => openMentionTasks(data, user?.id),
-    [data, user?.id]
-  );
+  const mentions = useMemo(() => openMentionTasks(data), [data]);
   const [notice, setNotice] = useState<IssueResponse[]>([]);
 
   useEffect(() => {
@@ -70,8 +65,8 @@ export function MentionNotice() {
           <DialogTitle>Du wurdest erwähnt</DialogTitle>
           <DialogDescription>
             {count === 1
-              ? '1 neue Aufgabe wartet auf dich.'
-              : `${count} neue Aufgaben warten auf dich.`}
+              ? 'Du wurdest in einer Aufgabe erwähnt.'
+              : `Du wurdest in ${count} Aufgaben erwähnt.`}
           </DialogDescription>
         </DialogHeader>
         <ul className="flex flex-col gap-2">

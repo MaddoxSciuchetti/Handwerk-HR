@@ -1,7 +1,6 @@
 import { LAYOUTITEMS } from '@/constants/layout.consts';
 import { tasksQueries } from '@/features/all-tasks/query/tasks.query';
 import { openMentionTasks } from '@/features/all-tasks/utilts/mention-tasks.utils';
-import useAuth from '@/features/user-profile/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { MessageSquareIcon } from 'lucide-react';
 import { ProfileDropdown } from './ProfileDropdown';
@@ -25,9 +24,8 @@ function AppSidebar({
   setIsSettingOpen: (isSettingOpen: boolean) => void;
   subscriptionLocked: boolean;
 }) {
-  const { user } = useAuth();
   const { data: tasks } = useQuery(tasksQueries.fetchTasks());
-  const mentionCount = openMentionTasks(tasks, user?.id).length;
+  const mentionCount = openMentionTasks(tasks).length;
 
   return (
     <Sidebar collapsible="icon">

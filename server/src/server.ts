@@ -19,7 +19,6 @@ import { indexRoutes } from "./routes/index.route";
 import inviteRoutes from "./routes/invite.route";
 import orgRoutes from "./routes/org.route";
 import { questionnaireRoutes } from "./routes/questionnaire.route";
-import orgChatRoutes from "./routes/orgChat.route";
 import { taskRoutes } from "./routes/tasks.route";
 import { documentMasterRoutes } from "./routes/documentMaster.route";
 import { getDocumentFont } from "./controllers/documentMaster.controller";
@@ -120,7 +119,6 @@ app.use(
 );
 
 app.use("/tasks", authenticate, requireSubscriptionAccess, taskRoutes);
-app.use("/chat", authenticate, requireSubscriptionAccess, orgChatRoutes);
 
 app.use("/org", authenticate, requireSubscriptionAccess, orgRoutes);
 app.use("/invites", inviteRoutes);

@@ -35,7 +35,9 @@ export type IssueResponse = {
   kind: 'standard' | 'contract_send' | 'contract_confirm';
   isTemporary: boolean;
   assigneeOnly?: boolean;
+  mentioned?: boolean;
   workerEngagement?: {
+    templateApplication?: { id: string; completedAt: string | null } | null;
     workerId: string;
     worker?: { firstName: string; lastName: string } | null;
   } | null;

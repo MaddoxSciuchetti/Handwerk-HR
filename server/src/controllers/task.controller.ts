@@ -33,7 +33,7 @@ export const updateTask = catchErrors(async (req, res) => {
 export const fetchTaskHistory = catchErrors(async (req, res) => {
     const orgId = req.orgId;
     const id = String(req.params.id);
-    const history = await getTaskHistoryInOrg(orgId, id);
+    const history = await getTaskHistoryInOrg(orgId, id, req.userId);
     return res.status(OK).json(history);
 });
 
