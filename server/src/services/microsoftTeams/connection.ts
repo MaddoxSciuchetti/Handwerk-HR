@@ -1,9 +1,10 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
+import { setTimeout as delay } from "node:timers/promises";
 import {
     ConfidentialClientApplication,
     InteractionRequiredAuthError,
 } from "@azure/msal-node";
-import type { Prisma } from "@prisma/client";
+import { Prisma, type MicrosoftAuthAttempt } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
     decryptIntegrationSecret,
@@ -219,26 +220,60 @@ async function saveAuthAttempt(
     });
 }
 
-export async function finishConnection(input: {
+type MicrosoftCallbackInput = {
     state: string;
     browserSecret: string;
     code?: string;
     error?: string;
-}) {
+};
+
+type SignInAttempt = Pick<
+    MicrosoftAuthAttempt,
+    | "organizationId"
+    | "userId"
+    | "tenantId"
+    | "clientId"
+    | "verifierCiphertext"
+    | "nonce"
+>;
+
+type TeamsConfig = Awaited<ReturnType<typeof teamsConfig>>;
+type TokenExchange = Awaited<ReturnType<typeof prepareTokenExchange>>;
+type MicrosoftTokenResult = Awaited<
+    ReturnType<ConfidentialClientApplication["acquireTokenByCode"]>
+>;
+type MicrosoftIdentity = ReturnType<typeof validateMicrosoftIdentity>;
+
+export async function finishConnection(input: MicrosoftCallbackInput) {
+    const { actor, attempt, code } = await validateCallbackAttempt(input);
+    const exchange = await prepareTokenExchange(actor, attempt, code);
+    const result = await exchangeAuthorizationCode(exchange);
+    const identity = validateMicrosoftIdentity(result, attempt, exchange.config);
+    assertTeamsPermissions(identity.scopes);
+    await saveMicrosoftConnection(actor, input.state, exchange, identity);
+    return actor;
+}
+
+async function validateCallbackAttempt(input: MicrosoftCallbackInput) {
     // Atomic consumption prevents replay; retain the row until completion so disconnect/new sign-in can cancel an in-flight exchange.
-    const attempts = await prisma.$queryRaw<
-        Array<{
-            organization_id: string;
-            user_id: string;
-            tenant_id: string;
-            client_id: string;
-            verifier_ciphertext: string;
-            nonce: string;
-        }>
-    >`
-        UPDATE microsoft_auth_attempts SET consumed_at = ${new Date()} WHERE id = ${input.state}
-        AND browser_hash = ${hash(input.browserSecret)} AND expires_at > ${new Date()} AND consumed_at IS NULL
-        RETURNING organization_id, user_id, tenant_id, client_id, verifier_ciphertext, nonce`;
+    const now = new Date();
+    const attempts = await prisma.microsoftAuthAttempt.updateManyAndReturn({
+        where: {
+            id: input.state,
+            browserHash: hash(input.browserSecret),
+            expiresAt: { gt: now },
+            consumedAt: null,
+        },
+        data: { consumedAt: now },
+        select: {
+            organizationId: true,
+            userId: true,
+            tenantId: true,
+            clientId: true,
+            verifierCiphertext: true,
+            nonce: true,
+        },
+    });
     const attempt = attempts[0];
     if (!attempt)
         throw new TeamsError(
@@ -246,8 +281,8 @@ export async function finishConnection(input: {
             "Die Anmeldung ist abgelaufen oder ungültig. Bitte erneut verbinden.",
         );
     const actor = {
-        organizationId: attempt.organization_id,
-        userId: attempt.user_id,
+        organizationId: attempt.organizationId,
+        userId: attempt.userId,
     };
     await assertActiveMember(actor);
     if (input.error || !input.code)
@@ -255,29 +290,62 @@ export async function finishConnection(input: {
             "consent_cancelled",
             "Die Microsoft-Anmeldung wurde abgebrochen. Bitte erneut verbinden.",
         );
+    return { actor, attempt, code: input.code };
+}
+
+async function prepareTokenExchange(
+    actor: Actor,
+    attempt: SignInAttempt,
+    code: string,
+) {
     const config = await teamsConfig(actor.organizationId);
     if (
-        config.clientId !== attempt.client_id ||
-        config.tenantId !== attempt.tenant_id
+        config.clientId !== attempt.clientId ||
+        config.tenantId !== attempt.tenantId
     ) {
         throw new TeamsError(
             "configuration_changed",
             "Die Microsoft-Einstellungen wurden geändert. Bitte erneut verbinden.",
         );
     }
-    const verifier = decryptIntegrationSecret(attempt.verifier_ciphertext);
+    const verifier = decryptIntegrationSecret(attempt.verifierCiphertext);
     if (!verifier)
         throw new TeamsError(
             "invalid_attempt",
             "Die Anmeldung ist ungültig. Bitte erneut verbinden.",
         );
     const client = msalClient(config);
-    const result = await client.acquireTokenByCode({
-        scopes: AUTH_SCOPES,
-        code: input.code,
-        redirectUri: callbackUri(),
-        codeVerifier: verifier,
-    });
+    return {
+        config,
+        client,
+        request: {
+            scopes: AUTH_SCOPES,
+            code,
+            redirectUri: callbackUri(),
+            codeVerifier: verifier,
+        },
+    };
+}
+
+async function exchangeAuthorizationCode({ client, request }: TokenExchange) {
+    try {
+        return await client.acquireTokenByCode(request);
+    } catch {
+        // Microsoft may have redeemed the code even when its response is lost.
+        // Never retry the exchange or make the consumed attempt reusable.
+        throw new TeamsError(
+            "token_exchange_failed",
+            "Microsoft konnte nicht verbunden werden. Bitte erneut verbinden.",
+            503,
+        );
+    }
+}
+
+function validateMicrosoftIdentity(
+    result: MicrosoftTokenResult,
+    attempt: SignInAttempt,
+    config: TeamsConfig,
+) {
     const claims = result?.idTokenClaims as
         | { nonce?: string; tid?: string; oid?: string }
         | undefined;
@@ -292,9 +360,17 @@ export async function finishConnection(input: {
             "Die Microsoft-Identität gehört nicht zur erwarteten Organisation.",
         );
     }
+    return {
+        account: result.account,
+        microsoftUserId: claims.oid,
+        scopes: result.scopes,
+    };
+}
+
+function assertTeamsPermissions(scopes: string[]) {
     if (
         !GRAPH_SCOPES.every((scope) =>
-            result.scopes.some(
+            scopes.some(
                 (granted) =>
                     granted
                         .toLowerCase()
@@ -308,12 +384,61 @@ export async function finishConnection(input: {
             "Die benötigten Teams-Berechtigungen wurden nicht vollständig freigegeben.",
         );
     }
+}
+
+async function saveMicrosoftConnection(
+    actor: Actor,
+    state: string,
+    exchange: TokenExchange,
+    identity: MicrosoftIdentity,
+) {
+    const retryDelays = [150, 300];
+    for (let attempt = 0; ; attempt++) {
+        try {
+            await saveConnectionTransaction(actor, state, exchange, identity);
+            return;
+        } catch (error) {
+            // Cancellation, membership and configuration checks must stop retries.
+            if (error instanceof TeamsError) throw error;
+            if (
+                attempt >= retryDelays.length ||
+                !isRetryableConnectionSaveError(error)
+            ) {
+                throw new TeamsError(
+                    "connection_save_failed",
+                    "Verbindung konnte nicht gespeichert werden. Bitte erneut verbinden.",
+                    503,
+                );
+            }
+            await delay(retryDelays[attempt]);
+        }
+    }
+}
+
+function isRetryableConnectionSaveError(error: unknown) {
+    if (error instanceof Prisma.PrismaClientInitializationError) {
+        return ["P1001", "P1002"].includes(error.errorCode ?? "");
+    }
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        // Retry unavailable connections, pool timeouts and rolled-back conflicts.
+        // Connection loss during commit can be ambiguous and is not retried.
+        return ["P1001", "P1002", "P2024", "P2034"].includes(error.code);
+    }
+    return false;
+}
+
+async function saveConnectionTransaction(
+    actor: Actor,
+    state: string,
+    { config, client }: TokenExchange,
+    identity: MicrosoftIdentity,
+) {
     await prisma.$transaction(async (tx) => {
         await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`teams-connection:${actor.organizationId}:${actor.userId}`}, 0))`;
         await assertActiveMember(actor, tx);
         const pending = await tx.microsoftAuthAttempt.findFirst({
             where: {
-                id: input.state,
+                id: state,
                 ...actor,
                 consumedAt: { not: null },
                 expiresAt: { gt: new Date() },
@@ -336,11 +461,11 @@ export async function finishConnection(input: {
         const data = {
             tenantId: config.tenantId,
             clientId: config.clientId,
-            homeAccountId: result.account!.homeAccountId,
-            microsoftUserId: claims.oid!,
-            displayName: result.account!.name || result.account!.username,
-            username: result.account!.username,
-            scopes: result.scopes,
+            homeAccountId: identity.account.homeAccountId,
+            microsoftUserId: identity.microsoftUserId,
+            displayName: identity.account.name || identity.account.username,
+            username: identity.account.username,
+            scopes: identity.scopes,
             cacheCiphertext: encryptIntegrationSecret(
                 client.getTokenCache().serialize(),
             ),
@@ -352,13 +477,12 @@ export async function finishConnection(input: {
             update: data,
         });
         await tx.microsoftAuthAttempt.deleteMany({
-            where: { id: input.state },
+            where: { id: state },
         });
         await tx.microsoftConnectionEvent.create({
             data: { ...actor, action: "connected" },
         });
     });
-    return actor;
 }
 
 export async function disconnect(actor: Actor) {

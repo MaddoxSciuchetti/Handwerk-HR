@@ -3,6 +3,8 @@ import {
     InteractionRequiredAuthError,
 } from "@azure/msal-node";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
+import { setTimeout as delay } from "node:timers/promises";
 import { encryptIntegrationSecret } from "@/services/integrations/secret";
 import {
     accessToken,
@@ -21,10 +23,10 @@ jest.mock("@azure/msal-node", () => ({
     ...jest.requireActual("@azure/msal-node"),
     ConfidentialClientApplication: jest.fn(),
 }));
+jest.mock("node:timers/promises", () => ({ setTimeout: jest.fn() }));
 jest.mock("@/lib/prisma", () => ({
     prisma: {
         $transaction: jest.fn(),
-        $queryRaw: jest.fn(),
         $executeRaw: jest.fn(),
         organizationMember: { findFirst: jest.fn() },
         organizationIntegration: { findUnique: jest.fn() },
@@ -35,6 +37,7 @@ jest.mock("@/lib/prisma", () => ({
             deleteMany: jest.fn(),
         },
         microsoftAuthAttempt: {
+            updateManyAndReturn: jest.fn(),
             deleteMany: jest.fn(),
             create: jest.fn(),
             findFirst: jest.fn(),
@@ -57,12 +60,12 @@ const msal = {
     getTokenCache: () => cache,
 };
 const attempt = {
-    organization_id: actor.organizationId,
-    user_id: actor.userId,
-    tenant_id: tenantId,
-    client_id: clientId,
+    organizationId: actor.organizationId,
+    userId: actor.userId,
+    tenantId: tenantId,
+    clientId: clientId,
     nonce: "nonce",
-    verifier_ciphertext: "",
+    verifierCiphertext: "",
 };
 beforeEach(() => {
     jest.resetAllMocks();
@@ -87,8 +90,10 @@ beforeEach(() => {
     );
     cache.serialize.mockReturnValue('{"tokens":"private"}');
     cache.getAccountByHomeId.mockResolvedValue({ homeAccountId: "home-alice" });
-    attempt.verifier_ciphertext = encryptIntegrationSecret("verifier");
-    (prisma.$queryRaw as jest.Mock).mockResolvedValue([attempt]);
+    attempt.verifierCiphertext = encryptIntegrationSecret("verifier");
+    (
+        prisma.microsoftAuthAttempt.updateManyAndReturn as jest.Mock
+    ).mockResolvedValue([attempt]);
     (prisma.microsoftAuthAttempt.findFirst as jest.Mock).mockResolvedValue({
         id: "state",
     });
@@ -162,17 +167,25 @@ it("binds the callback to the browser, enforces expiry and consumes an attempt o
         browserSecret: "browser",
         code: "temporary-code",
     });
-    const [sql, ...values] = (prisma.$queryRaw as jest.Mock).mock.calls[0];
-    expect(sql.join(" ")).toContain("expires_at >");
-    expect(sql.join(" ")).toContain(
-        "UPDATE microsoft_auth_attempts SET consumed_at =",
-    );
-    expect(values).toEqual([
-        expect.any(Date),
-        "state",
-        hash("browser"),
-        expect.any(Date),
-    ]);
+    expect(
+        prisma.microsoftAuthAttempt.updateManyAndReturn,
+    ).toHaveBeenCalledWith({
+        where: {
+            id: "state",
+            browserHash: hash("browser"),
+            expiresAt: { gt: expect.any(Date) },
+            consumedAt: null,
+        },
+        data: { consumedAt: expect.any(Date) },
+        select: {
+            organizationId: true,
+            userId: true,
+            tenantId: true,
+            clientId: true,
+            verifierCiphertext: true,
+            nonce: true,
+        },
+    });
     expect(prisma.microsoftUserConnection.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
             where: { organizationId_userId: actor },
@@ -183,7 +196,9 @@ it("binds the callback to the browser, enforces expiry and consumes an attempt o
             }),
         }),
     );
-    (prisma.$queryRaw as jest.Mock).mockResolvedValue([]);
+    (
+        prisma.microsoftAuthAttempt.updateManyAndReturn as jest.Mock
+    ).mockResolvedValue([]);
     await expect(
         finishConnection({
             state: "state",
@@ -235,6 +250,192 @@ it("rejects missing permissions before storing a connection", async () => {
     ).rejects.toMatchObject({ code: "consent_required" });
     expect(prisma.microsoftUserConnection.upsert).not.toHaveBeenCalled();
 });
+
+it("exchanges the callback code using the saved PKCE verifier and configured redirect", async () => {
+    await expect(
+        finishConnection({
+            state: "state",
+            browserSecret: "browser",
+            code: "temporary-code",
+        }),
+    ).resolves.toEqual(actor);
+    expect(msal.acquireTokenByCode).toHaveBeenCalledWith({
+        scopes: AUTH_SCOPES,
+        code: "temporary-code",
+        redirectUri: callbackUri(),
+        codeVerifier: "verifier",
+    });
+});
+
+it.each([
+    [{ clientId: "changed-client" }, "configuration_changed"],
+    [{ verifierCiphertext: "unreadable" }, "invalid_attempt"],
+])(
+    "rejects invalid exchange configuration before contacting Microsoft",
+    async (changes, code) => {
+        (
+            prisma.microsoftAuthAttempt.updateManyAndReturn as jest.Mock
+        ).mockResolvedValue([{ ...attempt, ...changes }]);
+        await expect(
+            finishConnection({
+                state: "state",
+                browserSecret: "browser",
+                code: "temporary-code",
+            }),
+        ).rejects.toMatchObject({ code });
+        expect(msal.acquireTokenByCode).not.toHaveBeenCalled();
+        expect(prisma.microsoftUserConnection.upsert).not.toHaveBeenCalled();
+    },
+);
+
+it("does not save a connection if the organization configuration changes during the exchange", async () => {
+    const config = await prisma.organizationIntegration.findUnique({
+        where: {
+            organizationId_provider: {
+                organizationId: actor.organizationId,
+                provider: "microsoft_graph",
+            },
+        },
+    });
+    (prisma.organizationIntegration.findUnique as jest.Mock)
+        .mockResolvedValueOnce(config)
+        .mockResolvedValueOnce({
+            ...config,
+            clientId: "33333333-3333-3333-3333-333333333333",
+        });
+    await expect(
+        finishConnection({
+            state: "state",
+            browserSecret: "browser",
+            code: "temporary-code",
+        }),
+    ).rejects.toMatchObject({ code: "configuration_changed" });
+    expect(msal.acquireTokenByCode).toHaveBeenCalledTimes(1);
+    expect(prisma.microsoftUserConnection.upsert).not.toHaveBeenCalled();
+});
+
+const callback = {
+    state: "state",
+    browserSecret: "browser",
+    code: "temporary-code",
+};
+const databaseError = (code: string) =>
+    new Prisma.PrismaClientKnownRequestError("Database failure", {
+        code,
+        clientVersion: "test",
+    });
+
+it("requires fresh sign-in after an exchange failure without retrying the code or changing a connection", async () => {
+    msal.acquireTokenByCode.mockRejectedValue(
+        new Error("private Microsoft details"),
+    );
+    await expect(finishConnection(callback)).rejects.toMatchObject({
+        code: "token_exchange_failed",
+    });
+    expect(msal.acquireTokenByCode).toHaveBeenCalledTimes(1);
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(prisma.microsoftUserConnection.upsert).not.toHaveBeenCalled();
+    expect(prisma.microsoftUserConnection.deleteMany).not.toHaveBeenCalled();
+});
+
+it.each(["P1001", "P1002", "P2024", "P2034"])(
+    "retries a transient %s save failure using the tokens already received",
+    async (code) => {
+        (prisma.$transaction as jest.Mock).mockRejectedValueOnce(
+            databaseError(code),
+        );
+        await expect(finishConnection(callback)).resolves.toEqual(actor);
+        expect(prisma.$transaction).toHaveBeenCalledTimes(2);
+        expect(msal.acquireTokenByCode).toHaveBeenCalledTimes(1);
+        expect(delay).toHaveBeenCalledWith(150);
+        expect(prisma.microsoftUserConnection.upsert).toHaveBeenCalledTimes(1);
+    },
+);
+
+it("retries a temporary database initialization failure", async () => {
+    (prisma.$transaction as jest.Mock).mockRejectedValueOnce(
+        new Prisma.PrismaClientInitializationError(
+            "Unavailable",
+            "test",
+            "P1001",
+        ),
+    );
+    await expect(finishConnection(callback)).resolves.toEqual(actor);
+    expect(prisma.$transaction).toHaveBeenCalledTimes(2);
+    expect(msal.acquireTokenByCode).toHaveBeenCalledTimes(1);
+});
+
+it("stops after three failed saves and preserves the previous connection", async () => {
+    (prisma.$transaction as jest.Mock).mockRejectedValue(
+        databaseError("P2034"),
+    );
+    await expect(finishConnection(callback)).rejects.toMatchObject({
+        code: "connection_save_failed",
+    });
+    expect(prisma.$transaction).toHaveBeenCalledTimes(3);
+    expect(delay).toHaveBeenNthCalledWith(1, 150);
+    expect(delay).toHaveBeenNthCalledWith(2, 300);
+    expect(msal.acquireTokenByCode).toHaveBeenCalledTimes(1);
+    expect(prisma.microsoftUserConnection.upsert).not.toHaveBeenCalled();
+    expect(prisma.microsoftUserConnection.deleteMany).not.toHaveBeenCalled();
+});
+
+it.each(["P2002", "P1017"])(
+    "does not retry a permanent or ambiguous %s save error",
+    async (code) => {
+        (prisma.$transaction as jest.Mock).mockRejectedValue(
+            databaseError(code),
+        );
+        await expect(finishConnection(callback)).rejects.toMatchObject({
+            code: "connection_save_failed",
+        });
+        expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+        expect(delay).not.toHaveBeenCalled();
+    },
+);
+
+it.each(["cancelled", "inactive", "configuration_changed"])(
+    "rechecks %s state before saving on a retry",
+    async (change) => {
+        (prisma.$transaction as jest.Mock).mockRejectedValueOnce(
+            databaseError("P2034"),
+        );
+        if (change === "cancelled") {
+            (
+                prisma.microsoftAuthAttempt.findFirst as jest.Mock
+            ).mockResolvedValue(null);
+        } else if (change === "inactive") {
+            (prisma.organizationMember.findFirst as jest.Mock)
+                .mockResolvedValueOnce({ userId: actor.userId })
+                .mockResolvedValue(null);
+        } else {
+            const config = {
+                enabled: true,
+                tenantId,
+                clientId,
+                clientSecretCiphertext: encryptIntegrationSecret("secret"),
+            };
+            (prisma.organizationIntegration.findUnique as jest.Mock)
+                .mockResolvedValueOnce(config)
+                .mockResolvedValue({
+                    ...config,
+                    clientId: "33333333-3333-3333-3333-333333333333",
+                });
+        }
+        await expect(finishConnection(callback)).rejects.toMatchObject({
+            code:
+                change === "cancelled"
+                    ? "invalid_attempt"
+                    : change === "inactive"
+                      ? "access_denied"
+                      : "configuration_changed",
+        });
+        expect(prisma.$transaction).toHaveBeenCalledTimes(2);
+        expect(msal.acquireTokenByCode).toHaveBeenCalledTimes(1);
+        expect(prisma.microsoftUserConnection.upsert).not.toHaveBeenCalled();
+        expect(delay).toHaveBeenCalledTimes(1);
+    },
+);
 
 it("refreshes only the requesting employee cache, under a database lock", async () => {
     const result = await accessToken(actor);
@@ -288,7 +489,9 @@ it("returns metadata only, even when provisioning fields are empty", async () =>
 });
 
 it("returns the refreshed status after completing the disconnect transaction", async () => {
-    (prisma.microsoftUserConnection.findUnique as jest.Mock).mockResolvedValue(null);
+    (prisma.microsoftUserConnection.findUnique as jest.Mock).mockResolvedValue(
+        null,
+    );
     const status = await disconnectAndGetStatus(actor);
     expect(status).toMatchObject({
         ...actor,
@@ -296,16 +499,21 @@ it("returns the refreshed status after completing the disconnect transaction", a
         status: "disconnected",
         account: null,
     });
-    const deletionOrder = (prisma.microsoftUserConnection.deleteMany as jest.Mock)
-        .mock.invocationCallOrder[0];
+    const deletionOrder = (
+        prisma.microsoftUserConnection.deleteMany as jest.Mock
+    ).mock.invocationCallOrder[0];
     const readOrder = (prisma.microsoftUserConnection.findUnique as jest.Mock)
         .mock.invocationCallOrder[0];
     expect(deletionOrder).toBeLessThan(readOrder);
 });
 
 it("does not return connection metadata if disconnect fails", async () => {
-    (prisma.$transaction as jest.Mock).mockRejectedValue(new Error("database unavailable"));
-    await expect(disconnectAndGetStatus(actor)).rejects.toThrow("database unavailable");
+    (prisma.$transaction as jest.Mock).mockRejectedValue(
+        new Error("database unavailable"),
+    );
+    await expect(disconnectAndGetStatus(actor)).rejects.toThrow(
+        "database unavailable",
+    );
     expect(prisma.microsoftUserConnection.findUnique).not.toHaveBeenCalled();
 });
 

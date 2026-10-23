@@ -60,7 +60,9 @@ it("starts a connection using the authenticated actor and keeps the browser secr
         url,
         browserSecret: "private-browser-secret",
     });
-    const result = await request(app()).post("/connection").send({ userId: "bob" });
+    const result = await request(app())
+        .post("/connection")
+        .send({ userId: "bob" });
     expect(startConnection).toHaveBeenCalledWith({
         organizationId: "org",
         userId: "alice",
@@ -68,7 +70,9 @@ it("starts a connection using the authenticated actor and keeps the browser secr
     expect(result.status).toBe(200);
     expect(result.body).toEqual({ success: true, data: { url } });
     expect(result.headers["set-cookie"][0]).toContain("HttpOnly");
-    expect(result.headers["set-cookie"][0]).toContain("Path=/auth/microsoft/callback");
+    expect(result.headers["set-cookie"][0]).toContain(
+        "Path=/auth/microsoft/callback",
+    );
 });
 
 it("delegates disconnect and status retrieval to the service", async () => {
@@ -122,6 +126,26 @@ it("returns a useful cancellation state without exposing Microsoft details", asy
     expect(result.headers.location).toContain("microsoft=consent_cancelled");
     expect(result.headers.location).not.toContain("private-details");
 });
+it.each(["token_exchange_failed", "connection_save_failed"])(
+    "redirects %s safely back to settings",
+    async (code) => {
+        (finishConnection as jest.Mock).mockRejectedValue(
+            new TeamsError(code, "Private details", 503),
+        );
+        const result = await request(app())
+            .get("/auth/microsoft/callback")
+            .query({ state, code: "private-auth-code" })
+            .set("Cookie", "microsoftTeamsAttempt=browser-binding");
+        expect(result.status).toBe(303);
+        expect(result.headers.location).toBe(
+            `http://localhost:5173/settings/general?microsoft=${code}`,
+        );
+        expect(result.headers["set-cookie"][0]).toContain(
+            "Expires=Thu, 01 Jan 1970",
+        );
+    },
+);
+
 it("does not redeem an unbound callback", async () => {
     const result = await request(app())
         .get("/auth/microsoft/callback")

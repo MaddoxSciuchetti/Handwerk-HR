@@ -83,6 +83,35 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllEnvs());
 describe('personal Microsoft Teams connection', () => {
+  it.each([
+    [
+      'token_exchange_failed',
+      'Microsoft konnte nicht verbunden werden. Bitte erneut verbinden.',
+    ],
+    [
+      'connection_save_failed',
+      'Verbindung konnte nicht gespeichert werden. Bitte erneut verbinden.',
+    ],
+  ])(
+    'explains %s and preserves access to the existing connection',
+    async (code, message) => {
+      window.history.replaceState(
+        {},
+        '',
+        `/settings/general?microsoft=${code}`
+      );
+      renderWithProviders(<TeamsConnectionCard user={mocks.user} />);
+      expect(await screen.findByText(message)).toBeInTheDocument();
+      expect(
+        await screen.findByText(/Verbunden als Alice Microsoft/)
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Konto wechseln' })
+      ).toBeEnabled();
+      expect(window.location.search).toBe('');
+    }
+  );
+
   it('waits for task edits to be saved before loading the Teams preview', async () => {
     const user = userEvent.setup();
     let finishSave!: (saved: boolean) => void;
