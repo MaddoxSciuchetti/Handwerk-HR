@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from 'test-unit/test-utils';
@@ -81,6 +81,7 @@ beforeEach(() => {
     warnings: [],
   });
 });
+afterEach(() => vi.unstubAllEnvs());
 describe('personal Microsoft Teams connection', () => {
   it('waits for task edits to be saved before loading the Teams preview', async () => {
     const user = userEvent.setup();
@@ -157,6 +158,82 @@ describe('personal Microsoft Teams connection', () => {
   });
 });
 describe('Teams sending', () => {
+  it('keeps the production dialog focused on destinations, content and sending', async () => {
+    vi.stubEnv('PROD', true);
+    const user = userEvent.setup();
+    mocks.sendTeams.mockResolvedValue({
+      status: 'completed',
+      destinations: [],
+    });
+    renderWithProviders(<TeamsSendAction taskId="task-a" disabled={false} />);
+    await user.click(
+      screen.getByRole('button', { name: 'Teams-Nachricht senden' })
+    );
+    const destination = await screen.findByRole('checkbox', {
+      name: 'Office · General',
+    });
+    const body = screen.getByText('Hallo Ada');
+    expect(
+      destination.compareDocumentPosition(body) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(screen.queryByText('Alice Microsoft')).not.toBeInTheDocument();
+    expect(screen.getByText(/Wähle die Kanäle/)).toHaveClass('sr-only');
+    expect(
+      screen.queryByRole('button', { name: 'Kanäle neu laden' })
+    ).not.toBeInTheDocument();
+    await user.click(destination);
+    await user.click(screen.getByRole('button', { name: 'Nachricht senden' }));
+    await waitFor(() =>
+      expect(mocks.sendTeams).toHaveBeenCalledWith('task-a', {
+        idempotencyKey: expect.any(String),
+        destinations: [{ teamId: 'team-a', channelId: 'channel-a' }],
+      })
+    );
+  });
+
+  it.each([false, true])(
+    'shows environment diagnostics only outside production (production=%s)',
+    async (production) => {
+      vi.stubEnv('PROD', production);
+      mocks.getTeamsPreview.mockResolvedValue({
+        ...preview,
+        connection: {
+          ...connection,
+          ready: false,
+          live: false,
+          status: 'disconnected',
+          account: null,
+        },
+      });
+      renderWithProviders(<TeamsSendForm taskId="task-a" />);
+      expect(await screen.findByText('Hallo Ada')).toBeInTheDocument();
+      expect(
+        screen.getByRole('group', { name: 'Teams-Kanäle' })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Nachricht senden' })
+      ).toBeDisabled();
+      if (production) {
+        expect(
+          screen.queryByText(/Microsoft Teams ist noch nicht eingerichtet/)
+        ).not.toBeInTheDocument();
+        expect(screen.queryByText(/Sequenzen werden/)).not.toBeInTheDocument();
+        expect(
+          screen.queryByRole('link', {
+            name: 'Zu den allgemeinen Einstellungen',
+          })
+        ).not.toBeInTheDocument();
+      } else {
+        expect(
+          screen.getByText(/Microsoft Teams ist noch nicht eingerichtet/)
+        ).toBeInTheDocument();
+        expect(screen.getByText(/Sequenzen werden/)).toBeInTheDocument();
+      }
+      expect(mocks.getChannels).not.toHaveBeenCalled();
+    }
+  );
+
   it('previews the rendered body, filters channels and never asks for a sender email', async () => {
     const user = userEvent.setup();
     mocks.sendTeams.mockResolvedValue({
