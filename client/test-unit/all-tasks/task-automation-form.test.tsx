@@ -6,10 +6,11 @@ import {
   type TaskEditState,
 } from '@/features/all-tasks/hooks/useTaskSidebar';
 
-const { createTask, updateTask, close } = vi.hoisted(() => ({
+const { createTask, updateTask, close, runAction } = vi.hoisted(() => ({
   createTask: vi.fn(),
   updateTask: vi.fn(),
   close: vi.fn(),
+  runAction: vi.fn(),
 }));
 vi.mock('@/features/all-tasks/hooks/useCreateTask', () => ({
   useCreateTask: () => ({ mutateAsync: createTask, isPending: false }),
@@ -25,7 +26,7 @@ function Form({
   seed?: Partial<TaskEditState>;
   mode?: 'create' | 'edit';
 }) {
-  const { register, onSubmit, errors } = useTasks(
+  const { register, onSubmit, saveForAction, errors } = useTasks(
     {
       ...EMPTY_TASK_EDIT_STATE,
       title: 'Test',
@@ -50,6 +51,14 @@ function Form({
         <p>{errors.mailSenderAddress.message}</p>
       ) : null}
       <button type="submit">Speichern</button>
+      <button
+        type="button"
+        onClick={async () => {
+          if (await saveForAction()) runAction();
+        }}
+      >
+        Ausführen
+      </button>
     </form>
   );
 }
@@ -57,6 +66,55 @@ function Form({
 beforeEach(() => vi.clearAllMocks());
 
 describe('task automation form', () => {
+  it('saves current edits before running an action without closing the task', async () => {
+    let finishSave!: () => void;
+    updateTask.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finishSave = resolve;
+        })
+    );
+    render(<Form mode="edit" seed={{ taskId: 'task-1' }} />);
+    fireEvent.change(screen.getByRole('combobox'), {
+      target: { value: 'microsoft_deactivate_account' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Ausführen' }));
+    await waitFor(() =>
+      expect(updateTask).toHaveBeenCalledWith({
+        taskId: 'task-1',
+        data: expect.objectContaining({
+          sequence: 'microsoft_deactivate_account',
+        }),
+      })
+    );
+    expect(runAction).not.toHaveBeenCalled();
+    finishSave();
+    await waitFor(() => expect(runAction).toHaveBeenCalledOnce());
+    expect(close).not.toHaveBeenCalled();
+  });
+
+  it('does not run an action when saving fails', async () => {
+    updateTask.mockRejectedValueOnce(new Error('Save failed'));
+    render(<Form mode="edit" seed={{ taskId: 'task-1' }} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Ausführen' }));
+    await waitFor(() => expect(updateTask).toHaveBeenCalledOnce());
+    expect(runAction).not.toHaveBeenCalled();
+    expect(close).not.toHaveBeenCalled();
+  });
+
+  it('validates the current configuration before running an action', async () => {
+    render(<Form mode="edit" seed={{ taskId: 'task-1' }} />);
+    fireEvent.change(screen.getByRole('combobox'), {
+      target: { value: 'microsoft_send_email' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Ausführen' }));
+    expect(
+      await screen.findByText('Bitte wähle eine E-Mail-Vorlage')
+    ).toBeInTheDocument();
+    expect(updateTask).not.toHaveBeenCalled();
+    expect(runAction).not.toHaveBeenCalled();
+  });
+
   it('saves the selected function on a new task', async () => {
     render(<Form />);
     fireEvent.change(screen.getByRole('combobox'), {

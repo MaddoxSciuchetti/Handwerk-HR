@@ -23,6 +23,7 @@ type TaskAutomationProps = {
   sequence: string;
   disabled: boolean;
   senderAddress?: string;
+  beforeRun?: () => Promise<boolean>;
 };
 
 function ExistingTaskAutomation({
@@ -31,6 +32,7 @@ function ExistingTaskAutomation({
   sequence,
   disabled,
   senderAddress,
+  beforeRun,
 }: TaskAutomationProps) {
   const queryClient = useQueryClient();
   const [isRunning, setIsRunning] = useState(false);
@@ -53,6 +55,10 @@ function ExistingTaskAutomation({
   const onGo = async () => {
     if (disabled || isRunning || blockedReason) return;
     setIsRunning(true);
+    if (beforeRun && !(await beforeRun())) {
+      setIsRunning(false);
+      return;
+    }
     const [, error] = await tryCatch(
       runIssueSequence(taskId, senderAddress?.trim() || undefined)
     );
@@ -104,7 +110,11 @@ function ExistingTaskAutomation({
 
 function TaskAutomation(props: TaskAutomationProps) {
   return props.sequence === 'microsoft_send_teams_message' ? (
-    <TeamsSendAction taskId={props.taskId} disabled={props.disabled} />
+    <TeamsSendAction
+      taskId={props.taskId}
+      disabled={props.disabled}
+      beforeOpen={props.beforeRun}
+    />
   ) : (
     <ExistingTaskAutomation {...props} />
   );

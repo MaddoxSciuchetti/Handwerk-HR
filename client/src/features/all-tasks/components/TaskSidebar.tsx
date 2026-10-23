@@ -50,13 +50,13 @@ export function TaskSidebar({
   taskEditState,
   onOpenArbeitszeugnis,
 }: TaskSidebarProps) {
-  const { register, control, errors, onSubmit, isTaskSaving } = useTasks(
-    taskEditState,
-    taskState,
-    setIsOpen
-  );
+  const { register, control, errors, onSubmit, saveForAction, isTaskSaving } =
+    useTasks(taskEditState, taskState, setIsOpen);
   const navigate = useNavigate();
   const sequence = useWatch({ control, name: 'sequence' });
+  const selectedAutomation = INTEGRATION_SEQUENCES.find(
+    (item) => item.value === sequence
+  );
   const mailSenderAddress = useWatch({ control, name: 'mailSenderAddress' });
   const workerEngagementId = useWatch({
     control,
@@ -262,12 +262,18 @@ export function TaskSidebar({
                 ) : null}
                 {taskState === 'edit' &&
                 taskEditState.taskId &&
-                taskEditState.sequence &&
-                taskEditState.integrationProvider ? (
+                sequence &&
+                sequence !== 'none' &&
+                (selectedAutomation?.provider ||
+                  taskEditState.integrationProvider) ? (
                   <TaskAutomation
                     taskId={taskEditState.taskId}
-                    provider={taskEditState.integrationProvider}
-                    sequence={taskEditState.sequence}
+                    provider={
+                      selectedAutomation?.provider ||
+                      taskEditState.integrationProvider!
+                    }
+                    sequence={sequence}
+                    beforeRun={saveForAction}
                     senderAddress={mailSenderAddress}
                     disabled={isSubmitting}
                   />

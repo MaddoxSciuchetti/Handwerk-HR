@@ -3,7 +3,10 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from 'test-unit/test-utils';
 import { TeamsConnectionCard } from '@/features/microsoft-teams/TeamsConnectionCard';
-import { TeamsSendForm } from '@/features/microsoft-teams/TeamsSendAction';
+import {
+  TeamsSendAction,
+  TeamsSendForm,
+} from '@/features/microsoft-teams/TeamsSendAction';
 import type { Preview } from '@/features/microsoft-teams/teams.api';
 
 const mocks = vi.hoisted(() => ({
@@ -79,6 +82,50 @@ beforeEach(() => {
   });
 });
 describe('personal Microsoft Teams connection', () => {
+  it('waits for task edits to be saved before loading the Teams preview', async () => {
+    const user = userEvent.setup();
+    let finishSave!: (saved: boolean) => void;
+    const beforeOpen = vi.fn(
+      () =>
+        new Promise<boolean>((resolve) => {
+          finishSave = resolve;
+        })
+    );
+    renderWithProviders(
+      <TeamsSendAction
+        taskId="task-1"
+        disabled={false}
+        beforeOpen={beforeOpen}
+      />
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'Teams-Nachricht senden' })
+    );
+    expect(beforeOpen).toHaveBeenCalledOnce();
+    expect(mocks.getTeamsPreview).not.toHaveBeenCalled();
+    finishSave(true);
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(mocks.getTeamsPreview).toHaveBeenCalledWith('task-1')
+    );
+  });
+
+  it('keeps the Teams send dialog closed when the edits cannot be saved', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(
+      <TeamsSendAction
+        taskId="task-1"
+        disabled={false}
+        beforeOpen={async () => false}
+      />
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'Teams-Nachricht senden' })
+    );
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(mocks.getTeamsPreview).not.toHaveBeenCalled();
+  });
+
   it('shows a personal connection to an ordinary employee and disconnects it', async () => {
     const user = userEvent.setup();
     mocks.disconnectTeams.mockResolvedValue({
@@ -152,7 +199,9 @@ describe('Teams sending', () => {
     });
     renderWithProviders(<TeamsSendForm taskId="task-a" />);
     expect(
-      await screen.findByRole('link', { name: 'Zu den allgemeinen Einstellungen' })
+      await screen.findByRole('link', {
+        name: 'Zu den allgemeinen Einstellungen',
+      })
     ).toHaveAttribute('href', '/settings/general');
     expect(
       screen.getByRole('button', { name: 'Nachricht senden' })
