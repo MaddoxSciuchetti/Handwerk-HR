@@ -53,6 +53,7 @@ model User {
   subscriptionAuditLogs  SubscriptionAuditLog[]
   confirmedEmploymentContracts EmploymentContract[] @relation("EmploymentContractConfirmedBy")
   orgChatMessages        OrgChatMessage[]
+  issueMentions          IssueMention[]
 
   @@map("users")
 }
@@ -187,6 +188,7 @@ model WorkerEngagement {
   mailForwarding           MailForwarding?
   clothing                 EngagementClothing[]
   mailRecipients           EngagementMailRecipient[]
+  templateApplication      TemplateApplication?
 
   @@index([workerId])
   @@index([organizationId])
@@ -288,6 +290,22 @@ model IssueTemplate {
   @@map("issue_templates")
 }
 
+model TemplateApplication {
+  id                 String @id @default(uuid())
+  workerEngagementId String @unique @map("worker_engagement_id")
+  templateId         String @map("template_id")
+  actorUserId        String @map("actor_user_id")
+  idempotencyKey     String @map("idempotency_key")
+  runAutomation      Boolean @default(false) @map("run_automation")
+  issueIds           String[] @map("issue_ids")
+  outcomes           Json @default("[]")
+  completedAt        DateTime? @map("completed_at") @db.Timestamptz()
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  engagement         WorkerEngagement @relation(fields: [workerEngagementId], references: [id], onDelete: Cascade)
+
+  @@map("template_applications")
+}
+
 model TemplateItem {
   id                      String             @id @default(uuid())
   issueTemplateId         String             @map("issue_template_id")
@@ -329,6 +347,7 @@ model Issue {
   integrationProvider IntegrationProvider? @map("integration_provider")
   sequence           IntegrationSequence? @map("sequence")
   mailTemplateId     String?            @map("mail_template_id")
+  automationRecipients Json? @map("automation_recipients")
   mailSenderAddress  String?            @map("mail_sender_address") @db.VarChar(254)
   isTemporary        Boolean            @default(false) @map("is_temporary")
   assigneeOnly       Boolean            @default(false) @map("assignee_only")
@@ -349,6 +368,7 @@ model Issue {
   mailTemplate       MailTemplate?      @relation(fields: [mailTemplateId], references: [id], onDelete: SetNull)
   comments           Comment[]
   auditLogs          IssueAuditLog[]
+  mentions           IssueMention[]
 
   @@index([workerEngagementId])
   @@index([organizationId])
@@ -370,6 +390,21 @@ model OrgChatMessage {
 
   @@index([organizationId, createdAt])
   @@map("org_chat_messages")
+}
+
+model IssueMention {
+  id        String    @id @default(uuid())
+  issueId   String    @map("issue_id")
+  userId    String    @map("user_id")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  seenAt    DateTime? @map("seen_at") @db.Timestamptz()
+
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([issueId, userId])
+  @@index([userId, seenAt])
+  @@map("issue_mentions")
 }
 
 model IssueAuditLog {
@@ -1110,6 +1145,7 @@ enum ExternalAccountStatus {
 }
 
 enum IssueStatus {
+  error
   open
   in_progress
   done
