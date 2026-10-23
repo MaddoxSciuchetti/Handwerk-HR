@@ -52,14 +52,13 @@ export function TaskSidebar({
   taskEditState,
   onOpenArbeitszeugnis,
 }: TaskSidebarProps) {
-  const { register, control, errors, onSubmit, isTaskSaving } = useTasks(
-    taskEditState,
-    taskState,
-    setIsOpen
-  );
+  const { register, control, errors, onSubmit, saveForAction, isTaskSaving } =
+    useTasks(taskEditState, taskState, setIsOpen);
   const navigate = useNavigate();
   const sequence = useWatch({ control, name: 'sequence' });
-  const microsoftAccountId = useWatch({ control, name: 'microsoftAccountId' });
+  const selectedAutomation = INTEGRATION_SEQUENCES.find(
+    (item) => item.value === sequence
+  );
   const mailSenderAddress = useWatch({ control, name: 'mailSenderAddress' });
   const workerEngagementId = useWatch({
     control,
@@ -237,7 +236,8 @@ export function TaskSidebar({
                   register={register}
                   errors={errors}
                 />
-                {(sequence === 'microsoft_send_email' || sequence === 'microsoft_send_teams_message') ? (
+                {sequence === 'microsoft_send_email' ||
+                sequence === 'microsoft_send_teams_message' ? (
                   <>
                     <div className="flex flex-col gap-2">
                       <FormSelectOptions
@@ -248,15 +248,21 @@ export function TaskSidebar({
                           value: template.id,
                           label: template.name,
                         }))}
-                        label={sequence === 'microsoft_send_teams_message' ? 'Nachrichtenvorlage' : 'E-Mail-Vorlage'}
+                        label={
+                          sequence === 'microsoft_send_teams_message'
+                            ? 'Nachrichtenvorlage'
+                            : 'E-Mail-Vorlage'
+                        }
                         placeholder="Vorlage wählen"
                       />
                     </div>
-                    {sequence === 'microsoft_send_email' && <MailSenderSelect
-                      control={control}
-                      errors={errors}
-                      current={mailSenderAddress}
-                    />}
+                    {sequence === 'microsoft_send_email' && (
+                      <MailSenderSelect
+                        control={control}
+                        errors={errors}
+                        current={mailSenderAddress}
+                      />
+                    )}
                   </>
                 ) : null}
                 {isMailSequence(sequence) && workerEngagementId ? (
@@ -264,20 +270,20 @@ export function TaskSidebar({
                 ) : null}
                 {taskState === 'edit' &&
                 taskEditState.taskId &&
-                taskEditState.sequence &&
-                taskEditState.integrationProvider ? (
+                sequence &&
+                sequence !== 'none' &&
+                (selectedAutomation?.provider ||
+                  taskEditState.integrationProvider) ? (
                   <TaskAutomation
                     taskId={taskEditState.taskId}
-                    provider={taskEditState.integrationProvider}
-                    sequence={taskEditState.sequence}
-                    senderAddress={mailSenderAddress}
-                    disabled={
-                      isSubmitting ||
-                      sequence !== taskEditState.sequence ||
-                      (sequence === 'microsoft_deactivate_account' &&
-                        (microsoftAccountId?.trim() || '') !==
-                          (taskEditState.microsoftAccountId?.trim() || ''))
+                    provider={
+                      selectedAutomation?.provider ||
+                      taskEditState.integrationProvider!
                     }
+                    sequence={sequence}
+                    beforeRun={saveForAction}
+                    senderAddress={mailSenderAddress}
+                    disabled={isSubmitting}
                   />
                 ) : null}
                 {taskState === 'edit' &&

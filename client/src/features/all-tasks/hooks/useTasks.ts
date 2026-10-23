@@ -104,12 +104,27 @@ export function useTasks(
     setIsOpen(false);
   });
 
+  const saveForAction = async () => {
+    let saved = false;
+    if (taskState !== 'edit' || !taskEditState.taskId) return false;
+    await handleSubmit(async (data) => {
+      try {
+        await updateTaskAsync({ taskId: taskEditState.taskId, data });
+        saved = true;
+      } catch {
+        // The update mutation reports the error; leave the task open to retry.
+      }
+    })();
+    return saved;
+  };
+
   return {
     register,
     control,
     errors,
     setValue,
     onSubmit,
+    saveForAction,
     isTaskSaving: isCreatePending || isUpdatePending,
   };
 }

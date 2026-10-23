@@ -49,14 +49,30 @@ function teamsLink(value: string | null) {
 export function TeamsSendAction({
   taskId,
   disabled,
+  beforeOpen,
 }: {
   taskId: string;
   disabled: boolean;
+  beforeOpen?: () => Promise<boolean>;
 }) {
   const [open, setOpen] = useState(false);
+  const [preparing, setPreparing] = useState(false);
+  const openSend = async () => {
+    if (disabled || preparing) return;
+    setPreparing(true);
+    try {
+      if (!beforeOpen || (await beforeOpen())) setOpen(true);
+    } finally {
+      setPreparing(false);
+    }
+  };
   return (
     <>
-      <Button type="button" disabled={disabled} onClick={() => setOpen(true)}>
+      <Button
+        type="button"
+        disabled={disabled || preparing}
+        onClick={() => void openSend()}
+      >
         Teams-Nachricht senden
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
