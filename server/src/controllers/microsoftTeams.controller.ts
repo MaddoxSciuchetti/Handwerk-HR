@@ -4,7 +4,7 @@ import { FRONTENDURL } from "@/constants/env";
 import {
     CALLBACK_COOKIE,
     connectionStatus,
-    disconnect,
+    disconnectAndGetStatus,
     finishConnection,
     startConnection,
     TeamsError,
@@ -46,10 +46,9 @@ const endpoint =
         }
     };
 export const getConnection = endpoint((req) => connectionStatus(actor(req)));
-export const deleteConnection = endpoint(async (req) => {
-    await disconnect(actor(req));
-    return connectionStatus(actor(req));
-});
+export const deleteConnection = endpoint((req) =>
+    disconnectAndGetStatus(actor(req)),
+);
 export const postConnection: RequestHandler = async (req, res) => {
     res.setHeader("Cache-Control", "no-store");
     try {

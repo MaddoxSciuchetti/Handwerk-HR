@@ -193,25 +193,30 @@ export async function startConnection(actor: Actor) {
         prompt: "select_account",
         responseMode: "query",
     });
+    await saveAuthAttempt(actor, {
+        id: state,
+        ...actor,
+        tenantId: config.tenantId,
+        clientId: config.clientId,
+        browserHash: hash(browserSecret),
+        nonce,
+        verifierCiphertext: encryptIntegrationSecret(verifier),
+        expiresAt: new Date(Date.now() + 600_000),
+    });
+    return { url, browserSecret };
+}
+
+async function saveAuthAttempt(
+    actor: Actor,
+    data: Prisma.MicrosoftAuthAttemptUncheckedCreateInput,
+) {
     await prisma.$transaction(async (tx) => {
         await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`teams-connection:${actor.organizationId}:${actor.userId}`}, 0))`;
         await tx.microsoftAuthAttempt.deleteMany({
             where: { OR: [actor, { expiresAt: { lt: new Date() } }] },
         });
-        await tx.microsoftAuthAttempt.create({
-            data: {
-                id: state,
-                ...actor,
-                tenantId: config.tenantId,
-                clientId: config.clientId,
-                browserHash: hash(browserSecret),
-                nonce,
-                verifierCiphertext: encryptIntegrationSecret(verifier),
-                expiresAt: new Date(Date.now() + 600_000),
-            },
-        });
+        await tx.microsoftAuthAttempt.create({ data });
     });
-    return { url, browserSecret };
 }
 
 export async function finishConnection(input: {
@@ -366,6 +371,11 @@ export async function disconnect(actor: Actor) {
             data: { ...actor, action: "disconnected" },
         });
     });
+}
+
+export async function disconnectAndGetStatus(actor: Actor) {
+    await disconnect(actor);
+    return connectionStatus(actor);
 }
 
 export async function accessToken(actor: Actor) {

@@ -10,6 +10,7 @@ import {
     callbackUri,
     connectionStatus,
     disconnect,
+    disconnectAndGetStatus,
     finishConnection,
     GRAPH_SCOPES,
     hash,
@@ -284,6 +285,28 @@ it("returns metadata only, even when provisioning fields are empty", async () =>
     expect(status.ready).toBe(true);
     expect(status).not.toHaveProperty("cacheCiphertext");
     expect(status).not.toHaveProperty("clientSecret");
+});
+
+it("returns the refreshed status after completing the disconnect transaction", async () => {
+    (prisma.microsoftUserConnection.findUnique as jest.Mock).mockResolvedValue(null);
+    const status = await disconnectAndGetStatus(actor);
+    expect(status).toMatchObject({
+        ...actor,
+        ready: true,
+        status: "disconnected",
+        account: null,
+    });
+    const deletionOrder = (prisma.microsoftUserConnection.deleteMany as jest.Mock)
+        .mock.invocationCallOrder[0];
+    const readOrder = (prisma.microsoftUserConnection.findUnique as jest.Mock)
+        .mock.invocationCallOrder[0];
+    expect(deletionOrder).toBeLessThan(readOrder);
+});
+
+it("does not return connection metadata if disconnect fails", async () => {
+    (prisma.$transaction as jest.Mock).mockRejectedValue(new Error("database unavailable"));
+    await expect(disconnectAndGetStatus(actor)).rejects.toThrow("database unavailable");
+    expect(prisma.microsoftUserConnection.findUnique).not.toHaveBeenCalled();
 });
 
 it("does not resurrect a connection when a pending login was cancelled during code exchange", async () => {
