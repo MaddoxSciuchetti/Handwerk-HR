@@ -1,4 +1,5 @@
 export const ISSUE_STATUSES = [
+  'error',
   'open',
   'in_progress',
   'done',
@@ -12,6 +13,7 @@ export const ISSUE_STATUS_OPTIONS: ReadonlyArray<{
   value: IssueStatusValue;
   label: string;
 }> = [
+  { value: 'error', label: 'Fehler' },
   { value: 'open', label: 'Offen' },
   { value: 'in_progress', label: 'In Bearbeitung' },
   { value: 'done', label: 'Erledigt' },

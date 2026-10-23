@@ -83,7 +83,22 @@ export function TaskStatusNotApplicableIcon(props: IconProps) {
   );
 }
 
+export function TaskStatusErrorIcon(props: IconProps) {
+  return (
+    <IconFrame {...props}>
+      <circle cx="7" cy="7" r="7" fill="#DC2626" />
+      <path
+        d="M4.2 4.2L9.8 9.8M9.8 4.2L4.2 9.8"
+        stroke="white"
+        strokeWidth="1.45"
+        strokeLinecap="round"
+      />
+    </IconFrame>
+  );
+}
+
 const STATUS_ICON_MAP = {
+  error: TaskStatusErrorIcon,
   open: TaskStatusOpenIcon,
   in_progress: TaskStatusInProgressIcon,
   done: TaskStatusDoneIcon,
@@ -97,5 +112,13 @@ export function TaskStatusIcon({
   ...props
 }: IconProps & { status: IssueStatusValue }) {
   const Icon = STATUS_ICON_MAP[status];
-  return <Icon className={className} {...props} />;
+  return (
+    <Icon
+      className={className}
+      {...(status === 'error'
+        ? { role: 'img', 'aria-hidden': false, 'aria-label': 'Fehler' }
+        : {})}
+      {...props}
+    />
+  );
 }
