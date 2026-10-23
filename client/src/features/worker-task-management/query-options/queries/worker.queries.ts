@@ -31,5 +31,6 @@ export const workerQueries = {
       queryKey: [WORKERBYID, workerId],
       staleTime: 30_000,
       queryFn: () => getWorkerById(workerId),
+      refetchInterval: (query) => query.state.data?.data.engagements.some(engagement => engagement.templateApplication && !engagement.templateApplication.completedAt) ? 2000 : false,
     }),
 };

@@ -1,3 +1,4 @@
+import { templateApplyInput, templateApplicationPreview } from '@/services/templateApplication';
 import { getLifecycleStatistics as fetchLifecycleStatistics } from "@/services/lifecycleStatistics";
 import { uploadFileToS3 } from "@/config/aws";
 import * as employmentContractService from "@/services/employmentContract.service";
@@ -334,14 +335,14 @@ export const applyIssueTemplate = catchErrors(
         const organizationId = req.orgId;
         const workerId = param(req, "workerId");
         const templateId = param(req, "templateId");
-        const { workerEngagementId, remainingOnly } = req.body;
+        const input = templateApplyInput.parse(req.body);
         const result = await workerService.applyIssueTemplate({
             workerId,
             organizationId,
             templateId,
-            workerEngagementId,
+            ...input,
             actorUserId: req.userId!,
-            remainingOnly: remainingOnly === true,
+            remainingOnly: true,
         });
         return res.status(200).json({ success: true, data: result });
     },
@@ -636,5 +637,14 @@ export const prepareEmploymentContractPdf = catchErrors(
 
 export const getLifecycleStatistics = catchErrors(async (req: Request, res: Response) => {
     const data = await fetchLifecycleStatistics(req.orgId, req.userId);
+    return res.status(200).json({ success: true, data });
+});
+
+export const previewIssueTemplate = catchErrors(async (req: Request, res: Response) => {
+    const engagementId = String(req.query.workerEngagementId ?? '');
+    const data = await templateApplicationPreview({
+        workerId: param(req, 'workerId'), templateId: param(req, 'templateId'),
+        organizationId: req.orgId, actorUserId: req.userId!,
+    }, engagementId);
     return res.status(200).json({ success: true, data });
 });

@@ -1,8 +1,13 @@
+import { applyTemplateApplication, type TemplateApplyInput } from './templateApplication';
 import { prisma } from "@/lib/prisma";
 import { templateItemsForEngagement } from "@/services/onboardingTemplateTasks";
 import { fillWorkerProfileFromQuestionnaires } from "@/services/questionnaireWorkerProfile";
 import { certificateText } from "@/services/arbeitszeugnis";
 import { issueVisibleToViewer } from "@/services/issueVisibility";
+import {
+    attachMentionFlag,
+    unreadMentionInclude,
+} from "@/services/issueMentions";
 import type {
     ArchiveWorkerInput,
     CreateAbsenceInput,
@@ -226,6 +231,7 @@ export async function getWorkerData(params: GetWorkersInput) {
                 orderBy: { startDate: "desc" },
                 take: 1,
                 include: {
+                    templateApplication: { select: { id: true, completedAt: true } },
                     responsibleUser: {
                         select: {
                             id: true,
@@ -274,6 +280,7 @@ export async function getWorkerById(
             engagements: {
                 orderBy: { startDate: "desc" },
                 include: {
+                    templateApplication: { select: { id: true, completedAt: true } },
                     responsibleUser: {
                         select: {
                             id: true,
@@ -325,6 +332,7 @@ export async function getWorkerById(
                                     lastName: true,
                                 },
                             },
+                            mentions: unreadMentionInclude(viewerUserId),
                         },
                     },
                 },
@@ -369,6 +377,7 @@ export async function getWorkerById(
         documents: documentsWithUrls,
         engagements: worker.engagements.map((engagement) => ({
             ...engagement,
+            issues: (engagement.issues ?? []).map(attachMentionFlag),
             questionnaireSubmission: engagement.questionnaireSubmission
                 ? {
                       id: engagement.questionnaireSubmission.id,
@@ -649,6 +658,7 @@ export async function updateIssue(params: UpdateIssueInput) {
     const {
         issueId,
         workerEngagementId,
+        newWorkerEngagementId,
         actorUserId,
         title,
         description,
@@ -669,6 +679,7 @@ export async function updateIssue(params: UpdateIssueInput) {
     if (!existing) throw new Error("Issue not found");
 
     const data: Record<string, unknown> = {};
+    if (newWorkerEngagementId !== undefined) data.workerEngagementId = newWorkerEngagementId;
     if (title !== undefined) data.title = title;
     if (description !== undefined) data.description = description;
     if (assigneeUserId !== undefined) data.assigneeUserId = assigneeUserId;
@@ -681,7 +692,14 @@ export async function updateIssue(params: UpdateIssueInput) {
     if (mailTemplateId !== undefined) data.mailTemplateId = mailTemplateId;
     if (mailSenderAddress !== undefined) data.mailSenderAddress = mailSenderAddress;
 
-    const keys = Object.keys(data);
+    const keys = Object.keys(data).filter((key) => {
+        const previous = (existing as unknown as Record<string, unknown>)[key];
+        if (JSON.stringify(previous) === JSON.stringify(data[key])) {
+            delete data[key];
+            return false;
+        }
+        return true;
+    });
     if (keys.length === 0) {
         return prisma.issue.findFirst({
             where: { id: issueId },
@@ -777,6 +795,8 @@ async function applyIssueTemplateInTx(
         templateId: string;
         actorUserId: string;
         remainingOnly?: boolean;
+        runAutomation?: boolean;
+        templateSnapshot?: Prisma.IssueTemplateGetPayload<{ include: { items: true } }>;
     },
 ) {
     const {
@@ -787,7 +807,7 @@ async function applyIssueTemplateInTx(
         remainingOnly = false,
     } = params;
 
-    const template = await tx.issueTemplate.findFirst({
+    const template = params.templateSnapshot ?? await tx.issueTemplate.findFirst({
         where: { id: templateId, organizationId },
         include: {
             items: { orderBy: { orderIndex: "asc" } },
@@ -818,7 +838,7 @@ async function applyIssueTemplateInTx(
                 workerEngagementId,
                 createdByUserId: actorUserId,
                 assigneeUserId: item.defaultAssigneeUserId ?? undefined,
-                status: item.defaultStatus ?? "open",
+                status: params.runAutomation && item.sequence ? "open" : item.defaultStatus ?? "open",
                 title: item.title,
                 description: item.description ?? undefined,
                 priority: "no_priority",
@@ -836,7 +856,7 @@ async function applyIssueTemplateInTx(
                 action: "issue.created",
                 newValue: {
                     title: item.title,
-                    status: item.defaultStatus ?? "open",
+                    status: params.runAutomation && item.sequence ? "open" : item.defaultStatus ?? "open",
                     assigneeUserId: item.defaultAssigneeUserId,
                     templateItemId: item.id,
                 },
@@ -849,6 +869,10 @@ async function applyIssueTemplateInTx(
 }
 
 export async function applyIssueTemplate(params: {
+    runAutomation?: boolean;
+    choices?: TemplateApplyInput["choices"];
+    idempotencyKey?: string;
+    templateRevision?: string;
     workerId: string;
     organizationId: string;
     workerEngagementId: string;
@@ -877,8 +901,13 @@ export async function applyIssueTemplate(params: {
     });
     if (!engagement) throw new Error("Worker engagement not found");
 
-    return prisma.$transaction((tx) =>
-        applyIssueTemplateInTx(tx, {
+    return applyTemplateApplication({ workerId, organizationId, templateId, actorUserId }, {
+        workerEngagementId, runAutomation: params.runAutomation ?? false,
+        choices: params.choices ?? {}, idempotencyKey: params.idempotencyKey,
+        templateRevision: params.templateRevision,
+    }, (tx, templateSnapshot) => applyIssueTemplateInTx(tx, {
+            templateSnapshot,
+            runAutomation: params.runAutomation,
             organizationId,
             workerEngagementId: engagement.id,
             templateId,

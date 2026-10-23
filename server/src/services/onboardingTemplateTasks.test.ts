@@ -1,35 +1,4 @@
-import {
-    isQuestionnaireOrContractTemplateTask,
-    templateItemsForEngagement,
-} from "@/services/onboardingTemplateTasks";
-
-describe("isQuestionnaireOrContractTemplateTask", () => {
-    it("skips the questionnaire and contract steps that already exist", () => {
-        expect(isQuestionnaireOrContractTemplateTask("Fragebogen")).toBe(true);
-        expect(
-            isQuestionnaireOrContractTemplateTask(
-                "Personalfragebogen inkl. notwendiger Dokumente",
-            ),
-        ).toBe(true);
-        expect(isQuestionnaireOrContractTemplateTask("Arbeitsvertrag")).toBe(
-            true,
-        );
-        expect(
-            isQuestionnaireOrContractTemplateTask(
-                "Arbeitsvertrag unterschrieben zurück",
-            ),
-        ).toBe(true);
-    });
-
-    it("keeps the other onboarding steps", () => {
-        expect(
-            isQuestionnaireOrContractTemplateTask("Willkommensmail an das Team"),
-        ).toBe(false);
-        expect(
-            isQuestionnaireOrContractTemplateTask("Arbeitskleidung"),
-        ).toBe(false);
-    });
-});
+import { templateItemsForEngagement } from "@/services/onboardingTemplateTasks";
 
 describe("templateItemsForEngagement", () => {
     const items = [
@@ -38,22 +7,23 @@ describe("templateItemsForEngagement", () => {
         { id: "w", title: "Willkommensmail an das Team" },
         { id: "k", title: "Arbeitskleidung" },
     ];
-
-    it("keeps every new item when the template is chosen up front", () => {
-        expect(
-            templateItemsForEngagement(items, {
-                remainingOnly: false,
-                existingTemplateItemIds: [],
-            }).map((item) => item.id),
-        ).toEqual(["q", "c", "w", "k"]);
-    });
-
-    it("fills only the steps the fast track has not created yet", () => {
+    it.each([false, true])(
+        "includes questionnaire and contract items (remainingOnly=%s)",
+        (remainingOnly) => {
+            expect(
+                templateItemsForEngagement(items, {
+                    remainingOnly,
+                    existingTemplateItemIds: [],
+                }),
+            ).toEqual(items);
+        },
+    );
+    it("only skips template items already created for this engagement", () => {
         expect(
             templateItemsForEngagement(items, {
                 remainingOnly: true,
                 existingTemplateItemIds: ["k"],
             }).map((item) => item.id),
-        ).toEqual(["w"]);
+        ).toEqual(["q", "c", "w"]);
     });
 });

@@ -73,6 +73,7 @@ export type WorkerStatus = 'active' | 'inactive';
 export type EngagementType = 'onboarding' | 'offboarding' | 'transfer';
 
 export type WorkerEngagement = {
+  templateApplication?: { id: string; completedAt: string | null } | null;
   id: string;
   type: EngagementType;
   status: EngagementProgressValue;

@@ -1,3 +1,6 @@
+import { TemplateApplyPrompt } from '@/features/worker-task-management/components/tasks/TemplateApplyPrompt';
+import { engagementsAwaitingTemplate } from '@/features/worker-task-management/pendingTemplate';
+import { TableSelectAllCheckbox } from '@/components/ui/table-select-all-checkbox';
 import { TableSkeletonRows } from '@/components/ui/table-skeleton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -90,10 +93,27 @@ function Tasks() {
       return next;
     });
   };
+  const selectVisibleTasks = (checked: boolean) => {
+    const visibleIds = new Set(filteredTasks.map((task) => task.id));
+    handleSetEditModeData((previous) => {
+      const remaining = previous.filter(
+        (item) => !visibleIds.has(item.taskNumber)
+      );
+      if (!checked) return remaining;
+      return [
+        ...remaining,
+        ...filteredTasks.map((task) => ({
+          taskNumber: task.id,
+          taskTitle: task.title,
+        })),
+      ];
+    });
+  };
 
   return (
     <div className="mx-auto flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
       <div className="flex h-full min-h-0 w-full flex-col">
+        {!largeEditMode && <TemplateApplyPrompt targets={engagementsAwaitingTemplate(data ?? [])} />}
         <TaskSidebar
           key={sidebarKey}
           {...sidebarProps}
@@ -144,7 +164,17 @@ function Tasks() {
               <Table aria-busy={isLoading}>
                 <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-0">
                   <TableRow className="border-0 hover:bg-transparent">
-                    <TableHead className="w-px h-12 bg-card py-3 pl-12 pr-2">
+                    <TableHead className="relative h-12 w-px bg-card py-3 pl-12 pr-2">
+                      <div className="absolute inset-y-0 left-0 flex w-10 items-center justify-center">
+                        <TableSelectAllCheckbox
+                          ids={filteredTasks.map((task) => task.id)}
+                          selectedIds={editModeData.map((item) => item.taskNumber)}
+                          disabled={isLoading}
+                          selectLabel="Alle Aufgaben auswählen"
+                          clearLabel="Alle Aufgaben abwählen"
+                          onCheckedChange={selectVisibleTasks}
+                        />
+                      </div>
                       Titel
                     </TableHead>
                     <TableHead className="w-px bg-card py-3 px-2" />

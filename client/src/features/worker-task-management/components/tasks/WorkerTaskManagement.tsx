@@ -1,4 +1,5 @@
 import ErrorAlert from '@/components/alerts/ErrorAlert';
+import { TableSelectAllCheckbox } from '@/components/ui/table-select-all-checkbox';
 import { TableSkeletonRows } from '@/components/ui/table-skeleton';
 import { PersonnelFoldersSkeleton } from '../files/FileSkeletons';
 import { ClothingOrderTable } from '../clothing/ClothingOrderTable';
@@ -109,6 +110,22 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
 
   const { data, isLoading } = useTaskData(workerId);
   const { displayData } = useFilteredData(data);
+  const selectVisibleTasks = (checked: boolean) => {
+    const visibleIds = new Set(displayData.map((task) => task.id));
+    handleSetEditModeData((previous) => {
+      const remaining = previous.filter(
+        (item) => !visibleIds.has(item.taskNumber)
+      );
+      if (!checked) return remaining;
+      return [
+        ...remaining,
+        ...displayData.map((task) => ({
+          taskNumber: task.id,
+          taskTitle: task.title,
+        })),
+      ];
+    });
+  };
   const { fetchFiles } = useGetWorkerFiles(workerId);
   const {
     sidebarKey,
@@ -142,7 +159,7 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
   const templateTargets = engagementsAwaitingTemplate(displayData, {
     workerId,
     label: `${data?.data.firstName ?? ''} ${data?.data.lastName ?? ''}`.trim(),
-  });
+  }).filter(target => !data?.data.engagements.find(engagement => engagement.id === target.engagementId)?.templateApplication);
   const engagements = data?.data.engagements ?? [];
   const waiting = engagements.some(
     (engagement) => engagement.status === 'expected'
@@ -157,6 +174,7 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
       <TaskSidebar
         key={sidebarKey}
         {...sidebarProps}
+        showWorkerLink={false}
         onOpenArbeitszeugnis={setZeugnisIssueId}
       />
       {contractSend ? (
@@ -254,8 +272,20 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                   <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-0">
                     <TableRow className="border-0 hover:bg-transparent">
                       <TableHead
-                        className={`${sectionHeaderClassName} bg-card`}
+                        className={`relative ${sectionHeaderClassName} bg-card`}
                       >
+                        <div className="absolute inset-y-0 left-0 flex w-10 items-center justify-center">
+                          <TableSelectAllCheckbox
+                            ids={displayData.map((task) => task.id)}
+                            selectedIds={editModeData.map(
+                              (item) => item.taskNumber
+                            )}
+                            disabled={isLoading}
+                            selectLabel="Alle Aufgaben auswählen"
+                            clearLabel="Alle Aufgaben abwählen"
+                            onCheckedChange={selectVisibleTasks}
+                          />
+                        </div>
                         Titel
                       </TableHead>
                       <TableHead className="h-12 bg-card py-3 px-2" />

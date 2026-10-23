@@ -1,12 +1,6 @@
-export function isQuestionnaireOrContractTemplateTask(title: string) {
-    const normalized = title.trim().toLocaleLowerCase("de-DE");
-    return (
-        normalized.includes("fragebogen") ||
-        normalized.includes("arbeitsvertrag")
-    );
-}
-
-export function templateItemsForEngagement<T extends { id: string; title: string }>(
+export function templateItemsForEngagement<
+    T extends { id: string; title: string },
+>(
     items: T[],
     options: {
         remainingOnly: boolean;
@@ -14,14 +8,5 @@ export function templateItemsForEngagement<T extends { id: string; title: string
     },
 ) {
     const taken = new Set(options.existingTemplateItemIds);
-    return items.filter((item) => {
-        if (taken.has(item.id)) return false;
-        if (
-            options.remainingOnly &&
-            isQuestionnaireOrContractTemplateTask(item.title)
-        ) {
-            return false;
-        }
-        return true;
-    });
+    return items.filter((item) => !taken.has(item.id));
 }

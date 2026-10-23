@@ -132,6 +132,7 @@ export interface CreateIssueInput {
 export interface UpdateIssueInput {
     issueId: string;
     workerEngagementId: string; // used to scope the lookup
+    newWorkerEngagementId?: string;
     /** Set by controller from auth — written to IssueAuditLog */
     actorUserId: string;
     title?: string;

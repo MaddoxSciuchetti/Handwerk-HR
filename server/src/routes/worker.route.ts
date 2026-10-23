@@ -184,6 +184,7 @@ worker.post("/:workerId/issues", workerController.createIssue);
 worker.put("/:workerId/issues/:issueId", workerController.updateIssue);
 worker.delete("/:workerId/issues/:issueId", workerController.deleteIssue);
 
+worker.get("/:workerId/templates/:templateId/preview", workerController.previewIssueTemplate);
 worker.post(
     "/:workerId/templates/:templateId/apply",
     workerController.applyIssueTemplate,
