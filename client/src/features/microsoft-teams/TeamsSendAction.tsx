@@ -79,7 +79,9 @@ export function TeamsSendAction({
         <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Teams-Nachricht senden</DialogTitle>
-            <DialogDescription>
+            <DialogDescription
+              className={import.meta.env.PROD ? 'sr-only' : undefined}
+            >
               Wähle die Kanäle und prüfe die Nachricht. Du sendest mit deinem
               verbundenen Microsoft-Konto.
             </DialogDescription>
@@ -91,6 +93,7 @@ export function TeamsSendAction({
   );
 }
 export function TeamsSendForm({ taskId }: { taskId: string }) {
+  const showDiagnostics = !import.meta.env.PROD;
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
@@ -175,19 +178,20 @@ export function TeamsSendForm({ taskId }: { taskId: string }) {
     <div className="flex flex-col gap-4">
       {preview.isPending && <p>Vorschau wird geladen…</p>}
       {preview.error && <p role="alert">{teamsError(preview.error)}</p>}
-      {operation ? (
-        <p className="text-sm">
-          Absender dieser Zustellung: <strong>{operation.senderName}</strong>
-        </p>
-      ) : (
-        connection?.account && (
+      {showDiagnostics &&
+        (operation ? (
           <p className="text-sm">
-            Absender: <strong>{connection.account.displayName}</strong> ·{' '}
-            {connection.account.username}
+            Absender dieser Zustellung: <strong>{operation.senderName}</strong>
           </p>
-        )
-      )}
-      {connection && !connected && (
+        ) : (
+          connection?.account && (
+            <p className="text-sm">
+              Absender: <strong>{connection.account.displayName}</strong> ·{' '}
+              {connection.account.username}
+            </p>
+          )
+        ))}
+      {showDiagnostics && connection && !connected && (
         <p role="status">
           {!connection.ready
             ? 'Microsoft Teams ist noch nicht eingerichtet.'
@@ -197,60 +201,63 @@ export function TeamsSendForm({ taskId }: { taskId: string }) {
           </a>
         </p>
       )}
-      {connection && !connection.live && (
+      {showDiagnostics && connection && !connection.live && (
         <p>Sequenzen werden in dieser Umgebung nicht ausgeführt.</p>
       )}
-      {preview.data && (
-        <div>
-          <p className="mb-2 text-sm font-medium">Nachricht</p>
-          <div className="max-h-64 overflow-auto whitespace-pre-wrap rounded-lg border p-3 text-sm">
-            {preview.data.body}
-          </div>
-        </div>
-      )}
-      {!operation && connected && (
+      {preview.data && !operation && (
         <fieldset className="flex min-w-0 flex-col gap-2">
           <legend className="mb-2 font-medium">Teams-Kanäle</legend>
-          <Input
-            aria-label="Kanäle suchen"
-            placeholder="Team oder Kanal suchen…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          {channels.isPending && <p>Kanäle werden geladen…</p>}
-          {channels.error && <p role="alert">{teamsError(channels.error)}</p>}
-          {channels.data?.warnings.map((warning) => (
-            <p key={warning} role="status" className="text-sm">
-              {warning}
-            </p>
-          ))}
-          <div className="max-h-52 overflow-y-auto rounded-lg border p-2">
-            {filtered.map((channel) => (
-              <label
-                key={channelKey(channel)}
-                className="flex items-center gap-2 p-2 text-sm"
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedKeys.has(channelKey(channel))}
-                  onChange={() => choose(channel)}
-                  disabled={busy}
-                />
-                {channel.label}
-              </label>
-            ))}
-            {channels.isSuccess && filtered.length === 0 && (
-              <p className="p-2 text-sm">Keine passenden Kanäle gefunden.</p>
-            )}
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={channels.isFetching || busy}
-            onClick={() => void channels.refetch()}
-          >
-            Kanäle neu laden
-          </Button>
+          {connected && (
+            <>
+              <Input
+                aria-label="Kanäle suchen"
+                placeholder="Team oder Kanal suchen…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              {channels.isPending && <p>Kanäle werden geladen…</p>}
+              {channels.error && (
+                <p role="alert">{teamsError(channels.error)}</p>
+              )}
+              {channels.data?.warnings.map((warning) => (
+                <p key={warning} role="status" className="text-sm">
+                  {warning}
+                </p>
+              ))}
+              <div className="max-h-52 overflow-y-auto rounded-lg border p-2">
+                {filtered.map((channel) => (
+                  <label
+                    key={channelKey(channel)}
+                    className="flex items-center gap-2 p-2 text-sm"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedKeys.has(channelKey(channel))}
+                      onChange={() => choose(channel)}
+                      disabled={busy}
+                    />
+                    {channel.label}
+                  </label>
+                ))}
+                {channels.isSuccess && filtered.length === 0 && (
+                  <p className="p-2 text-sm">
+                    Keine passenden Kanäle gefunden.
+                  </p>
+                )}
+              </div>
+              {(showDiagnostics || channels.isError) && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={channels.isFetching || busy}
+                  onClick={() => void channels.refetch()}
+                >
+                  Kanäle neu laden
+                </Button>
+              )}
+            </>
+          )}
+          {!connected && <p className="text-sm">Keine Kanäle verfügbar.</p>}
         </fieldset>
       )}
       {operation && (
@@ -310,6 +317,14 @@ export function TeamsSendForm({ taskId }: { taskId: string }) {
               )}
             </div>
           ))}
+        </div>
+      )}
+      {preview.data && (
+        <div>
+          <p className="mb-2 text-sm font-medium">Nachricht</p>
+          <div className="max-h-64 overflow-auto whitespace-pre-wrap rounded-lg border p-3 text-sm">
+            {preview.data.body}
+          </div>
         </div>
       )}
       {(send.error || review.error) && (
