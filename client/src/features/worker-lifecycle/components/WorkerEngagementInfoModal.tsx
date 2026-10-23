@@ -4,6 +4,7 @@ import { workerEngagementInfoItems } from '../consts/worker-engagement-info.cons
 import { workerLifecycleQueries } from '../query-options/queries/worker-lifycycle.queries';
 import WorkerEmailField from './WorkerEmailField';
 import WorkerInfoPanel from './WorkerInfoPanel';
+import WorkerClothingPanel from './WorkerClothingPanel';
 
 type WorkerEngagementInfoModalProps = {
   isOpen: boolean;
@@ -31,7 +32,7 @@ function WorkerEngagementInfoModal({
             <LoadingAlert className="min-h-0" />
           </div>
         ) : (
-          <div className="w-full">
+          <>
             {items.map((item) =>
               item.editable === 'email' ? (
                 <WorkerEmailField
@@ -42,7 +43,7 @@ function WorkerEngagementInfoModal({
               ) : (
                 <div
                   key={item.label}
-                  className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] items-start gap-4 border-b border-border/50 py-3.5 last:border-0"
+                  className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] items-start gap-4 border-b border-border/50 py-3.5"
                 >
                   <span className="text-sm text-muted-foreground">
                     {item.label}
@@ -53,7 +54,13 @@ function WorkerEngagementInfoModal({
                 </div>
               )
             )}
-          </div>
+            {data?.data ? (
+              <WorkerClothingPanel
+                workerId={workerId}
+                engagements={data.data.engagements}
+              />
+            ) : null}
+          </>
         )}
       </div>
     </WorkerInfoPanel>
