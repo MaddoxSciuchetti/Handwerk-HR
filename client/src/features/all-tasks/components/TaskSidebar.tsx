@@ -29,6 +29,7 @@ import TaskHistory from '@/features/worker-task-management/components/tasks/task
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { X } from 'lucide-react';
+import { TaskSaveButton } from './TaskSaveButton';
 import { useMemo, type Dispatch, type SetStateAction } from 'react';
 import { useWatch } from 'react-hook-form';
 import { useFetchEngagements } from '../hooks/useFetchEngagements';
@@ -41,6 +42,7 @@ type TaskSidebarProps = {
   taskState: 'create' | 'edit';
   taskEditState: TaskEditState;
   onOpenArbeitszeugnis?: (taskId: string) => void;
+  showWorkerLink?: boolean;
 };
 
 export function TaskSidebar({
@@ -49,9 +51,24 @@ export function TaskSidebar({
   taskState,
   taskEditState,
   onOpenArbeitszeugnis,
+  showWorkerLink = true,
 }: TaskSidebarProps) {
-  const { register, control, errors, onSubmit, saveForAction, isTaskSaving } =
-    useTasks(taskEditState, taskState, setIsOpen);
+  const {
+    register,
+    control,
+    errors,
+    onSubmit,
+    saveForAction,
+    isTaskSaving,
+    autoSaveState,
+    flushAutoSave,
+  } = useTasks(taskEditState, taskState, setIsOpen, {
+    autoSave: isOpen && taskState === 'edit',
+  });
+  const closeSidebar = async () => {
+    if (taskState === 'edit' && !(await flushAutoSave())) return;
+    setIsOpen(false);
+  };
   const navigate = useNavigate();
   const sequence = useWatch({ control, name: 'sequence' });
   const selectedAutomation = INTEGRATION_SEQUENCES.find(
@@ -138,7 +155,7 @@ export function TaskSidebar({
     <SidebarAside
       className="p-2"
       isOpen={isOpen}
-      onClose={() => setIsOpen(false)}
+      onClose={() => void closeSidebar()}
     >
       <SidebarPanel className="w-full">
         <SidebarHeader className="flex items-center justify-between gap-3 p-6">
@@ -146,7 +163,7 @@ export function TaskSidebar({
             <Label className="text-base font-semibold">
               {taskState === 'edit' ? 'Aufgabe bearbeiten' : 'Aufgabe'}
             </Label>
-            {taskState === 'edit' && selectedEngagement ? (
+            {showWorkerLink && taskState === 'edit' && selectedEngagement ? (
               <Button
                 type="button"
                 variant="outline"
@@ -164,13 +181,20 @@ export function TaskSidebar({
             size="icon-sm"
             className="rounded-2xl"
             aria-label="Schließen"
-            onClick={() => setIsOpen(false)}
+            onClick={() => void closeSidebar()}
           >
             <X className="size-4" aria-hidden />
           </Button>
         </SidebarHeader>
         <form
-          onSubmit={onSubmit}
+          onSubmit={
+            taskState === 'edit'
+              ? (event) => {
+                  event.preventDefault();
+                  void flushAutoSave();
+                }
+              : onSubmit
+          }
           className="flex min-h-0 flex-1 flex-col overflow-hidden"
         >
           <SidebarContent className="mt-2 flex min-h-0 flex-1 flex-col overflow-y-auto p-6">
@@ -313,13 +337,17 @@ export function TaskSidebar({
             </FieldGroup>
           </SidebarContent>
           <SidebarFooter className="shrink-0 border-0 p-6">
-            <Button
-              type="submit"
-              className="rounded-2xl"
-              disabled={isSubmitting}
-            >
-              {taskState === 'edit' ? 'Speichern' : 'Hinzufügen'}
-            </Button>
+            {taskState === 'edit' ? (
+              <TaskSaveButton state={autoSaveState} onSave={flushAutoSave} />
+            ) : (
+              <Button
+                type="submit"
+                className="rounded-2xl"
+                disabled={isSubmitting}
+              >
+                Hinzufügen
+              </Button>
+            )}
           </SidebarFooter>
         </form>
       </SidebarPanel>

@@ -14,6 +14,7 @@ import { TaskSidebarForm } from '../types/index.types';
 import { useCreateTask } from './useCreateTask';
 import type { TaskEditState } from './useTaskSidebar';
 import { useUpdateTask } from './useUpdateTask';
+import { useTaskAutosave } from './useTaskAutosave';
 
 export type TaskCommentDraft = {
   body: string;
@@ -27,6 +28,7 @@ export type PersistTaskComment = (args: {
 }) => Promise<unknown>;
 
 type UseTasksOptions = {
+  autoSave?: boolean;
   getCommentDraft?: () => TaskCommentDraft;
   persistComment?: PersistTaskComment;
 };
@@ -47,6 +49,10 @@ export function useTasks(
     handleSubmit,
     control,
     setValue,
+    watch,
+    getValues,
+    setError,
+    clearErrors,
     formState: { errors },
   } = useForm<TaskSidebarForm>({
     defaultValues: {
@@ -66,6 +72,12 @@ export function useTasks(
     setValue('status', (taskEditState.status || 'open') as IssueStatusValue);
     setValue('automation', storedTaskAutomation(taskEditState.automation));
   }, [taskEditState.automation, taskEditState.status, setValue]);
+
+  const autosave = useTaskAutosave(
+    { watch, getValues, setError, clearErrors },
+    Boolean(options?.autoSave && taskState === 'edit'),
+    (data) => updateTaskAsync({ taskId: taskEditState.taskId, data })
+  );
 
   const onSubmit = handleSubmit(async (data) => {
     if (taskState === 'create') {
@@ -108,7 +120,11 @@ export function useTasks(
     if (taskState !== 'edit' || !taskEditState.taskId) return false;
     await handleSubmit(async (data) => {
       try {
-        await updateTaskAsync({ taskId: taskEditState.taskId, data });
+        if (options?.autoSave) {
+          if (!(await autosave.flush())) return;
+        } else {
+          await updateTaskAsync({ taskId: taskEditState.taskId, data });
+        }
         saved = true;
       } catch {
         // The update mutation reports the error; leave the task open to retry.
@@ -124,6 +140,8 @@ export function useTasks(
     setValue,
     onSubmit,
     saveForAction,
+    autoSaveState: autosave.state,
+    flushAutoSave: autosave.flush,
     isTaskSaving: isCreatePending || isUpdatePending,
   };
 }
