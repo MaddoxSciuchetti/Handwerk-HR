@@ -32,7 +32,7 @@ type CreateWorkerResponse = {
 export const getWorkerData = async (): Promise<WorkerRecord[]> => {
   const response = await API.get<WorkerRecordResponse, WorkerRecordResponse>(
     `/worker`,
-    { params: { includeArchived: true } }
+    { params: { includeArchived: true, summary: true } }
   );
   return response.data;
 };

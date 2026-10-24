@@ -154,6 +154,7 @@ export const getWorkerData = catchErrors(
             page: page ? parseInt(page as string, 10) : 1,
             limit: limit ? parseInt(limit as string, 10) : 25,
             includeArchived: includeArchived === "true",
+            summary: req.query.summary === "true",
         });
 
         return res.status(200).json({ success: true, data: result });

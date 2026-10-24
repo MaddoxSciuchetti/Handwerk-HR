@@ -6,7 +6,6 @@ import type { Dispatch, MouseEvent, SetStateAction } from 'react';
 import { EngagementType, WorkerRecord } from '../types/index.types';
 import { getFirstFormType } from '../utils/formtype';
 import { getWorkerIssueCount } from '../utils/workerHealth.utils';
-import WorkerEngagementInfoButton from './WorkerEngagementInfoButton';
 import { EngagementProgressPicker } from './ui/EngagementProgressPicker';
 import EngagementTypeSwitch from './EngagementTypeSwitch';
 import {
@@ -82,7 +81,13 @@ function ProjectItem(props: ProjectItemProps) {
       className="group relative cursor-pointer border-0 hover:bg-transparent"
       onClick={(event) => {
         const target = event.target;
-        if (target instanceof Element && target.closest('[data-row-select]')) {
+        if (
+          !(target instanceof Element) ||
+          !event.currentTarget.contains(target) ||
+          target.closest(
+            'button, a, input, select, textarea, [role="button"], [role="checkbox"], [role="combobox"], [data-row-select]'
+          )
+        ) {
           return;
         }
         gotopage(worker.id, form_type, fullname);
@@ -103,72 +108,67 @@ function ProjectItem(props: ProjectItemProps) {
             onClick={toggleSelection}
           />
         )}
-        <span className={cn('inline-flex items-center gap-2', !isTeam && 'pl-2')}>
+        <span
+          className={cn('inline-flex items-center gap-2', !isTeam && 'pl-2')}
+        >
           {worker.firstName}
           {isTeam && props.marked ? (
             <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-normal text-muted-foreground">
               Nächstes Jubiläum
             </span>
           ) : null}
-          <WorkerEngagementInfoButton workerId={worker.id} />
         </span>
       </TableCell>
       {isTeam ? null : (
         <>
-      <TableCell
-        className={cn(
-          'transition-colors group-hover:bg-muted/50',
-          props.isSelected && 'bg-muted/50'
-        )}
-      >
-        <div onClick={(event) => event.stopPropagation()}>
-          <EngagementTypeSwitch
-            value={worker.engagements[0].type}
-            workerName={fullname.trim()}
-            disabled={props.isChangingType}
-            onSwitch={props.onTypeChange}
-          />
-        </div>
-      </TableCell>
-      <TableCell
-        className={cn(
-          'transition-colors group-hover:bg-muted/50',
-          props.isSelected && 'bg-muted/50'
-        )}
-      >
-        <div onClick={(event) => event.stopPropagation()}>
-          <ResponsibleUserPicker
-            value={worker.engagements[0].responsibleUser}
-            options={props.responsibleUsers}
-            workerName={fullname.trim()}
-            disabled={props.isChangingResponsible}
-            onChange={props.onResponsibleChange}
-          />
-        </div>
-      </TableCell>
-      <TableCell
-        className={cn(
-          'text-sm tabular-nums text-muted-foreground transition-colors group-hover:bg-muted/50',
-          props.isSelected && 'bg-muted/50'
-        )}
-      >
-        {issueCount}
-      </TableCell>
-      <TableCell
-        className={cn(
-          'transition-colors group-hover:rounded-r-xl group-hover:bg-muted/50',
-          props.isSelected && 'rounded-r-xl bg-muted/50'
-        )}
-      >
-        <div onClick={(e) => e.stopPropagation()}>
-          <EngagementProgressPicker
-            worker={worker}
-            workerId={worker.id}
-            engagementId={worker.engagements[0].id}
-            status={worker.engagements[0].status}
-          />
-        </div>
-      </TableCell>
+          <TableCell
+            className={cn(
+              'transition-colors group-hover:bg-muted/50',
+              props.isSelected && 'bg-muted/50'
+            )}
+          >
+            <EngagementTypeSwitch
+              value={worker.engagements[0].type}
+              workerName={fullname.trim()}
+              disabled={props.isChangingType}
+              onSwitch={props.onTypeChange}
+            />
+          </TableCell>
+          <TableCell
+            className={cn(
+              'transition-colors group-hover:bg-muted/50',
+              props.isSelected && 'bg-muted/50'
+            )}
+          >
+            <ResponsibleUserPicker
+              value={worker.engagements[0].responsibleUser}
+              options={props.responsibleUsers}
+              workerName={fullname.trim()}
+              disabled={props.isChangingResponsible}
+              onChange={props.onResponsibleChange}
+            />
+          </TableCell>
+          <TableCell
+            className={cn(
+              'text-sm tabular-nums text-muted-foreground transition-colors group-hover:bg-muted/50',
+              props.isSelected && 'bg-muted/50'
+            )}
+          >
+            {issueCount}
+          </TableCell>
+          <TableCell
+            className={cn(
+              'transition-colors group-hover:rounded-r-xl group-hover:bg-muted/50',
+              props.isSelected && 'rounded-r-xl bg-muted/50'
+            )}
+          >
+            <EngagementProgressPicker
+              worker={worker}
+              workerId={worker.id}
+              engagementId={worker.engagements[0].id}
+              status={worker.engagements[0].status}
+            />
+          </TableCell>
         </>
       )}
     </TableRow>

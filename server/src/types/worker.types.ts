@@ -61,6 +61,7 @@ export interface UpdateWorkerInput {
 }
 
 export interface GetWorkersInput {
+    summary?: boolean;
     organizationId: string;
     status?: WorkerStatus; // Prisma enum — safe to use directly
     search?: string;

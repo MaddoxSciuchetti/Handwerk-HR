@@ -9,6 +9,7 @@ export const workerLifecycleQueries = {
     return queryOptions<WorkerRecord[]>({
       queryKey: [ALL_WORKER_DATA],
       queryFn: () => getWorkerData(),
+      staleTime: 30_000,
     });
   },
   workerById: (workerId: string) => {

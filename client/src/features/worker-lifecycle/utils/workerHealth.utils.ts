@@ -1,4 +1,3 @@
-import type { IssueStatusValue } from '@/features/all-tasks/consts/issue-status.consts';
 import type { WorkerRecord } from '../types/index.types';
 
 export type WorkerHealthLevel = 'green' | 'orange' | 'red' | 'neutral';
@@ -10,34 +9,39 @@ export type WorkerHealth = {
   level: WorkerHealthLevel;
 };
 
-function collectWorkerIssues(worker: WorkerRecord) {
-  return worker.engagements.flatMap((engagement) => engagement.issues ?? []);
+function collectWorkerIssueCounts(worker: WorkerRecord) {
+  return worker.engagements.flatMap(
+    (engagement) =>
+      engagement.issueCounts ??
+      (engagement.issues ?? []).map((issue) => ({
+        status: issue.status,
+        count: 1,
+      }))
+  );
 }
 
 export function getWorkerIssueCount(worker: WorkerRecord): number {
-  return collectWorkerIssues(worker).filter(
-    (issue) => issue.status !== 'not_applicable'
-  ).length;
+  return collectWorkerIssueCounts(worker).reduce(
+    (total, issue) =>
+      total + (issue.status === 'not_applicable' ? 0 : issue.count),
+    0
+  );
 }
 
 export function getWorkerHealth(worker: WorkerRecord): WorkerHealth {
-  const issues = collectWorkerIssues(worker).filter(
+  const counts = collectWorkerIssueCounts(worker).filter(
     (issue) => !['cancelled', 'not_applicable'].includes(issue.status)
   );
-  const totalCount = issues.length;
+  const totalCount = counts.reduce((total, issue) => total + issue.count, 0);
 
   if (totalCount === 0) {
-    return {
-      doneCount: 0,
-      totalCount: 0,
-      percentage: null,
-      level: 'neutral',
-    };
+    return { doneCount: 0, totalCount: 0, percentage: null, level: 'neutral' };
   }
 
-  const doneCount = issues.filter(
-    (issue) => (issue.status as IssueStatusValue) === 'done'
-  ).length;
+  const doneCount = counts.reduce(
+    (total, issue) => total + (issue.status === 'done' ? issue.count : 0),
+    0
+  );
   const percentage = Math.round((doneCount / totalCount) * 100);
 
   let level: WorkerHealthLevel = 'red';

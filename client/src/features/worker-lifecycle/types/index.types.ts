@@ -92,7 +92,13 @@ export type WorkerEngagement = {
     email: string;
   };
   issues?: Pick<IssueResponse, 'id' | 'status'>[];
-  questionnaireSubmission?: { id: string; status: string; completedAt?: string | null; name?: string } | null;
+  issueCounts?: { status: string; count: number }[];
+  questionnaireSubmission?: {
+    id: string;
+    status: string;
+    completedAt?: string | null;
+    name?: string;
+  } | null;
 };
 
 export type WorkerRecord = {

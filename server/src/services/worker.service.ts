@@ -224,6 +224,43 @@ export async function getWorkerData(params: GetWorkersInput) {
             : {}),
     };
 
+    if (params.summary) {
+        const workers = await prisma.worker.findMany({
+            where,
+            orderBy: { createdAt: "desc" },
+            select: {
+                id: true, firstName: true, lastName: true, email: true,
+                position: true, status: true, birthday: true, entryDate: true,
+                exitDate: true, createdAt: true, updatedAt: true,
+                engagements: {
+                    orderBy: { startDate: "desc" }, take: 1,
+                    select: {
+                        id: true, type: true, status: true, startedAt: true,
+                        completedAt: true, startDate: true, endDate: true,
+                        responsibleUser: { select: { id: true, firstName: true, lastName: true, email: true } },
+                        templateApplication: { select: { id: true, completedAt: true, resultsDismissedAt: true } },
+                    },
+                },
+            },
+        });
+        const engagementIds = workers.flatMap(worker => worker.engagements.map(engagement => engagement.id));
+        const counts = engagementIds.length ? await prisma.issue.groupBy({
+            by: ["workerEngagementId", "status"],
+            where: { workerEngagementId: { in: engagementIds }, ...issueVisibleToViewer(viewerUserId) },
+            _count: { _all: true },
+        }) : [];
+        const byEngagement = new Map<string, { status: string; count: number }[]>();
+        for (const row of counts) {
+            if (!row.workerEngagementId) continue;
+            const values = byEngagement.get(row.workerEngagementId) ?? [];
+            values.push({ status: row.status, count: row._count._all });
+            byEngagement.set(row.workerEngagementId, values);
+        }
+        return workers.map(worker => ({ ...worker, engagements: worker.engagements.map(engagement => ({
+            ...engagement, issueCounts: byEngagement.get(engagement.id) ?? [],
+        })) }));
+    }
+
     return prisma.worker.findMany({
         where,
         orderBy: { createdAt: "desc" },

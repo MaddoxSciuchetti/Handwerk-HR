@@ -97,3 +97,24 @@ describe('getWorkerHealth', () => {
     });
   });
 });
+
+it('computes identical health and task totals from grouped status counts', () => {
+  const worker = workerWithStatuses([
+    'done',
+    'done',
+    'open',
+    'cancelled',
+    'not_applicable',
+  ]);
+  const expectedHealth = getWorkerHealth(worker);
+  const expectedCount = getWorkerIssueCount(worker);
+  worker.engagements[0].issues = undefined;
+  worker.engagements[0].issueCounts = [
+    { status: 'done', count: 2 },
+    { status: 'open', count: 1 },
+    { status: 'cancelled', count: 1 },
+    { status: 'not_applicable', count: 1 },
+  ];
+  expect(getWorkerHealth(worker)).toEqual(expectedHealth);
+  expect(getWorkerIssueCount(worker)).toBe(expectedCount);
+});

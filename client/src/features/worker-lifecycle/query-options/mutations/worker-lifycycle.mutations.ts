@@ -17,7 +17,7 @@ type WorkerListSnapshot = {
 };
 
 async function snapshotWorkers(): Promise<WorkerListSnapshot> {
-  await queryClient.cancelQueries({ queryKey: [ALL_WORKER_DATA] });
+  await queryClient.cancelQueries({ queryKey: [ALL_WORKER_DATA], exact: true });
   return {
     previous: queryClient.getQueryData<WorkerRecord[]>([ALL_WORKER_DATA]),
   };
@@ -29,9 +29,7 @@ function restoreWorkers(context: WorkerListSnapshot | undefined) {
   }
 }
 
-function updateWorkerList(
-  update: (workers: WorkerRecord[]) => WorkerRecord[]
-) {
+function updateWorkerList(update: (workers: WorkerRecord[]) => WorkerRecord[]) {
   const workers = queryClient.getQueryData<WorkerRecord[]>([ALL_WORKER_DATA]);
   if (!workers) return;
   queryClient.setQueryData([ALL_WORKER_DATA], update(workers));
@@ -63,7 +61,7 @@ export const workerLifecycleMutations = {
       onSettled: () => {
         void queryClient.invalidateQueries({
           queryKey: [ALL_WORKER_DATA],
-          refetchType: 'all',
+          refetchType: 'active',
         });
       },
     });
@@ -87,7 +85,7 @@ export const workerLifecycleMutations = {
       onSettled: () => {
         void queryClient.invalidateQueries({
           queryKey: [ALL_WORKER_DATA],
-          refetchType: 'all',
+          refetchType: 'active',
         });
       },
     });
@@ -103,7 +101,7 @@ export const workerLifecycleMutations = {
       onSuccess: () => {
         queryClient.invalidateQueries({
           queryKey: [ALL_WORKER_DATA],
-          refetchType: 'all',
+          refetchType: 'active',
         });
       },
       onError: (error) => {
