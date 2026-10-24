@@ -1,5 +1,6 @@
 import { TEMPLATE_DEMO_MODE } from '@/config/env';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import { Item } from '@/components/ui/item';
 import {
   Accordion,
@@ -114,6 +115,7 @@ export function TemplateApplyPrompt({
       templateId: string;
       templateRevision?: string;
       templateName: string;
+      workEmail?: string;
     }) => {
       const request = () =>
         applyTemplate(input.target.workerId, input.templateId, {
@@ -122,6 +124,7 @@ export function TemplateApplyPrompt({
           choices: input.choices,
           idempotencyKey: requestKey,
           templateRevision: input.templateRevision,
+          workEmail: input.workEmail,
         });
       let result = await request();
       // Reusing the same application key reads the receipt without rerunning actions.
@@ -477,11 +480,6 @@ export function TemplateApplyPrompt({
                 )}
                 {templateId ? (
                   <>
-                    {preview.isPending && (
-                      <p className="text-xs text-muted-foreground">
-                        Template wird geladen…
-                      </p>
-                    )}
                     {preview.isError && (
                       <p role="alert" className="text-xs text-destructive">
                         Template konnte nicht geladen werden.
@@ -493,7 +491,7 @@ export function TemplateApplyPrompt({
                         template={preview.data}
                         engagementId={selectedId!}
                         busy={apply.isPending}
-                        onApply={(runAutomation, choices) => {
+                        onApply={(runAutomation, choices, workEmail) => {
                           setRunNumber((current) => current + 1);
                           setSynchronizing(false);
                           setShowResults(false);
@@ -501,6 +499,7 @@ export function TemplateApplyPrompt({
                           apply.mutate({
                             runAutomation,
                             choices,
+                            workEmail,
                             target: selected,
                             templateId,
                             templateRevision: preview.data?.revision,
@@ -559,6 +558,7 @@ export function TemplateApplyPrompt({
           aria-label={
             hasVisibleRun ? 'Ausgeführte Aufgaben anzeigen' : 'Template wählen'
           }
+          aria-busy={Boolean(templateId && preview.isPending)}
           aria-expanded={open && !running}
           onClick={() => {
             if (hasVisibleRun) {
@@ -569,7 +569,11 @@ export function TemplateApplyPrompt({
             else setOpen(true);
           }}
         >
-          <LayoutTemplate className="size-4" />
+          {templateId && preview.isPending ? (
+            <Spinner aria-hidden="true" aria-label={undefined} />
+          ) : (
+            <LayoutTemplate className="size-4" />
+          )}
         </Button>
         {(running || hasVisibleRun) && (
           <TemplateAutomationProgress

@@ -1,5 +1,6 @@
+import { integrationsMocked, mockChannels } from "../integrations/localMock";
 import { prisma } from "@/lib/prisma";
-import { accessToken, TeamsError, type Actor } from "./connection";
+import { accessToken, assertActiveMember, TeamsError, type Actor } from "./connection";
 
 const GRAPH = "https://graph.microsoft.com/v1.0";
 export type ChannelChoice = {
@@ -91,6 +92,10 @@ async function list<T>(actor: Actor, token: string, initialPath: string) {
     return values;
 }
 export async function listChannels(actor: Actor) {
+    if (integrationsMocked()) {
+        await assertActiveMember(actor);
+        return { channels: mockChannels, warnings: [] };
+    }
     const auth = await accessToken(actor);
     const teams = await list<{ id: string; displayName: string }>(
         actor,

@@ -1,3 +1,4 @@
+import { integrationsMocked } from "../integrations/localMock";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import {
     ConfidentialClientApplication,
@@ -141,6 +142,10 @@ export function msalClient(config: Awaited<ReturnType<typeof teamsConfig>>) {
 
 export async function connectionStatus(actor: Actor) {
     await assertActiveMember(actor);
+    if (integrationsMocked()) return {
+        ...actor, ready: true, live: true, status: "connected",
+        account: { displayName: "Lokale Demo", username: "hr@example.test" },
+    };
     let ready = true;
     let configuration: Awaited<ReturnType<typeof teamsConfig>> | undefined;
     try {
@@ -307,6 +312,9 @@ async function prepareTokenExchange(
             code,
             redirectUri: callbackUri(),
             codeVerifier: verifier,
+            // The authorize step stored this nonce in the ID token. The token
+            // exchange rejects the response when that value is omitted.
+            nonce: attempt.nonce,
         },
     };
 }

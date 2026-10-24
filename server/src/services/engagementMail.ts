@@ -1,3 +1,4 @@
+import { integrationsMocked, mockMailboxes } from "./integrations/localMock";
 import type { EngagementMailRecipientKind } from "@prisma/client";
 import { BAD_REQUEST } from "@/constants/http";
 import { prisma } from "@/lib/prisma";
@@ -85,6 +86,7 @@ function rememberMail(seen: Set<string>, email: string | null | undefined) {
 }
 
 export async function listBsbMailAddresses(organizationId: string) {
+    if (integrationsMocked()) return { addresses: mockMailboxes, error: null };
     const members = await prisma.organizationMember.findMany({
         where: {
             organizationId,
