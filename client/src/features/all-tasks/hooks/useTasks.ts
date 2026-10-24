@@ -133,6 +133,12 @@ export function useTasks(
     return saved;
   };
 
+  const saveManually = async () => {
+    const success = await autosave.flush();
+    if (success) toast.success('Aufgabe gespeichert');
+    return success;
+  };
+
   return {
     register,
     control,
@@ -142,6 +148,7 @@ export function useTasks(
     saveForAction,
     autoSaveState: autosave.state,
     flushAutoSave: autosave.flush,
+    saveManually,
     isTaskSaving: isCreatePending || isUpdatePending,
   };
 }

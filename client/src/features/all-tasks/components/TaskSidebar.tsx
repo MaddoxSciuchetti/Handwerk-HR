@@ -62,6 +62,7 @@ export function TaskSidebar({
     isTaskSaving,
     autoSaveState,
     flushAutoSave,
+    saveManually,
   } = useTasks(taskEditState, taskState, setIsOpen, {
     autoSave: isOpen && taskState === 'edit',
   });
@@ -191,7 +192,7 @@ export function TaskSidebar({
             taskState === 'edit'
               ? (event) => {
                   event.preventDefault();
-                  void flushAutoSave();
+                  void saveManually();
                 }
               : onSubmit
           }
@@ -300,6 +301,7 @@ export function TaskSidebar({
                     beforeRun={saveForAction}
                     senderAddress={mailSenderAddress}
                     disabled={isSubmitting}
+                    completed={taskEditState.status === 'done'}
                   />
                 ) : null}
                 {taskState === 'edit' &&
@@ -338,7 +340,7 @@ export function TaskSidebar({
           </SidebarContent>
           <SidebarFooter className="shrink-0 border-0 p-6">
             {taskState === 'edit' ? (
-              <TaskSaveButton state={autoSaveState} onSave={flushAutoSave} />
+              <TaskSaveButton state={autoSaveState} onSave={saveManually} />
             ) : (
               <Button
                 type="submit"

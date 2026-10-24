@@ -117,6 +117,12 @@ function Tasks() {
         <TaskSidebar
           key={sidebarKey}
           {...sidebarProps}
+          taskEditState={{
+            ...sidebarProps.taskEditState,
+            status:
+              data?.find((task) => task.id === sidebarProps.taskEditState.taskId)
+                ?.status ?? sidebarProps.taskEditState.status,
+          }}
           onOpenArbeitszeugnis={setZeugnisIssueId}
         />
         {contractSend ? (

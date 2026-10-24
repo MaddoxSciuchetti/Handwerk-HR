@@ -2,6 +2,12 @@ import { TeamsSendAction } from '@/features/microsoft-teams/TeamsSendAction';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
   integrationLabel,
   sequenceLabel,
 } from '@/features/settings/integrations/integration.consts';
@@ -22,6 +28,7 @@ type TaskAutomationProps = {
   provider: string;
   sequence: string;
   disabled: boolean;
+  completed?: boolean;
   senderAddress?: string;
   beforeRun?: () => Promise<boolean>;
 };
@@ -33,7 +40,8 @@ function ExistingTaskAutomation({
   disabled,
   senderAddress,
   beforeRun,
-}: TaskAutomationProps) {
+  onCompleted,
+}: TaskAutomationProps & { onCompleted: () => void }) {
   const queryClient = useQueryClient();
   const [isRunning, setIsRunning] = useState(false);
   const integrations = useQuery({
@@ -77,6 +85,7 @@ function ExistingTaskAutomation({
       toast.error(message);
       return;
     }
+    onCompleted();
     void queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] });
     void queryClient.invalidateQueries({ queryKey: [WORKERBYID] });
     void queryClient.invalidateQueries({ queryKey: [TASKHISTORY, taskId] });
@@ -112,6 +121,37 @@ function ExistingTaskAutomation({
 }
 
 function TaskAutomation(props: TaskAutomationProps) {
+  const [executedTaskId, setExecutedTaskId] = useState<string | null>(null);
+  if (props.completed || executedTaskId === props.taskId) {
+    const message =
+      props.sequence === 'microsoft_send_email'
+        ? 'Diese E-Mail wurde bereits gesendet.'
+        : 'Diese Sequenz wurde bereits ausgeführt.';
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span
+              tabIndex={0}
+              className="block cursor-not-allowed rounded-2xl"
+              aria-label={message}
+            >
+              <Button
+                type="button"
+                disabled
+                className="w-full rounded-2xl bg-muted text-muted-foreground disabled:opacity-100"
+              >
+                {props.sequence === 'microsoft_send_teams_message'
+                  ? 'Teams-Nachricht senden'
+                  : 'Go'}
+              </Button>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>{message}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
   return props.sequence === 'microsoft_send_teams_message' ? (
     <TeamsSendAction
       taskId={props.taskId}
@@ -119,7 +159,10 @@ function TaskAutomation(props: TaskAutomationProps) {
       beforeOpen={props.beforeRun}
     />
   ) : (
-    <ExistingTaskAutomation {...props} />
+    <ExistingTaskAutomation
+      {...props}
+      onCompleted={() => setExecutedTaskId(props.taskId)}
+    />
   );
 }
 export default TaskAutomation;
