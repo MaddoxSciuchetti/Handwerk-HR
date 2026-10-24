@@ -1,6 +1,7 @@
 import { ContractPreviewSkeleton } from './ContractPreviewSkeleton';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Download, Loader2 } from 'lucide-react';
 import type { DocumentSegment } from '@/features/settings/documents/documentSegments';
 import { FETCHDESCRIPTION } from '@/features/all-tasks/consts/query.consts';
 import { ALL_WORKER_DATA } from '@/features/worker-lifecycle/consts/query-key.consts';
@@ -469,13 +470,19 @@ export function ContractSendDialog({
                   ) : null}
                   <Button
                     type="button"
+                    size="icon"
                     className="rounded-2xl"
+                    aria-label="PDF herunterladen"
+                    title="PDF herunterladen"
+                    aria-busy={printContract.isPending || prepare.isPending}
                     disabled={!complete || busy || blockedDelivery}
                     onClick={() => printContract.mutate()}
                   >
-                    {printContract.isPending || prepare.isPending
-                      ? 'Druckt…'
-                      : 'Drucken'}
+                    {printContract.isPending || prepare.isPending ? (
+                      <Loader2 className="animate-spin" aria-hidden="true" />
+                    ) : (
+                      <Download aria-hidden="true" />
+                    )}
                   </Button>
                 </div>
               )}

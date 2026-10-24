@@ -133,6 +133,12 @@ body {
 .styled-document [data-line-group].ProseMirror-selectednode {
   outline: none;
 }
+[data-answer-drop-target],
+[data-answer-drop-target] .document-inline-value,
+[data-answer-drop-target] input {
+  background-color: var(--color-green-100);
+  border-color: var(--color-green-500);
+}
 .document-inline-value:empty::before {
   content: attr(data-placeholder);
   color: #64748b;

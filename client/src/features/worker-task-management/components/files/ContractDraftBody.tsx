@@ -61,7 +61,7 @@ export function ContractDraftBody({
                 ? (event) => {
                     if (!getDraggedQuestionnaireAnswer()) return;
                     event.preventDefault();
-                    event.dataTransfer.dropEffect = 'copy';
+                    event.dataTransfer.dropEffect = 'move';
                     setDropIndex(index);
                   }
                 : undefined
@@ -89,7 +89,7 @@ export function ContractDraftBody({
             }
             className={cn(
               'mx-0.5 inline-block border-b border-foreground bg-transparent px-1 text-center outline-none placeholder:text-muted-foreground read-only:text-foreground',
-              dropIndex === index && 'bg-accent'
+              dropIndex === index && 'border-green-500 bg-green-100'
             )}
           />
         );

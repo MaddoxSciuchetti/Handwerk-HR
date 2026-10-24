@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, type DragEvent } from 'react';
+import { useContext, useEffect, useRef, useState, type DragEvent } from 'react';
 import { currentDocumentDate } from '@shared/document';
 import { Node, mergeAttributes } from '@tiptap/core';
 import {
@@ -114,6 +114,16 @@ function MasterDocumentField({
 
 function DocumentFieldView({ node, updateAttributes, editor }: NodeViewProps) {
   const context = useContext(DocumentValuesContext);
+  const [dropping, setDropping] = useState(false);
+  useEffect(() => {
+    const clear = () => setDropping(false);
+    window.document.addEventListener('drop', clear);
+    window.document.addEventListener('dragend', clear);
+    return () => {
+      window.document.removeEventListener('drop', clear);
+      window.document.removeEventListener('dragend', clear);
+    };
+  }, []);
   const key = String(node.attrs.key);
   const label = String(node.attrs.label);
   const useToday =
@@ -144,16 +154,29 @@ function DocumentFieldView({ node, updateAttributes, editor }: NodeViewProps) {
       as="span"
       className="inline"
       contentEditable={false}
+      data-answer-drop-target={dropping ? '' : undefined}
       onDragOver={(e: DragEvent<HTMLSpanElement>) => {
         if (
           !context.master &&
           !context.readOnly &&
           !useToday &&
           getDraggedQuestionnaireAnswer()
-        )
+        ) {
           e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          setDropping(true);
+        }
+      }}
+      onDragLeave={(e: DragEvent<HTMLSpanElement>) => {
+        if (
+          e.relatedTarget instanceof window.Node &&
+          e.currentTarget.contains(e.relatedTarget)
+        )
+          return;
+        setDropping(false);
       }}
       onDrop={(e: DragEvent<HTMLSpanElement>) => {
+        setDropping(false);
         const answer = getDraggedQuestionnaireAnswer();
         if (answer && !context.master && !context.readOnly && !useToday) {
           e.preventDefault();
@@ -271,22 +294,6 @@ function DocumentFieldView({ node, updateAttributes, editor }: NodeViewProps) {
           className="mx-0.5 max-w-full border-b border-blue-400 bg-blue-50 px-0.5 outline-none"
           style={{ font: 'inherit', color: 'inherit' }}
           onChange={(e) => context.onValueChange(key, e.target.value)}
-          onDragOver={(e) => {
-            if (
-              !context.readOnly &&
-              !useToday &&
-              getDraggedQuestionnaireAnswer()
-            )
-              e.preventDefault();
-          }}
-          onDrop={(e) => {
-            const answer = getDraggedQuestionnaireAnswer();
-            if (answer && !context.readOnly && !useToday) {
-              e.preventDefault();
-              context.onValueChange(key, answer.value);
-              setDraggedQuestionnaireAnswer(null);
-            }
-          }}
         />
       )}
     </NodeViewWrapper>

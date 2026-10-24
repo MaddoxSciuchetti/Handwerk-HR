@@ -128,7 +128,7 @@ it('prints the contract without a review checkbox', async () => {
     </QueryClientProvider>
   );
 
-  const print = await screen.findByRole('button', { name: 'Drucken' });
+  const print = await screen.findByRole('button', { name: 'PDF herunterladen' });
   expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   expect(
     screen.queryByText(/Prüfen Sie den ausgefüllten Vertrag/)
@@ -308,7 +308,7 @@ it('syncs a newly selected template immediately and clears the old PDF', async (
   expect(
     screen.queryByTitle('Arbeitsvertrag zum Drucken')
   ).not.toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Drucken' })).toBeEnabled();
+  expect(screen.getByRole('button', { name: 'PDF herunterladen' })).toBeEnabled();
 });
 
 it('does not offer a template switch for a printed contract', async () => {
@@ -360,7 +360,7 @@ it('prepares current edits before printing', async () => {
   );
   await userEvent
     .setup()
-    .click(await screen.findByRole('button', { name: 'Drucken' }));
+    .click(await screen.findByRole('button', { name: 'PDF herunterladen' }));
   await waitFor(() =>
     expect(recordPrintedEmploymentContract).toHaveBeenCalledWith(
       'worker',
