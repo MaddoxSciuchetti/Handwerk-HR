@@ -137,6 +137,20 @@ it("persists a manual correction across closing/reopening and field movement wit
         "contract.vorname",
     );
 });
+it("loads the draft and its saved response with joined relations to avoid repeated remote reads", async () => {
+    const saved = await saveEngagementContractDraft({
+        ...params,
+        values: { "contract.vorname": "Ada" },
+    });
+
+    expect(saved.values).toEqual({ "contract.vorname": "Ada" });
+    expect(prisma.employmentContract.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ relationLoadStrategy: "join" }),
+    );
+    expect(prisma.employmentContract.findFirstOrThrow).toHaveBeenCalledWith(
+        expect.objectContaining({ relationLoadStrategy: "join" }),
+    );
+});
 it("keeps sent/signed snapshots locked and rejects foreign keys", async () => {
     await expect(
         saveEngagementContractDraft({

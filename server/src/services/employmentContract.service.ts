@@ -114,6 +114,8 @@ const contractInclude = {
 
 async function loadContract(params: ContractParams) {
     return prisma.employmentContract.findFirst({
+        // Fetch the template, values and questionnaire in one database round trip.
+        relationLoadStrategy: "join",
         where: {
             engagementId: params.engagementId,
             engagement: {
@@ -136,6 +138,7 @@ function reloadContract(
     db: Prisma.TransactionClient | typeof prisma = prisma,
 ) {
     return db.employmentContract.findFirstOrThrow({
+        relationLoadStrategy: "join",
         where: { id },
         include: contractInclude,
     });
