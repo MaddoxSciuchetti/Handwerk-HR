@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { microsoftSimulationEnabled } from "@/constants/env";
 import {
     integrationsLive,
     loadMicrosoft365Config,
@@ -64,6 +65,7 @@ export async function departureMailPage(
         settings,
         groups: listed.groups,
         groupsError: listed.error,
+        simulated: microsoftSimulationEnabled(),
     };
 }
 
@@ -90,6 +92,7 @@ export async function sendTeamDepartureMail(params: {
             firstName: true,
             lastName: true,
             workEmail: true,
+            microsoftEmail: true,
             position: true,
             exitDate: true,
             departureMailSentAt: true,
@@ -107,7 +110,7 @@ export async function sendTeamDepartureMail(params: {
             message: "Die Entlassungsmail ist nicht eingerichtet.",
         };
     }
-    if (!integrationsLive()) {
+    if (!integrationsLive() && !microsoftSimulationEnabled()) {
         return {
             status: "failed",
             message: "Sequenzen werden in dieser Umgebung nicht ausgeführt.",
@@ -132,7 +135,7 @@ export async function sendTeamDepartureMail(params: {
     const values = {
         firstName: worker.firstName.trim(),
         lastName: worker.lastName.trim(),
-        workEmail: worker.workEmail?.trim() ?? "",
+        workEmail: worker.microsoftEmail?.trim() || worker.workEmail?.trim() || "",
         position: worker.position?.trim() ?? "",
         exitDate: formatWelcomeEntryDate(worker.exitDate),
     };

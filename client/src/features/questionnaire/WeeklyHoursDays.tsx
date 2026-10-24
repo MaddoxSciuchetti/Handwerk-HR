@@ -14,6 +14,7 @@ type WeeklyHoursDaysProps = {
   values: Record<string, string | undefined>;
   onChange: (key: string, value: string) => void;
   disabled?: boolean;
+  highlighted?: boolean;
   variant: 'editor' | 'form';
 };
 
@@ -21,12 +22,17 @@ export function WeeklyHoursDays({
   values,
   onChange,
   disabled = false,
+  highlighted = false,
   variant,
 }: WeeklyHoursDaysProps) {
   const total = weekdayHoursTotal(values);
-  const entered = WEEKDAYS.some((day) => hourQuantity(values[day.key] ?? '') != null);
+  const entered = WEEKDAYS.some(
+    (day) => hourQuantity(values[day.key] ?? '') != null
+  );
   const invalid = WEEKDAYS.some(
-    (day) => (values[day.key] ?? '').trim().length > 0 && normalizeHour(values[day.key] ?? '') === null
+    (day) =>
+      (values[day.key] ?? '').trim().length > 0 &&
+      normalizeHour(values[day.key] ?? '') === null
   );
 
   return (
@@ -40,12 +46,14 @@ export function WeeklyHoursDays({
       >
         {WEEKDAYS.map((day) => {
           const value = values[day.key] ?? '';
-          const invalid = value.trim().length > 0 && normalizeHour(value) === null;
+          const invalid =
+            value.trim().length > 0 && normalizeHour(value) === null;
           return (
             <div
               key={day.key}
               className={cn(
-                variant === 'form' && 'flex items-center justify-between gap-3 sm:flex-col sm:items-stretch'
+                variant === 'form' &&
+                  'flex items-center justify-between gap-3 sm:flex-col sm:items-stretch'
               )}
             >
               <Label htmlFor={day.key}>{day.label}</Label>
@@ -56,16 +64,32 @@ export function WeeklyHoursDays({
                 value={value}
                 aria-invalid={invalid}
                 aria-label={`${day.label} Stunden`}
-                className={cn('sm:w-full', variant === 'form' && 'w-24', disabled && 'bg-muted text-muted-foreground')}
-                onChange={(event) => onChange(day.key, hourInput(event.target.value))}
+                className={cn(
+                  'sm:w-full',
+                  variant === 'form' && 'w-24',
+                  (disabled || highlighted) && 'bg-muted',
+                  highlighted && 'dark:bg-muted',
+                  disabled && 'text-muted-foreground'
+                )}
+                onChange={(event) =>
+                  onChange(day.key, hourInput(event.target.value))
+                }
               />
             </div>
           );
         })}
       </div>
       {variant === 'editor' ? (
-        <p className={invalid ? 'text-sm text-destructive' : 'text-sm text-muted-foreground'}>
-          {invalid ? 'Bitte Stunden bis 24 eingeben, zum Beispiel 7,5.' : 'Std.'}
+        <p
+          className={
+            invalid
+              ? 'text-sm text-destructive'
+              : 'text-sm text-muted-foreground'
+          }
+        >
+          {invalid
+            ? 'Bitte Stunden bis 24 eingeben, zum Beispiel 7,5.'
+            : 'Std.'}
         </p>
       ) : (
         <p className="text-sm text-muted-foreground">

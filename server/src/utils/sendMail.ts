@@ -6,6 +6,7 @@ import type { PdfAttachment } from "@/services/documentDelivery";
 
 type Params = {
     to: string;
+    senderAddress?: string;
     subject: string;
     text: string;
     html: string;
@@ -45,6 +46,7 @@ const getToEmail = (to: string) => (NODE_ENV === "development" ? to : to);
 
 export const sendMail = async ({
     to,
+    senderAddress,
     subject,
     text,
     html,
@@ -58,6 +60,7 @@ export const sendMail = async ({
         try {
             const sent = await sendGraphMail({
                 to: recipient,
+                senderAddress,
                 subject,
                 html,
                 attachments,
@@ -77,7 +80,7 @@ export const sendMail = async ({
 
     const response = await resend.emails.send(
         {
-            from: getFromEmail(),
+            from: senderAddress || getFromEmail(),
             to: recipient,
             subject,
             text,

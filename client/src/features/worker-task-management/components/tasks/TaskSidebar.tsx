@@ -1,5 +1,6 @@
 import FormFields from '@/components/form/FormFields';
 import FormSelectOptions from '@/components/form/FormSelectOptions';
+import { AutomationRequirementNotice } from '@/features/settings/integrations/AutomationRequirementNotice';
 import {
   INTEGRATION_NONE,
   INTEGRATION_SEQUENCES,

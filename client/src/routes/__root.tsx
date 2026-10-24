@@ -13,7 +13,7 @@ import { RouterContext } from '@/router';
 import {
   createRootRouteWithContext,
   Outlet,
-  useLocation,
+  useMatches,
 } from '@tanstack/react-router';
 import { Toaster } from 'sonner';
 
@@ -23,7 +23,11 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 });
 
 function RootLayout() {
-  const location = useLocation();
+  // The URL changes before pending routes finish loading. Keep the shell tied
+  // to the rendered matches so the current page does not move into a new layout.
+  const pathname = useMatches({
+    select: (matches) => matches[matches.length - 1]?.pathname ?? '/',
+  });
   const isVerifiedPage = new Set([
     '/login',
     '/signup',
@@ -35,15 +39,13 @@ function RootLayout() {
     '/landing',
   ]);
 
-  const isEmailVerifyPage = location.pathname.startsWith('/email/verify/');
-  const isQuestionnairePage = location.pathname.startsWith('/fragebogen/');
+  const isEmailVerifyPage = pathname.startsWith('/email/verify/');
+  const isQuestionnairePage = pathname.startsWith('/fragebogen/');
   const isDoorman =
-    isVerifiedPage.has(location.pathname) ||
-    isEmailVerifyPage ||
-    isQuestionnairePage;
+    isVerifiedPage.has(pathname) || isEmailVerifyPage || isQuestionnairePage;
 
   if (isDoorman) {
-    const isLanding = location.pathname === '/landing';
+    const isLanding = pathname === '/landing';
     return (
       <main
         className={

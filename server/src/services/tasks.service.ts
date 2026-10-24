@@ -63,6 +63,8 @@ export type TaskHistoryItem = TaskHistoryAuditEntry | TaskHistoryCommentEntry;
 export const queryTasks = async (orgId: string, viewerUserId: string) => {
     const issues = await prisma.issue.findMany({
         where: {
+            // Legacy mention notifications are not standalone tasks.
+            assigneeOnly: false,
             AND: [
                 {
                     OR: [
@@ -99,7 +101,7 @@ export const queryTasks = async (orgId: string, viewerUserId: string) => {
 
 async function taskSequenceFields(
     orgId: string,
-    body: { sequence?: unknown; mailTemplateId?: unknown; mailSenderAddress?: unknown },
+    body: { sequence?: unknown; mailTemplateId?: unknown; mailSenderAddress?: unknown; microsoftAccountId?: unknown },
 ) {
     if (body.sequence === undefined) return {};
     if (body.sequence === null || body.sequence === "none" || body.sequence === "") {
@@ -108,6 +110,7 @@ async function taskSequenceFields(
             sequence: null,
             mailTemplateId: null,
             mailSenderAddress: null,
+            microsoftAccountId: null,
         };
     }
     if (!INTEGRATION_SEQUENCES.includes(body.sequence as IntegrationSequence)) {
@@ -150,7 +153,13 @@ async function taskSequenceFields(
     ) {
         throw new AppError(BAD_REQUEST, "Bitte wähle einen Absender.");
     }
-    return { integrationProvider, sequence, mailTemplateId, mailSenderAddress, automation: null };
+    const microsoftAccountId = sequence === "microsoft_deactivate_account"
+        ? (typeof body.microsoftAccountId === "string" ? body.microsoftAccountId.trim() || null : undefined)
+        : null;
+    if (microsoftAccountId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(microsoftAccountId)) {
+        throw new AppError(BAD_REQUEST, "Bitte gib eine gültige Microsoft-Konto-ID ein.");
+    }
+    return { integrationProvider, sequence, mailTemplateId, mailSenderAddress, microsoftAccountId, automation: null };
 }
 
 export async function createTaskInOrg(
@@ -167,6 +176,7 @@ export async function createTaskInOrg(
         sequence?: string | null;
         mailTemplateId?: string | null;
         mailSenderAddress?: string | null;
+        microsoftAccountId?: string | null;
     };
     const workerEngagementId = body.workerEngagementId?.trim() ?? "";
     if (!workerEngagementId) {
@@ -250,6 +260,7 @@ export async function updateTaskInOrg(
         sequence?: string | null;
         mailTemplateId?: string | null;
         mailSenderAddress?: string | null;
+        microsoftAccountId?: string | null;
     };
 
     let automation: string | null | undefined;
@@ -324,6 +335,7 @@ const HUMAN_READABLE_FIELDS = new Set([
     "mailTemplateId",
     "mailSenderAddress",
     "automationError",
+    "microsoftAccountId",
 ]);
 
 const PRIORITY_LABELS: Record<string, string> = {
@@ -658,7 +670,7 @@ export async function upsertIssueCommentInOrg(
     }
 
     const comment = await prisma.comment.create({
-        data: { issueId, userId, body },
+        data: { issueId, userId, body, mentionedUserIds: mentionIds },
         include: { user: { select: commentUserSelect } },
     });
 

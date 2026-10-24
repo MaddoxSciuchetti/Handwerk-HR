@@ -129,6 +129,7 @@ export interface CreateIssueInput {
     sequence?: IntegrationSequence | null;
     mailTemplateId?: string | null;
     mailSenderAddress?: string | null;
+    microsoftAccountId?: string | null;
     assigneeOnly?: boolean;
 }
 
@@ -149,6 +150,7 @@ export interface UpdateIssueInput {
     sequence?: IntegrationSequence | null;
     mailTemplateId?: string | null;
     mailSenderAddress?: string | null;
+    microsoftAccountId?: string | null;
 }
 
 

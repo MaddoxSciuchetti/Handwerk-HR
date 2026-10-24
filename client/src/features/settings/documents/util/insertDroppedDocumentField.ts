@@ -4,6 +4,7 @@ import { TextSelection } from '@tiptap/pm/state';
 import { dropPoint } from '@tiptap/pm/transform';
 import { tryCatchSync } from '@/lib/trycatch';
 import { FIELD_DRAG_TYPE } from '../consts/editor.consts';
+import { readableCheckboxMarks } from './insertDocumentField.util';
 import {
   getDraggedContractInput,
   setDraggedContractInput,
@@ -62,7 +63,11 @@ export function insertDroppedDocumentField(
         : {}),
     },
     null,
-    points ? undefined : $pos.marks()
+    points
+      ? undefined
+      : dragged.fieldType === 'checkbox'
+        ? readableCheckboxMarks($pos.marks(), view.state.schema)
+        : $pos.marks()
   );
   // Positions are document offsets; canReplaceWith expects child indexes.
   // dropPoint also finds a valid block boundary for description points.

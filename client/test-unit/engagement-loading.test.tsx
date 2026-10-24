@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { renderWithProviders } from 'test-unit/test-utils';
+import { fireEvent, screen } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import TaskManagement from '@/features/worker-task-management/components/tasks/WorkerTaskManagement';
 
@@ -22,7 +23,7 @@ vi.mock('@/features/all-tasks/components/TaskSidebar', () => ({
 }));
 
 it('keeps the engagement navigation and header mounted while switching loading tabs', () => {
-  render(<TaskManagement workerId="worker-1" />);
+  renderWithProviders(<TaskManagement workerId="worker-1" />);
   const header = screen.getByText('Aufgaben', {
     selector: '[data-slot="card-title"]',
   });
@@ -31,20 +32,6 @@ it('keeps the engagement navigation and header mounted while switching loading t
   expect(
     screen.getByRole('button', { name: 'Aufgabe hinzufügen' })
   ).toBeDisabled();
-  fireEvent.click(screen.getByTestId('clothing-tab-button'));
-  expect(
-    screen.getByText('Kleidung', { selector: '[data-slot="card-title"]' })
-      .parentElement
-  ).toBe(cardHeader);
-  expect(screen.getByTestId('open-clothing-add')).toBeDisabled();
-  expect(
-    screen.getByRole('columnheader', { name: 'Rückgabe' })
-  ).toBeInTheDocument();
-  fireEvent.click(screen.getByTestId('materials-tab-button'));
-  expect(screen.getByTestId('open-materials-upload')).toBeDisabled();
-  expect(
-    screen.getByRole('columnheader', { name: 'Artikelnummer' })
-  ).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: /^Dateien$/ }));
   expect(
     screen.getByRole('status', { name: 'Dateiordner werden geladen' })

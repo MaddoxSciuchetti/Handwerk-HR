@@ -1,5 +1,6 @@
 import { executionStatus, executionError } from "./issueExecutionStatus";
 import { prisma } from "@/lib/prisma";
+import { microsoftSimulationEnabled } from "@/constants/env";
 import { createCrewmeisterAccount } from "@/services/integrations/crewmeisterAccount";
 import {
     integrationsLive,
@@ -75,6 +76,7 @@ async function runMicrosoft(
         issueId: string;
         previousStatus: string;
         senderAddress?: string | null;
+        microsoftAccountId?: string | null;
     },
 ): Promise<SequenceRunResult> {
     if (sequence === "microsoft_send_teams_message")
@@ -92,10 +94,10 @@ async function runMicrosoft(
             }),
         );
     }
-    if (!config || !integrationsLive()) {
+    if (!config || (!integrationsLive() && !microsoftSimulationEnabled())) {
         return {
             status: "failed",
-            message: !integrationsLive()
+            message: !integrationsLive() && !microsoftSimulationEnabled()
                 ? NOT_LIVE_MESSAGE
                 : "Microsoft 365 ist für diese Organisation nicht eingerichtet.",
         };
@@ -116,7 +118,6 @@ async function runMicrosoft(
         where: { id: params.workerId, organizationId: params.organizationId },
         select: {
             id: true,
-            workEmail: true,
             externalAccounts: {
                 where: { provider: "microsoft_365" },
                 select: { externalId: true },
@@ -125,14 +126,13 @@ async function runMicrosoft(
         },
     });
     const userKey =
+        params.microsoftAccountId?.trim() ||
         worker?.externalAccounts[0]?.externalId.trim() ||
-        worker?.workEmail?.trim() ||
         "";
     if (!userKey) {
         return {
             status: "failed",
-            message:
-                "Für diesen Mitarbeiter ist kein Microsoft-365-Konto hinterlegt.",
+            message: "Für diesen Mitarbeiter ist keine Microsoft-365-ID hinterlegt.",
         };
     }
     const token = await microsoftGraphToken(config);
@@ -181,6 +181,7 @@ async function executeIssueSequence(params: {
             id: true,
             status: true,
             sequence: true,
+            microsoftAccountId: true,
             integrationProvider: true,
             workerEngagement: {
                 select: {
@@ -206,6 +207,7 @@ async function executeIssueSequence(params: {
         actorUserId: params.actorUserId,
         issueId: issue.id,
         previousStatus: issue.status,
+        microsoftAccountId: issue.microsoftAccountId,
         senderAddress: params.senderAddress,
     };
 

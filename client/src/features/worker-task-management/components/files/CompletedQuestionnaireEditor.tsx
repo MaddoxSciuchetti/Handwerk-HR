@@ -141,7 +141,11 @@ export function CompletedQuestionnaireEditor({
           return (
             <QuestionnaireQuestion
               key={item.key}
-              question={item}
+              question={{
+                ...item,
+                required: item.bsbOnly ? false : item.required,
+                officeEditable: true,
+              }}
               value={typeof value === 'string' ? value : ''}
               onChange={(next) => update(item.key, next)}
             />

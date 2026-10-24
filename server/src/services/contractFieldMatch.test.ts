@@ -109,7 +109,6 @@ describe("acceptModelMatches", () => {
             }),
         ).toEqual([{ key: "contract.iban", value: "DE89" }]);
     });
-
     it("accepts Herr or Frau only on a salutation field", () => {
         expect(
             acceptModelMatches(
@@ -128,35 +127,13 @@ describe("acceptModelMatches", () => {
             ),
         ).toEqual([{ key: "contract.anrede", value: "Herr" }]);
     });
-
-    it("stores a copied ja on a checkbox and a german date from an ISO copy", () => {
-        expect(
-            acceptModelMatches(
-                [
-                    { key: "contract.accepted", type: "checkbox" },
-                    { key: "contract.birthday", type: "date" },
-                ],
-                [{ value: "ja" }, { value: "01.04.1990" }],
-                {
-                    matches: [
-                        { key: "contract.accepted", value: "ja" },
-                        { key: "contract.birthday", value: "1990-04-01" },
-                    ],
-                },
-            ),
-        ).toEqual([
-            { key: "contract.accepted", value: "true" },
-            { key: "contract.birthday", value: "01.04.1990" },
-        ]);
-    });
 });
 
 describe("questionnaire answer reuse", () => {
-    it("copies only the contract field the questionnaire binds directly", () => {
+    it("keeps explicitly linked name parts available for a combined name field", () => {
         const answers = {
             firstName: "Lukas",
             lastName: "Muster",
-            otherJobs: "ja",
             street: "",
             postalCode: "",
             city: "",
@@ -170,12 +147,6 @@ describe("questionnaire answer reuse", () => {
                         label: "Vorname",
                     },
                     { type: "input", key: "contract.name", label: "Name" },
-                    {
-                        type: "input",
-                        key: "contract.accepted",
-                        label: "Angenommen",
-                        fieldType: "checkbox",
-                    },
                 ],
                 answers,
                 "",
@@ -185,16 +156,11 @@ describe("questionnaire answer reuse", () => {
                         label: "Vorname",
                         contractFieldKey: "contract.vorname",
                     },
-                    {
-                        key: "otherJobs",
-                        label: "Weitere Beschäftigungen",
-                        contractFieldKey: "contract.accepted",
-                    },
                 ],
             ),
         ).toEqual([
             { key: "contract.vorname", value: "Lukas" },
-            { key: "contract.accepted", value: "true" },
+            { key: "contract.name", value: "Lukas Muster" },
         ]);
     });
 
@@ -237,25 +203,173 @@ describe("questionnaire answer reuse", () => {
     });
 });
 
-it("matches a custom answer only when the questionnaire binds that contract field", () => {
-    const answers = {
-        "custom.shift-choice": "Früh",
-    } as unknown as QuestionnaireAnswers;
-    const segments: DocumentSegment[] = [
-        { type: "input", key: "contract.schicht", label: "Schicht" },
-    ];
+it("matches a custom-only questionnaire without requiring removed personal-data fields", () => {
     expect(
-        deterministicContractValues(segments, answers, "", [
-            { key: "custom.shift-choice", label: "Schicht" },
-        ]),
-    ).toEqual([]);
-    expect(
-        deterministicContractValues(segments, answers, "", [
+        deterministicContractValues(
+            [{ type: "input", key: "contract.schicht", label: "Schicht" }],
             {
-                key: "custom.shift-choice",
-                label: "Schicht",
-                contractFieldKey: "contract.schicht",
-            },
-        ]),
+                "custom.shift-choice": "Früh",
+            } as unknown as QuestionnaireAnswers,
+            "",
+            [{ key: "custom.shift-choice", label: "Schicht" }],
+        ),
     ).toEqual([{ key: "contract.schicht", value: "Früh" }]);
 });
+
+describe("questionnaire checkbox values", () => {
+    const checkbox: DocumentSegment = {
+        type: "input",
+        key: "contract.confirmed",
+        label: "Bestätigung",
+        fieldType: "checkbox",
+    };
+    it.each([
+        ["ja", "true"],
+        ["nein", "false"],
+        [" JA ", "true"],
+        ["Nein", "false"],
+    ])(
+        "stores %s as %s for linked and label-matched checkboxes",
+        (answer, expected) => {
+            for (const linked of [false, true]) {
+                expect(
+                    deterministicContractValues(
+                        [
+                            checkbox,
+                            {
+                                type: "input",
+                                key: "contract.text",
+                                label: "Antwort als Text",
+                            },
+                        ],
+                        {
+                            "custom.confirmed": answer,
+                            "custom.text": answer,
+                        } as unknown as QuestionnaireAnswers,
+                        "",
+                        [
+                            {
+                                key: "custom.confirmed",
+                                label: linked ? "Andere Frage" : "Bestätigung",
+                                ...(linked
+                                    ? { contractFieldKey: "contract.confirmed" }
+                                    : {}),
+                            },
+                            { key: "custom.text", label: "Antwort als Text" },
+                        ],
+                    ),
+                ).toEqual([
+                    { key: "contract.confirmed", value: expected },
+                    { key: "contract.text", value: answer.trim() },
+                ]);
+            }
+        },
+    );
+    it.each([
+        ["ja", "true"],
+        ["nein", "false"],
+    ])("normalizes validated model matches for %s", (answer, expected) => {
+        const fields = [
+            { key: "contract.confirmed", fieldType: "checkbox" },
+            { key: "contract.text", fieldType: "text" },
+        ];
+        expect(
+            acceptModelMatches(fields, [{ value: answer }], {
+                matches: [
+                    { key: "contract.confirmed", value: answer },
+                    { key: "contract.text", value: answer },
+                ],
+            }),
+        ).toEqual([
+            { key: "contract.confirmed", value: expected },
+            { key: "contract.text", value: answer },
+        ]);
+        expect(
+            acceptModelMatches(fields, [{ value: answer }], {
+                matches: [{ key: "contract.confirmed", value: expected }],
+            }),
+        ).toEqual([]);
+    });
+    it.each([
+        ["ja", "true"],
+        ["nein", "false"],
+    ])(
+        "removes a placed %s answer without consuming unrelated answers",
+        (answer, expected) => {
+            expect(
+                unmatchedQuestionnaireAnswers(
+                    [checkbox],
+                    { "contract.confirmed": expected },
+                    [
+                        { key: "custom.confirmed", value: answer },
+                        { key: "custom.other", value: answer },
+                    ],
+                    [
+                        { key: "custom.confirmed", label: "Bestätigung" },
+                        { key: "custom.other", label: "Andere Frage" },
+                    ],
+                ),
+            ).toEqual([
+                { key: "custom.other", label: "Andere Frage", value: answer },
+            ]);
+        },
+    );
+});
+
+it.each([
+    ["ja", "true"],
+    ["nein", "false"],
+])(
+    "converts %s after matching a questionnaire answer through the model",
+    async (answer, expected) => {
+        const { matchQuestionnaireToContract } =
+            await import("@/services/contractFieldMatchAi");
+        const originalKey = process.env.OPENAI_API_KEY;
+        process.env.OPENAI_API_KEY = "test-key";
+        const fetchMock = jest.spyOn(globalThis, "fetch").mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                choices: [
+                    {
+                        message: {
+                            content: JSON.stringify({
+                                matches: [
+                                    {
+                                        key: "contract.confirmed",
+                                        value: expected,
+                                        answerKey: "custom.confirmed",
+                                        confidence: "high",
+                                    },
+                                ],
+                            }),
+                        },
+                    },
+                ],
+            }),
+        } as Response);
+        try {
+            expect(
+                await matchQuestionnaireToContract(
+                    [
+                        {
+                            type: "input",
+                            key: "contract.confirmed",
+                            label: "Zustimmung",
+                            fieldType: "checkbox",
+                        },
+                    ],
+                    {
+                        "custom.confirmed": answer,
+                    } as unknown as QuestionnaireAnswers,
+                    "",
+                    [{ key: "custom.confirmed", label: "Bestätigung" }],
+                ),
+            ).toEqual([{ key: "contract.confirmed", value: expected }]);
+            expect(fetchMock).toHaveBeenCalledTimes(1);
+        } finally {
+            fetchMock.mockRestore();
+            if (originalKey === undefined) delete process.env.OPENAI_API_KEY;
+            else process.env.OPENAI_API_KEY = originalKey;
+        }
+    },
+);

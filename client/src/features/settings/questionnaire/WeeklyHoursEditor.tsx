@@ -39,7 +39,7 @@ export function WeeklyHoursEditor({
   const values = Object.fromEntries(
     days.map((day) => [day.key, day.defaultValue ?? ''])
   );
-  const officeOnly = days.some((day) => day.officeOnly);
+  const officeOnly = days.some((day) => day.officeOnly ?? day.bsbOnly);
 
   const ensureDistribution = (required: boolean) => {
     if (distribution) {
@@ -88,7 +88,7 @@ export function WeeklyHoursEditor({
         checked={officeOnly}
         onChange={(checked) => {
           for (const day of days)
-            onChange({ ...day, officeOnly: checked || undefined });
+            onChange({ ...day, officeOnly: checked, bsbOnly: undefined });
         }}
       />
       {editing ? (

@@ -521,3 +521,172 @@ it.each(['Body', 'Label', 'Table'])(
     }
   }
 );
+
+it.each(['paragraph', 'lineLabel'])(
+  'moves across fields and between field-only %s rows',
+  async (type) => {
+    const spy = vi.spyOn(Editor.prototype, 'setOptions');
+    const value = fromSegments([]);
+    const rows = ['beschreibung_1', 'beschreibung_2', 'beschreibung_3'].map(
+      (label, index) => ({
+        type,
+        attrs: { top: index * 20 },
+        content: [{ type: 'documentField', attrs: { key: label, label } }],
+      })
+    );
+    value.content = {
+      type: 'doc',
+      content:
+        type === 'lineLabel'
+          ? [{ type: 'lineGroup', content: rows }, { type: 'paragraph' }]
+          : [
+              {
+                type: 'orderedList',
+                content: rows.map((row) => ({
+                  type: 'listItem',
+                  content: [row],
+                })),
+              },
+              { type: 'paragraph' },
+            ],
+    };
+    const onChange = vi.fn();
+    render(
+      <StyledDocumentEditor document={value} master onChange={onChange} />
+    );
+    await screen.findByText('beschreibung_3');
+    const editor = spy.mock.instances.at(-1) as Editor;
+    vi.spyOn(editor.view as typeof editor.view & { scrollToSelection: () => void }, 'scrollToSelection').mockImplementation(
+      () => undefined
+    );
+    const starts: number[] = [];
+    editor.state.doc.descendants((node, pos) => {
+      if (node.isTextblock) starts.push(pos + 1);
+    });
+    vi.spyOn(editor.view, 'coordsAtPos').mockImplementation((pos) => {
+      const row = starts.findIndex((start) => pos >= start && pos <= start + 1);
+      const left = (pos - starts[row]) * 100;
+      return { left, right: left, top: row * 20, bottom: row * 20 + 16 };
+    });
+    const press = (key: string, shiftKey = false) =>
+      act(() => {
+        const event = new KeyboardEvent('keydown', {
+          key,
+          shiftKey,
+          cancelable: true,
+        });
+        expect(
+          editor.view.someProp('handleKeyDown', (handler) =>
+            handler(editor.view, event)
+          )
+        ).toBe(true);
+        expect(event.defaultPrevented).toBe(true);
+      });
+    const original = editor.getJSON();
+    onChange.mockClear();
+    act(() => editor.commands.setTextSelection(starts[2]));
+    press('ArrowRight');
+    expect(editor.state.selection.head).toBe(starts[2] + 1);
+    press('ArrowLeft');
+    expect(editor.state.selection.head).toBe(starts[2]);
+    press('ArrowUp');
+    expect(editor.state.selection.head).toBe(starts[1]);
+    press('ArrowUp');
+    expect(editor.state.selection.head).toBe(starts[0]);
+    press('ArrowDown');
+    expect(editor.state.selection.head).toBe(starts[1]);
+    press('ArrowDown', true);
+    expect(editor.state.selection.anchor).toBe(starts[1]);
+    expect(editor.state.selection.head).toBe(starts[2]);
+    press('ArrowLeft');
+    expect(editor.state.selection.head).toBe(starts[1]);
+    act(() => editor.commands.setTextSelection(starts[2]));
+    press('ArrowLeft');
+    expect(editor.state.selection.head).toBe(starts[1] + 1);
+    press('ArrowRight');
+    expect(editor.state.selection.head).toBe(starts[2]);
+    expect(editor.getJSON()).toEqual(original);
+    expect(onChange).not.toHaveBeenCalled();
+    spy.mockRestore();
+  }
+);
+
+it.each(['paragraph', 'lineLabel'])(
+  'supports Command-arrow line/document motion and selection in %s',
+  async (type) => {
+    const spy = vi.spyOn(Editor.prototype, 'setOptions');
+    const value = fromSegments([]);
+    const row = {
+      type,
+      content: [
+        {
+          type: 'documentField',
+          attrs: { key: 'contract.name', label: 'Name' },
+        },
+        { type: 'text', text: 'Alpha beta' },
+      ],
+    };
+    value.content = {
+      type: 'doc',
+      content: [
+        ...(type === 'lineLabel'
+          ? [{ type: 'lineGroup', content: [row] }]
+          : [row]),
+        { type: 'paragraph', content: [{ type: 'text', text: 'Last row' }] },
+      ],
+    };
+    const onChange = vi.fn();
+    render(
+      <StyledDocumentEditor document={value} master onChange={onChange} />
+    );
+    const target = await screen.findByText('Alpha beta');
+    const editor = spy.mock.instances.at(-1) as Editor;
+    vi.spyOn(editor.view as typeof editor.view & { scrollToSelection: () => void }, 'scrollToSelection').mockImplementation(
+      () => undefined
+    );
+    const start = editor.view.posAtDOM(target, 0);
+    const end = start + editor.state.doc.resolve(start).parent.content.size;
+    // Simulate a wrapped row with a field on its first visual line.
+    vi.spyOn(editor.view, 'coordsAtPos').mockImplementation((pos) => {
+      const offset = pos - start;
+      const top = offset < 5 ? 0 : 20;
+      const left = (offset < 5 ? offset : offset - 5) * 10;
+      return { top, bottom: top + 16, left, right: left };
+    });
+    const original = editor.getJSON();
+    onChange.mockClear();
+    const press = (key: string, shiftKey = false) =>
+      act(() => {
+        const event = new KeyboardEvent('keydown', {
+          key,
+          metaKey: true,
+          shiftKey,
+          cancelable: true,
+        });
+        expect(
+          editor.view.someProp('handleKeyDown', (handler) =>
+            handler(editor.view, event)
+          )
+        ).toBe(true);
+        expect(event.defaultPrevented).toBe(true);
+      });
+    act(() => editor.commands.setTextSelection(start + 7));
+    press('ArrowLeft');
+    expect(editor.state.selection.head).toBe(start + 5);
+    press('ArrowRight', true);
+    expect(editor.state.selection.anchor).toBe(start + 5);
+    expect(editor.state.selection.head).toBe(end);
+    press('ArrowUp', true);
+    expect(editor.state.selection.anchor).toBe(start + 5);
+    expect(editor.state.selection.head).toBe(start);
+    press('ArrowDown');
+    expect(editor.state.selection.head).toBe(editor.state.doc.content.size - 1);
+    expect(editor.state.selection.empty).toBe(true);
+    act(() => editor.commands.setTextSelection(start + 2));
+    press('ArrowLeft');
+    expect(editor.state.selection.head).toBe(start);
+    expect(editor.getJSON()).toEqual(original);
+    expect(onChange).not.toHaveBeenCalled();
+    spy.mockRestore();
+  }
+);

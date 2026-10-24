@@ -56,6 +56,7 @@ export function TaskItem({
       sequence: task.sequence ?? null,
       mailTemplateId: task.mailTemplateId ?? null,
       mailSenderAddress: task.mailSenderAddress ?? null,
+      microsoftAccountId: task.microsoftAccountId ?? null,
     });
   };
 

@@ -59,6 +59,9 @@ it('keeps the integrations heading while loading rows, then reveals the settings
     screen.getByRole('heading', { name: 'Crewmeister' })
   ).toBeInTheDocument();
   expect(screen.getAllByRole('button', { name: 'Speichern' })).toHaveLength(2);
+  expect(screen.getByRole('note')).toHaveTextContent(
+    'Live-Sequenzen werden in dieser Umgebung nicht ausgeführt.'
+  );
 });
 
 it('keeps personal Teams available without loading organization credentials for members', () => {

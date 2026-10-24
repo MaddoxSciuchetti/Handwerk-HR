@@ -124,6 +124,7 @@ export type WorkerDetailResponse = {
     lastName: string;
     email: string;
     workEmail: string | null;
+    microsoftEmail?: string | null;
     birthday: string | null;
     position: string | null;
     street: string | null;

@@ -12,6 +12,7 @@ export type OrganizationIntegration = {
   hasToken: boolean;
   ready: boolean;
   live: boolean;
+  simulated?: boolean;
 };
 
 type IntegrationsResponse = {

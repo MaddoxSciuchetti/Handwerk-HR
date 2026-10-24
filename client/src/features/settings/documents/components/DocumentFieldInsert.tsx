@@ -1,5 +1,5 @@
-import { useState, type DragEvent } from 'react';
-import type { Editor } from '@tiptap/react';
+import { useRef, useState, type DragEvent, type KeyboardEvent } from 'react';
+import { useEditorState, type Editor } from '@tiptap/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -10,7 +10,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { contractFieldKey, unusedFieldKey } from '../util/fieldKey.util';
-import { insertDocumentField } from '../util/insertDocumentField.util';
+import {
+  insertDocumentField,
+  selectedDocumentCheckbox,
+} from '../util/insertDocumentField.util';
 import { FIELD_DRAG_TYPE } from '../consts/editor.consts';
 
 type FieldType = 'text' | 'date' | 'checkbox' | 'points';
@@ -39,21 +42,62 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
   const [label, setLabel] = useState('');
   const [fieldKey, setFieldKey] = useState<string | null>(null);
   const [fieldType, setFieldType] = useState<FieldType>('text');
-  const [checkboxGlyph, setCheckboxGlyph] = useState('☐');
+  const [checkboxGlyph, setCheckboxGlyph] = useState<string>();
+  const labelInput = useRef<HTMLInputElement>(null);
+  const selectedCheckbox = useEditorState({
+    editor,
+    selector: ({ editor: current }) => selectedDocumentCheckbox(current),
+  });
+  const selectedGlyph = useEditorState({
+    editor,
+    selector: ({ editor: current }) => {
+      const { from, to } = current.state.selection;
+      const text = current.state.doc.textBetween(from, to);
+      return /^[☐☑☒□]$/.test(text) ? text : undefined;
+    },
+  });
   const [useToday, setUseToday] = useState(false);
+  const canInsert = Boolean(
+    label.trim() ||
+    (fieldType === 'checkbox' && (selectedCheckbox || selectedGlyph))
+  );
+  const suggestedFieldKey = label.trim()
+    ? fieldType === 'checkbox' && selectedCheckbox
+      ? String(selectedCheckbox.attrs.key)
+      : unusedFieldKey(usedFieldKeys(editor), contractFieldKey(label, ''))
+    : '';
   const nextField = () => {
-    const requested = contractFieldKey(label, fieldKey ?? '');
+    const nextLabel =
+      label.trim() ||
+      (fieldType === 'checkbox' && selectedGlyph ? 'Kontrollkästchen' : '');
+    const requested = contractFieldKey(nextLabel, fieldKey ?? '');
     return {
       key: fieldKey?.trim()
         ? requested
         : unusedFieldKey(usedFieldKeys(editor), requested),
-      label: label.trim(),
+      label: nextLabel,
       fieldType,
       required: fieldType !== 'checkbox',
       dateMode: fieldType === 'date' && useToday ? ('today' as const) : null,
     };
   };
   const insertField = () => {
+    if (fieldType === 'checkbox' && selectedCheckbox) {
+      insertDocumentField(editor, {
+        ...nextField(),
+        ...selectedCheckbox.attrs,
+        label: label.trim() || String(selectedCheckbox.attrs.label),
+        key: fieldKey?.trim()
+          ? contractFieldKey(label, fieldKey)
+          : String(selectedCheckbox.attrs.key),
+        fieldType: 'checkbox',
+        checkboxGlyph,
+      });
+      setLabel('');
+      setFieldKey(null);
+      return;
+    }
+    if (!canInsert) return;
     const field = nextField();
     if (field.fieldType === 'points') {
       editor
@@ -67,12 +111,19 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
     setLabel('');
     setFieldKey(null);
   };
+  const insertOnEnter = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key !== 'Enter' || event.nativeEvent.isComposing) return;
+    event.preventDefault();
+    insertField();
+  };
   const startFieldDrag = (event: DragEvent<HTMLSpanElement>) => {
     event.dataTransfer.setData(
       FIELD_DRAG_TYPE,
       JSON.stringify({
         ...nextField(),
-        ...(fieldType === 'checkbox' ? { checkboxGlyph } : {}),
+        ...(fieldType === 'checkbox'
+          ? { checkboxGlyph: checkboxGlyph ?? '☐' }
+          : {}),
       })
     );
     event.dataTransfer.effectAllowed = 'copy';
@@ -84,6 +135,7 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
         <label className="flex flex-col gap-1 text-xs text-muted-foreground">
           Feldbezeichnung
           <Input
+            ref={labelInput}
             aria-label="Feldbezeichnung"
             placeholder={
               fieldType === 'points'
@@ -92,6 +144,7 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
             }
             value={label}
             onChange={(event) => setLabel(event.target.value)}
+            onKeyDown={insertOnEnter}
             className="h-7 w-44"
             maxLength={120}
           />
@@ -105,7 +158,12 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
             <SelectTrigger aria-label="Feldtyp" size="sm" className="w-40">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent
+              onCloseAutoFocus={(event) => {
+                event.preventDefault();
+                labelInput.current?.focus();
+              }}
+            >
               {FIELD_TYPES.map((type) => (
                 <SelectItem key={type.value} value={type.value}>
                   {type.label}
@@ -119,7 +177,8 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
           <Input
             aria-label="Feldverknüpfung (optional)"
             placeholder="Schlüssel (automatisch)"
-            value={fieldKey ?? (label.trim() ? nextField().key : '')}
+            value={fieldKey ?? suggestedFieldKey}
+            onKeyDown={insertOnEnter}
             onChange={(event) =>
               setFieldKey(
                 event.target.value.toLowerCase().replace(/[^a-z0-9_.]/g, '')
@@ -145,7 +204,15 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
         ) : null}
         {fieldType === 'checkbox' ? (
           <>
-            <Select value={checkboxGlyph} onValueChange={setCheckboxGlyph}>
+            <Select
+              value={
+                checkboxGlyph ??
+                selectedCheckbox?.attrs.checkboxGlyph ??
+                selectedGlyph ??
+                '☐'
+              }
+              onValueChange={setCheckboxGlyph}
+            >
               <SelectTrigger
                 aria-label="Kästchenform"
                 size="sm"
@@ -153,7 +220,12 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
               >
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent
+                onCloseAutoFocus={(event) => {
+                  event.preventDefault();
+                  labelInput.current?.focus();
+                }}
+              >
                 <SelectItem value="☐">☐</SelectItem>
                 <SelectItem value="□">□</SelectItem>
               </SelectContent>
@@ -169,7 +241,7 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
           type="button"
           size="sm"
           onClick={insertField}
-          disabled={!label.trim()}
+          disabled={!canInsert}
         >
           {fieldType === 'points' ? 'Punkteblock einsetzen' : 'Feld einsetzen'}
         </Button>

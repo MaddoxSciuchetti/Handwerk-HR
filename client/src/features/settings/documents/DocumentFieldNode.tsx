@@ -1,15 +1,15 @@
-import { useContext, useEffect, useRef, useState, type DragEvent } from 'react';
-import { currentDocumentDate } from '@shared/document';
+import { useContext, useEffect, useRef } from 'react';
+import {
+  currentDocumentDate,
+  normalizeDocumentFieldValue,
+} from '@shared/document';
 import { Node, mergeAttributes } from '@tiptap/core';
 import {
   NodeViewWrapper,
   ReactNodeViewRenderer,
   type NodeViewProps,
 } from '@tiptap/react';
-import {
-  getDraggedQuestionnaireAnswer,
-  setDraggedQuestionnaireAnswer,
-} from '@/features/worker-task-management/components/files/questionnaireAnswerDrag';
+import { useQuestionnaireAnswerDrop } from '@/features/worker-task-management/components/files/questionnaireAnswerDrag';
 
 import { DocumentFieldDetails } from './components/DocumentFieldDetails';
 import { DocumentValuesContext } from './DocumentValuesContext';
@@ -32,11 +32,24 @@ function InlineValue({ label, value, readOnly, onChange }: InlineValueProps) {
       role="textbox"
       aria-label={label}
       aria-readonly={readOnly}
+      title={value || label}
       data-placeholder={label}
       contentEditable={!readOnly}
       suppressContentEditableWarning
-      className="document-inline-value mx-0.5 border-b border-blue-400 bg-blue-50 px-0.5 outline-none"
-      style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}
+      className="document-inline-value mx-0.5 border-b border-blue-400 bg-blue-50 px-0.5 outline-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      style={{
+        display: 'inline-block',
+        maxWidth: '100%',
+        verticalAlign: 'bottom',
+        whiteSpace: 'nowrap',
+        overflowWrap: 'normal',
+        overflowX: readOnly ? 'hidden' : 'auto',
+        textOverflow: readOnly ? 'ellipsis' : 'clip',
+      }}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' && !event.nativeEvent.isComposing)
+          event.preventDefault();
+      }}
       onInput={(e) => onChange(e.currentTarget.innerText)}
       onPaste={(e) => {
         e.preventDefault();
@@ -45,7 +58,7 @@ function InlineValue({ label, value, readOnly, onChange }: InlineValueProps) {
         const range = selection.getRangeAt(0);
         range.deleteContents();
         const text = window.document.createTextNode(
-          e.clipboardData.getData('text/plain')
+          e.clipboardData.getData('text/plain').replace(/\r\n|[\r\n]/g, ' ')
         );
         range.insertNode(text);
         range.setStartAfter(text);
@@ -92,7 +105,11 @@ function MasterDocumentField({
         fieldType === 'date' && !readOnly ? onUseTodayChange : undefined
       }
     >
-      <span data-drag-handle className="inline" onDoubleClick={rename}>
+      <span
+        data-drag-handle
+        className="inline-block max-w-full align-bottom"
+        onDoubleClick={rename}
+      >
         {fieldType === 'checkbox' ? (
           <span
             role="checkbox"
@@ -102,7 +119,10 @@ function MasterDocumentField({
             className="mx-0.5 inline-block size-3.5 rounded-[2px] border border-current bg-blue-50 align-[-0.125em]"
           />
         ) : (
-          <span className="mx-0.5 rounded border bg-blue-50 px-1 text-blue-900">
+          <span
+            title={label}
+            className="mx-0.5 inline-block max-w-full overflow-hidden rounded border bg-blue-50 px-1 align-bottom text-ellipsis whitespace-nowrap text-blue-900"
+          >
             {label}
             {useToday ? ' (heute)' : ''}
           </span>
@@ -114,16 +134,6 @@ function MasterDocumentField({
 
 function DocumentFieldView({ node, updateAttributes, editor }: NodeViewProps) {
   const context = useContext(DocumentValuesContext);
-  const [dropping, setDropping] = useState(false);
-  useEffect(() => {
-    const clear = () => setDropping(false);
-    window.document.addEventListener('drop', clear);
-    window.document.addEventListener('dragend', clear);
-    return () => {
-      window.document.removeEventListener('drop', clear);
-      window.document.removeEventListener('dragend', clear);
-    };
-  }, []);
   const key = String(node.attrs.key);
   const label = String(node.attrs.label);
   const useToday =
@@ -149,41 +159,21 @@ function DocumentFieldView({ node, updateAttributes, editor }: NodeViewProps) {
     : glyph === '□'
       ? '□'
       : '☐';
+  const answerDrop = useQuestionnaireAnswerDrop<HTMLSpanElement>(
+    !context.master && !context.readOnly && !useToday,
+    (answer) =>
+      context.onValueChange(
+        key,
+        normalizeDocumentFieldValue(node.attrs.fieldType, answer)
+      )
+  );
   return (
     <NodeViewWrapper
       as="span"
-      className="inline"
+      {...answerDrop}
+      className={`inline-block max-w-full align-baseline whitespace-nowrap ${answerDrop.className}`}
+      style={{ whiteSpace: 'nowrap' }}
       contentEditable={false}
-      data-answer-drop-target={dropping ? '' : undefined}
-      onDragOver={(e: DragEvent<HTMLSpanElement>) => {
-        if (
-          !context.master &&
-          !context.readOnly &&
-          !useToday &&
-          getDraggedQuestionnaireAnswer()
-        ) {
-          e.preventDefault();
-          e.dataTransfer.dropEffect = 'move';
-          setDropping(true);
-        }
-      }}
-      onDragLeave={(e: DragEvent<HTMLSpanElement>) => {
-        if (
-          e.relatedTarget instanceof window.Node &&
-          e.currentTarget.contains(e.relatedTarget)
-        )
-          return;
-        setDropping(false);
-      }}
-      onDrop={(e: DragEvent<HTMLSpanElement>) => {
-        setDropping(false);
-        const answer = getDraggedQuestionnaireAnswer();
-        if (answer && !context.master && !context.readOnly && !useToday) {
-          e.preventDefault();
-          context.onValueChange(key, answer.value);
-          setDraggedQuestionnaireAnswer(null);
-        }
-      }}
     >
       {node.attrs.fieldType === 'checkbox' && glyph ? (
         context.master ? (

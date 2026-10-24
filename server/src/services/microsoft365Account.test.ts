@@ -135,14 +135,15 @@ describe("microsoft 365 account", () => {
         fetchSpy.mockRestore();
     });
 
-    it("creates the user, stores the work email, and mails the password", async () => {
+    it("creates the user, stores a separate Microsoft email, and mails the communication address", async () => {
         configureEnv();
         findWorker.mockResolvedValue({
             id: "worker-1",
             firstName: "Ada",
             lastName: "Lovelace",
             email: "ada@personal.test",
-            workEmail: null,
+            workEmail: "ada@communication.test",
+            microsoftEmail: null,
             externalAccounts: [],
         });
         const updateWorker = jest.fn();
@@ -189,7 +190,7 @@ describe("microsoft 365 account", () => {
         });
         expect(updateWorker).toHaveBeenCalledWith({
             where: { id: "worker-1" },
-            data: { workEmail: "ada.lovelace@firma.de" },
+            data: { microsoftEmail: "ada.lovelace@firma.de" },
         });
         expect(upsertAccount).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -214,6 +215,48 @@ describe("microsoft 365 account", () => {
         expect(mailed.text).toMatch(/Temporäres Passwort: .+/);
         fetchSpy.mockRestore();
     });
+
+    it.each([204, 403, 500, "network-error"])(
+        "checks account cleanup after licensing fails (%s)",
+        async (deleteOutcome) => {
+            configureEnv();
+            findWorker.mockResolvedValue({
+                id: "worker-1", firstName: "Ada", lastName: "Lovelace",
+                email: "ada@personal.test", workEmail: null, externalAccounts: [],
+            });
+            const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => undefined);
+            const fetchSpy = jest.spyOn(global, "fetch")
+                .mockResolvedValueOnce(jsonResponse({ access_token: "token" }))
+                .mockResolvedValueOnce(jsonResponse({ id: "graph-1", userPrincipalName: "ada.lovelace@firma.de" }, 201))
+                .mockResolvedValueOnce(jsonResponse({ error: "license rejected" }, 403));
+            if (deleteOutcome === "network-error") {
+                fetchSpy.mockRejectedValueOnce(new Error("connection lost"));
+            } else {
+                fetchSpy.mockResolvedValueOnce(jsonResponse(null, Number(deleteOutcome)));
+            }
+            try {
+                const result = await provisionMicrosoft365Account({ organizationId: "org-1", workerId: "worker-1", config });
+                expect(result.status).toBe("failed");
+                if (result.status !== "failed") throw new Error("Expected failure");
+                expect(fetchSpy).toHaveBeenNthCalledWith(4,
+                    "https://graph.microsoft.com/v1.0/users/graph-1",
+                    expect.objectContaining({ method: "DELETE" }));
+                if (deleteOutcome === 204) {
+                    expect(result.message).toBe("Microsoft Graph hat die Lizenz abgelehnt.");
+                } else {
+                    expect(result.message).toContain("Löschung");
+                    expect(result.message).toContain("nicht bestätigt");
+                    expect(result.message).toContain("graph-1");
+                    expect(result.message).toContain("ada.lovelace@firma.de");
+                }
+                expect(transaction).not.toHaveBeenCalled();
+                expect(mail).not.toHaveBeenCalled();
+            } finally {
+                fetchSpy.mockRestore();
+                consoleSpy.mockRestore();
+            }
+        },
+    );
 
     it("keeps the account when the password mail fails", async () => {
         configureEnv();
@@ -273,7 +316,8 @@ describe("microsoft 365 account", () => {
             firstName: "Ada",
             lastName: "Lovelace",
             email: "ada@personal.test",
-            workEmail: "ada.lovelace@firma.de",
+            microsoftEmail: "ada.lovelace@firma.de",
+            workEmail: "ada@other-employer.test",
             externalAccounts: [{ externalId: "graph-1" }],
         });
         const fetchSpy = jest

@@ -1,8 +1,8 @@
 import { cn } from '@/lib/trycatch';
-import { useEffect, useRef, type ComponentProps } from 'react';
+import { useEffect, useRef, type ComponentPropsWithoutRef } from 'react';
 import '@/components/ui/right-sidebar.css';
 
-export type SidebarAsideProps = ComponentProps<'aside'> & {
+export type SidebarAsideProps = ComponentPropsWithoutRef<'aside'> & {
   isOpen: boolean;
   onClose: () => void;
 };
@@ -14,27 +14,37 @@ export function SidebarAside({
   children,
   ...props
 }: SidebarAsideProps) {
+  const sidebarRef = useRef<HTMLElement>(null);
   const hasOpened = useRef(isOpen);
-  const onCloseRef = useRef(onClose);
   if (isOpen) hasOpened.current = true;
-  onCloseRef.current = onClose;
   const motionState = isOpen ? 'open' : hasOpened.current ? 'closed' : 'idle';
 
   useEffect(() => {
     if (!isOpen) return;
 
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape' || event.defaultPrevented) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.defaultPrevented || event.isComposing)
+        return;
+
+      // Panels share a z-index, so the last open panel in DOM order is on top.
+      const panels = document.querySelectorAll(
+        '[data-sidebar-aside][data-state="open"]'
+      );
+      if (panels[panels.length - 1] !== sidebarRef.current) return;
+
       event.preventDefault();
-      onCloseRef.current();
+      onClose();
     };
 
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [isOpen]);
+    // Bubble after controls and Radix layers have had a chance to consume Escape.
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   return (
     <aside
+      ref={sidebarRef}
+      data-sidebar-aside=""
       aria-hidden={!isOpen}
       inert={!isOpen}
       data-state={motionState}

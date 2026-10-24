@@ -64,11 +64,12 @@ function publicPayload(definition: QuestionnaireDefinition | null) {
                       label: item.label,
                       section: item.section,
                       type: item.type,
-                      required: questionRequired(item),
+                      required: questionRequired(item) && !item.bsbOnly,
                       options: item.options,
                       max: item.max,
                       layout: item.layout,
                       employerFilled: fieldIsLocked(item),
+                      bsbOnly: item.bsbOnly,
                       defaultValue: item.defaultValue,
                   },
         ), { kind: "field" as const, ...QUESTIONNAIRE_DECLARATION, employerFilled: false }],
@@ -92,12 +93,18 @@ export async function getPublicQuestionnaire(token: string) {
 
 type ProfileQuestionField = QuestionnaireField & {
     defaultValue?: string;
+    bsbOnly?: boolean;
     officeOnly?: boolean;
 };
 
 function fieldsOf(definition: QuestionnaireDefinition | null): ProfileQuestionField[] {
-    const fields = definition ? definitionFields(definition) : [...QUESTIONNAIRE_FIELDS];
-    return [...fields.filter((field) => field.key !== "declaration").map((field) => ({ ...field, required: questionRequired(field) })), QUESTIONNAIRE_DECLARATION];
+    const fields: ProfileQuestionField[] = definition ? definitionFields(definition) : [...QUESTIONNAIRE_FIELDS];
+    return [
+        ...fields
+            .filter((field) => field.key !== "declaration")
+            .map((field) => ({ ...field, required: questionRequired(field) && !field.bsbOnly })),
+        QUESTIONNAIRE_DECLARATION,
+    ];
 }
 
 function lockEmployerValues(

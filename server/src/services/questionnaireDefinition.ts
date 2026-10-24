@@ -29,6 +29,7 @@ export type QuestionnaireFieldItem = {
     max?: number;
     layout?: "inline";
     employerFilled?: boolean;
+    bsbOnly?: boolean;
     defaultValue?: string;
     builtin?: boolean;
     contractFieldKey?: string;
@@ -151,16 +152,17 @@ export function definitionRepeaters(definition: QuestionnaireDefinition): Questi
     return repeaters;
 }
 
-export function isWorkerLocked(field: { defaultValue?: string }) {
-    return Boolean(field.defaultValue?.trim());
+export function isWorkerLocked(field: { defaultValue?: string; bsbOnly?: boolean }) {
+    return field.bsbOnly === true || Boolean(field.defaultValue?.trim());
 }
 
 export function fieldIsLocked(field: {
     key: string;
     defaultValue?: string;
     officeOnly?: boolean;
+    bsbOnly?: boolean;
 }) {
-    if (field.officeOnly === true) return true;
+    if (field.bsbOnly === true || field.officeOnly === true) return true;
     if (isWeekdayHourKey(field.key)) return false;
     return isWorkerLocked(field);
 }
@@ -183,11 +185,12 @@ export function presentQuestions(definition: QuestionnaireDefinition) {
         label: field.label,
         section: field.section,
         type: field.type,
-        required: questionRequired(field),
+        required: questionRequired(field) && !field.bsbOnly,
         options: field.options,
         max: field.max,
         layout: field.layout,
         employerFilled: fieldIsLocked(field),
+        bsbOnly: field.bsbOnly,
         defaultValue: field.defaultValue,
         builtin: field.builtin,
     }));
@@ -346,8 +349,9 @@ function parseField(raw: object, seen: Set<string>): QuestionnaireFieldItem {
         label,
         required: isWeeklyHoursKey(key) ? readRequired(raw, base.required === true) : questionRequired(base),
         employerFilled: false,
-        officeOnly: readOfficeOnly(raw) ? true : undefined,
         contractFieldKey: base.type === "file" ? undefined : contractFieldKey,
+        bsbOnly: ("bsbOnly" in raw && typeof raw.bsbOnly === "boolean" ? raw.bsbOnly : readOfficeOnly(raw)),
+        officeOnly: (("bsbOnly" in raw && typeof raw.bsbOnly === "boolean" ? raw.bsbOnly : readOfficeOnly(raw))) ? true : undefined,
         defaultValue: undefined,
     };
     const posted = "defaultValue" in raw && typeof raw.defaultValue === "string" ? raw.defaultValue : "";

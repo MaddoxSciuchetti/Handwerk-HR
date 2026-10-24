@@ -15,6 +15,7 @@ type QuestionnaireQuestionProps = {
   onChange: (value: string) => void;
   disabled?: boolean;
   employerFilled?: boolean;
+  fillable?: boolean;
   labelControl?: ReactNode;
   uploadToken?: string;
   onUploadBusy?: (busy: boolean) => void;
@@ -31,7 +32,7 @@ function QuestionText({
   return (
     <>
       {question.label}
-      {question.required ? ' *' : ''}
+      {question.required && !question.bsbOnly ? ' *' : ''}
     </>
   );
 }
@@ -42,26 +43,48 @@ export function QuestionnaireQuestion({
   onChange,
   disabled = false,
   employerFilled = false,
+  fillable = false,
   labelControl,
   uploadToken,
   onUploadBusy = () => undefined,
 }: QuestionnaireQuestionProps) {
-  const locked = disabled;
+  const locked = fillable
+    ? false
+    : disabled || Boolean(question.bsbOnly && !question.officeEditable);
+  const lockHint =
+    !fillable &&
+    (employerFilled || (question.bsbOnly && !question.officeEditable)) ? (
+      <FieldLock bsbOnly={question.bsbOnly} />
+    ) : null;
+  const fieldClass = fillable
+    ? 'bg-muted dark:bg-muted'
+    : locked
+      ? 'bg-muted text-muted-foreground'
+      : undefined;
   if (question.type === 'file') {
     return (
-      <QuestionnaireFileInput
-        question={question}
-        value={value}
-        token={uploadToken}
-        disabled={locked}
-        onChange={onChange}
-        onBusy={onUploadBusy}
-      />
+      <div className="flex flex-col gap-2">
+        <QuestionnaireFileInput
+          question={question}
+          value={value}
+          token={uploadToken}
+          disabled={locked}
+          onChange={onChange}
+          onBusy={onUploadBusy}
+        />
+        {lockHint}
+      </div>
     );
   }
   if (question.type === 'single') {
     return (
-      <fieldset className="flex flex-col gap-2">
+      <fieldset
+        className={
+          fillable
+            ? 'flex flex-col gap-2 rounded-xl bg-muted p-3'
+            : 'flex flex-col gap-2'
+        }
+      >
         {question.label || labelControl ? (
           <legend className="text-sm font-medium">
             <QuestionText question={question} labelControl={labelControl} />
@@ -79,9 +102,8 @@ export function QuestionnaireQuestion({
                 className="size-4 accent-primary"
                 checked={value === option}
                 disabled={locked}
-                onClick={(event) => {
+                onClick={() => {
                   if (locked || value !== option) return;
-                  event.preventDefault();
                   onChange('');
                 }}
                 onChange={() => onChange(option)}
@@ -90,14 +112,20 @@ export function QuestionnaireQuestion({
             </label>
           ))}
         </div>
-        {employerFilled ? <FieldLock /> : null}
+        {lockHint}
       </fieldset>
     );
   }
 
   if (question.type === 'check' && (question.options?.length ?? 0) > 1) {
     return (
-      <fieldset className="flex flex-col gap-2">
+      <fieldset
+        className={
+          fillable
+            ? 'flex flex-col gap-2 rounded-xl bg-muted p-3'
+            : 'flex flex-col gap-2'
+        }
+      >
         {question.label || labelControl ? (
           <legend className="text-sm font-medium">
             <QuestionText question={question} labelControl={labelControl} />
@@ -120,25 +148,34 @@ export function QuestionnaireQuestion({
             </label>
           ))}
         </div>
-        {employerFilled ? <FieldLock /> : null}
+        {lockHint}
       </fieldset>
     );
   }
 
   if (question.type === 'check') {
     return (
-      <label className="flex items-start gap-3 text-sm text-foreground">
-        <input
-          type="checkbox"
-          className="mt-1 size-4 shrink-0 accent-primary"
-          checked={value === 'ja'}
-          disabled={locked}
-          onChange={(event) => onChange(event.target.checked ? 'ja' : '')}
-        />
-        <span>
-          <QuestionText question={question} labelControl={labelControl} />
-        </span>
-      </label>
+      <div
+        className={
+          fillable
+            ? 'flex flex-col gap-2 rounded-xl bg-muted p-3'
+            : 'flex flex-col gap-2'
+        }
+      >
+        <label className="flex items-start gap-3 text-sm text-foreground">
+          <input
+            type="checkbox"
+            className="mt-1 size-4 shrink-0 accent-primary"
+            checked={value === 'ja'}
+            disabled={locked}
+            onChange={(event) => onChange(event.target.checked ? 'ja' : '')}
+          />
+          <span>
+            <QuestionText question={question} labelControl={labelControl} />
+          </span>
+        </label>
+        {lockHint}
+      </div>
     );
   }
 
@@ -155,7 +192,7 @@ export function QuestionnaireQuestion({
         disabled={locked}
         value={value}
         maxLength={question.key === 'insuranceNumber' ? 12 : question.max}
-        className={locked ? 'bg-muted text-muted-foreground' : undefined}
+        className={fieldClass}
         onChange={(event) =>
           onChange(
             question.key === 'insuranceNumber'
@@ -178,11 +215,15 @@ export function QuestionnaireQuestion({
           Die Versicherungsnummer hat nicht das richtige Format.
         </p>
       ) : null}
-      {employerFilled ? <FieldLock /> : null}
+      {lockHint}
     </div>
   );
 }
 
-function FieldLock() {
-  return <p className="text-xs text-muted-foreground">Vom Betrieb ausgefüllt</p>;
+function FieldLock({ bsbOnly }: { bsbOnly?: boolean }) {
+  return (
+    <p className="text-xs text-muted-foreground">
+      {bsbOnly ? 'Nur von BSB auszufüllen' : 'Vom Betrieb ausgefüllt'}
+    </p>
+  );
 }

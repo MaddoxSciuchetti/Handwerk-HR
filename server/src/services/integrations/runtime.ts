@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { microsoftSimulationEnabled } from "@/constants/env";
+import { SIMULATION_CONFIG } from "@/services/integrations/microsoftSimulation";
 import { decryptIntegrationSecret } from "@/services/integrations/secret";
 
 import type { Microsoft365Config } from "../microsoft365/types";
@@ -27,7 +29,9 @@ export async function loadMicrosoft365Config(
             },
         },
     });
-    if (!row?.enabled || !row.clientSecretCiphertext) return null;
+    if (!row?.enabled) return null;
+    if (microsoftSimulationEnabled()) return { ...SIMULATION_CONFIG };
+    if (!row.clientSecretCiphertext) return null;
     const tenantId = filled(row.tenantId);
     const clientId = filled(row.clientId);
     const domain = filled(row.domain);

@@ -1,4 +1,8 @@
+vi.mock('@/features/settings/employees/Employees', () => ({
+  default: () => null,
+}));
 import queryClient from '@/config/query.client';
+import { EmployeeModalProvider } from '@/features/employee-overview/context/ModalProvider';
 import Profile from '@/features/settings/profile/Profile';
 import type { ProfileUpdateInput } from '@/features/settings/profile/profile.schemas';
 import type { User } from '@/features/user-profile/types/auth.type';
@@ -63,7 +67,11 @@ vi.mock('@/features/settings/profile/profile.api', async (importOriginal) => {
 });
 
 function renderProfile() {
-  return renderWithAppQueryClient(<Profile />);
+  return renderWithAppQueryClient(
+    <EmployeeModalProvider>
+      <Profile />
+    </EmployeeModalProvider>
+  );
 }
 
 describe('Settings / Profil', () => {
@@ -80,11 +88,10 @@ describe('Settings / Profil', () => {
     renderProfile();
 
     expect(
-      await screen.findByRole('button', { name: 'Maria M.' })
+      await screen.findByRole('textbox', { name: 'Display Name' })
     ).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Maria M.' }));
-    const input = screen.getByRole('textbox');
+    const input = screen.getByRole('textbox', { name: 'Display Name' });
     await user.clear(input);
     await user.type(input, 'Chef Alex');
     await user.tab();
@@ -96,7 +103,7 @@ describe('Settings / Profil', () => {
     );
 
     expect(
-      await screen.findByRole('button', { name: 'Chef Alex' })
+      await screen.findByRole('textbox', { name: 'Display Name' })
     ).toBeInTheDocument();
 
     expect(toastSuccess).toHaveBeenCalledWith('Profil gespeichert.');
@@ -116,16 +123,17 @@ describe('Settings / Profil', () => {
     renderProfile();
 
     expect(
-      await screen.findByRole('button', { name: /^Maria$/ })
+      await screen.findByRole('textbox', { name: 'Vorname' })
     ).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /^Maria$/ }));
-    await user.clear(screen.getByRole('textbox'));
+    await user.clear(screen.getByRole('textbox', { name: 'Vorname' }));
     await user.tab();
 
     expect(toastError).toHaveBeenCalledWith('Muss mindestens 2 Zeichen haben');
     expect(updateProfileInformationMock).not.toHaveBeenCalled();
 
-    expect(screen.getByRole('button', { name: /^Maria$/ })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Vorname' })).toHaveValue(
+      'Maria'
+    );
   });
 });

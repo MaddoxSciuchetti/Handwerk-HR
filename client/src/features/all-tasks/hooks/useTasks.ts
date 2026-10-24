@@ -64,6 +64,7 @@ export function useTasks(
       sequence: taskEditState.sequence || TASK_AUTOMATION_NONE,
       mailTemplateId: taskEditState.mailTemplateId || '',
       mailSenderAddress: taskEditState.mailSenderAddress || '',
+      microsoftAccountId: taskEditState.microsoftAccountId || '',
     },
     resolver: zodResolver(taskFormSchema),
   });

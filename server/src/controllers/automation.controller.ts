@@ -1,3 +1,4 @@
+import { defaultQuestionnaireSender } from "@/services/questionnaireSender";
 import { BAD_REQUEST } from "@/constants/http";
 import { isTaskAutomationId } from "@/constants/taskAutomation.consts";
 import {
@@ -134,9 +135,10 @@ export const postIssueSequence = catchErrors(async (req, res) => {
 
 export const getMicrosoftMailAddresses = catchErrors(async (req, res) => {
     appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
+    const defaultSenderAddress = defaultQuestionnaireSender();
     return res.status(200).json({
         success: true,
-        data: await listBsbMailAddresses(req.orgId),
+        data: { ...await listBsbMailAddresses(req.orgId), defaultSenderAddress },
     });
 });
 
@@ -354,11 +356,13 @@ const mailRecipientInput = z.object({
                     "worker_work",
                     "microsoft_group",
                     "teams_channel",
+                    "microsoft_user",
                 ]),
                 label: z.string().trim().max(255),
                 address: z.string().trim().max(254).nullable().optional(),
                 workerId: z.string().trim().max(64).nullable().optional(),
                 groupId: z.string().trim().max(255).nullable().optional(),
+                microsoftUserId: z.string().trim().max(64).nullable().optional(),
             }),
         )
         .max(50),

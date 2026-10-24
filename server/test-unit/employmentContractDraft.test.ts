@@ -7,6 +7,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { fromSegments } from "../../shared/document";
 import { sendPreparedDocument } from "@/services/preparedDocument";
+import { QUESTIONNAIRE_FIELDS } from "@/services/questionnaireForm";
 
 jest.mock("@/lib/prisma", () => ({
     prisma: {
@@ -407,36 +408,10 @@ describe("changing a worker's contract template", () => {
         );
     });
     it("applies questionnaire answers to the new template, drops old inputs and retains the choice on reopening", async () => {
-        const previousKey = process.env.OPENAI_API_KEY;
-        process.env.OPENAI_API_KEY = "test-key";
-        const fetchMock = jest.spyOn(global, "fetch").mockResolvedValue({
-            ok: true,
-            json: async () => ({
-                choices: [
-                    {
-                        message: {
-                            content: JSON.stringify({
-                                matches: [
-                                    { key: "other.name", value: "Lukas Muster" },
-                                    { key: "other.birthday", value: "01.04.1990" },
-                                ],
-                            }),
-                        },
-                    },
-                ],
-            }),
-        } as Response);
-        let view: Awaited<ReturnType<typeof resyncEngagementContractFromQuestionnaire>>;
-        try {
-            view = await resyncEngagementContractFromQuestionnaire({
-                ...params,
-                masterId: replacement.id,
-            });
-        } finally {
-            fetchMock.mockRestore();
-            if (previousKey === undefined) delete process.env.OPENAI_API_KEY;
-            else process.env.OPENAI_API_KEY = previousKey;
-        }
+        const view = await resyncEngagementContractFromQuestionnaire({
+            ...params,
+            masterId: replacement.id,
+        });
         expect(view).toMatchObject({
             masterId: replacement.id,
             name: replacement.name,
@@ -516,6 +491,51 @@ it("rejects a draft save racing with a template switch instead of overwriting th
     expect(prisma.employmentContractValue.deleteMany).not.toHaveBeenCalled();
 });
 
+it.each([
+    ["ja", "true"],
+    ["nein", "false"],
+])(
+    "persists questionnaire checkbox answer %s as %s when refreshing the contract",
+    async (answer, expected) => {
+        const field = QUESTIONNAIRE_FIELDS.find(
+            (field) =>
+                field.type === "single" &&
+                field.options?.includes("ja") &&
+                field.options?.includes("nein"),
+        )!;
+        contract.master = {
+            name: "Vertrag",
+            revision: 4,
+            body: fromSegments([
+                {
+                    type: "input",
+                    key: "contract.checkbox",
+                    label: field.label,
+                    fieldType: "checkbox",
+                    required: false,
+                },
+            ]),
+        };
+        contract.engagement = {
+            questionnaireSubmission: {
+                status: "completed",
+                answers: [{ key: field.key, value: answer }],
+            },
+            worker: { email: "test@example.com" },
+        };
+        const view = await resyncEngagementContractFromQuestionnaire(params);
+        expect(prisma.employmentContractValue.createMany).toHaveBeenCalledWith({
+            data: [
+                {
+                    employmentContractId: "contract",
+                    key: "contract.checkbox",
+                    value: expected,
+                },
+            ],
+        });
+        expect(view.values).toEqual({ "contract.checkbox": expected });
+    },
+);
 it("reports newer questionnaire revisions until the contract has been synchronized", async () => {
     contract.matchedQuestionnaireRevision = 1;
     contract.engagement.questionnaireSubmission = {

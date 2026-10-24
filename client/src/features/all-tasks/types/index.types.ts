@@ -32,6 +32,7 @@ export type IssueResponse = {
   sequence?: string | null;
   mailTemplateId?: string | null;
   mailSenderAddress?: string | null;
+  microsoftAccountId?: string | null;
   kind: 'standard' | 'contract_send' | 'contract_confirm';
   isTemporary: boolean;
   assigneeOnly?: boolean;
@@ -64,4 +65,5 @@ export type TaskSidebarForm = {
   sequence: string;
   mailTemplateId: string;
   mailSenderAddress: string;
+  microsoftAccountId?: string;
 };

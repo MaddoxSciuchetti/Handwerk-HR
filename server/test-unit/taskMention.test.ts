@@ -1,11 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { createIssue } from "@/services/worker.service";
-import { upsertIssueCommentInOrg } from "@/services/tasks.service";
+import { queryTasks, upsertIssueCommentInOrg } from "@/services/tasks.service";
 import { sendMail } from "@/utils/sendMail";
 
 jest.mock("@/lib/prisma", () => ({
     prisma: {
-        issue: { findFirst: jest.fn() },
+        issue: { findFirst: jest.fn(), findMany: jest.fn() },
         issueMention: { upsert: jest.fn() },
         comment: { findFirst: jest.fn(), create: jest.fn(), update: jest.fn() },
         user: { findFirst: jest.fn(), findMany: jest.fn() },
@@ -104,5 +104,29 @@ describe("task mention comments", () => {
             }),
         );
         expect(result.mailFailed).toBe(false);
+    });
+});
+
+
+describe("task mention badges", () => {
+    it("marks the original task for the current viewer without exposing comment recipients", async () => {
+        const findTasks = prisma.issue.findMany as jest.Mock;
+        findTasks.mockResolvedValue([
+            { ...sourceIssue, assigneeUserId: "someone-else", mentions: [{ id: "mention-1" }] },
+            { id: "other-task", mentions: [] },
+        ]);
+
+        const tasks = await queryTasks("org-1", "coworker");
+
+        expect(findTasks).toHaveBeenCalledWith(expect.objectContaining({
+            where: expect.objectContaining({ assigneeOnly: false }),
+            include: expect.objectContaining({
+                mentions: { where: { userId: "coworker", seenAt: null }, select: { id: true }, take: 1 },
+            }),
+        }));
+        expect(tasks).toEqual([
+            { ...sourceIssue, assigneeUserId: "someone-else", mentioned: true },
+            { id: "other-task", mentioned: false },
+        ]);
     });
 });

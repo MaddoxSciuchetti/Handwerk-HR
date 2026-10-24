@@ -58,7 +58,7 @@ export function QuestionnaireFileInput({
     <div className="flex flex-col gap-2">
       <Label htmlFor={question.key}>
         {question.label}
-        {question.required ? ' *' : ''}
+        {question.required && !question.bsbOnly ? ' *' : ''}
       </Label>
       <input
         id={question.key}

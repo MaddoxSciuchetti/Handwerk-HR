@@ -20,6 +20,7 @@ export const taskFormSchema = z
     sequence: z.string(),
     mailTemplateId: z.string(),
     mailSenderAddress: z.string(),
+    microsoftAccountId: z.string().trim().optional(),
     automation: z.enum([
       TASK_AUTOMATION_NONE,
       O365_BLOCK_SIGN_IN,
@@ -28,6 +29,20 @@ export const taskFormSchema = z
     ]),
   })
   .superRefine((data, ctx) => {
+    if (
+      data.sequence === 'microsoft_deactivate_account' &&
+      data.microsoftAccountId &&
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        data.microsoftAccountId
+      )
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['microsoftAccountId'],
+        message: 'Bitte gib eine gültige Microsoft-Konto-ID ein',
+      });
+    }
+
     if (
       (data.sequence === 'microsoft_send_email' ||
         data.sequence === 'microsoft_send_teams_message') &&

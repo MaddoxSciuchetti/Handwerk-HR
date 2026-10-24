@@ -6,7 +6,10 @@ import { X } from 'lucide-react';
 import { PflichtfeldSwitch } from './PflichtfeldSwitch';
 import { tableColumns } from './tableColumns';
 import { weeklyHoursFields } from './weeklyHoursFields';
-import type { TemplateItem } from './questionnaireTemplate.types';
+import type {
+  TemplateField,
+  TemplateItem,
+} from './questionnaireTemplate.types';
 
 const customTypes = [
   { type: 'text' as const, label: 'Textfeld' },
@@ -19,24 +22,31 @@ const customTypes = [
 ];
 
 type NewQuestionFormProps = {
-  existingKeys: string[];
+  existingKeys?: string[];
+  field?: TemplateField;
   onAdd: (fields: TemplateItem[]) => void;
   onCancel?: () => void;
 };
 
 export function NewQuestionForm({
-  existingKeys,
+  existingKeys = [],
+  field,
   onAdd,
   onCancel,
 }: NewQuestionFormProps) {
   const questionId = useId();
   const typeId = useId();
-  const [label, setLabel] = useState('');
-  const [type, setType] =
-    useState<(typeof customTypes)[number]['type']>('text');
-  const [options, setOptions] = useState('Ja\nNein');
-  const [required, setRequired] = useState(true);
-  const [officeOnly, setOfficeOnly] = useState(false);
+  const [label, setLabel] = useState(field?.label ?? '');
+  const [type, setType] = useState<(typeof customTypes)[number]['type']>(
+    field?.type ?? 'text'
+  );
+  const [options, setOptions] = useState(
+    field?.options?.join('\n') ?? 'Ja\nNein'
+  );
+  const [required, setRequired] = useState(field?.required !== false);
+  const [officeOnly, setOfficeOnly] = useState(
+    field?.officeOnly ?? field?.bsbOnly ?? false
+  );
   const [columns, setColumns] = useState(
     'Name\nVorname\nGeburtsdatum (TT.MM.JJJJ)'
   );
@@ -45,6 +55,14 @@ export function NewQuestionForm({
     existingKeys.includes(key)
   );
   const parsedColumns = tableColumns(columns);
+  const [error, setError] = useState('');
+  const custom =
+    !field || field.builtin === false || field.key.startsWith('custom.');
+  const types = field
+    ? customTypes.filter(
+        (option) => option.type !== 'table' && option.type !== 'weekly-hours'
+      )
+    : customTypes;
 
   const addTable = () => {
     const name = label.trim();
@@ -69,44 +87,56 @@ export function NewQuestionForm({
     if (type === 'weekly-hours' || type === 'table') return;
     const name = label.trim();
     if (!name) return;
-    const choices = options
-      .split('\n')
-      .map((option) => option.trim())
-      .filter(Boolean);
-    let fieldOptions: string[] | undefined;
-    if (type === 'single') {
-      if (choices.length < 2) return;
+    setError('');
+    let fieldOptions = custom ? undefined : field?.options;
+    if (custom && (type === 'single' || type === 'check')) {
+      const choices = choiceLines(options);
+      if (!choices) {
+        setError('Bitte zwei bis acht unterschiedliche Antworten eingeben.');
+        return;
+      }
       fieldOptions = choices;
     }
-    if (type === 'check') {
-      const checkboxChoices = choiceLines(options);
-      if (!checkboxChoices) return;
-      fieldOptions = checkboxChoices;
-    }
+    let defaultValue = type === field?.type ? field.defaultValue : undefined;
+    if (
+      defaultValue &&
+      (type === 'single' || type === 'check') &&
+      !(fieldOptions ?? ['ja']).includes(defaultValue)
+    )
+      defaultValue = '';
     onAdd([
       {
+        ...field,
         kind: 'field',
-        key: `custom.${crypto.randomUUID()}`,
+        key: field?.key ?? `custom.${crypto.randomUUID()}`,
         label: name,
-        section: 'Weitere Angaben',
+        section: field?.section ?? 'Weitere Angaben',
         type,
-        required,
+        required: custom ? required : field?.required,
+        bsbOnly: undefined,
         officeOnly: officeOnly || undefined,
-        builtin: false,
+        builtin: field ? field.builtin : false,
         options: fieldOptions,
-        max: type === 'text' ? 255 : undefined,
+        max: type === 'text' ? (field?.max ?? 255) : undefined,
+        defaultValue,
+        contractFieldKey: type === 'file' ? undefined : field?.contractFieldKey,
       },
     ]);
-    setLabel('');
+    if (!field) setLabel('');
   };
 
   return (
-    <div className="relative flex min-w-0 flex-col gap-3 rounded-2xl border border-border bg-card py-5 pr-12 pl-5">
-      <h2 className="sr-only">Neue Frage</h2>
+    <div
+      role={field ? 'form' : undefined}
+      aria-label={field ? 'Frage bearbeiten' : undefined}
+      data-no-drag
+      className="relative flex min-w-0 flex-col gap-3 rounded-2xl border border-border bg-card py-5 pr-12 pl-5"
+    >
+      <h2 className="sr-only">{field ? 'Frage bearbeiten' : 'Neue Frage'}</h2>
       {onCancel ? (
         <button
           type="button"
-          aria-label="Neue Frage verwerfen"
+          aria-label={field ? 'Abbrechen' : 'Neue Frage verwerfen'}
           title="Neue Frage verwerfen"
           className="absolute top-3 right-3 inline-flex size-6 items-center justify-center rounded-md text-destructive outline-none hover:bg-destructive/10 focus-visible:bg-destructive/10"
           onClick={onCancel}
@@ -126,6 +156,7 @@ export function NewQuestionForm({
           </label>
           <textarea
             id={questionId}
+            aria-label={field ? 'Frage' : undefined}
             rows={1}
             className="field-sizing-content min-h-8 min-w-0 flex-1 resize-none rounded-md border border-transparent bg-transparent px-1 py-[3px] text-sm leading-6 font-medium outline-none hover:border-border hover:bg-muted focus:border-border focus:bg-muted"
             value={label}
@@ -135,29 +166,33 @@ export function NewQuestionForm({
           />
         </div>
       )}
-      <div className="flex min-w-0 items-start gap-2">
-        <label
-          htmlFor={typeId}
-          className="w-16 shrink-0 pt-1 text-sm leading-6 font-medium"
-        >
-          Antwort:
-        </label>
-        <select
-          id={typeId}
-          aria-label="Antworttyp"
-          className="h-8 min-w-0 flex-1 rounded-lg border border-input bg-background px-2.5 text-sm outline-none"
-          value={type}
-          onChange={(event) =>
-            setType(event.target.value as (typeof customTypes)[number]['type'])
-          }
-        >
-          {customTypes.map((option) => (
-            <option key={option.type} value={option.type}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </div>
+      {custom ? (
+        <div className="flex min-w-0 items-start gap-2">
+          <label
+            htmlFor={typeId}
+            className="w-16 shrink-0 pt-1 text-sm leading-6 font-medium"
+          >
+            Antwort:
+          </label>
+          <select
+            id={typeId}
+            aria-label={field ? 'Fragetyp' : 'Antworttyp'}
+            className="h-8 min-w-0 flex-1 rounded-lg border border-input bg-background px-2.5 text-sm outline-none"
+            value={type}
+            onChange={(event) =>
+              setType(
+                event.target.value as (typeof customTypes)[number]['type']
+              )
+            }
+          >
+            {types.map((option) => (
+              <option key={option.type} value={option.type}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : null}
       {type === 'weekly-hours' ? (
         <p className="text-xs text-muted-foreground">
           Eine Frage mit den sieben Wochentagen. Die Stunden erscheinen erst
@@ -186,7 +221,7 @@ export function NewQuestionForm({
           </Button>
         </>
       ) : null}
-      {type === 'single' || type === 'check' ? (
+      {custom && (type === 'single' || type === 'check') ? (
         <>
           <textarea
             className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -208,9 +243,14 @@ export function NewQuestionForm({
           Diese Frage ist schon im Fragebogen.
         </p>
       ) : null}
+      {error ? (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      ) : null}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          {type === 'weekly-hours' || type === 'table' ? null : (
+          {!custom || type === 'weekly-hours' || type === 'table' ? null : (
             <PflichtfeldSwitch checked={required} onChange={setRequired} />
           )}
           <PflichtfeldSwitch
@@ -238,7 +278,7 @@ export function NewQuestionForm({
             else addCustom();
           }}
         >
-          Hinzufügen
+          {field ? 'Übernehmen' : 'Hinzufügen'}
         </Button>
       </div>
     </div>

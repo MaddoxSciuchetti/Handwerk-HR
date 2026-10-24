@@ -57,19 +57,20 @@ it('shows the Microsoft client secret that will replace the saved one', async ()
   const secret = screen.getByLabelText('Client-Geheimnis');
   expect(secret).toHaveAttribute('type', 'text');
   expect(
-    screen.getByText('Leer lassen behält das gespeicherte Geheimnis.')
-  ).toBeInTheDocument();
+    screen.queryByText('Leer lassen behält das gespeicherte Geheimnis.')
+  ).not.toBeInTheDocument();
+  expect(secret).not.toHaveAttribute('placeholder');
 
   await user.type(secret, 'new-secret-value');
   expect(secret).toHaveValue('new-secret-value');
   expect(
-    screen.getByText('Dieser Text ersetzt das gespeicherte Geheimnis.')
-  ).toBeInTheDocument();
+    screen.queryByText('Dieser Text ersetzt das gespeicherte Geheimnis.')
+  ).not.toBeInTheDocument();
 
   await user.click(screen.getAllByRole('button', { name: 'Speichern' })[0]);
   expect(saveIntegration).toHaveBeenCalledWith(
     'microsoft_graph',
     expect.objectContaining({ clientSecret: 'new-secret-value' })
   );
-  expect(secret).toHaveValue('new-secret-value');
+  expect(secret).toHaveValue('');
 });

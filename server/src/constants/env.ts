@@ -13,6 +13,10 @@ const getEnv = (key: string, defaultValue?: string): string => {
 export const PORT = getEnv("PORT", "3000");
 export const FRONTENDURL = getEnv("FRONTEND_URL");
 export const NODE_ENV = getEnv("NODE_ENV", "development");
+// Explicit staging opt-in; independent of INTEGRATIONS_LIVE and Crewmeister.
+export function microsoftSimulationEnabled() {
+    return process.env.MICROSOFT_SIMULATION?.trim().toLowerCase() === "true";
+}
 // Explicit opt-in for development/staging questionnaire responses.
 export const QUESTIONNAIRE_MOCK_RESPONSES =
     process.env.QUESTIONNAIRE_MOCK_RESPONSES?.trim().toLowerCase() === "true";

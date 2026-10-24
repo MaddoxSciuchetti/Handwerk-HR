@@ -1,3 +1,5 @@
+import { microsoftSimulationEnabled } from "@/constants/env";
+import { microsoftGraphFetch } from "@/services/integrations/microsoftSimulation";
 import { ARBEITSZEUGNIS } from "@/constants/taskAutomation.consts";
 import { prisma } from "@/lib/prisma";
 import { valuesForDocumentSegments } from "@/services/contractFieldMatch";
@@ -50,6 +52,7 @@ type LetterWorker = {
     lastName: string;
     email: string;
     workEmail: string | null;
+    microsoftEmail?: string | null;
     phoneNumber: string | null;
     birthday: Date | null;
     position: string | null;
@@ -79,7 +82,7 @@ function letterFields(params: {
             .filter((part) => part.length > 0)
             .join(" "),
         email: params.worker.email.trim(),
-        workEmail: params.worker.workEmail?.trim() ?? "",
+        workEmail: params.worker.microsoftEmail?.trim() || params.worker.workEmail?.trim() || "",
         position: params.worker.position?.trim() ?? "",
         phone: params.worker.phoneNumber?.trim() ?? "",
         birthday: formatWelcomeEntryDate(params.worker.birthday),
@@ -180,6 +183,7 @@ async function loadLetter(params: {
                     lastName: true,
                     email: true,
                     workEmail: true,
+                    microsoftEmail: true,
                     phoneNumber: true,
                     birthday: true,
                     position: true,
@@ -423,7 +427,7 @@ export async function sendArbeitszeugnis(params: {
         ? await senderAddress(params.organizationId)
         : "";
     const token =
-        USE_MICROSOFT_MAIL && integrationsLive()
+        USE_MICROSOFT_MAIL && (integrationsLive() || microsoftSimulationEnabled())
             ? await microsoftGraphToken(
                   await loadMicrosoft365Config(params.organizationId),
               )
@@ -462,7 +466,7 @@ export async function sendArbeitszeugnis(params: {
                 }
                 return "resend:" + artifactId;
             }
-            const response = await fetch(
+            const response = await microsoftGraphFetch(
                 `${GRAPH}/users/${encodeURIComponent(from)}/sendMail`,
                 {
                     method: "POST",

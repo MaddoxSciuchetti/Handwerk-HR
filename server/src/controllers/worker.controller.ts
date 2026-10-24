@@ -4,6 +4,7 @@ import { getLifecycleStatistics as fetchLifecycleStatistics } from "@/services/l
 import { uploadFileToS3 } from "@/config/aws";
 import * as employmentContractService from "@/services/employmentContract.service";
 import { confirmReturnedEmploymentContract } from "@/services/signedContractReturn.service";
+import { defaultQuestionnaireSender } from "@/services/questionnaireSender";
 import catchErrors from "@/utils/catchErrors";
 import { Request, Response } from "express";
 import {
@@ -87,10 +88,23 @@ export const startExpectedOnboarding = catchErrors(
                 .json({ success: false, message: "E-Mail fehlt." });
         }
 
+        const senderAddress = defaultQuestionnaireSender() ?? (typeof req.body?.senderAddress === "string"
+            ? req.body.senderAddress.trim() : "");
+        if (
+            senderAddress.length > 254 ||
+            !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(senderAddress)
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "Bitte einen gültigen Absender wählen.",
+            });
+        }
+
         const result = await workerService.startExpectedOnboarding({
             organizationId: req.orgId,
             createdByUserId: req.userId,
             email,
+            senderAddress,
         });
 
         return res.status(201).json({ success: true, data: result });

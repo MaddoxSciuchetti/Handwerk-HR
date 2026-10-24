@@ -5,6 +5,8 @@ import { FieldGroup } from '@/components/ui/field';
 import { Label } from '@/components/ui/label';
 import { MailSenderSelect } from '@/features/all-tasks/components/MailSenderSelect';
 import TaskAutomation from '@/features/all-tasks/components/TaskAutomation';
+import { MicrosoftAccountIdField } from './MicrosoftAccountIdField';
+import { AutomationRequirementNotice } from '@/features/settings/integrations/AutomationRequirementNotice';
 import { EngagementMailRecipients } from '@/features/worker-task-management/components/tasks/EngagementMailRecipients';
 import {
   INTEGRATION_SEQUENCES,
@@ -252,7 +254,13 @@ export function TaskSidebar({
                     label="Automation"
                     placeholder="Automation wählen"
                   />
+                  <AutomationRequirementNotice sequence={sequence} />
                 </div>
+                <MicrosoftAccountIdField
+                  sequence={sequence}
+                  register={register}
+                  errors={errors}
+                />
                 {sequence === 'microsoft_send_email' ||
                 sequence === 'microsoft_send_teams_message' ? (
                   <>

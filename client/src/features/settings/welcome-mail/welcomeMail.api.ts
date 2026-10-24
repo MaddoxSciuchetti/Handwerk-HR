@@ -17,6 +17,7 @@ export type WelcomeMailPageData = {
   settings: WelcomeMailSettings | null;
   groups: MicrosoftGroupOption[];
   groupsError: string | null;
+  simulated?: boolean;
 };
 
 type WelcomeMailPageResponse = {

@@ -13,24 +13,37 @@ import type { QuestionnaireQuestion } from './questionnaire.types';
 type WeeklyHoursAnswerProps = {
   questions: QuestionnaireQuestion[];
   values: Record<string, string>;
+  fillBsb?: boolean;
   onChange: (key: string, value: string) => void;
 };
 
-export function WeeklyHoursAnswer({ questions, values, onChange }: WeeklyHoursAnswerProps) {
+export function WeeklyHoursAnswer({
+  questions,
+  values,
+  fillBsb = false,
+  onChange,
+}: WeeklyHoursAnswerProps) {
   const days = questions.filter((question) => isWeekdayHourKey(question.key));
   const office = days.some((day) => day.employerFilled);
   const choice = values[HOURS_DISTRIBUTION_KEY] ?? '';
   const showDays = office || choice === 'ja';
   const total = weekdayHoursTotal(values);
-  const entered = days.some((day) => hourQuantity(values[day.key] ?? '') != null);
+  const entered = days.some(
+    (day) => hourQuantity(values[day.key] ?? '') != null
+  );
   const reference = weeklyHoursReference(questions, values);
   const mismatch =
-    showDays && entered && reference != null && Math.abs(reference.hours - total) > 0.001;
+    showDays &&
+    entered &&
+    reference != null &&
+    Math.abs(reference.hours - total) > 0.001;
 
   return (
     <fieldset className="flex flex-col gap-4">
       {office ? (
-        <legend className="text-sm font-medium">Wöchentliche Arbeitszeit</legend>
+        <legend className="text-sm font-medium">
+          Wöchentliche Arbeitszeit
+        </legend>
       ) : (
         <legend className="text-sm font-medium">{WEEKLY_HOURS_PROMPT}</legend>
       )}
@@ -62,11 +75,14 @@ export function WeeklyHoursAnswer({ questions, values, onChange }: WeeklyHoursAn
         <WeeklyHoursDays
           variant="form"
           values={values}
-          disabled={office}
+          disabled={office && !fillBsb}
+          highlighted={fillBsb}
           onChange={onChange}
         />
       ) : null}
-      {office ? <p className="text-xs text-muted-foreground">Vom Betrieb ausgefüllt</p> : null}
+      {office && !fillBsb ? (
+        <p className="text-xs text-muted-foreground">Vom Betrieb ausgefüllt</p>
+      ) : null}
       {mismatch && reference ? (
         <p className="text-sm text-destructive">
           Die Summe {formatHours(total)} Std. weicht von „{reference.label}“ (

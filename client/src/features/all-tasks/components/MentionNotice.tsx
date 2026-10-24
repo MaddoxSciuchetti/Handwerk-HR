@@ -59,7 +59,12 @@ export function MentionNotice() {
   const count = notice.length;
 
   return (
-    <Dialog open={count > 0} onOpenChange={(open) => { if (!open) dismiss(); }}>
+    <Dialog
+      open={count > 0}
+      onOpenChange={(open) => {
+        if (!open) dismiss();
+      }}
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Du wurdest erwähnt</DialogTitle>

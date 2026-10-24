@@ -1,6 +1,11 @@
 import z from "zod";
 import { integrationsMocked } from "./integrations/localMock";
 import { applyTemplateApplication, type TemplateApplyInput } from './templateApplication';
+
+import { BAD_REQUEST } from "@/constants/http";
+import AppError from "@/utils/AppError";
+import { defaultQuestionnaireSender } from "@/services/questionnaireSender";
+import { listBsbMailAddresses } from "@/services/engagementMail";
 import { prisma } from "@/lib/prisma";
 import { templateItemsForEngagement } from "@/services/onboardingTemplateTasks";
 import { fillWorkerProfileFromQuestionnaires } from "@/services/questionnaireWorkerProfile";
@@ -147,7 +152,16 @@ export async function startExpectedOnboarding(params: {
     organizationId: string;
     createdByUserId: string;
     email: string;
+    senderAddress?: string;
 }) {
+    const defaultSender = defaultQuestionnaireSender();
+    const senderAddress = (defaultSender ?? params.senderAddress ?? "").trim().toLowerCase();
+    if (!defaultSender) {
+        const { addresses } = await listBsbMailAddresses(params.organizationId);
+        if (!addresses.some((address) => address.email === senderAddress)) {
+            throw new AppError(BAD_REQUEST, "Bitte einen gültigen Absender wählen.");
+        }
+    }
     const email = params.email.trim().toLowerCase();
     const { firstName, lastName } = placeholderNamesFromEmail(email);
     const created = await prisma.$transaction(async (tx) => {
@@ -169,6 +183,7 @@ export async function startExpectedOnboarding(params: {
                 responsibleUserId: params.createdByUserId,
                 status: "expected",
                 type: "onboarding",
+                questionnaireSenderAddress: senderAddress,
             },
         });
 
@@ -671,6 +686,7 @@ export async function createIssue(params: CreateIssueInput) {
         sequence,
         mailTemplateId,
         mailSenderAddress,
+        microsoftAccountId,
         assigneeOnly,
     } = params;
 
@@ -703,6 +719,7 @@ export async function createIssue(params: CreateIssueInput) {
                 sequence,
                 mailTemplateId,
                 mailSenderAddress,
+                microsoftAccountId,
                 assigneeOnly: assigneeOnly ?? false,
             },
             include: {
@@ -752,6 +769,7 @@ export async function updateIssue(params: UpdateIssueInput) {
         sequence,
         mailTemplateId,
         mailSenderAddress,
+        microsoftAccountId,
     } = params;
 
     const existing = await prisma.issue.findFirst({
@@ -772,6 +790,7 @@ export async function updateIssue(params: UpdateIssueInput) {
     if (sequence !== undefined) data.sequence = sequence;
     if (mailTemplateId !== undefined) data.mailTemplateId = mailTemplateId;
     if (mailSenderAddress !== undefined) data.mailSenderAddress = mailSenderAddress;
+    if (microsoftAccountId !== undefined) data.microsoftAccountId = microsoftAccountId;
 
     const keys = Object.keys(data).filter((key) => {
         const previous = (existing as unknown as Record<string, unknown>)[key];

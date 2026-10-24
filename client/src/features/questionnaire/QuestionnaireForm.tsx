@@ -51,6 +51,7 @@ type QuestionnaireFormProps = {
     intro?: string;
     items: CandidateItem[];
   };
+  onPresetChange?: (key: string, value: string) => void;
 };
 
 type Section = {
@@ -62,17 +63,24 @@ type Section = {
 function unanswered(
   question: QuestionnaireQuestionData,
   values: Record<string, string>,
-  questions: QuestionnaireQuestionData[],
+  questions: QuestionnaireQuestionData[]
 ) {
   const value = (values[question.key] ?? '').trim();
   if (isWeekdayHourKey(question.key)) {
-    const office = questions.some((item) => isWeekdayHourKey(item.key) && item.employerFilled);
+    const office = questions.some(
+      (item) => isWeekdayHourKey(item.key) && item.employerFilled
+    );
     const open = office || values[HOURS_DISTRIBUTION_KEY] === 'ja';
     if (!open) return false;
     return value.length > 0 && normalizeHour(value) === null;
   }
   if (question.key === HOURS_DISTRIBUTION_KEY) {
-    if (questions.some((item) => isWeekdayHourKey(item.key) && item.employerFilled)) return false;
+    if (
+      questions.some(
+        (item) => isWeekdayHourKey(item.key) && item.employerFilled
+      )
+    )
+      return false;
     return Boolean(question.required) && value !== 'ja' && value !== 'nein';
   }
   if (question.key === 'taxId') {
@@ -91,9 +99,16 @@ function filledRows(rows: Record<string, string>[]) {
   );
 }
 
-export function QuestionnaireForm({ token, preview, embedded }: QuestionnaireFormProps) {
+export function QuestionnaireForm({
+  token,
+  preview,
+  embedded,
+  onPresetChange,
+}: QuestionnaireFormProps) {
   const [values, setValues] = useState<Record<string, string>>({});
-  const [rows, setRows] = useState<Record<string, Record<string, string>[]>>({});
+  const [rows, setRows] = useState<Record<string, Record<string, string>[]>>(
+    {}
+  );
   const [submitted, setSubmitted] = useState(false);
   const [uploads, setUploads] = useState(0);
 
@@ -105,7 +120,12 @@ export function QuestionnaireForm({ token, preview, embedded }: QuestionnaireFor
   });
 
   const data = preview
-    ? { status: 'sent' as const, name: preview.name, intro: preview.intro, items: preview.items }
+    ? {
+        status: 'sent' as const,
+        name: preview.name,
+        intro: preview.intro,
+        items: preview.items,
+      }
     : questionnaire.data?.data;
   const questions = (
     data?.items?.flatMap((item) => (item.kind === 'field' ? [item] : [])) ??
@@ -137,7 +157,11 @@ export function QuestionnaireForm({ token, preview, embedded }: QuestionnaireFor
       ) {
         for (const key of WEEKDAY_HOUR_KEYS) payload[key] = '';
       }
-      if (preview) return Promise.resolve({ success: true, data: { status: 'completed' as const } });
+      if (preview)
+        return Promise.resolve({
+          success: true,
+          data: { status: 'completed' as const },
+        });
       const tables = Object.fromEntries(
         Object.entries(rows).flatMap(([key, value]) =>
           key.startsWith('rows.') ? [[key, filledRows(value)]] : []
@@ -153,24 +177,36 @@ export function QuestionnaireForm({ token, preview, embedded }: QuestionnaireFor
     onSuccess: () => setSubmitted(true),
   });
 
+  const remember = (key: string, value: string) => {
+    setValues((current) => ({ ...current, [key]: value }));
+    const question = questions.find((item) => item.key === key);
+    if (preview && question?.bsbOnly) onPresetChange?.(key, value);
+  };
+  const fillsBsb = (question: QuestionnaireQuestionData) =>
+    Boolean(preview) && question.bsbOnly === true && question.type !== 'file';
+
   const done = submitted || data?.status === 'completed';
   const missing =
     values.declaration !== 'ja' ||
-    questions.some((question) => unanswered(question, values, questions));
+    questions.some(
+      (question) => !question.bsbOnly && unanswered(question, values, questions)
+    );
   const sections = data?.items
-    ? data.items.filter((item) => item.key !== 'declaration').reduce<Section[]>((list, item) => {
-        if (item.kind === 'repeater') {
-          list.push({ title: item.section, questions: [], repeater: item });
+    ? data.items
+        .filter((item) => item.key !== 'declaration')
+        .reduce<Section[]>((list, item) => {
+          if (item.kind === 'repeater') {
+            list.push({ title: item.section, questions: [], repeater: item });
+            return list;
+          }
+          const current = list.at(-1);
+          if (!current || current.repeater || current.title !== item.section) {
+            list.push({ title: item.section, questions: [item] });
+          } else {
+            current.questions.push(item);
+          }
           return list;
-        }
-        const current = list.at(-1);
-        if (!current || current.repeater || current.title !== item.section) {
-          list.push({ title: item.section, questions: [item] });
-        } else {
-          current.questions.push(item);
-        }
-        return list;
-      }, [])
+        }, [])
     : questions.reduce<Section[]>((list, question) => {
         const current = list.at(-1);
         if (!current || current.title !== question.section) {
@@ -182,7 +218,9 @@ export function QuestionnaireForm({ token, preview, embedded }: QuestionnaireFor
       }, []);
   if (!data?.items) {
     repeaters.forEach((repeater) => {
-      const index = sections.findIndex((section) => section.title === repeater.afterSection);
+      const index = sections.findIndex(
+        (section) => section.title === repeater.afterSection
+      );
       const block = { title: repeater.section, questions: [], repeater };
       if (index === -1) sections.push(block);
       else sections.splice(index + 1, 0, block);
@@ -190,12 +228,24 @@ export function QuestionnaireForm({ token, preview, embedded }: QuestionnaireFor
   }
 
   return (
-    <div className={embedded ? undefined : "h-full overflow-y-auto px-4 py-8"}>
-      <div className={embedded ? "w-full" : "mx-auto w-full max-w-3xl rounded-lg border border-border bg-card p-8 text-card-foreground shadow-lg"}>
-        <h1 className="text-xl font-medium">{data?.name ?? 'Personalfragebogen'}</h1>
-        {!preview && questionnaire.isPending ? <LoadingAlert className="min-h-40" /> : null}
+    <div className={embedded ? undefined : 'h-full overflow-y-auto px-4 py-8'}>
+      <div
+        className={
+          embedded
+            ? 'w-full'
+            : 'mx-auto w-full max-w-3xl rounded-lg border border-border bg-card p-8 text-card-foreground shadow-lg'
+        }
+      >
+        <h1 className="text-xl font-medium">
+          {data?.name ?? 'Personalfragebogen'}
+        </h1>
+        {!preview && questionnaire.isPending ? (
+          <LoadingAlert className="min-h-40" />
+        ) : null}
         {!preview && questionnaire.isError ? (
-          <p className="mt-4 text-sm text-destructive">Dieser Link ist ungültig.</p>
+          <p className="mt-4 text-sm text-destructive">
+            Dieser Link ist ungültig.
+          </p>
         ) : null}
         {done ? (
           <p className="mt-4 text-sm text-muted-foreground">
@@ -211,9 +261,14 @@ export function QuestionnaireForm({ token, preview, embedded }: QuestionnaireFor
               submit.mutate();
             }}
           >
-            {data.intro ? <p className="text-sm text-muted-foreground">{data.intro}</p> : null}
+            {data.intro ? (
+              <p className="text-sm text-muted-foreground">{data.intro}</p>
+            ) : null}
             {sections.map((section, index) => (
-              <div key={`${index}-${section.title}`} className="flex flex-col gap-4">
+              <div
+                key={`${index}-${section.title}`}
+                className="flex flex-col gap-4"
+              >
                 {section.repeater ? (
                   section.repeater.key.startsWith('rows.') ? (
                     <QuestionnaireTableRows
@@ -240,88 +295,113 @@ export function QuestionnaireForm({ token, preview, embedded }: QuestionnaireFor
                   )
                 ) : (
                   <>
-                    {section.questions.some((question) => isWeeklyHoursKey(question.key)) ? (
+                    {section.questions.some((question) =>
+                      isWeeklyHoursKey(question.key)
+                    ) ? (
                       <WeeklyHoursAnswer
                         questions={questions}
                         values={values}
-                        onChange={(key, value) =>
-                          setValues((current) => ({ ...current, [key]: value }))
-                        }
+                        fillBsb={section.questions.some(
+                          (question) =>
+                            isWeekdayHourKey(question.key) && fillsBsb(question)
+                        )}
+                        onChange={remember}
                       />
                     ) : (
                       <h2 className="pt-2 text-base font-medium text-foreground">
                         {section.title}
                       </h2>
                     )}
-                    {section.questions.some((question) => isWeeklyHoursKey(question.key)) ? (
+                    {section.questions.some((question) =>
+                      isWeeklyHoursKey(question.key)
+                    ) ? (
                       section.questions
                         .filter((question) => !isWeeklyHoursKey(question.key))
                         .map((question) => (
                           <QuestionnaireQuestion
                             key={question.key}
                             question={question}
-                            disabled={question.employerFilled}
+                            disabled={
+                              question.employerFilled && !fillsBsb(question)
+                            }
                             employerFilled={question.employerFilled}
+                            fillable={fillsBsb(question)}
                             uploadToken={token}
                             onUploadBusy={(busy) =>
                               setUploads((count) => count + (busy ? 1 : -1))
                             }
                             value={values[question.key] ?? ''}
-                            onChange={(value) =>
-                              setValues((current) => ({
-                                ...current,
-                                [question.key]: value,
-                              }))
-                            }
+                            onChange={(value) => remember(question.key, value)}
                           />
                         ))
-                    ) : section.questions.every((question) => question.layout === 'inline') ? (
+                    ) : section.questions.every(
+                        (question) => question.layout === 'inline'
+                      ) ? (
                       <>
-                      <div className="grid grid-cols-4 gap-3 sm:grid-cols-7">
-                        {section.questions.map((question) => (
-                          <div key={question.key} className="flex flex-col gap-2">
-                            <Label htmlFor={question.key}>{question.label}</Label>
-                            <Input
-                              id={question.key}
-                              disabled={question.employerFilled}
-                              value={values[question.key] ?? ''}
-                              className={
-                                question.employerFilled
-                                  ? 'bg-muted text-muted-foreground'
-                                  : undefined
-                              }
-                              onChange={(event) =>
-                                setValues((current) => ({
-                                  ...current,
-                                  [question.key]: event.target.value,
-                                }))
-                              }
-                            />
-                          </div>
-                        ))}
-                      </div>
-                      {section.questions.some((question) => question.employerFilled) ? (
-                        <p className="text-xs text-muted-foreground">Vom Betrieb ausgefüllt</p>
-                      ) : null}
+                        <div className="grid grid-cols-4 gap-3 sm:grid-cols-7">
+                          {section.questions.map((question) => {
+                            const open = fillsBsb(question);
+                            const locked =
+                              !open &&
+                              (question.employerFilled || question.bsbOnly);
+                            return (
+                              <div
+                                key={question.key}
+                                className="flex flex-col gap-2"
+                              >
+                                <Label htmlFor={question.key}>
+                                  {question.label}
+                                </Label>
+                                <Input
+                                  id={question.key}
+                                  disabled={locked}
+                                  value={values[question.key] ?? ''}
+                                  className={
+                                    open
+                                      ? 'bg-muted dark:bg-muted'
+                                      : locked
+                                        ? 'bg-muted text-muted-foreground'
+                                        : undefined
+                                  }
+                                  onChange={(event) =>
+                                    remember(question.key, event.target.value)
+                                  }
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {section.questions.some(
+                          (question) =>
+                            !fillsBsb(question) &&
+                            (question.employerFilled || question.bsbOnly)
+                        ) ? (
+                          <p className="text-xs text-muted-foreground">
+                            {section.questions.some(
+                              (question) => question.bsbOnly
+                            )
+                              ? 'Nur von BSB auszufüllen'
+                              : 'Vom Betrieb ausgefüllt'}
+                          </p>
+                        ) : null}
                       </>
                     ) : (
                       section.questions.map((question) => (
                         <QuestionnaireQuestion
                           key={question.key}
                           question={question}
-                          disabled={question.employerFilled}
+                          disabled={
+                            (question.employerFilled || question.bsbOnly) &&
+                            !fillsBsb(question)
+                          }
                           employerFilled={question.employerFilled}
+                          fillable={fillsBsb(question)}
                           uploadToken={token}
                           onUploadBusy={(busy) =>
                             setUploads((count) => count + (busy ? 1 : -1))
                           }
                           value={values[question.key] ?? ''}
-                          onChange={(value) =>
-                            setValues((current) => ({
-                              ...current,
-                              [question.key]: value,
-                            }))
-                          }
+                          onChange={(value) => remember(question.key, value)}
                         />
                       ))
                     )}
@@ -354,13 +434,15 @@ export function QuestionnaireForm({ token, preview, embedded }: QuestionnaireFor
                 Das Formular konnte nicht gesendet werden.
               </p>
             ) : null}
-            {!embedded ? <Button
-              type="submit"
-              className="rounded-2xl"
-              disabled={missing || submit.isPending || uploads > 0}
-            >
-              {submit.isPending ? 'Sendet…' : 'Absenden'}
-            </Button> : null}
+            {!embedded ? (
+              <Button
+                type="submit"
+                className="rounded-2xl"
+                disabled={missing || submit.isPending || uploads > 0}
+              >
+                {submit.isPending ? 'Sendet…' : 'Absenden'}
+              </Button>
+            ) : null}
           </form>
         ) : null}
       </div>

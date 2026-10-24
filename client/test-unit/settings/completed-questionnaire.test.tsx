@@ -226,3 +226,46 @@ it('keeps the original edit revision when newer answers arrive in the background
     'inzwischen geändert'
   );
 });
+
+it('allows correcting completed questionnaire data alongside empty legacy office-only fields', async () => {
+  const initial = {
+    ...editableQuestionnaire,
+    items: [
+      ...editableQuestionnaire.items,
+      {
+        kind: 'field',
+        key: 'officeSalary',
+        label: 'Gehalt',
+        section: 'Office',
+        type: 'text',
+        required: true,
+        bsbOnly: true,
+      },
+    ],
+    answers: { ...editableQuestionnaire.answers, officeSalary: '' },
+  } as CompletedQuestionnaire;
+  vi.mocked(apiJson.put).mockResolvedValue({
+    data: { ...initial, revision: 1 },
+  });
+  renderWithProviders(
+    <CompletedQuestionnaireEditor
+      workerId="worker"
+      engagementId="eng"
+      questionnaire={initial}
+      onDone={vi.fn()}
+      onBusy={vi.fn()}
+    />
+  );
+  expect(screen.getByRole('textbox', { name: 'Gehalt' })).toBeEnabled();
+  const input = screen.getByRole('textbox', { name: 'Familienname' });
+  await userEvent.clear(input);
+  await userEvent.type(input, 'Correct');
+  await userEvent.click(screen.getByRole('button', { name: 'Speichern' }));
+  expect(apiJson.put).toHaveBeenCalledWith(
+    'worker/worker/engagements/eng/questionnaire/completed',
+    {
+      revision: 0,
+      answers: { lastName: 'Correct' },
+    }
+  );
+});

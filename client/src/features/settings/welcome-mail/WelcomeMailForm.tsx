@@ -1,3 +1,4 @@
+import { MicrosoftSimulationNotice } from '@/features/settings/integrations/MicrosoftSimulationNotice';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -5,7 +6,10 @@ import { MailMessageField } from '@/features/settings/mail-template/MailMessageF
 import { welcomeMailPlaceholders } from '@/features/settings/mail-template/mailPlaceholders';
 import { useEffect, useState } from 'react';
 import { WelcomeMailGroupSelect } from './WelcomeMailGroupSelect';
-import type { WelcomeMailPageData, WelcomeMailSettings } from './welcomeMail.api';
+import type {
+  WelcomeMailPageData,
+  WelcomeMailSettings,
+} from './welcomeMail.api';
 import { useSaveWelcomeMail } from './useWelcomeMail';
 
 type WelcomeMailFormProps = {
@@ -79,6 +83,7 @@ export function WelcomeMailForm({ page }: WelcomeMailFormProps) {
             }))
           }
         />
+        {page.simulated && <MicrosoftSimulationNotice />}
         {page.groupsError ? (
           <p className="text-sm text-destructive">{page.groupsError}</p>
         ) : null}

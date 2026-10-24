@@ -3,6 +3,7 @@ import {
     fieldIsLocked,
     hourKeys,
     isWorkerLocked,
+    presentQuestions,
     parseQuestionnaireDefinition,
     readEngagementDraft,
     seedQuestionnaireDefinition,
@@ -213,7 +214,7 @@ describe("questionnaire definition", () => {
                     kind: "field",
                     key: "hoursMonday",
                     defaultValue: "0",
-                    officeOnly: true,
+                    bsbOnly: true,
                     contractFieldKey: "arbeitszeit.mo",
                 },
                 { kind: "field", key: "hoursTuesday", defaultValue: "7,5" },
@@ -222,11 +223,11 @@ describe("questionnaire definition", () => {
         });
         expect(definition.items[0]).toMatchObject({
             defaultValue: "0",
-            officeOnly: true,
+            bsbOnly: true,
             required: false,
             contractFieldKey: "arbeitszeit.mo",
         });
-        expect(definition.items[1]).toMatchObject({ defaultValue: "7,5", officeOnly: undefined });
+        expect(definition.items[1]).toMatchObject({ defaultValue: "7,5", bsbOnly: false });
         expect(definition.items[2]).toMatchObject({ required: true });
     });
 
@@ -315,13 +316,13 @@ describe("questionnaire definition", () => {
         const byKey = new Map(definition.items.map((item) => [item.key, item]));
         expect(byKey.get("custom.schwerbehindert")).toMatchObject({
             section: "Persönliche Angaben",
-            officeOnly: true,
+            bsbOnly: true,
         });
         expect(byKey.get("custom.beschaeftigungsbetrieb")).toMatchObject({
             defaultValue: "BSB Haustechnik GmbH",
-            officeOnly: undefined,
+            bsbOnly: false,
         });
-        expect(byKey.get("hoursMonday")).toMatchObject({ officeOnly: true });
+        expect(byKey.get("hoursMonday")).toMatchObject({ bsbOnly: true });
         expect(byKey.get("children")).toMatchObject({
             kind: "repeater",
             columns: [
@@ -392,7 +393,7 @@ describe("deterministic contract matching", () => {
         { type: "input" as const, key: "contract.vorname", label: "Vorname" },
     ];
 
-    it("fills only the field the questionnaire binds and leaves the rest unbound", () => {
+    it("fills a bound value and a same-label question, and leaves a different name open", () => {
         const entries = deterministicContractValues(
             segments,
             {
@@ -414,6 +415,63 @@ describe("deterministic contract matching", () => {
             ],
         );
 
-        expect(entries).toEqual([{ key: "contract.stunden", value: "40" }]);
+        expect(entries).toEqual(
+            expect.arrayContaining([
+                { key: "contract.stunden", value: "40" },
+                { key: "contract.schuhe", value: "42" },
+                { key: "contract.vorname", value: "Ada" },
+            ]),
+        );
+        expect(entries.some((entry) => entry.value === "Bitte früh")).toBe(false);
     });
+});
+
+it.each(["firstName", "custom.bsb-salary"])(
+    "preserves the BSB-only flag for %s in templates, drafts and public questions",
+    (key) => {
+        const definition = parseQuestionnaireDefinition({
+            items: [
+                {
+                    kind: "field",
+                    key,
+                    label: "BSB-Angabe",
+                    type: "text",
+                    required: true,
+                    bsbOnly: true,
+                },
+            ],
+        });
+        expect(definition.items[0]).toMatchObject({
+            bsbOnly: true,
+            required: true,
+        });
+        const draft = applyOverrides(definition, {});
+        expect(draft.items[0]).toMatchObject({ bsbOnly: true, required: true });
+        expect(presentQuestions(draft)[0]).toMatchObject({
+            bsbOnly: true,
+            employerFilled: true,
+            required: false,
+        });
+        expect(isWorkerLocked({ bsbOnly: true })).toBe(true);
+        const unlocked = parseQuestionnaireDefinition({
+            items: [{ ...definition.items[0], bsbOnly: false }],
+        });
+        expect(presentQuestions(unlocked)[0]).toMatchObject({
+            employerFilled: false,
+            required: true,
+        });
+    },
+);
+
+
+it("keeps unified office-only controls compatible with staging questionnaire flags", () => {
+    const definition = parseQuestionnaireDefinition({ intro: "", items: [{
+        kind: "field", key: "custom.abcdefgh", label: "Office", section: "Person",
+        type: "text", officeOnly: true,
+    }] });
+    expect(definition.items[0]).toMatchObject({ officeOnly: true, bsbOnly: true });
+    const cleared = parseQuestionnaireDefinition({ intro: "", items: [{
+        ...definition.items[0], officeOnly: undefined, bsbOnly: undefined,
+    }] });
+    expect(cleared.items[0]).toMatchObject({ officeOnly: undefined, bsbOnly: false });
 });

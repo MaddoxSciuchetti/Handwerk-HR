@@ -28,7 +28,6 @@ jest.mock("@/lib/prisma", () => ({
     prisma: {
         $transaction: jest.fn(),
         $executeRaw: jest.fn(),
-        $queryRaw: jest.fn(),
         organizationMember: { findFirst: jest.fn() },
         organizationIntegration: { findUnique: jest.fn() },
         microsoftUserConnection: {
@@ -95,28 +94,6 @@ beforeEach(() => {
     (
         prisma.microsoftAuthAttempt.updateManyAndReturn as jest.Mock
     ).mockResolvedValue([attempt]);
-    (prisma.$queryRaw as jest.Mock).mockImplementation(async () => {
-        const rows = await (
-            prisma.microsoftAuthAttempt.updateManyAndReturn as jest.Mock
-        )();
-        return rows.map(
-            (row: {
-                organizationId: string;
-                userId: string;
-                tenantId: string;
-                clientId: string;
-                verifierCiphertext: string;
-                nonce: string;
-            }) => ({
-                organization_id: row.organizationId,
-                user_id: row.userId,
-                tenant_id: row.tenantId,
-                client_id: row.clientId,
-                verifier_ciphertext: row.verifierCiphertext,
-                nonce: row.nonce,
-            }),
-        );
-    });
     (prisma.microsoftAuthAttempt.findFirst as jest.Mock).mockResolvedValue({
         id: "state",
     });
@@ -190,7 +167,25 @@ it("binds the callback to the browser, enforces expiry and consumes an attempt o
         browserSecret: "browser",
         code: "temporary-code",
     });
-    expect(prisma.$queryRaw).toHaveBeenCalledTimes(1);
+    expect(
+        prisma.microsoftAuthAttempt.updateManyAndReturn,
+    ).toHaveBeenCalledWith({
+        where: {
+            id: "state",
+            browserHash: hash("browser"),
+            expiresAt: { gt: expect.any(Date) },
+            consumedAt: null,
+        },
+        data: { consumedAt: expect.any(Date) },
+        select: {
+            organizationId: true,
+            userId: true,
+            tenantId: true,
+            clientId: true,
+            verifierCiphertext: true,
+            nonce: true,
+        },
+    });
     expect(prisma.microsoftUserConnection.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
             where: { organizationId_userId: actor },

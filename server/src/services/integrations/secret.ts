@@ -10,7 +10,7 @@ const ALGORITHM = "aes-256-gcm";
 export class IntegrationSecretUnavailable extends Error {
     constructor() {
         super(
-            "Integrationsgeheimnisse können auf diesem Server nicht gespeichert werden.",
+            "Integrationsgeheimnisse können nicht gespeichert werden: INTEGRATION_SECRET_KEY fehlt in der Serverkonfiguration. Bitte den Schlüssel konfigurieren und den API-Server neu starten.",
         );
     }
 }

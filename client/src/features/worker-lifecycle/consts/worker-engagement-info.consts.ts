@@ -72,6 +72,10 @@ export function workerEngagementInfoItems(
       editable: 'workEmail',
     },
     {
+      label: 'Microsoft-E-Mail',
+      value: worker.microsoftEmail ?? '',
+    },
+    {
       label: 'Geburtsdatum',
       value: dateValue(worker.birthday),
       editable: 'birthday',

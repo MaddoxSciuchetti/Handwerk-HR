@@ -115,7 +115,7 @@ export default function WorkerClothingPanel({ workerId, engagements }: Props) {
     if (!clothing.data) return;
     setIssued((current) => {
       const edits = new Map(current.map((row) => [row.clothingId, row]));
-      return clothing.data.flatMap((item) => {
+      return clothing.data.flatMap<IssuedRow>((item) => {
         const outstanding = item.quantity - item.returnedQuantity;
         if (outstanding < 1) return [];
         const previous = edits.get(item.id);

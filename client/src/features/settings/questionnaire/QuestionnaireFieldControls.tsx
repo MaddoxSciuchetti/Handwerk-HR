@@ -1,4 +1,8 @@
 import { taxIdInput } from '@shared/taxId';
+
+import { Button } from '@/components/ui/button';
+import { useState } from 'react';
+import { NewQuestionForm } from './NewQuestionForm';
 import { Input } from '@/components/ui/input';
 import { insuranceNumberInput } from '@shared/insuranceNumber';
 import { ChoiceLineEditor } from '@/features/questionnaire/ChoiceLineEditor';
@@ -21,8 +25,22 @@ export function QuestionnaireFieldControls({
   onChange,
   onCommit,
 }: QuestionnaireFieldControlsProps) {
+  const [editing, setEditing] = useState(false);
   const patch = (next: Partial<TemplateField>) =>
     onChange({ ...field, ...next });
+
+  if (editing)
+    return (
+      <NewQuestionForm
+        field={field}
+        onCancel={() => setEditing(false)}
+        onAdd={(items) => {
+          const next = items[0];
+          if (next?.kind === 'field') onChange(next);
+          setEditing(false);
+        }}
+      />
+    );
 
   return (
     <div className="flex min-w-0 flex-col gap-3">
@@ -31,6 +49,17 @@ export function QuestionnaireFieldControls({
         onChange={(label) => patch({ label })}
         onCommit={(label) => onCommit({ ...field, label })}
       />
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        data-no-drag
+        className="self-start rounded-2xl"
+        aria-label={`Frage bearbeiten: ${field.label}`}
+        onClick={() => setEditing(true)}
+      >
+        Bearbeiten
+      </Button>
       {field.type !== 'file' ? (
         <div className="flex min-w-0 items-start gap-2">
           <span className="w-16 shrink-0 pt-1 text-sm leading-6 font-medium">
@@ -69,8 +98,10 @@ export function QuestionnaireFieldControls({
         ) : null}
         <PflichtfeldSwitch
           label="Nur vom Betrieb"
-          checked={field.officeOnly === true}
-          onChange={(checked) => patch({ officeOnly: checked || undefined })}
+          checked={field.officeOnly ?? field.bsbOnly ?? false}
+          onChange={(checked) =>
+            patch({ officeOnly: checked || undefined, bsbOnly: undefined })
+          }
         />
       </div>
     </div>

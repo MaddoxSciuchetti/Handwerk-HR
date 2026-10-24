@@ -102,6 +102,82 @@ credentials and `INTEGRATIONS_LIVE=true`; this flag is independent of `NODE_ENV`
 and permits real provider actions, including account changes and messages.
 Microsoft Teams additionally requires the employee's Microsoft connection.
 
+### Microsoft mail token renewal
+
+For automatic Microsoft Graph mail authentication, configure these on the backend:
+
+```env
+USE_MICROSOFT_MAIL=true
+MICROSOFT_365_TENANT_ID=<Microsoft tenant ID>
+MICROSOFT_365_CLIENT_ID=<application client ID>
+MICROSOFT_365_CLIENT_SECRET=<client secret value>
+# Optional fallback when no sender is selected for the operation:
+MICROSOFT_GRAPH_MAILBOX=<sender mailbox address>
+```
+
+The mail service obtains an application token, caches it in memory, and renews it
+on the next mail operation starting one minute before expiry. Concurrent operations
+share token acquisition. A Graph 401 triggers one renewal and one retry of the
+rejected request; timeouts, permission failures and other errors are not retried.
+No periodic timer or user sign-in is needed. Client secrets still need rotation
+before their own expiration.
+
+Grant the Entra application Microsoft Graph **application** permissions
+`Mail.ReadWrite` and `Mail.Send` with administrator consent, and access to the
+sender mailbox. This service creates a draft before sending to retain conversation
+tracking. A questionnaire's selected sender overrides `MICROSOFT_GRAPH_MAILBOX`.
+Application authentication requires an explicit mailbox and cannot use `/me`.
+
+These credentials must be backend environment variables; the organization credentials
+saved under Settings → Integrations serve the separate account/workflow integration.
+When all three application credential variables are absent, the legacy
+`MICROSOFT_GRAPH_TOKEN` remains supported but cannot renew itself. Application
+credentials take precedence over that static token; incomplete credentials fail
+rather than silently falling back. Restart/redeploy after changing the environment.
+
+### Integration credentials and staging tests
+
+The API requires `INTEGRATION_SECRET_KEY` to encrypt saved Microsoft client secrets
+and Crewmeister tokens, including dummy credentials on staging. Generate a random
+key (for example, `openssl rand -hex 32`), set it in the backend service's runtime
+environment, and restart the API. Keep the key stable across deployments; changing
+it makes existing saved secrets unreadable. Use a separate key for each environment.
+
+Saving only checks that required fields are filled; it does not authenticate with
+Microsoft or Crewmeister. Placeholder values can test saving and reloading settings.
+They cannot test a real provider connection.
+
+`INTEGRATIONS_LIVE` defaults to off. Credentials can still be saved, but sequences
+are blocked rather than simulated. To test actual provider operations on staging,
+use valid credentials for dedicated test accounts/tenants and explicitly set
+`INTEGRATIONS_LIVE=true` on that API service. This enables real provider requests,
+including account changes and emails, for all organizations using that service.
+
+For Microsoft workflow tests without real credentials, set this on the staging
+**backend** and restart/redeploy the API:
+
+```env
+MICROSOFT_SIMULATION=true
+INTEGRATIONS_LIVE=false
+```
+
+Enable Microsoft under Integrationen and save; credential fields may be left
+empty in simulation. If you enter a secret, storing it still requires
+`INTEGRATION_SECRET_KEY`. Configure mail templates with a test sender such as
+`admin@staging.example.test`, select one of the sample teams, and save the subject
+and message. Microsoft account creation/deactivation and onboarding/offboarding
+team emails can then be run through their normal task sequences.
+
+The UI shows Testmodus. Accounts use `staging.example.test` and simulated external
+IDs. Microsoft requests and account password emails are not sent. Sequences still
+update staging employee data, sent markers, task completion, and audit history;
+use disposable staging records. This does not simulate other providers or document
+delivery through Resend. Crewmeister remains subject to `INTEGRATIONS_LIVE`.
+Simulation takes precedence over live Microsoft execution even if
+`INTEGRATIONS_LIVE=true`. Unknown simulated Graph operations fail without network
+access. Remove `MICROSOFT_SIMULATION` or set it to `false` and restart to return to
+normal Microsoft behavior. Keep simulation off in production.
+
 ### Simulated questionnaire replies
 
 Set `QUESTIONNAIRE_MOCK_RESPONSES=true` in `server/.env` (or your staging API's
@@ -231,3 +307,13 @@ bottom template picker available after completion. Each fresh selection creates
 another task batch for that employee, including when switching templates. This
 requires the server mock above; normal deployments keep the one-application
 restriction. Existing demo tasks are retained.
+
+### Staging questionnaire sender
+
+The staging backend uses `EMAIL_SENDER` (set this to the verified `hello@…`
+address) automatically for short onboarding and questionnaire sends, including
+retries of existing records. No organization sender selection is required.
+Staging is identified by `APP_ENV=staging`, `NODE_ENV=staging`, the Render service
+`BSB-Onboarding-Backend-Development`, or the configured frontend URL
+`https://bsb-onboarding-frontend-development.onrender.com`. Production keeps its
+organization sender selection. This does not change the configured mail provider.

@@ -46,7 +46,9 @@ function Tasks() {
     const visibleTasks =
       segment === 'left'
         ? (data ?? [])
-        : (data?.filter((task) => task.assigneeUserId === user?.id) ?? []);
+        : (data?.filter(
+            (task) => task.assigneeUserId === user?.id || task.mentioned
+          ) ?? []);
 
     return confirmationTasksFirst(visibleTasks);
   }, [data, segment, user?.id]);
@@ -113,15 +115,20 @@ function Tasks() {
   return (
     <div className="mx-auto flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
       <div className="flex h-full min-h-0 w-full flex-col">
-        {!largeEditMode && <TemplateApplyPrompt targets={engagementsAwaitingTemplate(data ?? [])} />}
+        {!largeEditMode && (
+          <TemplateApplyPrompt
+            targets={engagementsAwaitingTemplate(data ?? [])}
+          />
+        )}
         <TaskSidebar
           key={sidebarKey}
           {...sidebarProps}
           taskEditState={{
             ...sidebarProps.taskEditState,
             status:
-              data?.find((task) => task.id === sidebarProps.taskEditState.taskId)
-                ?.status ?? sidebarProps.taskEditState.status,
+              data?.find(
+                (task) => task.id === sidebarProps.taskEditState.taskId
+              )?.status ?? sidebarProps.taskEditState.status,
           }}
           onOpenArbeitszeugnis={setZeugnisIssueId}
         />
@@ -174,7 +181,9 @@ function Tasks() {
                       <div className="absolute inset-y-0 left-0 flex w-10 items-center justify-center">
                         <TableSelectAllCheckbox
                           ids={filteredTasks.map((task) => task.id)}
-                          selectedIds={editModeData.map((item) => item.taskNumber)}
+                          selectedIds={editModeData.map(
+                            (item) => item.taskNumber
+                          )}
                           disabled={isLoading}
                           selectLabel="Alle Aufgaben auswählen"
                           clearLabel="Alle Aufgaben abwählen"

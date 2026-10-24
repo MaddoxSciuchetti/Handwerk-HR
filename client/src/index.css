@@ -86,6 +86,18 @@ body {
   padding: 4pt;
   vertical-align: top;
 }
+.styled-document :is(td, th) p:has(.node-documentField) {
+  white-space: nowrap;
+}
+.styled-document .tiptap .node-documentField {
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+}
+.styled-document .tiptap :is(td, th) .node-documentField {
+  /* Leave room for field margins and a currency suffix on the same line. */
+  max-width: calc(100% - 2ch - 4px);
+}
 .styled-document table[data-border='box'] {
   border: 0.75pt solid #000;
 }
@@ -193,7 +205,9 @@ body {
 
 /* Keep a Word-style selection visible while entering toolbar field details.
    The native selection remains responsible for highlighting focused text. */
-.styled-document .tiptap:not(.ProseMirror-focused) .document-retained-selection {
+.styled-document
+  .tiptap:not(.ProseMirror-focused)
+  .document-retained-selection {
   background-color: Highlight;
   color: HighlightText;
 }

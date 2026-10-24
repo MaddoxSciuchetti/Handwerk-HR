@@ -1,5 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { MicrosoftAccountIdField } from '@/features/all-tasks/components/MicrosoftAccountIdField';
+import { useWatch } from 'react-hook-form';
 import { useTasks } from '@/features/all-tasks/hooks/useTasks';
 import {
   EMPTY_TASK_EDIT_STATE,
@@ -26,7 +28,7 @@ function Form({
   seed?: Partial<TaskEditState>;
   mode?: 'create' | 'edit';
 }) {
-  const { register, onSubmit, saveForAction, errors } = useTasks(
+  const { register, onSubmit, saveForAction, errors, control } = useTasks(
     {
       ...EMPTY_TASK_EDIT_STATE,
       title: 'Test',
@@ -37,6 +39,7 @@ function Form({
     mode,
     close
   );
+  const sequence = useWatch({ control, name: 'sequence' });
   return (
     <form onSubmit={onSubmit}>
       <select aria-label="Automation" {...register('sequence')}>
@@ -45,6 +48,11 @@ function Form({
         <option value="microsoft_deactivate_account">Konto deaktivieren</option>
       </select>
       <input aria-label="E-Mail-Vorlage" {...register('mailTemplateId')} />
+      <MicrosoftAccountIdField
+        sequence={sequence}
+        register={register}
+        errors={errors}
+      />
       <input aria-label="Absender" {...register('mailSenderAddress')} />
       {errors.mailTemplateId ? <p>{errors.mailTemplateId.message}</p> : null}
       {errors.mailSenderAddress ? (
@@ -98,7 +106,11 @@ describe('task automation form', () => {
     render(
       <Form
         mode="edit"
-        seed={{ taskId: 'task-1', assigneeUserId: '', sequence: 'microsoft_deactivate_account' }}
+        seed={{
+          taskId: 'task-1',
+          assigneeUserId: '',
+          sequence: 'microsoft_deactivate_account',
+        }}
       />
     );
     fireEvent.click(screen.getByRole('button', { name: 'Ausführen' }));
@@ -128,6 +140,54 @@ describe('task automation form', () => {
     ).toBeInTheDocument();
     expect(updateTask).not.toHaveBeenCalled();
     expect(runAction).not.toHaveBeenCalled();
+  });
+
+  it('only shows the optional Microsoft ID for deactivation and saves a valid ID', async () => {
+    render(<Form />);
+    expect(
+      screen.queryByLabelText('Microsoft-Konto-ID (optional)')
+    ).not.toBeInTheDocument();
+    fireEvent.change(screen.getByRole('combobox'), {
+      target: { value: 'microsoft_deactivate_account' },
+    });
+    fireEvent.change(screen.getByLabelText('Microsoft-Konto-ID (optional)'), {
+      target: { value: '  12345678-1234-1234-1234-123456789abc  ' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Speichern' }));
+    await waitFor(() =>
+      expect(createTask).toHaveBeenCalledWith(
+        expect.objectContaining({
+          microsoftAccountId: '12345678-1234-1234-1234-123456789abc',
+        })
+      )
+    );
+  });
+
+  it('rejects an email address as a Microsoft ID', async () => {
+    render(<Form seed={{ sequence: 'microsoft_deactivate_account' }} />);
+    fireEvent.change(screen.getByLabelText('Microsoft-Konto-ID (optional)'), {
+      target: { value: 'worker@example.com' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Speichern' }));
+    expect(
+      await screen.findByText('Bitte gib eine gültige Microsoft-Konto-ID ein')
+    ).toBeInTheDocument();
+    expect(createTask).not.toHaveBeenCalled();
+  });
+
+  it('restores a Microsoft ID saved on the task', () => {
+    render(
+      <Form
+        mode="edit"
+        seed={{
+          sequence: 'microsoft_deactivate_account',
+          microsoftAccountId: '12345678-1234-1234-1234-123456789abc',
+        }}
+      />
+    );
+    expect(screen.getByLabelText('Microsoft-Konto-ID (optional)')).toHaveValue(
+      '12345678-1234-1234-1234-123456789abc'
+    );
   });
 
   it('saves the selected function on a new task', async () => {

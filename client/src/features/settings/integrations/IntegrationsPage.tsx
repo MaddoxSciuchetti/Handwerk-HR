@@ -1,19 +1,15 @@
+import { MicrosoftSimulationNotice } from './MicrosoftSimulationNotice';
 import useAuth from '@/features/user-profile/hooks/useAuth';
 import { TeamsConnectionCard } from '@/features/microsoft-teams/TeamsConnectionCard';
 import { IntegrationsSkeleton } from './IntegrationsSkeleton';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
+import { ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SettingsPageHeader } from '@/features/settings/components/SettingsPageHeader';
 import { IntegrationSwitch } from './IntegrationSwitch';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import {
   getIntegrations,
@@ -34,13 +30,18 @@ function IntegrationFields({
   actions: ReactNode;
   children: ReactNode;
 }) {
+  const [expanded, setExpanded] = useState(false);
+  const contentId = useId();
   return (
-    <Accordion type="single" collapsible className="min-w-0">
-      <AccordionItem value="settings" className="border-0">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <AccordionTrigger
+    <section className="min-w-0 w-full">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h3 className="min-w-0">
+          <button
             type="button"
-            className="w-fit flex-none items-center gap-2 py-1 text-base font-semibold hover:no-underline"
+            aria-expanded={expanded}
+            aria-controls={contentId}
+            onClick={() => setExpanded((value) => !value)}
+            className="flex min-h-12 items-center gap-2 rounded-lg border border-transparent py-1 text-left text-base font-semibold outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
           >
             <span
               className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border bg-background"
@@ -49,14 +50,18 @@ function IntegrationFields({
               {icon}
             </span>
             {title}
-          </AccordionTrigger>
-          <div className="flex flex-wrap items-center gap-3">{actions}</div>
-        </div>
-        <AccordionContent className="flex h-auto flex-col gap-3 pt-4 pb-0">
-          {children}
-        </AccordionContent>
-      </AccordionItem>
-    </Accordion>
+            <ChevronDown
+              aria-hidden="true"
+              className={`size-4 shrink-0 text-muted-foreground ${expanded ? 'rotate-180' : ''}`}
+            />
+          </button>
+        </h3>
+        <div className="flex flex-wrap items-center gap-3">{actions}</div>
+      </div>
+      <div id={contentId} hidden={!expanded}>
+        <div className="flex min-w-0 flex-col gap-3 pt-4">{children}</div>
+      </div>
+    </section>
   );
 }
 
@@ -82,8 +87,16 @@ function MicrosoftForm({
         licenseSkuId,
         clientSecret,
       }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+    onSuccess: (saved) => {
+      setClientSecret('');
+      queryClient.setQueryData<OrganizationIntegration[]>(
+        QUERY_KEY,
+        (current) =>
+          current?.map((item) =>
+            item.provider === saved.provider ? saved : item
+          )
+      );
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       toast.success('Microsoft 365 wurde gespeichert.');
     },
     onError: (error: { message?: string }) => {
@@ -124,49 +137,50 @@ function MicrosoftForm({
           </>
         }
       >
-        <Label htmlFor="microsoft-tenant">Tenant-ID</Label>
-        <Input
-          id="microsoft-tenant"
-          value={tenantId}
-          onChange={(event) => setTenantId(event.target.value)}
-        />
-        <Label htmlFor="microsoft-client">Client-ID</Label>
-        <Input
-          id="microsoft-client"
-          value={clientId}
-          onChange={(event) => setClientId(event.target.value)}
-        />
-        <Label htmlFor="microsoft-secret">Client-Geheimnis</Label>
-        <Input
-          id="microsoft-secret"
-          type="text"
-          autoComplete="off"
-          spellCheck={false}
-          value={clientSecret}
-          placeholder={
-            integration.hasClientSecret ? 'Neues Geheimnis eingeben' : ''
-          }
-          onChange={(event) => setClientSecret(event.target.value)}
-        />
-        <p className="text-sm text-muted-foreground">
-          {clientSecret.trim()
-            ? 'Dieser Text ersetzt das gespeicherte Geheimnis.'
-            : integration.hasClientSecret
-              ? 'Leer lassen behält das gespeicherte Geheimnis.'
-              : 'Das Geheimnis wird so gespeichert, wie es hier steht.'}
-        </p>
-        <Label htmlFor="microsoft-domain">Domäne (für Kontoanlage)</Label>
-        <Input
-          id="microsoft-domain"
-          value={domain}
-          onChange={(event) => setDomain(event.target.value)}
-        />
-        <Label htmlFor="microsoft-sku">Lizenz-SKU (für Kontoanlage)</Label>
-        <Input
-          id="microsoft-sku"
-          value={licenseSkuId}
-          onChange={(event) => setLicenseSkuId(event.target.value)}
-        />
+        {integration.simulated && <MicrosoftSimulationNotice />}
+        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] items-center gap-x-6 gap-y-3">
+          <Label htmlFor="microsoft-tenant">Tenant-ID</Label>
+          <Input
+            autoComplete="off"
+            spellCheck={false}
+            id="microsoft-tenant"
+            value={tenantId}
+            onChange={(event) => setTenantId(event.target.value)}
+          />
+          <Label htmlFor="microsoft-client">Client-ID</Label>
+          <Input
+            autoComplete="off"
+            spellCheck={false}
+            id="microsoft-client"
+            value={clientId}
+            onChange={(event) => setClientId(event.target.value)}
+          />
+          <Label htmlFor="microsoft-secret">Client-Geheimnis</Label>
+          <Input
+            autoComplete="off"
+            spellCheck={false}
+            id="microsoft-secret"
+            type="text"
+            value={clientSecret}
+            onChange={(event) => setClientSecret(event.target.value)}
+          />
+          <Label htmlFor="microsoft-domain">Domäne (für Kontoanlage)</Label>
+          <Input
+            autoComplete="off"
+            spellCheck={false}
+            id="microsoft-domain"
+            value={domain}
+            onChange={(event) => setDomain(event.target.value)}
+          />
+          <Label htmlFor="microsoft-sku">Lizenz-SKU (für Kontoanlage)</Label>
+          <Input
+            autoComplete="off"
+            spellCheck={false}
+            id="microsoft-sku"
+            value={licenseSkuId}
+            onChange={(event) => setLicenseSkuId(event.target.value)}
+          />
+        </div>
       </IntegrationFields>
     </form>
   );
@@ -184,9 +198,16 @@ function CrewmeisterForm({
   const save = useMutation({
     mutationFn: () =>
       saveIntegration('crewmeister', { enabled, token, crewId }),
-    onSuccess: async () => {
+    onSuccess: (saved) => {
       setToken('');
-      await queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      queryClient.setQueryData<OrganizationIntegration[]>(
+        QUERY_KEY,
+        (current) =>
+          current?.map((item) =>
+            item.provider === saved.provider ? saved : item
+          )
+      );
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       toast.success('Crewmeister wurde gespeichert.');
     },
     onError: (error: { message?: string }) => {
@@ -228,25 +249,30 @@ function CrewmeisterForm({
           </>
         }
       >
-        <Label htmlFor="crewmeister-token">
-          Token{integration.hasToken ? ' (gespeichert)' : ''}
-        </Label>
-        <Input
-          id="crewmeister-token"
-          type="password"
-          autoComplete="new-password"
-          value={token}
-          placeholder={integration.hasToken ? 'Unverändert lassen' : ''}
-          onChange={(event) => setToken(event.target.value)}
-        />
-        <Label htmlFor="crewmeister-crew">
-          Crew-ID, wenn der Token mehrere Crews sieht
-        </Label>
-        <Input
-          id="crewmeister-crew"
-          value={crewId}
-          onChange={(event) => setCrewId(event.target.value)}
-        />
+        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] items-center gap-x-6 gap-y-3">
+          <Label htmlFor="crewmeister-token">
+            Token{integration.hasToken ? ' (gespeichert)' : ''}
+          </Label>
+          <Input
+            autoComplete="off"
+            spellCheck={false}
+            id="crewmeister-token"
+            type="password"
+            value={token}
+            placeholder={integration.hasToken ? 'Unverändert lassen' : ''}
+            onChange={(event) => setToken(event.target.value)}
+          />
+          <Label htmlFor="crewmeister-crew">
+            Crew-ID, wenn der Token mehrere Crews sieht
+          </Label>
+          <Input
+            autoComplete="off"
+            spellCheck={false}
+            id="crewmeister-crew"
+            value={crewId}
+            onChange={(event) => setCrewId(event.target.value)}
+          />
+        </div>
       </IntegrationFields>
     </form>
   );
@@ -273,8 +299,17 @@ function OrganizationIntegrations() {
         </p>
       ) : (
         <div className="min-w-0 w-full">
-          <MicrosoftForm key={microsoft.tenantId} integration={microsoft} />
-          <CrewmeisterForm key={crewmeister.crewId} integration={crewmeister} />
+          {integrations.some((item) => !item.live && !item.simulated) && (
+            <p role="note" className="px-3 pt-4 text-sm text-muted-foreground">
+              Zugangsdaten können gespeichert werden. Live-Sequenzen werden in
+              dieser Umgebung nicht ausgeführt.
+            </p>
+          )}
+          <MicrosoftForm key={microsoft.provider} integration={microsoft} />
+          <CrewmeisterForm
+            key={crewmeister.provider}
+            integration={crewmeister}
+          />
         </div>
       )}
     </>
@@ -287,7 +322,7 @@ export function IntegrationsPage() {
   return (
     <div className="mx-auto flex h-full min-h-0 min-w-0 w-full max-w-full flex-col overflow-hidden rounded-2xl bg-card p-4 text-card-foreground sm:p-6 md:max-w-8xl">
       <SettingsPageHeader title="Integrationen" />
-      <div className="min-h-0 min-w-0 w-full flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="min-h-0 min-w-0 w-full flex-1 overflow-x-hidden overflow-y-auto overscroll-contain [overflow-anchor:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {user?.membershipRole === 'admin' && <OrganizationIntegrations />}
         {user && (
           <section aria-labelledby="plugins-heading" className="mt-6 pb-6">

@@ -7,6 +7,24 @@ export type DocumentField = {
   dateMode?: "today" | null;
 };
 
+/** Keep checkbox storage independent of the questionnaire's display language. */
+export function normalizeDocumentFieldValue(
+  fieldType: string | undefined,
+  value: string,
+): string {
+  if (fieldType !== "checkbox") return value;
+  switch (value.trim().toLowerCase()) {
+    case "ja":
+    case "true":
+      return "true";
+    case "nein":
+    case "false":
+      return "false";
+    default:
+      return value;
+  }
+}
+
 /** Resolve business dates consistently in the app's German time zone. */
 export function currentDocumentDate(now = new Date()): string {
   const parts = new Intl.DateTimeFormat("en-CA", {

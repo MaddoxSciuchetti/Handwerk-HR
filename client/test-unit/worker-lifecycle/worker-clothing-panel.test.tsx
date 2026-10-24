@@ -285,6 +285,7 @@ describe('worker information clothing', () => {
       vi.mocked(getClothingStock).mockResolvedValue([
         { ...stockItem, quantity: 6 },
       ]);
+      return { success: true };
     });
     renderPanel();
     const addButton = await screen.findByRole('button', {
@@ -331,6 +332,7 @@ describe('worker information clothing', () => {
           firstName: 'Ada',
           lastName: 'Eins',
           email: 'ada@example.com',
+          workEmail: null, birthday: null, position: null, street: null, city: null, state: null, postalCode: null, country: null, entryDate: null, exitDate: null, workwear: [],
           engagements,
         },
       }

@@ -127,10 +127,15 @@ export function suggestWeekdayLinks(fields: { key: string; label: string }[]) {
 }
 
 export function clearUndistributedWeekdays<T extends Record<string, unknown>>(
-  fields: { key: string; officeOnly?: boolean }[],
+  fields: { key: string; officeOnly?: boolean; bsbOnly?: boolean }[],
   answers: T,
 ): T {
-  if (fields.some((field) => isWeekdayHourKey(field.key) && field.officeOnly)) return answers;
+  if (
+    fields.some(
+      (field) => isWeekdayHourKey(field.key) && (field.officeOnly || field.bsbOnly)
+    )
+  )
+    return answers;
   if (!fields.some((field) => field.key === HOURS_DISTRIBUTION_KEY)) return answers;
   const choice = answers[HOURS_DISTRIBUTION_KEY];
   if (typeof choice === "string" && choice.trim().toLowerCase() === "ja") return answers;

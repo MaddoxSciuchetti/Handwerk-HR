@@ -14,6 +14,7 @@ import { StyledDocumentEditor } from '@/features/settings/documents/StyledDocume
 import { StyledDocumentReview } from '@/features/settings/documents/StyledDocumentReview';
 import { fromSegments } from '@/features/settings/documents/styledDocument';
 import { PreparedPdfPreview } from '@/features/worker-task-management/components/files/PreparedPdfPreview';
+import { setDraggedQuestionnaireAnswer } from '@/features/worker-task-management/components/files/questionnaireAnswerDrag';
 
 vi.mock('@/features/settings/documents/descriptionSentences.api', () => ({
   descriptionSentencesKey: ['documents', 'description-sentences'],
@@ -465,7 +466,10 @@ it('lets the sender type Tätigkeitspunkte without a stored field value', async 
   const point = await screen.findByRole('combobox', { name: 'Tätigkeiten 1' });
   expect(point).toHaveValue('Montage');
   fireEvent.change(point, { target: { value: 'Wartung' } });
-  expect(onValueChange).toHaveBeenCalledWith('contract.taetigkeiten', 'Wartung');
+  expect(onValueChange).toHaveBeenCalledWith(
+    'contract.taetigkeiten',
+    'Wartung'
+  );
   fireEvent.paste(point, {
     clipboardData: { getData: () => 'Montage\nWartung' },
   });
@@ -739,7 +743,9 @@ it.each(['□', '☐', '☒', '☑'])(
       target: { value: 'contract.fixed_term' },
     });
     fireEvent.click(screen.getByLabelText('Feldtyp'));
-    fireEvent.click(await screen.findByRole('option', { name: 'Kontrollkästchen' }));
+    fireEvent.click(
+      await screen.findByRole('option', { name: 'Kontrollkästchen' })
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Feld einsetzen' }));
     const nodes = editor.getJSON().content![0].content!;
     expect(nodes[0].attrs).toMatchObject({
@@ -801,17 +807,41 @@ it('uses mapped checkbox values with the same glyph footprint and supports read-
 it('moves positioned contract text and following content down when Enter splits a line', async () => {
   const optionsSpy = vi.spyOn(Editor.prototype, 'setOptions');
   const value = fromSegments([]);
-  value.content = { type: 'doc', content: [
-    { type: 'lineGroup', attrs: { height: 30, lines: [{ left: 0, top: 20, width: 50 }], labels: [] }, content: [
-      { type: 'lineLabel', attrs: { top: 0, left: 10, fontSize: 10 }, content: [{ type: 'text', text: 'Contract clause' }] },
-      { type: 'lineLabel', attrs: { top: 18, left: 10, fontSize: 10 }, content: [{ type: 'text', text: 'Following line' }] },
-    ] },
-    { type: 'paragraph', content: [{ type: 'text', text: 'Next paragraph' }] },
-  ] };
+  value.content = {
+    type: 'doc',
+    content: [
+      {
+        type: 'lineGroup',
+        attrs: {
+          height: 30,
+          lines: [{ left: 0, top: 20, width: 50 }],
+          labels: [],
+        },
+        content: [
+          {
+            type: 'lineLabel',
+            attrs: { top: 0, left: 10, fontSize: 10 },
+            content: [{ type: 'text', text: 'Contract clause' }],
+          },
+          {
+            type: 'lineLabel',
+            attrs: { top: 18, left: 10, fontSize: 10 },
+            content: [{ type: 'text', text: 'Following line' }],
+          },
+        ],
+      },
+      {
+        type: 'paragraph',
+        content: [{ type: 'text', text: 'Next paragraph' }],
+      },
+    ],
+  };
   render(<StyledDocumentEditor document={value} master />);
   await screen.findByText('Contract clause');
   const editor = optionsSpy.mock.instances.at(-1) as Editor;
-  act(() => { editor.commands.setTextSelection(2); });
+  act(() => {
+    editor.commands.setTextSelection(2);
+  });
   fireEvent.keyDown(editor.view.dom, { key: 'Enter', code: 'Enter' });
   const group = editor.getJSON().content![0];
   expect(group.content![0].content ?? []).toHaveLength(0);
@@ -819,19 +849,26 @@ it('moves positioned contract text and following content down when Enter splits 
   expect(group.content![2].attrs!.top).toBe(30);
   expect(group.attrs!.height).toBe(42);
   expect(group.attrs!.lines[0].top).toBe(32);
-  expect(editor.state.selection.$from.parent.textContent).toBe('Contract clause');
+  expect(editor.state.selection.$from.parent.textContent).toBe(
+    'Contract clause'
+  );
   optionsSpy.mockRestore();
 });
-
 
 it('retains the highlighted replacement text while entering a new field and changing its type', async () => {
   const optionsSpy = vi.spyOn(Editor.prototype, 'setOptions');
   const user = userEvent.setup();
-  const value = fromSegments([{ type: 'text', text: 'Before replace me after' }]);
-  const { container } = render(<StyledDocumentEditor document={value} master />);
+  const value = fromSegments([
+    { type: 'text', text: 'Before replace me after' },
+  ]);
+  const { container } = render(
+    <StyledDocumentEditor document={value} master />
+  );
   await screen.findByText('Before replace me after');
   const editor = optionsSpy.mock.instances.at(-1) as Editor;
-  vi.spyOn(editor.view, 'scrollToSelection').mockImplementation(() => undefined);
+  vi.spyOn(editor.view, 'scrollToSelection').mockImplementation(
+    () => undefined
+  );
   act(() => {
     editor.commands.focus();
     editor.commands.setTextSelection({ from: 8, to: 18 });
@@ -840,22 +877,37 @@ it('retains the highlighted replacement text while entering a new field and chan
   await user.click(label);
   await user.type(label, 'Vorname');
   expect(editor.view.hasFocus()).toBe(false);
-  expect(container.querySelector('.tiptap')).not.toHaveClass('ProseMirror-focused');
-  expect(container.querySelector('.document-retained-selection')).toHaveTextContent('replace me');
+  expect(container.querySelector('.tiptap')).not.toHaveClass(
+    'ProseMirror-focused'
+  );
+  expect(
+    container.querySelector('.document-retained-selection')
+  ).toHaveTextContent('replace me');
   expect(editor.state.selection.from).toBe(8);
   expect(editor.state.selection.to).toBe(18);
-  await user.clear(screen.getByRole('textbox', { name: 'Feldverknüpfung (optional)' }));
-  await user.type(screen.getByRole('textbox', { name: 'Feldverknüpfung (optional)' }), 'contract.first_name');
+  const keyInput = screen.getByRole('textbox', {
+    name: 'Feldverknüpfung (optional)',
+  });
+  expect(keyInput).toHaveValue('contract.vorname');
+  await user.clear(keyInput);
+  await user.type(keyInput, 'contract.first_name');
   await user.click(screen.getByRole('combobox', { name: 'Feldtyp' }));
   await user.click(await screen.findByRole('option', { name: 'Datum' }));
-  expect(container.querySelector('.document-retained-selection')).toHaveTextContent('replace me');
+  expect(
+    container.querySelector('.document-retained-selection')
+  ).toHaveTextContent('replace me');
   await user.click(screen.getByRole('button', { name: 'Feld einsetzen' }));
   const nodes = editor.getJSON().content![0].content!;
   expect(nodes[0].text).toBe('Before ');
-  expect(nodes[1]).toMatchObject({ type: 'documentField', attrs: { key: 'contract.first_name', label: 'Vorname', fieldType: 'date' } });
+  expect(nodes[1]).toMatchObject({
+    type: 'documentField',
+    attrs: { key: 'contract.first_name', label: 'Vorname', fieldType: 'date' },
+  });
   expect(nodes[2].text).toBe(' after');
   expect(container.querySelector('.document-retained-selection')).toBeNull();
-  expect(JSON.stringify(editor.getJSON())).not.toContain('document-retained-selection');
+  expect(JSON.stringify(editor.getJSON())).not.toContain(
+    'document-retained-selection'
+  );
   act(() => editor.commands.undo());
   expect(editor.getText()).toBe('Before replace me after');
   act(() => editor.commands.setTextSelection(1));
@@ -863,29 +915,228 @@ it('retains the highlighted replacement text while entering a new field and chan
   optionsSpy.mockRestore();
 });
 
+it('places a named field with Enter and ignores empty or composing Enter', async () => {
+  const spy = vi.spyOn(Editor.prototype, 'setOptions');
+  render(
+    <StyledDocumentEditor
+      document={fromSegments([{ type: 'text', text: 'Before replace after' }])}
+      master
+    />
+  );
+  await screen.findByText('Before replace after');
+  const editor = spy.mock.instances.at(-1) as Editor;
+  vi.spyOn(editor.view, 'scrollToSelection').mockImplementation(
+    () => undefined
+  );
+  act(() => editor.commands.setTextSelection({ from: 8, to: 15 }));
+  const label = screen.getByRole('textbox', { name: 'Feldbezeichnung' });
+  fireEvent.keyDown(label, { key: 'Enter' });
+  expect(editor.getText()).toBe('Before replace after');
+  fireEvent.change(label, { target: { value: 'Vorname' } });
+  const keyInput = screen.getByRole('textbox', {
+    name: 'Feldverknüpfung (optional)',
+  });
+  expect(keyInput).toHaveValue('contract.vorname');
+  fireEvent.change(label, { target: { value: 'Nachname' } });
+  expect(keyInput).toHaveValue('contract.nachname');
+  fireEvent.change(label, { target: { value: 'Vorname' } });
+  fireEvent.keyDown(label, { key: 'Enter', isComposing: true });
+  expect(editor.getText()).toBe('Before replace after');
+  fireEvent.keyDown(label, { key: 'Enter' });
+  expect(editor.getJSON().content![0].content).toMatchObject([
+    { type: 'text', text: 'Before ' },
+    {
+      type: 'documentField',
+      attrs: { label: 'Vorname', key: 'contract.vorname' },
+    },
+    { type: 'text', text: ' after' },
+  ]);
+  expect(label).toHaveValue('');
+  expect(keyInput).toHaveValue('');
+  expect(editor.state.selection.from).toBe(9);
+  spy.mockRestore();
+});
+
+it.each(['raw', 'raw without label', 'field'])(
+  'replaces a selected %s checkbox with the chosen shape on Enter at a readable size',
+  async (kind) => {
+    const spy = vi.spyOn(Editor.prototype, 'setOptions');
+    const user = userEvent.setup();
+    const value = fromSegments([]);
+    value.content = {
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            kind !== 'field'
+              ? {
+                  type: 'text',
+                  text: '□',
+                  marks: [
+                    {
+                      type: 'textStyle',
+                      attrs: { fontSize: 8, color: '#215e99' },
+                    },
+                  ],
+                }
+              : {
+                  type: 'documentField',
+                  attrs: {
+                    key: 'contract.fixed_term',
+                    label: 'Fixed term',
+                    fieldType: 'checkbox',
+                    checkboxGlyph: '□',
+                    required: false,
+                  },
+                  marks: [
+                    {
+                      type: 'textStyle',
+                      attrs: { fontSize: 8, color: '#215e99' },
+                    },
+                  ],
+                },
+            {
+              type: 'text',
+              text: ' Small surrounding text',
+              marks: [{ type: 'textStyle', attrs: { fontSize: 8 } }],
+            },
+          ],
+        },
+      ],
+    };
+    render(<StyledDocumentEditor document={value} master />);
+    await screen.findByText('Small surrounding text');
+    const editor = spy.mock.instances.at(-1) as Editor;
+    vi.spyOn(editor.view, 'scrollToSelection').mockImplementation(
+      () => undefined
+    );
+    act(() => editor.commands.setTextSelection({ from: 1, to: 2 }));
+    const label = screen.getByRole('textbox', { name: 'Feldbezeichnung' });
+    if (kind === 'raw') await user.type(label, 'Fixed term');
+    await user.click(screen.getByRole('combobox', { name: 'Feldtyp' }));
+    await user.click(screen.getByRole('option', { name: 'Kontrollkästchen' }));
+    await user.click(screen.getByRole('combobox', { name: 'Kästchenform' }));
+    await user.click(screen.getByRole('option', { name: '☐' }));
+    expect(label).toHaveFocus();
+    await user.keyboard('{Enter}');
+    const nodes = editor.getJSON().content![0].content!;
+    expect(nodes).toHaveLength(2);
+    expect(nodes[0]).toMatchObject({
+      type: 'documentField',
+      attrs: {
+        key:
+          kind === 'raw without label'
+            ? 'contract.kontrollkastchen'
+            : 'contract.fixed_term',
+        label: kind === 'raw without label' ? 'Kontrollkästchen' : 'Fixed term',
+        checkboxGlyph: '☐',
+        fieldType: 'checkbox',
+      },
+      marks: [{ type: 'textStyle', attrs: { fontSize: 14, color: '#215e99' } }],
+    });
+    expect(nodes[1]).toMatchObject({
+      type: 'text',
+      text: ' Small surrounding text',
+      marks: [{ type: 'textStyle', attrs: { fontSize: 8 } }],
+    });
+    act(() => editor.commands.undo());
+    expect(editor.getJSON().content![0].content![0].type).toBe(
+      kind !== 'field' ? 'text' : 'documentField'
+    );
+    spy.mockRestore();
+  }
+);
+
+it.each([
+  ['ja', 'true', null],
+  ['nein', 'false', null],
+  ['ja', 'true', '□'],
+  ['nein', 'false', '□'],
+])(
+  'converts dropped questionnaire answer %s into checkbox value %s (glyph %s)',
+  async (answer, expected, glyph) => {
+    const value = fromSegments([
+      {
+        type: 'input',
+        key: 'contract.accept',
+        label: 'Bestätigung',
+        fieldType: 'checkbox',
+      },
+    ]);
+    value.content.content![0].content![0].attrs!.checkboxGlyph = glyph;
+    const onValueChange = vi.fn();
+    render(
+      <StyledDocumentEditor document={value} onValueChange={onValueChange} />
+    );
+    const checkbox = await screen.findByRole('checkbox', {
+      name: 'Bestätigung',
+    });
+    setDraggedQuestionnaireAnswer({ value: answer! });
+    try {
+      fireEvent.drop(checkbox);
+      expect(onValueChange).toHaveBeenCalledWith('contract.accept', expected);
+    } finally {
+      setDraggedQuestionnaireAnswer(null);
+    }
+  }
+);
+
 it.each(['paragraph', 'lineLabel', 'tableCell'])(
   'drops a field at a text position inside a %s and publishes it',
   async (parent) => {
     const optionsSpy = vi.spyOn(Editor.prototype, 'setOptions');
-    const value = fromSegments([{ type: 'text', text: 'Before replacement after' }]);
+    const value = fromSegments([
+      { type: 'text', text: 'Before replacement after' },
+    ]);
     if (parent === 'lineLabel') {
-      value.content = { type: 'doc', content: [{ type: 'lineGroup', content: [
-        { type: 'lineLabel', content: [{ type: 'text', text: 'Before replacement after' }] },
-      ] }] };
+      value.content = {
+        type: 'doc',
+        content: [
+          {
+            type: 'lineGroup',
+            content: [
+              {
+                type: 'lineLabel',
+                content: [{ type: 'text', text: 'Before replacement after' }],
+              },
+            ],
+          },
+        ],
+      };
     } else if (parent === 'tableCell') {
-      value.content = { type: 'doc', content: [{ type: 'table', content: [
-        { type: 'tableRow', content: [{ type: 'tableCell', content: value.content.content }] },
-      ] }] };
+      value.content = {
+        type: 'doc',
+        content: [
+          {
+            type: 'table',
+            content: [
+              {
+                type: 'tableRow',
+                content: [
+                  { type: 'tableCell', content: value.content.content },
+                ],
+              },
+            ],
+          },
+        ],
+      };
     }
     const onChange = vi.fn();
-    render(<StyledDocumentEditor document={value} master onChange={onChange} />);
+    render(
+      <StyledDocumentEditor document={value} master onChange={onChange} />
+    );
     await screen.findByText('Before replacement after');
     const editor = optionsSpy.mock.instances.at(-1) as Editor;
     editor.setOptions({ editorProps: { handleScrollToSelection: () => true } });
     let pos = 0;
-    editor.state.doc.descendants((node, at) => { if (node.isText) pos = at + 7; });
+    editor.state.doc.descendants((node, at) => {
+      if (node.isText) pos = at + 7;
+    });
     vi.spyOn(editor.view, 'posAtCoords').mockReturnValue({ pos, inside: -1 });
-    fireEvent.change(screen.getByLabelText('Feldbezeichnung'), { target: { value: 'Vorname' } });
+    fireEvent.change(screen.getByLabelText('Feldbezeichnung'), {
+      target: { value: 'Vorname' },
+    });
     const data = new Map<string, string>();
     const dataTransfer = {
       setData: (type: string, content: string) => data.set(type, content),
@@ -893,13 +1144,19 @@ it.each(['paragraph', 'lineLabel', 'tableCell'])(
       types: ['application/x-bsb-field'],
       effectAllowed: '',
     };
-    fireEvent.dragStart(screen.getByTitle('Feld ziehen: Vorname'), { dataTransfer });
+    fireEvent.dragStart(screen.getByTitle('Feld ziehen: Vorname'), {
+      dataTransfer,
+    });
     fireEvent.drop(editor.view.dom, { dataTransfer });
     expect(JSON.stringify(editor.getJSON())).toContain('contract.vorname');
     expect(editor.getText()).toContain('Before');
     expect(editor.getText()).toContain('replacement after');
-    expect(JSON.stringify(onChange.mock.calls.at(-1)?.[0])).toContain('contract.vorname');
-    act(() => { editor.commands.undo(); });
+    expect(JSON.stringify(onChange.mock.calls.at(-1)?.[0])).toContain(
+      'contract.vorname'
+    );
+    act(() => {
+      editor.commands.undo();
+    });
     expect(JSON.stringify(editor.getJSON())).not.toContain('contract.vorname');
     optionsSpy.mockRestore();
   }
@@ -907,13 +1164,17 @@ it.each(['paragraph', 'lineLabel', 'tableCell'])(
 
 it('accepts a field dropped onto blank paper and keeps a long drag label bounded', async () => {
   const optionsSpy = vi.spyOn(Editor.prototype, 'setOptions');
-  const { container } = render(<StyledDocumentEditor document={fromSegments([])} master pageView />);
+  const { container } = render(
+    <StyledDocumentEditor document={fromSegments([])} master pageView />
+  );
   await screen.findByLabelText('Feldbezeichnung');
   const editor = optionsSpy.mock.instances.at(-1) as Editor;
   editor.setOptions({ editorProps: { handleScrollToSelection: () => true } });
   vi.spyOn(editor.view, 'posAtCoords').mockReturnValue(null);
   const label = 'A very long field label '.repeat(5).trim();
-  fireEvent.change(screen.getByLabelText('Feldbezeichnung'), { target: { value: label } });
+  fireEvent.change(screen.getByLabelText('Feldbezeichnung'), {
+    target: { value: label },
+  });
   const chip = screen.getByTitle(`Feld ziehen: ${label}`);
   expect(chip).toHaveClass('max-w-full');
   expect(chip.lastElementChild).toHaveClass('truncate');
@@ -925,10 +1186,13 @@ it('accepts a field dropped onto blank paper and keeps a long drag label bounded
     effectAllowed: '',
   };
   fireEvent.dragStart(chip, { dataTransfer });
-  fireEvent.drop(container.querySelector('.document-editor-paper')!, { dataTransfer });
+  fireEvent.drop(container.querySelector('.document-editor-paper')!, {
+    dataTransfer,
+  });
   expect(JSON.stringify(editor.getJSON())).toContain(label);
-  expect(screen.getByRole('combobox', { name: 'Dokumentzoom' }).parentElement)
-    .not.toContainElement(screen.getByLabelText('Feldbezeichnung'));
+  expect(
+    screen.getByRole('combobox', { name: 'Dokumentzoom' }).parentElement
+  ).not.toContainElement(screen.getByLabelText('Feldbezeichnung'));
   optionsSpy.mockRestore();
 });
 
@@ -938,18 +1202,28 @@ it.each([
   { fieldType: 'points', required: true },
 ])('preserves the attributes of a dropped $fieldType field', async (attrs) => {
   const optionsSpy = vi.spyOn(Editor.prototype, 'setOptions');
-  render(<StyledDocumentEditor document={fromSegments([{ type: 'text', text: 'Contract clause' }])} master />);
+  render(
+    <StyledDocumentEditor
+      document={fromSegments([{ type: 'text', text: 'Contract clause' }])}
+      master
+    />
+  );
   await screen.findByText('Contract clause');
   const editor = optionsSpy.mock.instances.at(-1) as Editor;
   editor.setOptions({ editorProps: { handleScrollToSelection: () => true } });
   vi.spyOn(editor.view, 'posAtCoords').mockReturnValue({ pos: 8, inside: -1 });
   const field = { key: 'contract.test', label: 'Test field', ...attrs };
-  fireEvent.drop(editor.view.dom, { dataTransfer: {
-    types: ['application/x-bsb-field'],
-    getData: (type: string) => type === 'application/x-bsb-field' ? JSON.stringify(field) : '',
-  } });
+  fireEvent.drop(editor.view.dom, {
+    dataTransfer: {
+      types: ['application/x-bsb-field'],
+      getData: (type: string) =>
+        type === 'application/x-bsb-field' ? JSON.stringify(field) : '',
+    },
+  });
   const inserted: { attrs: Record<string, unknown> }[] = [];
-  editor.state.doc.descendants((node) => { if (node.attrs.key === field.key) inserted.push(node); });
+  editor.state.doc.descendants((node) => {
+    if (node.attrs.key === field.key) inserted.push(node);
+  });
   expect(inserted).toHaveLength(1);
   expect(inserted[0].attrs).toMatchObject(field);
   optionsSpy.mockRestore();
@@ -958,7 +1232,9 @@ it.each([
 it('shows an optional auto-filled field link, allows overrides, and restores automatic generation when cleared', async () => {
   render(<StyledDocumentEditor document={document} master />);
   const label = await screen.findByRole('textbox', { name: 'Feldbezeichnung' });
-  const link = screen.getByRole('textbox', { name: 'Feldverknüpfung (optional)' });
+  const link = screen.getByRole('textbox', {
+    name: 'Feldverknüpfung (optional)',
+  });
   expect(link).toBeVisible();
   expect(link).not.toBeRequired();
   expect(screen.queryByText(/Platzhalter einfügen:/)).not.toBeInTheDocument();

@@ -16,6 +16,7 @@ export type TaskEditState = {
   sequence: string | null;
   mailTemplateId?: string | null;
   mailSenderAddress?: string | null;
+  microsoftAccountId?: string | null;
 };
 
 export const EMPTY_TASK_EDIT_STATE: TaskEditState = {
@@ -52,12 +53,9 @@ export function useTaskSidebar() {
 
   const close = useCallback(() => setIsOpen(false), []);
 
-  const patchTaskEditState = useCallback(
-    (patch: Partial<TaskEditState>) => {
-      setTaskEditState((prev) => ({ ...prev, ...patch }));
-    },
-    []
-  );
+  const patchTaskEditState = useCallback((patch: Partial<TaskEditState>) => {
+    setTaskEditState((prev) => ({ ...prev, ...patch }));
+  }, []);
 
   const sidebarKey =
     taskState === 'edit'

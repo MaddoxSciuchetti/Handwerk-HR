@@ -1,3 +1,4 @@
+import { defaultQuestionnaireSender } from "@/services/questionnaireSender";
 import { FRONTENDURL, QUESTIONNAIRE_MOCK_RESPONSES } from "@/constants/env";
 import { NOT_FOUND } from "@/constants/http";
 import { prisma } from "@/lib/prisma";
@@ -127,13 +128,19 @@ function parseAdded(questions: unknown) {
     return readEngagementDraft({ questions, values: {} }).questions;
 }
 
-async function deliverQuestionnaire(email: string | null, token: string) {
+async function deliverQuestionnaire(
+    email: string | null,
+    token: string,
+    senderAddress?: string | null,
+) {
     if (!email) return false;
     const formUrl = `${FRONTENDURL.replace(/\/$/, "")}/fragebogen/${token}`;
     const template = getQuestionnaireTemplate(formUrl);
+    const effectiveSender = defaultQuestionnaireSender() ?? senderAddress;
     try {
         const sent = await sendMail({
             to: email,
+            ...(effectiveSender ? { senderAddress: effectiveSender } : {}),
             subject: template.subject,
             text: template.text,
             html: template.html,
@@ -148,13 +155,14 @@ async function finishDispatch(
     email: string | null,
     token: string,
     engagementId: string,
+    senderAddress?: string | null,
 ) {
     if (QUESTIONNAIRE_MOCK_RESPONSES) {
         await completeMockQuestionnaire(token, email ?? "");
         return { emailSent: false, mockCompleted: true, engagementId };
     }
     return {
-        emailSent: await deliverQuestionnaire(email, token),
+        emailSent: await deliverQuestionnaire(email, token, senderAddress),
         mockCompleted: false,
         engagementId,
     };
@@ -171,6 +179,7 @@ export async function sendEngagementQuestionnaire(params: {
             engagement.worker.email,
             engagement.questionnaireSubmission.token,
             engagement.id,
+            engagement.questionnaireSenderAddress,
         );
     }
 
@@ -214,5 +223,10 @@ export async function sendEngagementQuestionnaire(params: {
         }
     });
 
-    return finishDispatch(engagement.worker.email, token, engagement.id);
+    return finishDispatch(
+        engagement.worker.email,
+        token,
+        engagement.id,
+        engagement.questionnaireSenderAddress,
+    );
 }

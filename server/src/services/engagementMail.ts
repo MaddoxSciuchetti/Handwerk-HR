@@ -1,6 +1,7 @@
 import { integrationsMocked, mockMailboxes } from "./integrations/localMock";
 import type { EngagementMailRecipientKind } from "@prisma/client";
 import { BAD_REQUEST } from "@/constants/http";
+import { microsoftSimulationEnabled } from "@/constants/env";
 import { prisma } from "@/lib/prisma";
 import AppError from "@/utils/AppError";
 import {
@@ -14,6 +15,8 @@ import {
     formatWelcomeEntryDate,
     listMailEnabledChannels,
     listMicrosoftGroups,
+    listLicensedMicrosoftUsers,
+    readLicensedMicrosoftUsers,
     microsoftGroupRecipientAddresses,
     sendGraphMail,
     type MicrosoftChannelOption,
@@ -38,6 +41,7 @@ export type MailRecipientInput = {
     address?: string | null;
     workerId?: string | null;
     groupId?: string | null;
+    microsoftUserId?: string | null;
 };
 
 export type StoredMailRecipient = {
@@ -46,6 +50,7 @@ export type StoredMailRecipient = {
     address: string | null;
     workerId: string | null;
     groupId: string | null;
+    microsoftUserId?: string | null;
 };
 
 export type MailSenderOption = {
@@ -76,6 +81,7 @@ const recipientSelect = {
     address: true,
     workerId: true,
     groupId: true,
+    microsoftUserId: true,
 } as const;
 
 function rememberMail(seen: Set<string>, email: string | null | undefined) {
@@ -117,12 +123,13 @@ export async function listBsbMailAddresses(organizationId: string) {
 async function storedWorkerMails(organizationId: string) {
     const workers = await prisma.worker.findMany({
         where: { organizationId },
-        select: { email: true, workEmail: true },
+        select: { email: true, workEmail: true, microsoftEmail: true },
     });
     const seen = new Set<string>();
     for (const worker of workers) {
         rememberMail(seen, worker.email);
         rememberMail(seen, worker.workEmail);
+        rememberMail(seen, worker.microsoftEmail);
     }
     return seen;
 }
@@ -172,11 +179,12 @@ export async function readEngagementMailRecipients(
 }
 
 export async function engagementMailOptions(organizationId: string) {
-    const [stored, workerMails, groups, channels] = await Promise.all([
+    const [stored, workerMails, groups, channels, licensed] = await Promise.all([
         listBsbMailAddresses(organizationId),
         storedWorkerMails(organizationId),
         listMicrosoftGroups(organizationId),
         listMailEnabledChannels(organizationId),
+        listLicensedMicrosoftUsers(organizationId),
     ]);
     const bsbMails = new Set([
         ...stored.addresses.map((address) => address.email),
@@ -184,6 +192,8 @@ export async function engagementMailOptions(organizationId: string) {
     ]);
     return {
         workers: [],
+        licensedUsers: licensed.users,
+        licensedUsersError: licensed.error,
         groups: groups.groups,
         groupsError: groups.error,
         channels: channels.channels.filter(
@@ -245,13 +255,29 @@ export async function normalizeRecipients(
                   lastName: true,
                   email: true,
                   workEmail: true,
+                  microsoftEmail: true,
               },
           })
         : [];
     const byId = new Map(workers.map((worker) => [worker.id, worker]));
+    const licensed = recipients.some((recipient) => recipient.kind === "microsoft_user")
+        ? await listLicensedMicrosoftUsers(organizationId)
+        : { users: [], error: null };
+    if (licensed.error) throw new AppError(BAD_REQUEST, licensed.error);
+    const licensedById = new Map(licensed.users.map((user) => [user.id, user]));
     const seen = new Set<string>();
     const rows: StoredMailRecipient[] = [];
     for (const recipient of recipients) {
+        if (recipient.kind === "microsoft_user") {
+            const user = licensedById.get(recipient.microsoftUserId ?? "");
+            if (!user) throw new AppError(BAD_REQUEST, "Lizenzierter Microsoft-Benutzer nicht gefunden.");
+            const key = `microsoft_user:${user.id}`;
+            if (seen.has(key)) continue;
+            seen.add(key);
+            rows.push({ kind: "microsoft_user", label: user.displayName, address: user.email,
+                microsoftUserId: user.id, workerId: null, groupId: null });
+            continue;
+        }
         if (recipient.kind === "worker_private" || recipient.kind === "worker_work") {
             const worker = recipient.workerId
                 ? byId.get(recipient.workerId)
@@ -327,6 +353,7 @@ type MailWorker = {
     firstName: string;
     lastName: string;
     workEmail: string | null;
+    microsoftEmail?: string | null;
     position: string | null;
     entryDate: Date | null;
     exitDate: Date | null;
@@ -339,7 +366,17 @@ async function resolveRecipientAddresses(params: {
     recipients: StoredMailRecipient[];
 }): Promise<{ addresses: string[] } | { message: string }> {
     const addresses = new Set<string>();
+    const licensedUsers = params.recipients.some((recipient) => recipient.kind === "microsoft_user")
+        ? await readLicensedMicrosoftUsers(params.token)
+        : [];
+    if (!licensedUsers) return { message: "Microsoft Graph hat die lizenzierten Benutzer nicht geliefert." };
     for (const recipient of params.recipients) {
+        if (recipient.kind === "microsoft_user") {
+            const user = licensedUsers.find((user) => user.id === recipient.microsoftUserId);
+            if (!user) return { message: `${recipient.label} hat kein gültiges lizenziertes Microsoft-Konto mehr.` };
+            addresses.add(user.email);
+            continue;
+        }
         if (recipient.kind === "microsoft_group") {
             const groupId = recipient.groupId?.trim() ?? "";
             if (!groupId) {
@@ -366,7 +403,7 @@ async function resolveRecipientAddresses(params: {
                           id: recipient.workerId,
                           organizationId: params.organizationId,
                       },
-                      select: { email: true, workEmail: true },
+                      select: { email: true, workEmail: true, microsoftEmail: true },
                   })
                 : null;
             const address =
@@ -508,6 +545,7 @@ async function loadIssueMail(
             firstName: true,
             lastName: true,
             workEmail: true,
+            microsoftEmail: true,
             position: true,
             entryDate: true,
             exitDate: true,
@@ -572,7 +610,7 @@ async function deliverMail(params: {
             message: "Für dieses Engagement sind keine Empfänger gewählt.",
         };
     }
-    if (!integrationsLive()) {
+    if (!integrationsLive() && !microsoftSimulationEnabled()) {
         return { status: "failed", message: NOT_LIVE_MESSAGE };
     }
     const config = await loadMicrosoft365Config(params.organizationId);
@@ -616,7 +654,7 @@ function mailValues(worker: MailWorker) {
     return {
         firstName: worker.firstName.trim(),
         lastName: worker.lastName.trim(),
-        workEmail: worker.workEmail?.trim() ?? "",
+        workEmail: worker.microsoftEmail?.trim() || worker.workEmail?.trim() || "",
         position: worker.position?.trim() ?? "",
         entryDate: formatWelcomeEntryDate(worker.entryDate),
         exitDate: formatWelcomeEntryDate(worker.exitDate),

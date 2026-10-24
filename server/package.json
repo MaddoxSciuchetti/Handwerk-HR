@@ -1,7 +1,7 @@
 {
     "name": "server",
     "private": true,
-    "version": "1.0.0",
+    "version": "2.0.0",
     "description": "",
     "main": "server.js",
     "proxy": "http://localhost:4242",
@@ -16,7 +16,7 @@
         "test:e2e": "jest ----testPathPatterns=./e2e",
         "build": "esbuild src/index.ts --bundle --platform=node --outfile=dist/index.js --format=esm --packages=external",
         "start": "node dist/index.js",
-        "dev": "tsx src/index.ts",
+        "dev": "tsx watch src/index.ts",
         "dev:documents": "docker compose -f ../compose.documents.yml up -d && tsx src/index.ts",
         "db:repair-prisma-migration": "prisma db execute --file prisma/repair_modified_migration.sql && prisma migrate deploy",
         "db:fix-subscription-plan-enum": "prisma db execute --file prisma/fix_subscription_plan_enum_drift.sql"

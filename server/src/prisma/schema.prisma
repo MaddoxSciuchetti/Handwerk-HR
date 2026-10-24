@@ -169,6 +169,7 @@ model WorkerEngagement {
   endDate           DateTime?          @map("end_date") @db.Date
   startedAt         DateTime           @default(now()) @map("started_at") @db.Timestamptz()
   completedAt       DateTime?          @map("completed_at") @db.Timestamptz()
+  questionnaireSenderAddress String?   @map("questionnaire_sender_address") @db.VarChar(254)
   questionnaireOverrides Json?         @map("questionnaire_overrides")
   createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz()
@@ -224,6 +225,7 @@ model Worker {
   firstName        String             @map("first_name") @db.VarChar(120)
   lastName         String             @map("last_name") @db.VarChar(120)
   email            String             @db.VarChar(254)
+  microsoftEmail   String?            @map("microsoft_email") @db.VarChar(254)
   workEmail        String?            @map("work_email") @db.VarChar(254)
   welcomeMailSentAt   DateTime?        @map("welcome_mail_sent_at") @db.Timestamptz()
   departureMailSentAt DateTime?        @map("departure_mail_sent_at") @db.Timestamptz()
@@ -349,6 +351,8 @@ model Issue {
   sequence           IntegrationSequence? @map("sequence")
   mailTemplateId     String?            @map("mail_template_id")
   automationRecipients Json? @map("automation_recipients")
+
+  microsoftAccountId String?            @map("microsoft_account_id") @db.VarChar(36)
   mailSenderAddress  String?            @map("mail_sender_address") @db.VarChar(254)
   isTemporary        Boolean            @default(false) @map("is_temporary")
   assigneeOnly       Boolean            @default(false) @map("assignee_only")
@@ -425,6 +429,7 @@ model IssueAuditLog {
 }
 
 model Comment {
+  mentionedUserIds String[] @default([]) @map("mentioned_user_ids")
   id        String   @id @default(uuid())
   issueId   String   @map("issue_id")
   userId    String   @map("user_id")
@@ -934,6 +939,7 @@ model EngagementMailRecipient {
   address      String?                     @db.VarChar(254)
   workerId     String?                     @map("worker_id")
   groupId      String?                     @map("group_id") @db.VarChar(255)
+  microsoftUserId String?                  @map("microsoft_user_id") @db.VarChar(64)
   createdAt    DateTime                    @default(now()) @map("created_at") @db.Timestamptz()
 
   engagement WorkerEngagement @relation(fields: [engagementId], references: [id], onDelete: Cascade)
@@ -1132,6 +1138,7 @@ enum EngagementMailRecipientKind {
   worker_work
   microsoft_group
   teams_channel
+  microsoft_user
 }
 
 enum ExternalAccountProvider {

@@ -18,6 +18,7 @@ export type PreviewField = {
   max?: number;
   layout?: 'inline';
   defaultValue?: string;
+  bsbOnly?: boolean;
   officeOnly?: boolean;
 };
 
@@ -79,26 +80,29 @@ export function candidateItems(items: PreviewItem[]): CandidateItem[] {
       };
     }
     const preset = item.defaultValue?.trim() ?? '';
+    const officeOnly = item.officeOnly === true || item.bsbOnly === true;
     return {
       kind: 'field',
       key: item.key,
       label: item.label,
       section: item.section,
       type: item.type,
-      required: isWeekdayHourKey(item.key)
+      required: officeOnly
         ? false
-        : item.key === HOURS_DISTRIBUTION_KEY
-          ? item.required === true
-          : item.type === 'file' || item.builtin === false
-            ? item.required !== false
-            : true,
+        : isWeekdayHourKey(item.key)
+          ? false
+          : item.key === HOURS_DISTRIBUTION_KEY
+            ? item.required === true
+            : item.type === 'file' || item.builtin === false
+              ? item.required !== false
+              : true,
       options: item.options,
       max: item.max,
       layout: item.layout,
       defaultValue: preset || undefined,
       employerFilled:
-        item.officeOnly === true ||
-        (!isWeekdayHourKey(item.key) && preset.length > 0),
+        officeOnly || (!isWeekdayHourKey(item.key) && preset.length > 0),
+      bsbOnly: officeOnly || undefined,
     };
   });
 }

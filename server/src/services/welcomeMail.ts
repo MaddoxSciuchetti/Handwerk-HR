@@ -1,6 +1,8 @@
 import { integrationsMocked, mockGroups, mockMailboxes } from "./integrations/localMock";
 import { MICROSOFT_APP_AUTH_ERROR } from "./microsoft365/authError";
 import { prisma } from "@/lib/prisma";
+import { microsoftSimulationEnabled } from "@/constants/env";
+import { microsoftGraphFetch } from "@/services/integrations/microsoftSimulation";
 import {
     integrationsLive,
     loadMicrosoft365Config,
@@ -28,6 +30,7 @@ export type WelcomeMailPage = {
     settings: WelcomeMailSettingsRecord | null;
     groups: MicrosoftGroupOption[];
     groupsError: string | null;
+    simulated?: boolean;
 };
 
 export type TeamWelcomeMailResult =
@@ -129,7 +132,7 @@ export function teamMailSettingsComplete(
 }
 
 async function graphJson(token: string, url: string, init?: RequestInit) {
-    const response = await fetch(url, {
+    const response = await microsoftGraphFetch(url, {
         ...init,
         headers: {
             Authorization: `Bearer ${token}`,
@@ -149,7 +152,10 @@ async function graphJson(token: string, url: string, init?: RequestInit) {
 async function listGraph<T>(token: string, path: string) {
     const items: T[] = [];
     let url: string | null = `${GRAPH}${path}`;
-    for (let page = 0; page < 10 && url; page += 1) {
+    const visited = new Set<string>();
+    while (url) {
+        if (visited.has(url)) return null;
+        visited.add(url);
         const { response, payload } = await graphJson(token, url);
         if (!response.ok) {
             console.error("Microsoft Graph request failed", response.status);
@@ -169,7 +175,7 @@ export async function listMicrosoftGroups(
     | { groups: []; error: string }
 > {
     if (integrationsMocked()) return { groups: mockGroups, error: null };
-    if (!integrationsLive()) {
+    if (!integrationsLive() && !microsoftSimulationEnabled()) {
         return { groups: [], error: NOT_LIVE_MESSAGE };
     }
     const config = await loadMicrosoft365Config(organizationId);
@@ -226,6 +232,7 @@ export async function welcomeMailPage(
         settings,
         groups: listed.groups,
         groupsError: listed.error,
+        simulated: microsoftSimulationEnabled(),
     };
 }
 
@@ -381,11 +388,46 @@ export type MicrosoftMailAddress = {
     kind: "mailbox" | "channel";
 };
 
+export type LicensedMicrosoftUser = {
+    id: string;
+    displayName: string;
+    email: string;
+};
+
+export async function readLicensedMicrosoftUsers(token: string): Promise<LicensedMicrosoftUser[] | null> {
+    const users = await listGraph<{
+        id?: string;
+        displayName?: string;
+        mail?: string;
+        userPrincipalName?: string;
+        assignedLicenses?: Array<{ skuId?: string }>;
+    }>(token, "/users?$select=id,displayName,mail,userPrincipalName,assignedLicenses&$top=999");
+    if (!users) return null;
+    const seen = new Set<string>();
+    return users.flatMap((user) => {
+        if (!user.id || !user.assignedLicenses?.length) return [];
+        const email = (user.mail?.trim() || user.userPrincipalName?.trim() || "").toLowerCase();
+        if (!email.includes("@") || seen.has(email)) return [];
+        seen.add(email);
+        return [{ id: user.id, displayName: user.displayName?.trim() || email, email }];
+    }).sort((left, right) => left.displayName.localeCompare(right.displayName, "de"));
+}
+
+export async function listLicensedMicrosoftUsers(organizationId: string) {
+    if (!integrationsLive()) return { users: [], error: NOT_LIVE_MESSAGE };
+    const config = await loadMicrosoft365Config(organizationId);
+    if (!config) return { users: [], error: null };
+    const token = await microsoftGraphToken(config);
+    if (!token) return { users: [], error: "Microsoft Graph hat die Anmeldung abgelehnt." };
+    const users = await readLicensedMicrosoftUsers(token);
+    return { users: users ?? [], error: users ? null : "Microsoft Graph hat die lizenzierten Benutzer nicht geliefert." };
+}
+
 export async function listMicrosoftMailAddresses(
     organizationId: string,
 ): Promise<{ addresses: MicrosoftMailAddress[]; error: string | null }> {
     if (integrationsMocked()) return { addresses: mockMailboxes, error: null };
-    if (!integrationsLive()) {
+    if (!integrationsLive() && !microsoftSimulationEnabled()) {
         return { addresses: [], error: NOT_LIVE_MESSAGE };
     }
     const config = await loadMicrosoft365Config(organizationId);
@@ -442,7 +484,7 @@ export async function listMailEnabledChannels(
     | { channels: MicrosoftChannelOption[]; error: string }
 > {
     if (integrationsMocked()) return { channels: [], error: null };
-    if (!integrationsLive()) {
+    if (!integrationsLive() && !microsoftSimulationEnabled()) {
         return { channels: [], error: NOT_LIVE_MESSAGE };
     }
     const config = await loadMicrosoft365Config(organizationId);
@@ -531,6 +573,7 @@ export async function sendTeamWelcomeMail(params: {
             firstName: true,
             lastName: true,
             workEmail: true,
+            microsoftEmail: true,
             position: true,
             entryDate: true,
             welcomeMailSentAt: true,
@@ -540,14 +583,14 @@ export async function sendTeamWelcomeMail(params: {
     if (worker.welcomeMailSentAt) {
         return { status: "skipped", reason: "already_sent" };
     }
-    const workEmail = worker.workEmail?.trim() ?? "";
+    const workEmail = worker.microsoftEmail?.trim() || worker.workEmail?.trim() || "";
     if (!workEmail) return { status: "skipped", reason: "no_work_email" };
 
     const settings = await readWelcomeMailSettings(params.organizationId);
     if (!teamMailSettingsComplete(settings)) {
         return { status: "skipped", reason: "not_configured" };
     }
-    if (!integrationsLive()) {
+    if (!integrationsLive() && !microsoftSimulationEnabled()) {
         return { status: "skipped", reason: "not_live" };
     }
     const config = await loadMicrosoft365Config(params.organizationId);

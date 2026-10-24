@@ -1,6 +1,8 @@
 import { microsoftAppAuthError } from "./microsoft365/authError";
 import { randomBytes } from "crypto";
 import type { Microsoft365EnvKey } from "@/constants/env";
+import { microsoftSimulationEnabled } from "@/constants/env";
+import { microsoftGraphFetch, SIMULATION_TOKEN } from "@/services/integrations/microsoftSimulation";
 import { prisma } from "@/lib/prisma";
 import { integrationsLive } from "@/services/integrations/runtime";
 import { passwordMail } from "./microsoft365/passwordMail";
@@ -92,7 +94,7 @@ export async function microsoft365AutomationStatus(
         name: "Microsoft 365",
         description:
             "Zugangsdaten liegen unter Integrationen. Ein Konto entsteht erst, wenn die Aufgabe ausgeführt wird.",
-        configured: Boolean(row?.enabled) && missing.length === 0,
+        configured: Boolean(row?.enabled) && (microsoftSimulationEnabled() || missing.length === 0),
         missing,
         permissions: REQUIRED_PERMISSIONS,
     };
@@ -151,6 +153,7 @@ export async function microsoftGraphToken(
     onAuthError?: (message: string) => void,
 ) {
     if (!config) return null;
+    if (microsoftSimulationEnabled()) return SIMULATION_TOKEN;
     return graphToken(config, onAuthError);
 }
 
@@ -196,7 +199,7 @@ async function graphRequest(
     path: string,
     init?: RequestInit,
 ) {
-    const response = await fetch(`${GRAPH}${path}`, {
+    const response = await microsoftGraphFetch(`${GRAPH}${path}`, {
         ...init,
         headers: {
             Authorization: `Bearer ${token}`,
@@ -307,7 +310,7 @@ export async function provisionMicrosoft365Account(params: {
             firstName: true,
             lastName: true,
             email: true,
-            workEmail: true,
+            microsoftEmail: true,
             externalAccounts: {
                 where: { provider: "microsoft_365" },
                 select: { externalId: true },
@@ -324,11 +327,11 @@ export async function provisionMicrosoft365Account(params: {
         return {
             status: "skipped",
             reason: "already_provisioned",
-            workEmail: worker.workEmail ?? "",
+            workEmail: worker.microsoftEmail ?? "",
         };
     }
 
-    if (!integrationsLive()) {
+    if (!integrationsLive() && !microsoftSimulationEnabled()) {
         return { status: "skipped", reason: "not_live" };
     }
 
@@ -356,21 +359,32 @@ export async function provisionMicrosoft365Account(params: {
         licenseSkuId: config.licenseSkuId,
     });
     if (!licensed) {
-        await graphRequest(
-            token,
-            `/users/${encodeURIComponent(created.externalId)}`,
-            { method: "DELETE" },
-        );
+        let deleted = false;
+        try {
+            const { response } = await graphRequest(
+                token,
+                `/users/${encodeURIComponent(created.externalId)}`,
+                { method: "DELETE" },
+            );
+            deleted = response.status === 204;
+            if (!deleted) {
+                console.error("Microsoft 365 account cleanup not confirmed", response.status);
+            }
+        } catch {
+            console.error("Microsoft 365 account cleanup request failed");
+        }
         return {
             status: "failed",
-            message: "Microsoft Graph hat die Lizenz abgelehnt.",
+            message: deleted
+                ? "Microsoft Graph hat die Lizenz abgelehnt."
+                : `Microsoft Graph hat die Lizenz abgelehnt. Die Löschung des neu erstellten Kontos ${created.workEmail} (ID: ${created.externalId}) wurde nicht bestätigt. Bitte prüfe das Konto in Microsoft 365, bevor du die Kontoerstellung erneut ausführst.`,
         };
     }
 
     await prisma.$transaction(async (tx) => {
         await tx.worker.update({
             where: { id: worker.id },
-            data: { workEmail: created.workEmail },
+            data: { microsoftEmail: created.workEmail },
         });
         await tx.workerExternalAccount.upsert({
             where: {
@@ -399,6 +413,14 @@ export async function provisionMicrosoft365Account(params: {
     });
     let passwordMailSent = false;
     try {
+        if (microsoftSimulationEnabled()) {
+            return {
+                status: "created",
+                workEmail: created.workEmail,
+                externalId: created.externalId,
+                passwordMailSent: false,
+            };
+        }
         const sent = await sendMail({
             to: worker.email,
             subject: template.subject,

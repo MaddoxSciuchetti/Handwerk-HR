@@ -81,6 +81,26 @@ it('preserves automations for callers that omit the selection', async () => {
     expect(updateIssue).toHaveBeenCalledWith(expect.not.objectContaining({ sequence: expect.anything() }));
 });
 
+const microsoftId = '12345678-1234-1234-1234-123456789abc';
+
+it('saves a manually entered Microsoft ID when creating and updating deactivation tasks', async () => {
+    await createTaskInOrg('org-1', 'user-1', { ...payload, microsoftAccountId: `  ${microsoftId}  ` });
+    expect(createIssue).toHaveBeenCalledWith(expect.objectContaining({ microsoftAccountId: microsoftId }));
+    await updateTaskInOrg('org-1', 'user-1', 'task-1', { ...payload, microsoftAccountId: microsoftId });
+    expect(updateIssue).toHaveBeenCalledWith(expect.objectContaining({ microsoftAccountId: microsoftId }));
+});
+
+it('allows an empty optional ID and clears the task override', async () => {
+    await updateTaskInOrg('org-1', 'user-1', 'task-1', { ...payload, microsoftAccountId: '   ' });
+    expect(updateIssue).toHaveBeenCalledWith(expect.objectContaining({ microsoftAccountId: null }));
+});
+
+it('rejects an email address instead of a Microsoft ID', async () => {
+    await expect(createTaskInOrg('org-1', 'user-1', { ...payload, microsoftAccountId: 'worker@example.com' }))
+        .rejects.toThrow('Bitte gib eine gültige Microsoft-Konto-ID ein.');
+    expect(createIssue).not.toHaveBeenCalled();
+});
+
 it('creates a Teams action with a message body and no Outlook sender', async () => {
     (prisma.mailTemplate.findFirst as jest.Mock).mockResolvedValue({ id: 'mail-1', body: 'Hallo {{Vorname}}' });
     await createTaskInOrg('org-1', 'user-1', { ...payload, sequence: 'microsoft_send_teams_message', mailTemplateId: 'mail-1' });

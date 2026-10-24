@@ -177,7 +177,7 @@ export function createMicrosoft365GraphClient(
             `/users/${encodeURIComponent(externalId)}`,
             { method: "DELETE" },
         );
-        return response.ok;
+        return response.status === 204;
     }
 
     return { getToken, createUser: createGraphUser, assignLicense, deleteUser };

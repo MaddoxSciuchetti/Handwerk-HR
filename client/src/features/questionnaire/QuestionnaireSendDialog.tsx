@@ -283,6 +283,15 @@ export function QuestionnaireSendDialog({
                       intro: data?.intro,
                       items: candidateItems(items),
                     }}
+                    onPresetChange={(key, value) =>
+                      setLocalItems(
+                        items.map((item) =>
+                          item.kind === 'field' && item.key === key
+                            ? { ...item, defaultValue: value }
+                            : item
+                        )
+                      )
+                    }
                   />
                 )}
               </>

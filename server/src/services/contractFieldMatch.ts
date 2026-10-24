@@ -1,4 +1,7 @@
-import { isCurrentDateField } from "../../../shared/document";
+import {
+    isCurrentDateField,
+    normalizeDocumentFieldValue,
+} from "../../../shared/document";
 import type { DocumentSegment } from "@/services/documentBody";
 import {
     answerString,
@@ -92,26 +95,14 @@ function formatMatchValue(field: MatchField, raw: string) {
     return formatted.slice(0, 8000);
 }
 
-function checkboxStorage(value: string) {
-    const folded = value.trim().toLowerCase();
-    if (folded === "ja" || folded === "yes" || folded === "true") return "true";
-    if (folded === "nein" || folded === "no" || folded === "false") return "false";
-    return "";
-}
-
-export function valueForContractField(
-    segment: DocumentSegment,
-    field: MatchField,
-    raw: string,
-) {
-    const formatted = formatMatchValue(field, raw);
-    if (!formatted || segment.type !== "input") return "";
-    if (segment.fieldType === "checkbox") return checkboxStorage(formatted);
-    return formatted;
-}
-
 function skipQuestionnaireMatch(segment: DocumentSegment) {
     return segment.type === "input" && (segment.fieldType === "points" || isCurrentDateField(segment));
+}
+
+function canCopyAnswer(segment: DocumentSegment, value: string) {
+    if (segment.type !== "input" || segment.fieldType !== "checkbox") return true;
+    const normalized = normalizeDocumentFieldValue("checkbox", value);
+    return normalized === "true" || normalized === "false";
 }
 
 export function isSalutationField(field: { key: string; label?: string }) {
@@ -128,15 +119,21 @@ export function salutationFromSex(value: string) {
     return "";
 }
 
+function acceptedSalutation(value: string) {
+    const trimmed = value.trim();
+    if (trimmed === "Herr" || trimmed === "Frau") return trimmed;
+    return "";
+}
+
 export function deterministicContractValues(
     segments: DocumentSegment[],
     answers: QuestionnaireAnswers,
     email = "",
     fields: MatchField[] = [],
 ) {
-    void email;
     const entries: { key: string; value: string }[] = [];
     const filled = new Set<string>();
+    const consumed = new Set<string>();
 
     for (const field of fields) {
         if (!field.contractFieldKey) continue;
@@ -150,14 +147,48 @@ export function deterministicContractValues(
             filled.has(segment.key)
         )
             continue;
-        const value = valueForContractField(
-            segment,
-            field,
-            answerString(answers, field.key),
-        );
-        if (!value) continue;
+        const value = formatMatchValue(field, answerString(answers, field.key));
+        if (!value || !canCopyAnswer(segment, value)) continue;
         filled.add(segment.key);
-        entries.push({ key: segment.key, value });
+        consumed.add(field.key);
+        entries.push({
+            key: segment.key,
+            value: normalizeDocumentFieldValue(segment.fieldType, value),
+        });
+    }
+
+    for (const entry of contractValuesFromAnswers(
+        segments,
+        answers,
+        email,
+    )) {
+        if (filled.has(entry.key)) continue;
+        filled.add(entry.key);
+        entries.push(entry);
+        for (const field of fields) {
+            if (consumed.has(field.key)) continue;
+            const value = formatMatchValue(field, answerString(answers, field.key));
+            if (value && value === entry.value) consumed.add(field.key);
+        }
+    }
+
+    for (const field of fields) {
+        if (consumed.has(field.key) || !field.label.trim()) continue;
+        const value = formatMatchValue(field, answerString(answers, field.key));
+        if (!value) continue;
+        const folded = fold(field.label);
+        const segment = segments.find((item) => {
+            if (item.type !== "input" || skipQuestionnaireMatch(item) || filled.has(item.key))
+                return false;
+            return fold(item.label) === folded || fold(item.key) === folded;
+        });
+        if (!segment || segment.type !== "input" || !canCopyAnswer(segment, value)) continue;
+        filled.add(segment.key);
+        consumed.add(field.key);
+        entries.push({
+            key: segment.key,
+            value: normalizeDocumentFieldValue(segment.fieldType, value),
+        });
     }
 
     const salutation = salutationFromSex(answerString(answers, "sex"));
@@ -176,44 +207,6 @@ export function deterministicContractValues(
     }
 
     return entries;
-}
-
-export function composedQuestionnaireValues(
-    answers: QuestionnaireAnswers,
-    email = "",
-) {
-    const values = answerValues(answers, email);
-    const locality = [values.postalCode, values.city].filter((part) => part.length > 0).join(" ");
-    const rows: { key: string; label: string; value: string }[] = [];
-    if (
-        values.fullName &&
-        values.fullName !== values.firstName &&
-        values.fullName !== values.lastName
-    ) {
-        rows.push({
-            key: "composed.fullName",
-            label: "Vor- und Nachname",
-            value: values.fullName,
-        });
-    }
-    if (values.address && values.address !== values.street) {
-        rows.push({
-            key: "composed.address",
-            label: "Anschrift",
-            value: values.address,
-        });
-    }
-    if (locality && locality !== values.postalCode && locality !== values.city) {
-        rows.push({
-            key: "composed.locality",
-            label: "PLZ und Ort",
-            value: locality,
-        });
-    }
-    if (values.email) {
-        rows.push({ key: "composed.email", label: "E-Mail", value: values.email });
-    }
-    return rows;
 }
 
 function matchAlias(label: string, key: string) {
@@ -242,29 +235,19 @@ export function contractValuesFromAnswers(
         const field = matchAlias(segment.label, segment.key);
         if (!field) continue;
         const value = values[field]?.trim() ?? "";
-        if (!value) continue;
+        if (!value || !canCopyAnswer(segment, value)) continue;
         seen.add(segment.key);
-        entries.push({ key: segment.key, value: value.slice(0, 8000) });
+        entries.push({
+            key: segment.key,
+            value: normalizeDocumentFieldValue(segment.fieldType, value.slice(0, 8000)),
+        });
     }
 
     return entries;
 }
 
-function canonicalMatchValue(value: string) {
-    const trimmed = value.trim();
-    const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(trimmed);
-    if (iso) return `${iso[3]}.${iso[2]}.${iso[1]}`;
-    return trimmed;
-}
-
-function acceptedSalutation(value: string) {
-    const trimmed = value.trim();
-    if (trimmed === "Herr" || trimmed === "Frau") return trimmed;
-    return "";
-}
-
 export function acceptModelMatches(
-    fields: { key: string; label?: string; type?: string }[],
+    fields: { key: string; label?: string; fieldType?: string }[],
     answers: { value: string }[],
     raw: unknown,
 ): { key: string; value: string }[] {
@@ -274,15 +257,12 @@ export function acceptModelMatches(
             : null;
     if (!record || !Array.isArray(record.matches)) return [];
 
-    const fieldByKey = new Map(fields.map((field) => [field.key, field]));
-    const allowedValues = new Map<string, string>();
-    for (const answer of answers) {
-        const trimmed = answer.value.trim();
-        if (!trimmed) continue;
-        const canonical = canonicalMatchValue(trimmed);
-        if (!allowedValues.has(canonical)) allowedValues.set(canonical, trimmed.slice(0, 8000));
-        if (!allowedValues.has(trimmed)) allowedValues.set(trimmed, trimmed.slice(0, 8000));
-    }
+    const allowedFields = new Map(fields.map((field) => [field.key, field]));
+    const allowedValues = new Set(
+        answers
+            .map((answer) => answer.value.trim())
+            .filter((value) => value.length > 0),
+    );
     const seen = new Set<string>();
     const entries: { key: string; value: string }[] = [];
 
@@ -290,32 +270,71 @@ export function acceptModelMatches(
         if (!item || typeof item !== "object" || Array.isArray(item)) continue;
         const key = "key" in item ? item.key : null;
         const value = "value" in item ? item.value : null;
-        if (typeof key !== "string" || typeof value !== "string" || seen.has(key)) continue;
-        const field = fieldByKey.get(key);
-        if (!field) continue;
+        if (typeof key !== "string" || typeof value !== "string") continue;
         const trimmed = value.trim().slice(0, 8000);
-        const stored =
-            allowedValues.get(trimmed) ??
-            allowedValues.get(canonicalMatchValue(trimmed));
-        if (!stored) {
-            const salutation = isSalutationField(field) ? acceptedSalutation(trimmed) : "";
-            if (!salutation) continue;
-            seen.add(key);
-            entries.push({ key, value: salutation });
-            continue;
-        }
-        if (field.type === "checkbox") {
-            const checkbox = checkboxStorage(stored);
-            if (!checkbox) continue;
-            seen.add(key);
-            entries.push({ key, value: checkbox });
+        const field = allowedFields.get(key);
+        const salutation = field && isSalutationField(field) ? acceptedSalutation(trimmed) : "";
+        if (!field || seen.has(key) || (!allowedValues.has(trimmed) && !salutation)) {
             continue;
         }
         seen.add(key);
-        entries.push({ key, value: stored });
+        entries.push({
+            key,
+            value: salutation || normalizeDocumentFieldValue(field.fieldType, trimmed),
+        });
     }
 
     return entries;
+}
+
+/** Validate AI output against both the template and an identified source answer.
+ * Text must be copied; only checkbox propositions may become booleans. */
+export function acceptSemanticModelMatches(
+    fields: { key: string; label?: string; fieldType?: string }[],
+    answers: { key: string; value: string }[],
+    raw: unknown,
+): { key: string; value: string }[] {
+    if (
+        !raw ||
+        typeof raw !== "object" ||
+        !("matches" in raw) ||
+        !Array.isArray(raw.matches)
+    )
+        return [];
+    const allowedFields = new Map(fields.map((field) => [field.key, field]));
+    const sources = new Map(
+        answers.map((answer) => [answer.key, answer.value.trim()]),
+    );
+    const seen = new Set<string>();
+    return raw.matches.flatMap((item: unknown) => {
+        if (!item || typeof item !== "object" || Array.isArray(item)) return [];
+        const match = item as Record<string, unknown>;
+        if (
+            match.confidence !== "high" ||
+            typeof match.key !== "string" ||
+            typeof match.answerKey !== "string" ||
+            typeof match.value !== "string"
+        )
+            return [];
+        const field = allowedFields.get(match.key);
+        const source = sources.get(match.answerKey);
+        const value = match.value.trim();
+        if (
+            !field ||
+            !source ||
+            seen.has(match.key) ||
+            !value ||
+            value.length > 8000
+        )
+            return [];
+        if (field.fieldType === "checkbox") {
+            if (value !== "true" && value !== "false") return [];
+        } else if (isSalutationField(field) && acceptedSalutation(value)) {
+            // Anrede may be Herr or Frau derived from Geschlecht or the first name.
+        } else if (value !== source) return [];
+        seen.add(match.key);
+        return [{ key: match.key, value }];
+    });
 }
 
 export function valuesForDocumentSegments(
@@ -346,7 +365,7 @@ export function valuesForDocumentSegments(
             missing.push(segment.label);
             continue;
         }
-        values[segment.key] = value.slice(0, 8000);
+        values[segment.key] = normalizeDocumentFieldValue(segment.fieldType, value.slice(0, 8000));
     }
 
     return { values, missing, unresolved };
@@ -408,6 +427,16 @@ export function unmatchedQuestionnaireAnswers(
     const consumed = new Set<string>();
     for (const [key, value] of byKey) {
         if (placed.has(value)) consumed.add(key);
+        const field = fields.find((item) => item.key === key);
+        const placedCheckbox = segments.some((segment) =>
+            segment.type === "input" &&
+            segment.fieldType === "checkbox" &&
+            (field?.contractFieldKey === segment.key ||
+                (field?.label && fold(field.label) === fold(segment.label))) &&
+            contractValues[segment.key] === normalizeDocumentFieldValue("checkbox", value),
+        );
+        if (placedCheckbox)
+            consumed.add(key);
     }
     if (fullName && placed.has(fullName)) {
         consumed.add("firstName");
