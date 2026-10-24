@@ -8,22 +8,35 @@ function escapeHtml(value: string) {
         .replace(/>/g, "&gt;");
 }
 
+export function microsoftSignInUrl(workEmail: string) {
+    const url = new URL("https://www.office.com/login");
+    url.searchParams.set("login_hint", workEmail.trim());
+    return url.toString();
+}
+
 export function passwordMail(params: PasswordMailInput): PasswordMail {
     const greeting = params.firstName.trim()
         ? `Hallo ${params.firstName.trim()},`
         : "Hallo,";
+    const signInUrl = microsoftSignInUrl(params.workEmail);
     const text = [
         greeting,
         "",
         "dein Microsoft-Konto ist eingerichtet.",
         `Arbeits-E-Mail: ${params.workEmail}`,
         `Temporäres Passwort: ${params.password}`,
+        `Anmeldung: ${signInUrl}`,
         "Bitte ändere das Passwort bei der ersten Anmeldung.",
     ].join("\n");
-    const html = text
-        .split("\n")
-        .map((line) => (line ? `<p>${escapeHtml(line)}</p>` : "<br>"))
-        .join("");
+    const html = [
+        `<p>${escapeHtml(greeting)}</p>`,
+        "<br>",
+        "<p>dein Microsoft-Konto ist eingerichtet.</p>",
+        `<p>Arbeits-E-Mail: ${escapeHtml(params.workEmail)}</p>`,
+        `<p>Temporäres Passwort: ${escapeHtml(params.password)}</p>`,
+        `<p><a href="${escapeHtml(signInUrl)}">Bei Microsoft 365 anmelden</a></p>`,
+        "<p>Bitte ändere das Passwort bei der ersten Anmeldung.</p>",
+    ].join("");
     return {
         subject: "Dein Microsoft-365-Zugang",
         text,

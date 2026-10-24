@@ -6,6 +6,7 @@ import {
     saveAutomationDocument,
 } from "@/services/automationDocument";
 import { microsoft365AutomationStatus } from "@/services/microsoft365Account";
+import { microsoft365LicenseAvailability } from "@/services/microsoft365/licenses";
 import {
     engagementMailOptions,
     listBsbMailAddresses,
@@ -52,6 +53,11 @@ const teamMailInput = z.object({
     subject: z.string().trim().min(1).max(400),
     body: z.string().trim().min(1).max(20_000),
 }) satisfies z.ZodType<WelcomeMailSettingsRecord>;
+
+export const getMicrosoft365Licenses = catchErrors(async (req, res) => {
+    appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
+    return res.status(200).json({ success: true, data: await microsoft365LicenseAvailability(req.orgId) });
+});
 
 export const getMicrosoft365Automation = catchErrors(async (req, res) => {
     appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");

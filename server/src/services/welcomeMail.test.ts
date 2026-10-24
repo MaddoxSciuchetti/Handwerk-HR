@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { microsoftGraphToken } from "@/services/microsoft365Account";
 import {
+    listMicrosoftGroups,
+    listMicrosoftMailAddresses,
+    listMailEnabledChannels,
     applyWelcomeMailTemplate,
     formatWelcomeEntryDate,
     sendTeamWelcomeMail,
@@ -216,4 +219,12 @@ describe("welcome mail", () => {
         expect(again).toEqual({ status: "skipped", reason: "already_sent" });
         expect(fetchSpy).toHaveBeenCalledTimes(2);
     });
+});
+
+it("propagates the same safe authentication diagnosis through all mail lookups", async () => {
+    const error = "Das Client-Secret der Microsoft-365-App ist abgelaufen.";
+    token.mockImplementation(async (_config, onError) => { onError(error); return null; });
+    expect(await listMicrosoftGroups("org")).toEqual({ groups: [], error });
+    expect(await listMicrosoftMailAddresses("org")).toEqual({ addresses: [], error });
+    expect(await listMailEnabledChannels("org")).toEqual({ channels: [], error });
 });

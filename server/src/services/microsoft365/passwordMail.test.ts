@@ -17,6 +17,12 @@ it("includes the login, temporary password and required password change", () => 
     expect(template.text).toContain("Arbeits-E-Mail: ada@firma.de");
     expect(template.text).toContain("Temporäres Passwort: temporary-password");
     expect(template.text).toContain(
+        "Anmeldung: https://www.office.com/login?login_hint=ada%40firma.de",
+    );
+    expect(template.html).toContain(
+        'href="https://www.office.com/login?login_hint=ada%40firma.de"',
+    );
+    expect(template.text).toContain(
         "Bitte ändere das Passwort bei der ersten Anmeldung.",
     );
 });

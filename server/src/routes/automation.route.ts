@@ -7,6 +7,7 @@ import {
     getDepartureMail,
     getIntegrations,
     getMicrosoft365Automation,
+    getMicrosoft365Licenses,
     getEngagementMailRecipients,
     getIssueMailPreview,
     getMicrosoftMailAddresses,
@@ -43,6 +44,7 @@ automationRoutes.post("/issues/:issueId/teams-review", postDeliveryReview);
 
 
 automationRoutes.get("/microsoft-365", getMicrosoft365Automation);
+automationRoutes.get("/microsoft-365/licenses", getMicrosoft365Licenses);
 automationRoutes.get("/microsoft-addresses", getMicrosoftMailAddresses);
 automationRoutes.get("/integrations", getIntegrations);
 automationRoutes.put("/integrations/:provider", putIntegration);

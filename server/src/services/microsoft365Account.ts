@@ -1,7 +1,9 @@
+import { microsoftAppAuthError } from "./microsoft365/authError";
 import { randomBytes } from "crypto";
 import type { Microsoft365EnvKey } from "@/constants/env";
 import { prisma } from "@/lib/prisma";
 import { integrationsLive } from "@/services/integrations/runtime";
+import { passwordMail } from "./microsoft365/passwordMail";
 import { sendMail } from "@/utils/sendMail";
 
 const GRAPH = "https://graph.microsoft.com/v1.0";
@@ -144,12 +146,18 @@ async function readBody(response: Response) {
     }
 }
 
-export async function microsoftGraphToken(config: Microsoft365Config | null) {
+export async function microsoftGraphToken(
+    config: Microsoft365Config | null,
+    onAuthError?: (message: string) => void,
+) {
     if (!config) return null;
-    return graphToken(config);
+    return graphToken(config, onAuthError);
 }
 
-async function graphToken(config: Microsoft365Config) {
+async function graphToken(
+    config: Microsoft365Config,
+    onAuthError?: (message: string) => void,
+) {
     const body = new URLSearchParams({
         client_id: config.clientId,
         client_secret: config.clientSecret,
@@ -173,6 +181,7 @@ async function graphToken(config: Microsoft365Config) {
             ? payload.access_token
             : "";
     if (!response.ok || !token) {
+        onAuthError?.(microsoftAppAuthError(payload, response.status));
         console.error(
             "Microsoft 365 token request failed",
             response.status,
@@ -281,40 +290,6 @@ async function assignLicense(params: {
         return false;
     }
     return true;
-}
-
-function escapeHtml(value: string) {
-    return value
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-}
-
-function passwordMail(params: {
-    firstName: string;
-    workEmail: string;
-    password: string;
-}) {
-    const greeting = params.firstName.trim()
-        ? `Hallo ${params.firstName.trim()},`
-        : "Hallo,";
-    const text = [
-        greeting,
-        "",
-        "dein Microsoft-Konto ist eingerichtet.",
-        `Arbeits-E-Mail: ${params.workEmail}`,
-        `Temporäres Passwort: ${params.password}`,
-        "Bitte ändere das Passwort bei der ersten Anmeldung.",
-    ].join("\n");
-    const html = text
-        .split("\n")
-        .map((line) => (line ? `<p>${escapeHtml(line)}</p>` : "<br>"))
-        .join("");
-    return {
-        subject: "Dein Microsoft-365-Zugang",
-        text,
-        html,
-    };
 }
 
 export async function provisionMicrosoft365Account(params: {

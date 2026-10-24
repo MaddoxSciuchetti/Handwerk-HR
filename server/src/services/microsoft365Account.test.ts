@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { sendMail } from "@/utils/sendMail";
 import {
+    microsoftGraphToken,
     buildUserPrincipalName,
     foldMailPart,
     provisionMicrosoft365Account,
@@ -207,6 +208,9 @@ describe("microsoft 365 account", () => {
         );
         const mailed = mail.mock.calls[0][0] as { text: string };
         expect(mailed.text).toContain("ada.lovelace@firma.de");
+        expect(mailed.text).toContain(
+            "https://www.office.com/login?login_hint=ada.lovelace%40firma.de",
+        );
         expect(mailed.text).toMatch(/Temporäres Passwort: .+/);
         fetchSpy.mockRestore();
     });
@@ -291,4 +295,41 @@ describe("microsoft 365 account", () => {
         expect(transaction).not.toHaveBeenCalled();
         fetchSpy.mockRestore();
     });
+});
+
+it.each([
+    [7000222, 'abgelaufen'],
+    [7000215, 'Secret-Wert'],
+    [7000218, 'Secret-Wert'],
+    [700016, 'Client-ID und Mandanten-ID'],
+    [90002, 'Mandanten-ID'],
+    [65001, 'Administratorzustimmung'],
+])("returns actionable app authentication diagnostics for AADSTS %s", async (code, expected) => {
+    const fetchSpy = jest.spyOn(global, "fetch").mockResolvedValue(jsonResponse({
+        error: "invalid_client", error_codes: [code], error_description: "private tenant detail",
+    }, 401));
+    const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    try {
+        const onError = jest.fn();
+        expect(await microsoftGraphToken(config, onError)).toBeNull();
+        expect(onError).toHaveBeenCalledWith(expect.stringContaining(expected));
+        expect(onError).toHaveBeenCalledWith(expect.stringContaining("persönliche Microsoft-Anmeldung"));
+        expect(onError.mock.calls[0][0]).not.toContain("private tenant detail");
+    } finally {
+        fetchSpy.mockRestore();
+        consoleSpy.mockRestore();
+    }
+});
+it("suggests retrying a temporary Microsoft outage instead of changing credentials", async () => {
+    const fetchSpy = jest.spyOn(global, "fetch").mockResolvedValue(jsonResponse({ error: "server_error" }, 503));
+    const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    try {
+        const onError = jest.fn();
+        expect(await microsoftGraphToken(config, onError)).toBeNull();
+        expect(onError).toHaveBeenCalledWith(expect.stringContaining("erneut versuchen"));
+        expect(onError.mock.calls[0][0]).not.toContain("Client-Secret");
+    } finally {
+        fetchSpy.mockRestore();
+        consoleSpy.mockRestore();
+    }
 });
