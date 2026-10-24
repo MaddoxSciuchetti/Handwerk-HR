@@ -12,6 +12,7 @@ import type { Dispatch, SetStateAction } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { useNavigate } from '@tanstack/react-router';
 import {
   useCreateMailTemplate,
   useUpdateMailTemplateDetails,
@@ -43,6 +44,7 @@ export function MailTemplateSidebar({
   mode,
   editState,
 }: MailTemplateSidebarProps) {
+  const navigate = useNavigate();
   const create = useCreateMailTemplate();
   const update = useUpdateMailTemplateDetails();
   const {
@@ -64,9 +66,13 @@ export function MailTemplateSidebar({
     };
     if (mode === 'create') {
       create.mutate(input, {
-        onSuccess: () => {
+        onSuccess: (template) => {
           toast.success('E-Mail erstellt');
           setIsOpen(false);
+          void navigate({
+            to: '/settings/mail-templates/$id',
+            params: { id: template.id },
+          });
         },
         onError: () => {
           toast.error('E-Mail konnte nicht erstellt werden');
@@ -89,7 +95,11 @@ export function MailTemplateSidebar({
   });
 
   return (
-    <SidebarAside className="p-2" isOpen={isOpen} onClose={() => setIsOpen(false)}>
+    <SidebarAside
+      className="p-2"
+      isOpen={isOpen}
+      onClose={() => setIsOpen(false)}
+    >
       <SidebarPanel className="w-full">
         <SidebarHeader className="flex items-center justify-between p-6">
           <Label className="typo-body-lg font-bold">

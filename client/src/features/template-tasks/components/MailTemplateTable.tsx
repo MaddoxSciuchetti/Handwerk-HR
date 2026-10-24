@@ -15,7 +15,7 @@ import {
 } from '@/features/settings/components/settingsTable';
 import { useMailTemplates } from '@/features/settings/mail-template/useMailTemplates';
 import { useState } from 'react';
-import { MailContentSidebar } from './MailContentSidebar';
+import { useNavigate } from '@tanstack/react-router';
 import {
   MailTemplateSidebar,
   type MailTemplateEditState,
@@ -29,13 +29,12 @@ const EMPTY_EDIT: MailTemplateEditState = {
 };
 
 export function MailTemplateTable() {
+  const navigate = useNavigate();
   const { data: customTemplates } = useMailTemplates();
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<'create' | 'edit'>('create');
   const [editState, setEditState] = useState<MailTemplateEditState>(EMPTY_EDIT);
   const [createOpenNonce, setCreateOpenNonce] = useState(0);
-  const [contentOpen, setContentOpen] = useState(false);
-  const [openMail, setOpenMail] = useState<MailTemplateRowData | null>(null);
 
   const rows: MailTemplateRowData[] = (customTemplates ?? []).map(
     (template) => ({
@@ -54,7 +53,6 @@ export function MailTemplateTable() {
             type="button"
             className="rounded-2xl"
             onClick={() => {
-              setContentOpen(false);
               setEditState(EMPTY_EDIT);
               setCreateOpenNonce((nonce) => nonce + 1);
               setMode('create');
@@ -74,7 +72,9 @@ export function MailTemplateTable() {
               </colgroup>
               <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-b-0">
                 <TableRow className="border-0 hover:bg-transparent">
-                  <TableHead className="h-12 bg-card py-3 pl-10">Name</TableHead>
+                  <TableHead className="h-12 bg-card py-3 pl-10">
+                    Name
+                  </TableHead>
                   <TableHead className="bg-card py-3 px-2">
                     Beschreibung
                   </TableHead>
@@ -86,16 +86,15 @@ export function MailTemplateTable() {
               <TableBody className={settingsTableBodyClassName}>
                 <MailTemplateRow
                   templates={rows}
-                  setIsOpen={(open) => {
-                    setContentOpen(false);
-                    setIsOpen(open);
-                  }}
+                  setIsOpen={setIsOpen}
                   setMode={setMode}
                   setEditState={setEditState}
                   onOpen={(template) => {
                     setIsOpen(false);
-                    setOpenMail(template);
-                    setContentOpen(true);
+                    void navigate({
+                      to: '/settings/mail-templates/$id',
+                      params: { id: template.id },
+                    });
                   }}
                 />
               </TableBody>
@@ -104,17 +103,13 @@ export function MailTemplateTable() {
         </CardContent>
       </Card>
       <MailTemplateSidebar
-        key={mode === 'edit' ? `edit-${editState.id}` : `create-${createOpenNonce}`}
+        key={
+          mode === 'edit' ? `edit-${editState.id}` : `create-${createOpenNonce}`
+        }
         isOpen={isOpen}
         setIsOpen={setIsOpen}
         mode={mode}
         editState={editState}
-      />
-      <MailContentSidebar
-        key={openMail?.id ?? 'mail'}
-        isOpen={contentOpen}
-        setIsOpen={setContentOpen}
-        mail={openMail}
       />
     </section>
   );
