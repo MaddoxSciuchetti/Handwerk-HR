@@ -9,13 +9,23 @@ import {
   type PersonnelDocumentName,
 } from '../../../personnel-documents/personnelDocumentNames';
 import { MaterialsEngagementPicker } from '../../materials/MaterialsEngagementPicker';
-import { EngagementCertificateList, type EngagementCertificateLink } from '../EngagementCertificateList';
-import { EngagementContractList, type EngagementContractLink } from '../EngagementContractList';
+import {
+  EngagementCertificateList,
+  type EngagementCertificateLink,
+} from '../EngagementCertificateList';
+import {
+  EngagementContractList,
+  type EngagementContractLink,
+} from '../EngagementContractList';
 import { EngagementTemplateDocuments } from '../EngagementTemplateDocuments';
-import { EngagementQuestionnaireList, type EngagementQuestionnaireLink } from '../EngagementQuestionnaireList';
+import {
+  EngagementQuestionnaireList,
+  type EngagementQuestionnaireLink,
+} from '../EngagementQuestionnaireList';
 import { OpenPersonnelFolder } from './OpenPersonnelFolder';
 import { PersonnelFolderCard } from './PersonnelFolderCard';
 import { PersonnelDocumentRow } from './PersonnelDocumentRow';
+import { useUploadPersonnelDocument } from '../../../hooks/usePersonnelDocuments';
 
 type OpenFolder =
   | { kind: 'builtin'; name: PersonnelDocumentName }
@@ -53,6 +63,7 @@ export function PersonnelDocumentFolders({
   onEngagementChange,
 }: PersonnelDocumentFoldersProps) {
   const [openFolder, setOpenFolder] = useState<OpenFolder | null>(null);
+  const upload = useUploadPersonnelDocument(workerId);
   const selectedId =
     engagements.find((item) => item.id === engagementId)?.id ??
     engagements[0]?.id ??
@@ -60,6 +71,11 @@ export function PersonnelDocumentFolders({
   const selectedDocuments = documents.filter(
     (document) => document.engagementId === selectedId
   );
+  const uploadFiles = (files: File[], name: string, folderId?: string) => {
+    for (const file of files) {
+      upload.mutate({ engagementId: selectedId, name, folderId, file });
+    }
+  };
   const selectedFolders = folders.filter(
     (folder) => folder.engagementId === selectedId
   );
@@ -93,6 +109,13 @@ export function PersonnelDocumentFolders({
         deletingId={deletingId}
         onBack={() => setOpenFolder(null)}
         onDelete={onDelete}
+        onFiles={(files) =>
+          uploadFiles(
+            files,
+            openCustom ? 'ordner' : openBuiltin!.value,
+            openCustom?.id
+          )
+        }
       />
     );
   }
@@ -119,7 +142,9 @@ export function PersonnelDocumentFolders({
           )}
         />
         {selectedDocuments
-          .filter((document) => document.name === 'fragebogen' && !document.folderId)
+          .filter(
+            (document) => document.name === 'fragebogen' && !document.folderId
+          )
           .map((document) => (
             <PersonnelDocumentRow
               key={document.id}
@@ -130,7 +155,9 @@ export function PersonnelDocumentFolders({
           ))}
         <EngagementContractList
           workerId={workerId}
-          contracts={contracts.filter((item) => item.engagementId === selectedId)}
+          contracts={contracts.filter(
+            (item) => item.engagementId === selectedId
+          )}
         />
         <EngagementTemplateDocuments
           workerId={workerId}
@@ -141,20 +168,22 @@ export function PersonnelDocumentFolders({
             (item) => item.engagementId === selectedId
           )}
         />
-        {PERSONNEL_DOCUMENT_NAMES.filter((item) => item.value !== 'fragebogen').map(
-          (item) => (
-            <PersonnelFolderCard
-              key={item.value}
-              label={item.label}
-              onOpen={() => setOpenFolder({ kind: 'builtin', name: item.value })}
-            />
-          )
-        )}
+        {PERSONNEL_DOCUMENT_NAMES.filter(
+          (item) => item.value !== 'fragebogen'
+        ).map((item) => (
+          <PersonnelFolderCard
+            key={item.value}
+            label={item.label}
+            onOpen={() => setOpenFolder({ kind: 'builtin', name: item.value })}
+            onFiles={(files) => uploadFiles(files, item.value)}
+          />
+        ))}
         {selectedFolders.map((folder) => (
           <PersonnelFolderCard
             key={folder.id}
             label={folder.label}
             onOpen={() => setOpenFolder({ kind: 'custom', id: folder.id })}
+            onFiles={(files) => uploadFiles(files, 'ordner', folder.id)}
           />
         ))}
       </div>
