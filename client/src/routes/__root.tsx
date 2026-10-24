@@ -2,6 +2,7 @@
 import { ErrorBoundary } from 'react-error-boundary';
 
 import ErrorAlert from '@/components/alerts/ErrorAlert';
+import { RouteError } from '@/components/alerts/RouteError';
 import { Suspense } from 'react';
 
 import LoadingAlert from '@/components/alerts/LoadingAlert';
@@ -18,6 +19,7 @@ import { Toaster } from 'sonner';
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   component: RootLayout,
+  errorComponent: RouteError,
 });
 
 function RootLayout() {
