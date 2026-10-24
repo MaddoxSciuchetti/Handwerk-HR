@@ -196,7 +196,7 @@ export function TeamsSendForm({ taskId }: { taskId: string }) {
           {!connection.ready
             ? 'Microsoft Teams ist noch nicht eingerichtet.'
             : 'Bitte dein Microsoft-Konto verbinden oder erneut anmelden.'}{' '}
-          <a className="underline" href="/settings/general">
+          <a className="underline" href="/settings/integrations">
             Zu den allgemeinen Einstellungen
           </a>
         </p>

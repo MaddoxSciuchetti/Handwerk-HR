@@ -98,7 +98,7 @@ describe('personal Microsoft Teams connection', () => {
       window.history.replaceState(
         {},
         '',
-        `/settings/general?microsoft=${code}`
+        `/settings/integrations?microsoft=${code}`
       );
       renderWithProviders(<TeamsConnectionCard user={mocks.user} />);
       expect(await screen.findByText(message)).toBeInTheDocument();
@@ -106,7 +106,7 @@ describe('personal Microsoft Teams connection', () => {
         await screen.findByText(/Verbunden als Alice Microsoft/)
       ).toBeInTheDocument();
       expect(
-        screen.getByRole('button', { name: 'Konto wechseln' })
+        screen.getByRole('button', { name: 'Microsoft Teams trennen' })
       ).toBeEnabled();
       expect(window.location.search).toBe('');
     }
@@ -169,11 +169,16 @@ describe('personal Microsoft Teams connection', () => {
     expect(
       await screen.findByText(/Verbunden als Alice Microsoft/)
     ).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Trennen' }));
+    await user.click(
+      screen.getByRole('button', { name: 'Microsoft Teams trennen' })
+    );
     await waitFor(() => expect(mocks.disconnectTeams).toHaveBeenCalledOnce());
     expect(
-      await screen.findByRole('button', { name: 'Microsoft Teams verbinden' })
+      await screen.findByRole('button', { name: 'Verbinden' })
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Microsoft Teams trennen' })
+    ).not.toBeInTheDocument();
   });
   it('offers reconnection when required by Microsoft', async () => {
     mocks.getConnection.mockResolvedValue({
@@ -308,7 +313,7 @@ describe('Teams sending', () => {
       await screen.findByRole('link', {
         name: 'Zu den allgemeinen Einstellungen',
       })
-    ).toHaveAttribute('href', '/settings/general');
+    ).toHaveAttribute('href', '/settings/integrations');
     expect(
       screen.getByRole('button', { name: 'Nachricht senden' })
     ).toBeDisabled();

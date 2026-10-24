@@ -75,7 +75,7 @@ export const postConnection: RequestHandler = async (req, res) => {
 export const microsoftCallback: RequestHandler = async (req, res) => {
     res.setHeader("Cache-Control", "no-store");
     res.setHeader("Referrer-Policy", "no-referrer");
-    const redirect = new URL("/settings/general", FRONTENDURL);
+    const redirect = new URL("/settings/integrations", FRONTENDURL);
     try {
         const input = z
             .object({

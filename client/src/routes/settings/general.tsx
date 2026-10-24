@@ -1,6 +1,10 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { GeneralSettings } from '@/features/settings/general/GeneralSettings';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/settings/general')({
-  component: GeneralSettings,
+  beforeLoad: ({ location }) => {
+    throw redirect({
+      href: `/settings/integrations${location.searchStr}`,
+      replace: true,
+    });
+  },
 });

@@ -1,3 +1,5 @@
+import useAuth from '@/features/user-profile/hooks/useAuth';
+import { TeamsConnectionCard } from '@/features/microsoft-teams/TeamsConnectionCard';
 import { IntegrationsSkeleton } from './IntegrationsSkeleton';
 import {
   Accordion,
@@ -9,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SettingsPageHeader } from '@/features/settings/components/SettingsPageHeader';
-import { cn } from '@/lib/utils';
+import { IntegrationSwitch } from './IntegrationSwitch';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
@@ -21,51 +23,36 @@ import {
 
 const QUERY_KEY = ['settings', 'integrations'];
 
-function EnabledSwitch({
-  checked,
-  onChange,
+function IntegrationFields({
+  title,
+  icon,
+  actions,
+  children,
 }: {
-  checked: boolean;
-  onChange: (checked: boolean) => void;
+  title: string;
+  icon: ReactNode;
+  actions: ReactNode;
+  children: ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-2">
-      <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        aria-label={checked ? 'Aktiv' : 'Inaktiv'}
-        onClick={() => onChange(!checked)}
-        className={cn(
-          'relative h-5 w-9 shrink-0 rounded-full border outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50',
-          checked ? 'border-primary bg-primary' : 'border-border bg-muted'
-        )}
-      >
-        <span
-          className={cn(
-            'absolute top-1/2 left-0.5 size-3.5 -translate-y-1/2 rounded-full transition-transform',
-            checked ? 'translate-x-4 bg-primary-foreground' : 'bg-foreground'
-          )}
-        />
-      </button>
-      <span className="text-sm text-muted-foreground">
-        {checked ? 'Aktiv' : 'Inaktiv'}
-      </span>
-    </div>
-  );
-}
-
-function CredentialFields({ children }: { children: ReactNode }) {
-  return (
     <Accordion type="single" collapsible className="min-w-0">
-      <AccordionItem value="credentials" className="border-0">
-        <AccordionTrigger
-          type="button"
-          className="w-fit flex-none gap-1.5 py-1 hover:no-underline"
-        >
-          Zugangsdaten
-        </AccordionTrigger>
-        <AccordionContent className="flex flex-col gap-3 pt-2 pb-0">
+      <AccordionItem value="settings" className="border-0">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <AccordionTrigger
+            type="button"
+            className="w-fit flex-none items-center gap-2 py-1 text-base font-semibold hover:no-underline"
+          >
+            <span
+              className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border bg-background"
+              aria-hidden="true"
+            >
+              {icon}
+            </span>
+            {title}
+          </AccordionTrigger>
+          <div className="flex flex-wrap items-center gap-3">{actions}</div>
+        </div>
+        <AccordionContent className="flex h-auto flex-col gap-3 pt-4 pb-0">
           {children}
         </AccordionContent>
       </AccordionItem>
@@ -96,13 +83,12 @@ function MicrosoftForm({
         clientSecret,
       }),
     onSuccess: async () => {
-      setClientSecret('');
       await queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      toast.success('Microsoft wurde gespeichert.');
+      toast.success('Microsoft 365 wurde gespeichert.');
     },
     onError: (error: { message?: string }) => {
       toast.error(
-        error.message || 'Microsoft konnte nicht gespeichert werden.'
+        error.message || 'Microsoft 365 konnte nicht gespeichert werden.'
       );
     },
   });
@@ -115,16 +101,29 @@ function MicrosoftForm({
         save.mutate();
       }}
     >
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-base font-semibold">Microsoft</h2>
-        <div className="flex flex-wrap items-center gap-3">
-          <EnabledSwitch checked={enabled} onChange={setEnabled} />
-          <Button type="submit" disabled={save.isPending}>
-            Speichern
-          </Button>
-        </div>
-      </div>
-      <CredentialFields>
+      <IntegrationFields
+        title="Microsoft 365"
+        icon={
+          <svg viewBox="0 0 24 24" className="size-7" fill="none">
+            <path fill="#F25022" d="M1 1h10v10H1z" />
+            <path fill="#7FBA00" d="M13 1h10v10H13z" />
+            <path fill="#00A4EF" d="M1 13h10v10H1z" />
+            <path fill="#FFB900" d="M13 13h10v10H13z" />
+          </svg>
+        }
+        actions={
+          <>
+            <IntegrationSwitch
+              label="Microsoft 365"
+              checked={enabled}
+              onChange={setEnabled}
+            />
+            <Button type="submit" disabled={save.isPending}>
+              Speichern
+            </Button>
+          </>
+        }
+      >
         <Label htmlFor="microsoft-tenant">Tenant-ID</Label>
         <Input
           id="microsoft-tenant"
@@ -137,18 +136,25 @@ function MicrosoftForm({
           value={clientId}
           onChange={(event) => setClientId(event.target.value)}
         />
-        <Label htmlFor="microsoft-secret">
-          Client-Geheimnis
-          {integration.hasClientSecret ? ' (gespeichert)' : ''}
-        </Label>
+        <Label htmlFor="microsoft-secret">Client-Geheimnis</Label>
         <Input
           id="microsoft-secret"
-          type="password"
-          autoComplete="new-password"
+          type="text"
+          autoComplete="off"
+          spellCheck={false}
           value={clientSecret}
-          placeholder={integration.hasClientSecret ? 'Unverändert lassen' : ''}
+          placeholder={
+            integration.hasClientSecret ? 'Neues Geheimnis eingeben' : ''
+          }
           onChange={(event) => setClientSecret(event.target.value)}
         />
+        <p className="text-sm text-muted-foreground">
+          {clientSecret.trim()
+            ? 'Dieser Text ersetzt das gespeicherte Geheimnis.'
+            : integration.hasClientSecret
+              ? 'Leer lassen behält das gespeicherte Geheimnis.'
+              : 'Das Geheimnis wird so gespeichert, wie es hier steht.'}
+        </p>
         <Label htmlFor="microsoft-domain">Domäne (für Kontoanlage)</Label>
         <Input
           id="microsoft-domain"
@@ -161,7 +167,7 @@ function MicrosoftForm({
           value={licenseSkuId}
           onChange={(event) => setLicenseSkuId(event.target.value)}
         />
-      </CredentialFields>
+      </IntegrationFields>
     </form>
   );
 }
@@ -198,16 +204,30 @@ function CrewmeisterForm({
         save.mutate();
       }}
     >
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-base font-semibold">Crewmeister</h2>
-        <div className="flex flex-wrap items-center gap-3">
-          <EnabledSwitch checked={enabled} onChange={setEnabled} />
-          <Button type="submit" disabled={save.isPending}>
-            Speichern
-          </Button>
-        </div>
-      </div>
-      <CredentialFields>
+      <IntegrationFields
+        title="Crewmeister"
+        icon={
+          <img
+            src="/assets/crewmeister-logo.png"
+            alt=""
+            width={28}
+            height={28}
+            className="size-7 rounded-md"
+          />
+        }
+        actions={
+          <>
+            <IntegrationSwitch
+              label="Crewmeister"
+              checked={enabled}
+              onChange={setEnabled}
+            />
+            <Button type="submit" disabled={save.isPending}>
+              Speichern
+            </Button>
+          </>
+        }
+      >
         <Label htmlFor="crewmeister-token">
           Token{integration.hasToken ? ' (gespeichert)' : ''}
         </Label>
@@ -227,12 +247,12 @@ function CrewmeisterForm({
           value={crewId}
           onChange={(event) => setCrewId(event.target.value)}
         />
-      </CredentialFields>
+      </IntegrationFields>
     </form>
   );
 }
 
-export function IntegrationsPage() {
+function OrganizationIntegrations() {
   const query = useQuery({ queryKey: QUERY_KEY, queryFn: getIntegrations });
 
   const integrations = query.data ?? [];
@@ -244,8 +264,7 @@ export function IntegrationsPage() {
   );
 
   return (
-    <div className="mx-auto flex h-full min-h-0 min-w-0 w-full max-w-full flex-col overflow-hidden rounded-2xl bg-card p-4 text-card-foreground sm:p-6 md:max-w-8xl">
-      <SettingsPageHeader title="Integrationen" />
+    <>
       {query.isLoading ? (
         <IntegrationsSkeleton />
       ) : query.isError || !microsoft || !crewmeister ? (
@@ -253,11 +272,32 @@ export function IntegrationsPage() {
           Integrationen konnten nicht geladen werden.
         </p>
       ) : (
-        <div className="min-h-0 min-w-0 w-full flex-1 overflow-y-auto">
+        <div className="min-w-0 w-full">
           <MicrosoftForm key={microsoft.tenantId} integration={microsoft} />
           <CrewmeisterForm key={crewmeister.crewId} integration={crewmeister} />
         </div>
       )}
+    </>
+  );
+}
+
+export function IntegrationsPage() {
+  const { user } = useAuth();
+
+  return (
+    <div className="mx-auto flex h-full min-h-0 min-w-0 w-full max-w-full flex-col overflow-hidden rounded-2xl bg-card p-4 text-card-foreground sm:p-6 md:max-w-8xl">
+      <SettingsPageHeader title="Integrationen" />
+      <div className="min-h-0 min-w-0 w-full flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {user?.membershipRole === 'admin' && <OrganizationIntegrations />}
+        {user && (
+          <section aria-labelledby="plugins-heading" className="mt-6 pb-6">
+            <h2 id="plugins-heading" className="typo-h4 mb-5 font-bold">
+              Plugins
+            </h2>
+            <TeamsConnectionCard user={user} />
+          </section>
+        )}
+      </div>
     </div>
   );
 }

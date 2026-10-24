@@ -103,7 +103,7 @@ it("accepts a bound callback without needing an unexpired app-session cookie and
     });
     expect(result.status).toBe(303);
     expect(result.headers.location).toBe(
-        "http://localhost:5173/settings/general?microsoft=connected",
+        "http://localhost:5173/settings/integrations?microsoft=connected",
     );
     expect(result.headers.location).not.toContain("private-auth-code");
     expect(result.headers["cache-control"]).toBe("no-store");
@@ -138,7 +138,7 @@ it.each(["token_exchange_failed", "connection_save_failed"])(
             .set("Cookie", "microsoftTeamsAttempt=browser-binding");
         expect(result.status).toBe(303);
         expect(result.headers.location).toBe(
-            `http://localhost:5173/settings/general?microsoft=${code}`,
+            `http://localhost:5173/settings/integrations?microsoft=${code}`,
         );
         expect(result.headers["set-cookie"][0]).toContain(
             "Expires=Thu, 01 Jan 1970",
