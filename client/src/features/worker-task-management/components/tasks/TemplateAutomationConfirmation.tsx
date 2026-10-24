@@ -1,9 +1,26 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from '@/components/ui/accordion';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertTitle } from '@/components/ui/alert';
 import { isMailSequence } from '@/features/settings/integrations/integration.consts';
 import {
+  connectTeams,
   getChannels,
   getConnection,
 } from '@/features/microsoft-teams/teams.api';
@@ -34,8 +51,28 @@ const descriptions: Record<string, string> = {
     'Sendet die hinterlegte Nachricht an die gewählten Teams-Kanäle.',
   microsoft_deactivate_account: 'Sperrt die Anmeldung am Microsoft-365-Konto.',
 };
-const inputClass =
-  'h-8 w-full rounded-lg border border-input bg-card px-2 text-sm';
+const emailAuthenticationHelp =
+  'Microsoft hat die Anmeldung der Organisation abgelehnt. Bitte unter Einstellungen → Integrationen die Mandanten-ID, Client-ID und das Client-Secret prüfen und korrigieren oder die Administration darum bitten.';
+const teamsSignInHelp =
+  'Dein Microsoft-Konto ist für Teams nicht verbunden oder muss erneut angemeldet werden. Melde dich erneut bei Microsoft an, um die Verbindung zu Teams wiederherzustellen und die Kanäle zu laden.';
+const microsoftConfigurationHelp =
+  'Die Microsoft-Integration der Organisation ist nicht vollständig eingerichtet. Bitte unter Einstellungen → Integrationen die Mandanten-ID, Client-ID und das Client-Secret prüfen und speichern oder die Administration darum bitten.';
+
+function mailErrorMessage(message: string) {
+  if (message === 'Microsoft Graph hat die Anmeldung abgelehnt.')
+    return emailAuthenticationHelp;
+  if (
+    message === 'Die Zugangsdaten sind unvollständig.' ||
+    message === 'Die Integration ist deaktiviert.'
+  )
+    return microsoftConfigurationHelp;
+  return message;
+}
+function errorCode(error: unknown) {
+  if (!error || typeof error !== 'object') return '';
+  if ('code' in error) return String(error.code);
+  return 'errorCode' in error ? String(error.errorCode) : '';
+}
 
 export function TemplateAutomationConfirmation({
   template,
@@ -83,6 +120,10 @@ export function TemplateAutomationConfirmation({
       hasTeams &&
       connection.data?.status === 'connected' &&
       connection.data.ready,
+  });
+  const reconnect = useMutation({
+    mutationFn: connectTeams,
+    onSuccess: ({ url }) => window.location.assign(url),
   });
   const recipients = new Map<string, MailRecipient>();
   for (const recipient of mail.data?.selected ?? [])
@@ -141,6 +182,80 @@ export function TemplateAutomationConfirmation({
       );
     return true;
   });
+  const mailErrors = hasMail
+    ? [
+        ...new Set(
+          [
+            senders.data?.error,
+            mail.data?.groupsError,
+            mail.data?.channelsError,
+            ...automated
+              .filter((item) => isMailSequence(item.sequence))
+              .map((item) => item.blockedReason),
+            ...(mail.isError || senders.isError
+              ? [
+                  'E-Mail-Auswahl konnte nicht geladen werden. Bitte erneut versuchen.',
+                ]
+              : []),
+          ]
+            .filter((error): error is string => Boolean(error))
+            .map(mailErrorMessage)
+        ),
+      ]
+    : [];
+  const teamsLookupError = connection.error || channels.error;
+  const teamsNeedsSignIn =
+    hasTeams &&
+    ((connection.data?.ready && connection.data.status !== 'connected') ||
+      [
+        'connection_required',
+        'reconnect_required',
+        'consent_required',
+        'login_required',
+        'interaction_required',
+      ].includes(errorCode(teamsLookupError)));
+  const teamsConfigurationError =
+    hasTeams &&
+    ((connection.isSuccess && !connection.data.ready) ||
+      errorCode(teamsLookupError) === 'not_configured');
+  const teamsBlockedReasons = [
+    ...new Set(
+      automated
+        .filter((item) => item.sequence === 'microsoft_send_teams_message')
+        .map((item) => item.blockedReason)
+        .filter((reason): reason is string => Boolean(reason))
+    ),
+  ];
+  const teamsMessage = !hasTeams
+    ? null
+    : teamsConfigurationError
+      ? microsoftConfigurationHelp
+      : teamsNeedsSignIn
+        ? teamsSignInHelp
+        : teamsLookupError
+          ? 'Teams-Kanäle konnten nicht geladen werden. Bitte erneut versuchen. Falls das Problem weiterhin besteht, bitte die Administration, den Zugriff auf die Teams-Kanäle zu prüfen.'
+          : connection.isSuccess && !connection.data.live
+            ? 'Sequenzen werden in dieser Umgebung nicht ausgeführt.'
+            : connection.isPending
+              ? null
+              : (teamsBlockedReasons[0] ?? null);
+  const otherBlockedReasons = [
+    ...new Set(
+      automated
+        .filter(
+          (item) =>
+            !isMailSequence(item.sequence) &&
+            item.sequence !== 'microsoft_send_teams_message'
+        )
+        .map((item) => item.blockedReason)
+        .filter((reason): reason is string => Boolean(reason))
+    ),
+  ];
+  const retryTeams = async () => {
+    const result = await connection.refetch();
+    if (result.data?.ready && result.data.status === 'connected')
+      await channels.refetch();
+  };
   const change = (id: string, patch: AutomationChoice) =>
     setChoices((current) => ({
       ...current,
@@ -150,199 +265,277 @@ export function TemplateAutomationConfirmation({
   return (
     <div className="space-y-3">
       <p className="text-sm font-medium">{template.name}</p>
+      {template.mocked && (
+        <p className="text-xs text-muted-foreground">
+          Lokale Simulation · Erfolg nach ca. 10 Sekunden. Es werden keine
+          Nachrichten gesendet oder Konten bei Microsoft oder Crewmeister
+          geändert.
+        </p>
+      )}
       {automated.length > 0 && (
-        <>
-          <p className="text-sm">Automatisierung starten?</p>
-          <details className="text-xs">
-            <summary className="cursor-pointer">Mehr anzeigen</summary>
-            <ul className="mt-2 space-y-2">
-              {automated.map((item) => (
-                <li key={item.id}>
-                  <span className="font-medium">{item.title}</span>
-                  <p className="text-muted-foreground">
-                    {descriptions[item.sequence!] ??
-                      'Führt die konfigurierte Aktion aus.'}
-                  </p>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-2 text-muted-foreground">
-              Diese Aktionen werden nach dem Start sofort ausgeführt.
-            </p>
-          </details>
+        <Accordion type="multiple" className="gap-2">
           {automated.map((item) => {
             const choice = effectiveChoices[item.id];
             const isMail = isMailSequence(item.sequence);
             const isTeams = item.sequence === 'microsoft_send_teams_message';
-            if (!isMail && !isTeams && !item.blockedReason) return null;
             return (
-              <fieldset
+              <AccordionItem
+                value={item.id}
                 key={item.id}
-                disabled={busy}
-                className="min-w-0 space-y-2 rounded-lg border p-2"
+                className="min-w-0 rounded-lg border border-border p-2"
               >
-                <legend className="px-1 text-xs font-medium">
+                <AccordionTrigger disabled={busy} className="py-0">
                   {item.title}
-                </legend>
-                {item.blockedReason && (
-                  <p role="alert" className="text-xs text-destructive">
-                    {item.blockedReason}
-                  </p>
-                )}
-                {isMail && (
-                  <>
-                    <select
-                      aria-label={`Absender für ${item.title}`}
-                      className={inputClass}
-                      value={choice.senderAddress ?? ''}
-                      onChange={(event) =>
-                        change(item.id, {
-                          senderAddress: event.target.value || undefined,
-                        })
-                      }
-                    >
-                      <option value="">Absender wählen</option>
-                      {senders.data?.addresses
-                        .filter((sender) => sender.kind === 'mailbox')
-                        .map((sender) => (
-                          <option key={sender.email} value={sender.email}>
-                            {sender.label}
-                          </option>
-                        ))}
-                    </select>
-                    <details>
-                      <summary className="cursor-pointer text-xs">
-                        Empfänger wählen ({choice.recipients?.length ?? 0})
-                      </summary>
-                      <div className="mt-1 max-h-36 space-y-1 overflow-y-auto">
-                        {[...recipients.values()].map((recipient) => {
-                          const key = recipientKey(recipient);
-                          const checked =
-                            choice.recipients?.some(
-                              (selected) => recipientKey(selected) === key
-                            ) ?? false;
-                          return (
-                            <label
-                              key={key}
-                              className="flex items-center gap-2 text-xs"
+                </AccordionTrigger>
+                <AccordionContent>
+                  <fieldset
+                    disabled={busy}
+                    aria-label={item.title}
+                    className="mt-2 min-w-0 space-y-2"
+                  >
+                    <p className="text-xs text-muted-foreground">
+                      {descriptions[item.sequence!] ??
+                        'Führt die konfigurierte Aktion aus.'}
+                    </p>
+                    {isMail && (
+                      <>
+                        <Select
+                          value={choice.senderAddress ?? ''}
+                          onValueChange={(value) =>
+                            change(item.id, { senderAddress: value })
+                          }
+                          disabled={busy}
+                        >
+                          <SelectTrigger
+                            aria-label={`Absender für ${item.title}`}
+                            className="w-full"
+                          >
+                            <SelectValue placeholder="Absender wählen" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {senders.data?.addresses
+                              .filter((sender) => sender.kind === 'mailbox')
+                              .map((sender) => (
+                                <SelectItem
+                                  key={sender.email}
+                                  value={sender.email}
+                                >
+                                  {sender.label}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                        <Accordion type="single" collapsible>
+                          <AccordionItem value="recipients">
+                            <AccordionTrigger
+                              className="text-xs"
+                              disabled={busy}
                             >
-                              <input
-                                type="checkbox"
-                                checked={checked}
-                                onChange={() =>
-                                  change(item.id, {
-                                    recipients: checked
-                                      ? choice.recipients?.filter(
-                                          (selected) =>
-                                            recipientKey(selected) !== key
-                                        )
-                                      : [
-                                          ...(choice.recipients ?? []),
-                                          recipient,
-                                        ],
-                                  })
-                                }
-                              />
-                              {recipient.label}
-                            </label>
-                          );
-                        })}
-                        {mail.isSuccess && recipients.size === 0 && (
-                          <p className="text-xs">Keine Empfänger vorhanden.</p>
+                              Empfänger wählen ({choice.recipients?.length ?? 0}
+                              )
+                            </AccordionTrigger>
+                            <AccordionContent>
+                              <div className="mt-1 max-h-36 space-y-1 overflow-y-auto">
+                                {[...recipients.values()].map((recipient) => {
+                                  const key = recipientKey(recipient);
+                                  const checked =
+                                    choice.recipients?.some(
+                                      (selected) =>
+                                        recipientKey(selected) === key
+                                    ) ?? false;
+                                  return (
+                                    <Label
+                                      key={key}
+                                      className="flex items-center gap-2 text-xs"
+                                    >
+                                      <Checkbox
+                                        disabled={busy}
+                                        checked={checked}
+                                        onCheckedChange={() =>
+                                          change(item.id, {
+                                            recipients: checked
+                                              ? choice.recipients?.filter(
+                                                  (selected) =>
+                                                    recipientKey(selected) !==
+                                                    key
+                                                )
+                                              : [
+                                                  ...(choice.recipients ?? []),
+                                                  recipient,
+                                                ],
+                                          })
+                                        }
+                                      />
+                                      {recipient.label}
+                                    </Label>
+                                  );
+                                })}
+                                {mail.isSuccess &&
+                                  mailErrors.length === 0 &&
+                                  recipients.size === 0 && (
+                                    <p className="text-xs">
+                                      Keine Empfänger vorhanden.
+                                    </p>
+                                  )}
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
+                      </>
+                    )}
+                    {isTeams && (
+                      <>
+                        {connection.data?.account && (
+                          <p className="text-xs">
+                            {connection.data.account.username}
+                          </p>
                         )}
-                      </div>
-                    </details>
-                    {(mail.isError || senders.isError) && (
-                      <p role="alert" className="text-xs text-destructive">
-                        E-Mail-Auswahl konnte nicht geladen werden.
-                      </p>
-                    )}
-                    {mail.data?.groupsError && (
-                      <p role="alert" className="text-xs text-destructive">
-                        {mail.data.groupsError}
-                      </p>
-                    )}
-                    {mail.data?.channelsError && (
-                      <p role="alert" className="text-xs text-destructive">
-                        {mail.data.channelsError}
-                      </p>
-                    )}
-                  </>
-                )}
-                {isTeams && (
-                  <>
-                    {connection.isSuccess &&
-                      !item.blockedReason &&
-                      (connection.data.status !== 'connected' ||
-                        !connection.data.ready) && (
-                        <p role="alert" className="text-xs text-destructive">
-                          Bitte Microsoft Teams in den Einstellungen verbinden.
-                        </p>
-                      )}
-                    {connection.data?.account && (
-                      <p className="text-xs">
-                        {connection.data.account.username}
-                      </p>
-                    )}
-                    <details>
-                      <summary className="cursor-pointer text-xs">
-                        Teams-Kanäle wählen ({choice.destinations?.length ?? 0})
-                      </summary>
-                      <div className="mt-1 max-h-36 space-y-1 overflow-y-auto">
-                        {channels.data?.channels.map((channel) => {
-                          const matches = (destination: {
-                            teamId: string;
-                            channelId: string;
-                          }) =>
-                            destination.teamId === channel.teamId &&
-                            destination.channelId === channel.channelId;
-                          const checked =
-                            choice.destinations?.some(matches) ?? false;
-                          return (
-                            <label
-                              key={`${channel.teamId}:${channel.channelId}`}
-                              className="flex items-center gap-2 text-xs"
+                        <Accordion type="single" collapsible>
+                          <AccordionItem value="channels">
+                            <AccordionTrigger
+                              className="text-xs"
+                              disabled={busy}
                             >
-                              <input
-                                type="checkbox"
-                                checked={checked}
-                                onChange={() =>
-                                  change(item.id, {
-                                    destinations: checked
-                                      ? choice.destinations?.filter(
-                                          (destination) => !matches(destination)
-                                        )
-                                      : [
-                                          ...(choice.destinations ?? []),
-                                          {
-                                            teamId: channel.teamId,
-                                            channelId: channel.channelId,
-                                          },
-                                        ],
-                                  })
-                                }
-                              />
-                              {channel.label}
-                            </label>
-                          );
-                        })}
-                        {channels.isSuccess &&
-                          channels.data.channels.length === 0 && (
-                            <p className="text-xs">Keine Kanäle vorhanden.</p>
-                          )}
-                      </div>
-                    </details>
-                    {(connection.isError || channels.isError) && (
-                      <p role="alert" className="text-xs text-destructive">
-                        Teams-Auswahl konnte nicht geladen werden.
-                      </p>
+                              Teams-Kanäle wählen (
+                              {choice.destinations?.length ?? 0})
+                            </AccordionTrigger>
+                            <AccordionContent>
+                              <div className="mt-1 max-h-36 space-y-1 overflow-y-auto">
+                                {channels.data?.channels.map((channel) => {
+                                  const matches = (destination: {
+                                    teamId: string;
+                                    channelId: string;
+                                  }) =>
+                                    destination.teamId === channel.teamId &&
+                                    destination.channelId === channel.channelId;
+                                  const checked =
+                                    choice.destinations?.some(matches) ?? false;
+                                  return (
+                                    <Label
+                                      key={`${channel.teamId}:${channel.channelId}`}
+                                      className="flex items-center gap-2 text-xs"
+                                    >
+                                      <Checkbox
+                                        disabled={busy}
+                                        checked={checked}
+                                        onCheckedChange={() =>
+                                          change(item.id, {
+                                            destinations: checked
+                                              ? choice.destinations?.filter(
+                                                  (destination) =>
+                                                    !matches(destination)
+                                                )
+                                              : [
+                                                  ...(choice.destinations ??
+                                                    []),
+                                                  {
+                                                    teamId: channel.teamId,
+                                                    channelId:
+                                                      channel.channelId,
+                                                  },
+                                                ],
+                                          })
+                                        }
+                                      />
+                                      {channel.label}
+                                    </Label>
+                                  );
+                                })}
+                                {channels.isSuccess &&
+                                  channels.data.channels.length === 0 && (
+                                    <p className="text-xs">
+                                      Keine Kanäle vorhanden.
+                                    </p>
+                                  )}
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
+                      </>
                     )}
-                  </>
-                )}
-              </fieldset>
+                  </fieldset>
+                </AccordionContent>
+              </AccordionItem>
             );
           })}
-        </>
+        </Accordion>
+      )}
+      {(mailErrors.length > 0 ||
+        teamsMessage ||
+        otherBlockedReasons.length > 0) && (
+        <section
+          aria-label="Probleme mit Automatisierungen"
+          className="space-y-3"
+        >
+          {mailErrors.length > 0 && (
+            <Alert variant="destructive" className="space-y-2 text-xs">
+              <AlertTitle>E-Mail-Versand nicht bereit</AlertTitle>
+              {mailErrors.map((error) => (
+                <p key={error}>{error}</p>
+              ))}
+              <a
+                href="/settings/integrations"
+                className="inline-block underline"
+              >
+                Microsoft-Zugangsdaten prüfen
+              </a>
+            </Alert>
+          )}
+          {teamsMessage && (
+            <Alert variant="destructive" className="space-y-2 text-xs">
+              <AlertTitle>Teams-Versand nicht bereit</AlertTitle>
+              <p>{teamsMessage}</p>
+              {teamsConfigurationError ? (
+                <a
+                  href="/settings/integrations"
+                  className="inline-block underline"
+                >
+                  Microsoft-Zugangsdaten prüfen
+                </a>
+              ) : teamsNeedsSignIn ? (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={busy || reconnect.isPending}
+                    onClick={() => reconnect.mutate()}
+                  >
+                    {reconnect.isPending && (
+                      <Spinner className="size-4" aria-hidden="true" />
+                    )}
+                    Erneut bei Microsoft anmelden
+                  </Button>
+                  {reconnect.isError && (
+                    <p>
+                      Die Microsoft-Anmeldung konnte nicht gestartet werden.
+                      Bitte erneut versuchen oder die Teams-Verbindung unter
+                      Einstellungen → Allgemein prüfen.{' '}
+                      <a href="/settings/general" className="underline">
+                        Teams-Einstellungen öffnen
+                      </a>
+                    </p>
+                  )}
+                </>
+              ) : teamsLookupError ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={
+                    busy || connection.isFetching || channels.isFetching
+                  }
+                  onClick={() => void retryTeams()}
+                >
+                  Teams-Verbindung erneut prüfen
+                </Button>
+              ) : null}
+            </Alert>
+          )}
+          {otherBlockedReasons.map((reason) => (
+            <Alert key={reason} variant="destructive" className="text-xs">
+              {reason}
+            </Alert>
+          ))}
+        </section>
       )}
       <div className="flex flex-col gap-1">
         {automated.length > 0 && (
@@ -355,7 +548,9 @@ export function TemplateAutomationConfirmation({
               onApply(true, effectiveChoices);
             }}
           >
-            {busy && startingAutomation && <Spinner className="size-4" aria-hidden="true" />}
+            {busy && startingAutomation && (
+              <Spinner className="size-4" aria-hidden="true" />
+            )}
             Automatisierung starten
           </Button>
         )}
@@ -369,7 +564,9 @@ export function TemplateAutomationConfirmation({
             onApply(false, {});
           }}
         >
-          {busy && !startingAutomation && <Spinner className="size-4" aria-hidden="true" />}
+          {busy && !startingAutomation && (
+            <Spinner className="size-4" aria-hidden="true" />
+          )}
           {automated.length ? 'Ohne Automatisierung' : 'Aufgaben erstellen'}
         </Button>
       </div>

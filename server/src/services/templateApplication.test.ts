@@ -2,6 +2,8 @@ import {
     applyTemplateApplication,
     templateApplicationPreview,
     templateApplyInput,
+    readTemplateApplication,
+    dismissTemplateApplicationResults,
 } from "./templateApplication";
 import { prisma } from "@/lib/prisma";
 import { runIssueSequence } from "./integrations/runSequence";
@@ -325,4 +327,134 @@ it("requires renewed confirmation when template actions changed after preview", 
     ).rejects.toThrow("Template wurde geändert");
     expect(createTasks).not.toHaveBeenCalled();
     expect(runIssueSequence).not.toHaveBeenCalled();
+});
+
+
+describe("local integration simulation", () => {
+    let previousNodeEnv: string | undefined;
+    let previousMock: string | undefined;
+    beforeEach(() => {
+        previousNodeEnv = process.env.NODE_ENV;
+        previousMock = process.env.INTEGRATIONS_MOCK;
+        process.env.NODE_ENV = "development";
+        process.env.INTEGRATIONS_MOCK = "true";
+        jest.useFakeTimers();
+    });
+    afterEach(() => {
+        if (previousNodeEnv === undefined) delete process.env.NODE_ENV;
+        else process.env.NODE_ENV = previousNodeEnv;
+        if (previousMock === undefined) delete process.env.INTEGRATIONS_MOCK;
+        else process.env.INTEGRATIONS_MOCK = previousMock;
+        jest.useRealTimers();
+    });
+    it("unblocks preview without requiring integration credentials", async () => {
+        const preview = await templateApplicationPreview(context, "engagement");
+        expect(preview.mocked).toBe(true);
+        expect(preview.items.every((entry) => entry.blockedReason === null)).toBe(true);
+    });
+    it("keeps the whole batch in progress for ten seconds and never invokes providers", async () => {
+        db.issueTemplate.findFirst.mockResolvedValue({
+            id: "template",
+            items: [item("a"), item("b", "microsoft_send_teams_message"), item("manual", null)],
+        });
+        let finished = false;
+        const resultPromise = applyTemplateApplication(context, {
+            ...manual, runAutomation: true,
+            choices: { b: { destinations: [{ teamId: "mock-team", channelId: "mock-channel" }] } },
+        }, createTasks).then((result) => { finished = true; return result; });
+        await jest.advanceTimersByTimeAsync(0);
+        expect(executionStatus).toHaveBeenCalledWith("issue-a", "user", "in_progress");
+        expect(executionStatus).toHaveBeenCalledWith("issue-b", "user", "in_progress");
+        await jest.advanceTimersByTimeAsync(9999);
+        expect(finished).toBe(false);
+        expect(executionStatus).not.toHaveBeenCalledWith("issue-a", "user", "done", expect.any(String));
+        await jest.advanceTimersByTimeAsync(1);
+        const result = await resultPromise;
+        expect(result.outcomes).toEqual([
+            expect.objectContaining({ issueId: "issue-a", status: "completed" }),
+            expect.objectContaining({ issueId: "issue-b", status: "completed" }),
+        ]);
+        expect(executionStatus).toHaveBeenCalledWith("issue-a", "user", "done", expect.stringContaining("Simulation"));
+        expect(executionStatus).not.toHaveBeenCalledWith("issue-manual", "user", expect.anything());
+        expect(runIssueSequence).not.toHaveBeenCalled();
+        expect(sendTeams).not.toHaveBeenCalled();
+    });
+    it("accepts a new demo template after a finished application", async () => {
+        const prior = { id: "application", templateId: "old-template", issueIds: ["old"], outcomes: [], completedAt: new Date(), idempotencyKey: "old-key" };
+        db.templateApplication.findUnique.mockResolvedValue(prior);
+        db.templateApplication.update.mockImplementation(async ({ data }: any) => ({ ...prior, ...data }));
+        const result = await applyTemplateApplication(context, { ...manual, idempotencyKey: "new-key" }, createTasks);
+        expect(createTasks).toHaveBeenCalledTimes(1);
+        expect(result.issueIds).toEqual(["issue-a", "issue-b", "issue-manual"]);
+        expect(db.templateApplication.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ templateId: "template", idempotencyKey: "new-key", outcomes: [] }) }));
+    });
+    it("does not repeat a demo run when retrying the same application key", async () => {
+        db.templateApplication.findUnique.mockResolvedValue({ id: "application", templateId: "template", issueIds: ["old"], outcomes: [], completedAt: new Date(), idempotencyKey: "same-key" });
+        await applyTemplateApplication(context, { ...manual, idempotencyKey: "same-key" }, createTasks);
+        expect(createTasks).not.toHaveBeenCalled();
+    });
+    it("ignores the flag in production", async () => {
+        process.env.NODE_ENV = "production";
+        expect((await templateApplicationPreview(context, "engagement")).mocked).toBe(false);
+        await applyTemplateApplication(context, { ...manual, runAutomation: true }, createTasks);
+        expect(runIssueSequence).toHaveBeenCalledTimes(2);
+    });
+});
+
+
+it("returns final task titles and database statuses for reopening the completed run", async () => {
+    db.issue.findMany.mockResolvedValueOnce([{ id: "issue-a", templateItemId: "a" }])
+        .mockResolvedValueOnce([{ id: "issue-a", title: "Microsoft-Konto", status: "done", sequence: "microsoft_create_account" }]);
+    const result = await applyTemplateApplication(context, { ...manual, runAutomation: true }, createTasks);
+    expect(result.tasks).toEqual([{ id: "issue-a", title: "Microsoft-Konto", status: "done", sequence: "microsoft_create_account" }]);
+    expect(db.issue.findMany).toHaveBeenLastCalledWith(expect.objectContaining({
+        where: { id: { in: ["issue-a", "issue-b", "issue-manual"] }, workerEngagement: { organizationId: "org" } },
+        select: { id: true, title: true, status: true, sequence: true },
+    }));
+});
+
+
+it("reads current stored task statuses instead of relying on the apply response", async () => {
+    db.templateApplication.findUnique.mockResolvedValue({ templateId: "template", issueIds: ["stored-task"], outcomes: [], completedAt: new Date() });
+    db.issue.findMany.mockResolvedValue([{ id: "stored-task", title: "Microsoft-Konto", status: "done", sequence: "microsoft_create_account" }]);
+    const record = await readTemplateApplication(context, "engagement");
+    expect(record?.result).toMatchObject({ count: 1, tasks: [{ id: "stored-task", status: "done" }] });
+    expect(createTasks).not.toHaveBeenCalled();
+});
+it("recovers existing tasks for an older empty demo receipt", async () => {
+    db.templateApplication.findUnique.mockResolvedValue({ templateId: "template", issueIds: [], outcomes: [], completedAt: new Date() });
+    db.issue.findMany.mockResolvedValue([{ id: "existing", title: "Microsoft-Konto", status: "done", sequence: "microsoft_create_account" }]);
+    const record = await readTemplateApplication(context, "engagement");
+    expect(record?.result.count).toBe(1);
+    expect(record?.result.issueIds).toEqual(["existing"]);
+    expect(db.issue.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: {
+        workerEngagementId: "engagement", workerEngagement: { organizationId: "org" }, templateItem: { issueTemplateId: "template" },
+    } }));
+});
+it("records that the finished bar was closed and ignores a second close", async () => {
+    db.templateApplication.findUnique.mockResolvedValue({
+        id: "application",
+        completedAt: new Date(),
+        resultsDismissedAt: null,
+    });
+    db.templateApplication.update.mockResolvedValue({});
+    await expect(dismissTemplateApplicationResults(context, "engagement")).resolves.toEqual({ dismissed: true });
+    expect(db.templateApplication.update).toHaveBeenCalledWith(expect.objectContaining({
+        where: { id: "application" },
+        data: { resultsDismissedAt: expect.any(Date) },
+    }));
+    db.templateApplication.findUnique.mockResolvedValue({
+        id: "application",
+        completedAt: new Date(),
+        resultsDismissedAt: new Date(),
+    });
+    db.templateApplication.update.mockClear();
+    await dismissTemplateApplicationResults(context, "engagement");
+    expect(db.templateApplication.update).not.toHaveBeenCalled();
+});
+
+it("does not expose saved task results from another engagement or organization", async () => {
+    db.workerEngagement.findFirst.mockResolvedValue(null);
+    await expect(readTemplateApplication(context, "foreign")).rejects.toThrow("Einsatz nicht gefunden");
+    expect(db.templateApplication.findUnique).not.toHaveBeenCalled();
 });

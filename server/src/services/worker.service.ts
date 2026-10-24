@@ -1,3 +1,4 @@
+import { integrationsMocked } from "./integrations/localMock";
 import { applyTemplateApplication, type TemplateApplyInput } from './templateApplication';
 import { prisma } from "@/lib/prisma";
 import { templateItemsForEngagement } from "@/services/onboardingTemplateTasks";
@@ -231,7 +232,7 @@ export async function getWorkerData(params: GetWorkersInput) {
                 orderBy: { startDate: "desc" },
                 take: 1,
                 include: {
-                    templateApplication: { select: { id: true, completedAt: true } },
+                    templateApplication: { select: { id: true, completedAt: true, resultsDismissedAt: true } },
                     responsibleUser: {
                         select: {
                             id: true,
@@ -280,7 +281,7 @@ export async function getWorkerById(
             engagements: {
                 orderBy: { startDate: "desc" },
                 include: {
-                    templateApplication: { select: { id: true, completedAt: true } },
+                    templateApplication: { select: { id: true, completedAt: true, resultsDismissedAt: true } },
                     responsibleUser: {
                         select: {
                             id: true,
@@ -912,7 +913,7 @@ export async function applyIssueTemplate(params: {
             workerEngagementId: engagement.id,
             templateId,
             actorUserId,
-            remainingOnly,
+            remainingOnly: integrationsMocked() ? false : remainingOnly,
         }),
     );
 }

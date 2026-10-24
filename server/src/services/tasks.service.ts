@@ -85,7 +85,7 @@ export const queryTasks = async (orgId: string, viewerUserId: string) => {
             workerEngagement: {
                 select: {
                     workerId: true,
-                    templateApplication: { select: { id: true, completedAt: true } },
+                    templateApplication: { select: { id: true, completedAt: true, resultsDismissedAt: true } },
                     worker: {
                         select: { firstName: true, lastName: true },
                     },

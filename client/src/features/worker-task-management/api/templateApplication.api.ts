@@ -7,6 +7,7 @@ export type AutomationChoice = {
   destinations?: Array<{ teamId: string; channelId: string }>;
 };
 export type TemplatePreview = {
+  mocked?: boolean;
   id: string;
   name: string;
   revision: string;
@@ -19,6 +20,18 @@ export type TemplatePreview = {
   }>;
 };
 export type TemplateApplicationResult = {
+  tasks?: Array<{
+    id: string;
+    title: string;
+    status:
+      | 'open'
+      | 'in_progress'
+      | 'done'
+      | 'error'
+      | 'cancelled'
+      | 'not_applicable';
+    sequence: string | null;
+  }>;
   count: number;
   issueIds: string[];
   outcomes: Array<{
@@ -57,5 +70,31 @@ export function applyTemplate(
     .post<{
       data: TemplateApplicationResult;
     }>(`/worker/${workerId}/templates/${templateId}/apply`, input)
+    .then((response) => response.data);
+}
+
+export type StoredTemplateApplication = {
+  templateName: string;
+  dismissed: boolean;
+  result: TemplateApplicationResult;
+};
+
+export function getTemplateApplication(workerId: string, engagementId: string) {
+  return apiJson
+    .get<{
+      data: StoredTemplateApplication | null;
+    }>(`/worker/${workerId}/template-application`, { params: { workerEngagementId: engagementId } })
+    .then((response) => response.data);
+}
+
+export function dismissTemplateApplication(
+  workerId: string,
+  engagementId: string
+) {
+  return apiJson
+    .post<{ data: { dismissed: boolean } }>(
+      `/worker/${workerId}/template-application/dismiss`,
+      { workerEngagementId: engagementId }
+    )
     .then((response) => response.data);
 }

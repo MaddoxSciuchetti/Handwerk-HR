@@ -159,7 +159,12 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
   const templateTargets = engagementsAwaitingTemplate(displayData, {
     workerId,
     label: `${data?.data.firstName ?? ''} ${data?.data.lastName ?? ''}`.trim(),
-  }).filter(target => !data?.data.engagements.find(engagement => engagement.id === target.engagementId)?.templateApplication);
+  }).filter((target) => {
+    const application = data?.data.engagements.find(
+      (engagement) => engagement.id === target.engagementId
+    )?.templateApplication;
+    return !application?.resultsDismissedAt;
+  });
   const engagements = data?.data.engagements ?? [];
   const waiting = engagements.some(
     (engagement) => engagement.status === 'expected'
@@ -457,7 +462,7 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
             setLargeEditMode={setLargeEditMode}
             setEditModeData={handleSetEditModeData}
           />
-        ) : activeTab === 'form' && templateTargets.length > 0 ? (
+        ) : activeTab === 'form' ? (
           <TemplateApplyPrompt targets={templateTargets} />
         ) : null}
       </Tabs>

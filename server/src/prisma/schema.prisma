@@ -300,6 +300,7 @@ model TemplateApplication {
   issueIds           String[] @map("issue_ids")
   outcomes           Json @default("[]")
   completedAt        DateTime? @map("completed_at") @db.Timestamptz()
+  resultsDismissedAt DateTime? @map("results_dismissed_at") @db.Timestamptz()
   createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz()
   engagement         WorkerEngagement @relation(fields: [workerEngagementId], references: [id], onDelete: Cascade)
 

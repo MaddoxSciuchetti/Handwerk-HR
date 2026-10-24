@@ -1,4 +1,4 @@
-import { templateApplyInput, templateApplicationPreview } from '@/services/templateApplication';
+import { templateApplyInput, templateApplicationPreview, readTemplateApplication, dismissTemplateApplicationResults } from '@/services/templateApplication';
 import { getLifecycleStatistics as fetchLifecycleStatistics } from "@/services/lifecycleStatistics";
 import { uploadFileToS3 } from "@/config/aws";
 import * as employmentContractService from "@/services/employmentContract.service";
@@ -645,6 +645,23 @@ export const previewIssueTemplate = catchErrors(async (req: Request, res: Respon
     const data = await templateApplicationPreview({
         workerId: param(req, 'workerId'), templateId: param(req, 'templateId'),
         organizationId: req.orgId, actorUserId: req.userId!,
+    }, engagementId);
+    return res.status(200).json({ success: true, data });
+});
+
+
+export const getTemplateApplication = catchErrors(async (req: Request, res: Response) => {
+    const data = await readTemplateApplication({
+        workerId: param(req, "workerId"), organizationId: req.orgId,
+    }, String(req.query.workerEngagementId ?? ""));
+    return res.status(200).json({ success: true, data });
+});
+
+export const dismissTemplateApplication = catchErrors(async (req: Request, res: Response) => {
+    const engagementId = String(req.body?.workerEngagementId ?? "");
+    if (!engagementId) return res.status(400).json({ message: "Einsatz fehlt." });
+    const data = await dismissTemplateApplicationResults({
+        workerId: param(req, "workerId"), organizationId: req.orgId,
     }, engagementId);
     return res.status(200).json({ success: true, data });
 });

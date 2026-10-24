@@ -37,7 +37,11 @@ export type IssueResponse = {
   assigneeOnly?: boolean;
   mentioned?: boolean;
   workerEngagement?: {
-    templateApplication?: { id: string; completedAt: string | null } | null;
+    templateApplication?: {
+      id: string;
+      completedAt: string | null;
+      resultsDismissedAt?: string | null;
+    } | null;
     workerId: string;
     worker?: { firstName: string; lastName: string } | null;
   } | null;

@@ -44,3 +44,9 @@ const pageHostname =
   typeof window !== 'undefined' ? window.location.hostname : undefined;
 
 export const API_URL = alignLocalApiUrl(configuredApiUrl, pageHostname);
+
+// Repeated template applications are available only in the local integration demo.
+export const TEMPLATE_DEMO_MODE =
+  Boolean(viteEnv?.DEV) &&
+  viteEnv?.MODE !== 'test' &&
+  getEnv('VITE_INTEGRATIONS_MOCK', 'false') === 'true';

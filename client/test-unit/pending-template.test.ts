@@ -47,4 +47,39 @@ describe('engagementsAwaitingTemplate', () => {
       ])
     ).toEqual([]);
   });
+
+  it('keeps the finished run visible until its bar is dismissed', () => {
+    const withReceipt = {
+      ...signed,
+      workerEngagement: {
+        ...signed.workerEngagement,
+        templateApplication: {
+          id: 'application',
+          completedAt: '2026-10-24T08:00:00.000Z',
+          resultsDismissedAt: null,
+        },
+      },
+    };
+    expect(engagementsAwaitingTemplate([withReceipt])).toEqual([
+      {
+        workerId: 'worker-1',
+        engagementId: 'engagement-1',
+        label: 'Ada Lovelace',
+      },
+    ]);
+    expect(
+      engagementsAwaitingTemplate([
+        {
+          ...withReceipt,
+          workerEngagement: {
+            ...withReceipt.workerEngagement,
+            templateApplication: {
+              ...withReceipt.workerEngagement.templateApplication,
+              resultsDismissedAt: '2026-10-24T09:00:00.000Z',
+            },
+          },
+        },
+      ])
+    ).toEqual([]);
+  });
 });

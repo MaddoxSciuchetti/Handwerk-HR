@@ -1,3 +1,7 @@
+import {
+    integrationsMocked,
+    MOCK_AUTOMATION_DELAY_MS,
+} from "./integrations/localMock";
 import { prisma } from "@/lib/prisma";
 import AppError from "@/utils/AppError";
 import { BAD_REQUEST } from "@/constants/http";
@@ -95,10 +99,11 @@ export async function templateApplicationPreview(
     engagementId: string,
 ) {
     const template = await loadTemplate(context, engagementId);
-    const integrations = await listOrganizationIntegrations(
-        context.organizationId,
-    );
-    const teams = template.items.some(
+    const mocked = integrationsMocked();
+    const integrations = mocked
+        ? []
+        : await listOrganizationIntegrations(context.organizationId);
+    const teams = !mocked && template.items.some(
         (item) => item.sequence === "microsoft_send_teams_message",
     )
         ? await connectionStatus({
@@ -109,6 +114,7 @@ export async function templateApplicationPreview(
     return {
         id: template.id,
         name: template.name,
+        mocked,
         revision: templateRevision(template),
         items: template.items.map((item) => {
             const integration = integrations.find(
@@ -119,7 +125,7 @@ export async function templateApplicationPreview(
                 title: item.title,
                 sequence: item.sequence,
                 integrationProvider: item.integrationProvider,
-                blockedReason: !item.sequence
+                blockedReason: mocked || !item.sequence
                     ? null
                     : item.sequence === "microsoft_send_teams_message"
                       ? !teams?.ready || teams.status !== "connected"
@@ -145,6 +151,89 @@ type Outcome = {
     message?: string;
 };
 
+async function applicationTasks(issueIds: string[], organizationId: string) {
+    return prisma.issue.findMany({
+        where: { id: { in: issueIds }, workerEngagement: { organizationId } },
+        select: { id: true, title: true, status: true, sequence: true },
+        orderBy: { createdAt: "asc" },
+    });
+}
+
+export async function readTemplateApplication(context: {
+    workerId: string;
+    organizationId: string;
+}, engagementId: string) {
+    const engagement = await prisma.workerEngagement.findFirst({
+        where: { id: engagementId, workerId: context.workerId, organizationId: context.organizationId },
+        select: { id: true },
+    });
+    if (!engagement) throw new AppError(BAD_REQUEST, "Einsatz nicht gefunden.");
+    const receipt = await prisma.templateApplication.findUnique({
+        where: { workerEngagementId: engagementId },
+    });
+    if (!receipt) return null;
+    const template = await prisma.issueTemplate.findFirst({
+        where: { id: receipt.templateId, organizationId: context.organizationId },
+        select: { name: true },
+    });
+    // Older demo receipts could be empty because the controller skipped existing items.
+    // Read those existing tasks instead of presenting an empty successful run.
+    const tasks = receipt.issueIds.length
+        ? await applicationTasks(receipt.issueIds, context.organizationId)
+        : await prisma.issue.findMany({
+              where: {
+                  workerEngagementId: engagementId,
+                  workerEngagement: { organizationId: context.organizationId },
+                  templateItem: { issueTemplateId: receipt.templateId },
+              },
+              select: { id: true, title: true, status: true, sequence: true },
+              orderBy: { createdAt: "asc" },
+          });
+    return {
+        templateName: template?.name ?? "Template",
+        dismissed: Boolean(receipt.resultsDismissedAt),
+        result: {
+            count: tasks.length,
+            issueIds: tasks.map((task) => task.id),
+            outcomes: receipt.outcomes,
+            running: !receipt.completedAt,
+            tasks,
+        },
+    };
+}
+
+export async function dismissTemplateApplicationResults(
+    context: { workerId: string; organizationId: string },
+    engagementId: string,
+) {
+    const engagement = await prisma.workerEngagement.findFirst({
+        where: {
+            id: engagementId,
+            workerId: context.workerId,
+            organizationId: context.organizationId,
+        },
+        select: { id: true },
+    });
+    if (!engagement) throw new AppError(BAD_REQUEST, "Einsatz nicht gefunden.");
+    const receipt = await prisma.templateApplication.findUnique({
+        where: { workerEngagementId: engagementId },
+    });
+    if (!receipt)
+        throw new AppError(BAD_REQUEST, "Kein Template-Durchlauf vorhanden.");
+    if (!receipt.completedAt)
+        throw new AppError(
+            BAD_REQUEST,
+            "Der Durchlauf ist noch nicht abgeschlossen.",
+        );
+    if (!receipt.resultsDismissedAt) {
+        await prisma.templateApplication.update({
+            where: { id: receipt.id },
+            data: { resultsDismissedAt: new Date() },
+        });
+    }
+    return { dismissed: true };
+}
+
 export async function applyTemplateApplication(
     context: Context,
     input: TemplateApplyInput,
@@ -154,10 +243,14 @@ export async function applyTemplateApplication(
     ) => Promise<{ count: number; issueIds: string[] }>,
 ) {
     const template = await loadTemplate(context, input.workerEngagementId);
+    // A new explicit demo click can replace a finished receipt; retries still reuse it.
+    const repeatDemo = (receipt: { completedAt: Date | null; idempotencyKey: string }) =>
+        integrationsMocked() && Boolean(receipt.completedAt) &&
+        Boolean(input.idempotencyKey) && receipt.idempotencyKey !== input.idempotencyKey;
     const prior = await prisma.templateApplication.findUnique({
         where: { workerEngagementId: input.workerEngagementId },
     });
-    if (prior) {
+    if (prior && !repeatDemo(prior)) {
         if (prior.templateId !== context.templateId)
             throw new AppError(
                 BAD_REQUEST,
@@ -169,6 +262,7 @@ export async function applyTemplateApplication(
             outcomes: prior.outcomes,
             running: !prior.completedAt,
             applicationId: prior.id,
+            tasks: await applicationTasks(prior.issueIds, context.organizationId),
         };
     }
     if (
@@ -230,7 +324,7 @@ export async function applyTemplateApplication(
             const existing = await tx.templateApplication.findUnique({
                 where: { workerEngagementId: input.workerEngagementId },
             });
-            if (existing) {
+            if (existing && !repeatDemo(existing)) {
                 if (existing.templateId !== context.templateId)
                     throw new AppError(
                         BAD_REQUEST,
@@ -239,19 +333,20 @@ export async function applyTemplateApplication(
                 return { receipt: existing, fresh: false };
             }
             const created = await createTasks(tx, template);
-            const receipt = await tx.templateApplication.create({
-                data: {
-                    workerEngagementId: input.workerEngagementId,
-                    templateId: context.templateId,
-                    actorUserId: context.actorUserId,
-                    idempotencyKey: input.idempotencyKey ?? randomUUID(),
-                    runAutomation: input.runAutomation,
-                    issueIds: created.issueIds,
-                    ...(!input.runAutomation
-                        ? { completedAt: new Date() }
-                        : {}),
-                },
-            });
+            const data = {
+                workerEngagementId: input.workerEngagementId,
+                templateId: context.templateId,
+                actorUserId: context.actorUserId,
+                idempotencyKey: input.idempotencyKey ?? randomUUID(),
+                runAutomation: input.runAutomation,
+                issueIds: created.issueIds,
+                outcomes: [],
+                completedAt: input.runAutomation ? null : new Date(),
+                resultsDismissedAt: null,
+            };
+            const receipt = existing
+                ? await tx.templateApplication.update({ where: { id: existing.id }, data })
+                : await tx.templateApplication.create({ data });
             return { receipt, fresh: true };
         },
         { timeout: 30_000 },
@@ -264,6 +359,7 @@ export async function applyTemplateApplication(
             outcomes: receipt.outcomes,
             running: !receipt.completedAt,
             applicationId: receipt.id,
+            tasks: await applicationTasks(receipt.issueIds, context.organizationId),
         };
     const outcomes: Outcome[] = [];
     if (input.runAutomation) {
@@ -271,6 +367,19 @@ export async function applyTemplateApplication(
             where: { id: { in: receipt.issueIds } },
             select: { id: true, templateItemId: true },
         });
+        // Keep the entire local batch in progress for ten seconds, regardless of task count.
+        const mocked = integrationsMocked();
+        const mockIssueIds = mocked
+            ? issues.filter((issue) => template.items.some((item) =>
+                  item.id === issue.templateItemId && item.sequence && item.integrationProvider,
+              )).map((issue) => issue.id)
+            : [];
+        if (mockIssueIds.length) {
+            await Promise.all(mockIssueIds.map((id) =>
+                executionStatus(id, context.actorUserId, "in_progress"),
+            ));
+            await new Promise((resolve) => setTimeout(resolve, MOCK_AUTOMATION_DELAY_MS));
+        }
         for (const item of template.items) {
             const issue = issues.find(
                 (issue) => issue.templateItemId === item.id,
@@ -288,7 +397,17 @@ export async function applyTemplateApplication(
                         },
                     });
                 }
-                if (item.sequence === "microsoft_send_teams_message") {
+                if (mocked) {
+                    await executionStatus(
+                        issue.id, context.actorUserId, "done",
+                        "Lokale Simulation: Erfolg der Integration bestätigt.",
+                    );
+                    outcome = {
+                        issueId: issue.id,
+                        status: "completed",
+                        message: "Lokale Simulation erfolgreich.",
+                    };
+                } else if (item.sequence === "microsoft_send_teams_message") {
                     await executionStatus(
                         issue.id,
                         context.actorUserId,
@@ -375,5 +494,6 @@ export async function applyTemplateApplication(
         outcomes,
         running: false,
         applicationId: receipt.id,
+        tasks: await applicationTasks(receipt.issueIds, context.organizationId),
     };
 }
