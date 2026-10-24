@@ -1,3 +1,4 @@
+import { isValidTaxId, taxIdInput } from '@shared/taxId';
 import { Input } from '@/components/ui/input';
 import {
   insuranceNumberInput,
@@ -149,6 +150,7 @@ export function QuestionnaireQuestion({
       <Input
         id={question.key}
         type={question.type === 'date' ? 'date' : 'text'}
+        inputMode={question.key === 'taxId' ? 'numeric' : undefined}
         required={question.required && !locked}
         disabled={locked}
         value={value}
@@ -158,10 +160,17 @@ export function QuestionnaireQuestion({
           onChange(
             question.key === 'insuranceNumber'
               ? insuranceNumberInput(event.target.value)
-              : event.target.value
+              : question.key === 'taxId'
+                ? taxIdInput(event.target.value)
+                : event.target.value
           )
         }
       />
+      {question.key === 'taxId' && value && !isValidTaxId(value) ? (
+        <p className="text-sm text-destructive" role="alert">
+          Bitte eine gültige 11-stellige Steuer-ID eingeben.
+        </p>
+      ) : null}
       {question.key === 'insuranceNumber' &&
       value.length === 12 &&
       !isValidInsuranceNumber(value) ? (

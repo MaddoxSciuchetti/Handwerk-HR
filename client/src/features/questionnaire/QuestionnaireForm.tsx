@@ -1,3 +1,4 @@
+import { isValidTaxId } from '@shared/taxId';
 import {
   QUESTIONNAIRE_DECLARATION_HEADING,
   QUESTIONNAIRE_DECLARATION_TEXT,
@@ -73,6 +74,9 @@ function unanswered(
   if (question.key === HOURS_DISTRIBUTION_KEY) {
     if (questions.some((item) => isWeekdayHourKey(item.key) && item.employerFilled)) return false;
     return Boolean(question.required) && value !== 'ja' && value !== 'nein';
+  }
+  if (question.key === 'taxId') {
+    return value ? !isValidTaxId(value) : Boolean(question.required);
   }
   if (question.key === 'insuranceNumber') {
     if (!value) return Boolean(question.required);

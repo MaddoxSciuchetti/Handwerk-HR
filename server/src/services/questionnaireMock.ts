@@ -46,7 +46,7 @@ export function mockQuestionnaireValues(
         employeeNumber: "MOCK-001",
         iban: "DE89370400440532013000",
         bic: "COBADEFFXXX",
-        taxId: "00000000000",
+        taxId: "12345678911",
         taxClass: "1",
         childAllowance: "0",
         religion: "keine",

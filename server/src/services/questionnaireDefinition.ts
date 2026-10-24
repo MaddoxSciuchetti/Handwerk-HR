@@ -1,3 +1,4 @@
+import { isValidTaxId, taxIdInput } from "../../../shared/taxId";
 import { BAD_REQUEST } from "@/constants/http";
 import AppError from "@/utils/AppError";
 import { isValidInsuranceNumber, insuranceNumberInput } from "../../../shared/insuranceNumber";
@@ -193,6 +194,14 @@ export function presentQuestions(definition: QuestionnaireDefinition) {
 }
 
 function cleanDefault(field: QuestionnaireFieldItem, value: string) {
+    if (field.key === "taxId") {
+        const normalized = taxIdInput(value);
+        if (!normalized) return undefined;
+        if (!isValidTaxId(normalized)) {
+            reject("Steuer-ID: Bitte eine gültige 11-stellige Identifikationsnummer eingeben.");
+        }
+        return normalized;
+    }
     if (field.key === "insuranceNumber") {
         const normalized = insuranceNumberInput(value);
         if (!normalized) return undefined;

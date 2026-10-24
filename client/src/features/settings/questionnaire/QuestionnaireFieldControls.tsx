@@ -1,3 +1,4 @@
+import { taxIdInput } from '@shared/taxId';
 import { Input } from '@/components/ui/input';
 import { insuranceNumberInput } from '@shared/insuranceNumber';
 import { ChoiceLineEditor } from '@/features/questionnaire/ChoiceLineEditor';
@@ -158,7 +159,9 @@ function QuestionAnswer({
           defaultValue:
             field.key === 'insuranceNumber'
               ? insuranceNumberInput(event.target.value)
-              : event.target.value,
+              : field.key === 'taxId'
+                ? taxIdInput(event.target.value)
+                : event.target.value,
         })
       }
     />

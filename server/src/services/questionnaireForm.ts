@@ -1,3 +1,4 @@
+import { isValidTaxId, taxIdInput } from "../../../shared/taxId";
 import { QUESTIONNAIRE_DECLARATION } from "../../../shared/questionnaireDeclaration";
 import z from "zod";
 import {
@@ -303,6 +304,13 @@ function fieldSchema(field: QuestionnaireField) {
             .string()
             .trim()
             .refine((value) => value === "" || options.includes(value), "ungültige Auswahl")
+            .refine((value) => !field.required || value.length > 0, "erforderlich");
+    }
+    if (field.key === "taxId") {
+        return z
+            .string()
+            .transform(taxIdInput)
+            .refine((value) => value === "" || isValidTaxId(value), "Steuer-ID: Bitte eine gültige 11-stellige Identifikationsnummer eingeben.")
             .refine((value) => !field.required || value.length > 0, "erforderlich");
     }
     if (field.key === "insuranceNumber") {
