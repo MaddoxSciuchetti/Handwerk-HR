@@ -1,4 +1,5 @@
 import ErrorAlert from '@/components/alerts/ErrorAlert';
+import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import { TableSkeletonRows } from '@/components/ui/table-skeleton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -49,6 +50,7 @@ function WorkerLifeCycle() {
 
   const [largeEditMode, setLargeEditMode] = useState(false);
   const [editModeData, setEditModeData] = useState<WorkerSelection[]>([]);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const { deleteWorkersMutation, isDeletingWorkers } = useWorkerMutations();
   const { mutate: switchEngagementType, isPending: isSwitchingType } =
     useSwitchEngagementType();
@@ -83,10 +85,12 @@ function WorkerLifeCycle() {
   };
 
   const handleDeleteSelected = () => {
+    if (isSelectionPending) return;
     const ids = editModeData
       .map((item) => item.engagementNumber)
       .filter((id) => id.length > 0);
     if (!ids.length) return;
+    setIsDeleteConfirmOpen(false);
     const selected = editModeData;
     setEditModeData([]);
     setLargeEditMode(false);
@@ -109,6 +113,17 @@ function WorkerLifeCycle() {
 
   return (
     <div className="mx-auto flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
+      <DeleteConfirmModal
+        isOpen={isDeleteConfirmOpen}
+        title="Handwerker wirklich löschen?"
+        description={
+          editModeData.length === 1
+            ? `Möchtest du „${editModeData[0].engagementTitle}“ wirklich dauerhaft löschen? Diese Aktion kann nicht rückgängig gemacht werden. Hinweis: Die Microsoft-Lizenzen bleiben diesem Handwerker weiterhin zugewiesen.`
+            : `Möchtest du die ${editModeData.length} ausgewählten Handwerker wirklich dauerhaft löschen? Diese Aktion kann nicht rückgängig gemacht werden. Hinweis: Die Microsoft-Lizenzen bleiben den jeweiligen Handwerkern weiterhin zugewiesen.`
+        }
+        onCancel={() => setIsDeleteConfirmOpen(false)}
+        onConfirm={handleDeleteSelected}
+      />
       <WorkerSidebar
         isOpen={isWorkerSidebarOpen}
         setIsOpen={setIsWorkerSidebarOpen}
@@ -226,7 +241,8 @@ function WorkerLifeCycle() {
             selectedItems={editModeData}
             setSelectedItems={handleSetEditModeData}
             isPending={isSelectionPending}
-            onDelete={handleDeleteSelected}
+            onDelete={() => setIsDeleteConfirmOpen(true)}
+            deleteLabel="Ausgewählte Handwerker löschen"
             onClose={() => setLargeEditMode(false)}
           />
         )}

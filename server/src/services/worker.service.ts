@@ -481,21 +481,29 @@ export async function unarchiveWorker(params: UnarchiveWorkerInput) {
     });
 }
 
-export async function deleteWorker(params: DeleteWorkerInput) {
-    const { workerId, organizationId } = params;
-    await assertOwnership(workerId, organizationId);
+export async function deleteWorkers(params: { organizationId: string; workerIds: string[] }) {
+    const { organizationId } = params;
+    const workerIds = [...new Set(params.workerIds)];
+    if (!workerIds.length) return { count: 0 };
 
-    return withTxRetry(
-        async (tx) => {
-            await tx.workerDocument.deleteMany({ where: { workerId } });
-            await tx.workerEngagement.deleteMany({ where: { workerId } });
-            return tx.worker.delete({ where: { id: workerId } });
-        },
-        {
-            maxAttempts: 3,
-            baseDelayMs: 1000,
-        },
-    );
+    return withTxRetry(async (tx) => {
+        const owned = await tx.worker.findMany({
+            where: { id: { in: workerIds }, organizationId },
+            select: { id: true },
+        });
+        if (owned.length !== workerIds.length) {
+            throw new Error("Worker not found or access denied");
+        }
+        // Child relations use ON DELETE CASCADE, so one scoped delete also
+        // removes engagements, issues and documents within this transaction.
+        return tx.worker.deleteMany({
+            where: { id: { in: workerIds }, organizationId },
+        });
+    });
+}
+
+export async function deleteWorker(params: DeleteWorkerInput) {
+    await deleteWorkers({ organizationId: params.organizationId, workerIds: [params.workerId] });
 }
 
 const WORKER_DATE_FIELDS = new Set(["birthday", "entryDate", "exitDate"]);

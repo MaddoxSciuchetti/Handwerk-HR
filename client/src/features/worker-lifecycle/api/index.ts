@@ -52,7 +52,7 @@ export const deleteWorkerById = async (workerId: string): Promise<void> => {
 export const deleteWorkersByIds = async (
   workerIds: string[]
 ): Promise<void> => {
-  await Promise.all(workerIds.map((id) => deleteWorkerById(id)));
+  await API.post('worker/bulk-delete', { workerIds });
 };
 
 export const addWorker = async (

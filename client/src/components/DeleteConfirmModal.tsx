@@ -1,31 +1,45 @@
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 type DeleteConfirmModalProps = {
   isOpen: boolean;
   onCancel: () => void;
   onConfirm: () => void;
+  title?: string;
+  description?: string;
 };
 
 function DeleteConfirmModal({
   isOpen,
   onCancel,
   onConfirm,
+  title = 'Bist du sicher?',
+  description = 'Dieser Eintrag wird dauerhaft gelöscht.',
 }: DeleteConfirmModalProps) {
   if (!isOpen) {
     return null;
   }
 
   return (
-    <Dialog open onOpenChange={(next) => { if (!next) onCancel(); }}>
+    <Dialog
+      open
+      onOpenChange={(next) => {
+        if (!next) onCancel();
+      }}
+    >
       <DialogContent className="h-auto max-w-sm p-5 sm:max-w-sm">
         <div className="flex w-full flex-col gap-4 text-left">
-          <p className="text-sm font-semibold text-foreground">
-            Bist du sicher?
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Dieser Eintrag wird dauerhaft gelöscht.
-          </p>
+          <DialogTitle className="text-sm font-semibold text-foreground">
+            {title}
+          </DialogTitle>
+          <DialogDescription className="text-xs">
+            {description}
+          </DialogDescription>
           <div className="flex items-center justify-center gap-2">
             <Button
               type="button"

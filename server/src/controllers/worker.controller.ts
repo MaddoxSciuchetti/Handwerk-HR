@@ -1,3 +1,4 @@
+import { deleteWorkersSchema } from '@/schemas/worker.schemas';
 import { templateApplyInput, templateApplicationPreview, readTemplateApplication, dismissTemplateApplicationResults } from '@/services/templateApplication';
 import { getLifecycleStatistics as fetchLifecycleStatistics } from "@/services/lifecycleStatistics";
 import { uploadFileToS3 } from "@/config/aws";
@@ -220,6 +221,12 @@ export const unarchiveWorker = catchErrors(
         return res.status(200).json({ success: true, data: result });
     },
 );
+
+export const deleteWorkers = catchErrors(async (req: Request, res: Response) => {
+    const { workerIds } = deleteWorkersSchema.parse(req.body);
+    const result = await workerService.deleteWorkers({ organizationId: req.orgId, workerIds });
+    return res.status(200).json({ success: true, data: result });
+});
 
 export const deleteWorker = catchErrors(async (req: Request, res: Response) => {
     const organizationId = req.orgId;

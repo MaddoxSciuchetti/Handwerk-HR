@@ -25,3 +25,7 @@ export const createWorkerTaskSchema = z.object({
 
 export type InsertWorkerHistory = z.infer<typeof insertWorkerHistorySchema>;
 export type CreateWorkerTask = z.infer<typeof createWorkerTaskSchema>;
+
+export const deleteWorkersSchema = z.object({
+    workerIds: z.array(z.string().trim().min(1).max(120)).min(1),
+});

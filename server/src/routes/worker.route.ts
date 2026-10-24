@@ -19,6 +19,7 @@ worker.get(
 );
 
 worker.post("/", workerController.createWorker);
+worker.post("/bulk-delete", workerController.deleteWorkers);
 worker.post("/fast-track", workerController.startExpectedOnboarding);
 worker.get(
     "/engagements/:engagementId/questionnaire",
