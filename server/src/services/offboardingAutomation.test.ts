@@ -165,7 +165,10 @@ describe("offboarding microsoft automation", () => {
             .mockResolvedValueOnce(jsonResponse(null, 204))
             .mockResolvedValueOnce(
                 jsonResponse({ id: "graph-user-1", accountEnabled: false }),
-            );
+            )
+            .mockResolvedValueOnce(jsonResponse({ value: [{ skuId: "sku" }] }))
+            .mockResolvedValueOnce(jsonResponse({}))
+            .mockResolvedValueOnce(jsonResponse({ value: [] }));
 
         const result = await runTaskAutomation({
             organizationId: "org-1",
@@ -181,6 +184,17 @@ describe("offboarding microsoft automation", () => {
             expect.objectContaining({
                 method: "PATCH",
                 body: JSON.stringify({ accountEnabled: false }),
+            }),
+        );
+        expect(fetchMock).toHaveBeenNthCalledWith(
+            5,
+            "https://graph.microsoft.com/v1.0/users/graph-user-1/assignLicense",
+            expect.objectContaining({
+                method: "POST",
+                body: JSON.stringify({
+                    addLicenses: [],
+                    removeLicenses: ["sku"],
+                }),
             }),
         );
         expect(updateIssue).toHaveBeenCalledWith({
@@ -199,10 +213,15 @@ describe("offboarding microsoft automation", () => {
         );
     });
 
-    it("treats an already blocked account as success", async () => {
-        jest.spyOn(global, "fetch").mockResolvedValueOnce(
-            jsonResponse({ id: "graph-user-1", accountEnabled: false }),
-        );
+    it("removes the license when sign-in is already blocked", async () => {
+        const fetchMock = jest
+            .spyOn(global, "fetch")
+            .mockResolvedValueOnce(
+                jsonResponse({ id: "graph-user-1", accountEnabled: false }),
+            )
+            .mockResolvedValueOnce(jsonResponse({ value: [{ skuId: "sku" }] }))
+            .mockResolvedValueOnce(jsonResponse({}))
+            .mockResolvedValueOnce(jsonResponse({ value: [] }));
 
         const result = await runTaskAutomation({
             organizationId: "org-1",
@@ -212,7 +231,14 @@ describe("offboarding microsoft automation", () => {
         });
 
         expect(result).toEqual({ status: "completed", alreadyBlocked: true });
-        expect(global.fetch).toHaveBeenCalledTimes(1);
+        expect(fetchMock).not.toHaveBeenCalledWith(
+            "https://graph.microsoft.com/v1.0/users/graph-user-1",
+            expect.objectContaining({ method: "PATCH" }),
+        );
+        expect(fetchMock).toHaveBeenCalledWith(
+            "https://graph.microsoft.com/v1.0/users/graph-user-1/assignLicense",
+            expect.objectContaining({ method: "POST" }),
+        );
     });
 
     it("leaves the task open when Microsoft rejects the block", async () => {
@@ -232,6 +258,32 @@ describe("offboarding microsoft automation", () => {
         expect(result).toEqual({
             status: "failed",
             message: "Microsoft Graph hat die Sperre abgelehnt.",
+        });
+        expect(transaction).not.toHaveBeenCalled();
+    });
+
+    it("leaves the task open when the license cannot be removed", async () => {
+        jest.spyOn(global, "fetch")
+            .mockResolvedValueOnce(
+                jsonResponse({ id: "graph-user-1", accountEnabled: true }),
+            )
+            .mockResolvedValueOnce(jsonResponse(null, 204))
+            .mockResolvedValueOnce(
+                jsonResponse({ id: "graph-user-1", accountEnabled: false }),
+            )
+            .mockResolvedValueOnce(jsonResponse({ value: [{ skuId: "sku" }] }))
+            .mockResolvedValueOnce(jsonResponse({ error: "denied" }, 403));
+
+        const result = await runTaskAutomation({
+            organizationId: "org-1",
+            issueId: "issue-1",
+            actorUserId: "user-1",
+            automation: "o365-block-signin",
+        });
+
+        expect(result).toEqual({
+            status: "failed",
+            message: "Microsoft Graph hat die Lizenz nicht entfernt.",
         });
         expect(transaction).not.toHaveBeenCalled();
     });

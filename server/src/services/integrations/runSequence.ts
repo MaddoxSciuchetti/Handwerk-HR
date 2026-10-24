@@ -142,7 +142,11 @@ async function runMicrosoft(
             message: "Microsoft Graph hat die Anmeldung abgelehnt.",
         };
     }
-    const blocked = await blockMicrosoftSignIn(token, userKey);
+    const blocked = await blockMicrosoftSignIn(
+        token,
+        userKey,
+        config.licenseSkuId,
+    );
     if (!blocked.ok) return { status: "failed", message: blocked.message };
     await prisma.workerExternalAccount.upsert({
         where: {
