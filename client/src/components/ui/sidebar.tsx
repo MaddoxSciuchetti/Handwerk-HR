@@ -240,7 +240,7 @@ function Sidebar({
         <div
           data-sidebar="sidebar"
           data-slot="sidebar-inner"
-          className="flex size-full min-w-0 flex-col justify-between overflow-hidden rounded-2xl border border-border bg-card py-6 text-sidebar-foreground transition-[padding] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none group-data-[collapsible=icon]:px-1.5 group-data-[collapsible=icon]:py-4 group-data-[variant=floating]:shadow-sm group-data-[variant=floating]:ring-1 group-data-[variant=floating]:ring-sidebar-border"
+          className="flex size-full min-w-0 flex-col justify-between overflow-hidden rounded-[26px] border border-border bg-card py-6 text-sidebar-foreground transition-[padding] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none group-data-[collapsible=icon]:px-1.5 group-data-[collapsible=icon]:py-4 group-data-[variant=floating]:shadow-sm group-data-[variant=floating]:ring-1 group-data-[variant=floating]:ring-sidebar-border"
         >
           {children}
         </div>

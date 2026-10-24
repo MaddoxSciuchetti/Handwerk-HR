@@ -71,7 +71,7 @@ function Layout() {
           setIsSettingOpen={setIsSettingOpen}
         />
       )}
-      <SidebarInset className="mt-1 mb-1 ml-1 flex h-[calc(100svh-0.5rem)] grow flex-col overflow-hidden rounded-2xl border border-border bg-background">
+      <SidebarInset className="mt-1 mb-1 ml-1 flex h-[calc(100svh-0.5rem)] grow flex-col overflow-hidden rounded-[26px] border border-border bg-background">
         <header className="flex h-16 shrink-0 items-center gap-2 px-4">
           <SidebarTrigger className="-ml-1" />
           <PagePath />

@@ -10,7 +10,7 @@ function SidebarContent({
 }: SidebarContentProps) {
   return (
     <div
-      className={cn('flex min-h-0  grow overflow-y-auto', className)}
+      className={cn('flex min-h-0 grow overflow-y-auto', className)}
       {...props}
     >
       {children}

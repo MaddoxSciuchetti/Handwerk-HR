@@ -39,7 +39,7 @@ export function SidebarAside({
       inert={!isOpen}
       data-state={motionState}
       className={cn(
-        'right-sidebar fixed right-1 top-1 bottom-1 z-50 overflow-hidden rounded-4xl border border-border bg-(--card)',
+        'right-sidebar fixed right-0 top-1 bottom-1 z-50 overflow-hidden rounded-[26px] border border-border bg-(--card)',
         !isOpen && 'pointer-events-none',
         className
       )}

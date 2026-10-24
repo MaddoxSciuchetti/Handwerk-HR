@@ -1,4 +1,12 @@
 @import 'tailwindcss';
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @theme {
   --font-sans: 'Calibri', Arial, sans-serif;
 }
