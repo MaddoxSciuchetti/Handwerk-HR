@@ -263,6 +263,10 @@ export async function updateTaskInOrg(
     }
 
     const sequenceFields = await taskSequenceFields(orgId, body);
+    const assigneeUserId =
+        body.assigneeUserId === undefined
+            ? undefined
+            : body.assigneeUserId.trim() || null;
     const newWorkerEngagementId = body.workerEngagementId?.trim();
     if (body.workerEngagementId !== undefined && !newWorkerEngagementId) {
         throw new AppError(BAD_REQUEST, "Bitte wähle einen Handwerker aus.");
@@ -285,9 +289,7 @@ export async function updateTaskInOrg(
                 ...(newWorkerEngagementId ? { workerEngagementId: newWorkerEngagementId } : {}),
                 ...(body.title !== undefined ? { title: body.title } : {}),
                 ...(body.status !== undefined ? { status: body.status } : {}),
-                ...(body.assigneeUserId !== undefined
-                    ? { assigneeUserId: body.assigneeUserId }
-                    : {}),
+                ...(assigneeUserId !== undefined ? { assigneeUserId } : {}),
                 ...(automation !== undefined ? { automation } : {}),
                 ...sequenceFields,
             },
@@ -301,7 +303,7 @@ export async function updateTaskInOrg(
         actorUserId: userId,
         title: body.title,
         status: body.status,
-        assigneeUserId: body.assigneeUserId,
+        assigneeUserId,
         automation,
         ...sequenceFields,
     });

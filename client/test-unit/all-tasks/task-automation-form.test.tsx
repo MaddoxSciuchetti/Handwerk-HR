@@ -93,6 +93,21 @@ describe('task automation form', () => {
     expect(close).not.toHaveBeenCalled();
   });
 
+  it('runs account deactivation without a Zuständigkeit', async () => {
+    updateTask.mockResolvedValueOnce({});
+    render(
+      <Form
+        mode="edit"
+        seed={{ taskId: 'task-1', assigneeUserId: '', sequence: 'microsoft_deactivate_account' }}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Ausführen' }));
+    await waitFor(() => expect(runAction).toHaveBeenCalledOnce());
+    expect(
+      screen.queryByText('Bitte wähle eine Zuständigkeit aus')
+    ).not.toBeInTheDocument();
+  });
+
   it('does not run an action when saving fails', async () => {
     updateTask.mockRejectedValueOnce(new Error('Save failed'));
     render(<Form mode="edit" seed={{ taskId: 'task-1' }} />);

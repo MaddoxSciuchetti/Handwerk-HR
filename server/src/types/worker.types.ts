@@ -137,7 +137,7 @@ export interface UpdateIssueInput {
     actorUserId: string;
     title?: string;
     description?: string;
-    assigneeUserId?: string;
+    assigneeUserId?: string | null;
     status?: IssueStatus;
     priority?: IssuePriority;
     dueDate?: Date;

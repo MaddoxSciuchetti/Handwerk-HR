@@ -19,11 +19,33 @@ export function useSubmitTasks(
     register,
     handleSubmit,
     control,
+    setError,
+    setValue,
     formState: { errors },
   } = useForm<TemplateTaskFormValues>({
     resolver: zodResolver(templateTaskFormSchema),
     defaultValues: initialValues,
   });
+
+  const onSaveError = (error: unknown) => {
+    const message =
+      error &&
+      typeof error === 'object' &&
+      'message' in error &&
+      typeof error.message === 'string' &&
+      error.message.trim()
+        ? error.message
+        : 'Aufgabe konnte nicht gespeichert werden';
+
+    if (
+      message === 'Bitte eine Nachrichtenvorlage mit Inhalt wählen.' ||
+      message === 'Bitte wähle eine E-Mail-Vorlage.' ||
+      message === 'Die E-Mail-Vorlage wurde nicht gefunden.'
+    ) {
+      setError('mailTemplateId', { type: 'server', message });
+    }
+    toast.error(message);
+  };
 
   const onSubmit = handleSubmit((data) => {
     if (templateTaskState === 'create') {
@@ -31,7 +53,7 @@ export function useSubmitTasks(
         { templateId, data },
         {
           onSuccess: () => toast.success('Aufgabe gespeichert'),
-          onError: () => toast.error('Aufgabe konnte nicht gespeichert werden'),
+          onError: onSaveError,
         }
       );
     } else {
@@ -39,7 +61,7 @@ export function useSubmitTasks(
         { taskId, data },
         {
           onSuccess: () => toast.success('Aufgabe gespeichert'),
-          onError: () => toast.error('Aufgabe konnte nicht gespeichert werden'),
+          onError: onSaveError,
         }
       );
     }
@@ -51,5 +73,6 @@ export function useSubmitTasks(
     errors,
     onSubmit,
     control,
+    setValue,
   };
 }
