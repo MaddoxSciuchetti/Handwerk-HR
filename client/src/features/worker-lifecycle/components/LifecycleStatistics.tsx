@@ -44,6 +44,7 @@ export function LifecycleStatistics() {
       >('/worker/statistics');
       return response.data;
     },
+    staleTime: 30_000,
     refetchInterval: 60_000,
   });
   const cards = [
