@@ -49,7 +49,7 @@ export function TemplateTaskItem({
                   setEditTemplateTask({
                     taskId: task.id,
                     taskName: task.taskName,
-                    taskDescription: task.taskDescription,
+                    taskDescription: task.taskDescription ?? '',
                     defaultStatus: task.defaultStatus,
                     defaultAssigneeUserId: task.defaultAssigneeUserId ?? '',
                     orderIndex: task.orderIndex,

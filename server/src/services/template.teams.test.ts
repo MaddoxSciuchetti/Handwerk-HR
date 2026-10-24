@@ -64,3 +64,14 @@ it("rejects an empty Teams body and scopes template access to the organization",
     );
     expect(prisma.templateItem.create).not.toHaveBeenCalled();
 });
+
+it.each(["", null])("saves an unassigned task with a null description (assignee: %s)", async (defaultAssigneeUserId) => {
+    const optionalData = { ...data, taskDescription: null, defaultAssigneeUserId };
+    await insertTemplateTask(optionalData);
+    await modifyTemplateTask("item", "org", optionalData);
+    for (const mutation of [prisma.templateItem.create, prisma.templateItem.update]) {
+        expect(mutation).toHaveBeenCalledWith(expect.objectContaining({
+            data: expect.objectContaining({ description: null, defaultAssigneeUserId: null }),
+        }));
+    }
+});

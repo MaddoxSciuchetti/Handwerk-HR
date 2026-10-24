@@ -19,10 +19,10 @@ export type InsertTemplateParams = {
 export type InsertTemplateTaskParams = {
     templateId: string;
     taskName: string;
-    taskDescription?: string;
+    taskDescription?: string | null;
     description?: string;
     defaultStatus?: IssueStatus;
-    defaultAssigneeUserId?: string;
+    defaultAssigneeUserId?: string | null;
     orderIndex?: number;
     integrationProvider?: IntegrationProvider | null;
     sequence?: IntegrationSequence | null;
@@ -31,9 +31,9 @@ export type InsertTemplateTaskParams = {
 
 export type ModifyTemplateTaskParams = {
     taskName?: string;
-    taskDescription?: string;
+    taskDescription?: string | null;
     defaultStatus?: IssueStatus;
-    defaultAssigneeUserId?: string;
+    defaultAssigneeUserId?: string | null;
     orderIndex?: number;
     integrationProvider?: IntegrationProvider | null;
     sequence?: IntegrationSequence | null;
@@ -246,7 +246,7 @@ export const insertTemplateTask = async (
             title: data.taskName,
             description: data.taskDescription,
             defaultStatus: data.defaultStatus,
-            defaultAssigneeUserId: data.defaultAssigneeUserId,
+            defaultAssigneeUserId: data.defaultAssigneeUserId === "" ? null : data.defaultAssigneeUserId,
             orderIndex: data.orderIndex ?? 0,
             integrationProvider,
             sequence,
@@ -296,7 +296,7 @@ export const modifyTemplateTask = async (
             title: data.taskName,
             description: data.taskDescription,
             defaultStatus: data.defaultStatus,
-            defaultAssigneeUserId: data.defaultAssigneeUserId,
+            defaultAssigneeUserId: data.defaultAssigneeUserId === "" ? null : data.defaultAssigneeUserId,
             orderIndex: data.orderIndex,
             integrationProvider,
             sequence,

@@ -17,9 +17,7 @@ export const templateTaskFormSchema = z
     defaultStatus: z.enum(ISSUE_STATUSES, {
       message: 'Bitte wähle einen Status aus',
     }),
-    defaultAssigneeUserId: z
-      .string()
-      .min(1, { message: 'Bitte wähle einen Verantwortlichen aus' }),
+    defaultAssigneeUserId: z.string(),
     orderIndex: z.number(),
     integrationProvider: z.enum([
       INTEGRATION_NONE,

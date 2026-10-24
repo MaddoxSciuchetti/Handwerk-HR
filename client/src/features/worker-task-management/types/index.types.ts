@@ -76,7 +76,7 @@ export type TemplateTaskResponse = {
   updatedAt: Date;
   orderIndex: number;
   taskName: string;
-  taskDescription: string;
+  taskDescription: string | null;
   defaultStatus: IssueStatusValue;
   defaultAssigneeUserId: string | null;
   integrationProvider?: 'microsoft_graph' | 'crewmeister' | null;
