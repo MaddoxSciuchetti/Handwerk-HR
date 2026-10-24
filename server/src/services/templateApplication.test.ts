@@ -12,6 +12,7 @@ import { executionStatus } from "./integrations/issueExecutionStatus";
 jest.mock("@/lib/prisma", () => ({
     prisma: {
         workerEngagement: { findFirst: jest.fn() },
+        worker: { findFirst: jest.fn(), update: jest.fn() },
         issueTemplate: { findFirst: jest.fn() },
         templateApplication: {
             findUnique: jest.fn(),
@@ -72,6 +73,7 @@ beforeEach(() => {
     jest.clearAllMocks();
     db.$transaction.mockImplementation(async (fn: any) => fn(db));
     db.workerEngagement.findFirst.mockResolvedValue({ id: "engagement" });
+    db.worker.findFirst.mockResolvedValue({ workEmail: null });
     db.issueTemplate.findFirst.mockResolvedValue({
         id: "template",
         name: "Onboarding",
@@ -457,4 +459,45 @@ it("does not expose saved task results from another engagement or organization",
     db.workerEngagement.findFirst.mockResolvedValue(null);
     await expect(readTemplateApplication(context, "foreign")).rejects.toThrow("Einsatz nicht gefunden");
     expect(db.templateApplication.findUnique).not.toHaveBeenCalled();
+});
+
+describe("missing work email for Microsoft removal", () => {
+    beforeEach(() => {
+        db.issueTemplate.findFirst.mockResolvedValue({
+            id: "template", name: "Offboarding",
+            items: [item("a", "microsoft_deactivate_account")],
+        });
+    });
+    it("requests an email in preview only when missing", async () => {
+        expect((await templateApplicationPreview(context, "engagement")).requiresWorkEmail).toBe(true);
+        db.worker.findFirst.mockResolvedValue({ workEmail: "worker@example.com" });
+        expect((await templateApplicationPreview(context, "engagement")).requiresWorkEmail).toBe(false);
+    });
+    it.each([true, false])("requires an email before task creation (automation: %s)", async (runAutomation) => {
+        await expect(applyTemplateApplication(context, { ...manual, runAutomation }, createTasks))
+            .rejects.toThrow("Bitte die Arbeits-E-Mail");
+        expect(createTasks).not.toHaveBeenCalled();
+        expect(runIssueSequence).not.toHaveBeenCalled();
+    });
+    it("validates and saves the email before running the removal sequence", async () => {
+        const input = templateApplyInput.parse({
+            ...manual, runAutomation: true, workEmail: " worker@example.com ",
+        });
+        (runIssueSequence as jest.Mock).mockImplementation(async () => {
+            expect(db.worker.update).toHaveBeenCalledWith({
+                where: { id: "worker", organizationId: "org" },
+                data: { workEmail: "worker@example.com" },
+            });
+            return { status: "completed" };
+        });
+        await applyTemplateApplication(context, input, createTasks);
+        expect(runIssueSequence).toHaveBeenCalled();
+        expect(templateApplyInput.safeParse({ ...manual, workEmail: "invalid" }).success).toBe(false);
+    });
+    it("keeps an existing work email", async () => {
+        db.worker.findFirst.mockResolvedValue({ workEmail: "existing@example.com" });
+        await applyTemplateApplication(context, { ...manual, workEmail: "other@example.com" }, createTasks);
+        expect(db.worker.update).not.toHaveBeenCalled();
+        expect(createTasks).toHaveBeenCalled();
+    });
 });

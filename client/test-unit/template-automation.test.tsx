@@ -65,6 +65,14 @@ vi.mock('@/features/microsoft-teams/teams.api', () => ({
   connectTeams: mocks.connect,
 }));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+vi.mock('@/features/worker-task-management/api/microsoftLicenses.api', () => ({
+  getMicrosoftLicenseAvailability: vi.fn(async () => ({
+    available: 3,
+    occupied: 2,
+    skuPartNumber: 'BUSINESS',
+    error: null,
+  })),
+}));
 const target = { workerId: 'worker', engagementId: 'engagement', label: 'Ada' };
 const automation = {
   id: 'a',
@@ -134,6 +142,19 @@ beforeEach(() => {
   });
 });
 
+it('spins the opener while the chosen template loads', async () => {
+  mocks.preview.mockReturnValue(new Promise(() => {}));
+  renderWithProviders(<TemplateApplyPrompt targets={[target]} />);
+  const user = userEvent.setup();
+  await user.click(
+    await screen.findByRole('button', { name: /Automatisch/ })
+  );
+  const opener = screen.getByRole('button', { name: 'Template wählen' });
+  expect(opener).toHaveAttribute('aria-busy', 'true');
+  expect(opener.querySelector('.animate-spin')).toBeInTheDocument();
+  expect(screen.queryByText('Template wird geladen…')).not.toBeInTheDocument();
+});
+
 async function selectTemplate(name = 'Automatisch') {
   const user = userEvent.setup();
   await user.click(
@@ -157,6 +178,7 @@ describe('template automation popup', () => {
     expect(
       await screen.findByRole('region', { name: 'Template auswählen' })
     ).toBeInTheDocument();
+    expect(screen.queryByText(/Microsoft 365 -/)).not.toBeInTheDocument();
   });
   it('closing creates nothing and does not auto-open again after remounting', async () => {
     const view = renderWithProviders(
@@ -193,6 +215,16 @@ describe('template automation popup', () => {
       screen.queryByText('Automatisierung starten?')
     ).not.toBeInTheDocument();
     expect(mocks.apply).not.toHaveBeenCalled();
+  });
+  it('shows Microsoft license availability inside account creation in demo mode', async () => {
+    mocks.demo = true;
+    renderWithProviders(<TemplateApplyPrompt targets={[target]} />);
+    const user = await selectTemplate();
+    await user.click(screen.getByRole('button', { name: 'Microsoft-Konto' }));
+    const account = screen.getByRole('group', { name: 'Microsoft-Konto' });
+    expect(
+      await within(account).findByText('Microsoft 365 - 2/5')
+    ).toBeInTheDocument();
   });
   it('supports creation with and without automation', async () => {
     const view = renderWithProviders(
@@ -276,7 +308,9 @@ describe('template automation popup', () => {
     await user.click(
       await screen.findByRole('option', { name: 'HR', exact: true })
     );
-    await user.click(screen.getByText('Empfänger wählen (0)'));
+    await user.click(
+      screen.getByRole('button', { name: 'Empfänger für Willkommensmail' })
+    );
     await user.click(await screen.findByRole('checkbox', { name: 'Team' }));
     expect(run).toBeEnabled();
     await user.click(
@@ -284,6 +318,9 @@ describe('template automation popup', () => {
     );
     await user.click(
       await screen.findByRole('option', { name: 'Office', exact: true })
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'Empfänger für Willkommensmail' })
     );
     await user.click(screen.getByRole('checkbox', { name: 'Team' }));
     expect(run).toBeDisabled();
@@ -383,7 +420,9 @@ describe('template automation popup', () => {
       screen.queryByText('Microsoft Graph hat die Anmeldung abgelehnt.')
     ).not.toBeInTheDocument();
     await user.click(screen.getByText('Microsoft-Konto'));
-    await user.click(screen.getByText('Empfänger wählen (0)'));
+    await user.click(
+      screen.getByRole('button', { name: 'Empfänger für Microsoft-Konto' })
+    );
     expect(
       screen.queryByText('Keine Empfänger vorhanden.')
     ).not.toBeInTheDocument();
@@ -430,7 +469,7 @@ describe('template automation popup', () => {
       await waitFor(() => expect(mocks.connect).toHaveBeenCalledTimes(1));
       expect(
         await screen.findByRole('link', { name: 'Teams-Einstellungen öffnen' })
-      ).toHaveAttribute('href', '/settings/general');
+      ).toHaveAttribute('href', '/settings/integrations');
       expect(screen.getAllByRole('alert')).toHaveLength(1);
     }
   );
@@ -551,7 +590,9 @@ describe('template automation popup', () => {
       screen.getByRole('button', { name: 'Automatisierung starten' })
     ).toBeDisabled();
     await user.click(screen.getByText('Teams-Info'));
-    await user.click(screen.getByText('Teams-Kanäle wählen (0)'));
+    await user.click(
+      screen.getByRole('button', { name: 'Empfänger für Teams-Info' })
+    );
     await user.click(
       await screen.findByRole('checkbox', { name: 'Team · Allgemein' })
     );
@@ -996,4 +1037,49 @@ it('hides the finished bar after it is closed and keeps it hidden on a later vis
     screen.queryByRole('region', { name: 'Ergebnis der Automatisierung' })
   ).not.toBeInTheDocument();
   expect(mocks.apply).not.toHaveBeenCalled();
+});
+
+describe('work email required for Microsoft removal', () => {
+  beforeEach(() => {
+    mocks.preview.mockResolvedValue({
+      id: 'automated', name: 'Offboarding', requiresWorkEmail: true,
+      items: [{ ...automation, sequence: 'microsoft_deactivate_account' }],
+    });
+  });
+
+  it.each(['Automatisierung starten', 'Ohne Automatisierung'])(
+    'requires a valid work email before %s and submits it',
+    async (action) => {
+      renderWithProviders(<TemplateApplyPrompt targets={[target]} />);
+      const user = await selectTemplate();
+      const start = screen.getByRole('button', { name: 'Automatisierung starten' });
+      const manual = screen.getByRole('button', { name: 'Ohne Automatisierung' });
+      expect(start).toBeDisabled();
+      expect(manual).toBeDisabled();
+      const email = screen.getByRole('textbox', { name: 'Arbeits-E-Mail' });
+      await user.type(email, 'invalid');
+      expect(start).toBeDisabled();
+      expect(manual).toBeDisabled();
+      await user.clear(email);
+      await user.type(email, 'worker@example.com');
+      await user.click(screen.getByRole('button', { name: action }));
+      await waitFor(() => expect(mocks.apply).toHaveBeenCalledWith(
+        'worker', 'automated', expect.objectContaining({
+          workEmail: 'worker@example.com',
+          runAutomation: action === 'Automatisierung starten',
+        })
+      ));
+    }
+  );
+
+  it('hides the email prompt when an email is already saved', async () => {
+    mocks.preview.mockResolvedValue({
+      id: 'automated', name: 'Offboarding', requiresWorkEmail: false,
+      items: [{ ...automation, sequence: 'microsoft_deactivate_account' }],
+    });
+    renderWithProviders(<TemplateApplyPrompt targets={[target]} />);
+    await selectTemplate();
+    expect(screen.queryByRole('textbox', { name: 'Arbeits-E-Mail' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Automatisierung starten' })).toBeEnabled();
+  });
 });

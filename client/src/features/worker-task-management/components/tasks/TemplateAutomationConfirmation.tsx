@@ -1,6 +1,15 @@
-import { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from '@/components/ui/popover';
+import { useState, type ReactNode } from 'react';
+import { MicrosoftLicenseStatus } from './MicrosoftLicenseStatus';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { z } from 'zod';
 import { Spinner } from '@/components/ui/spinner';
 import {
   Accordion,
@@ -18,7 +27,10 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertTitle } from '@/components/ui/alert';
-import { isMailSequence } from '@/features/settings/integrations/integration.consts';
+import {
+  isMailSequence,
+  sequenceLabel,
+} from '@/features/settings/integrations/integration.consts';
 import {
   connectTeams,
   getChannels,
@@ -37,20 +49,6 @@ import type {
   TemplatePreview,
 } from '../../api/templateApplication.api';
 
-const descriptions: Record<string, string> = {
-  microsoft_create_account:
-    'Legt ein Microsoft-365-Konto an und weist eine Lizenz zu.',
-  crewmeister_create_account: 'Legt ein Crewmeister-Konto an.',
-  microsoft_send_email:
-    'Sendet die hinterlegte E-Mail-Vorlage an die gewählten Empfänger.',
-  microsoft_send_onboarding_email:
-    'Sendet die Onboarding-E-Mail an die gewählten Empfänger.',
-  microsoft_send_offboarding_email:
-    'Sendet die Offboarding-E-Mail an die gewählten Empfänger.',
-  microsoft_send_teams_message:
-    'Sendet die hinterlegte Nachricht an die gewählten Teams-Kanäle.',
-  microsoft_deactivate_account: 'Sperrt die Anmeldung am Microsoft-365-Konto.',
-};
 const emailAuthenticationHelp =
   'Microsoft hat die Anmeldung der Organisation abgelehnt. Bitte unter Einstellungen → Integrationen die Mandanten-ID, Client-ID und das Client-Secret prüfen und korrigieren oder die Administration darum bitten.';
 const teamsSignInHelp =
@@ -68,6 +66,23 @@ function mailErrorMessage(message: string) {
     return microsoftConfigurationHelp;
   return message;
 }
+function selectionLabel(labels: string[]) {
+  if (labels.length === 0) return 'Wählen';
+  if (labels.length === 1) return labels[0];
+  return `${labels.length} ausgewählt`;
+}
+
+function FieldRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="w-20 shrink-0 text-xs text-muted-foreground">
+        {label}:
+      </span>
+      <div className="min-w-0 flex-1">{children}</div>
+    </div>
+  );
+}
+
 function errorCode(error: unknown) {
   if (!error || typeof error !== 'object') return '';
   if ('code' in error) return String(error.code);
@@ -85,11 +100,20 @@ export function TemplateAutomationConfirmation({
   busy: boolean;
   onApply: (
     runAutomation: boolean,
-    choices: Record<string, AutomationChoice>
+    choices: Record<string, AutomationChoice>,
+    workEmail?: string
   ) => void;
 }) {
   const { user } = useAuth();
   const [startingAutomation, setStartingAutomation] = useState(false);
+  const [workEmail, setWorkEmail] = useState('');
+  const normalizedWorkEmail = workEmail.trim();
+  const workEmailReady =
+    !template.requiresWorkEmail ||
+    z.string().email().max(254).safeParse(normalizedWorkEmail).success;
+  const submittedWorkEmail = template.requiresWorkEmail
+    ? normalizedWorkEmail
+    : undefined;
   const [choices, setChoices] = useState<Record<string, AutomationChoice>>({});
   const automated = template.items.filter(
     (item) => item.sequence && item.integrationProvider
@@ -265,6 +289,28 @@ export function TemplateAutomationConfirmation({
   return (
     <div className="space-y-3">
       <p className="text-sm font-medium">{template.name}</p>
+      {template.requiresWorkEmail && (
+        <div className="space-y-1.5">
+          <Label htmlFor="template-work-email" className="text-xs">
+            Arbeits-E-Mail
+          </Label>
+          <Input
+            id="template-work-email"
+            type="email"
+            required
+            maxLength={254}
+            value={workEmail}
+            onChange={(event) => setWorkEmail(event.target.value)}
+            disabled={busy}
+            placeholder="name@firma.de"
+            aria-describedby="template-work-email-hint"
+            className="h-8 text-xs"
+          />
+          <p id="template-work-email-hint" className="text-xs text-muted-foreground">
+            Fehlt noch, um das Microsoft-Konto zu finden.
+          </p>
+        </div>
+      )}
       {template.mocked && (
         <p className="text-xs text-muted-foreground">
           Lokale Simulation · Erfolg nach ca. 10 Sekunden. Es werden keine
@@ -293,165 +339,210 @@ export function TemplateAutomationConfirmation({
                     aria-label={item.title}
                     className="mt-2 min-w-0 space-y-2"
                   >
-                    <p className="text-xs text-muted-foreground">
-                      {descriptions[item.sequence!] ??
-                        'Führt die konfigurierte Aktion aus.'}
-                    </p>
-                    {isMail && (
-                      <>
-                        <Select
-                          value={choice.senderAddress ?? ''}
-                          onValueChange={(value) =>
-                            change(item.id, { senderAddress: value })
-                          }
-                          disabled={busy}
-                        >
-                          <SelectTrigger
-                            aria-label={`Absender für ${item.title}`}
-                            className="w-full"
-                          >
-                            <SelectValue placeholder="Absender wählen" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {senders.data?.addresses
-                              .filter((sender) => sender.kind === 'mailbox')
-                              .map((sender) => (
-                                <SelectItem
-                                  key={sender.email}
-                                  value={sender.email}
-                                >
-                                  {sender.label}
-                                </SelectItem>
-                              ))}
-                          </SelectContent>
-                        </Select>
-                        <Accordion type="single" collapsible>
-                          <AccordionItem value="recipients">
-                            <AccordionTrigger
-                              className="text-xs"
-                              disabled={busy}
-                            >
-                              Empfänger wählen ({choice.recipients?.length ?? 0}
-                              )
-                            </AccordionTrigger>
-                            <AccordionContent>
-                              <div className="mt-1 max-h-36 space-y-1 overflow-y-auto">
-                                {[...recipients.values()].map((recipient) => {
-                                  const key = recipientKey(recipient);
-                                  const checked =
-                                    choice.recipients?.some(
-                                      (selected) =>
-                                        recipientKey(selected) === key
-                                    ) ?? false;
-                                  return (
-                                    <Label
-                                      key={key}
-                                      className="flex items-center gap-2 text-xs"
-                                    >
-                                      <Checkbox
-                                        disabled={busy}
-                                        checked={checked}
-                                        onCheckedChange={() =>
-                                          change(item.id, {
-                                            recipients: checked
-                                              ? choice.recipients?.filter(
-                                                  (selected) =>
-                                                    recipientKey(selected) !==
-                                                    key
-                                                )
-                                              : [
-                                                  ...(choice.recipients ?? []),
-                                                  recipient,
-                                                ],
-                                          })
-                                        }
-                                      />
-                                      {recipient.label}
-                                    </Label>
-                                  );
-                                })}
-                                {mail.isSuccess &&
-                                  mailErrors.length === 0 &&
-                                  recipients.size === 0 && (
-                                    <p className="text-xs">
-                                      Keine Empfänger vorhanden.
-                                    </p>
-                                  )}
-                              </div>
-                            </AccordionContent>
-                          </AccordionItem>
-                        </Accordion>
-                      </>
+                    <FieldRow label="Aktion">
+                      <p className="truncate text-right text-xs">
+                        {sequenceLabel(item.sequence)}
+                      </p>
+                    </FieldRow>
+                    {item.sequence === 'microsoft_create_account' && (
+                      <MicrosoftLicenseStatus />
                     )}
-                    {isTeams && (
-                      <>
-                        {connection.data?.account && (
-                          <p className="text-xs">
-                            {connection.data.account.username}
+                    {(isMail || isTeams) && (
+                      <FieldRow label="Absender">
+                        {isMail ? (
+                          <Select
+                            value={choice.senderAddress ?? ''}
+                            onValueChange={(value) =>
+                              change(item.id, { senderAddress: value })
+                            }
+                            disabled={busy}
+                          >
+                            <SelectTrigger
+                              aria-label={`Absender für ${item.title}`}
+                              className="h-8 w-full text-xs"
+                            >
+                              <SelectValue placeholder="Wählen" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {senders.data?.addresses
+                                .filter((sender) => sender.kind === 'mailbox')
+                                .map((sender) => (
+                                  <SelectItem
+                                    key={sender.email}
+                                    value={sender.email}
+                                  >
+                                    {sender.label}
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <p className="truncate text-right text-xs">
+                            {connection.data?.account?.username ??
+                              'Nicht verbunden'}
                           </p>
                         )}
-                        <Accordion type="single" collapsible>
-                          <AccordionItem value="channels">
-                            <AccordionTrigger
-                              className="text-xs"
+                      </FieldRow>
+                    )}
+                    {isMail && (
+                      <FieldRow label="Empfänger">
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
                               disabled={busy}
+                              aria-label={`Empfänger für ${item.title}`}
+                              className="h-8 w-full justify-between px-2 text-xs font-normal"
                             >
-                              Teams-Kanäle wählen (
-                              {choice.destinations?.length ?? 0})
-                            </AccordionTrigger>
-                            <AccordionContent>
-                              <div className="mt-1 max-h-36 space-y-1 overflow-y-auto">
-                                {channels.data?.channels.map((channel) => {
-                                  const matches = (destination: {
-                                    teamId: string;
-                                    channelId: string;
-                                  }) =>
-                                    destination.teamId === channel.teamId &&
-                                    destination.channelId === channel.channelId;
-                                  const checked =
-                                    choice.destinations?.some(matches) ?? false;
-                                  return (
-                                    <Label
-                                      key={`${channel.teamId}:${channel.channelId}`}
-                                      className="flex items-center gap-2 text-xs"
-                                    >
-                                      <Checkbox
-                                        disabled={busy}
-                                        checked={checked}
-                                        onCheckedChange={() =>
-                                          change(item.id, {
-                                            destinations: checked
-                                              ? choice.destinations?.filter(
-                                                  (destination) =>
-                                                    !matches(destination)
-                                                )
-                                              : [
-                                                  ...(choice.destinations ??
-                                                    []),
-                                                  {
-                                                    teamId: channel.teamId,
-                                                    channelId:
-                                                      channel.channelId,
-                                                  },
-                                                ],
-                                          })
-                                        }
-                                      />
-                                      {channel.label}
-                                    </Label>
-                                  );
-                                })}
-                                {channels.isSuccess &&
-                                  channels.data.channels.length === 0 && (
-                                    <p className="text-xs">
-                                      Keine Kanäle vorhanden.
-                                    </p>
-                                  )}
-                              </div>
-                            </AccordionContent>
-                          </AccordionItem>
-                        </Accordion>
-                      </>
+                              <span className="truncate">
+                                {selectionLabel(
+                                  (choice.recipients ?? []).map(
+                                    (recipient) => recipient.label
+                                  )
+                                )}
+                              </span>
+                              <ChevronDown
+                                className="size-4 shrink-0 text-muted-foreground"
+                                aria-hidden="true"
+                              />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent
+                            align="end"
+                            className="w-[var(--radix-popover-trigger-width)] p-2"
+                            aria-label={`Empfänger für ${item.title}`}
+                          >
+                            <div className="max-h-36 space-y-1 overflow-y-auto">
+                              {[...recipients.values()].map((recipient) => {
+                                const key = recipientKey(recipient);
+                                const checked =
+                                  choice.recipients?.some(
+                                    (selected) => recipientKey(selected) === key
+                                  ) ?? false;
+                                return (
+                                  <Label
+                                    key={key}
+                                    className="flex items-center gap-2 text-xs"
+                                  >
+                                    <Checkbox
+                                      disabled={busy}
+                                      checked={checked}
+                                      onCheckedChange={() =>
+                                        change(item.id, {
+                                          recipients: checked
+                                            ? choice.recipients?.filter(
+                                                (selected) =>
+                                                  recipientKey(selected) !== key
+                                              )
+                                            : [
+                                                ...(choice.recipients ?? []),
+                                                recipient,
+                                              ],
+                                        })
+                                      }
+                                    />
+                                    {recipient.label}
+                                  </Label>
+                                );
+                              })}
+                              {mail.isSuccess &&
+                                mailErrors.length === 0 &&
+                                recipients.size === 0 && (
+                                  <p className="text-xs">
+                                    Keine Empfänger vorhanden.
+                                  </p>
+                                )}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </FieldRow>
+                    )}
+                    {isTeams && (
+                      <FieldRow label="Empfänger">
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              disabled={busy}
+                              aria-label={`Empfänger für ${item.title}`}
+                              className="h-8 w-full justify-between px-2 text-xs font-normal"
+                            >
+                              <span className="truncate">
+                                {selectionLabel(
+                                  (choice.destinations ?? []).map(
+                                    (destination) =>
+                                      channels.data?.channels.find(
+                                        (channel) =>
+                                          channel.teamId ===
+                                            destination.teamId &&
+                                          channel.channelId ===
+                                            destination.channelId
+                                      )?.label ?? 'Kanal'
+                                  )
+                                )}
+                              </span>
+                              <ChevronDown
+                                className="size-4 shrink-0 text-muted-foreground"
+                                aria-hidden="true"
+                              />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent
+                            align="end"
+                            className="w-[var(--radix-popover-trigger-width)] p-2"
+                            aria-label="Teams-Kanäle"
+                          >
+                            <div className="max-h-60 space-y-1 overflow-y-auto">
+                              {channels.data?.channels.map((channel) => {
+                                const matches = (destination: {
+                                  teamId: string;
+                                  channelId: string;
+                                }) =>
+                                  destination.teamId === channel.teamId &&
+                                  destination.channelId === channel.channelId;
+                                const checked =
+                                  choice.destinations?.some(matches) ?? false;
+                                return (
+                                  <Label
+                                    key={`${channel.teamId}:${channel.channelId}`}
+                                    className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-xs hover:bg-accent"
+                                  >
+                                    <Checkbox
+                                      disabled={busy}
+                                      checked={checked}
+                                      onCheckedChange={() =>
+                                        change(item.id, {
+                                          destinations: checked
+                                            ? choice.destinations?.filter(
+                                                (destination) =>
+                                                  !matches(destination)
+                                              )
+                                            : [
+                                                ...(choice.destinations ?? []),
+                                                {
+                                                  teamId: channel.teamId,
+                                                  channelId: channel.channelId,
+                                                },
+                                              ],
+                                        })
+                                      }
+                                    />
+                                    {channel.label}
+                                  </Label>
+                                );
+                              })}
+                              {channels.isSuccess &&
+                                channels.data.channels.length === 0 && (
+                                  <p className="text-xs">
+                                    Keine Kanäle vorhanden.
+                                  </p>
+                                )}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </FieldRow>
                     )}
                   </fieldset>
                 </AccordionContent>
@@ -509,8 +600,8 @@ export function TemplateAutomationConfirmation({
                     <p>
                       Die Microsoft-Anmeldung konnte nicht gestartet werden.
                       Bitte erneut versuchen oder die Teams-Verbindung unter
-                      Einstellungen → Allgemein prüfen.{' '}
-                      <a href="/settings/general" className="underline">
+                      Einstellungen → Integrationen prüfen.{' '}
+                      <a href="/settings/integrations" className="underline">
                         Teams-Einstellungen öffnen
                       </a>
                     </p>
@@ -541,11 +632,11 @@ export function TemplateAutomationConfirmation({
         {automated.length > 0 && (
           <Button
             type="button"
-            disabled={busy || !ready}
+            disabled={busy || !ready || !workEmailReady}
             aria-busy={busy && startingAutomation}
             onClick={() => {
               setStartingAutomation(true);
-              onApply(true, effectiveChoices);
+              onApply(true, effectiveChoices, submittedWorkEmail);
             }}
           >
             {busy && startingAutomation && (
@@ -557,11 +648,11 @@ export function TemplateAutomationConfirmation({
         <Button
           type="button"
           variant={automated.length ? 'outline' : 'default'}
-          disabled={busy}
+          disabled={busy || !workEmailReady}
           aria-busy={busy && !startingAutomation}
           onClick={() => {
             setStartingAutomation(false);
-            onApply(false, {});
+            onApply(false, {}, submittedWorkEmail);
           }}
         >
           {busy && !startingAutomation && (
