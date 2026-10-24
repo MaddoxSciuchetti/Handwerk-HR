@@ -75,6 +75,24 @@ it("keeps real delivery unchanged when the flag is off", async () => {
     expect(completeMockQuestionnaire).not.toHaveBeenCalled();
 });
 
+it("includes the print task alongside the signed-contract task before a reply arrives", async () => {
+    await sendEngagementQuestionnaire(params);
+    expect(prisma.issue.createMany).toHaveBeenCalledWith({
+        data: [
+            expect.objectContaining({ title: "Fragebogen", status: "in_progress" }),
+            expect.objectContaining({
+                workerEngagementId: "engagement",
+                createdByUserId: "user",
+                title: "Arbeitsvertrag drucken",
+                status: "open",
+                kind: "contract_send",
+                isTemporary: true,
+            }),
+            expect.objectContaining({ title: "Arbeitsvertrag unterschrieben", status: "open" }),
+        ],
+    });
+});
+
 it("creates the normal questionnaire and contract before simulating the reply, without emailing", async () => {
     flags.QUESTIONNAIRE_MOCK_RESPONSES = true;
     (completeMockQuestionnaire as jest.Mock).mockImplementation(async () => {

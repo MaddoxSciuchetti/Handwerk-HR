@@ -22,6 +22,7 @@ import { randomUUID } from "crypto";
 
 const EXPECTED_ONBOARDING_TASKS = [
     { title: "Fragebogen", status: "in_progress" },
+    { title: "Arbeitsvertrag drucken", status: "open", kind: "contract_send", isTemporary: true },
     { title: "Arbeitsvertrag unterschrieben", status: "open" },
 ] as const;
 
@@ -187,8 +188,7 @@ export async function sendEngagementQuestionnaire(params: {
             data: EXPECTED_ONBOARDING_TASKS.map((task) => ({
                 workerEngagementId: engagement.id,
                 createdByUserId: params.createdByUserId,
-                status: task.status,
-                title: task.title,
+                ...task,
             })),
         });
         await tx.questionnaireSubmission.create({

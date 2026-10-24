@@ -233,17 +233,31 @@ export async function submitPublicQuestionnaire(token: string, body: unknown) {
         });
 
         if (contract) {
-            await tx.issue.create({
-                data: {
+            const printTask = await tx.issue.findFirst({
+                where: {
                     workerEngagementId: submission.engagementId,
-                    createdByUserId: submission.engagement.responsibleUserId,
-                    assigneeUserId: submission.engagement.responsibleUserId,
-                    status: "in_progress",
                     kind: "contract_send",
-                    isTemporary: true,
-                    title: CONTRACT_TASK_TITLE,
                 },
             });
+            if (printTask) {
+                await tx.issue.updateMany({
+                    where: { id: printTask.id, status: "open" },
+                    data: { status: "in_progress" },
+                });
+            } else {
+                // Older engagements may not have a print task yet.
+                await tx.issue.create({
+                    data: {
+                        workerEngagementId: submission.engagementId,
+                        createdByUserId: submission.engagement.responsibleUserId,
+                        assigneeUserId: submission.engagement.responsibleUserId,
+                        status: "in_progress",
+                        kind: "contract_send",
+                        isTemporary: true,
+                        title: CONTRACT_TASK_TITLE,
+                    },
+                });
+            }
         }
     });
 
