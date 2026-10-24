@@ -60,10 +60,12 @@ beforeEach(() => {
   queryClient.clear();
   vi.resetAllMocks();
 });
-function showChat() {
+function showChat(
+  coworkers = [] as { id: string; firstName: string; lastName: string }[]
+) {
   render(
     <QueryClientProvider client={queryClient}>
-      <TaskChat taskId="task-1" coworkers={[]} currentUserId="user-1" />
+      <TaskChat taskId="task-1" coworkers={coworkers} currentUserId="user-1" />
     </QueryClientProvider>
   );
 }
@@ -88,27 +90,83 @@ describe('task chat sending', () => {
     expect(screen.getByRole('textbox')).toHaveValue('');
   });
 
-  it('saves an edited message and leaves edit mode', async () => {
+  it('selects an @ mention by keyboard and sends the mentioned coworker', async () => {
+    vi.mocked(saveTaskComment).mockResolvedValue({
+      comment: { ...comment, id: 'comment-2' },
+      mailFailed: false,
+    });
+    showChat([
+      { id: 'user-1', firstName: 'Ada', lastName: 'Lovelace' },
+      { id: 'user-2', firstName: 'Grace', lastName: 'Hopper' },
+    ]);
+    const composer = screen.getByRole('textbox');
+    fireEvent.change(composer, { target: { value: 'Hello @Gr' } });
+    expect(screen.getByRole('option', { name: 'Grace Hopper' })).toBeVisible();
+    fireEvent.keyDown(composer, { key: 'Enter' });
+    expect(composer).toHaveValue('Hello @Grace Hopper ');
+    expect(saveTaskComment).not.toHaveBeenCalled();
+    fireEvent.keyDown(composer, { key: 'Enter' });
+    await waitFor(() =>
+      expect(saveTaskComment).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: 'Hello @Grace Hopper',
+          mentionUserIds: ['user-2'],
+        })
+      )
+    );
+  });
+
+  it('edits inside the message bubble and saves only with the save icon', async () => {
     vi.mocked(saveTaskComment).mockResolvedValue({
       comment: { ...comment, body: 'Updated' },
       mailFailed: false,
     });
     showChat();
-    fireEvent.click(screen.getByRole('button', { name: 'Bearbeiten' }));
-    fireEvent.change(screen.getByRole('textbox'), {
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Letzte Nachricht bearbeiten' })
+    );
+    const editor = screen.getByRole('textbox', {
+      name: 'Nachricht bearbeiten',
+    });
+    expect(editor).toHaveValue('Earlier message');
+    expect(editor).toHaveFocus();
+    expect(screen.getByRole('textbox', { name: 'Chat' })).toHaveValue('');
+    fireEvent.change(editor, {
       target: { value: 'Updated' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Senden' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Änderung speichern' }));
     await waitFor(() =>
       expect(saveTaskComment).toHaveBeenCalledWith(
-        expect.objectContaining({ body: 'Updated', commentId: 'comment-1' })
+        expect.objectContaining({
+          body: 'Updated',
+          commentId: 'comment-1',
+        })
       )
     );
     await waitFor(() =>
-      expect(
-        screen.queryByRole('button', { name: 'Bearbeiten abbrechen' })
-      ).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Senden' })).toBeInTheDocument()
     );
+  });
+
+  it('discards an inline edit when clicking elsewhere without saving', () => {
+    showChat();
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Letzte Nachricht bearbeiten' })
+    );
+    const editor = screen.getByRole('textbox', {
+      name: 'Nachricht bearbeiten',
+    });
+    fireEvent.change(editor, { target: { value: 'Unsaved change' } });
+    fireEvent.keyDown(editor, { key: 'Enter' });
+    expect(saveTaskComment).not.toHaveBeenCalled();
+    fireEvent.blur(editor, {
+      relatedTarget: screen.getByRole('textbox', { name: 'Chat' }),
+    });
+    expect(
+      screen.queryByRole('textbox', { name: 'Nachricht bearbeiten' })
+    ).not.toBeInTheDocument();
+    expect(screen.getByText('Earlier message')).toBeInTheDocument();
+    expect(saveTaskComment).not.toHaveBeenCalled();
   });
 
   it('keeps the draft available to retry after a failed request', async () => {

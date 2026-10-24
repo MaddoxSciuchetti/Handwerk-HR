@@ -25,6 +25,13 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  optimizeDeps: {
+    include: [
+      '@shadcn/react/message-scroller',
+      '@base-ui/react/merge-props',
+      '@base-ui/react/use-render',
+    ],
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
