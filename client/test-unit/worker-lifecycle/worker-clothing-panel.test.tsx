@@ -9,6 +9,7 @@ import type { WorkerDetailResponse } from '@/features/worker-lifecycle/types/ind
 import { workerLifecycleQueries } from '@/features/worker-lifecycle/query-options/queries/worker-lifycycle.queries';
 import {
   createEngagementClothing,
+  deleteEngagementClothing,
   getEngagementClothing,
 } from '@/features/worker-task-management/api/engagementClothing.api';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -21,6 +22,7 @@ vi.mock('@/features/bestand/bestand.api', () => ({
 }));
 vi.mock('@/features/worker-task-management/api/engagementClothing.api', () => ({
   createEngagementClothing: vi.fn(),
+  deleteEngagementClothing: vi.fn(),
   getEngagementClothing: vi.fn(),
 }));
 
@@ -94,7 +96,7 @@ describe('worker information clothing', () => {
       return allocated;
     });
     const client = renderPanel();
-    await screen.findByText('Noch keine Kleidung ausgegeben.');
+    await screen.findByRole('button', { name: 'Zeile hinzufügen' });
     const user = await fillRow('2');
     await user.click(screen.getByRole('button', { name: 'Speichern' }));
     await waitFor(() =>
@@ -104,7 +106,10 @@ describe('worker information clothing', () => {
         { stockItemId: 'stock-1', quantity: 2 }
       )
     );
-    expect(await screen.findByText('2 Stück')).toBeVisible();
+    expect(await screen.findByLabelText('Anzahl')).toHaveValue(2);
+    expect(
+      screen.getByRole('combobox', { name: 'Artikel aus Bestand' })
+    ).toHaveTextContent('Arbeitshose');
     await waitFor(() =>
       expect(screen.getByLabelText('Verfügbarer Bestand')).toHaveTextContent(
         '3'
@@ -113,12 +118,13 @@ describe('worker information clothing', () => {
     expect(client.getQueryData(clothingStockKey)).toEqual([
       { ...stockItem, quantity: 3 },
     ]);
+    const addButton = screen.getByRole('button', { name: 'Zeile hinzufügen' });
+    const saved = screen.getByRole('combobox', { name: 'Artikel aus Bestand' });
     expect(
-      screen.queryByRole('combobox', { name: 'Artikel aus Bestand' })
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'Zeile hinzufügen' })
-    ).toBeVisible();
+      addButton.compareDocumentPosition(saved) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(screen.queryByText('1 Stück')).not.toBeInTheDocument();
+    expect(screen.queryByText('2 Stück')).not.toBeInTheDocument();
   });
 
   it('keeps the row and stock intact if the server rejects an allocation', async () => {
@@ -126,7 +132,7 @@ describe('worker information clothing', () => {
       new Error('Nicht genug Bestand.')
     );
     renderPanel();
-    await screen.findByText('Noch keine Kleidung ausgegeben.');
+    await screen.findByRole('button', { name: 'Zeile hinzufügen' });
     const user = await fillRow('2');
     await user.click(screen.getByRole('button', { name: 'Speichern' }));
     expect(await screen.findByRole('alert')).toHaveTextContent(
@@ -138,7 +144,7 @@ describe('worker information clothing', () => {
 
   it('does not allow quantities above the available stock', async () => {
     renderPanel();
-    await screen.findByText('Noch keine Kleidung ausgegeben.');
+    await screen.findByRole('button', { name: 'Zeile hinzufügen' });
     const user = await fillRow('6');
     expect(screen.getByLabelText('Anzahl')).toBeInvalid();
     await user.click(screen.getByRole('button', { name: 'Speichern' }));
@@ -173,7 +179,7 @@ describe('worker information clothing', () => {
       return saved;
     });
     renderPanel();
-    await screen.findByText('Noch keine Kleidung ausgegeben.');
+    await screen.findByRole('button', { name: 'Zeile hinzufügen' });
     const user = userEvent.setup();
     await user.click(screen.getByRole('button', { name: 'Zeile hinzufügen' }));
     await user.click(screen.getByRole('button', { name: 'Zeile hinzufügen' }));
@@ -193,14 +199,22 @@ describe('worker information clothing', () => {
     await waitFor(() =>
       expect(createEngagementClothing).toHaveBeenCalledTimes(2)
     );
-    expect(await screen.findByText('Arbeitshose')).toBeVisible();
-    expect(screen.getByText('T-Shirt')).toBeVisible();
+    await waitFor(() =>
+      expect(
+        screen.getAllByRole('combobox', { name: 'Artikel aus Bestand' })
+      ).toHaveLength(2)
+    );
+    const saved = screen.getAllByRole('combobox', {
+      name: 'Artikel aus Bestand',
+    });
+    expect(saved[0]).toHaveTextContent('Arbeitshose');
+    expect(saved[1]).toHaveTextContent('T-Shirt');
+    const addButton = screen.getByRole('button', { name: 'Zeile hinzufügen' });
     expect(
-      screen.queryByRole('combobox', { name: 'Artikel aus Bestand' })
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'Zeile hinzufügen' })
-    ).toBeVisible();
+      addButton.compareDocumentPosition(
+        screen.getAllByRole('combobox', { name: 'Artikel aus Bestand' })[0]
+      ) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
   });
 
   it('hides an article once the open rows use up its Bestand', async () => {
@@ -208,7 +222,7 @@ describe('worker information clothing', () => {
       { ...stockItem, quantity: 1 },
     ]);
     renderPanel();
-    await screen.findByText('Noch keine Kleidung ausgegeben.');
+    await screen.findByRole('button', { name: 'Zeile hinzufügen' });
     const user = userEvent.setup();
     await user.click(screen.getByRole('button', { name: 'Zeile hinzufügen' }));
     await user.click(
@@ -229,7 +243,7 @@ describe('worker information clothing', () => {
 
   it('leaves only the plus button after the last row is removed', async () => {
     renderPanel();
-    await screen.findByText('Noch keine Kleidung ausgegeben.');
+    await screen.findByRole('button', { name: 'Zeile hinzufügen' });
     const user = userEvent.setup();
     await user.click(screen.getByRole('button', { name: 'Zeile hinzufügen' }));
     const addButton = screen.getByRole('button', { name: 'Zeile hinzufügen' });
@@ -251,6 +265,57 @@ describe('worker information clothing', () => {
     expect(
       screen.getByRole('combobox', { name: 'Artikel aus Bestand' })
     ).toBeVisible();
+  });
+
+  it('removes a saved article from under the add row and returns it to Bestand', async () => {
+    vi.mocked(getEngagementClothing).mockResolvedValue([
+      {
+        id: 'clothing-1',
+        name: 'Arbeitshose',
+        size: 'M',
+        quantity: 1,
+        returnedQuantity: 0,
+        productUrl: null,
+        source: 'storage',
+        stockItemId: 'stock-1',
+      },
+    ]);
+    vi.mocked(deleteEngagementClothing).mockImplementation(async () => {
+      vi.mocked(getEngagementClothing).mockResolvedValue([]);
+      vi.mocked(getClothingStock).mockResolvedValue([
+        { ...stockItem, quantity: 6 },
+      ]);
+    });
+    renderPanel();
+    const addButton = await screen.findByRole('button', {
+      name: 'Zeile hinzufügen',
+    });
+    const saved = await screen.findByRole('combobox', {
+      name: 'Artikel aus Bestand',
+    });
+    expect(saved).toHaveTextContent('Arbeitshose');
+    expect(
+      addButton.compareDocumentPosition(saved) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Zeile entfernen' }));
+    await waitFor(() =>
+      expect(deleteEngagementClothing).toHaveBeenCalledWith(
+        'worker-1',
+        'eng-1',
+        'clothing-1'
+      )
+    );
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('combobox', { name: 'Artikel aus Bestand' })
+      ).not.toBeInTheDocument()
+    );
+    await waitFor(() =>
+      expect(screen.getByLabelText('Verfügbarer Bestand')).toHaveTextContent(
+        '6'
+      )
+    );
   });
 
   it('shows the clothing dropdown on the information page', async () => {

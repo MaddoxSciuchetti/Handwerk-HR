@@ -13,6 +13,7 @@ import { useClothingStock } from '@/features/bestand/useBestand';
 import { MaterialsEngagementPicker } from '@/features/worker-task-management/components/materials/MaterialsEngagementPicker';
 import {
   useCreateEngagementClothing,
+  useDeleteEngagementClothing,
   useEngagementClothing,
 } from '@/features/worker-task-management/hooks/useEngagementClothing';
 import { cn } from '@/lib/utils';
@@ -29,6 +30,17 @@ type Draft = {
   key: string;
   stockItemId: string;
   quantity: string;
+};
+
+type IssuedRow = {
+  clothingId: string;
+  stockItemId: string;
+  quantity: string;
+  originalStockItemId: string;
+  originalQuantity: number;
+  name: string;
+  size: string;
+  dirty: boolean;
 };
 
 const rowClass =
@@ -48,12 +60,39 @@ function emptyDraft(): Draft {
   };
 }
 
-function reservedByOtherRows(drafts: Draft[], key: string, stockItemId: string) {
-  return drafts.reduce((sum, draft) => {
-    if (draft.key === key || draft.stockItemId !== stockItemId) return sum;
-    const amount = Number(draft.quantity);
-    return Number.isSafeInteger(amount) && amount > 0 ? sum + amount : sum;
+function amountOf(quantity: string) {
+  const amount = Number(quantity);
+  return Number.isSafeInteger(amount) && amount > 0 ? amount : 0;
+}
+
+function isIssuedDirty(row: IssuedRow) {
+  return (
+    row.dirty &&
+    (row.stockItemId !== row.originalStockItemId ||
+      amountOf(row.quantity) !== row.originalQuantity)
+  );
+}
+
+function reservedByOthers(
+  issued: IssuedRow[],
+  drafts: Draft[],
+  stockItemId: string,
+  except: { clothingId?: string; draftKey?: string }
+) {
+  const saved = issued.reduce((sum, row) => {
+    if (row.clothingId === except.clothingId) return sum;
+    const released =
+      row.originalStockItemId === stockItemId ? row.originalQuantity : 0;
+    const planned = row.stockItemId === stockItemId ? amountOf(row.quantity) : 0;
+    return sum + planned - released;
   }, 0);
+  const pending = drafts.reduce((sum, draft) => {
+    if (draft.key === except.draftKey || draft.stockItemId !== stockItemId) {
+      return sum;
+    }
+    return sum + amountOf(draft.quantity);
+  }, 0);
+  return saved + pending;
 }
 
 export default function WorkerClothingPanel({ workerId, engagements }: Props) {
@@ -65,9 +104,54 @@ export default function WorkerClothingPanel({ workerId, engagements }: Props) {
   const clothing = useEngagementClothing(workerId, selectedId);
   const stock = useClothingStock(Boolean(selectedId));
   const create = useCreateEngagementClothing(workerId, selectedId);
+  const remove = useDeleteEngagementClothing(workerId, selectedId);
   const [drafts, setDrafts] = useState<Draft[]>([]);
+  const [issued, setIssued] = useState<IssuedRow[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const available = stock.data?.filter((item) => item.quantity > 0) ?? [];
+  const catalog = stock.data ?? [];
+  const pending = create.isPending || remove.isPending;
+
+  useEffect(() => {
+    if (!clothing.data) return;
+    setIssued((current) => {
+      const edits = new Map(current.map((row) => [row.clothingId, row]));
+      return clothing.data.flatMap((item) => {
+        const outstanding = item.quantity - item.returnedQuantity;
+        if (outstanding < 1) return [];
+        const previous = edits.get(item.id);
+        const base = {
+          clothingId: item.id,
+          originalStockItemId: item.stockItemId ?? '',
+          originalQuantity: outstanding,
+          name: item.name,
+          size: item.size,
+        };
+        const serverStockItemId = item.stockItemId ?? '';
+        if (
+          previous?.dirty &&
+          (previous.stockItemId !== serverStockItemId ||
+            amountOf(previous.quantity) !== outstanding)
+        ) {
+          return [
+            {
+              ...base,
+              stockItemId: previous.stockItemId,
+              quantity: previous.quantity,
+              dirty: true,
+            },
+          ];
+        }
+        return [
+          {
+            ...base,
+            stockItemId: serverStockItemId,
+            quantity: String(outstanding),
+            dirty: false,
+          },
+        ];
+      });
+    });
+  }, [clothing.data]);
 
   useEffect(() => {
     if (!stock.data) return;
@@ -76,23 +160,22 @@ export default function WorkerClothingPanel({ workerId, engagements }: Props) {
     const next = drafts.map((draft) => {
       if (!draft.stockItemId) return draft;
       const item = stock.data?.find((entry) => entry.id === draft.stockItemId);
-      if (!item || item.quantity < 1) {
+      const reserved = reservedByOthers(issued, [], draft.stockItemId, {});
+      const free =
+        (item ? item.quantity - reserved : 0) -
+        (claimed.get(draft.stockItemId) ?? 0);
+      if (!item || free < 1) {
         changed = true;
         return { ...draft, stockItemId: '' };
       }
-      const taken = claimed.get(item.id) ?? 0;
-      if (taken >= item.quantity) {
-        changed = true;
-        return { ...draft, stockItemId: '' };
-      }
-      const amount = Number(draft.quantity);
-      const quantity =
-        Number.isSafeInteger(amount) && amount > 0 ? amount : 0;
-      claimed.set(item.id, taken + quantity);
+      claimed.set(
+        draft.stockItemId,
+        (claimed.get(draft.stockItemId) ?? 0) + amountOf(draft.quantity)
+      );
       return draft;
     });
     if (changed) setDrafts(next);
-  }, [drafts, stock.data]);
+  }, [drafts, issued, stock.data]);
 
   function resetDraft() {
     setDrafts([]);
@@ -106,47 +189,111 @@ export default function WorkerClothingPanel({ workerId, engagements }: Props) {
     setError(null);
   }
 
+  function updateIssued(clothingId: string, patch: Partial<IssuedRow>) {
+    setIssued((rows) =>
+      rows.map((row) =>
+        row.clothingId === clothingId ? { ...row, ...patch, dirty: true } : row
+      )
+    );
+    setError(null);
+  }
+
+  function freeFor(
+    stockItemId: string,
+    except: { clothingId?: string; draftKey?: string }
+  ) {
+    const item = catalog.find((entry) => entry.id === stockItemId);
+    if (!item) return 0;
+    const row = except.clothingId
+      ? issued.find((entry) => entry.clothingId === except.clothingId)
+      : undefined;
+    const released =
+      row?.originalStockItemId === stockItemId ? row.originalQuantity : 0;
+    return item.quantity + released - reservedByOthers(issued, drafts, stockItemId, except);
+  }
+
+  function choicesFor(except: { clothingId?: string; draftKey?: string }) {
+    return catalog.flatMap((item) => {
+      const remaining = freeFor(item.id, except);
+      if (remaining < 1) return [];
+      return [{ ...item, quantity: remaining }];
+    });
+  }
+
+  function rowFits(
+    stockItemId: string,
+    quantity: string,
+    except: { clothingId?: string; draftKey?: string }
+  ) {
+    const amount = amountOf(quantity);
+    if (!stockItemId || amount < 1) return false;
+    return amount <= freeFor(stockItemId, except);
+  }
+
+  async function removeIssued(clothingId: string) {
+    if (pending) return;
+    setError(null);
+    try {
+      await remove.mutateAsync(clothingId);
+    } catch (removeError) {
+      setError(
+        stockErrorMessage(
+          removeError,
+          'Kleidung konnte nicht entfernt werden.'
+        )
+      );
+    }
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (create.isPending || drafts.length === 0) return;
-    const parsed = drafts.map((draft) => {
-      const item = stock.data?.find((entry) => entry.id === draft.stockItemId);
-      return { draft, item, amount: Number(draft.quantity) };
-    });
-    if (parsed.some((row) => !row.item)) {
+    const dirtyIssued = issued.filter(isIssuedDirty);
+    if (pending || (drafts.length === 0 && dirtyIssued.length === 0)) return;
+    const entries = [
+      ...drafts.map((draft) => ({
+        stockItemId: draft.stockItemId,
+        quantity: draft.quantity,
+        except: { draftKey: draft.key },
+      })),
+      ...dirtyIssued.map((row) => ({
+        stockItemId: row.stockItemId,
+        quantity: row.quantity,
+        except: { clothingId: row.clothingId },
+      })),
+    ];
+    if (entries.some((entry) => !entry.stockItemId)) {
       setError('Bitte einen Artikel aus dem Bestand auswählen.');
       return;
     }
-    if (
-      parsed.some((row) => !Number.isSafeInteger(row.amount) || row.amount < 1)
-    ) {
+    if (entries.some((entry) => amountOf(entry.quantity) < 1)) {
       setError('Anzahl muss eine ganze Zahl ab 1 sein.');
       return;
     }
-    const requested = new Map<string, number>();
-    for (const row of parsed) {
-      const id = row.item?.id;
-      if (!id) continue;
-      requested.set(id, (requested.get(id) ?? 0) + row.amount);
-    }
-    const overStock = [...requested.entries()].some(([id, total]) => {
-      const item = stock.data?.find((entry) => entry.id === id);
-      return !item || total > item.quantity;
-    });
-    if (overStock) {
+    if (
+      entries.some(
+        (entry) => !rowFits(entry.stockItemId, entry.quantity, entry.except)
+      )
+    ) {
       setError('Nicht genug Bestand.');
       return;
     }
     setError(null);
-    const pending = [...parsed];
     try {
-      for (const row of pending) {
-        if (!row.item) continue;
+      for (const row of dirtyIssued) {
+        const quantity = amountOf(row.quantity);
+        await remove.mutateAsync(row.clothingId);
+        await create.mutateAsync(
+          row.stockItemId
+            ? { stockItemId: row.stockItemId, quantity }
+            : { name: row.name, size: row.size, quantity }
+        );
+      }
+      for (const draft of drafts) {
         await create.mutateAsync({
-          stockItemId: row.item.id,
-          quantity: row.amount,
+          stockItemId: draft.stockItemId,
+          quantity: amountOf(draft.quantity),
         });
-        setDrafts((rows) => rows.filter((draft) => draft.key !== row.draft.key));
+        setDrafts((rows) => rows.filter((row) => row.key !== draft.key));
       }
       setDrafts([]);
     } catch (submitError) {
@@ -166,16 +313,15 @@ export default function WorkerClothingPanel({ workerId, engagements }: Props) {
       </p>
     );
 
+  const dirtyIssued = issued.filter(isIssuedDirty);
   const rowsReady =
-    drafts.length > 0 &&
-    drafts.every((draft) => {
-      const item = stock.data?.find((entry) => entry.id === draft.stockItemId);
-      const amount = Number(draft.quantity);
-      if (!item || item.quantity < 1) return false;
-      if (!Number.isSafeInteger(amount) || amount < 1) return false;
-      const reserved = reservedByOtherRows(drafts, draft.key, item.id);
-      return amount + reserved <= item.quantity;
-    });
+    (drafts.length > 0 || dirtyIssued.length > 0) &&
+    drafts.every((draft) =>
+      rowFits(draft.stockItemId, draft.quantity, { draftKey: draft.key })
+    ) &&
+    dirtyIssued.every((row) =>
+      rowFits(row.stockItemId, row.quantity, { clothingId: row.clothingId })
+    );
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col">
@@ -207,27 +353,6 @@ export default function WorkerClothingPanel({ workerId, engagements }: Props) {
           Kleidung konnte nicht geladen werden.
         </p>
       ) : null}
-      {clothing.data?.map((item) => (
-        <div key={item.id} className={`${rowClass} items-start py-3.5`}>
-          <span className="text-sm text-muted-foreground">
-            {item.name}
-            <span className="block">{item.size || 'ohne Größe'}</span>
-          </span>
-          <span className="min-w-0 text-right text-sm break-words text-foreground tabular-nums">
-            {item.quantity - item.returnedQuantity} Stück
-            {item.returnedQuantity > 0 ? (
-              <span className="block text-muted-foreground">
-                {item.returnedQuantity} zurückgegeben
-              </span>
-            ) : null}
-          </span>
-        </div>
-      ))}
-      {!clothing.isLoading && !clothing.isError && !clothing.data?.length ? (
-        <p className="py-3.5 text-sm text-muted-foreground">
-          Noch keine Kleidung ausgegeben.
-        </p>
-      ) : null}
       {stock.isError ? (
         <p role="alert" className="py-3.5 text-sm text-destructive">
           Bestand konnte nicht geladen werden.
@@ -242,59 +367,64 @@ export default function WorkerClothingPanel({ workerId, engagements }: Props) {
             variant="outline"
             className="rounded-2xl"
             aria-label="Zeile hinzufügen"
-            disabled={create.isPending || stock.isLoading || stock.isError}
+            disabled={pending || stock.isLoading || stock.isError}
             onClick={() => setDrafts((rows) => [...rows, emptyDraft()])}
           >
             <Plus aria-hidden="true" />
           </Button>
         </div>
       </div>
-      {drafts.map((draft) => {
-        const selected = stock.data?.find(
-          (item) => item.id === draft.stockItemId
-        );
-        const reserved = selected
-          ? reservedByOtherRows(drafts, draft.key, selected.id)
-          : 0;
-        const max = selected
-          ? Math.max(selected.quantity - reserved, 0)
-          : undefined;
-        const choices = available.flatMap((item) => {
-          const reserved = reservedByOtherRows(drafts, draft.key, item.id);
-          const remaining = item.quantity - reserved;
-          if (remaining < 1) return [];
-          return [{ ...item, quantity: remaining }];
-        });
-        return (
-          <ClothingDraftRows
-            key={draft.key}
-            draft={draft}
-            available={choices}
-            max={max}
-            disabled={create.isPending || stock.isLoading || stock.isError}
-            onArticle={(stockItemId) => updateDraft(draft.key, { stockItemId })}
-            onQuantity={(quantity) => updateDraft(draft.key, { quantity })}
-            onRemove={() =>
-              setDrafts((rows) => rows.filter((row) => row.key !== draft.key))
-            }
-          />
-        );
-      })}
+      {issued.map((row) => (
+        <ClothingDraftRows
+          key={row.clothingId}
+          draft={{
+            key: row.clothingId,
+            stockItemId: row.stockItemId,
+            quantity: row.quantity,
+          }}
+          available={choicesFor({ clothingId: row.clothingId })}
+          max={
+            row.stockItemId
+              ? Math.max(freeFor(row.stockItemId, { clothingId: row.clothingId }), 0)
+              : undefined
+          }
+          disabled={pending || stock.isLoading || stock.isError}
+          onArticle={(stockItemId) => updateIssued(row.clothingId, { stockItemId })}
+          onQuantity={(quantity) => updateIssued(row.clothingId, { quantity })}
+          onRemove={() => removeIssued(row.clothingId)}
+        />
+      ))}
+      {drafts.map((draft) => (
+        <ClothingDraftRows
+          key={draft.key}
+          draft={draft}
+          available={choicesFor({ draftKey: draft.key })}
+          max={
+            draft.stockItemId
+              ? Math.max(freeFor(draft.stockItemId, { draftKey: draft.key }), 0)
+              : undefined
+          }
+          disabled={pending || stock.isLoading || stock.isError}
+          onArticle={(stockItemId) => updateDraft(draft.key, { stockItemId })}
+          onQuantity={(quantity) => updateDraft(draft.key, { quantity })}
+          onRemove={() =>
+            setDrafts((rows) => rows.filter((row) => row.key !== draft.key))
+          }
+        />
+      ))}
       {error ? (
         <p role="alert" className="py-2 text-right text-sm text-destructive">
           {error}
         </p>
       ) : null}
-      {drafts.length > 0 ? (
+      {drafts.length > 0 || dirtyIssued.length > 0 ? (
         <div className="flex justify-end py-3.5">
           <Button
             type="submit"
             size="sm"
             variant="outline"
             className="rounded-2xl"
-            disabled={
-              create.isPending || stock.isLoading || stock.isError || !rowsReady
-            }
+            disabled={pending || stock.isLoading || stock.isError || !rowsReady}
           >
             Speichern
           </Button>
