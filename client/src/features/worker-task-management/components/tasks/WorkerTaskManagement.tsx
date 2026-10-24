@@ -1,3 +1,5 @@
+import { cn } from '@/lib/utils';
+import WorkerInformation from '@/features/worker-lifecycle/components/WorkerInformation';
 import ErrorAlert from '@/components/alerts/ErrorAlert';
 import { TableSelectAllCheckbox } from '@/components/ui/table-select-all-checkbox';
 import { TableSkeletonRows } from '@/components/ui/table-skeleton';
@@ -175,7 +177,12 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
   );
 
   return (
-    <div className="mx-auto flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
+    <div
+      className={cn(
+        'mx-auto flex h-full min-h-0 flex-col rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl',
+        activeTab === 'information' ? 'overflow-y-auto' : 'overflow-hidden'
+      )}
+    >
       <TaskSidebar
         key={sidebarKey}
         {...sidebarProps}
@@ -217,6 +224,7 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
         defaultValue="form"
         onValueChange={(value) => {
           if (
+            value === 'information' ||
             value === 'form' ||
             value === 'files' ||
             value === 'materials' ||
@@ -227,7 +235,10 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
             if (value !== 'form') setQuestionnaireEngagementId(null);
           }
         }}
-        className="flex min-h-0 flex-1 flex-col"
+        className={cn(
+          'flex min-h-0 flex-col',
+          activeTab === 'information' ? 'flex-none' : 'flex-1'
+        )}
       >
         <WorkerTabButtons
           activeTab={activeTab}
@@ -237,7 +248,12 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
             if (tab !== 'form') setQuestionnaireEngagementId(null);
           }}
         />
-        <Card className="mt-3 flex min-h-0 flex-1 flex-col gap-0 border border-border py-0 shadow-none ring-0">
+        <Card
+          className={cn(
+            'mt-3 flex min-h-0 flex-col gap-0 border border-border py-0 shadow-none ring-0',
+            activeTab === 'information' ? 'flex-none' : 'flex-1'
+          )}
+        >
           <CardHeader className="flex min-h-14 shrink-0 flex-row flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-3">
             <WorkerHeader
               activeTab={activeTab}
@@ -267,7 +283,19 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
               }
             />
           </CardHeader>
-          <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-0">
+          <CardContent
+            className={cn(
+              'flex min-h-0 flex-col px-2 pb-0',
+              activeTab === 'information'
+                ? 'flex-none'
+                : 'flex-1 overflow-hidden'
+            )}
+          >
+            <TabsContent value="information" className="mt-0 flex-none">
+              <div className="mx-auto w-full max-w-3xl px-4 py-4">
+                <WorkerInformation workerId={workerId} />
+              </div>
+            </TabsContent>
             <TabsContent
               value="form"
               className="mt-0 flex min-h-0 flex-1 flex-col"

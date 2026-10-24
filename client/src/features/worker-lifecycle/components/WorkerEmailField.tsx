@@ -8,9 +8,15 @@ import { useEffect, useRef, useState } from 'react';
 type WorkerEmailFieldProps = {
   workerId: string;
   email: string;
+  field?: 'email' | 'workEmail';
 };
 
-function WorkerEmailField({ workerId, email }: WorkerEmailFieldProps) {
+function WorkerEmailField({
+  workerId,
+  email,
+  field = 'email',
+}: WorkerEmailFieldProps) {
+  const label = field === 'workEmail' ? 'Arbeits-E-Mail' : 'E-Mail';
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState(email);
   const [errorMessage, setErrorMessage] = useState('');
@@ -21,14 +27,14 @@ function WorkerEmailField({ workerId, email }: WorkerEmailFieldProps) {
   }, [email]);
 
   const { mutate, isPending } = useMutation({
-    mutationFn: (nextEmail: string) =>
-      API.put(`/worker/${workerId}`, { email: nextEmail }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: [ALL_WORKER_DATA] });
+    mutationFn: (nextEmail: string | null) =>
+      API.put(`/worker/${workerId}`, { [field]: nextEmail }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: [ALL_WORKER_DATA] });
       setErrorMessage('');
     },
     onError: () => {
-      setErrorMessage('E-Mail konnte nicht gespeichert werden.');
+      setErrorMessage(`${label} konnte nicht gespeichert werden.`);
     },
   });
 
@@ -37,7 +43,13 @@ function WorkerEmailField({ workerId, email }: WorkerEmailFieldProps) {
       skipSave.current = false;
       return;
     }
-    const parsed = addWorkerBaseSchema.shape.email.safeParse(draft);
+    const normalized = draft.trim();
+    if (field === 'workEmail' && !normalized) {
+      setErrorMessage('');
+      if (email) mutate(null);
+      return;
+    }
+    const parsed = addWorkerBaseSchema.shape.email.safeParse(normalized);
     if (!parsed.success) {
       setErrorMessage(parsed.error.issues[0]?.message ?? 'Ungültige email');
       return;
@@ -49,15 +61,14 @@ function WorkerEmailField({ workerId, email }: WorkerEmailFieldProps) {
 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] items-center gap-4 border-b border-border/50 py-2.5">
-      <span className="text-sm text-muted-foreground">E-Mail</span>
+      <span className="text-sm text-muted-foreground">{label}</span>
       <div className="min-w-0">
         <Input
           type="email"
-          aria-label="E-Mail"
+          aria-label={label}
           autoComplete="email"
           disabled={isPending}
           value={draft}
-          placeholder="E-Mail"
           className="h-8 border-transparent bg-muted/50 text-right text-sm shadow-none focus:border-border focus:bg-muted focus-visible:border-border focus-visible:ring-0 dark:bg-muted/50 dark:focus:bg-muted"
           onChange={(event) => {
             setDraft(event.target.value);

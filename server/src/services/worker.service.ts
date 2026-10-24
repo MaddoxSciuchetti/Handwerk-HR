@@ -1,3 +1,4 @@
+import z from "zod";
 import { integrationsMocked } from "./integrations/localMock";
 import { applyTemplateApplication, type TemplateApplyInput } from './templateApplication';
 import { prisma } from "@/lib/prisma";
@@ -451,9 +452,43 @@ export async function updateWorker(params: {
     const { workerId, organizationId, updateData } = params;
     await assertOwnership(workerId, organizationId);
 
-    return prisma.worker.update({
-        where: { id: workerId },
-        data: updateData,
+    const { workwearSize, ...workerData } = updateData;
+    if (!workwearSize) {
+        return prisma.worker.update({
+            where: { id: workerId },
+            data: workerData,
+        });
+    }
+
+    const sizeEdit = z.object({
+        itemName: z.enum(["Hose", "T-Shirt"]),
+        size: z.string().trim().max(32),
+    }).parse(workwearSize);
+
+    return prisma.$transaction(async (tx) => {
+        const existing = await tx.workerWorkwear.findFirst({
+            where: { workerId, itemName: sizeEdit.itemName },
+        });
+        if (existing) {
+            await tx.workerWorkwear.updateMany({
+                where: { workerId, itemName: sizeEdit.itemName },
+                data: { size: sizeEdit.size },
+            });
+        } else if (sizeEdit.size) {
+            await tx.workerWorkwear.create({
+                data: {
+                    workerId,
+                    itemName: sizeEdit.itemName,
+                    size: sizeEdit.size,
+                    articleNumber: "",
+                    quantity: 1,
+                },
+            });
+        }
+        return tx.worker.update({
+            where: { id: workerId },
+            data: workerData,
+        });
     });
 }
 

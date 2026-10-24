@@ -25,6 +25,7 @@ type WorkerHeaderProps = {
 };
 
 const titles: Record<WorkerTab, string> = {
+  information: 'Information',
   form: 'Aufgaben',
   files: 'Dateien',
   materials: 'Materialien',
