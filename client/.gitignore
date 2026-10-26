@@ -39,3 +39,4 @@ playwright/.cache/
 **/*.trace
 **/*.webm
 **/*.png
+!src/features/settings/integrations/crewmeister-logo.png

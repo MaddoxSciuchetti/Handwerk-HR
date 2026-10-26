@@ -1,4 +1,5 @@
 import { MicrosoftSimulationNotice } from './MicrosoftSimulationNotice';
+import crewmeisterLogo from './crewmeister-logo.png';
 import useAuth from '@/features/user-profile/hooks/useAuth';
 import { TeamsConnectionCard } from '@/features/microsoft-teams/TeamsConnectionCard';
 import { IntegrationsSkeleton } from './IntegrationsSkeleton';
@@ -41,7 +42,7 @@ function IntegrationFields({
             aria-expanded={expanded}
             aria-controls={contentId}
             onClick={() => setExpanded((value) => !value)}
-            className="flex min-h-12 items-center gap-2 rounded-lg border border-transparent py-1 text-left text-base font-semibold outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="flex min-h-12 items-center gap-2 rounded-lg border-0 py-1 text-left text-base font-semibold outline-none focus-visible:underline focus-visible:underline-offset-4"
           >
             <span
               className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border bg-background"
@@ -229,7 +230,7 @@ function CrewmeisterForm({
         title="Crewmeister"
         icon={
           <img
-            src="/assets/crewmeister-logo.png"
+            src={crewmeisterLogo}
             alt=""
             width={28}
             height={28}
