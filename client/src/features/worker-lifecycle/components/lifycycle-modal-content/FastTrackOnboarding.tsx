@@ -81,7 +81,7 @@ export function FastTrackOnboarding({ onCreated }: FastTrackOnboardingProps) {
         if (!isPending) send();
       }}
     >
-      {!defaultSender && (
+      {!addresses.isPending && !defaultSender && (
         <>
           <label htmlFor={senderId} className="sr-only">
             Absender
@@ -98,13 +98,7 @@ export function FastTrackOnboarding({ onCreated }: FastTrackOnboardingProps) {
               aria-label="Absender"
               aria-required="true"
             >
-              <SelectValue
-                placeholder={
-                  addresses.isLoading
-                    ? 'Absender werden geladen…'
-                    : 'Absender wählen'
-                }
-              />
+              <SelectValue placeholder="Absender wählen" />
             </SelectTrigger>
             <SelectContent>
               {senders.map((sender) => (
