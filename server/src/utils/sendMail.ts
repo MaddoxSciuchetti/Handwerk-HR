@@ -14,6 +14,7 @@ type Params = {
     headers?: Record<string, string>;
     attachments?: PdfAttachment[];
     idempotencyKey?: string;
+    via?: "resend";
 };
 
 type SendResult = {
@@ -54,9 +55,10 @@ export const sendMail = async ({
     headers,
     attachments,
     idempotencyKey,
+    via,
 }: Params): Promise<SendResult> => {
     const recipient = getToEmail(to);
-    if (USE_MICROSOFT_MAIL) {
+    if (USE_MICROSOFT_MAIL && via !== "resend") {
         try {
             const sent = await sendGraphMail({
                 to: recipient,

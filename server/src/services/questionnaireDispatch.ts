@@ -1,10 +1,5 @@
 import { defaultQuestionnaireSender } from "@/services/questionnaireSender";
-import {
-    FRONTENDURL,
-    QUESTIONNAIRE_MOCK_RESPONSES,
-    USE_MICROSOFT_MAIL,
-    microsoftSimulationEnabled,
-} from "@/constants/env";
+import { FRONTENDURL, QUESTIONNAIRE_MOCK_RESPONSES } from "@/constants/env";
 import { NOT_FOUND } from "@/constants/http";
 import { prisma } from "@/lib/prisma";
 import {
@@ -22,12 +17,6 @@ import { completeMockQuestionnaire } from "@/services/questionnaireMock";
 import { primaryEmploymentContract } from "@/services/documentMaster.service";
 import { employmentContractFields, questionnaireForOrganization } from "@/services/questionnaireTemplate";
 import AppError from "@/utils/AppError";
-import {
-    integrationsLive,
-    loadMicrosoft365Config,
-} from "@/services/integrations/runtime";
-import { microsoftGraphToken } from "@/services/microsoft365Account";
-import { sendGraphMail } from "@/services/welcomeMail";
 import { getQuestionnaireTemplate } from "@/utils/emailTemplates";
 import { sendMail } from "@/utils/sendMail";
 import { randomUUID } from "crypto";
@@ -139,22 +128,7 @@ function parseAdded(questions: unknown) {
     return readEngagementDraft({ questions, values: {} }).questions;
 }
 
-async function signedInMailbox(organizationId: string, userId: string) {
-    const member = await prisma.organizationMember.findFirst({
-        where: {
-            organizationId,
-            userId,
-            status: "active",
-            user: { status: "active" },
-        },
-        select: { user: { select: { email: true } } },
-    });
-    return member?.user.email.trim() ?? "";
-}
-
 async function deliverQuestionnaire(
-    organizationId: string,
-    actorUserId: string,
     email: string | null,
     token: string,
     senderAddress?: string | null,
@@ -164,12 +138,9 @@ async function deliverQuestionnaire(
     const template = getQuestionnaireTemplate(formUrl);
     const effectiveSender = defaultQuestionnaireSender() ?? senderAddress;
     try {
-        if (USE_MICROSOFT_MAIL) {
-            const from = await signedInMailbox(organizationId, actorUserId);
-            return await deliverQuestionnaireWithOrganization(organizationId, email, from, template);
-        }
         const sent = await sendMail({
             to: email,
+            via: "resend",
             ...(effectiveSender ? { senderAddress: effectiveSender } : {}),
             subject: template.subject,
             text: template.text,
@@ -181,38 +152,7 @@ async function deliverQuestionnaire(
     }
 }
 
-async function deliverQuestionnaireWithOrganization(
-    organizationId: string,
-    email: string,
-    senderAddress: string | null | undefined,
-    template: { subject: string; text: string; html: string },
-) {
-    const from = senderAddress?.trim() ?? "";
-    if (!from.includes("@") || (!integrationsLive() && !microsoftSimulationEnabled())) {
-        console.error("Microsoft Graph questionnaire mail is not configured");
-        return false;
-    }
-    const graphToken = await microsoftGraphToken(await loadMicrosoft365Config(organizationId));
-    if (!graphToken) {
-        console.error("Microsoft Graph questionnaire mail is not configured");
-        return false;
-    }
-    const sent = await sendGraphMail({
-        token: graphToken,
-        senderAddress: from,
-        recipients: [email],
-        subject: template.subject,
-        text: template.text,
-        html: template.html,
-        rejectedLog: "Microsoft Graph questionnaire mail failed",
-        failureMessage: "Microsoft Graph hat die Fragebogen-Mail abgelehnt.",
-    });
-    return sent.status === "sent";
-}
-
 async function finishDispatch(
-    organizationId: string,
-    actorUserId: string,
     email: string | null,
     token: string,
     engagementId: string,
@@ -223,13 +163,7 @@ async function finishDispatch(
         return { emailSent: false, mockCompleted: true, engagementId };
     }
     return {
-        emailSent: await deliverQuestionnaire(
-            organizationId,
-            actorUserId,
-            email,
-            token,
-            senderAddress,
-        ),
+        emailSent: await deliverQuestionnaire(email, token, senderAddress),
         mockCompleted: false,
         engagementId,
     };
@@ -243,8 +177,6 @@ export async function sendEngagementQuestionnaire(params: {
     const engagement = await findEngagement(params.organizationId, params.engagementId);
     if (engagement.questionnaireSubmission) {
         return finishDispatch(
-            params.organizationId,
-            params.createdByUserId,
             engagement.worker.email,
             engagement.questionnaireSubmission.token,
             engagement.id,
@@ -293,8 +225,6 @@ export async function sendEngagementQuestionnaire(params: {
     });
 
     return finishDispatch(
-        params.organizationId,
-        params.createdByUserId,
         engagement.worker.email,
         token,
         engagement.id,
