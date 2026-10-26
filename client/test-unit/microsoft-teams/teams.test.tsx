@@ -197,10 +197,10 @@ describe('personal Microsoft Teams connection', () => {
     }
   );
 
-  it('waits for task edits to be saved before loading the Teams preview', async () => {
+  it('saves task edits and refreshes the message before sending from the sidebar', async () => {
     const user = userEvent.setup();
     let finishSave!: (saved: boolean) => void;
-    const beforeOpen = vi.fn(
+    const beforeSend = vi.fn(
       () =>
         new Promise<boolean>((resolve) => {
           finishSave = resolve;
@@ -210,35 +210,53 @@ describe('personal Microsoft Teams connection', () => {
       <TeamsSendAction
         taskId="task-1"
         disabled={false}
-        beforeOpen={beforeOpen}
+        beforeSend={beforeSend}
       />
+    );
+    await screen.findByRole('option', { name: 'Office · General' });
+    await user.selectOptions(
+      screen.getByRole('combobox', { name: 'Teams-Kanal' }),
+      'team-a:channel-a'
     );
     await user.click(
       screen.getByRole('button', { name: 'Teams-Nachricht senden' })
     );
-    expect(beforeOpen).toHaveBeenCalledOnce();
-    expect(mocks.getTeamsPreview).not.toHaveBeenCalled();
+    expect(beforeSend).toHaveBeenCalledOnce();
+    expect(mocks.sendTeams).not.toHaveBeenCalled();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    mocks.getTeamsPreview.mockResolvedValue({
+      ...preview,
+      body: 'Updated message',
+    });
     finishSave(true);
-    expect(await screen.findByRole('dialog')).toBeInTheDocument();
     await waitFor(() =>
-      expect(mocks.getTeamsPreview).toHaveBeenCalledWith('task-1')
+      expect(mocks.sendTeams).toHaveBeenCalledWith('task-1', {
+        idempotencyKey: expect.any(String),
+        destinations: [{ teamId: 'team-a', channelId: 'channel-a' }],
+      })
     );
+    expect(mocks.getTeamsPreview.mock.calls.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('keeps the Teams send dialog closed when the edits cannot be saved', async () => {
+  it('does not send when task edits cannot be saved', async () => {
     const user = userEvent.setup();
     renderWithProviders(
       <TeamsSendAction
         taskId="task-1"
         disabled={false}
-        beforeOpen={async () => false}
+        beforeSend={async () => false}
       />
+    );
+    await screen.findByRole('option', { name: 'Office · General' });
+    await user.selectOptions(
+      screen.getByRole('combobox', { name: 'Teams-Kanal' }),
+      'team-a:channel-a'
     );
     await user.click(
       screen.getByRole('button', { name: 'Teams-Nachricht senden' })
     );
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    expect(mocks.getTeamsPreview).not.toHaveBeenCalled();
+    expect(mocks.sendTeams).not.toHaveBeenCalled();
   });
 
   it('shows a personal connection to an ordinary employee and disconnects it', async () => {
@@ -277,7 +295,7 @@ describe('personal Microsoft Teams connection', () => {
   });
 });
 describe('Teams sending', () => {
-  it('keeps the production dialog focused on destinations, content and sending', async () => {
+  it('selects one channel and sends directly from the production sidebar without a dialog', async () => {
     vi.stubEnv('PROD', true);
     const user = userEvent.setup();
     mocks.sendTeams.mockResolvedValue({
@@ -285,30 +303,37 @@ describe('Teams sending', () => {
       destinations: [],
     });
     renderWithProviders(<TeamsSendAction taskId="task-a" disabled={false} />);
-    await user.click(
-      screen.getByRole('button', { name: 'Teams-Nachricht senden' })
-    );
-    const destination = await screen.findByRole('checkbox', {
-      name: 'Office · General',
+    const button = screen.getByRole('button', {
+      name: 'Teams-Nachricht senden',
     });
-    const body = screen.getByText('Hallo Ada');
-    expect(
-      destination.compareDocumentPosition(body) &
-        Node.DOCUMENT_POSITION_FOLLOWING
-    ).toBeTruthy();
+    expect(button).toBeDisabled();
+    await screen.findByRole('option', { name: 'Office · General' });
+    const select = screen.getByRole('combobox', { name: 'Teams-Kanal' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByText('Hallo Ada')).not.toBeInTheDocument();
     expect(screen.queryByText('Alice Microsoft')).not.toBeInTheDocument();
-    expect(screen.getByText(/Wähle die Kanäle/)).toHaveClass('sr-only');
-    expect(
-      screen.queryByRole('button', { name: 'Kanäle neu laden' })
-    ).not.toBeInTheDocument();
-    await user.click(destination);
-    await user.click(screen.getByRole('button', { name: 'Nachricht senden' }));
+    await user.selectOptions(select, 'team-b:channel-b');
+    await user.selectOptions(select, 'team-a:channel-a');
+    await user.click(button);
     await waitFor(() =>
       expect(mocks.sendTeams).toHaveBeenCalledWith('task-a', {
         idempotencyKey: expect.any(String),
         destinations: [{ teamId: 'team-a', channelId: 'channel-a' }],
       })
     );
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('prevents sending when the sidebar action is disabled', async () => {
+    renderWithProviders(<TeamsSendAction taskId="task-a" disabled />);
+    await screen.findByRole('option', { name: 'Office · General' });
+    expect(
+      screen.getByRole('combobox', { name: 'Teams-Kanal' })
+    ).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: 'Teams-Nachricht senden' })
+    ).toBeDisabled();
+    expect(mocks.sendTeams).not.toHaveBeenCalled();
   });
 
   it.each([false, true])(

@@ -9,10 +9,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {
-  integrationLabel,
-  sequenceLabel,
-} from '@/features/settings/integrations/integration.consts';
-import {
   TASKHISTORY,
   WORKERBYID,
 } from '@/features/worker-task-management/consts/query-key.consts';
@@ -160,7 +156,7 @@ function TaskAutomation(props: TaskAutomationProps) {
     <TeamsSendAction
       taskId={props.taskId}
       disabled={props.disabled}
-      beforeOpen={props.beforeRun}
+      beforeSend={props.beforeRun}
     />
   ) : (
     <ExistingTaskAutomation
