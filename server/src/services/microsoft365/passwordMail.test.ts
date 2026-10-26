@@ -50,6 +50,7 @@ it("sends credentials to the contact email instead of the new work mailbox", asy
     ).toBe(true);
     expect(mail).toHaveBeenCalledWith({
         to: "private@example.test",
+        via: "resend",
         ...passwordMail(input),
     });
 });

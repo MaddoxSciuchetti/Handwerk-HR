@@ -1,3 +1,4 @@
+import { defaultQuestionnaireSender } from "@/services/questionnaireSender";
 import { sendMail } from "@/utils/sendMail";
 import type { PasswordMailInput, PasswordMail } from "./types";
 
@@ -48,8 +49,20 @@ export async function sendPasswordMail(
     input: PasswordMailInput & { to: string },
 ): Promise<boolean> {
     const template = passwordMail(input);
+    const senderAddress = defaultQuestionnaireSender();
     try {
-        const sent = await sendMail({ to: input.to, ...template });
+        const sent = await sendMail({
+            to: input.to,
+            via: "resend",
+            ...(senderAddress ? { senderAddress } : {}),
+            ...template,
+        });
+        if (sent.error) {
+            console.error(
+                "Microsoft 365 Passwortmail fehlgeschlagen",
+                sent.error.message,
+            );
+        }
         return !sent.error && Boolean(sent.data?.id);
     } catch (error) {
         console.error("Microsoft 365 Passwortmail fehlgeschlagen", error);

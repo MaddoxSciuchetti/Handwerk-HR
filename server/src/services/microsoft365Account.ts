@@ -5,8 +5,7 @@ import { microsoftSimulationEnabled } from "@/constants/env";
 import { microsoftGraphFetch, SIMULATION_TOKEN } from "@/services/integrations/microsoftSimulation";
 import { prisma } from "@/lib/prisma";
 import { integrationsLive } from "@/services/integrations/runtime";
-import { passwordMail } from "./microsoft365/passwordMail";
-import { sendMail } from "@/utils/sendMail";
+import { sendPasswordMail } from "./microsoft365/passwordMail";
 
 const GRAPH = "https://graph.microsoft.com/v1.0";
 const TOKEN_SCOPE = "https://graph.microsoft.com/.default";
@@ -406,31 +405,20 @@ export async function provisionMicrosoft365Account(params: {
         });
     });
 
-    const template = passwordMail({
+    if (microsoftSimulationEnabled()) {
+        return {
+            status: "created",
+            workEmail: created.workEmail,
+            externalId: created.externalId,
+            passwordMailSent: false,
+        };
+    }
+    const passwordMailSent = await sendPasswordMail({
+        to: worker.email,
         firstName: worker.firstName,
         workEmail: created.workEmail,
         password,
     });
-    let passwordMailSent = false;
-    try {
-        if (microsoftSimulationEnabled()) {
-            return {
-                status: "created",
-                workEmail: created.workEmail,
-                externalId: created.externalId,
-                passwordMailSent: false,
-            };
-        }
-        const sent = await sendMail({
-            to: worker.email,
-            subject: template.subject,
-            text: template.text,
-            html: template.html,
-        });
-        passwordMailSent = !sent.error && Boolean(sent.data?.id);
-    } catch (error) {
-        console.error("Microsoft 365 Passwortmail fehlgeschlagen", error);
-    }
 
     return {
         status: "created",

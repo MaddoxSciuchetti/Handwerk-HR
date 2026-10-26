@@ -204,6 +204,7 @@ describe("microsoft 365 account", () => {
         expect(mail).toHaveBeenCalledWith(
             expect.objectContaining({
                 to: "ada@personal.test",
+                via: "resend",
                 subject: "Dein Microsoft-365-Zugang",
             }),
         );
