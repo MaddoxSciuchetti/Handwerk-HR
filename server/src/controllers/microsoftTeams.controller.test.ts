@@ -54,7 +54,7 @@ function app() {
 }
 beforeEach(() => jest.clearAllMocks());
 
-it("marks the callback cookie cross-site on staging so the browser keeps it", async () => {
+it("marks the staging callback cookie Secure and SameSite=Lax so the browser keeps it", async () => {
     const previous = process.env.NODE_ENV;
     process.env.NODE_ENV = "staging";
     (startConnection as jest.Mock).mockResolvedValue({
@@ -65,7 +65,8 @@ it("marks the callback cookie cross-site on staging so the browser keeps it", as
         const result = await request(app()).post("/connection").send({});
         const cookie = result.headers["set-cookie"][0];
         expect(cookie).toContain("Secure");
-        expect(cookie).toContain("SameSite=None");
+        expect(cookie).toContain("SameSite=Lax");
+        expect(cookie).not.toContain("SameSite=None");
     } finally {
         process.env.NODE_ENV = previous;
     }

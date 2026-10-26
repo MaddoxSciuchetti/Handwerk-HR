@@ -17,11 +17,12 @@ import {
     teamsPreview,
 } from "@/services/microsoftTeams/messages";
 
-const crossSiteCallbackCookie = () =>
-    process.env.NODE_ENV === "production" || process.env.NODE_ENV === "staging";
+// Microsoft returns the browser with a top-level navigation. Lax is sent on that
+// navigation and is stored on staging; SameSite=None is treated as a third-party
+// cookie and dropped between the two onrender.com sites.
 const callbackCookieOptions = () => ({
-    secure: crossSiteCallbackCookie(),
-    sameSite: crossSiteCallbackCookie() ? ("none" as const) : ("lax" as const),
+    secure: process.env.NODE_ENV !== "development",
+    sameSite: "lax" as const,
     path: "/auth/microsoft/callback",
 });
 const actor = (req: Request): Actor => {
@@ -98,6 +99,14 @@ export const microsoftCallback: RequestHandler = async (req, res) => {
         redirect.searchParams.set("microsoft", "connected");
     } catch (error) {
         // Return only our own error codes, never Microsoft's raw response or authorization code.
+        console.error(
+            "microsoft callback failed",
+            error instanceof TeamsError
+                ? error.code
+                : error instanceof Error
+                  ? error.name
+                  : "unknown",
+        );
         redirect.searchParams.set(
             "microsoft",
             error instanceof TeamsError ? error.code : "connection_failed",
