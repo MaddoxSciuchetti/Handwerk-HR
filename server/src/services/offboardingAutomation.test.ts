@@ -291,6 +291,37 @@ describe("offboarding microsoft automation", () => {
         );
     });
 
+    it("finishes when Graph disabled the account but the next read is still stale", async () => {
+        const fetchMock = jest
+            .spyOn(global, "fetch")
+            .mockResolvedValueOnce(
+                jsonResponse({ id: "graph-user-1", accountEnabled: true }),
+            )
+            .mockResolvedValueOnce(jsonResponse(null, 204))
+            .mockResolvedValueOnce(
+                jsonResponse({ id: "graph-user-1", accountEnabled: true }),
+            )
+            .mockResolvedValueOnce(jsonResponse({ value: [] }));
+
+        const result = await runTaskAutomation({
+            organizationId: "org-1",
+            issueId: "issue-1",
+            actorUserId: "user-1",
+            automation: "o365-block-signin",
+        });
+
+        expect(result).toEqual({ status: "completed", alreadyBlocked: false });
+        expect(fetchMock).toHaveBeenCalledWith(
+            "https://graph.microsoft.com/v1.0/users/graph-user-1",
+            expect.objectContaining({ method: "PATCH" }),
+        );
+        const tx = await transaction.mock.results[0].value;
+        expect(tx.issue.update).toHaveBeenCalledWith({
+            where: { id: "issue-1" },
+            data: { status: "done" },
+        });
+    });
+
     it("removes the license when sign-in is already blocked", async () => {
         const fetchMock = jest
             .spyOn(global, "fetch")

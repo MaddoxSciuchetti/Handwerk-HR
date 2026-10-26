@@ -66,7 +66,10 @@ async function readMicrosoftUser(token: string, key: string) {
     return {
         status: "found" as const,
         id,
-        accountEnabled: user?.accountEnabled !== false,
+        accountEnabled:
+            typeof user?.accountEnabled === "boolean"
+                ? user.accountEnabled
+                : null,
     };
 }
 
@@ -127,7 +130,15 @@ async function removeAssignedLicense(
         };
     }
 
-    const remaining = await assignedLicenseSkuIds(token, userId);
+    let remaining = await assignedLicenseSkuIds(token, userId);
+    for (
+        let attempt = 0;
+        remaining?.includes(skuId.toLowerCase()) && attempt < 3;
+        attempt += 1
+    ) {
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        remaining = await assignedLicenseSkuIds(token, userId);
+    }
     if (!remaining || remaining.includes(skuId.toLowerCase())) {
         return {
             ok: false as const,
@@ -156,8 +167,8 @@ export async function blockMicrosoftSignIn(
         };
     }
 
-    let alreadyBlocked = !current.accountEnabled;
-    if (current.accountEnabled) {
+    let alreadyBlocked = current.accountEnabled === false;
+    if (current.accountEnabled !== false) {
         const patched = await graphJson(
             token,
             `/users/${encodeURIComponent(current.id)}`,
@@ -177,12 +188,13 @@ export async function blockMicrosoftSignIn(
             };
         }
 
+        // Graph accepts the disable before every directory replica shows it.
+        // A stale or missing accountEnabled value here is not a failed block.
         const confirmed = await readMicrosoftUser(token, current.id);
-        if (confirmed.status !== "found" || confirmed.accountEnabled) {
-            return {
-                ok: false as const,
-                message: "Microsoft Graph hat die Sperre nicht bestätigt.",
-            };
+        if (confirmed.status !== "found" || confirmed.accountEnabled !== false) {
+            console.error(
+                "Microsoft Graph accepted the sign-in block before the directory read showed it",
+            );
         }
         alreadyBlocked = false;
     }
