@@ -2,7 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import useAuth from '@/features/user-profile/hooks/useAuth';
 import { getMicrosoftLicenseAvailability } from '../../api/microsoftLicenses.api';
 
-export function MicrosoftLicenseStatus() {
+export function MicrosoftLicenseStatus({
+  showAvailable = false,
+}: {
+  showAvailable?: boolean;
+}) {
   const { user } = useAuth();
   const licenses = useQuery({
     queryKey: ['microsoft-license-availability', user?.organizationId],
@@ -32,7 +36,13 @@ export function MicrosoftLicenseStatus() {
           : undefined)
       }
     >
-      Microsoft 365 - {label}
+      {showAvailable
+        ? licenses.isPending
+          ? 'Microsoft-Lizenzen werden geladen…'
+          : error || count == null
+            ? 'Microsoft-Lizenzanzahl nicht verfügbar'
+            : `${count} ${count === 1 ? 'Microsoft-Lizenz' : 'Microsoft-Lizenzen'} verfügbar`
+        : `Microsoft 365 - ${label}`}
     </p>
   );
 }
