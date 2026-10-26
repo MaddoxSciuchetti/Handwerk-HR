@@ -5,6 +5,9 @@ import {
 } from "@/services/questionnaireDispatch";
 import { prisma } from "@/lib/prisma";
 import { sendMail } from "@/utils/sendMail";
+import { integrationsLive, loadMicrosoft365Config } from "@/services/integrations/runtime";
+import { microsoftGraphToken } from "@/services/microsoft365Account";
+import { sendGraphMail } from "@/services/welcomeMail";
 import { completeMockQuestionnaire } from "@/services/questionnaireMock";
 import { questionnaireForOrganization } from "@/services/questionnaireTemplate";
 import { primaryEmploymentContract } from "@/services/documentMaster.service";
@@ -13,6 +16,8 @@ import { seedQuestionnaireDefinition } from "@/services/questionnaireDefinition"
 jest.mock("@/constants/env", () => ({
     FRONTENDURL: "http://localhost:5173",
     QUESTIONNAIRE_MOCK_RESPONSES: false,
+    USE_MICROSOFT_MAIL: false,
+    microsoftSimulationEnabled: () => false,
 }));
 jest.mock("@/lib/prisma", () => ({
     prisma: {
@@ -20,10 +25,19 @@ jest.mock("@/lib/prisma", () => ({
         questionnaireSubmission: { create: jest.fn() },
         issue: { createMany: jest.fn() },
         employmentContract: { create: jest.fn() },
+        organizationMember: { findFirst: jest.fn() },
         $transaction: jest.fn(),
     },
 }));
 jest.mock("@/utils/sendMail", () => ({ sendMail: jest.fn() }));
+jest.mock("@/services/integrations/runtime", () => ({
+    integrationsLive: jest.fn(() => true),
+    loadMicrosoft365Config: jest.fn(),
+}));
+jest.mock("@/services/microsoft365Account", () => ({
+    microsoftGraphToken: jest.fn(),
+}));
+jest.mock("@/services/welcomeMail", () => ({ sendGraphMail: jest.fn() }));
 jest.mock("@/services/questionnaireMock", () => ({
     completeMockQuestionnaire: jest.fn(),
 }));
@@ -64,6 +78,8 @@ beforeEach(() => {
         callback(prisma),
     );
     (sendMail as jest.Mock).mockResolvedValue({ error: null });
+    flags.USE_MICROSOFT_MAIL = false;
+    (integrationsLive as jest.Mock).mockReturnValue(true);
 });
 
 it("keeps real delivery unchanged when the flag is off", async () => {
@@ -175,6 +191,31 @@ it.each([false, true])("uses the saved sender for questionnaire delivery (resend
         to: "lukas@example.test",
         senderAddress: "office@example.test",
     }));
+});
+
+it("sends the questionnaire from the signed-in user with the organization client credentials", async () => {
+    flags.USE_MICROSOFT_MAIL = true;
+    engagement.questionnaireSenderAddress = "office@example.test";
+    (prisma.organizationMember.findFirst as jest.Mock).mockResolvedValue({
+        user: { email: "maddoxsciuchetti@hadox.onmicrosoft.com" },
+    });
+    (loadMicrosoft365Config as jest.Mock).mockResolvedValue({ clientId: "client" });
+    (microsoftGraphToken as jest.Mock).mockResolvedValue("graph-token");
+    (sendGraphMail as jest.Mock).mockResolvedValue({ status: "sent" });
+
+    expect(await sendEngagementQuestionnaire(params)).toMatchObject({ emailSent: true });
+    expect(prisma.organizationMember.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({ organizationId: "org", userId: "user" }),
+    }));
+    expect(loadMicrosoft365Config).toHaveBeenCalledWith("org");
+    expect(microsoftGraphToken).toHaveBeenCalledWith({ clientId: "client" });
+    expect(sendGraphMail).toHaveBeenCalledWith(expect.objectContaining({
+        token: "graph-token",
+        senderAddress: "maddoxsciuchetti@hadox.onmicrosoft.com",
+        recipients: ["lukas@example.test"],
+        html: expect.stringContaining("/fragebogen/"),
+    }));
+    expect(sendMail).not.toHaveBeenCalled();
 });
 
 it('overrides a legacy saved sender with the staging default on retry', async () => {

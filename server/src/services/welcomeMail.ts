@@ -302,6 +302,7 @@ export async function sendGraphMail(params: {
     recipients: string[];
     subject: string;
     text: string;
+    html?: string;
     rejectedLog: string;
     failureMessage: string;
 }): Promise<
@@ -322,7 +323,7 @@ export async function sendGraphMail(params: {
                     subject: params.subject,
                     body: {
                         contentType: "HTML",
-                        content: welcomeHtml(params.text),
+                        content: params.html ?? welcomeHtml(params.text),
                     },
                     toRecipients: params.recipients.map((address) => ({
                         emailAddress: { address },
