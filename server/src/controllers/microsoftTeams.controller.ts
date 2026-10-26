@@ -3,9 +3,11 @@ import { z } from "zod";
 import { FRONTENDURL } from "@/constants/env";
 import {
     CALLBACK_COOKIE,
+    callbackUri,
     connectionStatus,
     disconnectAndGetStatus,
     finishConnection,
+    microsoftAuthorizeUrl,
     startConnection,
     TeamsError,
     type Actor,
@@ -61,12 +63,13 @@ export const postConnection: RequestHandler = async (req, res) => {
     res.setHeader("Cache-Control", "no-store");
     try {
         const result = await startConnection(actor(req));
-        res.cookie(CALLBACK_COOKIE, result.browserSecret, {
-            ...callbackCookieOptions(),
-            httpOnly: true,
-            maxAge: 600_000,
-        });
-        res.json({ success: true, data: { url: result.url } });
+        const bridge = new URL(
+            "/auth/microsoft/bridge",
+            new URL(callbackUri()).origin,
+        );
+        bridge.searchParams.set("state", result.state);
+        bridge.searchParams.set("bind", result.browserSecret);
+        res.json({ success: true, data: { url: bridge.toString() } });
     } catch (error) {
         res.status(error instanceof TeamsError ? error.statusCode : 503).json({
             code:
@@ -76,6 +79,32 @@ export const postConnection: RequestHandler = async (req, res) => {
                     ? error.message
                     : "Die Microsoft-Anmeldung konnte nicht gestartet werden.",
         });
+    }
+};
+export const microsoftBridge: RequestHandler = async (req, res) => {
+    res.setHeader("Cache-Control", "no-store");
+    res.setHeader("Referrer-Policy", "no-referrer");
+    const redirect = new URL("/settings/integrations", FRONTENDURL);
+    try {
+        const { state, bind } = z
+            .object({
+                state: z.string().uuid(),
+                bind: z.string().min(1).max(200),
+            })
+            .parse(req.query);
+        const url = await microsoftAuthorizeUrl(state, bind);
+        res.cookie(CALLBACK_COOKIE, bind, {
+            ...callbackCookieOptions(),
+            httpOnly: true,
+            maxAge: 600_000,
+        });
+        res.redirect(303, url);
+    } catch (error) {
+        redirect.searchParams.set(
+            "microsoft",
+            error instanceof TeamsError ? error.code : "connection_failed",
+        );
+        res.redirect(303, redirect.toString());
     }
 };
 export const microsoftCallback: RequestHandler = async (req, res) => {
@@ -103,9 +132,13 @@ export const microsoftCallback: RequestHandler = async (req, res) => {
             "microsoft callback failed",
             error instanceof TeamsError
                 ? error.code
-                : error instanceof Error
-                  ? error.name
-                  : "unknown",
+                : error instanceof z.ZodError
+                  ? error.issues
+                        .map((issue) => issue.path.join(".") || issue.code)
+                        .join(",")
+                  : error instanceof Error
+                    ? error.name
+                    : "unknown",
         );
         redirect.searchParams.set(
             "microsoft",

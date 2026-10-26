@@ -3,6 +3,7 @@ import cookieParser from "cookie-parser";
 import request from "supertest";
 import {
     deleteConnection,
+    microsoftBridge,
     microsoftCallback,
     postConnection,
     postTeamsSend,
@@ -10,6 +11,7 @@ import {
 import {
     disconnectAndGetStatus,
     finishConnection,
+    microsoftAuthorizeUrl,
     startConnection,
     TeamsError,
 } from "@/services/microsoftTeams/connection";
@@ -17,6 +19,7 @@ import { sendTeams } from "@/services/microsoftTeams/messages";
 jest.mock("@/services/microsoftTeams/connection", () => ({
     ...jest.requireActual("@/services/microsoftTeams/connection"),
     finishConnection: jest.fn(),
+    microsoftAuthorizeUrl: jest.fn(),
     startConnection: jest.fn(),
     disconnectAndGetStatus: jest.fn(),
 }));
@@ -34,6 +37,7 @@ function app() {
     const application = express();
     application.use(express.json(), cookieParser());
     application.get("/auth/microsoft/callback", microsoftCallback);
+    application.get("/auth/microsoft/bridge", microsoftBridge);
     application.use((req, _res, next) => {
         req.orgId = "org";
         req.userId = "alice";
@@ -54,43 +58,68 @@ function app() {
 }
 beforeEach(() => jest.clearAllMocks());
 
-it("marks the staging callback cookie Secure and SameSite=Lax so the browser keeps it", async () => {
-    const previous = process.env.NODE_ENV;
-    process.env.NODE_ENV = "staging";
+it("sends the browser to the backend before Microsoft so the callback cookie is stored there", async () => {
+    const previousRedirect = process.env.MICROSOFT_TEAMS_REDIRECT_URI;
+    process.env.MICROSOFT_TEAMS_REDIRECT_URI =
+        "https://bsb-onboarding-backend-development.onrender.com/auth/microsoft/callback";
     (startConnection as jest.Mock).mockResolvedValue({
         url: "https://login.microsoftonline.com/authorize",
         browserSecret: "private-browser-secret",
+        state,
     });
     try {
-        const result = await request(app()).post("/connection").send({});
-        const cookie = result.headers["set-cookie"][0];
-        expect(cookie).toContain("Secure");
-        expect(cookie).toContain("SameSite=Lax");
-        expect(cookie).not.toContain("SameSite=None");
+        const result = await request(app())
+            .post("/connection")
+            .send({ userId: "bob" });
+        expect(startConnection).toHaveBeenCalledWith({
+            organizationId: "org",
+            userId: "alice",
+        });
+        expect(result.status).toBe(200);
+        expect(result.headers["set-cookie"]).toBeUndefined();
+        const bridge = new URL(result.body.data.url);
+        expect(bridge.origin).toBe(
+            "https://bsb-onboarding-backend-development.onrender.com",
+        );
+        expect(bridge.pathname).toBe("/auth/microsoft/bridge");
+        expect(bridge.searchParams.get("state")).toBe(state);
+        expect(bridge.searchParams.get("bind")).toBe("private-browser-secret");
     } finally {
-        process.env.NODE_ENV = previous;
+        if (previousRedirect === undefined) {
+            delete process.env.MICROSOFT_TEAMS_REDIRECT_URI;
+        } else {
+            process.env.MICROSOFT_TEAMS_REDIRECT_URI = previousRedirect;
+        }
     }
 });
 
-it("starts a connection using the authenticated actor and keeps the browser secret in an HTTP-only cookie", async () => {
-    const url = "https://login.microsoftonline.com/authorize";
-    (startConnection as jest.Mock).mockResolvedValue({
-        url,
-        browserSecret: "private-browser-secret",
-    });
-    const result = await request(app())
-        .post("/connection")
-        .send({ userId: "bob" });
-    expect(startConnection).toHaveBeenCalledWith({
-        organizationId: "org",
-        userId: "alice",
-    });
-    expect(result.status).toBe(200);
-    expect(result.body).toEqual({ success: true, data: { url } });
-    expect(result.headers["set-cookie"][0]).toContain("HttpOnly");
-    expect(result.headers["set-cookie"][0]).toContain(
-        "Path=/auth/microsoft/callback",
+it("stores the callback cookie on the backend host before redirecting to Microsoft", async () => {
+    const previous = process.env.NODE_ENV;
+    process.env.NODE_ENV = "staging";
+    (microsoftAuthorizeUrl as jest.Mock).mockResolvedValue(
+        "https://login.microsoftonline.com/authorize",
     );
+    try {
+        const result = await request(app())
+            .get("/auth/microsoft/bridge")
+            .query({ state, bind: "private-browser-secret" });
+        expect(microsoftAuthorizeUrl).toHaveBeenCalledWith(
+            state,
+            "private-browser-secret",
+        );
+        expect(result.status).toBe(303);
+        expect(result.headers.location).toBe(
+            "https://login.microsoftonline.com/authorize",
+        );
+        expect(result.headers["referrer-policy"]).toBe("no-referrer");
+        const cookie = result.headers["set-cookie"][0];
+        expect(cookie).toContain("HttpOnly");
+        expect(cookie).toContain("Secure");
+        expect(cookie).toContain("SameSite=Lax");
+        expect(cookie).toContain("Path=/auth/microsoft/callback");
+    } finally {
+        process.env.NODE_ENV = previous;
+    }
 });
 
 it("delegates disconnect and status retrieval to the service", async () => {

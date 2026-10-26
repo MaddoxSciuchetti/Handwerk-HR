@@ -209,7 +209,54 @@ export async function startConnection(actor: Actor) {
         verifierCiphertext: encryptIntegrationSecret(verifier),
         expiresAt: new Date(Date.now() + 600_000),
     });
-    return { url, browserSecret };
+    return { url, browserSecret, state };
+}
+
+// The staging site proxies API calls, so a cookie set on that response is stored
+// for the frontend host. Microsoft returns to the backend host. This rebuilds the
+// authorize URL after the browser has opened the backend directly.
+export async function microsoftAuthorizeUrl(state: string, browserSecret: string) {
+    const attempt = await prisma.microsoftAuthAttempt.findUnique({
+        where: { id: state },
+    });
+    if (
+        !attempt ||
+        attempt.consumedAt ||
+        attempt.expiresAt <= new Date() ||
+        attempt.browserHash !== hash(browserSecret)
+    ) {
+        throw new TeamsError(
+            "invalid_attempt",
+            "Die Anmeldung ist abgelaufen oder ungültig. Bitte erneut verbinden.",
+        );
+    }
+    const config = await teamsConfig(attempt.organizationId);
+    if (
+        config.clientId !== attempt.clientId ||
+        config.tenantId !== attempt.tenantId
+    ) {
+        throw new TeamsError(
+            "configuration_changed",
+            "Die Microsoft-Einstellungen wurden geändert. Bitte erneut verbinden.",
+        );
+    }
+    const verifier = decryptIntegrationSecret(attempt.verifierCiphertext);
+    if (!verifier) {
+        throw new TeamsError(
+            "invalid_attempt",
+            "Die Anmeldung ist ungültig. Bitte erneut verbinden.",
+        );
+    }
+    return msalClient(config).getAuthCodeUrl({
+        scopes: AUTH_SCOPES,
+        redirectUri: callbackUri(),
+        state,
+        nonce: attempt.nonce,
+        codeChallenge: createHash("sha256").update(verifier).digest("base64url"),
+        codeChallengeMethod: "S256",
+        prompt: "select_account",
+        responseMode: "query",
+    });
 }
 
 async function saveAuthAttempt(
