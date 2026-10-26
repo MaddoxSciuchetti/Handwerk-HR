@@ -23,13 +23,8 @@ export function MicrosoftAccountIdField({
         name="microsoftAccountId"
         label="Microsoft-Konto-ID (optional)"
         placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-        aria-describedby={`${id}-hint`}
         className="h-8"
       />
-      <p id={`${id}-hint`} className="text-sm text-muted-foreground">
-        Leer lassen, um die beim Handwerker hinterlegte Microsoft-ID zu
-        verwenden. Eine eingegebene ID vor der Ausführung speichern.
-      </p>
     </div>
   );
 }

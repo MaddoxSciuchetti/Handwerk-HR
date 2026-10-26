@@ -72,6 +72,44 @@ describe('Aufgaben (all tasks) — row selection & bulk delete', () => {
     vi.clearAllMocks();
   });
 
+  it('keeps the handyman automation bar off the list when a saved run is cached', async () => {
+    const task = taskStore.remaining[0];
+    task.title = 'Arbeitsvertrag unterschrieben';
+    task.status = 'done';
+    task.workerEngagement = {
+      workerId: 'worker-1',
+      worker: { firstName: 'Ada', lastName: 'Lovelace' },
+      templateApplication: {
+        id: 'application-1',
+        completedAt: '2026-10-24T08:00:00.000Z',
+        resultsDismissedAt: null,
+      },
+    };
+    queryClient.setQueryData(
+      ['template-application-result', 'worker-1', task.workerEngagementId],
+      {
+        target: {
+          workerId: 'worker-1',
+          engagementId: task.workerEngagementId,
+          label: 'Ada Lovelace',
+        },
+        templateName: 'Onboarding',
+        result: { count: 1, issueIds: [task.id], outcomes: [], running: false },
+      }
+    );
+
+    renderWithAppQueryClient(<Tasks />);
+
+    await screen.findByText('Arbeitsvertrag unterschrieben');
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Ausgeführte Aufgaben anzeigen' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Template wählen' })
+    ).not.toBeInTheDocument();
+  });
+
   it('keeps the row checkbox visible and selects every task from the column header', async () => {
     const user = userEvent.setup();
     renderWithAppQueryClient(<Tasks />);

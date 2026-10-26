@@ -1,5 +1,3 @@
-import { TemplateApplyPrompt } from '@/features/worker-task-management/components/tasks/TemplateApplyPrompt';
-import { engagementsAwaitingTemplate } from '@/features/worker-task-management/pendingTemplate';
 import { TableSelectAllCheckbox } from '@/components/ui/table-select-all-checkbox';
 import { TableSkeletonRows } from '@/components/ui/table-skeleton';
 import { Button } from '@/components/ui/button';
@@ -115,11 +113,6 @@ function Tasks() {
   return (
     <div className="mx-auto flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
       <div className="flex h-full min-h-0 w-full flex-col">
-        {!largeEditMode && (
-          <TemplateApplyPrompt
-            targets={engagementsAwaitingTemplate(data ?? [])}
-          />
-        )}
         <TaskSidebar
           key={sidebarKey}
           {...sidebarProps}
