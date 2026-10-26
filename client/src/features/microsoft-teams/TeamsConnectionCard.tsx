@@ -44,6 +44,9 @@ export function TeamsConnectionCard({ user }: { user: User }) {
     queryFn: getConnection,
     enabled: Boolean(user.organizationId),
     staleTime: 0,
+    // Environment configuration can become available while this page is open.
+    refetchInterval: (query) =>
+      query.state.data?.ready === false ? 5_000 : false,
   });
   useEffect(() => {
     const url = new URL(window.location.href);

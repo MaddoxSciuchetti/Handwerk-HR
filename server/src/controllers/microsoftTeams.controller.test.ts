@@ -54,6 +54,23 @@ function app() {
 }
 beforeEach(() => jest.clearAllMocks());
 
+it("marks the callback cookie cross-site on staging so the browser keeps it", async () => {
+    const previous = process.env.NODE_ENV;
+    process.env.NODE_ENV = "staging";
+    (startConnection as jest.Mock).mockResolvedValue({
+        url: "https://login.microsoftonline.com/authorize",
+        browserSecret: "private-browser-secret",
+    });
+    try {
+        const result = await request(app()).post("/connection").send({});
+        const cookie = result.headers["set-cookie"][0];
+        expect(cookie).toContain("Secure");
+        expect(cookie).toContain("SameSite=None");
+    } finally {
+        process.env.NODE_ENV = previous;
+    }
+});
+
 it("starts a connection using the authenticated actor and keeps the browser secret in an HTTP-only cookie", async () => {
     const url = "https://login.microsoftonline.com/authorize";
     (startConnection as jest.Mock).mockResolvedValue({

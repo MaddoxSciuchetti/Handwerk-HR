@@ -98,6 +98,7 @@ function MicrosoftForm({
           )
       );
       void queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: ['microsoft-teams'] });
       toast.success('Microsoft 365 wurde gespeichert.');
     },
     onError: (error: { message?: string }) => {

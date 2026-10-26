@@ -75,7 +75,6 @@ export function TableSkeletonRows({
             <Skeleton className="size-4 rounded-full" />
             {name}
           </div>,
-          <Skeleton className="h-6 w-20 rounded-2xl" />,
           <div className="flex justify-end gap-2">
             <Skeleton className="h-7 w-28 rounded-full" />
             <Skeleton className="h-7 w-24 rounded-full" />

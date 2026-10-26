@@ -192,7 +192,6 @@ function Tasks() {
                       </div>
                       Titel
                     </TableHead>
-                    <TableHead className="w-px bg-card py-3 px-2" />
                     <TableHead className="bg-card py-3 px-2 text-right">
                       Beschreibung
                     </TableHead>

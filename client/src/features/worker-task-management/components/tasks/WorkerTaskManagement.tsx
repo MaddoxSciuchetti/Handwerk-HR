@@ -321,7 +321,6 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                         </div>
                         Titel
                       </TableHead>
-                      <TableHead className="h-12 bg-card py-3 px-2" />
                       <TableHead className="h-12 bg-card py-3 px-2 text-right">
                         Beschreibung
                       </TableHead>
@@ -358,7 +357,7 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                     ) : (
                       <TableRow className="border-0 hover:bg-transparent">
                         <TableCell
-                          colSpan={3}
+                          colSpan={2}
                           className="py-10 text-center text-sm text-muted-foreground"
                         >
                           Keine Aufgaben gefunden.

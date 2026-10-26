@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from 'test-unit/test-utils';
 import { TeamsConnectionCard } from '@/features/microsoft-teams/TeamsConnectionCard';
+import { IntegrationsPage } from '@/features/settings/integrations/IntegrationsPage';
 import {
   TeamsSendAction,
   TeamsSendForm,
@@ -17,13 +18,20 @@ const mocks = vi.hoisted(() => ({
   getTeamsPreview: vi.fn(),
   sendTeams: vi.fn(),
   reviewDelivery: vi.fn(),
+  getIntegrations: vi.fn(),
+  saveIntegration: vi.fn(),
   user: {
+    membershipRole: 'admin' as const,
     id: 'alice',
     organizationId: 'org-a',
     email: 'alice@app.example',
     createdAt: '',
     updatedAt: '',
   },
+}));
+vi.mock('@/features/settings/integrations/integrations.api', () => ({
+  getIntegrations: mocks.getIntegrations,
+  saveIntegration: mocks.saveIntegration,
 }));
 vi.mock('@/features/user-profile/hooks/useAuth', () => ({
   default: () => ({ user: mocks.user }),
@@ -83,6 +91,83 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllEnvs());
 describe('personal Microsoft Teams connection', () => {
+  it('enables connecting immediately after Microsoft settings are saved', async () => {
+    const user = userEvent.setup();
+    const integrations = ['microsoft_graph', 'crewmeister'].map((provider) => ({
+      provider,
+      enabled: true,
+      tenantId: '',
+      clientId: '',
+      clientSecret: '',
+      domain: '',
+      licenseSkuId: '',
+      crewId: '',
+      ready: false,
+      live: true,
+    }));
+    mocks.getIntegrations.mockResolvedValue(integrations);
+    mocks.saveIntegration.mockResolvedValue(integrations[0]);
+    mocks.getConnection.mockResolvedValue({
+      ...connection,
+      ready: false,
+      status: 'disconnected',
+      account: null,
+    });
+    renderWithProviders(<IntegrationsPage />);
+    const button = await screen.findByRole('button', { name: 'Verbinden' });
+    await waitFor(() => expect(button).toBeDisabled());
+    mocks.getConnection.mockResolvedValue({
+      ...connection,
+      status: 'disconnected',
+      account: null,
+    });
+    const heading = await screen.findByRole('heading', {
+      name: 'Microsoft 365',
+    });
+    await user.click(
+      within(heading.closest('form')!).getByRole('button', {
+        name: 'Speichern',
+      })
+    );
+    await waitFor(() => expect(button).toBeEnabled());
+    expect(mocks.getConnection).toHaveBeenCalledTimes(2);
+  });
+
+  it('detects newly available configuration and stops polling once ready', async () => {
+    mocks.getConnection.mockResolvedValue({
+      ...connection,
+      ready: false,
+      status: 'disconnected',
+      account: null,
+    });
+    vi.useFakeTimers();
+    const view = renderWithProviders(<TeamsConnectionCard user={mocks.user} />);
+    try {
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1);
+      });
+      const button = screen.getByRole('button', { name: 'Verbinden' });
+      expect(button).toBeDisabled();
+      mocks.getConnection.mockResolvedValue({
+        ...connection,
+        status: 'disconnected',
+        account: null,
+      });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(5_001);
+      });
+      expect(button).toBeEnabled();
+      expect(mocks.getConnection).toHaveBeenCalledTimes(2);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(15_000);
+      });
+      expect(mocks.getConnection).toHaveBeenCalledTimes(2);
+    } finally {
+      view.unmount();
+      vi.useRealTimers();
+    }
+  });
+
   it.each([
     [
       'token_exchange_failed',

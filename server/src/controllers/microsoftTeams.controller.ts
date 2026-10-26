@@ -17,6 +17,13 @@ import {
     teamsPreview,
 } from "@/services/microsoftTeams/messages";
 
+const crossSiteCallbackCookie = () =>
+    process.env.NODE_ENV === "production" || process.env.NODE_ENV === "staging";
+const callbackCookieOptions = () => ({
+    secure: crossSiteCallbackCookie(),
+    sameSite: crossSiteCallbackCookie() ? ("none" as const) : ("lax" as const),
+    path: "/auth/microsoft/callback",
+});
 const actor = (req: Request): Actor => {
     if (!req.orgId || !req.userId)
         throw new TeamsError("access_denied", "Bitte erneut anmelden.", 403);
@@ -54,10 +61,8 @@ export const postConnection: RequestHandler = async (req, res) => {
     try {
         const result = await startConnection(actor(req));
         res.cookie(CALLBACK_COOKIE, result.browserSecret, {
+            ...callbackCookieOptions(),
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-            path: "/auth/microsoft/callback",
             maxAge: 600_000,
         });
         res.json({ success: true, data: { url: result.url } });
@@ -98,11 +103,7 @@ export const microsoftCallback: RequestHandler = async (req, res) => {
             error instanceof TeamsError ? error.code : "connection_failed",
         );
     }
-    res.clearCookie(CALLBACK_COOKIE, {
-        path: "/auth/microsoft/callback",
-        secure: process.env.NODE_ENV === "production",
-        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    });
+    res.clearCookie(CALLBACK_COOKIE, callbackCookieOptions());
     res.redirect(303, redirect.toString());
 };
 export const getChannels = endpoint((req) => listChannels(actor(req)));
