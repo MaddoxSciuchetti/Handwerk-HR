@@ -110,7 +110,7 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
     });
   };
 
-  const { data, isLoading } = useTaskData(workerId);
+  const { data, isLoading } = useTaskData(workerId, activeTab === 'form');
   const { displayData } = useFilteredData(data);
   const selectVisibleTasks = (checked: boolean) => {
     const visibleIds = new Set(displayData.map((task) => task.id));
