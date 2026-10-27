@@ -21,7 +21,7 @@ import {
   CircleAlert,
   Circle,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import { WORKERBYID } from '../../consts/query-key.consts';
@@ -102,11 +102,14 @@ export function TemplateApplyPrompt({
     );
   }
 
-  const refresh = () =>
-    Promise.all([
-      queryClient.invalidateQueries({ queryKey: [WORKERBYID] }),
-      queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] }),
-    ]);
+  const refresh = useCallback(
+    () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: [WORKERBYID] }),
+        queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] }),
+      ]),
+    [queryClient]
+  );
   const apply = useMutation({
     mutationFn: async (input: {
       runAutomation: boolean;
@@ -253,40 +256,69 @@ export function TemplateApplyPrompt({
   const hiddenEngagement =
     Boolean(resultTarget) &&
     (hiddenIds.includes(resultTarget.engagementId) ||
-      Boolean(sessionStorage.getItem(resultsDismissKey(resultTarget.engagementId))) ||
+      Boolean(
+        sessionStorage.getItem(resultsDismissKey(resultTarget.engagementId))
+      ) ||
       receiptDismissed);
+  const close = () => {
+    if (selectedId) sessionStorage.setItem(dismissKey(selectedId), '1');
+    setOpen(false);
+  };
+  const dismissRun = useCallback(
+    (target: TemplateApplyTarget) => {
+      const { workerId, engagementId } = target;
+      sessionStorage.setItem(dismissKey(engagementId), '1');
+      setOpen(false);
+      sessionStorage.setItem(resultsDismissKey(engagementId), '1');
+      setHiddenIds((current) =>
+        current.includes(engagementId) ? current : [...current, engagementId]
+      );
+      setResultsDismissed(true);
+      setShowResults(false);
+      void dismissTemplateApplication(workerId, engagementId)
+        .then(() => refresh())
+        .catch((error: { message?: string }) => {
+          sessionStorage.removeItem(resultsDismissKey(engagementId));
+          setHiddenIds((current) =>
+            current.filter((id) => id !== engagementId)
+          );
+          setResultsDismissed(false);
+          setOpen(true);
+          toast.error(
+            error.message || 'Leiste konnte nicht geschlossen werden'
+          );
+        });
+    },
+    [refresh]
+  );
+  const dismissBar = () => {
+    if (resultTarget && !running) dismissRun(resultTarget);
+  };
+  const completedTarget = completedRun?.target;
+  const succeeded = Boolean(
+    completedRun &&
+    !completedRun.result.running &&
+    completedRun.result.outcomes.every(
+      (outcome) => outcome.status === 'completed'
+    )
+  );
+  useEffect(() => {
+    if (running || !hasVisibleRun || !succeeded || !completedTarget) return;
+    const timer = window.setTimeout(() => dismissRun(completedTarget), 1500);
+    return () => window.clearTimeout(timer);
+  }, [running, hasVisibleRun, succeeded, completedTarget, dismissRun]);
   if (!running && hiddenEngagement && !selected) return null;
-  if (!running && receiptDismissed && selected?.engagementId === resultTarget?.engagementId) {
+  if (
+    !running &&
+    receiptDismissed &&
+    selected?.engagementId === resultTarget?.engagementId
+  ) {
     const others = available.filter(
       (target) => target.engagementId !== resultTarget?.engagementId
     );
     if (!others.length) return null;
   }
   if (!selected && !apply.isPending && !completedRun) return null;
-  const close = () => {
-    if (selectedId) sessionStorage.setItem(dismissKey(selectedId), '1');
-    setOpen(false);
-  };
-  const dismissBar = () => {
-    if (!resultTarget || running) return;
-    const { workerId, engagementId } = resultTarget;
-    close();
-    sessionStorage.setItem(resultsDismissKey(engagementId), '1');
-    setHiddenIds((current) =>
-      current.includes(engagementId) ? current : [...current, engagementId]
-    );
-    setResultsDismissed(true);
-    setShowResults(false);
-    void dismissTemplateApplication(workerId, engagementId)
-      .then(() => refresh())
-      .catch((error: { message?: string }) => {
-        sessionStorage.removeItem(resultsDismissKey(engagementId));
-        setHiddenIds((current) => current.filter((id) => id !== engagementId));
-        setResultsDismissed(false);
-        setOpen(true);
-        toast.error(error.message || 'Leiste konnte nicht geschlossen werden');
-      });
-  };
   return (
     <div className="fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 flex-col items-center gap-2">
       {createPortal(
