@@ -1,4 +1,10 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import {
+  act,
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, expect, it, vi } from 'vitest';
@@ -55,11 +61,14 @@ it('requires an explicit sender and submits it with the employee email', async (
 });
 
 it('uses the staging default without a sender selector', async () => {
-  vi.mocked(getMicrosoftMailAddresses).mockResolvedValue({
-    addresses: [],
-    error: null,
-    defaultSenderAddress: 'hello@example.test',
-  });
+  let resolveAddresses!: (
+    value: Awaited<ReturnType<typeof getMicrosoftMailAddresses>>
+  ) => void;
+  vi.mocked(getMicrosoftMailAddresses).mockReturnValue(
+    new Promise((resolve) => {
+      resolveAddresses = resolve;
+    })
+  );
   vi.mocked(API.post).mockResolvedValue({
     data: { worker: { id: 'worker' }, engagement: { id: 'engagement' } },
   });
@@ -72,6 +81,17 @@ it('uses the staging default without a sender selector', async () => {
       <FastTrackOnboarding onCreated={vi.fn()} />
     </QueryClientProvider>
   );
+  expect(
+    screen.queryByRole('combobox', { name: 'Absender' })
+  ).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Anlegen' })).toBeDisabled();
+  await act(async () => {
+    resolveAddresses({
+      addresses: [],
+      error: null,
+      defaultSenderAddress: 'hello@example.test',
+    });
+  });
   await waitFor(() =>
     expect(screen.getByRole('button', { name: 'Anlegen' })).toBeEnabled()
   );

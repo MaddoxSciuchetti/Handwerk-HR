@@ -1,4 +1,3 @@
-import { Button } from '@/components/ui/button';
 import { WeeklyHoursDays } from '@/features/questionnaire/WeeklyHoursDays';
 import {
   HOURS_DISTRIBUTION_KEY,
@@ -7,7 +6,6 @@ import {
   WEEKLY_HOURS_SECTION,
   isWeekdayHourKey,
 } from '@shared/weeklyHours';
-import { useState } from 'react';
 import { PflichtfeldSwitch } from './PflichtfeldSwitch';
 import { WeekdayAssign } from './WeekdayAssign';
 import type {
@@ -28,7 +26,6 @@ export function WeeklyHoursEditor({
   onChange,
   onAdd,
 }: WeeklyHoursEditorProps) {
-  const [editing, setEditing] = useState(false);
   const days = WEEKDAYS.flatMap((day) => {
     const field = fields.find((item) => item.key === day.key);
     return field ? [field] : [];
@@ -62,17 +59,6 @@ export function WeeklyHoursEditor({
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-medium">Wöchentliche Arbeitszeit</p>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="rounded-2xl"
-          data-no-drag
-          aria-expanded={editing}
-          onClick={() => setEditing((open) => !open)}
-        >
-          Bearbeiten
-        </Button>
       </div>
       <WeeklyHoursDays
         variant="editor"
@@ -91,21 +77,19 @@ export function WeeklyHoursEditor({
             onChange({ ...day, officeOnly: checked, bsbOnly: undefined });
         }}
       />
-      {editing ? (
-        <div className="flex flex-col gap-4 border-t border-border pt-4">
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-            <PflichtfeldSwitch
-              checked={distribution?.required === true}
-              onChange={ensureDistribution}
-            />
-          </div>
-          <WeekdayAssign
-            days={days}
-            contractFields={contractFields}
-            onChange={onChange}
+      <div className="flex flex-col gap-4 border-t border-border pt-4">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+          <PflichtfeldSwitch
+            checked={distribution?.required === true}
+            onChange={ensureDistribution}
           />
         </div>
-      ) : null}
+        <WeekdayAssign
+          days={days}
+          contractFields={contractFields}
+          onChange={onChange}
+        />
+      </div>
     </div>
   );
 }

@@ -2,13 +2,6 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { FETCHDESCRIPTION } from '@/features/all-tasks/consts/query.consts';
 import {
   TASKHISTORY,
@@ -46,53 +39,22 @@ function teamsLink(value: string | null) {
     return undefined;
   }
 }
-export function TeamsSendAction({
-  taskId,
-  disabled,
-  beforeOpen,
-}: {
+type TeamsSendProps = {
   taskId: string;
-  disabled: boolean;
-  beforeOpen?: () => Promise<boolean>;
-}) {
-  const [open, setOpen] = useState(false);
-  const [preparing, setPreparing] = useState(false);
-  const openSend = async () => {
-    if (disabled || preparing) return;
-    setPreparing(true);
-    try {
-      if (!beforeOpen || (await beforeOpen())) setOpen(true);
-    } finally {
-      setPreparing(false);
-    }
-  };
-  return (
-    <>
-      <Button
-        type="button"
-        disabled={disabled || preparing}
-        onClick={() => void openSend()}
-      >
-        Teams-Nachricht senden
-      </Button>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Teams-Nachricht senden</DialogTitle>
-            <DialogDescription
-              className={import.meta.env.PROD ? 'sr-only' : undefined}
-            >
-              Wähle die Kanäle und prüfe die Nachricht. Du sendest mit deinem
-              verbundenen Microsoft-Konto.
-            </DialogDescription>
-          </DialogHeader>
-          {open && <TeamsSendForm taskId={taskId} />}
-        </DialogContent>
-      </Dialog>
-    </>
-  );
+  disabled?: boolean;
+  beforeSend?: () => Promise<boolean>;
+};
+
+export function TeamsSendAction(props: TeamsSendProps) {
+  return <TeamsSendForm key={props.taskId} {...props} sidebar />;
 }
-export function TeamsSendForm({ taskId }: { taskId: string }) {
+
+export function TeamsSendForm({
+  taskId,
+  disabled = false,
+  beforeSend,
+  sidebar = false,
+}: TeamsSendProps & { sidebar?: boolean }) {
   const showDiagnostics = !import.meta.env.PROD;
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -131,14 +93,29 @@ export function TeamsSendForm({ taskId }: { taskId: string }) {
     ]);
   };
   const send = useMutation({
-    mutationFn: () =>
-      sendTeams(taskId, {
-        idempotencyKey:
-          preview.data?.operation?.idempotencyKey ?? idempotencyKey,
-        destinations: (preview.data?.operation?.destinations ?? selected).map(
+    mutationFn: async () => {
+      if (beforeSend && !(await beforeSend())) return;
+      // Saving task edits can change the message template or connection state.
+      const latest = await queryClient.fetchQuery({
+        queryKey: previewKey,
+        queryFn: () => getTeamsPreview(taskId),
+        staleTime: 0,
+      });
+      if (latest.completed || latest.operation?.status === 'completed') return;
+      if (
+        !latest.connection.ready ||
+        latest.connection.status !== 'connected' ||
+        !latest.connection.live
+      ) {
+        throw new Error('Microsoft Teams ist derzeit nicht verfügbar.');
+      }
+      return sendTeams(taskId, {
+        idempotencyKey: latest.operation?.idempotencyKey ?? idempotencyKey,
+        destinations: (latest.operation?.destinations ?? selected).map(
           ({ teamId, channelId }) => ({ teamId, channelId })
         ),
-      }),
+      });
+    },
     onSettled: refresh,
   });
   const review = useMutation({
@@ -206,16 +183,53 @@ export function TeamsSendForm({ taskId }: { taskId: string }) {
       )}
       {preview.data && !operation && (
         <fieldset className="flex min-w-0 flex-col gap-2">
-          <legend className="mb-2 font-medium">Teams-Kanäle</legend>
+          <legend className="mb-2 font-medium">
+            {sidebar ? 'Teams-Kanal' : 'Teams-Kanäle'}
+          </legend>
           {connected && (
             <>
-              <Input
-                aria-label="Kanäle suchen"
-                placeholder="Team oder Kanal suchen…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
+              {sidebar ? (
+                <select
+                  aria-label="Teams-Kanal"
+                  className="h-9 w-full min-w-0 rounded-2xl border border-input bg-background px-3 text-sm"
+                  value={selected[0] ? channelKey(selected[0]) : ''}
+                  disabled={
+                    disabled ||
+                    busy ||
+                    channels.isPending ||
+                    !channels.data?.channels.length
+                  }
+                  onChange={(event) => {
+                    const channel = channels.data?.channels.find(
+                      (item) => channelKey(item) === event.target.value
+                    );
+                    setSelected(channel ? [channel] : []);
+                  }}
+                >
+                  <option value="">Kanal auswählen…</option>
+                  {channels.data?.channels.map((channel) => (
+                    <option
+                      key={channelKey(channel)}
+                      value={channelKey(channel)}
+                    >
+                      {channel.label}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <Input
+                  aria-label="Kanäle suchen"
+                  placeholder="Team oder Kanal suchen…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              )}
               {channels.isPending && <p>Kanäle werden geladen…</p>}
+              {sidebar &&
+                channels.isSuccess &&
+                !channels.data.channels.length && (
+                  <p className="text-sm">Keine Kanäle verfügbar.</p>
+                )}
               {channels.error && (
                 <p role="alert">{teamsError(channels.error)}</p>
               )}
@@ -224,27 +238,29 @@ export function TeamsSendForm({ taskId }: { taskId: string }) {
                   {warning}
                 </p>
               ))}
-              <div className="max-h-52 overflow-y-auto rounded-lg border p-2">
-                {filtered.map((channel) => (
-                  <label
-                    key={channelKey(channel)}
-                    className="flex items-center gap-2 p-2 text-sm"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedKeys.has(channelKey(channel))}
-                      onChange={() => choose(channel)}
-                      disabled={busy}
-                    />
-                    {channel.label}
-                  </label>
-                ))}
-                {channels.isSuccess && filtered.length === 0 && (
-                  <p className="p-2 text-sm">
-                    Keine passenden Kanäle gefunden.
-                  </p>
-                )}
-              </div>
+              {!sidebar && (
+                <div className="max-h-52 overflow-y-auto rounded-lg border p-2">
+                  {filtered.map((channel) => (
+                    <label
+                      key={channelKey(channel)}
+                      className="flex items-center gap-2 p-2 text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedKeys.has(channelKey(channel))}
+                        onChange={() => choose(channel)}
+                        disabled={busy}
+                      />
+                      {channel.label}
+                    </label>
+                  ))}
+                  {channels.isSuccess && filtered.length === 0 && (
+                    <p className="p-2 text-sm">
+                      Keine passenden Kanäle gefunden.
+                    </p>
+                  )}
+                </div>
+              )}
               {(showDiagnostics || channels.isError) && (
                 <Button
                   type="button"
@@ -319,7 +335,7 @@ export function TeamsSendForm({ taskId }: { taskId: string }) {
           ))}
         </div>
       )}
-      {preview.data && (
+      {preview.data && !sidebar && (
         <div>
           <p className="mb-2 text-sm font-medium">Nachricht</p>
           <div className="max-h-64 overflow-auto whitespace-pre-wrap rounded-lg border p-3 text-sm">
@@ -338,6 +354,8 @@ export function TeamsSendForm({ taskId }: { taskId: string }) {
         <Button
           type="button"
           disabled={
+            disabled ||
+            preview.isPending ||
             !connected ||
             !connection?.live ||
             busy ||
@@ -351,7 +369,9 @@ export function TeamsSendForm({ taskId }: { taskId: string }) {
             ? 'Wird gesendet…'
             : operation
               ? 'Offene Zustellungen erneut senden'
-              : 'Nachricht senden'}
+              : sidebar
+                ? 'Teams-Nachricht senden'
+                : 'Nachricht senden'}
         </Button>
       )}
     </div>

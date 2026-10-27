@@ -1,5 +1,6 @@
 import { renderWithProviders } from './test-utils';
 import { MicrosoftLicenseStatus } from '@/features/worker-task-management/components/tasks/MicrosoftLicenseStatus';
+import { AutomationRequirementNotice } from '@/features/settings/integrations/AutomationRequirementNotice';
 import { screen } from '@testing-library/react';
 import { beforeEach, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({ licenses: vi.fn() }));
@@ -10,6 +11,26 @@ vi.mock('@/features/user-profile/hooks/useAuth', () => ({
   default: () => ({ user: { organizationId: 'org' } }),
 }));
 beforeEach(() => vi.clearAllMocks());
+it.each([
+  [4, '4 Microsoft-Lizenzen verfügbar'],
+  [1, '1 Microsoft-Lizenz verfügbar'],
+  [0, '0 Microsoft-Lizenzen verfügbar'],
+])(
+  'shows %i available licenses in the automation notice',
+  async (available, text) => {
+    mocks.licenses.mockResolvedValue({ available, error: null });
+    renderWithProviders(
+      <AutomationRequirementNotice sequence="microsoft_create_account" />
+    );
+    expect(await screen.findByText(text)).toBeInTheDocument();
+  }
+);
+it('does not fetch licenses for account deactivation', () => {
+  renderWithProviders(
+    <AutomationRequirementNotice sequence="microsoft_deactivate_account" />
+  );
+  expect(mocks.licenses).not.toHaveBeenCalled();
+});
 it('shows available seats', async () => {
   mocks.licenses.mockResolvedValue({
     available: 4,
