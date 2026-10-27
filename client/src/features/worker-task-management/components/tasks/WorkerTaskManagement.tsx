@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LargeEditMode } from '@/features/all-tasks/components/LargeEditMode';
 import { TaskItem } from '@/features/all-tasks/components/TaskItem';
 import { TaskSidebar } from '@/features/all-tasks/components/TaskSidebar';
@@ -35,7 +35,7 @@ import {
 import useFilteredData from '../../hooks/useFilteredData';
 import useGetWorkerFiles from '../../hooks/useGetWorkerFiles';
 import useTaskData from '../../hooks/useTaskData';
-import { WorkerTab } from '../../types/index.types';
+import { LifecycleType, WorkerTab } from '../../types/index.types';
 import handleZipExport from '../../utils/handleZipExport';
 import { ContractConfirmDialog } from '../files/ContractConfirmDialog';
 import { ContractSendDialog } from '../files/ContractSendDialog';
@@ -111,7 +111,36 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
   };
 
   const { data, isLoading } = useTaskData(workerId, activeTab === 'form');
-  const { displayData } = useFilteredData(data);
+  const { displayData: allTasks } = useFilteredData(data);
+  const engagements = data?.data.engagements ?? [];
+  const hasOffboarding = engagements.some(
+    (engagement) => engagement.type === 'offboarding'
+  );
+  const phaseKey = `${workerId}:${engagements
+    .filter((engagement) => engagement.type === 'offboarding')
+    .map((engagement) => engagement.id)
+    .join(',')}`;
+  const [phaseSelection, setPhaseSelection] = useState<{
+    key: string;
+    phase: LifecycleType;
+  } | null>(null);
+  const taskPhase =
+    phaseSelection?.key === phaseKey
+      ? phaseSelection.phase
+      : hasOffboarding
+        ? 'offboarding'
+        : 'onboarding';
+  const taskEngagements = engagements.filter((engagement) =>
+    taskPhase === 'offboarding'
+      ? engagement.type === 'offboarding'
+      : engagement.type !== 'offboarding'
+  );
+  const taskEngagementIds = new Set(
+    taskEngagements.map((engagement) => engagement.id)
+  );
+  const displayData = allTasks.filter((task) =>
+    taskEngagementIds.has(task.workerEngagementId)
+  );
   const selectVisibleTasks = (checked: boolean) => {
     const visibleIds = new Set(displayData.map((task) => task.id));
     handleSetEditModeData((previous) => {
@@ -158,20 +187,35 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
   if (!data && !isLoading)
     return <ErrorAlert message="The tasks could not load, reload page" />;
 
-  const templateTargets = engagementsAwaitingTemplate(displayData, {
-    workerId,
-    label: `${data?.data.firstName ?? ''} ${data?.data.lastName ?? ''}`.trim(),
-  }).filter((target) => {
+  const workerLabel =
+    `${data?.data.firstName ?? ''} ${data?.data.lastName ?? ''}`.trim();
+  const templateTargets = (
+    taskPhase === 'offboarding'
+      ? taskEngagements
+          .filter(
+            (engagement) =>
+              engagement.templateApplication ||
+              !engagement.issues?.some((issue) => issue.templateItemId)
+          )
+          .map((engagement) => ({
+            workerId,
+            engagementId: engagement.id,
+            label: workerLabel,
+          }))
+      : engagementsAwaitingTemplate(displayData, {
+          workerId,
+          label: workerLabel,
+        })
+  ).filter((target) => {
     const application = data?.data.engagements.find(
       (engagement) => engagement.id === target.engagementId
     )?.templateApplication;
     return !application?.resultsDismissedAt;
   });
-  const engagements = data?.data.engagements ?? [];
-  const waiting = engagements.some(
+  const waiting = taskEngagements.some(
     (engagement) => engagement.status === 'expected'
   );
-  const pendingQuestionnaire = engagements.find(
+  const pendingQuestionnaire = taskEngagements.find(
     (engagement) =>
       engagement.status === 'expected' && !engagement.questionnaireSubmission
   );
@@ -260,15 +304,10 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
               isLoading={isLoading}
               openForCreate={() =>
                 openForCreate({
-                  workerEngagementId:
-                    engagements.find(
-                      (engagement) => engagement.type === 'offboarding'
-                    )?.id ??
-                    engagements[0]?.id ??
-                    '',
+                  workerEngagementId: taskEngagements[0]?.id ?? '',
                 })
               }
-              hideCreate={waiting}
+              hideCreate={waiting || taskEngagements.length === 0}
               onOpenFileUpload={() => setIsFileUploadOpen(true)}
               onAddFolder={() => setCreateFolderOpen(true)}
               onExportFiles={() => void handleZipExport(fetchFiles)}
@@ -300,6 +339,23 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
               value="form"
               className="mt-0 flex min-h-0 flex-1 flex-col"
             >
+              {hasOffboarding && (
+                <Tabs
+                  value={taskPhase}
+                  onValueChange={(phase) => {
+                    if (phase !== 'onboarding' && phase !== 'offboarding')
+                      return;
+                    setPhaseSelection({ key: phaseKey, phase });
+                    handleSetEditModeData([]);
+                  }}
+                  className="shrink-0 px-4 py-3"
+                >
+                  <TabsList aria-label="Aufgabenphase">
+                    <TabsTrigger value="onboarding">Onboarding</TabsTrigger>
+                    <TabsTrigger value="offboarding">Offboarding</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              )}
               <ScrollableTableViewport>
                 <Table aria-busy={isLoading}>
                   <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-0">
@@ -338,13 +394,13 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                             (item) => item.taskNumber === task.id
                           )}
                           onOpenEdit={openForEdit}
-                          onOpenContractSend={(task) =>
+                          onOpenContractSend={() =>
                             setContractSend({
                               engagementId: task.workerEngagementId,
                               issueId: task.id,
                             })
                           }
-                          onOpenContractConfirm={(task) =>
+                          onOpenContractConfirm={() =>
                             setContractConfirm({
                               engagementId: task.workerEngagementId,
                               issueId: task.id,
@@ -490,7 +546,10 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
             setEditModeData={handleSetEditModeData}
           />
         ) : activeTab === 'form' ? (
-          <TemplateApplyPrompt targets={templateTargets} />
+          <TemplateApplyPrompt
+            key={`${phaseKey}:${taskPhase}`}
+            targets={templateTargets}
+          />
         ) : null}
       </Tabs>
     </div>

@@ -2,7 +2,10 @@ import { WorkerDetailResponse } from '@/features/worker-lifecycle/types/index.ty
 import { useMemo } from 'react';
 
 type WorkerEngagement = WorkerDetailResponse['data']['engagements'][number];
-export type WorkerIssue = NonNullable<WorkerEngagement['issues']>[number];
+export type WorkerIssue = Omit<
+  NonNullable<WorkerEngagement['issues']>[number],
+  'workerEngagementId'
+> & { workerEngagementId: string };
 
 const flattenEngagementIssues = (
   data: WorkerDetailResponse | undefined

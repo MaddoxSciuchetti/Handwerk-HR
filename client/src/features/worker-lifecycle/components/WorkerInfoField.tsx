@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input';
 import API from '@/config/apiClient';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react';
+import { WORKERBYID } from '@/features/worker-task-management/consts/query-key.consts';
 import { ALL_WORKER_DATA } from '../consts/query-key.consts';
 import type { WorkerEngagementInfoItem } from '../consts/worker-engagement-info.consts';
 
@@ -39,6 +40,7 @@ export default function WorkerInfoField({ workerId, item }: Props) {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [ALL_WORKER_DATA] });
+      void queryClient.invalidateQueries({ queryKey: [WORKERBYID, workerId] });
       setError('');
     },
     onError: () => setError(`${item.label} konnte nicht gespeichert werden.`),

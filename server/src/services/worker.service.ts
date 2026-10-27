@@ -251,7 +251,7 @@ export async function getWorkerData(params: GetWorkersInput) {
                 position: true, status: true, birthday: true, entryDate: true,
                 exitDate: true, createdAt: true, updatedAt: true,
                 engagements: {
-                    orderBy: { startDate: "desc" }, take: 1,
+                    orderBy: { createdAt: "desc" }, take: 1,
                     select: {
                         id: true, type: true, status: true, startedAt: true,
                         completedAt: true, startDate: true, endDate: true,
@@ -284,7 +284,7 @@ export async function getWorkerData(params: GetWorkersInput) {
         orderBy: { createdAt: "desc" },
         include: {
             engagements: {
-                orderBy: { startDate: "desc" },
+                orderBy: { createdAt: "desc" },
                 take: 1,
                 include: {
                     templateApplication: { select: { id: true, completedAt: true, resultsDismissedAt: true } },
@@ -334,7 +334,7 @@ export async function getWorkerById(
                 },
             },
             engagements: {
-                orderBy: { startDate: "desc" },
+                orderBy: { createdAt: "desc" },
                 include: {
                     templateApplication: { select: { id: true, completedAt: true, resultsDismissedAt: true } },
                     responsibleUser: {
@@ -581,7 +581,7 @@ export async function updateDataPoint(params: UpdateDataPointInput) {
     if (field === "responsibleUserId") {
         const engagement = await prisma.workerEngagement.findFirst({
             where: { workerId },
-            orderBy: { startDate: "desc" },
+            orderBy: { createdAt: "desc" },
         });
         if (!engagement) {
             throw new Error("Kein Engagement für diesen Handwerker gefunden");
@@ -640,6 +640,25 @@ export async function updateEngagement(params: UpdateEngagementInput) {
         where: { id: engagementId, workerId },
     });
     if (!existing) throw new Error("Engagement not found");
+
+    // Offboarding has its own tasks and template receipt; retain onboarding history.
+    if (updateData.type === "offboarding" && existing.type !== "offboarding") {
+        const offboarding = await prisma.workerEngagement.findFirst({
+            where: { workerId, organizationId, type: "offboarding" },
+            orderBy: { createdAt: "desc" },
+        });
+        if (offboarding) return offboarding;
+        return createEngagement({
+            workerId,
+            organizationId,
+            responsibleUserId: updateData.responsibleUserId ?? existing.responsibleUserId,
+            type: "offboarding",
+            status: updateData.status ?? "pending",
+            startDate: updateData.startDate,
+            endDate: updateData.endDate,
+            completedAt: updateData.completedAt,
+        });
+    }
 
     const data: Prisma.WorkerEngagementUpdateInput = { ...updateData };
     if (
