@@ -301,6 +301,38 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
           <CardHeader className="flex min-h-14 shrink-0 flex-row flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-3">
             <WorkerHeader
               activeTab={activeTab}
+              taskPhaseControl={
+                hasOffboarding ? (
+                  <Tabs
+                    value={taskPhase}
+                    onValueChange={(phase) => {
+                      if (phase !== 'onboarding' && phase !== 'offboarding')
+                        return;
+                      setPhaseSelection({ key: phaseKey, phase });
+                      handleSetEditModeData([]);
+                    }}
+                    className="shrink-0"
+                  >
+                    <TabsList
+                      aria-label="Aufgabenphase"
+                      className="border border-border bg-muted p-1"
+                    >
+                      <TabsTrigger
+                        value="onboarding"
+                        className="px-3 font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+                      >
+                        Onboarding
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="offboarding"
+                        className="px-3 font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+                      >
+                        Offboarding
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                ) : null
+              }
               isLoading={isLoading}
               openForCreate={() =>
                 openForCreate({
@@ -339,23 +371,6 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
               value="form"
               className="mt-0 flex min-h-0 flex-1 flex-col"
             >
-              {hasOffboarding && (
-                <Tabs
-                  value={taskPhase}
-                  onValueChange={(phase) => {
-                    if (phase !== 'onboarding' && phase !== 'offboarding')
-                      return;
-                    setPhaseSelection({ key: phaseKey, phase });
-                    handleSetEditModeData([]);
-                  }}
-                  className="shrink-0 px-4 py-3"
-                >
-                  <TabsList aria-label="Aufgabenphase">
-                    <TabsTrigger value="onboarding">Onboarding</TabsTrigger>
-                    <TabsTrigger value="offboarding">Offboarding</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              )}
               <ScrollableTableViewport>
                 <Table aria-busy={isLoading}>
                   <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-0">

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { CardTitle } from '@/components/ui/card';
 import {
@@ -11,6 +12,7 @@ import type { WorkerTab } from '../../types/index.types';
 
 type WorkerHeaderProps = {
   activeTab: WorkerTab;
+  taskPhaseControl?: ReactNode;
   isLoading?: boolean;
   openForCreate: () => void;
   hideCreate?: boolean;
@@ -37,6 +39,7 @@ const headerActionClassName =
 
 const WorkerHeader = ({
   activeTab,
+  taskPhaseControl,
   isLoading = false,
   openForCreate,
   hideCreate = false,
@@ -51,9 +54,12 @@ const WorkerHeader = ({
 }: WorkerHeaderProps) => {
   return (
     <>
-      <CardTitle className="text-base font-medium">
-        {titles[activeTab]}
-      </CardTitle>
+      <div className="flex flex-wrap items-center gap-3">
+        <CardTitle className="text-base font-medium">
+          {titles[activeTab]}
+        </CardTitle>
+        {activeTab === 'form' ? taskPhaseControl : null}
+      </div>
       <div className="flex h-8 shrink-0 items-center gap-3">
         {activeTab === 'form' && onSendQuestionnaire ? (
           <Button
