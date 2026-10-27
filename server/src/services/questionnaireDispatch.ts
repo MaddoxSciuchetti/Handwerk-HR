@@ -130,6 +130,7 @@ function parseAdded(questions: unknown) {
 async function deliverQuestionnaire(
     email: string | null,
     token: string,
+    organizationId: string,
     senderAddress?: string | null,
 ) {
     if (!email) return false;
@@ -138,6 +139,7 @@ async function deliverQuestionnaire(
     try {
         const sent = await sendMail({
             to: email,
+            organizationId,
             ...(senderAddress ? { senderAddress } : {}),
             subject: template.subject,
             text: template.text,
@@ -162,6 +164,7 @@ async function finishDispatch(
     email: string | null,
     token: string,
     engagementId: string,
+    organizationId: string,
     actorUserId: string,
 ) {
     if (QUESTIONNAIRE_MOCK_RESPONSES) {
@@ -172,6 +175,7 @@ async function finishDispatch(
         emailSent: await deliverQuestionnaire(
             email,
             token,
+            organizationId,
             await signedInSender(actorUserId),
         ),
         mockCompleted: false,
@@ -190,6 +194,7 @@ export async function sendEngagementQuestionnaire(params: {
             engagement.worker.email,
             engagement.questionnaireSubmission.token,
             engagement.id,
+            params.organizationId,
             params.createdByUserId,
         );
     }
@@ -238,6 +243,7 @@ export async function sendEngagementQuestionnaire(params: {
         engagement.worker.email,
         token,
         engagement.id,
+        params.organizationId,
         params.createdByUserId,
     );
 }
