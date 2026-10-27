@@ -121,6 +121,33 @@ async function crewmeister(token: string, path: string, init?: RequestInit) {
     return { response, payload };
 }
 
+function pageContent(payload: unknown): Record<string, unknown>[] {
+    if (
+        !payload ||
+        typeof payload !== "object" ||
+        !("content" in payload) ||
+        !Array.isArray(payload.content)
+    )
+        return [];
+    return payload.content.filter(
+        (item): item is Record<string, unknown> =>
+            Boolean(item) && typeof item === "object",
+    );
+}
+
+function duplicateUser(payload: unknown): boolean {
+    const first = Array.isArray(payload) ? payload[0] : payload;
+    if (!first || typeof first !== "object") return false;
+    if ("body" in first) return duplicateUser(first.body);
+    return (
+        ("code" in first && first.code === "ALREADY_EXISTS") ||
+        ("message" in first &&
+            typeof first.message === "string" &&
+            /already.*resource/i.test(first.message) &&
+            /property email/i.test(first.message))
+    );
+}
+
 async function resolveCrewId(auth: CrewmeisterAuth) {
     const { response, payload } = await crewmeister(
         auth.token,
@@ -234,7 +261,37 @@ export async function createCrewmeisterAccount(params: {
             }),
         },
     );
-    if (!userWrite.response.ok) {
+    let userResult = writeResult(userWrite.payload);
+    let reusedUser = false;
+    if (!userResult.id && duplicateUser(userWrite.payload)) {
+        const query = new URLSearchParams({
+            filter: `email==${JSON.stringify(worker.email.trim())}`,
+            pageSize: "20",
+        });
+        const existing = await crewmeister(
+            params.auth.token,
+            `/api/v3/platform-app/users?${query}`,
+        );
+        const matches = pageContent(existing.payload).filter(
+            (user) =>
+                typeof user.email === "string" &&
+                user.email.trim().toLowerCase() ===
+                    worker.email.trim().toLowerCase(),
+        );
+        if (
+            !existing.response.ok ||
+            matches.length !== 1 ||
+            !writeResult(matches[0]).id
+        ) {
+            return {
+                status: "failed",
+                message:
+                    "Die E-Mail ist bei Crewmeister bereits vergeben, aber der Token kann das zugehörige Benutzerkonto nicht eindeutig lesen. Bitte den Crewmeister-Administrator bitten, das bestehende Konto der Crew zuzuordnen.",
+            };
+        }
+        userResult = writeResult(matches[0]);
+        reusedUser = true;
+    } else if (!userWrite.response.ok) {
         return {
             status: "failed",
             message: errorMessage(
@@ -243,7 +300,6 @@ export async function createCrewmeisterAccount(params: {
             ),
         };
     }
-    const userResult = writeResult(userWrite.payload);
     const userId = userResult.id;
     if (!userId) {
         return {
@@ -256,43 +312,76 @@ export async function createCrewmeisterAccount(params: {
 
     const firstWorkingDay =
         day(engagement?.startDate) || day(worker.entryDate) || day(new Date());
-    const memberWrite = await crewmeister(
-        params.auth.token,
-        "/api/v3/platform-app/members",
-        {
-            method: "POST",
-            body: JSON.stringify({
-                crewId: Number(crew.crewId),
-                userId: Number(userId),
-                disabled: false,
-                email: worker.email,
-                employeeId: worker.id.replace(/-/g, "").slice(0, 32),
-                firstWorkingDay,
-                language: "DE",
-                name,
-                pinCode: pinCode(),
-                username: worker.email.split("@")[0] || name,
-            }),
-        },
-    );
-    if (!memberWrite.response.ok) {
-        return {
-            status: "failed",
-            message: errorMessage(
-                memberWrite.payload,
-                "Crewmeister hat das Mitglied abgelehnt.",
-            ),
-        };
+    let memberId = "";
+    if (reusedUser) {
+        const query = new URLSearchParams({
+            filter: `crewId==${crew.crewId};userId==${userId}`,
+            pageSize: "20",
+        });
+        const existing = await crewmeister(
+            params.auth.token,
+            `/api/v3/platform-app/members?${query}`,
+        );
+        if (!existing.response.ok)
+            return {
+                status: "failed",
+                message: errorMessage(
+                    existing.payload,
+                    "Die bestehende Crewmeister-Mitgliedschaft konnte nicht geprüft werden.",
+                ),
+            };
+        const member = pageContent(existing.payload).find(
+            (item) =>
+                String(item.crewId) === crew.crewId &&
+                String(item.userId) === userId,
+        );
+        if (member?.disabled === true)
+            return {
+                status: "failed",
+                message:
+                    "Die bestehende Crewmeister-Mitgliedschaft ist deaktiviert. Bitte in Crewmeister prüfen.",
+            };
+        if (member) memberId = writeResult(member).id;
     }
-    const memberResult = writeResult(memberWrite.payload);
-    const memberId = memberResult.id;
     if (!memberId) {
-        return {
-            status: "failed",
-            message:
-                memberResult.message ??
-                `Crewmeister hat keine Mitglieds-ID geliefert (HTTP ${memberWrite.response.status}).`,
-        };
+        const memberWrite = await crewmeister(
+            params.auth.token,
+            "/api/v3/platform-app/members",
+            {
+                method: "POST",
+                body: JSON.stringify({
+                    crewId: Number(crew.crewId),
+                    userId: Number(userId),
+                    disabled: false,
+                    email: worker.email,
+                    employeeId: worker.id.replace(/-/g, "").slice(0, 32),
+                    firstWorkingDay,
+                    language: "DE",
+                    name,
+                    pinCode: pinCode(),
+                    username: worker.email.split("@")[0] || name,
+                }),
+            },
+        );
+        if (!memberWrite.response.ok) {
+            return {
+                status: "failed",
+                message: errorMessage(
+                    memberWrite.payload,
+                    "Crewmeister hat das Mitglied abgelehnt.",
+                ),
+            };
+        }
+        const memberResult = writeResult(memberWrite.payload);
+        memberId = memberResult.id;
+        if (!memberId) {
+            return {
+                status: "failed",
+                message:
+                    memberResult.message ??
+                    `Crewmeister hat keine Mitglieds-ID geliefert (HTTP ${memberWrite.response.status}).`,
+            };
+        }
     }
 
     await prisma.workerExternalAccount.upsert({
@@ -316,8 +405,14 @@ export async function createCrewmeisterAccount(params: {
         "",
         "dein Crewmeister-Konto ist eingerichtet.",
         `E-Mail: ${worker.email}`,
-        `Temporäres Passwort: ${generated}`,
-        "Bitte ändere das Passwort bei der ersten Anmeldung.",
+        ...(reusedUser
+            ? [
+                  "Bitte melde dich mit deinen bestehenden Crewmeister-Zugangsdaten an. Falls du dein Passwort nicht kennst, nutze die Passwort-zurücksetzen-Funktion bei Crewmeister.",
+              ]
+            : [
+                  `Temporäres Passwort: ${generated}`,
+                  "Bitte ändere das Passwort bei der ersten Anmeldung.",
+              ]),
     ].join("\n");
     let passwordMailSent = false;
     try {

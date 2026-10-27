@@ -167,12 +167,12 @@ describe("crewmeister account", () => {
                 {
                     statusCode: 409,
                     body: {
-                        code: "ALREADY_EXISTS",
-                        message: "User already exists.",
+                        code: "INVALID_ARGUMENT",
+                        message: "Invalid email format.",
                     },
                 },
             ],
-            message: "User already exists.",
+            message: "Invalid email format.",
         },
         {
             payload: {
@@ -215,6 +215,124 @@ describe("crewmeister account", () => {
             expect(fetchSpy).toHaveBeenCalledTimes(2);
             expect(upsertAccount).not.toHaveBeenCalled();
             expect(mail).not.toHaveBeenCalled();
+        },
+    );
+
+    it.each(["missing", "active", "invisible", "disabled"])(
+        "recovers an existing user without changing their password (membership=%s)",
+        async (membership) => {
+            process.env.INTEGRATIONS_LIVE = "true";
+            findWorker.mockResolvedValue({
+                id: "worker-1",
+                firstName: "Ada",
+                lastName: "Lovelace",
+                email: "ada@personal.test",
+                externalAccounts: [],
+            });
+            findEngagement.mockResolvedValue({ startDate: null });
+            mail.mockResolvedValue({ data: { id: "mail-1" }, error: null });
+            const fetchSpy = jest
+                .spyOn(global, "fetch")
+                .mockImplementation(async (input, init) => {
+                    const url = new URL(String(input));
+                    if (url.pathname.endsWith("/crews"))
+                        return jsonResponse({ content: [{ id: 42 }] });
+                    if (
+                        url.pathname.endsWith("/users") &&
+                        init?.method === "POST"
+                    )
+                        return jsonResponse(
+                            {
+                                code: "ALREADY_EXISTS",
+                                message:
+                                    "There is already a resource that has the value ada@personal.test for property email. Please use another value.",
+                            },
+                            409,
+                        );
+                    if (url.pathname.endsWith("/users") && !init?.method) {
+                        expect(url.searchParams.get("filter")).toBe(
+                            'email=="ada@personal.test"',
+                        );
+                        return jsonResponse({
+                            content:
+                                membership === "invisible"
+                                    ? []
+                                    : [{ id: 7, email: "ada@personal.test" }],
+                        });
+                    }
+                    if (url.pathname.endsWith("/members") && !init?.method) {
+                        expect(url.searchParams.get("filter")).toBe(
+                            "crewId==42;userId==7",
+                        );
+                        return jsonResponse({
+                            content:
+                                membership === "missing"
+                                    ? []
+                                    : [
+                                          {
+                                              id: 99,
+                                              crewId: 42,
+                                              userId: 7,
+                                              disabled:
+                                                  membership === "disabled",
+                                          },
+                                      ],
+                        });
+                    }
+                    if (
+                        url.pathname.endsWith("/members") &&
+                        init?.method === "POST"
+                    ) {
+                        expect(membership).toBe("missing");
+                        expect(JSON.parse(String(init.body))).toMatchObject({
+                            crewId: 42,
+                            userId: 7,
+                        });
+                        return jsonResponse(
+                            { resourceAfterWrite: { id: 99 } },
+                            201,
+                        );
+                    }
+                    throw new Error("Unexpected request");
+                });
+            const result = await createCrewmeisterAccount({
+                organizationId: "org-1",
+                workerId: "worker-1",
+                engagementId: "engagement-1",
+                auth: { token: "jwt", crewId: "" },
+            });
+            if (membership === "invisible" || membership === "disabled") {
+                expect(result).toMatchObject({
+                    status: "failed",
+                    message: expect.stringContaining(
+                        membership === "invisible"
+                            ? "nicht eindeutig lesen"
+                            : "deaktiviert",
+                    ),
+                });
+                expect(upsertAccount).not.toHaveBeenCalled();
+                expect(mail).not.toHaveBeenCalled();
+            } else {
+                expect(result).toMatchObject({
+                    status: "created",
+                    externalId: "99",
+                });
+                expect(mail).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        text: expect.stringContaining(
+                            "bestehenden Crewmeister-Zugangsdaten",
+                        ),
+                    }),
+                );
+                expect(mail.mock.calls[0][0].text).not.toContain(
+                    "Temporäres Passwort",
+                );
+            }
+            expect(
+                fetchSpy.mock.calls.filter(
+                    ([, init]) => init?.method === "POST",
+                ),
+            ).toHaveLength(membership === "missing" ? 2 : 1);
         },
     );
 
