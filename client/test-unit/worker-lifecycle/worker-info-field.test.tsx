@@ -76,8 +76,11 @@ describe('worker info editing', () => {
     }
   );
 
-  it('updates phase on the displayed engagement', async () => {
-    const put = vi.spyOn(API, 'put').mockResolvedValue({ data: {} });
+  it('updates phase on selection without waiting for blur', async () => {
+    const put = vi.spyOn(API, 'put').mockResolvedValue({
+      success: true,
+      data: { id: 'engagement-1', type: 'transfer', status: 'completed' },
+    });
     const input = show({
       label: 'Phase',
       value: 'onboarding',
@@ -85,13 +88,14 @@ describe('worker info editing', () => {
       engagementId: 'engagement-1',
     });
     fireEvent.change(input, { target: { value: 'transfer' } });
-    fireEvent.blur(input);
     await waitFor(() =>
       expect(put).toHaveBeenCalledWith(
         '/worker/worker-1/engagements/engagement-1',
         { type: 'transfer' }
       )
     );
+    fireEvent.blur(input);
+    expect(put).toHaveBeenCalledTimes(1);
   });
 
   it('rejects an empty required name', () => {
