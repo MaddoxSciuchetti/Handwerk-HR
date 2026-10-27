@@ -2,6 +2,7 @@ import {
   formatCompanyAnniversary,
   nextCompanyAnniversary,
 } from '../utils/companyAnniversary';
+import { getWorkerIssueCount } from '../utils/workerHealth.utils';
 import { showsCompanyAnniversary } from '../utils/teamMembers';
 import type { WorkerDetailResponse } from '../types/index.types';
 
@@ -44,10 +45,7 @@ export function workerEngagementInfoItems(
   worker: WorkerDetailResponse['data']
 ): WorkerEngagementInfoItem[] {
   const engagement = worker.engagements[0];
-  const taskCount = worker.engagements.reduce(
-    (count, item) => count + (item.issues?.length ?? 0),
-    0
-  );
+  const taskCount = getWorkerIssueCount(worker);
 
   const items: WorkerEngagementInfoItem[] = [
     {

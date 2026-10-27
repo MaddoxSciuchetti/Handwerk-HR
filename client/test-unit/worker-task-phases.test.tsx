@@ -167,3 +167,31 @@ it('hides the offboarding template picker when leaving Aufgaben', async () => {
   await user.click(screen.getByRole('button', { name: 'Dateien' }));
   expect(screen.queryByTestId('template-target')).not.toBeInTheDocument();
 });
+
+it('retains offboarding tasks after the worker returns to Team and on reopening', async () => {
+  const user = userEvent.setup();
+  const history = {
+    ...offboarding,
+    issues: [{ id: 'exit-task', title: 'Return company keys', status: 'open' }],
+  };
+  state.data = worker([history, onboarding]);
+  const view = render(<TaskManagement workerId="worker-1" />);
+  expect(screen.getByText('Return company keys')).toBeInTheDocument();
+  state.data = worker([
+    { id: 'team-1', type: 'transfer', status: 'completed', issues: [] },
+    history,
+    onboarding,
+  ]);
+  view.rerender(<TaskManagement workerId="worker-1" />);
+  expect(screen.queryByText('Return company keys')).not.toBeInTheDocument();
+  expect(screen.getByText('Onboarding task')).toBeInTheDocument();
+  expect(screen.queryByText('Return company keys')).not.toBeInTheDocument();
+  await user.click(screen.getByRole('tab', { name: 'Offboarding' }));
+  expect(screen.getByText('Return company keys')).toBeInTheDocument();
+  view.unmount();
+  render(<TaskManagement workerId="worker-1" />);
+  expect(screen.getByText('Onboarding task')).toBeInTheDocument();
+  expect(screen.queryByText('Return company keys')).not.toBeInTheDocument();
+  await user.click(screen.getByRole('tab', { name: 'Offboarding' }));
+  expect(screen.getByText('Return company keys')).toBeInTheDocument();
+});

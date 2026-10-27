@@ -93,3 +93,20 @@ it("skips the issue query for an empty list", async () => {
     ).toEqual([]);
     expect(db.issue.groupBy).not.toHaveBeenCalled();
 });
+
+it("includes historical phase counts in summaries without loading issue records", async () => {
+    db.worker.findMany.mockResolvedValue([{ id: "worker", engagements: [
+        { id: "team", type: "transfer" }, { id: "offboarding", type: "offboarding" }, { id: "onboarding", type: "onboarding" },
+    ] }]);
+    db.issue.groupBy.mockResolvedValue([
+        { workerEngagementId: "offboarding", status: "done", _count: { _all: 1 } },
+        { workerEngagementId: "onboarding", status: "open", _count: { _all: 4 } },
+    ]);
+    const result = await getWorkerData({ organizationId: "org", viewerUserId: "viewer", summary: true });
+    expect(db.worker.findMany.mock.calls[0][0].select.engagements.take).toBeUndefined();
+    expect(result[0].engagements).toEqual([
+        { id: "team", type: "transfer", issueCounts: [] },
+        { id: "offboarding", type: "offboarding", issueCounts: [{ status: "done", count: 1 }] },
+        { id: "onboarding", type: "onboarding", issueCounts: [{ status: "open", count: 4 }] },
+    ]);
+});

@@ -1,3 +1,7 @@
+import {
+  engagementsForTaskPhase,
+  taskPhaseForType,
+} from '@/features/worker-lifecycle/utils/taskPhase';
 import { cn } from '@/lib/utils';
 import WorkerInformation from '@/features/worker-lifecycle/components/WorkerInformation';
 import ErrorAlert from '@/components/alerts/ErrorAlert';
@@ -116,7 +120,8 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
   const hasOffboarding = engagements.some(
     (engagement) => engagement.type === 'offboarding'
   );
-  const phaseKey = `${workerId}:${engagements
+  const currentType = engagements[0]?.type;
+  const phaseKey = `${workerId}:${engagements[0]?.id}:${currentType}:${engagements
     .filter((engagement) => engagement.type === 'offboarding')
     .map((engagement) => engagement.id)
     .join(',')}`;
@@ -127,14 +132,8 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
   const taskPhase =
     phaseSelection?.key === phaseKey
       ? phaseSelection.phase
-      : hasOffboarding
-        ? 'offboarding'
-        : 'onboarding';
-  const taskEngagements = engagements.filter((engagement) =>
-    taskPhase === 'offboarding'
-      ? engagement.type === 'offboarding'
-      : engagement.type !== 'offboarding'
-  );
+      : taskPhaseForType(currentType);
+  const taskEngagements = engagementsForTaskPhase(engagements, taskPhase);
   const taskEngagementIds = new Set(
     taskEngagements.map((engagement) => engagement.id)
   );

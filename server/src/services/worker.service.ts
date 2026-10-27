@@ -251,7 +251,7 @@ export async function getWorkerData(params: GetWorkersInput) {
                 position: true, status: true, birthday: true, entryDate: true,
                 exitDate: true, createdAt: true, updatedAt: true,
                 engagements: {
-                    orderBy: { createdAt: "desc" }, take: 1,
+                    orderBy: { createdAt: "desc" },
                     select: {
                         id: true, type: true, status: true, startedAt: true,
                         completedAt: true, startDate: true, endDate: true,
@@ -647,7 +647,9 @@ export async function updateEngagement(params: UpdateEngagementInput) {
             where: { workerId, organizationId, type: "offboarding" },
             orderBy: { createdAt: "desc" },
         });
-        if (offboarding) return offboarding;
+        // A retry can reuse the phase created by the first request. Returning
+        // to offboarding after a newer Team phase needs a new active phase.
+        if (offboarding && offboarding.createdAt >= existing.createdAt) return offboarding;
         return createEngagement({
             workerId,
             organizationId,
@@ -657,6 +659,26 @@ export async function updateEngagement(params: UpdateEngagementInput) {
             startDate: updateData.startDate,
             endDate: updateData.endDate,
             completedAt: updateData.completedAt,
+        });
+    }
+
+    // Leaving offboarding must not relabel its tasks or template history.
+    // The newest engagement determines the worker's current lifecycle phase.
+    if (existing.type === "offboarding" && updateData.type && updateData.type !== "offboarding") {
+        const latest = await prisma.workerEngagement.findFirst({
+            where: { workerId, organizationId },
+            orderBy: { createdAt: "desc" },
+        });
+        if (latest && latest.id !== existing.id && latest.type === updateData.type) return latest;
+        return createEngagement({
+            workerId,
+            organizationId,
+            responsibleUserId: updateData.responsibleUserId ?? existing.responsibleUserId,
+            type: updateData.type,
+            status: updateData.status ?? (updateData.type === "transfer" ? "completed" : "pending"),
+            startDate: updateData.startDate,
+            endDate: updateData.endDate,
+            completedAt: updateData.completedAt ?? (updateData.type === "transfer" ? new Date() : undefined),
         });
     }
 
