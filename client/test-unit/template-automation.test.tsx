@@ -1039,48 +1039,24 @@ it('hides the finished bar after it is closed and keeps it hidden on a later vis
   expect(mocks.apply).not.toHaveBeenCalled();
 });
 
-describe('work email required for Microsoft removal', () => {
+describe('Microsoft removal without a separate work email', () => {
   beforeEach(() => {
     mocks.preview.mockResolvedValue({
-      id: 'automated', name: 'Offboarding', requiresWorkEmail: true,
+      id: 'automated', name: 'Offboarding',
       items: [{ ...automation, sequence: 'microsoft_deactivate_account' }],
     });
   });
 
-  it.each(['Automatisierung starten', 'Ohne Automatisierung'])(
-    'requires a valid work email before %s and submits it',
-    async (action) => {
-      renderWithProviders(<TemplateApplyPrompt targets={[target]} />);
-      const user = await selectTemplate();
-      const start = screen.getByRole('button', { name: 'Automatisierung starten' });
-      const manual = screen.getByRole('button', { name: 'Ohne Automatisierung' });
-      expect(start).toBeDisabled();
-      expect(manual).toBeDisabled();
-      const email = screen.getByRole('textbox', { name: 'Arbeits-E-Mail' });
-      await user.type(email, 'invalid');
-      expect(start).toBeDisabled();
-      expect(manual).toBeDisabled();
-      await user.clear(email);
-      await user.type(email, 'worker@example.com');
-      await user.click(screen.getByRole('button', { name: action }));
-      await waitFor(() => expect(mocks.apply).toHaveBeenCalledWith(
-        'worker', 'automated', expect.objectContaining({
-          workEmail: 'worker@example.com',
-          runAutomation: action === 'Automatisierung starten',
-        })
-      ));
-    }
-  );
-
-  it('hides the email prompt when an email is already saved', async () => {
-    mocks.preview.mockResolvedValue({
-      id: 'automated', name: 'Offboarding', requiresWorkEmail: false,
-      items: [{ ...automation, sequence: 'microsoft_deactivate_account' }],
-    });
+  it('starts deactivation without asking for an email', async () => {
     renderWithProviders(<TemplateApplyPrompt targets={[target]} />);
-    await selectTemplate();
+    const user = await selectTemplate();
     expect(screen.queryByRole('textbox', { name: 'Arbeits-E-Mail' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Automatisierung starten' })).toBeEnabled();
+    await user.click(screen.getByRole('button', { name: 'Automatisierung starten' }));
+    await waitFor(() => expect(mocks.apply).toHaveBeenCalledWith(
+      'worker', 'automated', expect.not.objectContaining({
+        workEmail: expect.anything(),
+      })
+    ));
   });
 });
 

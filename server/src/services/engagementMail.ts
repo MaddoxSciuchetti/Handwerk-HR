@@ -286,7 +286,7 @@ export async function normalizeRecipients(
             const address =
                 recipient.kind === "worker_private"
                     ? worker.email.trim()
-                    : (worker.workEmail?.trim() ?? "");
+                    : (worker.microsoftEmail?.trim() || worker.workEmail?.trim() || "");
             if (!address.includes("@")) {
                 throw new AppError(
                     BAD_REQUEST,
@@ -409,7 +409,7 @@ async function resolveRecipientAddresses(params: {
             const address =
                 recipient.kind === "worker_private"
                     ? (worker?.email.trim() ?? "")
-                    : (worker?.workEmail?.trim() ?? "");
+                    : (worker?.microsoftEmail?.trim() || worker?.workEmail?.trim() || "");
             if (!address.includes("@")) {
                 return {
                     message: `${recipient.label} hat keine E-Mail mehr.`,

@@ -18,12 +18,11 @@ export function WorkerInformationFields({
   return (
     <div className="flex w-full flex-col text-left">
       {items.map((item) =>
-        item.editable === 'email' || item.editable === 'workEmail' ? (
+        item.editable === 'email' ? (
           <WorkerEmailField
             key={item.label}
             workerId={workerId}
             email={item.value}
-            field={item.editable}
           />
         ) : item.editable ? (
           <WorkerInfoField key={item.label} workerId={workerId} item={item} />

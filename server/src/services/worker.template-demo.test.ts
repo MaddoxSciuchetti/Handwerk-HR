@@ -39,11 +39,11 @@ it("keeps the missing-items restriction in production", async () => {
     expect(db.issue.create).not.toHaveBeenCalled();
 });
 
-it("forwards the entered work email to template application", async () => {
-    await applyIssueTemplate({ ...input, workEmail: "worker@example.com" });
+it("applies the template without a separate work email", async () => {
+    await applyIssueTemplate(input);
     expect(applyTemplateApplication).toHaveBeenCalledWith(
         expect.any(Object),
-        expect.objectContaining({ workEmail: "worker@example.com" }),
+        expect.not.objectContaining({ workEmail: expect.anything() }),
         expect.any(Function),
     );
 });

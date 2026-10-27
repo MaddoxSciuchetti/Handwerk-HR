@@ -68,7 +68,7 @@ function renderBody(issue: Awaited<ReturnType<typeof taskContext>>) {
     return applyEngagementMailTemplate(issue.mailTemplate.body, {
         firstName: worker.firstName.trim(),
         lastName: worker.lastName.trim(),
-        workEmail: worker.workEmail || "",
+        workEmail: worker.microsoftEmail?.trim() || worker.workEmail?.trim() || "",
         position: worker.position || "",
         entryDate: formatWelcomeEntryDate(worker.entryDate),
         exitDate: formatWelcomeEntryDate(worker.exitDate),

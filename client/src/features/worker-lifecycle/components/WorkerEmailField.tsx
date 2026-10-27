@@ -8,15 +8,10 @@ import { useEffect, useRef, useState } from 'react';
 type WorkerEmailFieldProps = {
   workerId: string;
   email: string;
-  field?: 'email' | 'workEmail';
 };
 
-function WorkerEmailField({
-  workerId,
-  email,
-  field = 'email',
-}: WorkerEmailFieldProps) {
-  const label = field === 'workEmail' ? 'Arbeits-E-Mail' : 'E-Mail';
+function WorkerEmailField({ workerId, email }: WorkerEmailFieldProps) {
+  const label = 'E-Mail';
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState(email);
   const [errorMessage, setErrorMessage] = useState('');
@@ -27,8 +22,8 @@ function WorkerEmailField({
   }, [email]);
 
   const { mutate, isPending } = useMutation({
-    mutationFn: (nextEmail: string | null) =>
-      API.put(`/worker/${workerId}`, { [field]: nextEmail }),
+    mutationFn: (nextEmail: string) =>
+      API.put(`/worker/${workerId}`, { email: nextEmail }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [ALL_WORKER_DATA] });
       setErrorMessage('');
@@ -44,11 +39,6 @@ function WorkerEmailField({
       return;
     }
     const normalized = draft.trim();
-    if (field === 'workEmail' && !normalized) {
-      setErrorMessage('');
-      if (email) mutate(null);
-      return;
-    }
     const parsed = addWorkerBaseSchema.shape.email.safeParse(normalized);
     if (!parsed.success) {
       setErrorMessage(parsed.error.issues[0]?.message ?? 'Ungültige email');

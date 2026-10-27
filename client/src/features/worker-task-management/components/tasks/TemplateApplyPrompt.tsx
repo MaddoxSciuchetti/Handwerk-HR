@@ -118,7 +118,6 @@ export function TemplateApplyPrompt({
       templateId: string;
       templateRevision?: string;
       templateName: string;
-      workEmail?: string;
     }) => {
       const request = () =>
         applyTemplate(input.target.workerId, input.templateId, {
@@ -127,7 +126,6 @@ export function TemplateApplyPrompt({
           choices: input.choices,
           idempotencyKey: requestKey,
           templateRevision: input.templateRevision,
-          workEmail: input.workEmail,
         });
       let result = await request();
       // Reusing the same application key reads the receipt without rerunning actions.
@@ -523,7 +521,7 @@ export function TemplateApplyPrompt({
                         template={preview.data}
                         engagementId={selectedId!}
                         busy={apply.isPending}
-                        onApply={(runAutomation, choices, workEmail) => {
+                        onApply={(runAutomation, choices) => {
                           setRunNumber((current) => current + 1);
                           setSynchronizing(false);
                           setShowResults(false);
@@ -531,7 +529,6 @@ export function TemplateApplyPrompt({
                           apply.mutate({
                             runAutomation,
                             choices,
-                            workEmail,
                             target: selected,
                             templateId,
                             templateRevision: preview.data?.revision,

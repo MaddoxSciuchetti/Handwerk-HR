@@ -157,7 +157,7 @@ describe('fast automatic saves', () => {
               item={{ label: 'Ort', value: '', editable: 'city' }}
             />
           ) : (
-            <WorkerEmailField workerId="worker-1" email="" field="workEmail" />
+            <WorkerEmailField workerId="worker-1" email="" />
           )}
         </QueryClientProvider>
       );

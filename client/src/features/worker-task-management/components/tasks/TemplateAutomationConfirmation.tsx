@@ -8,8 +8,6 @@ import { useState, type ReactNode } from 'react';
 import { MicrosoftLicenseStatus } from './MicrosoftLicenseStatus';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { z } from 'zod';
 import { Spinner } from '@/components/ui/spinner';
 import {
   Accordion,
@@ -100,20 +98,11 @@ export function TemplateAutomationConfirmation({
   busy: boolean;
   onApply: (
     runAutomation: boolean,
-    choices: Record<string, AutomationChoice>,
-    workEmail?: string
+    choices: Record<string, AutomationChoice>
   ) => void;
 }) {
   const { user } = useAuth();
   const [startingAutomation, setStartingAutomation] = useState(false);
-  const [workEmail, setWorkEmail] = useState('');
-  const normalizedWorkEmail = workEmail.trim();
-  const workEmailReady =
-    !template.requiresWorkEmail ||
-    z.string().email().max(254).safeParse(normalizedWorkEmail).success;
-  const submittedWorkEmail = template.requiresWorkEmail
-    ? normalizedWorkEmail
-    : undefined;
   const [choices, setChoices] = useState<Record<string, AutomationChoice>>({});
   const automated = template.items.filter(
     (item) => item.sequence && item.integrationProvider
@@ -289,28 +278,6 @@ export function TemplateAutomationConfirmation({
   return (
     <div className="space-y-3">
       <p className="text-sm font-medium">{template.name}</p>
-      {template.requiresWorkEmail && (
-        <div className="space-y-1.5">
-          <Label htmlFor="template-work-email" className="text-xs">
-            Arbeits-E-Mail
-          </Label>
-          <Input
-            id="template-work-email"
-            type="email"
-            required
-            maxLength={254}
-            value={workEmail}
-            onChange={(event) => setWorkEmail(event.target.value)}
-            disabled={busy}
-            placeholder="name@firma.de"
-            aria-describedby="template-work-email-hint"
-            className="h-8 text-xs"
-          />
-          <p id="template-work-email-hint" className="text-xs text-muted-foreground">
-            Fehlt noch, um das Microsoft-Konto zu finden.
-          </p>
-        </div>
-      )}
       {template.mocked && (
         <p className="text-xs text-muted-foreground">
           Lokale Simulation · Erfolg nach ca. 10 Sekunden. Es werden keine
@@ -632,11 +599,11 @@ export function TemplateAutomationConfirmation({
         {automated.length > 0 && (
           <Button
             type="button"
-            disabled={busy || !ready || !workEmailReady}
+            disabled={busy || !ready}
             aria-busy={busy && startingAutomation}
             onClick={() => {
               setStartingAutomation(true);
-              onApply(true, effectiveChoices, submittedWorkEmail);
+              onApply(true, effectiveChoices);
             }}
           >
             {busy && startingAutomation && (
@@ -648,11 +615,11 @@ export function TemplateAutomationConfirmation({
         <Button
           type="button"
           variant={automated.length ? 'outline' : 'default'}
-          disabled={busy || !workEmailReady}
+          disabled={busy}
           aria-busy={busy && !startingAutomation}
           onClick={() => {
             setStartingAutomation(false);
-            onApply(false, {}, submittedWorkEmail);
+            onApply(false, {});
           }}
         >
           {busy && !startingAutomation && (
