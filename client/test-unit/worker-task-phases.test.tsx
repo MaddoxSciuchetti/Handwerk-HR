@@ -168,8 +168,7 @@ it('hides the offboarding template picker when leaving Aufgaben', async () => {
   expect(screen.queryByTestId('template-target')).not.toBeInTheDocument();
 });
 
-it('retains offboarding tasks after the worker returns to Team and on reopening', async () => {
-  const user = userEvent.setup();
+it('hides Aufgaben in Team and restores saved tasks when switching back to a lifecycle type', async () => {
   const history = {
     ...offboarding,
     issues: [{ id: 'exit-task', title: 'Return company keys', status: 'open' }],
@@ -183,15 +182,17 @@ it('retains offboarding tasks after the worker returns to Team and on reopening'
     onboarding,
   ]);
   view.rerender(<TaskManagement workerId="worker-1" />);
+  expect(screen.queryByRole('button', { name: 'Aufgaben', exact: true })).not.toBeInTheDocument();
   expect(screen.queryByText('Return company keys')).not.toBeInTheDocument();
+  expect(screen.queryByText('Onboarding task')).not.toBeInTheDocument();
+  expect(screen.queryByTestId('template-target')).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Aufgabe hinzufügen' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('tablist', { name: 'Aufgabenphase' })).not.toBeInTheDocument();
+  state.data = worker([history, onboarding]);
+  view.rerender(<TaskManagement workerId="worker-1" />);
+  expect(screen.getByText('Return company keys')).toBeInTheDocument();
+  state.data = worker([onboarding, history]);
+  view.rerender(<TaskManagement workerId="worker-1" />);
   expect(screen.getByText('Onboarding task')).toBeInTheDocument();
   expect(screen.queryByText('Return company keys')).not.toBeInTheDocument();
-  await user.click(screen.getByRole('tab', { name: 'Offboarding' }));
-  expect(screen.getByText('Return company keys')).toBeInTheDocument();
-  view.unmount();
-  render(<TaskManagement workerId="worker-1" />);
-  expect(screen.getByText('Onboarding task')).toBeInTheDocument();
-  expect(screen.queryByText('Return company keys')).not.toBeInTheDocument();
-  await user.click(screen.getByRole('tab', { name: 'Offboarding' }));
-  expect(screen.getByText('Return company keys')).toBeInTheDocument();
 });

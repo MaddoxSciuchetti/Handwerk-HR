@@ -150,9 +150,10 @@ export function workerEngagementInfoItems(
       value: engagement ? engagement.type : '—',
       editable: engagement ? 'phase' : undefined,
       engagementId: engagement?.id,
-    },
-    { label: 'Aufgaben', value: String(taskCount) }
+    }
   );
+  if (engagement?.type !== 'transfer')
+    items.push({ label: 'Aufgaben', value: String(taskCount) });
 
   return items;
 }
