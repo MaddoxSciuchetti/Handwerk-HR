@@ -1,4 +1,7 @@
-import { defaultQuestionnaireSender } from "@/services/questionnaireSender";
+import {
+    defaultQuestionnaireSender,
+    stagingOnboardingMail,
+} from "@/services/questionnaireSender";
 import { FRONTENDURL, QUESTIONNAIRE_MOCK_RESPONSES } from "@/constants/env";
 import { NOT_FOUND } from "@/constants/http";
 import { prisma } from "@/lib/prisma";
@@ -140,7 +143,7 @@ async function deliverQuestionnaire(
     try {
         const sent = await sendMail({
             to: email,
-            via: "resend",
+            ...(stagingOnboardingMail() ? { via: "resend" as const } : {}),
             ...(effectiveSender ? { senderAddress: effectiveSender } : {}),
             subject: template.subject,
             text: template.text,

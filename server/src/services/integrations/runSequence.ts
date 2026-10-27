@@ -86,11 +86,16 @@ async function runMicrosoft(
         };
     const config = await loadMicrosoft365Config(params.organizationId);
     if (sequence === "microsoft_create_account") {
+        const actor = await prisma.user.findUnique({
+            where: { id: params.actorUserId },
+            select: { email: true },
+        });
         return finish(
             await provisionMicrosoft365Account({
                 organizationId: params.organizationId,
                 workerId: params.workerId,
                 config,
+                senderAddress: actor?.email,
             }),
         );
     }

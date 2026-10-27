@@ -1,4 +1,7 @@
-import { defaultQuestionnaireSender } from "@/services/questionnaireSender";
+import {
+    defaultQuestionnaireSender,
+    stagingOnboardingMail,
+} from "@/services/questionnaireSender";
 import { sendMail } from "@/utils/sendMail";
 import type { PasswordMailInput, PasswordMail } from "./types";
 
@@ -46,14 +49,15 @@ export function passwordMail(params: PasswordMailInput): PasswordMail {
 }
 
 export async function sendPasswordMail(
-    input: PasswordMailInput & { to: string },
+    input: PasswordMailInput & { to: string; senderAddress?: string | null },
 ): Promise<boolean> {
     const template = passwordMail(input);
-    const senderAddress = defaultQuestionnaireSender();
+    const senderAddress =
+        defaultQuestionnaireSender() || input.senderAddress?.trim() || "";
     try {
         const sent = await sendMail({
             to: input.to,
-            via: "resend",
+            ...(stagingOnboardingMail() ? { via: "resend" as const } : {}),
             ...(senderAddress ? { senderAddress } : {}),
             ...template,
         });

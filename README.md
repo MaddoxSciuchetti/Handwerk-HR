@@ -315,5 +315,8 @@ address) automatically for short onboarding and questionnaire sends, including
 retries of existing records. No organization sender selection is required.
 Staging is identified by `APP_ENV=staging`, `NODE_ENV=staging`, the Render service
 `BSB-Onboarding-Backend-Development`, or the configured frontend URL
-`https://bsb-onboarding-frontend-development.onrender.com`. Production keeps its
-organization sender selection. This does not change the configured mail provider.
+`https://bsb-onboarding-frontend-development.onrender.com`. Those questionnaire
+and new-account password messages stay on Resend. Production keeps its
+organization sender selection and, with `USE_MICROSOFT_MAIL=true`, sends both
+through Microsoft Graph. The password mail is sent from the signed-in user's
+email address.
