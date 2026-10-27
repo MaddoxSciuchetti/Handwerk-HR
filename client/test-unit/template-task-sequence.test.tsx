@@ -59,12 +59,46 @@ it('hides the sequence picker while the integration is Keine', async () => {
 
   expect(screen.getByText('Sequenz')).toBeInTheDocument();
   await user.click(document.getElementById('sequence')!);
-  await user.click(await screen.findByRole('option', { name: 'E-Mail senden' }));
+  await user.click(
+    await screen.findByRole('option', { name: 'E-Mail senden' })
+  );
   expect(screen.getByText('E-Mail-Vorlage')).toBeInTheDocument();
 
   await user.click(document.getElementById('integrationProvider')!);
   await user.click(await screen.findByRole('option', { name: 'Keine' }));
 
   expect(screen.queryByText('Sequenz')).not.toBeInTheDocument();
+  expect(screen.queryByText('E-Mail-Vorlage')).not.toBeInTheDocument();
+});
+
+it('offers Crewmeister account deactivation without email-template fields', async () => {
+  vi.mocked(getIntegrations).mockResolvedValue([
+    {
+      provider: 'crewmeister',
+      enabled: true,
+      tenantId: '',
+      clientId: '',
+      domain: '',
+      licenseSkuId: '',
+      crewId: '42',
+      hasClientSecret: false,
+      hasToken: true,
+      ready: true,
+      live: true,
+    },
+  ]);
+  vi.mocked(listMailTemplates).mockResolvedValue([]);
+  vi.mocked(specificEmployeeData).mockResolvedValue([]);
+  const user = userEvent.setup();
+  renderSidebar();
+  await user.click(document.getElementById('integrationProvider')!);
+  await user.click(await screen.findByRole('option', { name: 'Crewmeister' }));
+  await user.click(document.getElementById('sequence')!);
+  await user.click(
+    await screen.findByRole('option', { name: 'Konto deaktivieren' })
+  );
+  expect(document.getElementById('sequence')).toHaveTextContent(
+    'Konto deaktivieren'
+  );
   expect(screen.queryByText('E-Mail-Vorlage')).not.toBeInTheDocument();
 });

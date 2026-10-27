@@ -135,6 +135,7 @@ async function verifyMembership(
     memberId: string,
     crewId: string,
     email: string,
+    expectedDisabled = false,
 ): Promise<string | null> {
     const { response, payload } = await crewmeister(
         auth.token,
@@ -158,8 +159,10 @@ async function verifyMembership(
     ) {
         return "Die Crewmeister-Mitgliedschaft stimmt nicht mit dem Mitarbeiter und der gewählten Crew überein. Die Aufgabe wurde nicht als erfolgreich bestätigt.";
     }
-    if (!("disabled" in payload) || payload.disabled !== false) {
-        return "Die Crewmeister-Mitgliedschaft ist nicht aktiv. Bitte in Crewmeister prüfen.";
+    if (!("disabled" in payload) || payload.disabled !== expectedDisabled) {
+        return expectedDisabled
+            ? "Crewmeister hat die Deaktivierung der Mitgliedschaft noch nicht bestätigt. Bitte erneut versuchen."
+            : "Die Crewmeister-Mitgliedschaft ist nicht aktiv. Bitte in Crewmeister prüfen.";
     }
     return null;
 }
@@ -318,4 +321,115 @@ export async function createCrewmeisterAccount(params: {
     return alreadyMember
         ? { status: "skipped", reason: "already_created" }
         : { status: "created", externalId: memberId };
+}
+
+export async function deactivateCrewmeisterAccount(params: {
+    organizationId: string;
+    workerId: string;
+    auth: CrewmeisterAuth | null;
+}): Promise<
+    | { status: "completed" }
+    | { status: "skipped"; reason: "not_configured" | "not_live" }
+    | { status: "failed"; message: string }
+> {
+    if (!params.auth) return { status: "skipped", reason: "not_configured" };
+    const worker = await prisma.worker.findFirst({
+        where: { id: params.workerId, organizationId: params.organizationId },
+        select: { id: true, email: true },
+    });
+    if (!worker)
+        return { status: "failed", message: "Mitarbeiter nicht gefunden." };
+    if (!integrationsLive()) return { status: "skipped", reason: "not_live" };
+    const email = worker.email.trim();
+    if (!email.includes("@"))
+        return {
+            status: "failed",
+            message:
+                "Für diesen Mitarbeiter fehlt eine gültige E-Mail-Adresse.",
+        };
+    const crew = await resolveCrewId(params.auth);
+    if (!crew.ok) return { status: "failed", message: crew.message };
+    const query = new URLSearchParams({
+        filter: `crewId==${crew.crewId};email==${JSON.stringify(email)}`,
+        pageSize: "20",
+    });
+    const found = await crewmeister(
+        params.auth.token,
+        `/api/v3/platform-app/members?${query}`,
+    );
+    if (!found.response.ok)
+        return {
+            status: "failed",
+            message: errorMessage(
+                found.payload,
+                "Die Crewmeister-Mitgliedschaft konnte nicht geladen werden.",
+            ),
+        };
+    const matches = pageContent(found.payload).filter(
+        (member) =>
+            String(member.crewId) === crew.crewId &&
+            typeof member.email === "string" &&
+            member.email.trim().toLowerCase() === email.toLowerCase(),
+    );
+    if (matches.length !== 1 || !resourceId(matches[0]?.id))
+        return {
+            status: "failed",
+            message:
+                "Es wurde keine eindeutige Crewmeister-Mitgliedschaft für diesen Mitarbeiter gefunden. Bitte in Crewmeister prüfen.",
+        };
+    const member = matches[0];
+    const memberId = resourceId(member.id);
+    const alreadyDisabled = member.disabled === true;
+    const identityProblem = await verifyMembership(
+        params.auth,
+        memberId,
+        crew.crewId,
+        email,
+        alreadyDisabled,
+    );
+    if (identityProblem) return { status: "failed", message: identityProblem };
+    if (!alreadyDisabled) {
+        const result = await crewmeister(
+            params.auth.token,
+            `/api/v3/platform-app/members/${memberId}`,
+            {
+                method: "PATCH",
+                body: JSON.stringify({ disabled: true }),
+            },
+        );
+        if (
+            !result.response.ok ||
+            (result.payload &&
+                typeof result.payload === "object" &&
+                "code" in result.payload)
+        )
+            return {
+                status: "failed",
+                message: errorMessage(
+                    result.payload,
+                    `Crewmeister hat die Deaktivierung abgelehnt (HTTP ${result.response.status}).`,
+                ),
+            };
+        const problem = await verifyMembership(
+            params.auth,
+            memberId,
+            crew.crewId,
+            email,
+            true,
+        );
+        if (problem) return { status: "failed", message: problem };
+    }
+    await prisma.workerExternalAccount.upsert({
+        where: {
+            workerId_provider: { workerId: worker.id, provider: "crewmeister" },
+        },
+        create: {
+            workerId: worker.id,
+            provider: "crewmeister",
+            externalId: memberId,
+            status: "disabled",
+        },
+        update: { externalId: memberId, status: "disabled" },
+    });
+    return { status: "completed" };
 }

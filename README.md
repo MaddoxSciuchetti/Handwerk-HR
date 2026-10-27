@@ -184,6 +184,16 @@ reactivation. V2 is legacy, so retain coverage for this endpoint until a support
 V3 invitation replacement is available. An `INVITED` membership confirms setup,
 not email delivery or acceptance.
 
+Crewmeister also supports the `crewmeister_deactivate_account` sequence
+("Konto deaktivieren"). It matches the employee's email within the configured
+crew, verifies the member identity, and sets `disabled: true` through
+`PATCH /api/v3/platform-app/members/{id}`. A readback must confirm deactivation
+before the task completes and the local external-account status becomes disabled.
+Already disabled members are confirmed without another write. This preserves the
+membership and employee records; it does not delete the global login account.
+Deploy the `20261027193000_crewmeister_deactivation` database migration before
+saving tasks or templates using this sequence.
+
 Simulation takes precedence over live Microsoft execution even if
 `INTEGRATIONS_LIVE=true`. Unknown simulated Graph operations fail without network
 access. Remove `MICROSOFT_SIMULATION` or set it to `false` and restart to return to
