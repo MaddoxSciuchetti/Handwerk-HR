@@ -20,6 +20,8 @@ import {
   CheckCircle2,
   CircleAlert,
   Circle,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -55,6 +57,7 @@ export function TemplateApplyPrompt({
   const [templateId, setTemplateId] = useState<string>();
   const [requestKey, setRequestKey] = useState(() => crypto.randomUUID());
   const [synchronizing, setSynchronizing] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const [mockedRun, setMockedRun] = useState(false);
   const [lastRun, setLastRun] = useState<{
     target: TemplateApplyTarget;
@@ -334,6 +337,23 @@ export function TemplateApplyPrompt({
     if (!others.length) return null;
   }
   if (!selected && !apply.isPending && !completedRun) return null;
+  const resizeButton = (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      className="ml-auto rounded-full"
+      aria-label={expanded ? 'Popup verkleinern' : 'Popup vergrößern'}
+      aria-pressed={expanded}
+      onClick={() => setExpanded((current) => !current)}
+    >
+      {expanded ? (
+        <Minimize2 className="size-4" />
+      ) : (
+        <Maximize2 className="size-4" />
+      )}
+    </Button>
+  );
   return (
     <div className="fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 flex-col items-center gap-2">
       {createPortal(
@@ -349,7 +369,8 @@ export function TemplateApplyPrompt({
       )}
       <div
         className={cn(
-          'grid w-80 max-w-[calc(100vw-2rem)] transition-[grid-template-rows,opacity,transform] duration-300 ease-out motion-reduce:transition-none',
+          'grid max-w-[calc(100vw-2rem)] transition-[grid-template-rows,opacity,transform] duration-300 ease-out motion-reduce:transition-none',
+          expanded ? 'w-[calc(100vw-2rem)]' : 'w-[28rem]',
           open && !running
             ? 'grid-rows-[1fr] translate-y-0 opacity-100'
             : 'pointer-events-none grid-rows-[0fr] translate-y-2 opacity-0'
@@ -361,7 +382,10 @@ export function TemplateApplyPrompt({
           {showResults && hasVisibleRun && completedRun ? (
             <section
               aria-label="Ergebnis der Automatisierung"
-              className="max-h-[65vh] overflow-y-auto rounded-2xl border border-border bg-card p-3"
+              className={cn(
+                'overflow-y-auto rounded-2xl border border-border bg-card p-3',
+                expanded ? 'h-[calc(100dvh-6rem)]' : 'max-h-[75vh]'
+              )}
             >
               <div className="mb-2 flex items-center justify-between gap-2">
                 <div className="min-w-0">
@@ -369,6 +393,7 @@ export function TemplateApplyPrompt({
                     Ausgeführte Aufgaben
                   </p>
                 </div>
+                {resizeButton}
                 <Button
                   variant="ghost"
                   size="icon-sm"
@@ -473,7 +498,10 @@ export function TemplateApplyPrompt({
             selected && (
               <section
                 aria-label="Template auswählen"
-                className="max-h-[75vh] w-80 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-2xl border border-border bg-card p-3 text-card-foreground"
+                className={cn(
+                  'w-full overflow-y-auto rounded-2xl border border-border bg-card p-3 text-card-foreground',
+                  expanded ? 'h-[calc(100dvh-6rem)]' : 'max-h-[75vh]'
+                )}
               >
                 <div className="mb-2 flex items-center justify-between gap-2">
                   {templateId ? (
@@ -493,11 +521,12 @@ export function TemplateApplyPrompt({
                   ) : (
                     <p className="text-sm font-medium">Template auswählen</p>
                   )}
+                  {resizeButton}
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    className="ml-auto rounded-full"
+                    className="rounded-full"
                     aria-label="Schließen"
                     onClick={close}
                   >
