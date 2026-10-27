@@ -291,7 +291,7 @@ describe("offboarding microsoft automation", () => {
         );
     });
 
-    it("finishes when Graph disabled the account but the next read is still stale", async () => {
+    it("waits until a stale directory read shows the account as disabled", async () => {
         const fetchMock = jest
             .spyOn(global, "fetch")
             .mockResolvedValueOnce(
@@ -300,6 +300,9 @@ describe("offboarding microsoft automation", () => {
             .mockResolvedValueOnce(jsonResponse(null, 204))
             .mockResolvedValueOnce(
                 jsonResponse({ id: "graph-user-1", accountEnabled: true }),
+            )
+            .mockResolvedValueOnce(
+                jsonResponse({ id: "graph-user-1", accountEnabled: false }),
             )
             .mockResolvedValueOnce(jsonResponse({ value: [] }));
 

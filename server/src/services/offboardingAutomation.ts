@@ -73,6 +73,24 @@ async function readMicrosoftUser(token: string, key: string) {
     };
 }
 
+const SIGN_IN_CONFIRMATION_ATTEMPTS = 4;
+const SIGN_IN_CONFIRMATION_DELAY_MS = 500;
+
+async function confirmSignInBlocked(token: string, userId: string) {
+    for (let attempt = 0; attempt < SIGN_IN_CONFIRMATION_ATTEMPTS; attempt += 1) {
+        if (attempt > 0) {
+            await new Promise((resolve) =>
+                setTimeout(resolve, SIGN_IN_CONFIRMATION_DELAY_MS),
+            );
+        }
+        const confirmed = await readMicrosoftUser(token, userId);
+        if (confirmed.status === "found" && confirmed.accountEnabled === false) {
+            return confirmed;
+        }
+    }
+    return null;
+}
+
 async function assignedLicenseSkuIds(token: string, userId: string) {
     const { response, payload } = await graphJson(
         token,
@@ -189,9 +207,8 @@ export async function blockMicrosoftSignIn(
         }
 
         // Graph accepts the disable before every directory replica shows it.
-        // A stale or missing accountEnabled value here is not a failed block.
-        const confirmed = await readMicrosoftUser(token, current.id);
-        if (confirmed.status !== "found" || confirmed.accountEnabled !== false) {
+        const confirmed = await confirmSignInBlocked(token, current.id);
+        if (!confirmed) {
             console.error(
                 "Microsoft Graph accepted the sign-in block before the directory read showed it",
             );
