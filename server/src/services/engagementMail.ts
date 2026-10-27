@@ -91,11 +91,12 @@ function rememberMail(seen: Set<string>, email: string | null | undefined) {
     return value;
 }
 
-export async function listBsbMailAddresses(organizationId: string) {
-    if (integrationsMocked()) return { addresses: mockMailboxes, error: null };
+export async function listBsbMailAddresses(organizationId: string, actorUserId?: string) {
+    if (!actorUserId && integrationsMocked()) return { addresses: mockMailboxes, error: null };
     const members = await prisma.organizationMember.findMany({
         where: {
             organizationId,
+            ...(actorUserId ? { userId: actorUserId } : {}),
             status: "active",
             user: { status: "active" },
         },
@@ -136,10 +137,12 @@ async function storedWorkerMails(organizationId: string) {
 
 export async function listMailSenders(
     organizationId: string,
+    actorUserId: string,
 ): Promise<MailSenderOption[]> {
     const members = await prisma.organizationMember.findMany({
         where: {
             organizationId,
+            userId: actorUserId,
             status: "active",
             user: { status: "active", isVerified: true },
         },
@@ -433,6 +436,7 @@ async function resolveRecipientAddresses(params: {
 export async function mailSendPreview(params: {
     organizationId: string;
     issueId: string;
+    actorUserId: string;
 }): Promise<
     | {
           status: "ready";
@@ -456,7 +460,7 @@ export async function mailSendPreview(params: {
             select: recipientSelect,
             orderBy: { createdAt: "asc" },
         }),
-        listMailSenders(params.organizationId),
+        listMailSenders(params.organizationId, params.actorUserId),
     ]);
     const values = mailValues(loaded.worker);
     return {

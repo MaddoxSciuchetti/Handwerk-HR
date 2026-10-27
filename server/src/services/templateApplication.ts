@@ -284,7 +284,7 @@ export async function applyTemplateApplication(
     >();
     if (input.runAutomation) {
         const senders = mailItems.length
-            ? await listBsbMailAddresses(context.organizationId)
+            ? await listBsbMailAddresses(context.organizationId, context.actorUserId)
             : null;
         for (const item of template.items) {
             const choice = input.choices[item.id];

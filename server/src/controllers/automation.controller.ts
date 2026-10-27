@@ -137,7 +137,7 @@ export const getMicrosoftMailAddresses = catchErrors(async (req, res) => {
     return res.status(200).json({
         success: true,
         data: {
-            ...await listBsbMailAddresses(req.orgId),
+            ...await listBsbMailAddresses(req.orgId, req.userId),
             defaultSenderAddress: null,
         },
     });
@@ -339,6 +339,7 @@ export const getIssueMailPreview = catchErrors(async (req, res) => {
     const preview = await mailSendPreview({
         organizationId: req.orgId,
         issueId: String(req.params.issueId),
+        actorUserId: req.userId,
     });
     const previewError =
         preview.status === "failed"
