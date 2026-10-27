@@ -182,3 +182,19 @@ it.each([false, true])("sends the questionnaire from the signed-in user (retry: 
     });
     expect(mailed).not.toHaveProperty("via");
 });
+
+it("sends the questionnaire through Resend on staging", async () => {
+    process.env.APP_ENV = "staging";
+    try {
+        await sendEngagementQuestionnaire(params);
+        const mailed = (sendMail as jest.Mock).mock.calls.at(-1)?.[0];
+        expect(mailed).toMatchObject({
+            to: "lukas@example.test",
+            via: "resend",
+        });
+        expect(mailed).not.toHaveProperty("senderAddress");
+        expect(mailed).not.toHaveProperty("organizationId");
+    } finally {
+        delete process.env.APP_ENV;
+    }
+});

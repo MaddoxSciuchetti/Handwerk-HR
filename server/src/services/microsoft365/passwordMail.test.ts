@@ -60,23 +60,28 @@ it("sends credentials through Microsoft from the signed-in user", async () => {
     });
 });
 
-it("sends the password mail from the signed-in user on staging too", async () => {
+it("sends the password mail through Resend on staging", async () => {
     process.env.APP_ENV = "staging";
-    mail.mockResolvedValue({ data: { id: "mail-1" }, error: null });
-    expect(
-        await sendPasswordMail({
-            ...input,
+    try {
+        mail.mockResolvedValue({ data: { id: "mail-1" }, error: null });
+        expect(
+            await sendPasswordMail({
+                ...input,
+                to: "private@example.test",
+                senderAddress: "hr@firma.de",
+                organizationId: "org-1",
+            }),
+        ).toBe(true);
+        expect(mail).toHaveBeenCalledWith({
             to: "private@example.test",
-            senderAddress: "hr@firma.de",
-        }),
-    ).toBe(true);
-    expect(mail).toHaveBeenCalledWith({
-        to: "private@example.test",
-        senderAddress: "hr@firma.de",
-        ...passwordMail(input),
-    });
-    expect(mail.mock.calls[0][0]).not.toHaveProperty("via");
-    delete process.env.APP_ENV;
+            via: "resend",
+            ...passwordMail(input),
+        });
+        expect(mail.mock.calls[0][0]).not.toHaveProperty("senderAddress");
+        expect(mail.mock.calls[0][0]).not.toHaveProperty("organizationId");
+    } finally {
+        delete process.env.APP_ENV;
+    }
 });
 
 it.each([

@@ -1,4 +1,5 @@
 import { FRONTENDURL, QUESTIONNAIRE_MOCK_RESPONSES } from "@/constants/env";
+import { isStagingEnvironment } from "@/constants/stagingMail";
 import { NOT_FOUND } from "@/constants/http";
 import { prisma } from "@/lib/prisma";
 import {
@@ -137,10 +138,15 @@ async function deliverQuestionnaire(
     const formUrl = `${FRONTENDURL.replace(/\/$/, "")}/fragebogen/${token}`;
     const template = getQuestionnaireTemplate(formUrl);
     try {
+        const staging = isStagingEnvironment();
         const sent = await sendMail({
             to: email,
-            organizationId,
-            ...(senderAddress ? { senderAddress } : {}),
+            ...(staging
+                ? { via: "resend" as const }
+                : {
+                      organizationId,
+                      ...(senderAddress ? { senderAddress } : {}),
+                  }),
             subject: template.subject,
             text: template.text,
             html: template.html,
