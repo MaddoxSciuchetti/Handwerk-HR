@@ -3,13 +3,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { TemplateApplyPrompt } from '@/features/worker-task-management/components/tasks/TemplateApplyPrompt';
 import { TaskStatusIcon } from '@/features/all-tasks/components/ui/TaskStatusIcons';
 import { renderWithProviders } from './test-utils';
-import {
-  act,
-  fireEvent,
-  screen,
-  waitFor,
-  within,
-} from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -146,6 +140,7 @@ it('spins the opener while the chosen template loads', async () => {
   mocks.preview.mockReturnValue(new Promise(() => {}));
   renderWithProviders(<TemplateApplyPrompt targets={[target]} />);
   const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name: 'Template wählen' }));
   await user.click(await screen.findByRole('button', { name: /Automatisch/ }));
   const opener = screen.getByRole('button', { name: 'Template wählen' });
   expect(opener).toHaveAttribute('aria-busy', 'true');
@@ -155,6 +150,9 @@ it('spins the opener while the chosen template loads', async () => {
 
 async function selectTemplate(name = 'Automatisch') {
   const user = userEvent.setup();
+  const opener = screen.queryByRole('button', { name: 'Template wählen' });
+  if (opener?.getAttribute('aria-expanded') === 'false')
+    await user.click(opener);
   await user.click(
     await screen.findByRole('button', { name: new RegExp(name) })
   );
@@ -165,7 +163,7 @@ async function selectTemplate(name = 'Automatisch') {
 }
 
 describe('template automation popup', () => {
-  it('opens the existing bottom picker when a target becomes eligible', async () => {
+  it('shows only the bottom icon until clicked when a target becomes eligible', async () => {
     const { rerender } = renderWithProviders(
       <TemplateApplyPrompt targets={[]} />
     );
@@ -174,6 +172,12 @@ describe('template automation popup', () => {
     ).not.toBeInTheDocument();
     rerender(<TemplateApplyPrompt targets={[target]} />);
     expect(
+      screen.queryByRole('region', { name: 'Template auswählen' })
+    ).not.toBeInTheDocument();
+    const opener = screen.getByRole('button', { name: 'Template wählen' });
+    expect(opener).toHaveAttribute('aria-expanded', 'false');
+    await userEvent.click(opener);
+    expect(
       await screen.findByRole('region', { name: 'Template auswählen' })
     ).toBeInTheDocument();
     expect(screen.queryByText(/Microsoft 365 -/)).not.toBeInTheDocument();
@@ -181,6 +185,12 @@ describe('template automation popup', () => {
   it('closing creates nothing and does not auto-open again after remounting', async () => {
     const view = renderWithProviders(
       <TemplateApplyPrompt targets={[target]} />
+    );
+    expect(
+      screen.queryByRole('region', { name: 'Template auswählen' })
+    ).not.toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Template wählen' })
     );
     await userEvent.click(
       await screen.findByRole('button', { name: 'Schließen' })
@@ -1077,6 +1087,12 @@ it('loads saved tasks when remounting and refreshes their current statuses when 
   });
   const view = renderWithProviders(<TemplateApplyPrompt targets={[target]} />);
   expect(
+    screen.queryByRole('region', { name: 'Ergebnis der Automatisierung' })
+  ).not.toBeInTheDocument();
+  await userEvent.click(
+    await screen.findByRole('button', { name: 'Ausgeführte Aufgaben anzeigen' })
+  );
+  expect(
     await screen.findByRole('group', {
       name: 'Microsoft-Konto: Abgeschlossen',
     })
@@ -1084,6 +1100,12 @@ it('loads saved tasks when remounting and refreshes their current statuses when 
   expect(mocks.apply).not.toHaveBeenCalled();
   view.unmount();
   renderWithProviders(<TemplateApplyPrompt targets={[target]} />);
+  expect(
+    screen.queryByRole('region', { name: 'Ergebnis der Automatisierung' })
+  ).not.toBeInTheDocument();
+  await userEvent.click(
+    await screen.findByRole('button', { name: 'Ausgeführte Aufgaben anzeigen' })
+  );
   expect(
     await screen.findByRole('group', {
       name: 'Microsoft-Konto: Abgeschlossen',
@@ -1106,6 +1128,9 @@ it('hides the finished bar after it is closed and keeps it hidden on a later vis
   };
   mocks.savedRun.mockResolvedValue(stored);
   const view = renderWithProviders(<TemplateApplyPrompt targets={[target]} />);
+  await userEvent.click(
+    await screen.findByRole('button', { name: 'Ausgeführte Aufgaben anzeigen' })
+  );
   await screen.findByRole('region', {
     name: 'Ergebnis der Automatisierung',
   });

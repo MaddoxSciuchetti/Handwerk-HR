@@ -109,6 +109,14 @@ it('defaults to offboarding and scopes tasks, template selection and manual crea
     'aria-selected',
     'true'
   );
+  const phaseToggle = screen.getByRole('tablist', { name: 'Aufgabenphase' });
+  expect(phaseToggle.closest('[data-slot=card-header]')).toHaveTextContent(
+    'Aufgaben'
+  );
+  expect(screen.getByRole('tab', { name: 'Offboarding' })).toHaveAttribute(
+    'data-state',
+    'active'
+  );
   expect(screen.queryByText('Onboarding task')).not.toBeInTheDocument();
   expect(screen.getByTestId('template-target')).toHaveTextContent(
     'offboarding-1'

@@ -51,11 +51,7 @@ export function TemplateApplyPrompt({
 }: {
   targets: TemplateApplyTarget[];
 }) {
-  const [open, setOpen] = useState(() =>
-    Boolean(
-      targets[0] && !sessionStorage.getItem(dismissKey(targets[0].engagementId))
-    )
-  );
+  const [open, setOpen] = useState(false);
   const [previousId, setPreviousId] = useState(targets[0]?.engagementId);
   const [engagementId, setEngagementId] = useState(targets[0]?.engagementId);
   const [templateId, setTemplateId] = useState<string>();
@@ -103,9 +99,7 @@ export function TemplateApplyPrompt({
     setPreviousId(selectedId);
     setTemplateId(undefined);
     setRequestKey(crypto.randomUUID());
-    setOpen(
-      Boolean(selectedId && !sessionStorage.getItem(dismissKey(selectedId)))
-    );
+    setOpen(false);
   }
 
   const refresh = useCallback(
