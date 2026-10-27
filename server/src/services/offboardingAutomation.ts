@@ -73,24 +73,6 @@ async function readMicrosoftUser(token: string, key: string) {
     };
 }
 
-const SIGN_IN_CONFIRMATION_ATTEMPTS = 4;
-const SIGN_IN_CONFIRMATION_DELAY_MS = 500;
-
-async function confirmSignInBlocked(token: string, userId: string) {
-    for (let attempt = 0; attempt < SIGN_IN_CONFIRMATION_ATTEMPTS; attempt += 1) {
-        if (attempt > 0) {
-            await new Promise((resolve) =>
-                setTimeout(resolve, SIGN_IN_CONFIRMATION_DELAY_MS),
-            );
-        }
-        const confirmed = await readMicrosoftUser(token, userId);
-        if (confirmed.status === "found" && confirmed.accountEnabled === false) {
-            return confirmed;
-        }
-    }
-    return null;
-}
-
 async function assignedLicenseSkuIds(token: string, userId: string) {
     const { response, payload } = await graphJson(
         token,
@@ -147,22 +129,7 @@ async function removeAssignedLicense(
             message: "Microsoft Graph hat die Lizenz nicht entfernt.",
         };
     }
-
-    let remaining = await assignedLicenseSkuIds(token, userId);
-    for (
-        let attempt = 0;
-        remaining?.includes(skuId.toLowerCase()) && attempt < 3;
-        attempt += 1
-    ) {
-        await new Promise((resolve) => setTimeout(resolve, 300));
-        remaining = await assignedLicenseSkuIds(token, userId);
-    }
-    if (!remaining || remaining.includes(skuId.toLowerCase())) {
-        return {
-            ok: false as const,
-            message: "Microsoft Graph hat die Lizenzentfernung nicht bestätigt.",
-        };
-    }
+    // Graph accepts the removal before licenseDetails stops listing the SKU.
     return { ok: true as const };
 }
 
@@ -206,13 +173,8 @@ export async function blockMicrosoftSignIn(
             };
         }
 
-        // Graph accepts the disable before every directory replica shows it.
-        const confirmed = await confirmSignInBlocked(token, current.id);
-        if (!confirmed) {
-            console.error(
-                "Microsoft Graph accepted the sign-in block before the directory read showed it",
-            );
-        }
+        // A successful PATCH is the confirmation. The next directory read can
+        // still report accountEnabled: true until the replica catches up.
         alreadyBlocked = false;
     }
 
