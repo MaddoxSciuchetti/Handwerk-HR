@@ -9,7 +9,6 @@ import {
     loadMicrosoft365Config,
     NOT_LIVE_MESSAGE,
 } from "@/services/integrations/runtime";
-import { mailboxOnConfiguredDomain } from "@/services/microsoft365/productionSender";
 import { microsoftGraphToken } from "@/services/microsoft365Account";
 import {
     applyWelcomeMailTemplate,
@@ -628,10 +627,6 @@ async function deliverMail(params: {
             message: "Microsoft Graph hat die Anmeldung abgelehnt.",
         };
     }
-    const senderAddress = mailboxOnConfiguredDomain(
-        requestedSender,
-        config.domain,
-    );
     const resolved = await resolveRecipientAddresses({
         token,
         organizationId: params.organizationId,
@@ -641,7 +636,7 @@ async function deliverMail(params: {
     const values = mailValues(params.worker);
     const sent = await sendGraphMail({
         token,
-        senderAddress,
+        senderAddress: requestedSender,
         recipients: resolved.addresses,
         subject: filledSubject(params.template.subject, values),
         text: applyEngagementMailTemplate(params.template.body, values),
