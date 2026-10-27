@@ -380,7 +380,7 @@ export function TemplateAutomationConfirmation({
                             className="w-[var(--radix-popover-trigger-width)] p-2"
                             aria-label={`Empfänger für ${item.title}`}
                           >
-                            <div className="max-h-36 space-y-1 overflow-y-auto">
+                            <div className="max-h-60 space-y-1 overflow-y-auto">
                               {[...recipients.values()].map((recipient) => {
                                 const key = recipientKey(recipient);
                                 const checked =
@@ -390,7 +390,7 @@ export function TemplateAutomationConfirmation({
                                 return (
                                   <Label
                                     key={key}
-                                    className="flex items-center gap-2 text-xs"
+                                    className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-xs hover:bg-accent hover:text-accent-foreground focus-within:bg-accent focus-within:text-accent-foreground"
                                   >
                                     <Checkbox
                                       disabled={busy}
@@ -474,7 +474,7 @@ export function TemplateAutomationConfirmation({
                                 return (
                                   <Label
                                     key={`${channel.teamId}:${channel.channelId}`}
-                                    className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-xs hover:bg-accent"
+                                    className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-xs hover:bg-accent hover:text-accent-foreground focus-within:bg-accent focus-within:text-accent-foreground"
                                   >
                                     <Checkbox
                                       disabled={busy}

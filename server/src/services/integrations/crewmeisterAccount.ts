@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { integrationsLive } from "@/services/integrations/runtime";
 import { sendMail } from "@/utils/sendMail";
 
-const API = "https://dev.crewmeister.com";
+// The developer portal hosts documentation; requests go to the production API.
+const API = "https://api.crewmeister.com";
 
 export type CrewmeisterCreateResult =
     | { status: "created"; externalId: string; passwordMailSent: boolean }
@@ -90,11 +91,23 @@ async function resolveCrewId(auth: CrewmeisterAuth) {
         "/api/v3/platform-app/crews?pageSize=20",
     );
     if (!response.ok) {
+        if (response.status === 401) {
+            return {
+                ok: false as const,
+                message: "Crewmeister hat den Token abgelehnt (HTTP 401). Bitte einen gültigen Token unter Integrationen hinterlegen.",
+            };
+        }
+        if (response.status === 403) {
+            return {
+                ok: false as const,
+                message: "Der Crewmeister-Token darf die Crews nicht lesen (HTTP 403). Bitte die Berechtigungen in Crewmeister prüfen.",
+            };
+        }
         return {
             ok: false as const,
             message: errorMessage(
                 payload,
-                "Crewmeister hat die Crews nicht geliefert.",
+                `Crewmeister hat die Crews nicht geliefert (HTTP ${response.status}).`,
             ),
         };
     }
