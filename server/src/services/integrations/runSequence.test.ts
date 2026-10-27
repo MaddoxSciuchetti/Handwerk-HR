@@ -2,6 +2,7 @@ import { runIssueSequence } from "./runSequence";
 import { prisma } from "@/lib/prisma";
 import { executionStatus } from "./issueExecutionStatus";
 import { provisionMicrosoft365Account } from "../microsoft365Account";
+import { deactivateCrewmeisterAccount } from "./crewmeisterAccount";
 jest.mock("@/lib/prisma", () => ({
     prisma: {
         issue: { findFirst: jest.fn() },
@@ -17,10 +18,12 @@ jest.mock("../microsoft365Account", () => ({
 }));
 jest.mock("./runtime", () => ({
     loadMicrosoft365Config: jest.fn(async () => ({})),
+    loadCrewmeisterToken: jest.fn(async () => ({ token: "jwt", crewId: "42" })),
     integrationsLive: () => true,
 }));
 jest.mock("./crewmeisterAccount", () => ({
     createCrewmeisterAccount: jest.fn(),
+    deactivateCrewmeisterAccount: jest.fn(),
 }));
 jest.mock("../engagementMail", () => ({ isMailSequence: () => false }));
 jest.mock("../offboardingAutomation", () => ({
@@ -90,3 +93,37 @@ it("does not rerun completed tasks", async () => {
     expect(await runIssueSequence(input)).toEqual({ status: "completed" });
     expect(provisionMicrosoft365Account).not.toHaveBeenCalled();
 });
+
+it.each([true, false])(
+    "routes Crewmeister deactivation and records its verified result (success=%s)",
+    async (success) => {
+        (prisma.issue.findFirst as jest.Mock).mockResolvedValue({
+            id: "issue",
+            status: "open",
+            sequence: "crewmeister_deactivate_account",
+            integrationProvider: "crewmeister",
+            workerEngagement: { id: "engagement", workerId: "worker" },
+        });
+        (deactivateCrewmeisterAccount as jest.Mock).mockResolvedValue(
+            success
+                ? { status: "completed" }
+                : { status: "failed", message: "Nicht bestätigt" },
+        );
+        expect(await runIssueSequence(input)).toEqual(
+            success
+                ? { status: "completed" }
+                : { status: "failed", message: "Nicht bestätigt" },
+        );
+        expect(deactivateCrewmeisterAccount).toHaveBeenCalledWith({
+            organizationId: "org",
+            workerId: "worker",
+            auth: { token: "jwt", crewId: "42" },
+        });
+        expect(executionStatus).toHaveBeenLastCalledWith(
+            "issue",
+            "user",
+            success ? "done" : "error",
+            success ? undefined : "Nicht bestätigt",
+        );
+    },
+);

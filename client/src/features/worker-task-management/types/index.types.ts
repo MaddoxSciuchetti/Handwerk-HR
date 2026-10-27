@@ -71,7 +71,8 @@ export type TemplateTaskFormValues = {
     | 'microsoft_send_email'
     | 'microsoft_send_teams_message'
     | 'microsoft_deactivate_account'
-    | 'crewmeister_create_account';
+    | 'crewmeister_create_account'
+    | 'crewmeister_deactivate_account';
   mailTemplateId: string;
 };
 
@@ -91,6 +92,7 @@ export type TemplateTaskResponse = {
     | 'microsoft_send_teams_message'
     | 'microsoft_deactivate_account'
     | 'crewmeister_create_account'
+    | 'crewmeister_deactivate_account'
     | null;
   mailTemplateId?: string | null;
 };

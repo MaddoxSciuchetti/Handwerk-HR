@@ -31,6 +31,11 @@ export const INTEGRATION_SEQUENCES = [
     provider: 'crewmeister',
     label: 'Konto anlegen',
   },
+  {
+    value: 'crewmeister_deactivate_account',
+    provider: 'crewmeister',
+    label: 'Konto deaktivieren',
+  },
 ] as const;
 
 export type IntegrationProviderValue =

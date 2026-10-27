@@ -1,7 +1,10 @@
 import { executionStatus, executionError } from "./issueExecutionStatus";
 import { prisma } from "@/lib/prisma";
 import { microsoftSimulationEnabled } from "@/constants/env";
-import { createCrewmeisterAccount } from "@/services/integrations/crewmeisterAccount";
+import {
+    createCrewmeisterAccount,
+    deactivateCrewmeisterAccount,
+} from "@/services/integrations/crewmeisterAccount";
 import {
     integrationsLive,
     loadCrewmeisterToken,
@@ -102,9 +105,10 @@ async function runMicrosoft(
     if (!config || (!integrationsLive() && !microsoftSimulationEnabled())) {
         return {
             status: "failed",
-            message: !integrationsLive() && !microsoftSimulationEnabled()
-                ? NOT_LIVE_MESSAGE
-                : "Microsoft 365 ist für diese Organisation nicht eingerichtet.",
+            message:
+                !integrationsLive() && !microsoftSimulationEnabled()
+                    ? NOT_LIVE_MESSAGE
+                    : "Microsoft 365 ist für diese Organisation nicht eingerichtet.",
         };
     }
     if (isMailSequence(sequence)) {
@@ -137,7 +141,8 @@ async function runMicrosoft(
     if (!userKey) {
         return {
             status: "failed",
-            message: "Für diesen Mitarbeiter ist keine Microsoft-365-ID hinterlegt.",
+            message:
+                "Für diesen Mitarbeiter ist keine Microsoft-365-ID hinterlegt.",
         };
     }
     const token = await microsoftGraphToken(config);
@@ -217,13 +222,25 @@ async function executeIssueSequence(params: {
     };
 
     if (issue.integrationProvider === "crewmeister") {
-        if (issue.sequence !== "crewmeister_create_account") {
+        if (
+            issue.sequence !== "crewmeister_create_account" &&
+            issue.sequence !== "crewmeister_deactivate_account"
+        ) {
             return {
                 status: "failed",
                 message: "Diese Sequenz gibt es nicht.",
             };
         }
         const auth = await loadCrewmeisterToken(params.organizationId);
+        if (issue.sequence === "crewmeister_deactivate_account") {
+            return finish(
+                await deactivateCrewmeisterAccount({
+                    organizationId: params.organizationId,
+                    workerId: context.workerId,
+                    auth,
+                }),
+            );
+        }
         return finish(
             await createCrewmeisterAccount({
                 organizationId: params.organizationId,
