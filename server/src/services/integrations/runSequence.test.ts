@@ -3,7 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { executionStatus } from "./issueExecutionStatus";
 import { provisionMicrosoft365Account } from "../microsoft365Account";
 jest.mock("@/lib/prisma", () => ({
-    prisma: { issue: { findFirst: jest.fn() } },
+    prisma: {
+        issue: { findFirst: jest.fn() },
+        user: { findUnique: jest.fn() },
+    },
 }));
 jest.mock("./issueExecutionStatus", () => ({
     executionStatus: jest.fn(),
@@ -26,6 +29,9 @@ jest.mock("../offboardingAutomation", () => ({
 const input = { issueId: "issue", organizationId: "org", actorUserId: "user" };
 beforeEach(() => {
     jest.clearAllMocks();
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        email: "hr@firma.de",
+    });
     (prisma.issue.findFirst as jest.Mock).mockResolvedValue({
         id: "issue",
         status: "error",
@@ -39,6 +45,9 @@ it("marks a successful retry in progress then done", async () => {
         status: "created",
     });
     expect(await runIssueSequence(input)).toEqual({ status: "completed" });
+    expect(provisionMicrosoft365Account).toHaveBeenCalledWith(
+        expect.objectContaining({ senderAddress: "hr@firma.de" }),
+    );
     expect((executionStatus as jest.Mock).mock.calls).toEqual([
         ["issue", "user", "in_progress"],
         ["issue", "user", "done", undefined],

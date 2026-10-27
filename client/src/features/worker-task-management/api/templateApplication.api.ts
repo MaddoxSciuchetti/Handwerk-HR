@@ -7,7 +7,6 @@ export type AutomationChoice = {
   destinations?: Array<{ teamId: string; channelId: string }>;
 };
 export type TemplatePreview = {
-  requiresWorkEmail?: boolean;
   mocked?: boolean;
   id: string;
   name: string;
@@ -61,7 +60,6 @@ export function applyTemplate(
   templateId: string,
   input: {
     workerEngagementId: string;
-    workEmail?: string;
     runAutomation: boolean;
     idempotencyKey: string;
     templateRevision?: string;

@@ -167,24 +167,29 @@ it("persists an engagement definition and dispatches it without changing the org
     expect(template.items).toHaveLength(seedQuestionnaireDefinition().items.length);
 });
 
-it.each([false, true])("uses the saved sender for questionnaire delivery (resend: %s)", async (resend) => {
+it.each([false, true])("uses the saved Microsoft sender for questionnaire delivery (retry: %s)", async (retry) => {
     engagement.questionnaireSenderAddress = "office@example.test";
-    if (resend) engagement.questionnaireSubmission = { token: "existing-token", status: "sent" };
+    if (retry) engagement.questionnaireSubmission = { token: "existing-token", status: "sent" };
     await sendEngagementQuestionnaire(params);
-    expect(sendMail).toHaveBeenCalledWith(expect.objectContaining({
+    const mailed = (sendMail as jest.Mock).mock.calls.at(-1)?.[0];
+    expect(mailed).toMatchObject({
         to: "lukas@example.test",
-        via: "resend",
         senderAddress: "office@example.test",
-    }));
+    });
+    expect(mailed).not.toHaveProperty("via");
 });
 
 it('overrides a legacy saved sender with the staging default on retry', async () => {
     engagement.questionnaireSubmission = { id: 'submission', token: 'retry-token', status: 'sent' };
     engagement.questionnaireSenderAddress = 'old@example.test';
+    process.env.APP_ENV = 'staging';
     jest.spyOn(require('@/services/questionnaireSender'), 'defaultQuestionnaireSender').mockReturnValue('hello@example.test');
     (sendMail as jest.Mock).mockResolvedValue({ data: { id: 'mail' }, error: null });
     try {
         await sendEngagementQuestionnaire(params);
         expect(sendMail).toHaveBeenCalledWith(expect.objectContaining({ via: 'resend', senderAddress: 'hello@example.test', to: 'lukas@example.test' }));
-    } finally { jest.restoreAllMocks(); }
+    } finally {
+        delete process.env.APP_ENV;
+        jest.restoreAllMocks();
+    }
 });

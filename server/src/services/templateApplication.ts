@@ -36,7 +36,6 @@ const recipient = z.object({
 });
 export const templateApplyInput = z.object({
     workerEngagementId: z.string().min(1),
-    workEmail: z.string().trim().email().max(254).optional(),
     runAutomation: z.boolean().default(false),
     idempotencyKey: z.string().uuid().optional(),
     templateRevision: z.string().max(64).optional(),
@@ -95,21 +94,6 @@ function templateRevision(template: Awaited<ReturnType<typeof loadTemplate>>) {
         .digest("hex");
 }
 
-async function requiresWorkEmail(
-    context: Context,
-    template: Awaited<ReturnType<typeof loadTemplate>>,
-    db: Prisma.TransactionClient = prisma,
-) {
-    if (!template.items.some((item) => item.sequence === "microsoft_deactivate_account"))
-        return false;
-    const worker = await db.worker.findFirst({
-        where: { id: context.workerId, organizationId: context.organizationId },
-        select: { workEmail: true },
-    });
-    if (!worker) throw new AppError(BAD_REQUEST, "Mitarbeiter nicht gefunden.");
-    return !worker.workEmail?.trim();
-}
-
 export async function templateApplicationPreview(
     context: Context,
     engagementId: string,
@@ -132,7 +116,6 @@ export async function templateApplicationPreview(
         name: template.name,
         mocked,
         revision: templateRevision(template),
-        requiresWorkEmail: await requiresWorkEmail(context, template),
         items: template.items.map((item) => {
             const integration = integrations.find(
                 (i) => i.provider === item.integrationProvider,
@@ -348,17 +331,6 @@ export async function applyTemplateApplication(
                         "Für diesen Einsatz wurde bereits ein Template angewendet.",
                     );
                 return { receipt: existing, fresh: false };
-            }
-            if (await requiresWorkEmail(context, template, tx)) {
-                if (!input.workEmail)
-                    throw new AppError(
-                        BAD_REQUEST,
-                        "Bitte die Arbeits-E-Mail für das Microsoft-Konto eingeben.",
-                    );
-                await tx.worker.update({
-                    where: { id: context.workerId, organizationId: context.organizationId },
-                    data: { workEmail: input.workEmail },
-                });
             }
             const created = await createTasks(tx, template);
             const data = {

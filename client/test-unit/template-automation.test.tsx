@@ -1039,47 +1039,103 @@ it('hides the finished bar after it is closed and keeps it hidden on a later vis
   expect(mocks.apply).not.toHaveBeenCalled();
 });
 
-describe('work email required for Microsoft removal', () => {
+describe('Microsoft removal without a separate work email', () => {
   beforeEach(() => {
     mocks.preview.mockResolvedValue({
-      id: 'automated', name: 'Offboarding', requiresWorkEmail: true,
+      id: 'automated', name: 'Offboarding',
       items: [{ ...automation, sequence: 'microsoft_deactivate_account' }],
     });
   });
 
-  it.each(['Automatisierung starten', 'Ohne Automatisierung'])(
-    'requires a valid work email before %s and submits it',
-    async (action) => {
-      renderWithProviders(<TemplateApplyPrompt targets={[target]} />);
-      const user = await selectTemplate();
-      const start = screen.getByRole('button', { name: 'Automatisierung starten' });
-      const manual = screen.getByRole('button', { name: 'Ohne Automatisierung' });
-      expect(start).toBeDisabled();
-      expect(manual).toBeDisabled();
-      const email = screen.getByRole('textbox', { name: 'Arbeits-E-Mail' });
-      await user.type(email, 'invalid');
-      expect(start).toBeDisabled();
-      expect(manual).toBeDisabled();
-      await user.clear(email);
-      await user.type(email, 'worker@example.com');
-      await user.click(screen.getByRole('button', { name: action }));
-      await waitFor(() => expect(mocks.apply).toHaveBeenCalledWith(
-        'worker', 'automated', expect.objectContaining({
-          workEmail: 'worker@example.com',
-          runAutomation: action === 'Automatisierung starten',
-        })
-      ));
-    }
-  );
-
-  it('hides the email prompt when an email is already saved', async () => {
-    mocks.preview.mockResolvedValue({
-      id: 'automated', name: 'Offboarding', requiresWorkEmail: false,
-      items: [{ ...automation, sequence: 'microsoft_deactivate_account' }],
-    });
+  it('starts deactivation without asking for an email', async () => {
     renderWithProviders(<TemplateApplyPrompt targets={[target]} />);
-    await selectTemplate();
+    const user = await selectTemplate();
     expect(screen.queryByRole('textbox', { name: 'Arbeits-E-Mail' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Automatisierung starten' })).toBeEnabled();
+    await user.click(screen.getByRole('button', { name: 'Automatisierung starten' }));
+    await waitFor(() => expect(mocks.apply).toHaveBeenCalledWith(
+      'worker', 'automated', expect.not.objectContaining({
+        workEmail: expect.anything(),
+      })
+    ));
   });
 });
+
+
+it.each([
+  { action: 'Aufgaben erstellen', template: 'Manuell', outcomes: [] },
+  { action: 'Ohne Automatisierung', template: 'Automatisch', outcomes: [] },
+  {
+    action: 'Automatisierung starten',
+    template: 'Automatisch',
+    outcomes: [{ issueId: 'a', status: 'completed' }],
+  },
+])(
+  'automatically dismisses a successful $action run and keeps it hidden on revisit',
+  async ({ action, template, outcomes }) => {
+    mocks.demo = true;
+    const result = { count: 1, issueIds: ['a'], running: false, outcomes };
+    mocks.apply.mockResolvedValue(result);
+    const view = renderWithProviders(
+      <TemplateApplyPrompt targets={[target]} />
+    );
+    const user = await selectTemplate(template);
+    await user.click(screen.getByRole('button', { name: action }));
+    await waitFor(() =>
+      expect(screen.getByRole('progressbar')).toHaveAttribute(
+        'aria-valuenow',
+        '100'
+      )
+    );
+    expect(mocks.dismiss).not.toHaveBeenCalled();
+    await waitFor(
+      () => expect(screen.queryByRole('progressbar')).not.toBeInTheDocument(),
+      { timeout: 2500 }
+    );
+    expect(mocks.dismiss).toHaveBeenCalledWith('worker', 'engagement');
+    expect(
+      screen.queryByRole('button', { name: 'Leiste schließen' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('region', { name: 'Ergebnis der Automatisierung' })
+    ).not.toBeInTheDocument();
+    view.unmount();
+    mocks.savedRun.mockResolvedValue({
+      templateName: template,
+      result,
+      dismissed: true,
+    });
+    renderWithProviders(<TemplateApplyPrompt targets={[target]} />);
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Template wählen' })
+    ).not.toBeInTheDocument();
+  }
+);
+
+it.each(['failed', 'pending'])(
+  'keeps %s automation results available for review',
+  async (status) => {
+    mocks.apply.mockResolvedValue({
+      count: 1,
+      issueIds: ['a'],
+      running: false,
+      outcomes: [{ issueId: 'a', status }],
+    });
+    renderWithProviders(<TemplateApplyPrompt targets={[target]} />);
+    const user = await selectTemplate();
+    await user.click(
+      screen.getByRole('button', { name: 'Automatisierung starten' })
+    );
+    await waitFor(() =>
+      expect(screen.getByRole('progressbar')).toHaveAttribute(
+        'aria-valuenow',
+        '100'
+      )
+    );
+    await act(async () => {
+      await new Promise((resolve) => window.setTimeout(resolve, 1700));
+    });
+    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+    expect(mocks.dismiss).not.toHaveBeenCalled();
+  }
+);

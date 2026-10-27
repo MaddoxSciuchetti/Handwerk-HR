@@ -10,7 +10,6 @@ export type WorkerEngagementInfoItem = {
   value: string;
   editable?:
     | 'email'
-    | 'workEmail'
     | 'firstName'
     | 'lastName'
     | 'birthday'
@@ -66,11 +65,6 @@ export function workerEngagementInfoItems(
       maxLength: 120,
     },
     { label: 'E-Mail', value: worker.email ?? '', editable: 'email' },
-    {
-      label: 'Arbeits-E-Mail',
-      value: worker.workEmail ?? '',
-      editable: 'workEmail',
-    },
     {
       label: 'Microsoft-E-Mail',
       value: worker.microsoftEmail ?? '',

@@ -298,6 +298,7 @@ export async function provisionMicrosoft365Account(params: {
     organizationId: string;
     workerId: string;
     config: Microsoft365Config | null;
+    senderAddress?: string | null;
 }): Promise<ProvisionMicrosoft365Result> {
     const config = params.config;
     if (!config) return { status: "skipped", reason: "not_configured" };
@@ -418,6 +419,7 @@ export async function provisionMicrosoft365Account(params: {
         firstName: worker.firstName,
         workEmail: created.workEmail,
         password,
+        senderAddress: params.senderAddress,
     });
 
     return {

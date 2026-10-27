@@ -213,10 +213,11 @@ describe('personal Microsoft Teams connection', () => {
         beforeSend={beforeSend}
       />
     );
-    await screen.findByRole('option', { name: 'Office · General' });
-    await user.selectOptions(
-      screen.getByRole('combobox', { name: 'Teams-Kanal' }),
-      'team-a:channel-a'
+    const picker = await screen.findByRole('button', { name: 'Teams-Kanal' });
+    await waitFor(() => expect(picker).toBeEnabled());
+    await user.click(picker);
+    await user.click(
+      screen.getByRole('checkbox', { name: 'Office · General' })
     );
     await user.click(
       screen.getByRole('button', { name: 'Teams-Nachricht senden' })
@@ -247,10 +248,11 @@ describe('personal Microsoft Teams connection', () => {
         beforeSend={async () => false}
       />
     );
-    await screen.findByRole('option', { name: 'Office · General' });
-    await user.selectOptions(
-      screen.getByRole('combobox', { name: 'Teams-Kanal' }),
-      'team-a:channel-a'
+    const picker = await screen.findByRole('button', { name: 'Teams-Kanal' });
+    await waitFor(() => expect(picker).toBeEnabled());
+    await user.click(picker);
+    await user.click(
+      screen.getByRole('checkbox', { name: 'Office · General' })
     );
     await user.click(
       screen.getByRole('button', { name: 'Teams-Nachricht senden' })
@@ -307,13 +309,20 @@ describe('Teams sending', () => {
       name: 'Teams-Nachricht senden',
     });
     expect(button).toBeDisabled();
-    await screen.findByRole('option', { name: 'Office · General' });
-    const select = screen.getByRole('combobox', { name: 'Teams-Kanal' });
+    const select = await screen.findByRole('button', { name: 'Teams-Kanal' });
+    await waitFor(() => expect(select).toBeEnabled());
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(screen.queryByText('Hallo Ada')).not.toBeInTheDocument();
     expect(screen.queryByText('Alice Microsoft')).not.toBeInTheDocument();
-    await user.selectOptions(select, 'team-b:channel-b');
-    await user.selectOptions(select, 'team-a:channel-a');
+    await user.click(select);
+    await user.click(screen.getByRole('checkbox', { name: 'Site · Crew' }));
+    expect(select).toHaveTextContent('Site · Crew');
+    await user.click(select);
+    expect(screen.getByRole('checkbox', { name: 'Site · Crew' })).toBeChecked();
+    await user.click(
+      screen.getByRole('checkbox', { name: 'Office · General' })
+    );
+    expect(select).toHaveTextContent('Office · General');
     await user.click(button);
     await waitFor(() =>
       expect(mocks.sendTeams).toHaveBeenCalledWith('task-a', {
@@ -326,9 +335,8 @@ describe('Teams sending', () => {
 
   it('prevents sending when the sidebar action is disabled', async () => {
     renderWithProviders(<TeamsSendAction taskId="task-a" disabled />);
-    await screen.findByRole('option', { name: 'Office · General' });
     expect(
-      screen.getByRole('combobox', { name: 'Teams-Kanal' })
+      await screen.findByRole('button', { name: 'Teams-Kanal' })
     ).toBeDisabled();
     expect(
       screen.getByRole('button', { name: 'Teams-Nachricht senden' })

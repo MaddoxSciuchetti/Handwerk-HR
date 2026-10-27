@@ -973,7 +973,6 @@ export async function applyIssueTemplate(params: {
     choices?: TemplateApplyInput["choices"];
     idempotencyKey?: string;
     templateRevision?: string;
-    workEmail?: string;
     workerId: string;
     organizationId: string;
     workerEngagementId: string;
@@ -1006,7 +1005,6 @@ export async function applyIssueTemplate(params: {
         workerEngagementId, runAutomation: params.runAutomation ?? false,
         choices: params.choices ?? {}, idempotencyKey: params.idempotencyKey,
         templateRevision: params.templateRevision,
-        workEmail: params.workEmail,
     }, (tx, templateSnapshot) => applyIssueTemplateInTx(tx, {
             templateSnapshot,
             runAutomation: params.runAutomation,

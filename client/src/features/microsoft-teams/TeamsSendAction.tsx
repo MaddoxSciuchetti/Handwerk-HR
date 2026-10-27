@@ -2,6 +2,12 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { ChevronDownIcon } from 'lucide-react';
 import { FETCHDESCRIPTION } from '@/features/all-tasks/consts/query.consts';
 import {
   TASKHISTORY,
@@ -59,6 +65,7 @@ export function TeamsSendForm({
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
+  const [channelPickerOpen, setChannelPickerOpen] = useState(false);
   const [selected, setSelected] = useState<Channel[]>([]);
   const [idempotencyKey] = useState(() => crypto.randomUUID());
   const key = connectionKey(user?.id, user?.organizationId);
@@ -189,33 +196,63 @@ export function TeamsSendForm({
           {connected && (
             <>
               {sidebar ? (
-                <select
-                  aria-label="Teams-Kanal"
-                  className="h-9 w-full min-w-0 rounded-2xl border border-input bg-background px-3 text-sm"
-                  value={selected[0] ? channelKey(selected[0]) : ''}
-                  disabled={
-                    disabled ||
-                    busy ||
-                    channels.isPending ||
-                    !channels.data?.channels.length
-                  }
-                  onChange={(event) => {
-                    const channel = channels.data?.channels.find(
-                      (item) => channelKey(item) === event.target.value
-                    );
-                    setSelected(channel ? [channel] : []);
-                  }}
+                <Popover
+                  open={channelPickerOpen}
+                  onOpenChange={setChannelPickerOpen}
                 >
-                  <option value="">Kanal auswählen…</option>
-                  {channels.data?.channels.map((channel) => (
-                    <option
-                      key={channelKey(channel)}
-                      value={channelKey(channel)}
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      aria-label="Teams-Kanal"
+                      className="h-9 w-full min-w-0 justify-between rounded-2xl font-normal"
+                      disabled={
+                        disabled ||
+                        busy ||
+                        channels.isPending ||
+                        !channels.data?.channels.length
+                      }
                     >
-                      {channel.label}
-                    </option>
-                  ))}
-                </select>
+                      <span className="truncate">
+                        {selected[0]?.label || 'Kanal auswählen…'}
+                      </span>
+                      <ChevronDownIcon
+                        className="size-4 shrink-0 text-muted-foreground"
+                        aria-hidden
+                      />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    align="start"
+                    aria-label="Teams-Kanal auswählen"
+                    className="max-h-(--radix-popover-content-available-height) w-(--radix-popover-trigger-width) overflow-y-auto"
+                  >
+                    {channels.data?.channels.map((channel) => (
+                      <label
+                        key={channelKey(channel)}
+                        className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 hover:bg-accent focus-within:bg-accent"
+                      >
+                        <input
+                          type="checkbox"
+                          className="size-3.5 shrink-0 accent-primary"
+                          checked={selectedKeys.has(channelKey(channel))}
+                          disabled={disabled || busy}
+                          onChange={() => {
+                            setSelected(
+                              selectedKeys.has(channelKey(channel))
+                                ? []
+                                : [channel]
+                            );
+                            setChannelPickerOpen(false);
+                          }}
+                        />
+                        <span className="min-w-0 break-words">
+                          {channel.label}
+                        </span>
+                      </label>
+                    ))}
+                  </PopoverContent>
+                </Popover>
               ) : (
                 <Input
                   aria-label="Kanäle suchen"

@@ -180,6 +180,7 @@ describe("microsoft 365 account", () => {
             organizationId: "org-1",
             workerId: "worker-1",
             config,
+            senderAddress: "hr@firma.de",
         });
 
         expect(result).toEqual({
@@ -204,10 +205,11 @@ describe("microsoft 365 account", () => {
         expect(mail).toHaveBeenCalledWith(
             expect.objectContaining({
                 to: "ada@personal.test",
-                via: "resend",
+                senderAddress: "hr@firma.de",
                 subject: "Dein Microsoft-365-Zugang",
             }),
         );
+        expect(mail.mock.calls[0][0]).not.toHaveProperty("via");
         const mailed = mail.mock.calls[0][0] as { text: string };
         expect(mailed.text).toContain("ada.lovelace@firma.de");
         expect(mailed.text).toContain(

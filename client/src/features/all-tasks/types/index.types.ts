@@ -7,6 +7,7 @@ export type EngagementResponse = {
   workerId: string;
   workerFirstName: string;
   workerLastName: string;
+  microsoftAccountId?: string | null;
 };
 
 export type ListEngagementsResponse = {

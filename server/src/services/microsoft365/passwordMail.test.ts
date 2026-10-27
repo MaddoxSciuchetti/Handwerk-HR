@@ -43,16 +43,36 @@ it("uses a neutral greeting for a missing first name", () => {
     expect(passwordMail({ ...input, firstName: " " }).text).toMatch(/^Hallo,/);
 });
 
-it("sends credentials to the contact email instead of the new work mailbox", async () => {
+it("sends credentials through Microsoft from the signed-in user", async () => {
+    delete process.env.APP_ENV;
+    mail.mockResolvedValue({ data: { id: "mail-1" }, error: null });
+    expect(
+        await sendPasswordMail({
+            ...input,
+            to: "private@example.test",
+            senderAddress: "hr@firma.de",
+        }),
+    ).toBe(true);
+    expect(mail).toHaveBeenCalledWith({
+        to: "private@example.test",
+        senderAddress: "hr@firma.de",
+        ...passwordMail(input),
+    });
+});
+
+it("keeps the password mail on Resend for staging", async () => {
+    process.env.APP_ENV = "staging";
     mail.mockResolvedValue({ data: { id: "mail-1" }, error: null });
     expect(
         await sendPasswordMail({ ...input, to: "private@example.test" }),
     ).toBe(true);
-    expect(mail).toHaveBeenCalledWith({
-        to: "private@example.test",
-        via: "resend",
-        ...passwordMail(input),
-    });
+    expect(mail).toHaveBeenCalledWith(
+        expect.objectContaining({
+            to: "private@example.test",
+            via: "resend",
+        }),
+    );
+    delete process.env.APP_ENV;
 });
 
 it.each([
