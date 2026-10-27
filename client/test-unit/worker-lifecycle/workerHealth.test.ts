@@ -118,3 +118,28 @@ it('computes identical health and task totals from grouped status counts', () =>
   expect(getWorkerHealth(worker)).toEqual(expectedHealth);
   expect(getWorkerIssueCount(worker)).toBe(expectedCount);
 });
+
+it('keeps task counts and completion isolated as the current type changes', () => {
+  const worker = workerWithStatuses(['done', 'done', 'open', 'open']);
+  const onboarding = worker.engagements[0];
+  const offboarding = {
+    ...onboarding, id: 'offboarding', type: 'offboarding' as const,
+    issues: [{ id: 'exit', status: 'done' as const }],
+  };
+  worker.engagements = [offboarding, onboarding];
+  expect(getWorkerIssueCount(worker)).toBe(1);
+  expect(getWorkerHealth(worker).percentage).toBe(100);
+  worker.engagements = [{ ...onboarding, id: 'team', type: 'transfer', issues: [] }, offboarding, onboarding];
+  expect(getWorkerIssueCount(worker)).toBe(4);
+  expect(getWorkerHealth(worker).percentage).toBe(50);
+  worker.engagements = [onboarding, offboarding];
+  expect(getWorkerIssueCount(worker)).toBe(4);
+  expect(getWorkerHealth(worker).percentage).toBe(50);
+  // Summary responses use the same phase boundaries as full detail responses.
+  for (const engagement of worker.engagements) {
+    engagement.issueCounts = engagement.issues?.map((issue) => ({ status: issue.status, count: 1 }));
+    engagement.issues = undefined;
+  }
+  expect(getWorkerIssueCount(worker)).toBe(4);
+  expect(getWorkerHealth(worker).percentage).toBe(50);
+});

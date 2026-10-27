@@ -29,9 +29,28 @@ function patchEngagementType(
 
   return workers.map((worker) => ({
     ...worker,
-    engagements: worker.engagements.map((engagement) =>
-      engagementIds.has(engagement.id) ? { ...engagement, type } : engagement
-    ),
+    engagements: worker.engagements.flatMap((engagement) => {
+      if (!engagementIds.has(engagement.id)) return [engagement];
+      if ((engagement.type === 'offboarding') !== (type === 'offboarding')) {
+        // Match the server's separate phase creation without relabelling history.
+        return [
+          {
+            ...engagement,
+            id: `pending:${engagement.id}:${type}`,
+            type,
+            status:
+              type === 'transfer'
+                ? ('completed' as const)
+                : ('pending' as const),
+            issues: [],
+            issueCounts: [],
+            templateApplication: null,
+          },
+          engagement,
+        ];
+      }
+      return [{ ...engagement, type }];
+    }),
   }));
 }
 

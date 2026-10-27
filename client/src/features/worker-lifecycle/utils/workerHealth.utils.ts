@@ -1,3 +1,4 @@
+import { engagementsForTaskPhase } from './taskPhase';
 import type { WorkerRecord } from '../types/index.types';
 
 export type WorkerHealthLevel = 'green' | 'orange' | 'red' | 'neutral';
@@ -9,8 +10,8 @@ export type WorkerHealth = {
   level: WorkerHealthLevel;
 };
 
-function collectWorkerIssueCounts(worker: WorkerRecord) {
-  return worker.engagements.flatMap(
+function collectWorkerIssueCounts(worker: Pick<WorkerRecord, 'engagements'>) {
+  return engagementsForTaskPhase(worker.engagements).flatMap(
     (engagement) =>
       engagement.issueCounts ??
       (engagement.issues ?? []).map((issue) => ({
@@ -20,7 +21,9 @@ function collectWorkerIssueCounts(worker: WorkerRecord) {
   );
 }
 
-export function getWorkerIssueCount(worker: WorkerRecord): number {
+export function getWorkerIssueCount(
+  worker: Pick<WorkerRecord, 'engagements'>
+): number {
   return collectWorkerIssueCounts(worker).reduce(
     (total, issue) =>
       total + (issue.status === 'not_applicable' ? 0 : issue.count),
@@ -28,7 +31,9 @@ export function getWorkerIssueCount(worker: WorkerRecord): number {
   );
 }
 
-export function getWorkerHealth(worker: WorkerRecord): WorkerHealth {
+export function getWorkerHealth(
+  worker: Pick<WorkerRecord, 'engagements'>
+): WorkerHealth {
   const counts = collectWorkerIssueCounts(worker).filter(
     (issue) => !['cancelled', 'not_applicable'].includes(issue.status)
   );
