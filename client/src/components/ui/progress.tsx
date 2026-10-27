@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 function Progress({
   className,
   value,
+  children,
   ...props
 }: React.ComponentProps<typeof ProgressPrimitive.Root>) {
   return (
@@ -25,6 +26,7 @@ function Progress({
         className="absolute inset-y-0 left-0 bg-primary transition-[width] duration-300 ease-out motion-reduce:transition-none"
         style={{ width: `${Math.min(100, Math.max(0, value ?? 0))}%` }}
       />
+      {children}
     </ProgressPrimitive.Root>
   );
 }

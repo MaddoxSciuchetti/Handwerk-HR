@@ -59,3 +59,19 @@ it('starts a new run at zero and does not count pending automations', () => {
     }).finishedIds
   ).toEqual([]);
 });
+
+it('tracks active tasks through stale snapshots and completion', () => {
+  const started = mergeAutomationProgress(null, {
+    ...run,
+    tasks: [{ id: 'a', title: 'A', sequence: 'microsoft_send_email', status: 'in_progress' }],
+  });
+  expect(started.startedIds).toEqual(['a']);
+  expect(started.finishedIds).toEqual([]);
+  const stale = mergeAutomationProgress(started, { ...run, tasks: [] });
+  expect(stale.startedIds).toEqual(['a']);
+  const finished = mergeAutomationProgress(stale, {
+    ...run, outcomes: [{ issueId: 'a', status: 'completed' }],
+  });
+  expect(finished.startedIds).toEqual(['a']);
+  expect(finished.finishedIds).toEqual(['a']);
+});

@@ -762,13 +762,25 @@ it('fills the live progress bar as individual automation outcomes arrive', async
     })
   );
   let outcomes: Array<{ issueId: string; status: string }> = [];
+  let tasks: Array<{
+    id: string;
+    title: string;
+    sequence: string;
+    status: string;
+  }> = [];
   mocks.savedRun.mockImplementation(async () => {
     const input = mocks.apply.mock.calls[0]?.[2];
     return input
       ? {
           idempotencyKey: input.idempotencyKey,
           templateName: 'Automatisch',
-          result: { count: 2, issueIds: ['a', 'b'], outcomes, running: true },
+          result: {
+            count: 2,
+            issueIds: ['a', 'b'],
+            outcomes,
+            tasks,
+            running: true,
+          },
         }
       : null;
   });
@@ -778,6 +790,32 @@ it('fills the live progress bar as individual automation outcomes arrive', async
     screen.getByRole('button', { name: 'Automatisierung starten' })
   );
   expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '0');
+  tasks = [
+    {
+      id: 'a',
+      title: 'A',
+      sequence: 'microsoft_send_email',
+      status: 'in_progress',
+    },
+  ];
+  await waitFor(
+    () => {
+      expect(screen.getByRole('progressbar')).toHaveAttribute(
+        'aria-valuenow',
+        '25'
+      );
+      expect(screen.getByRole('progressbar')).toHaveAttribute(
+        'aria-valuetext',
+        '0 von 2 Aufgaben bearbeitet · 1 in Bearbeitung'
+      );
+      expect(
+        screen
+          .getByRole('progressbar')
+          .querySelector('.automation-progress-active')
+      ).toBeInTheDocument();
+    },
+    { timeout: 2500 }
+  );
   outcomes = [{ issueId: 'a', status: 'completed' }];
   await waitFor(
     () =>
@@ -1263,3 +1301,39 @@ it.each(['failed', 'pending'])(
     expect(mocks.dismiss).not.toHaveBeenCalled();
   }
 );
+
+it('creeps unevenly within active tasks and reserves completion for real updates', () => {
+  vi.useFakeTimers();
+  const random = vi.spyOn(Math, 'random').mockReturnValue(0.5);
+  const view = renderWithProviders(
+    <TemplateAutomationProgress mocked={false} synchronizing={false} finishedCount={1} activeCount={1} totalCount={4} />
+  );
+  const value = () => Number(screen.getByRole('progressbar').getAttribute('aria-valuenow'));
+  try {
+    expect(value()).toBe(37.5);
+    act(() => vi.advanceTimersByTime(2000));
+    const first = value();
+    expect(first).toBeGreaterThan(37.5);
+    random.mockReturnValue(0.9);
+    act(() => vi.advanceTimersByTime(2000));
+    const second = value();
+    expect(second).toBeGreaterThan(first);
+    expect(second - first).not.toBeCloseTo(first - 37.5, 5);
+    act(() => vi.advanceTimersByTime(600000));
+    expect(value()).toBeLessThan(50);
+    view.rerender(
+      <TemplateAutomationProgress mocked={false} synchronizing={false} finishedCount={2} activeCount={0} totalCount={4} />
+    );
+    expect(value()).toBe(50);
+    act(() => vi.advanceTimersByTime(60000));
+    expect(value()).toBe(50);
+    view.rerender(
+      <TemplateAutomationProgress mocked={false} synchronizing={false} completed finishedCount={4} totalCount={4} />
+    );
+    expect(value()).toBe(100);
+  } finally {
+    view.unmount();
+    random.mockRestore();
+    vi.useRealTimers();
+  }
+});
