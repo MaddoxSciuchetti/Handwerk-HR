@@ -1,6 +1,7 @@
 import Tasks from '@/features/all-tasks/components/Tasks';
 import type { IssueResponse } from '@/features/all-tasks/types/index.types';
 import queryClient from '@/config/query.client';
+import { FETCHDESCRIPTION } from '@/features/all-tasks/consts/query.consts';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithAppQueryClient } from 'test-unit/test-utils';
@@ -172,7 +173,7 @@ describe('Aufgaben (all tasks) — row selection & bulk delete', () => {
     );
   });
 
-  it('places confirmation tasks before the normal task list', async () => {
+  it('keeps task positions after edits and completion, including confirmation tasks', async () => {
     taskStore.remaining[1].kind = 'contract_confirm';
     renderWithAppQueryClient(<Tasks />);
 
@@ -185,8 +186,31 @@ describe('Aufgaben (all tasks) — row selection & bulk delete', () => {
         ?.querySelectorAll('tr') ?? []
     );
     expect(rows.map((row) => row.textContent)).toEqual([
-      expect.stringContaining('Beta Aufgabe'),
       expect.stringContaining('Alpha Aufgabe'),
+      expect.stringContaining('Beta Aufgabe'),
+    ]);
+
+    taskStore.remaining = taskStore.remaining.map((task, index) =>
+      index === 0
+        ? {
+            ...task,
+            title: 'Edited Aufgabe',
+            status: 'done',
+            updatedAt: '2026-10-27T12:00:00.000Z',
+          }
+        : task
+    );
+    await queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] });
+    await screen.findByText('Edited Aufgabe');
+    const updatedRows = Array.from(
+      screen
+        .getByText('Edited Aufgabe')
+        .closest('tbody')
+        ?.querySelectorAll('tr') ?? []
+    );
+    expect(updatedRows.map((row) => row.textContent)).toEqual([
+      expect.stringContaining('Edited Aufgabe'),
+      expect.stringContaining('Beta Aufgabe'),
     ]);
   });
 

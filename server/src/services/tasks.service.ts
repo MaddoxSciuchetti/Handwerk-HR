@@ -75,7 +75,8 @@ export const queryTasks = async (orgId: string, viewerUserId: string) => {
                 issueVisibleToViewer(viewerUserId),
             ],
         },
-        orderBy: { createdAt: "desc" },
+        // Tasks created together need an immutable tie-breaker across updates.
+        orderBy: [{ createdAt: "desc" }, { id: "asc" }],
         include: {
             assignee: {
                 select: {

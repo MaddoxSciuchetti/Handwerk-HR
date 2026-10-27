@@ -25,7 +25,6 @@ import {
 } from 'react';
 import { useFetchTasks } from '../hooks/useFetchTasks';
 import { useTaskSidebar } from '../hooks/useTaskSidebar';
-import { confirmationTasksFirst } from '../utilts/task-order.utils';
 import { LargeEditMode } from './LargeEditMode';
 import { ContractConfirmDialog } from '@/features/worker-task-management/components/files/ContractConfirmDialog';
 import { ContractSendDialog } from '@/features/worker-task-management/components/files/ContractSendDialog';
@@ -48,7 +47,7 @@ function Tasks() {
             (task) => task.assigneeUserId === user?.id || task.mentioned
           ) ?? []);
 
-    return confirmationTasksFirst(visibleTasks);
+    return visibleTasks;
   }, [data, segment, user?.id]);
 
   const [contractSend, setContractSend] = useState<{

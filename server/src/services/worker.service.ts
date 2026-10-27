@@ -371,7 +371,8 @@ export async function getWorkerById(
                     },
                     issues: {
                         where: issueVisibleToViewer(viewerUserId),
-                        orderBy: { createdAt: "desc" },
+                        // Keep tasks created together in the same order after edits.
+                        orderBy: [{ createdAt: "desc" }, { id: "asc" }],
                         include: {
                             assignee: {
                                 select: {
