@@ -1,7 +1,5 @@
 import resend from "../config/resend";
 import { EMAIL_SENDER, NODE_ENV, USE_MICROSOFT_MAIL } from "../constants/env";
-import { loadMicrosoft365Config } from "../services/integrations/runtime";
-import { mailboxOnConfiguredDomain } from "../services/microsoft365/productionSender";
 import { graphMailConfigured, sendGraphMail } from "../services/graphMail";
 import { organizationMailToken } from "../services/organizationMailToken";
 import { recordSentEmail } from "./testEmailOutbox";
@@ -65,9 +63,6 @@ export const sendMail = async ({
     const recipient = getToEmail(to);
     if (USE_MICROSOFT_MAIL && via !== "resend") {
         try {
-            const config = organizationId
-                ? await loadMicrosoft365Config(organizationId)
-                : null;
             const accessToken = organizationId
                 ? await organizationMailToken(organizationId)
                 : null;
@@ -82,10 +77,7 @@ export const sendMail = async ({
             }
             const sent = await sendGraphMail({
                 to: recipient,
-                senderAddress: mailboxOnConfiguredDomain(
-                    senderAddress,
-                    config?.domain,
-                ),
+                senderAddress,
                 ...(accessToken ? { accessToken } : {}),
                 subject,
                 html,

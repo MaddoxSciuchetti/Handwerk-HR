@@ -1,7 +1,6 @@
 /**
  * Production path: INTEGRATIONS_LIVE, Microsoft Graph, simulation off.
- * Mail is sent as the domain stored on the Microsoft integration.
- * Resend is never used.
+ * Mail is sent from the address that was chosen. Resend is never used.
  */
 import { randomUUID } from "node:crypto";
 import resend from "@/config/resend";
@@ -92,8 +91,7 @@ jest.mock("@/services/microsoftTeams/graph", () => ({
 
 const ORGANIZATION_ID = "org-1";
 const DOMAIN = "firma.de";
-const ONMICROSOFT = "buero@contoso.onmicrosoft.com";
-const PRODUCTION_SENDER = "buero@firma.de";
+const SENDER = "buero@contoso.onmicrosoft.com";
 
 let issue: Record<string, unknown>;
 let worker: Record<string, unknown>;
@@ -168,7 +166,6 @@ function expectProductionMicrosoft() {
     expect(resend.emails.send).not.toHaveBeenCalled();
     const urls = calls().map((call) => call.url).join("\n");
     expect(urls).toContain("graph.microsoft.com");
-    expect(urls).not.toContain("onmicrosoft");
     expect(urls).not.toContain("api.resend.com");
     expect(calls().every((call) => {
         const host = new URL(call.url).hostname;
@@ -204,7 +201,7 @@ describe("production Microsoft automations", () => {
             integrationProvider: "microsoft_graph",
             microsoftAccountId: null,
             mailTemplateId: "template-1",
-            mailSenderAddress: ONMICROSOFT,
+            mailSenderAddress: SENDER,
             automationRecipients: null,
             mailTemplate: {
                 organizationId: ORGANIZATION_ID,
@@ -226,7 +223,7 @@ describe("production Microsoft automations", () => {
         (prisma.$transaction as jest.Mock).mockImplementation((fn) => fn(prisma));
         (prisma.$queryRaw as jest.Mock).mockResolvedValue([{ locked: true }]);
         (prisma.user.findUnique as jest.Mock).mockResolvedValue({
-            email: ONMICROSOFT,
+            email: SENDER,
         });
         (prisma.organizationIntegration.findUnique as jest.Mock).mockResolvedValue({
             enabled: true,
@@ -350,7 +347,7 @@ describe("production Microsoft automations", () => {
         actorUserId: "user-1",
     };
 
-    it("creates the Microsoft account through Graph and mails the password from the app domain", async () => {
+    it("creates the Microsoft account through Graph and mails the password from the chosen sender", async () => {
         issue.sequence = "microsoft_create_account";
         expect(await runIssueSequence(context)).toEqual({ status: "completed" });
         const created = calls().find((call) => call.url.endsWith("/v1.0/users"));
@@ -360,12 +357,12 @@ describe("production Microsoft automations", () => {
         expect(draft?.url).toContain("/messages");
     });
 
-    it("sends the new-account password mail through Graph from the app domain", async () => {
+    it("sends the new-account password mail through Graph from the chosen sender", async () => {
         issue.sequence = "microsoft_create_account";
         expect(await runIssueSequence(context)).toEqual({ status: "completed" });
         const draft = calls().find((call) => call.method === "POST" && call.url.includes("/messages") && !call.url.endsWith("/send"));
         expect(decodeURIComponent(draft?.url ?? "")).toContain(
-            `/users/${PRODUCTION_SENDER}/messages`,
+            `/users/${SENDER}/messages`,
         );
         expect(draft?.body).toContain("Dein Microsoft-365-Zugang");
         expect(draft?.body).toContain("Temporäres Passwort");
@@ -377,12 +374,12 @@ describe("production Microsoft automations", () => {
         "microsoft_send_email",
         "microsoft_send_onboarding_email",
         "microsoft_send_offboarding_email",
-    ])("sends %s through Graph from the app domain", async (sequence) => {
+    ])("sends %s through Graph from the chosen sender", async (sequence) => {
         issue.sequence = sequence;
         expect(await runIssueSequence(context)).toEqual({ status: "completed" });
         const sent = calls().find((call) => call.url.endsWith("/sendMail"));
         expect(decodeURIComponent(sent?.url ?? "")).toContain(
-            `/users/${PRODUCTION_SENDER}/sendMail`,
+            `/users/${SENDER}/sendMail`,
         );
         expect(sent?.body).toContain("kollege@firma.de");
         expect(sent?.body).toContain("Willkommen Ada");
@@ -420,7 +417,7 @@ describe("production Microsoft automations", () => {
         expect(posted?.body).toContain("Willkommen Ada");
     });
 
-    it("sends the Fragebogen through Graph from the app domain", async () => {
+    it("sends the Fragebogen through Graph from the chosen sender", async () => {
         expect(
             await sendEngagementQuestionnaire({
                 organizationId: ORGANIZATION_ID,
@@ -430,7 +427,7 @@ describe("production Microsoft automations", () => {
         ).toMatchObject({ emailSent: true, mockCompleted: false });
         const draft = calls().find((call) => call.url.includes("/messages"));
         expect(decodeURIComponent(draft?.url ?? "")).toContain(
-            `/users/${PRODUCTION_SENDER}/messages`,
+            `/users/${SENDER}/messages`,
         );
         expect(draft?.body).toContain("Bitte füllen Sie den Personalfragebogen aus");
         expect(draft?.body).toContain("ada@personal.test");
