@@ -28,6 +28,7 @@ jest.mock("@/lib/prisma", () => ({
         engagementMailRecipient: { findMany: jest.fn() },
         issue: { findFirst: jest.fn(), findMany: jest.fn(), update: jest.fn(), findUniqueOrThrow: jest.fn() },
         issueAuditLog: { create: jest.fn() },
+        user: { findUnique: jest.fn() },
         $transaction: jest.fn(),
     },
 }));
@@ -103,6 +104,9 @@ describe("Microsoft staging simulation", () => {
         (prisma.$transaction as jest.Mock).mockImplementation(async (fn) =>
             fn(prisma),
         );
+        (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+            email: "hr@contoso.onmicrosoft.com",
+        });
     });
 
     afterEach(() => {

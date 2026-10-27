@@ -9,6 +9,7 @@ import {
     loadMicrosoft365Config,
     NOT_LIVE_MESSAGE,
 } from "@/services/integrations/runtime";
+import { mailboxOnConfiguredDomain } from "@/services/microsoft365/productionSender";
 import { microsoftGraphToken } from "@/services/microsoft365Account";
 import {
     applyWelcomeMailTemplate,
@@ -596,8 +597,8 @@ async function deliverMail(params: {
     template: { subject: string; body: string };
     senderAddress?: string | null;
 }): Promise<{ status: "sent" } | { status: "failed"; message: string }> {
-    const senderAddress = params.senderAddress?.trim() ?? "";
-    if (!senderAddress.includes("@")) {
+    const requestedSender = params.senderAddress?.trim() ?? "";
+    if (!requestedSender.includes("@")) {
         return { status: "failed", message: "Bitte einen Absender wählen." };
     }
     const recipients = params.recipients ?? await prisma.engagementMailRecipient.findMany({
@@ -627,6 +628,10 @@ async function deliverMail(params: {
             message: "Microsoft Graph hat die Anmeldung abgelehnt.",
         };
     }
+    const senderAddress = mailboxOnConfiguredDomain(
+        requestedSender,
+        config.domain,
+    );
     const resolved = await resolveRecipientAddresses({
         token,
         organizationId: params.organizationId,
