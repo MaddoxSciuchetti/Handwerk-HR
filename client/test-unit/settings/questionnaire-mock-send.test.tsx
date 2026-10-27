@@ -1,6 +1,6 @@
 import { QuestionnaireSendDialog } from '@/features/questionnaire/QuestionnaireSendDialog';
 import { apiJson } from '@/config/apiClient';
-import { screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from 'test-unit/test-utils';
 import { beforeEach, expect, it, vi } from 'vitest';
@@ -28,6 +28,53 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(apiJson.get).mockResolvedValue(draft);
   vi.mocked(apiJson.put).mockResolvedValue(draft);
+});
+
+it('sends with Enter after the dialog loads', async () => {
+  vi.mocked(apiJson.post).mockResolvedValue({
+    success: true,
+    data: { emailSent: true },
+  });
+  const onClose = vi.fn();
+  renderWithProviders(
+    <QuestionnaireSendDialog engagementId="engagement" onClose={onClose} />
+  );
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: 'Senden' })).toBeEnabled()
+  );
+  await userEvent.keyboard('{Enter}');
+  await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+  expect(apiJson.put).toHaveBeenCalledOnce();
+  expect(apiJson.post).toHaveBeenCalledExactlyOnceWith(
+    '/worker/engagements/engagement/questionnaire/send'
+  );
+});
+
+it('does not send with Enter while editing', async () => {
+  renderWithProviders(
+    <QuestionnaireSendDialog engagementId="engagement" onClose={vi.fn()} />
+  );
+  await userEvent.click(
+    await screen.findByRole('button', { name: 'Bearbeiten' })
+  );
+  fireEvent.keyDown(screen.getByRole('textbox', { name: 'Antwort' }), {
+    key: 'Enter',
+  });
+  expect(apiJson.post).not.toHaveBeenCalled();
+});
+
+it('does not resend a sent questionnaire with Enter', async () => {
+  vi.mocked(apiJson.get).mockResolvedValue({
+    ...draft,
+    data: { ...draft.data, sent: true, mockEnabled: false },
+  });
+  renderWithProviders(
+    <QuestionnaireSendDialog engagementId="engagement" onClose={vi.fn()} />
+  );
+  await screen.findByRole('heading', { name: 'Personalfragebogen' });
+  expect(screen.getByRole('button', { name: 'Senden' })).toBeDisabled();
+  await userEvent.keyboard('{Enter}');
+  expect(apiJson.post).not.toHaveBeenCalled();
 });
 
 it('labels mock mode and continues after simulated answers without reporting a failed email', async () => {
