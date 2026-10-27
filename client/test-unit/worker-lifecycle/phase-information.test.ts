@@ -33,5 +33,5 @@ it('uses the current type for the Information task count, including a return to 
     type: 'transfer',
     issues: [],
   } as unknown as (typeof worker.engagements)[number]);
-  expect(count()).toBe('2');
+  expect(count()).toBeUndefined();
 });

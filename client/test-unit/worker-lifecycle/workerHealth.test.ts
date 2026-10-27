@@ -130,8 +130,8 @@ it('keeps task counts and completion isolated as the current type changes', () =
   expect(getWorkerIssueCount(worker)).toBe(1);
   expect(getWorkerHealth(worker).percentage).toBe(100);
   worker.engagements = [{ ...onboarding, id: 'team', type: 'transfer', issues: [] }, offboarding, onboarding];
-  expect(getWorkerIssueCount(worker)).toBe(4);
-  expect(getWorkerHealth(worker).percentage).toBe(50);
+  expect(getWorkerIssueCount(worker)).toBe(0);
+  expect(getWorkerHealth(worker).percentage).toBeNull();
   worker.engagements = [onboarding, offboarding];
   expect(getWorkerIssueCount(worker)).toBe(4);
   expect(getWorkerHealth(worker).percentage).toBe(50);

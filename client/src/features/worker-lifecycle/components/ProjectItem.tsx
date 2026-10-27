@@ -154,7 +154,7 @@ function ProjectItem(props: ProjectItemProps) {
               props.isSelected && 'bg-muted/50'
             )}
           >
-            {issueCount}
+            {worker.engagements[0].type === 'transfer' ? '—' : issueCount}
           </TableCell>
           <TableCell
             className={cn(
@@ -162,12 +162,16 @@ function ProjectItem(props: ProjectItemProps) {
               props.isSelected && 'rounded-r-xl bg-muted/50'
             )}
           >
-            <EngagementProgressPicker
-              worker={worker}
-              workerId={worker.id}
-              engagementId={worker.engagements[0].id}
-              status={worker.engagements[0].status}
-            />
+            {worker.engagements[0].type === 'transfer' ? (
+              '—'
+            ) : (
+              <EngagementProgressPicker
+                worker={worker}
+                workerId={worker.id}
+                engagementId={worker.engagements[0].id}
+                status={worker.engagements[0].status}
+              />
+            )}
           </TableCell>
         </>
       )}

@@ -60,7 +60,7 @@ type TaskManagementProps = {
 const sectionHeaderClassName = 'h-12 py-3 pl-12 pr-2 text-sm font-medium';
 
 const TaskManagement = ({ workerId }: TaskManagementProps) => {
-  const [activeTab, setActiveTab] = useState<WorkerTab>('form');
+  const [selectedTab, setActiveTab] = useState<WorkerTab>('form');
   const [clothingAddOpen, setClothingAddOpen] = useState(false);
   const [isFileUploadOpen, setIsFileUploadOpen] = useState(false);
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
@@ -114,13 +114,16 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
     });
   };
 
-  const { data, isLoading } = useTaskData(workerId, activeTab === 'form');
+  const { data, isLoading } = useTaskData(workerId, selectedTab === 'form');
   const { displayData: allTasks } = useFilteredData(data);
   const engagements = data?.data.engagements ?? [];
   const hasOffboarding = engagements.some(
     (engagement) => engagement.type === 'offboarding'
   );
   const currentType = engagements[0]?.type;
+  const isTeam = currentType === 'transfer';
+  const activeTab =
+    isTeam && selectedTab === 'form' ? 'information' : selectedTab;
   const phaseKey = `${workerId}:${engagements[0]?.id}:${currentType}:${engagements
     .filter((engagement) => engagement.type === 'offboarding')
     .map((engagement) => engagement.id)
@@ -285,6 +288,7 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
       >
         <WorkerTabButtons
           activeTab={activeTab}
+          hideTasks={isTeam}
           onTabChange={(tab) => {
             setActiveTab(tab);
             if (tab !== 'clothing') setClothingAddOpen(false);
@@ -553,7 +557,7 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
             </TabsContent>
           </CardContent>
         </Card>
-        {largeEditMode ? (
+        {largeEditMode && !isTeam ? (
           <LargeEditMode
             editModeData={editModeData}
             setLargeEditMode={setLargeEditMode}
