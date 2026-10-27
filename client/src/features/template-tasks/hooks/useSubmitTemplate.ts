@@ -26,10 +26,7 @@ export function useSubmitTemplate(
       z.object({
         templateId: z.string().optional(),
         name: z.string().min(1, { message: 'Name ist erforderlich' }),
-        description: z
-          .string()
-          .min(1, { message: 'Beschreibung ist erforderlich' })
-          .nullable(),
+        description: z.string().nullable(),
       })
     ),
   });

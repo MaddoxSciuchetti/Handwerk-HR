@@ -91,11 +91,7 @@ export function TableSkeletonRows({
       case 'stock':
         return [name, line('w-10'), <Skeleton className="h-9 w-24" />];
       case 'templates':
-        return [
-          name,
-          line('w-48 max-w-full'),
-          <Skeleton className="ml-auto h-8 w-20 rounded-2xl" />,
-        ];
+        return [name, <Skeleton className="ml-auto h-8 w-20 rounded-2xl" />];
       case 'documents':
         return [
           <div className="h-12 w-10" />,

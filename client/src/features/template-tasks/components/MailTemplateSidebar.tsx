@@ -33,7 +33,7 @@ type MailTemplateSidebarProps = {
 
 const schema = z.object({
   name: z.string().min(1, { message: 'Name ist erforderlich' }),
-  description: z.string().min(1, { message: 'Beschreibung ist erforderlich' }),
+  description: z.string(),
 });
 
 type MailTemplateFormValues = z.infer<typeof schema>;
@@ -123,13 +123,6 @@ export function MailTemplateSidebar({
               register={register}
               name="name"
               label="Name der E-Mail"
-              labelClassName="typo-body-base"
-            />
-            <FormFields
-              errors={errors}
-              register={register}
-              name="description"
-              label="Beschreibung der E-Mail"
               labelClassName="typo-body-base"
             />
           </SidebarContent>
