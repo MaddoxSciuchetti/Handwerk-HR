@@ -360,26 +360,29 @@ export async function provisionMicrosoft365Account(params: {
         licenseSkuId: config.licenseSkuId,
     });
     if (!licensed) {
-        let deleted = false;
-        try {
-            const { response } = await graphRequest(
+        return removeUnsentAccount(
+            token,
+            created,
+            "Microsoft Graph hat die Lizenz abgelehnt.",
+        );
+    }
+
+    if (!microsoftSimulationEnabled()) {
+        const passwordMailSent = await sendPasswordMail({
+            to: worker.email,
+            firstName: worker.firstName,
+            workEmail: created.workEmail,
+            password,
+            senderAddress: params.senderAddress,
+            organizationId: params.organizationId,
+        });
+        if (!passwordMailSent) {
+            return removeUnsentAccount(
                 token,
-                `/users/${encodeURIComponent(created.externalId)}`,
-                { method: "DELETE" },
+                created,
+                "Die Passwortmail konnte nicht gesendet werden.",
             );
-            deleted = response.status === 204;
-            if (!deleted) {
-                console.error("Microsoft 365 account cleanup not confirmed", response.status);
-            }
-        } catch {
-            console.error("Microsoft 365 account cleanup request failed");
         }
-        return {
-            status: "failed",
-            message: deleted
-                ? "Microsoft Graph hat die Lizenz abgelehnt."
-                : `Microsoft Graph hat die Lizenz abgelehnt. Die Löschung des neu erstellten Kontos ${created.workEmail} (ID: ${created.externalId}) wurde nicht bestätigt. Bitte prüfe das Konto in Microsoft 365, bevor du die Kontoerstellung erneut ausführst.`,
-        };
     }
 
     await prisma.$transaction(async (tx) => {
@@ -407,27 +410,45 @@ export async function provisionMicrosoft365Account(params: {
         });
     });
 
-    if (microsoftSimulationEnabled()) {
-        return {
-            status: "created",
-            workEmail: created.workEmail,
-            externalId: created.externalId,
-            passwordMailSent: false,
-        };
-    }
-    const passwordMailSent = await sendPasswordMail({
-        to: worker.email,
-        firstName: worker.firstName,
-        workEmail: created.workEmail,
-        password,
-        senderAddress: params.senderAddress,
-        organizationId: params.organizationId,
-    });
-
     return {
         status: "created",
         workEmail: created.workEmail,
         externalId: created.externalId,
-        passwordMailSent,
+        passwordMailSent: !microsoftSimulationEnabled(),
+    };
+}
+
+async function deleteCreatedUser(token: string, externalId: string) {
+    try {
+        const { response } = await graphRequest(
+            token,
+            `/users/${encodeURIComponent(externalId)}`,
+            { method: "DELETE" },
+        );
+        const deleted = response.status === 204;
+        if (!deleted) {
+            console.error(
+                "Microsoft 365 account cleanup not confirmed",
+                response.status,
+            );
+        }
+        return deleted;
+    } catch {
+        console.error("Microsoft 365 account cleanup request failed");
+        return false;
+    }
+}
+
+async function removeUnsentAccount(
+    token: string,
+    created: { externalId: string; workEmail: string },
+    reason: string,
+): Promise<Extract<ProvisionMicrosoft365Result, { status: "failed" }>> {
+    const deleted = await deleteCreatedUser(token, created.externalId);
+    return {
+        status: "failed",
+        message: deleted
+            ? reason
+            : `${reason} Die Löschung des neu erstellten Kontos ${created.workEmail} (ID: ${created.externalId}) wurde nicht bestätigt. Bitte prüfe das Konto in Microsoft 365, bevor du die Kontoerstellung erneut ausführst.`,
     };
 }

@@ -261,7 +261,7 @@ describe("microsoft 365 account", () => {
         },
     );
 
-    it("keeps the account when the password mail fails", async () => {
+    it("removes the new account when the password mail is not sent", async () => {
         configureEnv();
         findWorker.mockResolvedValue({
             id: "worker-1",
@@ -294,7 +294,10 @@ describe("microsoft 365 account", () => {
                 );
             }
             if (url.endsWith("/assignLicense")) return jsonResponse({});
-            throw new Error(`unexpected ${url}`);
+            if (url.endsWith("/users/graph-1") && init?.method === "DELETE") {
+                return jsonResponse(null, 204);
+            }
+            throw new Error(`unexpected ${init?.method ?? "GET"} ${url}`);
         });
 
         const result = await provisionMicrosoft365Account({
@@ -303,12 +306,15 @@ describe("microsoft 365 account", () => {
             config,
         });
 
-        expect(result).toMatchObject({
-            status: "created",
-            workEmail: "ada.lovelace@firma.de",
-            passwordMailSent: false,
+        expect(result).toEqual({
+            status: "failed",
+            message: "Die Passwortmail konnte nicht gesendet werden.",
         });
-        expect(updateWorker).toHaveBeenCalled();
+        expect(updateWorker).not.toHaveBeenCalled();
+        expect(fetchSpy).toHaveBeenCalledWith(
+            "https://graph.microsoft.com/v1.0/users/graph-1",
+            expect.objectContaining({ method: "DELETE" }),
+        );
         fetchSpy.mockRestore();
     });
 
