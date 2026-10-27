@@ -1,5 +1,9 @@
 import API from '@/config/apiClient';
-import { EngagementType, WorkerRecord } from '../types/index.types';
+import {
+  EngagementType,
+  WorkerEngagement,
+  WorkerRecord,
+} from '../types/index.types';
 
 type WorkerRecordResponse = {
   success: boolean;
@@ -65,10 +69,19 @@ export const addWorker = async (
   return response;
 };
 
+export type EngagementUpdateResponse = {
+  success: boolean;
+  data: Pick<WorkerEngagement, 'id' | 'type' | 'status'> &
+    Partial<WorkerEngagement>;
+};
+
 export const updateEngagement = async (
   workerId: string,
   engagementId: string,
   data: { status?: string; type?: EngagementType; responsibleUserId?: string }
-): Promise<void> => {
-  await API.put(`worker/${workerId}/engagements/${engagementId}`, data);
+): Promise<EngagementUpdateResponse> => {
+  return API.put<EngagementUpdateResponse, EngagementUpdateResponse>(
+    `/worker/${workerId}/engagements/${engagementId}`,
+    data
+  );
 };

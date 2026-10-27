@@ -1,10 +1,14 @@
-import queryClient from '@/config/query.client';
 import { WORKERBYID } from '@/features/worker-task-management/consts/query-key.consts';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { updateEngagement } from '../api';
 import { ALL_WORKER_DATA } from '../consts/query-key.consts';
-import type { EngagementType, WorkerRecord } from '../types/index.types';
+import type {
+  EngagementType,
+  WorkerDetailResponse,
+  WorkerRecord,
+} from '../types/index.types';
+import { cacheSavedEngagement } from '../utils/cacheSavedEngagement';
 
 type SwitchTarget = {
   workerId: string;
@@ -55,12 +59,60 @@ function patchEngagementType(
 }
 
 export function useSwitchEngagementType() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ items, type }: SwitchEngagementTypeVariables) =>
       Promise.all(
-        items.map((item) =>
-          updateEngagement(item.workerId, item.engagementId, { type })
-        )
+        items.map(async (item) => {
+          const response = await updateEngagement(
+            item.workerId,
+            item.engagementId,
+            { type }
+          );
+          // Publish each saved phase immediately, including during bulk changes.
+          // Cancel old reads so they cannot overwrite the confirmed response.
+          await Promise.all([
+            queryClient.cancelQueries({ queryKey: [ALL_WORKER_DATA] }),
+            queryClient.cancelQueries({
+              queryKey: [WORKERBYID, item.workerId],
+            }),
+          ]);
+          queryClient.setQueryData<WorkerRecord[]>(
+            [ALL_WORKER_DATA],
+            (workers) =>
+              workers?.map((worker) =>
+                worker.id === item.workerId
+                  ? {
+                      ...worker,
+                      engagements: cacheSavedEngagement(
+                        worker.engagements,
+                        response.data
+                      ),
+                    }
+                  : worker
+              )
+          );
+          for (const key of [
+            [WORKERBYID, item.workerId],
+            [ALL_WORKER_DATA, 'detail', item.workerId],
+          ]) {
+            queryClient.setQueryData<WorkerDetailResponse>(key, (previous) =>
+              previous
+                ? {
+                    ...previous,
+                    data: {
+                      ...previous.data,
+                      engagements: cacheSavedEngagement(
+                        previous.data.engagements,
+                        response.data
+                      ),
+                    },
+                  }
+                : undefined
+            );
+          }
+          return response;
+        })
       ),
     onMutate: async ({ items, type }) => {
       const previousWorkers = queryClient.getQueryData<WorkerRecord[]>([

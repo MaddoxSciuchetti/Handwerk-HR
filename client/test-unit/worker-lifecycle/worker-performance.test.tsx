@@ -71,7 +71,11 @@ describe('worker mutation performance', () => {
     vi.mocked(updateEngagement).mockImplementation(
       () =>
         new Promise((resolve) => {
-          finish = resolve;
+          finish = () =>
+            resolve({
+              success: true,
+              data: { id: 'engagement', type: 'onboarding', status: 'pending' },
+            });
         })
     );
     vi.spyOn(queryClient, 'invalidateQueries').mockImplementation(

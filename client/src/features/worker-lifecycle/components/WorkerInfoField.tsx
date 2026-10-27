@@ -6,6 +6,8 @@ import { useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react';
 import { WORKERBYID } from '@/features/worker-task-management/consts/query-key.consts';
 import { ALL_WORKER_DATA } from '../consts/query-key.consts';
 import type { WorkerEngagementInfoItem } from '../consts/worker-engagement-info.consts';
+import { useSwitchEngagementType } from '../hooks/useSwitchEngagementType';
+import type { EngagementType } from '../types/index.types';
 
 const fieldClass =
   'h-8 w-full min-w-0 rounded-md border-transparent bg-muted/50 px-3 text-right text-sm shadow-none focus:border-border focus:bg-muted focus-visible:border-border focus-visible:ring-0 dark:bg-muted/50 dark:focus:bg-muted';
@@ -24,14 +26,10 @@ export default function WorkerInfoField({ workerId, item }: Props) {
   const setDraft = (value: string) => setEdit({ source: item.value, value });
   const [error, setError] = useState('');
   const skipSave = useRef(false);
+  const phaseMutation = useSwitchEngagementType();
 
   const mutation = useMutation({
     mutationFn: (value: string | null) => {
-      if (item.editable === 'phase') {
-        return API.put(`/worker/${workerId}/engagements/${item.engagementId}`, {
-          type: value,
-        });
-      }
       const payload =
         item.editable === 'workwearSize'
           ? { workwearSize: { itemName: item.itemName, size: value ?? '' } }
@@ -80,7 +78,7 @@ export default function WorkerInfoField({ workerId, item }: Props) {
 
   const shared = {
     'aria-label': item.label,
-    disabled: mutation.isPending,
+    disabled: mutation.isPending || phaseMutation.isPending,
     value: draft,
     className: cn(
       fieldClass,
@@ -91,7 +89,7 @@ export default function WorkerInfoField({ workerId, item }: Props) {
       setDraft(event.target.value);
       setError('');
     },
-    onBlur: save,
+    onBlur: item.editable === 'phase' ? undefined : save,
     onKeyDown: (event: KeyboardEvent<HTMLInputElement | HTMLSelectElement>) => {
       if (event.key === 'Enter') {
         event.preventDefault();
@@ -111,7 +109,27 @@ export default function WorkerInfoField({ workerId, item }: Props) {
       <span className="text-sm text-muted-foreground">{item.label}</span>
       <div className="min-w-0">
         {item.editable === 'phase' ? (
-          <select {...shared}>
+          <select
+            {...shared}
+            onChange={(event) => {
+              const type = event.target.value as EngagementType;
+              setDraft(type);
+              setError('');
+              if (type === item.value || !item.engagementId) return;
+              phaseMutation.mutate(
+                {
+                  items: [{ workerId, engagementId: item.engagementId }],
+                  type,
+                },
+                {
+                  onError: () => {
+                    setDraft(item.value);
+                    setError(`${item.label} konnte nicht gespeichert werden.`);
+                  },
+                }
+              );
+            }}
+          >
             <option value="onboarding">Onboarding</option>
             <option value="offboarding">Offboarding</option>
             <option value="transfer">Team</option>
