@@ -58,6 +58,7 @@ export function TemplateApplyPrompt({
   const [requestKey, setRequestKey] = useState(() => crypto.randomUUID());
   const [synchronizing, setSynchronizing] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [fadingEngagement, setFadingEngagement] = useState<string | null>(null);
   const [mockedRun, setMockedRun] = useState(false);
   const [lastRun, setLastRun] = useState<{
     target: TemplateApplyTarget;
@@ -292,7 +293,7 @@ export function TemplateApplyPrompt({
     setOpen(false);
   };
   const dismissRun = useCallback(
-    (target: TemplateApplyTarget) => {
+    (target: Pick<TemplateApplyTarget, 'workerId' | 'engagementId'>) => {
       const { workerId, engagementId } = target;
       sessionStorage.setItem(dismissKey(engagementId), '1');
       setOpen(false);
@@ -311,6 +312,7 @@ export function TemplateApplyPrompt({
           );
           setResultsDismissed(false);
           setOpen(true);
+          setFadingEngagement(null);
           toast.error(
             error.message || 'Leiste konnte nicht geschlossen werden'
           );
@@ -329,11 +331,48 @@ export function TemplateApplyPrompt({
       (outcome) => outcome.status === 'completed'
     )
   );
+  const completedWorkerId = completedTarget?.workerId;
+  const completedEngagementId = completedTarget?.engagementId;
   useEffect(() => {
-    if (running || !hasVisibleRun || !succeeded || !completedTarget) return;
-    const timer = window.setTimeout(() => dismissRun(completedTarget), 1500);
-    return () => window.clearTimeout(timer);
-  }, [running, hasVisibleRun, succeeded, completedTarget, dismissRun]);
+    if (
+      running ||
+      open ||
+      !hasVisibleRun ||
+      !succeeded ||
+      !completedWorkerId ||
+      !completedEngagementId
+    )
+      return;
+    let fadeTimer: ReturnType<typeof setTimeout>;
+    const holdTimer = window.setTimeout(() => {
+      setFadingEngagement(completedEngagementId);
+      fadeTimer = window.setTimeout(
+        () =>
+          dismissRun({
+            workerId: completedWorkerId,
+            engagementId: completedEngagementId,
+          }),
+        450
+      );
+    }, 1500);
+    return () => {
+      window.clearTimeout(holdTimer);
+      window.clearTimeout(fadeTimer);
+    };
+  }, [
+    running,
+    open,
+    hasVisibleRun,
+    succeeded,
+    completedWorkerId,
+    completedEngagementId,
+    dismissRun,
+  ]);
+  const fading =
+    !running &&
+    !open &&
+    succeeded &&
+    fadingEngagement === completedEngagementId;
   if (!running && hiddenEngagement && !selected) return null;
   if (
     !running &&
@@ -577,6 +616,7 @@ export function TemplateApplyPrompt({
                         engagementId={selectedId!}
                         busy={apply.isPending}
                         onApply={(runAutomation, choices) => {
+                          setFadingEngagement(null);
                           setSynchronizing(false);
                           setShowResults(false);
                           setMockedRun(Boolean(preview.data?.mocked));
@@ -633,8 +673,12 @@ export function TemplateApplyPrompt({
         </div>
       </div>
       <div
+        data-state={fading ? 'fading' : 'visible'}
         className={cn(
-          'relative flex h-11 shrink-0 items-center overflow-hidden rounded-full border border-border bg-card shadow-lg transition-[width] duration-500 ease-in-out motion-reduce:transition-none',
+          'relative flex h-11 shrink-0 items-center overflow-hidden rounded-full border border-border bg-card shadow-lg transition-[width,opacity,transform] duration-[450ms] ease-out motion-reduce:transition-none',
+          fading
+            ? 'pointer-events-none translate-y-1 opacity-0'
+            : 'translate-y-0 opacity-100',
           running || hasVisibleRun ? 'w-80 max-w-[calc(100vw-2rem)]' : 'w-11'
         )}
       >
@@ -651,6 +695,7 @@ export function TemplateApplyPrompt({
           aria-expanded={open && !running}
           onClick={() => {
             if (hasVisibleRun) {
+              setFadingEngagement(null);
               void savedRun.refetch();
               setShowResults(true);
               setOpen((current) => (showResults ? !current : true));
@@ -694,6 +739,7 @@ export function TemplateApplyPrompt({
             aria-label="Ergebnisse anzeigen"
             aria-expanded={open && showResults && !running}
             onClick={() => {
+              setFadingEngagement(null);
               void savedRun.refetch();
               setShowResults(true);
               setOpen((current) => (showResults ? !current : true));

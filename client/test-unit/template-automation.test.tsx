@@ -1204,7 +1204,8 @@ it('hides the finished bar after it is closed and keeps it hidden on a later vis
 describe('Microsoft removal without a separate work email', () => {
   beforeEach(() => {
     mocks.preview.mockResolvedValue({
-      id: 'automated', name: 'Offboarding',
+      id: 'automated',
+      name: 'Offboarding',
       items: [{ ...automation, sequence: 'microsoft_deactivate_account' }],
     });
   });
@@ -1212,16 +1213,23 @@ describe('Microsoft removal without a separate work email', () => {
   it('starts deactivation without asking for an email', async () => {
     renderWithProviders(<TemplateApplyPrompt targets={[target]} />);
     const user = await selectTemplate();
-    expect(screen.queryByRole('textbox', { name: 'Arbeits-E-Mail' })).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Automatisierung starten' }));
-    await waitFor(() => expect(mocks.apply).toHaveBeenCalledWith(
-      'worker', 'automated', expect.not.objectContaining({
-        workEmail: expect.anything(),
-      })
-    ));
+    expect(
+      screen.queryByRole('textbox', { name: 'Arbeits-E-Mail' })
+    ).not.toBeInTheDocument();
+    await user.click(
+      screen.getByRole('button', { name: 'Automatisierung starten' })
+    );
+    await waitFor(() =>
+      expect(mocks.apply).toHaveBeenCalledWith(
+        'worker',
+        'automated',
+        expect.not.objectContaining({
+          workEmail: expect.anything(),
+        })
+      )
+    );
   });
 });
-
 
 it.each([
   { action: 'Aufgaben erstellen', template: 'Manuell', outcomes: [] },
@@ -1248,6 +1256,12 @@ it.each([
         '100'
       )
     );
+    expect(mocks.dismiss).not.toHaveBeenCalled();
+    const bar = screen.getByRole('progressbar').closest('[data-state="visible"]');
+    expect(bar).toBeInTheDocument();
+    await waitFor(() => expect(bar).toHaveAttribute('data-state', 'fading'), { timeout: 1900 });
+    expect(bar).toHaveClass('opacity-0');
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '100');
     expect(mocks.dismiss).not.toHaveBeenCalled();
     await waitFor(
       () => expect(screen.queryByRole('progressbar')).not.toBeInTheDocument(),
