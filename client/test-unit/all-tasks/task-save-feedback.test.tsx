@@ -5,6 +5,9 @@ import { useTasks } from '@/features/all-tasks/hooks/useTasks';
 import { EMPTY_TASK_EDIT_STATE } from '@/features/all-tasks/hooks/useTaskSidebar';
 
 const { updateTask } = vi.hoisted(() => ({ updateTask: vi.fn() }));
+vi.mock('@/features/all-tasks/hooks/useFetchEngagements', () => ({
+  useFetchEngagements: () => ({ data: [] }),
+}));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock('@/features/all-tasks/hooks/useCreateTask', () => ({
   useCreateTask: () => ({ mutateAsync: vi.fn(), isPending: false }),

@@ -2,7 +2,7 @@ import { tryCatch } from '@/lib/trycatch';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { Dispatch, SetStateAction } from 'react';
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import type { IssueStatusValue } from '../consts/issue-status.consts';
 import {
@@ -15,6 +15,7 @@ import { useCreateTask } from './useCreateTask';
 import type { TaskEditState } from './useTaskSidebar';
 import { useUpdateTask } from './useUpdateTask';
 import { useTaskAutosave } from './useTaskAutosave';
+import { useFetchEngagements } from './useFetchEngagements';
 
 export type TaskCommentDraft = {
   body: string;
@@ -68,6 +69,14 @@ export function useTasks(
     },
     resolver: zodResolver(taskFormSchema),
   });
+  const workerEngagementId = useWatch({ control, name: 'workerEngagementId' });
+  const { data: engagements = [] } = useFetchEngagements();
+  const storedMicrosoftAccountId =
+    taskEditState.microsoftAccountId?.trim() ||
+    engagements
+      .find((engagement) => engagement.id === workerEngagementId)
+      ?.microsoftAccountId?.trim() ||
+    '';
 
   useEffect(() => {
     setValue('status', (taskEditState.status || 'open') as IssueStatusValue);
@@ -120,6 +129,17 @@ export function useTasks(
     let saved = false;
     if (taskState !== 'edit' || !taskEditState.taskId) return false;
     await handleSubmit(async (data) => {
+      if (
+        data.sequence === 'microsoft_deactivate_account' &&
+        !data.microsoftAccountId?.trim() &&
+        !storedMicrosoftAccountId
+      ) {
+        setError('microsoftAccountId', {
+          type: 'required',
+          message: 'Bitte gib eine Microsoft-Konto-ID ein',
+        });
+        return;
+      }
       try {
         if (options?.autoSave) {
           if (!(await autosave.flush())) return;
@@ -144,6 +164,7 @@ export function useTasks(
     register,
     control,
     errors,
+    storedMicrosoftAccountId,
     setValue,
     onSubmit,
     saveForAction,

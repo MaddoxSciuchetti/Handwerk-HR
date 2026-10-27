@@ -59,6 +59,7 @@ export function TaskSidebar({
     register,
     control,
     errors,
+    storedMicrosoftAccountId,
     onSubmit,
     saveForAction,
     isTaskSaving,
@@ -258,6 +259,7 @@ export function TaskSidebar({
                 </div>
                 <MicrosoftAccountIdField
                   sequence={sequence}
+                  storedMicrosoftAccountId={storedMicrosoftAccountId}
                   register={register}
                   errors={errors}
                 />
