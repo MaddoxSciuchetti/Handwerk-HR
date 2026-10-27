@@ -312,6 +312,88 @@ describe("microsoft 365 account", () => {
         fetchSpy.mockRestore();
     });
 
+    it("numbers the work address when Microsoft already has that sign-in name", async () => {
+        configureEnv();
+        findWorker.mockResolvedValue({
+            id: "worker-1",
+            firstName: "Maddox",
+            lastName: "Sciuchetti",
+            email: "maddox@personal.test",
+            microsoftEmail: null,
+            externalAccounts: [],
+        });
+        const updateWorker = jest.fn();
+        transaction.mockImplementation(async (run: (tx: unknown) => unknown) =>
+            run({
+                worker: { update: updateWorker },
+                workerExternalAccount: { upsert: jest.fn() },
+            }),
+        );
+        mail.mockResolvedValue({ data: { id: "mail-1" }, error: null });
+        const createdAddresses: string[] = [];
+        const fetchSpy = jest.spyOn(global, "fetch").mockImplementation(async (input, init) => {
+            const url = String(input);
+            if (url.includes("/oauth2/v2.0/token")) {
+                return jsonResponse({ access_token: "token" });
+            }
+            if (url.endsWith("/users") && init?.method === "POST") {
+                const body = JSON.parse(String(init.body)) as {
+                    userPrincipalName: string;
+                };
+                createdAddresses.push(body.userPrincipalName);
+                if (createdAddresses.length === 1) {
+                    return jsonResponse(
+                        {
+                            error: {
+                                code: "Request_BadRequest",
+                                message:
+                                    "Another object with the same value for property userPrincipalName already exists.",
+                                details: [
+                                    {
+                                        code: "ObjectConflict",
+                                        message:
+                                            "Another object with the same value for property userPrincipalName already exists.",
+                                        target: "userPrincipalName",
+                                    },
+                                ],
+                            },
+                        },
+                        400,
+                    );
+                }
+                return jsonResponse(
+                    { id: "graph-2", userPrincipalName: body.userPrincipalName },
+                    201,
+                );
+            }
+            if (url.endsWith("/assignLicense") && init?.method === "POST") {
+                return jsonResponse({ id: "graph-2" });
+            }
+            throw new Error(`unexpected ${init?.method ?? "GET"} ${url}`);
+        });
+
+        const result = await provisionMicrosoft365Account({
+            organizationId: "org-1",
+            workerId: "worker-1",
+            config,
+        });
+
+        expect(createdAddresses).toEqual([
+            "maddox.sciuchetti@firma.de",
+            "maddox.sciuchetti2@firma.de",
+        ]);
+        expect(result).toMatchObject({
+            status: "created",
+            workEmail: "maddox.sciuchetti2@firma.de",
+            externalId: "graph-2",
+        });
+        expect(updateWorker).toHaveBeenCalledWith({
+            where: { id: "worker-1" },
+            data: { microsoftEmail: "maddox.sciuchetti2@firma.de" },
+        });
+        fetchSpy.mockRestore();
+    });
+
     it("does not create another user when the account already exists", async () => {
         configureEnv();
         findWorker.mockResolvedValue({

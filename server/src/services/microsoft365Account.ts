@@ -1,3 +1,4 @@
+import { isMicrosoftAddressConflict } from "./microsoft365/addressConflict";
 import { microsoftAppAuthError } from "./microsoft365/authError";
 import { randomBytes } from "crypto";
 import type { Microsoft365EnvKey } from "@/constants/env";
@@ -240,7 +241,7 @@ async function createGraphUser(params: {
             }),
         });
 
-        if (response.status === 409) continue;
+        if (isMicrosoftAddressConflict(response.status, payload)) continue;
 
         if (!response.ok) {
             console.error(
