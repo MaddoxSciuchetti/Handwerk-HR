@@ -16,6 +16,7 @@ jest.mock("@/constants/env", () => ({
 }));
 jest.mock("@/lib/prisma", () => ({
     prisma: {
+        user: { findUnique: jest.fn() },
         workerEngagement: { findFirst: jest.fn(), update: jest.fn() },
         questionnaireSubmission: { create: jest.fn() },
         issue: { createMany: jest.fn() },
@@ -63,6 +64,9 @@ beforeEach(() => {
     (prisma.$transaction as jest.Mock).mockImplementation((callback) =>
         callback(prisma),
     );
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        email: "hr@firma.de",
+    });
     (sendMail as jest.Mock).mockResolvedValue({ error: null });
 });
 
@@ -167,29 +171,14 @@ it("persists an engagement definition and dispatches it without changing the org
     expect(template.items).toHaveLength(seedQuestionnaireDefinition().items.length);
 });
 
-it.each([false, true])("uses the saved Microsoft sender for questionnaire delivery (retry: %s)", async (retry) => {
+it.each([false, true])("sends the questionnaire from the signed-in user (retry: %s)", async (retry) => {
     engagement.questionnaireSenderAddress = "office@example.test";
     if (retry) engagement.questionnaireSubmission = { token: "existing-token", status: "sent" };
     await sendEngagementQuestionnaire(params);
     const mailed = (sendMail as jest.Mock).mock.calls.at(-1)?.[0];
     expect(mailed).toMatchObject({
         to: "lukas@example.test",
-        senderAddress: "office@example.test",
+        senderAddress: "hr@firma.de",
     });
     expect(mailed).not.toHaveProperty("via");
-});
-
-it('overrides a legacy saved sender with the staging default on retry', async () => {
-    engagement.questionnaireSubmission = { id: 'submission', token: 'retry-token', status: 'sent' };
-    engagement.questionnaireSenderAddress = 'old@example.test';
-    process.env.APP_ENV = 'staging';
-    jest.spyOn(require('@/services/questionnaireSender'), 'defaultQuestionnaireSender').mockReturnValue('hello@example.test');
-    (sendMail as jest.Mock).mockResolvedValue({ data: { id: 'mail' }, error: null });
-    try {
-        await sendEngagementQuestionnaire(params);
-        expect(sendMail).toHaveBeenCalledWith(expect.objectContaining({ via: 'resend', senderAddress: 'hello@example.test', to: 'lukas@example.test' }));
-    } finally {
-        delete process.env.APP_ENV;
-        jest.restoreAllMocks();
-    }
 });

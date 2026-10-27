@@ -308,15 +308,9 @@ another task batch for that employee, including when switching templates. This
 requires the server mock above; normal deployments keep the one-application
 restriction. Existing demo tasks are retained.
 
-### Staging questionnaire sender
+### Questionnaire and password mail
 
-The staging backend uses `EMAIL_SENDER` (set this to the verified `hello@…`
-address) automatically for short onboarding and questionnaire sends, including
-retries of existing records. No organization sender selection is required.
-Staging is identified by `APP_ENV=staging`, `NODE_ENV=staging`, the Render service
-`BSB-Onboarding-Backend-Development`, or the configured frontend URL
-`https://bsb-onboarding-frontend-development.onrender.com`. Those questionnaire
-and new-account password messages stay on Resend. Production keeps its
-organization sender selection and, with `USE_MICROSOFT_MAIL=true`, sends both
-through Microsoft Graph. The password mail is sent from the signed-in user's
-email address.
+With `USE_MICROSOFT_MAIL=true`, the questionnaire and the new Microsoft account
+password mail are sent through Microsoft Graph. Both use the signed-in user's
+email address as the sender, including on staging. The signed-in address has to
+be an active organization mailbox.

@@ -1,7 +1,3 @@
-import {
-    defaultQuestionnaireSender,
-    stagingOnboardingMail,
-} from "@/services/questionnaireSender";
 import { FRONTENDURL, QUESTIONNAIRE_MOCK_RESPONSES } from "@/constants/env";
 import { NOT_FOUND } from "@/constants/http";
 import { prisma } from "@/lib/prisma";
@@ -139,12 +135,10 @@ async function deliverQuestionnaire(
     if (!email) return false;
     const formUrl = `${FRONTENDURL.replace(/\/$/, "")}/fragebogen/${token}`;
     const template = getQuestionnaireTemplate(formUrl);
-    const effectiveSender = defaultQuestionnaireSender() ?? senderAddress;
     try {
         const sent = await sendMail({
             to: email,
-            ...(stagingOnboardingMail() ? { via: "resend" as const } : {}),
-            ...(effectiveSender ? { senderAddress: effectiveSender } : {}),
+            ...(senderAddress ? { senderAddress } : {}),
             subject: template.subject,
             text: template.text,
             html: template.html,
@@ -155,18 +149,31 @@ async function deliverQuestionnaire(
     }
 }
 
+async function signedInSender(userId: string) {
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true },
+    });
+    const email = user?.email?.trim() ?? "";
+    return email.includes("@") ? email : null;
+}
+
 async function finishDispatch(
     email: string | null,
     token: string,
     engagementId: string,
-    senderAddress?: string | null,
+    actorUserId: string,
 ) {
     if (QUESTIONNAIRE_MOCK_RESPONSES) {
         await completeMockQuestionnaire(token, email ?? "");
         return { emailSent: false, mockCompleted: true, engagementId };
     }
     return {
-        emailSent: await deliverQuestionnaire(email, token, senderAddress),
+        emailSent: await deliverQuestionnaire(
+            email,
+            token,
+            await signedInSender(actorUserId),
+        ),
         mockCompleted: false,
         engagementId,
     };
@@ -183,7 +190,7 @@ export async function sendEngagementQuestionnaire(params: {
             engagement.worker.email,
             engagement.questionnaireSubmission.token,
             engagement.id,
-            engagement.questionnaireSenderAddress,
+            params.createdByUserId,
         );
     }
 
@@ -231,6 +238,6 @@ export async function sendEngagementQuestionnaire(params: {
         engagement.worker.email,
         token,
         engagement.id,
-        engagement.questionnaireSenderAddress,
+        params.createdByUserId,
     );
 }
