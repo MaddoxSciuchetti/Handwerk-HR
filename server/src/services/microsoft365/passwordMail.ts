@@ -1,3 +1,4 @@
+import { isStagingEnvironment } from "@/constants/stagingMail";
 import { sendMail } from "@/utils/sendMail";
 import type { PasswordMailInput, PasswordMail } from "./types";
 
@@ -53,11 +54,18 @@ export async function sendPasswordMail(
 ): Promise<boolean> {
     const template = passwordMail(input);
     const senderAddress = input.senderAddress?.trim() || "";
+    const staging = isStagingEnvironment();
     try {
         const sent = await sendMail({
             to: input.to,
-            ...(input.organizationId ? { organizationId: input.organizationId } : {}),
-            ...(senderAddress ? { senderAddress } : {}),
+            ...(staging
+                ? { via: "resend" as const }
+                : {
+                      ...(input.organizationId
+                          ? { organizationId: input.organizationId }
+                          : {}),
+                      ...(senderAddress ? { senderAddress } : {}),
+                  }),
             ...template,
         });
         if (sent.error) {
