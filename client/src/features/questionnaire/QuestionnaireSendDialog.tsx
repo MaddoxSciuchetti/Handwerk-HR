@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Pencil, Check } from 'lucide-react';
+import { Pencil, Check, X } from 'lucide-react';
 import { QuestionnaireForm } from './QuestionnaireForm';
 import { candidateItems } from './questionnairePreview';
 import {
@@ -16,7 +16,12 @@ import type {
   TemplateField,
   TemplateRepeater,
 } from '@/features/settings/questionnaire/questionnaireTemplate.types';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { apiJson } from '@/config/apiClient';
 import queryClient from '@/config/query.client';
 import { ALL_WORKER_DATA } from '@/features/worker-lifecycle/consts/query-key.consts';
@@ -186,6 +191,7 @@ export function QuestionnaireSendDialog({
       }}
     >
       <DialogContent
+        showCloseButton={false}
         aria-describedby={undefined}
         className="w-full max-w-3xl border-0 bg-transparent p-0 shadow-none sm:max-w-3xl"
         onOpenAutoFocus={(event) => {
@@ -221,10 +227,8 @@ export function QuestionnaireSendDialog({
         }}
       >
         <div className="flex h-[80vh] flex-col gap-4 overflow-hidden rounded-2xl border border-border bg-card p-6 text-card-foreground">
-          <div className="flex shrink-0 items-center justify-between gap-3 pr-6">
-            <DialogTitle className="text-lg font-medium">
-              Fragebogen senden
-            </DialogTitle>
+          <DialogTitle className="sr-only">Fragebogen</DialogTitle>
+          <div className="-mt-3 -mr-3 flex shrink-0 items-center justify-end gap-1">
             {data && !sent ? (
               <Button
                 type="button"
@@ -258,6 +262,17 @@ export function QuestionnaireSendDialog({
                 </span>
               </Button>
             ) : null}
+            <DialogClose asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Dialog schließen"
+                disabled={persist.isPending || send.isPending}
+              >
+                <X />
+              </Button>
+            </DialogClose>
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto">
             {draft.isPending ? (
@@ -279,9 +294,6 @@ export function QuestionnaireSendDialog({
                     aus. Es wird keine E-Mail verschickt.
                   </p>
                 ) : null}
-                <p className="my-4 text-sm text-muted-foreground">
-                  An {data?.email ?? 'ohne E-Mail'}.
-                </p>
                 {editing ? (
                   <>
                     <p className="mb-4 text-xs text-muted-foreground">
