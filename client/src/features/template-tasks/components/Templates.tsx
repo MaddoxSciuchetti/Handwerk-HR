@@ -66,7 +66,6 @@ function Templates() {
                   className={alignedSettingsTableClassName}
                 >
                   <colgroup>
-                    <col className="w-72" />
                     <col />
                     <col className="w-32" />
                   </colgroup>
@@ -74,9 +73,6 @@ function Templates() {
                     <TableRow className="border-0 hover:bg-transparent">
                       <TableHead className="h-12 bg-card py-3 pl-10">
                         Name
-                      </TableHead>
-                      <TableHead className="bg-card py-3 px-2">
-                        Beschreibung
                       </TableHead>
                       <TableHead className="bg-card py-3 pr-6 text-right">
                         Aktionen

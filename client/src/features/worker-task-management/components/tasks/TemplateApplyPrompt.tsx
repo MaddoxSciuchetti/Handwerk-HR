@@ -37,6 +37,10 @@ import {
   type TemplateApplicationResult,
 } from '../../api/templateApplication.api';
 import { TemplateAutomationProgress } from './TemplateAutomationProgress';
+import {
+  mergeAutomationProgress,
+  type AutomationProgress,
+} from '../../utils/automationProgress';
 import { TemplateAutomationConfirmation } from './TemplateAutomationConfirmation';
 
 const dismissKey = (id: string) => `template-prompt-dismissed:${id}`;
@@ -71,7 +75,6 @@ export function TemplateApplyPrompt({
       .map((target) => target.engagementId)
       .filter((id) => sessionStorage.getItem(resultsDismissKey(id)))
   );
-  const [runNumber, setRunNumber] = useState(0);
   const [handled, setHandled] = useState<string[]>([]);
   const queryClient = useQueryClient();
   const { data: templates, isLoading } = useGetTemplates();
@@ -132,11 +135,18 @@ export function TemplateApplyPrompt({
           idempotencyKey: input.requestKey,
           templateRevision: input.templateRevision,
         });
+      const recordProgress = (result: TemplateApplicationResult) =>
+        queryClient.setQueryData<AutomationProgress>(
+          ['template-application-progress', input.requestKey],
+          (previous) => mergeAutomationProgress(previous, result)
+        );
       let result = await request();
+      recordProgress(result);
       // Reusing the same application key reads the receipt without rerunning actions.
       while (result.running) {
         await new Promise((resolve) => window.setTimeout(resolve, 2000));
         result = await request();
+        recordProgress(result);
       }
       return result;
     },
@@ -201,9 +211,14 @@ export function TemplateApplyPrompt({
         target.workerId,
         target.engagementId
       );
-      return record?.idempotencyKey === apply.variables?.requestKey
-        ? record?.result ?? null
-        : null;
+      const key = [
+        'template-application-progress',
+        apply.variables!.requestKey,
+      ];
+      const previous = queryClient.getQueryData<AutomationProgress>(key);
+      return record?.idempotencyKey === apply.variables!.requestKey
+        ? mergeAutomationProgress(previous, record.result)
+        : (previous ?? null);
     },
     enabled: apply.isPending && !synchronizing,
     refetchInterval: 1000,
@@ -568,7 +583,6 @@ export function TemplateApplyPrompt({
                         engagementId={selectedId!}
                         busy={apply.isPending}
                         onApply={(runAutomation, choices) => {
-                          setRunNumber((current) => current + 1);
                           setSynchronizing(false);
                           setShowResults(false);
                           setMockedRun(Boolean(preview.data?.mocked));
@@ -658,19 +672,15 @@ export function TemplateApplyPrompt({
         </Button>
         {(running || hasVisibleRun) && (
           <TemplateAutomationProgress
-            key={runNumber}
+            key={apply.variables?.requestKey ?? resultTarget?.engagementId}
             mocked={mockedRun}
             synchronizing={synchronizing}
             automating={apply.variables?.runAutomation !== false}
-            completed={!running}
-            progress={
-              apply.variables?.runAutomation && apply.variables.automationCount
-                ? Math.min(
-                    ((liveRun.data?.outcomes.length ?? 0) /
-                      apply.variables.automationCount) *
-                      100,
-                    99
-                  )
+            completed={!running && !apply.isError}
+            finishedCount={liveRun.data?.finishedIds.length ?? 0}
+            totalCount={
+              apply.variables?.runAutomation
+                ? apply.variables.automationCount
                 : 0
             }
           />

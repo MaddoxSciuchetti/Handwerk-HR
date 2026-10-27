@@ -146,9 +146,7 @@ it('spins the opener while the chosen template loads', async () => {
   mocks.preview.mockReturnValue(new Promise(() => {}));
   renderWithProviders(<TemplateApplyPrompt targets={[target]} />);
   const user = userEvent.setup();
-  await user.click(
-    await screen.findByRole('button', { name: /Automatisch/ })
-  );
+  await user.click(await screen.findByRole('button', { name: /Automatisch/ }));
   const opener = screen.getByRole('button', { name: 'Template wählen' });
   expect(opener).toHaveAttribute('aria-busy', 'true');
   expect(opener.querySelector('.animate-spin')).toBeInTheDocument();
@@ -779,12 +777,26 @@ it('fills the live progress bar as individual automation outcomes arrive', async
       ),
     { timeout: 2500 }
   );
-  outcomes = [...outcomes, { issueId: 'b', status: 'failed' }];
+  const previousReads = mocks.savedRun.mock.calls.length;
+  outcomes = [];
+  await waitFor(
+    () =>
+      expect(mocks.savedRun.mock.calls.length).toBeGreaterThan(previousReads),
+    { timeout: 2500 }
+  );
+  expect(screen.getByRole('progressbar')).toHaveAttribute(
+    'aria-valuenow',
+    '50'
+  );
+  outcomes = [
+    { issueId: 'a', status: 'completed' },
+    { issueId: 'b', status: 'failed' },
+  ];
   await waitFor(
     () =>
       expect(screen.getByRole('progressbar')).toHaveAttribute(
         'aria-valuenow',
-        '99'
+        '100'
       ),
     { timeout: 2500 }
   );
@@ -799,39 +811,68 @@ it('fills the live progress bar as individual automation outcomes arrive', async
   );
 });
 
-it('shows one progress line above the shadcn progress bar and waits past ten seconds if needed', () => {
+it('uses actual task counts and keeps the completed fill stable during the final refresh', () => {
   vi.useFakeTimers();
   const view = renderWithProviders(
-    <TemplateAutomationProgress mocked synchronizing={false} />
+    <TemplateAutomationProgress
+      mocked
+      synchronizing={false}
+      finishedCount={0}
+      totalCount={2}
+    />
   );
   try {
     expect(screen.getByRole('status')).toHaveTextContent(
-      'Automatisierung wird vorbereitet'
+      '0 von 2 Aufgaben bearbeitet'
     );
-    act(() => vi.advanceTimersByTime(3000));
-    expect(screen.getByRole('status')).toHaveTextContent(
-      'Anfrage an die Integration wird simuliert'
+    act(() => vi.advanceTimersByTime(20000));
+    expect(screen.getByRole('progressbar')).toHaveAttribute(
+      'aria-valuenow',
+      '0'
     );
-    act(() => vi.advanceTimersByTime(4000));
-    expect(screen.getByRole('status')).toHaveTextContent(
-      'Warte auf simulierte Erfolgsbestätigung'
+    view.rerender(
+      <TemplateAutomationProgress
+        mocked
+        synchronizing={false}
+        finishedCount={1}
+        totalCount={2}
+      />
     );
     expect(screen.getByRole('progressbar')).toHaveAttribute(
       'aria-valuenow',
-      '70'
+      '50'
     );
-    act(() => vi.advanceTimersByTime(10000));
+    expect(
+      screen
+        .getByRole('progressbar')
+        .querySelector('[data-slot="progress-indicator"]')
+    ).toHaveStyle({ width: '50%' });
+    view.rerender(
+      <TemplateAutomationProgress
+        mocked
+        synchronizing={false}
+        finishedCount={2}
+        totalCount={2}
+      />
+    );
     expect(screen.getByRole('progressbar')).toHaveAttribute(
       'aria-valuenow',
-      '95'
+      '100'
     );
-    view.rerender(<TemplateAutomationProgress mocked synchronizing />);
+    view.rerender(
+      <TemplateAutomationProgress
+        mocked
+        synchronizing
+        finishedCount={2}
+        totalCount={2}
+      />
+    );
     expect(screen.getByRole('status')).toHaveTextContent(
       'Aufgabenstatus wird aktualisiert'
     );
     expect(screen.getByRole('progressbar')).toHaveAttribute(
       'aria-valuenow',
-      '99'
+      '100'
     );
   } finally {
     view.unmount();

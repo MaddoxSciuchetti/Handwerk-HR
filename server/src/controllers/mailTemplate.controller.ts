@@ -14,7 +14,7 @@ import { z } from "zod";
 
 const detailsInput = z.object({
     name: z.string().trim().min(1).max(200),
-    description: z.string().trim().min(1).max(5000),
+    description: z.string().trim().max(5000),
 });
 
 const contentInput = z.object({

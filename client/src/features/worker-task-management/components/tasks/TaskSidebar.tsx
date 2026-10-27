@@ -129,13 +129,6 @@ export function TaskSidebar({
               label="Name der Aufgabe"
               labelClassName="typo-body-base"
             />
-            <FormFields
-              errors={errors}
-              register={register}
-              name="taskDescription"
-              label="Beschreibung der Aufgabe"
-              labelClassName="typo-body-base"
-            />
             <TaskStatusSelect
               control={control}
               errors={errors}

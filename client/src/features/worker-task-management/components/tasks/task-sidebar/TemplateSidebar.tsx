@@ -3,10 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import type { TemplateEditState } from '@/features/template-tasks/components/Templates';
-import {
-  type TemplateSubmission,
-  useSubmitTemplate,
-} from '@/features/template-tasks/hooks/useSubmitTemplate';
+import { useSubmitTemplate } from '@/features/template-tasks/hooks/useSubmitTemplate';
 import { Check, X } from 'lucide-react';
 import type { Dispatch, SetStateAction } from 'react';
 import { SidebarAside } from './SidebarAside';
@@ -22,11 +19,6 @@ type TemplateSidebarProps = {
   templateState: 'create' | 'edit';
 };
 
-const EMPTY_SUBMISSION: TemplateSubmission = {
-  name: '',
-  description: null,
-};
-
 export function TemplateSidebar({
   isOpen,
   setIsOpen,
@@ -39,7 +31,11 @@ export function TemplateSidebar({
     templateEditState
   );
   return (
-    <SidebarAside className="p-2" isOpen={isOpen} onClose={() => setIsOpen(false)}>
+    <SidebarAside
+      className="p-2"
+      isOpen={isOpen}
+      onClose={() => setIsOpen(false)}
+    >
       <SidebarPanel className="w-full">
         <SidebarHeader className="flex items-center justify-between p-6">
           <Label className="typo-body-lg font-bold">
@@ -68,13 +64,6 @@ export function TemplateSidebar({
               register={register}
               name="name"
               label="Name des Templates"
-              labelClassName="typo-body-base"
-            />
-            <FormFields
-              errors={errors}
-              register={register}
-              name="description"
-              label="Beschreibung des Templates"
               labelClassName="typo-body-base"
             />
           </SidebarContent>
