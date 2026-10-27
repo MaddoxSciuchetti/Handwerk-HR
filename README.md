@@ -173,6 +173,17 @@ IDs. Microsoft requests and account password emails are not sent. Sequences stil
 update staging employee data, sent markers, task completion, and audit history;
 use disposable staging records. This does not simulate other providers or document
 delivery through Resend. Crewmeister remains subject to `INTEGRATIONS_LIVE`.
+
+Crewmeister employee creation uses the web application's V2
+`POST /api/v2/crew/{crewId}/invite/with-email` flow, which creates or reuses the
+login account and sends Crewmeister's invitation. The application does not generate
+or email a Crewmeister password. V3 membership reads verify the crew, employee
+email, user link, and enabled state before the task succeeds. Existing active
+members are reused without another invitation; disabled members require manual
+reactivation. V2 is legacy, so retain coverage for this endpoint until a supported
+V3 invitation replacement is available. An `INVITED` membership confirms setup,
+not email delivery or acceptance.
+
 Simulation takes precedence over live Microsoft execution even if
 `INTEGRATIONS_LIVE=true`. Unknown simulated Graph operations fail without network
 access. Remove `MICROSOFT_SIMULATION` or set it to `false` and restart to return to
