@@ -22,7 +22,7 @@ import queryClient from '@/config/query.client';
 import { ALL_WORKER_DATA } from '@/features/worker-lifecycle/consts/query-key.consts';
 import { WORKERBYID } from '@/features/worker-task-management/consts/query-key.consts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import type {
   QuestionnaireQuestion as QuestionnaireQuestionData,
@@ -61,6 +61,7 @@ export function QuestionnaireSendDialog({
   onClose,
 }: QuestionnaireSendDialogProps) {
   const cache = useQueryClient();
+  const sendButton = useRef<HTMLButtonElement>(null);
   const [editing, setEditing] = useState(false);
   const [localItems, setLocalItems] = useState<TemplateItem[] | null>(null);
   const draft = useQuery({
@@ -187,6 +188,37 @@ export function QuestionnaireSendDialog({
       <DialogContent
         aria-describedby={undefined}
         className="w-full max-w-3xl border-0 bg-transparent p-0 shadow-none sm:max-w-3xl"
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          if (sendButton.current && !sendButton.current.disabled) {
+            sendButton.current.focus();
+          } else {
+            (event.target as HTMLElement).focus();
+          }
+        }}
+        onKeyDown={(event) => {
+          if (
+            event.key !== 'Enter' ||
+            event.defaultPrevented ||
+            event.nativeEvent.isComposing ||
+            event.repeat ||
+            event.altKey ||
+            event.ctrlKey ||
+            event.metaKey ||
+            event.shiftKey ||
+            editing
+          )
+            return;
+          const target = event.target as HTMLElement;
+          if (
+            target.closest(
+              'button, a, textarea, select, [contenteditable="true"], [role="combobox"]'
+            )
+          )
+            return;
+          event.preventDefault();
+          sendButton.current?.click();
+        }}
       >
         <div className="flex h-[80vh] flex-col gap-4 overflow-hidden rounded-2xl border border-border bg-card p-6 text-card-foreground">
           <div className="flex shrink-0 items-center justify-between gap-3 pr-6">
@@ -308,6 +340,7 @@ export function QuestionnaireSendDialog({
               Schließen
             </Button>
             <Button
+              ref={sendButton}
               type="button"
               className="rounded-2xl"
               disabled={

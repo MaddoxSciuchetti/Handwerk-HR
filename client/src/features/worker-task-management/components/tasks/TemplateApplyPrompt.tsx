@@ -118,13 +118,15 @@ export function TemplateApplyPrompt({
       templateId: string;
       templateRevision?: string;
       templateName: string;
+      automationCount: number;
+      requestKey: string;
     }) => {
       const request = () =>
         applyTemplate(input.target.workerId, input.templateId, {
           workerEngagementId: input.target.engagementId,
           runAutomation: input.runAutomation,
           choices: input.choices,
-          idempotencyKey: requestKey,
+          idempotencyKey: input.requestKey,
           templateRevision: input.templateRevision,
         });
       let result = await request();
@@ -187,6 +189,21 @@ export function TemplateApplyPrompt({
       });
       toast.error(error.message || 'Template konnte nicht angewendet werden');
     },
+  });
+  const liveRun = useQuery({
+    queryKey: ['template-application-progress', apply.variables?.requestKey],
+    queryFn: async () => {
+      const target = apply.variables!.target;
+      const record = await getTemplateApplication(
+        target.workerId,
+        target.engagementId
+      );
+      return record?.idempotencyKey === apply.variables?.requestKey
+        ? record?.result ?? null
+        : null;
+    },
+    enabled: apply.isPending && !synchronizing,
+    refetchInterval: 1000,
   });
   const resultTarget = selected ?? lastRun?.target;
   const savedRun = useQuery({
@@ -527,12 +544,18 @@ export function TemplateApplyPrompt({
                           setShowResults(false);
                           setMockedRun(Boolean(preview.data?.mocked));
                           apply.mutate({
+                            requestKey,
                             runAutomation,
                             choices,
                             target: selected,
                             templateId,
                             templateRevision: preview.data?.revision,
                             templateName: preview.data?.name ?? 'Template',
+                            automationCount:
+                              preview.data?.items.filter(
+                                (item) =>
+                                  item.sequence && item.integrationProvider
+                              ).length ?? 0,
                           });
                         }}
                       />
@@ -611,6 +634,16 @@ export function TemplateApplyPrompt({
             synchronizing={synchronizing}
             automating={apply.variables?.runAutomation !== false}
             completed={!running}
+            progress={
+              apply.variables?.runAutomation && apply.variables.automationCount
+                ? Math.min(
+                    ((liveRun.data?.outcomes.length ?? 0) /
+                      apply.variables.automationCount) *
+                      100,
+                    99
+                  )
+                : 0
+            }
           />
         )}
         {(running || hasVisibleRun) && (

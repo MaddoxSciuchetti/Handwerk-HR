@@ -1,5 +1,4 @@
 import { WorkerDetailResponse } from '@/features/worker-lifecycle/types/index.types';
-import { confirmationTasksFirst } from '@/features/all-tasks/utilts/task-order.utils';
 import { useMemo } from 'react';
 
 type WorkerEngagement = WorkerDetailResponse['data']['engagements'][number];
@@ -24,10 +23,7 @@ const flattenEngagementIssues = (
   ) ?? [];
 
 function useFilteredData(data: WorkerDetailResponse | undefined) {
-  const displayData = useMemo(
-    () => confirmationTasksFirst(flattenEngagementIssues(data)),
-    [data]
-  );
+  const displayData = useMemo(() => flattenEngagementIssues(data), [data]);
 
   return { displayData };
 }

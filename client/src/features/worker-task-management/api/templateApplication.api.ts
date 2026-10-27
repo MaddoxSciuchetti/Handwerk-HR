@@ -74,6 +74,7 @@ export function applyTemplate(
 }
 
 export type StoredTemplateApplication = {
+  idempotencyKey?: string;
   templateName: string;
   dismissed: boolean;
   result: TemplateApplicationResult;
