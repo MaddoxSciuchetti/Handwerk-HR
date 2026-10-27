@@ -218,7 +218,6 @@ describe("offboarding microsoft automation", () => {
             const fetchMock = jest.spyOn(global, "fetch")
                 .mockResolvedValueOnce(jsonResponse({ id: microsoftAccountId, accountEnabled: true }))
                 .mockResolvedValueOnce(jsonResponse(null, 204))
-                .mockResolvedValueOnce(jsonResponse({ id: microsoftAccountId, accountEnabled: false }))
                 .mockResolvedValueOnce(jsonResponse({ value: [] }));
             const params = { organizationId: "org-1", issueId: "issue-1", actorUserId: "user-1" };
             const result = path === "sequence"
@@ -241,12 +240,8 @@ describe("offboarding microsoft automation", () => {
                 jsonResponse({ id: "graph-user-1", accountEnabled: true }),
             )
             .mockResolvedValueOnce(jsonResponse(null, 204))
-            .mockResolvedValueOnce(
-                jsonResponse({ id: "graph-user-1", accountEnabled: false }),
-            )
             .mockResolvedValueOnce(jsonResponse({ value: [{ skuId: "sku" }] }))
-            .mockResolvedValueOnce(jsonResponse({}))
-            .mockResolvedValueOnce(jsonResponse({ value: [] }));
+            .mockResolvedValueOnce(jsonResponse({}));
 
         const result = await runTaskAutomation({
             organizationId: "org-1",
@@ -265,7 +260,7 @@ describe("offboarding microsoft automation", () => {
             }),
         );
         expect(fetchMock).toHaveBeenNthCalledWith(
-            5,
+            4,
             "https://graph.microsoft.com/v1.0/users/graph-user-1/assignLicense",
             expect.objectContaining({
                 method: "POST",
@@ -291,20 +286,15 @@ describe("offboarding microsoft automation", () => {
         );
     });
 
-    it("waits until a stale directory read shows the account as disabled", async () => {
+    it("finishes after Microsoft accepts the disable and the license removal", async () => {
         const fetchMock = jest
             .spyOn(global, "fetch")
             .mockResolvedValueOnce(
                 jsonResponse({ id: "graph-user-1", accountEnabled: true }),
             )
             .mockResolvedValueOnce(jsonResponse(null, 204))
-            .mockResolvedValueOnce(
-                jsonResponse({ id: "graph-user-1", accountEnabled: true }),
-            )
-            .mockResolvedValueOnce(
-                jsonResponse({ id: "graph-user-1", accountEnabled: false }),
-            )
-            .mockResolvedValueOnce(jsonResponse({ value: [] }));
+            .mockResolvedValueOnce(jsonResponse({ value: [{ skuId: "sku" }] }))
+            .mockResolvedValueOnce(jsonResponse({}));
 
         const result = await runTaskAutomation({
             organizationId: "org-1",
@@ -332,8 +322,7 @@ describe("offboarding microsoft automation", () => {
                 jsonResponse({ id: "graph-user-1", accountEnabled: false }),
             )
             .mockResolvedValueOnce(jsonResponse({ value: [{ skuId: "sku" }] }))
-            .mockResolvedValueOnce(jsonResponse({}))
-            .mockResolvedValueOnce(jsonResponse({ value: [] }));
+            .mockResolvedValueOnce(jsonResponse({}));
 
         const result = await runTaskAutomation({
             organizationId: "org-1",
@@ -380,9 +369,6 @@ describe("offboarding microsoft automation", () => {
                 jsonResponse({ id: "graph-user-1", accountEnabled: true }),
             )
             .mockResolvedValueOnce(jsonResponse(null, 204))
-            .mockResolvedValueOnce(
-                jsonResponse({ id: "graph-user-1", accountEnabled: false }),
-            )
             .mockResolvedValueOnce(jsonResponse({ value: [{ skuId: "sku" }] }))
             .mockResolvedValueOnce(jsonResponse({ error: "denied" }, 403));
 
