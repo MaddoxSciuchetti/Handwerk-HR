@@ -8,7 +8,10 @@ const API = "https://api.crewmeister.com";
 
 export type CrewmeisterCreateResult =
     | { status: "created"; externalId: string; passwordMailSent: boolean }
-    | { status: "skipped"; reason: "already_created" | "not_live" | "not_configured" }
+    | {
+          status: "skipped";
+          reason: "already_created" | "not_live" | "not_configured";
+      }
     | { status: "failed"; message: string };
 
 type CrewmeisterAuth = { token: string; crewId: string };
@@ -26,7 +29,7 @@ function password() {
 
 function pinCode() {
     const bytes = randomBytes(2);
-    return String(1000 + ((bytes[0] << 8) | bytes[1]) % 9000);
+    return String(1000 + (((bytes[0] << 8) | bytes[1]) % 9000));
 }
 
 function day(value: Date | null | undefined) {
@@ -57,27 +60,60 @@ function errorMessage(payload: unknown, fallback: string) {
     return fallback;
 }
 
-function resourceId(payload: unknown) {
+function writeResult(payload: unknown): { id: string; message?: string } {
     const first = Array.isArray(payload) ? payload[0] : payload;
-    if (!first || typeof first !== "object") return "";
+    if (!first || typeof first !== "object") return { id: "" };
+    // Batch write responses can wrap the actual result and its HTTP status.
+    if (
+        "statusCode" in first &&
+        typeof first.statusCode === "number" &&
+        "body" in first
+    ) {
+        if (first.statusCode < 200 || first.statusCode >= 300) {
+            return {
+                id: "",
+                message: errorMessage(
+                    first.body,
+                    `Crewmeister hat die Erstellung abgelehnt (HTTP ${first.statusCode}).`,
+                ),
+            };
+        }
+        return writeResult(first.body);
+    }
+    if ("code" in first && "message" in first) {
+        return {
+            id: "",
+            message: errorMessage(
+                first,
+                "Crewmeister hat die Erstellung abgelehnt.",
+            ),
+        };
+    }
+    // A job ID is not the ID of a created user or member.
+    if ("job" in first) {
+        return {
+            id: "",
+            message:
+                "Crewmeister verarbeitet die Erstellung noch. Die Erstellung wurde noch nicht bestätigt.",
+        };
+    }
     const after =
         "resourceAfterWrite" in first ? first.resourceAfterWrite : first;
-    if (!after || typeof after !== "object" || !("id" in after)) return "";
+    if (!after || typeof after !== "object" || !("id" in after))
+        return { id: "" };
     const id = after.id;
-    if (typeof id === "number" || typeof id === "string") return String(id);
-    return "";
+    if (typeof id === "number" || typeof id === "string")
+        return { id: String(id) };
+    return { id: "" };
 }
 
-async function crewmeister(
-    token: string,
-    path: string,
-    init?: RequestInit,
-) {
+async function crewmeister(token: string, path: string, init?: RequestInit) {
     const response = await fetch(`${API}${path}`, {
         ...init,
         headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
+            "X-Write-Async": "false",
             ...(init?.headers ?? {}),
         },
     });
@@ -94,13 +130,15 @@ async function resolveCrewId(auth: CrewmeisterAuth) {
         if (response.status === 401) {
             return {
                 ok: false as const,
-                message: "Crewmeister hat den Token abgelehnt (HTTP 401). Bitte einen gültigen Token unter Integrationen hinterlegen.",
+                message:
+                    "Crewmeister hat den Token abgelehnt (HTTP 401). Bitte einen gültigen Token unter Integrationen hinterlegen.",
             };
         }
         if (response.status === 403) {
             return {
                 ok: false as const,
-                message: "Der Crewmeister-Token darf die Crews nicht lesen (HTTP 403). Bitte die Berechtigungen in Crewmeister prüfen.",
+                message:
+                    "Der Crewmeister-Token darf die Crews nicht lesen (HTTP 403). Bitte die Berechtigungen in Crewmeister prüfen.",
             };
         }
         return {
@@ -185,22 +223,15 @@ export async function createCrewmeisterAccount(params: {
         params.auth.token,
         "/api/v3/platform-app/users",
         {
-            method: "PATCH",
-            body: JSON.stringify([
-                {
-                    method: "POST",
-                    path: "",
-                    scheduledAt: null,
-                    body: {
-                        name,
-                        email: worker.email,
-                        language: "de",
-                        password: generated,
-                        passwordConfirmation: generated,
-                        terms: true,
-                    },
-                },
-            ]),
+            method: "POST",
+            body: JSON.stringify({
+                name,
+                email: worker.email,
+                language: "de",
+                password: generated,
+                passwordConfirmation: generated,
+                terms: true,
+            }),
         },
     );
     if (!userWrite.response.ok) {
@@ -212,11 +243,14 @@ export async function createCrewmeisterAccount(params: {
             ),
         };
     }
-    const userId = resourceId(userWrite.payload);
+    const userResult = writeResult(userWrite.payload);
+    const userId = userResult.id;
     if (!userId) {
         return {
             status: "failed",
-            message: "Crewmeister hat keine Benutzer-ID geliefert.",
+            message:
+                userResult.message ??
+                `Crewmeister hat keine Benutzer-ID geliefert (HTTP ${userWrite.response.status}).`,
         };
     }
 
@@ -226,26 +260,19 @@ export async function createCrewmeisterAccount(params: {
         params.auth.token,
         "/api/v3/platform-app/members",
         {
-            method: "PATCH",
-            body: JSON.stringify([
-                {
-                    method: "POST",
-                    path: "",
-                    scheduledAt: null,
-                    body: {
-                        crewId: Number(crew.crewId),
-                        userId: Number(userId),
-                        disabled: false,
-                        email: worker.email,
-                        employeeId: worker.id.replace(/-/g, "").slice(0, 32),
-                        firstWorkingDay,
-                        language: "DE",
-                        name,
-                        pinCode: pinCode(),
-                        username: worker.email.split("@")[0] || name,
-                    },
-                },
-            ]),
+            method: "POST",
+            body: JSON.stringify({
+                crewId: Number(crew.crewId),
+                userId: Number(userId),
+                disabled: false,
+                email: worker.email,
+                employeeId: worker.id.replace(/-/g, "").slice(0, 32),
+                firstWorkingDay,
+                language: "DE",
+                name,
+                pinCode: pinCode(),
+                username: worker.email.split("@")[0] || name,
+            }),
         },
     );
     if (!memberWrite.response.ok) {
@@ -257,11 +284,14 @@ export async function createCrewmeisterAccount(params: {
             ),
         };
     }
-    const memberId = resourceId(memberWrite.payload);
+    const memberResult = writeResult(memberWrite.payload);
+    const memberId = memberResult.id;
     if (!memberId) {
         return {
             status: "failed",
-            message: "Crewmeister hat keine Mitglieds-ID geliefert.",
+            message:
+                memberResult.message ??
+                `Crewmeister hat keine Mitglieds-ID geliefert (HTTP ${memberWrite.response.status}).`,
         };
     }
 
