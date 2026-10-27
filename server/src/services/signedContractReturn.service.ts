@@ -8,6 +8,7 @@ import {
     findInboxReply,
     graphMailConfigured,
 } from "@/services/graphMail";
+import { organizationMailToken } from "@/services/organizationMailToken";
 import AppError from "@/utils/AppError";
 import type { Prisma } from "@prisma/client";
 
@@ -296,7 +297,6 @@ export async function pollReturnedContracts() {
         await pollResendInbox();
         return;
     }
-    if (!graphMailConfigured()) return;
 
     const waiting = await prisma.employmentContract.findMany({
         where: {
@@ -312,8 +312,10 @@ export async function pollReturnedContracts() {
             engagement: {
                 select: {
                     id: true,
+                    organizationId: true,
                     workerId: true,
                     responsibleUserId: true,
+                    responsibleUser: { select: { email: true } },
                     issues: {
                         where: { kind: "contract_confirm" },
                         select: { id: true },
@@ -329,7 +331,11 @@ export async function pollReturnedContracts() {
         if (!contract.conversationId) continue;
 
         try {
-            const reply = await findReturnedMessage(contract.conversationId);
+            const reply = await findReturnedMessage(
+                contract.conversationId,
+                contract.engagement.organizationId,
+                contract.engagement.responsibleUser.email,
+            );
             if (!reply) continue;
 
             if (!contract.fileUrl && reply.pdf) {
@@ -363,21 +369,26 @@ export async function pollReturnedContracts() {
     }
 }
 
-async function findReturnedMessage(conversationId: string) {
+async function findReturnedMessage(
+    conversationId: string,
+    organizationId: string,
+    mailbox: string | null,
+) {
     if (conversationId.startsWith(RESEND_MATCH)) return null;
-    const reply = await findInboxReply(conversationId);
+    const savedToken = graphMailConfigured()
+        ? null
+        : await organizationMailToken(organizationId);
+    if (!graphMailConfigured() && (!savedToken || !mailbox?.includes("@"))) return null;
+    const access = savedToken && mailbox
+        ? { token: savedToken, mailbox }
+        : undefined;
+    const reply = await findInboxReply(conversationId, access);
     if (!reply) return null;
-    const pdf = await downloadReplyPdf(reply.id);
+    const pdf = await downloadReplyPdf(reply.id, access);
     return { id: reply.id, pdf };
 }
 
 export function startReturnedContractPolling() {
-    if (USE_MICROSOFT_MAIL && !graphMailConfigured()) {
-        console.log(
-            "USE_MICROSOFT_MAIL is on, but the Microsoft Graph token is not set.",
-        );
-        return;
-    }
     if (!USE_MICROSOFT_MAIL && !RESEND_INBOUND_ADDRESS) {
         console.log(
             "RESEND_INBOUND_ADDRESS is not set. Replies are still watched, but new contract mail has no Reply-To address.",

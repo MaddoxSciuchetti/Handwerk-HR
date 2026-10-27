@@ -420,6 +420,7 @@ export async function provisionMicrosoft365Account(params: {
         workEmail: created.workEmail,
         password,
         senderAddress: params.senderAddress,
+        organizationId: params.organizationId,
     });
 
     return {

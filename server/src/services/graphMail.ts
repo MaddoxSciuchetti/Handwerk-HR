@@ -25,27 +25,27 @@ function mailboxPath(senderAddress = MICROSOFT_GRAPH_MAILBOX) {
     return `/users/${encodeURIComponent(senderAddress)}`;
 }
 
-async function graphFetch(path: string, init?: RequestInit) {
-    if (!graphMailConfigured()) {
+async function graphFetch(path: string, init?: RequestInit, accessToken?: string) {
+    if (!accessToken && !graphMailConfigured()) {
         throw new AppError(
             BAD_REQUEST,
             "Microsoft-Mail benötigt Anwendungszugangsdaten oder einen Graph-Token in der Umgebung.",
         );
     }
 
-    let token = await tokens.getToken();
-    const request = (accessToken: string) => fetch(`${GRAPH}${path}`, {
+    let token = accessToken || await tokens.getToken();
+    const request = (bearer: string) => fetch(`${GRAPH}${path}`, {
         ...init,
         signal: init?.signal ?? AbortSignal.timeout(30_000),
         headers: {
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${bearer}`,
             "Content-Type": "application/json",
             ...(init?.headers ?? {}),
         },
     });
     let response = await request(token);
     // Retry only a definitive authentication rejection, never a timeout or ambiguous send failure.
-    if (response.status === 401 && tokens.canRenew()) {
+    if (!accessToken && response.status === 401 && tokens.canRenew()) {
         await response.body?.cancel();
         token = await tokens.getToken(token);
         response = await request(token);
@@ -75,6 +75,7 @@ async function graphFetch(path: string, init?: RequestInit) {
 export async function sendGraphMail(params: {
     to: string;
     senderAddress?: string;
+    accessToken?: string;
     subject: string;
     html: string;
     attachments?: PdfAttachment[];
@@ -95,8 +96,10 @@ export async function sendGraphMail(params: {
                       })),
                   }
                 : {}),
-        }),
-    })) as { id?: string; conversationId?: string } | null;
+            }),
+        },
+        params.accessToken,
+    )) as { id?: string; conversationId?: string } | null;
 
     if (!draft?.id || !draft.conversationId) {
         throw new AppError(
@@ -108,6 +111,7 @@ export async function sendGraphMail(params: {
     await graphFetch(
         `${mailboxPath(params.senderAddress)}/messages/${encodeURIComponent(draft.id)}/send`,
         { method: "POST" },
+        params.accessToken,
     );
 
     return { conversationId: draft.conversationId };
@@ -118,7 +122,10 @@ type InboxMessage = {
     hasAttachments?: boolean;
 };
 
-export async function findInboxReply(conversationId: string) {
+export async function findInboxReply(
+    conversationId: string,
+    access?: { token: string; mailbox: string },
+) {
     const filter = `conversationId eq '${conversationId.replaceAll("'", "''")}'`;
     const query = new URLSearchParams({
         $filter: filter,
@@ -126,7 +133,9 @@ export async function findInboxReply(conversationId: string) {
         $top: "5",
     });
     const payload = (await graphFetch(
-        `${mailboxPath()}/mailFolders/inbox/messages?${query.toString()}`,
+        `${mailboxPath(access?.mailbox)}/mailFolders/inbox/messages?${query.toString()}`,
+        undefined,
+        access?.token,
     )) as { value?: InboxMessage[] } | null;
 
     return payload?.value?.[0] ?? null;
@@ -139,9 +148,14 @@ type FileAttachment = {
     contentBytes?: string;
 };
 
-export async function downloadReplyPdf(messageId: string) {
+export async function downloadReplyPdf(
+    messageId: string,
+    access?: { token: string; mailbox: string },
+) {
     const payload = (await graphFetch(
-        `${mailboxPath()}/messages/${encodeURIComponent(messageId)}/attachments`,
+        `${mailboxPath(access?.mailbox)}/messages/${encodeURIComponent(messageId)}/attachments`,
+        undefined,
+        access?.token,
     )) as { value?: FileAttachment[] } | null;
 
     const pdf = payload?.value?.find((attachment) => {

@@ -45,13 +45,18 @@ export function passwordMail(params: PasswordMailInput): PasswordMail {
 }
 
 export async function sendPasswordMail(
-    input: PasswordMailInput & { to: string; senderAddress?: string | null },
+    input: PasswordMailInput & {
+        to: string;
+        senderAddress?: string | null;
+        organizationId?: string;
+    },
 ): Promise<boolean> {
     const template = passwordMail(input);
     const senderAddress = input.senderAddress?.trim() || "";
     try {
         const sent = await sendMail({
             to: input.to,
+            ...(input.organizationId ? { organizationId: input.organizationId } : {}),
             ...(senderAddress ? { senderAddress } : {}),
             ...template,
         });
