@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Progress } from '@/components/ui/progress';
 
 export function TemplateAutomationProgress({
@@ -6,6 +7,7 @@ export function TemplateAutomationProgress({
   completed = false,
   automating = true,
   finishedCount = 0,
+  activeCount = 0,
   totalCount = 0,
 }: {
   mocked: boolean;
@@ -13,13 +15,48 @@ export function TemplateAutomationProgress({
   completed?: boolean;
   automating?: boolean;
   finishedCount?: number;
+  activeCount?: number;
   totalCount?: number;
 }) {
   const finished = Math.min(finishedCount, totalCount);
+  const active = completed ? 0 : Math.min(activeCount, totalCount - finished);
+  const baseline = finished + active * 0.5;
+  const ceiling = finished + active * 0.9;
+  const [visualUnits, setVisualUnits] = useState(baseline);
+
+  useEffect(() => {
+    if (!active || synchronizing || completed) return;
+    let timer: ReturnType<typeof setTimeout>;
+    let stopped = false;
+    const schedule = () => {
+      timer = setTimeout(
+        () => {
+          if (stopped) return;
+          // Vary both timing and distance, easing towards a limit below completion.
+          const fraction = 0.06 + Math.random() * 0.08;
+          setVisualUnits((previous) => {
+            const current = Math.max(previous, baseline);
+            return Math.max(current, current + (ceiling - current) * fraction);
+          });
+          schedule();
+        },
+        1200 + Math.random() * 1600
+      );
+    };
+    schedule();
+    return () => {
+      stopped = true;
+      clearTimeout(timer);
+    };
+  }, [baseline, ceiling, active, synchronizing, completed]);
+
+  const units = Math.max(baseline, visualUnits);
+  const activeWidth =
+    totalCount > 0 ? ((units - finished) / totalCount) * 100 : 0;
   const value = completed
     ? 100
     : totalCount > 0
-      ? (finished / totalCount) * 100
+      ? (units / totalCount) * 100
       : 0;
   const message = completed
     ? 'Durchlauf abgeschlossen'
@@ -28,7 +65,7 @@ export function TemplateAutomationProgress({
       : !automating
         ? 'Aufgaben werden erstellt…'
         : totalCount > 0
-          ? `${finished} von ${totalCount} Aufgaben bearbeitet`
+          ? `${finished} von ${totalCount} Aufgaben bearbeitet${active ? ` · ${active} in Bearbeitung` : ''}`
           : mocked
             ? 'Simulation wird vorbereitet…'
             : 'Automatisierung wird vorbereitet…';
@@ -48,7 +85,18 @@ export function TemplateAutomationProgress({
         aria-valuetext={message}
         className="h-1 w-full [&_[data-slot=progress-indicator]]:bg-emerald-500"
         value={value}
-      />
+      >
+        {active > 0 && (
+          <span
+            aria-hidden="true"
+            className="automation-progress-active absolute inset-y-0 transition-[left,width] duration-300 motion-reduce:transition-none"
+            style={{
+              left: `${(finished / totalCount) * 100}%`,
+              width: `${activeWidth}%`,
+            }}
+          />
+        )}
+      </Progress>
     </section>
   );
 }

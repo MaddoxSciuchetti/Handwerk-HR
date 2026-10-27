@@ -672,6 +672,11 @@ export function TemplateApplyPrompt({
             automating={apply.variables?.runAutomation !== false}
             completed={!running && !apply.isError}
             finishedCount={liveRun.data?.finishedIds.length ?? 0}
+            activeCount={
+              liveRun.data?.startedIds?.filter(
+                (id) => !liveRun.data?.finishedIds.includes(id)
+              ).length ?? 0
+            }
             totalCount={
               apply.variables?.runAutomation
                 ? apply.variables.automationCount
