@@ -80,6 +80,8 @@ describe("crewmeister account", () => {
             .spyOn(global, "fetch")
             .mockImplementation(async (input, init) => {
                 const url = String(input);
+                expect(new URL(url).origin).toBe("https://api.crewmeister.com");
+                expect(init?.headers).toMatchObject({ Authorization: "Bearer jwt" });
                 if (url.endsWith("/crews?pageSize=20")) {
                     return jsonResponse({ content: [{ id: 42 }] });
                 }
@@ -124,5 +126,38 @@ describe("crewmeister account", () => {
             }),
         );
         expect(fetchSpy).toHaveBeenCalledTimes(3);
+    });
+
+    it.each([
+        [401, "Token abgelehnt"],
+        [403, "darf die Crews nicht lesen"],
+        [404, "Crews nicht geliefert"],
+    ])("explains crew lookup failures without attempting account creation (HTTP %s)", async (status, message) => {
+        process.env.INTEGRATIONS_LIVE = "true";
+        findWorker.mockResolvedValue({
+            id: "worker-1",
+            firstName: "Ada",
+            lastName: "Lovelace",
+            email: "ada@personal.test",
+            externalAccounts: [],
+        });
+        findEngagement.mockResolvedValue({ startDate: null });
+        const fetchSpy = jest.spyOn(global, "fetch").mockResolvedValue({
+            ok: false,
+            status,
+            text: async () => "<html>Request failed</html>",
+        } as Response);
+        const result = await createCrewmeisterAccount({
+            organizationId: "org-1",
+            workerId: "worker-1",
+            engagementId: "engagement-1",
+            auth: { token: "jwt", crewId: "" },
+        });
+        expect(result).toEqual({
+            status: "failed",
+            message: expect.stringContaining(String(message)),
+        });
+        expect(result).toMatchObject({ message: expect.stringContaining(`HTTP ${status}`) });
+        expect(fetchSpy).toHaveBeenCalledTimes(1);
     });
 });
