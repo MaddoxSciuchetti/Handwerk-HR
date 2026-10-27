@@ -7,11 +7,13 @@ export function TemplateAutomationProgress({
   synchronizing,
   completed = false,
   automating = true,
+  progress,
 }: {
   mocked: boolean;
   synchronizing: boolean;
   completed?: boolean;
   automating?: boolean;
+  progress?: number;
 }) {
   const [elapsed, setElapsed] = useState(0);
   useEffect(() => {
@@ -53,16 +55,18 @@ export function TemplateAutomationProgress({
         aria-label="Automatisierung"
         className={cn(
           'h-1 w-full [&_[data-slot=progress-indicator]]:duration-300 motion-reduce:[&_[data-slot=progress-indicator]]:transition-none',
-          completed && '[&_[data-slot=progress-indicator]]:bg-emerald-500'
+          '[&_[data-slot=progress-indicator]]:bg-emerald-500'
         )}
         value={
           completed
             ? 100
             : synchronizing
               ? 99
-              : mocked
-                ? Math.min(elapsed * 10, 95)
-                : undefined
+              : progress !== undefined
+                ? progress
+                : mocked
+                  ? Math.min(elapsed * 10, 95)
+                  : undefined
         }
       />
     </section>

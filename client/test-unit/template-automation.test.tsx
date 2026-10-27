@@ -741,6 +741,64 @@ it('shows progress without automation and excludes tasks with no execution outco
   expect(screen.queryByText('Microsoft-Konto')).not.toBeInTheDocument();
 });
 
+it('fills the live progress bar as individual automation outcomes arrive', async () => {
+  mocks.preview.mockResolvedValue({
+    id: 'automated',
+    name: 'Automatisch',
+    items: [automation, { ...automation, id: 'b', title: 'Zweites Konto' }],
+  });
+  let finish!: (result: unknown) => void;
+  mocks.apply.mockReturnValue(
+    new Promise((resolve) => {
+      finish = resolve;
+    })
+  );
+  let outcomes: Array<{ issueId: string; status: string }> = [];
+  mocks.savedRun.mockImplementation(async () => {
+    const input = mocks.apply.mock.calls[0]?.[2];
+    return input
+      ? {
+          idempotencyKey: input.idempotencyKey,
+          templateName: 'Automatisch',
+          result: { count: 2, issueIds: ['a', 'b'], outcomes, running: true },
+        }
+      : null;
+  });
+  renderWithProviders(<TemplateApplyPrompt targets={[target]} />);
+  const user = await selectTemplate();
+  await user.click(
+    screen.getByRole('button', { name: 'Automatisierung starten' })
+  );
+  expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '0');
+  outcomes = [{ issueId: 'a', status: 'completed' }];
+  await waitFor(
+    () =>
+      expect(screen.getByRole('progressbar')).toHaveAttribute(
+        'aria-valuenow',
+        '50'
+      ),
+    { timeout: 2500 }
+  );
+  outcomes = [...outcomes, { issueId: 'b', status: 'failed' }];
+  await waitFor(
+    () =>
+      expect(screen.getByRole('progressbar')).toHaveAttribute(
+        'aria-valuenow',
+        '99'
+      ),
+    { timeout: 2500 }
+  );
+  await act(async () =>
+    finish({ count: 2, issueIds: ['a', 'b'], outcomes, running: false })
+  );
+  await waitFor(() =>
+    expect(screen.getByRole('progressbar')).toHaveAttribute(
+      'aria-valuenow',
+      '100'
+    )
+  );
+});
+
 it('shows one progress line above the shadcn progress bar and waits past ten seconds if needed', () => {
   vi.useFakeTimers();
   const view = renderWithProviders(

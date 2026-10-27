@@ -191,6 +191,7 @@ export async function readTemplateApplication(context: {
           });
     return {
         templateName: template?.name ?? "Template",
+        idempotencyKey: receipt.idempotencyKey,
         dismissed: Boolean(receipt.resultsDismissedAt),
         result: {
             count: tasks.length,
