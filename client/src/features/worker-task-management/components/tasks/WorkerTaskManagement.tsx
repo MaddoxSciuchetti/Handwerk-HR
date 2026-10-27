@@ -315,17 +315,17 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                   >
                     <TabsList
                       aria-label="Aufgabenphase"
-                      className="border border-border bg-muted p-1"
+                      className="bg-muted p-1"
                     >
                       <TabsTrigger
                         value="onboarding"
-                        className="px-3 font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+                        className="border-0 px-3 font-sans font-normal focus-visible:border-transparent focus-visible:ring-0 focus-visible:outline-none focus-visible:underline focus-visible:underline-offset-4 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-none dark:data-[state=active]:bg-input/30"
                       >
                         Onboarding
                       </TabsTrigger>
                       <TabsTrigger
                         value="offboarding"
-                        className="px-3 font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+                        className="border-0 px-3 font-sans font-normal focus-visible:border-transparent focus-visible:ring-0 focus-visible:outline-none focus-visible:underline focus-visible:underline-offset-4 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-none dark:data-[state=active]:bg-input/30"
                       >
                         Offboarding
                       </TabsTrigger>
