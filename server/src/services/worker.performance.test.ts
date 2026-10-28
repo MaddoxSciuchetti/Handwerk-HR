@@ -69,6 +69,7 @@ it("loads grouped counts instead of individual issues for the list", async () =>
     expect(result[0].engagements[0]).toEqual({
         id: "e",
         issueCounts: [{ status: "done", count: 100 }],
+        taskPhaseCompleted: true,
     });
     expect(
         db.worker.findMany.mock.calls[0][0].select.engagements.select.issues,
@@ -105,8 +106,28 @@ it("includes historical phase counts in summaries without loading issue records"
     const result = await getWorkerData({ organizationId: "org", viewerUserId: "viewer", summary: true });
     expect(db.worker.findMany.mock.calls[0][0].select.engagements.take).toBeUndefined();
     expect(result[0].engagements).toEqual([
-        { id: "team", type: "transfer", issueCounts: [] },
-        { id: "offboarding", type: "offboarding", issueCounts: [{ status: "done", count: 1 }] },
-        { id: "onboarding", type: "onboarding", issueCounts: [{ status: "open", count: 4 }] },
+        { id: "team", type: "transfer", issueCounts: [], taskPhaseCompleted: false },
+        { id: "offboarding", type: "offboarding", issueCounts: [{ status: "done", count: 1 }], taskPhaseCompleted: true },
+        { id: "onboarding", type: "onboarding", issueCounts: [{ status: "open", count: 4 }], taskPhaseCompleted: false },
     ]);
+});
+
+ it.each([false, true])("computes phase completion across empty type switches, including private tasks (%s)", async (hasPrivateOpenTask) => {
+    db.worker.findMany.mockResolvedValue([{ id: "worker", engagements: [
+        { id: "current", type: "onboarding", status: "pending" },
+        { id: "exit", type: "offboarding", status: "pending" },
+        { id: "original", type: "onboarding", status: "completed" },
+    ] }]);
+    const visible = [{ workerEngagementId: "original", status: "done", _count: { _all: 7 } }];
+    db.issue.groupBy.mockResolvedValueOnce(visible).mockResolvedValueOnce([
+        ...visible,
+        { workerEngagementId: "exit", status: "open", _count: { _all: 2 } },
+        ...(hasPrivateOpenTask ? [{ workerEngagementId: "current", status: "open", _count: { _all: 1 } }] : []),
+    ]);
+    const result = await getWorkerData({ organizationId: "org", viewerUserId: "viewer", summary: true });
+    expect(result[0].engagements[0]).toMatchObject({
+        status: "pending", issueCounts: [], taskPhaseCompleted: !hasPrivateOpenTask,
+    });
+    expect(result[0].engagements[1].taskPhaseCompleted).toBe(false);
+    expect(result[0].engagements[2].issueCounts).toEqual([{ status: "done", count: 7 }]);
 });
