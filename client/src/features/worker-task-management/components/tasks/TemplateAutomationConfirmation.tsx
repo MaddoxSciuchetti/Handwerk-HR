@@ -112,7 +112,7 @@ export function TemplateAutomationConfirmation({
     (item) => item.sequence === 'microsoft_send_teams_message'
   );
   const senders = useQuery({
-    queryKey: ['template-mail-senders', user?.organizationId],
+    queryKey: ['template-mail-senders', user?.organizationId, user?.id],
     queryFn: getMicrosoftMailAddresses,
     enabled: hasMail,
   });
@@ -161,6 +161,12 @@ export function TemplateAutomationConfirmation({
     };
     recipients.set(recipientKey(recipient), recipient);
   }
+  const signedInEmail = user?.email?.trim().toLowerCase();
+  const defaultSender = senders.data?.addresses.find(
+    (sender) =>
+      sender.kind === 'mailbox' &&
+      sender.email.trim().toLowerCase() === signedInEmail
+  )?.email;
   const effectiveChoices = Object.fromEntries(
     automated.map((item) => [
       item.id,
@@ -168,6 +174,7 @@ export function TemplateAutomationConfirmation({
         ...choices[item.id],
         ...(isMailSequence(item.sequence)
           ? {
+              senderAddress: choices[item.id]?.senderAddress ?? defaultSender,
               recipients:
                 choices[item.id]?.recipients ?? mail.data?.selected ?? [],
             }
