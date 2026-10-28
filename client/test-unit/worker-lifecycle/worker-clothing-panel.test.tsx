@@ -15,7 +15,12 @@ import {
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { toast } from 'sonner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('sonner', () => ({
+  toast: { info: vi.fn(), success: vi.fn(), error: vi.fn() },
+}));
 
 vi.mock('@/features/bestand/bestand.api', () => ({
   getClothingStock: vi.fn(),
@@ -239,6 +244,20 @@ describe('worker information clothing', () => {
     expect(
       screen.queryByRole('option', { name: /Arbeitshose/ })
     ).not.toBeInTheDocument();
+    expect(toast.info).toHaveBeenCalledWith('Kein Bestand vorhanden.');
+  });
+
+  it('shows a notice when the article list has no Bestand', async () => {
+    vi.mocked(getClothingStock).mockResolvedValue([]);
+    renderPanel();
+    await screen.findByRole('button', { name: 'Zeile hinzufügen' });
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Zeile hinzufügen' }));
+    await user.click(
+      screen.getByRole('combobox', { name: 'Artikel aus Bestand' })
+    );
+    expect(toast.info).toHaveBeenCalledWith('Kein Bestand vorhanden.');
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
   });
 
   it('leaves only the plus button after the last row is removed', async () => {
