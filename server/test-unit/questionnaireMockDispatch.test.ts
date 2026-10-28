@@ -171,20 +171,23 @@ it("persists an engagement definition and dispatches it without changing the org
     expect(template.items).toHaveLength(seedQuestionnaireDefinition().items.length);
 });
 
-it.each([false, true])("sends the questionnaire from the saved sender (retry: %s)", async (retry) => {
+it.each([false, true])("sends the questionnaire from the authenticated user instead of the saved sender (retry: %s)", async (retry) => {
     engagement.questionnaireSenderAddress = "office@example.test";
     if (retry) engagement.questionnaireSubmission = { token: "existing-token", status: "sent" };
     await sendEngagementQuestionnaire(params);
     const mailed = (sendMail as jest.Mock).mock.calls.at(-1)?.[0];
     expect(mailed).toMatchObject({
         to: "lukas@example.test",
-        senderAddress: "office@example.test",
+        senderAddress: "hr@firma.de",
     });
     expect(mailed).not.toHaveProperty("via");
 });
 
-it("sends the questionnaire through Resend on staging", async () => {
-    process.env.APP_ENV = "staging";
+it.each(["staging", "development"])("sends the questionnaire through Resend using the configured test sender in %s", async (environment) => {
+    const previousNodeEnv = process.env.NODE_ENV;
+    const previousAppEnv = process.env.APP_ENV;
+    process.env.NODE_ENV = environment;
+    delete process.env.APP_ENV;
     try {
         await sendEngagementQuestionnaire(params);
         const mailed = (sendMail as jest.Mock).mock.calls.at(-1)?.[0];
@@ -195,6 +198,9 @@ it("sends the questionnaire through Resend on staging", async () => {
         expect(mailed).not.toHaveProperty("senderAddress");
         expect(mailed).not.toHaveProperty("organizationId");
     } finally {
-        delete process.env.APP_ENV;
+        if (previousNodeEnv === undefined) delete process.env.NODE_ENV;
+        else process.env.NODE_ENV = previousNodeEnv;
+        if (previousAppEnv === undefined) delete process.env.APP_ENV;
+        else process.env.APP_ENV = previousAppEnv;
     }
 });
