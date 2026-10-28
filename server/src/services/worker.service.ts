@@ -651,9 +651,10 @@ export async function updateEngagement(params: UpdateEngagementInput) {
         });
     }
 
-    // Leaving offboarding must not relabel its tasks or template history.
+    // Never relabel onboarding/offboarding in place — Team and returns to a
+    // lifecycle type are new phases so tasks and template receipts stay put.
     // The newest engagement determines the worker's current lifecycle phase.
-    if (existing.type === "offboarding" && updateData.type && updateData.type !== "offboarding") {
+    if (updateData.type && updateData.type !== existing.type) {
         const latest = await prisma.workerEngagement.findFirst({
             where: { workerId, organizationId },
             orderBy: { createdAt: "desc" },

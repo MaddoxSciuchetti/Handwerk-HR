@@ -43,6 +43,16 @@ it('still updates an existing offboarding phase in place', async () => {
     expect(db.workerEngagement.create).not.toHaveBeenCalled();
 });
 
+it('creates a separate Team phase when leaving onboarding, retaining its tasks', async () => {
+    db.workerEngagement.findFirst.mockResolvedValueOnce(onboarding).mockResolvedValueOnce(onboarding);
+    db.workerEngagement.create.mockResolvedValue({ id: 'team-1', type: 'transfer' });
+    await expect(updateEngagement({ ...context, type: 'transfer' })).resolves.toEqual({ id: 'team-1', type: 'transfer' });
+    expect(db.workerEngagement.create).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({
+        workerId: 'worker-1', type: 'transfer', status: 'completed', responsibleUserId: 'user-1', completedAt: expect.any(Date),
+    }) }));
+    expect(db.workerEngagement.update).not.toHaveBeenCalled();
+});
+
 it('keeps offboarding tasks and receipt attached when returning to Team', async () => {
     const offboarding = { ...onboarding, id: 'offboarding-1', type: 'offboarding' };
     db.workerEngagement.findFirst.mockResolvedValueOnce(offboarding).mockResolvedValueOnce(offboarding);
@@ -50,6 +60,17 @@ it('keeps offboarding tasks and receipt attached when returning to Team', async 
     await expect(updateEngagement({ ...context, engagementId: offboarding.id, type: 'transfer' })).resolves.toEqual({ id: 'team-1', type: 'transfer' });
     expect(db.workerEngagement.create).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({
         workerId: 'worker-1', type: 'transfer', status: 'completed', responsibleUserId: 'user-1', completedAt: expect.any(Date),
+    }) }));
+    expect(db.workerEngagement.update).not.toHaveBeenCalled();
+});
+
+it('returns to onboarding as a new phase without relabeling Team or prior onboarding', async () => {
+    const team = { ...onboarding, id: 'team-1', type: 'transfer', createdAt: new Date('2026-10-03') };
+    db.workerEngagement.findFirst.mockResolvedValueOnce(team).mockResolvedValueOnce(team);
+    db.workerEngagement.create.mockResolvedValue({ id: 'onboarding-2', type: 'onboarding' });
+    await expect(updateEngagement({ ...context, engagementId: team.id, type: 'onboarding' })).resolves.toEqual({ id: 'onboarding-2', type: 'onboarding' });
+    expect(db.workerEngagement.create).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({
+        workerId: 'worker-1', type: 'onboarding', status: 'pending', responsibleUserId: 'user-1',
     }) }));
     expect(db.workerEngagement.update).not.toHaveBeenCalled();
 });

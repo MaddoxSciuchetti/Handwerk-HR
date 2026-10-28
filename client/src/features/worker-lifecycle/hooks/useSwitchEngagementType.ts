@@ -35,25 +35,25 @@ function patchEngagementType(
     ...worker,
     engagements: worker.engagements.flatMap((engagement) => {
       if (!engagementIds.has(engagement.id)) return [engagement];
-      if ((engagement.type === 'offboarding') !== (type === 'offboarding')) {
-        // Match the server's separate phase creation without relabelling history.
-        return [
-          {
-            ...engagement,
-            id: `pending:${engagement.id}:${type}`,
-            type,
-            status:
-              type === 'transfer'
-                ? ('completed' as const)
-                : ('pending' as const),
-            issues: [],
-            issueCounts: [],
-            templateApplication: null,
-          },
-          engagement,
-        ];
-      }
-      return [{ ...engagement, type }];
+      if (engagement.type === type) return [engagement];
+      // Match the server's separate phase creation without relabelling history.
+      // Onboarding→Team must keep the original engagement typed as onboarding
+      // so its tasks still appear when that phase is viewed later.
+      return [
+        {
+          ...engagement,
+          id: `pending:${engagement.id}:${type}`,
+          type,
+          status:
+            type === 'transfer'
+              ? ('completed' as const)
+              : ('pending' as const),
+          issues: [],
+          issueCounts: [],
+          templateApplication: null,
+        },
+        engagement,
+      ];
     }),
   }));
 }
