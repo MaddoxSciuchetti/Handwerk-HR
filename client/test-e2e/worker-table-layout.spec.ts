@@ -26,7 +26,7 @@ for (const width of [1100, 800]) {
       await expect(trigger).toHaveText('Team');
       await page.evaluate(() => document.fonts.ready);
       const before = await geometry(page);
-      for (const label of ['Offboarding', 'Team']) {
+      for (const label of ['Onboarding', 'Team', 'Offboarding', 'Team']) {
         await trigger.click();
         expect(await geometry(page)).toEqual(before);
         await page

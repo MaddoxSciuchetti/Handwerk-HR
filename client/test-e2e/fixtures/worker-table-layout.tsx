@@ -14,6 +14,7 @@ import type {
   WorkerRecord,
 } from '@/features/worker-lifecycle/types/index.types';
 import '@/index.css';
+import '@/App.css';
 
 const queryClient = new QueryClient();
 
