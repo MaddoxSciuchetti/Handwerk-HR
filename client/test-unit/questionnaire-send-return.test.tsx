@@ -21,7 +21,7 @@ vi.mock('@/features/worker-task-management/hooks/useTaskData', () => ({
           {
             id: 'engagement',
             type: 'onboarding',
-            status: 'expected',
+            status: 'pending',
             questionnaireSubmission: null,
             issues: [],
           },

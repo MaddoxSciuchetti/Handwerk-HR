@@ -5,7 +5,6 @@ import {
   TaskStatusOpenIcon,
 } from '@/features/all-tasks/components/ui/TaskStatusIcons';
 import type { IssueStatusValue } from '@/features/all-tasks/consts/issue-status.consts';
-import { Clock } from 'lucide-react';
 import type { ComponentType, SVGProps } from 'react';
 import type { EngagementProgressValue } from '../../consts/engagement-progress.consts';
 
@@ -15,7 +14,6 @@ const ENGAGEMENT_TO_ISSUE_ICON: Record<
   EngagementProgressValue,
   IssueStatusValue
 > = {
-  expected: 'open',
   pending: 'open',
   in_progress: 'in_progress',
   completed: 'done',
@@ -23,7 +21,6 @@ const ENGAGEMENT_TO_ISSUE_ICON: Record<
 };
 
 const ENGAGEMENT_ICON_MAP = {
-  expected: Clock,
   pending: TaskStatusOpenIcon,
   in_progress: TaskStatusInProgressIcon,
   completed: TaskStatusDoneIcon,

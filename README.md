@@ -256,6 +256,19 @@ cd ../client && npm install
 
 `migrate deploy` applies every migration in `server/src/prisma/migrations/` to the database pointed at by `DATABASE_URL`. Use `migrate dev` instead while developing schema changes.
 
+## Task-driven onboarding and offboarding completion
+
+Deploy migration `20261028200000_task_driven_engagement_completion` with the
+application update. It replaces existing “Erwartet” statuses with “Ausstehend”
+and reconciles task completion. Onboarding and offboarding become “Abgeschlossen”
+when every task is closed (`done`, `cancelled`, or `not_applicable`), without
+requiring an emailed contract return. Empty records stay pending. Reopening or
+adding an open task reopens completed work and clears its completion date.
+Cancelled engagements and team records retain their status.
+
+PostgreSQL triggers enforce this for manual edits, automations, bulk changes,
+task moves and deletions. Keep these triggers when changing task write paths.
+
 ## Run locally
 
 Two terminals.

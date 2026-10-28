@@ -2,7 +2,8 @@ import type { EngagementProgress } from "@prisma/client";
 
 export const ENGAGEMENT_PROGRESS_LABELS: Record<EngagementProgress, string> = {
     pending: "Ausstehend",
-    expected: "Erwartet",
+    // Compatibility for old stored values during rollout.
+    expected: "Ausstehend",
     in_progress: "In Bearbeitung",
     completed: "Abgeschlossen",
     cancelled: "Abgebrochen",

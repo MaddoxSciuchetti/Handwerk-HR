@@ -26,7 +26,7 @@ it("completes the signed-contract task and leaves template choice to the popup",
         id: "contract",
         engagementId: "engagement",
         confirmedAt: null,
-        engagement: { status: "expected" },
+        engagement: { status: "pending" },
     });
     db.employmentContract.updateMany.mockResolvedValue({ count: 1 });
     db.issue.findFirst.mockResolvedValue({ id: "confirm" });
@@ -48,10 +48,8 @@ it("completes the signed-contract task and leaves template choice to the popup",
         where: { id: "signed" },
         data: { status: "done" },
     });
-    expect(db.workerEngagement.update).toHaveBeenCalledWith({
-        where: { id: "engagement" },
-        data: { status: "in_progress" },
-    });
+    // Task completion determines progress in the database; receipt must not overwrite it.
+    expect(db.workerEngagement.update).not.toHaveBeenCalled();
     expect(db.issueTemplate.findMany).not.toHaveBeenCalled();
     expect(db.issue.create).not.toHaveBeenCalled();
 });

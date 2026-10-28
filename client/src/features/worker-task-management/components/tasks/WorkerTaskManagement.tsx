@@ -275,7 +275,9 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
   });
   const pendingQuestionnaire = taskEngagements.find(
     (engagement) =>
-      engagement.status === 'expected' && !engagement.questionnaireSubmission
+      engagement.type === 'onboarding' &&
+      engagement.status === 'pending' &&
+      !engagement.questionnaireSubmission
   );
 
   return (
