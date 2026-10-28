@@ -6,7 +6,7 @@ import {
 } from '@/components/ui/popover';
 import { useState, type ReactNode } from 'react';
 import { MicrosoftLicenseStatus } from './MicrosoftLicenseStatus';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import {
@@ -29,16 +29,9 @@ import {
   isMailSequence,
   sequenceLabel,
 } from '@/features/settings/integrations/integration.consts';
-import {
-  connectTeams,
-  getChannels,
-  getConnection,
-} from '@/features/microsoft-teams/teams.api';
+import { connectTeams } from '@/features/microsoft-teams/teams.api';
 import useAuth from '@/features/user-profile/hooks/useAuth';
 import {
-  engagementMailKey,
-  getEngagementMailRecipients,
-  getMicrosoftMailAddresses,
   recipientKey,
   type MailRecipient,
 } from '../../api/engagementMail.api';
@@ -46,6 +39,7 @@ import type {
   AutomationChoice,
   TemplatePreview,
 } from '../../api/templateApplication.api';
+import { useTemplateAutomationOptions } from '../../hooks/useTemplateAutomationOptions';
 
 const emailAuthenticationHelp =
   'Microsoft hat die Anmeldung der Organisation abgelehnt. Bitte unter Einstellungen → Integrationen die Mandanten-ID, Client-ID und das Client-Secret prüfen und korrigieren oder die Administration darum bitten.';
@@ -111,28 +105,10 @@ export function TemplateAutomationConfirmation({
   const hasTeams = automated.some(
     (item) => item.sequence === 'microsoft_send_teams_message'
   );
-  const senders = useQuery({
-    queryKey: ['template-mail-senders', user?.organizationId, user?.id],
-    queryFn: getMicrosoftMailAddresses,
-    enabled: hasMail,
-  });
-  const mail = useQuery({
-    queryKey: engagementMailKey(engagementId),
-    queryFn: () => getEngagementMailRecipients(engagementId),
-    enabled: hasMail,
-  });
-  const connection = useQuery({
-    queryKey: ['template-teams-connection', user?.organizationId, user?.id],
-    queryFn: getConnection,
-    enabled: hasTeams,
-  });
-  const channels = useQuery({
-    queryKey: ['template-teams-channels', user?.organizationId, user?.id],
-    queryFn: getChannels,
-    enabled:
-      hasTeams &&
-      connection.data?.status === 'connected' &&
-      connection.data.ready,
+  const { senders, mail, connection, channels } = useTemplateAutomationOptions({
+    engagementId,
+    hasMail,
+    hasTeams,
   });
   const reconnect = useMutation({
     mutationFn: connectTeams,

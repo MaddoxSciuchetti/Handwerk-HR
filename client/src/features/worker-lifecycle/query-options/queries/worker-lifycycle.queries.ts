@@ -3,6 +3,7 @@ import { queryOptions } from '@tanstack/react-query';
 import { getWorkerData } from '../../api';
 import { ALL_WORKER_DATA } from '../../consts/query-key.consts';
 import { WorkerDetailResponse, WorkerRecord } from '../../types/index.types';
+import { workerRefreshInterval } from '../../utils/workerRefreshInterval';
 
 export const workerLifecycleQueries = {
   workerData: () => {
@@ -10,12 +11,18 @@ export const workerLifecycleQueries = {
       queryKey: [ALL_WORKER_DATA],
       queryFn: () => getWorkerData(),
       staleTime: 30_000,
+      refetchInterval: (query) =>
+        workerRefreshInterval(
+          query.state.data?.flatMap((worker) => worker.engagements)
+        ),
     });
   },
   workerById: (workerId: string) => {
     return queryOptions<WorkerDetailResponse>({
       queryKey: [ALL_WORKER_DATA, 'detail', workerId],
       queryFn: () => getWorkerById(workerId),
+      refetchInterval: (query) =>
+        workerRefreshInterval(query.state.data?.data.engagements),
     });
   },
 };

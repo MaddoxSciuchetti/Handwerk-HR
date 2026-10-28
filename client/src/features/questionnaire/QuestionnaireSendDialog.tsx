@@ -23,9 +23,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { apiJson } from '@/config/apiClient';
-import queryClient from '@/config/query.client';
+import { FETCHDESCRIPTION } from '@/features/all-tasks/consts/query.consts';
 import { ALL_WORKER_DATA } from '@/features/worker-lifecycle/consts/query-key.consts';
-import { WORKERBYID } from '@/features/worker-task-management/consts/query-key.consts';
+import {
+  PERSONNEL_DOCUMENTS,
+  WORKERBYID,
+} from '@/features/worker-task-management/consts/query-key.consts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -37,6 +40,7 @@ import type {
 type DraftResponse = {
   success: boolean;
   data: {
+    workerId: string;
     engagementId: string;
     email: string | null;
     sent: boolean;
@@ -148,9 +152,39 @@ export function QuestionnaireSendDialog({
       );
     },
     onSuccess: (response) => {
-      void queryClient.invalidateQueries({ queryKey: [ALL_WORKER_DATA] });
-      void queryClient.invalidateQueries({ queryKey: [WORKERBYID] });
-      void queryClient.invalidateQueries({ queryKey: ['employment-contract'] });
+      const workerId = data?.workerId;
+      cache.setQueryData<DraftResponse>(
+        ['questionnaire-draft', engagementId],
+        (current) =>
+          current
+            ? {
+                ...current,
+                data: {
+                  ...current.data,
+                  sent: true,
+                  status: response.data.mockCompleted ? 'completed' : 'sent',
+                },
+              }
+            : current
+      );
+      void cache.invalidateQueries({ queryKey: [ALL_WORKER_DATA] });
+      void cache.invalidateQueries({
+        queryKey: [WORKERBYID, ...(workerId ? [workerId] : [])],
+      });
+      void cache.invalidateQueries({ queryKey: [FETCHDESCRIPTION] });
+      void cache.invalidateQueries({
+        queryKey: ['employment-contract'],
+        predicate: (query) => query.queryKey[2] === engagementId,
+      });
+      if (response.data.mockCompleted) {
+        void cache.invalidateQueries({
+          queryKey: ['completed-questionnaire'],
+          predicate: (query) => query.queryKey[2] === engagementId,
+        });
+        void cache.invalidateQueries({
+          queryKey: [PERSONNEL_DOCUMENTS, ...(workerId ? [workerId] : [])],
+        });
+      }
       if (response.data.mockCompleted) {
         toast.success(
           'Testfragebogen ausgefüllt. Der Vertrag kann bearbeitet werden.'

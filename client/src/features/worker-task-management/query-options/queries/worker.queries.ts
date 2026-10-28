@@ -1,4 +1,5 @@
 import { WorkerDetailResponse } from '@/features/worker-lifecycle/types/index.types';
+import { workerRefreshInterval } from '@/features/worker-lifecycle/utils/workerRefreshInterval';
 import { queryOptions } from '@tanstack/react-query';
 import {
   getTaskHistory,
@@ -32,6 +33,7 @@ export const workerQueries = {
       staleTime: 30_000,
       refetchOnMount: 'always',
       queryFn: () => getWorkerById(workerId),
-      refetchInterval: (query) => query.state.data?.data.engagements.some(engagement => engagement.templateApplication && !engagement.templateApplication.completedAt) ? 2000 : false,
+      refetchInterval: (query) =>
+        workerRefreshInterval(query.state.data?.data.engagements),
     }),
 };

@@ -262,6 +262,7 @@ export async function getWorkerData(params: GetWorkersInput) {
                         completedAt: true, startDate: true, endDate: true,
                         responsibleUser: { select: { id: true, firstName: true, lastName: true, email: true } },
                         templateApplication: { select: { id: true, completedAt: true, resultsDismissedAt: true } },
+                        questionnaireSubmission: { select: { id: true, status: true, completedAt: true } },
                     },
                 },
             },
@@ -293,6 +294,7 @@ export async function getWorkerData(params: GetWorkersInput) {
                 take: 1,
                 include: {
                     templateApplication: { select: { id: true, completedAt: true, resultsDismissedAt: true } },
+                    questionnaireSubmission: { select: { id: true, status: true, completedAt: true } },
                     responsibleUser: {
                         select: {
                             id: true,

@@ -1,6 +1,17 @@
 import { QuestionnaireSendDialog } from '@/features/questionnaire/QuestionnaireSendDialog';
 import { apiJson } from '@/config/apiClient';
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQuery,
+} from '@tanstack/react-query';
+import { ALL_WORKER_DATA } from '@/features/worker-lifecycle/consts/query-key.consts';
+import { FETCHDESCRIPTION } from '@/features/all-tasks/consts/query.consts';
+import {
+  PERSONNEL_DOCUMENTS,
+  WORKERBYID,
+} from '@/features/worker-task-management/consts/query-key.consts';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from 'test-unit/test-utils';
 import { beforeEach, expect, it, vi } from 'vitest';
@@ -14,6 +25,7 @@ vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 const draft = {
   success: true,
   data: {
+    workerId: 'worker',
     engagementId: 'engagement',
     email: 'lukas@example.test',
     sent: false,
@@ -29,6 +41,68 @@ beforeEach(() => {
   vi.mocked(apiJson.get).mockResolvedValue(draft);
   vi.mocked(apiJson.put).mockResolvedValue(draft);
 });
+
+it.each([false, true])(
+  'refreshes the provider cache immediately after sending (mock: %s)',
+  async (mockCompleted) => {
+    const cache = new QueryClient({
+      defaultOptions: { queries: { retry: false, staleTime: Infinity } },
+    });
+    const commonKeys = [
+      [ALL_WORKER_DATA],
+      [ALL_WORKER_DATA, 'detail', 'worker'],
+      [WORKERBYID, 'worker'],
+      ['employment-contract', 'worker', 'engagement'],
+    ];
+    const completedKeys = [
+      ['completed-questionnaire', 'worker', 'engagement'],
+      [PERSONNEL_DOCUMENTS, 'worker'],
+    ];
+    const unrelatedKeys = [
+      [WORKERBYID, 'other-worker'],
+      ['employment-contract', 'other-worker', 'other-engagement'],
+      ['completed-questionnaire', 'other-worker', 'other-engagement'],
+      [PERSONNEL_DOCUMENTS, 'other-worker'],
+    ];
+    for (const key of [...commonKeys, ...completedKeys, ...unrelatedKeys])
+      cache.setQueryData(key, {});
+    const fetchTasks = vi.fn(() => new Promise<never>(() => {}));
+    cache.setQueryData([FETCHDESCRIPTION], []);
+    function TaskList() {
+      useQuery({ queryKey: [FETCHDESCRIPTION], queryFn: fetchTasks });
+      return null;
+    }
+    vi.mocked(apiJson.post).mockResolvedValue({
+      success: true,
+      data: { emailSent: !mockCompleted, mockCompleted },
+    });
+    const onClose = vi.fn();
+    const view = render(
+      <QueryClientProvider client={cache}>
+        <TaskList />
+        <QuestionnaireSendDialog engagementId="engagement" onClose={onClose} />
+      </QueryClientProvider>
+    );
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Senden' })
+    );
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+    expect(fetchTasks).toHaveBeenCalledOnce();
+    for (const key of commonKeys)
+      expect(cache.getQueryState(key)?.isInvalidated).toBe(true);
+    for (const key of completedKeys)
+      expect(cache.getQueryState(key)?.isInvalidated).toBe(mockCompleted);
+    for (const key of unrelatedKeys)
+      expect(cache.getQueryState(key)?.isInvalidated).toBe(false);
+    expect(
+      cache.getQueryData(['questionnaire-draft', 'engagement'])
+    ).toMatchObject({
+      data: { sent: true, status: mockCompleted ? 'completed' : 'sent' },
+    });
+    view.unmount();
+    cache.clear();
+  }
+);
 
 it('sends with Enter after the dialog loads', async () => {
   vi.mocked(apiJson.post).mockResolvedValue({

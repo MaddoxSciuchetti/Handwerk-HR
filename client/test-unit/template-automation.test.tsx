@@ -140,6 +140,49 @@ beforeEach(() => {
   });
 });
 
+it('preloads automation options before template selection and reuses them in the form', async () => {
+  mocks.preview.mockResolvedValue({
+    id: 'automated',
+    name: 'Automatisch',
+    items: [
+      { ...automation, sequence: 'microsoft_send_email', title: 'E-Mail' },
+      { ...automation, id: 'teams', sequence: 'microsoft_send_teams_message', title: 'Teams' },
+    ],
+  });
+  renderWithProviders(<TemplateApplyPrompt targets={[target]} />);
+  await waitFor(() => {
+    expect(mocks.senders).toHaveBeenCalledTimes(1);
+    expect(mocks.mail).toHaveBeenCalledWith('engagement');
+    expect(mocks.connection).toHaveBeenCalledTimes(1);
+    expect(mocks.channels).toHaveBeenCalledTimes(1);
+  });
+  expect(mocks.preview).not.toHaveBeenCalled();
+
+  const user = await selectTemplate();
+  await user.click(screen.getByText('E-Mail'));
+  await user.click(screen.getByRole('button', { name: 'Empfänger für E-Mail' }));
+  expect(screen.getByRole('checkbox', { name: 'Team' })).toBeInTheDocument();
+  await user.keyboard('{Escape}');
+  await user.click(screen.getByText('Teams'));
+  await user.click(screen.getByRole('button', { name: 'Empfänger für Teams' }));
+  expect(screen.getByRole('checkbox', { name: 'Team · Allgemein' })).toBeInTheDocument();
+  expect(mocks.senders).toHaveBeenCalledTimes(1);
+  expect(mocks.mail).toHaveBeenCalledTimes(1);
+  expect(mocks.connection).toHaveBeenCalledTimes(1);
+  expect(mocks.channels).toHaveBeenCalledTimes(1);
+});
+
+it('waits for an engagement before preloading automation options', async () => {
+  const view = renderWithProviders(<TemplateApplyPrompt targets={[]} />);
+  expect(mocks.senders).not.toHaveBeenCalled();
+  expect(mocks.mail).not.toHaveBeenCalled();
+  expect(mocks.connection).not.toHaveBeenCalled();
+  expect(mocks.channels).not.toHaveBeenCalled();
+
+  view.rerender(<TemplateApplyPrompt targets={[target]} />);
+  await waitFor(() => expect(mocks.mail).toHaveBeenCalledWith('engagement'));
+});
+
 it('spins the opener while the chosen template loads', async () => {
   mocks.preview.mockReturnValue(new Promise(() => {}));
   renderWithProviders(<TemplateApplyPrompt targets={[target]} />);
@@ -510,7 +553,7 @@ describe('template automation popup', () => {
       name: 'Automatisch',
       items: [{ ...automation, sequence: 'microsoft_send_teams_message' }],
     });
-    mocks.channels.mockRejectedValueOnce({
+    mocks.channels.mockRejectedValue({
       code: 'reconnect_required',
       message: 'Bitte Microsoft Teams erneut verbinden.',
     });
