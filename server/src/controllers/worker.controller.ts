@@ -97,7 +97,6 @@ export const startExpectedOnboarding = catchErrors(
             organizationId: req.orgId,
             createdByUserId: req.userId,
             email,
-            senderAddress: typeof req.body?.senderAddress === "string" ? req.body.senderAddress : "",
         });
 
         return res.status(201).json({ success: true, data: result });

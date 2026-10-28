@@ -3,29 +3,12 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, expect, it, vi } from 'vitest';
 import { FastTrackOnboarding } from '@/features/worker-lifecycle/components/lifycycle-modal-content/FastTrackOnboarding';
-import API, { apiJson } from '@/config/apiClient';
+import API from '@/config/apiClient';
 
-const auth = vi.hoisted(() => ({ user: { email: ' ADA@Example.test ' } }));
-vi.mock('@/features/user-profile/hooks/useAuth', () => ({
-  default: () => auth,
-}));
-vi.mock('@/config/apiClient', () => ({
-  default: { post: vi.fn() },
-  apiJson: { get: vi.fn() },
-}));
+vi.mock('@/config/apiClient', () => ({ default: { post: vi.fn() } }));
 
 beforeEach(() => {
   vi.clearAllMocks();
-  auth.user = { email: ' ADA@Example.test ' };
-  vi.mocked(apiJson.get).mockResolvedValue({
-    data: {
-      addresses: [
-        { email: 'office@example.test', label: 'Office', kind: 'mailbox' },
-        { email: 'ada@example.test', label: 'Ada', kind: 'mailbox' },
-      ],
-      error: null,
-    },
-  });
   vi.mocked(API.post).mockResolvedValue({
     data: { worker: { id: 'worker' }, engagement: { id: 'engagement' } },
   });
@@ -41,16 +24,15 @@ function renderForm() {
       <FastTrackOnboarding onCreated={onCreated} />
     </QueryClientProvider>
   );
-  return { onCreated, client };
+  return { onCreated };
 }
 
-it('defaults to the signed-in mailbox once senders load and submits it', async () => {
+it('creates onboarding without asking for or posting a sender address', async () => {
   const { onCreated } = renderForm();
-  await waitFor(() =>
-    expect(
-      screen.getByRole('combobox', { name: 'Absender' })
-    ).toHaveTextContent('Ada')
-  );
+  expect(
+    screen.queryByRole('combobox', { name: 'Absender' })
+  ).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Anlegen' })).toBeEnabled();
   await userEvent.type(
     screen.getByLabelText('E-Mail des Mitarbeiters'),
     'worker@example.test'
@@ -59,7 +41,6 @@ it('defaults to the signed-in mailbox once senders load and submits it', async (
   await waitFor(() =>
     expect(API.post).toHaveBeenCalledWith('/worker/fast-track', {
       email: 'worker@example.test',
-      senderAddress: 'ada@example.test',
     })
   );
   await waitFor(() =>
@@ -67,36 +48,8 @@ it('defaults to the signed-in mailbox once senders load and submits it', async (
   );
 });
 
-it('keeps an explicit sender choice when senders refresh', async () => {
-  const { client } = renderForm();
-  const select = screen.getByRole('combobox', { name: 'Absender' });
-  await waitFor(() => expect(select).toHaveTextContent('Ada'));
-  await userEvent.click(select);
-  await userEvent.click(screen.getByRole('option', { name: 'Office' }));
-  await client.invalidateQueries({ queryKey: ['questionnaire-senders'] });
-  expect(select).toHaveTextContent('Office');
-  await userEvent.type(
-    screen.getByLabelText('E-Mail des Mitarbeiters'),
-    'worker@example.test'
-  );
-  await userEvent.click(screen.getByRole('button', { name: 'Anlegen' }));
-  await waitFor(() =>
-    expect(API.post).toHaveBeenCalledWith('/worker/fast-track', {
-      email: 'worker@example.test',
-      senderAddress: 'office@example.test',
-    })
-  );
-});
-
-it('requires a sender choice if the signed-in account has no available mailbox', async () => {
-  auth.user = { email: 'missing@example.test' };
+it('does not create onboarding with an empty recipient email', async () => {
   renderForm();
-  await waitFor(() =>
-    expect(screen.getByRole('combobox', { name: 'Absender' })).toBeEnabled()
-  );
-  expect(screen.getByRole('combobox', { name: 'Absender' })).toHaveTextContent(
-    'Absender wählen'
-  );
-  expect(screen.getByRole('button', { name: 'Anlegen' })).toBeDisabled();
+  await userEvent.click(screen.getByRole('button', { name: 'Anlegen' }));
   expect(API.post).not.toHaveBeenCalled();
 });

@@ -417,7 +417,7 @@ describe("production Microsoft automations", () => {
         expect(posted?.body).toContain("Willkommen Ada");
     });
 
-    it("sends the Fragebogen through Graph from the chosen sender", async () => {
+    it("sends the Fragebogen through Graph from the authenticated user", async () => {
         expect(
             await sendEngagementQuestionnaire({
                 organizationId: ORGANIZATION_ID,

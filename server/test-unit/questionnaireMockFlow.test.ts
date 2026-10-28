@@ -17,6 +17,7 @@ jest.mock("@/constants/env", () => ({
 }));
 jest.mock("@/lib/prisma", () => ({
     prisma: {
+        user: { findUnique: jest.fn() },
         workerEngagement: { findFirst: jest.fn() },
         questionnaireSubmission: {
             create: jest.fn(),
@@ -67,6 +68,7 @@ it.each([true, false])("updates worker and contract without duplicating print ta
             { type: "input", key: "contract.birthday", label: "Geburtsdatum" },
         ]),
     };
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue({ email: "hr@example.test" });
     const engagement: any = {
         id: "engagement",
         workerId: "worker",

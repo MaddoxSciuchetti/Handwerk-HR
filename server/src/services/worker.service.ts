@@ -4,7 +4,7 @@ import { applyTemplateApplication, type TemplateApplyInput } from './templateApp
 
 import { BAD_REQUEST } from "@/constants/http";
 import AppError from "@/utils/AppError";
-import { listBsbMailAddresses } from "@/services/engagementMail";
+import { questionnaireSender } from "@/services/questionnaireSender";
 import { prisma } from "@/lib/prisma";
 import { templateItemsForEngagement } from "@/services/onboardingTemplateTasks";
 import { fillWorkerProfileFromQuestionnaires } from "@/services/questionnaireWorkerProfile";
@@ -151,16 +151,8 @@ export async function startExpectedOnboarding(params: {
     organizationId: string;
     createdByUserId: string;
     email: string;
-    senderAddress: string;
 }) {
-    const senderAddress = params.senderAddress?.trim().toLowerCase() ?? "";
-    const { addresses } = await listBsbMailAddresses(params.organizationId);
-    if (!senderAddress || !addresses.some((address) => address.kind === "mailbox" && address.email === senderAddress)) {
-        throw new AppError(
-            BAD_REQUEST,
-            "Bitte einen gültigen Absender wählen.",
-        );
-    }
+    const senderAddress = await questionnaireSender(params.createdByUserId);
     const email = params.email.trim().toLowerCase();
     const { firstName, lastName } = placeholderNamesFromEmail(email);
     const created = await prisma.$transaction(async (tx) => {
