@@ -18,6 +18,7 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LandingRouteImport } from './routes/landing'
 import { Route as HomeRouteImport } from './routes/home'
+import { Route as CockpitRouteImport } from './routes/cockpit'
 import { Route as BestandRouteImport } from './routes/bestand'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UserIdRouteImport } from './routes/user/$Id'
@@ -85,6 +86,11 @@ const LandingRoute = LandingRouteImport.update({
 const HomeRoute = HomeRouteImport.update({
   id: '/home',
   path: '/home',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CockpitRoute = CockpitRouteImport.update({
+  id: '/cockpit',
+  path: '/cockpit',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BestandRoute = BestandRouteImport.update({
@@ -207,6 +213,7 @@ const EmailVerifyCodeRoute = EmailVerifyCodeRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/bestand': typeof BestandRoute
+  '/cockpit': typeof CockpitRoute
   '/home': typeof HomeRoute
   '/landing': typeof LandingRoute
   '/login': typeof LoginRoute
@@ -241,6 +248,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bestand': typeof BestandRoute
+  '/cockpit': typeof CockpitRoute
   '/home': typeof HomeRoute
   '/landing': typeof LandingRoute
   '/login': typeof LoginRoute
@@ -276,6 +284,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/bestand': typeof BestandRoute
+  '/cockpit': typeof CockpitRoute
   '/home': typeof HomeRoute
   '/landing': typeof LandingRoute
   '/login': typeof LoginRoute
@@ -312,6 +321,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/bestand'
+    | '/cockpit'
     | '/home'
     | '/landing'
     | '/login'
@@ -346,6 +356,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/bestand'
+    | '/cockpit'
     | '/home'
     | '/landing'
     | '/login'
@@ -380,6 +391,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/bestand'
+    | '/cockpit'
     | '/home'
     | '/landing'
     | '/login'
@@ -415,6 +427,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BestandRoute: typeof BestandRoute
+  CockpitRoute: typeof CockpitRoute
   HomeRoute: typeof HomeRoute
   LandingRoute: typeof LandingRoute
   LoginRoute: typeof LoginRoute
@@ -495,6 +508,13 @@ declare module '@tanstack/react-router' {
       path: '/home'
       fullPath: '/home'
       preLoaderRoute: typeof HomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cockpit': {
+      id: '/cockpit'
+      path: '/cockpit'
+      fullPath: '/cockpit'
+      preLoaderRoute: typeof CockpitRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bestand': {
@@ -713,6 +733,7 @@ const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BestandRoute: BestandRoute,
+  CockpitRoute: CockpitRoute,
   HomeRoute: HomeRoute,
   LandingRoute: LandingRoute,
   LoginRoute: LoginRoute,

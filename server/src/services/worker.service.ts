@@ -151,17 +151,14 @@ export async function startExpectedOnboarding(params: {
     organizationId: string;
     createdByUserId: string;
     email: string;
+    senderAddress: string;
 }) {
-    const actor = await prisma.user.findUnique({
-        where: { id: params.createdByUserId },
-        select: { email: true },
-    });
-    const senderAddress = actor?.email?.trim().toLowerCase() ?? "";
+    const senderAddress = params.senderAddress?.trim().toLowerCase() ?? "";
     const { addresses } = await listBsbMailAddresses(params.organizationId);
-    if (!addresses.some((address) => address.email === senderAddress)) {
+    if (!senderAddress || !addresses.some((address) => address.kind === "mailbox" && address.email === senderAddress)) {
         throw new AppError(
             BAD_REQUEST,
-            "Die E-Mail des angemeldeten Benutzers kann nicht als Absender verwendet werden.",
+            "Bitte einen gültigen Absender wählen.",
         );
     }
     const email = params.email.trim().toLowerCase();

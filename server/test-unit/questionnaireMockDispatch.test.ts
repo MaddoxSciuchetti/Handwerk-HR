@@ -171,14 +171,14 @@ it("persists an engagement definition and dispatches it without changing the org
     expect(template.items).toHaveLength(seedQuestionnaireDefinition().items.length);
 });
 
-it.each([false, true])("sends the questionnaire from the signed-in user (retry: %s)", async (retry) => {
+it.each([false, true])("sends the questionnaire from the saved sender (retry: %s)", async (retry) => {
     engagement.questionnaireSenderAddress = "office@example.test";
     if (retry) engagement.questionnaireSubmission = { token: "existing-token", status: "sent" };
     await sendEngagementQuestionnaire(params);
     const mailed = (sendMail as jest.Mock).mock.calls.at(-1)?.[0];
     expect(mailed).toMatchObject({
         to: "lukas@example.test",
-        senderAddress: "hr@firma.de",
+        senderAddress: "office@example.test",
     });
     expect(mailed).not.toHaveProperty("via");
 });

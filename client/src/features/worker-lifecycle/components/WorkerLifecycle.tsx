@@ -27,13 +27,10 @@ import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import { useState, type Dispatch, type SetStateAction } from 'react';
 import { QuestionnaireSendDialog } from '@/features/questionnaire/QuestionnaireSendDialog';
 import GreetingHeader from './GreetingHeader';
-import { LifecycleStatistics } from './LifecycleStatistics';
 import ProjectItem, { type WorkerSelection } from './ProjectItem';
 import { WorkerSidebar } from './WorkerSidebar';
 import { WorkerSelectAllCheckbox } from './WorkerSelectAllCheckbox';
 import { useChangeResponsibleUser } from '../hooks/useChangeResponsibleUser';
-import { isTeamMember } from '../utils/teamMembers';
-import NextAnniversary from './NextAnniversary';
 
 function WorkerLifeCycle() {
   const { user, isLoading, isError } = useAuth();
@@ -145,11 +142,6 @@ function WorkerLifeCycle() {
           firstname={user?.firstName || ''}
           isLoading={isLoading}
         />
-        <NextAnniversary
-          people={(workers ?? []).filter((worker) => isTeamMember(worker))}
-          isLoading={isLoading || workersLoading}
-        />
-        <LifecycleStatistics />
         <Card className="mt-5 flex min-h-64 shrink-0 flex-1 flex-col gap-0 border border-border py-0 shadow-none ring-0">
           <CardHeader className="flex shrink-0 flex-row flex-wrap items-center justify-between gap-4 px-6 py-3">
             <CardTitle className="text-base font-medium">Handwerker</CardTitle>
