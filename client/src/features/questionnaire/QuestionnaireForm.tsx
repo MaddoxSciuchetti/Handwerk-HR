@@ -3,6 +3,7 @@ import {
   QUESTIONNAIRE_DECLARATION_HEADING,
   QUESTIONNAIRE_DECLARATION_TEXT,
 } from '@shared/questionnaireDeclaration';
+import { mockQuestionnaireValues } from '@shared/questionnaireMock';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,6 +33,7 @@ type QuestionnaireResponse = {
   success: boolean;
   data: {
     status: 'sent' | 'completed';
+    staging?: boolean;
     name?: string;
     intro?: string;
     questions?: QuestionnaireQuestionData[];
@@ -181,6 +183,29 @@ export function QuestionnaireForm({
     setValues((current) => ({ ...current, [key]: value }));
     const question = questions.find((item) => item.key === key);
     if (preview && question?.bsbOnly) onPresetChange?.(key, value);
+  };
+  const fillStagingDemo = () => {
+    const demo = mockQuestionnaireValues(
+      [
+        ...questions
+          .filter((question) => question.type !== 'file')
+          .map((question) => ({
+            key: question.key,
+            type: question.type,
+            defaultValue: question.defaultValue,
+            options: question.options,
+            max: question.max,
+            required: question.required,
+          })),
+        { key: 'declaration', type: 'check', required: true },
+      ],
+      'staging.demo@example.test'
+    );
+    setValues((current) => ({
+      ...current,
+      ...demo,
+      declaration: 'ja',
+    }));
   };
   const fillsBsb = (question: QuestionnaireQuestionData) =>
     Boolean(preview) && question.bsbOnly === true && question.type !== 'file';
@@ -433,6 +458,16 @@ export function QuestionnaireForm({
               <p className="text-sm text-destructive">
                 Das Formular konnte nicht gesendet werden.
               </p>
+            ) : null}
+            {!embedded && data.staging ? (
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-2xl"
+                onClick={fillStagingDemo}
+              >
+                Fill out with staging
+              </Button>
             ) : null}
             {!embedded ? (
               <Button

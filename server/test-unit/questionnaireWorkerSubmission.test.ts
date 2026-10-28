@@ -189,6 +189,21 @@ it("publishes BSB-only fields as locked and optional in both public form represe
     });
 });
 
+it("marks the public form for staging demo fill when APP_ENV is staging", async () => {
+    const previousAppEnv = process.env.APP_ENV;
+    process.env.APP_ENV = "staging";
+    (prisma.questionnaireSubmission.findUnique as jest.Mock).mockResolvedValue({
+        status: "sent",
+        formDefinition: { items: [{ kind: "field", key: "firstName" }] },
+    });
+    await expect(getPublicQuestionnaire("token")).resolves.toMatchObject({
+        status: "sent",
+        staging: true,
+    });
+    if (previousAppEnv === undefined) delete process.env.APP_ENV;
+    else process.env.APP_ENV = previousAppEnv;
+});
+
 it.each([undefined, '', 'nein', true, 'true'])("rejects a submission without explicit declaration confirmation (%s)", async (declaration) => {
     (prisma.questionnaireSubmission.findUnique as jest.Mock).mockResolvedValue({ status: "sent" });
     const transactionCalls = (prisma.$transaction as jest.Mock).mock.calls.length;
