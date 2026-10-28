@@ -7,7 +7,11 @@ import {
     personnelDocumentLabel,
     type PersonnelDocumentName,
 } from "@/services/personnelDocumentNames";
-import { encodeFileAnswer, questionnaireFileName, readFileAnswer } from "@/services/questionnaireForm";
+import {
+    encodeFileAnswer,
+    questionnaireFileName,
+    readFileAnswer,
+} from "@/services/questionnaireForm";
 import AppError from "@/utils/AppError";
 import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { Prisma } from "@prisma/client";
@@ -117,10 +121,14 @@ async function toDto(document: {
 export async function listPersonnelDocuments(params: {
     organizationId: string;
     workerId: string;
-}): Promise<{ documents: PersonnelDocumentDto[]; folders: PersonnelFolderDto[] }> {
+}): Promise<{
+    documents: PersonnelDocumentDto[];
+    folders: PersonnelFolderDto[];
+    hiddenFolders: string[];
+}> {
     const worker = await prisma.worker.findFirst({
         where: { id: params.workerId, organizationId: params.organizationId },
-        select: { id: true },
+        select: { id: true, hiddenPersonnelFolders: true },
     });
     if (!worker) throw new AppError(NOT_FOUND, "Mitarbeiter nicht gefunden.");
 
@@ -148,8 +156,11 @@ export async function listPersonnelDocuments(params: {
     ]);
 
     return {
-        documents: await Promise.all(documents.map((document) => toDto(document))),
+        documents: await Promise.all(
+            documents.map((document) => toDto(document)),
+        ),
         folders,
+        hiddenFolders: worker.hiddenPersonnelFolders,
     };
 }
 
@@ -209,7 +220,10 @@ export async function uploadPersonnelDocument(params: {
         "upload/personnel-documents",
     );
     if (!upload.success || !upload.key) {
-        throw new AppError(BAD_REQUEST, upload.error ?? "Hochladen ist fehlgeschlagen.");
+        throw new AppError(
+            BAD_REQUEST,
+            upload.error ?? "Hochladen ist fehlgeschlagen.",
+        );
     }
 
     const created = await prisma.engagementPersonnelDocument.create({
@@ -255,7 +269,12 @@ export async function renamePersonnelDocument(params: {
         const answers = await tx.questionnaireAnswer.findMany({
             where: {
                 value: { contains: document.fileUrl },
-                submission: { engagementId: document.engagementId },
+                submission: {
+                    engagement: {
+                        workerId: params.workerId,
+                        organizationId: params.organizationId,
+                    },
+                },
             },
         });
         for (const answer of answers) {
@@ -305,4 +324,127 @@ export async function deletePersonnelDocument(params: {
     await prisma.engagementPersonnelDocument.delete({
         where: { id: document.id },
     });
+}
+
+export async function movePersonnelDocument(params: {
+    organizationId: string;
+    workerId: string;
+    documentId: string;
+    engagementId: string;
+    name: string;
+    folderId?: string;
+    source?: string;
+}) {
+    await requireEngagement(params);
+    const stored = await storedDocumentName(params);
+    const scope = {
+        workerId: params.workerId,
+        organizationId: params.organizationId,
+    };
+    await prisma.$transaction(async (tx) => {
+        if (params.source === "worker") {
+            const document = await tx.workerDocument.findFirst({
+                where: { id: params.documentId, worker: scope },
+            });
+            if (!document)
+                throw new AppError(NOT_FOUND, "Dokument nicht gefunden.");
+            await tx.engagementPersonnelDocument.create({
+                data: {
+                    engagementId: params.engagementId,
+                    ...stored,
+                    uploadedByUserId: document.uploadedByUserId,
+                    originalFileName: document.name,
+                    fileUrl: document.fileUrl,
+                    mimeType: document.mimeType,
+                    fileSizeBytes: document.fileSizeBytes,
+                    createdAt: document.createdAt,
+                },
+            });
+            await tx.workerDocument.delete({ where: { id: document.id } });
+        } else {
+            const document = await tx.engagementPersonnelDocument.findFirst({
+                where: { id: params.documentId, engagement: scope },
+            });
+            if (!document)
+                throw new AppError(NOT_FOUND, "Dokument nicht gefunden.");
+            await tx.engagementPersonnelDocument.update({
+                where: { id: document.id },
+                data: { ...stored, engagementId: params.engagementId },
+            });
+        }
+    });
+}
+
+export async function deletePersonnelFolder(params: {
+    organizationId: string;
+    workerId: string;
+    folderId: string;
+    confirmed: boolean;
+}) {
+    const scope = {
+        workerId: params.workerId,
+        organizationId: params.organizationId,
+    };
+    const builtin = params.folderId.startsWith("builtin:")
+        ? params.folderId.slice(8)
+        : null;
+    if (builtin && !isAssignablePersonnelDocumentName(builtin)) {
+        throw new AppError(BAD_REQUEST, "Ungültiger Ordner.");
+    }
+    const documents = await prisma.$transaction(async (tx) => {
+        const worker = await tx.worker.findFirst({
+            where: {
+                id: params.workerId,
+                organizationId: params.organizationId,
+            },
+        });
+        if (!worker)
+            throw new AppError(NOT_FOUND, "Mitarbeiter nicht gefunden.");
+        const folder = builtin
+            ? null
+            : await tx.engagementPersonnelFolder.findFirst({
+                  where: { id: params.folderId, engagement: scope },
+              });
+        if (!builtin && !folder)
+            throw new AppError(NOT_FOUND, "Ordner nicht gefunden.");
+        const where = {
+            engagement: scope,
+            ...(builtin
+                ? { folderId: null, name: builtin as PersonnelDocumentName }
+                : { folderId: params.folderId }),
+        };
+        const contents = await tx.engagementPersonnelDocument.findMany({
+            where,
+        });
+        if (contents.length && !params.confirmed) {
+            throw new AppError(
+                CONFLICT,
+                "Der Ordner enthält Dateien. Bitte das Löschen bestätigen.",
+            );
+        }
+        await tx.engagementPersonnelDocument.deleteMany({ where });
+        if (builtin) {
+            await tx.worker.update({
+                where: { id: worker.id },
+                data: { hiddenPersonnelFolders: { push: builtin } },
+            });
+        } else {
+            await tx.engagementPersonnelFolder.delete({
+                where: { id: params.folderId },
+            });
+        }
+        return contents;
+    });
+    for (const document of documents) {
+        try {
+            await s3.send(
+                new DeleteObjectCommand({
+                    Bucket: process.env.AWS_S3_BUCKET!,
+                    Key: document.fileUrl,
+                }),
+            );
+        } catch (error) {
+            console.error("S3 delete failed for key", document.fileUrl, error);
+        }
+    }
 }

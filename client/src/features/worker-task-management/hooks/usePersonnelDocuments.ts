@@ -2,12 +2,15 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   createPersonnelFolder,
+  movePersonnelDocument,
+  deletePersonnelFolder,
+  type MovePersonnelDocumentInput,
   deletePersonnelDocument,
   getPersonnelDocuments,
   uploadPersonnelDocument,
   type PersonnelLibrary,
 } from '../api/personnelDocuments.api';
-import { PERSONNEL_DOCUMENTS } from '../consts/query-key.consts';
+import { HISTORYDATA, PERSONNEL_DOCUMENTS } from '../consts/query-key.consts';
 
 export function usePersonnelDocuments(workerId: string) {
   return useQuery({
@@ -70,9 +73,11 @@ export function useDeletePersonnelDocument(workerId: string) {
         [PERSONNEL_DOCUMENTS, workerId],
         (current) => ({
           documents:
-            current?.documents.filter((document) => document.id !== documentId) ??
-            [],
+            current?.documents.filter(
+              (document) => document.id !== documentId
+            ) ?? [],
           folders: current?.folders ?? [],
+          hiddenFolders: current?.hiddenFolders ?? [],
         })
       );
       return { previous };
@@ -91,5 +96,38 @@ export function useDeletePersonnelDocument(workerId: string) {
         queryKey: [PERSONNEL_DOCUMENTS, workerId],
       });
     },
+  });
+}
+
+export function useMovePersonnelDocument(workerId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: MovePersonnelDocumentInput) =>
+      movePersonnelDocument(workerId, input),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: [PERSONNEL_DOCUMENTS, workerId],
+        }),
+        queryClient.invalidateQueries({ queryKey: [HISTORYDATA, workerId] }),
+      ]);
+    },
+    onError: (error: Error) =>
+      toast.error(error.message || 'Datei konnte nicht verschoben werden.'),
+  });
+}
+
+export function useDeletePersonnelFolder(workerId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { folderId: string; confirmed: boolean }) =>
+      deletePersonnelFolder(workerId, input.folderId, input.confirmed),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: [PERSONNEL_DOCUMENTS, workerId],
+      });
+    },
+    onError: (error: Error) =>
+      toast.error(error.message || 'Ordner konnte nicht gelöscht werden.'),
   });
 }

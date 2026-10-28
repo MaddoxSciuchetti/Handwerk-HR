@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
-import { FileText } from 'lucide-react';
+import { FileText, X } from 'lucide-react';
+import { STORED_FILE_DRAG_TYPE } from '../../../hooks/useFolderFileDrop';
 import type { PersonnelDocument } from '../../../api/personnelDocuments.api';
 
 type PersonnelDocumentRowProps = {
@@ -18,7 +19,21 @@ export function PersonnelDocumentRow({
   onDelete,
 }: PersonnelDocumentRowProps) {
   return (
-    <div className="flex flex-col rounded-xl border border-border p-4 transition-colors hover:bg-(--dropdown-surface)">
+    <div
+      draggable={!deleting}
+      onDragStart={(event) => {
+        event.dataTransfer.setData(
+          STORED_FILE_DRAG_TYPE,
+          JSON.stringify({
+            id: document.id,
+            source: 'personnel',
+            engagementId: document.engagementId,
+          })
+        );
+        event.dataTransfer.effectAllowed = 'move';
+      }}
+      className="group relative flex flex-col rounded-xl border border-border p-4 transition-colors hover:bg-(--dropdown-surface)"
+    >
       <div className="flex justify-end">
         <Button
           type="button"
@@ -27,9 +42,9 @@ export function PersonnelDocumentRow({
           disabled={deleting}
           aria-label={`${document.label} löschen`}
           onClick={() => onDelete(document.id)}
-          className="cursor-pointer text-muted-foreground"
+          className="cursor-pointer text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100"
         >
-          X
+          <X className="h-4 w-4" />
         </Button>
       </div>
       <Button
@@ -43,6 +58,7 @@ export function PersonnelDocumentRow({
           <img
             src={document.presignedUrl}
             alt=""
+            draggable={false}
             className="h-8 w-8 rounded-md object-cover"
           />
         ) : (

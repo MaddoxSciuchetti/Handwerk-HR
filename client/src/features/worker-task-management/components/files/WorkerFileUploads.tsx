@@ -70,6 +70,7 @@ function WorkerFileUploads({
           engagements={engagements}
           documents={personnel}
           folders={folders}
+          hiddenFolders={personnelDocuments.data?.hiddenFolders ?? []}
           questionnaires={questionnaires}
           contracts={contracts}
           certificates={certificates}

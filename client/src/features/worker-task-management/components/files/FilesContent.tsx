@@ -1,3 +1,4 @@
+import { STORED_FILE_DRAG_TYPE } from '../../hooks/useFolderFileDrop';
 import { Button } from '@/components/ui/button';
 
 import { SuccessResponse } from '@/types/api.types';
@@ -23,7 +24,15 @@ const FilesContent = ({ fetchFiles, deleteFiles }: FilesContentProps) => {
           return (
             <div
               key={index}
-              className="flex flex-col rounded-xl border border-border hover:bg-(--dropdown-surface) p-3 transition-colors"
+              draggable
+              onDragStart={(event) => {
+                event.dataTransfer.setData(
+                  STORED_FILE_DRAG_TYPE,
+                  JSON.stringify({ id: file.id, source: 'worker' })
+                );
+                event.dataTransfer.effectAllowed = 'move';
+              }}
+              className="group flex flex-col rounded-xl border border-border hover:bg-(--dropdown-surface) p-3 transition-colors"
             >
               <div className="flex justify-end">
                 <Button
@@ -34,7 +43,7 @@ const FilesContent = ({ fetchFiles, deleteFiles }: FilesContentProps) => {
                     e.stopPropagation();
                     deleteFiles(file.id);
                   }}
-                  className="cursor-pointer rounded-xl text-muted-foreground transition-colors hover:bg-(--hover-bg) hover:text-(--hover-foreground)"
+                  className="opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100 cursor-pointer rounded-xl text-muted-foreground transition-colors hover:bg-(--hover-bg) hover:text-(--hover-foreground)"
                 >
                   X
                 </Button>
@@ -43,6 +52,7 @@ const FilesContent = ({ fetchFiles, deleteFiles }: FilesContentProps) => {
                 <img
                   className="h-15 w-15 rounded-xl object-cover"
                   src={file.presignedUrl}
+                  draggable={false}
                   alt="not showing"
                 />
               </div>
