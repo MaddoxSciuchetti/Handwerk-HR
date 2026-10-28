@@ -812,7 +812,7 @@ it('fills the live progress bar as individual automation outcomes arrive', async
         screen
           .getByRole('progressbar')
           .querySelector('.automation-progress-active')
-      ).toBeInTheDocument();
+      ).not.toBeInTheDocument();
     },
     { timeout: 2500 }
   );

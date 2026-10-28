@@ -47,6 +47,7 @@ export function useWorkerFilter(workers: WorkerRecord[] | undefined) {
 
   return {
     employees,
+    isTeamMode: filterMode === 'engagementType' && filterValue === 'transfer',
     filterLabel,
     filterOptions,
     filteredWorkers,

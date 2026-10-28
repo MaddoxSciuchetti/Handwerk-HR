@@ -60,6 +60,7 @@ function WorkerLifeCycle() {
     isDeletingWorkers || isSwitchingType || isChangingResponsible;
   const {
     employees,
+    isTeamMode,
     filterLabel,
     filterOptions,
     filteredWorkers,
@@ -175,7 +176,9 @@ function WorkerLifeCycle() {
                           workers={filteredWorkers}
                           selected={editModeData}
                           onChange={handleSetEditModeData}
-                          disabled={isLoading || workersLoading || isSelectionPending}
+                          disabled={
+                            isLoading || workersLoading || isSelectionPending
+                          }
                         />
                       </div>
                       Name
@@ -184,20 +187,30 @@ function WorkerLifeCycle() {
                     <TableHead className="bg-card py-3 px-2">
                       Verantwortlich
                     </TableHead>
-                    <TableHead className="bg-card py-3 px-2">
-                      Aufgaben
-                    </TableHead>
-                    <TableHead className="bg-card py-3 px-2">Status</TableHead>
+                    {!isTeamMode && (
+                      <>
+                        <TableHead className="bg-card py-3 px-2">
+                          Aufgaben
+                        </TableHead>
+                        <TableHead className="bg-card py-3 px-2">
+                          Status
+                        </TableHead>
+                      </>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody className="[&_tr]:border-0 [&_td]:py-4 [&_td]:px-2 [&_td:first-child]:pl-10">
                   {isLoading || workersLoading ? (
-                    <TableSkeletonRows variant="workers" />
+                    <TableSkeletonRows
+                      variant="workers"
+                      columns={isTeamMode ? 3 : 5}
+                    />
                   ) : (
                     filteredWorkers.map((worker) => (
                       <ProjectItem
                         key={worker.id}
                         worker={worker}
+                        hideTaskColumns={isTeamMode}
                         gotopage={handleNavigate}
                         isSelected={editModeData.some(
                           (item) => item.engagementNumber === worker.id

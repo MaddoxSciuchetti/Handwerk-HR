@@ -51,8 +51,6 @@ export function TemplateAutomationProgress({
   }, [baseline, ceiling, active, synchronizing, completed]);
 
   const units = Math.max(baseline, visualUnits);
-  const activeWidth =
-    totalCount > 0 ? ((units - finished) / totalCount) * 100 : 0;
   const value = completed
     ? 100
     : totalCount > 0
@@ -85,18 +83,7 @@ export function TemplateAutomationProgress({
         aria-valuetext={message}
         className="h-1 w-full [&_[data-slot=progress-indicator]]:bg-emerald-500"
         value={value}
-      >
-        {active > 0 && (
-          <span
-            aria-hidden="true"
-            className="automation-progress-active absolute inset-y-0 transition-[left,width] duration-300 motion-reduce:transition-none"
-            style={{
-              left: `${(finished / totalCount) * 100}%`,
-              width: `${activeWidth}%`,
-            }}
-          />
-        )}
-      </Progress>
+      />
     </section>
   );
 }

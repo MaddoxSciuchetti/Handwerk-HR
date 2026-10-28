@@ -18,10 +18,12 @@ export function TableSkeletonRows({
   variant,
   rows = 6,
   cellClassName,
+  columns,
 }: {
   variant: TableSkeletonVariant;
   rows?: number;
   cellClassName?: string;
+  columns?: number;
 }) {
   const line = (width: string) => <Skeleton className={`h-4 ${width}`} />;
   const cells = (index: number): ReactNode[] => {
@@ -110,24 +112,26 @@ export function TableSkeletonRows({
           : 'border-0 hover:bg-transparent'
       }
     >
-      {cells(row).map((content, column) => (
-        <TableCell
-          key={column}
-          className={
-            cellClassName ??
-            (variant === 'documents' && column === 0
-              ? 'w-10 !p-0'
-              : 'px-2 py-4 first:pl-10')
-          }
-        >
-          {row === 0 && column === 0 ? (
-            <span role="status" className="sr-only">
-              Daten werden geladen…
-            </span>
-          ) : null}
-          <div aria-hidden="true">{content}</div>
-        </TableCell>
-      ))}
+      {cells(row)
+        .slice(0, columns)
+        .map((content, column) => (
+          <TableCell
+            key={column}
+            className={
+              cellClassName ??
+              (variant === 'documents' && column === 0
+                ? 'w-10 !p-0'
+                : 'px-2 py-4 first:pl-10')
+            }
+          >
+            {row === 0 && column === 0 ? (
+              <span role="status" className="sr-only">
+                Daten werden geladen…
+              </span>
+            ) : null}
+            <div aria-hidden="true">{content}</div>
+          </TableCell>
+        ))}
     </TableRow>
   ));
 }

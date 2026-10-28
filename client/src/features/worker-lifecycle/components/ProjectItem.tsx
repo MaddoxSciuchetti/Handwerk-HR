@@ -22,6 +22,7 @@ export type WorkerSelection = {
 
 type ProjectItemSharedProps = {
   worker: WorkerRecord;
+  hideTaskColumns?: boolean;
   gotopage: (
     taskId: string,
     form_type: LifecycleType,
@@ -148,31 +149,35 @@ function ProjectItem(props: ProjectItemProps) {
               onChange={props.onResponsibleChange}
             />
           </TableCell>
-          <TableCell
-            className={cn(
-              'text-sm tabular-nums text-muted-foreground transition-colors group-hover:bg-muted/50',
-              props.isSelected && 'bg-muted/50'
-            )}
-          >
-            {worker.engagements[0].type === 'transfer' ? '—' : issueCount}
-          </TableCell>
-          <TableCell
-            className={cn(
-              'transition-colors group-hover:rounded-r-xl group-hover:bg-muted/50',
-              props.isSelected && 'rounded-r-xl bg-muted/50'
-            )}
-          >
-            {worker.engagements[0].type === 'transfer' ? (
-              '—'
-            ) : (
-              <EngagementProgressPicker
-                worker={worker}
-                workerId={worker.id}
-                engagementId={worker.engagements[0].id}
-                status={worker.engagements[0].status}
-              />
-            )}
-          </TableCell>
+          {!props.hideTaskColumns && (
+            <>
+              <TableCell
+                className={cn(
+                  'text-sm tabular-nums text-muted-foreground transition-colors group-hover:bg-muted/50',
+                  props.isSelected && 'bg-muted/50'
+                )}
+              >
+                {worker.engagements[0].type === 'transfer' ? '—' : issueCount}
+              </TableCell>
+              <TableCell
+                className={cn(
+                  'transition-colors group-hover:rounded-r-xl group-hover:bg-muted/50',
+                  props.isSelected && 'rounded-r-xl bg-muted/50'
+                )}
+              >
+                {worker.engagements[0].type === 'transfer' ? (
+                  '—'
+                ) : (
+                  <EngagementProgressPicker
+                    worker={worker}
+                    workerId={worker.id}
+                    engagementId={worker.engagements[0].id}
+                    status={worker.engagements[0].status}
+                  />
+                )}
+              </TableCell>
+            </>
+          )}
         </>
       )}
     </TableRow>
