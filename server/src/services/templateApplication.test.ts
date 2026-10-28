@@ -20,6 +20,7 @@ jest.mock("@/lib/prisma", () => ({
             update: jest.fn(),
         },
         issue: { findMany: jest.fn(), update: jest.fn() },
+        issueAuditLog: { findMany: jest.fn() },
         $transaction: jest.fn(),
         $queryRaw: jest.fn(),
     },
@@ -423,6 +424,49 @@ it("reads current stored task statuses instead of relying on the apply response"
     expect(record?.result).toMatchObject({ count: 1, tasks: [{ id: "stored-task", status: "done" }] });
     expect(createTasks).not.toHaveBeenCalled();
 });
+it("clears the original failure after a task is retried successfully", async () => {
+    db.templateApplication.findUnique.mockResolvedValue({
+        templateId: "template", issueIds: ["crew"], completedAt: new Date(),
+        outcomes: [{ issueId: "crew", status: "failed", message: "Mitgliedschaft deaktiviert" }],
+    });
+    db.issue.findMany.mockResolvedValue([
+        { id: "crew", title: "Crewmeister", status: "done", sequence: "crewmeister_create_account" },
+    ]);
+    const record = await readTemplateApplication(context, "engagement");
+    expect(record?.result.outcomes).toEqual([{ issueId: "crew", status: "completed" }]);
+    expect(runIssueSequence).not.toHaveBeenCalled();
+    expect(db.templateApplication.update).not.toHaveBeenCalled();
+});
+
+it("shows a retry in progress without the previous error", async () => {
+    db.templateApplication.findUnique.mockResolvedValue({
+        templateId: "template", issueIds: ["crew"], completedAt: new Date(),
+        outcomes: [{ issueId: "crew", status: "failed", message: "Alter Fehler" }],
+    });
+    db.issue.findMany.mockResolvedValue([{ id: "crew", status: "in_progress" }]);
+    expect((await readTemplateApplication(context, "engagement"))?.result.outcomes)
+        .toEqual([{ issueId: "crew", status: "pending" }]);
+});
+
+it("uses the latest failure when a retry fails for a different reason", async () => {
+    db.templateApplication.findUnique.mockResolvedValue({
+        templateId: "template", issueIds: ["crew"], completedAt: new Date(),
+        outcomes: [{ issueId: "crew", status: "failed", message: "Alter Fehler" }],
+    });
+    db.issue.findMany.mockResolvedValue([{ id: "crew", status: "error" }]);
+    db.issueAuditLog.findMany.mockResolvedValue([
+        { issueId: "crew", newValue: { status: "error", automationError: "Token abgelaufen" } },
+    ]);
+    expect((await readTemplateApplication(context, "engagement"))?.result.outcomes)
+        .toEqual([{ issueId: "crew", status: "failed", message: "Token abgelaufen" }]);
+    expect(db.issueAuditLog.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: {
+            issueId: { in: ["crew"] }, action: "issue.updated",
+            newValue: { path: ["status"], equals: "error" },
+        },
+    }));
+});
+
 it("recovers existing tasks for an older empty demo receipt", async () => {
     db.templateApplication.findUnique.mockResolvedValue({ templateId: "template", issueIds: [], outcomes: [], completedAt: new Date() });
     db.issue.findMany.mockResolvedValue([{ id: "existing", title: "Microsoft-Konto", status: "done", sequence: "microsoft_create_account" }]);

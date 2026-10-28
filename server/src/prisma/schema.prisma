@@ -1132,6 +1132,7 @@ enum IntegrationSequence {
   microsoft_deactivate_account
   crewmeister_create_account
   crewmeister_deactivate_account
+  crewmeister_delete_membership
 }
 
 enum EngagementMailRecipientKind {

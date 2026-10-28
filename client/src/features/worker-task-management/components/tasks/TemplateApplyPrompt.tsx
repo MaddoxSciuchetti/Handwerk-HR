@@ -496,7 +496,7 @@ export function TemplateApplyPrompt({
                       </span>
                     </>
                   );
-                  if (task.status !== 'error' && outcome?.status !== 'failed')
+                  if (task.status !== 'error')
                     return (
                       <Item
                         key={task.id}

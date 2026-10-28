@@ -136,6 +136,7 @@ async function verifyMembership(
     crewId: string,
     email: string,
     expectedDisabled = false,
+    expectedUserId?: string,
 ): Promise<string | null> {
     const { response, payload } = await crewmeister(
         auth.token,
@@ -155,7 +156,9 @@ async function verifyMembership(
         typeof payload.email !== "string" ||
         payload.email.trim().toLowerCase() !== email.trim().toLowerCase() ||
         !("userId" in payload) ||
-        !resourceId(payload.userId)
+        !resourceId(payload.userId) ||
+        (expectedUserId !== undefined &&
+            String(payload.userId) !== expectedUserId)
     ) {
         return "Die Crewmeister-Mitgliedschaft stimmt nicht mit dem Mitarbeiter und der gewählten Crew überein. Die Aufgabe wurde nicht als erfolgreich bestätigt.";
     }
@@ -430,6 +433,135 @@ export async function deactivateCrewmeisterAccount(params: {
             status: "disabled",
         },
         update: { externalId: memberId, status: "disabled" },
+    });
+    return { status: "completed" };
+}
+
+// Membership removal is deliberately separate from offboarding/deactivation.
+// Swagger documents a Member DELETE, not an invitation-only cancellation API.
+export async function deleteCrewmeisterMembership(
+    params: Parameters<typeof deactivateCrewmeisterAccount>[0],
+): ReturnType<typeof deactivateCrewmeisterAccount> {
+    if (!params.auth) return { status: "skipped", reason: "not_configured" };
+    const worker = await prisma.worker.findFirst({
+        where: { id: params.workerId, organizationId: params.organizationId },
+        select: { id: true, email: true },
+    });
+    if (!worker)
+        return { status: "failed", message: "Mitarbeiter nicht gefunden." };
+    if (!integrationsLive()) return { status: "skipped", reason: "not_live" };
+    const email = worker.email.trim();
+    if (!email.includes("@"))
+        return {
+            status: "failed",
+            message:
+                "Für diesen Mitarbeiter fehlt eine gültige E-Mail-Adresse.",
+        };
+    const crew = await resolveCrewId(params.auth);
+    if (!crew.ok) return { status: "failed", message: crew.message };
+    const query = new URLSearchParams({
+        filter: `crewId==${crew.crewId};email==${JSON.stringify(email)}`,
+        pageSize: "20",
+    });
+    const path = `/api/v3/platform-app/members?${query}`;
+    const found = await crewmeister(params.auth.token, path);
+    const members = pageContent(found.payload);
+    const member = members[0];
+    if (!found.response.ok)
+        return {
+            status: "failed",
+            message: errorMessage(
+                found.payload,
+                `Crewmeister-Mitgliedschaft konnte nicht geladen werden (HTTP ${found.response.status}).`,
+            ),
+        };
+    if (members.length !== 1 || !resourceId(member?.id))
+        return {
+            status: "failed",
+            message:
+                "Es wurde keine eindeutige Crewmeister-Mitgliedschaft zum Entfernen gefunden. Bitte in Crewmeister prüfen.",
+        };
+    const memberId = resourceId(member.id);
+    // Re-read the exact record before deletion; an enabled member must first be
+    // deactivated explicitly. Never delete a global User or authentication token.
+    const problem = await verifyMembership(
+        params.auth,
+        memberId,
+        crew.crewId,
+        email,
+        true,
+        resourceId(member.userId),
+    );
+    if (problem)
+        return {
+            status: "failed",
+            message: `${problem} Vor dem Entfernen muss die Mitgliedschaft deaktiviert sein.`,
+        };
+    if (
+        String(member.crewId) !== crew.crewId ||
+        typeof member.email !== "string" ||
+        member.email.trim().toLowerCase() !== email.toLowerCase() ||
+        !resourceId(member.userId) ||
+        member.disabled !== true
+    )
+        return {
+            status: "failed",
+            message:
+                "Nur die eindeutig zugeordnete, deaktivierte Crewmeister-Mitgliedschaft darf entfernt werden.",
+        };
+
+    const removed = await crewmeister(
+        params.auth.token,
+        `/api/v3/platform-app/members/${memberId}`,
+        { method: "DELETE" },
+    );
+    const receipt = removed.payload;
+    // A 202 only accepts a job. A 404 can also mean missing permissions. Neither
+    // confirms deletion. Require the synchronous write receipt and then read back.
+    if (
+        removed.response.status !== 200 ||
+        !receipt ||
+        typeof receipt !== "object" ||
+        !("resourceAfterWrite" in receipt) ||
+        receipt.resourceAfterWrite !== null ||
+        !("resourceBeforeWrite" in receipt) ||
+        !receipt.resourceBeforeWrite ||
+        typeof receipt.resourceBeforeWrite !== "object" ||
+        !("id" in receipt.resourceBeforeWrite) ||
+        String(receipt.resourceBeforeWrite.id) !== memberId ||
+        !("crewId" in receipt.resourceBeforeWrite) ||
+        String(receipt.resourceBeforeWrite.crewId) !== crew.crewId ||
+        !("userId" in receipt.resourceBeforeWrite) ||
+        String(receipt.resourceBeforeWrite.userId) !== String(member.userId)
+    )
+        return {
+            status: "failed",
+            message: errorMessage(
+                receipt,
+                `Crewmeister hat die Entfernung nicht bestätigt (HTTP ${removed.response.status}). Bitte Löschberechtigung und Mitgliedschaft in Crewmeister prüfen.`,
+            ),
+        };
+
+    const remaining = await crewmeister(params.auth.token, path);
+    if (
+        !remaining.response.ok ||
+        !remaining.payload ||
+        typeof remaining.payload !== "object" ||
+        !("content" in remaining.payload) ||
+        !Array.isArray(remaining.payload.content) ||
+        remaining.payload.content.length !== 0
+    )
+        return {
+            status: "failed",
+            message:
+                "Die entfernte Crewmeister-Mitgliedschaft ist noch vorhanden oder die Nachprüfung ist fehlgeschlagen. Bitte in Crewmeister prüfen.",
+        };
+    await prisma.workerExternalAccount.deleteMany({
+        where: {
+            workerId: worker.id,
+            provider: "crewmeister",
+            externalId: memberId,
+        },
     });
     return { status: "completed" };
 }

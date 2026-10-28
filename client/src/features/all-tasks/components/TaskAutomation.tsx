@@ -1,5 +1,8 @@
 import { TeamsSendAction } from '@/features/microsoft-teams/TeamsSendAction';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { crewmeisterRemovalWarning } from '@/features/settings/integrations/integration.consts';
 import { MicrosoftSimulationNotice } from '@/features/settings/integrations/MicrosoftSimulationNotice';
 import { Spinner } from '@/components/ui/spinner';
 import {
@@ -33,6 +36,7 @@ type TaskAutomationProps = {
 function ExistingTaskAutomation({
   taskId,
   provider,
+  sequence,
   disabled,
   senderAddress,
   beforeRun,
@@ -40,6 +44,11 @@ function ExistingTaskAutomation({
 }: TaskAutomationProps & { onCompleted: () => void }) {
   const queryClient = useQueryClient();
   const [isRunning, setIsRunning] = useState(false);
+  const [removalConfirmedFor, setRemovalConfirmedFor] = useState<string | null>(
+    null
+  );
+  const removesMembership = sequence === 'crewmeister_delete_membership';
+  const removalConfirmed = !removesMembership || removalConfirmedFor === taskId;
   const integrations = useQuery({
     queryKey: ['settings', 'integrations'],
     queryFn: getIntegrations,
@@ -59,8 +68,9 @@ function ExistingTaskAutomation({
         : 'Sequenzen werden in dieser Umgebung nicht ausgeführt.';
 
   const onGo = async () => {
-    if (disabled || isRunning || blockedReason) return;
+    if (disabled || isRunning || blockedReason || !removalConfirmed) return;
     setIsRunning(true);
+    setRemovalConfirmedFor(null);
     if (beforeRun && !(await beforeRun())) {
       setIsRunning(false);
       return;
@@ -69,6 +79,9 @@ function ExistingTaskAutomation({
       runIssueSequence(taskId, senderAddress?.trim() || undefined)
     );
     setIsRunning(false);
+    void queryClient.invalidateQueries({
+      queryKey: ['template-application-result'],
+    });
     void queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] });
     void queryClient.invalidateQueries({ queryKey: [WORKERBYID] });
     void queryClient.invalidateQueries({ queryKey: [TASKHISTORY, taskId] });
@@ -100,10 +113,29 @@ function ExistingTaskAutomation({
       {blockedReason ? (
         <p className="text-sm text-muted-foreground">{blockedReason}</p>
       ) : null}
+      {removesMembership && (
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            {crewmeisterRemovalWarning}
+          </p>
+          <Label className="flex items-start gap-2">
+            <Checkbox
+              checked={removalConfirmedFor === taskId}
+              disabled={disabled || isRunning}
+              onCheckedChange={(checked) =>
+                setRemovalConfirmedFor(checked === true ? taskId : null)
+              }
+            />
+            Diese deaktivierte Mitgliedschaft dauerhaft entfernen
+          </Label>
+        </div>
+      )}
       <Button
         type="button"
         className="rounded-2xl"
-        disabled={disabled || isRunning || Boolean(blockedReason)}
+        disabled={
+          disabled || isRunning || Boolean(blockedReason) || !removalConfirmed
+        }
         aria-busy={isRunning}
         onClick={() => void onGo()}
       >
@@ -112,6 +144,8 @@ function ExistingTaskAutomation({
             <Spinner className="size-4 text-(--automation-accent)" />
             Wird ausgeführt…
           </>
+        ) : removesMembership ? (
+          'Mitgliedschaft entfernen'
         ) : (
           'Go'
         )}
