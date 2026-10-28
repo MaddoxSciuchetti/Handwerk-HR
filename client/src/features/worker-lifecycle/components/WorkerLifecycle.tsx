@@ -3,7 +3,6 @@ import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import { TableSkeletonRows } from '@/components/ui/table-skeleton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { NestedDropdown } from '@/components/ui/nested-dropdown';
 import { ScrollableTableViewport } from '@/components/ui/scrollable-table-viewport';
 import {
   Table,
@@ -31,6 +30,7 @@ import ProjectItem, { type WorkerSelection } from './ProjectItem';
 import { WorkerSidebar } from './WorkerSidebar';
 import { WorkerSelectAllCheckbox } from './WorkerSelectAllCheckbox';
 import { useChangeResponsibleUser } from '../hooks/useChangeResponsibleUser';
+import { WorkerTypeFilter } from './WorkerTypeFilter';
 
 function WorkerLifeCycle() {
   const { user, isLoading, isError } = useAuth();
@@ -60,12 +60,10 @@ function WorkerLifeCycle() {
   const {
     employees,
     isTeamMode,
-    filterLabel,
-    filterOptions,
+    selectedTypes,
     filteredWorkers,
-    handleSelect,
-    handleSubSelect,
-  } = useWorkerFilter(workers);
+    toggleType,
+  } = useWorkerFilter(workers, user?.id, user?.organizationId);
 
   useBodyScrollLock();
 
@@ -146,13 +144,10 @@ function WorkerLifeCycle() {
           <CardHeader className="flex shrink-0 flex-row flex-wrap items-center justify-between gap-4 px-6 py-3">
             <CardTitle className="text-base font-medium">Handwerker</CardTitle>
             <div className="flex shrink-0 items-center gap-3">
-              <NestedDropdown
-                options={filterOptions}
-                value={filterLabel}
-                placeholder="Filter"
-                className="border-border bg-muted shadow-none hover:bg-muted focus-visible:border-border focus-visible:ring-0 aria-expanded:bg-muted dark:border-border dark:bg-muted dark:hover:bg-muted"
-                onSelect={handleSelect}
-                onSubSelect={handleSubSelect}
+              <WorkerTypeFilter
+                selectedTypes={selectedTypes}
+                onToggle={toggleType}
+                disabled={!user?.id}
               />
               <Button
                 type="button"

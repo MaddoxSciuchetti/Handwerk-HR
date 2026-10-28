@@ -26,7 +26,8 @@ vi.mock('@/features/worker-lifecycle/hooks/useWorkerFilter', () => ({
   useWorkerFilter: () => ({
     isTeamMode: filterState.isTeamMode,
     employees: [],
-    filterOptions: [],
+    selectedTypes: ['onboarding', 'offboarding', 'transfer'],
+    toggleType: vi.fn(),
     filteredWorkers: [],
   }),
 }));
