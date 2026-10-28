@@ -2,11 +2,9 @@ import { useBillingSubscription } from '@/features/settings/payments/hooks/useBi
 import useAuth from '@/features/user-profile/hooks/useAuth';
 import { isSubscriptionLocked } from '@/features/settings/payments/util/subscriptionAccess.util';
 import { MentionNotice } from '@/features/all-tasks/components/MentionNotice';
-import FeatureModal from '@/features/sidebar/feature-modal/FeatureModal';
 import { useThemeProvider } from '@/hooks/useThemeProvider';
 import { Outlet, useLocation, useNavigate } from '@tanstack/react-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
 import AppSidebar from '../ui/sidebar/AppSidebar';
 import {
   SidebarInset,
@@ -16,7 +14,6 @@ import PagePath from './headers/PagePath';
 import { SettingsSidebar } from './SettingsSidebar';
 
 function Layout() {
-  const [modal, setModal] = useState<boolean>(false);
   const { theme } = useThemeProvider();
   const [isSettingOpen, setIsSettingOpen] = useState<boolean>(false);
   const navigate = useNavigate();
@@ -32,7 +29,10 @@ function Layout() {
   );
 
   useEffect(() => {
-    if (location.pathname.startsWith('/settings')) {
+    if (
+      location.pathname.startsWith('/settings') ||
+      location.pathname === '/bestand'
+    ) {
       setIsSettingOpen(true);
     }
   }, [location.pathname]);
@@ -44,10 +44,6 @@ function Layout() {
     navigate({ to: '/settings/payments' });
     setIsSettingOpen(true);
   }, [subscriptionLocked, isAdmin, location.pathname, navigate]);
-
-  const handleOpenModal = () => {
-    setModal((prev) => !prev);
-  };
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -67,7 +63,6 @@ function Layout() {
       ) : (
         <AppSidebar
           subscriptionLocked={subscriptionLocked}
-          openModal={handleOpenModal}
           setIsSettingOpen={setIsSettingOpen}
         />
       )}
@@ -92,16 +87,6 @@ function Layout() {
         </main>
       </SidebarInset>
       <MentionNotice />
-      {modal && (
-        <Dialog open onOpenChange={(next) => { if (!next) handleOpenModal(); }}>
-          <DialogContent
-            overlayClassName="bg-black/30"
-            className="border-0 bg-transparent p-0 shadow-none"
-          >
-            <FeatureModal handleToggle={handleOpenModal} />
-          </DialogContent>
-        </Dialog>
-      )}
     </>
   );
 }

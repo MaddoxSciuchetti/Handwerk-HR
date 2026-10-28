@@ -27,11 +27,6 @@ export const LAYOUTITEMS = [
     to: '/tasks',
     icon: Ticket,
   },
-  {
-    title: 'Bestand',
-    to: '/bestand',
-    icon: Shirt,
-  },
 ];
 
 export const SETTINGSITEMS = [
@@ -59,6 +54,11 @@ export const SETTINGSITEMS = [
     title: 'Fragebogen',
     to: '/settings/questionnaire',
     icon: ClipboardList,
+  },
+  {
+    title: 'Bestand',
+    to: '/bestand',
+    icon: Shirt,
   },
   {
     title: 'Integrationen',
