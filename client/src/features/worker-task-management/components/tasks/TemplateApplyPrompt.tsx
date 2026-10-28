@@ -20,8 +20,6 @@ import {
   CheckCircle2,
   CircleAlert,
   Circle,
-  Maximize2,
-  Minimize2,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -53,11 +51,9 @@ export function TemplateApplyPrompt({
 }) {
   const [open, setOpen] = useState(false);
   const [previousId, setPreviousId] = useState(targets[0]?.engagementId);
-  const [engagementId, setEngagementId] = useState(targets[0]?.engagementId);
   const [templateId, setTemplateId] = useState<string>();
   const [requestKey, setRequestKey] = useState(() => crypto.randomUUID());
   const [synchronizing, setSynchronizing] = useState(false);
-  const [expanded, setExpanded] = useState(false);
   const [fadingEngagement, setFadingEngagement] = useState<string | null>(null);
   const [mockedRun, setMockedRun] = useState(false);
   const [lastRun, setLastRun] = useState<{
@@ -81,9 +77,7 @@ export function TemplateApplyPrompt({
       !hiddenIds.includes(target.engagementId) &&
       !sessionStorage.getItem(resultsDismissKey(target.engagementId))
   );
-  const selected =
-    available.find((target) => target.engagementId === engagementId) ??
-    available[0];
+  const selected = available[0];
   const selectedId = selected?.engagementId;
   const preview = useQuery({
     queryKey: [
@@ -385,23 +379,6 @@ export function TemplateApplyPrompt({
     if (!others.length) return null;
   }
   if (!selected && !apply.isPending && !completedRun) return null;
-  const resizeButton = (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon-sm"
-      className="ml-auto rounded-full"
-      aria-label={expanded ? 'Popup verkleinern' : 'Popup vergrößern'}
-      aria-pressed={expanded}
-      onClick={() => setExpanded((current) => !current)}
-    >
-      {expanded ? (
-        <Minimize2 className="size-4" />
-      ) : (
-        <Maximize2 className="size-4" />
-      )}
-    </Button>
-  );
   return (
     <div className="fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 flex-col items-center gap-2">
       {createPortal(
@@ -417,8 +394,7 @@ export function TemplateApplyPrompt({
       )}
       <div
         className={cn(
-          'grid max-w-[calc(100vw-2rem)] transition-[grid-template-rows,opacity,transform] duration-300 ease-out motion-reduce:transition-none',
-          expanded ? 'w-[calc(100vw-2rem)]' : 'w-[28rem]',
+          'grid w-80 max-w-[calc(100vw-2rem)] transition-[grid-template-rows,opacity,transform] duration-300 ease-out motion-reduce:transition-none',
           open && !running
             ? 'grid-rows-[1fr] translate-y-0 opacity-100'
             : 'pointer-events-none grid-rows-[0fr] translate-y-2 opacity-0'
@@ -430,10 +406,7 @@ export function TemplateApplyPrompt({
           {showResults && hasVisibleRun && completedRun ? (
             <section
               aria-label="Ergebnis der Automatisierung"
-              className={cn(
-                'overflow-y-auto rounded-2xl border border-border bg-card p-3',
-                expanded ? 'h-[calc(100dvh-6rem)]' : 'max-h-[75vh]'
-              )}
+              className="max-h-[65vh] overflow-y-auto rounded-2xl border border-border bg-card p-3"
             >
               <div className="mb-2 flex items-center justify-between gap-2">
                 <div className="min-w-0">
@@ -441,7 +414,6 @@ export function TemplateApplyPrompt({
                     Ausgeführte Aufgaben
                   </p>
                 </div>
-                {resizeButton}
                 <Button
                   variant="ghost"
                   size="icon-sm"
@@ -546,10 +518,7 @@ export function TemplateApplyPrompt({
             selected && (
               <section
                 aria-label="Template auswählen"
-                className={cn(
-                  'w-full overflow-y-auto rounded-2xl border border-border bg-card p-3 text-card-foreground',
-                  expanded ? 'h-[calc(100dvh-6rem)]' : 'max-h-[75vh]'
-                )}
+                className="max-h-[75vh] w-80 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-2xl border border-border bg-card p-3 text-card-foreground"
               >
                 <div className="mb-2 flex items-center justify-between gap-2">
                   {templateId ? (
@@ -569,39 +538,17 @@ export function TemplateApplyPrompt({
                   ) : (
                     <p className="text-sm font-medium">Template auswählen</p>
                   )}
-                  {resizeButton}
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    className="rounded-full"
+                    className="ml-auto rounded-full"
                     aria-label="Schließen"
                     onClick={close}
                   >
                     <X className="size-4" />
                   </Button>
                 </div>
-                {available.length > 1 && (
-                  <div className="mb-2 flex flex-col gap-1">
-                    {available.map((target) => (
-                      <Button
-                        variant="ghost"
-                        key={target.engagementId}
-                        type="button"
-                        disabled={apply.isPending}
-                        className={cn(
-                          'rounded-lg px-2 py-1 text-left text-xs',
-                          target.engagementId === selectedId
-                            ? 'bg-muted'
-                            : 'hover:bg-muted'
-                        )}
-                        onClick={() => setEngagementId(target.engagementId)}
-                      >
-                        {target.label}
-                      </Button>
-                    ))}
-                  </div>
-                )}
                 {templateId ? (
                   <>
                     {preview.isError && (

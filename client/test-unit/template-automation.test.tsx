@@ -589,7 +589,7 @@ describe('template automation popup', () => {
     expect(area.closest('details')).toBeNull();
     expect(within(area).getAllByRole('alert')).toHaveLength(2);
   });
-  it('collects Teams channels and resets choices when switching employee', async () => {
+  it('collects Teams channels before automation can start', async () => {
     mocks.preview.mockResolvedValue({
       id: 'automated',
       name: 'Automatisch',
@@ -601,19 +601,7 @@ describe('template automation popup', () => {
         },
       ],
     });
-    renderWithProviders(
-      <TemplateApplyPrompt
-        targets={[
-          target,
-          {
-            ...target,
-            workerId: 'worker-2',
-            engagementId: 'second',
-            label: 'Grace',
-          },
-        ]}
-      />
-    );
+    renderWithProviders(<TemplateApplyPrompt targets={[target]} />);
     const user = await selectTemplate();
     expect(
       screen.getByRole('button', { name: 'Automatisierung starten' })
@@ -628,16 +616,6 @@ describe('template automation popup', () => {
     expect(
       screen.getByRole('button', { name: 'Automatisierung starten' })
     ).toBeEnabled();
-    await user.click(screen.getByRole('button', { name: 'Grace' }));
-    await selectTemplate();
-    expect(
-      screen.getByRole('button', { name: 'Automatisierung starten' })
-    ).toBeDisabled();
-    expect(mocks.preview).toHaveBeenCalledWith(
-      'worker-2',
-      'second',
-      'automated'
-    );
   });
   it('resets choices when changing template', async () => {
     renderWithProviders(<TemplateApplyPrompt targets={[target]} />);
