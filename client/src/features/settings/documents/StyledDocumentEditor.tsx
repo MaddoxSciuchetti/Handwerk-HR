@@ -9,6 +9,7 @@ import { DocumentEditorZoom } from './components/DocumentEditorZoom';
 import { DocumentEditorCanvas } from './components/DocumentEditorCanvas';
 import { DocumentEditorCorner } from './components/DocumentEditorCorner';
 import { insertDroppedDocumentField } from './util/insertDroppedDocumentField';
+import { documentCheckboxChoices } from './util/documentCheckboxChoices';
 
 type StyledDocumentEditorProps = {
   document: StyledDocument;
@@ -58,10 +59,21 @@ export function StyledDocumentEditor({
     );
   const showToolbar = master && !readOnly;
   const framed = showToolbar || Boolean(onToggleExpanded);
+  const changeValue = (key: string, value: string) => {
+    if (value === 'true') {
+      for (const group of documentCheckboxChoices(document)) {
+        if (group.includes(key)) {
+          for (const other of group)
+            if (other !== key) onValueChange(other, 'false');
+        }
+      }
+    }
+    onValueChange(key, value);
+  };
 
   return (
     <DocumentValuesContext.Provider
-      value={{ master, readOnly, values, onValueChange }}
+      value={{ master, readOnly, values, onValueChange: changeValue }}
     >
       <div
         className={
