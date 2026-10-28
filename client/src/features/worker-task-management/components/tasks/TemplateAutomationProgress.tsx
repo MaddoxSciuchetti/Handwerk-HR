@@ -63,7 +63,7 @@ export function TemplateAutomationProgress({
       : !automating
         ? 'Aufgaben werden erstellt…'
         : totalCount > 0
-          ? `${finished} von ${totalCount} Aufgaben bearbeitet${active ? ` · ${active} in Bearbeitung` : ''}`
+          ? `${active || finished} von ${totalCount} Aufgaben ${active ? 'in Bearbeitung' : 'bearbeitet'}`
           : mocked
             ? 'Simulation wird vorbereitet…'
             : 'Automatisierung wird vorbereitet…';

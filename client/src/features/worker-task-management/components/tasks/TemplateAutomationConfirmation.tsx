@@ -28,7 +28,6 @@ import { Alert, AlertTitle } from '@/components/ui/alert';
 import {
   isMailSequence,
   sequenceLabel,
-  crewmeisterRemovalWarning,
 } from '@/features/settings/integrations/integration.consts';
 import {
   connectTeams,
@@ -105,19 +104,12 @@ export function TemplateAutomationConfirmation({
   const { user } = useAuth();
   const [startingAutomation, setStartingAutomation] = useState(false);
   const [choices, setChoices] = useState<Record<string, AutomationChoice>>({});
-  const [removalConfirmedFor, setRemovalConfirmedFor] = useState<string | null>(
-    null
-  );
-  const removalKey = `${template.id}:${template.revision}`;
   const automated = template.items.filter(
     (item) => item.sequence && item.integrationProvider
   );
   const hasMail = automated.some((item) => isMailSequence(item.sequence));
   const hasTeams = automated.some(
     (item) => item.sequence === 'microsoft_send_teams_message'
-  );
-  const removesMembership = automated.some(
-    (item) => item.sequence === 'crewmeister_delete_membership'
   );
   const senders = useQuery({
     queryKey: ['template-mail-senders', user?.organizationId, user?.id],
@@ -611,35 +603,13 @@ export function TemplateAutomationConfirmation({
         </section>
       )}
       <div className="flex flex-col gap-1">
-        {removesMembership && (
-          <div className="mb-3 space-y-3">
-            <p className="text-xs text-muted-foreground">
-              {crewmeisterRemovalWarning}
-            </p>
-            <Label className="flex items-start gap-2 text-xs">
-              <Checkbox
-                checked={removalConfirmedFor === removalKey}
-                disabled={busy}
-                onCheckedChange={(checked) =>
-                  setRemovalConfirmedFor(checked === true ? removalKey : null)
-                }
-              />
-              Deaktivierte Crewmeister-Mitgliedschaften dauerhaft entfernen
-            </Label>
-          </div>
-        )}
         {automated.length > 0 && (
           <Button
             type="button"
-            disabled={
-              busy ||
-              !ready ||
-              (removesMembership && removalConfirmedFor !== removalKey)
-            }
+            disabled={busy || !ready}
             aria-busy={busy && startingAutomation}
             onClick={() => {
               setStartingAutomation(true);
-              setRemovalConfirmedFor(null);
               onApply(true, effectiveChoices);
             }}
           >

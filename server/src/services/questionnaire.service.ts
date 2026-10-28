@@ -1,6 +1,8 @@
 import { QUESTIONNAIRE_DECLARATION } from "../../../shared/questionnaireDeclaration";
 import { uploadFileToS3 } from "@/config/aws";
+import { QUESTIONNAIRE_MOCK_RESPONSES } from "@/constants/env";
 import { BAD_REQUEST, NOT_FOUND } from "@/constants/http";
+import { isStagingEnvironment } from "@/constants/stagingMail";
 import { prisma } from "@/lib/prisma";
 import { fileQuestionnaireAnswers } from "@/services/questionnaireFiles.service";
 import { matchQuestionnaireToContract } from "@/services/contractFieldMatchAi";
@@ -76,6 +78,10 @@ function publicPayload(definition: QuestionnaireDefinition | null) {
     };
 }
 
+function stagingFillEnabled() {
+    return isStagingEnvironment() || QUESTIONNAIRE_MOCK_RESPONSES;
+}
+
 export async function getPublicQuestionnaire(token: string) {
     const submission = await prisma.questionnaireSubmission.findUnique({
         where: { token },
@@ -87,6 +93,7 @@ export async function getPublicQuestionnaire(token: string) {
     }
     return {
         status: "sent" as const,
+        staging: stagingFillEnabled(),
         ...publicPayload(storedDefinition(submission.formDefinition)),
     };
 }
