@@ -2,11 +2,10 @@ import {
     getEngagementContract,
     resyncEngagementContractFromQuestionnaire,
     saveEngagementContractDraft,
-    sendFilledEmploymentContract,
 } from "@/services/employmentContract.service";
 import { prisma } from "@/lib/prisma";
 import { fromSegments } from "../../shared/document";
-import { invalidatePreparedDocuments, sendPreparedDocument } from "@/services/preparedDocument";
+import { invalidatePreparedDocuments } from "@/services/preparedDocument";
 import { QUESTIONNAIRE_FIELDS } from "@/services/questionnaireForm";
 
 jest.mock("@/lib/prisma", () => ({
@@ -41,7 +40,6 @@ jest.mock("@/services/preparedDocument", () => ({
     outgoingPdfUrl: jest.fn().mockResolvedValue(null),
     currentPreparation: jest.fn().mockResolvedValue(null),
     DeliveryRejected: class extends Error {},
-    sendPreparedDocument: jest.fn(),
 }));
 jest.mock("@/utils/sendMail", () => ({ sendMail: jest.fn() }));
 jest.mock("@/services/graphMail", () => ({ sendGraphMail: jest.fn() }));
@@ -299,60 +297,46 @@ it("refuses to resync a contract that was already sent", async () => {
     expect(prisma.employmentContractValue.deleteMany).not.toHaveBeenCalled();
 });
 
-describe("contract send task status", () => {
-    const sendParams = {
+it("keeps saved contracts open and syncable without completing the task", async () => {
+    contract.master.revision = 1;
+    const saved = await saveEngagementContractDraft({
         ...params,
-        actorUserId: "actor",
-        issueId: "send-task",
-        artifactId: "pdf",
-    };
-
-    it("marks the print task done without emailing the contract", async () => {
-        (prisma.issue.findFirst as jest.Mock).mockResolvedValue({
-            id: "send-task",
-            status: "in_progress",
-            kind: "contract_send",
-        });
-        (prisma.preparedDocument.findFirst as jest.Mock).mockResolvedValue({
-            id: "pdf",
-            masterId: "master",
-        });
-
-        await sendFilledEmploymentContract(sendParams);
-
-        expect(sendPreparedDocument).not.toHaveBeenCalled();
-        expect(prisma.preparedDocument.update).toHaveBeenCalledWith(
-            expect.objectContaining({
-                where: { id: "pdf" },
-                data: expect.objectContaining({
-                    status: "sent",
-                    providerId: "office-print",
-                }),
-            }),
-        );
-        expect(prisma.employmentContract.update).toHaveBeenCalledWith(
-            expect.objectContaining({
-                where: { id: "contract" },
-                data: expect.objectContaining({
-                    outgoingPdfId: "pdf",
-                    status: "ready",
-                }),
-            }),
-        );
-        expect(prisma.issue.update).toHaveBeenCalledWith({
-            where: { id: "send-task" },
-            data: { status: "done" },
-        });
-        expect(prisma.issueAuditLog.create).toHaveBeenCalledWith(
-            expect.objectContaining({
-                data: expect.objectContaining({
-                    issueId: "send-task",
-                    newValue: { status: "done" },
-                }),
-            }),
-        );
-        expect(prisma.issue.deleteMany).not.toHaveBeenCalled();
+        values: { "contract.vorname": "Ada" },
     });
+    expect(saved).toMatchObject({
+        status: "draft", sentAt: null, followsMaster: true,
+    });
+    expect((await getEngagementContract(params))?.values).toEqual({
+        "contract.vorname": "Ada",
+    });
+    contract.engagement.questionnaireSubmission = {
+        id: "submission", revision: 2, status: "completed",
+        formDefinition: {
+            intro: "",
+            items: [{
+                kind: "field", key: "firstName", label: "Vorname",
+                section: "Person", type: "text",
+                contractFieldKey: "contract.vorname",
+            }],
+        },
+        answers: [{ key: "firstName", value: "Augusta" }],
+    };
+    expect((await getEngagementContract(params))?.questionnaireSyncNeeded).toBe(true);
+    const synced = await resyncEngagementContractFromQuestionnaire(params);
+    expect(synced).toMatchObject({
+        status: "draft", sentAt: null, followsMaster: true,
+        values: { "contract.vorname": "Augusta" },
+    });
+    await saveEngagementContractDraft({
+        ...params, values: { "contract.vorname": "Augusta Ada" },
+    });
+    expect((await getEngagementContract(params))?.values).toEqual({
+        "contract.vorname": "Augusta Ada",
+    });
+    expect(prisma.issue.update).not.toHaveBeenCalled();
+    expect(prisma.issue.deleteMany).not.toHaveBeenCalled();
+    expect(prisma.issueAuditLog.create).not.toHaveBeenCalled();
+    expect(prisma.preparedDocument.update).not.toHaveBeenCalled();
 });
 
 it("returns placed questionnaire answers so clearing a local field can restore its sidebar chip", async () => {
