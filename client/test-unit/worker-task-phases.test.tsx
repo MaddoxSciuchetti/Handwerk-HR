@@ -239,10 +239,10 @@ it.each([
     resultsDismissedAt: '2026-10-28T12:01:00Z',
   },
 ])(
-  'allows task creation for expected onboarding with template receipt %j',
+  'allows task creation for pending onboarding with template receipt %j',
   async (templateApplication) => {
     state.data = worker([
-      { ...onboarding, status: 'expected', templateApplication },
+      { ...onboarding, status: 'pending', templateApplication },
       offboarding,
     ]);
     render(<TaskManagement workerId="worker-1" />);
@@ -257,13 +257,13 @@ it.each([
   }
 );
 
-it('does not let older expected onboarding hide creation for the current engagement', async () => {
+it('does not let older pending onboarding hide creation for the current engagement', async () => {
   state.data = worker([
     { ...onboarding, status: 'in_progress' },
     {
       id: 'old-onboarding',
       type: 'onboarding',
-      status: 'expected',
+      status: 'pending',
       issues: [],
     },
     offboarding,

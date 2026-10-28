@@ -188,7 +188,7 @@ export async function startExpectedOnboarding(params: {
                 workerId: worker.id,
                 organizationId: params.organizationId,
                 responsibleUserId: params.createdByUserId,
-                status: "expected",
+                status: "pending",
                 type: "onboarding",
                 questionnaireSenderAddress: senderAddress,
             },

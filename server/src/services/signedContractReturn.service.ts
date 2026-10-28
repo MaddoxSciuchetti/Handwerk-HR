@@ -431,7 +431,6 @@ export async function confirmReturnedEmploymentContract(params: {
             id: true,
             engagementId: true,
             confirmedAt: true,
-            engagement: { select: { status: true } },
         },
     });
     if (!contract) {
@@ -487,12 +486,6 @@ export async function confirmReturnedEmploymentContract(params: {
                     oldValue: { status: contractTask.status },
                     newValue: { status: "done" },
                 },
-            });
-        }
-        if (contract.engagement.status === "expected") {
-            await tx.workerEngagement.update({
-                where: { id: contract.engagementId },
-                data: { status: "in_progress" },
             });
         }
     });

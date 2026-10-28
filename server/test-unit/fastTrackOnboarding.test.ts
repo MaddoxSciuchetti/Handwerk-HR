@@ -19,7 +19,7 @@ beforeEach(() => {
 it('uses the authenticated user email and ignores a supplied sender', async () => {
     await startExpectedOnboarding({ ...params, senderAddress: 'stranger@example.test' } as typeof params);
     expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { id: 'user' }, select: { email: true } });
-    expect(prisma.workerEngagement.create).toHaveBeenCalledWith({ data: expect.objectContaining({ questionnaireSenderAddress: 'office@example.test' }) });
+    expect(prisma.workerEngagement.create).toHaveBeenCalledWith({ data: expect.objectContaining({ questionnaireSenderAddress: 'office@example.test', status: 'pending' }) });
 });
 it('creates a worker from a display name without an email', async () => {
     await startExpectedOnboarding({
