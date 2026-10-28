@@ -73,11 +73,14 @@ const WorkerHeader = ({
         {activeTab === 'form' && !hideCreate ? (
           <Button
             type="button"
-            className={headerActionClassName}
-            onClick={openForCreate}
+            size="icon"
+            data-testid="open-task-create"
             disabled={isLoading}
+            aria-label="Aufgabe hinzufügen"
+            className="size-7 rounded-2xl bg-black text-white hover:bg-black/90"
+            onClick={openForCreate}
           >
-            Aufgabe hinzufügen
+            <Plus aria-hidden="true" />
           </Button>
         ) : null}
         {activeTab === 'files' ? (
