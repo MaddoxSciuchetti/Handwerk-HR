@@ -273,9 +273,6 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
     )?.templateApplication;
     return !application?.resultsDismissedAt;
   });
-  const waiting = taskEngagements.some(
-    (engagement) => engagement.status === 'expected'
-  );
   const pendingQuestionnaire = taskEngagements.find(
     (engagement) =>
       engagement.status === 'expected' && !engagement.questionnaireSubmission
@@ -401,7 +398,7 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                   workerEngagementId: taskEngagements[0]?.id ?? '',
                 })
               }
-              hideCreate={waiting || taskEngagements.length === 0}
+              hideCreate={taskEngagements.length === 0}
               onOpenFileUpload={() => setIsFileUploadOpen(true)}
               onAddFolder={() => setCreateFolderOpen(true)}
               onExportFiles={() => void handleZipExport(fetchFiles)}
