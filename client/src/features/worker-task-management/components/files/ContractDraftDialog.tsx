@@ -2,17 +2,18 @@ import { PdfSkeleton } from '@/components/ui/pdf-skeleton';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Download, Loader2 } from 'lucide-react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import {
   fetchPreparedEmploymentContractPdf,
-  prepareEmploymentContractPdf,
+  prepareEmploymentContractDownload,
 } from '../../api/employmentContract.api';
 import { downloadBlob } from '../../downloadBlob';
 import {
   useEmploymentContract,
   useSaveEmploymentContract,
+  employmentContractKey,
 } from '../../hooks/useEmploymentContract';
 import { ContractDraftBody } from './ContractDraftBody';
 import { ContractQuestionnaireSync } from './ContractQuestionnaireSync';
@@ -51,6 +52,7 @@ export function ContractDraftDialog({
   engagementId,
   onClose,
 }: ContractDraftDialogProps) {
+  const queryClient = useQueryClient();
   const { data, isLoading, isError } = useEmploymentContract(
     workerId,
     engagementId
@@ -83,21 +85,30 @@ export function ContractDraftDialog({
         throw new Error('Kein PDF zum Herunterladen vorhanden.');
       }
 
-      const dirty =
-        JSON.stringify(values) !== JSON.stringify(data.values);
-      const prepared =
-        !dirty && data.prepared?.id
-          ? data.prepared
-          : await prepareEmploymentContractPdf(
-              workerId,
-              engagementId,
-              values
-            );
-      const blob = await fetchPreparedEmploymentContractPdf(
-        workerId,
-        engagementId,
-        prepared.id
-      );
+      const dirty = JSON.stringify(values) !== JSON.stringify(data.values);
+      let blob: Blob;
+      if (!dirty && data.prepared?.id) {
+        blob = await fetchPreparedEmploymentContractPdf(
+          workerId,
+          engagementId,
+          data.prepared.id
+        );
+      } else {
+        const result = await prepareEmploymentContractDownload(
+          workerId,
+          engagementId,
+          values
+        );
+        blob = result.blob;
+        queryClient.setQueryData(
+          employmentContractKey(workerId, engagementId),
+          {
+            ...data,
+            values,
+            prepared: result.prepared,
+          }
+        );
+      }
       if (!(blob instanceof Blob)) {
         throw new Error('PDF konnte nicht geladen werden');
       }

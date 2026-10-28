@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import {
   fetchPreparedEmploymentContractPdf,
   prepareEmploymentContractPdf,
+  prepareEmploymentContractDownload,
   recordPrintedEmploymentContract,
   selectEngagementContractTemplate,
 } from '../../api/employmentContract.api';
@@ -178,12 +179,29 @@ export function ContractSendDialog({
   });
   const savePdf = useMutation({
     mutationFn: async () => {
-      const pdf = prepared ?? (await prepare.mutateAsync());
-      const blob = await fetchPreparedEmploymentContractPdf(
-        workerId,
-        engagementId,
-        pdf.id
-      );
+      let blob: Blob;
+      if (prepared) {
+        blob = await fetchPreparedEmploymentContractPdf(
+          workerId,
+          engagementId,
+          prepared.id
+        );
+      } else {
+        const result = await prepareEmploymentContractDownload(
+          workerId,
+          engagementId,
+          values
+        );
+        blob = result.blob;
+        setPrepared(result.prepared);
+        queryClient.setQueryData(
+          employmentContractKey(workerId, engagementId),
+          (previous: typeof data) =>
+            previous
+              ? { ...previous, values, prepared: result.prepared }
+              : previous
+        );
+      }
       if (!(blob instanceof Blob)) {
         throw new Error('PDF konnte nicht geladen werden');
       }
@@ -318,7 +336,7 @@ export function ContractSendDialog({
                       htmlFor="contract-template"
                       className="text-sm font-medium"
                     >
-                      Vertragsvorlage
+                      Vertragsvorlage wechseln
                     </label>
                     <div className="flex flex-wrap items-center gap-2">
                       <select

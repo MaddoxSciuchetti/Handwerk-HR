@@ -6,7 +6,7 @@ import {
 } from "@/services/employmentContract.service";
 import { prisma } from "@/lib/prisma";
 import { fromSegments } from "../../shared/document";
-import { sendPreparedDocument } from "@/services/preparedDocument";
+import { invalidatePreparedDocuments, sendPreparedDocument } from "@/services/preparedDocument";
 import { QUESTIONNAIRE_FIELDS } from "@/services/questionnaireForm";
 
 jest.mock("@/lib/prisma", () => ({
@@ -22,6 +22,7 @@ jest.mock("@/lib/prisma", () => ({
             createMany: jest.fn(),
         },
         $transaction: jest.fn(),
+        $queryRaw: jest.fn(),
         documentMaster: { findFirst: jest.fn() },
         questionnaireSubmission: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
         issue: {
@@ -560,4 +561,27 @@ it("does not mark a newer correction as synchronized when matching used an older
     (prisma.questionnaireSubmission.updateMany as jest.Mock).mockResolvedValueOnce({ count: 0 });
     await expect(resyncEngagementContractFromQuestionnaire(params)).rejects.toThrow("inzwischen geändert");
     expect(prisma.employmentContractValue.deleteMany).not.toHaveBeenCalled();
+});
+
+
+it("keeps the prepared PDF when saving identical values", async () => {
+    contract.values = [{ key: "contract.vorname", value: "Ada" }];
+    await saveEngagementContractDraft({
+        ...params,
+        values: { "contract.vorname": "Ada" },
+    });
+    expect(invalidatePreparedDocuments).not.toHaveBeenCalled();
+    expect(prisma.employmentContractValue.deleteMany).not.toHaveBeenCalled();
+});
+
+it("invalidates the prepared PDF when saved values change", async () => {
+    contract.values = [{ key: "contract.vorname", value: "Ada" }];
+    await saveEngagementContractDraft({
+        ...params,
+        values: { "contract.vorname": "Grace" },
+    });
+    expect(invalidatePreparedDocuments).toHaveBeenCalled();
+    expect(contract.values).toEqual([
+        expect.objectContaining({ key: "contract.vorname", value: "Grace" }),
+    ]);
 });
