@@ -99,6 +99,65 @@ describe('phase change propagation', () => {
     put.mockRestore();
   });
 
+  it('keeps onboarding history when switching to Team instead of relabelling it', async () => {
+    const team = {
+      id: 'team-1',
+      type: 'transfer',
+      status: 'completed',
+    };
+    let finish!: () => void;
+    const put = vi.spyOn(API, 'put').mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finish = () => resolve({ success: true, data: team });
+        })
+    );
+    const { client, result, unmount } = setup();
+    act(() =>
+      result.current.mutate({
+        items: [{ workerId: 'worker-1', engagementId: 'onboarding-1' }],
+        type: 'transfer',
+      })
+    );
+    await waitFor(() => expect(put).toHaveBeenCalledTimes(1));
+    expect(
+      client
+        .getQueryData<WorkerRecord[]>([ALL_WORKER_DATA])?.[0]
+        .engagements.map((engagement) => ({
+          id: engagement.id,
+          type: engagement.type,
+          issues: engagement.issues,
+        }))
+    ).toEqual([
+      {
+        id: 'pending:onboarding-1:transfer',
+        type: 'transfer',
+        issues: [],
+      },
+      {
+        id: 'onboarding-1',
+        type: 'onboarding',
+        issues: onboarding.issues,
+      },
+    ]);
+    await act(async () => finish());
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    for (const key of detailKeys) {
+      const phases =
+        client.getQueryData<WorkerDetailResponse>(key)!.data.engagements;
+      expect(phases[0]).toMatchObject({
+        ...team,
+        issues: [],
+        templateApplication: null,
+        employmentContract: null,
+      });
+      expect(phases[1]).toEqual(onboarding);
+    }
+    unmount();
+    client.clear();
+    put.mockRestore();
+  });
+
   it('restores the list and leaves details intact when the save fails', async () => {
     const put = vi.spyOn(API, 'put').mockRejectedValue(new Error('failed'));
     const { client, result, unmount } = setup();

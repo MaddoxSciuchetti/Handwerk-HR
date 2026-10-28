@@ -2,6 +2,22 @@ import { expect, it } from 'vitest';
 import { workerEngagementInfoItems } from '@/features/worker-lifecycle/consts/worker-engagement-info.consts';
 import type { WorkerDetailResponse } from '@/features/worker-lifecycle/types/index.types';
 
+it('requires last name only when one was already saved', () => {
+  const base = {
+    firstName: 'Ada',
+    engagements: [],
+  } as unknown as WorkerDetailResponse['data'];
+  const lastName = (worker: WorkerDetailResponse['data']) =>
+    workerEngagementInfoItems(worker).find((item) => item.label === 'Nachname');
+
+  expect(lastName({ ...base, lastName: '' })).toMatchObject({
+    required: false,
+  });
+  expect(lastName({ ...base, lastName: 'Lovelace' })).toMatchObject({
+    required: true,
+  });
+});
+
 it('uses the current type for the Information task count, including a return to Team', () => {
   const onboarding = {
     id: 'entry',

@@ -19,6 +19,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Plus, X } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
+import { toast } from 'sonner';
 import type { WorkerDetailResponse } from '../types/index.types';
 
 type Props = {
@@ -453,6 +454,7 @@ function ClothingDraftRows({
   onQuantity,
   onRemove,
 }: ClothingDraftRowsProps) {
+  const [open, setOpen] = useState(false);
   const quantityId = `worker-clothing-quantity-${draft.key}`;
 
   return (
@@ -460,6 +462,14 @@ function ClothingDraftRows({
       <span className="text-sm text-muted-foreground">Artikel</span>
       <div className="flex min-w-0 items-center gap-2">
         <Select
+          open={open}
+          onOpenChange={(next) => {
+            if (next && available.length === 0) {
+              toast.info('Kein Bestand vorhanden.');
+              return;
+            }
+            setOpen(next);
+          }}
           value={draft.stockItemId}
           onValueChange={onArticle}
           disabled={disabled}

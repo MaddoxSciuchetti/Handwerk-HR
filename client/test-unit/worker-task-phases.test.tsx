@@ -196,3 +196,25 @@ it('hides Aufgaben in Team and restores saved tasks when switching back to a lif
   expect(screen.getByText('Onboarding task')).toBeInTheDocument();
   expect(screen.queryByText('Return company keys')).not.toBeInTheDocument();
 });
+
+it('still shows completed onboarding tasks after Team → offboarding → onboarding', async () => {
+  const user = userEvent.setup();
+  const team = { id: 'team-1', type: 'transfer', status: 'completed', issues: [] };
+  const freshOnboarding = {
+    id: 'onboarding-2',
+    type: 'onboarding',
+    status: 'pending',
+    issues: [],
+  };
+  state.data = worker([freshOnboarding, offboarding, team, onboarding]);
+  render(<TaskManagement workerId="worker-1" />);
+  expect(screen.getByRole('tab', { name: 'Onboarding' })).toHaveAttribute(
+    'aria-selected',
+    'true'
+  );
+  expect(screen.getByText('Onboarding task')).toBeInTheDocument();
+  await user.click(screen.getByRole('tab', { name: 'Offboarding' }));
+  expect(screen.queryByText('Onboarding task')).not.toBeInTheDocument();
+  await user.click(screen.getByRole('tab', { name: 'Onboarding' }));
+  expect(screen.getByText('Onboarding task')).toBeInTheDocument();
+});
