@@ -1,3 +1,6 @@
+import { listBsbMailAddresses } from '@/services/engagementMail';
+import { deleteWorkersSchema } from '@/schemas/worker.schemas';
+import { templateApplyInput, templateApplicationPreview, readTemplateApplication, dismissTemplateApplicationResults } from '@/services/templateApplication';
 import { getLifecycleStatistics as fetchLifecycleStatistics } from "@/services/lifecycleStatistics";
 import { uploadFileToS3 } from "@/config/aws";
 import * as employmentContractService from "@/services/employmentContract.service";
@@ -10,6 +13,7 @@ import {
     sendEngagementQuestionnaire,
 } from "@/services/questionnaireDispatch";
 import * as workerService from "../services/worker.service";
+import { saveCompletedQuestionnaire } from "@/services/questionnaireCorrections.service";
 import { getCompletedQuestionnaire } from "@/services/completedQuestionnaire.service";
 import {
     fileCompletedQuestionnaire,
@@ -23,6 +27,19 @@ export const getCompletedEngagementQuestionnaire = catchErrors(
             workerId: param(req, "workerId"),
             engagementId: param(req, "engagementId"),
         });
+        return res.status(200).json({ success: true, data });
+    },
+);
+
+export const saveCompletedEngagementQuestionnaire = catchErrors(
+    async (req: Request, res: Response) => {
+        const params = {
+            organizationId: req.orgId,
+            workerId: param(req, "workerId"),
+            engagementId: param(req, "engagementId"),
+        };
+        await saveCompletedQuestionnaire({ ...params, changedByUserId: req.userId, input: req.body });
+        const data = await getCompletedQuestionnaire(params);
         return res.status(200).json({ success: true, data });
     },
 );
@@ -62,32 +79,34 @@ function param(req: Request, key: string): string {
     return Array.isArray(val) ? val[0] : String(val);
 }
 
+export const getQuestionnaireSenders = catchErrors(async (req, res) => {
+    const data = await listBsbMailAddresses(req.orgId);
+    return res.status(200).json({ success: true, data });
+});
+
 export const startExpectedOnboarding = catchErrors(
     async (req: Request, res: Response) => {
         const email = String(req.body?.email ?? "").trim();
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            return res
-                .status(400)
-                .json({ success: false, message: "E-Mail fehlt." });
-        }
+        const name = String(req.body?.name ?? "").trim();
+        const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-        const senderAddress = typeof req.body?.senderAddress === "string"
-            ? req.body.senderAddress.trim() : "";
-        if (
-            senderAddress.length > 254 ||
-            !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(senderAddress)
-        ) {
+        if (email) {
+            if (!emailValid) {
+                return res
+                    .status(400)
+                    .json({ success: false, message: "E-Mail ungültig." });
+            }
+        } else if (!name) {
             return res.status(400).json({
                 success: false,
-                message: "Bitte einen gültigen Absender wählen.",
+                message: "Name oder E-Mail fehlt.",
             });
         }
 
         const result = await workerService.startExpectedOnboarding({
             organizationId: req.orgId,
             createdByUserId: req.userId,
-            email,
-            senderAddress,
+            ...(emailValid ? { email } : { name }),
         });
 
         return res.status(201).json({ success: true, data: result });
@@ -152,6 +171,7 @@ export const getWorkerData = catchErrors(
             page: page ? parseInt(page as string, 10) : 1,
             limit: limit ? parseInt(limit as string, 10) : 25,
             includeArchived: includeArchived === "true",
+            summary: req.query.summary === "true",
         });
 
         return res.status(200).json({ success: true, data: result });
@@ -217,6 +237,12 @@ export const unarchiveWorker = catchErrors(
         return res.status(200).json({ success: true, data: result });
     },
 );
+
+export const deleteWorkers = catchErrors(async (req: Request, res: Response) => {
+    const { workerIds } = deleteWorkersSchema.parse(req.body);
+    const result = await workerService.deleteWorkers({ organizationId: req.orgId, workerIds });
+    return res.status(200).json({ success: true, data: result });
+});
 
 export const deleteWorker = catchErrors(async (req: Request, res: Response) => {
     const organizationId = req.orgId;
@@ -333,14 +359,14 @@ export const applyIssueTemplate = catchErrors(
         const organizationId = req.orgId;
         const workerId = param(req, "workerId");
         const templateId = param(req, "templateId");
-        const { workerEngagementId, remainingOnly } = req.body;
+        const input = templateApplyInput.parse(req.body);
         const result = await workerService.applyIssueTemplate({
             workerId,
             organizationId,
             templateId,
-            workerEngagementId,
+            ...input,
             actorUserId: req.userId!,
-            remainingOnly: remainingOnly === true,
+            remainingOnly: true,
         });
         return res.status(200).json({ success: true, data: result });
     },
@@ -588,52 +614,55 @@ export const readPreparedEmploymentContractPdf = catchErrors(
     },
 );
 
-export const sendFilledEmploymentContract = catchErrors(
-    async (req: Request, res: Response) => {
-        const issueId = String(req.body?.issueId ?? "").trim();
-        const artifactId = String(req.body?.artifactId ?? "").trim();
-        if (!issueId) {
-            return res
-                .status(400)
-                .json({ success: false, message: "Aufgabe fehlt." });
-        }
-        if (!artifactId) {
-            return res.status(400).json({
-                success: false,
-                message: "Bitte das PDF zuerst erstellen und prüfen.",
-            });
-        }
-
-        const contract =
-            await employmentContractService.sendFilledEmploymentContract({
-                organizationId: req.orgId,
-                workerId: param(req, "workerId"),
-                engagementId: param(req, "engagementId"),
-                actorUserId: req.userId,
-                issueId,
-                artifactId,
-            });
-        return res.status(200).json({ success: true, data: contract });
-    },
-);
-
 export const prepareEmploymentContractPdf = catchErrors(
     async (req: Request, res: Response) => {
         const values = req.body?.values;
         if (!values || typeof values !== "object" || Array.isArray(values))
             return res.status(400).json({ message: "Werte fehlen." });
-        const prepared =
+        const { bytes, ...prepared } =
             await employmentContractService.prepareEmploymentContractPdf({
                 organizationId: req.orgId,
                 workerId: param(req, "workerId"),
                 engagementId: param(req, "engagementId"),
                 values,
+                includeBytes: req.query.download === "1",
             });
+        if (req.query.download === "1") {
+            res.setHeader("Cache-Control", "no-store");
+            res.setHeader("X-Prepared-Pdf", encodeURIComponent(JSON.stringify(prepared)));
+            return res.type("application/pdf").send(bytes);
+        }
         return res.json({ success: true, data: prepared });
     },
 );
 
 export const getLifecycleStatistics = catchErrors(async (req: Request, res: Response) => {
     const data = await fetchLifecycleStatistics(req.orgId, req.userId);
+    return res.status(200).json({ success: true, data });
+});
+
+export const previewIssueTemplate = catchErrors(async (req: Request, res: Response) => {
+    const engagementId = String(req.query.workerEngagementId ?? '');
+    const data = await templateApplicationPreview({
+        workerId: param(req, 'workerId'), templateId: param(req, 'templateId'),
+        organizationId: req.orgId, actorUserId: req.userId!,
+    }, engagementId);
+    return res.status(200).json({ success: true, data });
+});
+
+
+export const getTemplateApplication = catchErrors(async (req: Request, res: Response) => {
+    const data = await readTemplateApplication({
+        workerId: param(req, "workerId"), organizationId: req.orgId,
+    }, String(req.query.workerEngagementId ?? ""));
+    return res.status(200).json({ success: true, data });
+});
+
+export const dismissTemplateApplication = catchErrors(async (req: Request, res: Response) => {
+    const engagementId = String(req.body?.workerEngagementId ?? "");
+    if (!engagementId) return res.status(400).json({ message: "Einsatz fehlt." });
+    const data = await dismissTemplateApplicationResults({
+        workerId: param(req, "workerId"), organizationId: req.orgId,
+    }, engagementId);
     return res.status(200).json({ success: true, data });
 });

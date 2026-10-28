@@ -47,13 +47,6 @@ export function TemplateItem({
           <TableCell className="whitespace-normal">
             <p className="typo-body-sm text-text-primary">{template.name}</p>
           </TableCell>
-          <TableCell className="whitespace-normal">
-            {template.description ? (
-              <p className="typo-body-xs text-text-secondary line-clamp-3">
-                {template.description}
-              </p>
-            ) : null}
-          </TableCell>
           <TableCell className="pr-6 text-right">
             <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100">
               <Button

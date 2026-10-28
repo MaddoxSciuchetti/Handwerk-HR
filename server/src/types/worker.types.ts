@@ -45,22 +45,25 @@ export interface CreateWorkerInput {
 }
 
 export interface UpdateWorkerInput {
+    workwearSize?: { itemName: "Hose" | "T-Shirt"; size: string };
+    workEmail?: string | null;
     firstName?: string;
     lastName?: string;
     email?: string;
-    phoneNumber?: string;
-    birthday?: Date;
-    position?: string;
-    street?: string;
-    city?: string;
-    state?: string;
-    postalCode?: string;
-    country?: string;
-    entryDate?: Date;
-    exitDate?: Date;
+    phoneNumber?: string | null;
+    birthday?: Date | string | null;
+    position?: string | null;
+    street?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postalCode?: string | null;
+    country?: string | null;
+    entryDate?: Date | string | null;
+    exitDate?: Date | string | null;
 }
 
 export interface GetWorkersInput {
+    summary?: boolean;
     organizationId: string;
     status?: WorkerStatus; // Prisma enum — safe to use directly
     search?: string;
@@ -133,11 +136,12 @@ export interface CreateIssueInput {
 export interface UpdateIssueInput {
     issueId: string;
     workerEngagementId: string; // used to scope the lookup
+    newWorkerEngagementId?: string;
     /** Set by controller from auth — written to IssueAuditLog */
     actorUserId: string;
     title?: string;
     description?: string;
-    assigneeUserId?: string;
+    assigneeUserId?: string | null;
     status?: IssueStatus;
     priority?: IssuePriority;
     dueDate?: Date;

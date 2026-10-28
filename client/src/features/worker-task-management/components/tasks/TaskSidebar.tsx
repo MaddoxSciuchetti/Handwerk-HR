@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { useWatch } from 'react-hook-form';
 import { Check, X } from 'lucide-react';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useSubmitTasks } from '../../hooks/useSubmitTasks';
 import { TemplateTaskFormValues } from '../../types/index.types';
 import { SidebarAside } from './task-sidebar/SidebarAside';
@@ -39,7 +39,7 @@ export function TaskSidebar({
   templateTaskState,
   editTemplateTask,
 }: TaskSidebarProps) {
-  const { register, errors, onSubmit, control } = useSubmitTasks(
+  const { register, errors, onSubmit, control, setValue } = useSubmitTasks(
     editTemplateTask.taskId,
     templateId,
     templateTaskState,
@@ -55,6 +55,7 @@ export function TaskSidebar({
     name: 'integrationProvider',
   });
   const sequence = useWatch({ control, name: 'sequence' });
+  const mailTemplateId = useWatch({ control, name: 'mailTemplateId' });
   const { data: mailTemplates = [] } = useMailTemplates();
   const integrationOptions = [
     { value: INTEGRATION_NONE, label: 'Keine' },
@@ -68,15 +69,20 @@ export function TaskSidebar({
             : 'Crewmeister',
       })),
   ];
-  const sequenceOptions = [
-    { value: INTEGRATION_NONE, label: 'Keine' },
-    ...INTEGRATION_SEQUENCES.filter(
-      (sequence) => sequence.provider === integrationProvider
-    ).map((sequence) => ({
-      value: sequence.value,
-      label: sequence.label,
-    })),
-  ];
+  const hasIntegration =
+    Boolean(integrationProvider) && integrationProvider !== INTEGRATION_NONE;
+  const sequenceOptions = INTEGRATION_SEQUENCES.filter(
+    (item) => item.provider === integrationProvider
+  ).map((item) => ({
+    value: item.value,
+    label: item.label,
+  }));
+
+  useEffect(() => {
+    if (hasIntegration || !sequence || sequence === INTEGRATION_NONE) return;
+    setValue('sequence', INTEGRATION_NONE);
+    setValue('mailTemplateId', '');
+  }, [hasIntegration, sequence, setValue]);
 
   const assigneeOptions = useMemo(
     () =>
@@ -88,7 +94,11 @@ export function TaskSidebar({
   );
 
   return (
-    <SidebarAside className="p-2" isOpen={isOpen} onClose={() => setIsOpen(false)}>
+    <SidebarAside
+      className="p-2"
+      isOpen={isOpen}
+      onClose={() => setIsOpen(false)}
+    >
       <SidebarPanel className="w-full">
         <SidebarHeader className="flex items-center justify-between p-6">
           <Label className="typo-body-lg font-bold">
@@ -117,13 +127,6 @@ export function TaskSidebar({
               register={register}
               name="taskName"
               label="Name der Aufgabe"
-              labelClassName="typo-body-base"
-            />
-            <FormFields
-              errors={errors}
-              register={register}
-              name="taskDescription"
-              label="Beschreibung der Aufgabe"
               labelClassName="typo-body-base"
             />
             <TaskStatusSelect
@@ -158,29 +161,47 @@ export function TaskSidebar({
                 labelClassName="typo-body-base"
                 placeholder="Integration wählen"
               />
-              <FormSelectOptions
-                errors={errors}
-                control={control}
-                data={sequenceOptions}
-                name="sequence"
-                label="Sequenz"
-                labelClassName="typo-body-base"
-                placeholder="Sequenz wählen"
-              />
-              <AutomationRequirementNotice sequence={sequence} />
-              {sequence === 'microsoft_send_email' ? (
+              {hasIntegration ? (
                 <FormSelectOptions
                   errors={errors}
                   control={control}
-                  data={mailTemplates.map((template) => ({
-                    value: template.id,
-                    label: template.name,
-                  }))}
-                  name="mailTemplateId"
-                  label="E-Mail-Vorlage"
+                  data={sequenceOptions}
+                  name="sequence"
+                  label="Sequenz"
                   labelClassName="typo-body-base"
-                  placeholder="Vorlage wählen"
+                  placeholder="Sequenz wählen"
                 />
+              ) : null}
+              {sequence === 'microsoft_send_email' ||
+              sequence === 'microsoft_send_teams_message' ? (
+                <>
+                  <FormSelectOptions
+                    errors={errors}
+                    control={control}
+                    data={mailTemplates.map((template) => ({
+                      value: template.id,
+                      label: template.name,
+                    }))}
+                    name="mailTemplateId"
+                    label={
+                      sequence === 'microsoft_send_teams_message'
+                        ? 'Nachrichtenvorlage'
+                        : 'E-Mail-Vorlage'
+                    }
+                    labelClassName="typo-body-base"
+                    placeholder="Vorlage wählen"
+                  />
+                  {errors.mailTemplateId && mailTemplateId ? (
+                    <a
+                      href={`/settings/mail-templates/${encodeURIComponent(mailTemplateId)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm underline"
+                    >
+                      Inhalt der Vorlage bearbeiten (neuer Tab)
+                    </a>
+                  ) : null}
+                </>
               ) : null}
             </div>
           </SidebarContent>

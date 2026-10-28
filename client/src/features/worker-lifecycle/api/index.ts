@@ -1,5 +1,9 @@
 import API from '@/config/apiClient';
-import { EngagementType, WorkerRecord } from '../types/index.types';
+import {
+  EngagementType,
+  WorkerEngagement,
+  WorkerRecord,
+} from '../types/index.types';
 
 type WorkerRecordResponse = {
   success: boolean;
@@ -32,7 +36,7 @@ type CreateWorkerResponse = {
 export const getWorkerData = async (): Promise<WorkerRecord[]> => {
   const response = await API.get<WorkerRecordResponse, WorkerRecordResponse>(
     `/worker`,
-    { params: { includeArchived: true } }
+    { params: { includeArchived: true, summary: true } }
   );
   return response.data;
 };
@@ -52,7 +56,7 @@ export const deleteWorkerById = async (workerId: string): Promise<void> => {
 export const deleteWorkersByIds = async (
   workerIds: string[]
 ): Promise<void> => {
-  await Promise.all(workerIds.map((id) => deleteWorkerById(id)));
+  await API.post('worker/bulk-delete', { workerIds });
 };
 
 export const addWorker = async (
@@ -65,10 +69,19 @@ export const addWorker = async (
   return response;
 };
 
+export type EngagementUpdateResponse = {
+  success: boolean;
+  data: Pick<WorkerEngagement, 'id' | 'type' | 'status'> &
+    Partial<WorkerEngagement>;
+};
+
 export const updateEngagement = async (
   workerId: string,
   engagementId: string,
-  data: { status?: string; type?: EngagementType }
-): Promise<void> => {
-  await API.put(`worker/${workerId}/engagements/${engagementId}`, data);
+  data: { status?: string; type?: EngagementType; responsibleUserId?: string }
+): Promise<EngagementUpdateResponse> => {
+  return API.put<EngagementUpdateResponse, EngagementUpdateResponse>(
+    `/worker/${workerId}/engagements/${engagementId}`,
+    data
+  );
 };

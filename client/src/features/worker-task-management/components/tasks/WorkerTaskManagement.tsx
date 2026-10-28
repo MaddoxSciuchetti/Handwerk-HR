@@ -1,4 +1,17 @@
+import {
+  engagementsForTaskPhase,
+  taskPhaseForType,
+} from '@/features/worker-lifecycle/utils/taskPhase';
+import { cn } from '@/lib/utils';
+import WorkerInformation from '@/features/worker-lifecycle/components/WorkerInformation';
+import queryClient from '@/config/query.client';
+import { ALL_WORKER_DATA } from '@/features/worker-lifecycle/consts/query-key.consts';
+import type {
+  EngagementType,
+  WorkerRecord,
+} from '@/features/worker-lifecycle/types/index.types';
 import ErrorAlert from '@/components/alerts/ErrorAlert';
+import { TableSelectAllCheckbox } from '@/components/ui/table-select-all-checkbox';
 import { TableSkeletonRows } from '@/components/ui/table-skeleton';
 import { PersonnelFoldersSkeleton } from '../files/FileSkeletons';
 import { ClothingOrderTable } from '../clothing/ClothingOrderTable';
@@ -13,7 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LargeEditMode } from '@/features/all-tasks/components/LargeEditMode';
 import { TaskItem } from '@/features/all-tasks/components/TaskItem';
 import { TaskSidebar } from '@/features/all-tasks/components/TaskSidebar';
@@ -29,10 +42,11 @@ import {
   type Dispatch,
   type SetStateAction,
 } from 'react';
+import { useQueries, useQueryClient } from '@tanstack/react-query';
 import useFilteredData from '../../hooks/useFilteredData';
 import useGetWorkerFiles from '../../hooks/useGetWorkerFiles';
 import useTaskData from '../../hooks/useTaskData';
-import { WorkerTab } from '../../types/index.types';
+import { LifecycleType, WorkerTab } from '../../types/index.types';
 import handleZipExport from '../../utils/handleZipExport';
 import { ContractConfirmDialog } from '../files/ContractConfirmDialog';
 import { ContractSendDialog } from '../files/ContractSendDialog';
@@ -44,18 +58,37 @@ import { QuestionnaireSendDialog } from '@/features/questionnaire/QuestionnaireS
 import WorkerHeader from '../header/WorkerHeader';
 import { WorkerTabButtons } from '../header/WorkerTabButtons';
 import { engagementsAwaitingTemplate } from '../../pendingTemplate';
+import {
+  automationRevealQueryKey,
+  isAutomationTaskVisible,
+  type AutomationReveal,
+} from '../../utils/automationProgress';
 import { TemplateApplyPrompt } from './TemplateApplyPrompt';
 
 type TaskManagementProps = {
   workerId: string;
 };
 
-const sectionHeaderClassName = 'h-12 py-3 pl-10 pr-2 text-sm font-medium';
+const sectionHeaderClassName = 'h-12 py-3 pl-12 pr-2 text-sm font-medium';
+
+function cachedEngagementType(workerId: string): EngagementType | undefined {
+  return queryClient
+    .getQueryData<WorkerRecord[]>([ALL_WORKER_DATA])
+    ?.find((worker) => worker.id === workerId)?.engagements[0]?.type;
+}
+
+function defaultTabForWorker(workerId: string): WorkerTab {
+  return cachedEngagementType(workerId) === 'transfer' ? 'information' : 'form';
+}
 
 const TaskManagement = ({ workerId }: TaskManagementProps) => {
-  const [activeTab, setActiveTab] = useState<WorkerTab>('form');
+  const taskQueryClient = useQueryClient();
+  const [selectedTab, setActiveTab] = useState<WorkerTab>(() =>
+    defaultTabForWorker(workerId)
+  );
   const [clothingAddOpen, setClothingAddOpen] = useState(false);
   const [isFileUploadOpen, setIsFileUploadOpen] = useState(false);
+  const [createFolderOpen, setCreateFolderOpen] = useState(false);
   const materialFileInputRef = useRef<HTMLInputElement>(null);
   const [contractSend, setContractSend] = useState<{
     engagementId: string;
@@ -70,6 +103,10 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
   const [questionnaireEngagementId, setQuestionnaireEngagementId] = useState<
     string | null
   >(null);
+
+  useEffect(() => {
+    setActiveTab(defaultTabForWorker(workerId));
+  }, [workerId]);
 
   useEffect(() => {
     const pending = peekContractSendReturn();
@@ -106,8 +143,81 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
     });
   };
 
-  const { data, isLoading } = useTaskData(workerId);
-  const { displayData } = useFilteredData(data);
+  const listType = cachedEngagementType(workerId);
+  const listIsTeam = listType === 'transfer';
+  const { data, isLoading } = useTaskData(
+    workerId,
+    selectedTab === 'form' && !listIsTeam
+  );
+  const { displayData: allTasks } = useFilteredData(data);
+  const engagements = data?.data.engagements ?? [];
+  const hasOffboarding = engagements.some(
+    (engagement) => engagement.type === 'offboarding'
+  );
+  const currentType = engagements[0]?.type ?? listType;
+  const isTeam = currentType === 'transfer';
+  const activeTab =
+    isTeam && selectedTab === 'form' ? 'information' : selectedTab;
+  const phaseKey = `${workerId}:${engagements[0]?.id}:${currentType}:${engagements
+    .filter((engagement) => engagement.type === 'offboarding')
+    .map((engagement) => engagement.id)
+    .join(',')}`;
+  const [phaseSelection, setPhaseSelection] = useState<{
+    key: string;
+    phase: LifecycleType;
+  } | null>(null);
+  const taskPhase =
+    phaseSelection?.key === phaseKey
+      ? phaseSelection.phase
+      : taskPhaseForType(currentType);
+  const taskEngagements = engagementsForTaskPhase(engagements, taskPhase);
+  const taskEngagementIds = new Set(
+    taskEngagements.map((engagement) => engagement.id)
+  );
+  const automationReveals = useQueries({
+    queries: taskEngagements.map((engagement) => ({
+      queryKey: automationRevealQueryKey(engagement.id),
+      queryFn: async () =>
+        taskQueryClient.getQueryData<AutomationReveal | null>(
+          automationRevealQueryKey(engagement.id)
+        ) ?? null,
+      initialData: () =>
+        taskQueryClient.getQueryData<AutomationReveal | null>(
+          automationRevealQueryKey(engagement.id)
+        ) ?? null,
+      staleTime: Infinity,
+    })),
+  });
+  const revealByEngagement = Object.fromEntries(
+    taskEngagements.map((engagement, index) => [
+      engagement.id,
+      automationReveals[index]?.data ?? null,
+    ])
+  ) as Record<string, AutomationReveal | null>;
+  const displayData = allTasks.filter(
+    (task) =>
+      taskEngagementIds.has(task.workerEngagementId) &&
+      isAutomationTaskVisible(
+        task.id,
+        revealByEngagement[task.workerEngagementId]
+      )
+  );
+  const selectVisibleTasks = (checked: boolean) => {
+    const visibleIds = new Set(displayData.map((task) => task.id));
+    handleSetEditModeData((previous) => {
+      const remaining = previous.filter(
+        (item) => !visibleIds.has(item.taskNumber)
+      );
+      if (!checked) return remaining;
+      return [
+        ...remaining,
+        ...displayData.map((task) => ({
+          taskNumber: task.id,
+          taskTitle: task.title,
+        })),
+      ];
+    });
+  };
   const { fetchFiles } = useGetWorkerFiles(workerId);
   const {
     sidebarKey,
@@ -138,24 +248,49 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
   if (!data && !isLoading)
     return <ErrorAlert message="The tasks could not load, reload page" />;
 
-  const templateTargets = engagementsAwaitingTemplate(displayData, {
-    workerId,
-    label: `${data?.data.firstName ?? ''} ${data?.data.lastName ?? ''}`.trim(),
+  const workerLabel =
+    `${data?.data.firstName ?? ''} ${data?.data.lastName ?? ''}`.trim();
+  const templateTargets = (
+    taskPhase === 'offboarding'
+      ? taskEngagements
+          .filter(
+            (engagement) =>
+              engagement.templateApplication ||
+              !engagement.issues?.some((issue) => issue.templateItemId)
+          )
+          .map((engagement) => ({
+            workerId,
+            engagementId: engagement.id,
+            label: workerLabel,
+          }))
+      : engagementsAwaitingTemplate(displayData, {
+          workerId,
+          label: workerLabel,
+        })
+  ).filter((target) => {
+    const application = data?.data.engagements.find(
+      (engagement) => engagement.id === target.engagementId
+    )?.templateApplication;
+    return !application?.resultsDismissedAt;
   });
-  const engagements = data?.data.engagements ?? [];
-  const waiting = engagements.some(
-    (engagement) => engagement.status === 'expected'
-  );
-  const pendingQuestionnaire = engagements.find(
+  const pendingQuestionnaire = taskEngagements.find(
     (engagement) =>
-      engagement.status === 'expected' && !engagement.questionnaireSubmission
+      engagement.type === 'onboarding' &&
+      engagement.status === 'pending' &&
+      !engagement.questionnaireSubmission
   );
 
   return (
-    <div className="mx-auto flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
+    <div
+      className={cn(
+        'mx-auto flex h-full min-h-0 flex-col rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl',
+        activeTab === 'information' ? 'overflow-y-auto' : 'overflow-hidden'
+      )}
+    >
       <TaskSidebar
         key={sidebarKey}
         {...sidebarProps}
+        showWorkerLink={false}
         onOpenArbeitszeugnis={setZeugnisIssueId}
       />
       {contractSend ? (
@@ -193,6 +328,7 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
         defaultValue="form"
         onValueChange={(value) => {
           if (
+            value === 'information' ||
             value === 'form' ||
             value === 'files' ||
             value === 'materials' ||
@@ -203,33 +339,70 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
             if (value !== 'form') setQuestionnaireEngagementId(null);
           }
         }}
-        className="flex min-h-0 flex-1 flex-col"
+        className={cn(
+          'flex min-h-0 flex-col',
+          activeTab === 'information' ? 'flex-none' : 'flex-1'
+        )}
       >
         <WorkerTabButtons
           activeTab={activeTab}
+          hideTasks={isTeam}
           onTabChange={(tab) => {
             setActiveTab(tab);
             if (tab !== 'clothing') setClothingAddOpen(false);
             if (tab !== 'form') setQuestionnaireEngagementId(null);
           }}
         />
-        <Card className="mt-3 flex min-h-0 flex-1 flex-col gap-0 border border-border py-0 shadow-none ring-0">
+        <Card
+          className={cn(
+            'mt-3 flex min-h-0 flex-col gap-0 border border-border py-0 shadow-none ring-0',
+            activeTab === 'information' ? 'flex-none' : 'flex-1'
+          )}
+        >
           <CardHeader className="flex min-h-14 shrink-0 flex-row flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-3">
             <WorkerHeader
               activeTab={activeTab}
+              taskPhaseControl={
+                hasOffboarding ? (
+                  <Tabs
+                    value={taskPhase}
+                    onValueChange={(phase) => {
+                      if (phase !== 'onboarding' && phase !== 'offboarding')
+                        return;
+                      setPhaseSelection({ key: phaseKey, phase });
+                      handleSetEditModeData([]);
+                    }}
+                    className="shrink-0"
+                  >
+                    <TabsList
+                      aria-label="Aufgabenphase"
+                      className="bg-muted p-1"
+                    >
+                      <TabsTrigger
+                        value="onboarding"
+                        className="border-0 px-3 font-sans font-normal focus-visible:border-transparent focus-visible:ring-0 focus-visible:outline-none focus-visible:underline focus-visible:underline-offset-4 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-none dark:data-[state=active]:bg-input/30"
+                      >
+                        Onboarding
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="offboarding"
+                        className="border-0 px-3 font-sans font-normal focus-visible:border-transparent focus-visible:ring-0 focus-visible:outline-none focus-visible:underline focus-visible:underline-offset-4 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-none dark:data-[state=active]:bg-input/30"
+                      >
+                        Offboarding
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                ) : null
+              }
               isLoading={isLoading}
               openForCreate={() =>
                 openForCreate({
-                  workerEngagementId:
-                    engagements.find(
-                      (engagement) => engagement.type === 'offboarding'
-                    )?.id ??
-                    engagements[0]?.id ??
-                    '',
+                  workerEngagementId: taskEngagements[0]?.id ?? '',
                 })
               }
-              hideCreate={waiting}
+              hideCreate={taskEngagements.length === 0}
               onOpenFileUpload={() => setIsFileUploadOpen(true)}
+              onAddFolder={() => setCreateFolderOpen(true)}
               onExportFiles={() => void handleZipExport(fetchFiles)}
               onUploadMaterials={() => materialFileInputRef.current?.click()}
               materialsUploadDisabled={engagements.length === 0}
@@ -242,7 +415,19 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
               }
             />
           </CardHeader>
-          <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-0">
+          <CardContent
+            className={cn(
+              'flex min-h-0 flex-col px-2 pb-0',
+              activeTab === 'information'
+                ? 'flex-none'
+                : 'flex-1 overflow-hidden'
+            )}
+          >
+            <TabsContent value="information" className="mt-0 flex-none">
+              <div className="mx-auto w-full max-w-3xl px-4 py-4">
+                <WorkerInformation workerId={workerId} />
+              </div>
+            </TabsContent>
             <TabsContent
               value="form"
               className="mt-0 flex min-h-0 flex-1 flex-col"
@@ -252,11 +437,22 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                   <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-0">
                     <TableRow className="border-0 hover:bg-transparent">
                       <TableHead
-                        className={`${sectionHeaderClassName} bg-card`}
+                        className={`relative ${sectionHeaderClassName} bg-card`}
                       >
+                        <div className="absolute inset-y-0 left-0 flex w-10 items-center justify-center">
+                          <TableSelectAllCheckbox
+                            ids={displayData.map((task) => task.id)}
+                            selectedIds={editModeData.map(
+                              (item) => item.taskNumber
+                            )}
+                            disabled={isLoading}
+                            selectLabel="Alle Aufgaben auswählen"
+                            clearLabel="Alle Aufgaben abwählen"
+                            onCheckedChange={selectVisibleTasks}
+                          />
+                        </div>
                         Titel
                       </TableHead>
-                      <TableHead className="h-12 bg-card py-3 px-2" />
                       <TableHead className="h-12 bg-card py-3 px-2 text-right">
                         Beschreibung
                       </TableHead>
@@ -274,13 +470,13 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                             (item) => item.taskNumber === task.id
                           )}
                           onOpenEdit={openForEdit}
-                          onOpenContractSend={(task) =>
+                          onOpenContractSend={() =>
                             setContractSend({
                               engagementId: task.workerEngagementId,
                               issueId: task.id,
                             })
                           }
-                          onOpenContractConfirm={(task) =>
+                          onOpenContractConfirm={() =>
                             setContractConfirm({
                               engagementId: task.workerEngagementId,
                               issueId: task.id,
@@ -293,7 +489,7 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                     ) : (
                       <TableRow className="border-0 hover:bg-transparent">
                         <TableCell
-                          colSpan={3}
+                          colSpan={2}
                           className="py-10 text-center text-sm text-muted-foreground"
                         >
                           Keine Aufgaben gefunden.
@@ -359,6 +555,8 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                     )}
                     isUploadModalOpen={isFileUploadOpen}
                     setIsUploadModalOpen={setIsFileUploadOpen}
+                    createFolderOpen={createFolderOpen}
+                    setCreateFolderOpen={setCreateFolderOpen}
                   />
                 )}
               </ScrollableTableViewport>
@@ -417,14 +615,17 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
             </TabsContent>
           </CardContent>
         </Card>
-        {largeEditMode ? (
+        {largeEditMode && !isTeam ? (
           <LargeEditMode
             editModeData={editModeData}
             setLargeEditMode={setLargeEditMode}
             setEditModeData={handleSetEditModeData}
           />
-        ) : templateTargets.length > 0 ? (
-          <TemplateApplyPrompt targets={templateTargets} />
+        ) : activeTab === 'form' ? (
+          <TemplateApplyPrompt
+            key={`${phaseKey}:${taskPhase}`}
+            targets={templateTargets}
+          />
         ) : null}
       </Tabs>
     </div>

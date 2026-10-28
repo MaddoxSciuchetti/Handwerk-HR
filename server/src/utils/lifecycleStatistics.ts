@@ -27,7 +27,7 @@ const open = (status: string) => !["completed", "cancelled"].includes(status);
 
 export function summarizeLifecycleStatistics(workers: Worker[], issues: Issue[], now = new Date()) {
     const activeWorkers = workers.filter(worker => worker.status === "active" && worker.engagements.some(e => open(e.status)));
-    const openIssues = issues.filter(issue => !["done", "cancelled"].includes(issue.status) &&
+    const openIssues = issues.filter(issue => !["done", "cancelled", "not_applicable"].includes(issue.status) &&
         (!issue.workerEngagement || (issue.workerEngagement.worker.status === "active" && open(issue.workerEngagement.status))));
     const engagements = workers.flatMap(worker => worker.engagements);
     function completedOrRunning(

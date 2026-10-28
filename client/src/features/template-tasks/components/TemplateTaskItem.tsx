@@ -29,13 +29,6 @@ export function TemplateTaskItem({
           <TableCell className="whitespace-normal">
             <p className="typo-body-sm text-text-primary">{task.taskName}</p>
           </TableCell>
-          <TableCell className="whitespace-normal">
-            {task.taskDescription ? (
-              <p className="typo-body-xs text-text-secondary line-clamp-3">
-                {task.taskDescription}
-              </p>
-            ) : null}
-          </TableCell>
           <TableCell className="pr-6 text-right">
             <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100">
               <Button
@@ -49,7 +42,7 @@ export function TemplateTaskItem({
                   setEditTemplateTask({
                     taskId: task.id,
                     taskName: task.taskName,
-                    taskDescription: task.taskDescription,
+                    taskDescription: task.taskDescription ?? '',
                     defaultStatus: task.defaultStatus,
                     defaultAssigneeUserId: task.defaultAssigneeUserId ?? '',
                     orderIndex: task.orderIndex,

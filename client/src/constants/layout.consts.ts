@@ -1,30 +1,36 @@
 import {
   ClipboardList,
-  CreditCard,
   FileText,
   Inbox,
+  LayoutDashboard,
   Plug,
   ScrollText,
   Shirt,
   Ticket,
   UserRound,
+  Users,
 } from 'lucide-react';
 
 export const LAYOUTITEMS = [
+  {
+    title: 'Cockpit',
+    to: '/cockpit',
+    icon: LayoutDashboard,
+  },
   {
     title: 'Handwerker',
     to: '/worker-lifycycle',
     icon: Inbox,
   },
   {
+    title: 'Team',
+    to: '/team',
+    icon: Users,
+  },
+  {
     title: 'Aufgaben',
     to: '/tasks',
     icon: Ticket,
-  },
-  {
-    title: 'Bestand',
-    to: '/bestand',
-    icon: Shirt,
   },
 ];
 
@@ -55,15 +61,13 @@ export const SETTINGSITEMS = [
     icon: ClipboardList,
   },
   {
+    title: 'Bestand',
+    to: '/bestand',
+    icon: Shirt,
+  },
+  {
     title: 'Integrationen',
     to: '/settings/integrations',
     icon: Plug,
-    adminOnly: true,
-  },
-  {
-    title: 'Zahlungen',
-    to: '/settings/payments',
-    icon: CreditCard,
-    adminOnly: true,
   },
 ];

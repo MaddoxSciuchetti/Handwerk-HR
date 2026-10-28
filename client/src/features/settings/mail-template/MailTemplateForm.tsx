@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { LoaderCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { MailMessageField } from './MailMessageField';
 import { customMailPlaceholders } from './mailPlaceholders';
@@ -67,12 +68,23 @@ export function MailTemplateForm({ templateId, page }: MailTemplateFormProps) {
           Die E-Mail konnte nicht gespeichert werden.
         </p>
       ) : null}
-      {save.isSuccess ? (
-        <p className="text-sm text-foreground">Gespeichert.</p>
-      ) : null}
       <div>
-        <Button type="submit" disabled={!canSave || save.isPending}>
-          Speichern
+        <Button
+          type="submit"
+          className="min-w-24"
+          aria-busy={save.isPending}
+          disabled={!canSave || save.isPending}
+        >
+          {save.isPending ? (
+            <span role="status" aria-label="Wird gespeichert">
+              <LoaderCircle
+                aria-hidden="true"
+                className="size-4 animate-spin"
+              />
+            </span>
+          ) : (
+            'Speichern'
+          )}
         </Button>
       </div>
     </form>

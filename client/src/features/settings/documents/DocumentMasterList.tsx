@@ -1,3 +1,4 @@
+import { TableSelectAllCheckbox } from '@/components/ui/table-select-all-checkbox';
 import { TableSkeletonRows } from '@/components/ui/table-skeleton';
 import {
   Table,
@@ -19,6 +20,7 @@ type DocumentMasterListProps = {
   masters: DocumentMasterListItem[];
   selectedIds: string[];
   onToggle: (id: string) => void;
+  onSelectAll: (checked: boolean) => void;
   emptyLabel: string;
 };
 
@@ -27,6 +29,7 @@ export function DocumentMasterList({
   masters,
   selectedIds,
   onToggle,
+  onSelectAll,
   emptyLabel,
 }: DocumentMasterListProps) {
   if (!isLoading && masters.length === 0) {
@@ -40,7 +43,16 @@ export function DocumentMasterList({
       <TableHeader>
         <TableRow className="border-0 hover:bg-transparent">
           <TableHead className="w-10 p-0">
-            <span className="sr-only">Auswahl</span>
+            <div className="flex h-12 w-10 items-center justify-center">
+              <TableSelectAllCheckbox
+                ids={masters.map((master) => master.id)}
+                selectedIds={selectedIds}
+                disabled={isLoading}
+                selectLabel="Alle Dokumente auswählen"
+                clearLabel="Alle Dokumente abwählen"
+                onCheckedChange={onSelectAll}
+              />
+            </div>
           </TableHead>
           <TableHead className="h-12 px-2 py-3">Name</TableHead>
           <TableHead className="px-2 py-3">Art</TableHead>

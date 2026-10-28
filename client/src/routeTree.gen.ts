@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WorkerLifycycleRouteImport } from './routes/worker-lifycycle'
+import { Route as TeamRouteImport } from './routes/team'
 import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -17,6 +18,7 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LandingRouteImport } from './routes/landing'
 import { Route as HomeRouteImport } from './routes/home'
+import { Route as CockpitRouteImport } from './routes/cockpit'
 import { Route as BestandRouteImport } from './routes/bestand'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UserIdRouteImport } from './routes/user/$Id'
@@ -26,6 +28,7 @@ import { Route as SettingsProfileRouteImport } from './routes/settings/profile'
 import { Route as SettingsPlansRouteImport } from './routes/settings/plans'
 import { Route as SettingsPaymentsRouteImport } from './routes/settings/payments'
 import { Route as SettingsIntegrationsRouteImport } from './routes/settings/integrations'
+import { Route as SettingsGeneralRouteImport } from './routes/settings/general'
 import { Route as SettingsEmployeesRouteImport } from './routes/settings/employees'
 import { Route as SettingsDocumentsRouteImport } from './routes/settings/documents'
 import { Route as SettingsDepartureMailRouteImport } from './routes/settings/departure-mail'
@@ -43,6 +46,11 @@ import { Route as EmailVerifyCodeRouteImport } from './routes/email/verify/$code
 const WorkerLifycycleRoute = WorkerLifycycleRouteImport.update({
   id: '/worker-lifycycle',
   path: '/worker-lifycycle',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeamRoute = TeamRouteImport.update({
+  id: '/team',
+  path: '/team',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TasksRoute = TasksRouteImport.update({
@@ -78,6 +86,11 @@ const LandingRoute = LandingRouteImport.update({
 const HomeRoute = HomeRouteImport.update({
   id: '/home',
   path: '/home',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CockpitRoute = CockpitRouteImport.update({
+  id: '/cockpit',
+  path: '/cockpit',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BestandRoute = BestandRouteImport.update({
@@ -123,6 +136,11 @@ const SettingsPaymentsRoute = SettingsPaymentsRouteImport.update({
 const SettingsIntegrationsRoute = SettingsIntegrationsRouteImport.update({
   id: '/integrations',
   path: '/integrations',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SettingsGeneralRoute = SettingsGeneralRouteImport.update({
+  id: '/general',
+  path: '/general',
   getParentRoute: () => SettingsRoute,
 } as any)
 const SettingsEmployeesRoute = SettingsEmployeesRouteImport.update({
@@ -195,6 +213,7 @@ const EmailVerifyCodeRoute = EmailVerifyCodeRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/bestand': typeof BestandRoute
+  '/cockpit': typeof CockpitRoute
   '/home': typeof HomeRoute
   '/landing': typeof LandingRoute
   '/login': typeof LoginRoute
@@ -202,6 +221,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRouteWithChildren
   '/signup': typeof SignupRoute
   '/tasks': typeof TasksRoute
+  '/team': typeof TeamRoute
   '/worker-lifycycle': typeof WorkerLifycycleRoute
   '/fragebogen/$token': typeof FragebogenTokenRoute
   '/fragebogen/preview': typeof FragebogenPreviewRoute
@@ -211,6 +231,7 @@ export interface FileRoutesByFullPath {
   '/settings/departure-mail': typeof SettingsDepartureMailRoute
   '/settings/documents': typeof SettingsDocumentsRouteWithChildren
   '/settings/employees': typeof SettingsEmployeesRoute
+  '/settings/general': typeof SettingsGeneralRoute
   '/settings/integrations': typeof SettingsIntegrationsRoute
   '/settings/payments': typeof SettingsPaymentsRoute
   '/settings/plans': typeof SettingsPlansRoute
@@ -227,6 +248,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bestand': typeof BestandRoute
+  '/cockpit': typeof CockpitRoute
   '/home': typeof HomeRoute
   '/landing': typeof LandingRoute
   '/login': typeof LoginRoute
@@ -234,6 +256,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRouteWithChildren
   '/signup': typeof SignupRoute
   '/tasks': typeof TasksRoute
+  '/team': typeof TeamRoute
   '/worker-lifycycle': typeof WorkerLifycycleRoute
   '/fragebogen/$token': typeof FragebogenTokenRoute
   '/fragebogen/preview': typeof FragebogenPreviewRoute
@@ -243,6 +266,7 @@ export interface FileRoutesByTo {
   '/settings/departure-mail': typeof SettingsDepartureMailRoute
   '/settings/documents': typeof SettingsDocumentsRouteWithChildren
   '/settings/employees': typeof SettingsEmployeesRoute
+  '/settings/general': typeof SettingsGeneralRoute
   '/settings/integrations': typeof SettingsIntegrationsRoute
   '/settings/payments': typeof SettingsPaymentsRoute
   '/settings/plans': typeof SettingsPlansRoute
@@ -260,6 +284,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/bestand': typeof BestandRoute
+  '/cockpit': typeof CockpitRoute
   '/home': typeof HomeRoute
   '/landing': typeof LandingRoute
   '/login': typeof LoginRoute
@@ -267,6 +292,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRouteWithChildren
   '/signup': typeof SignupRoute
   '/tasks': typeof TasksRoute
+  '/team': typeof TeamRoute
   '/worker-lifycycle': typeof WorkerLifycycleRoute
   '/fragebogen/$token': typeof FragebogenTokenRoute
   '/fragebogen/preview': typeof FragebogenPreviewRoute
@@ -276,6 +302,7 @@ export interface FileRoutesById {
   '/settings/departure-mail': typeof SettingsDepartureMailRoute
   '/settings/documents': typeof SettingsDocumentsRouteWithChildren
   '/settings/employees': typeof SettingsEmployeesRoute
+  '/settings/general': typeof SettingsGeneralRoute
   '/settings/integrations': typeof SettingsIntegrationsRoute
   '/settings/payments': typeof SettingsPaymentsRoute
   '/settings/plans': typeof SettingsPlansRoute
@@ -294,6 +321,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/bestand'
+    | '/cockpit'
     | '/home'
     | '/landing'
     | '/login'
@@ -301,6 +329,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/tasks'
+    | '/team'
     | '/worker-lifycycle'
     | '/fragebogen/$token'
     | '/fragebogen/preview'
@@ -310,6 +339,7 @@ export interface FileRouteTypes {
     | '/settings/departure-mail'
     | '/settings/documents'
     | '/settings/employees'
+    | '/settings/general'
     | '/settings/integrations'
     | '/settings/payments'
     | '/settings/plans'
@@ -326,6 +356,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/bestand'
+    | '/cockpit'
     | '/home'
     | '/landing'
     | '/login'
@@ -333,6 +364,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/tasks'
+    | '/team'
     | '/worker-lifycycle'
     | '/fragebogen/$token'
     | '/fragebogen/preview'
@@ -342,6 +374,7 @@ export interface FileRouteTypes {
     | '/settings/departure-mail'
     | '/settings/documents'
     | '/settings/employees'
+    | '/settings/general'
     | '/settings/integrations'
     | '/settings/payments'
     | '/settings/plans'
@@ -358,6 +391,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/bestand'
+    | '/cockpit'
     | '/home'
     | '/landing'
     | '/login'
@@ -365,6 +399,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/tasks'
+    | '/team'
     | '/worker-lifycycle'
     | '/fragebogen/$token'
     | '/fragebogen/preview'
@@ -374,6 +409,7 @@ export interface FileRouteTypes {
     | '/settings/departure-mail'
     | '/settings/documents'
     | '/settings/employees'
+    | '/settings/general'
     | '/settings/integrations'
     | '/settings/payments'
     | '/settings/plans'
@@ -391,6 +427,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BestandRoute: typeof BestandRoute
+  CockpitRoute: typeof CockpitRoute
   HomeRoute: typeof HomeRoute
   LandingRoute: typeof LandingRoute
   LoginRoute: typeof LoginRoute
@@ -398,6 +435,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRouteWithChildren
   SignupRoute: typeof SignupRoute
   TasksRoute: typeof TasksRoute
+  TeamRoute: typeof TeamRoute
   WorkerLifycycleRoute: typeof WorkerLifycycleRoute
   FragebogenTokenRoute: typeof FragebogenTokenRoute
   FragebogenPreviewRoute: typeof FragebogenPreviewRoute
@@ -414,6 +452,13 @@ declare module '@tanstack/react-router' {
       path: '/worker-lifycycle'
       fullPath: '/worker-lifycycle'
       preLoaderRoute: typeof WorkerLifycycleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/team': {
+      id: '/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof TeamRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tasks': {
@@ -463,6 +508,13 @@ declare module '@tanstack/react-router' {
       path: '/home'
       fullPath: '/home'
       preLoaderRoute: typeof HomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cockpit': {
+      id: '/cockpit'
+      path: '/cockpit'
+      fullPath: '/cockpit'
+      preLoaderRoute: typeof CockpitRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bestand': {
@@ -526,6 +578,13 @@ declare module '@tanstack/react-router' {
       path: '/integrations'
       fullPath: '/settings/integrations'
       preLoaderRoute: typeof SettingsIntegrationsRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/settings/general': {
+      id: '/settings/general'
+      path: '/general'
+      fullPath: '/settings/general'
+      preLoaderRoute: typeof SettingsGeneralRouteImport
       parentRoute: typeof SettingsRoute
     }
     '/settings/employees': {
@@ -638,6 +697,7 @@ interface SettingsRouteChildren {
   SettingsDepartureMailRoute: typeof SettingsDepartureMailRoute
   SettingsDocumentsRoute: typeof SettingsDocumentsRouteWithChildren
   SettingsEmployeesRoute: typeof SettingsEmployeesRoute
+  SettingsGeneralRoute: typeof SettingsGeneralRoute
   SettingsIntegrationsRoute: typeof SettingsIntegrationsRoute
   SettingsPaymentsRoute: typeof SettingsPaymentsRoute
   SettingsPlansRoute: typeof SettingsPlansRoute
@@ -654,6 +714,7 @@ const SettingsRouteChildren: SettingsRouteChildren = {
   SettingsDepartureMailRoute: SettingsDepartureMailRoute,
   SettingsDocumentsRoute: SettingsDocumentsRouteWithChildren,
   SettingsEmployeesRoute: SettingsEmployeesRoute,
+  SettingsGeneralRoute: SettingsGeneralRoute,
   SettingsIntegrationsRoute: SettingsIntegrationsRoute,
   SettingsPaymentsRoute: SettingsPaymentsRoute,
   SettingsPlansRoute: SettingsPlansRoute,
@@ -672,6 +733,7 @@ const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BestandRoute: BestandRoute,
+  CockpitRoute: CockpitRoute,
   HomeRoute: HomeRoute,
   LandingRoute: LandingRoute,
   LoginRoute: LoginRoute,
@@ -679,6 +741,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRouteWithChildren,
   SignupRoute: SignupRoute,
   TasksRoute: TasksRoute,
+  TeamRoute: TeamRoute,
   WorkerLifycycleRoute: WorkerLifycycleRoute,
   FragebogenTokenRoute: FragebogenTokenRoute,
   FragebogenPreviewRoute: FragebogenPreviewRoute,

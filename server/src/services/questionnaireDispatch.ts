@@ -1,4 +1,6 @@
+import { questionnaireSender } from "@/services/questionnaireSender";
 import { FRONTENDURL, QUESTIONNAIRE_MOCK_RESPONSES } from "@/constants/env";
+import { isStagingEnvironment } from "@/constants/stagingMail";
 import { NOT_FOUND } from "@/constants/http";
 import { prisma } from "@/lib/prisma";
 import {
@@ -22,7 +24,8 @@ import { randomUUID } from "crypto";
 
 const EXPECTED_ONBOARDING_TASKS = [
     { title: "Fragebogen", status: "in_progress" },
-    { title: "Arbeitsvertrag", status: "open" },
+    { title: "Arbeitsvertrag drucken", status: "open", kind: "contract_send", isTemporary: true },
+    { title: "Arbeitsvertrag unterschrieben", status: "open" },
 ] as const;
 
 async function findEngagement(organizationId: string, engagementId: string) {
@@ -129,15 +132,22 @@ function parseAdded(questions: unknown) {
 async function deliverQuestionnaire(
     email: string | null,
     token: string,
+    organizationId: string,
     senderAddress?: string | null,
 ) {
     if (!email) return false;
     const formUrl = `${FRONTENDURL.replace(/\/$/, "")}/fragebogen/${token}`;
     const template = getQuestionnaireTemplate(formUrl);
     try {
+        const useTestSender = isStagingEnvironment() || process.env.NODE_ENV === "development";
         const sent = await sendMail({
             to: email,
-            ...(senderAddress ? { senderAddress } : {}),
+            ...(useTestSender
+                ? { via: "resend" as const }
+                : {
+                      organizationId,
+                      ...(senderAddress ? { senderAddress } : {}),
+                  }),
             subject: template.subject,
             text: template.text,
             html: template.html,
@@ -152,6 +162,7 @@ async function finishDispatch(
     email: string | null,
     token: string,
     engagementId: string,
+    organizationId: string,
     senderAddress?: string | null,
 ) {
     if (QUESTIONNAIRE_MOCK_RESPONSES) {
@@ -159,7 +170,12 @@ async function finishDispatch(
         return { emailSent: false, mockCompleted: true, engagementId };
     }
     return {
-        emailSent: await deliverQuestionnaire(email, token, senderAddress),
+        emailSent: await deliverQuestionnaire(
+            email,
+            token,
+            organizationId,
+            senderAddress,
+        ),
         mockCompleted: false,
         engagementId,
     };
@@ -171,12 +187,14 @@ export async function sendEngagementQuestionnaire(params: {
     engagementId: string;
 }) {
     const engagement = await findEngagement(params.organizationId, params.engagementId);
+    const senderAddress = await questionnaireSender(params.createdByUserId);
     if (engagement.questionnaireSubmission) {
         return finishDispatch(
             engagement.worker.email,
             engagement.questionnaireSubmission.token,
             engagement.id,
-            engagement.questionnaireSenderAddress,
+            params.organizationId,
+            senderAddress,
         );
     }
 
@@ -194,8 +212,7 @@ export async function sendEngagementQuestionnaire(params: {
             data: EXPECTED_ONBOARDING_TASKS.map((task) => ({
                 workerEngagementId: engagement.id,
                 createdByUserId: params.createdByUserId,
-                status: task.status,
-                title: task.title,
+                ...task,
             })),
         });
         await tx.questionnaireSubmission.create({
@@ -225,6 +242,7 @@ export async function sendEngagementQuestionnaire(params: {
         engagement.worker.email,
         token,
         engagement.id,
-        engagement.questionnaireSenderAddress,
+        params.organizationId,
+        senderAddress,
     );
 }

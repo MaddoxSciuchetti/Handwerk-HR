@@ -99,6 +99,8 @@ const contractInclude = {
             questionnaireSubmission: {
                 select: {
                     status: true,
+                    id: true,
+                    revision: true,
                     formDefinition: true,
                     answers: {
                         select: { key: true, value: true },
@@ -112,6 +114,8 @@ const contractInclude = {
 
 async function loadContract(params: ContractParams) {
     return prisma.employmentContract.findFirst({
+        // Fetch the template, values and questionnaire in one database round trip.
+        relationLoadStrategy: "join",
         where: {
             engagementId: params.engagementId,
             engagement: {
@@ -134,6 +138,7 @@ function reloadContract(
     db: Prisma.TransactionClient | typeof prisma = prisma,
 ) {
     return db.employmentContract.findFirstOrThrow({
+        relationLoadStrategy: "join",
         where: { id },
         include: contractInclude,
     });
@@ -188,6 +193,10 @@ function present(
         masterRevision: contract.master.revision,
         matchedMasterRevision: contract.matchedMasterRevision,
         questionnaireCompleted: submission?.status === "completed",
+        questionnaireRevision: submission?.revision ?? 0,
+        matchedQuestionnaireRevision: contract.matchedQuestionnaireRevision ?? 0,
+        questionnaireSyncNeeded: submission?.status === "completed" &&
+            (submission.revision ?? 0) > (contract.matchedQuestionnaireRevision ?? 0),
         sentAt: contract.sentAt?.toISOString() ?? null,
         signedFileUrl: null as string | null,
         outgoingFileUrl: null as string | null,
@@ -236,12 +245,43 @@ export async function saveEngagementContractDraft(
 
     const segments = readDocumentSegments(contract.master.body);
     const manualEntries = readDraftValues(params.values, inputKeys(segments));
-    const entries = Object.entries(resolveCurrentDateValues(
-        readStyledDocument(contract.master.body),
-        Object.fromEntries(manualEntries.map((entry) => [entry.key, entry.value])),
-    )).map(([key, value]) => ({ key, value }));
+    const entries = Object.entries(
+        resolveCurrentDateValues(
+            readStyledDocument(contract.master.body),
+            Object.fromEntries(
+                manualEntries.map((entry) => [entry.key, entry.value]),
+            ),
+        ),
+    ).map(([key, value]) => ({ key, value }));
 
     const saved = await prisma.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT id FROM worker_engagements WHERE id = ${params.engagementId} FOR UPDATE`;
+        const latest = await tx.employmentContract.findUnique({
+            where: { id: contract.id },
+            include: { values: true },
+        });
+        if (latest?.sentAt || latest?.status === "signed")
+            throw new AppError(
+                CONFLICT,
+                "Der Vertrag wurde bereits versendet.",
+            );
+        if (!latest || latest.masterId !== contract.masterId) {
+            throw new AppError(
+                CONFLICT,
+                "Die Vertragsvorlage wurde inzwischen geändert. Bitte erneut öffnen.",
+            );
+        }
+        const unchanged =
+            latest.values.length === entries.length &&
+            entries.every((entry) =>
+                latest.values.some(
+                    (saved) =>
+                        saved.key === entry.key && saved.value === entry.value,
+                ),
+            );
+        if (unchanged && latest.body === null)
+            return reloadContract(contract.id, tx);
+
         await invalidatePreparedDocuments(
             {
                 organizationId: params.organizationId,
@@ -250,17 +290,6 @@ export async function saveEngagementContractDraft(
             },
             tx,
         );
-        const latest = await tx.employmentContract.findUnique({
-            where: { id: contract.id },
-        });
-        if (latest?.sentAt || latest?.status === "signed")
-            throw new AppError(
-                CONFLICT,
-                "Der Vertrag wurde bereits versendet.",
-            );
-        if (!latest || latest.masterId !== contract.masterId) {
-            throw new AppError(CONFLICT, "Die Vertragsvorlage wurde inzwischen geändert. Bitte erneut öffnen.");
-        }
         if (contract.body !== null) {
             await tx.employmentContract.update({
                 where: { id: contract.id },
@@ -284,7 +313,14 @@ export async function saveEngagementContractDraft(
         return reloadContract(contract.id, tx);
     });
 
-    return present(saved);
+    return {
+        ...present(saved),
+        prepared: await currentPreparation({
+            organizationId: params.organizationId,
+            engagementId: params.engagementId,
+            kind: "employment_contract",
+        }),
+    };
 }
 
 export async function persistMatchedContractValues(
@@ -300,19 +336,24 @@ export async function persistMatchedContractValues(
         where: { id: params.contractId },
         include: { master: true, values: true },
     });
+    const segments = current ? readDocumentSegments(current.master.body) : [];
+    const allowed = inputKeys(segments);
     const pointKeys = new Set(
-        current
-            ? readDocumentSegments(current.master.body).flatMap((segment) =>
-                  segment.type === "input" && segment.fieldType === "points"
-                      ? [segment.key]
-                      : [],
-              )
-            : [],
+        segments.flatMap((segment) =>
+            segment.type === "input" && segment.fieldType === "points"
+                ? [segment.key]
+                : [],
+        ),
     );
+    const matchedKeys = new Set(params.entries.map((entry) => entry.key));
+    // Matching only supplies questionnaire-backed fields. Keep manual values
+    // (e.g. pay and allowances) for inputs still present in the target template.
     const preserved = (current?.values ?? [])
         .filter(
-            (entry) => params.preserveDescriptionPoints !== false &&
-                pointKeys.has(entry.key) && entry.value.trim().length > 0,
+            (entry) => allowed.has(entry.key) && entry.value.trim().length > 0 &&
+                (pointKeys.has(entry.key)
+                    ? params.preserveDescriptionPoints !== false
+                    : !matchedKeys.has(entry.key)),
         )
         .map((entry) => ({ key: entry.key, value: entry.value }));
     const entries = [
@@ -378,6 +419,13 @@ export async function resyncEngagementContractFromQuestionnaire(
     );
 
     const saved = await prisma.$transaction(async (tx) => {
+        // Claim the exact questionnaire revision used for matching. A concurrent
+        // correction must never be marked as synchronized without being applied.
+        const claimed = await tx.questionnaireSubmission.updateMany({
+            where: { id: submission.id, revision: submission.revision, status: "completed" },
+            data: { revision: submission.revision },
+        });
+        if (claimed.count !== 1) throw new AppError(CONFLICT, "Der Fragebogen wurde inzwischen geändert. Bitte erneut synchronisieren.");
         await invalidatePreparedDocuments(
             {
                 organizationId: params.organizationId,
@@ -427,6 +475,15 @@ export async function resyncEngagementContractFromQuestionnaire(
             masterRevision: master.revision,
             preserveDescriptionPoints: !switchingTemplate,
         });
+        await tx.employmentContract.update({
+            where: { id: contract.id },
+            data: {
+                matchedQuestionnaireRevision: submission.revision,
+                status: "draft",
+                body: Prisma.DbNull,
+                outgoingPdfId: null,
+            },
+        });
         return reloadContract(contract.id, tx);
     });
 
@@ -462,7 +519,7 @@ export async function confirmEngagementContractForSend(params: ContractParams) {
 }
 
 export async function prepareEmploymentContractPdf(
-    params: ContractParams & { values: Record<string, unknown> },
+    params: ContractParams & { values: Record<string, unknown>; includeBytes?: boolean },
 ) {
     const contract = await findContract(params);
     if (!contract || contract.sentAt || contract.status === "signed")
@@ -496,74 +553,4 @@ export async function readPreparedEmploymentContractPdf(
     });
     if (!selected) throw new AppError(NOT_FOUND, "PDF nicht gefunden.");
     return downloadStoredFile(selected.s3Key);
-}
-
-export async function sendFilledEmploymentContract(
-    params: ContractParams & {
-        actorUserId: string;
-        issueId: string;
-        artifactId: string;
-    },
-) {
-    const contract = await findContract(params);
-    if (!contract) throw new AppError(NOT_FOUND, "Vertrag nicht gefunden.");
-
-    const issue = await prisma.issue.findFirst({
-        where: {
-            id: params.issueId,
-            workerEngagementId: params.engagementId,
-            kind: "contract_send",
-        },
-    });
-    if (!issue) throw new AppError(NOT_FOUND, "Aufgabe nicht gefunden.");
-
-    const artifact = await prisma.preparedDocument.findFirst({
-        where: {
-            id: params.artifactId,
-            masterId: contract.masterId,
-            organizationId: params.organizationId,
-            engagementId: params.engagementId,
-            kind: "employment_contract",
-        },
-    });
-    if (!artifact) throw new AppError(NOT_FOUND, "PDF nicht gefunden.");
-
-    const printedAt = new Date();
-    await prisma.$transaction(async (tx) => {
-        await tx.preparedDocument.update({
-            where: { id: artifact.id },
-            data: {
-                status: "sent",
-                sentAt: printedAt,
-                approvedBy: params.actorUserId,
-                approvedAt: printedAt,
-                providerId: "office-print",
-            },
-        });
-        await tx.employmentContract.update({
-            where: { id: contract.id },
-            data: {
-                sentAt: printedAt,
-                outgoingPdfId: artifact.id,
-                status: contract.status === "signed" ? "signed" : "ready",
-            },
-        });
-        if (issue.status !== "done") {
-            await tx.issue.update({
-                where: { id: issue.id },
-                data: { status: "done" },
-            });
-            await tx.issueAuditLog.create({
-                data: {
-                    issueId: issue.id,
-                    actorUserId: params.actorUserId,
-                    action: "issue.updated",
-                    oldValue: { status: issue.status },
-                    newValue: { status: "done" },
-                },
-            });
-        }
-    });
-
-    return getEngagementContract(params);
 }

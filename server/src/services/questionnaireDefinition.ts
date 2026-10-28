@@ -1,3 +1,4 @@
+import { isValidTaxId, taxIdInput } from "../../../shared/taxId";
 import { BAD_REQUEST } from "@/constants/http";
 import AppError from "@/utils/AppError";
 import { isValidInsuranceNumber, insuranceNumberInput } from "../../../shared/insuranceNumber";
@@ -196,6 +197,14 @@ export function presentQuestions(definition: QuestionnaireDefinition) {
 }
 
 function cleanDefault(field: QuestionnaireFieldItem, value: string) {
+    if (field.key === "taxId") {
+        const normalized = taxIdInput(value);
+        if (!normalized) return undefined;
+        if (!isValidTaxId(normalized)) {
+            reject("Steuer-ID: Bitte eine gültige 11-stellige Identifikationsnummer eingeben.");
+        }
+        return normalized;
+    }
     if (field.key === "insuranceNumber") {
         const normalized = insuranceNumberInput(value);
         if (!normalized) return undefined;
@@ -257,12 +266,26 @@ function parseRepeater(raw: object, seen: Set<string>): QuestionnaireRepeaterIte
     if (!source || source.kind !== "repeater") reject("Dieser Block ist nicht verfügbar.");
     if (seen.has(source.key)) reject("Jede Frage darf nur einmal vorkommen.");
     seen.add(source.key);
-    return repeaterItem({
-        key: source.key,
-        section: source.section,
-        afterSection: "",
-        columns: [...source.columns],
-    });
+    const postedColumns = "columns" in raw && Array.isArray(raw.columns) ? raw.columns : [];
+    return {
+        ...repeaterItem({
+            key: source.key,
+            section: source.section,
+            afterSection: "",
+            columns: source.columns.map((column) => {
+                const posted = postedColumns.find(
+                    (entry) => entry && typeof entry === "object" && entry.key === column.key,
+                );
+                return {
+                    ...column,
+                    officeOnly: posted && typeof posted.officeOnly === "boolean"
+                        ? posted.officeOnly
+                        : column.officeOnly,
+                };
+            }),
+        }),
+        allowMoreRows: "allowMoreRows" in raw && raw.allowMoreRows === true ? true : undefined,
+    };
 }
 
 function parseCustomTable(raw: object, key: string, seen: Set<string>): QuestionnaireRepeaterItem {
@@ -327,7 +350,8 @@ function parseField(raw: object, seen: Set<string>): QuestionnaireFieldItem {
         required: isWeeklyHoursKey(key) ? readRequired(raw, base.required === true) : questionRequired(base),
         employerFilled: false,
         contractFieldKey: base.type === "file" ? undefined : contractFieldKey,
-        bsbOnly: ("bsbOnly" in raw && raw.bsbOnly === true) || readOfficeOnly(raw),
+        bsbOnly: ("bsbOnly" in raw && typeof raw.bsbOnly === "boolean" ? raw.bsbOnly : readOfficeOnly(raw)),
+        officeOnly: (("bsbOnly" in raw && typeof raw.bsbOnly === "boolean" ? raw.bsbOnly : readOfficeOnly(raw))) ? true : undefined,
         defaultValue: undefined,
     };
     const posted = "defaultValue" in raw && typeof raw.defaultValue === "string" ? raw.defaultValue : "";

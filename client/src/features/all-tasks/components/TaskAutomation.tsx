@@ -1,6 +1,13 @@
+import { TeamsSendAction } from '@/features/microsoft-teams/TeamsSendAction';
 import { Button } from '@/components/ui/button';
 import { MicrosoftSimulationNotice } from '@/features/settings/integrations/MicrosoftSimulationNotice';
 import { Spinner } from '@/components/ui/spinner';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
   TASKHISTORY,
   WORKERBYID,
@@ -18,15 +25,20 @@ type TaskAutomationProps = {
   provider: string;
   sequence: string;
   disabled: boolean;
+  completed?: boolean;
   senderAddress?: string;
+  beforeRun?: () => Promise<boolean>;
 };
 
-function TaskAutomation({
+function ExistingTaskAutomation({
   taskId,
   provider,
+  sequence,
   disabled,
   senderAddress,
-}: TaskAutomationProps) {
+  beforeRun,
+  onCompleted,
+}: TaskAutomationProps & { onCompleted: () => void }) {
   const queryClient = useQueryClient();
   const [isRunning, setIsRunning] = useState(false);
   const integrations = useQuery({
@@ -50,10 +62,20 @@ function TaskAutomation({
   const onGo = async () => {
     if (disabled || isRunning || blockedReason) return;
     setIsRunning(true);
+    if (beforeRun && !(await beforeRun())) {
+      setIsRunning(false);
+      return;
+    }
     const [, error] = await tryCatch(
       runIssueSequence(taskId, senderAddress?.trim() || undefined)
     );
     setIsRunning(false);
+    void queryClient.invalidateQueries({
+      queryKey: ['template-application-result'],
+    });
+    void queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] });
+    void queryClient.invalidateQueries({ queryKey: [WORKERBYID] });
+    void queryClient.invalidateQueries({ queryKey: [TASKHISTORY, taskId] });
     if (error) {
       const message =
         error &&
@@ -65,6 +87,7 @@ function TaskAutomation({
       toast.error(message);
       return;
     }
+    onCompleted();
     void queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] });
     void queryClient.invalidateQueries({ queryKey: [WORKERBYID] });
     void queryClient.invalidateQueries({ queryKey: [TASKHISTORY, taskId] });
@@ -101,4 +124,49 @@ function TaskAutomation({
   );
 }
 
+function TaskAutomation(props: TaskAutomationProps) {
+  const [executedTaskId, setExecutedTaskId] = useState<string | null>(null);
+  if (props.completed || executedTaskId === props.taskId) {
+    const message =
+      props.sequence === 'microsoft_send_email'
+        ? 'Diese E-Mail wurde bereits gesendet.'
+        : 'Diese Sequenz wurde bereits ausgeführt.';
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span
+              tabIndex={0}
+              className="block cursor-not-allowed rounded-2xl"
+              aria-label={message}
+            >
+              <Button
+                type="button"
+                disabled
+                className="w-full rounded-2xl bg-muted text-muted-foreground disabled:opacity-100"
+              >
+                {props.sequence === 'microsoft_send_teams_message'
+                  ? 'Teams-Nachricht senden'
+                  : 'Go'}
+              </Button>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>{message}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+  return props.sequence === 'microsoft_send_teams_message' ? (
+    <TeamsSendAction
+      taskId={props.taskId}
+      disabled={props.disabled}
+      beforeSend={props.beforeRun}
+    />
+  ) : (
+    <ExistingTaskAutomation
+      {...props}
+      onCompleted={() => setExecutedTaskId(props.taskId)}
+    />
+  );
+}
 export default TaskAutomation;

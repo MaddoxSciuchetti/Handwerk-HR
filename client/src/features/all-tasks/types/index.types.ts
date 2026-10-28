@@ -7,6 +7,7 @@ export type EngagementResponse = {
   workerId: string;
   workerFirstName: string;
   workerLastName: string;
+  microsoftAccountId?: string | null;
 };
 
 export type ListEngagementsResponse = {
@@ -36,8 +37,13 @@ export type IssueResponse = {
   kind: 'standard' | 'contract_send' | 'contract_confirm';
   isTemporary: boolean;
   assigneeOnly?: boolean;
-  hasMention?: boolean;
+  mentioned?: boolean;
   workerEngagement?: {
+    templateApplication?: {
+      id: string;
+      completedAt: string | null;
+      resultsDismissedAt?: string | null;
+    } | null;
     workerId: string;
     worker?: { firstName: string; lastName: string } | null;
   } | null;

@@ -1,3 +1,9 @@
+vi.mock('@/features/user-profile/hooks/useAuth', () => ({
+  default: () => ({ user: { membershipRole: 'admin' } }),
+}));
+vi.mock('@/features/microsoft-teams/TeamsConnectionCard', () => ({
+  TeamsConnectionCard: () => null,
+}));
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, expect, it, vi } from 'vitest';
@@ -33,7 +39,7 @@ const emptyIntegration = (
 beforeEach(() => vi.resetAllMocks());
 
 it.each([
-  ['microsoft_graph', 'Microsoft', 'Tenant-ID', 'Client-Geheimnis'],
+  ['microsoft_graph', 'Microsoft 365', 'Tenant-ID', 'Client-Geheimnis'],
   [
     'crewmeister',
     'Crewmeister',
@@ -53,7 +59,7 @@ it.each([
     const heading = await screen.findByRole('heading', { name: title });
     const form = heading.closest('form')!;
     const fields = within(form);
-    expect(fields.queryByLabelText(fieldLabel)).not.toBeInTheDocument();
+    expect(fields.getByLabelText(fieldLabel)).not.toBeVisible();
     expect(
       fields.queryByRole('button', { name: 'Zugangsdaten' })
     ).not.toBeInTheDocument();
@@ -73,7 +79,7 @@ it.each([
       enabled: true,
       ...(provider === 'microsoft_graph'
         ? { tenantId: 'first-value', hasClientSecret: true }
-        : { crewId: 'first-value', hasToken: true }),
+        : { crewId: 'first-value', hasToken: true, token: 'temporary-secret' }),
     };
     vi.mocked(saveIntegration).mockResolvedValue(saved);
     // A slow background refresh must not keep the save button disabled.
@@ -84,19 +90,27 @@ it.each([
       expect(fields.getByRole('button', { name: 'Speichern' })).toBeEnabled()
     );
     expect(screen.getAllByRole('switch')).toHaveLength(2);
-    expect(screen.getAllByRole('heading', { name: 'Microsoft' })).toHaveLength(
-      1
-    );
+    expect(
+      screen.getAllByRole('heading', { name: 'Microsoft 365' })
+    ).toHaveLength(1);
     expect(
       screen.getAllByRole('heading', { name: 'Crewmeister' })
     ).toHaveLength(1);
     expect(fields.getByRole('switch')).toHaveAttribute('aria-checked', 'true');
-    expect(screen.getByRole('switch', { name: 'Inaktiv' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('switch', {
+        name: provider === 'microsoft_graph' ? 'Crewmeister' : 'Microsoft 365',
+      })
+    ).toBeInTheDocument();
     expect(fields.getByLabelText(fieldLabel)).toBe(input);
     expect(input).toHaveValue('first-value');
-    expect(fields.getByLabelText(`${secretLabel} (gespeichert)`)).toHaveValue(
-      ''
-    );
+    expect(
+      fields.getByLabelText(
+        provider === 'microsoft_graph'
+          ? secretLabel
+          : `${secretLabel} (gespeichert)`
+      )
+    ).toHaveValue(provider === 'crewmeister' ? 'temporary-secret' : '');
 
     await user.clear(input);
     await user.type(input, 'edited-value');
@@ -108,11 +122,12 @@ it.each([
         enabled: true,
         [provider === 'microsoft_graph' ? 'tenantId' : 'crewId']:
           'edited-value',
-        [provider === 'microsoft_graph' ? 'clientSecret' : 'token']: '',
+        [provider === 'microsoft_graph' ? 'clientSecret' : 'token']:
+          provider === 'crewmeister' ? 'temporary-secret' : '',
       })
     );
     await user.click(disclosure);
-    expect(fields.queryByLabelText(fieldLabel)).not.toBeInTheDocument();
+    expect(fields.getByLabelText(fieldLabel)).not.toBeVisible();
     expect(fields.getByRole('switch')).toHaveAttribute('aria-checked', 'true');
     await user.click(disclosure);
     expect(fields.getByLabelText(fieldLabel)).toHaveValue('edited-value');

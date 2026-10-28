@@ -5,15 +5,21 @@ import type { TaskSidebarForm } from '../types/index.types';
 
 export function MicrosoftAccountIdField({
   sequence,
+  storedMicrosoftAccountId,
   register,
   errors,
 }: {
   sequence: string | undefined;
+  storedMicrosoftAccountId?: string | null;
   register: UseFormRegister<TaskSidebarForm>;
   errors: FieldErrors<TaskSidebarForm>;
 }) {
   const id = useId();
-  if (sequence !== 'microsoft_deactivate_account') return null;
+  if (
+    sequence !== 'microsoft_deactivate_account' ||
+    storedMicrosoftAccountId?.trim()
+  )
+    return null;
   return (
     <div className="flex flex-col gap-2">
       <FormFields
@@ -21,15 +27,11 @@ export function MicrosoftAccountIdField({
         errors={errors}
         register={register}
         name="microsoftAccountId"
-        label="Microsoft-Konto-ID (optional)"
+        label="Microsoft-Konto-ID (erforderlich)"
+        aria-required="true"
         placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-        aria-describedby={`${id}-hint`}
         className="h-8"
       />
-      <p id={`${id}-hint`} className="text-sm text-muted-foreground">
-        Leer lassen, um die beim Handwerker hinterlegte Microsoft-ID zu
-        verwenden. Eine eingegebene ID vor der Ausführung speichern.
-      </p>
     </div>
   );
 }

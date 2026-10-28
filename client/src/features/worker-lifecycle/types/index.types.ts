@@ -73,6 +73,11 @@ export type WorkerStatus = 'active' | 'inactive';
 export type EngagementType = 'onboarding' | 'offboarding' | 'transfer';
 
 export type WorkerEngagement = {
+  templateApplication?: {
+    id: string;
+    completedAt: string | null;
+    resultsDismissedAt?: string | null;
+  } | null;
   id: string;
   type: EngagementType;
   status: EngagementProgressValue;
@@ -87,16 +92,25 @@ export type WorkerEngagement = {
     email: string;
   };
   issues?: Pick<IssueResponse, 'id' | 'status'>[];
-  questionnaireSubmission?: { id: string; status: string; completedAt?: string | null; name?: string } | null;
+  issueCounts?: { status: string; count: number }[];
+  questionnaireSubmission?: {
+    id: string;
+    status: string;
+    completedAt?: string | null;
+    name?: string;
+  } | null;
 };
 
 export type WorkerRecord = {
   id: string;
   firstName: string;
   lastName: string;
-  email: string;
+  email: string | null;
   position: string | null;
   status: WorkerStatus;
+  birthday?: string | null;
+  entryDate?: string | null;
+  exitDate?: string | null;
   createdAt: string;
   updatedAt: string;
   engagements: WorkerEngagement[];
@@ -108,7 +122,7 @@ export type WorkerDetailResponse = {
     id: string;
     firstName: string;
     lastName: string;
-    email: string;
+    email: string | null;
     workEmail: string | null;
     microsoftEmail?: string | null;
     birthday: string | null;

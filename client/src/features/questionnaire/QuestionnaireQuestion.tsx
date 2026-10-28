@@ -1,3 +1,4 @@
+import { isValidTaxId, taxIdInput } from '@shared/taxId';
 import { Input } from '@/components/ui/input';
 import {
   insuranceNumberInput,
@@ -77,7 +78,13 @@ export function QuestionnaireQuestion({
   }
   if (question.type === 'single') {
     return (
-      <fieldset className={fillable ? 'flex flex-col gap-2 rounded-xl bg-muted p-3' : 'flex flex-col gap-2'}>
+      <fieldset
+        className={
+          fillable
+            ? 'flex flex-col gap-2 rounded-xl bg-muted p-3'
+            : 'flex flex-col gap-2'
+        }
+      >
         {question.label || labelControl ? (
           <legend className="text-sm font-medium">
             <QuestionText question={question} labelControl={labelControl} />
@@ -112,7 +119,13 @@ export function QuestionnaireQuestion({
 
   if (question.type === 'check' && (question.options?.length ?? 0) > 1) {
     return (
-      <fieldset className={fillable ? 'flex flex-col gap-2 rounded-xl bg-muted p-3' : 'flex flex-col gap-2'}>
+      <fieldset
+        className={
+          fillable
+            ? 'flex flex-col gap-2 rounded-xl bg-muted p-3'
+            : 'flex flex-col gap-2'
+        }
+      >
         {question.label || labelControl ? (
           <legend className="text-sm font-medium">
             <QuestionText question={question} labelControl={labelControl} />
@@ -142,7 +155,13 @@ export function QuestionnaireQuestion({
 
   if (question.type === 'check') {
     return (
-      <div className={fillable ? 'flex flex-col gap-2 rounded-xl bg-muted p-3' : 'flex flex-col gap-2'}>
+      <div
+        className={
+          fillable
+            ? 'flex flex-col gap-2 rounded-xl bg-muted p-3'
+            : 'flex flex-col gap-2'
+        }
+      >
         <label className="flex items-start gap-3 text-sm text-foreground">
           <input
             type="checkbox"
@@ -168,6 +187,7 @@ export function QuestionnaireQuestion({
       <Input
         id={question.key}
         type={question.type === 'date' ? 'date' : 'text'}
+        inputMode={question.key === 'taxId' ? 'numeric' : undefined}
         required={question.required && !locked}
         disabled={locked}
         value={value}
@@ -177,10 +197,17 @@ export function QuestionnaireQuestion({
           onChange(
             question.key === 'insuranceNumber'
               ? insuranceNumberInput(event.target.value)
-              : event.target.value
+              : question.key === 'taxId'
+                ? taxIdInput(event.target.value)
+                : event.target.value
           )
         }
       />
+      {question.key === 'taxId' && value && !isValidTaxId(value) ? (
+        <p className="text-sm text-destructive" role="alert">
+          Bitte eine gültige 11-stellige Steuer-ID eingeben.
+        </p>
+      ) : null}
       {question.key === 'insuranceNumber' &&
       value.length === 12 &&
       !isValidInsuranceNumber(value) ? (

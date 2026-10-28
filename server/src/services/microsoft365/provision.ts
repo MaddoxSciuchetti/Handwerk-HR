@@ -35,6 +35,15 @@ export function createMicrosoft365Provisioner(
             return { status: "skipped", reason: "not_live" };
         }
 
+        const privateEmail = worker.email?.trim() ?? "";
+        if (!privateEmail.includes("@")) {
+            return {
+                status: "failed",
+                message:
+                    "Für diesen Mitarbeiter fehlt eine gültige E-Mail-Adresse.",
+            };
+        }
+
         const token = await dependencies.graph.getToken(config);
         if (!token) {
             return {
@@ -73,15 +82,33 @@ export function createMicrosoft365Provisioner(
             };
         }
 
-        await dependencies.repository.saveAccount(worker.id, {
-            externalId: created.externalId,
-            workEmail: created.workEmail,
-        });
         const passwordMailSent = await dependencies.sendPasswordMail({
-            to: worker.email,
+            to: privateEmail,
             firstName: worker.firstName,
             workEmail: created.workEmail,
             password,
+        });
+        if (!passwordMailSent) {
+            let deleted = false;
+            try {
+                deleted = await dependencies.graph.deleteUser(
+                    token,
+                    created.externalId,
+                );
+            } catch {
+                // A network failure leaves the deletion outcome unknown.
+            }
+            return {
+                status: "failed",
+                message: deleted
+                    ? "Die Passwortmail konnte nicht gesendet werden."
+                    : `Die Passwortmail konnte nicht gesendet werden. Die Löschung des neu erstellten Kontos ${created.workEmail} (ID: ${created.externalId}) wurde nicht bestätigt. Bitte prüfe das Konto in Microsoft 365, bevor du die Kontoerstellung erneut ausführst.`,
+            };
+        }
+
+        await dependencies.repository.saveAccount(worker.id, {
+            externalId: created.externalId,
+            workEmail: created.workEmail,
         });
 
         return {

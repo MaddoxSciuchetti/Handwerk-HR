@@ -89,6 +89,7 @@ export function useStyledDocumentEditor({
       orderedListStart: current?.isActive('orderedList')
         ? (current.getAttributes('orderedList').start ?? 1)
         : null,
+      inTable: current?.isActive('table') ?? false,
     }),
   });
 

@@ -14,7 +14,7 @@ export function MainContractPill() {
       <Tooltip>
         <TooltipTrigger asChild>
           <span
-            className="typo-body-xs inline-flex shrink-0 cursor-default rounded-full border border-green-300 bg-green-50/40 px-3 py-1 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-200"
+            className="typo-body-xs inline-flex shrink-0 cursor-default rounded-full border border-green-300 bg-green-50/40 px-3 py-1 text-green-700 dark:border-green-400 dark:bg-green-500/20 dark:text-green-300"
             onClick={(event) => event.stopPropagation()}
           >
             Hauptvertrag

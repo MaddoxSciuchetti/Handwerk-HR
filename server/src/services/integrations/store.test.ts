@@ -5,6 +5,7 @@ import {
 } from "@/services/integrations/runtime";
 import {
     listOrganizationIntegrations,
+    redactIntegrationSecrets,
     saveOrganizationIntegration,
 } from "@/services/integrations/store";
 
@@ -106,9 +107,15 @@ describe("integration settings on staging", () => {
         });
         const row = upsert.mock.calls[0][0].create;
         expect(row.tokenCiphertext).not.toContain("dummy-token");
-        expect(saved).toMatchObject({ hasToken: true, live: false });
+        expect(saved).toMatchObject({ hasToken: true, token: "dummy-token", live: false });
         expect(saved).not.toHaveProperty("tokenCiphertext");
         findUnique.mockResolvedValue(row);
+        findMany.mockResolvedValue([row]);
+        const listed = await listOrganizationIntegrations(microsoft.organizationId, true);
+        expect(listed[1]).toEqual(saved);
+        expect(redactIntegrationSecrets(listed[1]).token).toBe("");
+        const internal = await listOrganizationIntegrations(microsoft.organizationId);
+        expect(internal[1]).not.toHaveProperty("token");
         expect(await loadCrewmeisterToken(microsoft.organizationId)).toEqual({
             token: "dummy-token",
             crewId: "42",

@@ -1,3 +1,4 @@
+import { TEMPLATE_DEMO_MODE } from '@/config/env';
 export type TemplateApplyTarget = {
   workerId: string;
   engagementId: string;
@@ -11,16 +12,22 @@ type PendingIssue = {
   kind: string;
   templateItemId: string | null;
   workerEngagement?: {
+    templateApplication?: {
+      id: string;
+      completedAt: string | null;
+      resultsDismissedAt?: string | null;
+    } | null;
     workerId: string;
     worker?: { firstName: string; lastName: string } | null;
   } | null;
 };
 
-function isPrintedContract(issue: PendingIssue) {
+function isSignedContract(issue: PendingIssue) {
   return (
     issue.status === 'done' &&
-    (issue.kind === 'contract_send' ||
-      issue.title.trim().toLocaleLowerCase('de-DE') === 'arbeitsvertrag drucken')
+    issue.kind === 'standard' &&
+    issue.title.trim().toLocaleLowerCase('de-DE') ===
+      'arbeitsvertrag unterschrieben'
   );
 }
 
@@ -44,8 +51,22 @@ export function engagementsAwaitingTemplate(
 
   const targets: TemplateApplyTarget[] = [];
   for (const [engagementId, group] of byEngagement) {
-    if (!group.some(isPrintedContract)) continue;
-    if (group.some((issue) => issue.templateItemId)) continue;
+    if (!group.some(isSignedContract)) continue;
+    if (
+      group.some(
+        (issue) => issue.workerEngagement?.templateApplication?.resultsDismissedAt
+      )
+    )
+      continue;
+    const hasReceipt = group.some(
+      (issue) => issue.workerEngagement?.templateApplication
+    );
+    if (
+      !TEMPLATE_DEMO_MODE &&
+      !hasReceipt &&
+      group.some((issue) => issue.templateItemId)
+    )
+      continue;
     const sample = group.find((issue) => issue.workerEngagement?.workerId);
     const workerId = sample?.workerEngagement?.workerId ?? fallback?.workerId;
     if (!workerId) continue;

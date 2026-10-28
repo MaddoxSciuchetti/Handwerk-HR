@@ -10,6 +10,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { Check, Upload, X } from 'lucide-react';
 import { FormEvent, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
+import { DocumentKindSelect } from './components/DocumentKindSelect';
 import {
   DOCUMENT_MASTER_KINDS,
   TEMPLATE_DOCUMENT_KINDS,
@@ -63,103 +64,6 @@ function draftsFromFiles(files: FileList, kindLabel: string): UploadDraft[] {
   }));
 }
 
-function DocumentKindField({
-  id,
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  id: string;
-  label: string;
-  value: string;
-  options: string[];
-  onChange: (kindLabel: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const query = value.trim().toLocaleLowerCase('de');
-  const exactMatch = options.some(
-    (option) => option.toLocaleLowerCase('de') === query
-  );
-  const matches =
-    query.length === 0 || exactMatch
-      ? options
-      : options.filter((option) =>
-          option.toLocaleLowerCase('de').includes(query)
-        );
-  const canAdd =
-    value.trim().length > 0 &&
-    !options.some(
-      (option) => option.toLocaleLowerCase('de') === query
-    );
-
-  return (
-    <div className="flex flex-col gap-2">
-      <Label htmlFor={id}>{label}</Label>
-      <Input
-        id={id}
-        role="combobox"
-        aria-expanded={open}
-        aria-autocomplete="list"
-        aria-controls={`${id}-options`}
-        value={value}
-        maxLength={80}
-        placeholder="Art wählen oder eingeben"
-        onFocus={() => setOpen(true)}
-        onBlur={() => setOpen(false)}
-        onChange={(event) => {
-          onChange(event.target.value);
-          setOpen(true);
-        }}
-      />
-      {open ? (
-        <div
-          id={`${id}-options`}
-          role="listbox"
-          className="flex max-h-48 flex-col overflow-auto rounded-xl border border-border bg-popover p-1 text-popover-foreground shadow-md"
-        >
-          {matches.map((option) => (
-            <button
-              key={option}
-              type="button"
-              role="option"
-              aria-selected={option.toLocaleLowerCase('de') === query}
-              className="rounded-lg px-3 py-2 text-left text-sm hover:bg-muted"
-              onMouseDown={(event) => {
-                event.preventDefault();
-                onChange(option);
-                setOpen(false);
-              }}
-            >
-              {option}
-            </button>
-          ))}
-          {canAdd ? (
-            <button
-              type="button"
-              role="option"
-              aria-selected={false}
-              className="rounded-lg px-3 py-2 text-left text-sm hover:bg-muted"
-              onMouseDown={(event) => {
-                event.preventDefault();
-                onChange(value.trim());
-                setOpen(false);
-              }}
-            >
-              {`„${value.trim()}“ hinzufügen`}
-            </button>
-          ) : null}
-          {matches.length === 0 && !canAdd ? (
-            <p className="px-3 py-2 text-sm text-muted-foreground">
-              Art eingeben
-            </p>
-          ) : null}
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
 export function AddDocumentMasterDialog({
   onClose,
   isOpen = true,
@@ -172,9 +76,11 @@ export function AddDocumentMasterDialog({
     purpose === 'template' ? TEMPLATE_DOCUMENT_KINDS : DOCUMENT_MASTER_KINDS;
   const initialLabel =
     purpose === 'template' ? 'Arbeitszeugnis' : 'Arbeitsvertrag';
+  const [createdKinds, setCreatedKinds] = useState<string[]>([]);
   const options = uniqueLabels([
     ...presetKinds.map((kind) => documentKindLabel(kind)),
     ...existingKinds.map((kind) => documentKindLabel(kind)),
+    ...createdKinds,
   ]);
   const [kindLabel, setKindLabel] = useState(initialLabel);
   const [name, setName] = useState('');
@@ -193,6 +99,18 @@ export function AddDocumentMasterDialog({
       ? drafts.every((draft) => draft.name.trim().length > 0)
       : drafts.length === 1 && name.trim().length > 0);
 
+  const rememberKind = (label: string) => {
+    const next = label.trim();
+    if (!next) return;
+    setCreatedKinds((current) => uniqueLabels([...current, next]));
+    return next;
+  };
+
+  const createKind = (label: string) => {
+    const next = rememberKind(label);
+    if (next) setKindLabel(next);
+  };
+
   const selectFiles = (files: FileList | null) => {
     if (!files?.length) return;
     if ([...files].some((file) => !/\.(pdf|docx|txt)$/i.test(file.name))) {
@@ -209,6 +127,11 @@ export function AddDocumentMasterDialog({
         draft.key === key ? { ...draft, ...patch } : draft
       )
     );
+  };
+
+  const createDraftKind = (key: string, label: string) => {
+    const next = rememberKind(label);
+    if (next) updateDraft(key, { kindLabel: next });
   };
 
   const onSubmit = async (event: FormEvent) => {
@@ -291,12 +214,13 @@ export function AddDocumentMasterDialog({
         <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
           <SidebarContent className="flex flex-col gap-4 p-6">
             {multiple || purpose === 'contract' ? null : (
-              <DocumentKindField
+              <DocumentKindSelect
                 id="document-kind"
                 label="Art"
                 value={kindLabel}
                 options={options}
                 onChange={setKindLabel}
+                onCreate={createKind}
               />
             )}
 
@@ -325,7 +249,12 @@ export function AddDocumentMasterDialog({
                   if (!pending) setDragging(true);
                 }}
                 onDragLeave={(event) => {
-                  if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false);
+                  if (
+                    !event.currentTarget.contains(
+                      event.relatedTarget as Node | null
+                    )
+                  )
+                    setDragging(false);
                 }}
                 onDrop={(event) => {
                   event.preventDefault();
@@ -338,10 +267,17 @@ export function AddDocumentMasterDialog({
                 )}
               >
                 <Upload className="size-5 text-muted-foreground" aria-hidden />
-                <span className="text-sm font-medium">Dateien hier ablegen oder auswählen</span>
-                <span className="text-xs text-muted-foreground">PDF, Word (.docx) oder Text (.txt)</span>
+                <span className="text-sm font-medium">
+                  Dateien hier ablegen oder auswählen
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  PDF, Word (.docx) oder Text (.txt)
+                </span>
                 {drafts.length > 0 ? (
-                  <span className="max-w-full break-all text-sm" aria-live="polite">
+                  <span
+                    className="max-w-full break-all text-sm"
+                    aria-live="polite"
+                  >
                     {drafts.map((draft) => draft.file.name).join(', ')}
                   </span>
                 ) : null}
@@ -355,13 +291,16 @@ export function AddDocumentMasterDialog({
                     {draft.file.name}
                   </legend>
                   {purpose === 'contract' ? null : (
-                    <DocumentKindField
+                    <DocumentKindSelect
                       id={`document-kind-${draft.key}`}
                       label={`Art ${index + 1}`}
                       value={draft.kindLabel}
                       options={options}
                       onChange={(nextLabel) =>
                         updateDraft(draft.key, { kindLabel: nextLabel })
+                      }
+                      onCreate={(nextLabel) =>
+                        createDraftKind(draft.key, nextLabel)
                       }
                     />
                   )}

@@ -55,6 +55,8 @@ export function useQuestionnaireDragPreview() {
   const [drag, setDrag] = useState<Drag | null>(null);
   const frame = useRef(0);
   const pointer = useRef(0);
+  const pointerX = useRef(0);
+  const nativeImage = useRef<HTMLElement | null>(null);
   const ghost = useRef<HTMLElement | null>(null);
   const landing = useRef<Map<
     string,
@@ -86,18 +88,27 @@ export function useQuestionnaireDragPreview() {
       });
   }, [drag]);
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    const track = (event: globalThis.DragEvent) => {
+      if (!active.current) return;
+      pointer.current = event.clientY;
+      pointerX.current = event.clientX;
+    };
+    document.addEventListener('dragover', track);
+    return () => {
+      document.removeEventListener('dragover', track);
       cancelAnimationFrame(frame.current);
       ghost.current?.remove();
-    },
-    []
-  );
+      nativeImage.current?.remove();
+    };
+  }, []);
 
   const stop = (committed = false) => {
     cancelAnimationFrame(frame.current);
     ghost.current?.remove();
     ghost.current = null;
+    nativeImage.current?.remove();
+    nativeImage.current = null;
     if (
       committed &&
       active.current &&
@@ -162,14 +173,20 @@ export function useQuestionnaireDragPreview() {
     const rect = event.currentTarget.getBoundingClientRect();
     const image = event.currentTarget.cloneNode(true) as HTMLElement;
     image.setAttribute('aria-hidden', 'true');
-    image.style.cssText = `position:fixed;left:-10000px;top:0;width:${rect.width}px;pointer-events:none;background:var(--card,white);border-radius:16px;box-shadow:0 16px 40px #0003;`;
+    image.inert = true;
+    image.dataset.questionnaireDragOverlay = '';
+    image.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;pointer-events:none;z-index:10000;opacity:1;background:var(--card,white);color:var(--card-foreground,black);border-radius:16px;box-shadow:0 16px 40px #0003;`;
     document.body.append(image);
-    event.dataTransfer.setDragImage?.(
-      image,
-      event.clientX - rect.left,
-      event.clientY - rect.top
-    );
     ghost.current = image;
+    // Browsers fade native drag images. Hide that image and move an opaque DOM
+    // card instead, keeping the pointer at the spot where the card was grabbed.
+    const blank = document.createElement('div');
+    blank.style.cssText =
+      'position:fixed;left:0;top:0;width:1px;height:1px;pointer-events:none;';
+    document.body.append(blank);
+    event.dataTransfer.setDragImage?.(blank, 0, 0);
+    nativeImage.current = blank;
+    const grabX = event.clientX - rect.left;
     const session: Drag = {
       id,
       from,
@@ -178,15 +195,20 @@ export function useQuestionnaireDragPreview() {
       grab: event.clientY - rect.top,
     };
     pointer.current = event.clientY;
+    pointerX.current = event.clientX;
     active.current = session;
     setDrag(session);
     const scroller = scrollParent(root);
     let previousTime = 0;
     const tick = (time: number) => {
-      ghost.current?.remove();
-      ghost.current = null;
+      nativeImage.current?.remove();
+      nativeImage.current = null;
       const current = active.current;
       if (!current) return;
+      if (ghost.current) {
+        ghost.current.style.left = `${pointerX.current - grabX}px`;
+        ghost.current.style.top = `${pointer.current - current.grab}px`;
+      }
       if (scroller) {
         const bounds =
           scroller === document.scrollingElement
@@ -255,6 +277,7 @@ export function useQuestionnaireDragPreview() {
       event.preventDefault();
       event.dataTransfer.dropEffect = 'move';
       pointer.current = event.clientY;
+      pointerX.current = event.clientX;
     },
     finish: (fallback: number, event: DragEvent) => {
       const current = active.current;

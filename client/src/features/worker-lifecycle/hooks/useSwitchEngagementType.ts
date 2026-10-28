@@ -1,10 +1,14 @@
-import queryClient from '@/config/query.client';
 import { WORKERBYID } from '@/features/worker-task-management/consts/query-key.consts';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { updateEngagement } from '../api';
 import { ALL_WORKER_DATA } from '../consts/query-key.consts';
-import type { EngagementType, WorkerRecord } from '../types/index.types';
+import type {
+  EngagementType,
+  WorkerDetailResponse,
+  WorkerRecord,
+} from '../types/index.types';
+import { cacheSavedEngagement } from '../utils/cacheSavedEngagement';
 
 type SwitchTarget = {
   workerId: string;
@@ -29,44 +33,121 @@ function patchEngagementType(
 
   return workers.map((worker) => ({
     ...worker,
-    engagements: worker.engagements.map((engagement) =>
-      engagementIds.has(engagement.id) ? { ...engagement, type } : engagement
-    ),
+    engagements: worker.engagements.flatMap((engagement) => {
+      if (!engagementIds.has(engagement.id)) return [engagement];
+      if (engagement.type === type) return [engagement];
+      // Match the server's separate phase creation without relabelling history.
+      // Onboarding→Team must keep the original engagement typed as onboarding
+      // so its tasks still appear when that phase is viewed later.
+      return [
+        {
+          ...engagement,
+          id: `pending:${engagement.id}:${type}`,
+          type,
+          status:
+            type === 'transfer' ? ('completed' as const) : ('pending' as const),
+          issues: [],
+          issueCounts: [],
+          templateApplication: null,
+        },
+        engagement,
+      ];
+    }),
   }));
 }
 
 export function useSwitchEngagementType() {
+  const queryClient = useQueryClient();
   return useMutation({
+    mutationKey: ['worker-inline-edit'],
     mutationFn: ({ items, type }: SwitchEngagementTypeVariables) =>
       Promise.all(
-        items.map((item) =>
-          updateEngagement(item.workerId, item.engagementId, { type })
-        )
+        items.map(async (item) => {
+          const response = await updateEngagement(
+            item.workerId,
+            item.engagementId,
+            { type }
+          );
+          // Publish each saved phase immediately, including during bulk changes.
+          // Cancel old reads so they cannot overwrite the confirmed response.
+          await Promise.all([
+            queryClient.cancelQueries({ queryKey: [ALL_WORKER_DATA] }),
+            queryClient.cancelQueries({
+              queryKey: [WORKERBYID, item.workerId],
+            }),
+          ]);
+          queryClient.setQueryData<WorkerRecord[]>(
+            [ALL_WORKER_DATA],
+            (workers) =>
+              workers?.map((worker) =>
+                worker.id === item.workerId
+                  ? {
+                      ...worker,
+                      engagements: cacheSavedEngagement(
+                        worker.engagements,
+                        response.data
+                      ),
+                    }
+                  : worker
+              )
+          );
+          for (const key of [
+            [WORKERBYID, item.workerId],
+            [ALL_WORKER_DATA, 'detail', item.workerId],
+          ]) {
+            queryClient.setQueryData<WorkerDetailResponse>(key, (previous) =>
+              previous
+                ? {
+                    ...previous,
+                    data: {
+                      ...previous.data,
+                      engagements: cacheSavedEngagement(
+                        previous.data.engagements,
+                        response.data
+                      ),
+                    },
+                  }
+                : undefined
+            );
+          }
+          return response;
+        })
       ),
     onMutate: async ({ items, type }) => {
       await queryClient.cancelQueries({ queryKey: [ALL_WORKER_DATA] });
-
       const previousWorkers = queryClient.getQueryData<WorkerRecord[]>([
         ALL_WORKER_DATA,
       ]);
-
       if (previousWorkers) {
         queryClient.setQueryData<WorkerRecord[]>(
           [ALL_WORKER_DATA],
           patchEngagementType(previousWorkers, items, type)
         );
       }
-
       return { previousWorkers } satisfies OptimisticContext;
     },
-    onError: (_error, _variables, context) => {
+    onError: (_error, { items }, context) => {
       if (context?.previousWorkers) {
-        queryClient.setQueryData([ALL_WORKER_DATA], context.previousWorkers);
+        queryClient.setQueryData<WorkerRecord[]>([ALL_WORKER_DATA], (workers) =>
+          workers?.map((worker) =>
+            items.some((item) => item.workerId === worker.id)
+              ? (context.previousWorkers?.find(
+                  (previous) => previous.id === worker.id
+                ) ?? worker)
+              : worker
+          )
+        );
       }
       toast.error('Typ konnte nicht geändert werden.');
     },
     onSettled: (_data, _error, { items }) => {
-      void queryClient.invalidateQueries({ queryKey: [ALL_WORKER_DATA] });
+      void queryClient.invalidateQueries({
+        queryKey: [ALL_WORKER_DATA],
+        refetchType:
+          queryClient.isMutating({ mutationKey: ['worker-inline-edit'] }) > 1
+            ? 'none'
+            : 'active',
+      });
       for (const item of items) {
         void queryClient.invalidateQueries({
           queryKey: [WORKERBYID, item.workerId],

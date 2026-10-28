@@ -54,6 +54,7 @@ test.describe('Onboarding worker view journey', () => {
     await page.getByRole('tab', { name: 'Dateien' }).click();
 
     await page.getByTestId('open-file-upload').click();
+    await page.getByRole('menuitem', { name: 'Datei' }).click();
     await page.getByLabel('Dokumentname').click();
     await page.getByRole('option', { name: 'Personalausweis' }).click();
 

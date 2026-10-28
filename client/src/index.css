@@ -1,4 +1,14 @@
 @import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @theme {
   --font-sans: 'Calibri', Arial, sans-serif;
 }
@@ -137,6 +147,12 @@ body {
 .styled-document [data-line-group].ProseMirror-selectednode {
   outline: none;
 }
+[data-answer-drop-target],
+[data-answer-drop-target] .document-inline-value,
+[data-answer-drop-target] input {
+  background-color: var(--color-green-100);
+  border-color: var(--color-green-500);
+}
 .document-inline-value:empty::before {
   content: attr(data-placeholder);
   color: #64748b;
@@ -191,7 +207,9 @@ body {
 
 /* Keep a Word-style selection visible while entering toolbar field details.
    The native selection remains responsible for highlighting focused text. */
-.styled-document .tiptap:not(.ProseMirror-focused) .document-retained-selection {
+.styled-document
+  .tiptap:not(.ProseMirror-focused)
+  .document-retained-selection {
   background-color: Highlight;
   color: HighlightText;
 }

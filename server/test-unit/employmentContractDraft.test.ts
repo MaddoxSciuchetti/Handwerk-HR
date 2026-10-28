@@ -2,11 +2,10 @@ import {
     getEngagementContract,
     resyncEngagementContractFromQuestionnaire,
     saveEngagementContractDraft,
-    sendFilledEmploymentContract,
 } from "@/services/employmentContract.service";
 import { prisma } from "@/lib/prisma";
 import { fromSegments } from "../../shared/document";
-import { sendPreparedDocument } from "@/services/preparedDocument";
+import { invalidatePreparedDocuments } from "@/services/preparedDocument";
 import { QUESTIONNAIRE_FIELDS } from "@/services/questionnaireForm";
 
 jest.mock("@/lib/prisma", () => ({
@@ -22,7 +21,9 @@ jest.mock("@/lib/prisma", () => ({
             createMany: jest.fn(),
         },
         $transaction: jest.fn(),
+        $queryRaw: jest.fn(),
         documentMaster: { findFirst: jest.fn() },
+        questionnaireSubmission: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
         issue: {
             findFirst: jest.fn(),
             findMany: jest.fn(),
@@ -39,7 +40,6 @@ jest.mock("@/services/preparedDocument", () => ({
     outgoingPdfUrl: jest.fn().mockResolvedValue(null),
     currentPreparation: jest.fn().mockResolvedValue(null),
     DeliveryRejected: class extends Error {},
-    sendPreparedDocument: jest.fn(),
 }));
 jest.mock("@/utils/sendMail", () => ({ sendMail: jest.fn() }));
 jest.mock("@/services/graphMail", () => ({ sendGraphMail: jest.fn() }));
@@ -68,7 +68,7 @@ beforeEach(() => {
         sentAt: null,
         master: { name: "Vertrag", body },
         values: [],
-        engagement: { questionnaireSubmission: null },
+        engagement: { questionnaireSubmission: null, worker: { email: "ada@example.com" } },
     };
     (prisma.$transaction as jest.Mock).mockImplementation((callback) =>
         callback(prisma),
@@ -137,6 +137,20 @@ it("persists a manual correction across closing/reopening and field movement wit
         "contract.vorname",
     );
 });
+it("loads the draft and its saved response with joined relations to avoid repeated remote reads", async () => {
+    const saved = await saveEngagementContractDraft({
+        ...params,
+        values: { "contract.vorname": "Ada" },
+    });
+
+    expect(saved.values).toEqual({ "contract.vorname": "Ada" });
+    expect(prisma.employmentContract.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ relationLoadStrategy: "join" }),
+    );
+    expect(prisma.employmentContract.findFirstOrThrow).toHaveBeenCalledWith(
+        expect.objectContaining({ relationLoadStrategy: "join" }),
+    );
+});
 it("keeps sent/signed snapshots locked and rejects foreign keys", async () => {
     await expect(
         saveEngagementContractDraft({
@@ -174,7 +188,9 @@ it("replaces contract values from the Fragebogen and drops removed fields", asyn
     ];
     contract.engagement = {
         questionnaireSubmission: {
+            id: "submission", revision: 0,
             status: "completed",
+            formDefinition: { intro: "", items: [{ kind: "field", key: "lastName", label: "Nachname", section: "Person", type: "text", contractFieldKey: "contract.nachname" }] },
             answers: [
                 { key: "lastName", value: "Lovelace" },
                 { key: "firstName", value: "Ada" },
@@ -200,12 +216,17 @@ it("replaces contract values from the Fragebogen and drops removed fields", asyn
     expect(view.masterRevision).toBe(4);
 });
 
-it("keeps engagement description points when the Fragebogen match replaces other fields", async () => {
+it("keeps manual pay, allowances, checkboxes and description points when syncing questionnaire fields", async () => {
     contract.master = {
         name: "Vertrag",
         revision: 4,
         body: fromSegments([
             { type: "input", key: "contract.nachname", label: "Nachname" },
+            { type: "input", key: "contract.gehalt", label: "Gehalt" },
+            { type: "input", key: "contract.freiwillige_zulage", label: "Freiwillige Zulage" },
+            { type: "input", key: "contract.zulage_im_einzelfall", label: "Zulage im Einzelfall" },
+            { type: "input", key: "contract.total", label: "Brutto-Arbeitsentgelt insgesamt" },
+            { type: "input", key: "contract.hourly", label: "Je Stunde", fieldType: "checkbox" },
             {
                 type: "input",
                 key: "contract.taetigkeiten",
@@ -217,10 +238,17 @@ it("keeps engagement description points when the Fragebogen match replaces other
     contract.values = [
         { key: "contract.nachname", value: "Alt" },
         { key: "contract.taetigkeiten", value: "Montage\nWartung" },
+        { key: "contract.gehalt", value: "4000" },
+        { key: "contract.freiwillige_zulage", value: "200" },
+        { key: "contract.zulage_im_einzelfall", value: "0" },
+        { key: "contract.total", value: "4200" },
+        { key: "contract.hourly", value: "false" },
     ];
     contract.engagement = {
         questionnaireSubmission: {
+            id: "submission", revision: 0,
             status: "completed",
+            formDefinition: { intro: "", items: [{ kind: "field", key: "lastName", label: "Nachname", section: "Person", type: "text", contractFieldKey: "contract.nachname" }] },
             answers: [{ key: "lastName", value: "Lovelace" }],
         },
         worker: { email: "ada@example.com" },
@@ -245,6 +273,11 @@ it("keeps engagement description points when the Fragebogen match replaces other
     expect(view.values).toEqual({
         "contract.nachname": "Lovelace",
         "contract.taetigkeiten": "Montage\nWartung",
+        "contract.gehalt": "4000",
+        "contract.freiwillige_zulage": "200",
+        "contract.zulage_im_einzelfall": "0",
+        "contract.total": "4200",
+        "contract.hourly": "false",
     });
 });
 
@@ -264,60 +297,46 @@ it("refuses to resync a contract that was already sent", async () => {
     expect(prisma.employmentContractValue.deleteMany).not.toHaveBeenCalled();
 });
 
-describe("contract send task status", () => {
-    const sendParams = {
+it("keeps saved contracts open and syncable without completing the task", async () => {
+    contract.master.revision = 1;
+    const saved = await saveEngagementContractDraft({
         ...params,
-        actorUserId: "actor",
-        issueId: "send-task",
-        artifactId: "pdf",
-    };
-
-    it("marks the print task done without emailing the contract", async () => {
-        (prisma.issue.findFirst as jest.Mock).mockResolvedValue({
-            id: "send-task",
-            status: "in_progress",
-            kind: "contract_send",
-        });
-        (prisma.preparedDocument.findFirst as jest.Mock).mockResolvedValue({
-            id: "pdf",
-            masterId: "master",
-        });
-
-        await sendFilledEmploymentContract(sendParams);
-
-        expect(sendPreparedDocument).not.toHaveBeenCalled();
-        expect(prisma.preparedDocument.update).toHaveBeenCalledWith(
-            expect.objectContaining({
-                where: { id: "pdf" },
-                data: expect.objectContaining({
-                    status: "sent",
-                    providerId: "office-print",
-                }),
-            }),
-        );
-        expect(prisma.employmentContract.update).toHaveBeenCalledWith(
-            expect.objectContaining({
-                where: { id: "contract" },
-                data: expect.objectContaining({
-                    outgoingPdfId: "pdf",
-                    status: "ready",
-                }),
-            }),
-        );
-        expect(prisma.issue.update).toHaveBeenCalledWith({
-            where: { id: "send-task" },
-            data: { status: "done" },
-        });
-        expect(prisma.issueAuditLog.create).toHaveBeenCalledWith(
-            expect.objectContaining({
-                data: expect.objectContaining({
-                    issueId: "send-task",
-                    newValue: { status: "done" },
-                }),
-            }),
-        );
-        expect(prisma.issue.deleteMany).not.toHaveBeenCalled();
+        values: { "contract.vorname": "Ada" },
     });
+    expect(saved).toMatchObject({
+        status: "draft", sentAt: null, followsMaster: true,
+    });
+    expect((await getEngagementContract(params))?.values).toEqual({
+        "contract.vorname": "Ada",
+    });
+    contract.engagement.questionnaireSubmission = {
+        id: "submission", revision: 2, status: "completed",
+        formDefinition: {
+            intro: "",
+            items: [{
+                kind: "field", key: "firstName", label: "Vorname",
+                section: "Person", type: "text",
+                contractFieldKey: "contract.vorname",
+            }],
+        },
+        answers: [{ key: "firstName", value: "Augusta" }],
+    };
+    expect((await getEngagementContract(params))?.questionnaireSyncNeeded).toBe(true);
+    const synced = await resyncEngagementContractFromQuestionnaire(params);
+    expect(synced).toMatchObject({
+        status: "draft", sentAt: null, followsMaster: true,
+        values: { "contract.vorname": "Augusta" },
+    });
+    await saveEngagementContractDraft({
+        ...params, values: { "contract.vorname": "Augusta Ada" },
+    });
+    expect((await getEngagementContract(params))?.values).toEqual({
+        "contract.vorname": "Augusta Ada",
+    });
+    expect(prisma.issue.update).not.toHaveBeenCalled();
+    expect(prisma.issue.deleteMany).not.toHaveBeenCalled();
+    expect(prisma.issueAuditLog.create).not.toHaveBeenCalled();
+    expect(prisma.preparedDocument.update).not.toHaveBeenCalled();
 });
 
 it("returns placed questionnaire answers so clearing a local field can restore its sidebar chip", async () => {
@@ -351,6 +370,7 @@ describe("changing a worker's contract template", () => {
         body: fromSegments([
             { type: "input", key: "other.name", label: "Name" },
             { type: "input", key: "other.birthday", label: "Geburtsdatum" },
+            { type: "input", key: "contract.gehalt", label: "Gehalt" },
             {
                 type: "input",
                 key: "contract.duties",
@@ -374,6 +394,7 @@ describe("changing a worker's contract template", () => {
         contract.values = [
             { key: "old.field", value: "Alte manuelle Eingabe" },
             { key: "contract.duties", value: "Alte Tätigkeiten" },
+            { key: "contract.gehalt", value: "4000" },
         ];
         contract.outgoingPdfId = "old-pdf";
         (prisma.documentMaster.findFirst as jest.Mock).mockResolvedValue(
@@ -400,6 +421,7 @@ describe("changing a worker's contract template", () => {
             values: {
                 "other.name": "Lukas Muster",
                 "other.birthday": "01.04.1990",
+                "contract.gehalt": "4000",
             },
         });
         expect(view.values).not.toHaveProperty("old.field");
@@ -517,3 +539,51 @@ it.each([
         expect(view.values).toEqual({ "contract.checkbox": expected });
     },
 );
+it("reports newer questionnaire revisions until the contract has been synchronized", async () => {
+    contract.matchedQuestionnaireRevision = 1;
+    contract.engagement.questionnaireSubmission = {
+        id: "submission", revision: 2, status: "completed", formDefinition: { intro: "", items: [{ kind: "field", key: "firstName", label: "Vorname", section: "Person", type: "text", contractFieldKey: "contract.vorname" }] },
+        answers: [{ key: "firstName", value: "Augusta" }],
+    };
+    expect((await getEngagementContract(params))?.questionnaireSyncNeeded).toBe(true);
+    const synced = await resyncEngagementContractFromQuestionnaire(params);
+    expect(synced.values).toEqual({ "contract.vorname": "Augusta" });
+    expect(synced.questionnaireSyncNeeded).toBe(false);
+    expect(synced.matchedQuestionnaireRevision).toBe(2);
+    expect(prisma.questionnaireSubmission.updateMany).toHaveBeenCalledWith({
+        where: { id: "submission", revision: 2, status: "completed" }, data: { revision: 2 },
+    });
+});
+
+it("does not mark a newer correction as synchronized when matching used an older revision", async () => {
+    contract.engagement.questionnaireSubmission = {
+        id: "submission", revision: 2, status: "completed", formDefinition: null,
+        answers: [{ key: "firstName", value: "Augusta" }],
+    };
+    (prisma.questionnaireSubmission.updateMany as jest.Mock).mockResolvedValueOnce({ count: 0 });
+    await expect(resyncEngagementContractFromQuestionnaire(params)).rejects.toThrow("inzwischen geändert");
+    expect(prisma.employmentContractValue.deleteMany).not.toHaveBeenCalled();
+});
+
+
+it("keeps the prepared PDF when saving identical values", async () => {
+    contract.values = [{ key: "contract.vorname", value: "Ada" }];
+    await saveEngagementContractDraft({
+        ...params,
+        values: { "contract.vorname": "Ada" },
+    });
+    expect(invalidatePreparedDocuments).not.toHaveBeenCalled();
+    expect(prisma.employmentContractValue.deleteMany).not.toHaveBeenCalled();
+});
+
+it("invalidates the prepared PDF when saved values change", async () => {
+    contract.values = [{ key: "contract.vorname", value: "Ada" }];
+    await saveEngagementContractDraft({
+        ...params,
+        values: { "contract.vorname": "Grace" },
+    });
+    expect(invalidatePreparedDocuments).toHaveBeenCalled();
+    expect(contract.values).toEqual([
+        expect.objectContaining({ key: "contract.vorname", value: "Grace" }),
+    ]);
+});

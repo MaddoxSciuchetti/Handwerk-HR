@@ -17,6 +17,12 @@ it("includes the login, temporary password and required password change", () => 
     expect(template.text).toContain("Arbeits-E-Mail: ada@firma.de");
     expect(template.text).toContain("Temporäres Passwort: temporary-password");
     expect(template.text).toContain(
+        "Anmeldung: https://www.office.com/login?login_hint=ada%40firma.de",
+    );
+    expect(template.html).toContain(
+        'href="https://www.office.com/login?login_hint=ada%40firma.de"',
+    );
+    expect(template.text).toContain(
         "Bitte ändere das Passwort bei der ersten Anmeldung.",
     );
 });
@@ -37,15 +43,45 @@ it("uses a neutral greeting for a missing first name", () => {
     expect(passwordMail({ ...input, firstName: " " }).text).toMatch(/^Hallo,/);
 });
 
-it("sends credentials to the contact email instead of the new work mailbox", async () => {
+it("sends credentials through Microsoft from the signed-in user", async () => {
+    delete process.env.APP_ENV;
     mail.mockResolvedValue({ data: { id: "mail-1" }, error: null });
     expect(
-        await sendPasswordMail({ ...input, to: "private@example.test" }),
+        await sendPasswordMail({
+            ...input,
+            to: "private@example.test",
+            senderAddress: "hr@firma.de",
+        }),
     ).toBe(true);
     expect(mail).toHaveBeenCalledWith({
         to: "private@example.test",
+        senderAddress: "hr@firma.de",
         ...passwordMail(input),
     });
+});
+
+it("sends the password mail through Resend on staging", async () => {
+    process.env.APP_ENV = "staging";
+    try {
+        mail.mockResolvedValue({ data: { id: "mail-1" }, error: null });
+        expect(
+            await sendPasswordMail({
+                ...input,
+                to: "private@example.test",
+                senderAddress: "hr@firma.de",
+                organizationId: "org-1",
+            }),
+        ).toBe(true);
+        expect(mail).toHaveBeenCalledWith({
+            to: "private@example.test",
+            via: "resend",
+            ...passwordMail(input),
+        });
+        expect(mail.mock.calls[0][0]).not.toHaveProperty("senderAddress");
+        expect(mail.mock.calls[0][0]).not.toHaveProperty("organizationId");
+    } finally {
+        delete process.env.APP_ENV;
+    }
 });
 
 it.each([

@@ -1,7 +1,9 @@
 import {
+  createMailPill,
   insertMailPlaceholder,
   paintMailBody,
   readMailBody,
+  removeMailPill,
 } from '@/features/settings/mail-template/mailBody';
 import { welcomeMailPlaceholders } from '@/features/settings/mail-template/mailPlaceholders';
 import { describe, expect, it } from 'vitest';
@@ -32,6 +34,22 @@ describe('mail body placeholders', () => {
     expect(root.textContent).toBe('Hallo Vorname NachnameEintritt Eintritt');
     expect(root.textContent).not.toContain('{{');
     expect(readMailBody(root)).toBe(body);
+  });
+
+  it('creates draggable pills so they can be moved inside the editor', () => {
+    const pill = createMailPill('Vorname');
+    expect(pill.draggable).toBe(true);
+    expect(pill.contentEditable).toBe('false');
+  });
+
+  it('removes a pill without leaving a double space', () => {
+    const root = document.createElement('div');
+    paintMailBody(root, 'Hallo {{Vorname}} Team', tokens);
+    const pill = root.querySelector(
+      '[data-mail-placeholder="Vorname"]'
+    ) as HTMLElement;
+    removeMailPill(pill);
+    expect(readMailBody(root)).toBe('Hallo Team');
   });
 
   it('keeps line breaks that the browser wraps in divs', () => {

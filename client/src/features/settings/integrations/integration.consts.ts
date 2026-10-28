@@ -7,6 +7,11 @@ export const INTEGRATION_PROVIDERS = [
 
 export const INTEGRATION_SEQUENCES = [
   {
+    value: 'microsoft_send_teams_message',
+    provider: 'microsoft_graph',
+    label: 'Teams-Nachricht senden',
+  },
+  {
     value: 'microsoft_create_account',
     provider: 'microsoft_graph',
     label: 'Konto anlegen',
@@ -26,7 +31,20 @@ export const INTEGRATION_SEQUENCES = [
     provider: 'crewmeister',
     label: 'Konto anlegen',
   },
+  {
+    value: 'crewmeister_deactivate_account',
+    provider: 'crewmeister',
+    label: 'Konto deaktivieren',
+  },
+  {
+    value: 'crewmeister_delete_membership',
+    provider: 'crewmeister',
+    label: 'Mitgliedschaft entfernen',
+  },
 ] as const;
+
+export const crewmeisterRemovalWarning =
+  'Entfernt die deaktivierte Crewmeister-Mitgliedschaft dauerhaft, auch bei einer noch offenen Einladung. Der globale Crewmeister-Login bleibt bestehen. Nur ausführen, wenn diese Mitgliedschaft wirklich entfernt werden soll.';
 
 export type IntegrationProviderValue =
   (typeof INTEGRATION_PROVIDERS)[number]['value'];

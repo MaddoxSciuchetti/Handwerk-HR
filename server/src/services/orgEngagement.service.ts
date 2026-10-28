@@ -8,7 +8,16 @@ export async function listOrgEngagements(organizationId: string) {
             id: true,
             type: true,
             worker: {
-                select: { id: true, firstName: true, lastName: true },
+                select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    externalAccounts: {
+                        where: { provider: "microsoft_365" },
+                        select: { externalId: true },
+                        take: 1,
+                    },
+                },
             },
         },
     });
@@ -19,5 +28,6 @@ export async function listOrgEngagements(organizationId: string) {
         workerId: r.worker.id,
         workerFirstName: r.worker.firstName,
         workerLastName: r.worker.lastName,
+        microsoftAccountId: r.worker.externalAccounts[0]?.externalId.trim() || null,
     }));
 }

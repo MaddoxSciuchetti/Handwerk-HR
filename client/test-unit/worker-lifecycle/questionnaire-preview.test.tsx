@@ -1,14 +1,14 @@
 import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { expect, it, vi } from 'vitest';
-import WorkerEngagementInfoModal from '@/features/worker-lifecycle/components/WorkerEngagementInfoModal';
+import WorkerInformation from '@/features/worker-lifecycle/components/WorkerInformation';
 import { getWorkerById } from '@/features/worker-task-management/api/index.api';
 
 vi.mock('@/features/worker-task-management/api/index.api', () => ({
   getWorkerById: vi.fn(),
 }));
 
-it('shows questionnaire dates, full address and position in the worker information preview', async () => {
+it('shows editable questionnaire dates, address and position on the worker information tab', async () => {
   vi.mocked(getWorkerById).mockResolvedValue({
     success: true,
     data: {
@@ -34,15 +34,17 @@ it('shows questionnaire dates, full address and position in the worker informati
   });
   render(
     <QueryClientProvider client={query}>
-      <WorkerEngagementInfoModal
-        isOpen
-        workerId="worker"
-        onClose={() => undefined}
-      />
+      <WorkerInformation workerId="worker" />
     </QueryClientProvider>
   );
-  expect(await screen.findByText('04.03.1992')).toBeInTheDocument();
-  expect(screen.getByText('Musterstraße 12, 10115 Berlin')).toBeInTheDocument();
-  expect(screen.getByText('01.11.2026')).toBeInTheDocument();
-  expect(screen.getByText('Monteur')).toBeInTheDocument();
+  expect(await screen.findByLabelText('Geburtsdatum')).toHaveValue(
+    '1992-03-04'
+  );
+  expect(screen.getByLabelText('Straße und Hausnummer')).toHaveValue(
+    'Musterstraße 12'
+  );
+  expect(screen.getByLabelText('Postleitzahl')).toHaveValue('10115');
+  expect(screen.getByLabelText('Ort')).toHaveValue('Berlin');
+  expect(screen.getByLabelText('Eintrittsdatum')).toHaveValue('2026-11-01');
+  expect(screen.getByLabelText('Position')).toHaveValue('Monteur');
 });

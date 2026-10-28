@@ -2,13 +2,20 @@ import { Button } from '@/components/ui/button';
 import { ChevronLeft, Folder } from 'lucide-react';
 import type { PersonnelDocument } from '../../../api/personnelDocuments.api';
 import { PersonnelDocumentRow } from './PersonnelDocumentRow';
+import {
+  useFolderFileDrop,
+  type StoredFileDrag,
+} from '../../../hooks/useFolderFileDrop';
+import { cn } from '@/lib/utils';
 
 type OpenPersonnelFolderProps = {
   label: string;
+  onMove?: (file: StoredFileDrag) => void;
   documents: PersonnelDocument[];
   deletingId: string | null;
   onBack: () => void;
   onDelete: (documentId: string) => void;
+  onFiles: (files: File[]) => void;
 };
 
 export function OpenPersonnelFolder({
@@ -17,9 +24,18 @@ export function OpenPersonnelFolder({
   deletingId,
   onBack,
   onDelete,
+  onFiles,
+  onMove,
 }: OpenPersonnelFolderProps) {
+  const { isDragging, dropHandlers } = useFolderFileDrop(onFiles, onMove);
   return (
-    <div className="px-10 py-4">
+    <div
+      className={cn(
+        'min-h-60 px-10 py-4 transition-colors',
+        isDragging && 'bg-muted/50'
+      )}
+      {...dropHandlers}
+    >
       <Button
         type="button"
         variant="ghost"

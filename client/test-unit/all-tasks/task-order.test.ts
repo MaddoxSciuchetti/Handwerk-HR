@@ -1,51 +1,66 @@
-import { confirmationTasksFirst } from '@/features/all-tasks/utilts/task-order.utils';
-import type { IssueResponse } from '@/features/all-tasks/types/index.types';
-import { describe, expect, it } from 'vitest';
+import useFilteredData from '@/features/worker-task-management/hooks/useFilteredData';
+import type { WorkerDetailResponse } from '@/features/worker-lifecycle/types/index.types';
+import { renderHook } from '@testing-library/react';
+import { expect, it } from 'vitest';
 
-function makeTask(
-  id: string,
-  kind: IssueResponse['kind'] = 'standard'
-): IssueResponse {
-  return {
-    id,
-    workerEngagementId: 'engagement-1',
-    createdByUserId: 'user-1',
-    assigneeUserId: 'user-1',
-    templateItemId: null,
-    status: 'open',
-    kind,
-    isTemporary: false,
-    title: id,
-    description: null,
-    priority: 'medium',
-    dueDate: null,
-    startedAt: '2026-01-01T00:00:00.000Z',
-    completedAt: null,
-    createdAt: '2026-01-01T00:00:00.000Z',
-    updatedAt: '2026-01-01T00:00:00.000Z',
-  };
-}
-
-describe('confirmationTasksFirst', () => {
-  it('groups confirmation tasks first and preserves order inside both groups', () => {
-    const tasks = [
-      makeTask('standard-1'),
-      makeTask('confirmation-1', 'contract_confirm'),
-      makeTask('standard-2'),
-      makeTask('confirmation-2', 'contract_confirm'),
-    ];
-
-    expect(confirmationTasksFirst(tasks).map((task) => task.id)).toEqual([
-      'confirmation-1',
-      'confirmation-2',
-      'standard-1',
-      'standard-2',
-    ]);
-    expect(tasks.map((task) => task.id)).toEqual([
-      'standard-1',
-      'confirmation-1',
-      'standard-2',
-      'confirmation-2',
-    ]);
+it('preserves worker task positions when tasks are edited or completed', () => {
+  const data = {
+    data: {
+      id: 'worker-1',
+      firstName: 'Alex',
+      lastName: 'Test',
+      engagements: [
+        {
+          id: 'engagement-1',
+          issues: [
+            {
+              id: 'standard',
+              title: 'Questionnaire',
+              kind: 'standard',
+              status: 'open',
+            },
+            {
+              id: 'confirmation',
+              title: 'Contract signed',
+              kind: 'contract_confirm',
+              status: 'open',
+            },
+            {
+              id: 'print',
+              title: 'Print contract',
+              kind: 'standard',
+              status: 'done',
+            },
+          ],
+        },
+      ],
+    },
+  } as WorkerDetailResponse;
+  const { result, rerender } = renderHook(
+    ({ worker }) => useFilteredData(worker),
+    {
+      initialProps: { worker: data },
+    }
+  );
+  expect(result.current.displayData.map((task) => task.id)).toEqual([
+    'standard',
+    'confirmation',
+    'print',
+  ]);
+  const updated = structuredClone(data);
+  Object.assign(updated.data.engagements[0].issues![0], {
+    title: 'Edited questionnaire',
+    status: 'done',
+    updatedAt: '2026-10-27T12:00:00.000Z',
+  });
+  rerender({ worker: updated });
+  expect(result.current.displayData.map((task) => task.id)).toEqual([
+    'standard',
+    'confirmation',
+    'print',
+  ]);
+  expect(result.current.displayData[0]).toMatchObject({
+    title: 'Edited questionnaire',
+    status: 'done',
   });
 });

@@ -1,4 +1,4 @@
-import type { IssueStatusValue } from '@/features/all-tasks/consts/issue-status.consts';
+import { engagementsForTaskPhase } from './taskPhase';
 import type { WorkerRecord } from '../types/index.types';
 
 export type WorkerHealthLevel = 'green' | 'orange' | 'red' | 'neutral';
@@ -10,32 +10,43 @@ export type WorkerHealth = {
   level: WorkerHealthLevel;
 };
 
-function collectWorkerIssues(worker: WorkerRecord) {
-  return worker.engagements.flatMap((engagement) => engagement.issues ?? []);
-}
-
-export function getWorkerIssueCount(worker: WorkerRecord): number {
-  return collectWorkerIssues(worker).length;
-}
-
-export function getWorkerHealth(worker: WorkerRecord): WorkerHealth {
-  const issues = collectWorkerIssues(worker).filter(
-    (issue) => (issue.status as IssueStatusValue) !== 'cancelled'
+function collectWorkerIssueCounts(worker: Pick<WorkerRecord, 'engagements'>) {
+  return engagementsForTaskPhase(worker.engagements).flatMap(
+    (engagement) =>
+      engagement.issueCounts ??
+      (engagement.issues ?? []).map((issue) => ({
+        status: issue.status,
+        count: 1,
+      }))
   );
-  const totalCount = issues.length;
+}
+
+export function getWorkerIssueCount(
+  worker: Pick<WorkerRecord, 'engagements'>
+): number {
+  return collectWorkerIssueCounts(worker).reduce(
+    (total, issue) =>
+      total + (issue.status === 'not_applicable' ? 0 : issue.count),
+    0
+  );
+}
+
+export function getWorkerHealth(
+  worker: Pick<WorkerRecord, 'engagements'>
+): WorkerHealth {
+  const counts = collectWorkerIssueCounts(worker).filter(
+    (issue) => !['cancelled', 'not_applicable'].includes(issue.status)
+  );
+  const totalCount = counts.reduce((total, issue) => total + issue.count, 0);
 
   if (totalCount === 0) {
-    return {
-      doneCount: 0,
-      totalCount: 0,
-      percentage: null,
-      level: 'neutral',
-    };
+    return { doneCount: 0, totalCount: 0, percentage: null, level: 'neutral' };
   }
 
-  const doneCount = issues.filter(
-    (issue) => (issue.status as IssueStatusValue) === 'done'
-  ).length;
+  const doneCount = counts.reduce(
+    (total, issue) => total + (issue.status === 'done' ? issue.count : 0),
+    0
+  );
   const percentage = Math.round((doneCount / totalCount) * 100);
 
   let level: WorkerHealthLevel = 'red';

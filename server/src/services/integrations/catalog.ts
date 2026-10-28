@@ -13,8 +13,11 @@ export const INTEGRATION_SEQUENCES = [
     "microsoft_send_onboarding_email",
     "microsoft_send_offboarding_email",
     "microsoft_send_email",
+    "microsoft_send_teams_message",
     "microsoft_deactivate_account",
     "crewmeister_create_account",
+    "crewmeister_deactivate_account",
+    "crewmeister_delete_membership",
 ] as const satisfies readonly IntegrationSequence[];
 
 export const SEQUENCE_PROVIDER: Record<
@@ -25,8 +28,11 @@ export const SEQUENCE_PROVIDER: Record<
     microsoft_send_onboarding_email: "microsoft_graph",
     microsoft_send_offboarding_email: "microsoft_graph",
     microsoft_send_email: "microsoft_graph",
+    microsoft_send_teams_message: "microsoft_graph",
     microsoft_deactivate_account: "microsoft_graph",
     crewmeister_create_account: "crewmeister",
+    crewmeister_deactivate_account: "crewmeister",
+    crewmeister_delete_membership: "crewmeister",
 };
 
 export function sequenceMatchesProvider(

@@ -1,3 +1,4 @@
+import { isValidTaxId, taxIdInput } from "../../../shared/taxId";
 import { QUESTIONNAIRE_DECLARATION } from "../../../shared/questionnaireDeclaration";
 import z from "zod";
 import {
@@ -305,6 +306,13 @@ function fieldSchema(field: QuestionnaireField) {
             .refine((value) => value === "" || options.includes(value), "ungültige Auswahl")
             .refine((value) => !field.required || value.length > 0, "erforderlich");
     }
+    if (field.key === "taxId") {
+        return z
+            .string()
+            .transform(taxIdInput)
+            .refine((value) => value === "" || isValidTaxId(value), "Steuer-ID: Bitte eine gültige 11-stellige Identifikationsnummer eingeben.")
+            .refine((value) => !field.required || value.length > 0, "erforderlich");
+    }
     if (field.key === "insuranceNumber") {
         return z
             .string()
@@ -467,6 +475,21 @@ export function questionnaireAnswersFromStored(
         }
     }
 
+    // Keep the flattened cells above for existing contract matching, and expose
+    // structured rows so the completed questionnaire can display and edit tables.
+    const tables = new Map<string, Map<number, Record<string, string>>>();
+    for (const [key, value] of byKey) {
+        const match = /^(rows\.[^.]+)\.(\d+)\.([^.]+)$/.exec(key);
+        if (!match) continue;
+        const table = tables.get(match[1]) ?? new Map<number, Record<string, string>>();
+        const index = Number(match[2]);
+        table.set(index, { ...table.get(index), [match[3]]: value });
+        tables.set(match[1], table);
+    }
+    for (const [key, table] of tables) {
+        (answers as Record<string, unknown>)[key] = [...table.entries()]
+            .sort(([a], [b]) => a - b).map(([, row]) => row);
+    }
     answers.children = children;
     answers.priorEmployment = priorEmployment;
     return answers;

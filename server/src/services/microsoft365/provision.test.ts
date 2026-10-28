@@ -54,7 +54,7 @@ function setup() {
     };
 }
 
-it("creates and licenses the account before saving it and mailing the private address", async () => {
+it("creates and licenses the account, mails the password, then saves it", async () => {
     const { dependencies: d, provision } = setup();
     expect(await provision(input)).toEqual({
         status: "created",
@@ -85,10 +85,10 @@ it("creates and licenses the account before saving it and mailing the private ad
         d.graph.assignLicense.mock.invocationCallOrder[0],
     );
     expect(d.graph.assignLicense.mock.invocationCallOrder[0]).toBeLessThan(
-        d.repository.saveAccount.mock.invocationCallOrder[0],
-    );
-    expect(d.repository.saveAccount.mock.invocationCallOrder[0]).toBeLessThan(
         d.sendPasswordMail.mock.invocationCallOrder[0],
+    );
+    expect(d.sendPasswordMail.mock.invocationCallOrder[0]).toBeLessThan(
+        d.repository.saveAccount.mock.invocationCallOrder[0],
     );
 });
 
@@ -184,24 +184,27 @@ it("reports failure even when cleanup is rejected", async () => {
     expect(d.repository.saveAccount).not.toHaveBeenCalled();
 });
 
-it("does not email credentials before the local account transaction succeeds", async () => {
+it("does not keep the account when saving fails after the password was sent", async () => {
     const { dependencies: d, provision } = setup();
     d.repository.saveAccount.mockRejectedValue(
         new Error("database unavailable"),
     );
     await expect(provision(input)).rejects.toThrow("database unavailable");
-    expect(d.sendPasswordMail).not.toHaveBeenCalled();
+    expect(d.sendPasswordMail).toHaveBeenCalled();
 });
 
-it("retains the created account and exposes a failed password delivery", async () => {
+it("removes the new account when the password mail is not sent", async () => {
     const { dependencies: d, provision } = setup();
     d.sendPasswordMail.mockResolvedValue(false);
     expect(await provision(input)).toEqual({
-        status: "created",
-        ...account,
-        passwordMailSent: false,
+        status: "failed",
+        message: "Die Passwortmail konnte nicht gesendet werden.",
     });
-    expect(d.graph.deleteUser).not.toHaveBeenCalled();
+    expect(d.graph.deleteUser).toHaveBeenCalledWith(
+        "token",
+        account.externalId,
+    );
+    expect(d.repository.saveAccount).not.toHaveBeenCalled();
 });
 
 it("does not retry user creation after a network failure with an unknown outcome", async () => {

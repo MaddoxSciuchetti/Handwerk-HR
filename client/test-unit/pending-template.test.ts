@@ -1,11 +1,11 @@
 import { engagementsAwaitingTemplate } from '@/features/worker-task-management/pendingTemplate';
 import { describe, expect, it } from 'vitest';
 
-const printed = {
+const signed = {
   workerEngagementId: 'engagement-1',
-  title: 'Arbeitsvertrag drucken',
+  title: 'Arbeitsvertrag unterschrieben',
   status: 'done',
-  kind: 'contract_send',
+  kind: 'standard',
   templateItemId: null,
   workerEngagement: {
     workerId: 'worker-1',
@@ -14,8 +14,8 @@ const printed = {
 };
 
 describe('engagementsAwaitingTemplate', () => {
-  it('asks for a template after the contract was printed on the fast track', () => {
-    expect(engagementsAwaitingTemplate([printed])).toEqual([
+  it('asks for a template after the signed-contract task is completed', () => {
+    expect(engagementsAwaitingTemplate([signed])).toEqual([
       {
         workerId: 'worker-1',
         engagementId: 'engagement-1',
@@ -24,17 +24,61 @@ describe('engagementsAwaitingTemplate', () => {
     ]);
   });
 
-  it('stays hidden while the print task is still open', () => {
+  it('stays hidden while the signed-contract task is still open', () => {
     expect(
-      engagementsAwaitingTemplate([{ ...printed, status: 'in_progress' }])
+      engagementsAwaitingTemplate([{ ...signed, status: 'in_progress' }])
+    ).toEqual([]);
+  });
+
+  it('stays hidden after printing until the signed-contract task is completed', () => {
+    expect(
+      engagementsAwaitingTemplate([
+        { ...signed, title: 'Arbeitsvertrag drucken', kind: 'contract_send' },
+        { ...signed, status: 'open' },
+      ])
     ).toEqual([]);
   });
 
   it('stays hidden once a template already filled the tasks', () => {
     expect(
       engagementsAwaitingTemplate([
-        printed,
-        { ...printed, title: 'Willkommensmail', templateItemId: 'item-1' },
+        signed,
+        { ...signed, title: 'Willkommensmail', templateItemId: 'item-1' },
+      ])
+    ).toEqual([]);
+  });
+
+  it('keeps the finished run visible until its bar is dismissed', () => {
+    const withReceipt = {
+      ...signed,
+      workerEngagement: {
+        ...signed.workerEngagement,
+        templateApplication: {
+          id: 'application',
+          completedAt: '2026-10-24T08:00:00.000Z',
+          resultsDismissedAt: null,
+        },
+      },
+    };
+    expect(engagementsAwaitingTemplate([withReceipt])).toEqual([
+      {
+        workerId: 'worker-1',
+        engagementId: 'engagement-1',
+        label: 'Ada Lovelace',
+      },
+    ]);
+    expect(
+      engagementsAwaitingTemplate([
+        {
+          ...withReceipt,
+          workerEngagement: {
+            ...withReceipt.workerEngagement,
+            templateApplication: {
+              ...withReceipt.workerEngagement.templateApplication,
+              resultsDismissedAt: '2026-10-24T09:00:00.000Z',
+            },
+          },
+        },
       ])
     ).toEqual([]);
   });

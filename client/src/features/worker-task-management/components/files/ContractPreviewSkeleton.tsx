@@ -15,7 +15,7 @@ export function ContractPreviewSkeleton() {
         <Skeleton className="h-5 w-48" />
         <div className="mt-3 flex flex-col gap-2">
           <Skeleton className="h-4 w-28" />
-          <Skeleton className="h-9 w-60" />
+          <Skeleton className="h-9 w-60 max-w-full" />
         </div>
       </div>
       <div className="flex min-h-0 flex-1 gap-4 overflow-hidden" aria-hidden="true">

@@ -1,11 +1,7 @@
 import type { IssueResponse } from '../types/index.types';
 
-export function openMentionTasks(
-  tasks: IssueResponse[] | undefined,
-  userId: string | undefined
-) {
-  if (!userId) return [];
+export function openMentionTasks(tasks: IssueResponse[] | undefined) {
   return (tasks ?? []).filter(
-    (task) => task.hasMention && task.status !== 'done'
+    (task) => task.mentioned && task.status !== 'done'
   );
 }

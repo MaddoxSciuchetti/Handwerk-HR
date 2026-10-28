@@ -9,10 +9,11 @@ import {
 
 export const clothingStockKey = ['clothing-stock'] as const;
 
-export function useClothingStock() {
+export function useClothingStock(enabled = true) {
   return useQuery({
     queryKey: clothingStockKey,
     queryFn: getClothingStock,
+    enabled,
   });
 }
 

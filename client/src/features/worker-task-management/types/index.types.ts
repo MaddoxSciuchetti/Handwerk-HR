@@ -47,7 +47,12 @@ export type CreateWorkerTaskPayload = {
 
 export type InsertHistoryData = z.infer<typeof formSchema>;
 
-export type WorkerTab = 'form' | 'files' | 'materials' | 'clothing';
+export type WorkerTab =
+  | 'information'
+  | 'form'
+  | 'files'
+  | 'materials'
+  | 'clothing';
 
 import type { IssueStatusValue } from '@/features/all-tasks/consts/issue-status.consts';
 
@@ -64,8 +69,11 @@ export type TemplateTaskFormValues = {
     | 'none'
     | 'microsoft_create_account'
     | 'microsoft_send_email'
+    | 'microsoft_send_teams_message'
     | 'microsoft_deactivate_account'
-    | 'crewmeister_create_account';
+    | 'crewmeister_create_account'
+    | 'crewmeister_deactivate_account'
+    | 'crewmeister_delete_membership';
   mailTemplateId: string;
 };
 
@@ -75,15 +83,18 @@ export type TemplateTaskResponse = {
   updatedAt: Date;
   orderIndex: number;
   taskName: string;
-  taskDescription: string;
+  taskDescription: string | null;
   defaultStatus: IssueStatusValue;
   defaultAssigneeUserId: string | null;
   integrationProvider?: 'microsoft_graph' | 'crewmeister' | null;
   sequence?:
     | 'microsoft_create_account'
     | 'microsoft_send_email'
+    | 'microsoft_send_teams_message'
     | 'microsoft_deactivate_account'
     | 'crewmeister_create_account'
+    | 'crewmeister_deactivate_account'
+    | 'crewmeister_delete_membership'
     | null;
   mailTemplateId?: string | null;
 };

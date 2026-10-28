@@ -1,12 +1,14 @@
 import resend from "../config/resend";
 import { EMAIL_SENDER, NODE_ENV, USE_MICROSOFT_MAIL } from "../constants/env";
-import { sendGraphMail } from "../services/graphMail";
+import { graphMailConfigured, sendGraphMail } from "../services/graphMail";
+import { organizationMailToken } from "../services/organizationMailToken";
 import { recordSentEmail } from "./testEmailOutbox";
 import type { PdfAttachment } from "@/services/documentDelivery";
 
 type Params = {
     to: string;
     senderAddress?: string;
+    organizationId?: string;
     subject: string;
     text: string;
     html: string;
@@ -14,6 +16,7 @@ type Params = {
     headers?: Record<string, string>;
     attachments?: PdfAttachment[];
     idempotencyKey?: string;
+    via?: "resend";
 };
 
 type SendResult = {
@@ -47,6 +50,7 @@ const getToEmail = (to: string) => (NODE_ENV === "development" ? to : to);
 export const sendMail = async ({
     to,
     senderAddress,
+    organizationId,
     subject,
     text,
     html,
@@ -54,13 +58,27 @@ export const sendMail = async ({
     headers,
     attachments,
     idempotencyKey,
+    via,
 }: Params): Promise<SendResult> => {
     const recipient = getToEmail(to);
-    if (USE_MICROSOFT_MAIL) {
+    if (USE_MICROSOFT_MAIL && via !== "resend") {
         try {
+            const accessToken = organizationId
+                ? await organizationMailToken(organizationId)
+                : null;
+            if (!accessToken && !graphMailConfigured()) {
+                return {
+                    data: null,
+                    error: {
+                        name: "MailError",
+                        message: "Microsoft-Mail ist für diese Organisation nicht eingerichtet.",
+                    },
+                };
+            }
             const sent = await sendGraphMail({
                 to: recipient,
                 senderAddress,
+                ...(accessToken ? { accessToken } : {}),
                 subject,
                 html,
                 attachments,

@@ -1,6 +1,8 @@
 import { QUESTIONNAIRE_DECLARATION } from "../../../shared/questionnaireDeclaration";
 import { uploadFileToS3 } from "@/config/aws";
+import { QUESTIONNAIRE_MOCK_RESPONSES } from "@/constants/env";
 import { BAD_REQUEST, NOT_FOUND } from "@/constants/http";
+import { isStagingEnvironment } from "@/constants/stagingMail";
 import { prisma } from "@/lib/prisma";
 import { fileQuestionnaireAnswers } from "@/services/questionnaireFiles.service";
 import { matchQuestionnaireToContract } from "@/services/contractFieldMatchAi";
@@ -76,6 +78,10 @@ function publicPayload(definition: QuestionnaireDefinition | null) {
     };
 }
 
+function stagingFillEnabled() {
+    return isStagingEnvironment() || QUESTIONNAIRE_MOCK_RESPONSES;
+}
+
 export async function getPublicQuestionnaire(token: string) {
     const submission = await prisma.questionnaireSubmission.findUnique({
         where: { token },
@@ -87,6 +93,7 @@ export async function getPublicQuestionnaire(token: string) {
     }
     return {
         status: "sent" as const,
+        staging: stagingFillEnabled(),
         ...publicPayload(storedDefinition(submission.formDefinition)),
     };
 }
@@ -240,17 +247,31 @@ export async function submitPublicQuestionnaire(token: string, body: unknown) {
         });
 
         if (contract) {
-            await tx.issue.create({
-                data: {
+            const printTask = await tx.issue.findFirst({
+                where: {
                     workerEngagementId: submission.engagementId,
-                    createdByUserId: submission.engagement.responsibleUserId,
-                    assigneeUserId: submission.engagement.responsibleUserId,
-                    status: "in_progress",
                     kind: "contract_send",
-                    isTemporary: true,
-                    title: CONTRACT_TASK_TITLE,
                 },
             });
+            if (printTask) {
+                await tx.issue.updateMany({
+                    where: { id: printTask.id, status: "open" },
+                    data: { status: "in_progress" },
+                });
+            } else {
+                // Older engagements may not have a print task yet.
+                await tx.issue.create({
+                    data: {
+                        workerEngagementId: submission.engagementId,
+                        createdByUserId: submission.engagement.responsibleUserId,
+                        assigneeUserId: submission.engagement.responsibleUserId,
+                        status: "in_progress",
+                        kind: "contract_send",
+                        isTemporary: true,
+                        title: CONTRACT_TASK_TITLE,
+                    },
+                });
+            }
         }
     });
 

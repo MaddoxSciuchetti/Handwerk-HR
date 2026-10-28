@@ -10,7 +10,7 @@ import type { IssueTemplateListItem } from '../../types/template.types';
 export const templateQueries = {
   getTasks: (templateId: string) => {
     return queryOptions<TemplateTaskResponse[]>({
-      queryKey: [DESCRIPTION_ROOT],
+      queryKey: [DESCRIPTION_ROOT, templateId],
       queryFn: () => getTemplateTask(templateId),
     });
   },

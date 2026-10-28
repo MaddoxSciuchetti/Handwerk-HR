@@ -1,3 +1,4 @@
+import { TableSelectAllCheckbox } from '@/components/ui/table-select-all-checkbox';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TableSkeletonRows } from '@/components/ui/table-skeleton';
@@ -37,6 +38,10 @@ export function BestandTab({ isLoading = false }: { isLoading?: boolean }) {
         ? current.filter((value) => value !== id)
         : [...current, id]
     );
+  const items = stock.data ?? [];
+  const selectAll = (checked: boolean) => {
+    setSelectedIds(checked ? items.map((item) => item.id) : []);
+  };
 
   return (
     <Card
@@ -68,7 +73,17 @@ export function BestandTab({ isLoading = false }: { isLoading?: boolean }) {
             >
               <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-0">
                 <TableRow className="border-0 hover:bg-transparent">
-                  <TableHead className="h-12 bg-card py-3 pl-10 pr-2">
+                  <TableHead className="relative h-12 bg-card py-3 pl-12 pr-2">
+                    <div className="absolute inset-y-0 left-0 flex w-10 items-center justify-center">
+                      <TableSelectAllCheckbox
+                        ids={items.map((item) => item.id)}
+                        selectedIds={selectedIds}
+                        disabled={isLoading || stock.isLoading || deleting}
+                        selectLabel="Alle Artikel auswählen"
+                        clearLabel="Alle Artikel abwählen"
+                        onCheckedChange={selectAll}
+                      />
+                    </div>
                     Artikel
                   </TableHead>
                   <TableHead className="bg-card py-3 px-2">Größe</TableHead>

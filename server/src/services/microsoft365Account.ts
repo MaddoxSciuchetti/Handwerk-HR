@@ -1,10 +1,12 @@
+import { isMicrosoftAddressConflict } from "./microsoft365/addressConflict";
+import { microsoftAppAuthError } from "./microsoft365/authError";
 import { randomBytes } from "crypto";
 import type { Microsoft365EnvKey } from "@/constants/env";
 import { microsoftSimulationEnabled } from "@/constants/env";
 import { microsoftGraphFetch, SIMULATION_TOKEN } from "@/services/integrations/microsoftSimulation";
 import { prisma } from "@/lib/prisma";
 import { integrationsLive } from "@/services/integrations/runtime";
-import { sendMail } from "@/utils/sendMail";
+import { sendPasswordMail } from "./microsoft365/passwordMail";
 
 const GRAPH = "https://graph.microsoft.com/v1.0";
 const TOKEN_SCOPE = "https://graph.microsoft.com/.default";
@@ -146,13 +148,19 @@ async function readBody(response: Response) {
     }
 }
 
-export async function microsoftGraphToken(config: Microsoft365Config | null) {
+export async function microsoftGraphToken(
+    config: Microsoft365Config | null,
+    onAuthError?: (message: string) => void,
+) {
     if (!config) return null;
     if (microsoftSimulationEnabled()) return SIMULATION_TOKEN;
-    return graphToken(config);
+    return graphToken(config, onAuthError);
 }
 
-async function graphToken(config: Microsoft365Config) {
+async function graphToken(
+    config: Microsoft365Config,
+    onAuthError?: (message: string) => void,
+) {
     const body = new URLSearchParams({
         client_id: config.clientId,
         client_secret: config.clientSecret,
@@ -176,6 +184,7 @@ async function graphToken(config: Microsoft365Config) {
             ? payload.access_token
             : "";
     if (!response.ok || !token) {
+        onAuthError?.(microsoftAppAuthError(payload, response.status));
         console.error(
             "Microsoft 365 token request failed",
             response.status,
@@ -232,7 +241,7 @@ async function createGraphUser(params: {
             }),
         });
 
-        if (response.status === 409) continue;
+        if (isMicrosoftAddressConflict(response.status, payload)) continue;
 
         if (!response.ok) {
             console.error(
@@ -286,44 +295,11 @@ async function assignLicense(params: {
     return true;
 }
 
-function escapeHtml(value: string) {
-    return value
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-}
-
-function passwordMail(params: {
-    firstName: string;
-    workEmail: string;
-    password: string;
-}) {
-    const greeting = params.firstName.trim()
-        ? `Hallo ${params.firstName.trim()},`
-        : "Hallo,";
-    const text = [
-        greeting,
-        "",
-        "dein Microsoft-Konto ist eingerichtet.",
-        `Arbeits-E-Mail: ${params.workEmail}`,
-        `Temporäres Passwort: ${params.password}`,
-        "Bitte ändere das Passwort bei der ersten Anmeldung.",
-    ].join("\n");
-    const html = text
-        .split("\n")
-        .map((line) => (line ? `<p>${escapeHtml(line)}</p>` : "<br>"))
-        .join("");
-    return {
-        subject: "Dein Microsoft-365-Zugang",
-        text,
-        html,
-    };
-}
-
 export async function provisionMicrosoft365Account(params: {
     organizationId: string;
     workerId: string;
     config: Microsoft365Config | null;
+    senderAddress?: string | null;
 }): Promise<ProvisionMicrosoft365Result> {
     const config = params.config;
     if (!config) return { status: "skipped", reason: "not_configured" };
@@ -360,6 +336,15 @@ export async function provisionMicrosoft365Account(params: {
         return { status: "skipped", reason: "not_live" };
     }
 
+    const privateEmail = worker.email?.trim() ?? "";
+    if (!privateEmail.includes("@") && !microsoftSimulationEnabled()) {
+        return {
+            status: "failed",
+            message:
+                "Für diesen Mitarbeiter fehlt eine gültige E-Mail-Adresse.",
+        };
+    }
+
     const token = await microsoftGraphToken(config);
     if (!token) {
         return {
@@ -384,26 +369,29 @@ export async function provisionMicrosoft365Account(params: {
         licenseSkuId: config.licenseSkuId,
     });
     if (!licensed) {
-        let deleted = false;
-        try {
-            const { response } = await graphRequest(
+        return removeUnsentAccount(
+            token,
+            created,
+            "Microsoft Graph hat die Lizenz abgelehnt.",
+        );
+    }
+
+    if (!microsoftSimulationEnabled()) {
+        const passwordMailSent = await sendPasswordMail({
+            to: privateEmail,
+            firstName: worker.firstName,
+            workEmail: created.workEmail,
+            password,
+            senderAddress: params.senderAddress,
+            organizationId: params.organizationId,
+        });
+        if (!passwordMailSent) {
+            return removeUnsentAccount(
                 token,
-                `/users/${encodeURIComponent(created.externalId)}`,
-                { method: "DELETE" },
+                created,
+                "Die Passwortmail konnte nicht gesendet werden.",
             );
-            deleted = response.status === 204;
-            if (!deleted) {
-                console.error("Microsoft 365 account cleanup not confirmed", response.status);
-            }
-        } catch {
-            console.error("Microsoft 365 account cleanup request failed");
         }
-        return {
-            status: "failed",
-            message: deleted
-                ? "Microsoft Graph hat die Lizenz abgelehnt."
-                : `Microsoft Graph hat die Lizenz abgelehnt. Die Löschung des neu erstellten Kontos ${created.workEmail} (ID: ${created.externalId}) wurde nicht bestätigt. Bitte prüfe das Konto in Microsoft 365, bevor du die Kontoerstellung erneut ausführst.`,
-        };
     }
 
     await prisma.$transaction(async (tx) => {
@@ -431,36 +419,45 @@ export async function provisionMicrosoft365Account(params: {
         });
     });
 
-    const template = passwordMail({
-        firstName: worker.firstName,
-        workEmail: created.workEmail,
-        password,
-    });
-    let passwordMailSent = false;
-    try {
-        if (microsoftSimulationEnabled()) {
-            return {
-                status: "created",
-                workEmail: created.workEmail,
-                externalId: created.externalId,
-                passwordMailSent: false,
-            };
-        }
-        const sent = await sendMail({
-            to: worker.email,
-            subject: template.subject,
-            text: template.text,
-            html: template.html,
-        });
-        passwordMailSent = !sent.error && Boolean(sent.data?.id);
-    } catch (error) {
-        console.error("Microsoft 365 Passwortmail fehlgeschlagen", error);
-    }
-
     return {
         status: "created",
         workEmail: created.workEmail,
         externalId: created.externalId,
-        passwordMailSent,
+        passwordMailSent: !microsoftSimulationEnabled(),
+    };
+}
+
+async function deleteCreatedUser(token: string, externalId: string) {
+    try {
+        const { response } = await graphRequest(
+            token,
+            `/users/${encodeURIComponent(externalId)}`,
+            { method: "DELETE" },
+        );
+        const deleted = response.status === 204;
+        if (!deleted) {
+            console.error(
+                "Microsoft 365 account cleanup not confirmed",
+                response.status,
+            );
+        }
+        return deleted;
+    } catch {
+        console.error("Microsoft 365 account cleanup request failed");
+        return false;
+    }
+}
+
+async function removeUnsentAccount(
+    token: string,
+    created: { externalId: string; workEmail: string },
+    reason: string,
+): Promise<Extract<ProvisionMicrosoft365Result, { status: "failed" }>> {
+    const deleted = await deleteCreatedUser(token, created.externalId);
+    return {
+        status: "failed",
+        message: deleted
+            ? reason
+            : `${reason} Die Löschung des neu erstellten Kontos ${created.workEmail} (ID: ${created.externalId}) wurde nicht bestätigt. Bitte prüfe das Konto in Microsoft 365, bevor du die Kontoerstellung erneut ausführst.`,
     };
 }

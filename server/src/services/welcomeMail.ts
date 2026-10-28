@@ -1,3 +1,5 @@
+import { integrationsMocked, mockGroups, mockMailboxes } from "./integrations/localMock";
+import { MICROSOFT_APP_AUTH_ERROR } from "./microsoft365/authError";
 import { prisma } from "@/lib/prisma";
 import { microsoftSimulationEnabled } from "@/constants/env";
 import { microsoftGraphFetch } from "@/services/integrations/microsoftSimulation";
@@ -172,30 +174,55 @@ export async function listMicrosoftGroups(
     | { groups: MicrosoftGroupOption[]; error: null }
     | { groups: []; error: string }
 > {
+    if (integrationsMocked()) return { groups: mockGroups, error: null };
     if (!integrationsLive() && !microsoftSimulationEnabled()) {
         return { groups: [], error: NOT_LIVE_MESSAGE };
     }
     const config = await loadMicrosoft365Config(organizationId);
     if (!config) return { groups: [], error: null };
-    const token = await microsoftGraphToken(config);
+    let authError = MICROSOFT_APP_AUTH_ERROR;
+    const token = await microsoftGraphToken(config, (message) => {
+        authError = message;
+    });
     if (!token) {
         return {
             groups: [],
-            error: "Microsoft Graph hat die Anmeldung abgelehnt.",
+            error: authError,
         };
     }
-    const groups = await listGraph<{ id?: string; displayName?: string }>(
+    const groups = await listGraph<{
+        id?: string;
+        displayName?: string;
+        mailEnabled?: boolean;
+        mail?: string | null;
+        isAssignableToRole?: boolean | null;
+    }>(
         token,
-        "/groups?$select=id,displayName&$top=999",
+        "/groups?$select=id,displayName,mailEnabled,mail,isAssignableToRole&$top=999",
     );
     if (!groups) {
         return {
             groups: [],
-            error: "Microsoft Graph hat die Gruppen nicht geliefert.",
+            error: "Microsoft-Gruppen konnten nicht geladen werden. Bitte die Administration bitten, die Graph-Anwendungsberechtigung Group.Read.All und die Administratorzustimmung in Microsoft Entra zu prüfen.",
         };
     }
     return {
         groups: groups
+            .filter((group) => {
+                // Directory security groups are not email audiences. Keep normal
+                // mail-enabled groups, including distribution and Microsoft 365 groups.
+                if (
+                    group.mailEnabled !== true ||
+                    !group.mail?.trim().includes("@") ||
+                    group.isAssignableToRole === true
+                ) return false;
+                const name = group.displayName?.trim() ?? "";
+                // Answers creates an internal backing group that is not a mailing audience.
+                return (
+                    !/^group for answers in viva engage(?:\s|$)/i.test(name) &&
+                    name.toLowerCase() !== "aad dc administrators"
+                );
+            })
             .map((group) => ({
                 id: group.id?.trim() ?? "",
                 displayName: group.displayName?.trim() ?? "",
@@ -296,6 +323,7 @@ export async function sendGraphMail(params: {
     recipients: string[];
     subject: string;
     text: string;
+    html?: string;
     rejectedLog: string;
     failureMessage: string;
 }): Promise<
@@ -316,7 +344,7 @@ export async function sendGraphMail(params: {
                     subject: params.subject,
                     body: {
                         contentType: "HTML",
-                        content: welcomeHtml(params.text),
+                        content: params.html ?? welcomeHtml(params.text),
                     },
                     toRecipients: params.recipients.map((address) => ({
                         emailAddress: { address },
@@ -420,16 +448,20 @@ export async function listLicensedMicrosoftUsers(organizationId: string) {
 export async function listMicrosoftMailAddresses(
     organizationId: string,
 ): Promise<{ addresses: MicrosoftMailAddress[]; error: string | null }> {
-    if (!integrationsLive()) {
+    if (integrationsMocked()) return { addresses: mockMailboxes, error: null };
+    if (!integrationsLive() && !microsoftSimulationEnabled()) {
         return { addresses: [], error: NOT_LIVE_MESSAGE };
     }
     const config = await loadMicrosoft365Config(organizationId);
     if (!config) return { addresses: [], error: null };
-    const token = await microsoftGraphToken(config);
+    let authError = MICROSOFT_APP_AUTH_ERROR;
+    const token = await microsoftGraphToken(config, (message) => {
+        authError = message;
+    });
     if (!token) {
         return {
             addresses: [],
-            error: "Microsoft Graph hat die Anmeldung abgelehnt.",
+            error: authError,
         };
     }
     const [users, channels] = await Promise.all([
@@ -462,7 +494,7 @@ export async function listMicrosoftMailAddresses(
     }
     addresses.sort((left, right) => left.label.localeCompare(right.label, "de"));
     const error = !users
-        ? "Microsoft Graph hat die E-Mail-Adressen nicht geliefert."
+        ? "Microsoft-Postfächer konnten nicht geladen werden. Bitte die Administration bitten, die Graph-Anwendungsberechtigung User.Read.All und die Administratorzustimmung in Microsoft Entra zu prüfen."
         : channels.error;
     return { addresses, error };
 }
@@ -473,16 +505,20 @@ export async function listMailEnabledChannels(
     | { channels: MicrosoftChannelOption[]; error: null }
     | { channels: MicrosoftChannelOption[]; error: string }
 > {
-    if (!integrationsLive()) {
+    if (integrationsMocked()) return { channels: [], error: null };
+    if (!integrationsLive() && !microsoftSimulationEnabled()) {
         return { channels: [], error: NOT_LIVE_MESSAGE };
     }
     const config = await loadMicrosoft365Config(organizationId);
     if (!config) return { channels: [], error: null };
-    const token = await microsoftGraphToken(config);
+    let authError = MICROSOFT_APP_AUTH_ERROR;
+    const token = await microsoftGraphToken(config, (message) => {
+        authError = message;
+    });
     if (!token) {
         return {
             channels: [],
-            error: "Microsoft Graph hat die Anmeldung abgelehnt.",
+            error: authError,
         };
     }
     const groups = await listGraph<{
@@ -496,7 +532,7 @@ export async function listMailEnabledChannels(
     if (!groups) {
         return {
             channels: [],
-            error: "Microsoft Graph hat die Kanäle nicht geliefert.",
+            error: "Teams-Kanäle konnten nicht geladen werden. Bitte die Administration bitten, die Graph-Anwendungsberechtigungen Group.Read.All und Channel.ReadBasic.All sowie die Administratorzustimmung in Microsoft Entra zu prüfen.",
         };
     }
     const teams = groups.filter(
@@ -515,7 +551,7 @@ export async function listMailEnabledChannels(
         if (response.status === 403) {
             return {
                 channels,
-                error: "Microsoft Graph hat die Kanäle nicht geliefert.",
+                error: "Teams-Kanäle konnten nicht geladen werden. Bitte die Administration bitten, die Graph-Anwendungsberechtigungen Group.Read.All und Channel.ReadBasic.All sowie die Administratorzustimmung in Microsoft Entra zu prüfen.",
             };
         }
         if (!response.ok) continue;
@@ -582,11 +618,14 @@ export async function sendTeamWelcomeMail(params: {
     const config = await loadMicrosoft365Config(params.organizationId);
     if (!config) return { status: "skipped", reason: "not_configured" };
 
-    const token = await microsoftGraphToken(config);
+    let authError = MICROSOFT_APP_AUTH_ERROR;
+    const token = await microsoftGraphToken(config, (message) => {
+        authError = message;
+    });
     if (!token) {
         return {
             status: "failed",
-            message: "Microsoft Graph hat die Anmeldung abgelehnt.",
+            message: authError,
         };
     }
 

@@ -12,11 +12,6 @@ const toolbarLabels = [
   'Nummeriert',
   'Tabelle',
   'Seitenumbruch',
-  'Zeile +',
-  'Spalte +',
-  'Zeile entfernen',
-  'Spalte entfernen',
-  'Tabelle entfernen',
   'Rückgängig',
   'Fließtext linksbündig',
   'Alles linksbündig',
@@ -80,17 +75,20 @@ export function DocumentEditorSkeleton({
                   <Skeleton className="h-7 w-16" />
                   <Skeleton className="h-7 w-16" />
                   <ToolbarButtonSkeleton label="Bild hinzufügen" />
-                  {pageView ? <Skeleton className="h-8 w-16" /> : null}
-                  <Skeleton className="h-7 w-44" />
-                  <Skeleton className="h-7 w-44" />
-                  <Skeleton className="h-7 w-40" />
-                  <ToolbarButtonSkeleton label="Feld einsetzen" />
+                </div>
+              ) : null}
+              {showToolbar ? (
+                <div className="space-y-2 border-t pt-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Skeleton className="h-11 w-44" />
+                    <Skeleton className="h-11 w-40" />
+                    <Skeleton className="h-11 w-44" />
+                    <ToolbarButtonSkeleton label="Feld einsetzen" />
+                  </div>
                 </div>
               ) : null}
             </div>
-            {pageView && !showToolbar ? (
-              <Skeleton className="h-8 w-16" />
-            ) : null}
+            {pageView ? <Skeleton className="h-8 w-16" /> : null}
             {showCorner ? (
               <div className="flex shrink-0 items-center gap-1">
                 {showOriginalToggle ? (

@@ -56,8 +56,12 @@ export function ClothingOrderRow({
 
   return (
     <TableRow data-testid={`clothing-row-${item.id}`}>
-      <TableCell className="pl-10 font-medium">{item.name}</TableCell>
-      <TableCell>{item.size || '—'}</TableCell>
+      <TableCell className="whitespace-normal break-words pl-10 font-medium">
+        {item.name}
+      </TableCell>
+      <TableCell className="whitespace-normal break-words">
+        {item.size || '—'}
+      </TableCell>
       <TableCell>
         {item.productUrl ? (
           <a
@@ -74,7 +78,7 @@ export function ClothingOrderRow({
       </TableCell>
       <TableCell>{sourceLabel[item.source]}</TableCell>
       <TableCell>{item.quantity}</TableCell>
-      <TableCell>
+      <TableCell className="whitespace-normal">
         {outstanding < 1 ? (
           <span>Zurück im Bestand</span>
         ) : (
@@ -103,7 +107,9 @@ export function ClothingOrderRow({
             </Button>
           </div>
         )}
-        {error ? <p className="mt-1 text-xs text-destructive">{error}</p> : null}
+        {error ? (
+          <p className="mt-1 text-xs text-destructive">{error}</p>
+        ) : null}
       </TableCell>
       <TableCell className="pr-6 text-right">
         <TrashButton

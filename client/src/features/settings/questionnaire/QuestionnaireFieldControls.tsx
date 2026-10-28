@@ -1,16 +1,7 @@
+import { taxIdInput } from '@shared/taxId';
+
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { useState } from 'react';
-import { NewQuestionForm } from './NewQuestionForm';
 import { insuranceNumberInput } from '@shared/insuranceNumber';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { ChoiceLineEditor } from '@/features/questionnaire/ChoiceLineEditor';
 import { PflichtfeldSwitch } from './PflichtfeldSwitch';
 import { QuestionTitle } from './QuestionTitle';
@@ -28,63 +19,28 @@ type QuestionnaireFieldControlsProps = {
 
 export function QuestionnaireFieldControls({
   field,
-  contractFields,
   onChange,
   onCommit,
 }: QuestionnaireFieldControlsProps) {
-  const [editing, setEditing] = useState(false);
   const patch = (next: Partial<TemplateField>) =>
     onChange({ ...field, ...next });
-
-  if (editing)
-    return (
-      <NewQuestionForm
-        field={field}
-        onCancel={() => setEditing(false)}
-        onAdd={(items) => {
-          const next = items[0];
-          if (!next || next.kind !== 'field') return;
-          onChange(next);
-          setEditing(false);
-        }}
-      />
-    );
 
   return (
     <div className="flex min-w-0 flex-col gap-3">
       <QuestionTitle
         label={field.label}
+        onChange={(label) => patch({ label })}
         onCommit={(label) => onCommit({ ...field, label })}
       />
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        data-no-drag
-        className="self-start rounded-2xl"
-        aria-label={`Frage bearbeiten: ${field.label}`}
-        onClick={() => setEditing(true)}
-      >
-        Bearbeiten
-      </Button>
-      <PflichtfeldSwitch
-        label="Nur von BSB auszufüllen"
-        checked={field.bsbOnly === true}
-        onChange={(bsbOnly) => patch({ bsbOnly })}
-      />
-      {field.type === 'file' ? (
-        <PflichtfeldSwitch
-          checked={field.required !== false}
-          onChange={(required) => patch({ required })}
-        />
-      ) : (
-        <QuestionAnswer field={field} onChange={patch} />
-      )}
-      {field.builtin === false && field.type !== 'file' ? (
-        <PflichtfeldSwitch
-          checked={field.required !== false}
-          onChange={(required) => patch({ required })}
-        />
+      {field.type !== 'file' ? (
+        <div className="flex min-w-0 items-start gap-2">
+          <span className="w-16 shrink-0 pt-1 text-sm leading-6 font-medium">
+            Antwort:
+          </span>
+          <div className="min-w-0 flex-1">
+            <QuestionAnswer field={field} onChange={patch} />
+          </div>
+        </div>
       ) : null}
       {field.type === 'file' ? (
         <p className="text-xs text-muted-foreground">
@@ -105,32 +61,21 @@ export function QuestionnaireFieldControls({
           }
         />
       ) : null}
-      {field.type === 'file' ? null : (
-        <div className="flex flex-col gap-2">
-          <Label htmlFor={`${field.key}-contract`}>Vertragsfeld</Label>
-          <Select
-            value={field.contractFieldKey || '__none__'}
-            onValueChange={(value) =>
-              patch({ contractFieldKey: value === '__none__' ? '' : value })
-            }
-          >
-            <SelectTrigger
-              id={`${field.key}-contract`}
-              className="h-9 w-full bg-background"
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent position="popper" align="start">
-              <SelectItem value="__none__">Keins</SelectItem>
-              {contractFields.map((option) => (
-                <SelectItem key={option.key} value={option.key}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        {field.type === 'file' || field.builtin === false ? (
+          <PflichtfeldSwitch
+            checked={field.required !== false}
+            onChange={(required) => patch({ required })}
+          />
+        ) : null}
+        <PflichtfeldSwitch
+          label="Nur vom Betrieb"
+          checked={field.officeOnly ?? field.bsbOnly ?? false}
+          onChange={(checked) =>
+            patch({ officeOnly: checked || undefined, bsbOnly: undefined })
+          }
+        />
+      </div>
     </div>
   );
 }
@@ -152,8 +97,9 @@ function QuestionAnswer({
               name={`${field.key}-default`}
               className="size-4 accent-primary"
               checked={field.defaultValue === option}
-              onClick={() => {
+              onClick={(event) => {
                 if (field.defaultValue !== option) return;
+                event.preventDefault();
                 onChange({ defaultValue: '' });
               }}
               onChange={() => onChange({ defaultValue: option })}
@@ -206,6 +152,7 @@ function QuestionAnswer({
   return (
     <Input
       id={`${field.key}-default`}
+      className="h-8 min-w-0 focus-visible:border-input focus-visible:ring-0"
       type={field.type === 'date' ? 'date' : 'text'}
       value={field.defaultValue ?? ''}
       aria-label="Antwort"
@@ -215,7 +162,9 @@ function QuestionAnswer({
           defaultValue:
             field.key === 'insuranceNumber'
               ? insuranceNumberInput(event.target.value)
-              : event.target.value,
+              : field.key === 'taxId'
+                ? taxIdInput(event.target.value)
+                : event.target.value,
         })
       }
     />

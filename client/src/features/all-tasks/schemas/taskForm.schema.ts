@@ -13,9 +13,7 @@ export const taskFormSchema = z
     workerEngagementId: z
       .string()
       .min(1, { message: 'Bitte wähle einen Handwerker aus' }),
-    assigneeUserId: z
-      .string()
-      .min(1, { message: 'Bitte wähle eine Zuständigkeit aus' }),
+    assigneeUserId: z.string(),
     status: z.enum(ISSUE_STATUSES, {
       message: 'Bitte wähle einen Status aus',
     }),
@@ -45,7 +43,11 @@ export const taskFormSchema = z
       });
     }
 
-    if (data.sequence === 'microsoft_send_email' && !data.mailTemplateId) {
+    if (
+      (data.sequence === 'microsoft_send_email' ||
+        data.sequence === 'microsoft_send_teams_message') &&
+      !data.mailTemplateId
+    ) {
       ctx.addIssue({
         code: 'custom',
         path: ['mailTemplateId'],

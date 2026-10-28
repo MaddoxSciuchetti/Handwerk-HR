@@ -1,4 +1,3 @@
-import { Button } from '@/components/ui/button';
 import { WeeklyHoursDays } from '@/features/questionnaire/WeeklyHoursDays';
 import {
   HOURS_DISTRIBUTION_KEY,
@@ -7,10 +6,12 @@ import {
   WEEKLY_HOURS_SECTION,
   isWeekdayHourKey,
 } from '@shared/weeklyHours';
-import { useState } from 'react';
 import { PflichtfeldSwitch } from './PflichtfeldSwitch';
 import { WeekdayAssign } from './WeekdayAssign';
-import type { ContractFieldOption, TemplateField } from './questionnaireTemplate.types';
+import type {
+  ContractFieldOption,
+  TemplateField,
+} from './questionnaireTemplate.types';
 
 type WeeklyHoursEditorProps = {
   fields: TemplateField[];
@@ -25,14 +26,17 @@ export function WeeklyHoursEditor({
   onChange,
   onAdd,
 }: WeeklyHoursEditorProps) {
-  const [editing, setEditing] = useState(false);
   const days = WEEKDAYS.flatMap((day) => {
     const field = fields.find((item) => item.key === day.key);
     return field ? [field] : [];
   });
-  const distribution = fields.find((field) => field.key === HOURS_DISTRIBUTION_KEY);
-  const values = Object.fromEntries(days.map((day) => [day.key, day.defaultValue ?? '']));
-  const officeOnly = days.some((day) => day.bsbOnly);
+  const distribution = fields.find(
+    (field) => field.key === HOURS_DISTRIBUTION_KEY
+  );
+  const values = Object.fromEntries(
+    days.map((day) => [day.key, day.defaultValue ?? ''])
+  );
+  const officeOnly = days.some((day) => day.officeOnly ?? day.bsbOnly);
 
   const ensureDistribution = (required: boolean) => {
     if (distribution) {
@@ -55,17 +59,6 @@ export function WeeklyHoursEditor({
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-medium">Wöchentliche Arbeitszeit</p>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="rounded-2xl"
-          data-no-drag
-          aria-expanded={editing}
-          onClick={() => setEditing((open) => !open)}
-        >
-          Bearbeiten
-        </Button>
       </div>
       <WeeklyHoursDays
         variant="editor"
@@ -76,22 +69,27 @@ export function WeeklyHoursEditor({
           onChange({ ...field, defaultValue: value });
         }}
       />
-      {editing ? (
-        <div className="flex flex-col gap-4 border-t border-border pt-4">
+      <PflichtfeldSwitch
+        label="Nur vom Betrieb"
+        checked={officeOnly}
+        onChange={(checked) => {
+          for (const day of days)
+            onChange({ ...day, officeOnly: checked, bsbOnly: undefined });
+        }}
+      />
+      <div className="flex flex-col gap-4 border-t border-border pt-4">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
           <PflichtfeldSwitch
             checked={distribution?.required === true}
             onChange={ensureDistribution}
           />
-          <PflichtfeldSwitch
-            label="Nur von BSB auszufüllen"
-            checked={officeOnly}
-            onChange={(checked) => {
-              for (const day of days) onChange({ ...day, bsbOnly: checked });
-            }}
-          />
-          <WeekdayAssign days={days} contractFields={contractFields} onChange={onChange} />
         </div>
-      ) : null}
+        <WeekdayAssign
+          days={days}
+          contractFields={contractFields}
+          onChange={onChange}
+        />
+      </div>
     </div>
   );
 }

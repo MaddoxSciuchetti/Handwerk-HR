@@ -8,9 +8,9 @@ import {
     findInboxReply,
     graphMailConfigured,
 } from "@/services/graphMail";
-import { isQuestionnaireOrContractTemplateTask } from "@/services/onboardingTemplateTasks";
+import { organizationMailToken } from "@/services/organizationMailToken";
 import AppError from "@/utils/AppError";
-import { Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 
 const CONFIRM_TASK_TITLE = "Arbeitsvertrag bestätigen";
 const POLL_MS = 60_000;
@@ -64,7 +64,7 @@ async function openConfirmTask(engagementId: string, actorUserId: string) {
         const closedEarly = await tx.issue.findMany({
             where: {
                 workerEngagementId: engagementId,
-                title: "Arbeitsvertrag",
+                title: { in: ["Arbeitsvertrag", "Arbeitsvertrag unterschrieben"] },
                 kind: "standard",
                 status: "done",
             },
@@ -297,7 +297,6 @@ export async function pollReturnedContracts() {
         await pollResendInbox();
         return;
     }
-    if (!graphMailConfigured()) return;
 
     const waiting = await prisma.employmentContract.findMany({
         where: {
@@ -313,8 +312,10 @@ export async function pollReturnedContracts() {
             engagement: {
                 select: {
                     id: true,
+                    organizationId: true,
                     workerId: true,
                     responsibleUserId: true,
+                    responsibleUser: { select: { email: true } },
                     issues: {
                         where: { kind: "contract_confirm" },
                         select: { id: true },
@@ -330,7 +331,11 @@ export async function pollReturnedContracts() {
         if (!contract.conversationId) continue;
 
         try {
-            const reply = await findReturnedMessage(contract.conversationId);
+            const reply = await findReturnedMessage(
+                contract.conversationId,
+                contract.engagement.organizationId,
+                contract.engagement.responsibleUser.email,
+            );
             if (!reply) continue;
 
             if (!contract.fileUrl && reply.pdf) {
@@ -364,21 +369,26 @@ export async function pollReturnedContracts() {
     }
 }
 
-async function findReturnedMessage(conversationId: string) {
+async function findReturnedMessage(
+    conversationId: string,
+    organizationId: string,
+    mailbox: string | null,
+) {
     if (conversationId.startsWith(RESEND_MATCH)) return null;
-    const reply = await findInboxReply(conversationId);
+    const savedToken = graphMailConfigured()
+        ? null
+        : await organizationMailToken(organizationId);
+    if (!graphMailConfigured() && (!savedToken || !mailbox?.includes("@"))) return null;
+    const access = savedToken && mailbox
+        ? { token: savedToken, mailbox }
+        : undefined;
+    const reply = await findInboxReply(conversationId, access);
     if (!reply) return null;
-    const pdf = await downloadReplyPdf(reply.id);
+    const pdf = await downloadReplyPdf(reply.id, access);
     return { id: reply.id, pdf };
 }
 
 export function startReturnedContractPolling() {
-    if (USE_MICROSOFT_MAIL && !graphMailConfigured()) {
-        console.log(
-            "USE_MICROSOFT_MAIL is on, but the Microsoft Graph token is not set.",
-        );
-        return;
-    }
     if (!USE_MICROSOFT_MAIL && !RESEND_INBOUND_ADDRESS) {
         console.log(
             "RESEND_INBOUND_ADDRESS is not set. Replies are still watched, but new contract mail has no Reply-To address.",
@@ -402,71 +412,6 @@ export function startReturnedContractPolling() {
     timer.unref();
 }
 
-async function createRemainingOnboardingTasks(
-    tx: Prisma.TransactionClient,
-    params: {
-        organizationId: string;
-        workerEngagementId: string;
-        actorUserId: string;
-    },
-) {
-    const alreadyChosen = await tx.issue.count({
-        where: {
-            workerEngagementId: params.workerEngagementId,
-            templateItemId: { not: null },
-        },
-    });
-    if (alreadyChosen > 0) return;
-
-    const templates = await tx.issueTemplate.findMany({
-        where: { organizationId: params.organizationId, isActive: true },
-        include: { items: { orderBy: { orderIndex: "asc" } } },
-        orderBy: { updatedAt: "desc" },
-    });
-    const template =
-        templates.find((candidate) =>
-            candidate.items.some((item) =>
-                isQuestionnaireOrContractTemplateTask(item.title),
-            ),
-        ) ?? templates[0];
-    if (!template) return;
-
-    const items = template.items.filter(
-        (item) => !isQuestionnaireOrContractTemplateTask(item.title),
-    );
-    for (const item of items) {
-        const issue = await tx.issue.create({
-            data: {
-                workerEngagementId: params.workerEngagementId,
-                createdByUserId: params.actorUserId,
-                assigneeUserId: item.defaultAssigneeUserId ?? undefined,
-                status: item.defaultStatus ?? "open",
-                title: item.title,
-                description: item.description ?? undefined,
-                priority: "no_priority",
-                templateItemId: item.id,
-                integrationProvider: item.integrationProvider,
-                sequence: item.sequence,
-                mailTemplateId: item.mailTemplateId,
-            },
-            select: { id: true },
-        });
-        await tx.issueAuditLog.create({
-            data: {
-                issueId: issue.id,
-                actorUserId: params.actorUserId,
-                action: "issue.created",
-                newValue: {
-                    title: item.title,
-                    status: item.defaultStatus ?? "open",
-                    assigneeUserId: item.defaultAssigneeUserId,
-                    templateItemId: item.id,
-                },
-            },
-        });
-    }
-}
-
 export async function confirmReturnedEmploymentContract(params: {
     organizationId: string;
     workerId: string;
@@ -486,7 +431,6 @@ export async function confirmReturnedEmploymentContract(params: {
             id: true,
             engagementId: true,
             confirmedAt: true,
-            engagement: { select: { status: true } },
         },
     });
     if (!contract) {
@@ -524,7 +468,7 @@ export async function confirmReturnedEmploymentContract(params: {
         const contractTasks = await tx.issue.findMany({
             where: {
                 workerEngagementId: contract.engagementId,
-                title: "Arbeitsvertrag",
+                title: { in: ["Arbeitsvertrag", "Arbeitsvertrag unterschrieben"] },
                 kind: "standard",
                 status: { not: "done" },
             },
@@ -542,17 +486,6 @@ export async function confirmReturnedEmploymentContract(params: {
                     oldValue: { status: contractTask.status },
                     newValue: { status: "done" },
                 },
-            });
-        }
-        await createRemainingOnboardingTasks(tx, {
-            organizationId: params.organizationId,
-            workerEngagementId: contract.engagementId,
-            actorUserId: params.actorUserId,
-        });
-        if (contract.engagement.status === "expected") {
-            await tx.workerEngagement.update({
-                where: { id: contract.engagementId },
-                data: { status: "in_progress" },
             });
         }
     });

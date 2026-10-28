@@ -17,6 +17,7 @@ jest.mock("@/constants/env", () => ({
 }));
 jest.mock("@/lib/prisma", () => ({
     prisma: {
+        user: { findUnique: jest.fn() },
         workerEngagement: { findFirst: jest.fn() },
         questionnaireSubmission: {
             create: jest.fn(),
@@ -29,6 +30,7 @@ jest.mock("@/lib/prisma", () => ({
         issue: {
             createMany: jest.fn(),
             create: jest.fn(),
+            findFirst: jest.fn(),
             updateMany: jest.fn(),
         },
         $transaction: jest.fn(),
@@ -52,7 +54,11 @@ jest.mock("@/services/questionnaireFiles.service", () => ({
     fileQuestionnaireAnswers: jest.fn(),
 }));
 
-it("runs send -> simulated reply -> worker and contract updates -> print task, and tolerates replay", async () => {
+it.each([true, false])("updates worker and contract without duplicating print tasks, including legacy engagements (existing task: %s)", async (existingTask) => {
+    jest.clearAllMocks();
+    (prisma.issue.findFirst as jest.Mock).mockResolvedValue(
+        existingTask ? { id: "print-task" } : null,
+    );
     const master = {
         id: "master",
         revision: 1,
@@ -62,6 +68,7 @@ it("runs send -> simulated reply -> worker and contract updates -> print task, a
             { type: "input", key: "contract.birthday", label: "Geburtsdatum" },
         ]),
     };
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue({ email: "hr@example.test" });
     const engagement: any = {
         id: "engagement",
         workerId: "worker",
@@ -160,14 +167,24 @@ it("runs send -> simulated reply -> worker and contract updates -> print task, a
             { key: "contract.birthday", value: "01.04.1990" },
         ]),
     });
-    expect(prisma.issue.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({
-            kind: "contract_send",
-            title: "Arbeitsvertrag drucken",
-        }),
-    });
+    if (existingTask) {
+        expect(prisma.issue.updateMany).toHaveBeenCalledWith({
+            where: { id: "print-task", status: "open" },
+            data: { status: "in_progress" },
+        });
+        expect(prisma.issue.create).not.toHaveBeenCalled();
+    } else {
+        expect(prisma.issue.create).toHaveBeenCalledWith({
+            data: expect.objectContaining({
+                kind: "contract_send",
+                title: "Arbeitsvertrag drucken",
+            }),
+        });
+    }
     await sendEngagementQuestionnaire(params);
-    expect(prisma.issue.create).toHaveBeenCalledTimes(1);
+    expect(prisma.issue.create).toHaveBeenCalledTimes(existingTask ? 0 : 1);
+    expect(prisma.issue.findFirst).toHaveBeenCalledTimes(1);
+    expect(prisma.issue.createMany).toHaveBeenCalledTimes(1);
     expect(prisma.employmentContract.create).toHaveBeenCalledTimes(1);
     expect(sendMail).not.toHaveBeenCalled();
 });

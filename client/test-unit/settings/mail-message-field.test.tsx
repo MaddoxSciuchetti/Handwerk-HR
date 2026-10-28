@@ -115,6 +115,48 @@ describe('mail message field', () => {
     expect(editor).not.toHaveTextContent('{{Vorname}}');
   });
 
+  it('moves an existing placeholder pill inside the message', () => {
+    function Harness() {
+      const [value, setValue] = useState('Hallo {{Vorname}} Team');
+      return (
+        <>
+          <label id="move-label" htmlFor="move-message">
+            Nachricht
+          </label>
+          <MailMessageField
+            id="move-message"
+            labelledBy="move-label"
+            value={value}
+            placeholders={['Vorname', 'Nachname']}
+            onChange={setValue}
+          />
+          <output data-testid="body">{value}</output>
+        </>
+      );
+    }
+
+    renderWithProviders(<Harness />);
+    const editor = screen.getByRole('textbox', { name: 'Nachricht' });
+    const pill = editor.querySelector(
+      '[data-mail-placeholder="Vorname"]'
+    ) as HTMLElement;
+    expect(pill).toBeTruthy();
+    expect(pill.draggable).toBe(true);
+
+    const dataTransfer = createDataTransfer();
+    dataTransfer.effectAllowed = 'move';
+    fireEvent.dragStart(pill, { dataTransfer });
+    expect(dataTransfer.getData(MAIL_PLACEHOLDER_DRAG)).toBe('Vorname');
+
+    // jsdom has no caretRangeFromPoint; a null drop range inserts at the end.
+    fireEvent.drop(editor, { dataTransfer });
+
+    expect(editor.querySelectorAll('[data-mail-placeholder="Vorname"]')).toHaveLength(
+      1
+    );
+    expect(screen.getByTestId('body')).toHaveTextContent('Hallo Team {{Vorname}}');
+  });
+
   it('hides the team hint and shows saved placeholders as pills', async () => {
     const user = userEvent.setup();
     renderWithProviders(<WelcomeMailForm page={page} />);

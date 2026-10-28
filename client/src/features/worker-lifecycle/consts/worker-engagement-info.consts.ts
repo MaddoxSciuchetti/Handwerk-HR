@@ -1,72 +1,159 @@
-import { formatDate } from '../utils/dateCalculation';
+import {
+  formatCompanyAnniversary,
+  nextCompanyAnniversary,
+} from '../utils/companyAnniversary';
+import { getWorkerIssueCount } from '../utils/workerHealth.utils';
+import { showsCompanyAnniversary } from '../utils/teamMembers';
 import type { WorkerDetailResponse } from '../types/index.types';
 
 export type WorkerEngagementInfoItem = {
   label: string;
   value: string;
+  editable?:
+    | 'email'
+    | 'firstName'
+    | 'lastName'
+    | 'birthday'
+    | 'street'
+    | 'postalCode'
+    | 'city'
+    | 'state'
+    | 'country'
+    | 'entryDate'
+    | 'exitDate'
+    | 'position'
+    | 'workwearSize'
+    | 'phase';
+  inputType?: 'text' | 'date';
+  required?: boolean;
+  maxLength?: number;
+  itemName?: 'Hose' | 'T-Shirt';
+  engagementId?: string;
 };
 
-const PHASE_LABELS: Record<string, string> = {
-  onboarding: 'Onboarding',
-  offboarding: 'Offboarding',
-  transfer: 'Transfer',
-};
-
-function displayText(value: string | null | undefined) {
-  const trimmed = value?.trim();
-  return trimmed ? trimmed : '—';
-}
-
-function displayDate(value: string | null) {
-  if (!value) return '—';
-  return formatDate(value);
-}
-
-function workwearSize(
-  worker: WorkerDetailResponse['data'],
-  itemName: string
-) {
-  return displayText(
-    worker.workwear?.find((item) => item.itemName === itemName)?.size
+function workwearSize(worker: WorkerDetailResponse['data'], itemName: string) {
+  return (
+    worker.workwear?.find((item) => item.itemName === itemName)?.size ?? ''
   );
 }
 
-function formatAddress(worker: WorkerDetailResponse['data']) {
-  const cityLine = [worker.postalCode, worker.city].filter(Boolean).join(' ');
-  const parts = [worker.street, cityLine, worker.state, worker.country].filter(
-    Boolean
-  );
-  return parts.length ? parts.join(', ') : '—';
+function dateValue(value: string | null) {
+  return value?.slice(0, 10) ?? '';
 }
 
 export function workerEngagementInfoItems(
   worker: WorkerDetailResponse['data']
 ): WorkerEngagementInfoItem[] {
   const engagement = worker.engagements[0];
-  const taskCount = worker.engagements.reduce(
-    (count, item) => count + (item.issues?.length ?? 0),
-    0
-  );
+  const taskCount = getWorkerIssueCount(worker);
 
-  return [
-    { label: 'Vorname', value: displayText(worker.firstName) },
-    { label: 'Nachname', value: displayText(worker.lastName) },
-    { label: 'E-Mail', value: displayText(worker.email) },
-    { label: 'Arbeits-E-Mail', value: displayText(worker.workEmail) },
-    { label: 'Microsoft-E-Mail', value: displayText(worker.microsoftEmail) },
-    { label: 'Geburtsdatum', value: displayDate(worker.birthday) },
-    { label: 'Adresse', value: formatAddress(worker) },
-    { label: 'Hosengröße', value: workwearSize(worker, 'Hose') },
-    { label: 'T-Shirt-Größe', value: workwearSize(worker, 'T-Shirt') },
-    { label: 'Eintrittsdatum', value: displayDate(worker.entryDate) },
-    { label: 'Position', value: displayText(worker.position) },
-    { label: 'Austrittsdatum', value: displayDate(worker.exitDate) },
+  const items: WorkerEngagementInfoItem[] = [
+    {
+      label: 'Vorname',
+      value: worker.firstName,
+      editable: 'firstName',
+      required: true,
+      maxLength: 120,
+    },
+    {
+      label: 'Nachname',
+      value: worker.lastName,
+      editable: 'lastName',
+      required: Boolean(worker.lastName.trim()),
+      maxLength: 120,
+    },
+    { label: 'E-Mail', value: worker.email ?? '', editable: 'email' },
+    {
+      label: 'Microsoft-E-Mail',
+      value: worker.microsoftEmail ?? '',
+    },
+    {
+      label: 'Geburtsdatum',
+      value: dateValue(worker.birthday),
+      editable: 'birthday',
+      inputType: 'date',
+    },
+    {
+      label: 'Straße und Hausnummer',
+      value: worker.street ?? '',
+      editable: 'street',
+      maxLength: 255,
+    },
+    {
+      label: 'Postleitzahl',
+      value: worker.postalCode ?? '',
+      editable: 'postalCode',
+      maxLength: 24,
+    },
+    {
+      label: 'Ort',
+      value: worker.city ?? '',
+      editable: 'city',
+      maxLength: 120,
+    },
+    {
+      label: 'Bundesland',
+      value: worker.state ?? '',
+      editable: 'state',
+      maxLength: 120,
+    },
+    {
+      label: 'Land (Ländercode)',
+      value: worker.country ?? '',
+      editable: 'country',
+      maxLength: 3,
+    },
+    {
+      label: 'Hosengröße',
+      value: workwearSize(worker, 'Hose'),
+      editable: 'workwearSize',
+      itemName: 'Hose',
+      maxLength: 32,
+    },
+    {
+      label: 'T-Shirt-Größe',
+      value: workwearSize(worker, 'T-Shirt'),
+      editable: 'workwearSize',
+      itemName: 'T-Shirt',
+      maxLength: 32,
+    },
+    {
+      label: 'Eintrittsdatum',
+      value: dateValue(worker.entryDate),
+      editable: 'entryDate',
+      inputType: 'date',
+    },
+  ];
+
+  if (showsCompanyAnniversary(worker)) {
+    items.push({
+      label: 'Firmenjubiläum',
+      value: formatCompanyAnniversary(nextCompanyAnniversary(worker.entryDate)),
+    });
+  }
+
+  items.push(
+    {
+      label: 'Position',
+      value: worker.position ?? '',
+      editable: 'position',
+      maxLength: 160,
+    },
+    {
+      label: 'Austrittsdatum',
+      value: dateValue(worker.exitDate),
+      editable: 'exitDate',
+      inputType: 'date',
+    },
     {
       label: 'Phase',
-      value: engagement
-        ? (PHASE_LABELS[engagement.type] ?? engagement.type)
-        : '—',
-    },
-    { label: 'Aufgaben', value: String(taskCount) },
-  ];
+      value: engagement ? engagement.type : '—',
+      editable: engagement ? 'phase' : undefined,
+      engagementId: engagement?.id,
+    }
+  );
+  if (engagement?.type !== 'transfer')
+    items.push({ label: 'Aufgaben', value: String(taskCount) });
+
+  return items;
 }

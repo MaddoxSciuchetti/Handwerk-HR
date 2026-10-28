@@ -53,12 +53,9 @@ export function useTaskSidebar() {
 
   const close = useCallback(() => setIsOpen(false), []);
 
-  const patchTaskEditState = useCallback(
-    (patch: Partial<TaskEditState>) => {
-      setTaskEditState((prev) => ({ ...prev, ...patch }));
-    },
-    []
-  );
+  const patchTaskEditState = useCallback((patch: Partial<TaskEditState>) => {
+    setTaskEditState((prev) => ({ ...prev, ...patch }));
+  }, []);
 
   const sidebarKey =
     taskState === 'edit'

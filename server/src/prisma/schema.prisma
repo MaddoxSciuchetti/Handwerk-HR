@@ -1,6 +1,6 @@
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["partialIndexes"]
+  previewFeatures = ["partialIndexes", "relationJoins"]
 }
 
 datasource db {
@@ -15,6 +15,10 @@ enum OrgMemberRole {
 
 
 model User {
+  microsoftConnections MicrosoftUserConnection[]
+  microsoftAuthAttempts MicrosoftAuthAttempt[]
+  microsoftConnectionEvents MicrosoftConnectionEvent[]
+  teamsSends TeamsSend[]
   id                     String               @id @default(uuid())
   firstName              String               @map("first_name") @db.VarChar(120)
   lastName               String               @map("last_name") @db.VarChar(120)
@@ -49,6 +53,7 @@ model User {
   subscriptionAuditLogs  SubscriptionAuditLog[]
   confirmedEmploymentContracts EmploymentContract[] @relation("EmploymentContractConfirmedBy")
   orgChatMessages        OrgChatMessage[]
+  issueMentions          IssueMention[]
 
   @@map("users")
 }
@@ -88,6 +93,10 @@ model NewVerificationCode {
 
 
 model Organization {
+  microsoftConnections MicrosoftUserConnection[]
+  microsoftAuthAttempts MicrosoftAuthAttempt[]
+  microsoftConnectionEvents MicrosoftConnectionEvent[]
+  teamsSends TeamsSend[]
   id              String                 @id @default(uuid())
   createdByUserId String?                @map("created_by_user_id")
   name            String                @db.VarChar(255)
@@ -115,6 +124,7 @@ model Organization {
   subscription    Subscription?
   absences        Absence[]
   documentMasters DocumentMaster[]
+  descriptionSentences DescriptionSentence[]
   questionnaire   Questionnaire?
   welcomeMailSettings       WelcomeMailSettings?
   departureMailSettings     DepartureMailSettings?
@@ -179,6 +189,7 @@ model WorkerEngagement {
   mailForwarding           MailForwarding?
   clothing                 EngagementClothing[]
   mailRecipients           EngagementMailRecipient[]
+  templateApplication      TemplateApplication?
 
   @@index([workerId])
   @@index([organizationId])
@@ -208,12 +219,13 @@ model Invitation {
 
 
 model Worker {
+  hiddenPersonnelFolders String[] @default([]) @map("hidden_personnel_folders")
   id               String             @id @default(uuid())
   organizationId   String             @map("organization_id")
   createdByUserId  String             @map("created_by_user_id")
   firstName        String             @map("first_name") @db.VarChar(120)
   lastName         String             @map("last_name") @db.VarChar(120)
-  email            String             @db.VarChar(254)
+  email            String?            @db.VarChar(254)
   microsoftEmail   String?            @map("microsoft_email") @db.VarChar(254)
   workEmail        String?            @map("work_email") @db.VarChar(254)
   welcomeMailSentAt   DateTime?        @map("welcome_mail_sent_at") @db.Timestamptz()
@@ -281,6 +293,23 @@ model IssueTemplate {
   @@map("issue_templates")
 }
 
+model TemplateApplication {
+  id                 String @id @default(uuid())
+  workerEngagementId String @unique @map("worker_engagement_id")
+  templateId         String @map("template_id")
+  actorUserId        String @map("actor_user_id")
+  idempotencyKey     String @map("idempotency_key")
+  runAutomation      Boolean @default(false) @map("run_automation")
+  issueIds           String[] @map("issue_ids")
+  outcomes           Json @default("[]")
+  completedAt        DateTime? @map("completed_at") @db.Timestamptz()
+  resultsDismissedAt DateTime? @map("results_dismissed_at") @db.Timestamptz()
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  engagement         WorkerEngagement @relation(fields: [workerEngagementId], references: [id], onDelete: Cascade)
+
+  @@map("template_applications")
+}
+
 model TemplateItem {
   id                      String             @id @default(uuid())
   issueTemplateId         String             @map("issue_template_id")
@@ -309,6 +338,7 @@ model TemplateItem {
 
 
 model Issue {
+  teamsSend TeamsSend?
   id                 String             @id @default(uuid())
   workerEngagementId String?            @map("worker_engagement_id")
   organizationId     String?            @map("organization_id")
@@ -321,6 +351,8 @@ model Issue {
   integrationProvider IntegrationProvider? @map("integration_provider")
   sequence           IntegrationSequence? @map("sequence")
   mailTemplateId     String?            @map("mail_template_id")
+  automationRecipients Json? @map("automation_recipients")
+
   microsoftAccountId String?            @map("microsoft_account_id") @db.VarChar(36)
   mailSenderAddress  String?            @map("mail_sender_address") @db.VarChar(254)
   isTemporary        Boolean            @default(false) @map("is_temporary")
@@ -342,6 +374,7 @@ model Issue {
   mailTemplate       MailTemplate?      @relation(fields: [mailTemplateId], references: [id], onDelete: SetNull)
   comments           Comment[]
   auditLogs          IssueAuditLog[]
+  mentions           IssueMention[]
 
   @@index([workerEngagementId])
   @@index([organizationId])
@@ -363,6 +396,21 @@ model OrgChatMessage {
 
   @@index([organizationId, createdAt])
   @@map("org_chat_messages")
+}
+
+model IssueMention {
+  id        String    @id @default(uuid())
+  issueId   String    @map("issue_id")
+  userId    String    @map("user_id")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  seenAt    DateTime? @map("seen_at") @db.Timestamptz()
+
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([issueId, userId])
+  @@index([userId, seenAt])
+  @@map("issue_mentions")
 }
 
 model IssueAuditLog {
@@ -520,6 +568,7 @@ model EmploymentContract {
   conversationId    String?                  @unique @map("conversation_id") @db.VarChar(512)
   sentAt                DateTime?                @map("sent_at") @db.Timestamptz()
   matchedMasterRevision Int?                     @map("matched_master_revision")
+  matchedQuestionnaireRevision Int @default(0) @map("matched_questionnaire_revision")
   confirmedAt           DateTime?                @map("confirmed_at") @db.Timestamptz()
   confirmedByUserId     String?                  @map("confirmed_by_user_id")
   createdAt         DateTime                 @default(now()) @map("created_at") @db.Timestamptz()
@@ -655,6 +704,7 @@ model QuestionnaireQuestion {
 }
 
 model QuestionnaireSubmission {
+  revision Int @default(0)
   id           String                        @id @default(uuid())
   engagementId String                        @unique @map("engagement_id")
   token          String                        @unique @db.VarChar(64)
@@ -665,9 +715,23 @@ model QuestionnaireSubmission {
   updatedAt    DateTime                      @updatedAt @map("updated_at") @db.Timestamptz()
 
   engagement WorkerEngagement      @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+  changes    QuestionnaireChange[]
   answers    QuestionnaireAnswer[]
 
   @@map("questionnaire_submissions")
+}
+
+model QuestionnaireChange {
+  id String @id @default(uuid())
+  submissionId String @map("submission_id")
+  revision Int
+  changedByUserId String @map("changed_by_user_id")
+  changes Json
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  submission QuestionnaireSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@unique([submissionId, revision])
+  @@map("questionnaire_changes")
 }
 
 model QuestionnaireAnswer {
@@ -1065,8 +1129,11 @@ enum IntegrationSequence {
   microsoft_send_onboarding_email
   microsoft_send_offboarding_email
   microsoft_send_email
+  microsoft_send_teams_message
   microsoft_deactivate_account
   crewmeister_create_account
+  crewmeister_deactivate_account
+  crewmeister_delete_membership
 }
 
 enum EngagementMailRecipientKind {
@@ -1089,10 +1156,12 @@ enum ExternalAccountStatus {
 }
 
 enum IssueStatus {
+  error
   open
   in_progress
   done
   cancelled
+  not_applicable
 }
 
 enum IssueKind {
@@ -1126,4 +1195,107 @@ enum InvoiceStatus {
   paid
   void
   uncollectible
+}
+
+model DescriptionSentence {
+  id             String @id @default(uuid())
+  organizationId String @map("organization_id")
+  sentence       String @db.VarChar(500)
+  normalized     String @db.VarChar(500)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, normalized])
+  @@map("description_sentences")
+}
+
+
+model MicrosoftUserConnection {
+  id String @id @default(uuid())
+  organizationId String @map("organization_id")
+  userId String @map("user_id")
+  tenantId String @map("tenant_id")
+  clientId String @map("client_id")
+  homeAccountId String @map("home_account_id")
+  microsoftUserId String @map("microsoft_user_id")
+  displayName String @map("display_name")
+  username String
+  scopes String[]
+  cacheCiphertext String @map("cache_ciphertext") @db.Text
+  reconnectRequired Boolean @default(false) @map("reconnect_required")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([organizationId, userId])
+  @@map("microsoft_user_connections")
+}
+
+model MicrosoftAuthAttempt {
+  id String @id
+  organizationId String @map("organization_id")
+  userId String @map("user_id")
+  tenantId String @map("tenant_id")
+  clientId String @map("client_id")
+  consumedAt DateTime? @map("consumed_at") @db.Timestamptz()
+  browserHash String @map("browser_hash")
+  verifierCiphertext String @map("verifier_ciphertext") @db.Text
+  nonce String
+  expiresAt DateTime @map("expires_at") @db.Timestamptz()
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([expiresAt])
+  @@map("microsoft_auth_attempts")
+}
+
+model MicrosoftConnectionEvent {
+  id String @id @default(uuid())
+  organizationId String @map("organization_id")
+  userId String @map("user_id")
+  action String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([organizationId, userId])
+  @@map("microsoft_connection_events")
+}
+
+model TeamsSend {
+  id String @id @default(uuid())
+  issueId String @unique @map("issue_id")
+  organizationId String @map("organization_id")
+  actorUserId String @map("actor_user_id")
+  idempotencyKey String @unique @map("idempotency_key")
+  microsoftUserId String @map("microsoft_user_id")
+  tenantId String @map("tenant_id")
+  senderName String @map("sender_name")
+  body String @db.Text
+  status String @default("pending")
+  leaseUntil DateTime? @map("lease_until") @db.Timestamptz()
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  actor User @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
+  destinations TeamsSendDestination[]
+  @@map("teams_sends")
+}
+
+model TeamsSendDestination {
+  id String @id @default(uuid())
+  sendId String @map("send_id")
+  teamId String @map("team_id")
+  channelId String @map("channel_id")
+  label String
+  status String @default("pending")
+  graphMessageId String? @map("graph_message_id")
+  messageUrl String? @map("message_url")
+  error String?
+  retryAfter DateTime? @map("retry_after") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+  send TeamsSend @relation(fields: [sendId], references: [id], onDelete: Cascade)
+  @@unique([sendId, teamId, channelId])
+  @@map("teams_send_destinations")
 }

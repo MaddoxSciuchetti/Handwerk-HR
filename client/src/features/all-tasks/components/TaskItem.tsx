@@ -1,8 +1,7 @@
-import { Button } from '@/components/ui/button';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import { Headset } from 'lucide-react';
-import type { Dispatch, MouseEvent, SetStateAction } from 'react';
+import type { Dispatch, KeyboardEvent, MouseEvent, SetStateAction } from 'react';
 import {
   storedTaskAutomation,
   TASK_AUTOMATION_NONE,
@@ -13,7 +12,7 @@ import { getAssigneeLabel } from '../utilts/assignee.utils';
 import formatDateDe from '../utilts/date.utils';
 import { PriorityIndicator } from '../utilts/priority.utils';
 import { PillBadge } from './ui/PillBadge';
-import { SquareCheckIcon, SquareDashedIcon } from './ui/SelectIcons';
+import { RowSelectButton } from './ui/RowSelectButton';
 import { TaskStatusPicker } from './ui/TaskStatusPicker';
 
 type TaskItemProps = {
@@ -44,7 +43,15 @@ export function TaskItem({
   const isContractActionTask =
     isConfirmationTask || task.kind === 'contract_send';
 
-  const openInEditMode = () => {
+  const openTask = () => {
+    if (task.kind === 'contract_send') {
+      onOpenContractSend?.(task);
+      return;
+    }
+    if (task.kind === 'contract_confirm') {
+      onOpenContractConfirm?.(task);
+      return;
+    }
     onOpenEdit({
       taskId: task.id,
       title: task.title,
@@ -60,6 +67,13 @@ export function TaskItem({
     });
   };
 
+  const openFromKeyboard = (event: KeyboardEvent<HTMLTableRowElement>) => {
+    if (event.target !== event.currentTarget) return;
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    openTask();
+  };
+
   const toggleSelection = (e: MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
@@ -71,14 +85,16 @@ export function TaskItem({
     );
   };
 
-  const SelectionIcon = isSelected ? SquareCheckIcon : SquareDashedIcon;
-
   return (
     <TableRow
       data-automation-task={isAutomationTask || undefined}
       data-confirmation-task={isConfirmationTask || undefined}
+      tabIndex={0}
+      aria-label={`${task.title} öffnen`}
+      onClick={openTask}
+      onKeyDown={openFromKeyboard}
       className={cn(
-        'group relative border-0 hover:bg-transparent has-aria-expanded:bg-transparent',
+        'group relative cursor-pointer border-0 hover:bg-transparent has-aria-expanded:bg-transparent',
         isAutomationTask && !isContractActionTask && 'automation-task-row'
       )}
     >
@@ -90,23 +106,10 @@ export function TaskItem({
           isSelected && 'bg-muted/50'
         )}
       >
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-xs"
-          aria-pressed={isSelected}
-          aria-label={isSelected ? 'Auswahl entfernen' : 'Auswählen'}
-          onClick={toggleSelection}
-          className={cn(
-            'absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-2xl',
-            isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-          )}
-        >
-          <SelectionIcon className="size-4" />
-        </Button>
-        <div className="relative z-10 flex min-w-0 items-center gap-2.5">
+        <RowSelectButton isSelected={isSelected} onClick={toggleSelection} />
+        <div className="relative z-10 flex min-w-0 items-center gap-2.5 pl-2">
           <TaskStatusPicker taskId={task.id} status={task.status} />
-          {task.hasMention ? (
+          {task.mentioned ? (
             <span
               className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground"
               aria-label="1 Erwähnung"
@@ -133,33 +136,6 @@ export function TaskItem({
             </span>
           ) : null}
         </div>
-      </TableCell>
-      <TableCell
-        className={cn(
-          'w-px transition-colors',
-          'group-hover:bg-muted/50',
-          isSelected && 'bg-muted/50'
-        )}
-      >
-        <Button
-          type="button"
-          variant="outline"
-          size="xs"
-          className="shrink-0 rounded-2xl"
-          onClick={() => {
-            if (task.kind === 'contract_send' && task.status !== 'done') {
-              onOpenContractSend?.(task);
-              return;
-            }
-            if (task.kind === 'contract_confirm') {
-              onOpenContractConfirm?.(task);
-              return;
-            }
-            openInEditMode();
-          }}
-        >
-          Bearbeiten
-        </Button>
       </TableCell>
       <TableCell
         className={cn(

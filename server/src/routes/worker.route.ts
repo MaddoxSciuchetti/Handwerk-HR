@@ -19,7 +19,9 @@ worker.get(
 );
 
 worker.post("/", workerController.createWorker);
+worker.post("/bulk-delete", workerController.deleteWorkers);
 worker.post("/fast-track", workerController.startExpectedOnboarding);
+worker.get("/questionnaire-senders", workerController.getQuestionnaireSenders);
 worker.get(
     "/engagements/:engagementId/questionnaire",
     workerController.getEngagementQuestionnaire,
@@ -45,6 +47,10 @@ worker.post("/:workerId/engagements", workerController.createEngagement);
 worker.get(
     "/:workerId/engagements/:engagementId/questionnaire/completed",
     workerController.getCompletedEngagementQuestionnaire,
+);
+worker.put(
+    "/:workerId/engagements/:engagementId/questionnaire/completed",
+    workerController.saveCompletedEngagementQuestionnaire,
 );
 worker.post(
     "/:workerId/engagements/:engagementId/questionnaire/files",
@@ -99,10 +105,6 @@ worker.post(
     engagementTemplateDocumentController.printEngagementTemplateDocument,
 );
 worker.post(
-    "/:workerId/engagements/:engagementId/contract/send",
-    workerController.sendFilledEmploymentContract,
-);
-worker.post(
     "/:workerId/engagements/:engagementId/contract/confirm-return",
     workerController.confirmReturnedEmploymentContractHandler,
 );
@@ -149,6 +151,14 @@ worker.post(
     "/:workerId/engagements/:engagementId/personnel-folders",
     personnelDocumentController.createPersonnelFolder,
 );
+worker.delete(
+    "/:workerId/personnel-folders/:folderId",
+    personnelDocumentController.deletePersonnelFolder,
+);
+worker.patch(
+    "/:workerId/personnel-documents/:documentId/location",
+    personnelDocumentController.movePersonnelDocument,
+);
 worker.post(
     "/:workerId/engagements/:engagementId/personnel-documents",
     upload.single("file"),
@@ -180,6 +190,9 @@ worker.post("/:workerId/issues", workerController.createIssue);
 worker.put("/:workerId/issues/:issueId", workerController.updateIssue);
 worker.delete("/:workerId/issues/:issueId", workerController.deleteIssue);
 
+worker.get("/:workerId/template-application", workerController.getTemplateApplication);
+worker.post("/:workerId/template-application/dismiss", workerController.dismissTemplateApplication);
+worker.get("/:workerId/templates/:templateId/preview", workerController.previewIssueTemplate);
 worker.post(
     "/:workerId/templates/:templateId/apply",
     workerController.applyIssueTemplate,

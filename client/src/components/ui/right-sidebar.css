@@ -1,14 +1,15 @@
+.right-sidebar {
+  width: min(32rem, calc(100vw - 0.5rem));
+  transform: translateX(calc(100% + 0.25rem));
+}
+
 .right-sidebar[data-state='open'] {
+  transform: translateX(0);
   animation: right-sidebar-in 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .right-sidebar[data-state='closed'] {
   animation: right-sidebar-out 180ms ease-in both;
-}
-
-.right-sidebar[aria-hidden='true'] {
-  visibility: hidden;
-  transition: visibility 0s 180ms;
 }
 
 @keyframes right-sidebar-in {

@@ -42,7 +42,7 @@ it.each([false, true])(
     expect(dropSpot).toHaveClass('outline-blue-400');
     const dataTransfer = transfer();
     expect(fireEvent.dragOver(field, { dataTransfer })).toBe(false);
-    expect(dataTransfer.dropEffect).toBe('copy');
+    expect(dataTransfer.dropEffect).toBe('move');
     expect(dropSpot).toHaveClass('outline-emerald-600');
     fireEvent.dragOver(screen.getByText('Outside the fields'), {
       dataTransfer,
@@ -82,7 +82,7 @@ it.each([false, true])(
     expect(onValueChange).not.toHaveBeenCalled();
   }
 );
-it('keeps the preview at the source size and grab position, and clears on cancel', () => {
+it('uses a blank native image and clears the opaque preview on cancel', () => {
   render(
     <UnmatchedQuestionnaireAnswers
       answers={[{ key: 'name', label: 'Name', value: 'Ada' }]}
@@ -106,9 +106,9 @@ it('keeps the preview at the source size and grab position, and clears on cancel
   Object.defineProperty(event, 'dataTransfer', { value: dataTransfer });
   fireEvent(source, event);
   const [preview, x, y] = dataTransfer.setDragImage.mock.calls[0];
-  expect(preview.style.width).toBe('240px');
-  expect(preview.style.height).toBe('58px');
-  expect([x, y]).toEqual([20, 15]);
+  expect(preview.style.width).toBe('1px');
+  expect(preview.style.height).toBe('1px');
+  expect([x, y]).toEqual([0, 0]);
   fireEvent.dragEnd(source);
   expect(getDraggedQuestionnaireAnswer()).toBeNull();
 });

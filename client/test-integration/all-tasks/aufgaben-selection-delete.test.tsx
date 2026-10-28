@@ -1,6 +1,7 @@
 import Tasks from '@/features/all-tasks/components/Tasks';
 import type { IssueResponse } from '@/features/all-tasks/types/index.types';
 import queryClient from '@/config/query.client';
+import { FETCHDESCRIPTION } from '@/features/all-tasks/consts/query.consts';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithAppQueryClient } from 'test-unit/test-utils';
@@ -72,18 +73,79 @@ describe('Aufgaben (all tasks) — row selection & bulk delete', () => {
     vi.clearAllMocks();
   });
 
-  it('uses opacity + group-hover classes so the checkbox is hidden until row hover (CSS in real browsers)', async () => {
+  it('keeps the handyman automation bar off the list when a saved run is cached', async () => {
+    const task = taskStore.remaining[0];
+    task.title = 'Arbeitsvertrag unterschrieben';
+    task.status = 'done';
+    task.workerEngagement = {
+      workerId: 'worker-1',
+      worker: { firstName: 'Ada', lastName: 'Lovelace' },
+      templateApplication: {
+        id: 'application-1',
+        completedAt: '2026-10-24T08:00:00.000Z',
+        resultsDismissedAt: null,
+      },
+    };
+    queryClient.setQueryData(
+      ['template-application-result', 'worker-1', task.workerEngagementId],
+      {
+        target: {
+          workerId: 'worker-1',
+          engagementId: task.workerEngagementId,
+          label: 'Ada Lovelace',
+        },
+        templateName: 'Onboarding',
+        result: { count: 1, issueIds: [task.id], outcomes: [], running: false },
+      }
+    );
+
+    renderWithAppQueryClient(<Tasks />);
+
+    await screen.findByText('Arbeitsvertrag unterschrieben');
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Ausgeführte Aufgaben anzeigen' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Template wählen' })
+    ).not.toBeInTheDocument();
+  });
+
+  it('keeps the row checkbox visible and selects every task from the column header', async () => {
+    const user = userEvent.setup();
     renderWithAppQueryClient(<Tasks />);
 
     await screen.findByText('Alpha Aufgabe');
 
     const row = getTaskRowByTitle('Alpha Aufgabe');
-    const selectBtn = within(row).getByRole('button', {
+    const selectControl = within(row).getByRole('checkbox', {
       name: /Auswählen/i,
     });
+    const selectSlot = selectControl.parentElement;
 
-    expect(selectBtn.classList.contains('opacity-0')).toBe(true);
-    expect(selectBtn.className).toMatch(/group-hover:opacity-100/);
+    expect(selectSlot).not.toHaveClass('opacity-0');
+    expect(selectSlot?.className).toMatch(/inset-y-0/);
+    expect(selectSlot?.className).toMatch(/\bw-10\b/);
+
+    await user.click(
+      screen.getByRole('checkbox', { name: 'Alle Aufgaben auswählen' })
+    );
+    expect(await screen.findByText(/2 ausgewählt/i)).toBeInTheDocument();
+    expect(
+      within(getTaskRowByTitle('Alpha Aufgabe')).getByRole('checkbox', {
+        name: /Auswahl entfernen/i,
+      })
+    ).toBeChecked();
+    expect(
+      within(getTaskRowByTitle('Beta Aufgabe')).getByRole('checkbox', {
+        name: /Auswahl entfernen/i,
+      })
+    ).toBeChecked();
+
+    await user.click(
+      screen.getByRole('checkbox', { name: 'Alle Aufgaben abwählen' })
+    );
+    expect(screen.queryByText(/ausgewählt/i)).not.toBeInTheDocument();
   });
 
   it('does not outline integration sequences with the automation line', async () => {
@@ -111,7 +173,7 @@ describe('Aufgaben (all tasks) — row selection & bulk delete', () => {
     );
   });
 
-  it('places confirmation tasks before the normal task list', async () => {
+  it('keeps task positions after edits and completion, including confirmation tasks', async () => {
     taskStore.remaining[1].kind = 'contract_confirm';
     renderWithAppQueryClient(<Tasks />);
 
@@ -124,8 +186,31 @@ describe('Aufgaben (all tasks) — row selection & bulk delete', () => {
         ?.querySelectorAll('tr') ?? []
     );
     expect(rows.map((row) => row.textContent)).toEqual([
-      expect.stringContaining('Beta Aufgabe'),
       expect.stringContaining('Alpha Aufgabe'),
+      expect.stringContaining('Beta Aufgabe'),
+    ]);
+
+    taskStore.remaining = taskStore.remaining.map((task, index) =>
+      index === 0
+        ? {
+            ...task,
+            title: 'Edited Aufgabe',
+            status: 'done',
+            updatedAt: '2026-10-27T12:00:00.000Z',
+          }
+        : task
+    );
+    await queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] });
+    await screen.findByText('Edited Aufgabe');
+    const updatedRows = Array.from(
+      screen
+        .getByText('Edited Aufgabe')
+        .closest('tbody')
+        ?.querySelectorAll('tr') ?? []
+    );
+    expect(updatedRows.map((row) => row.textContent)).toEqual([
+      expect.stringContaining('Edited Aufgabe'),
+      expect.stringContaining('Beta Aufgabe'),
     ]);
   });
 
@@ -136,14 +221,18 @@ describe('Aufgaben (all tasks) — row selection & bulk delete', () => {
     await screen.findByText('Alpha Aufgabe');
 
     const row = getTaskRowByTitle('Alpha Aufgabe');
-    const selectBtn = within(row).getByRole('button', {
+    const selectControl = within(row).getByRole('checkbox', {
       name: /Auswählen/i,
     });
 
-    await user.click(selectBtn);
+    await user.click(selectControl);
 
-    expect(selectBtn).toHaveAttribute('aria-pressed', 'true');
-    expect(selectBtn.classList.contains('opacity-100')).toBe(true);
+    const selected = within(getTaskRowByTitle('Alpha Aufgabe')).getByRole(
+      'checkbox',
+      { name: /Auswahl entfernen/i }
+    );
+    expect(selected).toBeChecked();
+    expect(selected.parentElement).not.toHaveClass('opacity-0');
   });
 
   it('opens the bottom bar after selecting a row, deletes via the bar, and removes the task from the list', async () => {
@@ -154,7 +243,7 @@ describe('Aufgaben (all tasks) — row selection & bulk delete', () => {
     await screen.findByText('Beta Aufgabe');
 
     const alphaRow = getTaskRowByTitle('Alpha Aufgabe');
-    const selectAlpha = within(alphaRow).getByRole('button', {
+    const selectAlpha = within(alphaRow).getByRole('checkbox', {
       name: /Auswählen/i,
     });
 

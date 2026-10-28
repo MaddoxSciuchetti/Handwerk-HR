@@ -1,3 +1,4 @@
+import { TableSelectAllCheckbox } from '@/components/ui/table-select-all-checkbox';
 import { TableSkeletonRows } from '@/components/ui/table-skeleton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,7 +25,6 @@ import {
 } from 'react';
 import { useFetchTasks } from '../hooks/useFetchTasks';
 import { useTaskSidebar } from '../hooks/useTaskSidebar';
-import { confirmationTasksFirst } from '../utilts/task-order.utils';
 import { LargeEditMode } from './LargeEditMode';
 import { ContractConfirmDialog } from '@/features/worker-task-management/components/files/ContractConfirmDialog';
 import { ContractSendDialog } from '@/features/worker-task-management/components/files/ContractSendDialog';
@@ -32,8 +32,6 @@ import { ArbeitszeugnisSendDialog } from '@/features/worker-task-management/comp
 import { TaskItem } from './TaskItem';
 import { TaskSidebar } from './TaskSidebar';
 import { Segment, TaskSegmentToggle } from './ui/taskHeader';
-import { engagementsAwaitingTemplate } from '@/features/worker-task-management/pendingTemplate';
-import { TemplateApplyPrompt } from '@/features/worker-task-management/components/tasks/TemplateApplyPrompt';
 
 function Tasks() {
   const { user } = useAuth();
@@ -46,10 +44,10 @@ function Tasks() {
       segment === 'left'
         ? (data ?? [])
         : (data?.filter(
-            (task) => task.assigneeUserId === user?.id || task.hasMention
+            (task) => task.assigneeUserId === user?.id || task.mentioned
           ) ?? []);
 
-    return confirmationTasksFirst(visibleTasks);
+    return visibleTasks;
   }, [data, segment, user?.id]);
 
   const [contractSend, setContractSend] = useState<{
@@ -94,8 +92,22 @@ function Tasks() {
       return next;
     });
   };
-
-  const templateTargets = engagementsAwaitingTemplate(filteredTasks);
+  const selectVisibleTasks = (checked: boolean) => {
+    const visibleIds = new Set(filteredTasks.map((task) => task.id));
+    handleSetEditModeData((previous) => {
+      const remaining = previous.filter(
+        (item) => !visibleIds.has(item.taskNumber)
+      );
+      if (!checked) return remaining;
+      return [
+        ...remaining,
+        ...filteredTasks.map((task) => ({
+          taskNumber: task.id,
+          taskTitle: task.title,
+        })),
+      ];
+    });
+  };
 
   return (
     <div className="mx-auto flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
@@ -103,6 +115,13 @@ function Tasks() {
         <TaskSidebar
           key={sidebarKey}
           {...sidebarProps}
+          taskEditState={{
+            ...sidebarProps.taskEditState,
+            status:
+              data?.find(
+                (task) => task.id === sidebarProps.taskEditState.taskId
+              )?.status ?? sidebarProps.taskEditState.status,
+          }}
           onOpenArbeitszeugnis={setZeugnisIssueId}
         />
         {contractSend ? (
@@ -150,10 +169,21 @@ function Tasks() {
               <Table aria-busy={isLoading}>
                 <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-0">
                   <TableRow className="border-0 hover:bg-transparent">
-                    <TableHead className="w-px h-12 bg-card py-3 pl-10 pr-2">
+                    <TableHead className="relative h-12 w-px bg-card py-3 pl-12 pr-2">
+                      <div className="absolute inset-y-0 left-0 flex w-10 items-center justify-center">
+                        <TableSelectAllCheckbox
+                          ids={filteredTasks.map((task) => task.id)}
+                          selectedIds={editModeData.map(
+                            (item) => item.taskNumber
+                          )}
+                          disabled={isLoading}
+                          selectLabel="Alle Aufgaben auswählen"
+                          clearLabel="Alle Aufgaben abwählen"
+                          onCheckedChange={selectVisibleTasks}
+                        />
+                      </div>
                       Titel
                     </TableHead>
-                    <TableHead className="w-px bg-card py-3 px-2" />
                     <TableHead className="bg-card py-3 px-2 text-right">
                       Beschreibung
                     </TableHead>
@@ -205,8 +235,6 @@ function Tasks() {
             setLargeEditMode={setLargeEditMode}
             setEditModeData={handleSetEditModeData}
           />
-        ) : templateTargets.length > 0 ? (
-          <TemplateApplyPrompt targets={templateTargets} />
         ) : null}
       </div>
     </div>

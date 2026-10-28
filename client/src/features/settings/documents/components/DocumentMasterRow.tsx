@@ -1,10 +1,5 @@
-import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { TableCell, TableRow } from '@/components/ui/table';
-import {
-  SquareCheckIcon,
-  SquareDashedIcon,
-} from '@/features/all-tasks/components/ui/SelectIcons';
-import { cn } from '@/lib/utils';
 import { useNavigate } from '@tanstack/react-router';
 import type { MouseEvent } from 'react';
 import { documentKindLabel } from '../documentMaster.types';
@@ -23,7 +18,6 @@ export function DocumentMasterRow({
   onToggle,
 }: DocumentMasterRowProps) {
   const navigate = useNavigate();
-  const SelectionIcon = isSelected ? SquareCheckIcon : SquareDashedIcon;
 
   const toggle = (event: MouseEvent) => {
     event.stopPropagation();
@@ -43,26 +37,18 @@ export function DocumentMasterRow({
       }
     >
       <TableCell className="w-10 !p-0" onClick={toggle}>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-xs"
-          aria-pressed={isSelected}
-          aria-label={
-            isSelected
-              ? `${master.name} aus der Auswahl entfernen`
-              : `${master.name} auswählen`
-          }
-          onClick={toggle}
-          className={cn(
-            'h-full min-h-12 w-10 border-0 bg-transparent shadow-none hover:bg-transparent focus-visible:border-transparent focus-visible:ring-0 dark:hover:bg-transparent',
-            isSelected
-              ? 'opacity-100'
-              : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100'
-          )}
-        >
-          <SelectionIcon className="size-4" />
-        </Button>
+        <div className="flex h-full min-h-12 w-10 items-center justify-center">
+          <Checkbox
+            checked={isSelected}
+            aria-label={
+              isSelected
+                ? `${master.name} aus der Auswahl entfernen`
+                : `${master.name} auswählen`
+            }
+            onClick={toggle}
+            className="relative cursor-pointer after:absolute after:-inset-3 after:content-['']"
+          />
+        </div>
       </TableCell>
       <TableCell>
         <div className="flex min-w-0 items-center gap-2">

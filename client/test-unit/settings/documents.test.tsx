@@ -98,6 +98,15 @@ describe('document settings', () => {
     expect(
       await screen.findByRole('option', { name: '„Abmahnung“ hinzufügen' })
     ).toBeInTheDocument();
+    await user.click(
+      screen.getByRole('option', { name: '„Abmahnung“ hinzufügen' })
+    );
+    expect(typeSelect).toHaveValue('Abmahnung');
+
+    await user.click(typeSelect);
+    expect(
+      await screen.findByRole('option', { name: 'Abmahnung' })
+    ).toBeInTheDocument();
   });
 
   it('creates one template per uploaded file and keeps each chosen type', async () => {
@@ -164,6 +173,7 @@ describe('document settings', () => {
         ]}
         selectedIds={[]}
         onToggle={() => undefined}
+        onSelectAll={() => undefined}
         emptyLabel="Noch keine Vorlagen."
       />
     );
@@ -186,7 +196,7 @@ describe('document settings', () => {
     renderWithProviders(<DocumentsPage />);
 
     await user.click(
-      await screen.findByRole('button', { name: 'Qualifiziertes Zeugnis auswählen' })
+      await screen.findByRole('checkbox', { name: 'Qualifiziertes Zeugnis auswählen' })
     );
     await user.click(
       screen.getByRole('button', { name: 'Ausgewählte Dokumente löschen' })
@@ -224,7 +234,7 @@ describe('document settings', () => {
     );
     const view = renderWithProviders(<DocumentsPage />);
     await user.click(
-      await screen.findByRole('button', { name: 'Alte Vorlage auswählen' })
+      await screen.findByRole('checkbox', { name: 'Alte Vorlage auswählen' })
     );
     await user.click(
       screen.getByRole('button', { name: 'Ausgewählte Dokumente löschen' })
@@ -285,7 +295,7 @@ describe('document settings', () => {
     expect(screen.queryByRole('button', { name: /löschen$/ })).not.toBeInTheDocument();
 
     await user.click(
-      screen.getByRole('button', { name: 'Saisonvertrag auswählen' })
+      screen.getByRole('checkbox', { name: 'Saisonvertrag auswählen' })
     );
     await user.click(screen.getByRole('button', { name: 'Als Hauptvertrag' }));
 

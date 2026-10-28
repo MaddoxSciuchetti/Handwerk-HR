@@ -7,6 +7,14 @@ import {
   type OrganizationIntegration,
 } from '@/features/settings/integrations/integrations.api';
 
+const auth = vi.hoisted(() => ({ user: { membershipRole: 'admin' } }));
+vi.mock('@/features/user-profile/hooks/useAuth', () => ({
+  default: () => auth,
+}));
+vi.mock('@/features/microsoft-teams/TeamsConnectionCard', () => ({
+  TeamsConnectionCard: () => <h2>Microsoft Teams</h2>,
+}));
+
 vi.mock('@/features/settings/integrations/integrations.api', () => ({
   getIntegrations: vi.fn(),
   saveIntegration: vi.fn(),
@@ -45,7 +53,7 @@ it('keeps the integrations heading while loading rows, then reveals the settings
   await screen.findAllByRole('switch');
   expect(screen.queryByRole('status')).not.toBeInTheDocument();
   expect(
-    screen.getByRole('heading', { name: 'Microsoft' })
+    screen.getByRole('heading', { name: 'Microsoft 365' })
   ).toBeInTheDocument();
   expect(
     screen.getByRole('heading', { name: 'Crewmeister' })
@@ -54,4 +62,18 @@ it('keeps the integrations heading while loading rows, then reveals the settings
   expect(screen.getByRole('note')).toHaveTextContent(
     'Live-Sequenzen werden in dieser Umgebung nicht ausgeführt.'
   );
+});
+
+it('keeps personal Teams available without loading organization credentials for members', () => {
+  auth.user.membershipRole = 'worker';
+  vi.mocked(getIntegrations).mockClear();
+  renderWithProviders(<IntegrationsPage />);
+  expect(
+    screen.getByRole('heading', { name: 'Microsoft Teams' })
+  ).toBeInTheDocument();
+  expect(getIntegrations).not.toHaveBeenCalled();
+  expect(
+    screen.queryByRole('button', { name: 'Speichern' })
+  ).not.toBeInTheDocument();
+  auth.user.membershipRole = 'admin';
 });

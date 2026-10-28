@@ -62,21 +62,29 @@ export function documentEditorActions(editor: Editor) {
       run: () =>
         editor.chain().focus().insertContent({ type: 'pageBreak' }).run(),
     },
-    { label: 'Zeile +', run: () => editor.chain().focus().addRowAfter().run() },
+    {
+      label: 'Zeile +',
+      tableOnly: true,
+      run: () => editor.chain().focus().addRowAfter().run(),
+    },
     {
       label: 'Spalte +',
+      tableOnly: true,
       run: () => editor.chain().focus().addColumnAfter().run(),
     },
     {
       label: 'Zeile entfernen',
+      tableOnly: true,
       run: () => editor.chain().focus().deleteRow().run(),
     },
     {
       label: 'Spalte entfernen',
+      tableOnly: true,
       run: () => editor.chain().focus().deleteColumn().run(),
     },
     {
       label: 'Tabelle entfernen',
+      tableOnly: true,
       run: () => editor.chain().focus().deleteTable().run(),
     },
     { label: 'Rückgängig', run: () => editor.chain().focus().undo().run() },

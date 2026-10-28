@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, expect, it, vi } from 'vitest';
 import { renderWithProviders } from 'test-unit/test-utils';
@@ -7,6 +7,7 @@ import {
   getEngagementMailRecipients,
   saveEngagementMailRecipients,
   type EngagementMailPage,
+  type MailRecipient,
 } from '@/features/worker-task-management/api/engagementMail.api';
 
 vi.mock(
@@ -108,6 +109,47 @@ it('shows a no-match message without losing selections', async () => {
   expect(saveEngagementMailRecipients).not.toHaveBeenCalled();
 });
 
+it('selects and deselects recipients by clicking their name and email', async () => {
+  const user = userEvent.setup();
+  renderWithProviders(<EngagementMailRecipients engagementId="engagement-1" />);
+  await user.click(screen.getByRole('combobox', { name: 'Empfänger suchen' }));
+  const checkbox = await screen.findByRole('checkbox', { name: /Ada Müller/ });
+  await user.click(screen.getByText('Ada Müller'));
+  await waitFor(() => expect(checkbox).toBeChecked());
+  await user.click(screen.getByText('ada@bsb-gruppe.de'));
+  await waitFor(() => expect(checkbox).not.toBeChecked());
+  expect(saveEngagementMailRecipients).toHaveBeenCalledTimes(2);
+});
+
+it('shows the selection while saving and restores it if saving fails', async () => {
+  let rejectSave!: (error: Error) => void;
+  vi.mocked(saveEngagementMailRecipients).mockReturnValue(
+    new Promise<MailRecipient[]>((_, reject) => {
+      rejectSave = reject;
+    })
+  );
+  const user = userEvent.setup();
+  renderWithProviders(<EngagementMailRecipients engagementId="engagement-1" />);
+  await user.click(screen.getByRole('combobox', { name: 'Empfänger suchen' }));
+  const checkbox = await screen.findByRole('checkbox', { name: /Ada Müller/ });
+  await user.click(screen.getByText('Ada Müller'));
+  await waitFor(() => expect(checkbox).toBeDisabled());
+  expect(checkbox).toBeChecked();
+
+  await act(async () => rejectSave(new Error('Save failed')));
+  await screen.findByText('Empfänger konnten nicht gespeichert werden.');
+  expect(checkbox).not.toBeChecked();
+  expect(checkbox).toBeEnabled();
+  expect(screen.queryByText('Ausgewählt: Ada Müller')).not.toBeInTheDocument();
+
+  vi.mocked(saveEngagementMailRecipients).mockImplementation(
+    async (_, selected) => selected
+  );
+  await user.click(screen.getByText('ada@bsb-gruppe.de'));
+  await waitFor(() => expect(checkbox).toBeEnabled());
+  expect(checkbox).toBeChecked();
+});
+
 it('supports typing in the closed field and keyboard navigation without submitting the task', async () => {
   const user = userEvent.setup();
   renderWithProviders(<EngagementMailRecipients engagementId="engagement-1" />);
@@ -121,5 +163,7 @@ it('supports typing in the closed field and keyboard navigation without submitti
   expect(choice).toHaveFocus();
   await user.keyboard(' ');
   await waitFor(() => expect(choice).toBeChecked());
-  expect(screen.getByText('Ausgewählt: Ada Müller')).toBeInTheDocument();
+  await user.keyboard('{Escape}');
+  expect(input).toHaveAttribute('placeholder', 'Ada Müller');
+  expect(screen.queryByText('Ausgewählt: Ada Müller')).not.toBeInTheDocument();
 });

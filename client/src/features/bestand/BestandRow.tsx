@@ -1,11 +1,6 @@
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { TableCell, TableRow } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import {
-  SquareCheckIcon,
-  SquareDashedIcon,
-} from '@/features/all-tasks/components/ui/SelectIcons';
-import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import type { ClothingStockItem } from './bestand.api';
 import { stockErrorMessage } from './stockError';
@@ -25,7 +20,6 @@ export function BestandRow({
   selectionDisabled,
 }: BestandRowProps) {
   const updateQuantity = useUpdateClothingStockQuantity();
-  const SelectionIcon = isSelected ? SquareCheckIcon : SquareDashedIcon;
   const [draft, setDraft] = useState({
     source: item.quantity,
     value: String(item.quantity),
@@ -71,27 +65,19 @@ export function BestandRow({
       className="group border-0 hover:bg-transparent"
     >
       <TableCell className="relative font-medium">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-xs"
-          aria-pressed={isSelected}
-          aria-label={
-            isSelected
-              ? `${item.name} (${item.size || '—'}) aus der Auswahl entfernen`
-              : `${item.name} (${item.size || '—'}) auswählen`
-          }
-          disabled={selectionDisabled}
-          onClick={() => onToggle(item.id)}
-          className={cn(
-            'absolute left-2 top-1/2 -translate-y-1/2 rounded-2xl',
-            isSelected
-              ? 'opacity-100'
-              : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100'
-          )}
-        >
-          <SelectionIcon className="size-4" />
-        </Button>
+        <div className="absolute inset-y-0 left-0 z-20 flex w-10 items-center justify-center">
+          <Checkbox
+            checked={isSelected}
+            disabled={selectionDisabled}
+            aria-label={
+              isSelected
+                ? `${item.name} (${item.size || '—'}) aus der Auswahl entfernen`
+                : `${item.name} (${item.size || '—'}) auswählen`
+            }
+            onClick={() => onToggle(item.id)}
+            className="relative cursor-pointer after:absolute after:-inset-3 after:content-['']"
+          />
+        </div>
         {item.name}
       </TableCell>
       <TableCell>{item.size || '—'}</TableCell>

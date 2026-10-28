@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Pencil, Check } from 'lucide-react';
+import { Pencil, Check, X } from 'lucide-react';
 import { QuestionnaireForm } from './QuestionnaireForm';
 import { candidateItems } from './questionnairePreview';
 import {
@@ -14,14 +14,23 @@ import type {
   ContractFieldOption,
   TemplateItem,
   TemplateField,
+  TemplateRepeater,
 } from '@/features/settings/questionnaire/questionnaireTemplate.types';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { apiJson } from '@/config/apiClient';
-import queryClient from '@/config/query.client';
+import { FETCHDESCRIPTION } from '@/features/all-tasks/consts/query.consts';
 import { ALL_WORKER_DATA } from '@/features/worker-lifecycle/consts/query-key.consts';
-import { WORKERBYID } from '@/features/worker-task-management/consts/query-key.consts';
+import {
+  PERSONNEL_DOCUMENTS,
+  WORKERBYID,
+} from '@/features/worker-task-management/consts/query-key.consts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import type {
   QuestionnaireQuestion as QuestionnaireQuestionData,
@@ -31,6 +40,7 @@ import type {
 type DraftResponse = {
   success: boolean;
   data: {
+    workerId: string;
     engagementId: string;
     email: string | null;
     sent: boolean;
@@ -60,6 +70,7 @@ export function QuestionnaireSendDialog({
   onClose,
 }: QuestionnaireSendDialogProps) {
   const cache = useQueryClient();
+  const sendButton = useRef<HTMLButtonElement>(null);
   const [editing, setEditing] = useState(false);
   const [localItems, setLocalItems] = useState<TemplateItem[] | null>(null);
   const draft = useQuery({
@@ -84,7 +95,15 @@ export function QuestionnaireSendDialog({
     ];
   const blocks = blocksFromItems(items);
   const changeField = (field: TemplateField) =>
-    setLocalItems(items.map((item) => (item.key === field.key ? field : item)));
+    setLocalItems((current) =>
+      (current ?? items).map((item) => (item.key === field.key ? field : item))
+    );
+  const changeRepeater = (repeater: TemplateRepeater) =>
+    setLocalItems((current) =>
+      (current ?? items).map((item) =>
+        item.key === repeater.key ? repeater : item
+      )
+    );
   const insertItems = (index: number, incoming: TemplateItem[]) => {
     const placed = new Set(items.map((item) => item.key));
     const offset = blocks
@@ -133,9 +152,39 @@ export function QuestionnaireSendDialog({
       );
     },
     onSuccess: (response) => {
-      void queryClient.invalidateQueries({ queryKey: [ALL_WORKER_DATA] });
-      void queryClient.invalidateQueries({ queryKey: [WORKERBYID] });
-      void queryClient.invalidateQueries({ queryKey: ['employment-contract'] });
+      const workerId = data?.workerId;
+      cache.setQueryData<DraftResponse>(
+        ['questionnaire-draft', engagementId],
+        (current) =>
+          current
+            ? {
+                ...current,
+                data: {
+                  ...current.data,
+                  sent: true,
+                  status: response.data.mockCompleted ? 'completed' : 'sent',
+                },
+              }
+            : current
+      );
+      void cache.invalidateQueries({ queryKey: [ALL_WORKER_DATA] });
+      void cache.invalidateQueries({
+        queryKey: [WORKERBYID, ...(workerId ? [workerId] : [])],
+      });
+      void cache.invalidateQueries({ queryKey: [FETCHDESCRIPTION] });
+      void cache.invalidateQueries({
+        queryKey: ['employment-contract'],
+        predicate: (query) => query.queryKey[2] === engagementId,
+      });
+      if (response.data.mockCompleted) {
+        void cache.invalidateQueries({
+          queryKey: ['completed-questionnaire'],
+          predicate: (query) => query.queryKey[2] === engagementId,
+        });
+        void cache.invalidateQueries({
+          queryKey: [PERSONNEL_DOCUMENTS, ...(workerId ? [workerId] : [])],
+        });
+      }
       if (response.data.mockCompleted) {
         toast.success(
           'Testfragebogen ausgefüllt. Der Vertrag kann bearbeitet werden.'
@@ -175,12 +224,45 @@ export function QuestionnaireSendDialog({
         if (!next && !persist.isPending && !send.isPending) void close();
       }}
     >
-      <DialogContent aria-describedby={undefined} className="w-full max-w-3xl border-0 bg-transparent p-0 shadow-none sm:max-w-3xl">
+      <DialogContent
+        showCloseButton={false}
+        aria-describedby={undefined}
+        className="w-full max-w-3xl border-0 bg-transparent p-0 shadow-none sm:max-w-3xl"
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          if (sendButton.current && !sendButton.current.disabled) {
+            sendButton.current.focus();
+          } else {
+            (event.target as HTMLElement).focus();
+          }
+        }}
+        onKeyDown={(event) => {
+          if (
+            event.key !== 'Enter' ||
+            event.defaultPrevented ||
+            event.nativeEvent.isComposing ||
+            event.repeat ||
+            event.altKey ||
+            event.ctrlKey ||
+            event.metaKey ||
+            event.shiftKey ||
+            editing
+          )
+            return;
+          const target = event.target as HTMLElement;
+          if (
+            target.closest(
+              'button, a, textarea, select, [contenteditable="true"], [role="combobox"]'
+            )
+          )
+            return;
+          event.preventDefault();
+          sendButton.current?.click();
+        }}
+      >
         <div className="flex h-[80vh] flex-col gap-4 overflow-hidden rounded-2xl border border-border bg-card p-6 text-card-foreground">
-          <div className="flex shrink-0 items-center justify-between gap-3 pr-6">
-            <DialogTitle className="text-lg font-medium">
-              Fragebogen senden
-            </DialogTitle>
+          <DialogTitle className="sr-only">Fragebogen</DialogTitle>
+          <div className="-mt-3 -mr-3 flex shrink-0 items-center justify-end gap-1">
             {data && !sent ? (
               <Button
                 type="button"
@@ -214,6 +296,17 @@ export function QuestionnaireSendDialog({
                 </span>
               </Button>
             ) : null}
+            <DialogClose asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Dialog schließen"
+                disabled={persist.isPending || send.isPending}
+              >
+                <X />
+              </Button>
+            </DialogClose>
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto">
             {draft.isPending ? (
@@ -235,9 +328,6 @@ export function QuestionnaireSendDialog({
                     aus. Es wird keine E-Mail verschickt.
                   </p>
                 ) : null}
-                <p className="my-4 text-sm text-muted-foreground">
-                  An {data?.email ?? 'ohne E-Mail'}.
-                </p>
                 {editing ? (
                   <>
                     <p className="mb-4 text-xs text-muted-foreground">
@@ -252,6 +342,7 @@ export function QuestionnaireSendDialog({
                       onDrop={drop}
                       onInsert={insertItems}
                       onChangeField={changeField}
+                      onChangeRepeater={changeRepeater}
                       onCommitField={changeField}
                       onRemove={(id) =>
                         setLocalItems(
@@ -295,6 +386,7 @@ export function QuestionnaireSendDialog({
               Schließen
             </Button>
             <Button
+              ref={sendButton}
               type="button"
               className="rounded-2xl"
               disabled={

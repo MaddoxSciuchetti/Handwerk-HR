@@ -1,3 +1,4 @@
+import { isMicrosoftAddressConflict } from "./addressConflict";
 import { buildUserPrincipalName } from "./identity";
 import type {
     AssignLicenseInput,
@@ -110,7 +111,7 @@ export function createMicrosoft365GraphClient(
                 },
             );
 
-            if (response.status === 409) continue;
+            if (isMicrosoftAddressConflict(response.status, payload)) continue;
 
             if (!response.ok) {
                 console.error(

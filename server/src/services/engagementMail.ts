@@ -1,3 +1,4 @@
+import { integrationsMocked, mockMailboxes } from "./integrations/localMock";
 import type { EngagementMailRecipientKind } from "@prisma/client";
 import { BAD_REQUEST } from "@/constants/http";
 import { microsoftSimulationEnabled } from "@/constants/env";
@@ -90,10 +91,12 @@ function rememberMail(seen: Set<string>, email: string | null | undefined) {
     return value;
 }
 
-export async function listBsbMailAddresses(organizationId: string) {
+export async function listBsbMailAddresses(organizationId: string, actorUserId?: string) {
+    if (!actorUserId && integrationsMocked()) return { addresses: mockMailboxes, error: null };
     const members = await prisma.organizationMember.findMany({
         where: {
             organizationId,
+            ...(actorUserId ? { userId: actorUserId } : {}),
             status: "active",
             user: { status: "active" },
         },
@@ -134,10 +137,12 @@ async function storedWorkerMails(organizationId: string) {
 
 export async function listMailSenders(
     organizationId: string,
+    actorUserId: string,
 ): Promise<MailSenderOption[]> {
     const members = await prisma.organizationMember.findMany({
         where: {
             organizationId,
+            userId: actorUserId,
             status: "active",
             user: { status: "active", isVerified: true },
         },
@@ -237,7 +242,7 @@ export async function saveEngagementMailRecipients(params: {
     });
 }
 
-async function normalizeRecipients(
+export async function normalizeRecipients(
     organizationId: string,
     recipients: MailRecipientInput[],
 ): Promise<StoredMailRecipient[]> {
@@ -283,8 +288,8 @@ async function normalizeRecipients(
             if (!worker) throw new AppError(BAD_REQUEST, "Empfänger nicht gefunden.");
             const address =
                 recipient.kind === "worker_private"
-                    ? worker.email.trim()
-                    : (worker.workEmail?.trim() ?? "");
+                    ? (worker.email?.trim() ?? "")
+                    : (worker.microsoftEmail?.trim() || worker.workEmail?.trim() || "");
             if (!address.includes("@")) {
                 throw new AppError(
                     BAD_REQUEST,
@@ -406,8 +411,8 @@ async function resolveRecipientAddresses(params: {
                 : null;
             const address =
                 recipient.kind === "worker_private"
-                    ? (worker?.email.trim() ?? "")
-                    : (worker?.workEmail?.trim() ?? "");
+                    ? (worker?.email?.trim() ?? "")
+                    : (worker?.microsoftEmail?.trim() || worker?.workEmail?.trim() || "");
             if (!address.includes("@")) {
                 return {
                     message: `${recipient.label} hat keine E-Mail mehr.`,
@@ -431,6 +436,7 @@ async function resolveRecipientAddresses(params: {
 export async function mailSendPreview(params: {
     organizationId: string;
     issueId: string;
+    actorUserId: string;
 }): Promise<
     | {
           status: "ready";
@@ -447,12 +453,14 @@ export async function mailSendPreview(params: {
         return { status: "failed", message: loaded.message ?? "Aufgabe nicht gefunden." };
     }
     const [recipients, senders] = await Promise.all([
-        prisma.engagementMailRecipient.findMany({
+        Array.isArray(loaded.automationRecipients)
+            ? Promise.resolve(loaded.automationRecipients as StoredMailRecipient[])
+            : prisma.engagementMailRecipient.findMany({
             where: { engagementId: loaded.engagementId },
             select: recipientSelect,
             orderBy: { createdAt: "asc" },
         }),
-        listMailSenders(params.organizationId),
+        listMailSenders(params.organizationId, params.actorUserId),
     ]);
     const values = mailValues(loaded.worker);
     return {
@@ -491,6 +499,7 @@ export async function sendIssueMail(params: {
     const sent = await deliverMail({
         organizationId: params.organizationId,
         engagementId: loaded.engagementId,
+        recipients: Array.isArray(loaded.automationRecipients) ? loaded.automationRecipients as StoredMailRecipient[] : undefined,
         worker: loaded.worker,
         template: loaded.template,
         senderAddress: params.senderAddress?.trim() || loaded.mailSenderAddress,
@@ -520,6 +529,7 @@ async function loadIssueMail(
             sequence: true,
             mailTemplateId: true,
             mailSenderAddress: true,
+            automationRecipients: true,
             workerEngagement: {
                 select: {
                     id: true,
@@ -568,6 +578,7 @@ async function loadIssueMail(
                 worker,
                 template: { id: "", name: "", subject: "-", body: "-" },
                 mailSenderAddress: issue.mailSenderAddress,
+                automationRecipients: issue.automationRecipients,
             };
         }
         return { message: "Für diese Aufgabe ist keine E-Mail-Vorlage hinterlegt." };
@@ -577,21 +588,23 @@ async function loadIssueMail(
         worker,
         template,
         mailSenderAddress: issue.mailSenderAddress,
+        automationRecipients: issue.automationRecipients,
     };
 }
 
 async function deliverMail(params: {
+    recipients?: StoredMailRecipient[];
     organizationId: string;
     engagementId: string;
     worker: MailWorker;
     template: { subject: string; body: string };
     senderAddress?: string | null;
 }): Promise<{ status: "sent" } | { status: "failed"; message: string }> {
-    const senderAddress = params.senderAddress?.trim() ?? "";
-    if (!senderAddress.includes("@")) {
+    const requestedSender = params.senderAddress?.trim() ?? "";
+    if (!requestedSender.includes("@")) {
         return { status: "failed", message: "Bitte einen Absender wählen." };
     }
-    const recipients = await prisma.engagementMailRecipient.findMany({
+    const recipients = params.recipients ?? await prisma.engagementMailRecipient.findMany({
         where: { engagementId: params.engagementId },
         select: recipientSelect,
     });
@@ -627,7 +640,7 @@ async function deliverMail(params: {
     const values = mailValues(params.worker);
     const sent = await sendGraphMail({
         token,
-        senderAddress,
+        senderAddress: requestedSender,
         recipients: resolved.addresses,
         subject: filledSubject(params.template.subject, values),
         text: applyEngagementMailTemplate(params.template.body, values),

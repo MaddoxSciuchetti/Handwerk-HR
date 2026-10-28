@@ -26,8 +26,9 @@ jest.mock("@/lib/prisma", () => ({
         departureMailSettings: { findUnique: jest.fn() },
         mailTemplate: { findFirst: jest.fn() },
         engagementMailRecipient: { findMany: jest.fn() },
-        issue: { findFirst: jest.fn(), findMany: jest.fn(), update: jest.fn() },
+        issue: { findFirst: jest.fn(), findMany: jest.fn(), update: jest.fn(), findUniqueOrThrow: jest.fn() },
         issueAuditLog: { create: jest.fn() },
+        user: { findUnique: jest.fn() },
         $transaction: jest.fn(),
     },
 }));
@@ -58,6 +59,7 @@ describe("Microsoft staging simulation", () => {
 
     beforeEach(() => {
         jest.resetAllMocks();
+        (prisma.issue.findUniqueOrThrow as jest.Mock).mockResolvedValue({ status: "open" });
         process.env.MICROSOFT_SIMULATION = "true";
         delete process.env.INTEGRATIONS_LIVE;
         delete process.env.INTEGRATION_SECRET_KEY;
@@ -102,6 +104,9 @@ describe("Microsoft staging simulation", () => {
         (prisma.$transaction as jest.Mock).mockImplementation(async (fn) =>
             fn(prisma),
         );
+        (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+            email: "hr@contoso.onmicrosoft.com",
+        });
     });
 
     afterEach(() => {
@@ -175,7 +180,7 @@ describe("Microsoft staging simulation", () => {
             });
             expect(prisma.issue.update).toHaveBeenCalledWith({
                 where: { id: context.issueId },
-                data: { status: "done" },
+                data: { status: "done", completedAt: expect.any(Date) },
             });
             expect(prisma.issueAuditLog.create).toHaveBeenCalled();
             if (sequence === "microsoft_create_account") {

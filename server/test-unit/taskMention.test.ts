@@ -6,6 +6,7 @@ import { sendMail } from "@/utils/sendMail";
 jest.mock("@/lib/prisma", () => ({
     prisma: {
         issue: { findFirst: jest.fn(), findMany: jest.fn() },
+        issueMention: { upsert: jest.fn() },
         comment: { findFirst: jest.fn(), create: jest.fn(), update: jest.fn() },
         user: { findFirst: jest.fn(), findMany: jest.fn() },
     },
@@ -29,6 +30,7 @@ const createComment = prisma.comment.create as jest.Mock;
 const findUsers = prisma.user.findMany as jest.Mock;
 const findUser = prisma.user.findFirst as jest.Mock;
 const createMentionTask = createIssue as jest.Mock;
+const recordMention = prisma.issueMention.upsert as jest.Mock;
 const mail = sendMail as jest.Mock;
 
 const sourceIssue = {
@@ -49,10 +51,10 @@ describe("task mention comments", () => {
             email: "mia@firma.de",
         });
         mail.mockResolvedValue({ data: { id: "mail-1" }, error: null });
-        createMentionTask.mockResolvedValue({ id: "task-1" });
+        recordMention.mockResolvedValue({ id: "mention-1" });
     });
 
-    it("stores the mention on the source comment without creating a task and sends one email", async () => {
+    it("marks the existing task for the tagged person and sends one email", async () => {
         findUsers.mockResolvedValue([
             {
                 id: "coworker",
@@ -68,14 +70,13 @@ describe("task mention comments", () => {
         });
 
         expect(createMentionTask).not.toHaveBeenCalled();
-        expect(createComment).toHaveBeenCalledWith(expect.objectContaining({
-            data: {
-                issueId: "issue-1",
-                userId: "sender",
-                body: "Bitte @Otto Berg schauen",
-                mentionedUserIds: ["coworker"],
-            },
-        }));
+        expect(recordMention).toHaveBeenCalledWith(
+            expect.objectContaining({
+                where: { issueId_userId: { issueId: "issue-1", userId: "coworker" } },
+                create: { issueId: "issue-1", userId: "coworker" },
+                update: { seenAt: null },
+            }),
+        );
         expect(mail).toHaveBeenCalledTimes(1);
         expect(mail).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -87,7 +88,7 @@ describe("task mention comments", () => {
         expect(result.mailFailed).toBe(false);
     });
 
-    it("stores a self-mention without a task or an email", async () => {
+    it("stores a self-mention without a marker or an email", async () => {
         const result = await upsertIssueCommentInOrg("org-1", "sender", "issue-1", {
             body: "Notiz an mich",
             mentionUserIds: ["sender"],
@@ -95,6 +96,7 @@ describe("task mention comments", () => {
 
         expect(findUsers).not.toHaveBeenCalled();
         expect(createMentionTask).not.toHaveBeenCalled();
+        expect(recordMention).not.toHaveBeenCalled();
         expect(mail).not.toHaveBeenCalled();
         expect(createComment).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -110,8 +112,8 @@ describe("task mention badges", () => {
     it("marks the original task for the current viewer without exposing comment recipients", async () => {
         const findTasks = prisma.issue.findMany as jest.Mock;
         findTasks.mockResolvedValue([
-            { ...sourceIssue, assigneeUserId: "someone-else", _count: { comments: 2 } },
-            { id: "other-task", _count: { comments: 0 } },
+            { ...sourceIssue, assigneeUserId: "someone-else", mentions: [{ id: "mention-1" }] },
+            { id: "other-task", mentions: [] },
         ]);
 
         const tasks = await queryTasks("org-1", "coworker");
@@ -119,12 +121,12 @@ describe("task mention badges", () => {
         expect(findTasks).toHaveBeenCalledWith(expect.objectContaining({
             where: expect.objectContaining({ assigneeOnly: false }),
             include: expect.objectContaining({
-                _count: { select: { comments: { where: { mentionedUserIds: { has: "coworker" } } } } },
+                mentions: { where: { userId: "coworker", seenAt: null }, select: { id: true }, take: 1 },
             }),
         }));
         expect(tasks).toEqual([
-            { ...sourceIssue, assigneeUserId: "someone-else", hasMention: true },
-            { id: "other-task", hasMention: false },
+            { ...sourceIssue, assigneeUserId: "someone-else", mentioned: true },
+            { id: "other-task", mentioned: false },
         ]);
     });
 });

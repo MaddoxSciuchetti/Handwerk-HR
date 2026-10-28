@@ -97,10 +97,28 @@ it("sends the exact account parameters, with no personal email or client secret"
     });
 });
 
-it("tries a numbered address after a conflict", async () => {
+it.each([
+    json({}, 409),
+    json(
+        {
+            error: {
+                code: "Request_BadRequest",
+                message:
+                    "Another object with the same value for property userPrincipalName already exists.",
+                details: [
+                    {
+                        code: "ObjectConflict",
+                        target: "userPrincipalName",
+                    },
+                ],
+            },
+        },
+        400,
+    ),
+])("tries a numbered address after a taken address", async (conflict) => {
     const { fetcher, graph } = setup();
     fetcher
-        .mockResolvedValueOnce(json({}, 409))
+        .mockResolvedValueOnce(conflict)
         .mockResolvedValueOnce(json({ id: "graph-2" }, 201));
     expect(await graph.createUser(createInput)).toMatchObject({
         ok: true,

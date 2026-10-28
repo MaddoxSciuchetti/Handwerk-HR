@@ -76,7 +76,7 @@ export type ProvisionMicrosoft365Input = {
 
 export type ProvisioningWorker = WorkerIdentity & {
     id: string;
-    email: string;
+    email: string | null;
     microsoftEmail: string | null;
     externalAccounts: { externalId: string }[];
 };

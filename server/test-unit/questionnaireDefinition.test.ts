@@ -259,6 +259,48 @@ describe("questionnaire definition", () => {
         });
     });
 
+    it("round-trips office-only settings for built-in tables without changing their schema", () => {
+        const definition = seedQuestionnaireDefinition();
+        const changed = {
+            ...definition,
+            items: definition.items.map((item) => item.kind === "repeater" ? {
+                ...item,
+                allowMoreRows: true,
+                columns: item.columns.map((column) => ({
+                    ...column,
+                    label: "Untrusted label",
+                    type: "text",
+                    officeOnly: true,
+                })),
+            } : item),
+        };
+        const saved = parseQuestionnaireDefinition(changed);
+        for (const item of saved.items) {
+            if (item.kind !== "repeater") continue;
+            expect(item.columns.every((column) => column.officeOnly === true)).toBe(true);
+            expect(item.allowMoreRows).toBe(true);
+            expect(item.columns.some((column) => column.label === "Untrusted label")).toBe(false);
+        }
+        const unlocked = parseQuestionnaireDefinition({
+            ...saved,
+            items: saved.items.map((item) => item.kind === "repeater" ? {
+                ...item,
+                columns: item.columns.map((column) => ({ ...column, officeOnly: false })),
+            } : item),
+        });
+        const reloaded = parseQuestionnaireDefinition(JSON.parse(JSON.stringify(unlocked)));
+        for (const item of reloaded.items) {
+            if (item.kind !== "repeater") continue;
+            expect(item.columns.every((column) => column.officeOnly === false)).toBe(true);
+        }
+        const legacy = parseQuestionnaireDefinition({
+            items: [{ kind: "repeater", key: "priorEmployment" }],
+        });
+        expect(legacy.items[0]).toMatchObject({
+            columns: [expect.anything(), expect.anything(), expect.anything(), { key: "days", officeOnly: true }],
+        });
+    });
+
     it("keeps a renamed builtin question", () => {
         const definition = parseQuestionnaireDefinition({
             items: [{ kind: "field", key: "firstName", label: "Rufname" }],
@@ -420,3 +462,16 @@ it.each(["firstName", "custom.bsb-salary"])(
         });
     },
 );
+
+
+it("keeps unified office-only controls compatible with staging questionnaire flags", () => {
+    const definition = parseQuestionnaireDefinition({ intro: "", items: [{
+        kind: "field", key: "custom.abcdefgh", label: "Office", section: "Person",
+        type: "text", officeOnly: true,
+    }] });
+    expect(definition.items[0]).toMatchObject({ officeOnly: true, bsbOnly: true });
+    const cleared = parseQuestionnaireDefinition({ intro: "", items: [{
+        ...definition.items[0], officeOnly: undefined, bsbOnly: undefined,
+    }] });
+    expect(cleared.items[0]).toMatchObject({ officeOnly: undefined, bsbOnly: false });
+});

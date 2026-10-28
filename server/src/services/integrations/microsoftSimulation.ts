@@ -11,6 +11,7 @@ export const SIMULATION_CONFIG = {
 };
 
 const accountEnabled = new Map<string, boolean>();
+const assignedLicenses = new Map<string, string[]>();
 
 function simulatedUserId(key: string) {
     return key.startsWith("simulation-microsoft-")
@@ -74,6 +75,11 @@ export async function microsoftGraphFetch(
             { status: 201 },
         );
     }
+    const licenseDetails = path.match(/^\/users\/([^/]+)\/licenseDetails$/);
+    if (method === "GET" && licenseDetails) {
+        const id = simulatedUserId(decodeURIComponent(licenseDetails[1]));
+        return Response.json({ value: (assignedLicenses.get(id) ?? []).map((skuId) => ({ skuId })) });
+    }
     const user = path.match(/^\/users\/([^/]+)(\/assignLicense)?$/);
     if (user) {
         const id = simulatedUserId(decodeURIComponent(user[1]));
@@ -88,9 +94,15 @@ export async function microsoftGraphFetch(
             accountEnabled.set(id, body.accountEnabled !== false);
             return new Response(null, { status: 204 });
         }
-        if (method === "POST" && user[2]) return Response.json({ id });
+        if (method === "POST" && user[2]) {
+            const body = JSON.parse(String(init?.body));
+            const removed = new Set((body.removeLicenses ?? []).map((sku: string) => sku.toLowerCase()));
+            assignedLicenses.set(id, [...(assignedLicenses.get(id) ?? []).filter((sku) => !removed.has(sku.toLowerCase())), ...(body.addLicenses ?? []).map((license: { skuId: string }) => license.skuId)]);
+            return Response.json({ id });
+        }
         if (method === "DELETE" && !user[2]) {
             accountEnabled.delete(id);
+            assignedLicenses.delete(id);
             return new Response(null, { status: 204 });
         }
     }

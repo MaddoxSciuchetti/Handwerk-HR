@@ -66,12 +66,79 @@ async function readMicrosoftUser(token: string, key: string) {
     return {
         status: "found" as const,
         id,
-        accountEnabled: user?.accountEnabled !== false,
+        accountEnabled:
+            typeof user?.accountEnabled === "boolean"
+                ? user.accountEnabled
+                : null,
     };
 }
 
-export async function blockMicrosoftSignIn(token: string, userKey: string) {
-    const current = await   readMicrosoftUser(token, userKey);
+async function assignedLicenseSkuIds(token: string, userId: string) {
+    const { response, payload } = await graphJson(
+        token,
+        `/users/${encodeURIComponent(userId)}/licenseDetails?$select=skuId`,
+    );
+    if (!response.ok) return null;
+    const value =
+        payload &&
+        typeof payload === "object" &&
+        "value" in payload &&
+        Array.isArray(payload.value)
+            ? payload.value
+            : [];
+    return value.flatMap((item) => {
+        if (!item || typeof item !== "object" || !("skuId" in item)) return [];
+        const skuId = typeof item.skuId === "string" ? item.skuId.trim() : "";
+        return skuId ? [skuId.toLowerCase()] : [];
+    });
+}
+
+async function removeAssignedLicense(
+    token: string,
+    userId: string,
+    licenseSkuId: string,
+) {
+    const skuId = licenseSkuId.trim();
+    const assigned = await assignedLicenseSkuIds(token, userId);
+    if (!assigned) {
+        return {
+            ok: false as const,
+            message: "Microsoft Graph hat die Lizenzen nicht geliefert.",
+        };
+    }
+    if (!assigned.includes(skuId.toLowerCase())) return { ok: true as const };
+
+    const removed = await graphJson(
+        token,
+        `/users/${encodeURIComponent(userId)}/assignLicense`,
+        {
+            method: "POST",
+            body: JSON.stringify({
+                addLicenses: [],
+                removeLicenses: [skuId],
+            }),
+        },
+    );
+    if (!removed.response.ok) {
+        console.error(
+            "Microsoft Graph license removal failed",
+            removed.response.status,
+        );
+        return {
+            ok: false as const,
+            message: "Microsoft Graph hat die Lizenz nicht entfernt.",
+        };
+    }
+    // Graph accepts the removal before licenseDetails stops listing the SKU.
+    return { ok: true as const };
+}
+
+export async function blockMicrosoftSignIn(
+    token: string,
+    userKey: string,
+    licenseSkuId: string,
+) {
+    const current = await readMicrosoftUser(token, userKey);
     if (current.status === "missing") {
         return {
             ok: false as const,
@@ -84,44 +151,43 @@ export async function blockMicrosoftSignIn(token: string, userKey: string) {
             message: "Microsoft Graph hat das Konto nicht geliefert.",
         };
     }
-    if (!current.accountEnabled) {
-        return {
-            ok: true as const,
-            externalId: current.id,
-            alreadyBlocked: true,
-        };
-    }
 
-    const patched = await graphJson(
-        token,
-        `/users/${encodeURIComponent(current.id)}`,
-        {
-            method: "PATCH",
-            body: JSON.stringify({ accountEnabled: false }),
-        },
-    );
-    if (!patched.response.ok) {
-        console.error(
-            "Microsoft Graph sign-in block failed",
-            patched.response.status,
+    let alreadyBlocked = current.accountEnabled === false;
+    if (current.accountEnabled !== false) {
+        const patched = await graphJson(
+            token,
+            `/users/${encodeURIComponent(current.id)}`,
+            {
+                method: "PATCH",
+                body: JSON.stringify({ accountEnabled: false }),
+            },
         );
-        return {
-            ok: false as const,
-            message: "Microsoft Graph hat die Sperre abgelehnt.",
-        };
+        if (!patched.response.ok) {
+            console.error(
+                "Microsoft Graph sign-in block failed",
+                patched.response.status,
+            );
+            return {
+                ok: false as const,
+                message: "Microsoft Graph hat die Sperre abgelehnt.",
+            };
+        }
+
+        // A successful PATCH is the confirmation. The next directory read can
+        // still report accountEnabled: true until the replica catches up.
+        alreadyBlocked = false;
     }
 
-    const confirmed = await readMicrosoftUser(token, current.id);
-    if (confirmed.status !== "found" || confirmed.accountEnabled) {
-        return {
-            ok: false as const,
-            message: "Microsoft Graph hat die Sperre nicht bestätigt.",
-        };
-    }
+    const license = await removeAssignedLicense(
+        token,
+        current.id,
+        licenseSkuId,
+    );
+    if (!license.ok) return license;
     return {
         ok: true as const,
-        externalId: confirmed.id,
-        alreadyBlocked: false,
+        externalId: current.id,
+        alreadyBlocked,
     };
 }
 
@@ -303,7 +369,11 @@ export async function runTaskAutomation(params: {
         };
     }
 
-    const blocked = await blockMicrosoftSignIn(token, userKey);
+    const blocked = await blockMicrosoftSignIn(
+        token,
+        userKey,
+        config.licenseSkuId,
+    );
     if (!blocked.ok) return { status: "failed", message: blocked.message };
 
     await completeAutomatedTask({

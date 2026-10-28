@@ -2,7 +2,7 @@ import { tryCatch } from '@/lib/trycatch';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { Dispatch, SetStateAction } from 'react';
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import type { IssueStatusValue } from '../consts/issue-status.consts';
 import {
@@ -14,6 +14,8 @@ import { TaskSidebarForm } from '../types/index.types';
 import { useCreateTask } from './useCreateTask';
 import type { TaskEditState } from './useTaskSidebar';
 import { useUpdateTask } from './useUpdateTask';
+import { useTaskAutosave } from './useTaskAutosave';
+import { useFetchEngagements } from './useFetchEngagements';
 
 export type TaskCommentDraft = {
   body: string;
@@ -27,6 +29,7 @@ export type PersistTaskComment = (args: {
 }) => Promise<unknown>;
 
 type UseTasksOptions = {
+  autoSave?: boolean;
   getCommentDraft?: () => TaskCommentDraft;
   persistComment?: PersistTaskComment;
 };
@@ -47,6 +50,10 @@ export function useTasks(
     handleSubmit,
     control,
     setValue,
+    watch,
+    getValues,
+    setError,
+    clearErrors,
     formState: { errors },
   } = useForm<TaskSidebarForm>({
     defaultValues: {
@@ -62,11 +69,25 @@ export function useTasks(
     },
     resolver: zodResolver(taskFormSchema),
   });
+  const workerEngagementId = useWatch({ control, name: 'workerEngagementId' });
+  const { data: engagements = [] } = useFetchEngagements();
+  const storedMicrosoftAccountId =
+    taskEditState.microsoftAccountId?.trim() ||
+    engagements
+      .find((engagement) => engagement.id === workerEngagementId)
+      ?.microsoftAccountId?.trim() ||
+    '';
 
   useEffect(() => {
     setValue('status', (taskEditState.status || 'open') as IssueStatusValue);
     setValue('automation', storedTaskAutomation(taskEditState.automation));
   }, [taskEditState.automation, taskEditState.status, setValue]);
+
+  const autosave = useTaskAutosave(
+    { watch, getValues, setError, clearErrors },
+    Boolean(options?.autoSave && taskState === 'edit'),
+    (data) => updateTaskAsync({ taskId: taskEditState.taskId, data })
+  );
 
   const onSubmit = handleSubmit(async (data) => {
     if (taskState === 'create') {
@@ -104,12 +125,52 @@ export function useTasks(
     setIsOpen(false);
   });
 
+  const saveForAction = async () => {
+    let saved = false;
+    if (taskState !== 'edit' || !taskEditState.taskId) return false;
+    await handleSubmit(async (data) => {
+      if (
+        data.sequence === 'microsoft_deactivate_account' &&
+        !data.microsoftAccountId?.trim() &&
+        !storedMicrosoftAccountId
+      ) {
+        setError('microsoftAccountId', {
+          type: 'required',
+          message: 'Bitte gib eine Microsoft-Konto-ID ein',
+        });
+        return;
+      }
+      try {
+        if (options?.autoSave) {
+          if (!(await autosave.flush())) return;
+        } else {
+          await updateTaskAsync({ taskId: taskEditState.taskId, data });
+        }
+        saved = true;
+      } catch {
+        // The update mutation reports the error; leave the task open to retry.
+      }
+    })();
+    return saved;
+  };
+
+  const saveManually = async () => {
+    const success = await autosave.flush();
+    if (success) toast.success('Aufgabe gespeichert');
+    return success;
+  };
+
   return {
     register,
     control,
     errors,
+    storedMicrosoftAccountId,
     setValue,
     onSubmit,
+    saveForAction,
+    autoSaveState: autosave.state,
+    flushAutoSave: autosave.flush,
+    saveManually,
     isTaskSaving: isCreatePending || isUpdatePending,
   };
 }

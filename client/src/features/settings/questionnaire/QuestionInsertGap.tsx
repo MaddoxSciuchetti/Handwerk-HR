@@ -7,6 +7,7 @@ import type { TemplateItem } from './questionnaireTemplate.types';
 type QuestionInsertGapProps = {
   open: boolean;
   onOpen: () => void;
+  onClose?: () => void;
   onAdd: (fields: TemplateItem[]) => void;
   existingKeys: string[];
   onDrop: (event: DragEvent) => void;
@@ -15,6 +16,7 @@ type QuestionInsertGapProps = {
 export function QuestionInsertGap({
   open,
   onOpen,
+  onClose,
   onAdd,
   existingKeys,
   onDrop,
@@ -24,7 +26,7 @@ export function QuestionInsertGap({
   return (
     <div
       data-question-insert-gap=""
-      className={open ? 'py-4' : 'flex h-14 items-center justify-center'}
+      className={open ? 'py-4' : 'flex h-6 items-center justify-center'}
       onMouseEnter={() => setNear(true)}
       onMouseLeave={() => setNear(false)}
       onDragOver={(event) => event.preventDefault()}
@@ -35,7 +37,11 @@ export function QuestionInsertGap({
       }}
     >
       {open ? (
-        <NewQuestionForm existingKeys={existingKeys} onAdd={onAdd} />
+        <NewQuestionForm
+          existingKeys={existingKeys}
+          onAdd={onAdd}
+          onCancel={onClose}
+        />
       ) : (
         <button
           type="button"

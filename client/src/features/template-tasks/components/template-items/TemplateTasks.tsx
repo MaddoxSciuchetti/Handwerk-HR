@@ -81,9 +81,6 @@ export function TemplateTasks({ templateId, name }: TemplateTasksProps) {
                     <TableHead className="h-12 bg-card py-3 pl-10">
                       Aufgabe
                     </TableHead>
-                    <TableHead className="bg-card py-3 px-2">
-                      Beschreibung
-                    </TableHead>
                     <TableHead className="bg-card py-3 pr-6 text-right">
                       Aktionen
                     </TableHead>

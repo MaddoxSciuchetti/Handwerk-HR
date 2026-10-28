@@ -16,6 +16,7 @@ jest.mock("@/constants/env", () => ({
 }));
 jest.mock("@/lib/prisma", () => ({
     prisma: {
+        user: { findUnique: jest.fn() },
         workerEngagement: { findFirst: jest.fn(), update: jest.fn() },
         questionnaireSubmission: { create: jest.fn() },
         issue: { createMany: jest.fn() },
@@ -63,6 +64,9 @@ beforeEach(() => {
     (prisma.$transaction as jest.Mock).mockImplementation((callback) =>
         callback(prisma),
     );
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        email: "hr@firma.de",
+    });
     (sendMail as jest.Mock).mockResolvedValue({ error: null });
 });
 
@@ -73,6 +77,24 @@ it("keeps real delivery unchanged when the flag is off", async () => {
     });
     expect(sendMail).toHaveBeenCalledTimes(1);
     expect(completeMockQuestionnaire).not.toHaveBeenCalled();
+});
+
+it("includes the print task alongside the signed-contract task before a reply arrives", async () => {
+    await sendEngagementQuestionnaire(params);
+    expect(prisma.issue.createMany).toHaveBeenCalledWith({
+        data: [
+            expect.objectContaining({ title: "Fragebogen", status: "in_progress" }),
+            expect.objectContaining({
+                workerEngagementId: "engagement",
+                createdByUserId: "user",
+                title: "Arbeitsvertrag drucken",
+                status: "open",
+                kind: "contract_send",
+                isTemporary: true,
+            }),
+            expect.objectContaining({ title: "Arbeitsvertrag unterschrieben", status: "open" }),
+        ],
+    });
 });
 
 it("creates the normal questionnaire and contract before simulating the reply, without emailing", async () => {
@@ -149,12 +171,36 @@ it("persists an engagement definition and dispatches it without changing the org
     expect(template.items).toHaveLength(seedQuestionnaireDefinition().items.length);
 });
 
-it.each([false, true])("uses the saved sender for questionnaire delivery (resend: %s)", async (resend) => {
+it.each([false, true])("sends the questionnaire from the authenticated user instead of the saved sender (retry: %s)", async (retry) => {
     engagement.questionnaireSenderAddress = "office@example.test";
-    if (resend) engagement.questionnaireSubmission = { token: "existing-token", status: "sent" };
+    if (retry) engagement.questionnaireSubmission = { token: "existing-token", status: "sent" };
     await sendEngagementQuestionnaire(params);
-    expect(sendMail).toHaveBeenCalledWith(expect.objectContaining({
+    const mailed = (sendMail as jest.Mock).mock.calls.at(-1)?.[0];
+    expect(mailed).toMatchObject({
         to: "lukas@example.test",
-        senderAddress: "office@example.test",
-    }));
+        senderAddress: "hr@firma.de",
+    });
+    expect(mailed).not.toHaveProperty("via");
+});
+
+it.each(["staging", "development"])("sends the questionnaire through Resend using the configured test sender in %s", async (environment) => {
+    const previousNodeEnv = process.env.NODE_ENV;
+    const previousAppEnv = process.env.APP_ENV;
+    process.env.NODE_ENV = environment;
+    delete process.env.APP_ENV;
+    try {
+        await sendEngagementQuestionnaire(params);
+        const mailed = (sendMail as jest.Mock).mock.calls.at(-1)?.[0];
+        expect(mailed).toMatchObject({
+            to: "lukas@example.test",
+            via: "resend",
+        });
+        expect(mailed).not.toHaveProperty("senderAddress");
+        expect(mailed).not.toHaveProperty("organizationId");
+    } finally {
+        if (previousNodeEnv === undefined) delete process.env.NODE_ENV;
+        else process.env.NODE_ENV = previousNodeEnv;
+        if (previousAppEnv === undefined) delete process.env.APP_ENV;
+        else process.env.APP_ENV = previousAppEnv;
+    }
 });

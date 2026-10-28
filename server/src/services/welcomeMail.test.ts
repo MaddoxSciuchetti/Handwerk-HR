@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { microsoftGraphToken } from "@/services/microsoft365Account";
 import {
+    listMicrosoftGroups,
+    listMicrosoftMailAddresses,
+    listMailEnabledChannels,
     applyWelcomeMailTemplate,
     formatWelcomeEntryDate,
     sendTeamWelcomeMail,
@@ -219,4 +222,47 @@ describe("welcome mail", () => {
         expect(again).toEqual({ status: "skipped", reason: "already_sent" });
         expect(fetchSpy).toHaveBeenCalledTimes(2);
     });
+});
+
+it("propagates the same safe authentication diagnosis through all mail lookups", async () => {
+    const error = "Das Client-Secret der Microsoft-365-App ist abgelaufen.";
+    token.mockImplementation(async (_config, onError) => { onError(error); return null; });
+    expect(await listMicrosoftGroups("org")).toEqual({ groups: [], error });
+    expect(await listMicrosoftMailAddresses("org")).toEqual({ addresses: [], error });
+    expect(await listMailEnabledChannels("org")).toEqual({ channels: [], error });
+});
+
+
+it("only lists suitable email audiences and follows every page", async () => {
+    token.mockResolvedValue("token");
+    const fetchSpy = jest.spyOn(globalThis, "fetch")
+        .mockResolvedValueOnce(jsonResponse({
+            value: [
+                { id: "admin", displayName: "AAD DC Administrators", mailEnabled: false, mail: null },
+                { id: "all", displayName: "All Company", mailEnabled: true, mail: "all@firma.de" },
+                { id: "answers", displayName: "Group for Answers in Viva Engage - DO NOT DELETE 89931431937", mailEnabled: true, mail: "answers@firma.de" },
+                { id: "role", displayName: "Directory role administrators", mailEnabled: true, mail: "role@firma.de", isAssignableToRole: true },
+                { id: "security", displayName: "Security group", mailEnabled: false, mail: "security@firma.de" },
+                { id: "pending", displayName: "Unprovisioned mailbox", mailEnabled: true, mail: null },
+            ],
+            "@odata.nextLink": "https://graph.microsoft.com/v1.0/groups?$skiptoken=next",
+        }))
+        .mockResolvedValueOnce(jsonResponse({ value: [
+            { id: "team", displayName: "Hadox", mailEnabled: true, mail: "hadox@firma.de" },
+            { id: "distribution", displayName: "Employees", mailEnabled: true, mail: "employees@firma.de" },
+            { id: "mail-security", displayName: "Office", mailEnabled: true, mail: "office@firma.de", securityEnabled: true },
+            { id: "renamed-admin", displayName: " AAD DC Administrators ", mailEnabled: true, mail: "admins@firma.de" },
+        ] }));
+    try {
+        expect(await listMicrosoftGroups("org")).toEqual({ groups: [
+            { id: "all", displayName: "All Company" },
+            { id: "distribution", displayName: "Employees" },
+            { id: "team", displayName: "Hadox" },
+            { id: "mail-security", displayName: "Office" },
+        ], error: null });
+        expect(String(fetchSpy.mock.calls[0][0])).toContain("mailEnabled,mail,isAssignableToRole");
+        expect(fetchSpy).toHaveBeenCalledTimes(2);
+    } finally {
+        fetchSpy.mockRestore();
+    }
 });

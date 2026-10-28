@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody } from '@/components/ui/table';
 import { SettingsPageHeader } from '@/features/settings/components/SettingsPageHeader';
 import { User } from '@/features/user-profile/types/auth.type';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import Employees from '@/features/settings/employees/Employees';
 import { EditableTextRow } from './EditableTextRow';
@@ -33,31 +33,40 @@ function Profile() {
     isSaving,
     isUploadingPhoto,
   } = useProfileSettings();
-  const [editingField, setEditingField] = useState<EditableField | null>(null);
-  const [values, setValues] = useState<ProfileUpdateInput>(getInitialValues());
+  const saved = getInitialValues(user);
+  const [draft, setDraft] = useState<ProfileUpdateInput | null>(null);
+  const values = draft ?? saved;
 
-  useEffect(() => {
-    if (user && !editingField) {
-      setValues(getInitialValues(user));
-    }
-  }, [user, editingField]);
+  const changeField = (field: EditableField, value: string) => {
+    setDraft((current) => ({ ...(current ?? saved), [field]: value }));
+  };
 
   const trySaveField = (field: EditableField) => {
-    if (!user) return;
+    if (!user || !draft) return;
 
-    const nextValues = {
+    const trimmed = values[field].trim();
+    if (trimmed === saved[field]) {
+      setDraft(null);
+      return;
+    }
+
+    const parsedField = profileUpdateSchema.shape[field].safeParse(trimmed);
+    if (!parsedField.success) {
+      toast.error(parsedField.error.issues[0]?.message ?? 'Ungültiger Wert.');
+      setDraft(null);
+      return;
+    }
+
+    const parsed = profileUpdateSchema.safeParse({
       ...values,
-      [field]: values[field].trim(),
-    };
-
-    const parsed = profileUpdateSchema.safeParse(nextValues);
+      [field]: parsedField.data,
+    });
     if (!parsed.success) {
       const issue = parsed.error.issues.find(
         (entry) => entry.path[0] === field
       );
       toast.error(issue?.message || 'Ungültiger Wert.');
-      setValues(getInitialValues(user));
-      setEditingField(null);
+      setDraft(null);
       return;
     }
 
@@ -67,8 +76,7 @@ function Profile() {
       return current[typedKey] !== parsed.data[typedKey];
     });
 
-    setEditingField(null);
-    setValues(parsed.data);
+    setDraft(null);
 
     if (changed) {
       saveProfile(parsed.data);
@@ -82,7 +90,7 @@ function Profile() {
 
   return (
     <div className="mx-auto flex h-full flex-col overflow-auto rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
-      <div className="flex h-full w-full flex-col items-stretch">
+      <div className="w-full shrink-0">
         <SettingsPageHeader title="Profil" />
         <Card className="mt-5 w-full gap-0 border border-border py-0 shadow-none ring-0">
           <CardContent className="px-2 py-2">
@@ -91,45 +99,30 @@ function Profile() {
           <EditableTextRow
             label="Display Name"
             value={values.displayName}
-            isEditing={editingField === 'displayName'}
             isDisabled={isSaving}
-            onClickValue={() => setEditingField('displayName')}
-            onChangeValue={(value) =>
-              setValues((prev) => ({ ...prev, displayName: value }))
-            }
+            onChangeValue={(value) => changeField('displayName', value)}
             onBlur={() => trySaveField('displayName')}
           />
           <EditableTextRow
             label="Vorname"
             value={values.firstName}
-            isEditing={editingField === 'firstName'}
             isDisabled={isSaving}
-            onClickValue={() => setEditingField('firstName')}
-            onChangeValue={(value) =>
-              setValues((prev) => ({ ...prev, firstName: value }))
-            }
+            onChangeValue={(value) => changeField('firstName', value)}
             onBlur={() => trySaveField('firstName')}
           />
           <EditableTextRow
             label="Nachname"
             value={values.lastName}
-            isEditing={editingField === 'lastName'}
             isDisabled={isSaving}
-            onClickValue={() => setEditingField('lastName')}
-            onChangeValue={(value) =>
-              setValues((prev) => ({ ...prev, lastName: value }))
-            }
+            onChangeValue={(value) => changeField('lastName', value)}
             onBlur={() => trySaveField('lastName')}
           />
           <EditableTextRow
             label="Email Adresse"
+            type="email"
             value={values.email}
-            isEditing={editingField === 'email'}
             isDisabled={isSaving}
-            onClickValue={() => setEditingField('email')}
-            onChangeValue={(value) =>
-              setValues((prev) => ({ ...prev, email: value }))
-            }
+            onChangeValue={(value) => changeField('email', value)}
             onBlur={() => trySaveField('email')}
           />
           <ProfilePhotoRow

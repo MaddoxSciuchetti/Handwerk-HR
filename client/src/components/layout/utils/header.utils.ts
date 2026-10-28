@@ -1,7 +1,7 @@
-import { LAYOUTITEMS } from '@/constants/layout.consts';
+import { LAYOUTITEMS, SETTINGSITEMS } from '@/constants/layout.consts';
 
 export const getSidebarItemLabel = (pathname: string) => {
-  const match = LAYOUTITEMS.find(
+  const match = [...LAYOUTITEMS, ...SETTINGSITEMS].find(
     (item) => pathname === item.to || pathname.startsWith(`${item.to}/`)
   );
   return match?.title ?? '';

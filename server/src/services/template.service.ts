@@ -19,10 +19,10 @@ export type InsertTemplateParams = {
 export type InsertTemplateTaskParams = {
     templateId: string;
     taskName: string;
-    taskDescription?: string;
+    taskDescription?: string | null;
     description?: string;
     defaultStatus?: IssueStatus;
-    defaultAssigneeUserId?: string;
+    defaultAssigneeUserId?: string | null;
     orderIndex?: number;
     integrationProvider?: IntegrationProvider | null;
     sequence?: IntegrationSequence | null;
@@ -31,9 +31,9 @@ export type InsertTemplateTaskParams = {
 
 export type ModifyTemplateTaskParams = {
     taskName?: string;
-    taskDescription?: string;
+    taskDescription?: string | null;
     defaultStatus?: IssueStatus;
-    defaultAssigneeUserId?: string;
+    defaultAssigneeUserId?: string | null;
     orderIndex?: number;
     integrationProvider?: IntegrationProvider | null;
     sequence?: IntegrationSequence | null;
@@ -66,14 +66,17 @@ async function assertSequence(params: {
             "Die Sequenz gehört nicht zu dieser Integration.",
         );
     }
-    if (params.sequence === "microsoft_send_email") {
+    if ((params.sequence === "microsoft_send_email" || params.sequence === "microsoft_send_teams_message")) {
         if (!params.mailTemplateId) {
             throw new AppError(BAD_REQUEST, "Bitte wähle eine E-Mail-Vorlage.");
         }
         const template = await prisma.mailTemplate.findFirst({
             where: { id: params.mailTemplateId, organizationId: params.organizationId },
-            select: { id: true },
+            select: { id: true, ...(params.sequence === "microsoft_send_teams_message" ? { body: true } : {}) },
         });
+        if (params.sequence === "microsoft_send_teams_message" && !template?.body.trim()) {
+            throw new AppError(BAD_REQUEST, "Bitte eine Nachrichtenvorlage mit Inhalt wählen.");
+        }
         if (!template) {
             throw new AppError(BAD_REQUEST, "Die E-Mail-Vorlage wurde nicht gefunden.");
         }
@@ -229,7 +232,7 @@ export const insertTemplateTask = async (
     const integrationProvider = data.integrationProvider ?? null;
     const sequence = data.sequence ?? null;
     const mailTemplateId =
-        sequence === "microsoft_send_email" ? (data.mailTemplateId ?? null) : null;
+        (sequence === "microsoft_send_email" || sequence === "microsoft_send_teams_message") ? (data.mailTemplateId ?? null) : null;
     await assertSequence({
         organizationId: data.organizationId,
         integrationProvider,
@@ -243,7 +246,7 @@ export const insertTemplateTask = async (
             title: data.taskName,
             description: data.taskDescription,
             defaultStatus: data.defaultStatus,
-            defaultAssigneeUserId: data.defaultAssigneeUserId,
+            defaultAssigneeUserId: data.defaultAssigneeUserId === "" ? null : data.defaultAssigneeUserId,
             orderIndex: data.orderIndex ?? 0,
             integrationProvider,
             sequence,
@@ -280,7 +283,7 @@ export const modifyTemplateTask = async (
     const integrationProvider = data.integrationProvider ?? null;
     const sequence = data.sequence ?? null;
     const mailTemplateId =
-        sequence === "microsoft_send_email" ? (data.mailTemplateId ?? null) : null;
+        (sequence === "microsoft_send_email" || sequence === "microsoft_send_teams_message") ? (data.mailTemplateId ?? null) : null;
     await assertSequence({
         organizationId,
         integrationProvider,
@@ -293,7 +296,7 @@ export const modifyTemplateTask = async (
             title: data.taskName,
             description: data.taskDescription,
             defaultStatus: data.defaultStatus,
-            defaultAssigneeUserId: data.defaultAssigneeUserId,
+            defaultAssigneeUserId: data.defaultAssigneeUserId === "" ? null : data.defaultAssigneeUserId,
             orderIndex: data.orderIndex,
             integrationProvider,
             sequence,

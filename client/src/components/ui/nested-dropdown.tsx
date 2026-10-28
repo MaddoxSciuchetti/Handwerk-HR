@@ -42,13 +42,16 @@ export function NestedDropdown({
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
-          className={cn('w-60 justify-between rounded-2xl font-normal', className)}
+          className={cn(
+            'w-44 shrink-0 justify-between rounded-2xl font-normal',
+            className
+          )}
         >
           <span className="truncate">{value || placeholder}</span>
-          <ChevronDownIcon className="size-4 opacity-50" />
+          <ChevronDownIcon className="size-4 opacity-50" aria-hidden />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-60">
+      <DropdownMenuContent align="end" className="w-max min-w-44">
         {options.map((option) => {
           if (option.value === '__divider__') {
             return <DropdownMenuSeparator key={option.value} />;
@@ -57,7 +60,7 @@ export function NestedDropdown({
           if (option.subOptions?.length) {
             return (
               <DropdownMenuSub key={option.value}>
-                <DropdownMenuSubTrigger>
+                <DropdownMenuSubTrigger className="[&>svg:last-child]:hidden">
                   {option.icon ? (
                     <option.icon className="size-4" aria-hidden />
                   ) : null}
@@ -67,7 +70,7 @@ export function NestedDropdown({
                   {option.subOptions.map((sub) => (
                     <DropdownMenuItem
                       key={sub.value}
-                      onClick={() => {
+                      onSelect={() => {
                         onSubSelect?.(sub, option);
                         sub.action?.();
                       }}
@@ -83,7 +86,7 @@ export function NestedDropdown({
           return (
             <DropdownMenuItem
               key={option.value}
-              onClick={() => {
+              onSelect={() => {
                 onSelect(option.value);
                 option.action?.();
               }}

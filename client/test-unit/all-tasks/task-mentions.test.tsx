@@ -33,7 +33,7 @@ describe('task mentions', () => {
       <table>
         <tbody>
           <TaskItem
-            task={{ ...task, hasMention: true }}
+            task={{ ...task, mentioned: true }}
             isSelected={false}
             onOpenEdit={vi.fn()}
             setLargeEditMode={vi.fn()}
@@ -48,18 +48,17 @@ describe('task mentions', () => {
 
   it('counts the source task once and excludes tasks without a mention or already completed', () => {
     expect(
-      openMentionTasks(
-        [
-          { ...task, hasMention: true },
-          { ...task, id: 'no-mention', hasMention: false },
-          { ...task, id: 'legacy-mention', assigneeOnly: true, assigneeUserId: 'recipient' },
-          { ...task, id: 'done', hasMention: true, status: 'done' },
-        ],
-        'recipient'
-      ).map((item) => item.id)
+      openMentionTasks([
+        { ...task, mentioned: true },
+        { ...task, id: 'no-mention', mentioned: false },
+        {
+          ...task,
+          id: 'legacy-mention',
+          assigneeOnly: true,
+          assigneeUserId: 'recipient',
+        },
+        { ...task, id: 'done', mentioned: true, status: 'done' },
+      ]).map((item) => item.id)
     ).toEqual(['source-task']);
-    expect(
-      openMentionTasks([{ ...task, hasMention: true }], undefined)
-    ).toEqual([]);
   });
 });

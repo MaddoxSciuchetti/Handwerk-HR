@@ -556,7 +556,7 @@ it.each(['paragraph', 'lineLabel'])(
     );
     await screen.findByText('beschreibung_3');
     const editor = spy.mock.instances.at(-1) as Editor;
-    vi.spyOn(editor.view, 'scrollToSelection').mockImplementation(
+    vi.spyOn(editor.view as typeof editor.view & { scrollToSelection: () => void }, 'scrollToSelection').mockImplementation(
       () => undefined
     );
     const starts: number[] = [];
@@ -641,7 +641,7 @@ it.each(['paragraph', 'lineLabel'])(
     );
     const target = await screen.findByText('Alpha beta');
     const editor = spy.mock.instances.at(-1) as Editor;
-    vi.spyOn(editor.view, 'scrollToSelection').mockImplementation(
+    vi.spyOn(editor.view as typeof editor.view & { scrollToSelection: () => void }, 'scrollToSelection').mockImplementation(
       () => undefined
     );
     const start = editor.view.posAtDOM(target, 0);

@@ -26,6 +26,8 @@ it.each([
     ['microsoft_deactivate_account', 'microsoft_graph'],
     ['microsoft_create_account', 'microsoft_graph'],
     ['crewmeister_create_account', 'crewmeister'],
+    ['crewmeister_deactivate_account', 'crewmeister'],
+    ['crewmeister_delete_membership', 'crewmeister'],
 ])('creates a task with %s and its provider', async (sequence, integrationProvider) => {
     await createTaskInOrg('org-1', 'user-1', { ...payload, sequence });
     expect(createIssue).toHaveBeenCalledWith(expect.objectContaining({ sequence, integrationProvider, mailTemplateId: null, automation: null }));
@@ -99,4 +101,32 @@ it('rejects an email address instead of a Microsoft ID', async () => {
     await expect(createTaskInOrg('org-1', 'user-1', { ...payload, microsoftAccountId: 'worker@example.com' }))
         .rejects.toThrow('Bitte gib eine gültige Microsoft-Konto-ID ein.');
     expect(createIssue).not.toHaveBeenCalled();
+});
+
+it('creates a Teams action with a message body and no Outlook sender', async () => {
+    (prisma.mailTemplate.findFirst as jest.Mock).mockResolvedValue({ id: 'mail-1', body: 'Hallo {{Vorname}}' });
+    await createTaskInOrg('org-1', 'user-1', { ...payload, sequence: 'microsoft_send_teams_message', mailTemplateId: 'mail-1' });
+    expect(createIssue).toHaveBeenCalledWith(expect.objectContaining({ sequence: 'microsoft_send_teams_message', mailTemplateId: 'mail-1', mailSenderAddress: null }));
+});
+
+it('rejects a Teams action with an empty template body', async () => {
+    (prisma.mailTemplate.findFirst as jest.Mock).mockResolvedValue({ id: 'mail-1', body: ' ' });
+    await expect(createTaskInOrg('org-1', 'user-1', { ...payload, sequence: 'microsoft_send_teams_message', mailTemplateId: 'mail-1' })).rejects.toThrow('Nachrichtenvorlage mit Inhalt');
+    expect(createIssue).not.toHaveBeenCalled();
+});
+
+it('validates a changed engagement against the organization before moving a task', async () => {
+    await updateTaskInOrg('org-1', 'user-1', 'task-1', { workerEngagementId: 'engagement-2' });
+    expect(prisma.workerEngagement.findFirst).toHaveBeenCalledWith({
+        where: { id: 'engagement-2', organizationId: 'org-1' }, select: { id: true },
+    });
+    expect(updateIssue).toHaveBeenCalledWith(expect.objectContaining({
+        workerEngagementId: 'engagement-1', newWorkerEngagementId: 'engagement-2',
+    }));
+});
+
+it('rejects moving a task to an engagement outside the organization', async () => {
+    (prisma.workerEngagement.findFirst as jest.Mock).mockResolvedValue(null);
+    await expect(updateTaskInOrg('org-1', 'user-1', 'task-1', { workerEngagementId: 'foreign' })).rejects.toThrow('Engagement nicht gefunden.');
+    expect(updateIssue).not.toHaveBeenCalled();
 });

@@ -10,6 +10,7 @@ export type OrganizationIntegration = {
   crewId: string;
   hasClientSecret: boolean;
   hasToken: boolean;
+  token?: string;
   ready: boolean;
   live: boolean;
   simulated?: boolean;

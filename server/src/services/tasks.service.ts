@@ -9,6 +9,12 @@ import { INTEGRATION_SEQUENCES, SEQUENCE_PROVIDER } from "@/services/integration
 import type { IntegrationSequence } from "@prisma/client";
 import type { IssueStatus } from "@prisma/client";
 import { issueVisibleToViewer } from "@/services/issueVisibility";
+import {
+    attachMentionFlag,
+    markIssueMentionsSeen,
+    recordIssueMentions,
+    unreadMentionInclude,
+} from "@/services/issueMentions";
 import { createIssue, updateIssue } from "@/services/worker.service";
 import AppError from "@/utils/AppError";
 import { BAD_REQUEST } from "@/constants/http";
@@ -55,7 +61,7 @@ export type TaskHistoryCommentEntry = {
 export type TaskHistoryItem = TaskHistoryAuditEntry | TaskHistoryCommentEntry;
 
 export const queryTasks = async (orgId: string, viewerUserId: string) => {
-    const tasks = await prisma.issue.findMany({
+    const issues = await prisma.issue.findMany({
         where: {
             // Legacy mention notifications are not standalone tasks.
             assigneeOnly: false,
@@ -69,13 +75,9 @@ export const queryTasks = async (orgId: string, viewerUserId: string) => {
                 issueVisibleToViewer(viewerUserId),
             ],
         },
-        orderBy: { createdAt: "desc" },
+        // Tasks created together need an immutable tie-breaker across updates.
+        orderBy: [{ createdAt: "desc" }, { id: "asc" }],
         include: {
-            _count: {
-                select: {
-                    comments: { where: { mentionedUserIds: { has: viewerUserId } } },
-                },
-            },
             assignee: {
                 select: {
                     id: true,
@@ -86,17 +88,16 @@ export const queryTasks = async (orgId: string, viewerUserId: string) => {
             workerEngagement: {
                 select: {
                     workerId: true,
+                    templateApplication: { select: { id: true, completedAt: true, resultsDismissedAt: true } },
                     worker: {
                         select: { firstName: true, lastName: true },
                     },
                 },
             },
+            mentions: unreadMentionInclude(viewerUserId),
         },
     });
-    return tasks.map(({ _count, ...task }) => ({
-        ...task,
-        hasMention: _count.comments > 0,
-    }));
+    return issues.map(attachMentionFlag);
 };
 
 async function taskSequenceFields(
@@ -125,17 +126,20 @@ async function taskSequenceFields(
     if (!integration?.enabled) {
         throw new AppError(BAD_REQUEST, "Diese Integration ist nicht aktiv.");
     }
-    const mailTemplateId = sequence === "microsoft_send_email"
+    const mailTemplateId = (sequence === "microsoft_send_email" || sequence === "microsoft_send_teams_message")
         ? (typeof body.mailTemplateId === "string" ? body.mailTemplateId.trim() : "")
         : null;
-    if (sequence === "microsoft_send_email") {
+    if (sequence === "microsoft_send_email" || sequence === "microsoft_send_teams_message") {
         if (!mailTemplateId) {
             throw new AppError(BAD_REQUEST, "Bitte wähle eine E-Mail-Vorlage.");
         }
         const template = await prisma.mailTemplate.findFirst({
             where: { id: mailTemplateId, organizationId: orgId },
-            select: { id: true },
+            select: { id: true, ...(sequence === "microsoft_send_teams_message" ? { body: true } : {}) },
         });
+        if (sequence === "microsoft_send_teams_message" && !template?.body.trim()) {
+            throw new AppError(BAD_REQUEST, "Bitte eine Nachrichtenvorlage mit Inhalt wählen.");
+        }
         if (!template) {
             throw new AppError(BAD_REQUEST, "Die E-Mail-Vorlage wurde nicht gefunden.");
         }
@@ -249,6 +253,7 @@ export async function updateTaskInOrg(
     }
 
     const body = (payload ?? {}) as {
+        workerEngagementId?: string;
         title?: string;
         status?: IssueStatus;
         assigneeUserId?: string;
@@ -270,6 +275,21 @@ export async function updateTaskInOrg(
     }
 
     const sequenceFields = await taskSequenceFields(orgId, body);
+    const assigneeUserId =
+        body.assigneeUserId === undefined
+            ? undefined
+            : body.assigneeUserId.trim() || null;
+    const newWorkerEngagementId = body.workerEngagementId?.trim();
+    if (body.workerEngagementId !== undefined && !newWorkerEngagementId) {
+        throw new AppError(BAD_REQUEST, "Bitte wähle einen Handwerker aus.");
+    }
+    if (newWorkerEngagementId && newWorkerEngagementId !== existing.workerEngagementId) {
+        const target = await prisma.workerEngagement.findFirst({
+            where: { id: newWorkerEngagementId, organizationId: orgId },
+            select: { id: true },
+        });
+        if (!target) throw new AppError(BAD_REQUEST, "Engagement nicht gefunden.");
+    }
     if (sequenceFields.sequence && !existing.workerEngagementId) {
         throw new AppError(BAD_REQUEST, "Bitte wähle einen Handwerker aus.");
     }
@@ -278,11 +298,10 @@ export async function updateTaskInOrg(
         return prisma.issue.update({
             where: { id: existing.id },
             data: {
+                ...(newWorkerEngagementId ? { workerEngagementId: newWorkerEngagementId } : {}),
                 ...(body.title !== undefined ? { title: body.title } : {}),
                 ...(body.status !== undefined ? { status: body.status } : {}),
-                ...(body.assigneeUserId !== undefined
-                    ? { assigneeUserId: body.assigneeUserId }
-                    : {}),
+                ...(assigneeUserId !== undefined ? { assigneeUserId } : {}),
                 ...(automation !== undefined ? { automation } : {}),
                 ...sequenceFields,
             },
@@ -292,16 +311,18 @@ export async function updateTaskInOrg(
     return updateIssue({
         issueId: existing.id,
         workerEngagementId: existing.workerEngagementId,
+        newWorkerEngagementId,
         actorUserId: userId,
         title: body.title,
         status: body.status,
-        assigneeUserId: body.assigneeUserId,
+        assigneeUserId,
         automation,
         ...sequenceFields,
     });
 }
 
 const HUMAN_READABLE_FIELDS = new Set([
+    "workerEngagementId",
     "title",
     "description",
     "status",
@@ -314,6 +335,7 @@ const HUMAN_READABLE_FIELDS = new Set([
     "sequence",
     "mailTemplateId",
     "mailSenderAddress",
+    "automationError",
     "microsoftAccountId",
 ]);
 
@@ -327,6 +349,7 @@ const PRIORITY_LABELS: Record<string, string> = {
 
 type ChangeResolvers = {
     userName: (id: string) => string | null;
+    engagementName: (id: string) => string | null;
 };
 
 function valueToString(value: unknown): string | null {
@@ -352,6 +375,9 @@ function resolveFieldValue(
     }
     if (field === "assigneeUserId") {
         return resolvers.userName(stringValue) ?? stringValue;
+    }
+    if (field === "workerEngagementId") {
+        return resolvers.engagementName(stringValue) ?? "Entferntes Engagement";
     }
     if (field === "priority") {
         return PRIORITY_LABELS[stringValue] ?? stringValue;
@@ -384,6 +410,7 @@ function diffAuditValues(
     const changes: TaskHistoryChange[] = [];
     for (const field of fields) {
         if (!HUMAN_READABLE_FIELDS.has(field)) continue;
+        if (valueToString(oldObj[field]) === valueToString(newObj[field])) continue;
         const normalizedField = field === "statusId" ? "status" : field;
         if (changes.some((c) => c.field === normalizedField)) continue;
         changes.push({
@@ -420,6 +447,7 @@ function statusDisplay(status: IssueStatus) {
 export async function getTaskHistoryInOrg(
     orgId: string,
     taskId: string,
+    viewerUserId?: string,
 ): Promise<TaskHistoryItem[]> {
     const task = await prisma.issue.findFirst({
         where: {
@@ -430,6 +458,10 @@ export async function getTaskHistoryInOrg(
     });
     if (!task) {
         throw new Error("Task not found for organization");
+    }
+
+    if (viewerUserId) {
+        await markIssueMentionsSeen(taskId, viewerUserId);
     }
 
     const logs = await prisma.issueAuditLog.findMany({
@@ -449,8 +481,13 @@ export async function getTaskHistoryInOrg(
     });
 
     const assigneeIds = new Set<string>();
+    const engagementIds = new Set<string>();
     for (const log of logs) {
         for (const blob of [log.oldValue, log.newValue]) {
+            if (blob && typeof blob === "object" && "workerEngagementId" in blob) {
+                const id = (blob as Record<string, unknown>).workerEngagementId;
+                if (typeof id === "string") engagementIds.add(id);
+            }
             if (blob && typeof blob === "object" && "assigneeUserId" in blob) {
                 const id = (blob as Record<string, unknown>).assigneeUserId;
                 if (typeof id === "string") assigneeIds.add(id);
@@ -471,8 +508,17 @@ export async function getTaskHistoryInOrg(
         : [];
 
     const userById = new Map(assignees.map((u) => [u.id, u]));
+    const engagements = engagementIds.size ? await prisma.workerEngagement.findMany({
+        where: { id: { in: Array.from(engagementIds) }, organizationId: orgId },
+        select: { id: true, type: true, worker: { select: { firstName: true, lastName: true } } },
+    }) : [];
+    const engagementById = new Map(engagements.map((engagement) => [engagement.id, engagement]));
 
     const resolvers: ChangeResolvers = {
+        engagementName: (id) => {
+            const engagement = engagementById.get(id);
+            return engagement ? `${engagement.worker.firstName} ${engagement.worker.lastName} · ${engagement.type}` : null;
+        },
         userName: (id) => {
             const u = userById.get(id);
             if (!u) return null;
@@ -643,6 +689,10 @@ export async function upsertIssueCommentInOrg(
         "Ein Kollege";
     const actionUrl = tasksPageUrl();
     let mailFailed = false;
+    await recordIssueMentions(
+        issue.id,
+        mentioned.map((person) => person.id),
+    );
 
     for (const person of mentioned) {
         const recipientName =

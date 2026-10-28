@@ -42,7 +42,7 @@ describe("deleteTasksInOrg", () => {
         expect(prisma.issue.deleteMany).toHaveBeenCalledWith({
             where: {
                 id: { in: ["issue-1"] },
-                workerEngagement: { organizationId: "org-1" },
+                OR: [{ workerEngagement: { organizationId: "org-1" } }, { organizationId: "org-1" }],
             },
         });
         expect(prisma.templateItem.delete).not.toHaveBeenCalled();

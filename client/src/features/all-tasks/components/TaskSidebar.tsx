@@ -31,6 +31,7 @@ import TaskHistory from '@/features/worker-task-management/components/tasks/task
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { X } from 'lucide-react';
+import { TaskSaveButton } from './TaskSaveButton';
 import { useMemo, type Dispatch, type SetStateAction } from 'react';
 import { useWatch } from 'react-hook-form';
 import { useFetchEngagements } from '../hooks/useFetchEngagements';
@@ -43,6 +44,7 @@ type TaskSidebarProps = {
   taskState: 'create' | 'edit';
   taskEditState: TaskEditState;
   onOpenArbeitszeugnis?: (taskId: string) => void;
+  showWorkerLink?: boolean;
 };
 
 export function TaskSidebar({
@@ -51,15 +53,31 @@ export function TaskSidebar({
   taskState,
   taskEditState,
   onOpenArbeitszeugnis,
+  showWorkerLink = true,
 }: TaskSidebarProps) {
-  const { register, control, errors, onSubmit, isTaskSaving } = useTasks(
-    taskEditState,
-    taskState,
-    setIsOpen
-  );
+  const {
+    register,
+    control,
+    errors,
+    storedMicrosoftAccountId,
+    onSubmit,
+    saveForAction,
+    isTaskSaving,
+    autoSaveState,
+    flushAutoSave,
+    saveManually,
+  } = useTasks(taskEditState, taskState, setIsOpen, {
+    autoSave: isOpen && taskState === 'edit',
+  });
+  const closeSidebar = async () => {
+    if (taskState === 'edit' && !(await flushAutoSave())) return;
+    setIsOpen(false);
+  };
   const navigate = useNavigate();
   const sequence = useWatch({ control, name: 'sequence' });
-  const microsoftAccountId = useWatch({ control, name: 'microsoftAccountId' });
+  const selectedAutomation = INTEGRATION_SEQUENCES.find(
+    (item) => item.value === sequence
+  );
   const mailSenderAddress = useWatch({ control, name: 'mailSenderAddress' });
   const workerEngagementId = useWatch({
     control,
@@ -141,7 +159,7 @@ export function TaskSidebar({
     <SidebarAside
       className="p-2"
       isOpen={isOpen}
-      onClose={() => setIsOpen(false)}
+      onClose={() => void closeSidebar()}
     >
       <SidebarPanel className="w-full">
         <SidebarHeader className="flex items-center justify-between gap-3 p-6">
@@ -149,7 +167,7 @@ export function TaskSidebar({
             <Label className="text-base font-semibold">
               {taskState === 'edit' ? 'Aufgabe bearbeiten' : 'Aufgabe'}
             </Label>
-            {taskState === 'edit' && selectedEngagement ? (
+            {showWorkerLink && taskState === 'edit' && selectedEngagement ? (
               <Button
                 type="button"
                 variant="outline"
@@ -167,13 +185,20 @@ export function TaskSidebar({
             size="icon-sm"
             className="rounded-2xl"
             aria-label="Schließen"
-            onClick={() => setIsOpen(false)}
+            onClick={() => void closeSidebar()}
           >
             <X className="size-4" aria-hidden />
           </Button>
         </SidebarHeader>
         <form
-          onSubmit={onSubmit}
+          onSubmit={
+            taskState === 'edit'
+              ? (event) => {
+                  event.preventDefault();
+                  void saveManually();
+                }
+              : onSubmit
+          }
           className="flex min-h-0 flex-1 flex-col overflow-hidden"
         >
           <SidebarContent className="mt-2 flex min-h-0 flex-1 flex-col overflow-y-auto p-6">
@@ -234,10 +259,12 @@ export function TaskSidebar({
                 </div>
                 <MicrosoftAccountIdField
                   sequence={sequence}
+                  storedMicrosoftAccountId={storedMicrosoftAccountId}
                   register={register}
                   errors={errors}
                 />
-                {sequence === 'microsoft_send_email' ? (
+                {sequence === 'microsoft_send_email' ||
+                sequence === 'microsoft_send_teams_message' ? (
                   <>
                     <div className="flex flex-col gap-2">
                       <FormSelectOptions
@@ -248,15 +275,21 @@ export function TaskSidebar({
                           value: template.id,
                           label: template.name,
                         }))}
-                        label="E-Mail-Vorlage"
+                        label={
+                          sequence === 'microsoft_send_teams_message'
+                            ? 'Nachrichtenvorlage'
+                            : 'E-Mail-Vorlage'
+                        }
                         placeholder="Vorlage wählen"
                       />
                     </div>
-                    <MailSenderSelect
-                      control={control}
-                      errors={errors}
-                      current={mailSenderAddress}
-                    />
+                    {sequence === 'microsoft_send_email' && (
+                      <MailSenderSelect
+                        control={control}
+                        errors={errors}
+                        current={mailSenderAddress}
+                      />
+                    )}
                   </>
                 ) : null}
                 {isMailSequence(sequence) && workerEngagementId ? (
@@ -264,20 +297,21 @@ export function TaskSidebar({
                 ) : null}
                 {taskState === 'edit' &&
                 taskEditState.taskId &&
-                taskEditState.sequence &&
-                taskEditState.integrationProvider ? (
+                sequence &&
+                sequence !== 'none' &&
+                (selectedAutomation?.provider ||
+                  taskEditState.integrationProvider) ? (
                   <TaskAutomation
                     taskId={taskEditState.taskId}
-                    provider={taskEditState.integrationProvider}
-                    sequence={taskEditState.sequence}
-                    senderAddress={mailSenderAddress}
-                    disabled={
-                      isSubmitting ||
-                      sequence !== taskEditState.sequence ||
-                      (sequence === 'microsoft_deactivate_account' &&
-                        (microsoftAccountId?.trim() || '') !==
-                          (taskEditState.microsoftAccountId?.trim() || ''))
+                    provider={
+                      selectedAutomation?.provider ||
+                      taskEditState.integrationProvider!
                     }
+                    sequence={sequence}
+                    beforeRun={saveForAction}
+                    senderAddress={mailSenderAddress}
+                    disabled={isSubmitting}
+                    completed={taskEditState.status === 'done'}
                   />
                 ) : null}
                 {taskState === 'edit' &&
@@ -315,13 +349,17 @@ export function TaskSidebar({
             </FieldGroup>
           </SidebarContent>
           <SidebarFooter className="shrink-0 border-0 p-6">
-            <Button
-              type="submit"
-              className="rounded-2xl"
-              disabled={isSubmitting}
-            >
-              {taskState === 'edit' ? 'Speichern' : 'Hinzufügen'}
-            </Button>
+            {taskState === 'edit' ? (
+              <TaskSaveButton state={autoSaveState} onSave={saveManually} />
+            ) : (
+              <Button
+                type="submit"
+                className="rounded-2xl"
+                disabled={isSubmitting}
+              >
+                Hinzufügen
+              </Button>
+            )}
           </SidebarFooter>
         </form>
       </SidebarPanel>

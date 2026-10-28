@@ -20,7 +20,12 @@ export type TemplateRepeater = {
   kind: 'repeater';
   key: string;
   section: string;
-  columns: { key: string; label: string; type: 'text' | 'date'; officeOnly?: boolean }[];
+  columns: {
+    key: string;
+    label: string;
+    type: 'text' | 'date';
+    officeOnly?: boolean;
+  }[];
   allowMoreRows?: boolean;
 };
 

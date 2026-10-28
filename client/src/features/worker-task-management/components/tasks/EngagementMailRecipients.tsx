@@ -81,7 +81,9 @@ export function EngagementMailRecipients({
     },
   });
 
-  const selected = (page.data?.selected ?? []).filter(
+  const selected = (
+    (save.isPending ? save.variables : page.data?.selected) ?? []
+  ).filter(
     (choice) =>
       choice.kind !== 'worker_private' && choice.kind !== 'worker_work'
   );
@@ -229,9 +231,6 @@ export function EngagementMailRecipients({
           </div>
         </PopoverContent>
       </Popover>
-      {summary ? (
-        <p className="text-xs text-muted-foreground">Ausgewählt: {summary}</p>
-      ) : null}
       {page.isError ? (
         <p className="text-xs text-destructive">
           Empfänger konnten nicht geladen werden.

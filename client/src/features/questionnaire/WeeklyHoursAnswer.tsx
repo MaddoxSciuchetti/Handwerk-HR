@@ -28,15 +28,22 @@ export function WeeklyHoursAnswer({
   const choice = values[HOURS_DISTRIBUTION_KEY] ?? '';
   const showDays = office || choice === 'ja';
   const total = weekdayHoursTotal(values);
-  const entered = days.some((day) => hourQuantity(values[day.key] ?? '') != null);
+  const entered = days.some(
+    (day) => hourQuantity(values[day.key] ?? '') != null
+  );
   const reference = weeklyHoursReference(questions, values);
   const mismatch =
-    showDays && entered && reference != null && Math.abs(reference.hours - total) > 0.001;
+    showDays &&
+    entered &&
+    reference != null &&
+    Math.abs(reference.hours - total) > 0.001;
 
   return (
     <fieldset className="flex flex-col gap-4">
       {office ? (
-        <legend className="text-sm font-medium">Wöchentliche Arbeitszeit</legend>
+        <legend className="text-sm font-medium">
+          Wöchentliche Arbeitszeit
+        </legend>
       ) : (
         <legend className="text-sm font-medium">{WEEKLY_HOURS_PROMPT}</legend>
       )}

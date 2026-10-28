@@ -1,8 +1,8 @@
 import { ContractPreviewSkeleton } from './ContractPreviewSkeleton';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Download, Loader2 } from 'lucide-react';
 import type { DocumentSegment } from '@/features/settings/documents/documentSegments';
-import { FETCHDESCRIPTION } from '@/features/all-tasks/consts/query.consts';
 import { ALL_WORKER_DATA } from '@/features/worker-lifecycle/consts/query-key.consts';
 import { WORKERBYID } from '@/features/worker-task-management/consts/query-key.consts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -11,11 +11,10 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import {
   fetchPreparedEmploymentContractPdf,
-  prepareEmploymentContractPdf,
-  recordPrintedEmploymentContract,
+  prepareEmploymentContractDownload,
   selectEngagementContractTemplate,
 } from '../../api/employmentContract.api';
-import { printPdfBlob } from '../../printPdf';
+import { downloadBlob } from '../../downloadBlob';
 import { PreparedPdfPreview, type PreparedPdf } from './PreparedPdfPreview';
 import {
   documentFields,
@@ -31,6 +30,7 @@ import {
 } from '../../hooks/useEmploymentContract';
 import { useDocumentMasters } from '@/features/settings/documents/useDocumentMasters';
 import { ContractDraftBody } from './ContractDraftBody';
+import { ContractQuestionnaireSync } from './ContractQuestionnaireSync';
 import {
   documentPreviewModalPanel,
   documentPreviewModalSize,
@@ -95,6 +95,7 @@ export function ContractSendDialog({
   const templates = useDocumentMasters(
     Boolean(data && !data.sentAt && data.status !== 'signed')
   );
+  const [syncing, setSyncing] = useState(false);
   const [values, setValues] = useState<Record<string, string>>({});
   const [prepared, setPrepared] = useState<PreparedPdf | null>(null);
   const saveDraft = useSaveEmploymentContract(workerId, engagementId);
@@ -109,39 +110,6 @@ export function ContractSendDialog({
     setPrepared(data.prepared ?? null);
   }, [data]);
 
-  const printContract = useMutation({
-    mutationFn: async () => {
-      const pdf = prepared ?? (await prepare.mutateAsync());
-      const blob = await fetchPreparedEmploymentContractPdf(
-        workerId,
-        engagementId,
-        pdf.id
-      );
-      if (!(blob instanceof Blob)) {
-        throw new Error('PDF konnte nicht geladen werden');
-      }
-      await printPdfBlob(blob);
-      await recordPrintedEmploymentContract(
-        workerId,
-        engagementId,
-        issueId,
-        pdf.id
-      );
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] });
-      void queryClient.invalidateQueries({ queryKey: [WORKERBYID] });
-      void queryClient.invalidateQueries({ queryKey: [ALL_WORKER_DATA] });
-      toast.success('Vertrag gedruckt. Die Aufgabe ist erledigt.');
-      onClose();
-    },
-    onError: (error) =>
-      toast.error(
-        (error as { message?: string }).message ??
-          'Vertrag konnte nicht gedruckt werden'
-      ),
-  });
-
   const complete = data
     ? documentFields(data.document ?? fromSegments(data.segments)).every(
         (field) =>
@@ -155,45 +123,52 @@ export function ContractSendDialog({
     : false;
   const alreadySent = Boolean(data?.sentAt);
   const readOnly = data?.status === 'signed' || alreadySent;
-  const prepare = useMutation({
-    mutationFn: () =>
-      prepareEmploymentContractPdf(workerId, engagementId, values),
-    onSuccess: (pdf) => {
-      setPrepared(pdf);
-      queryClient.setQueryData(
-        employmentContractKey(workerId, engagementId),
-        (previous: typeof data) =>
-          previous ? { ...previous, values, prepared: pdf } : previous
-      );
+  const savePdf = useMutation({
+    mutationFn: async () => {
+      let blob: Blob;
+      if (prepared) {
+        blob = await fetchPreparedEmploymentContractPdf(
+          workerId,
+          engagementId,
+          prepared.id
+        );
+      } else {
+        const result = await prepareEmploymentContractDownload(
+          workerId,
+          engagementId,
+          values
+        );
+        blob = result.blob;
+        setPrepared(result.prepared);
+        queryClient.setQueryData(
+          employmentContractKey(workerId, engagementId),
+          (previous: typeof data) =>
+            previous
+              ? { ...previous, values, prepared: result.prepared }
+              : previous
+        );
+      }
+      if (!(blob instanceof Blob)) {
+        throw new Error('PDF konnte nicht geladen werden');
+      }
+      downloadBlob(blob, `${data?.name ?? 'Arbeitsvertrag'}.pdf`);
     },
     onError: (error) =>
       toast.error(
         (error as { message?: string }).message ??
-          'PDF konnte nicht erstellt werden'
+          'PDF konnte nicht heruntergeladen werden'
       ),
   });
-  const savePdf = useMutation({
-    mutationFn: async () => {
-      if (!prepared) return;
-      const blob = await fetchPreparedEmploymentContractPdf(
-        workerId,
-        engagementId,
-        prepared.id
-      );
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${data?.name ?? 'Arbeitsvertrag'}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-    },
-    onError: () => toast.error('PDF konnte nicht gespeichert werden'),
-  });
+  const saveBeforeSync = async () => {
+    if (data && JSON.stringify(values) !== JSON.stringify(data.values)) {
+      await saveDraft.mutateAsync(values);
+    }
+  };
   const switchTemplate = useMutation({
-    mutationFn: (masterId: string) =>
-      selectEngagementContractTemplate(workerId, engagementId, masterId),
+    mutationFn: async (masterId: string) => {
+      await saveBeforeSync();
+      return selectEngagementContractTemplate(workerId, engagementId, masterId);
+    },
     onSuccess: (saved) => {
       edited.current = false;
       setValues(saved.values);
@@ -219,11 +194,7 @@ export function ContractSendDialog({
     (template) => template.kind === 'employment_contract'
   );
   const busy =
-    changingTemplate ||
-    savePdf.isPending ||
-    printContract.isPending ||
-    prepare.isPending ||
-    saveDraft.isPending;
+    syncing || changingTemplate || savePdf.isPending || saveDraft.isPending;
   const blockedDelivery = ['sending', 'uncertain'].includes(
     prepared?.status ?? ''
   );
@@ -313,12 +284,12 @@ export function ContractSendDialog({
                       htmlFor="contract-template"
                       className="text-sm font-medium"
                     >
-                      Vertragsvorlage
+                      Vertragsvorlage wechseln
                     </label>
                     <div className="flex flex-wrap items-center gap-2">
                       <select
                         id="contract-template"
-                        className="h-9 min-w-60 rounded-md border border-input bg-background px-3 text-sm"
+                        className="h-9 w-60 min-w-0 max-w-full shrink-0 truncate rounded-md border border-input bg-background px-3 text-sm"
                         value={data.masterId}
                         disabled={
                           busy ||
@@ -341,6 +312,19 @@ export function ContractSendDialog({
                           </option>
                         ))}
                       </select>
+                      <ContractQuestionnaireSync
+                        workerId={workerId}
+                        engagementId={engagementId}
+                        contract={data}
+                        beforeSync={saveBeforeSync}
+                        onBusy={setSyncing}
+                        disabled={busy || blockedDelivery}
+                        onSynced={(saved) => {
+                          edited.current = false;
+                          setValues(saved.values);
+                          setPrepared(null);
+                        }}
+                      />
                     </div>
                     {templates.isError ? (
                       <p className="text-sm text-destructive">
@@ -365,7 +349,7 @@ export function ContractSendDialog({
                   prepared={prepared}
                   showConfirmation={false}
                   showOpenLink={false}
-                  frameTitle="Arbeitsvertrag zum Drucken"
+                  frameTitle="Arbeitsvertrag PDF-Vorschau"
                   page={{
                     width: data.document.page.width,
                     height: data.document.page.height,
@@ -387,9 +371,10 @@ export function ContractSendDialog({
                     values={values}
                     readOnly={
                       readOnly ||
+                      syncing ||
                       changingTemplate ||
-                      prepare.isPending ||
-                      printContract.isPending
+                      saveDraft.isPending ||
+                      savePdf.isPending
                     }
                     acceptAnswerDrop={unmatched.length > 0}
                     onValueChange={(key, value) => {
@@ -400,7 +385,31 @@ export function ContractSendDialog({
                   />
                 </div>
               )}
-              {alreadySent ? null : (
+              {alreadySent ? (
+                data.outgoingFileUrl ? (
+                  <div className="flex shrink-0 justify-end">
+                    <Button
+                      type="button"
+                      size="icon"
+                      className="rounded-2xl"
+                      aria-label="PDF herunterladen"
+                      title="PDF herunterladen"
+                      onClick={() => {
+                        const link = document.createElement('a');
+                        link.href = data.outgoingFileUrl!;
+                        link.download = `${data.name ?? 'Arbeitsvertrag'}.pdf`;
+                        link.target = '_blank';
+                        link.rel = 'noreferrer';
+                        document.body.appendChild(link);
+                        link.click();
+                        link.remove();
+                      }}
+                    >
+                      <Download aria-hidden="true" />
+                    </Button>
+                  </div>
+                ) : null
+              ) : (
                 <div className="flex shrink-0 justify-end gap-2">
                   {prepared ? (
                     <Button
@@ -413,53 +422,43 @@ export function ContractSendDialog({
                     >
                       Bearbeiten
                     </Button>
-                  ) : (
-                    <>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        disabled={
-                          readOnly ||
-                          changingTemplate ||
-                          saveDraft.isPending ||
-                          prepare.isPending
-                        }
-                        onClick={() =>
-                          saveDraft.mutate(values, {
-                            onSuccess: (saved) => {
-                              setValues(saved.values);
-                              toast.success('Entwurf gespeichert');
-                            },
-                            onError: () =>
-                              toast.error(
-                                'Entwurf konnte nicht gespeichert werden'
-                              ),
-                          })
-                        }
-                      >
-                        {saveDraft.isPending ? 'Speichert…' : 'Speichern'}
-                      </Button>
-                    </>
-                  )}
-                  {prepared ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled={busy || blockedDelivery}
-                      onClick={() => savePdf.mutate()}
-                    >
-                      {savePdf.isPending ? 'Speichert…' : 'Speichern'}
-                    </Button>
                   ) : null}
                   <Button
                     type="button"
-                    className="rounded-2xl"
-                    disabled={!complete || busy || blockedDelivery}
-                    onClick={() => printContract.mutate()}
+                    variant="outline"
+                    disabled={readOnly || busy || blockedDelivery}
+                    onClick={() =>
+                      saveDraft.mutate(values, {
+                        onSuccess: (saved) => {
+                          edited.current = false;
+                          setValues(saved.values);
+                          setPrepared(saved.prepared ?? null);
+                          toast.success('Entwurf gespeichert');
+                        },
+                        onError: () =>
+                          toast.error(
+                            'Entwurf konnte nicht gespeichert werden'
+                          ),
+                      })
+                    }
                   >
-                    {printContract.isPending || prepare.isPending
-                      ? 'Druckt…'
-                      : 'Drucken'}
+                    {saveDraft.isPending ? 'Speichert…' : 'Speichern'}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="icon"
+                    className="rounded-2xl"
+                    aria-label="PDF herunterladen"
+                    title="PDF herunterladen"
+                    aria-busy={savePdf.isPending}
+                    disabled={!complete || busy || blockedDelivery}
+                    onClick={() => savePdf.mutate()}
+                  >
+                    {savePdf.isPending ? (
+                      <Loader2 className="animate-spin" aria-hidden="true" />
+                    ) : (
+                      <Download aria-hidden="true" />
+                    )}
                   </Button>
                 </div>
               )}

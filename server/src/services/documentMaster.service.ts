@@ -112,6 +112,75 @@ export async function listDocumentMasters(
     });
 }
 
+const NAME_MAX = 200;
+
+export function copiedDocumentName(
+    name: string,
+    taken: Iterable<string>,
+): string {
+    const used = new Set(taken);
+    const base = name.trim();
+    for (let copy = 1; copy < 1000; copy += 1) {
+        const suffix = copy === 1 ? " (Kopie)" : ` (Kopie ${copy})`;
+        const candidate = `${base.slice(0, NAME_MAX - suffix.length)}${suffix}`;
+        if (!used.has(candidate)) return candidate;
+    }
+    throw new AppError(CONFLICT, "Keine freie Kopie des Namens gefunden.");
+}
+
+export async function duplicateDocumentMaster(
+    id: string,
+    organizationId: string,
+): Promise<DocumentMasterDetail> {
+    const master = await prisma.documentMaster.findFirst({
+        where: { id, organizationId, deletedAt: null },
+        select: {
+            kind: true,
+            name: true,
+            body: true,
+            sourceKey: true,
+            sourceMime: true,
+            sourceName: true,
+        },
+    });
+    if (!master) {
+        throw new AppError(NOT_FOUND, "Dokument nicht gefunden.");
+    }
+
+    const existing = await prisma.documentMaster.findMany({
+        where: { organizationId, deletedAt: null },
+        select: { name: true },
+    });
+    const created = await prisma.documentMaster.create({
+        data: {
+            organizationId,
+            kind: master.kind,
+            name: copiedDocumentName(
+                master.name,
+                existing.map((item) => item.name),
+            ),
+            isPrimary: false,
+            body: master.body as Prisma.InputJsonValue,
+            sourceKey: master.sourceKey,
+            sourceMime: master.sourceMime,
+            sourceName: master.sourceName,
+        },
+        select: {
+            id: true,
+            name: true,
+            kind: true,
+            isPrimary: true,
+            body: true,
+            revision: true,
+            approvedAt: true,
+            sourceMime: true,
+            updatedAt: true,
+        },
+    });
+
+    return toDetail(created);
+}
+
 export async function createDocumentMaster(params: {
     organizationId: string;
     kind: string;

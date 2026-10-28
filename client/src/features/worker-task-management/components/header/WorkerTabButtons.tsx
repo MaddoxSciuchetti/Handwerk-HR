@@ -3,24 +3,37 @@ import type { WorkerTab } from '../../types/index.types';
 
 type WorkerTabButtonsProps = {
   activeTab: WorkerTab;
+  hideTasks?: boolean;
   onTabChange: (tab: WorkerTab) => void;
 };
 
 export function WorkerTabButtons({
   activeTab,
   onTabChange,
+  hideTasks = false,
 }: WorkerTabButtonsProps) {
   return (
     <div className="mt-5 flex shrink-0 items-center gap-3">
       <Button
         type="button"
-        variant={activeTab === 'form' ? 'default' : 'outline'}
+        variant={activeTab === 'information' ? 'default' : 'outline'}
         size="sm"
         className="rounded-2xl"
-        onClick={() => onTabChange('form')}
+        onClick={() => onTabChange('information')}
       >
-        Aufgaben
+        Information
       </Button>
+      {!hideTasks && (
+        <Button
+          type="button"
+          variant={activeTab === 'form' ? 'default' : 'outline'}
+          size="sm"
+          className="rounded-2xl"
+          onClick={() => onTabChange('form')}
+        >
+          Aufgaben
+        </Button>
+      )}
       <Button
         type="button"
         variant={activeTab === 'files' ? 'default' : 'outline'}
@@ -29,26 +42,6 @@ export function WorkerTabButtons({
         onClick={() => onTabChange('files')}
       >
         Dateien
-      </Button>
-      <Button
-        type="button"
-        variant={activeTab === 'materials' ? 'default' : 'outline'}
-        size="sm"
-        className="rounded-2xl"
-        data-testid="materials-tab-button"
-        onClick={() => onTabChange('materials')}
-      >
-        Materialien
-      </Button>
-      <Button
-        type="button"
-        variant={activeTab === 'clothing' ? 'default' : 'outline'}
-        size="sm"
-        className="rounded-2xl"
-        data-testid="clothing-tab-button"
-        onClick={() => onTabChange('clothing')}
-      >
-        Kleidung
       </Button>
     </div>
   );

@@ -70,8 +70,8 @@ it('selects stock without deleting it, then deletes only selected rows from the 
   expect(
     screen.queryByRole('button', { name: /löschen/ })
   ).not.toBeInTheDocument();
-  await user.click(screen.getByRole('button', { name: 'Hose (S) auswählen' }));
-  await user.click(screen.getByRole('button', { name: 'Hose (M) auswählen' }));
+  await user.click(screen.getByRole('checkbox', { name: 'Hose (S) auswählen' }));
+  await user.click(screen.getByRole('checkbox', { name: 'Hose (M) auswählen' }));
   expect(screen.getByText('2 ausgewählt')).toBeInTheDocument();
   expect(stock.remove).not.toHaveBeenCalled();
   expect(screen.getByTestId('bestand-row-hose-s')).toHaveAttribute(
@@ -110,9 +110,9 @@ it('keeps failed deletions selected and edits quantities independently of select
     expect.any(Object)
   );
   expect(screen.queryByText('1 ausgewählt')).not.toBeInTheDocument();
-  await user.click(screen.getByRole('button', { name: 'Hose (S) auswählen' }));
+  await user.click(screen.getByRole('checkbox', { name: 'Hose (S) auswählen' }));
   await user.click(
-    screen.getByRole('button', { name: 'T-Shirt (L) auswählen' })
+    screen.getByRole('checkbox', { name: 'T-Shirt (L) auswählen' })
   );
   await user.click(
     screen.getByRole('button', { name: 'Ausgewählten Bestand löschen' })
@@ -121,15 +121,15 @@ it('keeps failed deletions selected and edits quantities independently of select
     expect(screen.getByText('1 ausgewählt')).toBeInTheDocument()
   );
   expect(
-    screen.getByRole('button', {
+    screen.getByRole('checkbox', {
       name: 'T-Shirt (L) aus der Auswahl entfernen',
     })
-  ).toHaveAttribute('aria-pressed', 'true');
+  ).toBeChecked();
   expect(
-    screen.getByRole('button', { name: 'Hose (S) auswählen' })
-  ).toHaveAttribute('aria-pressed', 'false');
+    screen.getByRole('checkbox', { name: 'Hose (S) auswählen' })
+  ).not.toBeChecked();
   await user.click(
-    screen.getByRole('button', {
+    screen.getByRole('checkbox', {
       name: 'T-Shirt (L) aus der Auswahl entfernen',
     })
   );
@@ -141,7 +141,7 @@ it('keeps the stock headers and controls while replacing loading rows, then show
   const view = render(<BestandTab isLoading />);
   expect(screen.getByRole('table')).toHaveAttribute('aria-busy', 'true');
   expect(
-    screen.getByRole('columnheader', { name: 'Artikel' })
+    screen.getByRole('columnheader', { name: /Artikel$/ })
   ).toBeInTheDocument();
   expect(
     screen.getByRole('columnheader', { name: 'Größe' })
@@ -155,4 +155,36 @@ it('keeps the stock headers and controls while replacing loading rows, then show
   view.rerender(<BestandTab />);
   expect(screen.queryByRole('status')).not.toBeInTheDocument();
   expect(screen.getByTestId('bestand-row-hose')).toBeInTheDocument();
+});
+
+it('selects and clears every stock row from the column header', async () => {
+  stock.data = [
+    { id: 'hose-s', name: 'Hose', size: 'S', quantity: 2 },
+    { id: 'shirt', name: 'T-Shirt', size: 'L', quantity: 3 },
+  ];
+  const user = userEvent.setup();
+  render(<BestandTab />);
+
+  expect(
+    screen.getByRole('checkbox', { name: 'Hose (S) auswählen' })
+  ).toBeInTheDocument();
+  await user.click(
+    screen.getByRole('checkbox', { name: 'Alle Artikel auswählen' })
+  );
+  expect(screen.getByText('2 ausgewählt')).toBeInTheDocument();
+  expect(
+    screen.getByRole('checkbox', {
+      name: 'Hose (S) aus der Auswahl entfernen',
+    })
+  ).toBeChecked();
+  expect(
+    screen.getByRole('checkbox', {
+      name: 'T-Shirt (L) aus der Auswahl entfernen',
+    })
+  ).toBeChecked();
+
+  await user.click(
+    screen.getByRole('checkbox', { name: 'Alle Artikel abwählen' })
+  );
+  expect(screen.queryByText('2 ausgewählt')).not.toBeInTheDocument();
 });

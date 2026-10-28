@@ -1,11 +1,19 @@
+import z from "zod";
+import { integrationsMocked } from "./integrations/localMock";
+import { applyTemplateApplication, type TemplateApplyInput } from './templateApplication';
+
 import { BAD_REQUEST } from "@/constants/http";
 import AppError from "@/utils/AppError";
-import { listBsbMailAddresses } from "@/services/engagementMail";
+import { questionnaireSender } from "@/services/questionnaireSender";
 import { prisma } from "@/lib/prisma";
 import { templateItemsForEngagement } from "@/services/onboardingTemplateTasks";
 import { fillWorkerProfileFromQuestionnaires } from "@/services/questionnaireWorkerProfile";
 import { certificateText } from "@/services/arbeitszeugnis";
 import { issueVisibleToViewer } from "@/services/issueVisibility";
+import {
+    attachMentionFlag,
+    unreadMentionInclude,
+} from "@/services/issueMentions";
 import type {
     ArchiveWorkerInput,
     CreateAbsenceInput,
@@ -139,19 +147,30 @@ function placeholderNamesFromEmail(email: string) {
     };
 }
 
+function namesFromDisplayName(name: string) {
+    const parts = name
+        .trim()
+        .split(/\s+/)
+        .map((part) => part.trim())
+        .filter((part) => part.length > 0);
+
+    return {
+        firstName: (parts[0] ?? "Unbekannt").slice(0, 120),
+        lastName: parts.slice(1).join(" ").slice(0, 120),
+    };
+}
+
 export async function startExpectedOnboarding(params: {
     organizationId: string;
     createdByUserId: string;
-    email: string;
-    senderAddress: string;
+    email?: string;
+    name?: string;
 }) {
-    const senderAddress = params.senderAddress.trim().toLowerCase();
-    const { addresses } = await listBsbMailAddresses(params.organizationId);
-    if (!addresses.some((address) => address.email === senderAddress)) {
-        throw new AppError(BAD_REQUEST, "Bitte einen gültigen Absender wählen.");
-    }
-    const email = params.email.trim().toLowerCase();
-    const { firstName, lastName } = placeholderNamesFromEmail(email);
+    const senderAddress = await questionnaireSender(params.createdByUserId);
+    const email = params.email?.trim().toLowerCase() || null;
+    const { firstName, lastName } = email
+        ? placeholderNamesFromEmail(email)
+        : namesFromDisplayName(params.name ?? "");
     const created = await prisma.$transaction(async (tx) => {
         const worker = await tx.worker.create({
             data: {
@@ -169,7 +188,7 @@ export async function startExpectedOnboarding(params: {
                 workerId: worker.id,
                 organizationId: params.organizationId,
                 responsibleUserId: params.createdByUserId,
-                status: "expected",
+                status: "pending",
                 type: "onboarding",
                 questionnaireSenderAddress: senderAddress,
             },
@@ -228,14 +247,54 @@ export async function getWorkerData(params: GetWorkersInput) {
             : {}),
     };
 
+    if (params.summary) {
+        const workers = await prisma.worker.findMany({
+            where,
+            orderBy: { createdAt: "desc" },
+            select: {
+                id: true, firstName: true, lastName: true, email: true,
+                position: true, status: true, birthday: true, entryDate: true,
+                exitDate: true, createdAt: true, updatedAt: true,
+                engagements: {
+                    orderBy: { createdAt: "desc" },
+                    select: {
+                        id: true, type: true, status: true, startedAt: true,
+                        completedAt: true, startDate: true, endDate: true,
+                        responsibleUser: { select: { id: true, firstName: true, lastName: true, email: true } },
+                        templateApplication: { select: { id: true, completedAt: true, resultsDismissedAt: true } },
+                        questionnaireSubmission: { select: { id: true, status: true, completedAt: true } },
+                    },
+                },
+            },
+        });
+        const engagementIds = workers.flatMap(worker => worker.engagements.map(engagement => engagement.id));
+        const counts = engagementIds.length ? await prisma.issue.groupBy({
+            by: ["workerEngagementId", "status"],
+            where: { workerEngagementId: { in: engagementIds }, ...issueVisibleToViewer(viewerUserId) },
+            _count: { _all: true },
+        }) : [];
+        const byEngagement = new Map<string, { status: string; count: number }[]>();
+        for (const row of counts) {
+            if (!row.workerEngagementId) continue;
+            const values = byEngagement.get(row.workerEngagementId) ?? [];
+            values.push({ status: row.status, count: row._count._all });
+            byEngagement.set(row.workerEngagementId, values);
+        }
+        return workers.map(worker => ({ ...worker, engagements: worker.engagements.map(engagement => ({
+            ...engagement, issueCounts: byEngagement.get(engagement.id) ?? [],
+        })) }));
+    }
+
     return prisma.worker.findMany({
         where,
         orderBy: { createdAt: "desc" },
         include: {
             engagements: {
-                orderBy: { startDate: "desc" },
+                orderBy: { createdAt: "desc" },
                 take: 1,
                 include: {
+                    templateApplication: { select: { id: true, completedAt: true, resultsDismissedAt: true } },
+                    questionnaireSubmission: { select: { id: true, status: true, completedAt: true } },
                     responsibleUser: {
                         select: {
                             id: true,
@@ -282,8 +341,9 @@ export async function getWorkerById(
                 },
             },
             engagements: {
-                orderBy: { startDate: "desc" },
+                orderBy: { createdAt: "desc" },
                 include: {
+                    templateApplication: { select: { id: true, completedAt: true, resultsDismissedAt: true } },
                     responsibleUser: {
                         select: {
                             id: true,
@@ -318,7 +378,8 @@ export async function getWorkerById(
                     },
                     issues: {
                         where: issueVisibleToViewer(viewerUserId),
-                        orderBy: { createdAt: "desc" },
+                        // Keep tasks created together in the same order after edits.
+                        orderBy: [{ createdAt: "desc" }, { id: "asc" }],
                         include: {
                             assignee: {
                                 select: {
@@ -335,6 +396,7 @@ export async function getWorkerById(
                                     lastName: true,
                                 },
                             },
+                            mentions: unreadMentionInclude(viewerUserId),
                         },
                     },
                 },
@@ -379,6 +441,7 @@ export async function getWorkerById(
         documents: documentsWithUrls,
         engagements: worker.engagements.map((engagement) => ({
             ...engagement,
+            issues: (engagement.issues ?? []).map(attachMentionFlag),
             questionnaireSubmission: engagement.questionnaireSubmission
                 ? {
                       id: engagement.questionnaireSubmission.id,
@@ -414,9 +477,43 @@ export async function updateWorker(params: {
     const { workerId, organizationId, updateData } = params;
     await assertOwnership(workerId, organizationId);
 
-    return prisma.worker.update({
-        where: { id: workerId },
-        data: updateData,
+    const { workwearSize, ...workerData } = updateData;
+    if (!workwearSize) {
+        return prisma.worker.update({
+            where: { id: workerId },
+            data: workerData,
+        });
+    }
+
+    const sizeEdit = z.object({
+        itemName: z.enum(["Hose", "T-Shirt"]),
+        size: z.string().trim().max(32),
+    }).parse(workwearSize);
+
+    return prisma.$transaction(async (tx) => {
+        const existing = await tx.workerWorkwear.findFirst({
+            where: { workerId, itemName: sizeEdit.itemName },
+        });
+        if (existing) {
+            await tx.workerWorkwear.updateMany({
+                where: { workerId, itemName: sizeEdit.itemName },
+                data: { size: sizeEdit.size },
+            });
+        } else if (sizeEdit.size) {
+            await tx.workerWorkwear.create({
+                data: {
+                    workerId,
+                    itemName: sizeEdit.itemName,
+                    size: sizeEdit.size,
+                    articleNumber: "",
+                    quantity: 1,
+                },
+            });
+        }
+        return tx.worker.update({
+            where: { id: workerId },
+            data: workerData,
+        });
     });
 }
 
@@ -444,21 +541,29 @@ export async function unarchiveWorker(params: UnarchiveWorkerInput) {
     });
 }
 
-export async function deleteWorker(params: DeleteWorkerInput) {
-    const { workerId, organizationId } = params;
-    await assertOwnership(workerId, organizationId);
+export async function deleteWorkers(params: { organizationId: string; workerIds: string[] }) {
+    const { organizationId } = params;
+    const workerIds = [...new Set(params.workerIds)];
+    if (!workerIds.length) return { count: 0 };
 
-    return withTxRetry(
-        async (tx) => {
-            await tx.workerDocument.deleteMany({ where: { workerId } });
-            await tx.workerEngagement.deleteMany({ where: { workerId } });
-            return tx.worker.delete({ where: { id: workerId } });
-        },
-        {
-            maxAttempts: 3,
-            baseDelayMs: 1000,
-        },
-    );
+    return withTxRetry(async (tx) => {
+        const owned = await tx.worker.findMany({
+            where: { id: { in: workerIds }, organizationId },
+            select: { id: true },
+        });
+        if (owned.length !== workerIds.length) {
+            throw new Error("Worker not found or access denied");
+        }
+        // Child relations use ON DELETE CASCADE, so one scoped delete also
+        // removes engagements, issues and documents within this transaction.
+        return tx.worker.deleteMany({
+            where: { id: { in: workerIds }, organizationId },
+        });
+    });
+}
+
+export async function deleteWorker(params: DeleteWorkerInput) {
+    await deleteWorkers({ organizationId: params.organizationId, workerIds: [params.workerId] });
 }
 
 const WORKER_DATE_FIELDS = new Set(["birthday", "entryDate", "exitDate"]);
@@ -483,7 +588,7 @@ export async function updateDataPoint(params: UpdateDataPointInput) {
     if (field === "responsibleUserId") {
         const engagement = await prisma.workerEngagement.findFirst({
             where: { workerId },
-            orderBy: { startDate: "desc" },
+            orderBy: { createdAt: "desc" },
         });
         if (!engagement) {
             throw new Error("Kein Engagement für diesen Handwerker gefunden");
@@ -542,6 +647,48 @@ export async function updateEngagement(params: UpdateEngagementInput) {
         where: { id: engagementId, workerId },
     });
     if (!existing) throw new Error("Engagement not found");
+
+    // Offboarding has its own tasks and template receipt; retain onboarding history.
+    if (updateData.type === "offboarding" && existing.type !== "offboarding") {
+        const offboarding = await prisma.workerEngagement.findFirst({
+            where: { workerId, organizationId, type: "offboarding" },
+            orderBy: { createdAt: "desc" },
+        });
+        // A retry can reuse the phase created by the first request. Returning
+        // to offboarding after a newer Team phase needs a new active phase.
+        if (offboarding && offboarding.createdAt >= existing.createdAt) return offboarding;
+        return createEngagement({
+            workerId,
+            organizationId,
+            responsibleUserId: updateData.responsibleUserId ?? existing.responsibleUserId,
+            type: "offboarding",
+            status: updateData.status ?? "pending",
+            startDate: updateData.startDate,
+            endDate: updateData.endDate,
+            completedAt: updateData.completedAt,
+        });
+    }
+
+    // Never relabel onboarding/offboarding in place — Team and returns to a
+    // lifecycle type are new phases so tasks and template receipts stay put.
+    // The newest engagement determines the worker's current lifecycle phase.
+    if (updateData.type && updateData.type !== existing.type) {
+        const latest = await prisma.workerEngagement.findFirst({
+            where: { workerId, organizationId },
+            orderBy: { createdAt: "desc" },
+        });
+        if (latest && latest.id !== existing.id && latest.type === updateData.type) return latest;
+        return createEngagement({
+            workerId,
+            organizationId,
+            responsibleUserId: updateData.responsibleUserId ?? existing.responsibleUserId,
+            type: updateData.type,
+            status: updateData.status ?? (updateData.type === "transfer" ? "completed" : "pending"),
+            startDate: updateData.startDate,
+            endDate: updateData.endDate,
+            completedAt: updateData.completedAt ?? (updateData.type === "transfer" ? new Date() : undefined),
+        });
+    }
 
     const data: Prisma.WorkerEngagementUpdateInput = { ...updateData };
     if (
@@ -661,6 +808,7 @@ export async function updateIssue(params: UpdateIssueInput) {
     const {
         issueId,
         workerEngagementId,
+        newWorkerEngagementId,
         actorUserId,
         title,
         description,
@@ -682,6 +830,7 @@ export async function updateIssue(params: UpdateIssueInput) {
     if (!existing) throw new Error("Issue not found");
 
     const data: Record<string, unknown> = {};
+    if (newWorkerEngagementId !== undefined) data.workerEngagementId = newWorkerEngagementId;
     if (title !== undefined) data.title = title;
     if (description !== undefined) data.description = description;
     if (assigneeUserId !== undefined) data.assigneeUserId = assigneeUserId;
@@ -695,7 +844,14 @@ export async function updateIssue(params: UpdateIssueInput) {
     if (mailSenderAddress !== undefined) data.mailSenderAddress = mailSenderAddress;
     if (microsoftAccountId !== undefined) data.microsoftAccountId = microsoftAccountId;
 
-    const keys = Object.keys(data);
+    const keys = Object.keys(data).filter((key) => {
+        const previous = (existing as unknown as Record<string, unknown>)[key];
+        if (JSON.stringify(previous) === JSON.stringify(data[key])) {
+            delete data[key];
+            return false;
+        }
+        return true;
+    });
     if (keys.length === 0) {
         return prisma.issue.findFirst({
             where: { id: issueId },
@@ -791,6 +947,8 @@ async function applyIssueTemplateInTx(
         templateId: string;
         actorUserId: string;
         remainingOnly?: boolean;
+        runAutomation?: boolean;
+        templateSnapshot?: Prisma.IssueTemplateGetPayload<{ include: { items: true } }>;
     },
 ) {
     const {
@@ -801,7 +959,7 @@ async function applyIssueTemplateInTx(
         remainingOnly = false,
     } = params;
 
-    const template = await tx.issueTemplate.findFirst({
+    const template = params.templateSnapshot ?? await tx.issueTemplate.findFirst({
         where: { id: templateId, organizationId },
         include: {
             items: { orderBy: { orderIndex: "asc" } },
@@ -832,7 +990,7 @@ async function applyIssueTemplateInTx(
                 workerEngagementId,
                 createdByUserId: actorUserId,
                 assigneeUserId: item.defaultAssigneeUserId ?? undefined,
-                status: item.defaultStatus ?? "open",
+                status: params.runAutomation && item.sequence ? "open" : item.defaultStatus ?? "open",
                 title: item.title,
                 description: item.description ?? undefined,
                 priority: "no_priority",
@@ -850,7 +1008,7 @@ async function applyIssueTemplateInTx(
                 action: "issue.created",
                 newValue: {
                     title: item.title,
-                    status: item.defaultStatus ?? "open",
+                    status: params.runAutomation && item.sequence ? "open" : item.defaultStatus ?? "open",
                     assigneeUserId: item.defaultAssigneeUserId,
                     templateItemId: item.id,
                 },
@@ -863,6 +1021,10 @@ async function applyIssueTemplateInTx(
 }
 
 export async function applyIssueTemplate(params: {
+    runAutomation?: boolean;
+    choices?: TemplateApplyInput["choices"];
+    idempotencyKey?: string;
+    templateRevision?: string;
     workerId: string;
     organizationId: string;
     workerEngagementId: string;
@@ -891,13 +1053,18 @@ export async function applyIssueTemplate(params: {
     });
     if (!engagement) throw new Error("Worker engagement not found");
 
-    return prisma.$transaction((tx) =>
-        applyIssueTemplateInTx(tx, {
+    return applyTemplateApplication({ workerId, organizationId, templateId, actorUserId }, {
+        workerEngagementId, runAutomation: params.runAutomation ?? false,
+        choices: params.choices ?? {}, idempotencyKey: params.idempotencyKey,
+        templateRevision: params.templateRevision,
+    }, (tx, templateSnapshot) => applyIssueTemplateInTx(tx, {
+            templateSnapshot,
+            runAutomation: params.runAutomation,
             organizationId,
             workerEngagementId: engagement.id,
             templateId,
             actorUserId,
-            remainingOnly,
+            remainingOnly: integrationsMocked() ? false : remainingOnly,
         }),
     );
 }

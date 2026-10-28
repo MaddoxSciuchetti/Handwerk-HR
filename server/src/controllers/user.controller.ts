@@ -25,6 +25,7 @@ export const getUser = catchErrors(async (req, res) => {
     return res.status(OK).json({
         ...user,
         membershipRole: membership?.membershipRole ?? "worker",
+        organizationId: req.orgId,
     });
 });
 
@@ -47,24 +48,18 @@ export const getProfilePhoto = catchErrors(async (req, res) => {
 
     const profilePic = await queryProfilePhoto(id);
     if (!profilePic?.avatarUrl) {
-        return res
-            .status(NOT_FOUND)
-            .json({ error: "Please upload a profile picture" });
+        return res.status(OK).json("");
     }
 
     let key: string;
     try {
         key = new URL(profilePic.avatarUrl).pathname.slice(1);
     } catch {
-        return res
-            .status(NOT_FOUND)
-            .json({ error: "Please upload a profile picture" });
+        return res.status(OK).json("");
     }
 
     if (!key) {
-        return res
-            .status(NOT_FOUND)
-            .json({ error: "Please upload a profile picture" });
+        return res.status(OK).json("");
     }
 
     const presignedUrl = await generatePresignedUrl(key);

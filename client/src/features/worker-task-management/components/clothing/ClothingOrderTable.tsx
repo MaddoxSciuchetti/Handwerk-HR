@@ -27,7 +27,16 @@ export function ClothingOrderTable({
   onDelete,
 }: ClothingOrderTableProps) {
   return (
-    <Table aria-busy={isLoading}>
+    <Table aria-busy={isLoading} className="min-w-[960px] table-fixed">
+      <colgroup>
+        <col className="w-[26%]" />
+        <col className="w-[10%]" />
+        <col className="w-[9%]" />
+        <col className="w-[16%]" />
+        <col className="w-[9%]" />
+        <col className="w-[24%]" />
+        <col className="w-[6%]" />
+      </colgroup>
       <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-0">
         <TableRow className="border-0 hover:bg-transparent">
           <TableHead className="h-12 bg-card py-3 pl-10 pr-2">

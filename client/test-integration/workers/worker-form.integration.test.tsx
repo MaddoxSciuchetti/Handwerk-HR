@@ -4,6 +4,19 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from '../../test-unit/test-utils';
 
+vi.mock('@/config/apiClient', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/config/apiClient')>();
+  return {
+    ...actual,
+    apiJson: {
+      ...actual.apiJson,
+      get: vi.fn().mockResolvedValue({
+        data: { addresses: [], error: null },
+      }),
+    },
+  };
+});
+
 const noop = () => {};
 
 const addWorkerMock = vi.hoisted(() =>
@@ -73,49 +86,33 @@ describe('Worker form (integration)', () => {
     toastError.mockClear();
   });
 
-  it('shows required errors when submitting an empty onboarding form', async () => {
-    const user = userEvent.setup();
+  it('shows only fast-track onboarding without the manual fields or add button', () => {
     renderOnboardingForm();
 
-    await user.click(screen.getByRole('button', { name: /^Hinzufügen$/i }));
-
-    const required = await screen.findAllByText(/^erforderlich$/);
-    expect(required.length).toBeGreaterThan(0);
-
+    expect(
+      screen.getByLabelText('Name oder E-Mail des Mitarbeiters')
+    ).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Anlegen' })).toBeVisible();
+    expect(screen.queryByRole('separator')).not.toBeInTheDocument();
+    expect(screen.queryByText('oder')).not.toBeInTheDocument();
+    for (const placeholder of [
+      /^Vorname$/,
+      /^Nachname$/,
+      /^Email$/,
+      /^Geburtsdatum/,
+      /^Adresse/,
+      /^Eintrittsdatum/,
+      /^Position/,
+    ]) {
+      expect(
+        screen.queryByPlaceholderText(placeholder)
+      ).not.toBeInTheDocument();
+    }
+    expect(screen.queryByText('Template (optional)')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /^Hinzufügen$/i })
+    ).not.toBeInTheDocument();
     expect(addWorkerMock).not.toHaveBeenCalled();
-  });
-
-  it('submits onboarding and calls addWorker with valid payloads', async () => {
-    const user = userEvent.setup();
-    renderOnboardingForm();
-
-    await user.type(screen.getByPlaceholderText(/^Vorname$/), 'Anna');
-    await user.type(screen.getByPlaceholderText(/^Nachname$/), 'Schmidt');
-    await user.type(
-      screen.getByPlaceholderText(/^Email$/),
-      'anna@test.example'
-    );
-    await user.type(screen.getByPlaceholderText(/^Geburtsdatum/), '01.03.1992');
-    await user.type(screen.getByPlaceholderText(/^Adresse/), 'Berlin Str. 1');
-    await user.type(
-      screen.getByPlaceholderText(/^Eintrittsdatum/),
-      '01.08.2025'
-    );
-    await user.type(screen.getByPlaceholderText(/^Position/), 'Pflege');
-
-    await user.click(screen.getByRole('button', { name: /^Hinzufügen$/i }));
-
-    await vi.waitFor(() => expect(addWorkerMock).toHaveBeenCalledTimes(1));
-
-    const payload = addWorkerMock.mock.calls[0][0];
-    expect(payload.firstName).toBe('Anna');
-    expect(payload.lastName).toBe('Schmidt');
-    expect(payload.email).toBe('anna@test.example');
-    expect(payload.engagementType).toBe('onboarding');
-
-    expect(toastSuccess).toHaveBeenCalledWith(
-      'Mitarbeiter erstellt und Benachrichtigungen versendet'
-    );
   });
 
   it('blocks offboarding submit when austrittsdatum is before eintrittsdatum and shows An error occurred', async () => {

@@ -6,6 +6,7 @@ import {
     saveAutomationDocument,
 } from "@/services/automationDocument";
 import { microsoft365AutomationStatus } from "@/services/microsoft365Account";
+import { microsoft365LicenseAvailability } from "@/services/microsoft365/licenses";
 import {
     engagementMailOptions,
     listBsbMailAddresses,
@@ -53,6 +54,11 @@ const teamMailInput = z.object({
     body: z.string().trim().min(1).max(20_000),
 }) satisfies z.ZodType<WelcomeMailSettingsRecord>;
 
+export const getMicrosoft365Licenses = catchErrors(async (req, res) => {
+    appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
+    return res.status(200).json({ success: true, data: await microsoft365LicenseAvailability(req.orgId) });
+});
+
 export const getMicrosoft365Automation = catchErrors(async (req, res) => {
     appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
     return res.status(200).json({
@@ -74,7 +80,7 @@ const integrationInput = z.object({
 
 export const getIntegrations = catchErrors(async (req, res) => {
     appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
-    const integrations = await listOrganizationIntegrations(req.orgId);
+    const integrations = await listOrganizationIntegrations(req.orgId, req.membershipRole === "admin");
     return res.status(200).json({
         success: true,
         data:
@@ -130,7 +136,10 @@ export const getMicrosoftMailAddresses = catchErrors(async (req, res) => {
     appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
     return res.status(200).json({
         success: true,
-        data: await listBsbMailAddresses(req.orgId),
+        data: {
+            ...await listBsbMailAddresses(req.orgId, req.userId),
+            defaultSenderAddress: null,
+        },
     });
 });
 
@@ -330,6 +339,7 @@ export const getIssueMailPreview = catchErrors(async (req, res) => {
     const preview = await mailSendPreview({
         organizationId: req.orgId,
         issueId: String(req.params.issueId),
+        actorUserId: req.userId,
     });
     const previewError =
         preview.status === "failed"

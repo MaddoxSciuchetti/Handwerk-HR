@@ -3,6 +3,7 @@ import { microsoftSimulationEnabled } from "@/constants/env";
 import { prisma } from "@/lib/prisma";
 import { integrationsLive } from "@/services/integrations/runtime";
 import {
+    decryptIntegrationSecret,
     encryptIntegrationSecret,
     IntegrationSecretUnavailable,
 } from "@/services/integrations/secret";
@@ -19,6 +20,7 @@ export type IntegrationView = {
     crewId: string;
     hasClientSecret: boolean;
     hasToken: boolean;
+    token?: string;
     ready: boolean;
     live: boolean;
     simulated: boolean;
@@ -38,6 +40,7 @@ function view(
         clientSecretCiphertext: string | null;
         tokenCiphertext: string | null;
     } | null,
+    includeToken = false,
 ): IntegrationView {
     return {
         provider,
@@ -49,6 +52,13 @@ function view(
         crewId: row?.crewId ?? "",
         hasClientSecret: Boolean(row?.clientSecretCiphertext),
         hasToken: Boolean(row?.tokenCiphertext),
+        ...(includeToken && provider === "crewmeister"
+            ? {
+                  token: row?.tokenCiphertext
+                      ? decryptIntegrationSecret(row.tokenCiphertext) ?? ""
+                      : "",
+              }
+            : {}),
         ready:
             provider === "microsoft_graph"
                 ? Boolean(
@@ -72,15 +82,23 @@ export function redactIntegrationSecrets(integration: IntegrationView): Integrat
         domain: "",
         licenseSkuId: "",
         crewId: "",
+        token: "",
     };
 }
 
-export async function listOrganizationIntegrations(organizationId: string) {
+export async function listOrganizationIntegrations(
+    organizationId: string,
+    includeToken = false,
+) {
     const rows = await prisma.organizationIntegration.findMany({
         where: { organizationId },
     });
     return providers.map((provider) =>
-        view(provider, rows.find((row) => row.provider === provider) ?? null),
+        view(
+            provider,
+            rows.find((row) => row.provider === provider) ?? null,
+            includeToken,
+        ),
     );
 }
 
@@ -130,16 +148,11 @@ export async function saveOrganizationIntegration(params: {
     if (params.enabled && params.provider === "microsoft_graph" && !microsoftSimulationEnabled()) {
         const tenantId = (params.tenantId ?? existing?.tenantId ?? "").trim();
         const clientId = (params.clientId ?? existing?.clientId ?? "").trim();
-        const domain = (params.domain ?? existing?.domain ?? "").trim();
-        const licenseSkuId = (
-            params.licenseSkuId ??
-            existing?.licenseSkuId ??
-            ""
-        ).trim();
-        if (!tenantId || !clientId || !domain || !licenseSkuId) {
+        // Teams needs an app registration, while account provisioning separately requires domain/SKU.
+        if (!tenantId || !clientId) {
             throw new AppError(
                 BAD_REQUEST,
-                "Tenant, Client, Domäne und Lizenz-SKU sind erforderlich.",
+                "Tenant und Client sind erforderlich.",
             );
         }
         requireSecret(Boolean(clientSecretCiphertext), secret);
@@ -178,5 +191,5 @@ export async function saveOrganizationIntegration(params: {
             tokenCiphertext,
         },
     });
-    return view(params.provider, saved);
+    return view(params.provider, saved, true);
 }
