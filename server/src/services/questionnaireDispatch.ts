@@ -1,3 +1,4 @@
+import { questionnaireSender } from "@/services/questionnaireSender";
 import { FRONTENDURL, QUESTIONNAIRE_MOCK_RESPONSES } from "@/constants/env";
 import { isStagingEnvironment } from "@/constants/stagingMail";
 import { NOT_FOUND } from "@/constants/http";
@@ -138,10 +139,10 @@ async function deliverQuestionnaire(
     const formUrl = `${FRONTENDURL.replace(/\/$/, "")}/fragebogen/${token}`;
     const template = getQuestionnaireTemplate(formUrl);
     try {
-        const staging = isStagingEnvironment();
+        const useTestSender = isStagingEnvironment() || process.env.NODE_ENV === "development";
         const sent = await sendMail({
             to: email,
-            ...(staging
+            ...(useTestSender
                 ? { via: "resend" as const }
                 : {
                       organizationId,
@@ -186,13 +187,14 @@ export async function sendEngagementQuestionnaire(params: {
     engagementId: string;
 }) {
     const engagement = await findEngagement(params.organizationId, params.engagementId);
+    const senderAddress = await questionnaireSender(params.createdByUserId);
     if (engagement.questionnaireSubmission) {
         return finishDispatch(
             engagement.worker.email,
             engagement.questionnaireSubmission.token,
             engagement.id,
             params.organizationId,
-            engagement.questionnaireSenderAddress,
+            senderAddress,
         );
     }
 
@@ -241,6 +243,6 @@ export async function sendEngagementQuestionnaire(params: {
         token,
         engagement.id,
         params.organizationId,
-        engagement.questionnaireSenderAddress,
+        senderAddress,
     );
 }
