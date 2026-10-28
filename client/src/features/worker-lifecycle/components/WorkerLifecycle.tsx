@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollableTableViewport } from '@/components/ui/scrollable-table-viewport';
 import {
-  Table,
   TableBody,
   TableHead,
   TableHeader,
@@ -31,6 +30,7 @@ import { WorkerSidebar } from './WorkerSidebar';
 import { WorkerSelectAllCheckbox } from './WorkerSelectAllCheckbox';
 import { useChangeResponsibleUser } from '../hooks/useChangeResponsibleUser';
 import { WorkerTypeFilter } from './WorkerTypeFilter';
+import { WorkerTable } from './WorkerTable';
 
 function WorkerLifeCycle() {
   const { user, isLoading, isError } = useAuth();
@@ -205,8 +205,11 @@ function WorkerLifeCycle() {
             </div>
           </CardHeader>
           <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-0">
-            <ScrollableTableViewport>
-              <Table aria-busy={isLoading || workersLoading}>
+            <ScrollableTableViewport className="[scrollbar-gutter:stable]">
+              <WorkerTable
+                hideTaskColumns={isTeamMode}
+                aria-busy={isLoading || workersLoading}
+              >
                 <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-b-0">
                   <TableRow className="border-0 hover:bg-transparent">
                     <TableHead className="relative h-12 bg-card py-3 pl-12 pr-2">
@@ -299,7 +302,7 @@ function WorkerLifeCycle() {
                     ))
                   )}
                 </TableBody>
-              </Table>
+              </WorkerTable>
             </ScrollableTableViewport>
           </CardContent>
         </Card>
