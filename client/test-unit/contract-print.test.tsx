@@ -128,7 +128,10 @@ it('prints the contract without a review checkbox', async () => {
     </QueryClientProvider>
   );
 
-  const print = await screen.findByRole('button', { name: 'PDF herunterladen' });
+  expect(
+    await screen.findByRole('button', { name: 'PDF herunterladen' })
+  ).toBeEnabled();
+  const print = screen.getByRole('button', { name: 'Drucken' });
   expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   expect(
     screen.queryByText(/Prüfen Sie den ausgefüllten Vertrag/)
@@ -360,7 +363,7 @@ it('prepares current edits before printing', async () => {
   );
   await userEvent
     .setup()
-    .click(await screen.findByRole('button', { name: 'PDF herunterladen' }));
+    .click(await screen.findByRole('button', { name: 'Drucken' }));
   await waitFor(() =>
     expect(recordPrintedEmploymentContract).toHaveBeenCalledWith(
       'worker',
@@ -430,13 +433,14 @@ it('downloads the prepared PDF without recording it as printed', async () => {
   );
   await userEvent
     .setup()
-    .click(await screen.findByRole('button', { name: 'Speichern' }));
+    .click(await screen.findByRole('button', { name: 'PDF herunterladen' }));
   await waitFor(() => expect(click).toHaveBeenCalled());
   expect(click.mock.instances[0]).toHaveAttribute(
     'download',
     'Arbeitsvertrag.pdf'
   );
   expect(recordPrintedEmploymentContract).not.toHaveBeenCalled();
+  expect(printPdfBlob).not.toHaveBeenCalled();
   expect(onClose).not.toHaveBeenCalled();
   create.mockRestore();
   click.mockRestore();

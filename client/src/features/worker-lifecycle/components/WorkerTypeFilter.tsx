@@ -35,7 +35,7 @@ export function WorkerTypeFilter({
           variant="outline"
           disabled={disabled}
           aria-label={`Typ filtern: ${selectedLabels.join(', ') || 'keine'}`}
-          className="w-52 shrink-0 justify-between rounded-2xl border-border bg-muted font-normal shadow-none hover:bg-muted focus-visible:border-border focus-visible:ring-0 aria-expanded:bg-muted dark:border-border dark:bg-muted dark:hover:bg-muted"
+          className="w-28 shrink-0 justify-between rounded-2xl border-border bg-muted font-normal shadow-none hover:bg-muted focus-visible:border-border focus-visible:ring-0 aria-expanded:bg-muted dark:border-border dark:bg-muted dark:hover:bg-muted"
         >
           <span className="truncate">{label}</span>
           <ChevronDownIcon className="size-4 shrink-0 opacity-50" aria-hidden />
