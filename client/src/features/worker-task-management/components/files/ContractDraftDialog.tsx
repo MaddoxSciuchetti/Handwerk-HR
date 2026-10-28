@@ -161,6 +161,11 @@ export function ContractDraftDialog({
                   workerId={workerId}
                   engagementId={engagementId}
                   contract={data}
+                  beforeSync={async () => {
+                    if (JSON.stringify(values) !== JSON.stringify(data.values)) {
+                      await saveDraft.mutateAsync(values);
+                    }
+                  }}
                   onBusy={setSyncing}
                   disabled={busy}
                   onSynced={(saved) => setValues(saved.values)}

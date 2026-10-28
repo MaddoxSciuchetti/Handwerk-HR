@@ -213,9 +213,16 @@ export function ContractSendDialog({
           'PDF konnte nicht heruntergeladen werden'
       ),
   });
+  const saveBeforeSync = async () => {
+    if (data && JSON.stringify(values) !== JSON.stringify(data.values)) {
+      await saveDraft.mutateAsync(values);
+    }
+  };
   const switchTemplate = useMutation({
-    mutationFn: (masterId: string) =>
-      selectEngagementContractTemplate(workerId, engagementId, masterId),
+    mutationFn: async (masterId: string) => {
+      await saveBeforeSync();
+      return selectEngagementContractTemplate(workerId, engagementId, masterId);
+    },
     onSuccess: (saved) => {
       edited.current = false;
       setValues(saved.values);
@@ -368,6 +375,7 @@ export function ContractSendDialog({
                         workerId={workerId}
                         engagementId={engagementId}
                         contract={data}
+                        beforeSync={saveBeforeSync}
                         onBusy={setSyncing}
                         disabled={busy || blockedDelivery}
                         onSynced={(saved) => {

@@ -8,6 +8,7 @@ type Props = {
   engagementId: string;
   contract: EmploymentContractDraft;
   disabled?: boolean;
+  beforeSync?: () => Promise<unknown>;
   onSynced: (saved: EmploymentContractDraft) => void;
   onBusy?: (busy: boolean) => void;
 };
@@ -17,10 +18,11 @@ export function ContractQuestionnaireSync({
   engagementId,
   contract,
   disabled,
+  beforeSync,
   onSynced,
   onBusy,
 }: Props) {
-  const sync = useResyncEmploymentContract(workerId, engagementId);
+  const sync = useResyncEmploymentContract(workerId, engagementId, beforeSync);
   const locked = Boolean(contract.sentAt || contract.status === 'signed');
   if (!contract.questionnaireSyncNeeded || locked) return null;
   return (
