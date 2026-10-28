@@ -21,6 +21,20 @@ it('uses the authenticated user email and ignores a supplied sender', async () =
     expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { id: 'user' }, select: { email: true } });
     expect(prisma.workerEngagement.create).toHaveBeenCalledWith({ data: expect.objectContaining({ questionnaireSenderAddress: 'office@example.test' }) });
 });
+it('creates a worker from a display name without an email', async () => {
+    await startExpectedOnboarding({
+        organizationId: 'org',
+        createdByUserId: 'user',
+        name: 'Max Mustermann',
+    });
+    expect(prisma.worker.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+            firstName: 'Max',
+            lastName: 'Mustermann',
+            email: null,
+        }),
+    });
+});
 it('rejects onboarding if the authenticated user cannot be found', async () => {
     (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
     await expect(startExpectedOnboarding(params)).rejects.toThrow('Die E-Mail-Adresse des angemeldeten Nutzers fehlt.');

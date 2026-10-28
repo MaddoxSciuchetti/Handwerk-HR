@@ -89,7 +89,9 @@ describe('Worker form (integration)', () => {
   it('shows only fast-track onboarding without the manual fields or add button', () => {
     renderOnboardingForm();
 
-    expect(screen.getByLabelText('E-Mail des Mitarbeiters')).toBeVisible();
+    expect(
+      screen.getByLabelText('Name oder E-Mail des Mitarbeiters')
+    ).toBeVisible();
     expect(screen.getByRole('button', { name: 'Anlegen' })).toBeVisible();
     expect(screen.queryByRole('separator')).not.toBeInTheDocument();
     expect(screen.queryByText('oder')).not.toBeInTheDocument();

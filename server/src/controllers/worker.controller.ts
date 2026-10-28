@@ -87,16 +87,26 @@ export const getQuestionnaireSenders = catchErrors(async (req, res) => {
 export const startExpectedOnboarding = catchErrors(
     async (req: Request, res: Response) => {
         const email = String(req.body?.email ?? "").trim();
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            return res
-                .status(400)
-                .json({ success: false, message: "E-Mail fehlt." });
+        const name = String(req.body?.name ?? "").trim();
+        const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+        if (email) {
+            if (!emailValid) {
+                return res
+                    .status(400)
+                    .json({ success: false, message: "E-Mail ungültig." });
+            }
+        } else if (!name) {
+            return res.status(400).json({
+                success: false,
+                message: "Name oder E-Mail fehlt.",
+            });
         }
 
         const result = await workerService.startExpectedOnboarding({
             organizationId: req.orgId,
             createdByUserId: req.userId,
-            email,
+            ...(emailValid ? { email } : { name }),
         });
 
         return res.status(201).json({ success: true, data: result });

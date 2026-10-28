@@ -85,7 +85,7 @@ try {
             masterRevision: master.revision,
             kind: "employment_contract",
             name: master.name,
-            recipient: worker.email,
+            recipient: worker.email ?? "",
             snapshot: json,
             values,
             fontManifest: [],

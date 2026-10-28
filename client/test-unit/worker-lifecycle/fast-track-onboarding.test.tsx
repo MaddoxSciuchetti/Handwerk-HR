@@ -34,13 +34,30 @@ it('creates onboarding without asking for or posting a sender address', async ()
   ).not.toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Anlegen' })).toBeEnabled();
   await userEvent.type(
-    screen.getByLabelText('E-Mail des Mitarbeiters'),
+    screen.getByLabelText('Name oder E-Mail des Mitarbeiters'),
     'worker@example.test'
   );
   await userEvent.click(screen.getByRole('button', { name: 'Anlegen' }));
   await waitFor(() =>
     expect(API.post).toHaveBeenCalledWith('/worker/fast-track', {
       email: 'worker@example.test',
+    })
+  );
+  await waitFor(() =>
+    expect(onCreated).toHaveBeenCalledWith({ engagementId: 'engagement' })
+  );
+});
+
+it('creates onboarding by name without an email', async () => {
+  const { onCreated } = renderForm();
+  await userEvent.type(
+    screen.getByLabelText('Name oder E-Mail des Mitarbeiters'),
+    'Max Mustermann'
+  );
+  await userEvent.click(screen.getByRole('button', { name: 'Anlegen' }));
+  await waitFor(() =>
+    expect(API.post).toHaveBeenCalledWith('/worker/fast-track', {
+      name: 'Max Mustermann',
     })
   );
   await waitFor(() =>

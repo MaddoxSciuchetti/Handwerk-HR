@@ -147,14 +147,30 @@ function placeholderNamesFromEmail(email: string) {
     };
 }
 
+function namesFromDisplayName(name: string) {
+    const parts = name
+        .trim()
+        .split(/\s+/)
+        .map((part) => part.trim())
+        .filter((part) => part.length > 0);
+
+    return {
+        firstName: (parts[0] ?? "Unbekannt").slice(0, 120),
+        lastName: parts.slice(1).join(" ").slice(0, 120),
+    };
+}
+
 export async function startExpectedOnboarding(params: {
     organizationId: string;
     createdByUserId: string;
-    email: string;
+    email?: string;
+    name?: string;
 }) {
     const senderAddress = await questionnaireSender(params.createdByUserId);
-    const email = params.email.trim().toLowerCase();
-    const { firstName, lastName } = placeholderNamesFromEmail(email);
+    const email = params.email?.trim().toLowerCase() || null;
+    const { firstName, lastName } = email
+        ? placeholderNamesFromEmail(email)
+        : namesFromDisplayName(params.name ?? "");
     const created = await prisma.$transaction(async (tx) => {
         const worker = await tx.worker.create({
             data: {

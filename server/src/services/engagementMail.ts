@@ -288,7 +288,7 @@ export async function normalizeRecipients(
             if (!worker) throw new AppError(BAD_REQUEST, "Empfänger nicht gefunden.");
             const address =
                 recipient.kind === "worker_private"
-                    ? worker.email.trim()
+                    ? (worker.email?.trim() ?? "")
                     : (worker.microsoftEmail?.trim() || worker.workEmail?.trim() || "");
             if (!address.includes("@")) {
                 throw new AppError(
@@ -411,7 +411,7 @@ async function resolveRecipientAddresses(params: {
                 : null;
             const address =
                 recipient.kind === "worker_private"
-                    ? (worker?.email.trim() ?? "")
+                    ? (worker?.email?.trim() ?? "")
                     : (worker?.microsoftEmail?.trim() || worker?.workEmail?.trim() || "");
             if (!address.includes("@")) {
                 return {

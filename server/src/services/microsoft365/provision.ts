@@ -35,6 +35,15 @@ export function createMicrosoft365Provisioner(
             return { status: "skipped", reason: "not_live" };
         }
 
+        const privateEmail = worker.email?.trim() ?? "";
+        if (!privateEmail.includes("@")) {
+            return {
+                status: "failed",
+                message:
+                    "Für diesen Mitarbeiter fehlt eine gültige E-Mail-Adresse.",
+            };
+        }
+
         const token = await dependencies.graph.getToken(config);
         if (!token) {
             return {
@@ -74,7 +83,7 @@ export function createMicrosoft365Provisioner(
         }
 
         const passwordMailSent = await dependencies.sendPasswordMail({
-            to: worker.email,
+            to: privateEmail,
             firstName: worker.firstName,
             workEmail: created.workEmail,
             password,

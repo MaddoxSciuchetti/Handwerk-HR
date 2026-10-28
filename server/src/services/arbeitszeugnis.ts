@@ -50,7 +50,7 @@ export type ArbeitszeugnisResult =
 type LetterWorker = {
     firstName: string;
     lastName: string;
-    email: string;
+    email: string | null;
     workEmail: string | null;
     microsoftEmail?: string | null;
     phoneNumber: string | null;
@@ -81,7 +81,7 @@ function letterFields(params: {
         fullName: [firstName, lastName]
             .filter((part) => part.length > 0)
             .join(" "),
-        email: params.worker.email.trim(),
+        email: params.worker.email?.trim() ?? "",
         workEmail: params.worker.microsoftEmail?.trim() || params.worker.workEmail?.trim() || "",
         position: params.worker.position?.trim() ?? "",
         phone: params.worker.phoneNumber?.trim() ?? "",
@@ -395,7 +395,7 @@ export async function prepareArbeitszeugnisPdf(params: {
         ...params,
         kind: "arbeitszeugnis",
         masterId: loaded.master.id,
-        recipient: loaded.engagement.worker.email,
+        recipient: loaded.engagement.worker.email ?? "",
     });
 }
 
@@ -411,6 +411,13 @@ export async function sendArbeitszeugnis(params: {
     const { engagement, master } = loaded;
     if (engagement.arbeitszeugnis?.sentAt) return { status: "already_sent" };
     if (!master) return { status: "failed", message: "Vorlage fehlt." };
+    const recipient = engagement.worker.email?.trim() ?? "";
+    if (!recipient.includes("@")) {
+        return {
+            status: "failed",
+            message: "Für diesen Mitarbeiter fehlt eine E-Mail-Adresse.",
+        };
+    }
     const selected = await prisma.preparedDocument.findFirst({
         where: {
             id: params.artifactId,
@@ -440,11 +447,11 @@ export async function sendArbeitszeugnis(params: {
     await sendPreparedDocument({
         ...params,
         kind: "arbeitszeugnis",
-        recipient: engagement.worker.email,
+        recipient,
         deliver: async (attachment, artifactId) => {
             if (!USE_MICROSOFT_MAIL) {
                 const sent = await sendMail({
-                    to: engagement.worker.email,
+                    to: recipient,
                     subject: SUBJECT,
                     text: "Anbei Ihr Arbeitszeugnis als PDF.",
                     html: "<p>Anbei Ihr Arbeitszeugnis als PDF.</p>",
@@ -486,7 +493,7 @@ export async function sendArbeitszeugnis(params: {
                             toRecipients: [
                                 {
                                     emailAddress: {
-                                        address: engagement.worker.email,
+                                        address: recipient,
                                     },
                                 },
                             ],

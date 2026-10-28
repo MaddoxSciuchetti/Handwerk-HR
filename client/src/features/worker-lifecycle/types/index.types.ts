@@ -105,7 +105,7 @@ export type WorkerRecord = {
   id: string;
   firstName: string;
   lastName: string;
-  email: string;
+  email: string | null;
   position: string | null;
   status: WorkerStatus;
   birthday?: string | null;
@@ -122,7 +122,7 @@ export type WorkerDetailResponse = {
     id: string;
     firstName: string;
     lastName: string;
-    email: string;
+    email: string | null;
     workEmail: string | null;
     microsoftEmail?: string | null;
     birthday: string | null;
