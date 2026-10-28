@@ -11,6 +11,7 @@ import {
   recordPrintedEmploymentContract,
   saveEngagementContractDraft,
   selectEngagementContractTemplate,
+  resyncEngagementContractFromQuestionnaire,
 } from '@/features/worker-task-management/api/employmentContract.api';
 import { printPdfBlob } from '@/features/worker-task-management/printPdf';
 import { fromSegments } from '@/features/settings/documents/styledDocument';
@@ -317,6 +318,71 @@ it('syncs a newly selected template immediately and clears the old PDF', async (
     screen.getByRole('button', { name: 'PDF herunterladen' })
   ).toBeEnabled();
 });
+
+it.each(['questionnaire', 'template'] as const)(
+  'saves unsaved pay before syncing the %s',
+  async (source) => {
+    const initial = {
+      ...draft,
+      prepared: null,
+      questionnaireSyncNeeded: true,
+      segments: [
+        { type: 'input' as const, key: 'contract.gehalt', label: 'Gehalt' },
+      ],
+      values: { 'contract.gehalt': '4000' },
+    };
+    const saved = { ...initial, values: { 'contract.gehalt': '4500' } };
+    vi.mocked(getEngagementContract).mockResolvedValue(initial);
+    vi.mocked(saveEngagementContractDraft).mockResolvedValue(saved);
+    const syncApi =
+      source === 'template'
+        ? selectEngagementContractTemplate
+        : resyncEngagementContractFromQuestionnaire;
+    vi.mocked(syncApi).mockImplementation(async () => {
+      expect(saveEngagementContractDraft).toHaveBeenCalledWith(
+        'worker',
+        'engagement',
+        { 'contract.gehalt': '4500' }
+      );
+      return { ...saved, questionnaireSyncNeeded: false };
+    });
+    const query = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const user = userEvent.setup();
+    render(
+      <QueryClientProvider client={query}>
+        <ContractSendDialog
+          workerId="worker"
+          engagementId="engagement"
+          issueId="issue"
+          onClose={() => undefined}
+        />
+      </QueryClientProvider>
+    );
+    const pay = await screen.findByRole('textbox', { name: 'Gehalt' });
+    await user.clear(pay);
+    await user.type(pay, '4500');
+    if (source === 'template') {
+      await user.selectOptions(
+        screen.getByRole('combobox', { name: 'Vertragsvorlage wechseln' }),
+        'other-master'
+      );
+    } else {
+      await user.click(screen.getByRole('button', { name: 'Sync?' }));
+    }
+    await waitFor(() => expect(syncApi).toHaveBeenCalled());
+    expect(saveEngagementContractDraft).toHaveBeenCalledWith(
+      'worker',
+      'engagement',
+      { 'contract.gehalt': '4500' }
+    );
+    expect(
+      vi.mocked(saveEngagementContractDraft).mock.invocationCallOrder[0]
+    ).toBeLessThan(vi.mocked(syncApi).mock.invocationCallOrder[0]);
+    await waitFor(() => expect(pay).toHaveValue('4500'));
+  }
+);
 
 it('does not offer a template switch for a printed contract', async () => {
   vi.mocked(getEngagementContract).mockResolvedValue({

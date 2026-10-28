@@ -85,3 +85,24 @@ it('does not offer to overwrite sent or signed contracts', () => {
     screen.queryByRole('button', { name: 'Sync?' })
   ).not.toBeInTheDocument();
 });
+
+it('does not sync when saving pending edits fails', async () => {
+  const beforeSync = vi.fn().mockRejectedValue(new Error('Save failed'));
+  const onSynced = vi.fn();
+  const onBusy = vi.fn();
+  renderWithProviders(
+    <ContractQuestionnaireSync
+      workerId="worker"
+      engagementId="eng"
+      contract={contract}
+      beforeSync={beforeSync}
+      onSynced={onSynced}
+      onBusy={onBusy}
+    />
+  );
+  await userEvent.click(screen.getByRole('button', { name: 'Sync?' }));
+  await waitFor(() => expect(onBusy).toHaveBeenLastCalledWith(false));
+  expect(beforeSync).toHaveBeenCalledOnce();
+  expect(resyncEngagementContractFromQuestionnaire).not.toHaveBeenCalled();
+  expect(onSynced).not.toHaveBeenCalled();
+});
