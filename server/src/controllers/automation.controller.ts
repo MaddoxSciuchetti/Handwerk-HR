@@ -80,7 +80,7 @@ const integrationInput = z.object({
 
 export const getIntegrations = catchErrors(async (req, res) => {
     appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
-    const integrations = await listOrganizationIntegrations(req.orgId);
+    const integrations = await listOrganizationIntegrations(req.orgId, req.membershipRole === "admin");
     return res.status(200).json({
         success: true,
         data:

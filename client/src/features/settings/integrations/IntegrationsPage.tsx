@@ -195,13 +195,14 @@ function CrewmeisterForm({
 }) {
   const queryClient = useQueryClient();
   const [enabled, setEnabled] = useState(integration.enabled);
-  const [token, setToken] = useState('');
+  const [tokenDraft, setToken] = useState<string | null>(null);
+  const token = tokenDraft ?? integration.token ?? '';
   const [crewId, setCrewId] = useState(integration.crewId);
   const save = useMutation({
     mutationFn: () =>
       saveIntegration('crewmeister', { enabled, token, crewId }),
     onSuccess: (saved) => {
-      setToken('');
+      setToken(null);
       queryClient.setQueryData<OrganizationIntegration[]>(
         QUERY_KEY,
         (current) =>
@@ -259,9 +260,8 @@ function CrewmeisterForm({
             autoComplete="off"
             spellCheck={false}
             id="crewmeister-token"
-            type="password"
+            type="text"
             value={token}
-            placeholder={integration.hasToken ? 'Unverändert lassen' : ''}
             onChange={(event) => setToken(event.target.value)}
           />
           <Label htmlFor="crewmeister-crew">
