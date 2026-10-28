@@ -336,19 +336,24 @@ export async function persistMatchedContractValues(
         where: { id: params.contractId },
         include: { master: true, values: true },
     });
+    const segments = current ? readDocumentSegments(current.master.body) : [];
+    const allowed = inputKeys(segments);
     const pointKeys = new Set(
-        current
-            ? readDocumentSegments(current.master.body).flatMap((segment) =>
-                  segment.type === "input" && segment.fieldType === "points"
-                      ? [segment.key]
-                      : [],
-              )
-            : [],
+        segments.flatMap((segment) =>
+            segment.type === "input" && segment.fieldType === "points"
+                ? [segment.key]
+                : [],
+        ),
     );
+    const matchedKeys = new Set(params.entries.map((entry) => entry.key));
+    // Matching only supplies questionnaire-backed fields. Keep manual values
+    // (e.g. pay and allowances) for inputs still present in the target template.
     const preserved = (current?.values ?? [])
         .filter(
-            (entry) => params.preserveDescriptionPoints !== false &&
-                pointKeys.has(entry.key) && entry.value.trim().length > 0,
+            (entry) => allowed.has(entry.key) && entry.value.trim().length > 0 &&
+                (pointKeys.has(entry.key)
+                    ? params.preserveDescriptionPoints !== false
+                    : !matchedKeys.has(entry.key)),
         )
         .map((entry) => ({ key: entry.key, value: entry.value }));
     const entries = [

@@ -42,13 +42,16 @@ export function useSaveEmploymentContract(
 
 export function useResyncEmploymentContract(
   workerId: string,
-  engagementId: string
+  engagementId: string,
+  beforeSync?: () => Promise<unknown>
 ) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () =>
-      resyncEngagementContractFromQuestionnaire(workerId, engagementId),
+    mutationFn: async () => {
+      await beforeSync?.();
+      return resyncEngagementContractFromQuestionnaire(workerId, engagementId);
+    },
     onSuccess: (saved) => {
       queryClient.setQueryData<EmploymentContractDraft>(
         employmentContractKey(workerId, engagementId),

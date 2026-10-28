@@ -218,12 +218,17 @@ it("replaces contract values from the Fragebogen and drops removed fields", asyn
     expect(view.masterRevision).toBe(4);
 });
 
-it("keeps engagement description points when the Fragebogen match replaces other fields", async () => {
+it("keeps manual pay, allowances, checkboxes and description points when syncing questionnaire fields", async () => {
     contract.master = {
         name: "Vertrag",
         revision: 4,
         body: fromSegments([
             { type: "input", key: "contract.nachname", label: "Nachname" },
+            { type: "input", key: "contract.gehalt", label: "Gehalt" },
+            { type: "input", key: "contract.freiwillige_zulage", label: "Freiwillige Zulage" },
+            { type: "input", key: "contract.zulage_im_einzelfall", label: "Zulage im Einzelfall" },
+            { type: "input", key: "contract.total", label: "Brutto-Arbeitsentgelt insgesamt" },
+            { type: "input", key: "contract.hourly", label: "Je Stunde", fieldType: "checkbox" },
             {
                 type: "input",
                 key: "contract.taetigkeiten",
@@ -235,6 +240,11 @@ it("keeps engagement description points when the Fragebogen match replaces other
     contract.values = [
         { key: "contract.nachname", value: "Alt" },
         { key: "contract.taetigkeiten", value: "Montage\nWartung" },
+        { key: "contract.gehalt", value: "4000" },
+        { key: "contract.freiwillige_zulage", value: "200" },
+        { key: "contract.zulage_im_einzelfall", value: "0" },
+        { key: "contract.total", value: "4200" },
+        { key: "contract.hourly", value: "false" },
     ];
     contract.engagement = {
         questionnaireSubmission: {
@@ -265,6 +275,11 @@ it("keeps engagement description points when the Fragebogen match replaces other
     expect(view.values).toEqual({
         "contract.nachname": "Lovelace",
         "contract.taetigkeiten": "Montage\nWartung",
+        "contract.gehalt": "4000",
+        "contract.freiwillige_zulage": "200",
+        "contract.zulage_im_einzelfall": "0",
+        "contract.total": "4200",
+        "contract.hourly": "false",
     });
 });
 
@@ -371,6 +386,7 @@ describe("changing a worker's contract template", () => {
         body: fromSegments([
             { type: "input", key: "other.name", label: "Name" },
             { type: "input", key: "other.birthday", label: "Geburtsdatum" },
+            { type: "input", key: "contract.gehalt", label: "Gehalt" },
             {
                 type: "input",
                 key: "contract.duties",
@@ -394,6 +410,7 @@ describe("changing a worker's contract template", () => {
         contract.values = [
             { key: "old.field", value: "Alte manuelle Eingabe" },
             { key: "contract.duties", value: "Alte Tätigkeiten" },
+            { key: "contract.gehalt", value: "4000" },
         ];
         contract.outgoingPdfId = "old-pdf";
         (prisma.documentMaster.findFirst as jest.Mock).mockResolvedValue(
@@ -420,6 +437,7 @@ describe("changing a worker's contract template", () => {
             values: {
                 "other.name": "Lukas Muster",
                 "other.birthday": "01.04.1990",
+                "contract.gehalt": "4000",
             },
         });
         expect(view.values).not.toHaveProperty("old.field");
