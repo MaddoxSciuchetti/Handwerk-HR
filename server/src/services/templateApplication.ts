@@ -189,6 +189,46 @@ export async function readTemplateApplication(context: {
               select: { id: true, title: true, status: true, sequence: true },
               orderBy: { createdAt: "asc" },
           });
+    // The receipt describes the original run. Tasks can be retried separately,
+    // so the results panel must use their current state and latest error.
+    const storedOutcomes = Array.isArray(receipt.outcomes)
+        ? (receipt.outcomes as Outcome[])
+        : [];
+    const taskById = new Map(tasks.map((task) => [task.id, task]));
+    const failedIds = tasks
+        .filter((task) => task.status === "error")
+        .map((task) => task.id);
+    const errors = failedIds.length
+        ? await prisma.issueAuditLog.findMany({
+              where: {
+                  issueId: { in: failedIds },
+                  action: "issue.updated",
+                  newValue: { path: ["status"], equals: "error" },
+              },
+              orderBy: { createdAt: "desc" },
+              distinct: ["issueId"],
+              select: { issueId: true, newValue: true },
+          })
+        : [];
+    const latestError = new Map(
+        errors.map((entry) => {
+            const value = entry.newValue as { automationError?: string } | null;
+            return [entry.issueId, value?.automationError];
+        }),
+    );
+    const outcomes = storedOutcomes.map((outcome): Outcome => {
+        const task = taskById.get(outcome.issueId);
+        if (!task) return outcome;
+        if (task.status === "done")
+            return { issueId: task.id, status: "completed" };
+        if (task.status === "error")
+            return {
+                issueId: task.id,
+                status: "failed",
+                message: latestError.get(task.id) ?? outcome.message,
+            };
+        return { issueId: task.id, status: "pending" };
+    });
     return {
         templateName: template?.name ?? "Template",
         idempotencyKey: receipt.idempotencyKey,
@@ -196,7 +236,7 @@ export async function readTemplateApplication(context: {
         result: {
             count: tasks.length,
             issueIds: tasks.map((task) => task.id),
-            outcomes: receipt.outcomes,
+            outcomes,
             running: !receipt.completedAt,
             tasks,
         },

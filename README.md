@@ -194,6 +194,22 @@ membership and employee records; it does not delete the global login account.
 Deploy the `20261027193000_crewmeister_deactivation` database migration before
 saving tasks or templates using this sequence.
 
+Crewmeister's separate `crewmeister_delete_membership` action ("Mitgliedschaft
+entfernen") uses the documented `DELETE /api/v3/platform-app/members/{id}`
+operation. It requires an explicitly deactivated membership, matches crew and email,
+rechecks the member identity, and verifies a synchronous deletion receipt and an
+empty membership lookup before clearing the matching local external-account link.
+The individual task and template confirmation show a permanent-removal warning and
+require explicit acknowledgement. This removes a membership record, including one
+created by a pending invitation; it does not delete the global User, and the API
+does not document whether previously emailed invitation links are invalidated.
+Crewmeister can deny the operation when the token lacks deletion permissions.
+There is no documented invitation-only revoke/resend operation in the current V3
+Platform specification. A subsequent account-creation task can invite the same email
+when no membership remains. Existing completed tasks are never resent automatically.
+Deploy migration `20261028083000_crewmeister_delete_membership` before using this
+action. Ordinary offboarding continues to use deactivation.
+
 Simulation takes precedence over live Microsoft execution even if
 `INTEGRATIONS_LIVE=true`. Unknown simulated Graph operations fail without network
 access. Remove `MICROSOFT_SIMULATION` or set it to `false` and restart to return to

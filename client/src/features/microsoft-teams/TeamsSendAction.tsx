@@ -93,6 +93,7 @@ export function TeamsSendForm({
   });
   const refresh = async () => {
     await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['template-application-result'] }),
       queryClient.invalidateQueries({ queryKey: previewKey }),
       queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] }),
       queryClient.invalidateQueries({ queryKey: [WORKERBYID] }),

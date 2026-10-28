@@ -62,6 +62,32 @@ function TaskAutomationHarness() {
 }
 
 describe('TaskAutomation', () => {
+  it('requires explicit acknowledgement before permanently removing a Crewmeister membership', async () => {
+    vi.mocked(getIntegrations).mockResolvedValueOnce([
+      {
+        provider: 'crewmeister', enabled: true, ready: true, live: true,
+        crewId: '42', tenantId: '', clientId: '', domain: '', licenseSkuId: '',
+        hasClientSecret: false, hasToken: true,
+      },
+    ]);
+    runIssueSequence.mockClear();
+    runIssueSequence.mockResolvedValueOnce(undefined);
+    renderWithProviders(
+      <TaskAutomation taskId="remove-crew" provider="crewmeister"
+        sequence="crewmeister_delete_membership" disabled={false} />
+    );
+    const user = userEvent.setup();
+    const button = screen.getByRole('button', { name: 'Mitgliedschaft entfernen' });
+    expect(button).toBeDisabled();
+    expect(screen.getByText(/Der globale Crewmeister-Login bleibt bestehen/)).toBeInTheDocument();
+    await user.click(button);
+    expect(runIssueSequence).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('checkbox', { name: 'Diese deaktivierte Mitgliedschaft dauerhaft entfernen' }));
+    await waitFor(() => expect(button).toBeEnabled());
+    await user.click(button);
+    await waitFor(() => expect(runIssueSequence).toHaveBeenCalledWith('remove-crew', undefined));
+  });
+
   it('allows a clearly labelled simulation with no credentials and live execution off', async () => {
     vi.mocked(getIntegrations).mockResolvedValueOnce([
       {

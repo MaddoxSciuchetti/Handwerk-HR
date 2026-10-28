@@ -4,6 +4,7 @@ import { microsoftSimulationEnabled } from "@/constants/env";
 import {
     createCrewmeisterAccount,
     deactivateCrewmeisterAccount,
+    deleteCrewmeisterMembership,
 } from "@/services/integrations/crewmeisterAccount";
 import {
     integrationsLive,
@@ -224,7 +225,8 @@ async function executeIssueSequence(params: {
     if (issue.integrationProvider === "crewmeister") {
         if (
             issue.sequence !== "crewmeister_create_account" &&
-            issue.sequence !== "crewmeister_deactivate_account"
+            issue.sequence !== "crewmeister_deactivate_account" &&
+            issue.sequence !== "crewmeister_delete_membership"
         ) {
             return {
                 status: "failed",
@@ -232,6 +234,15 @@ async function executeIssueSequence(params: {
             };
         }
         const auth = await loadCrewmeisterToken(params.organizationId);
+        if (issue.sequence === "crewmeister_delete_membership") {
+            return finish(
+                await deleteCrewmeisterMembership({
+                    organizationId: params.organizationId,
+                    workerId: context.workerId,
+                    auth,
+                }),
+            );
+        }
         if (issue.sequence === "crewmeister_deactivate_account") {
             return finish(
                 await deactivateCrewmeisterAccount({

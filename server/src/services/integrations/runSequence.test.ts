@@ -2,7 +2,7 @@ import { runIssueSequence } from "./runSequence";
 import { prisma } from "@/lib/prisma";
 import { executionStatus } from "./issueExecutionStatus";
 import { provisionMicrosoft365Account } from "../microsoft365Account";
-import { deactivateCrewmeisterAccount } from "./crewmeisterAccount";
+import { deactivateCrewmeisterAccount, deleteCrewmeisterMembership } from "./crewmeisterAccount";
 jest.mock("@/lib/prisma", () => ({
     prisma: {
         issue: { findFirst: jest.fn() },
@@ -24,6 +24,7 @@ jest.mock("./runtime", () => ({
 jest.mock("./crewmeisterAccount", () => ({
     createCrewmeisterAccount: jest.fn(),
     deactivateCrewmeisterAccount: jest.fn(),
+    deleteCrewmeisterMembership: jest.fn(),
 }));
 jest.mock("../engagementMail", () => ({ isMailSequence: () => false }));
 jest.mock("../offboardingAutomation", () => ({
@@ -92,6 +93,22 @@ it("does not rerun completed tasks", async () => {
     });
     expect(await runIssueSequence(input)).toEqual({ status: "completed" });
     expect(provisionMicrosoft365Account).not.toHaveBeenCalled();
+});
+
+it.each([true, false])("routes membership removal separately from deactivation (success=%s)", async (success) => {
+    (prisma.issue.findFirst as jest.Mock).mockResolvedValue({
+        id: "issue", status: "open", sequence: "crewmeister_delete_membership",
+        integrationProvider: "crewmeister",
+        workerEngagement: { id: "engagement", workerId: "worker" },
+    });
+    const result = success ? { status: "completed" } : { status: "failed", message: "Keine Löschberechtigung" };
+    (deleteCrewmeisterMembership as jest.Mock).mockResolvedValue(result);
+    expect(await runIssueSequence(input)).toEqual(result);
+    expect(deleteCrewmeisterMembership).toHaveBeenCalledWith({
+        organizationId: "org", workerId: "worker", auth: { token: "jwt", crewId: "42" },
+    });
+    expect(deactivateCrewmeisterAccount).not.toHaveBeenCalled();
+    expect(executionStatus).toHaveBeenLastCalledWith("issue", "user", success ? "done" : "error", success ? undefined : "Keine Löschberechtigung");
 });
 
 it.each([true, false])(

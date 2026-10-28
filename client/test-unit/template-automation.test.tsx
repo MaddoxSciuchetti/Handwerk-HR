@@ -164,6 +164,29 @@ async function selectTemplate(name = 'Automatisch') {
   return user;
 }
 
+it('requires removal acknowledgement for a template containing membership deletion', async () => {
+  mocks.preview.mockResolvedValue({
+    id: 'automated', name: 'Automatisch', revision: 'delete-v1',
+    items: [{
+      id: 'remove-crew', title: 'Crewmeister entfernen',
+      sequence: 'crewmeister_delete_membership', integrationProvider: 'crewmeister', blockedReason: null,
+    }],
+  });
+  renderWithProviders(<TemplateApplyPrompt targets={[target]} />);
+  const user = await selectTemplate();
+  const start = screen.getByRole('button', { name: 'Automatisierung starten' });
+  expect(start).toBeDisabled();
+  await user.click(start);
+  expect(mocks.apply).not.toHaveBeenCalled();
+  expect(screen.getByRole('button', { name: 'Ohne Automatisierung' })).toBeEnabled();
+  await user.click(screen.getByRole('checkbox', {
+    name: 'Deaktivierte Crewmeister-Mitgliedschaften dauerhaft entfernen',
+  }));
+  expect(start).toBeEnabled();
+  await user.click(start);
+  await waitFor(() => expect(mocks.apply).toHaveBeenCalled());
+});
+
 describe('template automation popup', () => {
   it('shows only the bottom icon until clicked when a target becomes eligible', async () => {
     const { rerender } = renderWithProviders(
@@ -1104,6 +1127,35 @@ it('expands horizontally with progress beside the icon while preserving the orig
     'aria-valuenow',
     '100'
   );
+});
+
+it('does not expand a stale failure for a task that has since completed', async () => {
+  mocks.savedRun.mockResolvedValue({
+    templateName: 'Onboarding',
+    result: {
+      count: 1,
+      issueIds: ['crew'],
+      running: false,
+      outcomes: [{
+        issueId: 'crew', status: 'failed', message: 'Alte Crewmeister-Meldung',
+      }],
+      tasks: [{
+        id: 'crew', title: 'Crewmeister', status: 'done',
+        sequence: 'crewmeister_create_account',
+      }],
+    },
+  });
+  renderWithProviders(<TemplateApplyPrompt targets={[target]} />);
+  await userEvent.click(
+    await screen.findByRole('button', { name: 'Ausgeführte Aufgaben anzeigen' })
+  );
+  expect(
+    await screen.findByRole('group', { name: 'Crewmeister: Abgeschlossen' })
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByRole('button', { name: 'Crewmeister: Abgeschlossen' })
+  ).not.toBeInTheDocument();
+  expect(screen.queryByText('Alte Crewmeister-Meldung')).not.toBeInTheDocument();
 });
 
 it('loads saved tasks when remounting and refreshes their current statuses when reopening results', async () => {
