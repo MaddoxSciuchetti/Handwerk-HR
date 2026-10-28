@@ -28,9 +28,29 @@ export function createMailPill(token: string) {
   const pill = document.createElement('span');
   pill.dataset.mailPlaceholder = token;
   pill.contentEditable = 'false';
-  pill.className = mailPillClassName;
+  pill.draggable = true;
+  pill.className = `${mailPillClassName} cursor-grab active:cursor-grabbing`;
   pill.textContent = token;
   return pill;
+}
+
+/** Removes a placeholder pill and collapses the double space left behind. */
+export function removeMailPill(pill: HTMLElement) {
+  const parent = pill.parentNode;
+  const prev = pill.previousSibling;
+  const next = pill.nextSibling;
+  pill.remove();
+  if (!parent) return;
+  if (
+    prev?.nodeType === Node.TEXT_NODE &&
+    next?.nodeType === Node.TEXT_NODE
+  ) {
+    const left = prev.textContent ?? '';
+    const right = next.textContent ?? '';
+    if (/\s$/.test(left) && /^\s/.test(right)) {
+      next.textContent = right.replace(/^\s/, '');
+    }
+  }
 }
 
 export function paintMailBody(
