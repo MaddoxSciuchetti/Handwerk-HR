@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import WorkerLifeCycle from '@/features/worker-lifecycle/components/WorkerLifecycle';
 
-const { deleteWorkersMutation } = vi.hoisted(() => ({
+const { deleteWorkersMutation, filterState } = vi.hoisted(() => ({
+  filterState: { isTeamMode: false },
   deleteWorkersMutation: vi.fn(),
 }));
 vi.mock('@/features/user-profile/hooks/useAuth', () => ({
@@ -23,6 +24,7 @@ vi.mock('@/features/worker-lifecycle/hooks/useChangeResponsibleUser', () => ({
 }));
 vi.mock('@/features/worker-lifecycle/hooks/useWorkerFilter', () => ({
   useWorkerFilter: () => ({
+    isTeamMode: filterState.isTeamMode,
     employees: [],
     filterOptions: [],
     filteredWorkers: [],
@@ -62,7 +64,7 @@ vi.mock(
   })
 );
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => { vi.clearAllMocks(); filterState.isTeamMode = false; });
 
 describe('handyman deletion confirmation', () => {
   it('requires confirmation before deleting the selected handyman', async () => {
@@ -96,4 +98,16 @@ describe('handyman deletion confirmation', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(screen.getByText('1 ausgewählt')).toBeInTheDocument();
   });
+});
+
+it('removes Aufgaben and Status headers in Team mode and restores them outside Team', () => {
+  filterState.isTeamMode = true;
+  const view = render(<WorkerLifeCycle />);
+  expect(screen.queryByRole('columnheader', { name: 'Aufgaben' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('columnheader', { name: 'Status' })).not.toBeInTheDocument();
+  expect(screen.getAllByRole('columnheader')).toHaveLength(3);
+  filterState.isTeamMode = false;
+  view.rerender(<WorkerLifeCycle />);
+  expect(screen.getByRole('columnheader', { name: 'Aufgaben' })).toBeInTheDocument();
+  expect(screen.getByRole('columnheader', { name: 'Status' })).toBeInTheDocument();
 });

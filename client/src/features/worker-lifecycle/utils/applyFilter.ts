@@ -52,7 +52,7 @@ export function applyFilter(
   if (!mode || mode === 'all' || !value || SORT_MODES.has(mode)) return workers;
   switch (mode) {
     case 'engagementType':
-      return workers.filter((w) => w.engagements.some((e) => e.type === value));
+      return workers.filter((w) => w.engagements[0]?.type === value);
     case 'status':
       return workers.filter((w) =>
         w.engagements.some((e) => e.status === value)

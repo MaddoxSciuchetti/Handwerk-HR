@@ -32,7 +32,7 @@ const worker = {
   ],
 } as unknown as WorkerRecord;
 
-function setup(isChangingType = false) {
+function setup(isChangingType = false, hideTaskColumns = false) {
   const navigate = vi.fn();
   const changeType = vi.fn();
   const changeResponsible = vi.fn();
@@ -41,6 +41,7 @@ function setup(isChangingType = false) {
       <TableBody>
         <ProjectItem
           worker={worker}
+          hideTaskColumns={hideTaskColumns}
           gotopage={navigate}
           isSelected={false}
           setLargeEditMode={vi.fn()}
@@ -130,4 +131,9 @@ describe('worker row type picker', () => {
       'Maddox Example'
     );
   });
+});
+
+it('omits task and status cells when the list is in Team mode', () => {
+  setup(false, true);
+  expect(screen.getAllByRole('cell')).toHaveLength(3);
 });
