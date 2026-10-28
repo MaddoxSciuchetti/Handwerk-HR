@@ -67,33 +67,42 @@ export function calendarDaysUntil(date: Date, today = new Date()) {
   );
 }
 
-export function nextUpcomingAnniversary(
+export function nextUpcomingAnniversaries(
   people: UpcomingAnniversaryPerson[],
+  limit = 3,
   today = new Date()
-): UpcomingAnniversary | null {
+): UpcomingAnniversary[] {
+  if (limit <= 0) return [];
+
   const current = startOfUtcDay(today).getTime();
-  let nearest: UpcomingAnniversary | null = null;
+  const byDate = new Map<number, UpcomingAnniversary>();
 
   for (const person of people) {
     const anniversary = nextCompanyAnniversary(person.entryDate, today);
     if (!anniversary || anniversary.date.getTime() < current) continue;
-    if (
-      nearest &&
-      anniversary.date.getTime() > nearest.date.getTime()
-    ) {
+
+    const key = anniversary.date.getTime();
+    const existing = byDate.get(key);
+    if (existing) {
+      existing.people.push({ ...person, years: anniversary.years });
       continue;
     }
-    if (nearest && anniversary.date.getTime() === nearest.date.getTime()) {
-      nearest.people.push({ ...person, years: anniversary.years });
-      continue;
-    }
-    nearest = {
+    byDate.set(key, {
       people: [{ ...person, years: anniversary.years }],
       date: anniversary.date,
-    };
+    });
   }
 
-  return nearest;
+  return [...byDate.values()]
+    .sort((a, b) => a.date.getTime() - b.date.getTime())
+    .slice(0, limit);
+}
+
+export function nextUpcomingAnniversary(
+  people: UpcomingAnniversaryPerson[],
+  today = new Date()
+): UpcomingAnniversary | null {
+  return nextUpcomingAnniversaries(people, 1, today)[0] ?? null;
 }
 
 export function formatDaysUntil(days: number) {
