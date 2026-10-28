@@ -164,7 +164,7 @@ async function selectTemplate(name = 'Automatisch') {
   return user;
 }
 
-it('requires removal acknowledgement for a template containing membership deletion', async () => {
+it('starts membership deletion templates without extra acknowledgement', async () => {
   mocks.preview.mockResolvedValue({
     id: 'automated', name: 'Automatisch', revision: 'delete-v1',
     items: [{
@@ -175,13 +175,9 @@ it('requires removal acknowledgement for a template containing membership deleti
   renderWithProviders(<TemplateApplyPrompt targets={[target]} />);
   const user = await selectTemplate();
   const start = screen.getByRole('button', { name: 'Automatisierung starten' });
-  expect(start).toBeDisabled();
-  await user.click(start);
-  expect(mocks.apply).not.toHaveBeenCalled();
-  expect(screen.getByRole('button', { name: 'Ohne Automatisierung' })).toBeEnabled();
-  await user.click(screen.getByRole('checkbox', {
+  expect(screen.queryByRole('checkbox', {
     name: 'Deaktivierte Crewmeister-Mitgliedschaften dauerhaft entfernen',
-  }));
+  })).not.toBeInTheDocument();
   expect(start).toBeEnabled();
   await user.click(start);
   await waitFor(() => expect(mocks.apply).toHaveBeenCalled());
@@ -831,7 +827,7 @@ it('fills the live progress bar as individual automation outcomes arrive', async
       );
       expect(screen.getByRole('progressbar')).toHaveAttribute(
         'aria-valuetext',
-        '0 von 2 Aufgaben bearbeitet · 1 in Bearbeitung'
+        '1 von 2 Aufgaben in Bearbeitung'
       );
       expect(
         screen

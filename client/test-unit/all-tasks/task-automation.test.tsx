@@ -62,7 +62,7 @@ function TaskAutomationHarness() {
 }
 
 describe('TaskAutomation', () => {
-  it('requires explicit acknowledgement before permanently removing a Crewmeister membership', async () => {
+  it('runs Crewmeister membership removal with Go and no extra acknowledgement', async () => {
     vi.mocked(getIntegrations).mockResolvedValueOnce([
       {
         provider: 'crewmeister', enabled: true, ready: true, live: true,
@@ -77,12 +77,9 @@ describe('TaskAutomation', () => {
         sequence="crewmeister_delete_membership" disabled={false} />
     );
     const user = userEvent.setup();
-    const button = screen.getByRole('button', { name: 'Mitgliedschaft entfernen' });
-    expect(button).toBeDisabled();
-    expect(screen.getByText(/Der globale Crewmeister-Login bleibt bestehen/)).toBeInTheDocument();
-    await user.click(button);
-    expect(runIssueSequence).not.toHaveBeenCalled();
-    await user.click(screen.getByRole('checkbox', { name: 'Diese deaktivierte Mitgliedschaft dauerhaft entfernen' }));
+    const button = screen.getByRole('button', { name: 'Go' });
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Der globale Crewmeister-Login bleibt bestehen/)).not.toBeInTheDocument();
     await waitFor(() => expect(button).toBeEnabled());
     await user.click(button);
     await waitFor(() => expect(runIssueSequence).toHaveBeenCalledWith('remove-crew', undefined));
