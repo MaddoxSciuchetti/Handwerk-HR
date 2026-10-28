@@ -98,6 +98,15 @@ describe('document settings', () => {
     expect(
       await screen.findByRole('option', { name: '„Abmahnung“ hinzufügen' })
     ).toBeInTheDocument();
+    await user.click(
+      screen.getByRole('option', { name: '„Abmahnung“ hinzufügen' })
+    );
+    expect(typeSelect).toHaveValue('Abmahnung');
+
+    await user.click(typeSelect);
+    expect(
+      await screen.findByRole('option', { name: 'Abmahnung' })
+    ).toBeInTheDocument();
   });
 
   it('creates one template per uploaded file and keeps each chosen type', async () => {
