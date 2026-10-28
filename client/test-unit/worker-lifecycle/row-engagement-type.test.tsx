@@ -53,7 +53,7 @@ function setup(isChangingType = false, hideTaskColumns = false) {
             { id: 'user-2', firstName: 'Anna', lastName: 'Example' },
           ]}
           onResponsibleChange={changeResponsible}
-          isChangingResponsible={isChangingType}
+          isChangingResponsible={false}
         />
       </TableBody>
     </Table>
@@ -95,9 +95,10 @@ describe('worker row type picker', () => {
     await user.click(
       screen.getByRole('button', { name: 'Typ für Maddox Example ändern' })
     );
-    expect(
-      screen.getByRole('menuitemradio', { name: 'Team' })
-    ).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('menuitemradio', { name: 'Team' })).toHaveAttribute(
+      'aria-checked',
+      'true'
+    );
     await user.click(
       screen.getByRole('menuitemradio', { name: 'Offboarding' })
     );
@@ -114,7 +115,7 @@ describe('worker row type picker', () => {
     expect(changeType).not.toHaveBeenCalled();
   });
 
-  it('disables type changes while saving and still opens the worker from its name', async () => {
+  it('only disables the type field while saving and still opens the worker from its name', async () => {
     const { user, navigate } = setup(true);
     expect(
       screen.getByRole('button', { name: 'Typ für Maddox Example ändern' })
@@ -123,7 +124,10 @@ describe('worker row type picker', () => {
       screen.getByRole('button', {
         name: 'Verantwortlichen für Maddox Example ändern',
       })
-    ).toBeDisabled();
+    ).toBeEnabled();
+    expect(
+      screen.getByRole('button', { name: 'Typ für Maddox Example ändern' })
+    ).toHaveAttribute('aria-busy', 'true');
     await user.click(screen.getByText('Maddox'));
     expect(navigate).toHaveBeenCalledExactlyOnceWith(
       'worker-1',

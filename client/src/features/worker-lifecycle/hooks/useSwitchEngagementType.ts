@@ -45,9 +45,7 @@ function patchEngagementType(
           id: `pending:${engagement.id}:${type}`,
           type,
           status:
-            type === 'transfer'
-              ? ('completed' as const)
-              : ('pending' as const),
+            type === 'transfer' ? ('completed' as const) : ('pending' as const),
           issues: [],
           issueCounts: [],
           templateApplication: null,
@@ -61,6 +59,7 @@ function patchEngagementType(
 export function useSwitchEngagementType() {
   const queryClient = useQueryClient();
   return useMutation({
+    mutationKey: ['worker-inline-edit'],
     mutationFn: ({ items, type }: SwitchEngagementTypeVariables) =>
       Promise.all(
         items.map(async (item) => {
@@ -115,39 +114,40 @@ export function useSwitchEngagementType() {
         })
       ),
     onMutate: async ({ items, type }) => {
+      await queryClient.cancelQueries({ queryKey: [ALL_WORKER_DATA] });
       const previousWorkers = queryClient.getQueryData<WorkerRecord[]>([
         ALL_WORKER_DATA,
       ]);
-      const nextWorkers = previousWorkers
-        ? patchEngagementType(previousWorkers, items, type)
-        : undefined;
-
-      if (nextWorkers) {
+      if (previousWorkers) {
         queryClient.setQueryData<WorkerRecord[]>(
           [ALL_WORKER_DATA],
-          nextWorkers
+          patchEngagementType(previousWorkers, items, type)
         );
       }
-
-      await queryClient.cancelQueries({ queryKey: [ALL_WORKER_DATA] });
-
-      if (nextWorkers) {
-        queryClient.setQueryData<WorkerRecord[]>(
-          [ALL_WORKER_DATA],
-          nextWorkers
-        );
-      }
-
       return { previousWorkers } satisfies OptimisticContext;
     },
-    onError: (_error, _variables, context) => {
+    onError: (_error, { items }, context) => {
       if (context?.previousWorkers) {
-        queryClient.setQueryData([ALL_WORKER_DATA], context.previousWorkers);
+        queryClient.setQueryData<WorkerRecord[]>([ALL_WORKER_DATA], (workers) =>
+          workers?.map((worker) =>
+            items.some((item) => item.workerId === worker.id)
+              ? (context.previousWorkers?.find(
+                  (previous) => previous.id === worker.id
+                ) ?? worker)
+              : worker
+          )
+        );
       }
       toast.error('Typ konnte nicht geändert werden.');
     },
     onSettled: (_data, _error, { items }) => {
-      void queryClient.invalidateQueries({ queryKey: [ALL_WORKER_DATA] });
+      void queryClient.invalidateQueries({
+        queryKey: [ALL_WORKER_DATA],
+        refetchType:
+          queryClient.isMutating({ mutationKey: ['worker-inline-edit'] }) > 1
+            ? 'none'
+            : 'active',
+      });
       for (const item of items) {
         void queryClient.invalidateQueries({
           queryKey: [WORKERBYID, item.workerId],

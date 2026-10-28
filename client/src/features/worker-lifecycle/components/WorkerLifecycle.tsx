@@ -23,7 +23,7 @@ import type {
   WorkerRecord,
 } from '@/features/worker-lifecycle/types/index.types';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
-import { useState, type Dispatch, type SetStateAction } from 'react';
+import { useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import { QuestionnaireSendDialog } from '@/features/questionnaire/QuestionnaireSendDialog';
 import GreetingHeader from './GreetingHeader';
 import ProjectItem, { type WorkerSelection } from './ProjectItem';
@@ -51,19 +51,25 @@ function WorkerLifeCycle() {
   const [editModeData, setEditModeData] = useState<WorkerSelection[]>([]);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const { deleteWorkersMutation, isDeletingWorkers } = useWorkerMutations();
-  const { mutate: switchEngagementType, isPending: isSwitchingType } =
+  const { mutateAsync: switchEngagementType, isPending: isSwitchingType } =
     useSwitchEngagementType();
-  const { mutate: changeResponsibleUser, isPending: isChangingResponsible } =
-    useChangeResponsibleUser();
-  const isSelectionPending =
-    isDeletingWorkers || isSwitchingType || isChangingResponsible;
   const {
-    employees,
-    isTeamMode,
-    selectedTypes,
-    filteredWorkers,
-    toggleType,
-  } = useWorkerFilter(workers, user?.id, user?.organizationId);
+    mutateAsync: changeResponsibleUser,
+    isPending: isChangingResponsible,
+  } = useChangeResponsibleUser();
+  const pendingWorkerSaves = useRef(new Map<string, Promise<string>>());
+  const [pendingTypes, setPendingTypes] = useState<Set<string>>(new Set());
+  const [pendingResponsible, setPendingResponsible] = useState<Set<string>>(
+    new Set()
+  );
+  const isSelectionPending =
+    isDeletingWorkers ||
+    isSwitchingType ||
+    isChangingResponsible ||
+    pendingTypes.size > 0 ||
+    pendingResponsible.size > 0;
+  const { employees, isTeamMode, selectedTypes, filteredWorkers, toggleType } =
+    useWorkerFilter(workers, user?.id, user?.organizationId);
 
   useBodyScrollLock();
 
@@ -100,13 +106,53 @@ function WorkerLifeCycle() {
     });
   };
 
+  // Serialize edits for one worker so a second field uses the confirmed phase ID.
+  // Other workers can save independently.
+  const enqueueWorkerSave = (
+    worker: WorkerRecord,
+    action: (engagementId: string) => Promise<string>
+  ) => {
+    const save = (
+      pendingWorkerSaves.current.get(worker.id) ??
+      Promise.resolve(worker.engagements[0].id)
+    ).then(action);
+    pendingWorkerSaves.current.set(worker.id, save);
+    const clear = () => {
+      if (pendingWorkerSaves.current.get(worker.id) === save) {
+        pendingWorkerSaves.current.delete(worker.id);
+      }
+    };
+    void save.then(clear, clear);
+    return save;
+  };
+
   const handleSwitchType = (worker: WorkerRecord, type: EngagementType) => {
     const engagement = worker.engagements[0];
-    if (!engagement || engagement.type === type || isSelectionPending) return;
-    switchEngagementType({
-      items: [{ workerId: worker.id, engagementId: engagement.id }],
-      type,
-    });
+    if (
+      !engagement ||
+      engagement.type === type ||
+      pendingTypes.has(worker.id) ||
+      isDeletingWorkers
+    )
+      return;
+    setPendingTypes((previous) => new Set(previous).add(worker.id));
+    void enqueueWorkerSave(worker, async (engagementId) => {
+      const responses = await switchEngagementType({
+        items: [{ workerId: worker.id, engagementId }],
+        type,
+      });
+      return responses[0].data.id;
+    })
+      .catch(() => {
+        // The mutation reports the error and restores the cached field.
+      })
+      .finally(() => {
+        setPendingTypes((previous) => {
+          const next = new Set(previous);
+          next.delete(worker.id);
+          return next;
+        });
+      });
   };
 
   return (
@@ -211,21 +257,43 @@ function WorkerLifeCycle() {
                         setLargeEditMode={setLargeEditMode}
                         setEditModeData={handleSetEditModeData}
                         onTypeChange={(type) => handleSwitchType(worker, type)}
-                        isChangingType={isSelectionPending}
+                        isChangingType={pendingTypes.has(worker.id)}
                         responsibleUsers={employees}
-                        isChangingResponsible={isSelectionPending}
+                        isChangingResponsible={pendingResponsible.has(
+                          worker.id
+                        )}
                         onResponsibleChange={(userId) => {
                           const engagement = worker.engagements[0];
                           if (
-                            isSelectionPending ||
+                            pendingResponsible.has(worker.id) ||
+                            isDeletingWorkers ||
                             engagement.responsibleUser.id === userId
                           )
                             return;
-                          changeResponsibleUser({
-                            workerId: worker.id,
-                            engagementId: engagement.id,
-                            userId,
-                          });
+                          setPendingResponsible((previous) =>
+                            new Set(previous).add(worker.id)
+                          );
+                          void enqueueWorkerSave(
+                            worker,
+                            async (engagementId) => {
+                              const response = await changeResponsibleUser({
+                                workerId: worker.id,
+                                engagementId,
+                                userId,
+                              });
+                              return response.data.id;
+                            }
+                          )
+                            .catch(() => {
+                              // The mutation reports the error and restores the cached field.
+                            })
+                            .finally(() => {
+                              setPendingResponsible((previous) => {
+                                const next = new Set(previous);
+                                next.delete(worker.id);
+                                return next;
+                              });
+                            });
                         }}
                       />
                     ))
