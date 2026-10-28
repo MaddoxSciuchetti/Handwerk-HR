@@ -27,6 +27,7 @@ it.each([
     ['microsoft_create_account', 'microsoft_graph'],
     ['crewmeister_create_account', 'crewmeister'],
     ['crewmeister_deactivate_account', 'crewmeister'],
+    ['crewmeister_delete_membership', 'crewmeister'],
 ])('creates a task with %s and its provider', async (sequence, integrationProvider) => {
     await createTaskInOrg('org-1', 'user-1', { ...payload, sequence });
     expect(createIssue).toHaveBeenCalledWith(expect.objectContaining({ sequence, integrationProvider, mailTemplateId: null, automation: null }));
