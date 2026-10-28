@@ -190,9 +190,15 @@ export async function listMicrosoftGroups(
             error: authError,
         };
     }
-    const groups = await listGraph<{ id?: string; displayName?: string }>(
+    const groups = await listGraph<{
+        id?: string;
+        displayName?: string;
+        mailEnabled?: boolean;
+        mail?: string | null;
+        isAssignableToRole?: boolean | null;
+    }>(
         token,
-        "/groups?$select=id,displayName&$top=999",
+        "/groups?$select=id,displayName,mailEnabled,mail,isAssignableToRole&$top=999",
     );
     if (!groups) {
         return {
@@ -202,6 +208,21 @@ export async function listMicrosoftGroups(
     }
     return {
         groups: groups
+            .filter((group) => {
+                // Directory security groups are not email audiences. Keep normal
+                // mail-enabled groups, including distribution and Microsoft 365 groups.
+                if (
+                    group.mailEnabled !== true ||
+                    !group.mail?.trim().includes("@") ||
+                    group.isAssignableToRole === true
+                ) return false;
+                const name = group.displayName?.trim() ?? "";
+                // Answers creates an internal backing group that is not a mailing audience.
+                return (
+                    !/^group for answers in viva engage(?:\s|$)/i.test(name) &&
+                    name.toLowerCase() !== "aad dc administrators"
+                );
+            })
             .map((group) => ({
                 id: group.id?.trim() ?? "",
                 displayName: group.displayName?.trim() ?? "",
