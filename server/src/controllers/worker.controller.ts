@@ -1,3 +1,4 @@
+import { listBsbMailAddresses } from '@/services/engagementMail';
 import { deleteWorkersSchema } from '@/schemas/worker.schemas';
 import { templateApplyInput, templateApplicationPreview, readTemplateApplication, dismissTemplateApplicationResults } from '@/services/templateApplication';
 import { getLifecycleStatistics as fetchLifecycleStatistics } from "@/services/lifecycleStatistics";
@@ -78,6 +79,11 @@ function param(req: Request, key: string): string {
     return Array.isArray(val) ? val[0] : String(val);
 }
 
+export const getQuestionnaireSenders = catchErrors(async (req, res) => {
+    const data = await listBsbMailAddresses(req.orgId);
+    return res.status(200).json({ success: true, data });
+});
+
 export const startExpectedOnboarding = catchErrors(
     async (req: Request, res: Response) => {
         const email = String(req.body?.email ?? "").trim();
@@ -91,6 +97,7 @@ export const startExpectedOnboarding = catchErrors(
             organizationId: req.orgId,
             createdByUserId: req.userId,
             email,
+            senderAddress: typeof req.body?.senderAddress === "string" ? req.body.senderAddress : "",
         });
 
         return res.status(201).json({ success: true, data: result });

@@ -21,6 +21,7 @@ worker.get(
 worker.post("/", workerController.createWorker);
 worker.post("/bulk-delete", workerController.deleteWorkers);
 worker.post("/fast-track", workerController.startExpectedOnboarding);
+worker.get("/questionnaire-senders", workerController.getQuestionnaireSenders);
 worker.get(
     "/engagements/:engagementId/questionnaire",
     workerController.getEngagementQuestionnaire,

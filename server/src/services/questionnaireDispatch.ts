@@ -157,21 +157,12 @@ async function deliverQuestionnaire(
     }
 }
 
-async function signedInSender(userId: string) {
-    const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { email: true },
-    });
-    const email = user?.email?.trim() ?? "";
-    return email.includes("@") ? email : null;
-}
-
 async function finishDispatch(
     email: string | null,
     token: string,
     engagementId: string,
     organizationId: string,
-    actorUserId: string,
+    senderAddress?: string | null,
 ) {
     if (QUESTIONNAIRE_MOCK_RESPONSES) {
         await completeMockQuestionnaire(token, email ?? "");
@@ -182,7 +173,7 @@ async function finishDispatch(
             email,
             token,
             organizationId,
-            await signedInSender(actorUserId),
+            senderAddress,
         ),
         mockCompleted: false,
         engagementId,
@@ -201,7 +192,7 @@ export async function sendEngagementQuestionnaire(params: {
             engagement.questionnaireSubmission.token,
             engagement.id,
             params.organizationId,
-            params.createdByUserId,
+            engagement.questionnaireSenderAddress,
         );
     }
 
@@ -250,6 +241,6 @@ export async function sendEngagementQuestionnaire(params: {
         token,
         engagement.id,
         params.organizationId,
-        params.createdByUserId,
+        engagement.questionnaireSenderAddress,
     );
 }
