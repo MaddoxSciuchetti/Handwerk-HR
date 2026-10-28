@@ -4,6 +4,12 @@ import {
 } from '@/features/worker-lifecycle/utils/taskPhase';
 import { cn } from '@/lib/utils';
 import WorkerInformation from '@/features/worker-lifecycle/components/WorkerInformation';
+import queryClient from '@/config/query.client';
+import { ALL_WORKER_DATA } from '@/features/worker-lifecycle/consts/query-key.consts';
+import type {
+  EngagementType,
+  WorkerRecord,
+} from '@/features/worker-lifecycle/types/index.types';
 import ErrorAlert from '@/components/alerts/ErrorAlert';
 import { TableSelectAllCheckbox } from '@/components/ui/table-select-all-checkbox';
 import { TableSkeletonRows } from '@/components/ui/table-skeleton';
@@ -59,8 +65,20 @@ type TaskManagementProps = {
 
 const sectionHeaderClassName = 'h-12 py-3 pl-12 pr-2 text-sm font-medium';
 
+function cachedEngagementType(workerId: string): EngagementType | undefined {
+  return queryClient
+    .getQueryData<WorkerRecord[]>([ALL_WORKER_DATA])
+    ?.find((worker) => worker.id === workerId)?.engagements[0]?.type;
+}
+
+function defaultTabForWorker(workerId: string): WorkerTab {
+  return cachedEngagementType(workerId) === 'transfer' ? 'information' : 'form';
+}
+
 const TaskManagement = ({ workerId }: TaskManagementProps) => {
-  const [selectedTab, setActiveTab] = useState<WorkerTab>('form');
+  const [selectedTab, setActiveTab] = useState<WorkerTab>(() =>
+    defaultTabForWorker(workerId)
+  );
   const [clothingAddOpen, setClothingAddOpen] = useState(false);
   const [isFileUploadOpen, setIsFileUploadOpen] = useState(false);
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
@@ -78,6 +96,10 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
   const [questionnaireEngagementId, setQuestionnaireEngagementId] = useState<
     string | null
   >(null);
+
+  useEffect(() => {
+    setActiveTab(defaultTabForWorker(workerId));
+  }, [workerId]);
 
   useEffect(() => {
     const pending = peekContractSendReturn();
@@ -114,13 +136,18 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
     });
   };
 
-  const { data, isLoading } = useTaskData(workerId, selectedTab === 'form');
+  const listType = cachedEngagementType(workerId);
+  const listIsTeam = listType === 'transfer';
+  const { data, isLoading } = useTaskData(
+    workerId,
+    selectedTab === 'form' && !listIsTeam
+  );
   const { displayData: allTasks } = useFilteredData(data);
   const engagements = data?.data.engagements ?? [];
   const hasOffboarding = engagements.some(
     (engagement) => engagement.type === 'offboarding'
   );
-  const currentType = engagements[0]?.type;
+  const currentType = engagements[0]?.type ?? listType;
   const isTeam = currentType === 'transfer';
   const activeTab =
     isTeam && selectedTab === 'form' ? 'information' : selectedTab;
