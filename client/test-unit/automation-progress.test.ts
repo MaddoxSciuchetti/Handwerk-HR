@@ -1,5 +1,9 @@
 import { expect, it } from 'vitest';
-import { mergeAutomationProgress } from '@/features/worker-task-management/utils/automationProgress';
+import {
+  isAutomationTaskVisible,
+  mergeAutomationProgress,
+  mergeAutomationReveal,
+} from '@/features/worker-task-management/utils/automationProgress';
 import type { TemplateApplicationResult } from '@/features/worker-task-management/api/templateApplication.api';
 const run: TemplateApplicationResult = {
   count: 3,
@@ -74,4 +78,32 @@ it('tracks active tasks through stale snapshots and completion', () => {
   });
   expect(finished.startedIds).toEqual(['a']);
   expect(finished.finishedIds).toEqual(['a']);
+});
+
+it('reveals automation tasks only as progress starts them and keeps manual tasks visible', () => {
+  const baseline = { baselineIds: ['existing'], visibleIds: [] };
+  expect(isAutomationTaskVisible('existing', baseline)).toBe(true);
+  expect(isAutomationTaskVisible('a', baseline)).toBe(false);
+  const started = mergeAutomationReveal(
+    baseline,
+    {
+      ...run,
+      tasks: [
+        {
+          id: 'a',
+          title: 'A',
+          sequence: 'microsoft_send_email',
+          status: 'in_progress',
+        },
+        { id: 'manual', title: 'Manual', sequence: null, status: 'open' },
+      ],
+    },
+    { finishedIds: [], startedIds: ['a'] }
+  );
+  expect(started.baselineIds).toEqual(['existing']);
+  expect(started.visibleIds).toEqual(['a', 'manual']);
+  expect(isAutomationTaskVisible('a', started)).toBe(true);
+  expect(isAutomationTaskVisible('b', started)).toBe(false);
+  expect(isAutomationTaskVisible('manual', started)).toBe(true);
+  expect(isAutomationTaskVisible('missing', null)).toBe(true);
 });
