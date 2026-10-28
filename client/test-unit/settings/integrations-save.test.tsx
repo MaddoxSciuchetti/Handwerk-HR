@@ -59,7 +59,7 @@ it.each([
     const heading = await screen.findByRole('heading', { name: title });
     const form = heading.closest('form')!;
     const fields = within(form);
-    expect(fields.queryByLabelText(fieldLabel)).not.toBeInTheDocument();
+    expect(fields.getByLabelText(fieldLabel)).not.toBeVisible();
     expect(
       fields.queryByRole('button', { name: 'Zugangsdaten' })
     ).not.toBeInTheDocument();
@@ -79,7 +79,7 @@ it.each([
       enabled: true,
       ...(provider === 'microsoft_graph'
         ? { tenantId: 'first-value', hasClientSecret: true }
-        : { crewId: 'first-value', hasToken: true }),
+        : { crewId: 'first-value', hasToken: true, token: 'temporary-secret' }),
     };
     vi.mocked(saveIntegration).mockResolvedValue(saved);
     // A slow background refresh must not keep the save button disabled.
@@ -110,7 +110,7 @@ it.each([
           ? secretLabel
           : `${secretLabel} (gespeichert)`
       )
-    ).toHaveValue('');
+    ).toHaveValue(provider === 'crewmeister' ? 'temporary-secret' : '');
 
     await user.clear(input);
     await user.type(input, 'edited-value');
@@ -122,11 +122,12 @@ it.each([
         enabled: true,
         [provider === 'microsoft_graph' ? 'tenantId' : 'crewId']:
           'edited-value',
-        [provider === 'microsoft_graph' ? 'clientSecret' : 'token']: '',
+        [provider === 'microsoft_graph' ? 'clientSecret' : 'token']:
+          provider === 'crewmeister' ? 'temporary-secret' : '',
       })
     );
     await user.click(disclosure);
-    expect(fields.queryByLabelText(fieldLabel)).not.toBeInTheDocument();
+    expect(fields.getByLabelText(fieldLabel)).not.toBeVisible();
     expect(fields.getByRole('switch')).toHaveAttribute('aria-checked', 'true');
     await user.click(disclosure);
     expect(fields.getByLabelText(fieldLabel)).toHaveValue('edited-value');

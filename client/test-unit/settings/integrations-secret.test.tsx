@@ -74,3 +74,30 @@ it('shows the Microsoft client secret that will replace the saved one', async ()
   );
   expect(secret).toHaveValue('');
 });
+
+it('shows the saved Crewmeister token and keeps its replacement visible after saving', async () => {
+  const user = userEvent.setup();
+  vi.mocked(getIntegrations).mockResolvedValueOnce([
+    integration('microsoft_graph'),
+    integration('crewmeister', { hasToken: true, token: 'saved-token' }),
+  ]);
+  renderWithProviders(<IntegrationsPage />);
+  await user.click(await screen.findByRole('button', { name: 'Crewmeister' }));
+  const token = screen.getByLabelText('Token (gespeichert)');
+  expect(token).toHaveAttribute('type', 'text');
+  expect(token).toHaveValue('saved-token');
+  expect(token).not.toHaveAttribute('placeholder');
+
+  await user.clear(token);
+  await user.type(token, 'replacement-token');
+  vi.mocked(saveIntegration).mockResolvedValue(
+    integration('crewmeister', { hasToken: true, token: 'replacement-token' })
+  );
+  vi.mocked(getIntegrations).mockReturnValue(new Promise(() => {}));
+  await user.click(screen.getAllByRole('button', { name: 'Speichern' })[1]);
+  expect(saveIntegration).toHaveBeenLastCalledWith(
+    'crewmeister',
+    expect.objectContaining({ token: 'replacement-token' })
+  );
+  expect(token).toHaveValue('replacement-token');
+});
