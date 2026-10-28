@@ -7,6 +7,7 @@ import {
   fetchPreparedEmploymentContractPdf,
   getEngagementContract,
   prepareEmploymentContractDownload,
+  saveEngagementContractDraft,
 } from '@/features/worker-task-management/api/employmentContract.api';
 import { fromSegments } from '@/features/settings/documents/styledDocument';
 
@@ -24,7 +25,9 @@ vi.mock('@/features/worker-task-management/api/employmentContract.api', () => ({
 vi.mock(
   '@/features/worker-task-management/components/files/ContractDraftBody',
   () => ({
-    ContractDraftBody: () => <div>Vertragsentwurf</div>,
+    ContractDraftBody: ({ readOnly }: { readOnly: boolean }) => (
+      <div data-readonly={readOnly}>Vertragsentwurf</div>
+    ),
   })
 );
 
@@ -54,6 +57,40 @@ const draft = {
   outgoingFileUrl: null,
   prepared: null,
 };
+
+it('keeps an unsent ready contract editable and saveable when opened from Dateien', async () => {
+  const ready = { ...draft, status: 'ready' as const };
+  vi.mocked(getEngagementContract).mockResolvedValue(ready);
+  vi.mocked(saveEngagementContractDraft).mockResolvedValue(draft);
+  const onClose = vi.fn();
+  const query = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  render(
+    <QueryClientProvider client={query}>
+      <ContractDraftDialog
+        workerId="worker"
+        engagementId="engagement"
+        onClose={onClose}
+      />
+    </QueryClientProvider>
+  );
+  expect(await screen.findByText('Vertragsentwurf')).toHaveAttribute(
+    'data-readonly',
+    'false'
+  );
+  await userEvent.click(
+    screen.getByRole('button', { name: 'Entwurf speichern' })
+  );
+  await waitFor(() =>
+    expect(saveEngagementContractDraft).toHaveBeenCalledWith(
+      'worker',
+      'engagement',
+      {}
+    )
+  );
+  expect(onClose).not.toHaveBeenCalled();
+});
 
 it('downloads the Arbeitsvertrag PDF from the Dateien dialog', async () => {
   vi.mocked(getEngagementContract).mockResolvedValue(draft);
