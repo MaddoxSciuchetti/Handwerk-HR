@@ -245,12 +245,43 @@ export async function saveEngagementContractDraft(
 
     const segments = readDocumentSegments(contract.master.body);
     const manualEntries = readDraftValues(params.values, inputKeys(segments));
-    const entries = Object.entries(resolveCurrentDateValues(
-        readStyledDocument(contract.master.body),
-        Object.fromEntries(manualEntries.map((entry) => [entry.key, entry.value])),
-    )).map(([key, value]) => ({ key, value }));
+    const entries = Object.entries(
+        resolveCurrentDateValues(
+            readStyledDocument(contract.master.body),
+            Object.fromEntries(
+                manualEntries.map((entry) => [entry.key, entry.value]),
+            ),
+        ),
+    ).map(([key, value]) => ({ key, value }));
 
     const saved = await prisma.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT id FROM worker_engagements WHERE id = ${params.engagementId} FOR UPDATE`;
+        const latest = await tx.employmentContract.findUnique({
+            where: { id: contract.id },
+            include: { values: true },
+        });
+        if (latest?.sentAt || latest?.status === "signed")
+            throw new AppError(
+                CONFLICT,
+                "Der Vertrag wurde bereits versendet.",
+            );
+        if (!latest || latest.masterId !== contract.masterId) {
+            throw new AppError(
+                CONFLICT,
+                "Die Vertragsvorlage wurde inzwischen geändert. Bitte erneut öffnen.",
+            );
+        }
+        const unchanged =
+            latest.values.length === entries.length &&
+            entries.every((entry) =>
+                latest.values.some(
+                    (saved) =>
+                        saved.key === entry.key && saved.value === entry.value,
+                ),
+            );
+        if (unchanged && latest.body === null)
+            return reloadContract(contract.id, tx);
+
         await invalidatePreparedDocuments(
             {
                 organizationId: params.organizationId,
@@ -259,17 +290,6 @@ export async function saveEngagementContractDraft(
             },
             tx,
         );
-        const latest = await tx.employmentContract.findUnique({
-            where: { id: contract.id },
-        });
-        if (latest?.sentAt || latest?.status === "signed")
-            throw new AppError(
-                CONFLICT,
-                "Der Vertrag wurde bereits versendet.",
-            );
-        if (!latest || latest.masterId !== contract.masterId) {
-            throw new AppError(CONFLICT, "Die Vertragsvorlage wurde inzwischen geändert. Bitte erneut öffnen.");
-        }
         if (contract.body !== null) {
             await tx.employmentContract.update({
                 where: { id: contract.id },
@@ -293,7 +313,14 @@ export async function saveEngagementContractDraft(
         return reloadContract(contract.id, tx);
     });
 
-    return present(saved);
+    return {
+        ...present(saved),
+        prepared: await currentPreparation({
+            organizationId: params.organizationId,
+            engagementId: params.engagementId,
+            kind: "employment_contract",
+        }),
+    };
 }
 
 export async function persistMatchedContractValues(
@@ -487,7 +514,7 @@ export async function confirmEngagementContractForSend(params: ContractParams) {
 }
 
 export async function prepareEmploymentContractPdf(
-    params: ContractParams & { values: Record<string, unknown> },
+    params: ContractParams & { values: Record<string, unknown>; includeBytes?: boolean },
 ) {
     const contract = await findContract(params);
     if (!contract || contract.sentAt || contract.status === "signed")

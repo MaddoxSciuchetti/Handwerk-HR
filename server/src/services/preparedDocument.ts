@@ -154,8 +154,10 @@ export async function prepareDocument(
         masterId: string;
         values: Record<string, unknown>;
         recipient: string;
+        includeBytes?: boolean;
     },
 ) {
+    const startedAt = performance.now();
     const master = await prisma.documentMaster.findFirst({
         where: {
             id: params.masterId,
@@ -172,6 +174,78 @@ export async function prepareDocument(
     } catch (error) {
         throw new AppError(BAD_REQUEST, (error as Error).message);
     }
+    // Reuse only the exact template revision, answers, and recipient. The same
+    // lock and draft checks as creation prevent reusing a superseded snapshot.
+    const reuseWhere = {
+        ...scopeWhere(params),
+        masterId: master.id,
+        masterRevision: master.revision,
+        recipient: params.recipient,
+        status: { in: ["prepared", "failed"] },
+    };
+    const candidate = await prisma.preparedDocument.findFirst({
+        where: reuseWhere,
+        orderBy: { createdAt: "desc" },
+    });
+    const savedValues = candidate?.values as Record<string, string> | undefined;
+    const sameValues =
+        savedValues &&
+        Object.keys(savedValues).length === Object.keys(values).length &&
+        Object.entries(values).every(
+            ([key, value]) => savedValues[key] === value,
+        );
+    const reusable =
+        candidate && sameValues
+            ? await prisma.$transaction(async (tx) => {
+                  await tx.$queryRaw`SELECT id FROM worker_engagements WHERE id = ${params.engagementId} FOR UPDATE`;
+                  const current = await tx.preparedDocument.findFirst({
+                      where: { ...reuseWhere, id: candidate.id },
+                  });
+                  if (!current) return null;
+                  const active = await tx.preparedDocument.findFirst({
+                      where: {
+                          ...scopeWhere(params),
+                          status: { in: ["sending", "sent", "uncertain"] },
+                      },
+                  });
+                  if (active)
+                      throw new AppError(
+                          CONFLICT,
+                          "Versand ist bereits erfolgt oder muss geprüft werden.",
+                      );
+                  const latest = await tx.documentMaster.findFirst({
+                      where: {
+                          id: master.id,
+                          revision: master.revision,
+                          deletedAt: null,
+                      },
+                  });
+                  if (!latest)
+                      throw new AppError(
+                          CONFLICT,
+                          "Die Vorlage wurde geändert. Bitte das PDF erneut erstellen.",
+                      );
+                  await assertCurrentDraft(
+                      tx,
+                      params,
+                      master.id,
+                      document,
+                      values,
+                  );
+                  return current;
+              })
+            : null;
+    if (reusable)
+        return {
+            id: reusable.id,
+            previewUrl: await generatePresignedUrl(reusable.s3Key),
+            contentHash: reusable.contentHash,
+            masterRevision: reusable.masterRevision,
+            bytes: params.includeBytes
+                ? await downloadStoredFile(reusable.s3Key)
+                : undefined,
+        };
+    const renderStartedAt = performance.now();
     let pdf: Awaited<ReturnType<typeof generateDocumentPdf>>;
     try {
         pdf = await generateDocumentPdf(document, values);
@@ -182,38 +256,75 @@ export async function prepareDocument(
         });
         throw error;
     }
-    const stored = await uploadFileToS3(
-        {
-            buffer: pdf.bytes,
-            mimetype: "application/pdf",
-        } as Express.Multer.File,
-        params.engagementId,
-        "documents/prepared",
-    );
+    const renderedAt = performance.now();
+    // Font snapshots are immutable. Reuse matching assets within this
+    // organization instead of uploading the same full fonts for every PDF.
+    const previous = pdf.fontAssets?.length
+        ? await prisma.preparedDocument.findFirst({
+              where: { organizationId: params.organizationId },
+              orderBy: { createdAt: "desc" },
+              select: { fontManifest: true },
+          })
+        : null;
+    const fontKeys = new Map<string, string>();
+    if (Array.isArray(previous?.fontManifest)) {
+        for (const font of previous.fontManifest) {
+            if (
+                font &&
+                typeof font === "object" &&
+                !Array.isArray(font) &&
+                typeof font.filename === "string" &&
+                typeof font.hash === "string" &&
+                typeof font.s3Key === "string"
+            ) {
+                fontKeys.set(`${font.filename}\0${font.hash}`, font.s3Key);
+            }
+        }
+    }
+    const [stored, fontManifest] = await Promise.all([
+        uploadFileToS3(
+            {
+                buffer: pdf.bytes,
+                mimetype: "application/pdf",
+            } as Express.Multer.File,
+            params.engagementId,
+            "documents/prepared",
+        ),
+        Promise.all(
+            (pdf.fontAssets ?? []).map(async (font) => {
+                const existingKey = fontKeys.get(
+                    `${font.filename}\0${font.hash}`,
+                );
+                if (existingKey)
+                    return {
+                        filename: font.filename,
+                        hash: font.hash,
+                        s3Key: existingKey,
+                    };
+                const asset = await uploadFileToS3(
+                    {
+                        buffer: font.bytes,
+                        mimetype: "font/ttf",
+                    } as Express.Multer.File,
+                    params.engagementId,
+                    "documents/font-snapshots",
+                );
+                if (!asset.success || !asset.key)
+                    throw new AppError(
+                        BAD_REQUEST,
+                        "Schrift-Snapshot konnte nicht gespeichert werden.",
+                    );
+                return {
+                    filename: font.filename,
+                    hash: font.hash,
+                    s3Key: asset.key,
+                };
+            }),
+        ),
+    ]);
     if (!stored.success || !stored.key)
         throw new AppError(BAD_REQUEST, "PDF konnte nicht gespeichert werden.");
-    const fontManifest = await Promise.all(
-        (pdf.fontAssets ?? []).map(async (font) => {
-            const asset = await uploadFileToS3(
-                {
-                    buffer: font.bytes,
-                    mimetype: "font/ttf",
-                } as Express.Multer.File,
-                params.engagementId,
-                "documents/font-snapshots",
-            );
-            if (!asset.success || !asset.key)
-                throw new AppError(
-                    BAD_REQUEST,
-                    "Schrift-Snapshot konnte nicht gespeichert werden.",
-                );
-            return {
-                filename: font.filename,
-                hash: font.hash,
-                s3Key: asset.key,
-            };
-        }),
-    );
+    const storedAt = performance.now();
     const artifact = await prisma.$transaction(async (tx) => {
         await tx.$queryRaw`SELECT id FROM worker_engagements WHERE id = ${params.engagementId} FOR UPDATE`;
         const latest = await tx.documentMaster.findFirst({
@@ -272,12 +383,16 @@ export async function prepareDocument(
         artifactId: artifact.id,
         kind: params.kind,
         contentHash: artifact.contentHash,
+        renderMs: Math.round(renderedAt - renderStartedAt),
+        storageMs: Math.round(storedAt - renderedAt),
+        totalMs: Math.round(performance.now() - startedAt),
     });
     return {
         id: artifact.id,
         previewUrl: await generatePresignedUrl(artifact.s3Key),
         contentHash: artifact.contentHash,
         masterRevision: artifact.masterRevision,
+        bytes: params.includeBytes ? pdf.bytes : undefined,
     };
 }
 

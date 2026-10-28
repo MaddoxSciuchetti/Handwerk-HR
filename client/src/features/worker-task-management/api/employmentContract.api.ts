@@ -79,13 +79,13 @@ export function recordPrintedEmploymentContract(
   issueId: string,
   artifactId: string
 ): Promise<EmploymentContractDraft> {
-  return API.post<
-    { issueId: string; artifactId: string },
-    ContractResponse
-  >(`worker/${workerId}/engagements/${engagementId}/contract/send`, {
-    issueId,
-    artifactId,
-  }).then((response) => response.data);
+  return API.post<{ issueId: string; artifactId: string }, ContractResponse>(
+    `worker/${workerId}/engagements/${engagementId}/contract/send`,
+    {
+      issueId,
+      artifactId,
+    }
+  ).then((response) => response.data);
 }
 
 export function prepareEmploymentContractPdf(
@@ -97,6 +97,33 @@ export function prepareEmploymentContractPdf(
     `worker/${workerId}/engagements/${engagementId}/contract/prepare-pdf`,
     { values }
   ).then((response) => response.data);
+}
+
+// Binary response avoids fetching a just-generated PDF back from object storage.
+export function prepareEmploymentContractDownload(
+  workerId: string,
+  engagementId: string,
+  values: Record<string, string>
+) {
+  return apiJson.post<{ blob: Blob; prepared: PreparedPdf }>(
+    `worker/${workerId}/engagements/${engagementId}/contract/prepare-pdf?download=1`,
+    { values },
+    {
+      responseType: 'blob',
+      transformResponse: [
+        (blob: Blob, headers, status) => {
+          // Keep error bodies intact for the shared auth/error interceptor.
+          if (!status || status >= 400) return blob;
+          return {
+            blob,
+            prepared: JSON.parse(
+              decodeURIComponent(String(headers['x-prepared-pdf']))
+            ),
+          };
+        },
+      ],
+    }
+  );
 }
 
 export function confirmReturnedEmploymentContract(
@@ -129,7 +156,6 @@ export function confirmEngagementContractForSend(
     {}
   ).then((response) => response.data);
 }
-
 
 export function selectEngagementContractTemplate(
   workerId: string,

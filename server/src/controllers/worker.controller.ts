@@ -648,13 +648,19 @@ export const prepareEmploymentContractPdf = catchErrors(
         const values = req.body?.values;
         if (!values || typeof values !== "object" || Array.isArray(values))
             return res.status(400).json({ message: "Werte fehlen." });
-        const prepared =
+        const { bytes, ...prepared } =
             await employmentContractService.prepareEmploymentContractPdf({
                 organizationId: req.orgId,
                 workerId: param(req, "workerId"),
                 engagementId: param(req, "engagementId"),
                 values,
+                includeBytes: req.query.download === "1",
             });
+        if (req.query.download === "1") {
+            res.setHeader("Cache-Control", "no-store");
+            res.setHeader("X-Prepared-Pdf", encodeURIComponent(JSON.stringify(prepared)));
+            return res.type("application/pdf").send(bytes);
+        }
         return res.json({ success: true, data: prepared });
     },
 );

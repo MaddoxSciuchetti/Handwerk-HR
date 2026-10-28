@@ -59,6 +59,7 @@ app.use(
             }
         },
         credentials: true,
+        exposedHeaders: ["X-Prepared-Pdf"],
     }),
 );
 

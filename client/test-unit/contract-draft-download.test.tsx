@@ -6,7 +6,7 @@ import { ContractDraftDialog } from '@/features/worker-task-management/component
 import {
   fetchPreparedEmploymentContractPdf,
   getEngagementContract,
-  prepareEmploymentContractPdf,
+  prepareEmploymentContractDownload,
 } from '@/features/worker-task-management/api/employmentContract.api';
 import { fromSegments } from '@/features/settings/documents/styledDocument';
 
@@ -15,7 +15,7 @@ beforeEach(() => vi.clearAllMocks());
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock('@/features/worker-task-management/api/employmentContract.api', () => ({
   fetchPreparedEmploymentContractPdf: vi.fn(),
-  prepareEmploymentContractPdf: vi.fn(),
+  prepareEmploymentContractDownload: vi.fn(),
   getEngagementContract: vi.fn(),
   saveEngagementContractDraft: vi.fn(),
   resyncEngagementContractFromQuestionnaire: vi.fn(),
@@ -57,11 +57,14 @@ const draft = {
 
 it('downloads the Arbeitsvertrag PDF from the Dateien dialog', async () => {
   vi.mocked(getEngagementContract).mockResolvedValue(draft);
-  vi.mocked(prepareEmploymentContractPdf).mockResolvedValue({
-    id: 'pdf-1',
-    previewUrl: 'https://example.test/contract.pdf',
-    contentHash: 'hash',
-    masterRevision: 1,
+  vi.mocked(prepareEmploymentContractDownload).mockResolvedValue({
+    blob: new Blob(['%PDF'], { type: 'application/pdf' }),
+    prepared: {
+      id: 'pdf-1',
+      previewUrl: 'https://example.test/contract.pdf',
+      contentHash: 'hash',
+      masterRevision: 1,
+    },
   });
   vi.mocked(fetchPreparedEmploymentContractPdf).mockResolvedValue(
     new Blob(['%PDF'], { type: 'application/pdf' })
@@ -91,17 +94,13 @@ it('downloads the Arbeitsvertrag PDF from the Dateien dialog', async () => {
     .click(await screen.findByRole('button', { name: 'PDF herunterladen' }));
 
   await waitFor(() =>
-    expect(prepareEmploymentContractPdf).toHaveBeenCalledWith(
+    expect(prepareEmploymentContractDownload).toHaveBeenCalledWith(
       'worker',
       'engagement',
       {}
     )
   );
-  expect(fetchPreparedEmploymentContractPdf).toHaveBeenCalledWith(
-    'worker',
-    'engagement',
-    'pdf-1'
-  );
+  expect(fetchPreparedEmploymentContractPdf).not.toHaveBeenCalled();
   expect(click.mock.instances[0]).toHaveAttribute(
     'download',
     'Arbeitsvertrag.pdf'
@@ -154,7 +153,7 @@ it('reuses an existing prepared PDF when values are unchanged', async () => {
       'pdf-ready'
     )
   );
-  expect(prepareEmploymentContractPdf).not.toHaveBeenCalled();
+  expect(prepareEmploymentContractDownload).not.toHaveBeenCalled();
   create.mockRestore();
   click.mockRestore();
 });

@@ -7,6 +7,7 @@ import {
   fetchPreparedEmploymentContractPdf,
   getEngagementContract,
   prepareEmploymentContractPdf,
+  prepareEmploymentContractDownload,
   recordPrintedEmploymentContract,
   saveEngagementContractDraft,
   selectEngagementContractTemplate,
@@ -26,6 +27,7 @@ vi.mock('@/features/worker-task-management/printPdf', () => ({
 vi.mock('@/features/worker-task-management/api/employmentContract.api', () => ({
   fetchPreparedEmploymentContractPdf: vi.fn(),
   prepareEmploymentContractPdf: vi.fn(),
+  prepareEmploymentContractDownload: vi.fn(),
   recordPrintedEmploymentContract: vi.fn(),
   getEngagementContract: vi.fn(),
   saveEngagementContractDraft: vi.fn(),
@@ -289,7 +291,7 @@ it('syncs a newly selected template immediately and clears the old PDF', async (
     </QueryClientProvider>
   );
   const select = await screen.findByRole('combobox', {
-    name: 'Vertragsvorlage',
+    name: 'Vertragsvorlage wechseln',
   });
   expect(
     screen.queryByRole('option', { name: 'Zeugnis' })
@@ -311,7 +313,9 @@ it('syncs a newly selected template immediately and clears the old PDF', async (
   expect(
     screen.queryByTitle('Arbeitsvertrag zum Drucken')
   ).not.toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'PDF herunterladen' })).toBeEnabled();
+  expect(
+    screen.getByRole('button', { name: 'PDF herunterladen' })
+  ).toBeEnabled();
 });
 
 it('does not offer a template switch for a printed contract', async () => {
@@ -334,7 +338,7 @@ it('does not offer a template switch for a printed contract', async () => {
   );
   await screen.findByTitle('Arbeitsvertrag zum Drucken');
   expect(
-    screen.queryByRole('combobox', { name: 'Vertragsvorlage' })
+    screen.queryByRole('combobox', { name: 'Vertragsvorlage wechseln' })
   ).not.toBeInTheDocument();
 });
 
@@ -380,7 +384,9 @@ it('prepares current edits before printing', async () => {
 });
 
 it('keeps the field column in the contract preview skeleton', () => {
-  vi.mocked(getEngagementContract).mockReturnValue(new Promise(() => undefined));
+  vi.mocked(getEngagementContract).mockReturnValue(
+    new Promise(() => undefined)
+  );
   const query = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -442,6 +448,56 @@ it('downloads the prepared PDF without recording it as printed', async () => {
   expect(recordPrintedEmploymentContract).not.toHaveBeenCalled();
   expect(printPdfBlob).not.toHaveBeenCalled();
   expect(onClose).not.toHaveBeenCalled();
+  create.mockRestore();
+  click.mockRestore();
+});
+
+it('downloads a newly generated PDF directly and reuses it on the next click', async () => {
+  vi.mocked(getEngagementContract).mockResolvedValue({
+    ...draft,
+    prepared: null,
+  });
+  vi.mocked(prepareEmploymentContractDownload).mockResolvedValue({
+    blob: new Blob(['%PDF'], { type: 'application/pdf' }),
+    prepared: draft.prepared,
+  });
+  vi.mocked(fetchPreparedEmploymentContractPdf).mockResolvedValue(
+    new Blob(['%PDF'], { type: 'application/pdf' })
+  );
+  const create = vi
+    .spyOn(URL, 'createObjectURL')
+    .mockReturnValue('blob:contract');
+  const click = vi
+    .spyOn(HTMLAnchorElement.prototype, 'click')
+    .mockImplementation(() => {});
+  const query = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  render(
+    <QueryClientProvider client={query}>
+      <ContractSendDialog
+        workerId="worker"
+        engagementId="engagement"
+        issueId="issue"
+        onClose={() => undefined}
+      />
+    </QueryClientProvider>
+  );
+  const user = userEvent.setup();
+  await user.click(
+    await screen.findByRole('button', { name: 'PDF herunterladen' })
+  );
+  await waitFor(() => expect(click).toHaveBeenCalledTimes(1));
+  expect(fetchPreparedEmploymentContractPdf).not.toHaveBeenCalled();
+  expect(recordPrintedEmploymentContract).not.toHaveBeenCalled();
+  await user.click(screen.getByRole('button', { name: 'PDF herunterladen' }));
+  await waitFor(() => expect(click).toHaveBeenCalledTimes(2));
+  expect(prepareEmploymentContractDownload).toHaveBeenCalledTimes(1);
+  expect(fetchPreparedEmploymentContractPdf).toHaveBeenCalledWith(
+    'worker',
+    'engagement',
+    'pdf-1'
+  );
   create.mockRestore();
   click.mockRestore();
 });
