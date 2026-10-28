@@ -1,6 +1,5 @@
 import {
   ClipboardList,
-  CreditCard,
   FileText,
   Inbox,
   LayoutDashboard,
@@ -70,11 +69,5 @@ export const SETTINGSITEMS = [
     title: 'Integrationen',
     to: '/settings/integrations',
     icon: Plug,
-  },
-  {
-    title: 'Zahlungen',
-    to: '/settings/payments',
-    icon: CreditCard,
-    adminOnly: true,
   },
 ];
