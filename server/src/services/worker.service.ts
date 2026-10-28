@@ -268,11 +268,15 @@ export async function getWorkerData(params: GetWorkersInput) {
             },
         });
         const engagementIds = workers.flatMap(worker => worker.engagements.map(engagement => engagement.id));
-        const counts = engagementIds.length ? await prisma.issue.groupBy({
+        const [counts, allCounts] = engagementIds.length ? await Promise.all([prisma.issue.groupBy({
             by: ["workerEngagementId", "status"],
             where: { workerEngagementId: { in: engagementIds }, ...issueVisibleToViewer(viewerUserId) },
             _count: { _all: true },
-        }) : [];
+        }), prisma.issue.groupBy({
+            by: ["workerEngagementId", "status"],
+            where: { workerEngagementId: { in: engagementIds } },
+            _count: { _all: true },
+        })]) : [[], []];
         const byEngagement = new Map<string, { status: string; count: number }[]>();
         for (const row of counts) {
             if (!row.workerEngagementId) continue;
@@ -280,9 +284,37 @@ export async function getWorkerData(params: GetWorkersInput) {
             values.push({ status: row.status, count: row._count._all });
             byEngagement.set(row.workerEngagementId, values);
         }
-        return workers.map(worker => ({ ...worker, engagements: worker.engagements.map(engagement => ({
-            ...engagement, issueCounts: byEngagement.get(engagement.id) ?? [],
-        })) }));
+        // The list totals tasks across the current phase, including older records
+        // left behind by type switches. Its completion icon must use that scope too.
+        // Use all tasks for completion so private open tasks cannot be overlooked.
+        const allByEngagement = new Map<string, { total: number; open: number }>();
+        for (const row of allCounts) {
+            if (!row.workerEngagementId) continue;
+            const value = allByEngagement.get(row.workerEngagementId) ?? { total: 0, open: 0 };
+            value.total += row._count._all;
+            if (!["done", "cancelled", "not_applicable"].includes(row.status)) {
+                value.open += row._count._all;
+            }
+            allByEngagement.set(row.workerEngagementId, value);
+        }
+        return workers.map(worker => {
+            const phases = new Map<string, { total: number; open: number }>();
+            for (const engagement of worker.engagements) {
+                const phase = phases.get(engagement.type) ?? { total: 0, open: 0 };
+                const tasks = allByEngagement.get(engagement.id);
+                phase.total += tasks?.total ?? 0;
+                phase.open += tasks?.open ?? 0;
+                phases.set(engagement.type, phase);
+            }
+            return { ...worker, engagements: worker.engagements.map(engagement => {
+                const phase = phases.get(engagement.type)!;
+                return {
+                    ...engagement,
+                    issueCounts: byEngagement.get(engagement.id) ?? [],
+                    taskPhaseCompleted: phase.total > 0 && phase.open === 0,
+                };
+            }) };
+        });
     }
 
     return prisma.worker.findMany({

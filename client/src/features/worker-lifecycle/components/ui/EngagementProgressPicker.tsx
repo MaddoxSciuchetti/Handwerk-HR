@@ -36,6 +36,17 @@ export function EngagementProgressPicker({
   const health = getWorkerHealth(worker);
   const healthLabel =
     health.percentage !== null ? `${health.percentage}%` : '—';
+  const phaseCompleted = worker.engagements.find(
+    (engagement) => engagement.id === engagementId
+  )?.taskPhaseCompleted;
+  const displayStatus =
+    status === 'cancelled' || phaseCompleted === undefined
+      ? status
+      : phaseCompleted
+        ? 'completed'
+        : status === 'completed'
+          ? 'in_progress'
+          : status;
 
   return (
     <DropdownMenu>
@@ -43,14 +54,17 @@ export function EngagementProgressPicker({
         <Button
           type="button"
           variant="outline"
-          aria-label={`Status: ${engagementProgressLabel(status)}. ${health.percentage ?? 0}% der Aufgaben erledigt. Zum Ändern klicken.`}
+          aria-label={`Status: ${engagementProgressLabel(displayStatus)}. ${health.percentage ?? 0}% der Aufgaben erledigt. Zum Ändern klicken.`}
           className={cn(
             'h-7 gap-1.5 rounded-full border border-border bg-muted px-2.5 text-xs font-medium shadow-none hover:bg-muted focus-visible:border-border focus-visible:ring-0 aria-expanded:bg-muted dark:border-border dark:bg-muted dark:hover:bg-muted',
             className
           )}
           onClick={(e) => e.stopPropagation()}
         >
-          <EngagementProgressIcon status={status} className="size-4 shrink-0" />
+          <EngagementProgressIcon
+            status={displayStatus}
+            className="size-4 shrink-0"
+          />
           <span className="tabular-nums text-foreground">{healthLabel}</span>
         </Button>
       </DropdownMenuTrigger>
@@ -60,7 +74,7 @@ export function EngagementProgressPicker({
         onClick={(e) => e.stopPropagation()}
       >
         {ENGAGEMENT_PROGRESS_OPTIONS.map((option) => {
-          const isSelected = option.value === status;
+          const isSelected = option.value === displayStatus;
 
           return (
             <DropdownMenuItem
@@ -80,7 +94,10 @@ export function EngagementProgressPicker({
               <EngagementProgressIcon status={option.value} />
               <span className="flex-1">{option.label}</span>
               {isSelected ? (
-                <Check className="size-4 shrink-0 text-foreground" aria-hidden />
+                <Check
+                  className="size-4 shrink-0 text-foreground"
+                  aria-hidden
+                />
               ) : (
                 <span className="size-4 shrink-0" aria-hidden />
               )}
