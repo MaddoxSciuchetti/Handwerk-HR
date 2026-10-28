@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   demo: false,
+  authEmail: undefined as string | undefined,
   preview: vi.fn(),
   apply: vi.fn(),
   savedRun: vi.fn(),
@@ -44,7 +45,7 @@ vi.mock(
   })
 );
 vi.mock('@/features/user-profile/hooks/useAuth', () => ({
-  default: () => ({ user: { id: 'user', organizationId: 'org' } }),
+  default: () => ({ user: { id: 'user', organizationId: 'org', email: mocks.authEmail } }),
 }));
 vi.mock('@/features/worker-task-management/api/engagementMail.api', () => ({
   engagementMailKey: (id: string) => ['mail', id],
@@ -79,6 +80,7 @@ const automation = {
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.demo = false;
+  mocks.authEmail = undefined;
   mocks.savedRun.mockResolvedValue(null);
   mocks.dismiss.mockResolvedValue({ dismissed: true });
   sessionStorage.clear();
@@ -1350,4 +1352,39 @@ it('creeps unevenly within active tasks and reserves completion for real updates
     random.mockRestore();
     vi.useRealTimers();
   }
+});
+
+it('defaults email sender to the logged-in user instead of the first available mailbox', async () => {
+  mocks.authEmail = ' Office@Example.com ';
+  mocks.preview.mockResolvedValue({
+    id: 'automated', name: 'Automatisch',
+    items: [{ ...automation, sequence: 'microsoft_send_email', title: 'Willkommensmail' }],
+  });
+  renderWithProviders(<TemplateApplyPrompt targets={[target]} />);
+  const user = await selectTemplate();
+  await user.click(screen.getByText('Willkommensmail'));
+  await waitFor(() => expect(screen.getByRole('combobox', { name: 'Absender für Willkommensmail' })).toHaveTextContent('Office'));
+  await user.click(screen.getByRole('button', { name: 'Empfänger für Willkommensmail' }));
+  await user.click(await screen.findByRole('checkbox', { name: 'Team' }));
+  await user.click(screen.getByText('Willkommensmail'));
+  await user.click(screen.getByRole('button', { name: 'Automatisierung starten' }));
+  await waitFor(() => expect(mocks.apply).toHaveBeenCalledWith('worker', 'automated', expect.objectContaining({
+    choices: { a: expect.objectContaining({ senderAddress: 'office@example.com' }) },
+  })));
+});
+
+it('does not default to another mailbox when the logged-in user is unavailable', async () => {
+  mocks.authEmail = 'missing@example.com';
+  mocks.preview.mockResolvedValue({
+    id: 'automated', name: 'Automatisch',
+    items: [{ ...automation, sequence: 'microsoft_send_email', title: 'Willkommensmail' }],
+  });
+  renderWithProviders(<TemplateApplyPrompt targets={[target]} />);
+  const user = await selectTemplate();
+  await user.click(screen.getByText('Willkommensmail'));
+  await waitFor(() => expect(mocks.senders).toHaveBeenCalled());
+  expect(screen.getByRole('combobox', { name: 'Absender für Willkommensmail' })).toHaveTextContent('Wählen');
+  await user.click(screen.getByRole('button', { name: 'Empfänger für Willkommensmail' }));
+  await user.click(await screen.findByRole('checkbox', { name: 'Team' }));
+  expect(screen.getByRole('button', { name: 'Automatisierung starten' })).toBeDisabled();
 });
