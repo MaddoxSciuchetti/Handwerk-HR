@@ -43,17 +43,19 @@ export function ResponsibleUserPicker({
           aria-label={`Verantwortlichen für ${workerName} ändern`}
           disabled={disabled}
           aria-busy={disabled}
-          className="-ml-2 gap-2 rounded-lg border-border bg-muted px-2 font-normal shadow-none hover:bg-muted focus-visible:border-border focus-visible:ring-0 aria-expanded:bg-muted dark:border-border dark:bg-muted dark:hover:bg-muted"
+          className="-ml-2 max-w-full gap-2 rounded-lg border-border bg-muted px-2 font-normal shadow-none hover:bg-muted focus-visible:border-border focus-visible:ring-0 aria-expanded:bg-muted dark:border-border dark:bg-muted dark:hover:bg-muted"
         >
-          {`${value.firstName} ${value.lastName}`.trim()}
+          <span className="truncate">
+            {`${value.firstName} ${value.lastName}`.trim()}
+          </span>
           {disabled ? (
             <Loader2
-              className="size-3.5 animate-spin text-muted-foreground"
+              className="size-3.5 shrink-0 animate-spin text-muted-foreground"
               aria-hidden
             />
           ) : (
             <ChevronDown
-              className="size-3.5 text-muted-foreground"
+              className="size-3.5 shrink-0 text-muted-foreground"
               aria-hidden
             />
           )}

@@ -110,9 +110,12 @@ function ProjectItem(props: ProjectItemProps) {
           />
         )}
         <span
-          className={cn('inline-flex items-center gap-2', !isTeam && 'pl-2')}
+          className={cn(
+            'inline-flex max-w-full items-center gap-2',
+            !isTeam && 'pl-2'
+          )}
         >
-          {worker.firstName}
+          <span className="truncate">{worker.firstName}</span>
           {isTeam && props.marked ? (
             <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-normal text-muted-foreground">
               Nächstes Jubiläum
