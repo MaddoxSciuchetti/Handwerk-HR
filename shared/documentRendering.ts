@@ -202,8 +202,9 @@ function positionedLabelHtml(
 
 function printText(value: string | undefined): string {
   return escapeHtml(value).replace(/[☐☒☑]/g, (glyph) => {
-    // Keep the original glyph's advance width. A smaller SVG shifts the
-    // underlined tab that sits to the right of a checkbox row.
+    // Keep the original glyph's advance width so following text and underlined
+    // tabs stay in place. Inset the drawing vertically and leave the remaining
+    // width on the right as breathing room before the label.
     const mark =
       glyph === "☐"
         ? ""
@@ -213,7 +214,7 @@ function printText(value: string | undefined): string {
       '<span style="visibility:hidden">' +
       glyph +
       "</span>" +
-      '<svg aria-hidden="true" viewBox="0 0 12 12" style="position:absolute;inset:0;width:100%;height:100%"><rect x="0.5" y="0.5" width="11" height="11" fill="none" stroke="currentColor"/>' +
+      '<svg aria-hidden="true" viewBox="0 0 12 12" style="position:absolute;left:0;top:12.5%;width:75%;height:75%"><rect x="0.5" y="0.5" width="11" height="11" fill="none" stroke="currentColor"/>' +
       mark +
       "</svg></span>"
     );
