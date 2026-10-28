@@ -12,7 +12,7 @@ vi.mock(
   })
 );
 
-it('shows and opens filed questionnaire attachments only for the selected engagement', async () => {
+it('shows and opens filed questionnaire attachments from every engagement', async () => {
   const user = userEvent.setup();
   const open = vi.spyOn(window, 'open').mockImplementation(() => null);
   const attachment: PersonnelDocument = {
@@ -27,43 +27,38 @@ it('shows and opens filed questionnaire attachments only for the selected engage
     createdAt: '2026-10-23',
     presignedUrl: 'https://example.test/kk.png',
   };
-  const props = {
-    workerId: 'worker',
-    engagements: [
-      { id: 'engagement', type: 'onboarding' as const, startDate: null },
-      { id: 'other', type: 'onboarding' as const, startDate: null },
-    ],
-    documents: [
-      attachment,
-      {
-        ...attachment,
-        id: 'other-file',
-        engagementId: 'other',
-        originalFileName: 'other.png',
-      },
-    ],
-    folders: [],
-    questionnaires: [],
-    contracts: [],
-    certificates: [],
-    deletingId: null,
-    onDelete: vi.fn(),
-    engagementId: 'engagement',
-    onEngagementChange: vi.fn(),
-  };
-  const view = renderWithProviders(<PersonnelDocumentFolders {...props} />);
-  expect(
-    screen.queryByRole('button', { name: 'other.png öffnen' })
-  ).not.toBeInTheDocument();
-  await user.click(screen.getByRole('button', { name: 'kk.png öffnen' }));
-  expect(open).toHaveBeenCalledWith(attachment.presignedUrl, '_blank');
-
-  view.rerender(<PersonnelDocumentFolders {...props} engagementId="other" />);
-  expect(
-    screen.queryByRole('button', { name: 'kk.png öffnen' })
-  ).not.toBeInTheDocument();
+  const otherUrl = 'https://example.test/other.png';
+  renderWithProviders(
+    <PersonnelDocumentFolders
+      workerId="worker"
+      engagements={[
+        { id: 'engagement', type: 'onboarding', startDate: null },
+        { id: 'other', type: 'onboarding', startDate: null },
+      ]}
+      documents={[
+        attachment,
+        {
+          ...attachment,
+          id: 'other-file',
+          engagementId: 'other',
+          originalFileName: 'other.png',
+          presignedUrl: otherUrl,
+        },
+      ]}
+      folders={[]}
+      questionnaires={[]}
+      contracts={[]}
+      certificates={[]}
+      deletingId={null}
+      onDelete={vi.fn()}
+    />
+  );
   expect(
     screen.getByRole('button', { name: 'other.png öffnen' })
   ).toBeVisible();
+  await user.click(screen.getByRole('button', { name: 'kk.png öffnen' }));
+  expect(open).toHaveBeenCalledWith(attachment.presignedUrl, '_blank');
+  await user.click(screen.getByRole('button', { name: 'other.png öffnen' }));
+  expect(open).toHaveBeenCalledWith(otherUrl, '_blank');
   open.mockRestore();
 });

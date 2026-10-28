@@ -52,8 +52,6 @@ it('shows the questionnaire, contract, and folders as file boxes', async () => {
       certificates={[]}
       deletingId={null}
       onDelete={() => undefined}
-      engagementId={engagement.id}
-      onEngagementChange={() => undefined}
     />
   );
 
@@ -83,7 +81,7 @@ it('shows the questionnaire, contract, and folders as file boxes', async () => {
   expect(screen.queryByText(/Datei/)).not.toBeInTheDocument();
 });
 
-it('uploads dropped files into built-in, custom, and open folders for the selected engagement', async () => {
+it('uploads dropped files into built-in, custom, and open folders', async () => {
   vi.mocked(uploadPersonnelDocument).mockClear();
   renderWithProviders(
     <PersonnelDocumentFolders
@@ -98,8 +96,6 @@ it('uploads dropped files into built-in, custom, and open folders for the select
       certificates={[]}
       deletingId={null}
       onDelete={vi.fn()}
-      engagementId="engagement-2"
-      onEngagementChange={vi.fn()}
     />
   );
   const files = [
@@ -118,9 +114,9 @@ it('uploads dropped files into built-in, custom, and open folders for the select
   for (const file of files) {
     expect(uploadPersonnelDocument).toHaveBeenCalledWith(
       'worker',
-      'engagement-2',
+      engagement.id,
       {
-        engagementId: 'engagement-2',
+        engagementId: engagement.id,
         name: 'personalausweis',
         folderId: undefined,
         file,

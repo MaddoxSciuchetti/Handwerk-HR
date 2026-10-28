@@ -7,7 +7,7 @@ import {
 import ErrorAlert from '@/components/alerts/ErrorAlert';
 import { FileCardsSkeleton, PersonnelFoldersSkeleton } from './FileSkeletons';
 import type { EngagementType } from '@/features/worker-lifecycle/types/index.types';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import useDeleteWorkerFile from '../../hooks/useDeleteWorkerFile';
 import useGetWorkerFiles from '../../hooks/useGetWorkerFiles';
 import {
@@ -57,11 +57,7 @@ function WorkerFileUploads({
   const filteredFiles = useMemo(() => fetchFiles ?? [], [fetchFiles]);
   const personnel = personnelDocuments.data?.documents ?? [];
   const folders = personnelDocuments.data?.folders ?? [];
-  const [engagementId, setEngagementId] = useState(engagements[0]?.id ?? '');
-  const selectedEngagementId =
-    engagements.find((item) => item.id === engagementId)?.id ??
-    engagements[0]?.id ??
-    '';
+  const defaultEngagementId = engagements[0]?.id ?? '';
 
   return (
     <>
@@ -83,8 +79,6 @@ function WorkerFileUploads({
               : null
           }
           onDelete={(documentId) => deletePersonnelDocument.mutate(documentId)}
-          engagementId={selectedEngagementId}
-          onEngagementChange={setEngagementId}
         />
       )}
       {isLoading ? <FileCardsSkeleton /> : null}
@@ -108,7 +102,7 @@ function WorkerFileUploads({
       <AddPersonnelFolder
         open={createFolderOpen}
         workerId={workerId}
-        engagementId={selectedEngagementId}
+        engagementId={defaultEngagementId}
         onOpenChange={setCreateFolderOpen}
       />
       {isUploadModalOpen && (
