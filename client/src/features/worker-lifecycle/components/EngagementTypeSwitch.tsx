@@ -6,7 +6,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Loader2 } from 'lucide-react';
 import { ENGAGEMENT_TYPE_OPTIONS } from '../consts/engagement-type.consts';
 import type { EngagementType } from '../types/index.types';
 
@@ -28,7 +28,7 @@ function EngagementTypeSwitch({
   )?.label;
 
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <Button
           type="button"
@@ -36,10 +36,21 @@ function EngagementTypeSwitch({
           size="sm"
           aria-label={`Typ für ${workerName} ändern`}
           disabled={disabled}
-          className="-ml-2 gap-2 rounded-lg border-border bg-muted px-2 font-normal shadow-none hover:bg-muted focus-visible:border-border focus-visible:ring-0 aria-expanded:bg-muted dark:border-border dark:bg-muted dark:hover:bg-muted"
+          aria-busy={disabled}
+          className="-ml-2 w-32 justify-between gap-2 rounded-lg border-border bg-muted px-2 font-normal shadow-none hover:bg-muted focus-visible:border-border focus-visible:ring-0 aria-expanded:bg-muted dark:border-border dark:bg-muted dark:hover:bg-muted"
         >
           {label}
-          <ChevronDown className="size-3.5 text-muted-foreground" aria-hidden />
+          {disabled ? (
+            <Loader2
+              className="size-3.5 animate-spin text-muted-foreground"
+              aria-hidden
+            />
+          ) : (
+            <ChevronDown
+              className="size-3.5 text-muted-foreground"
+              aria-hidden
+            />
+          )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">

@@ -24,7 +24,21 @@ import {
 import { OpenPersonnelFolder } from './OpenPersonnelFolder';
 import { PersonnelFolderCard } from './PersonnelFolderCard';
 import { PersonnelDocumentRow } from './PersonnelDocumentRow';
-import { useUploadPersonnelDocument } from '../../../hooks/usePersonnelDocuments';
+import {
+  useUploadPersonnelDocument,
+  useMovePersonnelDocument,
+  useDeletePersonnelFolder,
+} from '../../../hooks/usePersonnelDocuments';
+import type { StoredFileDrag } from '../../../hooks/useFolderFileDrop';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 type OpenFolder =
   | { kind: 'builtin'; name: PersonnelDocumentName }
@@ -39,6 +53,7 @@ type PersonnelDocumentFoldersProps = {
   }>;
   documents: PersonnelDocument[];
   folders: PersonnelFolder[];
+  hiddenFolders?: string[];
   questionnaires: EngagementQuestionnaireLink[];
   contracts: EngagementContractLink[];
   certificates: EngagementCertificateLink[];
@@ -51,6 +66,7 @@ export function PersonnelDocumentFolders({
   engagements,
   documents,
   folders,
+  hiddenFolders = [],
   questionnaires,
   contracts,
   certificates,
@@ -59,6 +75,32 @@ export function PersonnelDocumentFolders({
 }: PersonnelDocumentFoldersProps) {
   const [openFolder, setOpenFolder] = useState<OpenFolder | null>(null);
   const upload = useUploadPersonnelDocument(workerId);
+  const move = useMovePersonnelDocument(workerId);
+  const removeFolder = useDeletePersonnelFolder(workerId);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: string;
+    label: string;
+  } | null>(null);
+  const deleteFolder = (id: string, label: string, containsFiles: boolean) => {
+    if (containsFiles) setDeleteTarget({ id, label });
+    else removeFolder.mutate({ folderId: id, confirmed: false });
+  };
+  const moveFile = (
+    file: StoredFileDrag,
+    name: string,
+    engagementId: string,
+    folderId?: string
+  ) => {
+    move.mutate({
+      documentId: file.id,
+      source: file.source,
+      engagementId: folderId
+        ? engagementId
+        : (file.engagementId ?? engagementId),
+      name,
+      folderId,
+    });
+  };
   const defaultEngagementId = engagements[0]?.id ?? '';
   const uploadFiles = (
     files: File[],
@@ -101,6 +143,14 @@ export function PersonnelDocumentFolders({
         deletingId={deletingId}
         onBack={() => setOpenFolder(null)}
         onDelete={onDelete}
+        onMove={(file) =>
+          moveFile(
+            file,
+            openCustom ? 'ordner' : openBuiltin!.value,
+            uploadEngagementId,
+            openCustom?.id
+          )
+        }
         onFiles={(files) =>
           uploadFiles(
             files,
@@ -143,11 +193,28 @@ export function PersonnelDocumentFolders({
         ))}
         <EngagementCertificateList certificates={certificates} />
         {PERSONNEL_DOCUMENT_NAMES.filter(
-          (item) => item.value !== 'fragebogen'
+          (item) =>
+            item.value !== 'fragebogen' &&
+            (!hiddenFolders.includes(item.value) ||
+              documents.some(
+                (document) => !document.folderId && document.name === item.value
+              ))
         ).map((item) => (
           <PersonnelFolderCard
             key={item.value}
             label={item.label}
+            deleting={removeFolder.isPending}
+            onDelete={() =>
+              deleteFolder(
+                `builtin:${item.value}`,
+                item.label,
+                documents.some(
+                  (document) =>
+                    !document.folderId && document.name === item.value
+                )
+              )
+            }
+            onMove={(file) => moveFile(file, item.value, defaultEngagementId)}
             onOpen={() => setOpenFolder({ kind: 'builtin', name: item.value })}
             onFiles={(files) =>
               uploadFiles(files, item.value, defaultEngagementId)
@@ -158,6 +225,17 @@ export function PersonnelDocumentFolders({
           <PersonnelFolderCard
             key={folder.id}
             label={folder.label}
+            deleting={removeFolder.isPending}
+            onDelete={() =>
+              deleteFolder(
+                folder.id,
+                folder.label,
+                documents.some((document) => document.folderId === folder.id)
+              )
+            }
+            onMove={(file) =>
+              moveFile(file, 'ordner', folder.engagementId, folder.id)
+            }
             onOpen={() => setOpenFolder({ kind: 'custom', id: folder.id })}
             onFiles={(files) =>
               uploadFiles(files, 'ordner', folder.engagementId, folder.id)
@@ -165,6 +243,47 @@ export function PersonnelDocumentFolders({
           />
         ))}
       </div>
+      <Dialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open && !removeFolder.isPending) setDeleteTarget(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ordner löschen?</DialogTitle>
+            <DialogDescription>
+              Der Ordner „{deleteTarget?.label}“ enthält Dateien. Möchten Sie
+              den Ordner und alle enthaltenen Dateien wirklich löschen? Diese
+              Aktion kann nicht rückgängig gemacht werden.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              disabled={removeFolder.isPending}
+              onClick={() => setDeleteTarget(null)}
+            >
+              Abbrechen
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={removeFolder.isPending}
+              onClick={() => {
+                if (deleteTarget)
+                  removeFolder.mutate(
+                    { folderId: deleteTarget.id, confirmed: true },
+                    { onSuccess: () => setDeleteTarget(null) }
+                  );
+              }}
+            >
+              {removeFolder.isPending
+                ? 'Wird gelöscht…'
+                : 'Ordner und Dateien löschen'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import userEvent from '@testing-library/user-event';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
+import { renderWithProviders as render } from './test-utils';
 import { beforeEach, expect, it, vi } from 'vitest';
 import TaskManagement from '@/features/worker-task-management/components/tasks/WorkerTaskManagement';
 import type { WorkerDetailResponse } from '@/features/worker-lifecycle/types/index.types';
@@ -182,12 +183,18 @@ it('hides Aufgaben in Team and restores saved tasks when switching back to a lif
     onboarding,
   ]);
   view.rerender(<TaskManagement workerId="worker-1" />);
-  expect(screen.queryByRole('button', { name: 'Aufgaben', exact: true })).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('button', { name: 'Aufgaben', exact: true })
+  ).not.toBeInTheDocument();
   expect(screen.queryByText('Return company keys')).not.toBeInTheDocument();
   expect(screen.queryByText('Onboarding task')).not.toBeInTheDocument();
   expect(screen.queryByTestId('template-target')).not.toBeInTheDocument();
-  expect(screen.queryByRole('button', { name: 'Aufgabe hinzufügen' })).not.toBeInTheDocument();
-  expect(screen.queryByRole('tablist', { name: 'Aufgabenphase' })).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('button', { name: 'Aufgabe hinzufügen' })
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('tablist', { name: 'Aufgabenphase' })
+  ).not.toBeInTheDocument();
   state.data = worker([history, onboarding]);
   view.rerender(<TaskManagement workerId="worker-1" />);
   expect(screen.getByText('Return company keys')).toBeInTheDocument();
@@ -199,7 +206,12 @@ it('hides Aufgaben in Team and restores saved tasks when switching back to a lif
 
 it('still shows completed onboarding tasks after Team → offboarding → onboarding', async () => {
   const user = userEvent.setup();
-  const team = { id: 'team-1', type: 'transfer', status: 'completed', issues: [] };
+  const team = {
+    id: 'team-1',
+    type: 'transfer',
+    status: 'completed',
+    issues: [],
+  };
   const freshOnboarding = {
     id: 'onboarding-2',
     type: 'onboarding',
@@ -217,4 +229,62 @@ it('still shows completed onboarding tasks after Team → offboarding → onboar
   expect(screen.queryByText('Onboarding task')).not.toBeInTheDocument();
   await user.click(screen.getByRole('tab', { name: 'Onboarding' }));
   expect(screen.getByText('Onboarding task')).toBeInTheDocument();
+});
+
+it.each([
+  null,
+  {
+    id: 'application-1',
+    completedAt: '2026-10-28T12:00:00Z',
+    resultsDismissedAt: '2026-10-28T12:01:00Z',
+  },
+])(
+  'allows task creation for expected onboarding with template receipt %j',
+  async (templateApplication) => {
+    state.data = worker([
+      { ...onboarding, status: 'expected', templateApplication },
+      offboarding,
+    ]);
+    render(<TaskManagement workerId="worker-1" />);
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Aufgabe hinzufügen' })
+    );
+
+    expect(state.create).toHaveBeenCalledWith({
+      workerEngagementId: 'onboarding-1',
+    });
+  }
+);
+
+it('does not let older expected onboarding hide creation for the current engagement', async () => {
+  state.data = worker([
+    { ...onboarding, status: 'in_progress' },
+    {
+      id: 'old-onboarding',
+      type: 'onboarding',
+      status: 'expected',
+      issues: [],
+    },
+    offboarding,
+  ]);
+  render(<TaskManagement workerId="worker-1" />);
+
+  await userEvent.click(
+    screen.getByRole('button', { name: 'Aufgabe hinzufügen' })
+  );
+
+  expect(state.create).toHaveBeenCalledWith({
+    workerEngagementId: 'onboarding-1',
+  });
+});
+
+it('hides task creation when there is no engagement to attach the task to', () => {
+  state.data = worker([]);
+  render(<TaskManagement workerId="worker-1" />);
+
+  expect(
+    screen.queryByRole('button', { name: 'Aufgabe hinzufügen' })
+  ).not.toBeInTheDocument();
+  expect(state.create).not.toHaveBeenCalled();
 });

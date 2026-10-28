@@ -181,3 +181,40 @@ describe('phase change propagation', () => {
     put.mockRestore();
   });
 });
+
+it('does not undo another worker update when a type save fails', async () => {
+  let rejectSave!: (error: Error) => void;
+  const put = vi.spyOn(API, 'put').mockImplementation(
+    () =>
+      new Promise((_resolve, reject) => {
+        rejectSave = reject;
+      })
+  );
+  const { client, result, unmount } = setup();
+  client.setQueryData<WorkerRecord[]>([ALL_WORKER_DATA], (workers) => [
+    ...workers!,
+    { id: 'worker-2', engagements: [onboarding] } as unknown as WorkerRecord,
+  ]);
+  act(() =>
+    result.current.mutate({
+      items: [{ workerId: 'worker-1', engagementId: 'onboarding-1' }],
+      type: 'offboarding',
+    })
+  );
+  await waitFor(() => expect(put).toHaveBeenCalledTimes(1));
+  client.setQueryData<WorkerRecord[]>([ALL_WORKER_DATA], (workers) =>
+    workers?.map((worker) =>
+      worker.id === 'worker-2'
+        ? { ...worker, firstName: 'Saved elsewhere' }
+        : worker
+    )
+  );
+  await act(async () => rejectSave(new Error('failed')));
+  await waitFor(() => expect(result.current.isError).toBe(true));
+  const workers = client.getQueryData<WorkerRecord[]>([ALL_WORKER_DATA])!;
+  expect(workers[0].engagements).toEqual([onboarding]);
+  expect(workers[1].firstName).toBe('Saved elsewhere');
+  unmount();
+  client.clear();
+  put.mockRestore();
+});

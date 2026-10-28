@@ -9,6 +9,7 @@ import { ALL_WORKER_DATA } from '../consts/query-key.consts';
 
 export function useChangeResponsibleUser() {
   return useMutation({
+    mutationKey: ['worker-inline-edit'],
     mutationFn: ({
       workerId,
       engagementId,
@@ -60,13 +61,27 @@ export function useChangeResponsibleUser() {
       }
       return { previousWorkers };
     },
-    onError: (_error, _variables, context) => {
+    onError: (_error, { workerId }, context) => {
       if (context?.previousWorkers)
-        queryClient.setQueryData([ALL_WORKER_DATA], context.previousWorkers);
+        queryClient.setQueryData<WorkerRecord[]>([ALL_WORKER_DATA], (workers) =>
+          workers?.map((worker) =>
+            worker.id === workerId
+              ? (context.previousWorkers?.find(
+                  (previous) => previous.id === worker.id
+                ) ?? worker)
+              : worker
+          )
+        );
       toast.error('Verantwortlicher konnte nicht geändert werden.');
     },
     onSettled: (_data, _error, { workerId }) => {
-      void queryClient.invalidateQueries({ queryKey: [ALL_WORKER_DATA] });
+      void queryClient.invalidateQueries({
+        queryKey: [ALL_WORKER_DATA],
+        refetchType:
+          queryClient.isMutating({ mutationKey: ['worker-inline-edit'] }) > 1
+            ? 'none'
+            : 'active',
+      });
       void queryClient.invalidateQueries({ queryKey: [WORKERBYID, workerId] });
     },
   });

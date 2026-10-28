@@ -219,6 +219,7 @@ model Invitation {
 
 
 model Worker {
+  hiddenPersonnelFolders String[] @default([]) @map("hidden_personnel_folders")
   id               String             @id @default(uuid())
   organizationId   String             @map("organization_id")
   createdByUserId  String             @map("created_by_user_id")

@@ -9,12 +9,14 @@ function param(req: Request, key: string): string {
 
 export const listPersonnelDocuments = catchErrors(
     async (req: Request, res: Response) => {
-        const { documents, folders } =
+        const { documents, folders, hiddenFolders } =
             await personnelDocumentService.listPersonnelDocuments({
                 organizationId: req.orgId,
                 workerId: param(req, "workerId"),
             });
-        return res.status(200).json({ success: true, data: documents, folders });
+        return res
+            .status(200)
+            .json({ success: true, data: documents, folders, hiddenFolders });
     },
 );
 
@@ -75,6 +77,42 @@ export const deletePersonnelDocument = catchErrors(
             organizationId: req.orgId,
             workerId: param(req, "workerId"),
             documentId: param(req, "documentId"),
+        });
+        return res.status(200).json({ success: true });
+    },
+);
+
+export const movePersonnelDocument = catchErrors(
+    async (req: Request, res: Response) => {
+        await personnelDocumentService.movePersonnelDocument({
+            organizationId: req.orgId,
+            workerId: param(req, "workerId"),
+            documentId: param(req, "documentId"),
+            engagementId:
+                typeof req.body?.engagementId === "string"
+                    ? req.body.engagementId
+                    : "",
+            name: typeof req.body?.name === "string" ? req.body.name : "",
+            folderId:
+                typeof req.body?.folderId === "string"
+                    ? req.body.folderId
+                    : undefined,
+            source:
+                typeof req.body?.source === "string"
+                    ? req.body.source
+                    : undefined,
+        });
+        return res.status(200).json({ success: true });
+    },
+);
+
+export const deletePersonnelFolder = catchErrors(
+    async (req: Request, res: Response) => {
+        await personnelDocumentService.deletePersonnelFolder({
+            organizationId: req.orgId,
+            workerId: param(req, "workerId"),
+            folderId: param(req, "folderId"),
+            confirmed: req.query.confirmed === "true",
         });
         return res.status(200).json({ success: true });
     },

@@ -155,6 +155,14 @@ worker.post(
     "/:workerId/engagements/:engagementId/personnel-folders",
     personnelDocumentController.createPersonnelFolder,
 );
+worker.delete(
+    "/:workerId/personnel-folders/:folderId",
+    personnelDocumentController.deletePersonnelFolder,
+);
+worker.patch(
+    "/:workerId/personnel-documents/:documentId/location",
+    personnelDocumentController.movePersonnelDocument,
+);
 worker.post(
     "/:workerId/engagements/:engagementId/personnel-documents",
     upload.single("file"),

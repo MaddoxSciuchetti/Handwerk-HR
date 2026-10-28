@@ -21,6 +21,7 @@ export type PersonnelFolder = {
 };
 
 export type PersonnelLibrary = {
+  hiddenFolders?: string[];
   documents: PersonnelDocument[];
   folders: PersonnelFolder[];
 };
@@ -29,6 +30,7 @@ type ListResponse = {
   success: boolean;
   data: PersonnelDocument[];
   folders?: PersonnelFolder[];
+  hiddenFolders?: string[];
 };
 
 type UploadResponse = {
@@ -44,6 +46,7 @@ export function getPersonnelDocuments(
     .then((response) => ({
       documents: response.data,
       folders: response.folders ?? [],
+      hiddenFolders: response.hiddenFolders ?? [],
     }));
 }
 
@@ -53,10 +56,10 @@ export function createPersonnelFolder(
   label: string
 ): Promise<PersonnelFolder> {
   return apiJson
-    .post<{ success: boolean; data: PersonnelFolder }>(
-      `worker/${workerId}/engagements/${engagementId}/personnel-folders`,
-      { label }
-    )
+    .post<{
+      success: boolean;
+      data: PersonnelFolder;
+    }>(`worker/${workerId}/engagements/${engagementId}/personnel-folders`, { label })
     .then((response) => response.data);
 }
 
@@ -94,5 +97,33 @@ export function deletePersonnelDocument(
 ): Promise<{ success: boolean }> {
   return apiJson.delete<{ success: boolean }>(
     `worker/${workerId}/personnel-documents/${documentId}`
+  );
+}
+
+export type MovePersonnelDocumentInput = {
+  documentId: string;
+  engagementId: string;
+  name: string;
+  folderId?: string;
+  source?: 'personnel' | 'worker';
+};
+
+export function movePersonnelDocument(
+  workerId: string,
+  input: MovePersonnelDocumentInput
+) {
+  return apiJson.patch(
+    `worker/${workerId}/personnel-documents/${input.documentId}/location`,
+    input
+  );
+}
+
+export function deletePersonnelFolder(
+  workerId: string,
+  folderId: string,
+  confirmed: boolean
+) {
+  return apiJson.delete(
+    `worker/${workerId}/personnel-folders/${encodeURIComponent(folderId)}?confirmed=${confirmed}`
   );
 }
