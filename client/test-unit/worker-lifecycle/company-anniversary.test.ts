@@ -3,6 +3,7 @@ import {
   formatCompanyAnniversary,
   formatDaysUntil,
   nextCompanyAnniversary,
+  nextUpcomingAnniversaries,
   nextUpcomingAnniversary,
 } from '@/features/worker-lifecycle/utils/companyAnniversary';
 
@@ -90,5 +91,42 @@ describe('next upcoming anniversary', () => {
       ['a', 5],
       ['b', 10],
     ]);
+  });
+
+  it('returns up to three soonest anniversary dates', () => {
+    const upcoming = nextUpcomingAnniversaries(
+      [
+        {
+          id: 'fourth',
+          firstName: 'Dana',
+          lastName: 'Vier',
+          entryDate: '2020-12-01',
+        },
+        {
+          id: 'first',
+          firstName: 'Ada',
+          lastName: 'Eins',
+          entryDate: '2021-11-01',
+        },
+        {
+          id: 'third',
+          firstName: 'Cara',
+          lastName: 'Drei',
+          entryDate: '2016-09-01',
+        },
+        {
+          id: 'second',
+          firstName: 'Bea',
+          lastName: 'Zwei',
+          entryDate: '2022-08-01',
+        },
+      ],
+      3,
+      today
+    );
+
+    expect(
+      upcoming.map((item) => item.people.map((person) => person.id))
+    ).toEqual([['first'], ['second'], ['fourth']]);
   });
 });
