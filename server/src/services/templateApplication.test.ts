@@ -355,7 +355,7 @@ describe("local integration simulation", () => {
         expect(preview.mocked).toBe(true);
         expect(preview.items.every((entry) => entry.blockedReason === null)).toBe(true);
     });
-    it("keeps the whole batch in progress for ten seconds and never invokes providers", async () => {
+    it("advances mocked tasks one at a time over ten seconds and never invokes providers", async () => {
         db.issueTemplate.findFirst.mockResolvedValue({
             id: "template",
             items: [item("a"), item("b", "microsoft_send_teams_message"), item("manual", null)],
@@ -367,17 +367,21 @@ describe("local integration simulation", () => {
         }, createTasks).then((result) => { finished = true; return result; });
         await jest.advanceTimersByTimeAsync(0);
         expect(executionStatus).toHaveBeenCalledWith("issue-a", "user", "in_progress");
-        expect(executionStatus).toHaveBeenCalledWith("issue-b", "user", "in_progress");
-        await jest.advanceTimersByTimeAsync(9999);
+        expect(executionStatus).not.toHaveBeenCalledWith("issue-b", "user", "in_progress");
+        await jest.advanceTimersByTimeAsync(4999);
         expect(finished).toBe(false);
         expect(executionStatus).not.toHaveBeenCalledWith("issue-a", "user", "done", expect.any(String));
         await jest.advanceTimersByTimeAsync(1);
+        expect(executionStatus).toHaveBeenCalledWith("issue-a", "user", "done", expect.stringContaining("Simulation"));
+        expect(executionStatus).toHaveBeenCalledWith("issue-b", "user", "in_progress");
+        expect(executionStatus).not.toHaveBeenCalledWith("issue-b", "user", "done", expect.any(String));
+        await jest.advanceTimersByTimeAsync(5000);
         const result = await resultPromise;
         expect(result.outcomes).toEqual([
             expect.objectContaining({ issueId: "issue-a", status: "completed" }),
             expect.objectContaining({ issueId: "issue-b", status: "completed" }),
         ]);
-        expect(executionStatus).toHaveBeenCalledWith("issue-a", "user", "done", expect.stringContaining("Simulation"));
+        expect(executionStatus).toHaveBeenCalledWith("issue-b", "user", "done", expect.stringContaining("Simulation"));
         expect(executionStatus).not.toHaveBeenCalledWith("issue-manual", "user", expect.anything());
         expect(runIssueSequence).not.toHaveBeenCalled();
         expect(sendTeams).not.toHaveBeenCalled();

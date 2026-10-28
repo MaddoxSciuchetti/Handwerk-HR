@@ -1,11 +1,13 @@
 import { TemplateAutomationProgress } from '@/features/worker-task-management/components/tasks/TemplateAutomationProgress';
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TemplateApplyPrompt } from '@/features/worker-task-management/components/tasks/TemplateApplyPrompt';
 import { TaskStatusIcon } from '@/features/all-tasks/components/ui/TaskStatusIcons';
+import { automationRevealQueryKey } from '@/features/worker-task-management/utils/automationProgress';
 import { renderWithProviders } from './test-utils';
-import { act, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ReactNode } from 'react';
 
 const mocks = vi.hoisted(() => ({
   demo: false,
@@ -783,12 +785,21 @@ it('fills the live progress bar as individual automation outcomes arrive', async
         }
       : null;
   });
-  renderWithProviders(<TemplateApplyPrompt targets={[target]} />);
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+  const Wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  );
+  render(<TemplateApplyPrompt targets={[target]} />, { wrapper: Wrapper });
   const user = await selectTemplate();
   await user.click(
     screen.getByRole('button', { name: 'Automatisierung starten' })
   );
   expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '0');
+  expect(
+    client.getQueryData(automationRevealQueryKey(target.engagementId))
+  ).toEqual({ baselineIds: [], visibleIds: [] });
   tasks = [
     {
       id: 'a',
@@ -812,6 +823,9 @@ it('fills the live progress bar as individual automation outcomes arrive', async
           .getByRole('progressbar')
           .querySelector('.automation-progress-active')
       ).not.toBeInTheDocument();
+      expect(
+        client.getQueryData(automationRevealQueryKey(target.engagementId))
+      ).toEqual({ baselineIds: [], visibleIds: ['a'] });
     },
     { timeout: 2500 }
   );

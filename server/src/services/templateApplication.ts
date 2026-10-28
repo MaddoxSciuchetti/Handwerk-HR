@@ -402,25 +402,27 @@ export async function applyTemplateApplication(
             applicationId: receipt.id,
             tasks: await applicationTasks(receipt.issueIds, context.organizationId),
         };
-    const outcomes: Outcome[] = [];
+        const outcomes: Outcome[] = [];
     if (input.runAutomation) {
         const issues = await prisma.issue.findMany({
             where: { id: { in: receipt.issueIds } },
             select: { id: true, templateItemId: true },
         });
-        // Keep the entire local batch in progress for ten seconds, regardless of task count.
+        // Run one mocked task at a time so the list and progress bar advance together.
         const mocked = integrationsMocked();
-        const mockIssueIds = mocked
-            ? issues.filter((issue) => template.items.some((item) =>
-                  item.id === issue.templateItemId && item.sequence && item.integrationProvider,
-              )).map((issue) => issue.id)
-            : [];
-        if (mockIssueIds.length) {
-            await Promise.all(mockIssueIds.map((id) =>
-                executionStatus(id, context.actorUserId, "in_progress"),
-            ));
-            await new Promise((resolve) => setTimeout(resolve, MOCK_AUTOMATION_DELAY_MS));
-        }
+        const mockIssueCount = mocked
+            ? issues.filter((issue) =>
+                  template.items.some(
+                      (item) =>
+                          item.id === issue.templateItemId &&
+                          item.sequence &&
+                          item.integrationProvider,
+                  ),
+              ).length
+            : 0;
+        const mockStepDelayMs = mockIssueCount
+            ? Math.round(MOCK_AUTOMATION_DELAY_MS / mockIssueCount)
+            : 0;
         for (const item of template.items) {
             const issue = issues.find(
                 (issue) => issue.templateItemId === item.id,
@@ -439,6 +441,14 @@ export async function applyTemplateApplication(
                     });
                 }
                 if (mocked) {
+                    await executionStatus(
+                        issue.id,
+                        context.actorUserId,
+                        "in_progress",
+                    );
+                    await new Promise((resolve) =>
+                        setTimeout(resolve, mockStepDelayMs),
+                    );
                     await executionStatus(
                         issue.id, context.actorUserId, "done",
                         "Lokale Simulation: Erfolg der Integration bestätigt.",

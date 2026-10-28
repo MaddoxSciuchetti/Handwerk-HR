@@ -42,6 +42,7 @@ import {
   type Dispatch,
   type SetStateAction,
 } from 'react';
+import { useQueries, useQueryClient } from '@tanstack/react-query';
 import useFilteredData from '../../hooks/useFilteredData';
 import useGetWorkerFiles from '../../hooks/useGetWorkerFiles';
 import useTaskData from '../../hooks/useTaskData';
@@ -57,6 +58,11 @@ import { QuestionnaireSendDialog } from '@/features/questionnaire/QuestionnaireS
 import WorkerHeader from '../header/WorkerHeader';
 import { WorkerTabButtons } from '../header/WorkerTabButtons';
 import { engagementsAwaitingTemplate } from '../../pendingTemplate';
+import {
+  automationRevealQueryKey,
+  isAutomationTaskVisible,
+  type AutomationReveal,
+} from '../../utils/automationProgress';
 import { TemplateApplyPrompt } from './TemplateApplyPrompt';
 
 type TaskManagementProps = {
@@ -76,6 +82,7 @@ function defaultTabForWorker(workerId: string): WorkerTab {
 }
 
 const TaskManagement = ({ workerId }: TaskManagementProps) => {
+  const taskQueryClient = useQueryClient();
   const [selectedTab, setActiveTab] = useState<WorkerTab>(() =>
     defaultTabForWorker(workerId)
   );
@@ -167,8 +174,33 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
   const taskEngagementIds = new Set(
     taskEngagements.map((engagement) => engagement.id)
   );
-  const displayData = allTasks.filter((task) =>
-    taskEngagementIds.has(task.workerEngagementId)
+  const automationReveals = useQueries({
+    queries: taskEngagements.map((engagement) => ({
+      queryKey: automationRevealQueryKey(engagement.id),
+      queryFn: async () =>
+        taskQueryClient.getQueryData<AutomationReveal | null>(
+          automationRevealQueryKey(engagement.id)
+        ) ?? null,
+      initialData: () =>
+        taskQueryClient.getQueryData<AutomationReveal | null>(
+          automationRevealQueryKey(engagement.id)
+        ) ?? null,
+      staleTime: Infinity,
+    })),
+  });
+  const revealByEngagement = Object.fromEntries(
+    taskEngagements.map((engagement, index) => [
+      engagement.id,
+      automationReveals[index]?.data ?? null,
+    ])
+  ) as Record<string, AutomationReveal | null>;
+  const displayData = allTasks.filter(
+    (task) =>
+      taskEngagementIds.has(task.workerEngagementId) &&
+      isAutomationTaskVisible(
+        task.id,
+        revealByEngagement[task.workerEngagementId]
+      )
   );
   const selectVisibleTasks = (checked: boolean) => {
     const visibleIds = new Set(displayData.map((task) => task.id));

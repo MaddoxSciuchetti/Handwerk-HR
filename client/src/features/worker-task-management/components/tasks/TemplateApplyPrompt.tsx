@@ -36,10 +36,14 @@ import {
 } from '../../api/templateApplication.api';
 import { TemplateAutomationProgress } from './TemplateAutomationProgress';
 import {
+  automationRevealQueryKey,
   mergeAutomationProgress,
+  mergeAutomationReveal,
   type AutomationProgress,
+  type AutomationReveal,
 } from '../../utils/automationProgress';
 import { TemplateAutomationConfirmation } from './TemplateAutomationConfirmation';
+import type { WorkerDetailResponse } from '@/features/worker-lifecycle/types/index.types';
 
 const dismissKey = (id: string) => `template-prompt-dismissed:${id}`;
 const resultsDismissKey = (id: string) => `template-results-dismissed:${id}`;
@@ -105,6 +109,24 @@ export function TemplateApplyPrompt({
       ]),
     [queryClient]
   );
+  const publishReveal = useCallback(
+    (
+      engagementId: string,
+      result: TemplateApplicationResult,
+      progress: AutomationProgress,
+      active: boolean
+    ) => {
+      const key = automationRevealQueryKey(engagementId);
+      if (!active) {
+        queryClient.setQueryData<AutomationReveal | null>(key, null);
+        return;
+      }
+      queryClient.setQueryData<AutomationReveal | null>(key, (previous) =>
+        mergeAutomationReveal(previous, result, progress)
+      );
+    },
+    [queryClient]
+  );
   const apply = useMutation({
     mutationFn: async (input: {
       runAutomation: boolean;
@@ -124,11 +146,18 @@ export function TemplateApplyPrompt({
           idempotencyKey: input.requestKey,
           templateRevision: input.templateRevision,
         });
-      const recordProgress = (result: TemplateApplicationResult) =>
-        queryClient.setQueryData<AutomationProgress>(
-          ['template-application-progress', input.requestKey],
-          (previous) => mergeAutomationProgress(previous, result)
-        );
+      const progressKey = [
+        'template-application-progress',
+        input.requestKey,
+      ] as const;
+      const recordProgress = (result: TemplateApplicationResult) => {
+        const previous =
+          queryClient.getQueryData<AutomationProgress>(progressKey);
+        const progress = mergeAutomationProgress(previous, result);
+        queryClient.setQueryData<AutomationProgress>(progressKey, progress);
+        if (input.runAutomation)
+          publishReveal(input.target.engagementId, result, progress, true);
+      };
       let result = await request();
       recordProgress(result);
       // Reusing the same application key reads the receipt without rerunning actions.
@@ -139,10 +168,26 @@ export function TemplateApplyPrompt({
       }
       return result;
     },
+    onMutate: (input) => {
+      if (!input.runAutomation) return;
+      const worker = queryClient.getQueryData<WorkerDetailResponse>([
+        WORKERBYID,
+        input.target.workerId,
+      ]);
+      const baselineIds =
+        worker?.data.engagements.flatMap((engagement) =>
+          (engagement.issues ?? []).map((issue) => issue.id)
+        ) ?? [];
+      queryClient.setQueryData<AutomationReveal>(
+        automationRevealQueryKey(input.target.engagementId),
+        { baselineIds, visibleIds: [] }
+      );
+    },
     onSuccess: async (result, input) => {
       setSynchronizing(true);
       // Keep the mutation pending until the visible task queries have caught up.
       await refresh();
+      publishReveal(input.target.engagementId, result, { finishedIds: [] }, false);
       const run = {
         target: input.target,
         templateName: input.templateName,
@@ -184,7 +229,8 @@ export function TemplateApplyPrompt({
         else toast.success(message);
       } else toast.success('Aufgaben erstellt');
     },
-    onError: (error: Error) => {
+    onError: (error: Error, input) => {
+      publishReveal(input.target.engagementId, { count: 0, issueIds: [], outcomes: [], running: false }, { finishedIds: [] }, false);
       void refresh();
       void queryClient.invalidateQueries({
         queryKey: ['template-application-preview'],
@@ -205,9 +251,17 @@ export function TemplateApplyPrompt({
         apply.variables!.requestKey,
       ];
       const previous = queryClient.getQueryData<AutomationProgress>(key);
-      return record?.idempotencyKey === apply.variables!.requestKey
-        ? mergeAutomationProgress(previous, record.result)
-        : (previous ?? null);
+      const progress =
+        record?.idempotencyKey === apply.variables!.requestKey
+          ? mergeAutomationProgress(previous, record.result)
+          : (previous ?? null);
+      if (
+        progress &&
+        record?.idempotencyKey === apply.variables!.requestKey &&
+        apply.variables?.runAutomation
+      )
+        publishReveal(target.engagementId, record.result, progress, true);
+      return progress;
     },
     enabled: apply.isPending && !synchronizing,
     refetchInterval: 1000,
