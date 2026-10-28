@@ -614,35 +614,6 @@ export const readPreparedEmploymentContractPdf = catchErrors(
     },
 );
 
-export const sendFilledEmploymentContract = catchErrors(
-    async (req: Request, res: Response) => {
-        const issueId = String(req.body?.issueId ?? "").trim();
-        const artifactId = String(req.body?.artifactId ?? "").trim();
-        if (!issueId) {
-            return res
-                .status(400)
-                .json({ success: false, message: "Aufgabe fehlt." });
-        }
-        if (!artifactId) {
-            return res.status(400).json({
-                success: false,
-                message: "Bitte das PDF zuerst erstellen und prüfen.",
-            });
-        }
-
-        const contract =
-            await employmentContractService.sendFilledEmploymentContract({
-                organizationId: req.orgId,
-                workerId: param(req, "workerId"),
-                engagementId: param(req, "engagementId"),
-                actorUserId: req.userId,
-                issueId,
-                artifactId,
-            });
-        return res.status(200).json({ success: true, data: contract });
-    },
-);
-
 export const prepareEmploymentContractPdf = catchErrors(
     async (req: Request, res: Response) => {
         const values = req.body?.values;

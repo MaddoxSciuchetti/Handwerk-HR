@@ -3,7 +3,6 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Download, Loader2 } from 'lucide-react';
 import type { DocumentSegment } from '@/features/settings/documents/documentSegments';
-import { FETCHDESCRIPTION } from '@/features/all-tasks/consts/query.consts';
 import { ALL_WORKER_DATA } from '@/features/worker-lifecycle/consts/query-key.consts';
 import { WORKERBYID } from '@/features/worker-task-management/consts/query-key.consts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -12,13 +11,10 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import {
   fetchPreparedEmploymentContractPdf,
-  prepareEmploymentContractPdf,
   prepareEmploymentContractDownload,
-  recordPrintedEmploymentContract,
   selectEngagementContractTemplate,
 } from '../../api/employmentContract.api';
 import { downloadBlob } from '../../downloadBlob';
-import { printPdfBlob } from '../../printPdf';
 import { PreparedPdfPreview, type PreparedPdf } from './PreparedPdfPreview';
 import {
   documentFields,
@@ -114,39 +110,6 @@ export function ContractSendDialog({
     setPrepared(data.prepared ?? null);
   }, [data]);
 
-  const printContract = useMutation({
-    mutationFn: async () => {
-      const pdf = prepared ?? (await prepare.mutateAsync());
-      const blob = await fetchPreparedEmploymentContractPdf(
-        workerId,
-        engagementId,
-        pdf.id
-      );
-      if (!(blob instanceof Blob)) {
-        throw new Error('PDF konnte nicht geladen werden');
-      }
-      await printPdfBlob(blob);
-      await recordPrintedEmploymentContract(
-        workerId,
-        engagementId,
-        issueId,
-        pdf.id
-      );
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] });
-      void queryClient.invalidateQueries({ queryKey: [WORKERBYID] });
-      void queryClient.invalidateQueries({ queryKey: [ALL_WORKER_DATA] });
-      toast.success('Vertrag gedruckt. Die Aufgabe ist erledigt.');
-      onClose();
-    },
-    onError: (error) =>
-      toast.error(
-        (error as { message?: string }).message ??
-          'Vertrag konnte nicht gedruckt werden'
-      ),
-  });
-
   const complete = data
     ? documentFields(data.document ?? fromSegments(data.segments)).every(
         (field) =>
@@ -160,23 +123,6 @@ export function ContractSendDialog({
     : false;
   const alreadySent = Boolean(data?.sentAt);
   const readOnly = data?.status === 'signed' || alreadySent;
-  const prepare = useMutation({
-    mutationFn: () =>
-      prepareEmploymentContractPdf(workerId, engagementId, values),
-    onSuccess: (pdf) => {
-      setPrepared(pdf);
-      queryClient.setQueryData(
-        employmentContractKey(workerId, engagementId),
-        (previous: typeof data) =>
-          previous ? { ...previous, values, prepared: pdf } : previous
-      );
-    },
-    onError: (error) =>
-      toast.error(
-        (error as { message?: string }).message ??
-          'PDF konnte nicht erstellt werden'
-      ),
-  });
   const savePdf = useMutation({
     mutationFn: async () => {
       let blob: Blob;
@@ -248,12 +194,7 @@ export function ContractSendDialog({
     (template) => template.kind === 'employment_contract'
   );
   const busy =
-    syncing ||
-    changingTemplate ||
-    savePdf.isPending ||
-    printContract.isPending ||
-    prepare.isPending ||
-    saveDraft.isPending;
+    syncing || changingTemplate || savePdf.isPending || saveDraft.isPending;
   const blockedDelivery = ['sending', 'uncertain'].includes(
     prepared?.status ?? ''
   );
@@ -408,7 +349,7 @@ export function ContractSendDialog({
                   prepared={prepared}
                   showConfirmation={false}
                   showOpenLink={false}
-                  frameTitle="Arbeitsvertrag zum Drucken"
+                  frameTitle="Arbeitsvertrag PDF-Vorschau"
                   page={{
                     width: data.document.page.width,
                     height: data.document.page.height,
@@ -432,8 +373,8 @@ export function ContractSendDialog({
                       readOnly ||
                       syncing ||
                       changingTemplate ||
-                      prepare.isPending ||
-                      printContract.isPending
+                      saveDraft.isPending ||
+                      savePdf.isPending
                     }
                     acceptAnswerDrop={unmatched.length > 0}
                     onValueChange={(key, value) => {
@@ -481,58 +422,43 @@ export function ContractSendDialog({
                     >
                       Bearbeiten
                     </Button>
-                  ) : (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled={
-                        readOnly ||
-                        changingTemplate ||
-                        saveDraft.isPending ||
-                        prepare.isPending
-                      }
-                      onClick={() =>
-                        saveDraft.mutate(values, {
-                          onSuccess: (saved) => {
-                            setValues(saved.values);
-                            toast.success('Entwurf gespeichert');
-                          },
-                          onError: () =>
-                            toast.error(
-                              'Entwurf konnte nicht gespeichert werden'
-                            ),
-                        })
-                      }
-                    >
-                      {saveDraft.isPending ? 'Speichert…' : 'Speichern'}
-                    </Button>
-                  )}
+                  ) : null}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={readOnly || busy || blockedDelivery}
+                    onClick={() =>
+                      saveDraft.mutate(values, {
+                        onSuccess: (saved) => {
+                          edited.current = false;
+                          setValues(saved.values);
+                          setPrepared(saved.prepared ?? null);
+                          toast.success('Entwurf gespeichert');
+                        },
+                        onError: () =>
+                          toast.error(
+                            'Entwurf konnte nicht gespeichert werden'
+                          ),
+                      })
+                    }
+                  >
+                    {saveDraft.isPending ? 'Speichert…' : 'Speichern'}
+                  </Button>
                   <Button
                     type="button"
                     size="icon"
                     className="rounded-2xl"
                     aria-label="PDF herunterladen"
                     title="PDF herunterladen"
-                    aria-busy={savePdf.isPending || prepare.isPending}
+                    aria-busy={savePdf.isPending}
                     disabled={!complete || busy || blockedDelivery}
                     onClick={() => savePdf.mutate()}
                   >
-                    {savePdf.isPending || prepare.isPending ? (
+                    {savePdf.isPending ? (
                       <Loader2 className="animate-spin" aria-hidden="true" />
                     ) : (
                       <Download aria-hidden="true" />
                     )}
-                  </Button>
-                  <Button
-                    type="button"
-                    className="rounded-2xl"
-                    aria-busy={printContract.isPending || prepare.isPending}
-                    disabled={!complete || busy || blockedDelivery}
-                    onClick={() => printContract.mutate()}
-                  >
-                    {printContract.isPending || prepare.isPending
-                      ? 'Druckt…'
-                      : 'Drucken'}
                   </Button>
                 </div>
               )}

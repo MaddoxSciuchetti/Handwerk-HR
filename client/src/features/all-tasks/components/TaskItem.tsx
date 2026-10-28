@@ -44,7 +44,7 @@ export function TaskItem({
     isConfirmationTask || task.kind === 'contract_send';
 
   const openTask = () => {
-    if (task.kind === 'contract_send' && task.status !== 'done') {
+    if (task.kind === 'contract_send') {
       onOpenContractSend?.(task);
       return;
     }

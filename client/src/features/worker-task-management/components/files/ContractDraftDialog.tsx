@@ -66,7 +66,7 @@ export function ContractDraftDialog({
     setValues(data.values);
   }, [data]);
 
-  const readOnly = data?.status !== 'draft';
+  const readOnly = Boolean(data?.sentAt || data?.status === 'signed');
   const downloadPdf = useMutation({
     mutationFn: async () => {
       if (!data) return;
