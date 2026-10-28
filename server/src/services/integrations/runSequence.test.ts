@@ -2,7 +2,11 @@ import { runIssueSequence } from "./runSequence";
 import { prisma } from "@/lib/prisma";
 import { executionStatus } from "./issueExecutionStatus";
 import { provisionMicrosoft365Account } from "../microsoft365Account";
-import { deactivateCrewmeisterAccount, deleteCrewmeisterMembership } from "./crewmeisterAccount";
+import {
+    createCrewmeisterAccount,
+    deactivateCrewmeisterAccount,
+    deleteCrewmeisterMembership,
+} from "./crewmeisterAccount";
 jest.mock("@/lib/prisma", () => ({
     prisma: {
         issue: { findFirst: jest.fn() },
@@ -20,6 +24,7 @@ jest.mock("./runtime", () => ({
     loadMicrosoft365Config: jest.fn(async () => ({})),
     loadCrewmeisterToken: jest.fn(async () => ({ token: "jwt", crewId: "42" })),
     integrationsLive: () => true,
+    NOT_LIVE_MESSAGE: "Sequenzen werden in dieser Umgebung nicht ausgeführt.",
 }));
 jest.mock("./crewmeisterAccount", () => ({
     createCrewmeisterAccount: jest.fn(),
@@ -93,6 +98,64 @@ it("does not rerun completed tasks", async () => {
     });
     expect(await runIssueSequence(input)).toEqual({ status: "completed" });
     expect(provisionMicrosoft365Account).not.toHaveBeenCalled();
+});
+
+it.each([true, false])(
+    "routes Crewmeister account creation and records its verified result (success=%s)",
+    async (success) => {
+        (prisma.issue.findFirst as jest.Mock).mockResolvedValue({
+            id: "issue",
+            status: "open",
+            sequence: "crewmeister_create_account",
+            integrationProvider: "crewmeister",
+            workerEngagement: { id: "engagement", workerId: "worker" },
+        });
+        (createCrewmeisterAccount as jest.Mock).mockResolvedValue(
+            success
+                ? { status: "created", externalId: "99" }
+                : { status: "failed", message: "Einladung abgelehnt" },
+        );
+        expect(await runIssueSequence(input)).toEqual(
+            success
+                ? { status: "completed" }
+                : { status: "failed", message: "Einladung abgelehnt" },
+        );
+        expect(createCrewmeisterAccount).toHaveBeenCalledWith({
+            organizationId: "org",
+            workerId: "worker",
+            engagementId: "engagement",
+            auth: { token: "jwt", crewId: "42" },
+        });
+        expect(deactivateCrewmeisterAccount).not.toHaveBeenCalled();
+        expect(deleteCrewmeisterMembership).not.toHaveBeenCalled();
+        expect(executionStatus).toHaveBeenLastCalledWith(
+            "issue",
+            "user",
+            success ? "done" : "error",
+            success ? undefined : "Einladung abgelehnt",
+        );
+    },
+);
+
+it("treats already_created as a completed Crewmeister create", async () => {
+    (prisma.issue.findFirst as jest.Mock).mockResolvedValue({
+        id: "issue",
+        status: "open",
+        sequence: "crewmeister_create_account",
+        integrationProvider: "crewmeister",
+        workerEngagement: { id: "engagement", workerId: "worker" },
+    });
+    (createCrewmeisterAccount as jest.Mock).mockResolvedValue({
+        status: "skipped",
+        reason: "already_created",
+    });
+    expect(await runIssueSequence(input)).toEqual({ status: "completed" });
+    expect(executionStatus).toHaveBeenLastCalledWith(
+        "issue",
+        "user",
+        "done",
+        undefined,
+    );
 });
 
 it.each([true, false])("routes membership removal separately from deactivation (success=%s)", async (success) => {
