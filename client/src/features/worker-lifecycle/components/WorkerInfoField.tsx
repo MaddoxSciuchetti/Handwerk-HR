@@ -50,6 +50,10 @@ export default function WorkerInfoField({ workerId, item }: Props) {
       return;
     }
     const value = draft.trim();
+    if (value === item.value.trim()) {
+      setError('');
+      return;
+    }
     if (item.required && !value) {
       setError('Erforderlich');
       return;
@@ -58,7 +62,6 @@ export default function WorkerInfoField({ workerId, item }: Props) {
       setError(`Maximal ${item.maxLength} Zeichen`);
       return;
     }
-    if (value === item.value.trim()) return;
     let nextValue: string | null = value || null;
     if (item.inputType === 'date' && value) {
       const date = new Date(`${value}T00:00:00.000Z`);

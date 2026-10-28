@@ -59,7 +59,7 @@ export function workerEngagementInfoItems(
       label: 'Nachname',
       value: worker.lastName,
       editable: 'lastName',
-      required: true,
+      required: Boolean(worker.lastName.trim()),
       maxLength: 120,
     },
     { label: 'E-Mail', value: worker.email ?? '', editable: 'email' },

@@ -98,7 +98,7 @@ describe('worker info editing', () => {
     expect(put).toHaveBeenCalledTimes(1);
   });
 
-  it('rejects an empty required name', () => {
+  it('rejects clearing a required last name that already had a value', () => {
     const put = vi.spyOn(API, 'put');
     const input = show({
       label: 'Nachname',
@@ -109,6 +109,19 @@ describe('worker info editing', () => {
     fireEvent.change(input, { target: { value: ' ' } });
     fireEvent.blur(input);
     expect(screen.getByRole('alert')).toHaveTextContent('Erforderlich');
+    expect(put).not.toHaveBeenCalled();
+  });
+
+  it('allows an empty last name when it was never filled out', () => {
+    const put = vi.spyOn(API, 'put');
+    const input = show({
+      label: 'Nachname',
+      value: '',
+      editable: 'lastName',
+      required: false,
+    });
+    fireEvent.blur(input);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(put).not.toHaveBeenCalled();
   });
 
