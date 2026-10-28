@@ -93,6 +93,7 @@ export type WorkerEngagement = {
   };
   issues?: Pick<IssueResponse, 'id' | 'status'>[];
   issueCounts?: { status: string; count: number }[];
+  taskPhaseCompleted?: boolean;
   questionnaireSubmission?: {
     id: string;
     status: string;
