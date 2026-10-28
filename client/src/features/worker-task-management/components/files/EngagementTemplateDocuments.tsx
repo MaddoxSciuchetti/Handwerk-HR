@@ -21,11 +21,13 @@ import { TemplateDocumentDialog } from './TemplateDocumentDialog';
 type EngagementTemplateDocumentsProps = {
   workerId: string;
   engagementId: string;
+  showCreate?: boolean;
 };
 
 export function EngagementTemplateDocuments({
   workerId,
   engagementId,
+  showCreate = true,
 }: EngagementTemplateDocumentsProps) {
   const documents = useTemplateDocuments(workerId, engagementId);
   const masters = useDocumentMasters();
@@ -65,11 +67,13 @@ export function EngagementTemplateDocuments({
           onOpen={() => setOpenId(document.id)}
         />
       ))}
-      <StoredFileBox
-        label="Aus Vorlage"
-        icon={FilePlus}
-        onOpen={() => setPickerOpen(true)}
-      />
+      {showCreate ? (
+        <StoredFileBox
+          label="Aus Vorlage"
+          icon={FilePlus}
+          onOpen={() => setPickerOpen(true)}
+        />
+      ) : null}
       {pickerOpen ? (
         <Dialog
           open
