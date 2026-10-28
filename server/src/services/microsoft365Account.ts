@@ -336,6 +336,15 @@ export async function provisionMicrosoft365Account(params: {
         return { status: "skipped", reason: "not_live" };
     }
 
+    const privateEmail = worker.email?.trim() ?? "";
+    if (!privateEmail.includes("@") && !microsoftSimulationEnabled()) {
+        return {
+            status: "failed",
+            message:
+                "Für diesen Mitarbeiter fehlt eine gültige E-Mail-Adresse.",
+        };
+    }
+
     const token = await microsoftGraphToken(config);
     if (!token) {
         return {
@@ -369,7 +378,7 @@ export async function provisionMicrosoft365Account(params: {
 
     if (!microsoftSimulationEnabled()) {
         const passwordMailSent = await sendPasswordMail({
-            to: worker.email,
+            to: privateEmail,
             firstName: worker.firstName,
             workEmail: created.workEmail,
             password,

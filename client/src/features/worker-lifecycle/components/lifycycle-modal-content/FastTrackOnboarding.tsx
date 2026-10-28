@@ -19,14 +19,24 @@ type FastTrackResponse = {
   };
 };
 
+type FastTrackPayload = { email: string } | { name: string };
+
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+function resolveFastTrackPayload(raw: string): FastTrackPayload | null {
+  const value = raw.trim();
+  if (!value) return null;
+  if (EMAIL_PATTERN.test(value)) return { email: value };
+  if (value.includes('@')) return null;
+  return { name: value };
+}
+
 export function FastTrackOnboarding({ onCreated }: FastTrackOnboardingProps) {
-  const [email, setEmail] = useState('');
-  const emailId = useId();
+  const [value, setValue] = useState('');
+  const inputId = useId();
   const { mutate, isPending } = useMutation({
-    mutationFn: (value: { email: string }) =>
-      API.post<FastTrackResponse>('/worker/fast-track', value),
+    mutationFn: (payload: FastTrackPayload) =>
+      API.post<FastTrackResponse>('/worker/fast-track', payload),
     onSuccess: (response) => {
       const body = response as unknown as FastTrackResponse;
       queryClient.invalidateQueries({
@@ -40,12 +50,12 @@ export function FastTrackOnboarding({ onCreated }: FastTrackOnboardingProps) {
   });
 
   const send = () => {
-    const value = email.trim();
-    if (!EMAIL_PATTERN.test(value)) {
-      toast.error('Bitte eine gültige E-Mail eingeben');
+    const payload = resolveFastTrackPayload(value);
+    if (!payload) {
+      toast.error('Bitte einen Namen oder eine gültige E-Mail eingeben');
       return;
     }
-    mutate({ email: value });
+    mutate(payload);
   };
 
   return (
@@ -56,20 +66,20 @@ export function FastTrackOnboarding({ onCreated }: FastTrackOnboardingProps) {
         if (!isPending) send();
       }}
     >
-      <label htmlFor={emailId} className="sr-only">
-        E-Mail des Mitarbeiters
+      <label htmlFor={inputId} className="sr-only">
+        Name oder E-Mail des Mitarbeiters
       </label>
       <Input
-        id={emailId}
+        id={inputId}
         className="flex-1 focus-visible:ring-2 focus-visible:ring-inset"
-        type="email"
-        autoComplete="email"
+        type="text"
+        autoComplete="off"
         required
         disabled={isPending}
-        value={email}
-        placeholder="E-Mail"
+        value={value}
+        placeholder="Name oder E-Mail"
         maxLength={254}
-        onChange={(event) => setEmail(event.target.value)}
+        onChange={(event) => setValue(event.target.value)}
       />
       <Button type="submit" className="rounded-2xl" disabled={isPending}>
         {isPending ? 'Legt an…' : 'Anlegen'}

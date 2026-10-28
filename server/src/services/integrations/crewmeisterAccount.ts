@@ -189,7 +189,7 @@ export async function createCrewmeisterAccount(params: {
     if (!worker)
         return { status: "failed", message: "Mitarbeiter nicht gefunden." };
     if (!integrationsLive()) return { status: "skipped", reason: "not_live" };
-    const email = worker.email.trim();
+    const email = worker.email?.trim() ?? "";
     if (!email.includes("@"))
         return {
             status: "failed",
@@ -343,7 +343,7 @@ export async function deactivateCrewmeisterAccount(params: {
     if (!worker)
         return { status: "failed", message: "Mitarbeiter nicht gefunden." };
     if (!integrationsLive()) return { status: "skipped", reason: "not_live" };
-    const email = worker.email.trim();
+    const email = worker.email?.trim() ?? "";
     if (!email.includes("@"))
         return {
             status: "failed",
@@ -450,7 +450,7 @@ export async function deleteCrewmeisterMembership(
     if (!worker)
         return { status: "failed", message: "Mitarbeiter nicht gefunden." };
     if (!integrationsLive()) return { status: "skipped", reason: "not_live" };
-    const email = worker.email.trim();
+    const email = worker.email?.trim() ?? "";
     if (!email.includes("@"))
         return {
             status: "failed",
