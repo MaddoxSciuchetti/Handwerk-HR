@@ -213,18 +213,3 @@ body {
   background-color: Highlight;
   color: HighlightText;
 }
-
-/* Moving stripes distinguish work in progress from completed task segments. */
-.automation-progress-active {
-  background: repeating-linear-gradient(
-    110deg, #6ee7b7 0px, #6ee7b7 5px, #10b981 5px, #10b981 10px
-  );
-  background-size: 21px 100%;
-  animation: automation-progress-flow 800ms linear infinite;
-}
-@keyframes automation-progress-flow {
-  to { background-position: 21px 0; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .automation-progress-active { animation: none; }
-}
