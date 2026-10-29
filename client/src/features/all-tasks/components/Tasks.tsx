@@ -109,6 +109,27 @@ function Tasks() {
     });
   };
 
+  const selectedTask = data?.find(
+    (task) => task.id === sidebarProps.taskEditState.taskId
+  );
+  const openContract =
+    selectedTask &&
+    (selectedTask.kind === 'contract_send' ||
+      selectedTask.kind === 'contract_confirm') &&
+    selectedTask.workerEngagement?.workerId &&
+    selectedTask.workerEngagementId
+      ? () => {
+          const target = {
+            workerId: selectedTask.workerEngagement!.workerId,
+            engagementId: selectedTask.workerEngagementId!,
+            issueId: selectedTask.id,
+          };
+          if (selectedTask.kind === 'contract_confirm')
+            setContractConfirm(target);
+          else setContractSend(target);
+        }
+      : undefined;
+
   return (
     <div className="mx-auto flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
       <div className="flex h-full min-h-0 w-full flex-col">
@@ -122,6 +143,7 @@ function Tasks() {
                 (task) => task.id === sidebarProps.taskEditState.taskId
               )?.status ?? sidebarProps.taskEditState.status,
           }}
+          onOpenContract={openContract}
           onOpenArbeitszeugnis={setZeugnisIssueId}
         />
         {contractSend ? (
@@ -201,24 +223,6 @@ function Tasks() {
                           (item) => item.taskNumber === task.id
                         )}
                         onOpenEdit={openForEdit}
-                        onOpenContractSend={(task) => {
-                          const taskWorkerId = task.workerEngagement?.workerId;
-                          if (!taskWorkerId) return;
-                          setContractSend({
-                            workerId: taskWorkerId,
-                            engagementId: task.workerEngagementId,
-                            issueId: task.id,
-                          });
-                        }}
-                        onOpenContractConfirm={(task) => {
-                          const taskWorkerId = task.workerEngagement?.workerId;
-                          if (!taskWorkerId) return;
-                          setContractConfirm({
-                            workerId: taskWorkerId,
-                            engagementId: task.workerEngagementId,
-                            issueId: task.id,
-                          });
-                        }}
                         setLargeEditMode={setLargeEditMode}
                         setEditModeData={handleSetEditModeData}
                       />
