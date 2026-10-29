@@ -13,7 +13,7 @@ function RouteComponent() {
   const draft = readQuestionnaireDraft();
   if (!draft) {
     return (
-      <div className="h-full overflow-y-auto px-4 py-8">
+      <div className="min-h-dvh px-4 py-8">
         <p className="mx-auto max-w-3xl text-sm text-muted-foreground">
           Die Vorschau ist leer. Öffnen Sie sie aus dem Fragebogen.
         </p>
@@ -23,7 +23,11 @@ function RouteComponent() {
 
   return (
     <QuestionnaireForm
-      preview={{ name: draft.name, intro: draft.intro, items: candidateItems(draft.items) }}
+      preview={{
+        name: draft.name,
+        intro: draft.intro,
+        items: candidateItems(draft.items),
+      }}
     />
   );
 }
