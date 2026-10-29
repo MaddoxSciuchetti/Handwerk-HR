@@ -41,13 +41,13 @@ it('shows available seats', async () => {
     error: null,
   });
   renderWithProviders(<MicrosoftLicenseStatus />);
-  expect(await screen.findByText('Microsoft 365 - 6/10')).toBeInTheDocument();
+  expect(await screen.findByText('Microsoft 365 - 4')).toBeInTheDocument();
 });
 it('highlights zero availability in one line', async () => {
   mocks.licenses.mockResolvedValue({ available: 0, occupied: 10, error: null });
   renderWithProviders(<MicrosoftLicenseStatus />);
   expect(await screen.findByRole('alert')).toHaveTextContent(
-    'Microsoft 365 - 10/10'
+    'Microsoft 365 - 0'
   );
   expect(screen.getByRole('alert')).toHaveAttribute(
     'title',
@@ -63,7 +63,7 @@ it('shows lookup errors without claiming seats are exhausted', async () => {
   expect(
     await screen.findByText('Microsoft 365 - Nicht verfügbar')
   ).toBeInTheDocument();
-  expect(screen.queryByText('Microsoft 365 - 0/0')).not.toBeInTheDocument();
+  expect(screen.queryByText('Microsoft 365 - 0')).not.toBeInTheDocument();
 });
 
 it('pings the administrator for the current engagement and prevents repeat clicks', async () => {

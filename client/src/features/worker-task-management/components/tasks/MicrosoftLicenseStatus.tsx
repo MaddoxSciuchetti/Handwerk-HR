@@ -40,7 +40,9 @@ export function MicrosoftLicenseStatus({
     ? 'Wird geladen…'
     : error
       ? 'Nicht verfügbar'
-      : `${licenses.data?.occupied ?? '–'}/${licenses.data?.occupied != null && count != null ? licenses.data.occupied + count : '–'}`;
+      : count == null
+        ? '–'
+        : String(count);
   return (
     <div className="flex items-center gap-2">
       <p
