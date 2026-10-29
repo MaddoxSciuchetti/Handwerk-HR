@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   ScrollableTableViewport,
-  stickyTableHeaderClassName,
+  stickyTableHeadClassName,
 } from '@/components/ui/scrollable-table-viewport';
 import {
   TableBody,
@@ -217,11 +217,11 @@ function WorkerLifeCycle() {
                 hideTaskColumns={isTeamMode}
                 aria-busy={isLoading || workersLoading}
               >
-                <TableHeader
-                  className={`${stickyTableHeaderClassName(headerScrolled)} [&_tr]:border-b-0`}
-                >
+                <TableHeader className="[&_tr]:border-b-0">
                   <TableRow className="border-0 hover:bg-transparent">
-                    <TableHead className="relative h-12 py-3 pl-12 pr-2">
+                    <TableHead
+                      className={`relative h-12 py-3 pl-12 pr-2 ${stickyTableHeadClassName(headerScrolled)}`}
+                    >
                       <div className="absolute inset-y-0 left-0 flex w-10 items-center justify-center">
                         <WorkerSelectAllCheckbox
                           workers={filteredWorkers}
@@ -234,12 +234,28 @@ function WorkerLifeCycle() {
                       </div>
                       Name
                     </TableHead>
-                    <TableHead className="py-3 px-2">Typ</TableHead>
-                    <TableHead className="py-3 px-2">Verantwortlich</TableHead>
+                    <TableHead
+                      className={`py-3 px-2 ${stickyTableHeadClassName(headerScrolled)}`}
+                    >
+                      Typ
+                    </TableHead>
+                    <TableHead
+                      className={`py-3 px-2 ${stickyTableHeadClassName(headerScrolled)}`}
+                    >
+                      Verantwortlich
+                    </TableHead>
                     {!isTeamMode && (
                       <>
-                        <TableHead className="py-3 px-2">Aufgaben</TableHead>
-                        <TableHead className="py-3 px-2">Status</TableHead>
+                        <TableHead
+                          className={`py-3 px-2 ${stickyTableHeadClassName(headerScrolled)}`}
+                        >
+                          Aufgaben
+                        </TableHead>
+                        <TableHead
+                          className={`py-3 px-2 ${stickyTableHeadClassName(headerScrolled)}`}
+                        >
+                          Status
+                        </TableHead>
                       </>
                     )}
                   </TableRow>

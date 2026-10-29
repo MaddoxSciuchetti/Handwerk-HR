@@ -1,7 +1,7 @@
 import { createRoot } from 'react-dom/client';
 import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { stickyTableHeaderClassName } from '@/components/ui/scrollable-table-viewport';
+import { stickyTableHeadClassName } from '@/components/ui/scrollable-table-viewport';
 import {
   TableBody,
   TableHead,
@@ -54,9 +54,7 @@ export function Harness() {
         }}
       >
         <WorkerTable hideTaskColumns={team}>
-          <TableHeader
-            className={`${stickyTableHeaderClassName(headerScrolled)} [&_tr]:border-b-0`}
-          >
+          <TableHeader className="[&_tr]:border-b-0">
             <TableRow className="border-0 hover:bg-transparent">
               {[
                 'Name',
@@ -64,7 +62,12 @@ export function Harness() {
                 'Verantwortlich',
                 ...(!team ? ['Aufgaben', 'Status'] : []),
               ].map((name) => (
-                <TableHead key={name}>{name}</TableHead>
+                <TableHead
+                  key={name}
+                  className={stickyTableHeadClassName(headerScrolled)}
+                >
+                  {name}
+                </TableHead>
               ))}
             </TableRow>
           </TableHeader>

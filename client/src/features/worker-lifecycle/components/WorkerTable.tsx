@@ -16,7 +16,8 @@ export function WorkerTable({
     <Table
       {...props}
       className={cn(
-        'table-fixed',
+        // separate borders so sticky header backgrounds/z-index paint above rows
+        'table-fixed border-separate border-spacing-0',
         hideTaskColumns ? 'min-w-160' : 'min-w-200',
         className
       )}
