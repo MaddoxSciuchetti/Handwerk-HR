@@ -273,20 +273,21 @@ export async function updateDocumentMaster(params: {
     revision?: number;
     approved?: boolean;
 }): Promise<DocumentMasterDetail> {
-    const existing = await prisma.documentMaster.findFirst({
-        where: { id: params.id, organizationId: params.organizationId, deletedAt: null },
-        select: { id: true, revision: true },
-    });
-
-    if (!existing) {
-        throw new AppError(NOT_FOUND, "Dokument nicht gefunden.");
+    let revision = params.revision;
+    if (revision === undefined) {
+        const existing = await prisma.documentMaster.findFirst({
+            where: { id: params.id, organizationId: params.organizationId, deletedAt: null },
+            select: { revision: true },
+        });
+        if (!existing) throw new AppError(NOT_FOUND, "Dokument nicht gefunden.");
+        revision = existing.revision;
     }
 
-    const result = await prisma.documentMaster.updateMany({
+    const [saved] = await prisma.documentMaster.updateManyAndReturn({
         where: {
             id: params.id,
             organizationId: params.organizationId,
-            revision: params.revision ?? existing.revision,
+            revision,
             deletedAt: null,
         },
         data: {
@@ -296,13 +297,29 @@ export async function updateDocumentMaster(params: {
             revision: { increment: 1 },
             approvedAt: params.approved ? new Date() : null,
         },
+        select: {
+            ...masterSelect,
+            body: true,
+            revision: true,
+            approvedAt: true,
+            sourceMime: true,
+        },
     });
-    if (!result.count)
+    if (!saved) {
+        const existing = await prisma.documentMaster.findFirst({
+            where: { id: params.id, organizationId: params.organizationId, deletedAt: null },
+            select: { id: true },
+        });
+        if (!existing) throw new AppError(NOT_FOUND, "Dokument nicht gefunden.");
         throw new AppError(
             CONFLICT,
             "Die Vorlage wurde inzwischen geändert. Bitte neu laden.",
         );
-    return getDocumentMaster(params.id, params.organizationId);
+    }
+    // Return the exact revision written, without another read or signing the
+    // immutable upload URL. Credential failures after commit used to report a
+    // failed save even though the document had already been persisted.
+    return toDetail(saved);
 }
 
 export async function setPrimaryDocumentMaster(
