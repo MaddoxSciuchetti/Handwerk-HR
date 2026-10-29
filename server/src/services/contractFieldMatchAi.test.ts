@@ -255,6 +255,28 @@ it("fills Anrede from Geschlecht without asking the model", async () => {
     expect(fetchMock).not.toHaveBeenCalled();
 });
 
+it("fills both staging salutation fields from an already placed first name", async () => {
+    modelResult([
+        match("contract.salutation", "firstName", "Herr"),
+        match("contract.salutation_2", "firstName", "Herr"),
+    ]);
+    const result = await matchQuestionnaireToContract(
+        [
+            { type: "input", key: "contract.vorname", label: "Vorname" },
+            { type: "input", key: "contract.salutation", label: "Salutation" },
+            { type: "input", key: "contract.salutation_2", label: "salutation" },
+        ],
+        { firstName: "Max" } as QuestionnaireAnswers,
+        "",
+        [{ key: "firstName", label: "Vorname", contractFieldKey: "contract.vorname" }],
+    );
+    expect(result).toEqual([
+        { key: "contract.vorname", value: "Max" },
+        { key: "contract.salutation", value: "Herr" },
+        { key: "contract.salutation_2", value: "Herr" },
+    ]);
+});
+
 it("lets the model set Anrede from the first name when Geschlecht does not decide it", async () => {
     modelResult([
         {
