@@ -88,6 +88,7 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
   );
   const [clothingAddOpen, setClothingAddOpen] = useState(false);
   const [isFileUploadOpen, setIsFileUploadOpen] = useState(false);
+  const [createTemplateOpen, setCreateTemplateOpen] = useState(false);
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
   const materialFileInputRef = useRef<HTMLInputElement>(null);
   const [contractSend, setContractSend] = useState<{
@@ -403,6 +404,9 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
               hideCreate={taskEngagements.length === 0}
               onOpenFileUpload={() => setIsFileUploadOpen(true)}
               onAddFolder={() => setCreateFolderOpen(true)}
+              onCreateTemplateDocument={
+                engagements.length ? () => setCreateTemplateOpen(true) : undefined
+              }
               onExportFiles={() => void handleZipExport(fetchFiles)}
               onUploadMaterials={() => materialFileInputRef.current?.click()}
               materialsUploadDisabled={engagements.length === 0}
@@ -555,6 +559,8 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                     )}
                     isUploadModalOpen={isFileUploadOpen}
                     setIsUploadModalOpen={setIsFileUploadOpen}
+                    createTemplateOpen={createTemplateOpen}
+                    setCreateTemplateOpen={setCreateTemplateOpen}
                     createFolderOpen={createFolderOpen}
                     setCreateFolderOpen={setCreateFolderOpen}
                   />
