@@ -9,6 +9,10 @@ import * as personnelDocumentController from "../controllers/personnelDocument.c
 import * as workerController from "../controllers/worker.controller";
 
 const worker = express.Router();
+worker.get(
+    "/:workerId/engagements/:engagementId/contract/printed-pdf",
+    workerController.downloadPrintedContract,
+);
 worker.post(
     "/:workerId/engagements/:engagementId/contract/prepare-pdf",
     workerController.prepareEmploymentContractPdf,

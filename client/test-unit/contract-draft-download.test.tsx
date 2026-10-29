@@ -5,6 +5,7 @@ import { beforeEach, expect, it, vi } from 'vitest';
 import { ContractDraftDialog } from '@/features/worker-task-management/components/files/ContractDraftDialog';
 import {
   fetchPreparedEmploymentContractPdf,
+  fetchPrintedEmploymentContractPdf,
   getEngagementContract,
   prepareEmploymentContractDownload,
   saveEngagementContractDraft,
@@ -16,6 +17,7 @@ beforeEach(() => vi.clearAllMocks());
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock('@/features/worker-task-management/api/employmentContract.api', () => ({
   fetchPreparedEmploymentContractPdf: vi.fn(),
+  fetchPrintedEmploymentContractPdf: vi.fn(),
   prepareEmploymentContractDownload: vi.fn(),
   getEngagementContract: vi.fn(),
   saveEngagementContractDraft: vi.fn(),
@@ -191,6 +193,56 @@ it('reuses an existing prepared PDF when values are unchanged', async () => {
     )
   );
   expect(prepareEmploymentContractDownload).not.toHaveBeenCalled();
+  create.mockRestore();
+  click.mockRestore();
+});
+
+it('keeps a printed contract read-only and downloads its frozen PDF', async () => {
+  vi.mocked(getEngagementContract).mockResolvedValue({
+    ...draft,
+    printedAt: '2026-10-29T12:00:00.000Z',
+    followsMaster: false,
+    prepared: null,
+  });
+  vi.mocked(fetchPrintedEmploymentContractPdf).mockResolvedValue(
+    new Blob(['%PDF-frozen'])
+  );
+  const create = vi
+    .spyOn(URL, 'createObjectURL')
+    .mockReturnValue('blob:frozen');
+  const click = vi
+    .spyOn(HTMLAnchorElement.prototype, 'click')
+    .mockImplementation(() => {});
+  const query = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  render(
+    <QueryClientProvider client={query}>
+      <ContractDraftDialog
+        workerId="worker"
+        engagementId="engagement"
+        onClose={() => undefined}
+      />
+    </QueryClientProvider>
+  );
+  await userEvent.click(
+    await screen.findByRole('button', { name: 'PDF herunterladen' })
+  );
+  await waitFor(() =>
+    expect(fetchPrintedEmploymentContractPdf).toHaveBeenCalledWith(
+      'worker',
+      'engagement'
+    )
+  );
+  expect(prepareEmploymentContractDownload).not.toHaveBeenCalled();
+  expect(saveEngagementContractDraft).not.toHaveBeenCalled();
+  expect(screen.getByText('Vertragsentwurf')).toHaveAttribute(
+    'data-readonly',
+    'true'
+  );
+  expect(
+    screen.queryByRole('button', { name: 'Entwurf speichern' })
+  ).not.toBeInTheDocument();
   create.mockRestore();
   click.mockRestore();
 });
