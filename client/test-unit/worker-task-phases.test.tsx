@@ -8,9 +8,10 @@ import type { WorkerDetailResponse } from '@/features/worker-lifecycle/types/ind
 const state = vi.hoisted(() => ({
   data: undefined as WorkerDetailResponse | undefined,
   create: vi.fn(),
+  edit: vi.fn(),
 }));
 vi.mock('@/features/worker-task-management/hooks/useTaskData', () => ({
-  default: () => ({ data: state.data, isLoading: false }),
+  default: () => ({ data: state.data, isLoading: !state.data }),
 }));
 vi.mock('@/features/worker-task-management/hooks/useGetWorkerFiles', () => ({
   default: () => ({ fetchFiles: vi.fn() }),
@@ -19,6 +20,7 @@ vi.mock('@/features/all-tasks/hooks/useTaskSidebar', () => ({
   useTaskSidebar: () => ({
     sidebarProps: { isOpen: false, taskEditState: {} },
     openForCreate: state.create,
+    openForEdit: state.edit,
   }),
 }));
 vi.mock('@/features/all-tasks/components/TaskSidebar', () => ({
@@ -239,10 +241,10 @@ it.each([
     resultsDismissedAt: '2026-10-28T12:01:00Z',
   },
 ])(
-  'allows task creation for expected onboarding with template receipt %j',
+  'allows task creation for pending onboarding with template receipt %j',
   async (templateApplication) => {
     state.data = worker([
-      { ...onboarding, status: 'expected', templateApplication },
+      { ...onboarding, status: 'pending', templateApplication },
       offboarding,
     ]);
     render(<TaskManagement workerId="worker-1" />);
@@ -257,13 +259,13 @@ it.each([
   }
 );
 
-it('does not let older expected onboarding hide creation for the current engagement', async () => {
+it('does not let older pending onboarding hide creation for the current engagement', async () => {
   state.data = worker([
     { ...onboarding, status: 'in_progress' },
     {
       id: 'old-onboarding',
       type: 'onboarding',
-      status: 'expected',
+      status: 'pending',
       issues: [],
     },
     offboarding,
@@ -287,4 +289,67 @@ it('hides task creation when there is no engagement to attach the task to', () =
     screen.queryByRole('button', { name: 'Aufgabe hinzufügen' })
   ).not.toBeInTheDocument();
   expect(state.create).not.toHaveBeenCalled();
+});
+
+it('opens a mentioned historical task in its correct phase after data loads', () => {
+  state.data = undefined;
+  const view = render(<TaskManagement workerId="worker-1" taskId="task-1" />);
+  expect(state.edit).not.toHaveBeenCalled();
+  state.data = worker([offboarding, onboarding]);
+  view.rerender(<TaskManagement workerId="worker-1" taskId="task-1" />);
+  expect(screen.getByRole('tab', { name: 'Onboarding' })).toHaveAttribute(
+    'aria-selected',
+    'true'
+  );
+  expect(screen.getByText('Onboarding task')).toBeInTheDocument();
+  expect(state.edit).toHaveBeenCalledWith(
+    expect.objectContaining({
+      taskId: 'task-1',
+      workerEngagementId: 'onboarding-1',
+    })
+  );
+  // Refetching task data must not reopen a panel the recipient has closed.
+  state.data = worker([offboarding, onboarding]);
+  view.rerender(<TaskManagement workerId="worker-1" taskId="task-1" />);
+  expect(state.edit).toHaveBeenCalledTimes(1);
+});
+
+it('opens a linked onboarding task while the worker is currently in Team', () => {
+  state.data = worker([
+    { id: 'team', type: 'transfer', status: 'completed', issues: [] },
+    offboarding,
+    onboarding,
+  ]);
+  render(<TaskManagement workerId="worker-1" taskId="task-1" />);
+  expect(screen.getByText('Onboarding task')).toBeInTheDocument();
+  expect(state.edit).toHaveBeenCalledWith(
+    expect.objectContaining({ taskId: 'task-1' })
+  );
+});
+
+it('does not open a task absent from this worker or visible data', () => {
+  render(<TaskManagement workerId="worker-1" taskId="other-worker-task" />);
+  expect(state.edit).not.toHaveBeenCalled();
+});
+
+it('opens a different mentioned task when navigating within the same worker', () => {
+  state.data = worker([
+    {
+      ...offboarding,
+      issues: [{ id: 'exit-task', title: 'Return keys', status: 'open' }],
+    },
+    onboarding,
+  ]);
+  const view = render(<TaskManagement workerId="worker-1" taskId="task-1" />);
+  view.rerender(<TaskManagement workerId="worker-1" taskId="exit-task" />);
+  expect(screen.getByRole('tab', { name: 'Offboarding' })).toHaveAttribute(
+    'aria-selected',
+    'true'
+  );
+  expect(state.edit).toHaveBeenLastCalledWith(
+    expect.objectContaining({
+      taskId: 'exit-task',
+      workerEngagementId: 'offboarding-1',
+    })
+  );
 });

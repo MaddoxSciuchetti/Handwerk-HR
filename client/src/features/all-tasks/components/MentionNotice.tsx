@@ -2,7 +2,6 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -51,9 +50,20 @@ export function MentionNotice() {
     setNotice([]);
   };
 
-  const openTasks = () => {
+  const openTask = (task: IssueResponse) => {
+    const workerId = task.workerEngagement?.workerId;
+    if (!workerId) return;
     dismiss();
-    navigate({ to: '/tasks' });
+    navigate({
+      to: '/user/$Id',
+      params: { Id: workerId },
+      search: {
+        workerName:
+          `${task.workerEngagement?.worker?.firstName ?? ''} ${task.workerEngagement?.worker?.lastName ?? ''}`.trim(),
+        prevPage: 'Worker Lifecycle',
+        taskId: task.id,
+      },
+    });
   };
 
   const count = notice.length;
@@ -68,22 +78,21 @@ export function MentionNotice() {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Du wurdest erwähnt</DialogTitle>
-          <DialogDescription>
-            {count === 1
-              ? 'Du wurdest in einer Aufgabe erwähnt.'
-              : `Du wurdest in ${count} Aufgaben erwähnt.`}
-          </DialogDescription>
         </DialogHeader>
         <ul className="flex flex-col gap-2">
           {notice.map((task) => (
-            <li
-              key={task.id}
-              className="flex items-center gap-3 rounded-xl bg-muted px-3 py-2 text-sm"
-            >
-              <span className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground">
-                1
-              </span>
-              <span className="min-w-0 truncate">{task.title}</span>
+            <li key={task.id}>
+              <button
+                type="button"
+                className="flex w-full items-center gap-3 rounded-xl bg-muted px-3 py-2 text-left text-sm hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                onClick={() => openTask(task)}
+                aria-label={`Aufgabe öffnen: ${task.title}`}
+              >
+                <span className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground">
+                  1
+                </span>
+                <span className="min-w-0 truncate">{task.title}</span>
+              </button>
             </li>
           ))}
         </ul>
@@ -91,9 +100,11 @@ export function MentionNotice() {
           <Button type="button" variant="outline" onClick={dismiss}>
             Schließen
           </Button>
-          <Button type="button" onClick={openTasks}>
-            Zu den Aufgaben
-          </Button>
+          {count === 1 ? (
+            <Button type="button" onClick={() => openTask(notice[0])}>
+              Zur Aufgabe
+            </Button>
+          ) : null}
         </DialogFooter>
       </DialogContent>
     </Dialog>
