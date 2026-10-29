@@ -148,6 +148,7 @@ export async function sendTeams(
     input: {
         idempotencyKey: string;
         destinations: Array<{ teamId: string; channelId: string }>;
+        body?: string;
     },
 ) {
     await taskContext(actor, issueId);
@@ -271,7 +272,7 @@ export async function sendTeams(
                     microsoftUserId: auth.connection.microsoftUserId,
                     tenantId: auth.connection.tenantId,
                     senderName: auth.connection.displayName,
-                    body: renderBody(currentIssue),
+                    body: input.body?.trim() || renderBody(currentIssue),
                     destinations: {
                         create: destinations.map((d) => ({
                             ...d,

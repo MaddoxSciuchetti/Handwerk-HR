@@ -43,6 +43,7 @@ import {
   type AutomationReveal,
 } from '../../utils/automationProgress';
 import { TemplateAutomationConfirmation } from './TemplateAutomationConfirmation';
+import { useTemplateAutomationOptions } from '../../hooks/useTemplateAutomationOptions';
 import type { WorkerDetailResponse } from '@/features/worker-lifecycle/types/index.types';
 
 const dismissKey = (id: string) => `template-prompt-dismissed:${id}`;
@@ -83,6 +84,11 @@ export function TemplateApplyPrompt({
   );
   const selected = available[0];
   const selectedId = selected?.engagementId;
+  useTemplateAutomationOptions({
+    engagementId: selectedId,
+    hasMail: Boolean(selectedId),
+    hasTeams: Boolean(selectedId),
+  });
   const preview = useQuery({
     queryKey: [
       'template-application-preview',
