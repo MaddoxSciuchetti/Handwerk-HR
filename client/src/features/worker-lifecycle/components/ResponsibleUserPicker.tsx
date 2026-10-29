@@ -34,7 +34,7 @@ export function ResponsibleUserPicker({
     : [value, ...options];
 
   return (
-    <DropdownMenu modal={false}>
+    <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
           type="button"

@@ -3,7 +3,10 @@ import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import { TableSkeletonRows } from '@/components/ui/table-skeleton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollableTableViewport } from '@/components/ui/scrollable-table-viewport';
+import {
+  ScrollableTableViewport,
+  stickyTableHeaderClassName,
+} from '@/components/ui/scrollable-table-viewport';
 import {
   TableBody,
   TableHead,
@@ -43,6 +46,7 @@ function WorkerLifeCycle() {
     isLoading: workersLoading,
   } = useHome();
   const [isWorkerSidebarOpen, setIsWorkerSidebarOpen] = useState(false);
+  const [headerScrolled, setHeaderScrolled] = useState(false);
   const [questionnaireEngagementId, setQuestionnaireEngagementId] = useState<
     string | null
   >(null);
@@ -181,12 +185,12 @@ function WorkerLifeCycle() {
           onClose={() => setQuestionnaireEngagementId(null)}
         />
       ) : null}
-      <div className="flex h-full min-h-0 w-full flex-col overflow-y-auto">
+      <div className="flex h-full min-h-0 w-full flex-col">
         <GreetingHeader
           firstname={user?.firstName || ''}
           isLoading={isLoading}
         />
-        <Card className="mt-5 flex min-h-64 shrink-0 flex-1 flex-col gap-0 border border-border py-0 shadow-none ring-0">
+        <Card className="mt-5 flex min-h-0 flex-1 flex-col gap-0 border border-border py-0 shadow-none ring-0">
           <CardHeader className="flex shrink-0 flex-row flex-wrap items-center justify-between gap-4 px-6 py-3">
             <CardTitle className="text-base font-medium">Handwerker</CardTitle>
             <div className="flex shrink-0 items-center gap-3">
@@ -205,14 +209,19 @@ function WorkerLifeCycle() {
             </div>
           </CardHeader>
           <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-0">
-            <ScrollableTableViewport className="[scrollbar-gutter:stable]">
+            <ScrollableTableViewport
+              className="[scrollbar-gutter:stable]"
+              onScrolledChange={setHeaderScrolled}
+            >
               <WorkerTable
                 hideTaskColumns={isTeamMode}
                 aria-busy={isLoading || workersLoading}
               >
-                <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-b-0">
+                <TableHeader
+                  className={`${stickyTableHeaderClassName(headerScrolled)} [&_tr]:border-b-0`}
+                >
                   <TableRow className="border-0 hover:bg-transparent">
-                    <TableHead className="relative h-12 bg-card py-3 pl-12 pr-2">
+                    <TableHead className="relative h-12 py-3 pl-12 pr-2">
                       <div className="absolute inset-y-0 left-0 flex w-10 items-center justify-center">
                         <WorkerSelectAllCheckbox
                           workers={filteredWorkers}
@@ -225,18 +234,12 @@ function WorkerLifeCycle() {
                       </div>
                       Name
                     </TableHead>
-                    <TableHead className="bg-card py-3 px-2">Typ</TableHead>
-                    <TableHead className="bg-card py-3 px-2">
-                      Verantwortlich
-                    </TableHead>
+                    <TableHead className="py-3 px-2">Typ</TableHead>
+                    <TableHead className="py-3 px-2">Verantwortlich</TableHead>
                     {!isTeamMode && (
                       <>
-                        <TableHead className="bg-card py-3 px-2">
-                          Aufgaben
-                        </TableHead>
-                        <TableHead className="bg-card py-3 px-2">
-                          Status
-                        </TableHead>
+                        <TableHead className="py-3 px-2">Aufgaben</TableHead>
+                        <TableHead className="py-3 px-2">Status</TableHead>
                       </>
                     )}
                   </TableRow>

@@ -28,7 +28,7 @@ function EngagementTypeSwitch({
   )?.label;
 
   return (
-    <DropdownMenu modal={false}>
+    <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
           type="button"

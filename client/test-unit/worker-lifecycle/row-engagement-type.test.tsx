@@ -135,6 +135,20 @@ describe('worker row type picker', () => {
       'Maddox Example'
     );
   });
+
+  it('blocks opening the worker while a type menu is open', async () => {
+    const { user, navigate } = setup();
+    await user.click(
+      screen.getByRole('button', { name: 'Typ für Maddox Example ändern' })
+    );
+    expect(
+      screen.getByRole('menuitemradio', { name: 'Team' })
+    ).toBeInTheDocument();
+    expect(getComputedStyle(screen.getByText('Maddox')).pointerEvents).toBe(
+      'none'
+    );
+    expect(navigate).not.toHaveBeenCalled();
+  });
 });
 
 it('omits task and status cells when the list is in Team mode', () => {
