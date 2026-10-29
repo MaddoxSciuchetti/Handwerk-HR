@@ -108,7 +108,10 @@ function canCopyAnswer(segment: DocumentSegment, value: string) {
 export function isSalutationField(field: { key: string; label?: string }) {
     const label = fold(field.label ?? "");
     const key = fold(field.key.split(".").at(-1) ?? field.key);
-    if (label.includes("anrede") || key.includes("anrede")) return true;
+    if (
+        label.includes("anrede") || key.includes("anrede") ||
+        label.includes("salutation") || key.includes("salutation")
+    ) return true;
     return label === "herrfrau" || label === "herroderfrau" || key === "herrfrau";
 }
 

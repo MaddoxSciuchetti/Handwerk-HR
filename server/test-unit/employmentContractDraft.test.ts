@@ -216,6 +216,36 @@ it("replaces contract values from the Fragebogen and drops removed fields", asyn
     expect(view.masterRevision).toBe(4);
 });
 
+it("persists both staging salutation fields and returns them when the contract is reopened", async () => {
+    contract.master = {
+        name: "Vertrag",
+        revision: 4,
+        body: fromSegments([
+            { type: "input", key: "contract.salutation", label: "Salutation" },
+            { type: "input", key: "contract.salutation_2", label: "salutation" },
+        ]),
+    };
+    contract.values = [
+        { key: "contract.salutation", value: "old value" },
+        { key: "contract.salutation_2", value: "old value" },
+    ];
+    contract.engagement.questionnaireSubmission = {
+        id: "submission", revision: 1, status: "completed",
+        answers: [{ key: "sex", value: "weiblich" }],
+    };
+
+    const synced = await resyncEngagementContractFromQuestionnaire(params);
+    expect(prisma.employmentContractValue.createMany).toHaveBeenCalledWith({
+        data: [
+            { employmentContractId: "contract", key: "contract.salutation", value: "Frau" },
+            { employmentContractId: "contract", key: "contract.salutation_2", value: "Frau" },
+        ],
+    });
+    const expected = { "contract.salutation": "Frau", "contract.salutation_2": "Frau" };
+    expect(synced.values).toEqual(expected);
+    expect((await getEngagementContract(params))?.values).toEqual(expected);
+});
+
 it("keeps manual pay, allowances, checkboxes and description points when syncing questionnaire fields", async () => {
     contract.master = {
         name: "Vertrag",
