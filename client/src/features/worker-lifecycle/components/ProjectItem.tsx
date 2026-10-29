@@ -100,7 +100,9 @@ function ProjectItem(props: ProjectItemProps) {
           isTeam
             ? 'rounded-xl px-6 group-hover:rounded-xl'
             : 'pl-10 pr-2 group-hover:rounded-l-xl',
-          !isTeam && props.isSelected && 'rounded-l-xl bg-muted/50'
+          !isTeam &&
+            props.isSelected &&
+            'rounded-l-xl bg-[var(--hover-bg)]'
         )}
       >
         {isTeam ? null : (
@@ -128,7 +130,7 @@ function ProjectItem(props: ProjectItemProps) {
           <TableCell
             className={cn(
               'transition-colors group-hover:bg-muted/50',
-              props.isSelected && 'bg-muted/50'
+              props.isSelected && 'bg-[var(--hover-bg)]'
             )}
           >
             <EngagementTypeSwitch
@@ -141,7 +143,7 @@ function ProjectItem(props: ProjectItemProps) {
           <TableCell
             className={cn(
               'transition-colors group-hover:bg-muted/50',
-              props.isSelected && 'bg-muted/50'
+              props.isSelected && 'bg-[var(--hover-bg)]'
             )}
           >
             <ResponsibleUserPicker
@@ -157,7 +159,7 @@ function ProjectItem(props: ProjectItemProps) {
               <TableCell
                 className={cn(
                   'text-sm tabular-nums text-muted-foreground transition-colors group-hover:bg-muted/50',
-                  props.isSelected && 'bg-muted/50'
+                  props.isSelected && 'bg-[var(--hover-bg)]'
                 )}
               >
                 {worker.engagements[0].type === 'transfer' ? '—' : issueCount}
@@ -165,7 +167,7 @@ function ProjectItem(props: ProjectItemProps) {
               <TableCell
                 className={cn(
                   'transition-colors group-hover:rounded-r-xl group-hover:bg-muted/50',
-                  props.isSelected && 'rounded-r-xl bg-muted/50'
+                  props.isSelected && 'rounded-r-xl bg-[var(--hover-bg)]'
                 )}
               >
                 {worker.engagements[0].type === 'transfer' ? (

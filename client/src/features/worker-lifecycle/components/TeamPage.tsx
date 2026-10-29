@@ -2,7 +2,7 @@ import ErrorAlert from '@/components/alerts/ErrorAlert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   ScrollableTableViewport,
-  stickyTableHeaderClassName,
+  stickyTableHeadClassName,
 } from '@/components/ui/scrollable-table-viewport';
 import { TableSkeletonRows } from '@/components/ui/table-skeleton';
 import {
@@ -58,12 +58,17 @@ function TeamPage() {
           </CardHeader>
           <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-0">
             <ScrollableTableViewport onScrolledChange={setHeaderScrolled}>
-              <Table aria-busy={isLoading || workersLoading}>
-                <TableHeader
-                  className={`${stickyTableHeaderClassName(headerScrolled)} [&_tr]:border-b-0`}
-                >
+              <Table
+                aria-busy={isLoading || workersLoading}
+                className="border-separate border-spacing-0"
+              >
+                <TableHeader className="[&_tr]:border-b-0">
                   <TableRow className="border-0 hover:bg-transparent">
-                    <TableHead className="h-12 px-6 py-3">Name</TableHead>
+                    <TableHead
+                      className={`h-12 px-6 py-3 ${stickyTableHeadClassName(headerScrolled)}`}
+                    >
+                      Name
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody className="[&_tr]:border-0 [&_td]:py-4">
