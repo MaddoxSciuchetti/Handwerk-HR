@@ -1,115 +1,73 @@
+import { createWorkerFile } from '@/apis/index.apis';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import type { EngagementType } from '@/features/worker-lifecycle/types/index.types';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { MaterialsEngagementPicker } from '../../materials/MaterialsEngagementPicker';
-import type { PersonnelFolder } from '../../../api/personnelDocuments.api';
-import { useUploadPersonnelDocument } from '../../../hooks/usePersonnelDocuments';
-import { PERSONNEL_DOCUMENT_NAMES } from '../../../personnel-documents/personnelDocumentNames';
+import { toast } from 'sonner';
+import { HISTORYDATA } from '../../../consts/query-key.consts';
 import { PersonnelFileDropzone } from './PersonnelFileDropzone';
 
 type PersonnelDocumentUploadFormProps = {
   workerId: string;
-  engagements: Array<{
-    id: string;
-    type: EngagementType;
-    startDate: string | null;
-  }>;
-  folders: PersonnelFolder[];
   setModal: (open: boolean) => void;
 };
 
 export function PersonnelDocumentUploadForm({
   workerId,
-  engagements,
-  folders,
   setModal,
 }: PersonnelDocumentUploadFormProps) {
-  const [engagementId, setEngagementId] = useState(engagements[0]?.id ?? '');
   const [name, setName] = useState('');
   const [file, setFile] = useState<File | null>(null);
-  const upload = useUploadPersonnelDocument(workerId);
-  const selectedEngagement =
-    engagements.find((item) => item.id === engagementId)?.id ??
-    engagements[0]?.id ??
-    '';
+  const queryClient = useQueryClient();
+  const upload = useMutation({
+    mutationFn: (document: File) => createWorkerFile([document], workerId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: [HISTORYDATA, workerId] });
+      setModal(false);
+    },
+    onError: () => toast.error('Dokument konnte nicht hochgeladen werden.'),
+  });
 
-  const folderId = name.startsWith('folder:')
-    ? name.slice('folder:'.length)
-    : '';
   const submit = () => {
-    if (!selectedEngagement || !name || !file) return;
+    const title = name.trim();
+    if (!title || !file || upload.isPending) return;
+    // Keep the file extension when the user supplies only a document title.
+    const extension = file.name.match(/\.[^.]+$/)?.[0] ?? '';
+    const filename =
+      extension && !title.toLowerCase().endsWith(extension.toLowerCase())
+        ? `${title}${extension}`
+        : title;
     upload.mutate(
-      {
-        engagementId: selectedEngagement,
-        name: folderId ? 'ordner' : name,
-        folderId: folderId || undefined,
-        file,
-      },
-      { onSuccess: () => setModal(false) }
+      new File([file], filename, {
+        type: file.type,
+        lastModified: file.lastModified,
+      })
     );
   };
 
   return (
     <div className="flex w-full min-w-0 flex-col gap-4">
-      {engagements.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          Kein Engagement vorhanden.
-        </p>
-      ) : (
-        <>
-          <MaterialsEngagementPicker
-            engagements={engagements}
-            value={selectedEngagement}
-            onChange={setEngagementId}
-          />
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="personnel-document-name">Dokumentname</Label>
-            <Select value={name || undefined} onValueChange={setName}>
-              <SelectTrigger
-                id="personnel-document-name"
-                aria-label="Dokumentname"
-              >
-                <SelectValue placeholder="Name wählen" />
-              </SelectTrigger>
-              <SelectContent>
-                {PERSONNEL_DOCUMENT_NAMES.filter(
-                  (item) => item.value !== 'fragebogen'
-                ).map((item) => (
-                  <SelectItem key={item.value} value={item.value}>
-                    {item.label}
-                  </SelectItem>
-                ))}
-                {folders
-                  .filter(
-                    (folder) => folder.engagementId === selectedEngagement
-                  )
-                  .map((folder) => (
-                    <SelectItem key={folder.id} value={`folder:${folder.id}`}>
-                      {folder.label}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <PersonnelFileDropzone file={file} onFile={setFile} />
-          <Button
-            type="button"
-            className="bg-black text-white hover:bg-black/90"
-            disabled={!name || !file || upload.isPending}
-            onClick={submit}
-          >
-            {upload.isPending ? 'Hochladen...' : 'Hochladen'}
-          </Button>
-        </>
-      )}
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="personnel-document-name">Dokumentname</Label>
+        <Input
+          id="personnel-document-name"
+          placeholder="Dokumentname eingeben"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          maxLength={240}
+          disabled={upload.isPending}
+        />
+      </div>
+      <PersonnelFileDropzone file={file} onFile={setFile} />
+      <Button
+        type="button"
+        className="bg-black text-white hover:bg-black/90"
+        disabled={!name.trim() || !file || upload.isPending}
+        onClick={submit}
+      >
+        {upload.isPending ? 'Hochladen...' : 'Hochladen'}
+      </Button>
     </div>
   );
 }

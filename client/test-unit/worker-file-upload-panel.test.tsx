@@ -5,7 +5,11 @@ import { expect, it, vi } from 'vitest';
 import { renderWithProviders } from './test-utils';
 import WorkerHeader from '@/features/worker-task-management/components/header/WorkerHeader';
 import WorkerFileUploads from '@/features/worker-task-management/components/files/WorkerFileUploads';
-import { uploadPersonnelDocument } from '@/features/worker-task-management/api/personnelDocuments.api';
+import { createWorkerFile } from '@/apis/index.apis';
+
+vi.mock('@/apis/index.apis', () => ({
+  createWorkerFile: vi.fn().mockResolvedValue({ success: true }),
+}));
 
 vi.mock('@/features/worker-task-management/hooks/useGetWorkerFiles', () => ({
   default: () => ({ fetchFiles: [], isLoading: false, isError: false }),
@@ -67,36 +71,27 @@ it('opens the upload side panel from the header and uploads the chosen document'
   const panel = screen.getByRole('dialog', { name: 'Datei hochladen' });
   expect(panel).toHaveAttribute('data-slot', 'sheet-content');
   expect(panel).toHaveAttribute('data-side', 'right');
-  await user.click(
-    within(panel).getByRole('combobox', { name: 'Dokumentname' })
-  );
-  expect(panel).toBeVisible();
-  expect(within(panel).getByText('Datei hochladen')).toBeVisible();
-  await user.click(
-    await screen.findByRole('option', { name: 'Personalausweis' })
-  );
-  expect(panel).toBeVisible();
+  const nameInput = within(panel).getByRole('textbox', {
+    name: 'Dokumentname',
+  });
   expect(
-    within(panel).getByRole('combobox', { name: 'Dokumentname' })
-  ).toHaveTextContent('Personalausweis');
+    within(panel).queryByRole('combobox', { name: 'Dokumentname' })
+  ).not.toBeInTheDocument();
+  await user.type(nameInput, '  Schulungsnachweis  ');
+  expect(nameInput).toHaveValue('  Schulungsnachweis  ');
   const file = new File(['document'], 'identity.pdf', {
     type: 'application/pdf',
   });
   await user.upload(within(panel).getByLabelText('Datei auswählen'), file);
   expect(within(panel).getByText('identity.pdf')).toBeInTheDocument();
   await user.click(within(panel).getByRole('button', { name: 'Hochladen' }));
-  await waitFor(() =>
-    expect(uploadPersonnelDocument).toHaveBeenCalledWith(
-      'worker',
-      'engagement',
-      {
-        engagementId: 'engagement',
-        name: 'personalausweis',
-        folderId: undefined,
-        file,
-      }
-    )
-  );
+  await waitFor(() => expect(createWorkerFile).toHaveBeenCalledOnce());
+  const [files, workerId] = vi.mocked(createWorkerFile).mock.calls[0];
+  expect(workerId).toBe('worker');
+  expect(files).toHaveLength(1);
+  expect(files[0].name).toBe('Schulungsnachweis.pdf');
+  expect(files[0].type).toBe('application/pdf');
+  expect(files[0].size).toBe(file.size);
   await waitFor(() =>
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   );
