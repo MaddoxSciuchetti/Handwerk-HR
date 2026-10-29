@@ -5,6 +5,8 @@ export type AutomationChoice = {
   senderAddress?: string;
   recipients?: MailRecipient[];
   destinations?: Array<{ teamId: string; channelId: string }>;
+  subject?: string;
+  body?: string;
 };
 export type TemplatePreview = {
   mocked?: boolean;
@@ -17,6 +19,7 @@ export type TemplatePreview = {
     sequence: string | null;
     integrationProvider: string | null;
     blockedReason: string | null;
+    message?: { subject: string | null; body: string } | null;
   }>;
 };
 export type TemplateApplicationResult = {

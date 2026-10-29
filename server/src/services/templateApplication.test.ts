@@ -47,10 +47,14 @@ jest.mock("./microsoftTeams/connection", () => ({
 jest.mock("./microsoftTeams/messages", () => ({ sendTeams: jest.fn() }));
 jest.mock("./engagementMail", () => ({
     isMailSequence: (v: string) => v === "microsoft_send_email",
+    applyEngagementMailTemplate: (template: string) => template,
     normalizeRecipients: jest.fn(async (_org, recipients) => recipients),
     listBsbMailAddresses: jest.fn(async () => ({
         addresses: [{ email: "hr@example.com", kind: "mailbox" }],
     })),
+}));
+jest.mock("./welcomeMail", () => ({
+    formatWelcomeEntryDate: () => "",
 }));
 const db = prisma as any;
 const context = {
@@ -73,7 +77,18 @@ const createTasks = jest.fn();
 beforeEach(() => {
     jest.clearAllMocks();
     db.$transaction.mockImplementation(async (fn: any) => fn(db));
-    db.workerEngagement.findFirst.mockResolvedValue({ id: "engagement" });
+    db.workerEngagement.findFirst.mockResolvedValue({
+        id: "engagement",
+        worker: {
+            firstName: "Ada",
+            lastName: "Lovelace",
+            workEmail: null,
+            microsoftEmail: null,
+            position: null,
+            entryDate: null,
+            exitDate: null,
+        },
+    });
     db.worker.findFirst.mockResolvedValue({ workEmail: null });
     db.issueTemplate.findFirst.mockResolvedValue({
         id: "template",

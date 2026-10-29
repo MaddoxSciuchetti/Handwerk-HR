@@ -662,6 +662,77 @@ describe('template automation popup', () => {
       screen.getByRole('button', { name: 'Automatisierung starten' })
     ).toBeEnabled();
   });
+  it('lets users view and edit the filled Teams message before starting', async () => {
+    mocks.preview.mockResolvedValue({
+      id: 'automated',
+      name: 'Automatisch',
+      items: [
+        {
+          ...automation,
+          sequence: 'microsoft_send_teams_message',
+          title: 'Infomail ans Team versendet',
+          message: {
+            subject: null,
+            body: 'Hallo Ada, willkommen im Team.',
+          },
+        },
+      ],
+    });
+    mocks.apply.mockResolvedValue({
+      count: 1,
+      issueIds: ['t1'],
+      outcomes: [{ issueId: 't1', status: 'completed' }],
+      running: false,
+    });
+    renderWithProviders(<TemplateApplyPrompt targets={[target]} />);
+    const user = await selectTemplate();
+    await user.click(screen.getByText('Infomail ans Team versendet'));
+    await user.click(
+      screen.getByRole('button', {
+        name: 'View Nachricht für Infomail ans Team versendet',
+      })
+    );
+    const editor = await screen.findByRole('textbox', { name: 'Nachricht' });
+    expect(editor).toHaveValue('Hallo Ada, willkommen im Team.');
+    await user.clear(editor);
+    await user.type(editor, 'Hallo Ada, bitte beachte den Start.');
+    expect(
+      await screen.findByRole('status', { name: 'Speichern' })
+    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('status', { name: 'Speichern' })
+      ).not.toBeInTheDocument()
+    );
+    await user.keyboard('{Escape}');
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Empfänger für Infomail ans Team versendet',
+      })
+    );
+    await user.click(
+      await screen.findByRole('checkbox', { name: 'Team · Allgemein' })
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'Automatisierung starten' })
+    );
+    await waitFor(() =>
+      expect(mocks.apply).toHaveBeenCalledWith(
+        'worker',
+        'automated',
+        expect.objectContaining({
+          choices: {
+            a: expect.objectContaining({
+              body: 'Hallo Ada, bitte beachte den Start.',
+              destinations: [
+                { teamId: 'team', channelId: 'channel' },
+              ],
+            }),
+          },
+        })
+      )
+    );
+  });
   it('resets choices when changing template', async () => {
     renderWithProviders(<TemplateApplyPrompt targets={[target]} />);
     const user = await selectTemplate();

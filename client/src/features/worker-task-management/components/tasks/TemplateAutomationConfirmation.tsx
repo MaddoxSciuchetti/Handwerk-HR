@@ -5,6 +5,7 @@ import {
   PopoverContent,
 } from '@/components/ui/popover';
 import { useState, type ReactNode } from 'react';
+import { AutomationMessageView } from './AutomationMessageView';
 import { MicrosoftLicenseStatus } from './MicrosoftLicenseStatus';
 import { useMutation } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -67,7 +68,7 @@ function selectionLabel(labels: string[]) {
 function FieldRow({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex items-center gap-3">
-      <span className="w-20 shrink-0 text-xs text-muted-foreground">
+      <span className="w-24 shrink-0 text-xs text-muted-foreground">
         {label}:
       </span>
       <div className="min-w-0 flex-1">{children}</div>
@@ -492,6 +493,26 @@ export function TemplateAutomationConfirmation({
                             </div>
                           </PopoverContent>
                         </Popover>
+                      </FieldRow>
+                    )}
+                    {(isMail || isTeams) && item.message && (
+                      <FieldRow label="Nachricht">
+                        <AutomationMessageView
+                          title={item.title}
+                          disabled={busy}
+                          message={{
+                            subject: isMail
+                              ? (choice.subject ?? item.message.subject ?? '')
+                              : null,
+                            body: choice.body ?? item.message.body,
+                          }}
+                          onSave={(next) =>
+                            change(item.id, {
+                              ...(isMail ? { subject: next.subject ?? '' } : {}),
+                              body: next.body,
+                            })
+                          }
+                        />
                       </FieldRow>
                     )}
                   </fieldset>
