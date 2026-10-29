@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { isStagingEnvironment } from "@/constants/stagingMail";
 import { createIssue } from "@/services/worker.service";
 import { queryTasks, upsertIssueCommentInOrg } from "@/services/tasks.service";
 import { sendMail } from "@/utils/sendMail";
@@ -25,6 +26,10 @@ jest.mock("@/constants/env", () => ({
     APP_ORIGIN: "https://app.example",
 }));
 
+jest.mock("@/constants/stagingMail", () => ({
+    isStagingEnvironment: jest.fn(() => false),
+}));
+
 const findIssue = prisma.issue.findFirst as jest.Mock;
 const createComment = prisma.comment.create as jest.Mock;
 const findUsers = prisma.user.findMany as jest.Mock;
@@ -37,6 +42,7 @@ const sourceIssue = {
     id: "issue-1",
     title: "Vertrag prüfen",
     workerEngagementId: "eng-1",
+    workerEngagement: { workerId: "worker-1" },
 };
 
 describe("task mention comments", () => {
@@ -82,10 +88,36 @@ describe("task mention comments", () => {
             expect.objectContaining({
                 to: "otto@firma.de",
                 subject: "Dringende Aufgabe: Vertrag prüfen",
-                text: expect.stringContaining("https://app.example/tasks"),
+                organizationId: "org-1",
+                text: expect.stringContaining("https://app.example/user/worker-1?taskId=issue-1"),
             }),
         );
         expect(result.mailFailed).toBe(false);
+    });
+
+    it("sends mention alerts through Resend on staging", async () => {
+        (isStagingEnvironment as jest.Mock).mockReturnValueOnce(true);
+        findUsers.mockResolvedValue([
+            {
+                id: "coworker",
+                firstName: "Otto",
+                lastName: "Berg",
+                email: "otto@firma.de",
+            },
+        ]);
+
+        await upsertIssueCommentInOrg("org-1", "sender", "issue-1", {
+            body: "Bitte @Otto Berg schauen",
+            mentionUserIds: ["coworker"],
+        });
+
+        expect(mail).toHaveBeenCalledWith(
+            expect.objectContaining({
+                to: "otto@firma.de",
+                via: "resend",
+            }),
+        );
+        expect(mail.mock.calls[0][0]).not.toHaveProperty("organizationId");
     });
 
     it("stores a self-mention without a marker or an email", async () => {
