@@ -666,3 +666,14 @@ export const dismissTemplateApplication = catchErrors(async (req: Request, res: 
     }, engagementId);
     return res.status(200).json({ success: true, data });
 });
+
+export const downloadPrintedContract = catchErrors(async (req: Request, res: Response) => {
+    const bytes = await employmentContractService.downloadPrintedContract({
+        organizationId: req.orgId,
+        workerId: param(req, "workerId"),
+        engagementId: param(req, "engagementId"),
+    });
+    res.setHeader("Cache-Control", "no-store");
+    res.setHeader("Content-Disposition", 'attachment; filename="Arbeitsvertrag.pdf"');
+    return res.type("application/pdf").send(bytes);
+});

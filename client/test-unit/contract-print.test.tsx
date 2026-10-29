@@ -5,6 +5,7 @@ import { beforeEach, expect, it, vi } from 'vitest';
 import { ContractSendDialog } from '@/features/worker-task-management/components/files/ContractSendDialog';
 import {
   fetchPreparedEmploymentContractPdf,
+  fetchPrintedEmploymentContractPdf,
   getEngagementContract,
   prepareEmploymentContractPdf,
   prepareEmploymentContractDownload,
@@ -22,6 +23,7 @@ vi.mock('@tanstack/react-router', () => ({
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock('@/features/worker-task-management/api/employmentContract.api', () => ({
   fetchPreparedEmploymentContractPdf: vi.fn(),
+  fetchPrintedEmploymentContractPdf: vi.fn(),
   prepareEmploymentContractPdf: vi.fn(),
   prepareEmploymentContractDownload: vi.fn(),
   getEngagementContract: vi.fn(),
@@ -516,6 +518,51 @@ it('downloads a newly generated PDF directly and reuses it on the next click', a
     'engagement',
     'pdf-1'
   );
+  create.mockRestore();
+  click.mockRestore();
+});
+
+it('keeps a printed contract read-only and downloads its frozen PDF', async () => {
+  vi.mocked(getEngagementContract).mockResolvedValue({
+    ...draft,
+    printedAt: '2026-10-29T12:00:00.000Z',
+    followsMaster: false,
+    prepared: null,
+  });
+  vi.mocked(fetchPrintedEmploymentContractPdf).mockResolvedValue(
+    new Blob(['%PDF-frozen'])
+  );
+  const create = vi
+    .spyOn(URL, 'createObjectURL')
+    .mockReturnValue('blob:frozen');
+  const click = vi
+    .spyOn(HTMLAnchorElement.prototype, 'click')
+    .mockImplementation(() => {});
+  const query = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  render(
+    <QueryClientProvider client={query}>
+      <ContractSendDialog
+        workerId="worker"
+        engagementId="engagement"
+        issueId="issue"
+        onClose={() => undefined}
+      />
+    </QueryClientProvider>
+  );
+  await userEvent.click(
+    await screen.findByRole('button', { name: 'PDF herunterladen' })
+  );
+  await waitFor(() =>
+    expect(fetchPrintedEmploymentContractPdf).toHaveBeenCalledWith(
+      'worker',
+      'engagement'
+    )
+  );
+  expect(prepareEmploymentContractDownload).not.toHaveBeenCalled();
+  expect(saveEngagementContractDraft).not.toHaveBeenCalled();
+  expect(screen.getByRole('button', { name: 'Speichern' })).toBeDisabled();
   create.mockRestore();
   click.mockRestore();
 });

@@ -1,4 +1,5 @@
 import z from "zod";
+import { freezePrintedContract } from "@/services/employmentContract.service";
 import { integrationsMocked } from "./integrations/localMock";
 import { applyTemplateApplication, type TemplateApplyInput } from './templateApplication';
 
@@ -906,6 +907,9 @@ export async function updateIssue(params: UpdateIssueInput) {
     }
 
     return prisma.$transaction(async (tx) => {
+        if (existing.kind === "contract_send" && status === "done" && existing.status !== "done") {
+            await freezePrintedContract(tx, newWorkerEngagementId ?? workerEngagementId);
+        }
         const updated = await tx.issue.update({
             where: { id: issueId },
             data,

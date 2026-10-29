@@ -43,6 +43,7 @@ export function useQuickUpdateTaskStatus() {
       void queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] });
       void queryClient.invalidateQueries({ queryKey: [ALL_WORKER_DATA] });
       void queryClient.invalidateQueries({ queryKey: [WORKERBYID] });
+      void queryClient.invalidateQueries({ queryKey: ['employment-contract'] });
       void queryClient.invalidateQueries({ queryKey: [TASKHISTORY, taskId] });
     },
   });

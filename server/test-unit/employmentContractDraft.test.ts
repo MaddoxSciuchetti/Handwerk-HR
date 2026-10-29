@@ -1,5 +1,8 @@
 import {
     getEngagementContract,
+    freezePrintedContract,
+    downloadPrintedContract,
+    persistMatchedContractValues,
     resyncEngagementContractFromQuestionnaire,
     saveEngagementContractDraft,
 } from "@/services/employmentContract.service";
@@ -19,6 +22,7 @@ jest.mock("@/lib/prisma", () => ({
         employmentContractValue: {
             deleteMany: jest.fn(),
             createMany: jest.fn(),
+            upsert: jest.fn(),
         },
         $transaction: jest.fn(),
         $queryRaw: jest.fn(),
@@ -41,6 +45,7 @@ jest.mock("@/services/preparedDocument", () => ({
     currentPreparation: jest.fn().mockResolvedValue(null),
     DeliveryRejected: class extends Error {},
 }));
+jest.mock("@/services/documentPdf", () => ({ generateDocumentPdf: jest.fn() }));
 jest.mock("@/utils/sendMail", () => ({ sendMail: jest.fn() }));
 jest.mock("@/services/graphMail", () => ({ sendGraphMail: jest.fn() }));
 jest.mock("@/config/aws", () => ({ generatePresignedUrl: jest.fn() }));
@@ -616,4 +621,75 @@ it("invalidates the prepared PDF when saved values change", async () => {
     expect(contract.values).toEqual([
         expect.objectContaining({ key: "contract.vorname", value: "Grace" }),
     ]);
+});
+
+
+describe("printed contract snapshots", () => {
+    it("keeps the paper wording and worker values after later master edits", async () => {
+        contract.values = [{ key: "contract.vorname", value: "Ada" }];
+        await freezePrintedContract(prisma as any, "eng");
+        const frozenBody = structuredClone(contract.body);
+        contract.master.body = fromSegments([{ type: "text", text: "Changed master" }]);
+        const view = await getEngagementContract(params);
+        expect(view).toMatchObject({
+            followsMaster: false,
+            status: "ready",
+            sentAt: null,
+            document: frozenBody,
+            values: { "contract.vorname": "Ada" },
+            prepared: null,
+        });
+        expect(view?.printedAt).toBeTruthy();
+        await expect(saveEngagementContractDraft({ ...params, values: {} })).rejects.toThrow();
+        await expect(resyncEngagementContractFromQuestionnaire(params)).rejects.toThrow();
+        await persistMatchedContractValues(prisma as any, {
+            contractId: "contract", entries: [{ key: "contract.vorname", value: "Changed" }], masterRevision: 2,
+        });
+        expect(prisma.employmentContractValue.deleteMany).not.toHaveBeenCalled();
+    });
+
+    it("does not replace an existing snapshot when completion is repeated", async () => {
+        await freezePrintedContract(prisma as any, "eng");
+        const firstPrint = contract.printedAt;
+        const firstBody = structuredClone(contract.body);
+        contract.master.body = fromSegments([{ type: "text", text: "Changed master" }]);
+        await freezePrintedContract(prisma as any, "eng");
+        expect(contract.printedAt).toBe(firstPrint);
+        expect(contract.body).toEqual(firstBody);
+        expect(prisma.employmentContract.update).toHaveBeenCalledTimes(1);
+    });
+
+    it("downloads from the frozen body and values instead of the latest master", async () => {
+        const { generateDocumentPdf } = await import("@/services/documentPdf");
+        const bytes = Buffer.from("frozen-pdf");
+        (generateDocumentPdf as jest.Mock).mockResolvedValue({ bytes });
+        contract.values = [{ key: "contract.vorname", value: "Ada" }];
+        await freezePrintedContract(prisma as any, "eng");
+        const frozenBody = structuredClone(contract.body);
+        contract.master.body = fromSegments([{ type: "text", text: "Changed master" }]);
+        expect(await downloadPrintedContract(params)).toBe(bytes);
+        expect(generateDocumentPdf).toHaveBeenCalledWith(frozenBody, { "contract.vorname": "Ada" });
+    });
+});
+
+
+it("keeps automatic dates on the day the print task was completed", async () => {
+    jest.useFakeTimers().setSystemTime(new Date("2026-10-29T12:00:00Z"));
+    try {
+        contract.master.body = fromSegments([{
+            type: "input", key: "contract.datum", label: "Datum", fieldType: "date", dateMode: "today",
+        }]);
+        (prisma.employmentContractValue.upsert as jest.Mock).mockImplementation(async ({ create }) => {
+            contract.values.push(create);
+            return create;
+        });
+        await freezePrintedContract(prisma as any, "eng");
+        const printed = await getEngagementContract(params);
+        jest.setSystemTime(new Date("2026-11-01T12:00:00Z"));
+        const later = await getEngagementContract(params);
+        expect(printed?.values["contract.datum"]).toBeTruthy();
+        expect(later?.values).toEqual(printed?.values);
+    } finally {
+        jest.useRealTimers();
+    }
 });
