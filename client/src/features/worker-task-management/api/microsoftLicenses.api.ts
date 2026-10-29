@@ -15,3 +15,9 @@ export function getMicrosoftLicenseAvailability() {
     }>('/automation/microsoft-365/licenses')
     .then((response) => response.data);
 }
+
+export function pingMicrosoftLicenseAdmin(engagementId: string) {
+  return apiJson.post<{ success: boolean }>(
+    `/automation/engagements/${encodeURIComponent(engagementId)}/microsoft-license-ping`
+  );
+}
