@@ -183,12 +183,11 @@ export function PersonnelDocumentFolders({
             />
           ))}
         <EngagementContractList workerId={workerId} contracts={contracts} />
-        {engagements.map((engagement, index) => (
+        {engagements.map((engagement) => (
           <EngagementTemplateDocuments
             key={engagement.id}
             workerId={workerId}
             engagementId={engagement.id}
-            showCreate={index === 0}
           />
         ))}
         <EngagementCertificateList certificates={certificates} />
