@@ -35,9 +35,6 @@ vi.mock('@/hooks/useBodyScrollLock', () => ({ useBodyScrollLock: vi.fn() }));
 vi.mock('@/features/worker-lifecycle/components/GreetingHeader', () => ({
   default: () => null,
 }));
-vi.mock('@/features/worker-lifecycle/components/LifecycleStatistics', () => ({
-  LifecycleStatistics: () => null,
-}));
 vi.mock('@/features/worker-lifecycle/components/WorkerSidebar', () => ({
   WorkerSidebar: () => null,
 }));

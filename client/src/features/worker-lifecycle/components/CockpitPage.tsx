@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query';
 import { workerLifecycleQueries } from '../query-options/queries/worker-lifycycle.queries';
 import { isTeamMember } from '../utils/teamMembers';
 import GreetingHeader from './GreetingHeader';
-import { LifecycleStatistics } from './LifecycleStatistics';
 import NextAnniversary from './NextAnniversary';
 
 export default function CockpitPage() {
@@ -25,7 +24,6 @@ export default function CockpitPage() {
         people={(workers ?? []).filter((worker) => isTeamMember(worker))}
         isLoading={isLoading || workersLoading}
       />
-      <LifecycleStatistics />
     </div>
   );
 }
