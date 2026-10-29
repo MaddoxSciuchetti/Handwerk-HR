@@ -1,6 +1,7 @@
 import { createRoot } from 'react-dom/client';
 import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { stickyTableHeaderClassName } from '@/components/ui/scrollable-table-viewport';
 import {
   TableBody,
   TableHead,
@@ -21,6 +22,7 @@ const queryClient = new QueryClient();
 export function Harness() {
   const [type, setType] = useState<EngagementType>('transfer');
   const [pending, setPending] = useState(false);
+  const [headerScrolled, setHeaderScrolled] = useState(false);
   const team = new URLSearchParams(location.search).has('team');
   const workers = Array.from({ length: 16 }, (_, index) => ({
     id: `worker-${index}`,
@@ -43,10 +45,19 @@ export function Harness() {
       <div
         data-testid="viewport"
         className="h-96 overflow-auto [scrollbar-gutter:stable]"
+        data-scrolled={headerScrolled ? '' : undefined}
+        onScroll={(event) => {
+          const next = event.currentTarget.scrollTop > 0;
+          setHeaderScrolled((previous) =>
+            previous === next ? previous : next
+          );
+        }}
       >
         <WorkerTable hideTaskColumns={team}>
-          <TableHeader>
-            <TableRow>
+          <TableHeader
+            className={`${stickyTableHeaderClassName(headerScrolled)} [&_tr]:border-b-0`}
+          >
+            <TableRow className="border-0 hover:bg-transparent">
               {[
                 'Name',
                 'Typ',

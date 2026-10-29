@@ -11,6 +11,30 @@ async function geometry(page: Page) {
   );
 }
 
+test('keeps the header bar stuck to the top of the table viewport while scrolling', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1100, height: 720 });
+  await page.goto('/test-e2e/fixtures/worker-table-layout.html');
+  await page.evaluate(() => document.fonts.ready);
+  const viewport = page.getByTestId('viewport');
+  const headerTopBefore = await page.locator('thead').evaluate((header) => {
+    return header.getBoundingClientRect().top;
+  });
+  await viewport.evaluate((node) => {
+    node.scrollTop = node.scrollHeight;
+    node.dispatchEvent(new Event('scroll'));
+  });
+  const headerTopAfter = await page.locator('thead').evaluate((header) => {
+    return header.getBoundingClientRect().top;
+  });
+  expect(headerTopAfter).toBe(headerTopBefore);
+  expect(
+    await viewport.evaluate((node) => node.scrollTop > 0)
+  ).toBe(true);
+  await expect(viewport).toHaveAttribute('data-scrolled', '');
+});
+
 for (const width of [1100, 800]) {
   for (const team of [false, true]) {
     test(`keeps columns and rows stable at ${width}px with ${team ? 'three' : 'five'} columns`, async ({
