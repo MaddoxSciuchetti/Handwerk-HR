@@ -8,19 +8,23 @@ vi.mock('@/features/all-tasks/components/ui/TaskStatusPicker', () => ({
   TaskStatusPicker: () => null,
 }));
 
-it.each(['open', 'done'] as const)(
-  'opens the contract from a %s task with mouse and keyboard',
-  async (status) => {
+it.each([
+  ['contract_send', 'open'],
+  ['contract_send', 'done'],
+  ['contract_confirm', 'open'],
+  ['contract_confirm', 'done'],
+] as const)(
+  'opens the sidebar for a %s task that is %s with mouse and keyboard',
+  async (kind, status) => {
     const task = {
       id: 'contract-task',
       workerEngagementId: 'engagement',
       title: 'Arbeitsvertrag drucken',
-      kind: 'contract_send',
+      kind,
       status,
       priority: 'medium',
       createdAt: '2026-10-28T10:00:00Z',
     } as IssueResponse;
-    const onOpenContractSend = vi.fn();
     const onOpenEdit = vi.fn();
     const user = userEvent.setup();
     render(
@@ -30,7 +34,6 @@ it.each(['open', 'done'] as const)(
             task={task}
             isSelected={false}
             onOpenEdit={onOpenEdit}
-            onOpenContractSend={onOpenContractSend}
             setLargeEditMode={vi.fn()}
             setEditModeData={vi.fn()}
           />
@@ -41,10 +44,15 @@ it.each(['open', 'done'] as const)(
       name: 'Arbeitsvertrag drucken öffnen',
     });
     await user.click(row);
-    expect(onOpenContractSend).toHaveBeenLastCalledWith(task);
+    expect(onOpenEdit).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        taskId: task.id,
+        workerEngagementId: 'engagement',
+      })
+    );
     row.focus();
     await user.keyboard('{Enter}');
-    expect(onOpenContractSend).toHaveBeenCalledTimes(2);
-    expect(onOpenEdit).not.toHaveBeenCalled();
+    await user.keyboard(' ');
+    expect(onOpenEdit).toHaveBeenCalledTimes(3);
   }
 );

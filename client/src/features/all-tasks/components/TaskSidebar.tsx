@@ -43,6 +43,7 @@ type TaskSidebarProps = {
   setIsOpen: Dispatch<SetStateAction<boolean>>;
   taskState: 'create' | 'edit';
   taskEditState: TaskEditState;
+  onOpenContract?: () => void;
   onOpenArbeitszeugnis?: (taskId: string) => void;
   showWorkerLink?: boolean;
 };
@@ -52,6 +53,7 @@ export function TaskSidebar({
   setIsOpen,
   taskState,
   taskEditState,
+  onOpenContract,
   onOpenArbeitszeugnis,
   showWorkerLink = true,
 }: TaskSidebarProps) {
@@ -326,6 +328,21 @@ export function TaskSidebar({
                   </Button>
                 ) : null}
               </div>
+
+              {taskState === 'edit' &&
+              taskEditState.taskId &&
+              onOpenContract ? (
+                <Button
+                  type="button"
+                  className="self-start rounded-2xl"
+                  disabled={isSubmitting}
+                  onClick={async () => {
+                    if (await flushAutoSave()) onOpenContract();
+                  }}
+                >
+                  Arbeitsvertrag öffnen
+                </Button>
+              ) : null}
 
               {taskState === 'edit' && taskEditState.taskId ? (
                 <>

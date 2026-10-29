@@ -281,6 +281,24 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
       !engagement.questionnaireSubmission
   );
 
+  const selectedTask = allTasks.find(
+    (task) => task.id === sidebarProps.taskEditState.taskId
+  );
+  const openContract =
+    selectedTask &&
+    (selectedTask.kind === 'contract_send' ||
+      selectedTask.kind === 'contract_confirm') &&
+    selectedTask.workerEngagementId
+      ? () => {
+          const target = {
+            engagementId: selectedTask.workerEngagementId!,
+            issueId: selectedTask.id,
+          };
+          if (selectedTask.kind === 'contract_confirm') setContractConfirm(target);
+          else setContractSend(target);
+        }
+      : undefined;
+
   return (
     <div
       className={cn(
@@ -292,6 +310,7 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
         key={sidebarKey}
         {...sidebarProps}
         showWorkerLink={false}
+        onOpenContract={openContract}
         onOpenArbeitszeugnis={setZeugnisIssueId}
       />
       {contractSend ? (
@@ -474,18 +493,6 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                             (item) => item.taskNumber === task.id
                           )}
                           onOpenEdit={openForEdit}
-                          onOpenContractSend={() =>
-                            setContractSend({
-                              engagementId: task.workerEngagementId,
-                              issueId: task.id,
-                            })
-                          }
-                          onOpenContractConfirm={() =>
-                            setContractConfirm({
-                              engagementId: task.workerEngagementId,
-                              issueId: task.id,
-                            })
-                          }
                           setLargeEditMode={setLargeEditMode}
                           setEditModeData={handleSetEditModeData}
                         />
