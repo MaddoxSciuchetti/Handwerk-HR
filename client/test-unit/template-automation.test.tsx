@@ -297,7 +297,7 @@ describe('template automation popup', () => {
     await user.click(screen.getByRole('button', { name: 'Microsoft-Konto' }));
     const account = screen.getByRole('group', { name: 'Microsoft-Konto' });
     expect(
-      await within(account).findByText('Microsoft 365 - 2/5')
+      await within(account).findByText('Microsoft 365 - 3')
     ).toBeInTheDocument();
   });
   it('supports creation with and without automation', async () => {

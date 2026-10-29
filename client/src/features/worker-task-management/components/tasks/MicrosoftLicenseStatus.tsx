@@ -24,7 +24,9 @@ export function MicrosoftLicenseStatus({
     ? 'Wird geladen…'
     : error
       ? 'Nicht verfügbar'
-      : `${licenses.data?.occupied ?? '–'}/${licenses.data?.occupied != null && count != null ? licenses.data.occupied + count : '–'}`;
+      : count == null
+        ? '–'
+        : String(count);
   return (
     <p
       className={`text-xs whitespace-nowrap ${count === 0 || error ? 'text-destructive' : 'text-muted-foreground'}`}
