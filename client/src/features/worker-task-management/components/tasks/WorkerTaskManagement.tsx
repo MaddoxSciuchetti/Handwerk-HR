@@ -31,6 +31,7 @@ import { LargeEditMode } from '@/features/all-tasks/components/LargeEditMode';
 import { TaskItem } from '@/features/all-tasks/components/TaskItem';
 import { TaskSidebar } from '@/features/all-tasks/components/TaskSidebar';
 import { useTaskSidebar } from '@/features/all-tasks/hooks/useTaskSidebar';
+import { storedTaskAutomation } from '@/features/all-tasks/consts/task-automation.consts';
 import {
   clearContractSendReturn,
   peekContractSendReturn,
@@ -67,6 +68,7 @@ import { TemplateApplyPrompt } from './TemplateApplyPrompt';
 
 type TaskManagementProps = {
   workerId: string;
+  taskId?: string;
 };
 
 const sectionHeaderClassName = 'h-12 py-3 pl-12 pr-2 text-sm font-medium';
@@ -81,7 +83,7 @@ function defaultTabForWorker(workerId: string): WorkerTab {
   return cachedEngagementType(workerId) === 'transfer' ? 'information' : 'form';
 }
 
-const TaskManagement = ({ workerId }: TaskManagementProps) => {
+const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
   const taskQueryClient = useQueryClient();
   const [selectedTab, setActiveTab] = useState<WorkerTab>(() =>
     defaultTabForWorker(workerId)
@@ -152,11 +154,17 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
   );
   const { displayData: allTasks } = useFilteredData(data);
   const engagements = data?.data.engagements ?? [];
+  const linkedTask = allTasks.find((task) => task.id === taskId);
+  const linkedEngagement = linkedTask
+    ? engagements.find(
+        (engagement) => engagement.id === linkedTask.workerEngagementId
+      )
+    : undefined;
   const hasOffboarding = engagements.some(
     (engagement) => engagement.type === 'offboarding'
   );
   const currentType = engagements[0]?.type ?? listType;
-  const isTeam = currentType === 'transfer';
+  const isTeam = currentType === 'transfer' && !linkedTask;
   const activeTab =
     isTeam && selectedTab === 'form' ? 'information' : selectedTab;
   const phaseKey = `${workerId}:${engagements[0]?.id}:${currentType}:${engagements
@@ -227,6 +235,34 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
     openForCreate,
     patchTaskEditState,
   } = useTaskSidebar();
+  const openedTaskLink = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!taskId) {
+      openedTaskLink.current = null;
+      return;
+    }
+    const linkKey = `${workerId}:${taskId}`;
+    if (!linkedTask || !linkedEngagement || openedTaskLink.current === linkKey)
+      return;
+    openedTaskLink.current = linkKey;
+    setActiveTab('form');
+    const phase = taskPhaseForType(linkedEngagement.type);
+    if (phase !== 'team') setPhaseSelection({ key: phaseKey, phase });
+    openForEdit({
+      taskId: linkedTask.id,
+      title: linkedTask.title,
+      workerEngagementId: linkedTask.workerEngagementId,
+      assigneeUserId: linkedTask.assigneeUserId ?? '',
+      status: linkedTask.status,
+      automation: storedTaskAutomation(linkedTask.automation),
+      integrationProvider: linkedTask.integrationProvider ?? null,
+      sequence: linkedTask.sequence ?? null,
+      mailTemplateId: linkedTask.mailTemplateId ?? null,
+      mailSenderAddress: linkedTask.mailSenderAddress ?? null,
+      microsoftAccountId: linkedTask.microsoftAccountId ?? null,
+    });
+  }, [taskId, workerId, linkedTask, linkedEngagement, phaseKey, openForEdit]);
 
   useEffect(() => {
     if (!sidebarProps.isOpen || sidebarProps.taskState !== 'edit') return;
