@@ -138,8 +138,6 @@ function WorkerFileUploads({
               <PersonnelDocumentUploadForm
                 setModal={setIsUploadModalOpen}
                 workerId={workerId}
-                engagements={engagements}
-                folders={folders}
               />
             </div>
           </SheetContent>
