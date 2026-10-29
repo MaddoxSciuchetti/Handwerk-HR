@@ -21,31 +21,12 @@ export function useSaveDocumentMaster(id: string) {
       queryClient.setQueryData<DocumentMasterDetail>(
         [DOCUMENT_MASTERS_KEY, id],
         (previous) => {
-          // The original upload is immutable. Retain its still-valid URL so a
-          // newly signed URL does not reload the comparison iframe on every save.
-          let sourceUrl = saved.sourceUrl;
-          if (previous?.sourceUrl) {
-            const previousUrl = new URL(
-              previous.sourceUrl,
-              window.location.origin
-            );
-            const date = previousUrl.searchParams.get('X-Amz-Date');
-            const seconds = Number(
-              previousUrl.searchParams.get('X-Amz-Expires')
-            );
-            const issued =
-              date && /^\d{8}T\d{6}Z$/.test(date)
-                ? Date.parse(
-                    `${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6, 8)}T${date.slice(9, 11)}:${date.slice(11, 13)}:${date.slice(13, 15)}Z`
-                  )
-                : null;
-            if (
-              issued === null ||
-              issued + seconds * 1000 > Date.now() + 60_000
-            )
-              sourceUrl = previous.sourceUrl;
-          }
-          return { ...previous, ...saved, sourceUrl };
+          // Saving does not change the original upload or sign another URL.
+          return {
+            ...previous,
+            ...saved,
+            sourceUrl: saved.sourceUrl ?? previous?.sourceUrl,
+          };
         }
       );
       // The saved detail is already authoritative. Refresh only the list, not
@@ -53,6 +34,26 @@ export function useSaveDocumentMaster(id: string) {
       queryClient.invalidateQueries({
         queryKey: [DOCUMENT_MASTERS_KEY],
         exact: true,
+      });
+      // Drafts follow the master in the database. Refresh them on their next
+      // mount rather than leaving the previous master in the client cache.
+      // Do not replace local values in any currently open child editor.
+      void queryClient.invalidateQueries({
+        predicate: ({ queryKey, state }) => {
+          if (
+            !['employment-contract', 'template-document'].includes(
+              String(queryKey[0])
+            )
+          )
+            return false;
+          const draft = state.data as
+            | { masterId?: string; sentAt?: string | null; status?: string }
+            | undefined;
+          return (
+            draft?.masterId === id && !draft.sentAt && draft.status !== 'signed'
+          );
+        },
+        refetchType: 'none',
       });
     },
   });
