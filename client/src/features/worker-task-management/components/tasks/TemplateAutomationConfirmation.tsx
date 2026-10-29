@@ -295,7 +295,7 @@ export function TemplateAutomationConfirmation({
                       </p>
                     </FieldRow>
                     {item.sequence === 'microsoft_create_account' && (
-                      <MicrosoftLicenseStatus />
+                      <MicrosoftLicenseStatus key={engagementId} engagementId={engagementId} />
                     )}
                     {(isMail || isTeams) && (
                       <FieldRow label="Absender">
