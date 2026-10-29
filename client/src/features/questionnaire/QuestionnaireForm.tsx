@@ -255,7 +255,7 @@ export function QuestionnaireForm({
       className={
         embedded
           ? undefined
-          : 'h-full overflow-y-auto px-2 py-4 sm:px-4 sm:py-8'
+          : 'min-h-dvh px-2 py-4 sm:px-4 sm:py-8'
       }
     >
       <div
