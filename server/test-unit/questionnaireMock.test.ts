@@ -35,10 +35,32 @@ it("produces valid answers for the complete built-in questionnaire", () => {
     expect(answers).toMatchObject({
         firstName: "Lukas",
         lastName: "Muster",
-        street: "Musterstraße 12",
+        street: "Lindenstraße 12",
         birthday: "1990-04-01",
         jobTitle: "Anlagenmechaniker",
+        employeeNumber: "1042",
+        healthInsurance: "Techniker Krankenkasse",
+        otherJobs: "nein",
+        marginalJob: "nein",
+        schoolDegree: "Mittlere Reife/gleichwertiger Abschluss",
+        vocationalDegree: "Anerkannte Berufsausbildung",
+        trainingStart: "2007-08-01",
+        trainingEnd: "2010-07-31",
     });
+});
+
+it("uses a realistic fictional identity when no email is supplied", () => {
+    const values = mockQuestionnaireValues(
+        definitionFields(seedQuestionnaireDefinition()),
+    );
+    expect(values).toMatchObject({
+        firstName: "Lukas",
+        lastName: "Adler",
+        birthday: "1990-04-01",
+        insuranceNumber: "10010490A443",
+        birthName: "Adler",
+    });
+    expect(Object.values(values).join(" ")).not.toMatch(/Testwert|Muster|MOCK-|Staging|Demo/);
 });
 
 it("respects prefilled values, custom choices and field lengths", () => {
@@ -52,7 +74,7 @@ it("respects prefilled values, custom choices and field lengths", () => {
         firstName: "Vorausgefüllt",
         "custom.choice": "Spät",
         "custom.check": "Montage",
-        "custom.short": "Test",
+        "custom.short": "Kein",
     });
 });
 

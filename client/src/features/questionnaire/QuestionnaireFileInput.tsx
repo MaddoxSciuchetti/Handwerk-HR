@@ -66,12 +66,12 @@ export function QuestionnaireFileInput({
         accept="application/pdf,image/jpeg,image/png,image/webp"
         disabled={disabled || !token}
         aria-label={question.label}
-        className="text-sm file:mr-3 file:rounded-md file:border file:border-input file:bg-background file:px-3 file:py-1.5"
+        className="w-full min-w-0 text-sm file:mr-3 file:rounded-md file:border file:border-input file:bg-background file:px-3 file:py-1.5"
         onChange={(event) => {
           void upload(event.target.files?.[0]);
         }}
       />
-      {name ? <p className="text-sm">{name}</p> : null}
+      {name ? <p className="text-sm break-all">{name}</p> : null}
       {!token ? (
         <p className="text-xs text-muted-foreground">
           Die Datei wird beim Ausfüllen hochgeladen.

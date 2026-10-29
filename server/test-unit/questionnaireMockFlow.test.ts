@@ -153,7 +153,7 @@ it.each([true, false])("updates worker and contract without duplicating print ta
             firstName: "Lukas",
             lastName: "Muster",
             birthday: new Date("1990-04-01"),
-            street: "Musterstraße 12",
+            street: "Lindenstraße 12",
             position: "Anlagenmechaniker",
             entryDate: expect.any(Date),
         }),
@@ -163,7 +163,7 @@ it.each([true, false])("updates worker and contract without duplicating print ta
         masterRevision: 1,
         entries: expect.arrayContaining([
             { key: "contract.name", value: "Lukas Muster" },
-            { key: "contract.address", value: "Musterstraße 12, 10115 Berlin" },
+            { key: "contract.address", value: "Lindenstraße 12, 10115 Berlin" },
             { key: "contract.birthday", value: "01.04.1990" },
         ]),
     });

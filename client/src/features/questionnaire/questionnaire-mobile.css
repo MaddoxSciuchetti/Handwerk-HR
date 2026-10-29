@@ -1,0 +1,37 @@
+.questionnaire-form fieldset {
+  min-width: 0;
+}
+
+.questionnaire-form legend,
+.questionnaire-form label,
+.questionnaire-form h2 {
+  overflow-wrap: anywhere;
+}
+
+@media (width < 40rem) {
+  .questionnaire-form input:not([type='checkbox']):not([type='radio']),
+  .questionnaire-form button {
+    min-height: 2.75rem;
+  }
+
+  .questionnaire-form input:not([type='checkbox']):not([type='radio']) {
+    font-size: 1rem;
+  }
+
+  .questionnaire-form label:has(input[type='radio']),
+  .questionnaire-form label:has(input[type='checkbox']) {
+    min-height: 2.75rem;
+    padding-block: 0.5rem;
+  }
+
+  .questionnaire-form input[type='radio'],
+  .questionnaire-form input[type='checkbox'] {
+    width: 1.25rem;
+    height: 1.25rem;
+    flex-shrink: 0;
+  }
+
+  .questionnaire-form input[type='file']::file-selector-button {
+    min-height: 2.75rem;
+  }
+}
