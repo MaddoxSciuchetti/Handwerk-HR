@@ -216,6 +216,32 @@ it("matches a custom-only questionnaire without requiring removed personal-data 
     ).toEqual([{ key: "contract.schicht", value: "Früh" }]);
 });
 
+it("maps Urlaubsanspruch and Gehalt questionnaire answers onto differently labelled contract fields", () => {
+    expect(
+        deterministicContractValues(
+            [
+                { type: "input", key: "contract.urlaubstage", label: "Urlaubstage" },
+                { type: "input", key: "contract.gehalt", label: "Gehalt" },
+            ],
+            {
+                "custom.urlaubsanspruch": "30",
+                "custom.bsb-salary": "4200",
+            } as unknown as QuestionnaireAnswers,
+            "",
+            [
+                {
+                    key: "custom.urlaubsanspruch",
+                    label: "Urlaubsanspruch (Kalenderjahr)",
+                },
+                { key: "custom.bsb-salary", label: "Gehalt" },
+            ],
+        ),
+    ).toEqual([
+        { key: "contract.urlaubstage", value: "30" },
+        { key: "contract.gehalt", value: "4200" },
+    ]);
+});
+
 describe("questionnaire checkbox values", () => {
     const checkbox: DocumentSegment = {
         type: "input",
