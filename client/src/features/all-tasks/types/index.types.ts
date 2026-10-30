@@ -9,7 +9,6 @@ export type EngagementResponse = {
   workerLastName: string;
   microsoftAccountId?: string | null;
   scheduledDeactivateAt?: string | null;
-  scheduledDeactivateTestAt?: string | null;
 };
 
 export type ListEngagementsResponse = {
@@ -37,7 +36,6 @@ export type IssueResponse = {
   mailSenderAddress?: string | null;
   microsoftAccountId?: string | null;
   scheduledDeactivateAt?: string | null;
-  scheduledDeactivateTestAt?: string | null;
   kind: 'standard' | 'contract_send' | 'contract_confirm';
   isTemporary: boolean;
   assigneeOnly?: boolean;

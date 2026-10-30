@@ -354,7 +354,6 @@ model Issue {
   automationRecipients Json? @map("automation_recipients")
 
   scheduledDeactivateAt DateTime? @map("scheduled_deactivate_at") @db.Date
-  scheduledDeactivateTestAt DateTime? @map("scheduled_deactivate_test_at") @db.Timestamptz()
   scheduledDeactivateByUserId String? @map("scheduled_deactivate_by_user_id")
   deactivationClaimToken String? @map("deactivation_claim_token")
   deactivationClaimUntil DateTime? @map("deactivation_claim_until") @db.Timestamptz()
@@ -387,7 +386,6 @@ model Issue {
   @@index([status])
   @@index([mailTemplateId])
   @@index([scheduledDeactivateAt])
-  @@index([scheduledDeactivateTestAt])
   @@map("issues")
 }
 
