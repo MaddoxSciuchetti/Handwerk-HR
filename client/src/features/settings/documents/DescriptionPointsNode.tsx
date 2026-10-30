@@ -6,6 +6,7 @@ import {
   type NodeViewProps,
 } from '@tiptap/react';
 import { DescriptionPointsEditor } from './components/DescriptionPointsEditor';
+import { DocumentFieldRemove } from './components/DocumentFieldRemove';
 import { DocumentValuesContext } from './DocumentValuesContext';
 
 function MasterDescriptionPoints({
@@ -41,7 +42,11 @@ function MasterDescriptionPoints({
   );
 }
 
-function DescriptionPointsView({ node, updateAttributes }: NodeViewProps) {
+function DescriptionPointsView({
+  node,
+  updateAttributes,
+  deleteNode,
+}: NodeViewProps) {
   const context = useContext(DocumentValuesContext);
   const key = String(node.attrs.key);
   const label = String(node.attrs.label);
@@ -49,7 +54,7 @@ function DescriptionPointsView({ node, updateAttributes }: NodeViewProps) {
     <NodeViewWrapper
       as="div"
       contentEditable={false}
-      className="my-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2"
+      className="group/document-field relative my-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-slate-900"
       data-description-points=""
     >
       {context.master ? (
@@ -74,6 +79,9 @@ function DescriptionPointsView({ node, updateAttributes }: NodeViewProps) {
           />
         </>
       )}
+      {!context.readOnly ? (
+        <DocumentFieldRemove label={label} onRemove={deleteNode} />
+      ) : null}
     </NodeViewWrapper>
   );
 }

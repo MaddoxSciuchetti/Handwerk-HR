@@ -67,7 +67,7 @@ export function DescriptionSentenceSelect({
       <PopoverAnchor asChild>
         <div
           ref={anchorRef}
-          className="flex min-w-0 flex-1 items-center rounded-md border border-input bg-background"
+          className="flex min-w-0 flex-1 items-center rounded-md border border-input bg-background text-foreground"
         >
           <input
             ref={inputRef}

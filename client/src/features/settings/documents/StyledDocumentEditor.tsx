@@ -78,7 +78,7 @@ export function StyledDocumentEditor({
       <div
         className={
           framed
-            ? 'flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-card'
+            ? 'flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-card text-card-foreground'
             : 'flex min-h-0 min-w-0 flex-1 flex-col gap-2'
         }
       >

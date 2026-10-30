@@ -12,6 +12,7 @@ import {
 import { useQuestionnaireAnswerDrop } from '@/features/worker-task-management/components/files/questionnaireAnswerDrag';
 
 import { DocumentFieldDetails } from './components/DocumentFieldDetails';
+import { DocumentFieldRemove } from './components/DocumentFieldRemove';
 import { DocumentValuesContext } from './DocumentValuesContext';
 
 type InlineValueProps = {
@@ -132,7 +133,12 @@ function MasterDocumentField({
   );
 }
 
-function DocumentFieldView({ node, updateAttributes, editor }: NodeViewProps) {
+function DocumentFieldView({
+  node,
+  updateAttributes,
+  editor,
+  deleteNode,
+}: NodeViewProps) {
   const context = useContext(DocumentValuesContext);
   const key = String(node.attrs.key);
   const label = String(node.attrs.label);
@@ -171,7 +177,7 @@ function DocumentFieldView({ node, updateAttributes, editor }: NodeViewProps) {
     <NodeViewWrapper
       as="span"
       {...answerDrop}
-      className={`inline-block max-w-full align-baseline whitespace-nowrap ${answerDrop.className}`}
+      className={`group/document-field relative inline-block max-w-full align-baseline whitespace-nowrap ${context.readOnly ? '' : 'pr-4'} ${answerDrop.className}`}
       style={{ whiteSpace: 'nowrap' }}
       contentEditable={false}
     >
@@ -286,6 +292,9 @@ function DocumentFieldView({ node, updateAttributes, editor }: NodeViewProps) {
           onChange={(e) => context.onValueChange(key, e.target.value)}
         />
       )}
+      {!context.readOnly ? (
+        <DocumentFieldRemove label={label} onRemove={deleteNode} />
+      ) : null}
     </NodeViewWrapper>
   );
 }
