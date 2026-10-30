@@ -1,11 +1,9 @@
-import { timingSafeEqual } from "node:crypto";
-import type { RequestHandler } from "express";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import catchErrors from "@/utils/catchErrors";
 import appAssert from "@/utils/appAssert";
 import { BAD_REQUEST } from "@/constants/http";
-import { CRON_SECRET } from "@/constants/env";
+import { requireCronSecret } from "@/middleware/requireCronSecret";
 import {
     berlinToday,
     DEACTIVATION_SEQUENCES,
@@ -15,20 +13,7 @@ import {
 } from "@/services/integrations/deactivationSchedule";
 import { runIssueSequence } from "@/services/integrations/runSequence";
 
-export const requireCronSecret: RequestHandler = (req, res, next) => {
-    const expected = CRON_SECRET();
-    const received = req.get("Authorization") ?? "";
-    const wanted = `Bearer ${expected}`;
-    if (
-        !expected ||
-        Buffer.byteLength(received) !== Buffer.byteLength(wanted) ||
-        !timingSafeEqual(Buffer.from(received), Buffer.from(wanted))
-    ) {
-        res.status(401).json({ success: false });
-        return;
-    }
-    next();
-};
+export { requireCronSecret };
 export const getDeactivationSchedule = catchErrors(async (req, res) => {
     appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
     res.json({
