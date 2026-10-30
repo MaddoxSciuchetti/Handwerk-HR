@@ -8,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { AddWorkerColumn } from '@/features/worker-lifecycle/components/AddWorkerColumn';
 import { WorkerTable } from '@/features/worker-lifecycle/components/WorkerTable';
 import ProjectItem from '@/features/worker-lifecycle/components/ProjectItem';
 import type {
@@ -22,12 +23,14 @@ const queryClient = new QueryClient();
 export function Harness() {
   const [type, setType] = useState<EngagementType>('transfer');
   const [pending, setPending] = useState(false);
+  const [showAnniversary, setShowAnniversary] = useState(false);
   const [headerScrolled, setHeaderScrolled] = useState(false);
   const team = new URLSearchParams(location.search).has('team');
   const workers = Array.from({ length: 16 }, (_, index) => ({
     id: `worker-${index}`,
     firstName: index ? `Worker ${index}` : 'Alexandra',
     lastName: 'Example',
+    entryDate: index ? '2017-03-04' : '2022-11-12',
     engagements: [
       {
         id: `phase-${index}`,
@@ -53,7 +56,7 @@ export function Harness() {
           );
         }}
       >
-        <WorkerTable hideTaskColumns={team}>
+        <WorkerTable hideTaskColumns={team} showAnniversary={showAnniversary}>
           <TableHeader className="[&_tr]:border-b-0">
             <TableRow className="border-0 hover:bg-transparent">
               {[
@@ -61,12 +64,17 @@ export function Harness() {
                 'Typ',
                 'Verantwortlich',
                 ...(!team ? ['Aufgaben', 'Status'] : []),
+                ...(showAnniversary ? ['Anniversary'] : []),
               ].map((name) => (
                 <TableHead
                   key={name}
-                  className={stickyTableHeadClassName(headerScrolled)}
+                  className={`relative pr-10 ${stickyTableHeadClassName(headerScrolled)}`}
                 >
                   {name}
+                  {!showAnniversary &&
+                    name === (team ? 'Verantwortlich' : 'Status') && (
+                      <AddWorkerColumn onAdd={() => setShowAnniversary(true)} />
+                    )}
                 </TableHead>
               ))}
             </TableRow>
@@ -77,6 +85,7 @@ export function Harness() {
                 key={worker.id}
                 worker={worker}
                 hideTaskColumns={team}
+                showAnniversary={showAnniversary}
                 gotopage={() => undefined}
                 isSelected={false}
                 setLargeEditMode={() => undefined}

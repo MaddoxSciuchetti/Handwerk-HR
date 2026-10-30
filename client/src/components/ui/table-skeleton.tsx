@@ -103,6 +103,15 @@ export function TableSkeletonRows({
     }
   };
 
+  const rowCells = (row: number) => {
+    const content = cells(row);
+    const count = columns ?? content.length;
+    return Array.from(
+      { length: count },
+      (_, column) => content[column] ?? line('w-24')
+    );
+  };
+
   return Array.from({ length: rows }, (_, row) => (
     <TableRow
       key={row}
@@ -112,26 +121,24 @@ export function TableSkeletonRows({
           : 'border-0 hover:bg-transparent'
       }
     >
-      {cells(row)
-        .slice(0, columns)
-        .map((content, column) => (
-          <TableCell
-            key={column}
-            className={
-              cellClassName ??
-              (variant === 'documents' && column === 0
-                ? 'w-10 !p-0'
-                : 'px-2 py-4 first:pl-10')
-            }
-          >
-            {row === 0 && column === 0 ? (
-              <span role="status" className="sr-only">
-                Daten werden geladen…
-              </span>
-            ) : null}
-            <div aria-hidden="true">{content}</div>
-          </TableCell>
-        ))}
+      {rowCells(row).map((content, column) => (
+        <TableCell
+          key={column}
+          className={
+            cellClassName ??
+            (variant === 'documents' && column === 0
+              ? 'w-10 !p-0'
+              : 'px-2 py-4 first:pl-10')
+          }
+        >
+          {row === 0 && column === 0 ? (
+            <span role="status" className="sr-only">
+              Daten werden geladen…
+            </span>
+          ) : null}
+          <div aria-hidden="true">{content}</div>
+        </TableCell>
+      ))}
     </TableRow>
   ));
 }

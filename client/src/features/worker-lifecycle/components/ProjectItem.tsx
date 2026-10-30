@@ -5,6 +5,8 @@ import { cn } from '@/lib/utils';
 import type { Dispatch, MouseEvent, SetStateAction } from 'react';
 import { EngagementType, WorkerRecord } from '../types/index.types';
 import { getFirstFormType } from '../utils/formtype';
+import { nextCompanyAnniversary } from '../utils/companyAnniversary';
+import { formatCalendarDate } from '../utils/calendarDate';
 import { getWorkerIssueCount } from '../utils/workerHealth.utils';
 import { EngagementProgressPicker } from './ui/EngagementProgressPicker';
 import EngagementTypeSwitch from './EngagementTypeSwitch';
@@ -23,6 +25,7 @@ export type WorkerSelection = {
 type ProjectItemSharedProps = {
   worker: WorkerRecord;
   hideTaskColumns?: boolean;
+  showAnniversary?: boolean;
   gotopage: (
     taskId: string,
     form_type: LifecycleType,
@@ -76,6 +79,10 @@ function ProjectItem(props: ProjectItemProps) {
   };
 
   const issueCount = getWorkerIssueCount(worker);
+  const showAnniversary = !isTeam && props.showAnniversary;
+  const anniversary = showAnniversary
+    ? nextCompanyAnniversary(worker.entryDate)
+    : null;
 
   return (
     <TableRow
@@ -143,7 +150,14 @@ function ProjectItem(props: ProjectItemProps) {
           <TableCell
             className={cn(
               'transition-colors group-hover:bg-muted/50',
-              props.isSelected && 'bg-[var(--hover-bg)]'
+              props.hideTaskColumns &&
+                !showAnniversary &&
+                'group-hover:rounded-r-xl',
+              props.isSelected && 'bg-[var(--hover-bg)]',
+              props.isSelected &&
+                props.hideTaskColumns &&
+                !showAnniversary &&
+                'rounded-r-xl'
             )}
           >
             <ResponsibleUserPicker
@@ -166,8 +180,10 @@ function ProjectItem(props: ProjectItemProps) {
               </TableCell>
               <TableCell
                 className={cn(
-                  'transition-colors group-hover:rounded-r-xl group-hover:bg-muted/50',
-                  props.isSelected && 'rounded-r-xl bg-[var(--hover-bg)]'
+                  'transition-colors group-hover:bg-muted/50',
+                  !showAnniversary && 'group-hover:rounded-r-xl',
+                  props.isSelected && 'bg-[var(--hover-bg)]',
+                  props.isSelected && !showAnniversary && 'rounded-r-xl'
                 )}
               >
                 {worker.engagements[0].type === 'transfer' ? (
@@ -182,6 +198,16 @@ function ProjectItem(props: ProjectItemProps) {
                 )}
               </TableCell>
             </>
+          )}
+          {showAnniversary && (
+            <TableCell
+              className={cn(
+                'tabular-nums text-muted-foreground transition-colors group-hover:rounded-r-xl group-hover:bg-muted/50',
+                props.isSelected && 'rounded-r-xl bg-[var(--hover-bg)]'
+              )}
+            >
+              {anniversary ? formatCalendarDate(anniversary.date) : '—'}
+            </TableCell>
           )}
         </>
       )}
