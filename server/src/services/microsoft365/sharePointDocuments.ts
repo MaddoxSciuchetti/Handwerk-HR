@@ -19,9 +19,10 @@ const MIME_BY_EXTENSION: Record<string, string> = {
     txt: "text/plain",
 };
 const MAX_LIVE_DRIVES = 5;
-const MAX_LIVE_ITEMS_PER_DRIVE = 300;
-const MAX_LIVE_FOLDER_EXPANDS = 40;
-const MAX_RESULTS = 40;
+const MAX_LIVE_ITEMS_PER_DRIVE = 400;
+const MAX_LIVE_FOLDER_EXPANDS = 80;
+const MAX_PARENT_FOLDERS = 20;
+const MAX_RESULTS = 50;
 
 export type SharePointFileHit = {
     id: string;
@@ -43,6 +44,7 @@ type SearchHitResource = {
     file?: { mimeType?: string };
     folder?: Record<string, unknown>;
     parentReference?: {
+        id?: string;
         driveId?: string;
         name?: string;
         path?: string;
@@ -234,6 +236,86 @@ async function listDriveChildren(
     return items;
 }
 
+function withDrive(
+    child: SearchHitResource,
+    driveId: string,
+    parentId?: string,
+): SearchHitResource {
+    return {
+        ...child,
+        parentReference: {
+            ...child.parentReference,
+            id: parentId ?? child.parentReference?.id,
+            driveId,
+        },
+    };
+}
+
+function matchingFilesInChildren(
+    children: SearchHitResource[],
+    driveId: string,
+    query: string,
+    parentId?: string,
+) {
+    const matches: SearchHitResource[] = [];
+    for (const child of children) {
+        if (
+            child.file &&
+            child.name &&
+            isAllowedFile(child.name) &&
+            matchesQuery(child.name, query)
+        ) {
+            matches.push(withDrive(child, driveId, parentId));
+        }
+    }
+    return matches;
+}
+
+/**
+ * List every file in the same folders as known hits/recent items.
+ * That picks up siblings like Test 4.docx when only Test 1–3 are indexed yet.
+ */
+async function listSiblingMatches(
+    token: string,
+    items: SearchHitResource[],
+    query: string,
+): Promise<SearchHitResource[]> {
+    const parents: Array<{ driveId: string; itemId: string }> = [];
+    const seen = new Set<string>();
+    for (const item of items) {
+        const driveId = item.parentReference?.driveId?.trim();
+        const itemId = item.parentReference?.id?.trim();
+        if (!driveId || !itemId) continue;
+        const key = `${driveId}:${itemId}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        parents.push({ driveId, itemId });
+        if (parents.length >= MAX_PARENT_FOLDERS) break;
+    }
+
+    const matches: SearchHitResource[] = [];
+    await Promise.all(
+        parents.map(async ({ driveId, itemId }) => {
+            try {
+                const children = await listDriveChildren(token, driveId, itemId);
+                matches.push(
+                    ...matchingFilesInChildren(children, driveId, query, itemId),
+                );
+            } catch (error) {
+                if (
+                    error &&
+                    typeof error === "object" &&
+                    "status" in error &&
+                    error.status === 401
+                ) {
+                    throw error;
+                }
+            }
+        }),
+    );
+    return matches;
+}
+
 /** Walk the live drive tree (not the search index) so new files appear immediately. */
 async function liveScanDrive(
     token: string,
@@ -261,13 +343,17 @@ async function liveScanDrive(
             }
             break;
         }
+
+        const priorityFolders: string[] = [];
+        const otherFolders: string[] = [];
         for (const child of children) {
             itemsSeen += 1;
             if (!child.id) continue;
             if (child.folder) {
-                if (foldersExpanded < MAX_LIVE_FOLDER_EXPANDS) {
-                    foldersExpanded += 1;
-                    queue.push(child.id);
+                if (child.name && matchesQuery(child.name, query)) {
+                    priorityFolders.push(child.id);
+                } else {
+                    otherFolders.push(child.id);
                 }
                 continue;
             }
@@ -277,15 +363,15 @@ async function liveScanDrive(
                 isAllowedFile(child.name) &&
                 matchesQuery(child.name, query)
             ) {
-                matches.push({
-                    ...child,
-                    parentReference: {
-                        ...child.parentReference,
-                        driveId,
-                    },
-                });
+                matches.push(withDrive(child, driveId, itemId === "root" ? undefined : itemId));
             }
             if (matches.length >= MAX_RESULTS) return matches;
+        }
+
+        for (const folderId of [...priorityFolders, ...otherFolders]) {
+            if (foldersExpanded >= MAX_LIVE_FOLDER_EXPANDS) break;
+            foldersExpanded += 1;
+            queue.push(folderId);
         }
     }
     return matches;
@@ -302,6 +388,15 @@ function uniqueDriveIds(items: SearchHitResource[]) {
         if (ids.length >= MAX_LIVE_DRIVES) break;
     }
     return ids;
+}
+
+function isAuthError(error: unknown): error is { status: 401 } {
+    return (
+        Boolean(error) &&
+        typeof error === "object" &&
+        "status" in error &&
+        error.status === 401
+    );
 }
 
 function sortHits(hits: SharePointFileHit[]) {
@@ -349,6 +444,7 @@ export async function searchSharePointFiles(
     const hits: SharePointFileHit[] = [];
     const seen = new Set<string>();
     let recentItems: SearchHitResource[] = [];
+    const seedItems: SearchHitResource[] = [];
 
     if (recentResponse.ok) {
         const payload = (await recentResponse.json()) as {
@@ -356,6 +452,7 @@ export async function searchSharePointFiles(
         };
         recentItems = payload.value ?? [];
         for (const item of recentItems) {
+            seedItems.push(item);
             if (!item.name || !matchesQuery(item.name, trimmed)) continue;
             collectHits(hits, seen, item);
         }
@@ -372,35 +469,53 @@ export async function searchSharePointFiles(
         for (const container of payload.value ?? []) {
             for (const hitContainer of container.hitsContainers ?? []) {
                 for (const hit of hitContainer.hits ?? []) {
+                    if (hit.resource) seedItems.push(hit.resource);
                     collectHits(hits, seen, hit.resource);
                 }
             }
         }
     }
 
-    const driveIds = uniqueDriveIds(recentItems);
+    try {
+        const siblings = await listSiblingMatches(
+            auth.token,
+            seedItems,
+            trimmed,
+        );
+        for (const item of siblings) {
+            collectHits(hits, seen, item);
+        }
+    } catch (error) {
+        if (isAuthError(error)) {
+            await authenticationRejected(actor);
+            throw new TeamsError(
+                "reconnect_required",
+                "Bitte Microsoft unter Einstellungen → Integrationen erneut verbinden.",
+            );
+        }
+    }
+
+    const driveIds = uniqueDriveIds(seedItems);
     if (driveIds.length > 0) {
         const liveResults = await Promise.all(
             driveIds.map(async (driveId) => {
                 try {
                     return await liveScanDrive(auth.token, driveId, trimmed);
                 } catch (error) {
-                    if (
-                        error &&
-                        typeof error === "object" &&
-                        "status" in error &&
-                        error.status === 401
-                    ) {
-                        await authenticationRejected(actor);
-                        throw new TeamsError(
-                            "reconnect_required",
-                            "Bitte Microsoft unter Einstellungen → Integrationen erneut verbinden.",
-                        );
-                    }
+                    if (isAuthError(error)) throw error;
                     return [] as SearchHitResource[];
                 }
             }),
-        );
+        ).catch(async (error) => {
+            if (isAuthError(error)) {
+                await authenticationRejected(actor);
+                throw new TeamsError(
+                    "reconnect_required",
+                    "Bitte Microsoft unter Einstellungen → Integrationen erneut verbinden.",
+                );
+            }
+            return [] as SearchHitResource[][];
+        });
         for (const [index, items] of liveResults.entries()) {
             for (const item of items) {
                 collectHits(hits, seen, item, driveIds[index]);

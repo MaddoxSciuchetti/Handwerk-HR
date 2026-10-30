@@ -186,7 +186,10 @@ it("live-scans recent drives so every matching Text file appears", async () => {
                         mimeType:
                             "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                     },
-                    parentReference: { driveId: "drive-bsb" },
+                    parentReference: {
+                        id: "folder-neue",
+                        driveId: "drive-bsb",
+                    },
                 },
             ],
         }),
@@ -244,6 +247,113 @@ it("live-scans recent drives so every matching Text file appears", async () => {
         "Text 1.docx",
         "Text 2.docx",
         "Text 4.docx",
+    ]);
+});
+
+it("lists siblings of indexed hits so newer files like Test 4 still appear", async () => {
+    mockGraph({
+        search: jsonResponse(200, {
+            value: [
+                {
+                    hitsContainers: [
+                        {
+                            hits: [
+                                {
+                                    resource: {
+                                        id: "test-1",
+                                        name: "Test 1.docx",
+                                        file: {
+                                            mimeType:
+                                                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                                        },
+                                        parentReference: {
+                                            id: "folder-neue",
+                                            driveId: "drive-bsb",
+                                        },
+                                    },
+                                },
+                                {
+                                    resource: {
+                                        id: "test-2",
+                                        name: "Test 2.docx",
+                                        file: {
+                                            mimeType:
+                                                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                                        },
+                                        parentReference: {
+                                            id: "folder-neue",
+                                            driveId: "drive-bsb",
+                                        },
+                                    },
+                                },
+                                {
+                                    resource: {
+                                        id: "test-3",
+                                        name: "Test 3.docx",
+                                        file: {
+                                            mimeType:
+                                                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                                        },
+                                        parentReference: {
+                                            id: "folder-neue",
+                                            driveId: "drive-bsb",
+                                        },
+                                    },
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        }),
+        recent: jsonResponse(200, { value: [] }),
+        childrenByItem: {
+            "folder-neue": jsonResponse(200, {
+                value: [
+                    {
+                        id: "test-1",
+                        name: "Test 1.docx",
+                        file: {
+                            mimeType:
+                                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        },
+                    },
+                    {
+                        id: "test-2",
+                        name: "Test 2.docx",
+                        file: {
+                            mimeType:
+                                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        },
+                    },
+                    {
+                        id: "test-3",
+                        name: "Test 3.docx",
+                        file: {
+                            mimeType:
+                                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        },
+                    },
+                    {
+                        id: "test-4",
+                        name: "Test 4.docx",
+                        file: {
+                            mimeType:
+                                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        },
+                    },
+                ],
+            }),
+            root: jsonResponse(200, { value: [] }),
+        },
+    });
+
+    const files = await searchSharePointFiles(actor, "Test");
+    expect(files.map((file) => file.name)).toEqual([
+        "Test 1.docx",
+        "Test 2.docx",
+        "Test 3.docx",
+        "Test 4.docx",
     ]);
 });
 
