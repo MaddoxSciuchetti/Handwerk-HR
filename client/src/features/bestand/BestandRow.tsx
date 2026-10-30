@@ -36,7 +36,8 @@ export function BestandRow({
   const setQuantity = (value: string) =>
     setDraft({ source: item.quantity, value });
   const [error, setError] = useState<string | null>(null);
-  const typeLabel = CLOTHING_PRINT_TYPE_LABELS[item.printType];
+  const typeLabel =
+    CLOTHING_PRINT_TYPE_LABELS[item.printType] ?? item.printType ?? '—';
   const selectionName = `${item.name} (${sizeLabel(item.size)}, ${typeLabel})`;
 
   const commitQuantity = () => {

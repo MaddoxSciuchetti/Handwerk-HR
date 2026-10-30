@@ -86,9 +86,14 @@ function isIssuedDirty(row: IssuedRow) {
   );
 }
 
+function printTypeLabel(printType: ClothingStockItem['printType'] | undefined) {
+  if (!printType) return '—';
+  return CLOTHING_PRINT_TYPE_LABELS[printType] ?? printType;
+}
+
 function stockLabel(item: ClothingStockItem) {
   const size = item.size || 'ohne Größe';
-  const type = CLOTHING_PRINT_TYPE_LABELS[item.printType];
+  const type = printTypeLabel(item.printType);
   return `${item.name} · ${size} · ${type} · ${item.quantity} verfügbar`;
 }
 
@@ -435,10 +440,6 @@ export default function WorkerClothingPanel({ workerId, engagements }: Props) {
             quantity: row.quantity,
             issuedAt: row.issuedAt,
           }}
-          size={
-            catalog.find((item) => item.id === row.stockItemId)?.size ??
-            row.size
-          }
           available={choicesFor({ clothingId: row.clothingId })}
           max={
             row.stockItemId
@@ -456,7 +457,6 @@ export default function WorkerClothingPanel({ workerId, engagements }: Props) {
         <ClothingIssueFields
           key={draft.key}
           draft={draft}
-          size={catalog.find((item) => item.id === draft.stockItemId)?.size ?? ''}
           available={choicesFor({ draftKey: draft.key })}
           max={
             draft.stockItemId
@@ -496,7 +496,6 @@ export default function WorkerClothingPanel({ workerId, engagements }: Props) {
 
 type ClothingIssueFieldsProps = {
   draft: Draft;
-  size: string;
   available: ClothingStockItem[];
   max: number | undefined;
   disabled: boolean;
@@ -508,7 +507,6 @@ type ClothingIssueFieldsProps = {
 
 function ClothingIssueFields({
   draft,
-  size,
   available,
   max,
   disabled,
@@ -522,56 +520,40 @@ function ClothingIssueFields({
   const issuedAtId = `worker-clothing-issued-at-${draft.key}`;
 
   return (
-    <div className="border-b border-border/50 py-1">
-      <div className={cn(rowClass, 'border-0')}>
-        <span className="text-sm text-muted-foreground">Artikel</span>
-        <div className="flex min-w-0 items-center gap-2">
-          <Select
-            open={open}
-            onOpenChange={(next) => {
-              if (next && available.length === 0) {
-                toast.info('Kein Bestand vorhanden.');
-                return;
-              }
-              setOpen(next);
-            }}
-            value={draft.stockItemId}
-            onValueChange={onArticle}
-            disabled={disabled}
+    <div className={rowClass}>
+      <span className="text-sm text-muted-foreground">Artikel</span>
+      <div className="flex min-w-0 items-center gap-2">
+        <Select
+          open={open}
+          onOpenChange={(next) => {
+            if (next && available.length === 0) {
+              toast.info('Kein Bestand vorhanden.');
+              return;
+            }
+            setOpen(next);
+          }}
+          value={draft.stockItemId}
+          onValueChange={onArticle}
+          disabled={disabled}
+        >
+          <SelectTrigger
+            id={`worker-clothing-article-${draft.key}`}
+            aria-label="Artikel aus Bestand"
+            className={cn(
+              fieldClass,
+              'min-w-0 flex-1 justify-between *:data-[slot=select-value]:ml-auto'
+            )}
           >
-            <SelectTrigger
-              id={`worker-clothing-article-${draft.key}`}
-              aria-label="Artikel aus Bestand"
-              className={cn(
-                fieldClass,
-                'min-w-0 flex-1 justify-between *:data-[slot=select-value]:ml-auto'
-              )}
-            >
-              <SelectValue placeholder="Artikel auswählen" />
-            </SelectTrigger>
-            <SelectContent>
-              {available.map((item) => (
-                <SelectItem key={item.id} value={item.id}>
-                  {stockLabel(item)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button
-            type="button"
-            size="icon-sm"
-            variant="ghost"
-            className="shrink-0 rounded-2xl text-muted-foreground"
-            aria-label="Zeile entfernen"
-            disabled={disabled}
-            onClick={onRemove}
-          >
-            <X aria-hidden="true" />
-          </Button>
-        </div>
-      </div>
-      <div className={cn(rowClass, 'border-0')}>
-        <span className="text-sm text-muted-foreground">Erhalten am</span>
+            <SelectValue placeholder="Artikel auswählen" />
+          </SelectTrigger>
+          <SelectContent>
+            {available.map((item) => (
+              <SelectItem key={item.id} value={item.id}>
+                {stockLabel(item)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Input
           id={issuedAtId}
           aria-label="Erhalten am"
@@ -580,17 +562,8 @@ function ClothingIssueFields({
           onChange={(event) => onIssuedAt(event.target.value)}
           required
           disabled={disabled}
-          className={dateFieldClass}
+          className={cn(dateFieldClass, 'w-[9.5rem] shrink-0')}
         />
-      </div>
-      <div className={cn(rowClass, 'border-0')}>
-        <span className="text-sm text-muted-foreground">Größe</span>
-        <span className="text-right text-sm" aria-label="Größe">
-          {size || '—'}
-        </span>
-      </div>
-      <div className={cn(rowClass, 'border-0')}>
-        <span className="text-sm text-muted-foreground">Anzahl</span>
         <Input
           id={quantityId}
           aria-label="Anzahl"
@@ -602,8 +575,19 @@ function ClothingIssueFields({
           onChange={(event) => onQuantity(event.target.value)}
           required
           disabled={disabled}
-          className={cn(fieldClass, 'w-24 justify-self-end px-2')}
+          className={cn(fieldClass, 'w-16 shrink-0 px-2')}
         />
+        <Button
+          type="button"
+          size="icon-sm"
+          variant="ghost"
+          className="shrink-0 rounded-2xl text-muted-foreground"
+          aria-label="Zeile entfernen"
+          disabled={disabled}
+          onClick={onRemove}
+        >
+          <X aria-hidden="true" />
+        </Button>
       </div>
     </div>
   );

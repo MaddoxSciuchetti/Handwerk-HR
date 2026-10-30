@@ -32,7 +32,9 @@ type ClothingAddFormProps = {
 
 function stockLabel(item: ClothingStockItem) {
   const size = item.size || 'ohne Größe';
-  const type = CLOTHING_PRINT_TYPE_LABELS[item.printType];
+  const type = item.printType
+    ? (CLOTHING_PRINT_TYPE_LABELS[item.printType] ?? item.printType)
+    : '—';
   return `${item.name} · ${size} · ${type} · ${item.quantity} im Bestand`;
 }
 
