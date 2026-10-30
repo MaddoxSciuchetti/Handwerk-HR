@@ -2,6 +2,7 @@ import {
   ClipboardList,
   FileText,
   Inbox,
+  LayoutDashboard,
   Plug,
   ScrollText,
   Shirt,
@@ -11,6 +12,11 @@ import {
 } from 'lucide-react';
 
 export const LAYOUTITEMS = [
+  {
+    title: 'Cockpit',
+    to: '/cockpit',
+    icon: LayoutDashboard,
+  },
   {
     title: 'Handwerker',
     to: '/worker-lifycycle',

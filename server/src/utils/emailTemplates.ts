@@ -89,15 +89,15 @@ export const getAnniversaryReminderTemplate = ({
     );
     const subject =
         people.length === 1
-            ? `Firmenjubiläum heute: ${labels[0]}`
-            : `Firmenjubiläen heute: ${people.length} Mitarbeitende`;
+            ? `Firmenjubiläum in einer Woche: ${labels[0]}`
+            : `Firmenjubiläen in einer Woche: ${people.length} Mitarbeitende`;
     const listText = labels.map((label) => `• ${label}`).join("\n");
     const listHtml = labels
         .map((label) => `<li style="margin:0 0 8px;">${escapeHtml(label)}</li>`)
         .join("");
     return {
         subject,
-        text: `Hallo ${recipientName},\n\nheute steht ein Firmenjubiläum an:\n\n${listText}\n\nZum Handwerker: ${actionUrl}`,
-        html: `<!doctype html><html lang="de-DE"><head><meta charset="utf-8"><title>Firmenjubiläum</title></head><body style="margin:0;padding:24px;background:#f5f7fb;font-family:Arial,sans-serif;"><table width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td align="center"><table width="640" cellspacing="0" cellpadding="0" border="0" style="max-width:640px;background:#ffffff;border-radius:12px;padding:28px;"><tr><td><h1 style="margin:0 0 12px;color:#151a22;font-size:24px;">Firmenjubiläum heute</h1><p style="margin:0 0 16px;color:#334155;line-height:1.6;">Hallo ${safeRecipient},</p><p style="margin:0 0 16px;color:#334155;line-height:1.6;">heute feiern wir:</p><ul style="margin:0 0 24px;padding-left:20px;color:#334155;line-height:1.6;">${listHtml}</ul><a href="${escapeHtml(actionUrl)}" style="display:inline-block;background:#1d4ed8;color:#ffffff;text-decoration:none;font-weight:600;padding:10px 16px;border-radius:8px;">Zum Handwerker</a></td></tr></table></td></tr></table></body></html>`,
+        text: `Hallo ${recipientName},\n\nin einer Woche steht ein Firmenjubiläum an:\n\n${listText}\n\nZum Handwerker: ${actionUrl}`,
+        html: `<!doctype html><html lang="de-DE"><head><meta charset="utf-8"><title>Firmenjubiläum</title></head><body style="margin:0;padding:24px;background:#f5f7fb;font-family:Arial,sans-serif;"><table width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td align="center"><table width="640" cellspacing="0" cellpadding="0" border="0" style="max-width:640px;background:#ffffff;border-radius:12px;padding:28px;"><tr><td><h1 style="margin:0 0 12px;color:#151a22;font-size:24px;">Firmenjubiläum in einer Woche</h1><p style="margin:0 0 16px;color:#334155;line-height:1.6;">Hallo ${safeRecipient},</p><p style="margin:0 0 16px;color:#334155;line-height:1.6;">in einer Woche feiern wir:</p><ul style="margin:0 0 24px;padding-left:20px;color:#334155;line-height:1.6;">${listHtml}</ul><a href="${escapeHtml(actionUrl)}" style="display:inline-block;background:#1d4ed8;color:#ffffff;text-decoration:none;font-weight:600;padding:10px 16px;border-radius:8px;">Zum Handwerker</a></td></tr></table></td></tr></table></body></html>`,
     };
 };
