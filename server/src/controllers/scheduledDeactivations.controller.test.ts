@@ -63,7 +63,16 @@ it("returns zero counts without due tasks", async () => {
                     ],
                 },
                 status: { in: ["open", "error", "in_progress"] },
-                scheduledDeactivateAt: { lt: expect.any(Date) },
+                AND: expect.arrayContaining([
+                    expect.objectContaining({
+                        OR: expect.arrayContaining([
+                            {
+                                scheduledDeactivateTestAt: null,
+                                scheduledDeactivateAt: { lt: expect.any(Date) },
+                            },
+                        ]),
+                    }),
+                ]),
             }),
             take: 25,
         }),
@@ -103,4 +112,21 @@ it("isolates individual failures, scopes executions and signals cron failure", a
     expect(next).not.toHaveBeenCalled();
     log.mockRestore();
     error.mockRestore();
+});
+
+it("queries due test timestamps on staging in addition to normal calendar schedules", async () => {
+    const previousService = process.env.RENDER_SERVICE_ID;
+    const previousFlag = process.env.DEACTIVATION_SCHEDULE_TESTS;
+    try {
+        process.env.RENDER_SERVICE_ID = "srv-d6dnk2vpm1nc739v1m90";
+        process.env.DEACTIVATION_SCHEDULE_TESTS = "true";
+        (prisma.issue.findMany as jest.Mock).mockResolvedValue([]);
+        await postScheduledDeactivations({} as any, response, next);
+        expect(prisma.issue.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({
+            AND: expect.arrayContaining([{ OR: expect.arrayContaining([{ scheduledDeactivateTestAt: { lte: expect.any(Date) } }]) }]),
+        }) }));
+    } finally {
+        if (previousService === undefined) delete process.env.RENDER_SERVICE_ID; else process.env.RENDER_SERVICE_ID = previousService;
+        if (previousFlag === undefined) delete process.env.DEACTIVATION_SCHEDULE_TESTS; else process.env.DEACTIVATION_SCHEDULE_TESTS = previousFlag;
+    }
 });

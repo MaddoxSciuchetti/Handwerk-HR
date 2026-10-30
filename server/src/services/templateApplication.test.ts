@@ -416,7 +416,7 @@ it("returns final task titles and database statuses for reopening the completed 
     expect(result.tasks).toEqual([{ id: "issue-a", title: "Microsoft-Konto", status: "done", sequence: "microsoft_create_account" }]);
     expect(db.issue.findMany).toHaveBeenLastCalledWith(expect.objectContaining({
         where: { id: { in: ["issue-a", "issue-b", "issue-manual"] }, workerEngagement: { organizationId: "org" } },
-        select: { id: true, title: true, status: true, sequence: true, scheduledDeactivateAt: true },
+        select: { id: true, title: true, status: true, sequence: true, scheduledDeactivateAt: true, scheduledDeactivateTestAt: true },
     }));
 });
 

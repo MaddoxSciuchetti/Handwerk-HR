@@ -11,6 +11,14 @@ export const DEACTIVATION_SEQUENCES = [
 export function isDeactivation(sequence: string | null | undefined) {
     return DEACTIVATION_SEQUENCES.some((value) => value === sequence);
 }
+export function deactivationScheduleTestsEnabled() {
+    return (
+        (process.env.NODE_ENV === "development" &&
+            !process.env.RENDER_SERVICE_ID) ||
+        (process.env.RENDER_SERVICE_ID === "srv-d6dnk2vpm1nc739v1m90" &&
+            process.env.DEACTIVATION_SCHEDULE_TESTS === "true")
+    );
+}
 export const executableStatuses = ["open", "error", "in_progress"] as const;
 export function berlinToday(now = new Date()) {
     return new Intl.DateTimeFormat("en-CA", {
@@ -52,6 +60,9 @@ export async function readDeactivationSchedule(
     return {
         scheduledDeactivateAt:
             issue.scheduledDeactivateAt?.toISOString().slice(0, 10) ?? null,
+        scheduledDeactivateTestAt:
+            issue.scheduledDeactivateTestAt?.toISOString() ?? null,
+        canTestSchedule: deactivationScheduleTestsEnabled(),
     };
 }
 export async function saveDeactivationSchedule(params: {
@@ -59,7 +70,13 @@ export async function saveDeactivationSchedule(params: {
     issueId: string;
     actorUserId: string;
     scheduledDeactivateAt: string | null;
+    testInOneMinute?: boolean;
 }) {
+    if (params.testInOneMinute && !deactivationScheduleTestsEnabled())
+        throw new AppError(403, "Testplanung ist hier nicht verfügbar.");
+    const testAt = params.testInOneMinute
+        ? new Date(Date.now() + 60_000)
+        : null;
     const date =
         params.scheduledDeactivateAt === null
             ? null
@@ -90,7 +107,9 @@ export async function saveDeactivationSchedule(params: {
             where: { id: issue.id },
             data: {
                 scheduledDeactivateAt: date,
-                scheduledDeactivateByUserId: date ? params.actorUserId : null,
+                scheduledDeactivateTestAt: testAt,
+                scheduledDeactivateByUserId:
+                    date || testAt ? params.actorUserId : null,
                 deactivationClaimToken: null,
                 deactivationClaimUntil: null,
             },
@@ -101,6 +120,8 @@ export async function saveDeactivationSchedule(params: {
                 actorUserId: params.actorUserId,
                 action: "issue.updated",
                 oldValue: {
+                    scheduledDeactivateTestAt:
+                        issue.scheduledDeactivateTestAt?.toISOString() ?? null,
                     scheduledDeactivateAt:
                         issue.scheduledDeactivateAt
                             ?.toISOString()
@@ -108,10 +129,15 @@ export async function saveDeactivationSchedule(params: {
                 },
                 newValue: {
                     scheduledDeactivateAt: params.scheduledDeactivateAt,
+                    scheduledDeactivateTestAt: testAt?.toISOString() ?? null,
                 },
             },
         });
-        return { scheduledDeactivateAt: params.scheduledDeactivateAt };
+        return {
+            scheduledDeactivateAt: params.scheduledDeactivateAt,
+            scheduledDeactivateTestAt: testAt?.toISOString() ?? null,
+            canTestSchedule: deactivationScheduleTestsEnabled(),
+        };
     });
 }
 
@@ -140,9 +166,12 @@ export async function claimDeactivation(params: {
             return null;
         if (
             params.scheduled &&
-            (!issue.scheduledDeactivateAt ||
-                issue.scheduledDeactivateAt.toISOString().slice(0, 10) >=
-                    berlinToday(now))
+            (issue.scheduledDeactivateTestAt
+                ? !deactivationScheduleTestsEnabled() ||
+                  issue.scheduledDeactivateTestAt > now
+                : !issue.scheduledDeactivateAt ||
+                  issue.scheduledDeactivateAt.toISOString().slice(0, 10) >=
+                      berlinToday(now))
         )
             return null;
         const token = randomUUID();
@@ -208,6 +237,7 @@ export async function finishDeactivation(params: {
                 ...(params.succeeded
                     ? {
                           scheduledDeactivateAt: null,
+                          scheduledDeactivateTestAt: null,
                           scheduledDeactivateByUserId: null,
                       }
                     : {}),
@@ -220,6 +250,8 @@ export async function finishDeactivation(params: {
                 action: "issue.updated",
                 oldValue: {
                     status: issue.status,
+                    scheduledDeactivateTestAt:
+                        issue.scheduledDeactivateTestAt?.toISOString() ?? null,
                     scheduledDeactivateAt:
                         issue.scheduledDeactivateAt
                             ?.toISOString()
@@ -228,7 +260,10 @@ export async function finishDeactivation(params: {
                 newValue: {
                     status: terminal ? issue.status : status,
                     ...(params.succeeded
-                        ? { scheduledDeactivateAt: null }
+                        ? {
+                              scheduledDeactivateAt: null,
+                              scheduledDeactivateTestAt: null,
+                          }
                         : {}),
                     executionSource: params.scheduled ? "cron" : "manual",
                     ...(params.message
