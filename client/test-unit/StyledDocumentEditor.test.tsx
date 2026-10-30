@@ -804,6 +804,153 @@ it('uses mapped checkbox values with the same glyph footprint and supports read-
   expect(checkbox.parentElement).toHaveTextContent('□×');
 });
 
+it('starts a new left-aligned line after Enter on a right-aligned salary paragraph', async () => {
+  const optionsSpy = vi.spyOn(Editor.prototype, 'setOptions');
+  const onChange = vi.fn();
+  const value = fromSegments([]);
+  value.content = {
+    type: 'doc',
+    content: [
+      {
+        type: 'paragraph',
+        attrs: { textAlign: 'right' },
+        content: [
+          { type: 'text', text: '0' },
+          { type: 'text', text: ' €' },
+        ],
+      },
+    ],
+  };
+  render(
+    <StyledDocumentEditor document={value} master onChange={onChange} />
+  );
+  await screen.findByText('0 €');
+  const editor = optionsSpy.mock.instances.at(-1) as Editor;
+  act(() => {
+    editor.commands.setTextSelection(editor.state.doc.content.size - 1);
+  });
+  fireEvent.keyDown(editor.view.dom, { key: 'Enter', code: 'Enter' });
+  const paragraphs = editor.getJSON().content!;
+  expect(paragraphs).toHaveLength(2);
+  expect(paragraphs[0].attrs!.textAlign).toBe('right');
+  expect(paragraphs[1].attrs!.textAlign).toBe('left');
+  expect(editor.state.selection.$from.parent.attrs.textAlign).toBe('left');
+  optionsSpy.mockRestore();
+});
+
+it('moves Enter from a right salary amount cell onto a new left label cell', async () => {
+  const optionsSpy = vi.spyOn(Editor.prototype, 'setOptions');
+  const value = fromSegments([]);
+  value.content = {
+    type: 'doc',
+    content: [
+      {
+        type: 'table',
+        content: [
+          {
+            type: 'tableRow',
+            content: [
+              {
+                type: 'tableCell',
+                attrs: { colwidth: [360] },
+                content: [
+                  {
+                    type: 'paragraph',
+                    attrs: {
+                      textAlign: 'left',
+                      fontSize: 9,
+                      marginTop: 0,
+                      marginBottom: 2,
+                    },
+                    content: [
+                      {
+                        type: 'text',
+                        marks: [
+                          {
+                            type: 'textStyle',
+                            attrs: { fontSize: 9, fontFamily: 'Arial' },
+                          },
+                        ],
+                        text: '- Zulage im Einzelfall aufgrund besonderer Umstände*',
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                type: 'tableCell',
+                attrs: { colwidth: [120] },
+                content: [
+                  {
+                    type: 'paragraph',
+                    attrs: {
+                      textAlign: 'right',
+                      fontSize: 9,
+                      marginTop: 0,
+                      marginBottom: 2,
+                    },
+                    content: [
+                      {
+                        type: 'documentField',
+                        attrs: {
+                          key: 'contract.zulage_im_einzelfall',
+                          label: 'zulage_im_einzelfall',
+                          fieldType: 'text',
+                        },
+                      },
+                      {
+                        type: 'text',
+                        marks: [
+                          {
+                            type: 'textStyle',
+                            attrs: { fontSize: 9, fontFamily: 'Arial' },
+                          },
+                        ],
+                        text: ' €',
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+  render(<StyledDocumentEditor document={value} master />);
+  await screen.findByText(
+    '- Zulage im Einzelfall aufgrund besonderer Umstände*'
+  );
+  const editor = optionsSpy.mock.instances.at(-1) as Editor;
+  let amountPos = 0;
+  editor.state.doc.descendants((node, pos) => {
+    if (node.type.name === 'paragraph' && node.attrs.textAlign === 'right')
+      amountPos = pos + node.nodeSize - 2;
+  });
+  act(() => {
+    editor.commands.setTextSelection(amountPos);
+  });
+  fireEvent.keyDown(editor.view.dom, { key: 'Enter', code: 'Enter' });
+  const table = editor.getJSON().content![0];
+  expect(table.content).toHaveLength(2);
+  const newLeft = table.content![1].content![0].content![0];
+  const newRight = table.content![1].content![1].content![0];
+  expect(newLeft.attrs!.textAlign ?? 'left').toBe('left');
+  expect(newLeft.attrs!.fontSize).toBe(9);
+  expect(newRight.attrs!.textAlign).toBe('right');
+  expect(newRight.attrs!.fontSize).toBe(9);
+  expect(editor.state.selection.$from.parent.attrs.fontSize).toBe(9);
+  expect(
+    editor.state.storedMarks?.find((mark) => mark.type.name === 'textStyle')
+      ?.attrs
+  ).toMatchObject({ fontSize: 9, fontFamily: 'Arial' });
+  expect(
+    editor.state.selection.$from.index(editor.state.selection.$from.depth - 1)
+  ).toBe(0);
+  optionsSpy.mockRestore();
+});
+
 it('moves positioned contract text and following content down when Enter splits a line', async () => {
   const optionsSpy = vi.spyOn(Editor.prototype, 'setOptions');
   const value = fromSegments([]);

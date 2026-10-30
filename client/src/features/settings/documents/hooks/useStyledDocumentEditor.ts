@@ -3,6 +3,12 @@ import { useEditor, useEditorState } from '@tiptap/react';
 import type { StyledDocument } from '../styledDocument';
 import { normalizeLineLabels } from '../util/lineLayout.util';
 import { insertDroppedDocumentField } from '../util/insertDroppedDocumentField';
+import {
+  handleDocumentPaste,
+  transformDocumentPastedHTML,
+  transformDocumentPastedSlice,
+  transformDocumentPastedText,
+} from '../util/documentPaste.util';
 import { documentEditorExtensions } from '../editor/documentEditorExtensions';
 import { usePaginationLayout } from './usePaginationLayout';
 import { useEditorEditable } from './useEditorEditable';
@@ -55,6 +61,10 @@ export function useStyledDocumentEditor({
     editorProps: {
       handleDrop: (view, event) =>
         insertDroppedDocumentField(view, event, latest.current),
+      handlePaste: (view, event) => handleDocumentPaste(view, event),
+      transformPastedHTML: transformDocumentPastedHTML,
+      transformPastedText: transformDocumentPastedText,
+      transformPasted: transformDocumentPastedSlice,
     },
   });
   const publish = useEditorContentSync(editor, document[section]);
