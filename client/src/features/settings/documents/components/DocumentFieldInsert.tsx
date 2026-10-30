@@ -145,7 +145,7 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
             value={label}
             onChange={(event) => setLabel(event.target.value)}
             onKeyDown={insertOnEnter}
-            className="h-7 w-44"
+            className="h-7 w-44 text-foreground"
             maxLength={120}
           />
         </label>
@@ -187,7 +187,7 @@ export function DocumentFieldInsert({ editor }: DocumentFieldInsertProps) {
             onBlur={() => {
               if (!fieldKey?.trim()) setFieldKey(null);
             }}
-            className="h-7 w-44"
+            className="h-7 w-44 text-foreground"
             maxLength={120}
             title="Gleicher Schlüssel = gemeinsamer Wert. Ein neuer Schlüssel erzeugt ein unabhängiges Feld."
           />
