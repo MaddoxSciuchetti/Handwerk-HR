@@ -24,6 +24,8 @@ jest.mock("@/constants/env", () => ({
 
 const today = new Date("2026-10-21T12:00:00.000Z");
 const berlinDay = "2026-10-21";
+/** 5-year milestone on 2026-10-28 → reminder fires 7 days earlier on today. */
+const dueEntryDate = new Date("2021-10-28T00:00:00.000Z");
 
 function worker(overrides: Record<string, unknown> = {}) {
     return {
@@ -31,7 +33,7 @@ function worker(overrides: Record<string, unknown> = {}) {
         organizationId: "org-1",
         firstName: "Ada",
         lastName: "Beispiel",
-        entryDate: new Date("2021-10-21T00:00:00.000Z"),
+        entryDate: dueEntryDate,
         exitDate: null,
         engagements: [{ type: "transfer", status: "completed" }],
         ...overrides,
@@ -67,7 +69,7 @@ beforeEach(() => {
 });
 
 describe("findDueAnniversariesForWorkers", () => {
-    it("returns a milestone that falls on Berlin today", () => {
+    it("returns a milestone that falls one week after Berlin today", () => {
         const due = findDueAnniversariesForWorkers([worker()], today);
         expect(due).toEqual([
             expect.objectContaining({
@@ -77,7 +79,7 @@ describe("findDueAnniversariesForWorkers", () => {
             }),
         ]);
         expect(due[0]?.anniversaryDate.toISOString().slice(0, 10)).toBe(
-            "2026-10-21",
+            "2026-10-28",
         );
     });
 
@@ -122,14 +124,14 @@ describe("findDueAnniversariesForWorkers", () => {
     });
 
     it("maps Feb 29 entry to Feb 28 in a non-leap anniversary year", () => {
-        const leapDay = new Date("2025-02-28T12:00:00.000Z");
+        const reminderDay = new Date("2025-02-21T12:00:00.000Z");
         const due = findDueAnniversariesForWorkers(
             [
                 worker({
                     entryDate: new Date("2020-02-29T00:00:00.000Z"),
                 }),
             ],
-            leapDay,
+            reminderDay,
         );
         expect(due).toEqual([
             expect.objectContaining({ years: 5, workerId: "worker-1" }),
@@ -139,10 +141,10 @@ describe("findDueAnniversariesForWorkers", () => {
         );
     });
 
-    it("ignores workers without a milestone today", () => {
+    it("ignores workers whose milestone is not one week away", () => {
         expect(
             findDueAnniversariesForWorkers(
-                [worker({ entryDate: new Date("2021-10-20T00:00:00.000Z") })],
+                [worker({ entryDate: new Date("2021-10-21T00:00:00.000Z") })],
                 today,
             ),
         ).toEqual([]);
@@ -258,7 +260,7 @@ describe("runAnniversaryReminders", () => {
                 {
                     workerId: "worker-1",
                     years: 5,
-                    anniversaryDate: new Date("2026-10-21T00:00:00.000Z"),
+                    anniversaryDate: new Date("2026-10-28T00:00:00.000Z"),
                     recipientUserId: "user-1",
                 },
             ],

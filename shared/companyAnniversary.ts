@@ -37,15 +37,18 @@ export function nextCompanyAnniversary(
   return latest;
 }
 
-/** Milestone that falls exactly on `today`'s UTC calendar day, if any. */
+export const ANNIVERSARY_REMINDER_DAYS_BEFORE = 7;
+
+/** Milestone due for a reminder `ANNIVERSARY_REMINDER_DAYS_BEFORE` days before it. */
 export function dueCompanyAnniversary(
   entryDate: string | null | undefined,
   today = new Date()
 ): CompanyAnniversary | null {
   const next = nextCompanyAnniversary(entryDate, today);
   if (!next) return null;
-  const current = startOfUtcDay(today).getTime();
-  return next.date.getTime() === current ? next : null;
+  return calendarDaysUntil(next.date, today) === ANNIVERSARY_REMINDER_DAYS_BEFORE
+    ? next
+    : null;
 }
 
 export function formatCompanyAnniversary(
