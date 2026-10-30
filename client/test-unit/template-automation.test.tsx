@@ -1495,14 +1495,12 @@ it.each(['crewmeister_deactivate_account', 'microsoft_deactivate_account'])(
     await user.click(
       screen.getByRole('button', { name: 'Konto deaktivieren' })
     );
-    expect(screen.queryByText('Letzter aktiver Tag')).not.toBeInTheDocument();
+    expect(screen.queryByRole('grid')).not.toBeInTheDocument();
     await user.click(screen.getByRole('switch', { name: 'Planen' }));
     expect(
       screen.getByRole('button', { name: 'Automatisierung starten' })
     ).toBeDisabled();
-    await user.click(
-      screen.getByRole('button', { name: /Letzter aktiver Tag/ })
-    );
+    expect(screen.getByRole('grid')).toBeInTheDocument();
     const displayDate = new Date(`${date}T12:00:00`).toLocaleDateString('de');
     const day = screen
       .getAllByRole('button')
