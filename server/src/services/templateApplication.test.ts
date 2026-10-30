@@ -20,7 +20,7 @@ jest.mock("@/lib/prisma", () => ({
             update: jest.fn(),
         },
         issue: { findMany: jest.fn(), update: jest.fn() },
-        issueAuditLog: { findMany: jest.fn() },
+        issueAuditLog: { findMany: jest.fn(), create: jest.fn() },
         $transaction: jest.fn(),
         $queryRaw: jest.fn(),
     },
@@ -431,7 +431,7 @@ it("returns final task titles and database statuses for reopening the completed 
     expect(result.tasks).toEqual([{ id: "issue-a", title: "Microsoft-Konto", status: "done", sequence: "microsoft_create_account" }]);
     expect(db.issue.findMany).toHaveBeenLastCalledWith(expect.objectContaining({
         where: { id: { in: ["issue-a", "issue-b", "issue-manual"] }, workerEngagement: { organizationId: "org" } },
-        select: { id: true, title: true, status: true, sequence: true },
+        select: { id: true, title: true, status: true, sequence: true, scheduledDeactivateAt: true },
     }));
 });
 
@@ -538,4 +538,44 @@ describe("Microsoft removal without a separate work email", () => {
         expect(db.worker.update).not.toHaveBeenCalled();
         expect(createTasks).toHaveBeenCalled();
     });
+});
+
+it.each(["crewmeister_deactivate_account", "microsoft_deactivate_account"])("saves %s before immediate execution and returns a scheduled outcome", async (sequence) => {
+    db.issueTemplate.findFirst.mockResolvedValue({ id: "template", name: "Offboarding", items: [item("a", sequence), item("b")] });
+    const result = await applyTemplateApplication(context, {
+        ...manual, runAutomation: true, choices: { a: { scheduledDeactivateAt: "2099-12-31" } },
+    }, createTasks);
+    expect(db.issue.update).toHaveBeenCalledWith({ where: { id: "issue-a" }, data: {
+        scheduledDeactivateAt: new Date("2099-12-31T00:00:00Z"), scheduledDeactivateByUserId: "user",
+    } });
+    expect((db.issue.update as jest.Mock).mock.invocationCallOrder[0]).toBeLessThan((runIssueSequence as jest.Mock).mock.invocationCallOrder[0]);
+    expect(runIssueSequence).toHaveBeenCalledTimes(1);
+    expect(runIssueSequence).toHaveBeenCalledWith(expect.objectContaining({ issueId: "issue-b" }));
+    expect(result.outcomes).toEqual([
+        expect.objectContaining({ issueId: "issue-a", status: "scheduled" }),
+        expect.objectContaining({ issueId: "issue-b", status: "completed" }),
+    ]);
+    expect(result.running).toBe(false);
+});
+it("ignores scheduling choices without automation", async () => {
+    await applyTemplateApplication(context, { ...manual, choices: { a: { scheduledDeactivateAt: "2099-12-31" } } }, createTasks);
+    expect(db.issue.update).not.toHaveBeenCalled();
+    expect(runIssueSequence).not.toHaveBeenCalled();
+});
+it.each(["2020-01-01", "2099-02-30", ""])("rejects invalid scheduled date %s before creating tasks", async (date) => {
+    db.issueTemplate.findFirst.mockResolvedValue({ id: "template", name: "Offboarding", items: [item("a", "microsoft_deactivate_account")] });
+    await expect(applyTemplateApplication(context, { ...manual, runAutomation: true, choices: { a: { scheduledDeactivateAt: date } } }, createTasks)).rejects.toThrow();
+    expect(createTasks).not.toHaveBeenCalled();
+});
+it("rejects schedules on other automation types", async () => {
+    await expect(applyTemplateApplication(context, { ...manual, runAutomation: true, choices: { a: { scheduledDeactivateAt: "2099-12-31" } } }, createTasks)).rejects.toThrow();
+    expect(createTasks).not.toHaveBeenCalled();
+});
+
+it("retains scheduled outcomes when reopening the popup and shows the updated date", async () => {
+    db.templateApplication.findUnique.mockResolvedValue({ templateId: "template", issueIds: ["issue-a"], outcomes: [{ issueId: "issue-a", status: "scheduled" }], completedAt: new Date() });
+    db.issue.findMany.mockResolvedValue([{ id: "issue-a", title: "Deaktivieren", status: "open", sequence: "microsoft_deactivate_account", scheduledDeactivateAt: new Date("2099-12-31T00:00:00Z") }]);
+    const record = await readTemplateApplication(context, "engagement");
+    expect(record?.result.running).toBe(false);
+    expect(record?.result.outcomes).toEqual([{ issueId: "issue-a", status: "scheduled", message: "Geplant · 2099-12-31" }]);
 });

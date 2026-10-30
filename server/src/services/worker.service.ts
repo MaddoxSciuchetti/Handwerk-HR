@@ -1,3 +1,4 @@
+import { isDeactivation, lockDeactivation } from "./integrations/deactivationSchedule";
 import z from "zod";
 import { freezePrintedContract } from "@/services/employmentContract.service";
 import { integrationsMocked } from "./integrations/localMock";
@@ -909,6 +910,19 @@ export async function updateIssue(params: UpdateIssueInput) {
     return prisma.$transaction(async (tx) => {
         if (existing.kind === "contract_send" && status === "done" && existing.status !== "done") {
             await freezePrintedContract(tx, newWorkerEngagementId ?? workerEngagementId);
+        }
+        if (isDeactivation(existing.sequence) || existing.scheduledDeactivateAt) {
+            await lockDeactivation(tx, issueId);
+            const current = await tx.issue.findFirst({ where: { id: issueId, workerEngagementId } });
+            if (current?.deactivationClaimUntil && current.deactivationClaimUntil > new Date())
+                throw new AppError(409, "Die Deaktivierung läuft bereits.");
+            if ((sequence !== undefined && sequence !== current?.sequence) ||
+                (newWorkerEngagementId !== undefined && newWorkerEngagementId !== current?.workerEngagementId)) {
+                data.scheduledDeactivateAt = null;
+                data.scheduledDeactivateByUserId = null;
+                oldValue.scheduledDeactivateAt = current?.scheduledDeactivateAt?.toISOString().slice(0, 10) ?? null;
+                keys.push("scheduledDeactivateAt");
+            }
         }
         const updated = await tx.issue.update({
             where: { id: issueId },

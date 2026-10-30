@@ -171,6 +171,7 @@ async function graphToken(
         `https://login.microsoftonline.com/${encodeURIComponent(config.tenantId)}/oauth2/v2.0/token`,
         {
             method: "POST",
+            signal: AbortSignal.timeout(10_000),
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body,
         },

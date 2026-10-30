@@ -1,3 +1,4 @@
+import { getDeactivationSchedule, patchDeactivationSchedule } from "@/controllers/scheduledDeactivations.controller";
 import { Router } from "express";
 import {
     getArbeitszeugnisPreview,
@@ -73,6 +74,8 @@ automationRoutes.put(
 automationRoutes.post("/issues/:issueId/arbeitszeugnis", postArbeitszeugnis);
 automationRoutes.post("/issues/:issueId/run", postTaskAutomation);
 automationRoutes.post("/issues/:issueId/sequence", postIssueSequence);
+automationRoutes.get("/issues/:issueId/deactivation-schedule", getDeactivationSchedule);
+automationRoutes.patch("/issues/:issueId/deactivation-schedule", patchDeactivationSchedule);
 automationRoutes.get("/issues/:issueId/mail-preview", getIssueMailPreview);
 automationRoutes.get(
     "/engagements/:engagementId/mail-recipients",

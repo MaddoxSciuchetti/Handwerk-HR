@@ -105,7 +105,7 @@ describe('TaskAutomation', () => {
     runIssueSequence.mockResolvedValueOnce(undefined);
     renderWithProviders(<TaskAutomationHarness />);
     expect(await screen.findByRole('note')).toHaveTextContent('Testmodus');
-    const button = screen.getByRole('button', { name: 'Go' });
+    const button = screen.getByRole('button', { name: 'Jetzt deaktivieren' });
     await waitFor(() => expect(button).toBeEnabled());
     await userEvent.setup().click(button);
     await waitFor(() =>
@@ -125,7 +125,7 @@ describe('TaskAutomation', () => {
     const user = userEvent.setup();
     renderWithAppQueryClient(<TaskAutomationHarness />);
 
-    const runButton = screen.getByRole('button', { name: 'Go' });
+    const runButton = screen.getByRole('button', { name: 'Jetzt deaktivieren' });
     await user.click(runButton);
 
     expect(runButton).toHaveAttribute('aria-busy', 'true');
@@ -136,7 +136,7 @@ describe('TaskAutomation', () => {
 
     resolveAutomation?.();
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Go' })).toBeDisabled()
+      expect(screen.getByRole('button', { name: 'Jetzt deaktivieren' })).toBeDisabled()
     );
     expect(screen.queryByText('Wird ausgeführt…')).not.toBeInTheDocument();
   });
@@ -176,7 +176,7 @@ describe('TaskAutomation', () => {
     runIssueSequence.mockRejectedValueOnce(new Error('Failed'));
     const user = userEvent.setup();
     renderWithAppQueryClient(<TaskAutomationHarness />);
-    const button = screen.getByRole('button', { name: 'Go' });
+    const button = screen.getByRole('button', { name: 'Jetzt deaktivieren' });
     await waitFor(() => expect(button).toBeEnabled());
     await user.click(button);
     await waitFor(() => expect(button).toBeEnabled());

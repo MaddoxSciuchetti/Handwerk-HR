@@ -1,3 +1,4 @@
+import { scheduleDateLabel } from '@/features/all-tasks/utils/deactivationSchedule';
 import { TEMPLATE_DEMO_MODE } from '@/config/env';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -193,7 +194,12 @@ export function TemplateApplyPrompt({
       setSynchronizing(true);
       // Keep the mutation pending until the visible task queries have caught up.
       await refresh();
-      publishReveal(input.target.engagementId, result, { finishedIds: [] }, false);
+      publishReveal(
+        input.target.engagementId,
+        result,
+        { finishedIds: [] },
+        false
+      );
       const run = {
         target: input.target,
         templateName: input.templateName,
@@ -222,6 +228,9 @@ export function TemplateApplyPrompt({
         const succeeded = result.outcomes.filter(
           (outcome) => outcome.status === 'completed'
         ).length;
+        const scheduled = result.outcomes.filter(
+          (outcome) => outcome.status === 'scheduled'
+        ).length;
         const failed = result.outcomes.filter(
           (outcome) => outcome.status === 'failed'
         ).length;
@@ -230,13 +239,18 @@ export function TemplateApplyPrompt({
         ).length;
         const message = result.running
           ? 'Automatisierung läuft bereits.'
-          : `${succeeded} erfolgreich · ${failed} fehlgeschlagen${pending ? ` · ${pending} zu prüfen` : ''}`;
+          : `${succeeded} erfolgreich · ${failed} fehlgeschlagen${scheduled ? ` · ${scheduled} geplant` : ''}${pending ? ` · ${pending} zu prüfen` : ''}`;
         if (failed || pending) toast.error(message);
         else toast.success(message);
       } else toast.success('Aufgaben erstellt');
     },
     onError: (error: Error, input) => {
-      publishReveal(input.target.engagementId, { count: 0, issueIds: [], outcomes: [], running: false }, { finishedIds: [] }, false);
+      publishReveal(
+        input.target.engagementId,
+        { count: 0, issueIds: [], outcomes: [], running: false },
+        { finishedIds: [] },
+        false
+      );
       void refresh();
       void queryClient.invalidateQueries({
         queryKey: ['template-application-preview'],
@@ -331,7 +345,9 @@ export function TemplateApplyPrompt({
             ? 'done'
             : outcome.status === 'failed'
               ? 'error'
-              : 'in_progress',
+              : outcome.status === 'scheduled'
+                ? 'open'
+                : 'in_progress',
       }));
   const running = apply.isPending;
   const receiptDismissed = Boolean(savedRun.data?.dismissed);
@@ -382,7 +398,8 @@ export function TemplateApplyPrompt({
     completedRun &&
     !completedRun.result.running &&
     completedRun.result.outcomes.every(
-      (outcome) => outcome.status === 'completed'
+      (outcome) =>
+        outcome.status === 'completed' || outcome.status === 'scheduled'
     )
   );
   const completedWorkerId = completedTarget?.workerId;
@@ -397,7 +414,7 @@ export function TemplateApplyPrompt({
       !completedEngagementId
     )
       return;
-    let fadeTimer: ReturnType<typeof setTimeout>;
+    let fadeTimer: number;
     const holdTimer = window.setTimeout(() => {
       setFadingEngagement(completedEngagementId);
       fadeTimer = window.setTimeout(
@@ -493,16 +510,22 @@ export function TemplateApplyPrompt({
                   const outcome = completedRun.result.outcomes.find(
                     (entry) => entry.issueId === task.id
                   );
-                  const label = (
-                    {
-                      done: 'Abgeschlossen',
-                      error: 'Fehlgeschlagen',
-                      open: 'Offen',
-                      in_progress: 'In Bearbeitung',
-                      cancelled: 'Abgebrochen',
-                      not_applicable: 'Nicht zutreffend',
-                    } as Record<string, string>
-                  )[task.status];
+                  const date =
+                    'scheduledDeactivateAt' in task
+                      ? task.scheduledDeactivateAt
+                      : null;
+                  const label = date
+                    ? `Geplant · ${scheduleDateLabel(String(date))}`
+                    : (
+                        {
+                          done: 'Abgeschlossen',
+                          error: 'Fehlgeschlagen',
+                          open: 'Offen',
+                          in_progress: 'In Bearbeitung',
+                          cancelled: 'Abgebrochen',
+                          not_applicable: 'Nicht zutreffend',
+                        } as Record<string, string>
+                      )[task.status];
                   const Icon =
                     task.status === 'done'
                       ? CheckCircle2

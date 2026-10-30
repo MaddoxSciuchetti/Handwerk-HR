@@ -35,6 +35,7 @@ type GraphUser = {
 async function graphJson(token: string, path: string, init?: RequestInit) {
     const response = await microsoftGraphFetch(`${GRAPH}${path}`, {
         ...init,
+        signal: init?.signal ?? AbortSignal.timeout(10_000),
         headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",

@@ -1,3 +1,4 @@
+import { requireCronSecret, postScheduledDeactivations } from "./controllers/scheduledDeactivations.controller";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -85,6 +86,8 @@ app.post(
 app.get("/", (req, res) => {
     res.send("here");
 });
+
+app.post("/internal/cron/scheduled-deactivations", requireCronSecret, postScheduledDeactivations);
 
 app.use("/test", testRoutes);
 

@@ -1,3 +1,9 @@
+import { claimDeactivation, finishDeactivation } from "./deactivationSchedule";
+jest.mock("./deactivationSchedule", () => ({
+    ...jest.requireActual("./deactivationSchedule"),
+    claimDeactivation: jest.fn(async () => ({ token: "claim", actorUserId: "user" })),
+    finishDeactivation: jest.fn(),
+}));
 import { runIssueSequence } from "./runSequence";
 import { prisma } from "@/lib/prisma";
 import { executionStatus } from "./issueExecutionStatus";
@@ -199,11 +205,24 @@ it.each([true, false])(
             workerId: "worker",
             auth: { token: "jwt", crewId: "42" },
         });
-        expect(executionStatus).toHaveBeenLastCalledWith(
-            "issue",
-            "user",
-            success ? "done" : "error",
-            success ? undefined : "Nicht bestätigt",
-        );
+        expect(claimDeactivation).toHaveBeenCalledWith(input);
+        expect(finishDeactivation).toHaveBeenLastCalledWith({
+            issueId: "issue", token: "claim", actorUserId: "user", scheduled: undefined,
+            succeeded: success, message: success ? undefined : "Nicht bestätigt",
+        });
     },
 );
+
+it("does not contact the provider if another deactivation owns the claim", async () => {
+    (prisma.issue.findFirst as jest.Mock).mockResolvedValue({ id: "issue", status: "in_progress", sequence: "crewmeister_deactivate_account" });
+    (claimDeactivation as jest.Mock).mockResolvedValueOnce(null);
+    expect(await runIssueSequence(input)).toMatchObject({ status: "failed" });
+    expect(deactivateCrewmeisterAccount).not.toHaveBeenCalled();
+    expect(finishDeactivation).not.toHaveBeenCalled();
+});
+it("records thrown provider errors and releases the claim for retry", async () => {
+    (prisma.issue.findFirst as jest.Mock).mockResolvedValue({ id: "issue", status: "open", sequence: "crewmeister_deactivate_account", integrationProvider: "crewmeister", workerEngagement: { id: "engagement", workerId: "worker" } });
+    (deactivateCrewmeisterAccount as jest.Mock).mockRejectedValueOnce(new Error("Timeout"));
+    expect(await runIssueSequence({ ...input, scheduled: true })).toEqual({ status: "failed", message: "Timeout" });
+    expect(finishDeactivation).toHaveBeenCalledWith(expect.objectContaining({ succeeded: false, message: "Timeout", scheduled: true }));
+});
