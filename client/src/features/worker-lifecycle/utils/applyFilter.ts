@@ -1,18 +1,27 @@
-import type { EngagementType, WorkerRecord } from '../types/index.types';
+import type {
+  EngagementType,
+  WorkerRecord,
+  WorkerTypeFilterValue,
+} from '../types/index.types';
 
 export function applyFilter(
   workers: WorkerRecord[],
-  types: EngagementType[]
+  types: WorkerTypeFilterValue[]
 ): WorkerRecord[] {
+  const includeArchived = types.includes('archived');
+  const activeTypes = types.filter(
+    (type): type is EngagementType => type !== 'archived'
+  );
   return workers.filter((worker) => {
+    if (worker.status === 'inactive') return includeArchived;
     const current = worker.engagements[0];
-    return current && types.includes(current.type);
+    return current && activeTypes.includes(current.type);
   });
 }
 
 export function applyFilterAndSort(
   workers: WorkerRecord[],
-  types: EngagementType[]
+  types: WorkerTypeFilterValue[]
 ): WorkerRecord[] {
   return applyFilter(workers, types).sort(
     (left, right) =>

@@ -7,25 +7,35 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ChevronDownIcon } from 'lucide-react';
-import { ENGAGEMENT_TYPE_OPTIONS } from '../consts/engagement-type.consts';
-import type { EngagementType } from '../types/index.types';
+import {
+  DEFAULT_WORKER_TYPE_FILTER,
+  WORKER_TYPE_FILTER_OPTIONS,
+} from '../consts/engagement-type.consts';
+import type { WorkerTypeFilterValue } from '../types/index.types';
+
+function isDefaultOrAllSelected(selectedTypes: WorkerTypeFilterValue[]) {
+  if (selectedTypes.length === WORKER_TYPE_FILTER_OPTIONS.length) return true;
+  return (
+    selectedTypes.length === DEFAULT_WORKER_TYPE_FILTER.length &&
+    DEFAULT_WORKER_TYPE_FILTER.every((type) => selectedTypes.includes(type))
+  );
+}
 
 export function WorkerTypeFilter({
   selectedTypes,
   onToggle,
   disabled,
 }: {
-  selectedTypes: EngagementType[];
-  onToggle: (type: EngagementType) => void;
+  selectedTypes: WorkerTypeFilterValue[];
+  onToggle: (type: WorkerTypeFilterValue) => void;
   disabled?: boolean;
 }) {
-  const selectedLabels = ENGAGEMENT_TYPE_OPTIONS.filter((option) =>
+  const selectedLabels = WORKER_TYPE_FILTER_OPTIONS.filter((option) =>
     selectedTypes.includes(option.value)
   ).map((option) => option.label);
-  const label =
-    selectedTypes.length === ENGAGEMENT_TYPE_OPTIONS.length
-      ? 'Typ'
-      : selectedLabels.join(', ') || 'Typ (keine)';
+  const label = isDefaultOrAllSelected(selectedTypes)
+    ? 'Typ'
+    : selectedLabels.join(', ') || 'Typ (keine)';
 
   return (
     <DropdownMenu>
@@ -43,7 +53,7 @@ export function WorkerTypeFilter({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-52">
         <DropdownMenuLabel>Typ</DropdownMenuLabel>
-        {ENGAGEMENT_TYPE_OPTIONS.map((option) => (
+        {WORKER_TYPE_FILTER_OPTIONS.map((option) => (
           <DropdownMenuCheckboxItem
             key={option.value}
             checked={selectedTypes.includes(option.value)}

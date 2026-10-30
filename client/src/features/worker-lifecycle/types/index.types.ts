@@ -72,6 +72,8 @@ export type WorkerStatus = 'active' | 'inactive';
 
 export type EngagementType = 'onboarding' | 'offboarding' | 'transfer';
 
+export type WorkerTypeFilterValue = EngagementType | 'archived';
+
 export type WorkerEngagement = {
   templateApplication?: {
     id: string;
