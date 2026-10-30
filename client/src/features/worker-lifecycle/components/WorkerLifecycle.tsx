@@ -35,6 +35,7 @@ import { WorkerSelectAllCheckbox } from './WorkerSelectAllCheckbox';
 import { useChangeResponsibleUser } from '../hooks/useChangeResponsibleUser';
 import { WorkerTypeFilter } from './WorkerTypeFilter';
 import { WorkerTable } from './WorkerTable';
+import { AddWorkerColumn } from './AddWorkerColumn';
 
 function WorkerLifeCycle() {
   const { user, isLoading, isError } = useAuth();
@@ -48,6 +49,7 @@ function WorkerLifeCycle() {
   } = useHome();
   const [isWorkerSidebarOpen, setIsWorkerSidebarOpen] = useState(false);
   const [headerScrolled, setHeaderScrolled] = useState(false);
+  const [showAnniversary, setShowAnniversary] = useState(false);
   const [questionnaireEngagementId, setQuestionnaireEngagementId] = useState<
     string | null
   >(null);
@@ -252,6 +254,7 @@ function WorkerLifeCycle() {
             >
               <WorkerTable
                 hideTaskColumns={isTeamMode}
+                showAnniversary={showAnniversary}
                 aria-busy={isLoading || workersLoading}
               >
                 <TableHeader className="[&_tr]:border-b-0">
@@ -277,9 +280,14 @@ function WorkerLifeCycle() {
                       Typ
                     </TableHead>
                     <TableHead
-                      className={`py-3 px-2 ${stickyTableHeadClassName(headerScrolled)}`}
+                      className={`relative py-3 pl-2 ${isTeamMode && !showAnniversary ? 'pr-10' : 'pr-2'} ${stickyTableHeadClassName(headerScrolled)}`}
                     >
                       Verantwortlich
+                      {isTeamMode && !showAnniversary && (
+                        <AddWorkerColumn
+                          onAdd={() => setShowAnniversary(true)}
+                        />
+                      )}
                     </TableHead>
                     {!isTeamMode && (
                       <>
@@ -289,11 +297,23 @@ function WorkerLifeCycle() {
                           Aufgaben
                         </TableHead>
                         <TableHead
-                          className={`py-3 px-2 ${stickyTableHeadClassName(headerScrolled)}`}
+                          className={`relative py-3 pl-2 ${!showAnniversary ? 'pr-10' : 'pr-2'} ${stickyTableHeadClassName(headerScrolled)}`}
                         >
                           Status
+                          {!showAnniversary && (
+                            <AddWorkerColumn
+                              onAdd={() => setShowAnniversary(true)}
+                            />
+                          )}
                         </TableHead>
                       </>
+                    )}
+                    {showAnniversary && (
+                      <TableHead
+                        className={`py-3 px-2 ${stickyTableHeadClassName(headerScrolled)}`}
+                      >
+                        Anniversary
+                      </TableHead>
                     )}
                   </TableRow>
                 </TableHeader>
@@ -301,7 +321,7 @@ function WorkerLifeCycle() {
                   {isLoading || workersLoading ? (
                     <TableSkeletonRows
                       variant="workers"
-                      columns={isTeamMode ? 3 : 5}
+                      columns={(isTeamMode ? 3 : 5) + Number(showAnniversary)}
                     />
                   ) : (
                     filteredWorkers.map((worker) => (
@@ -309,6 +329,7 @@ function WorkerLifeCycle() {
                         key={worker.id}
                         worker={worker}
                         hideTaskColumns={isTeamMode}
+                        showAnniversary={showAnniversary}
                         gotopage={handleNavigate}
                         isSelected={editModeData.some(
                           (item) => item.engagementNumber === worker.id
