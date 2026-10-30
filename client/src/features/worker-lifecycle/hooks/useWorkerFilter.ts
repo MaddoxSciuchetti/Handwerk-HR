@@ -1,26 +1,32 @@
 import { employeeQueries } from '@/features/employee-overview/query-options/queries/employee.queries';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
-import { ENGAGEMENT_TYPE_OPTIONS } from '../consts/engagement-type.consts';
-import type { EngagementType, WorkerRecord } from '../types/index.types';
+import {
+  DEFAULT_WORKER_TYPE_FILTER,
+  WORKER_TYPE_FILTER_OPTIONS,
+} from '../consts/engagement-type.consts';
+import type {
+  WorkerRecord,
+  WorkerTypeFilterValue,
+} from '../types/index.types';
 import { applyFilterAndSort } from '../utils/applyFilter';
 
-const allTypes = ENGAGEMENT_TYPE_OPTIONS.map((option) => option.value);
+const allFilterValues = WORKER_TYPE_FILTER_OPTIONS.map((option) => option.value);
 
-function readTypes(key: string | null): EngagementType[] {
-  if (!key) return allTypes;
+function readTypes(key: string | null): WorkerTypeFilterValue[] {
+  if (!key) return DEFAULT_WORKER_TYPE_FILTER;
   try {
     const saved = localStorage.getItem(key);
-    if (saved === null) return allTypes;
+    if (saved === null) return DEFAULT_WORKER_TYPE_FILTER;
     const values: unknown = JSON.parse(saved);
     if (
       !Array.isArray(values) ||
-      values.some((value) => !allTypes.includes(value))
+      values.some((value) => !allFilterValues.includes(value))
     )
-      return allTypes;
-    return allTypes.filter((type) => values.includes(type));
+      return DEFAULT_WORKER_TYPE_FILTER;
+    return allFilterValues.filter((type) => values.includes(type));
   } catch {
-    return allTypes;
+    return DEFAULT_WORKER_TYPE_FILTER;
   }
 }
 
@@ -45,9 +51,9 @@ export function useWorkerFilter(
   );
   const { data: employees = [] } = useQuery(employeeQueries.getEmployees());
 
-  const toggleType = (type: EngagementType) => {
+  const toggleType = (type: WorkerTypeFilterValue) => {
     if (!storageKey) return;
-    const types = allTypes.filter((value) =>
+    const types = allFilterValues.filter((value) =>
       value === type
         ? !selectedTypes.includes(value)
         : selectedTypes.includes(value)

@@ -1,4 +1,7 @@
-import type { EngagementType } from '../types/index.types';
+import type {
+  EngagementType,
+  WorkerTypeFilterValue,
+} from '../types/index.types';
 
 export const ENGAGEMENT_TYPE_OPTIONS: {
   label: string;
@@ -8,6 +11,17 @@ export const ENGAGEMENT_TYPE_OPTIONS: {
   { label: 'Offboarding', value: 'offboarding' },
   { label: 'Team', value: 'transfer' },
 ];
+
+export const WORKER_TYPE_FILTER_OPTIONS: {
+  label: string;
+  value: WorkerTypeFilterValue;
+}[] = [
+  ...ENGAGEMENT_TYPE_OPTIONS,
+  { label: 'Archiv', value: 'archived' },
+];
+
+export const DEFAULT_WORKER_TYPE_FILTER: WorkerTypeFilterValue[] =
+  ENGAGEMENT_TYPE_OPTIONS.map((option) => option.value);
 
 export function switchableEngagementTypes(selectedTypes: EngagementType[]) {
   const unique = new Set(selectedTypes);

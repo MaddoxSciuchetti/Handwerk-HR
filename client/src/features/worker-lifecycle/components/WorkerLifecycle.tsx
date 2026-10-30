@@ -25,6 +25,7 @@ import type {
   WorkerRecord,
 } from '@/features/worker-lifecycle/types/index.types';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
+import { Archive, ArchiveRestore } from 'lucide-react';
 import { useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import { QuestionnaireSendDialog } from '@/features/questionnaire/QuestionnaireSendDialog';
 import GreetingHeader from './GreetingHeader';
@@ -54,7 +55,12 @@ function WorkerLifeCycle() {
   const [largeEditMode, setLargeEditMode] = useState(false);
   const [editModeData, setEditModeData] = useState<WorkerSelection[]>([]);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const { deleteWorkersMutation, isDeletingWorkers } = useWorkerMutations();
+  const {
+    deleteWorkersMutation,
+    isDeletingWorkers,
+    archiveWorkerMutation,
+    unarchiveWorkerMutation,
+  } = useWorkerMutations();
   const { mutateAsync: switchEngagementType, isPending: isSwitchingType } =
     useSwitchEngagementType();
   const {
@@ -108,6 +114,37 @@ function WorkerLifeCycle() {
         setLargeEditMode(true);
       },
     });
+  };
+
+  const selectedWorkers = (workers ?? []).filter((worker) =>
+    editModeData.some((item) => item.engagementNumber === worker.id)
+  );
+  const canArchiveSelected = selectedWorkers.some(
+    (worker) => worker.status === 'active'
+  );
+  const canRestoreSelected = selectedWorkers.some(
+    (worker) => worker.status === 'inactive'
+  );
+
+  const clearSelection = () => {
+    setEditModeData([]);
+    setLargeEditMode(false);
+  };
+
+  const handleArchiveSelected = () => {
+    if (isSelectionPending || !canArchiveSelected) return;
+    for (const worker of selectedWorkers) {
+      if (worker.status === 'active') archiveWorkerMutation(worker.id);
+    }
+    clearSelection();
+  };
+
+  const handleRestoreSelected = () => {
+    if (isSelectionPending || !canRestoreSelected) return;
+    for (const worker of selectedWorkers) {
+      if (worker.status === 'inactive') unarchiveWorkerMutation(worker.id);
+    }
+    clearSelection();
   };
 
   // Serialize edits for one worker so a second field uses the confirmed phase ID.
@@ -340,6 +377,36 @@ function WorkerLifeCycle() {
             onDelete={() => setIsDeleteConfirmOpen(true)}
             deleteLabel="Ausgewählte Handwerker löschen"
             onClose={() => setLargeEditMode(false)}
+            actions={
+              <>
+                {canArchiveSelected ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="Ausgewählte Handwerker archivieren"
+                    disabled={isSelectionPending}
+                    onClick={handleArchiveSelected}
+                    className="rounded-full"
+                  >
+                    <Archive className="h-4 w-4" aria-hidden />
+                  </Button>
+                ) : null}
+                {canRestoreSelected ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="Ausgewählte Handwerker wiederherstellen"
+                    disabled={isSelectionPending}
+                    onClick={handleRestoreSelected}
+                    className="rounded-full"
+                  >
+                    <ArchiveRestore className="h-4 w-4" aria-hidden />
+                  </Button>
+                ) : null}
+              </>
+            }
           />
         )}
       </div>
