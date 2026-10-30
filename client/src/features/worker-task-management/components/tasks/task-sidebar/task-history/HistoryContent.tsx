@@ -31,6 +31,8 @@ const FIELD_LABELS: Record<string, string> = {
   assigneeUserId: 'Zuständig',
   priority: 'Priorität',
   dueDate: 'Fälligkeit',
+  scheduledDeactivateAt: 'Letzter aktiver Tag',
+  executionSource: 'Ausführung',
   automation: 'Automation',
   automationError: 'Fehler',
   integrationProvider: 'Integration',

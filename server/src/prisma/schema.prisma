@@ -353,6 +353,10 @@ model Issue {
   mailTemplateId     String?            @map("mail_template_id")
   automationRecipients Json? @map("automation_recipients")
 
+  scheduledDeactivateAt DateTime? @map("scheduled_deactivate_at") @db.Date
+  scheduledDeactivateByUserId String? @map("scheduled_deactivate_by_user_id")
+  deactivationClaimToken String? @map("deactivation_claim_token")
+  deactivationClaimUntil DateTime? @map("deactivation_claim_until") @db.Timestamptz()
   microsoftAccountId String?            @map("microsoft_account_id") @db.VarChar(36)
   mailSenderAddress  String?            @map("mail_sender_address") @db.VarChar(254)
   isTemporary        Boolean            @default(false) @map("is_temporary")
@@ -381,6 +385,7 @@ model Issue {
   @@index([assigneeUserId])
   @@index([status])
   @@index([mailTemplateId])
+  @@index([scheduledDeactivateAt])
   @@map("issues")
 }
 

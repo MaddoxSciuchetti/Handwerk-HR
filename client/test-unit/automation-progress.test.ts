@@ -107,3 +107,30 @@ it('reveals automation tasks only as progress starts them and keeps manual tasks
   expect(isAutomationTaskVisible('manual', started)).toBe(true);
   expect(isAutomationTaskVisible('missing', null)).toBe(true);
 });
+
+it('finishes scheduling in the popup while the task remains open and visible', () => {
+  const result: TemplateApplicationResult = {
+    count: 1,
+    issueIds: ['scheduled'],
+    running: false,
+    outcomes: [{ issueId: 'scheduled', status: 'scheduled' }],
+    tasks: [
+      {
+        id: 'scheduled',
+        title: 'Deaktivieren',
+        status: 'open',
+        sequence: 'microsoft_deactivate_account',
+        scheduledDeactivateAt: '2099-12-31',
+      },
+    ],
+  };
+  const progress = mergeAutomationProgress(null, result);
+  expect(progress.finishedIds).toEqual(['scheduled']);
+  expect(result.tasks![0].status).toBe('open');
+  expect(
+    isAutomationTaskVisible(
+      'scheduled',
+      mergeAutomationReveal(null, result, progress)
+    )
+  ).toBe(true);
+});

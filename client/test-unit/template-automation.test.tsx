@@ -1471,3 +1471,55 @@ it('does not default to another mailbox when the logged-in user is unavailable',
   await user.click(await screen.findByRole('checkbox', { name: 'Team' }));
   expect(screen.getByRole('button', { name: 'Automatisierung starten' })).toBeDisabled();
 });
+
+it.each(['crewmeister_deactivate_account', 'microsoft_deactivate_account'])(
+  'includes an optional scheduled date for %s in the bottom popup',
+  async (sequence) => {
+    const date = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Europe/Berlin',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date());
+    mocks.preview.mockResolvedValue({
+      id: 'automated',
+      name: 'Automatisch',
+      revision: 'schedule-v1',
+      items: [
+        { ...automation, sequence, title: 'Konto deaktivieren' },
+        { ...automation, id: 'b', title: 'Konto erstellen' },
+      ],
+    });
+    renderWithProviders(<TemplateApplyPrompt targets={[target]} />);
+    const user = await selectTemplate();
+    await user.click(
+      screen.getByRole('button', { name: 'Konto deaktivieren' })
+    );
+    expect(screen.queryByText('Letzter aktiver Tag')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('switch', { name: 'Planen' }));
+    expect(
+      screen.getByRole('button', { name: 'Automatisierung starten' })
+    ).toBeDisabled();
+    await user.click(
+      screen.getByRole('button', { name: /Letzter aktiver Tag/ })
+    );
+    const displayDate = new Date(`${date}T12:00:00`).toLocaleDateString('de');
+    const day = screen
+      .getAllByRole('button')
+      .find((button) => button.getAttribute('data-day') === displayDate);
+    await user.click(day!);
+    await user.click(
+      screen.getByRole('button', { name: 'Automatisierung starten' })
+    );
+    await waitFor(() =>
+      expect(mocks.apply).toHaveBeenCalledWith(
+        'worker',
+        'automated',
+        expect.objectContaining({
+          runAutomation: true,
+          choices: { a: { scheduledDeactivateAt: date }, b: {} },
+        })
+      )
+    );
+  }
+);

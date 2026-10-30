@@ -1,3 +1,5 @@
+import { isDeactivation } from '../utils/deactivationSchedule';
+import { TaskDeactivationSchedule } from './TaskDeactivationSchedule';
 import FormFields from '@/components/form/FormFields';
 import FormSelectOptions from '@/components/form/FormSelectOptions';
 import { Button } from '@/components/ui/button';
@@ -292,6 +294,21 @@ export function TaskSidebar({
                     )}
                   </>
                 ) : null}
+                {taskState === 'edit' &&
+                  taskEditState.taskId &&
+                  isDeactivation(sequence) && (
+                    <TaskDeactivationSchedule
+                      key={taskEditState.taskId}
+                      taskId={taskEditState.taskId}
+                      beforeSave={saveForAction}
+                      disabled={
+                        isSubmitting ||
+                        ['done', 'cancelled', 'not_applicable'].includes(
+                          taskEditState.status
+                        )
+                      }
+                    />
+                  )}
                 {isMailSequence(sequence) && workerEngagementId ? (
                   <EngagementMailRecipients engagementId={workerEngagementId} />
                 ) : null}

@@ -1,3 +1,4 @@
+import { isDeactivation, claimDeactivation, finishDeactivation } from "./deactivationSchedule";
 import { executionStatus, executionError } from "./issueExecutionStatus";
 import { prisma } from "@/lib/prisma";
 import { microsoftSimulationEnabled } from "@/constants/env";
@@ -182,6 +183,7 @@ async function executeIssueSequence(params: {
     issueId: string;
     actorUserId: string;
     senderAddress?: string | null;
+    scheduled?: boolean;
 }): Promise<SequenceRunResult> {
     const issue = await prisma.issue.findFirst({
         where: {
@@ -273,10 +275,26 @@ export async function runIssueSequence(
             id: params.issueId,
             workerEngagement: { organizationId: params.organizationId },
         },
-        select: { id: true, status: true },
+        select: { id: true, status: true, sequence: true },
     });
     if (!issue) return { status: "failed", message: "Aufgabe nicht gefunden." };
     if (issue.status === "done") return { status: "completed" };
+    if (isDeactivation(issue.sequence)) {
+        const claim = await claimDeactivation(params);
+        if (!claim) return { status: "failed", message: "Aufgabe ist nicht fällig oder wird bereits ausgeführt." };
+        let result: SequenceRunResult;
+        try {
+            result = await executeIssueSequence({ ...params, actorUserId: claim.actorUserId });
+        } catch (error) {
+            result = { status: "failed", message: executionError(error) };
+        }
+        await finishDeactivation({
+            issueId: issue.id, ...claim, scheduled: params.scheduled,
+            succeeded: result.status === "completed",
+            message: result.status === "failed" ? result.message : undefined,
+        });
+        return result;
+    }
     await executionStatus(issue.id, params.actorUserId, "in_progress");
     let result: SequenceRunResult;
     try {

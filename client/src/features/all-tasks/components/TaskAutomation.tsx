@@ -1,3 +1,4 @@
+import { isDeactivation } from '../utils/deactivationSchedule';
 import { TeamsSendAction } from '@/features/microsoft-teams/TeamsSendAction';
 import { Button } from '@/components/ui/button';
 import { MicrosoftSimulationNotice } from '@/features/settings/integrations/MicrosoftSimulationNotice';
@@ -73,6 +74,9 @@ function ExistingTaskAutomation({
     void queryClient.invalidateQueries({
       queryKey: ['template-application-result'],
     });
+    void queryClient.invalidateQueries({
+      queryKey: ['deactivation-schedule', taskId],
+    });
     void queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] });
     void queryClient.invalidateQueries({ queryKey: [WORKERBYID] });
     void queryClient.invalidateQueries({ queryKey: [TASKHISTORY, taskId] });
@@ -116,6 +120,8 @@ function ExistingTaskAutomation({
             <Spinner className="size-4 text-(--automation-accent)" />
             Wird ausgeführt…
           </>
+        ) : isDeactivation(sequence) ? (
+          'Jetzt deaktivieren'
         ) : (
           'Go'
         )}
@@ -147,7 +153,9 @@ function TaskAutomation(props: TaskAutomationProps) {
               >
                 {props.sequence === 'microsoft_send_teams_message'
                   ? 'Teams-Nachricht senden'
-                  : 'Go'}
+                  : isDeactivation(props.sequence)
+                    ? 'Jetzt deaktivieren'
+                    : 'Go'}
               </Button>
             </span>
           </TooltipTrigger>

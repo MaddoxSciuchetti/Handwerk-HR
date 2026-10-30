@@ -46,6 +46,7 @@ function errorMessage(payload: unknown, fallback: string) {
 async function crewmeister(token: string, path: string, init?: RequestInit) {
     const response = await fetch(`${API}${path}`, {
         ...init,
+        signal: init?.signal ?? AbortSignal.timeout(10_000),
         headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",

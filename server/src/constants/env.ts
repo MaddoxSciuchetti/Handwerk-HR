@@ -69,3 +69,5 @@ export type Microsoft365EnvKey = (typeof MICROSOFT_365_ENV_KEYS)[number];
 export function microsoft365Env(key: Microsoft365EnvKey) {
     return process.env[key]?.trim() ?? "";
 }
+
+export const CRON_SECRET = () => process.env.CRON_SECRET?.trim() ?? "";

@@ -30,6 +30,7 @@ jest.mock("@/lib/prisma", () => ({
         issueAuditLog: { create: jest.fn() },
         user: { findUnique: jest.fn() },
         $transaction: jest.fn(),
+        $queryRaw: jest.fn(),
     },
 }));
 jest.mock("@/utils/sendMail", () => ({ sendMail: jest.fn() }));
@@ -99,6 +100,10 @@ describe("Microsoft staging simulation", () => {
             position: "Test",
             welcomeMailSentAt: null,
             departureMailSentAt: null,
+        });
+        (prisma.issue.update as jest.Mock).mockImplementation(async ({ data }) => {
+            (prisma.issue.findUniqueOrThrow as jest.Mock).mockResolvedValue({ id: context.issueId, ...data });
+            return { id: context.issueId, ...data };
         });
         (prisma.issue.findMany as jest.Mock).mockResolvedValue([]);
         (prisma.$transaction as jest.Mock).mockImplementation(async (fn) =>
@@ -180,7 +185,7 @@ describe("Microsoft staging simulation", () => {
             });
             expect(prisma.issue.update).toHaveBeenCalledWith({
                 where: { id: context.issueId },
-                data: { status: "done", completedAt: expect.any(Date) },
+                data: expect.objectContaining({ status: "done", completedAt: expect.any(Date) }),
             });
             expect(prisma.issueAuditLog.create).toHaveBeenCalled();
             if (sequence === "microsoft_create_account") {

@@ -1,3 +1,8 @@
+import { DeactivationScheduleField } from '@/features/all-tasks/components/DeactivationScheduleField';
+import {
+  isDeactivation,
+  scheduleDateLabel,
+} from '@/features/all-tasks/utils/deactivationSchedule';
 import { ChevronDown } from 'lucide-react';
 import {
   Popover,
@@ -31,10 +36,7 @@ import {
 } from '@/features/settings/integrations/integration.consts';
 import { connectTeams } from '@/features/microsoft-teams/teams.api';
 import useAuth from '@/features/user-profile/hooks/useAuth';
-import {
-  recipientKey,
-  type MailRecipient,
-} from '../../api/engagementMail.api';
+import { recipientKey, type MailRecipient } from '../../api/engagementMail.api';
 import type {
   AutomationChoice,
   TemplatePreview,
@@ -161,6 +163,8 @@ export function TemplateAutomationConfirmation({
   const ready = automated.every((item) => {
     const choice = effectiveChoices[item.id];
     if (item.blockedReason) return false;
+    if (isDeactivation(item.sequence) && choice.scheduledDeactivateAt === '')
+      return false;
     if (isMailSequence(item.sequence))
       return Boolean(
         senders.isSuccess &&
@@ -281,7 +285,15 @@ export function TemplateAutomationConfirmation({
                 className="min-w-0 rounded-lg border border-border p-2"
               >
                 <AccordionTrigger disabled={busy} className="py-0">
-                  {item.title}
+                  <span className="flex flex-1 items-center justify-between gap-2">
+                    <span>{item.title}</span>
+                    {choice.scheduledDeactivateAt && (
+                      <span className="text-xs font-normal text-muted-foreground">
+                        Geplant ·{' '}
+                        {scheduleDateLabel(choice.scheduledDeactivateAt)}
+                      </span>
+                    )}
+                  </span>
                 </AccordionTrigger>
                 <AccordionContent>
                   <fieldset
@@ -294,6 +306,15 @@ export function TemplateAutomationConfirmation({
                         {sequenceLabel(item.sequence)}
                       </p>
                     </FieldRow>
+                    {isDeactivation(item.sequence) && (
+                      <DeactivationScheduleField
+                        value={choice.scheduledDeactivateAt ?? null}
+                        onChange={(date) =>
+                          change(item.id, { scheduledDeactivateAt: date })
+                        }
+                        disabled={busy}
+                      />
+                    )}
                     {item.sequence === 'microsoft_create_account' && (
                       <MicrosoftLicenseStatus />
                     )}

@@ -2,6 +2,7 @@ import { apiJson } from '@/config/apiClient';
 import type { MailRecipient } from './engagementMail.api';
 
 export type AutomationChoice = {
+  scheduledDeactivateAt?: string | null;
   senderAddress?: string;
   recipients?: MailRecipient[];
   destinations?: Array<{ teamId: string; channelId: string }>;
@@ -31,12 +32,13 @@ export type TemplateApplicationResult = {
       | 'cancelled'
       | 'not_applicable';
     sequence: string | null;
+    scheduledDeactivateAt?: string | null;
   }>;
   count: number;
   issueIds: string[];
   outcomes: Array<{
     issueId: string;
-    status: 'completed' | 'failed' | 'pending';
+    status: 'completed' | 'failed' | 'pending' | 'scheduled';
     message?: string;
   }>;
   running: boolean;
@@ -84,7 +86,9 @@ export function getTemplateApplication(workerId: string, engagementId: string) {
   return apiJson
     .get<{
       data: StoredTemplateApplication | null;
-    }>(`/worker/${workerId}/template-application`, { params: { workerEngagementId: engagementId } })
+    }>(`/worker/${workerId}/template-application`, {
+      params: { workerEngagementId: engagementId },
+    })
     .then((response) => response.data);
 }
 
@@ -93,9 +97,8 @@ export function dismissTemplateApplication(
   engagementId: string
 ) {
   return apiJson
-    .post<{ data: { dismissed: boolean } }>(
-      `/worker/${workerId}/template-application/dismiss`,
-      { workerEngagementId: engagementId }
-    )
+    .post<{
+      data: { dismissed: boolean };
+    }>(`/worker/${workerId}/template-application/dismiss`, { workerEngagementId: engagementId })
     .then((response) => response.data);
 }

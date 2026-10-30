@@ -1,3 +1,4 @@
+import { isDeactivation, validateSchedule } from "./integrations/deactivationSchedule";
 import {
     integrationsMocked,
     MOCK_AUTOMATION_DELAY_MS,
@@ -43,6 +44,7 @@ export const templateApplyInput = z.object({
         .record(
             z.string(),
             z.object({
+                scheduledDeactivateAt: z.string().nullable().optional(),
                 senderAddress: z.string().email().optional(),
                 recipients: z.array(recipient).min(1).max(50).optional(),
                 destinations: z
@@ -147,14 +149,14 @@ export async function templateApplicationPreview(
 
 type Outcome = {
     issueId: string;
-    status: "completed" | "failed" | "pending";
+    status: "completed" | "failed" | "pending" | "scheduled";
     message?: string;
 };
 
 async function applicationTasks(issueIds: string[], organizationId: string) {
     return prisma.issue.findMany({
         where: { id: { in: issueIds }, workerEngagement: { organizationId } },
-        select: { id: true, title: true, status: true, sequence: true },
+        select: { id: true, title: true, status: true, sequence: true, scheduledDeactivateAt: true },
         orderBy: { createdAt: "asc" },
     });
 }
@@ -186,7 +188,7 @@ export async function readTemplateApplication(context: {
                   workerEngagement: { organizationId: context.organizationId },
                   templateItem: { issueTemplateId: receipt.templateId },
               },
-              select: { id: true, title: true, status: true, sequence: true },
+              select: { id: true, title: true, status: true, sequence: true, scheduledDeactivateAt: true },
               orderBy: { createdAt: "asc" },
           });
     // The receipt describes the original run. Tasks can be retried separately,
@@ -227,6 +229,9 @@ export async function readTemplateApplication(context: {
                 status: "failed",
                 message: latestError.get(task.id) ?? outcome.message,
             };
+        if (task.scheduledDeactivateAt && isDeactivation(task.sequence) &&
+            (task.status === "open" || task.status === "in_progress"))
+            return { issueId: task.id, status: "scheduled", message: `Geplant · ${task.scheduledDeactivateAt.toISOString().slice(0, 10)}` };
         return { issueId: task.id, status: "pending" };
     });
     return {
@@ -328,6 +333,10 @@ export async function applyTemplateApplication(
             : null;
         for (const item of template.items) {
             const choice = input.choices[item.id];
+            if (choice?.scheduledDeactivateAt != null) {
+                if (!isDeactivation(item.sequence)) throw new AppError(BAD_REQUEST, "Diese Aufgabe kann nicht geplant werden.");
+                validateSchedule(choice.scheduledDeactivateAt);
+            }
             if (isMailSequence(item.sequence)) {
                 if (!choice?.senderAddress || !choice.recipients?.length)
                     throw new AppError(
@@ -374,6 +383,20 @@ export async function applyTemplateApplication(
                 return { receipt: existing, fresh: false };
             }
             const created = await createTasks(tx, template);
+            if (input.runAutomation && Object.values(input.choices).some((choice) => choice.scheduledDeactivateAt)) {
+                const issues = await tx.issue.findMany({ where: { id: { in: created.issueIds } }, select: { id: true, templateItemId: true } });
+                for (const issue of issues) {
+                    const date = input.choices[issue.templateItemId ?? ""]?.scheduledDeactivateAt;
+                    if (!date) continue;
+                    await tx.issue.update({ where: { id: issue.id }, data: {
+                        scheduledDeactivateAt: validateSchedule(date), scheduledDeactivateByUserId: context.actorUserId,
+                    } });
+                    await tx.issueAuditLog.create({ data: {
+                        issueId: issue.id, actorUserId: context.actorUserId, action: "issue.updated",
+                        oldValue: { scheduledDeactivateAt: null }, newValue: { scheduledDeactivateAt: date },
+                    } });
+                }
+            }
             const data = {
                 workerEngagementId: input.workerEngagementId,
                 templateId: context.templateId,
@@ -440,7 +463,9 @@ export async function applyTemplateApplication(
                         },
                     });
                 }
-                if (mocked) {
+                if (isDeactivation(item.sequence) && choice?.scheduledDeactivateAt) {
+                    outcome = { issueId: issue.id, status: "scheduled", message: `Geplant · ${choice.scheduledDeactivateAt}` };
+                } else if (mocked) {
                     await executionStatus(
                         issue.id,
                         context.actorUserId,
