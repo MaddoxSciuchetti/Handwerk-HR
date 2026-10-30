@@ -9,6 +9,7 @@ type ContractDraftBodyProps = {
   segments: DocumentSegment[];
   values: Record<string, string>;
   onValueChange: (key: string, value: string) => void;
+  onDocumentChange?: (document: StyledDocument) => void;
   readOnly: boolean;
   acceptAnswerDrop?: boolean;
 };
@@ -18,6 +19,7 @@ export function ContractDraftBody({
   segments,
   values,
   onValueChange,
+  onDocumentChange,
   readOnly,
   acceptAnswerDrop = false,
 }: ContractDraftBodyProps) {
@@ -28,6 +30,7 @@ export function ContractDraftBody({
         document={document}
         values={values}
         onValueChange={onValueChange}
+        onDocumentChange={onDocumentChange}
         readOnly={readOnly}
       />
     );

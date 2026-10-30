@@ -155,6 +155,8 @@ export async function prepareDocument(
         values: Record<string, unknown>;
         recipient: string;
         includeBytes?: boolean;
+        /** Person-specific body; falls back to the live master template. */
+        document?: StyledDocument;
     },
 ) {
     const startedAt = performance.now();
@@ -167,7 +169,7 @@ export async function prepareDocument(
         },
     });
     if (!master) throw new AppError(NOT_FOUND, "Vorlage nicht gefunden.");
-    const document = parseStyledDocument(master.body);
+    const document = params.document ?? parseStyledDocument(master.body);
     let values: Record<string, string>;
     try {
         values = validateFieldValues(document, params.values);

@@ -18,10 +18,11 @@ import { downloadStoredFile, generatePresignedUrl } from "@/config/aws";
 import AppError from "@/utils/AppError";
 import { Prisma } from "@prisma/client";
 import {
+    documentFields,
     readStyledDocument,
     resolveCurrentDateValues,
-    type StyledDocument,
 } from "../../../shared/document";
+import { parseStyledDocument } from "@/services/styledDocument";
 import {
     prepareDocument,
     invalidatePreparedDocuments,
@@ -144,13 +145,22 @@ function reloadContract(
     });
 }
 
+function activeContractBody(
+    contract: NonNullable<Awaited<ReturnType<typeof findContract>>>,
+) {
+    return contract.body ?? contract.master.body;
+}
+
 function present(
     contract: NonNullable<Awaited<ReturnType<typeof findContract>>>,
 ) {
-    const followsMaster = !contract.sentAt && contract.status !== "signed";
-    const segments = followsMaster
-        ? readDocumentSegments(contract.master.body)
-        : readDocumentSegments(contract.body ?? contract.master.body);
+    // Person-specific text (or a send snapshot) freezes the body away from the live master.
+    const followsMaster =
+        contract.body == null &&
+        !contract.sentAt &&
+        contract.status !== "signed";
+    const source = activeContractBody(contract);
+    const segments = readDocumentSegments(source);
     const values: Record<string, string> = {};
     const allowed = inputKeys(segments);
     for (const entry of contract.values) {
@@ -168,6 +178,7 @@ function present(
                   matchFields,
               )
             : [];
+    const document = readStyledDocument(source);
 
     return {
         id: contract.id,
@@ -177,13 +188,9 @@ function present(
         name: contract.master.name,
         followsMaster,
         segments,
-        document: readStyledDocument(
-            followsMaster
-                ? contract.master.body
-                : (contract.body ?? contract.master.body),
-        ),
+        document,
         values: followsMaster
-            ? resolveCurrentDateValues(readStyledDocument(contract.master.body), values)
+            ? resolveCurrentDateValues(document, values)
             : values,
         unmatchedAnswers,
         questionnaireAnswers:
@@ -233,7 +240,10 @@ export async function getEngagementContract(params: ContractParams) {
 }
 
 export async function saveEngagementContractDraft(
-    params: ContractParams & { values: Record<string, unknown> },
+    params: ContractParams & {
+        values: Record<string, unknown>;
+        document?: unknown;
+    },
 ) {
     const contract = await findContract(params);
     if (!contract) {
@@ -243,11 +253,19 @@ export async function saveEngagementContractDraft(
         throw new AppError(CONFLICT, "Der Vertrag ist kein Entwurf mehr.");
     }
 
-    const segments = readDocumentSegments(contract.master.body);
-    const manualEntries = readDraftValues(params.values, inputKeys(segments));
+    const nextDocument =
+        params.document === undefined
+            ? null
+            : parseStyledDocument(params.document);
+    const sourceDocument =
+        nextDocument ?? readStyledDocument(activeContractBody(contract));
+    const allowed = new Set(
+        documentFields(sourceDocument).map((field) => field.key),
+    );
+    const manualEntries = readDraftValues(params.values, allowed);
     const entries = Object.entries(
         resolveCurrentDateValues(
-            readStyledDocument(contract.master.body),
+            sourceDocument,
             Object.fromEntries(
                 manualEntries.map((entry) => [entry.key, entry.value]),
             ),
@@ -271,7 +289,7 @@ export async function saveEngagementContractDraft(
                 "Die Vertragsvorlage wurde inzwischen geändert. Bitte erneut öffnen.",
             );
         }
-        const unchanged =
+        const valuesUnchanged =
             latest.values.length === entries.length &&
             entries.every((entry) =>
                 latest.values.some(
@@ -279,7 +297,7 @@ export async function saveEngagementContractDraft(
                         saved.key === entry.key && saved.value === entry.value,
                 ),
             );
-        if (unchanged && latest.body === null)
+        if (valuesUnchanged && nextDocument === null)
             return reloadContract(contract.id, tx);
 
         await invalidatePreparedDocuments(
@@ -290,10 +308,18 @@ export async function saveEngagementContractDraft(
             },
             tx,
         );
-        if (contract.body !== null) {
+        if (nextDocument) {
             await tx.employmentContract.update({
                 where: { id: contract.id },
-                data: { body: Prisma.DbNull, status: "draft" },
+                data: {
+                    body: nextDocument as unknown as Prisma.InputJsonValue,
+                    status: "draft",
+                },
+            });
+        } else if (latest.status !== "draft") {
+            await tx.employmentContract.update({
+                where: { id: contract.id },
+                data: { status: "draft" },
             });
         }
 
@@ -336,7 +362,9 @@ export async function persistMatchedContractValues(
         where: { id: params.contractId },
         include: { master: true, values: true },
     });
-    const segments = current ? readDocumentSegments(current.master.body) : [];
+    const segments = current
+        ? readDocumentSegments(current.body ?? current.master.body)
+        : [];
     const allowed = inputKeys(segments);
     const pointKeys = new Set(
         segments.flatMap((segment) =>
@@ -410,7 +438,11 @@ export async function resyncEngagementContractFromQuestionnaire(
     if (!master) throw new AppError(NOT_FOUND, "Vertragsvorlage nicht gefunden.");
     const switchingTemplate = Boolean(params.masterId && master.id !== contract.masterId);
     const answers = questionnaireAnswersFromStored(submission.answers);
-    const segments = readDocumentSegments(master.body);
+    // Keep person-specific wording when only questionnaire values are refreshed.
+    const matchBody = switchingTemplate
+        ? master.body
+        : (contract.body ?? master.body);
+    const segments = readDocumentSegments(matchBody);
     const entries = await matchQuestionnaireToContract(
         segments,
         answers,
@@ -480,7 +512,7 @@ export async function resyncEngagementContractFromQuestionnaire(
             data: {
                 matchedQuestionnaireRevision: submission.revision,
                 status: "draft",
-                body: Prisma.DbNull,
+                ...(switchingTemplate ? { body: Prisma.DbNull } : {}),
                 outgoingPdfId: null,
             },
         });
@@ -492,7 +524,7 @@ export async function resyncEngagementContractFromQuestionnaire(
 
 /**
  * Call when the user confirms the Personalfragebogen is back and this contract can be sent.
- * Copies the current master text onto the child and locks text and input fields.
+ * Freezes the current person-specific text (or master) onto the child.
  */
 export async function confirmEngagementContractForSend(params: ContractParams) {
     const contract = await findContract(params);
@@ -508,7 +540,7 @@ export async function confirmEngagementContractForSend(params: ContractParams) {
         where: { id: contract.id },
         data: {
             body: readStyledDocument(
-                contract.master.body,
+                activeContractBody(contract),
             ) as unknown as Prisma.InputJsonValue,
             status: "ready",
         },
@@ -525,6 +557,8 @@ export async function prepareEmploymentContractPdf(
     if (!contract || contract.sentAt || contract.status === "signed")
         throw new AppError(CONFLICT, "Vertrag kann nicht vorbereitet werden.");
     await saveEngagementContractDraft(params);
+    const latest = await findContract(params);
+    if (!latest) throw new AppError(NOT_FOUND, "Vertrag nicht gefunden.");
     const worker = await prisma.worker.findFirst({
         where: { id: params.workerId, organizationId: params.organizationId },
         select: { email: true },
@@ -532,8 +566,11 @@ export async function prepareEmploymentContractPdf(
     return prepareDocument({
         ...params,
         kind: "employment_contract",
-        masterId: contract.masterId,
+        masterId: latest.masterId,
         recipient: worker?.email?.trim() || "buero",
+        document: latest.body
+            ? parseStyledDocument(latest.body)
+            : undefined,
     });
 }
 

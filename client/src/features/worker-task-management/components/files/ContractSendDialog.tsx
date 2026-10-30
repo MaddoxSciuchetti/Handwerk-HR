@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Download, Loader2 } from 'lucide-react';
 import type { DocumentSegment } from '@/features/settings/documents/documentSegments';
+import type { StyledDocument } from '@/features/settings/documents/styledDocument';
 import { ALL_WORKER_DATA } from '@/features/worker-lifecycle/consts/query-key.consts';
 import { WORKERBYID } from '@/features/worker-task-management/consts/query-key.consts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -97,21 +98,30 @@ export function ContractSendDialog({
   );
   const [syncing, setSyncing] = useState(false);
   const [values, setValues] = useState<Record<string, string>>({});
+  const [document, setDocument] = useState<StyledDocument | null>(null);
   const [prepared, setPrepared] = useState<PreparedPdf | null>(null);
   const saveDraft = useSaveEmploymentContract(workerId, engagementId);
 
   const edited = useRef(false);
+  const documentEdited = useRef(false);
   useEffect(() => {
     if (!data || edited.current) return;
     // Cached data can predate questionnaire completion. Accept fresh server
     // values until the user starts editing; then preserve local corrections.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setValues(data.values);
+    if (!documentEdited.current) setDocument(data.document);
     setPrepared(data.prepared ?? null);
   }, [data]);
 
+  const activeDocument = document ?? data?.document;
+  const draftPayload = () => ({
+    values,
+    document:
+      documentEdited.current && activeDocument ? activeDocument : undefined,
+  });
   const complete = data
-    ? documentFields(data.document ?? fromSegments(data.segments)).every(
+    ? documentFields(activeDocument ?? fromSegments(data.segments)).every(
         (field) =>
           fieldComplete(
             field,
@@ -133,6 +143,16 @@ export function ContractSendDialog({
           prepared.id
         );
       } else {
+        const dirty =
+          documentEdited.current ||
+          JSON.stringify(values) !== JSON.stringify(data?.values);
+        if (dirty) {
+          const saved = await saveDraft.mutateAsync(draftPayload());
+          documentEdited.current = false;
+          edited.current = false;
+          setDocument(saved.document);
+          setValues(saved.values);
+        }
         const result = await prepareEmploymentContractDownload(
           workerId,
           engagementId,
@@ -144,7 +164,12 @@ export function ContractSendDialog({
           employmentContractKey(workerId, engagementId),
           (previous: typeof data) =>
             previous
-              ? { ...previous, values, prepared: result.prepared }
+              ? {
+                  ...previous,
+                  values,
+                  document: activeDocument ?? previous.document,
+                  prepared: result.prepared,
+                }
               : previous
         );
       }
@@ -160,8 +185,12 @@ export function ContractSendDialog({
       ),
   });
   const saveBeforeSync = async () => {
-    if (data && JSON.stringify(values) !== JSON.stringify(data.values)) {
-      await saveDraft.mutateAsync(values);
+    if (
+      data &&
+      (documentEdited.current ||
+        JSON.stringify(values) !== JSON.stringify(data.values))
+    ) {
+      await saveDraft.mutateAsync(draftPayload());
     }
   };
   const switchTemplate = useMutation({
@@ -171,7 +200,9 @@ export function ContractSendDialog({
     },
     onSuccess: (saved) => {
       edited.current = false;
+      documentEdited.current = false;
       setValues(saved.values);
+      setDocument(saved.document);
       setPrepared(null);
       queryClient.setQueryData(
         employmentContractKey(workerId, engagementId),
@@ -203,10 +234,12 @@ export function ContractSendDialog({
     if (
       !readOnly &&
       data &&
-      JSON.stringify(values) !== JSON.stringify(data.values)
+      (documentEdited.current ||
+        JSON.stringify(values) !== JSON.stringify(data.values))
     ) {
       try {
-        await saveDraft.mutateAsync(values);
+        await saveDraft.mutateAsync(draftPayload());
+        documentEdited.current = false;
       } catch {
         toast.error('Entwurf konnte nicht gespeichert werden');
         return;
@@ -247,8 +280,11 @@ export function ContractSendDialog({
 
   const openMaster = () => {
     if (!data || readOnly || busy) return;
-    saveDraft.mutate(values, {
-      onSuccess: leaveForMaster,
+    saveDraft.mutate(draftPayload(), {
+      onSuccess: () => {
+        documentEdited.current = false;
+        leaveForMaster();
+      },
       onError: () =>
         toast.error('Die Zuordnung konnte nicht gespeichert werden'),
     });
@@ -321,7 +357,9 @@ export function ContractSendDialog({
                         disabled={busy || blockedDelivery}
                         onSynced={(saved) => {
                           edited.current = false;
+                          documentEdited.current = false;
                           setValues(saved.values);
+                          setDocument(saved.document);
                           setPrepared(null);
                         }}
                       />
@@ -351,8 +389,8 @@ export function ContractSendDialog({
                   showOpenLink={false}
                   frameTitle="Arbeitsvertrag PDF-Vorschau"
                   page={{
-                    width: data.document.page.width,
-                    height: data.document.page.height,
+                    width: (activeDocument ?? data.document).page.width,
+                    height: (activeDocument ?? data.document).page.height,
                   }}
                 />
               ) : (
@@ -366,7 +404,7 @@ export function ContractSendDialog({
                     />
                   ) : null}
                   <ContractDraftBody
-                    document={data.document}
+                    document={activeDocument}
                     segments={data.segments}
                     values={values}
                     readOnly={
@@ -382,6 +420,16 @@ export function ContractSendDialog({
                       setPrepared(null);
                       setValues((current) => ({ ...current, [key]: value }));
                     }}
+                    onDocumentChange={
+                      readOnly
+                        ? undefined
+                        : (next) => {
+                            edited.current = true;
+                            documentEdited.current = true;
+                            setPrepared(null);
+                            setDocument(next);
+                          }
+                    }
                   />
                 </div>
               )}
@@ -428,10 +476,12 @@ export function ContractSendDialog({
                     variant="outline"
                     disabled={readOnly || busy || blockedDelivery}
                     onClick={() =>
-                      saveDraft.mutate(values, {
+                      saveDraft.mutate(draftPayload(), {
                         onSuccess: (saved) => {
                           edited.current = false;
+                          documentEdited.current = false;
                           setValues(saved.values);
+                          setDocument(saved.document);
                           setPrepared(saved.prepared ?? null);
                           toast.success('Entwurf gespeichert');
                         },

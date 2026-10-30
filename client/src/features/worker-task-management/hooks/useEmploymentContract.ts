@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { StyledDocument } from '@/features/settings/documents/styledDocument';
 import {
   confirmEngagementContractForSend,
   getEngagementContract,
@@ -6,6 +7,11 @@ import {
   saveEngagementContractDraft,
   type EmploymentContractDraft,
 } from '../api/employmentContract.api';
+
+export type EmploymentContractDraftInput = {
+  values: Record<string, string>;
+  document?: StyledDocument;
+};
 
 export function employmentContractKey(workerId: string, engagementId: string) {
   return ['employment-contract', workerId, engagementId] as const;
@@ -29,8 +35,19 @@ export function useSaveEmploymentContract(
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (values: Record<string, string>) =>
-      saveEngagementContractDraft(workerId, engagementId, values),
+    mutationFn: (input: EmploymentContractDraftInput | Record<string, string>) => {
+      if ('values' in input) {
+        return input.document
+          ? saveEngagementContractDraft(
+              workerId,
+              engagementId,
+              input.values,
+              input.document
+            )
+          : saveEngagementContractDraft(workerId, engagementId, input.values);
+      }
+      return saveEngagementContractDraft(workerId, engagementId, input);
+    },
     onSuccess: (saved) => {
       queryClient.setQueryData<EmploymentContractDraft>(
         employmentContractKey(workerId, engagementId),

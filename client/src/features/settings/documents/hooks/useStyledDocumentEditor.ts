@@ -34,6 +34,7 @@ export function useStyledDocumentEditor({
 }: UseStyledDocumentEditorArgs) {
   const latest = useRef({ document, onChange, section, master, readOnly });
   const publishRef = useRef<(next: unknown) => void>(() => undefined);
+  const editable = !readOnly;
   useLayoutEffect(() => {
     latest.current = { document, onChange, section, master, readOnly };
   }, [document, onChange, section, master, readOnly]);
@@ -49,7 +50,7 @@ export function useStyledDocumentEditor({
   const editor = useEditor({
     extensions,
     content: initialContent,
-    editable: master && !readOnly,
+    editable,
     onUpdate: ({ editor: current }) => {
       const next = current.getJSON();
       publishRef.current(next);
@@ -71,7 +72,7 @@ export function useStyledDocumentEditor({
   useLayoutEffect(() => {
     publishRef.current = publish;
   }, [publish]);
-  useEditorEditable(editor, master && !readOnly);
+  useEditorEditable(editor, editable);
   useEditorPageLayout({
     editor,
     pageView,

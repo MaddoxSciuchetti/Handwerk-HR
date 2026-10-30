@@ -74,20 +74,25 @@ it('shows a checkbox as a box and reveals its stored key only when the field is 
   fireEvent.mouseDown(screen.getByText('Vorname'));
   expect(await screen.findByText('contract.vorname')).toBeInTheDocument();
 });
-it('allows inline value and checkbox edits while locking the surrounding wording', async () => {
+it('allows inline value, checkbox, and surrounding wording edits for a person-specific contract', async () => {
   const onValueChange = vi.fn();
+  const onChange = vi.fn();
   render(
     <StyledDocumentEditor
       document={document}
       values={{ 'contract.vorname': 'Ada' }}
       onValueChange={onValueChange}
+      onChange={onChange}
     />
   );
   const input = await screen.findByRole('textbox', { name: 'Vorname' });
   await waitFor(() => expect(input).toHaveTextContent('Ada'));
   expect(input).toHaveAttribute('contenteditable', 'true');
   const prose = input.closest('.tiptap');
-  expect(prose).toHaveAttribute('contenteditable', 'false');
+  expect(prose).toHaveAttribute('contenteditable', 'true');
+  expect(
+    screen.queryByRole('textbox', { name: 'Feldbezeichnung' })
+  ).toBeNull();
   Object.defineProperty(input, 'innerText', {
     configurable: true,
     value: 'Jörg Müller',
@@ -999,6 +1004,64 @@ it('moves positioned contract text and following content down when Enter splits 
   expect(editor.state.selection.$from.parent.textContent).toBe(
     'Contract clause'
   );
+  optionsSpy.mockRestore();
+});
+
+it('lets a person-specific contract edit text and paste plain lines without master field tools', async () => {
+  const optionsSpy = vi.spyOn(Editor.prototype, 'setOptions');
+  const onChange = vi.fn();
+  const value = fromSegments([]);
+  value.content = {
+    type: 'doc',
+    content: [
+      {
+        type: 'lineGroup',
+        attrs: {
+          height: 18,
+          lines: [{ left: 0, top: 12, width: 50 }],
+          labels: [],
+        },
+        content: [
+          {
+            type: 'lineLabel',
+            attrs: { top: 0, left: 10, fontSize: 10 },
+            content: [{ type: 'text', text: 'Original line' }],
+          },
+        ],
+      },
+    ],
+  };
+  render(
+    <StyledDocumentEditor document={value} onChange={onChange} pageView />
+  );
+  await screen.findByText('Original line');
+  expect(
+    screen.queryByRole('textbox', { name: 'Feldbezeichnung' })
+  ).toBeNull();
+  const editor = optionsSpy.mock.instances.at(-1) as Editor;
+  expect(editor.isEditable).toBe(true);
+  act(() => {
+    editor.commands.setTextSelection(2);
+  });
+  fireEvent.keyDown(editor.view.dom, { key: 'Enter', code: 'Enter' });
+  expect(editor.getJSON().content![0].content).toHaveLength(2);
+  const emptyLine = editor.getJSON().content![0].content![1];
+  act(() => {
+    editor.commands.setTextSelection(4);
+  });
+  fireEvent.paste(editor.view.dom, {
+    clipboardData: {
+      getData: (type: string) =>
+        type === 'text/plain'
+          ? 'Copied clause'
+          : '<span style="position:absolute;color:red">Copied clause</span>',
+    },
+  });
+  await waitFor(() =>
+    expect(editor.state.doc.textContent).toContain('Copied clause')
+  );
+  expect(emptyLine.type).toBe('lineLabel');
+  expect(onChange).toHaveBeenCalled();
   optionsSpy.mockRestore();
 });
 

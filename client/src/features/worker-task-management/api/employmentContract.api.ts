@@ -49,16 +49,22 @@ export function getEngagementContract(
   ).then((response) => response.data);
 }
 
+export type EmploymentContractDraftSave = {
+  values: Record<string, string>;
+  document?: StyledDocument;
+};
+
 export function saveEngagementContractDraft(
   workerId: string,
   engagementId: string,
-  values: Record<string, string>
+  values: Record<string, string>,
+  document?: StyledDocument
 ): Promise<EmploymentContractDraft> {
-  return API.put<{ values: Record<string, string> }, ContractResponse>(
+  const body: EmploymentContractDraftSave = { values };
+  if (document) body.document = document;
+  return API.put<EmploymentContractDraftSave, ContractResponse>(
     `worker/${workerId}/engagements/${engagementId}/contract`,
-    {
-      values,
-    }
+    body
   ).then((response) => response.data);
 }
 

@@ -57,7 +57,8 @@ export function StyledDocumentEditor({
         showOriginalToggle={showOriginalToggle}
       />
     );
-  const showToolbar = master && !readOnly;
+  const showToolbar = !readOnly;
+  const showFieldInsert = master && !readOnly;
   const framed = showToolbar || Boolean(onToggleExpanded);
   const changeValue = (key: string, value: string) => {
     if (value === 'true') {
@@ -90,7 +91,7 @@ export function StyledDocumentEditor({
                   <DocumentEditorToolbar editor={editor} toolbar={toolbar} />
                 </div>
               ) : null}
-              {showToolbar ? <DocumentFieldInsert editor={editor} /> : null}
+              {showFieldInsert ? <DocumentFieldInsert editor={editor} /> : null}
             </div>
             {pageView ? (
               <DocumentEditorZoom zoom={zoom} onZoomChange={setZoom} />
@@ -119,7 +120,7 @@ export function StyledDocumentEditor({
           zoom={zoom}
           pageCount={pageCount}
           onFieldDrop={
-            showToolbar
+            showFieldInsert
               ? (event) => {
                   if (!event.defaultPrevented)
                     insertDroppedDocumentField(
