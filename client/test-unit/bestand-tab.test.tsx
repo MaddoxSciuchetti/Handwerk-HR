@@ -4,7 +4,13 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const stock = vi.hoisted(() => ({
-  data: [] as { id: string; name: string; size: string; quantity: number }[],
+  data: [] as {
+    id: string;
+    name: string;
+    size: string;
+    printType: 'bedruckt' | 'sondersachen' | 'unbedruckt';
+    quantity: number;
+  }[],
   remove: vi.fn(),
   update: vi.fn(),
 }));
@@ -53,25 +59,30 @@ describe('BestandTab', () => {
       'aria-hidden',
       'false'
     );
-    expect(screen.getByLabelText('Artikel')).not.toHaveAttribute('placeholder');
-    expect(screen.getByLabelText('Größe')).not.toHaveAttribute('placeholder');
+    expect(screen.getByLabelText('Beschreibung')).toBeInTheDocument();
+    expect(screen.getByLabelText('Größe')).toBeInTheDocument();
+    expect(screen.getByLabelText('Typ')).toBeInTheDocument();
     expect(screen.getByTestId('bestand-add-form')).toBeInTheDocument();
   });
 });
 
 it('selects stock without deleting it, then deletes only selected rows from the toolbar', async () => {
   stock.data = [
-    { id: 'hose-s', name: 'Hose', size: 'S', quantity: 2 },
-    { id: 'hose-m', name: 'Hose', size: 'M', quantity: 4 },
-    { id: 'shirt', name: 'T-Shirt', size: 'L', quantity: 3 },
+    { id: 'hose-s', name: 'Hose', size: 'S', printType: 'bedruckt', quantity: 2 },
+    { id: 'hose-m', name: 'Hose', size: 'M', printType: 'bedruckt', quantity: 4 },
+    { id: 'shirt', name: 'T-Shirt', size: 'L', printType: 'bedruckt', quantity: 3 },
   ];
   const user = userEvent.setup();
   render(<BestandTab />);
   expect(
     screen.queryByRole('button', { name: /löschen/ })
   ).not.toBeInTheDocument();
-  await user.click(screen.getByRole('checkbox', { name: 'Hose (S) auswählen' }));
-  await user.click(screen.getByRole('checkbox', { name: 'Hose (M) auswählen' }));
+  await user.click(
+    screen.getByRole('checkbox', { name: 'Hose (S, Bedruckt) auswählen' })
+  );
+  await user.click(
+    screen.getByRole('checkbox', { name: 'Hose (M, Bedruckt) auswählen' })
+  );
   expect(screen.getByText('2 ausgewählt')).toBeInTheDocument();
   expect(stock.remove).not.toHaveBeenCalled();
   expect(screen.getByTestId('bestand-row-hose-s')).toHaveAttribute(
@@ -91,8 +102,14 @@ it('selects stock without deleting it, then deletes only selected rows from the 
 
 it('keeps failed deletions selected and edits quantities independently of selection', async () => {
   stock.data = [
-    { id: 'hose', name: 'Hose', size: 'S', quantity: 2 },
-    { id: 'shirt', name: 'T-Shirt', size: 'L', quantity: 3 },
+    { id: 'hose', name: 'Hose', size: 'S', printType: 'bedruckt', quantity: 2 },
+    {
+      id: 'shirt',
+      name: 'T-Shirt',
+      size: 'L',
+      printType: 'bedruckt',
+      quantity: 3,
+    },
   ];
   stock.remove
     .mockResolvedValueOnce({ success: true })
@@ -110,9 +127,11 @@ it('keeps failed deletions selected and edits quantities independently of select
     expect.any(Object)
   );
   expect(screen.queryByText('1 ausgewählt')).not.toBeInTheDocument();
-  await user.click(screen.getByRole('checkbox', { name: 'Hose (S) auswählen' }));
   await user.click(
-    screen.getByRole('checkbox', { name: 'T-Shirt (L) auswählen' })
+    screen.getByRole('checkbox', { name: 'Hose (S, Bedruckt) auswählen' })
+  );
+  await user.click(
+    screen.getByRole('checkbox', { name: 'T-Shirt (L, Bedruckt) auswählen' })
   );
   await user.click(
     screen.getByRole('button', { name: 'Ausgewählten Bestand löschen' })
@@ -122,29 +141,34 @@ it('keeps failed deletions selected and edits quantities independently of select
   );
   expect(
     screen.getByRole('checkbox', {
-      name: 'T-Shirt (L) aus der Auswahl entfernen',
+      name: 'T-Shirt (L, Bedruckt) aus der Auswahl entfernen',
     })
   ).toBeChecked();
   expect(
-    screen.getByRole('checkbox', { name: 'Hose (S) auswählen' })
+    screen.getByRole('checkbox', { name: 'Hose (S, Bedruckt) auswählen' })
   ).not.toBeChecked();
   await user.click(
     screen.getByRole('checkbox', {
-      name: 'T-Shirt (L) aus der Auswahl entfernen',
+      name: 'T-Shirt (L, Bedruckt) aus der Auswahl entfernen',
     })
   );
   expect(screen.queryByText('1 ausgewählt')).not.toBeInTheDocument();
 });
 
 it('keeps the stock headers and controls while replacing loading rows, then shows the data', () => {
-  stock.data = [{ id: 'hose', name: 'Hose', size: 'S', quantity: 2 }];
+  stock.data = [
+    { id: 'hose', name: 'Hose', size: 'S', printType: 'bedruckt', quantity: 2 },
+  ];
   const view = render(<BestandTab isLoading />);
   expect(screen.getByRole('table')).toHaveAttribute('aria-busy', 'true');
   expect(
-    screen.getByRole('columnheader', { name: /Artikel$/ })
+    screen.getByRole('columnheader', { name: /Beschreibung$/ })
   ).toBeInTheDocument();
   expect(
     screen.getByRole('columnheader', { name: 'Größe' })
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole('columnheader', { name: 'Typ' })
   ).toBeInTheDocument();
   expect(
     screen.getByRole('columnheader', { name: 'Anzahl bei BSB' })
@@ -159,14 +183,20 @@ it('keeps the stock headers and controls while replacing loading rows, then show
 
 it('selects and clears every stock row from the column header', async () => {
   stock.data = [
-    { id: 'hose-s', name: 'Hose', size: 'S', quantity: 2 },
-    { id: 'shirt', name: 'T-Shirt', size: 'L', quantity: 3 },
+    { id: 'hose-s', name: 'Hose', size: 'S', printType: 'bedruckt', quantity: 2 },
+    {
+      id: 'shirt',
+      name: 'T-Shirt',
+      size: 'L',
+      printType: 'bedruckt',
+      quantity: 3,
+    },
   ];
   const user = userEvent.setup();
   render(<BestandTab />);
 
   expect(
-    screen.getByRole('checkbox', { name: 'Hose (S) auswählen' })
+    screen.getByRole('checkbox', { name: 'Hose (S, Bedruckt) auswählen' })
   ).toBeInTheDocument();
   await user.click(
     screen.getByRole('checkbox', { name: 'Alle Artikel auswählen' })
@@ -174,12 +204,12 @@ it('selects and clears every stock row from the column header', async () => {
   expect(screen.getByText('2 ausgewählt')).toBeInTheDocument();
   expect(
     screen.getByRole('checkbox', {
-      name: 'Hose (S) aus der Auswahl entfernen',
+      name: 'Hose (S, Bedruckt) aus der Auswahl entfernen',
     })
   ).toBeChecked();
   expect(
     screen.getByRole('checkbox', {
-      name: 'T-Shirt (L) aus der Auswahl entfernen',
+      name: 'T-Shirt (L, Bedruckt) aus der Auswahl entfernen',
     })
   ).toBeChecked();
 

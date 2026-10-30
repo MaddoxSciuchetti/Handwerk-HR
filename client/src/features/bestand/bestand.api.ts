@@ -1,15 +1,18 @@
+import type { ClothingPrintType } from '@shared/clothing';
 import { apiJson } from '@/config/apiClient';
 
 export type ClothingStockItem = {
   id: string;
   name: string;
   size: string;
+  printType: ClothingPrintType;
   quantity: number;
 };
 
 export type ClothingStockInput = {
   name: string;
   size: string;
+  printType: ClothingPrintType;
   quantity: number;
 };
 

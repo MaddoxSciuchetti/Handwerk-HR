@@ -27,14 +27,15 @@ export function ClothingOrderTable({
   onDelete,
 }: ClothingOrderTableProps) {
   return (
-    <Table aria-busy={isLoading} className="min-w-[960px] table-fixed">
+    <Table aria-busy={isLoading} className="min-w-[1080px] table-fixed">
       <colgroup>
-        <col className="w-[26%]" />
-        <col className="w-[10%]" />
-        <col className="w-[9%]" />
-        <col className="w-[16%]" />
-        <col className="w-[9%]" />
-        <col className="w-[24%]" />
+        <col className="w-[22%]" />
+        <col className="w-[12%]" />
+        <col className="w-[8%]" />
+        <col className="w-[8%]" />
+        <col className="w-[14%]" />
+        <col className="w-[8%]" />
+        <col className="w-[22%]" />
         <col className="w-[6%]" />
       </colgroup>
       <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-0">
@@ -42,6 +43,7 @@ export function ClothingOrderTable({
           <TableHead className="h-12 bg-card py-3 pl-10 pr-2">
             Artikel
           </TableHead>
+          <TableHead className="bg-card py-3 px-2">Erhalten am</TableHead>
           <TableHead className="bg-card py-3 px-2">Größe</TableHead>
           <TableHead className="bg-card py-3 px-2">Link</TableHead>
           <TableHead className="bg-card py-3 px-2">Herkunft</TableHead>

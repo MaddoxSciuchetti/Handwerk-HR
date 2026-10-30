@@ -12,6 +12,7 @@ import {
   deleteEngagementClothing,
   getEngagementClothing,
 } from '@/features/worker-task-management/api/engagementClothing.api';
+import { berlinToday } from '@shared/calendarDate';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -38,6 +39,7 @@ const stockItem = {
   id: 'stock-1',
   name: 'Arbeitshose',
   size: 'M',
+  printType: 'bedruckt' as const,
   quantity: 5,
 };
 
@@ -68,7 +70,9 @@ async function fillRow(quantity: string) {
     screen.getByRole('combobox', { name: 'Artikel aus Bestand' })
   );
   await user.click(
-    await screen.findByRole('option', { name: 'Arbeitshose · M · 5 verfügbar' })
+    await screen.findByRole('option', {
+      name: 'Arbeitshose · M · Bedruckt · 5 verfügbar',
+    })
   );
   await user.clear(screen.getByLabelText('Anzahl'));
   await user.type(screen.getByLabelText('Anzahl'), quantity);
@@ -87,11 +91,13 @@ describe('worker information clothing', () => {
       id: 'clothing-1',
       name: 'Arbeitshose',
       size: 'M',
+      printType: 'bedruckt' as const,
       quantity: 2,
       returnedQuantity: 0,
       productUrl: null,
       source: 'storage' as const,
       stockItemId: 'stock-1',
+      issuedAt: berlinToday(),
     };
     vi.mocked(createEngagementClothing).mockImplementation(async () => {
       vi.mocked(getClothingStock).mockResolvedValue([
@@ -108,10 +114,16 @@ describe('worker information clothing', () => {
       expect(createEngagementClothing).toHaveBeenCalledWith(
         'worker-1',
         'eng-1',
-        { stockItemId: 'stock-1', quantity: 2 }
+        {
+          stockItemId: 'stock-1',
+          quantity: 2,
+          issuedAt: berlinToday(),
+        }
       )
     );
     expect(await screen.findByLabelText('Anzahl')).toHaveValue(2);
+    expect(screen.getByLabelText('Größe')).toHaveTextContent('M');
+    expect(screen.getByLabelText('Erhalten am')).toHaveValue(berlinToday());
     expect(
       screen.getByRole('combobox', { name: 'Artikel aus Bestand' })
     ).toHaveTextContent('Arbeitshose');
@@ -157,17 +169,25 @@ describe('worker information clothing', () => {
   });
 
   it('adds another article row from the plus button and saves both', async () => {
-    const shirt = { id: 'stock-2', name: 'T-Shirt', size: 'L', quantity: 4 };
+    const shirt = {
+      id: 'stock-2',
+      name: 'T-Shirt',
+      size: 'L',
+      printType: 'bedruckt' as const,
+      quantity: 4,
+    };
     vi.mocked(getClothingStock).mockResolvedValue([{ ...stockItem }, shirt]);
     const hose = {
       id: 'clothing-1',
       name: 'Arbeitshose',
       size: 'M',
+      printType: 'bedruckt' as const,
       quantity: 1,
       returnedQuantity: 0,
       productUrl: null,
       source: 'storage' as const,
       stockItemId: 'stock-1',
+      issuedAt: berlinToday(),
     };
     const top = {
       ...hose,
@@ -194,11 +214,15 @@ describe('worker information clothing', () => {
     expect(combos).toHaveLength(2);
     await user.click(combos[0]);
     await user.click(
-      await screen.findByRole('option', { name: 'Arbeitshose · M · 5 verfügbar' })
+      await screen.findByRole('option', {
+        name: 'Arbeitshose · M · Bedruckt · 5 verfügbar',
+      })
     );
     await user.click(combos[1]);
     await user.click(
-      await screen.findByRole('option', { name: 'T-Shirt · L · 4 verfügbar' })
+      await screen.findByRole('option', {
+        name: 'T-Shirt · L · Bedruckt · 4 verfügbar',
+      })
     );
     await user.click(screen.getByRole('button', { name: 'Speichern' }));
     await waitFor(() =>
@@ -234,7 +258,9 @@ describe('worker information clothing', () => {
       screen.getByRole('combobox', { name: 'Artikel aus Bestand' })
     );
     await user.click(
-      await screen.findByRole('option', { name: 'Arbeitshose · M · 1 verfügbar' })
+      await screen.findByRole('option', {
+        name: 'Arbeitshose · M · Bedruckt · 1 verfügbar',
+      })
     );
     await user.click(screen.getByRole('button', { name: 'Zeile hinzufügen' }));
     const combos = screen.getAllByRole('combobox', {
@@ -292,11 +318,13 @@ describe('worker information clothing', () => {
         id: 'clothing-1',
         name: 'Arbeitshose',
         size: 'M',
+        printType: 'bedruckt',
         quantity: 1,
         returnedQuantity: 0,
         productUrl: null,
         source: 'storage',
         stockItemId: 'stock-1',
+        issuedAt: '2026-03-17',
       },
     ]);
     vi.mocked(deleteEngagementClothing).mockImplementation(async () => {
@@ -314,6 +342,8 @@ describe('worker information clothing', () => {
       name: 'Artikel aus Bestand',
     });
     expect(saved).toHaveTextContent('Arbeitshose');
+    expect(screen.getByLabelText('Erhalten am')).toHaveValue('2026-03-17');
+    expect(screen.getByLabelText('Größe')).toHaveTextContent('M');
     expect(
       addButton.compareDocumentPosition(saved) & Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();

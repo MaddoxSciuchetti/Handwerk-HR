@@ -2,17 +2,24 @@ import { BAD_REQUEST, CONFLICT, NOT_FOUND } from "@/constants/http";
 import { prisma } from "@/lib/prisma";
 import type { CreateEngagementClothingInput } from "@/schemas/engagementClothing.schemas";
 import AppError from "@/utils/AppError";
+import type { ClothingPrintType } from "@prisma/client";
 import { Prisma } from "@prisma/client";
+import {
+    berlinToday,
+    calendarDayUtc,
+} from "../../../shared/calendarDate";
 
 export type EngagementClothingDto = {
     id: string;
     name: string;
     size: string;
+    printType: ClothingPrintType;
     productUrl: string | null;
     source: "storage" | "purchased";
     quantity: number;
     returnedQuantity: number;
     stockItemId: string | null;
+    issuedAt: string;
 };
 
 type Scope = {
@@ -25,11 +32,13 @@ type ClothingRow = {
     id: string;
     name: string;
     size: string;
+    printType: ClothingPrintType;
     productUrl: string | null;
     source: "storage" | "purchased";
     quantity: number;
     returnedQuantity: number;
     stockItemId: string | null;
+    issuedAt: Date;
 };
 
 type Tx = Prisma.TransactionClient;
@@ -39,17 +48,23 @@ function toDto(row: ClothingRow): EngagementClothingDto {
         id: row.id,
         name: row.name,
         size: row.size,
+        printType: row.printType,
         productUrl: row.productUrl,
         source: row.source,
         quantity: row.quantity,
         returnedQuantity: row.returnedQuantity,
         stockItemId: row.stockItemId,
+        issuedAt: row.issuedAt.toISOString().slice(0, 10),
     };
 }
 
 function normalizeUrl(value: string | undefined) {
     const trimmed = value?.trim() ?? "";
     return trimmed.length > 0 ? trimmed : null;
+}
+
+function resolveIssuedAt(value: string | undefined) {
+    return calendarDayUtc(value ?? berlinToday());
 }
 
 function isUniqueConflict(error: unknown) {
@@ -89,7 +104,12 @@ async function requireClothing(tx: Tx, scope: Scope, clothingId: string) {
 async function addToStock(
     tx: Tx,
     organizationId: string,
-    item: { stockItemId: string | null; name: string; size: string },
+    item: {
+        stockItemId: string | null;
+        name: string;
+        size: string;
+        printType: ClothingPrintType;
+    },
     quantity: number,
 ) {
     if (item.stockItemId) {
@@ -105,6 +125,7 @@ async function addToStock(
             organizationId,
             name: { equals: item.name, mode: "insensitive" },
             size: { equals: item.size, mode: "insensitive" },
+            printType: item.printType,
         },
         select: { id: true },
     });
@@ -122,6 +143,7 @@ async function addToStock(
                 organizationId,
                 name: item.name,
                 size: item.size,
+                printType: item.printType,
                 quantity,
             },
             select: { id: true },
@@ -134,6 +156,7 @@ async function addToStock(
                 organizationId,
                 name: { equals: item.name, mode: "insensitive" },
                 size: { equals: item.size, mode: "insensitive" },
+                printType: item.printType,
             },
             select: { id: true },
         });
@@ -153,7 +176,7 @@ export async function listEngagementClothing(
         await requireEngagement(tx, scope);
         const rows = await tx.engagementClothing.findMany({
             where: { engagementId: scope.engagementId },
-            orderBy: { createdAt: "asc" },
+            orderBy: [{ issuedAt: "asc" }, { createdAt: "asc" }],
         });
         return rows.map(toDto);
     });
@@ -166,6 +189,7 @@ export async function createEngagementClothing(
     return prisma.$transaction(async (tx) => {
         await requireEngagement(tx, scope);
         const productUrl = normalizeUrl(input.productUrl);
+        const issuedAt = resolveIssuedAt(input.issuedAt);
 
         if (input.stockItemId) {
             const item = await tx.clothingStockItem.findFirst({
@@ -194,9 +218,11 @@ export async function createEngagementClothing(
                     stockItemId: item.id,
                     name: item.name,
                     size: item.size,
+                    printType: item.printType,
                     productUrl,
                     source: "storage",
                     quantity: input.quantity,
+                    issuedAt,
                 },
             });
             return toDto(created);
@@ -210,9 +236,11 @@ export async function createEngagementClothing(
                 engagementId: scope.engagementId,
                 name,
                 size: input.size?.trim() ?? "",
+                printType: input.printType ?? "unbedruckt",
                 productUrl,
                 source: "purchased",
                 quantity: input.quantity,
+                issuedAt,
             },
         });
         return toDto(created);

@@ -1,6 +1,7 @@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { TableCell, TableRow } from '@/components/ui/table';
+import { CLOTHING_PRINT_TYPE_LABELS } from '@shared/clothing';
 import { useState } from 'react';
 import type { ClothingStockItem } from './bestand.api';
 import { stockErrorMessage } from './stockError';
@@ -12,6 +13,10 @@ type BestandRowProps = {
   onToggle: (id: string) => void;
   selectionDisabled?: boolean;
 };
+
+function sizeLabel(size: string) {
+  return size || '—';
+}
 
 export function BestandRow({
   item,
@@ -31,6 +36,8 @@ export function BestandRow({
   const setQuantity = (value: string) =>
     setDraft({ source: item.quantity, value });
   const [error, setError] = useState<string | null>(null);
+  const typeLabel = CLOTHING_PRINT_TYPE_LABELS[item.printType];
+  const selectionName = `${item.name} (${sizeLabel(item.size)}, ${typeLabel})`;
 
   const commitQuantity = () => {
     const parsed = Number(quantity);
@@ -71,8 +78,8 @@ export function BestandRow({
             disabled={selectionDisabled}
             aria-label={
               isSelected
-                ? `${item.name} (${item.size || '—'}) aus der Auswahl entfernen`
-                : `${item.name} (${item.size || '—'}) auswählen`
+                ? `${selectionName} aus der Auswahl entfernen`
+                : `${selectionName} auswählen`
             }
             onClick={() => onToggle(item.id)}
             className="relative cursor-pointer after:absolute after:-inset-3 after:content-['']"
@@ -80,7 +87,8 @@ export function BestandRow({
         </div>
         {item.name}
       </TableCell>
-      <TableCell>{item.size || '—'}</TableCell>
+      <TableCell>{sizeLabel(item.size)}</TableCell>
+      <TableCell>{typeLabel}</TableCell>
       <TableCell>
         <Input
           aria-label={`Anzahl bei BSB für ${item.name}`}

@@ -84,9 +84,10 @@ export function BestandTab({ isLoading = false }: { isLoading?: boolean }) {
                         onCheckedChange={selectAll}
                       />
                     </div>
-                    Artikel
+                    Beschreibung
                   </TableHead>
                   <TableHead className="bg-card py-3 px-2">Größe</TableHead>
+                  <TableHead className="bg-card py-3 px-2">Typ</TableHead>
                   <TableHead className="bg-card py-3 px-2">
                     Anzahl bei BSB
                   </TableHead>

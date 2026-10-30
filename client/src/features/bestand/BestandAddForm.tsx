@@ -1,8 +1,21 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import SidebarContent from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarContent';
 import SidebarFooter from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarFooter';
+import {
+  CLOTHING_PRINT_TYPES,
+  CLOTHING_PRINT_TYPE_LABELS,
+  CLOTHING_SIZES,
+  type ClothingPrintType,
+} from '@shared/clothing';
 import { FormEvent, useEffect, useState } from 'react';
 import { stockErrorMessage } from './stockError';
 import { useCreateClothingStockItem } from './useBestand';
@@ -12,10 +25,13 @@ type BestandAddFormProps = {
   onAdded: () => void;
 };
 
+const NO_SIZE = '__none__';
+
 export function BestandAddForm({ open, onAdded }: BestandAddFormProps) {
   const createItem = useCreateClothingStockItem();
   const [name, setName] = useState('');
   const [size, setSize] = useState('');
+  const [printType, setPrintType] = useState<ClothingPrintType>('bedruckt');
   const [quantity, setQuantity] = useState('1');
   const [error, setError] = useState<string | null>(null);
 
@@ -23,6 +39,7 @@ export function BestandAddForm({ open, onAdded }: BestandAddFormProps) {
     if (open) return;
     setName('');
     setSize('');
+    setPrintType('bedruckt');
     setQuantity('1');
     setError(null);
   }, [open]);
@@ -37,7 +54,12 @@ export function BestandAddForm({ open, onAdded }: BestandAddFormProps) {
 
     setError(null);
     createItem.mutate(
-      { name: name.trim(), size: size.trim(), quantity: parsedQuantity },
+      {
+        name: name.trim(),
+        size: size.trim(),
+        printType,
+        quantity: parsedQuantity,
+      },
       {
         onSuccess: () => onAdded(),
         onError: (mutationError) => {
@@ -57,7 +79,7 @@ export function BestandAddForm({ open, onAdded }: BestandAddFormProps) {
     >
       <SidebarContent className="mt-2 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-6">
         <div className="grid gap-1.5">
-          <Label htmlFor="bestand-name">Artikel</Label>
+          <Label htmlFor="bestand-name">Beschreibung</Label>
           <Input
             id="bestand-name"
             value={name}
@@ -67,11 +89,40 @@ export function BestandAddForm({ open, onAdded }: BestandAddFormProps) {
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="bestand-size">Größe</Label>
-          <Input
-            id="bestand-size"
-            value={size}
-            onChange={(event) => setSize(event.target.value)}
-          />
+          <Select
+            value={size || NO_SIZE}
+            onValueChange={(value) => setSize(value === NO_SIZE ? '' : value)}
+          >
+            <SelectTrigger id="bestand-size" className="w-full">
+              <SelectValue placeholder="Größe wählen" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NO_SIZE}>ohne Größe</SelectItem>
+              {CLOTHING_SIZES.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor="bestand-type">Typ</Label>
+          <Select
+            value={printType}
+            onValueChange={(value) => setPrintType(value as ClothingPrintType)}
+          >
+            <SelectTrigger id="bestand-type" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {CLOTHING_PRINT_TYPES.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {CLOTHING_PRINT_TYPE_LABELS[option]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="bestand-quantity">Anzahl bei BSB</Label>
