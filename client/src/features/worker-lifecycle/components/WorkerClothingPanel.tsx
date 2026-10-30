@@ -11,6 +11,7 @@ import type { ClothingStockItem } from '@/features/bestand/bestand.api';
 import { stockErrorMessage } from '@/features/bestand/stockError';
 import { useClothingStock } from '@/features/bestand/useBestand';
 import { MaterialsEngagementPicker } from '@/features/worker-task-management/components/materials/MaterialsEngagementPicker';
+import type { EngagementClothingItem } from '@/features/worker-task-management/api/engagementClothing.api';
 import {
   useCreateEngagementClothing,
   useDeleteEngagementClothing,
@@ -95,6 +96,29 @@ function stockLabel(item: ClothingStockItem) {
   const size = item.size || 'ohne Größe';
   const type = printTypeLabel(item.printType);
   return `${item.name} · ${size} · ${type} · ${item.quantity} verfügbar`;
+}
+
+function toIssuedRow(item: EngagementClothingItem): IssuedRow | null {
+  const outstanding = item.quantity - item.returnedQuantity;
+  if (outstanding < 1) return null;
+  return {
+    clothingId: item.id,
+    stockItemId: item.stockItemId ?? '',
+    quantity: String(outstanding),
+    issuedAt: item.issuedAt,
+    originalStockItemId: item.stockItemId ?? '',
+    originalQuantity: outstanding,
+    originalIssuedAt: item.issuedAt,
+    name: item.name,
+    size: item.size,
+    dirty: false,
+  };
+}
+
+function upsertIssued(current: IssuedRow[], row: IssuedRow) {
+  return current.some((item) => item.clothingId === row.clothingId)
+    ? current.map((item) => (item.clothingId === row.clothingId ? row : item))
+    : [...current, row];
 }
 
 function reservedByOthers(
@@ -272,6 +296,9 @@ export default function WorkerClothingPanel({ workerId, engagements }: Props) {
     setError(null);
     try {
       await remove.mutateAsync(clothingId);
+      setIssued((current) =>
+        current.filter((item) => item.clothingId !== clothingId)
+      );
     } catch (removeError) {
       setError(
         stockErrorMessage(
@@ -325,7 +352,10 @@ export default function WorkerClothingPanel({ workerId, engagements }: Props) {
       for (const row of dirtyIssued) {
         const quantity = amountOf(row.quantity);
         await remove.mutateAsync(row.clothingId);
-        await create.mutateAsync(
+        setIssued((current) =>
+          current.filter((item) => item.clothingId !== row.clothingId)
+        );
+        const created = await create.mutateAsync(
           row.stockItemId
             ? {
                 stockItemId: row.stockItemId,
@@ -339,13 +369,17 @@ export default function WorkerClothingPanel({ workerId, engagements }: Props) {
                 issuedAt: row.issuedAt,
               }
         );
+        const next = toIssuedRow(created);
+        if (next) setIssued((current) => upsertIssued(current, next));
       }
       for (const draft of drafts) {
-        await create.mutateAsync({
+        const created = await create.mutateAsync({
           stockItemId: draft.stockItemId,
           quantity: amountOf(draft.quantity),
           issuedAt: draft.issuedAt,
         });
+        const next = toIssuedRow(created);
+        if (next) setIssued((current) => upsertIssued(current, next));
         setDrafts((rows) => rows.filter((row) => row.key !== draft.key));
       }
       setDrafts([]);
