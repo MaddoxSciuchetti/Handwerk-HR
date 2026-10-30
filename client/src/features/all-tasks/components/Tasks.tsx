@@ -2,7 +2,10 @@ import { TableSelectAllCheckbox } from '@/components/ui/table-select-all-checkbo
 import { TableSkeletonRows } from '@/components/ui/table-skeleton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollableTableViewport } from '@/components/ui/scrollable-table-viewport';
+import {
+  ScrollableTableViewport,
+  stickyTableHeadClassName,
+} from '@/components/ui/scrollable-table-viewport';
 import {
   Table,
   TableBody,
@@ -62,6 +65,7 @@ function Tasks() {
   } | null>(null);
 
   const [zeugnisIssueId, setZeugnisIssueId] = useState<string | null>(null);
+  const [headerScrolled, setHeaderScrolled] = useState(false);
 
   useEffect(() => {
     const pending = peekContractSendReturn();
@@ -165,11 +169,16 @@ function Tasks() {
             </div>
           </CardHeader>
           <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-0">
-            <ScrollableTableViewport>
-              <Table aria-busy={isLoading}>
-                <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-0">
+            <ScrollableTableViewport onScrolledChange={setHeaderScrolled}>
+              <Table
+                aria-busy={isLoading}
+                className="border-separate border-spacing-0"
+              >
+                <TableHeader className="[&_tr]:border-0">
                   <TableRow className="border-0 hover:bg-transparent">
-                    <TableHead className="relative h-12 w-px bg-card py-3 pl-12 pr-2">
+                    <TableHead
+                      className={`relative h-12 w-px py-3 pl-12 pr-2 ${stickyTableHeadClassName(headerScrolled)}`}
+                    >
                       <div className="absolute inset-y-0 left-0 flex w-10 items-center justify-center">
                         <TableSelectAllCheckbox
                           ids={filteredTasks.map((task) => task.id)}
@@ -184,7 +193,9 @@ function Tasks() {
                       </div>
                       Titel
                     </TableHead>
-                    <TableHead className="bg-card py-3 px-2 text-right">
+                    <TableHead
+                      className={`py-3 px-2 text-right ${stickyTableHeadClassName(headerScrolled)}`}
+                    >
                       Beschreibung
                     </TableHead>
                   </TableRow>

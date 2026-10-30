@@ -94,7 +94,7 @@ export function TaskItem({
       onClick={openTask}
       onKeyDown={openFromKeyboard}
       className={cn(
-        'group relative cursor-pointer border-0 hover:bg-transparent has-aria-expanded:bg-transparent',
+        'group cursor-pointer border-0 hover:bg-transparent has-aria-expanded:bg-transparent',
         isAutomationTask && !isContractActionTask && 'automation-task-row'
       )}
     >
@@ -103,11 +103,11 @@ export function TaskItem({
           'w-px relative pl-10 pr-2 font-medium transition-colors group-hover:rounded-l-xl',
           'group-hover:bg-muted/50',
           isSelected && 'rounded-l-xl',
-          isSelected && 'bg-muted/50'
+          isSelected && 'bg-[var(--hover-bg)]'
         )}
       >
         <RowSelectButton isSelected={isSelected} onClick={toggleSelection} />
-        <div className="relative z-10 flex min-w-0 items-center gap-2.5 pl-2">
+        <div className="flex min-w-0 items-center gap-2.5 pl-2">
           <TaskStatusPicker taskId={task.id} status={task.status} />
           {task.mentioned ? (
             <span
@@ -142,7 +142,7 @@ export function TaskItem({
           'transition-colors group-hover:rounded-r-xl',
           'group-hover:bg-muted/50',
           isSelected && 'rounded-r-xl',
-          isSelected && 'bg-muted/50'
+          isSelected && 'bg-[var(--hover-bg)]'
         )}
       >
         <div className="flex items-center justify-end gap-2">
