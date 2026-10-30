@@ -14,7 +14,7 @@ import {
 } from '@/features/settings/documents/documentMaster.types';
 import { useDocumentMasters } from '@/features/settings/documents/useDocumentMasters';
 import { FilePlus, FileText } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import {
   useCreateTemplateDocument,
@@ -39,9 +39,25 @@ export function EngagementTemplateDocuments({
   const create = useCreateTemplateDocument(workerId, engagementId);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
+  const printCache = useRef(new Map<string, Promise<Blob>>());
   const choices = (masters.data ?? []).filter((master) =>
     isTemplateDocumentKind(master.kind)
   );
+
+  const prefetchPrint = (documentId: string) => {
+    const cached = printCache.current.get(documentId);
+    if (cached) return cached;
+    const pending = printTemplateDocument(
+      workerId,
+      engagementId,
+      documentId
+    ).catch((error) => {
+      printCache.current.delete(documentId);
+      throw error;
+    });
+    printCache.current.set(documentId, pending);
+    return pending;
+  };
 
   const choose = (masterId: string) => {
     create.mutate(masterId, {
@@ -70,10 +86,11 @@ export function EngagementTemplateDocuments({
           label={document.name}
           icon={FileText}
           onOpen={() => setOpenId(document.id)}
+          onPrefetchPrint={() => {
+            void prefetchPrint(document.id);
+          }}
           onPrint={async () => {
-            await printPdfBlob(
-              await printTemplateDocument(workerId, engagementId, document.id)
-            );
+            await printPdfBlob(await prefetchPrint(document.id));
           }}
         />
       ))}

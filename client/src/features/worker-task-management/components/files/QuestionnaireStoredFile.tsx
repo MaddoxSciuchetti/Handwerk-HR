@@ -1,5 +1,8 @@
 import { FilePrintButton } from './FilePrintButton';
-import { printStoredFile } from '../../printStoredFile';
+import {
+  prefetchStoredFile,
+  printStoredFile,
+} from '../../printStoredFile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PERSONNEL_DOCUMENTS } from '@/features/worker-task-management/consts/query-key.consts';
@@ -88,6 +91,9 @@ export function QuestionnaireStoredFile({
       </a>
       <FilePrintButton
         label={file.name}
+        onPrefetch={() => {
+          void prefetchStoredFile(file.url);
+        }}
         onPrint={() => printStoredFile(file.url, file.name)}
       />
       <Button
