@@ -49,9 +49,29 @@ function jsonResponse(status: number, body: unknown) {
     });
 }
 
+function mockSearchAndRecent(params: {
+    search?: Response;
+    recent?: Response;
+}) {
+    (graphFetch as jest.Mock).mockImplementation(
+        async (_token: string, path: string) => {
+            if (path === "/search/query") {
+                return (
+                    params.search ??
+                    jsonResponse(200, { value: [{ hitsContainers: [] }] })
+                );
+            }
+            if (path.startsWith("/me/drive/recent")) {
+                return params.recent ?? jsonResponse(200, { value: [] });
+            }
+            throw new Error(`unexpected graph path ${path}`);
+        },
+    );
+}
+
 it("maps Graph search hits to allowed SharePoint files", async () => {
-    (graphFetch as jest.Mock).mockResolvedValue(
-        jsonResponse(200, {
+    mockSearchAndRecent({
+        search: jsonResponse(200, {
             value: [
                 {
                     hitsContainers: [
@@ -88,7 +108,7 @@ it("maps Graph search hits to allowed SharePoint files", async () => {
                 },
             ],
         }),
-    );
+    });
 
     await expect(searchSharePointFiles(actor, "Vertrag")).resolves.toEqual([
         {
@@ -110,8 +130,44 @@ it("maps Graph search hits to allowed SharePoint files", async () => {
     );
 });
 
+it("includes recent files that are not in the search index yet", async () => {
+    mockSearchAndRecent({
+        search: jsonResponse(200, { value: [{ hitsContainers: [] }] }),
+        recent: jsonResponse(200, {
+            value: [
+                {
+                    id: "recent-1",
+                    name: "Test 1.docx",
+                    size: 20,
+                    lastModifiedDateTime: "2026-10-30T12:00:00Z",
+                    file: {
+                        mimeType:
+                            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    },
+                    parentReference: {
+                        driveId: "drive-bsb",
+                        name: "Dokumente",
+                        path: "/drives/drive-bsb/root:/Neue_Mitarbeiter",
+                    },
+                },
+            ],
+        }),
+    });
+
+    await expect(searchSharePointFiles(actor, "Test")).resolves.toEqual([
+        expect.objectContaining({
+            id: "recent-1",
+            driveId: "drive-bsb",
+            name: "Test 1.docx",
+        }),
+    ]);
+});
+
 it("marks reconnect required when SharePoint search is unauthorized", async () => {
-    (graphFetch as jest.Mock).mockResolvedValue(jsonResponse(401, {}));
+    mockSearchAndRecent({
+        search: jsonResponse(401, {}),
+        recent: jsonResponse(200, { value: [] }),
+    });
     await expect(searchSharePointFiles(actor, "x")).rejects.toMatchObject({
         code: "reconnect_required",
         statusCode: 400,
