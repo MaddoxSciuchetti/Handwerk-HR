@@ -7,8 +7,16 @@ import {
 import { isTeamMember } from "../../../shared/teamMembers";
 import { APP_ORIGIN, FRONTENDURL } from "@/constants/env";
 import { prisma } from "@/lib/prisma";
+import {
+    cronError,
+    cronInfo,
+    cronWarn,
+    serializeCronError,
+} from "@/utils/cronLog";
 import { getAnniversaryReminderTemplate } from "@/utils/emailTemplates";
 import { sendMail } from "@/utils/sendMail";
+
+const JOB = "anniversary-reminder";
 
 export type DueAnniversary = {
     organizationId: string;
@@ -27,12 +35,12 @@ function exitDateIso(value: Date | null): string | null {
     return value ? entryDateIso(value) : null;
 }
 
-function teamActionUrl() {
+function handwerkerActionUrl() {
     const origin =
         FRONTENDURL.replace(/\/$/, "") ||
         APP_ORIGIN.split(",")[0]?.trim().replace(/\/$/, "") ||
         "";
-    return `${origin}/team`;
+    return `${origin}/worker-lifycycle`;
 }
 
 export function findDueAnniversariesForWorkers(
@@ -127,12 +135,21 @@ function personName(person: { firstName: string; lastName: string }) {
 }
 
 export async function runAnniversaryReminders(now = new Date()) {
+    const berlinDay = berlinToday(now);
     const due = findDueAnniversariesForWorkers(
         await loadCandidateWorkers(),
         now,
     );
     if (!due.length) {
-        return { processed: 0, succeeded: 0, failed: 0 };
+        const summary = { processed: 0, succeeded: 0, failed: 0 };
+        cronInfo(JOB, {
+            event: "run_complete",
+            outcome: "ok",
+            berlinDay,
+            dueCount: 0,
+            ...summary,
+        });
+        return summary;
     }
 
     const byOrg = new Map<string, DueAnniversary[]>();
@@ -145,28 +162,71 @@ export async function runAnniversaryReminders(now = new Date()) {
     let processed = 0;
     let succeeded = 0;
     let failed = 0;
-    const actionUrl = teamActionUrl();
+    const actionUrl = handwerkerActionUrl();
 
     for (const [organizationId, anniversaries] of byOrg) {
-        const members = await loadActiveMembers(organizationId);
-        if (!members.length) continue;
-
-        const alreadySent = await prisma.anniversaryReminderSent.findMany({
-            where: {
+        const workers = anniversaries.map((item) => ({
+            workerId: item.workerId,
+            years: item.years,
+        }));
+        let members;
+        try {
+            members = await loadActiveMembers(organizationId);
+        } catch (error) {
+            failed += 1;
+            processed += 1;
+            cronError(JOB, {
+                event: "load_members_failed",
+                outcome: "failed",
                 organizationId,
-                OR: anniversaries.map((item) => ({
-                    workerId: item.workerId,
-                    years: item.years,
-                    anniversaryDate: item.anniversaryDate,
-                })),
-            },
-            select: {
-                workerId: true,
-                years: true,
-                anniversaryDate: true,
-                recipientUserId: true,
-            },
-        });
+                berlinDay,
+                workers,
+                error: serializeCronError(error),
+            });
+            continue;
+        }
+        if (!members.length) {
+            cronWarn(JOB, {
+                event: "org_skipped",
+                reason: "no_active_members",
+                organizationId,
+                berlinDay,
+                workers,
+            });
+            continue;
+        }
+
+        let alreadySent;
+        try {
+            alreadySent = await prisma.anniversaryReminderSent.findMany({
+                where: {
+                    organizationId,
+                    OR: anniversaries.map((item) => ({
+                        workerId: item.workerId,
+                        years: item.years,
+                        anniversaryDate: item.anniversaryDate,
+                    })),
+                },
+                select: {
+                    workerId: true,
+                    years: true,
+                    anniversaryDate: true,
+                    recipientUserId: true,
+                },
+            });
+        } catch (error) {
+            failed += 1;
+            processed += 1;
+            cronError(JOB, {
+                event: "load_sent_failed",
+                outcome: "failed",
+                organizationId,
+                berlinDay,
+                workers,
+                error: serializeCronError(error),
+            });
+            continue;
+        }
         const sentKeys = new Set(
             alreadySent.map(
                 (row) =>
@@ -184,6 +244,10 @@ export async function runAnniversaryReminders(now = new Date()) {
             if (!pending.length) continue;
 
             processed += 1;
+            const pendingWorkers = pending.map((item) => ({
+                workerId: item.workerId,
+                years: item.years,
+            }));
             const template = getAnniversaryReminderTemplate({
                 recipientName: personName(member) || member.email,
                 people: pending.map((item) => ({
@@ -193,6 +257,7 @@ export async function runAnniversaryReminders(now = new Date()) {
                 actionUrl,
             });
 
+            let stage: "send_mail" | "record_sent" = "send_mail";
             try {
                 const result = await sendMail({
                     to: member.email,
@@ -207,6 +272,7 @@ export async function runAnniversaryReminders(now = new Date()) {
                 });
                 if (result.error) throw new Error(result.error.message);
 
+                stage = "record_sent";
                 await prisma.anniversaryReminderSent.createMany({
                     data: pending.map((item) => ({
                         id: randomUUID(),
@@ -219,21 +285,44 @@ export async function runAnniversaryReminders(now = new Date()) {
                     skipDuplicates: true,
                 });
                 succeeded += 1;
-                console.info("anniversary-reminder", {
+                cronInfo(JOB, {
+                    event: "send_succeeded",
+                    outcome: "ok",
                     organizationId,
+                    berlinDay,
                     recipientUserId: member.id,
-                    workers: pending.map((item) => item.workerId),
+                    recipientEmail: member.email,
+                    workers: pendingWorkers,
+                    actionUrl,
                 });
             } catch (error) {
                 failed += 1;
-                console.error("anniversary-reminder", {
+                cronError(JOB, {
+                    event:
+                        stage === "send_mail"
+                            ? "send_failed"
+                            : "record_sent_failed",
+                    outcome: "failed",
+                    stage,
                     organizationId,
+                    berlinDay,
                     recipientUserId: member.id,
-                    error,
+                    recipientEmail: member.email,
+                    workers: pendingWorkers,
+                    error: serializeCronError(error),
                 });
             }
         }
     }
 
-    return { processed, succeeded, failed };
+    const summary = { processed, succeeded, failed };
+    cronInfo(JOB, {
+        event: "run_complete",
+        outcome: failed ? "failed" : "ok",
+        berlinDay,
+        dueCount: due.length,
+        organizationCount: byOrg.size,
+        ...summary,
+    });
+    return summary;
 }

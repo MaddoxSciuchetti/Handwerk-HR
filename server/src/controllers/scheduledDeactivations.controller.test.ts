@@ -57,6 +57,7 @@ it("accepts the exact bearer token", () => {
 it("queries due calendar schedules with claim filters and a batch limit", async () => {
     jest.useFakeTimers().setSystemTime(new Date("2026-10-30T23:15:00Z"));
     (prisma.issue.findMany as jest.Mock).mockResolvedValue([]);
+    const log = jest.spyOn(console, "info").mockImplementation();
     await postScheduledDeactivations({} as any, response, next);
     const expectedCutoff = new Date(`${berlinToday()}T00:00:00Z`);
     expect(prisma.issue.findMany).toHaveBeenCalledWith({
@@ -94,10 +95,12 @@ it("queries due calendar schedules with claim filters and a batch limit", async 
         failed: 0,
     });
     expect(runIssueSequence).not.toHaveBeenCalled();
+    log.mockRestore();
 });
 
 it("returns zero counts without due tasks", async () => {
     (prisma.issue.findMany as jest.Mock).mockResolvedValue([]);
+    const log = jest.spyOn(console, "info").mockImplementation();
     await postScheduledDeactivations({} as any, response, next);
     expect(response.status).toHaveBeenCalledWith(200);
     expect(response.json).toHaveBeenCalledWith({
@@ -106,6 +109,15 @@ it("returns zero counts without due tasks", async () => {
         failed: 0,
     });
     expect(runIssueSequence).not.toHaveBeenCalled();
+    expect(log).toHaveBeenCalledWith(
+        "scheduled-deactivation",
+        expect.objectContaining({
+            event: "run_complete",
+            outcome: "ok",
+            dueCount: 0,
+        }),
+    );
+    log.mockRestore();
 });
 
 it("runs each due task as the scheduling user and returns 200 when all succeed", async () => {
@@ -143,6 +155,24 @@ it("runs each due task as the scheduling user and returns 200 when all succeed",
         succeeded: 2,
         failed: 0,
     });
+    expect(log).toHaveBeenCalledWith(
+        "scheduled-deactivation",
+        expect.objectContaining({
+            event: "task_succeeded",
+            outcome: "ok",
+            issueId: "crew",
+        }),
+    );
+    expect(log).toHaveBeenCalledWith(
+        "scheduled-deactivation",
+        expect.objectContaining({
+            event: "run_complete",
+            outcome: "ok",
+            processed: 2,
+            succeeded: 2,
+            failed: 0,
+        }),
+    );
     log.mockRestore();
 });
 
@@ -178,6 +208,30 @@ it("isolates individual failures, scopes executions and signals cron failure", a
         failed: 1,
     });
     expect(next).not.toHaveBeenCalled();
+    expect(error).toHaveBeenCalledWith(
+        "scheduled-deactivation",
+        expect.objectContaining({
+            event: "task_failed",
+            outcome: "failed",
+            issueId: "b",
+            organizationId: "org-b",
+            actorUserId: "scheduler-b",
+            error: expect.objectContaining({
+                name: "Error",
+                message: "Timeout",
+            }),
+        }),
+    );
+    expect(log).toHaveBeenCalledWith(
+        "scheduled-deactivation",
+        expect.objectContaining({
+            event: "run_complete",
+            outcome: "failed",
+            processed: 2,
+            succeeded: 1,
+            failed: 1,
+        }),
+    );
     log.mockRestore();
     error.mockRestore();
 });
@@ -195,6 +249,7 @@ it("counts non-completed sequence results as failures for the cron exit signal",
         message: "Crewmeister timeout",
     });
     const log = jest.spyOn(console, "info").mockImplementation();
+    const error = jest.spyOn(console, "error").mockImplementation();
     await postScheduledDeactivations({} as any, response, next);
     expect(response.status).toHaveBeenCalledWith(503);
     expect(response.json).toHaveBeenCalledWith({
@@ -202,7 +257,27 @@ it("counts non-completed sequence results as failures for the cron exit signal",
         succeeded: 0,
         failed: 1,
     });
+    expect(error).toHaveBeenCalledWith("scheduled-deactivation", {
+        job: "scheduled-deactivation",
+        event: "task_failed",
+        outcome: "failed",
+        berlinDay: expect.any(String),
+        issueId: "a",
+        organizationId: "org",
+        actorUserId: "scheduler",
+        status: "failed",
+        message: "Crewmeister timeout",
+    });
+    expect(log).toHaveBeenCalledWith(
+        "scheduled-deactivation",
+        expect.objectContaining({
+            event: "run_complete",
+            outcome: "failed",
+            failed: 1,
+        }),
+    );
     log.mockRestore();
+    error.mockRestore();
 });
 
 it("treats missing organisation or scheduling user as a failed task", async () => {
@@ -235,6 +310,20 @@ it("treats missing organisation or scheduling user as a failed task", async () =
         succeeded: 1,
         failed: 1,
     });
+    expect(error).toHaveBeenCalledWith(
+        "scheduled-deactivation",
+        expect.objectContaining({
+            event: "task_failed",
+            outcome: "failed",
+            issueId: "broken",
+            organizationId: "org",
+            actorUserId: null,
+            error: expect.objectContaining({
+                message:
+                    "Geplante Deaktivierung ohne Organisation oder Benutzer.",
+            }),
+        }),
+    );
     log.mockRestore();
     error.mockRestore();
 });

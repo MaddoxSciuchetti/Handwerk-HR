@@ -23,6 +23,7 @@ jest.mock("@/constants/env", () => ({
 }));
 
 const today = new Date("2026-10-21T12:00:00.000Z");
+const berlinDay = "2026-10-21";
 
 function worker(overrides: Record<string, unknown> = {}) {
     return {
@@ -35,6 +36,30 @@ function worker(overrides: Record<string, unknown> = {}) {
         engagements: [{ type: "transfer", status: "completed" }],
         ...overrides,
     };
+}
+
+function member(
+    overrides: Record<string, unknown> = {},
+): { user: Record<string, unknown> } {
+    return {
+        user: {
+            id: "user-1",
+            email: "hr@example.com",
+            firstName: "Hans",
+            lastName: "Recruiter",
+            ...overrides,
+        },
+    };
+}
+
+function mockDueWorkerReady() {
+    (prisma.worker.findMany as jest.Mock).mockResolvedValue([worker()]);
+    (prisma.organizationMember.findMany as jest.Mock).mockResolvedValue([
+        member(),
+    ]);
+    (prisma.anniversaryReminderSent.findMany as jest.Mock).mockResolvedValue(
+        [],
+    );
 }
 
 beforeEach(() => {
@@ -125,7 +150,23 @@ describe("findDueAnniversariesForWorkers", () => {
 });
 
 describe("runAnniversaryReminders", () => {
-    it("returns zeros when nobody is due", async () => {
+    let info: jest.SpyInstance;
+    let warn: jest.SpyInstance;
+    let error: jest.SpyInstance;
+
+    beforeEach(() => {
+        info = jest.spyOn(console, "info").mockImplementation();
+        warn = jest.spyOn(console, "warn").mockImplementation();
+        error = jest.spyOn(console, "error").mockImplementation();
+    });
+
+    afterEach(() => {
+        info.mockRestore();
+        warn.mockRestore();
+        error.mockRestore();
+    });
+
+    it("returns zeros when nobody is due and logs an idle run summary", async () => {
         (prisma.worker.findMany as jest.Mock).mockResolvedValue([]);
         await expect(runAnniversaryReminders(today)).resolves.toEqual({
             processed: 0,
@@ -133,23 +174,20 @@ describe("runAnniversaryReminders", () => {
             failed: 0,
         });
         expect(sendMail).not.toHaveBeenCalled();
+        expect(info).toHaveBeenCalledWith("anniversary-reminder", {
+            job: "anniversary-reminder",
+            event: "run_complete",
+            outcome: "ok",
+            berlinDay,
+            dueCount: 0,
+            processed: 0,
+            succeeded: 0,
+            failed: 0,
+        });
     });
 
-    it("emails active members and records sends", async () => {
-        (prisma.worker.findMany as jest.Mock).mockResolvedValue([worker()]);
-        (prisma.organizationMember.findMany as jest.Mock).mockResolvedValue([
-            {
-                user: {
-                    id: "user-1",
-                    email: "hr@example.com",
-                    firstName: "Hans",
-                    lastName: "Recruiter",
-                },
-            },
-        ]);
-        (prisma.anniversaryReminderSent.findMany as jest.Mock).mockResolvedValue(
-            [],
-        );
+    it("emails active members, records sends, and links to Handwerker", async () => {
+        mockDueWorkerReady();
         (sendMail as jest.Mock).mockResolvedValue({
             data: { id: "mail-1" },
             error: null,
@@ -170,6 +208,10 @@ describe("runAnniversaryReminders", () => {
                 subject: expect.stringContaining("Ada Beispiel"),
             }),
         );
+        const mailed = (sendMail as jest.Mock).mock.calls[0][0];
+        expect(mailed.html).toContain("/worker-lifycycle");
+        expect(mailed.html).toContain("Zum Handwerker");
+        expect(mailed.text).toContain("/worker-lifycycle");
         expect(prisma.anniversaryReminderSent.createMany).toHaveBeenCalledWith(
             expect.objectContaining({
                 data: [
@@ -183,20 +225,34 @@ describe("runAnniversaryReminders", () => {
                 skipDuplicates: true,
             }),
         );
+        expect(info).toHaveBeenCalledWith(
+            "anniversary-reminder",
+            expect.objectContaining({
+                event: "send_succeeded",
+                outcome: "ok",
+                organizationId: "org-1",
+                recipientUserId: "user-1",
+                recipientEmail: "hr@example.com",
+                workers: [{ workerId: "worker-1", years: 5 }],
+                actionUrl: "https://app.example/worker-lifycycle",
+            }),
+        );
+        expect(info).toHaveBeenCalledWith(
+            "anniversary-reminder",
+            expect.objectContaining({
+                event: "run_complete",
+                outcome: "ok",
+                dueCount: 1,
+                processed: 1,
+                succeeded: 1,
+                failed: 0,
+            }),
+        );
+        expect(error).not.toHaveBeenCalled();
     });
 
     it("skips recipients who already received today's reminder", async () => {
-        (prisma.worker.findMany as jest.Mock).mockResolvedValue([worker()]);
-        (prisma.organizationMember.findMany as jest.Mock).mockResolvedValue([
-            {
-                user: {
-                    id: "user-1",
-                    email: "hr@example.com",
-                    firstName: "Hans",
-                    lastName: "Recruiter",
-                },
-            },
-        ]);
+        mockDueWorkerReady();
         (prisma.anniversaryReminderSent.findMany as jest.Mock).mockResolvedValue(
             [
                 {
@@ -214,26 +270,22 @@ describe("runAnniversaryReminders", () => {
             failed: 0,
         });
         expect(sendMail).not.toHaveBeenCalled();
+        expect(info).toHaveBeenCalledWith(
+            "anniversary-reminder",
+            expect.objectContaining({
+                event: "run_complete",
+                outcome: "ok",
+                processed: 0,
+                failed: 0,
+            }),
+        );
     });
 
-    it("counts mail failures without recording a send", async () => {
-        (prisma.worker.findMany as jest.Mock).mockResolvedValue([worker()]);
-        (prisma.organizationMember.findMany as jest.Mock).mockResolvedValue([
-            {
-                user: {
-                    id: "user-1",
-                    email: "hr@example.com",
-                    firstName: "Hans",
-                    lastName: "Recruiter",
-                },
-            },
-        ]);
-        (prisma.anniversaryReminderSent.findMany as jest.Mock).mockResolvedValue(
-            [],
-        );
+    it("logs a clear send_failed event with serialized error details", async () => {
+        mockDueWorkerReady();
         (sendMail as jest.Mock).mockResolvedValue({
             data: null,
-            error: { name: "MailError", message: "boom" },
+            error: { name: "MailError", message: "resend rejected" },
         });
 
         await expect(runAnniversaryReminders(today)).resolves.toEqual({
@@ -242,5 +294,157 @@ describe("runAnniversaryReminders", () => {
             failed: 1,
         });
         expect(prisma.anniversaryReminderSent.createMany).not.toHaveBeenCalled();
+        expect(error).toHaveBeenCalledWith("anniversary-reminder", {
+            job: "anniversary-reminder",
+            event: "send_failed",
+            outcome: "failed",
+            stage: "send_mail",
+            organizationId: "org-1",
+            berlinDay,
+            recipientUserId: "user-1",
+            recipientEmail: "hr@example.com",
+            workers: [{ workerId: "worker-1", years: 5 }],
+            error: {
+                name: "Error",
+                message: "resend rejected",
+                stack: expect.any(String),
+            },
+        });
+        expect(info).toHaveBeenCalledWith(
+            "anniversary-reminder",
+            expect.objectContaining({
+                event: "run_complete",
+                outcome: "failed",
+                failed: 1,
+            }),
+        );
+    });
+
+    it("logs record_sent_failed when mail succeeded but dedupe write fails", async () => {
+        mockDueWorkerReady();
+        (sendMail as jest.Mock).mockResolvedValue({
+            data: { id: "mail-1" },
+            error: null,
+        });
+        (prisma.anniversaryReminderSent.createMany as jest.Mock).mockRejectedValue(
+            new Error("unique constraint"),
+        );
+
+        await expect(runAnniversaryReminders(today)).resolves.toEqual({
+            processed: 1,
+            succeeded: 0,
+            failed: 1,
+        });
+        expect(error).toHaveBeenCalledWith(
+            "anniversary-reminder",
+            expect.objectContaining({
+                event: "record_sent_failed",
+                outcome: "failed",
+                stage: "record_sent",
+                recipientEmail: "hr@example.com",
+                error: expect.objectContaining({
+                    name: "Error",
+                    message: "unique constraint",
+                }),
+            }),
+        );
+    });
+
+    it("warns when an org has due jubilees but no active members", async () => {
+        (prisma.worker.findMany as jest.Mock).mockResolvedValue([worker()]);
+        (prisma.organizationMember.findMany as jest.Mock).mockResolvedValue([]);
+
+        await expect(runAnniversaryReminders(today)).resolves.toEqual({
+            processed: 0,
+            succeeded: 0,
+            failed: 0,
+        });
+        expect(sendMail).not.toHaveBeenCalled();
+        expect(warn).toHaveBeenCalledWith("anniversary-reminder", {
+            job: "anniversary-reminder",
+            event: "org_skipped",
+            reason: "no_active_members",
+            organizationId: "org-1",
+            berlinDay,
+            workers: [{ workerId: "worker-1", years: 5 }],
+        });
+    });
+
+    it("isolates one recipient failure while continuing other members", async () => {
+        (prisma.worker.findMany as jest.Mock).mockResolvedValue([worker()]);
+        (prisma.organizationMember.findMany as jest.Mock).mockResolvedValue([
+            member({ id: "user-1", email: "fail@example.com" }),
+            member({
+                id: "user-2",
+                email: "ok@example.com",
+                firstName: "Olga",
+                lastName: "Ok",
+            }),
+        ]);
+        (prisma.anniversaryReminderSent.findMany as jest.Mock).mockResolvedValue(
+            [],
+        );
+        (sendMail as jest.Mock)
+            .mockResolvedValueOnce({
+                data: null,
+                error: { message: "mailbox full" },
+            })
+            .mockResolvedValueOnce({ data: { id: "mail-2" }, error: null });
+        (prisma.anniversaryReminderSent.createMany as jest.Mock).mockResolvedValue(
+            { count: 1 },
+        );
+
+        await expect(runAnniversaryReminders(today)).resolves.toEqual({
+            processed: 2,
+            succeeded: 1,
+            failed: 1,
+        });
+        expect(error).toHaveBeenCalledWith(
+            "anniversary-reminder",
+            expect.objectContaining({
+                event: "send_failed",
+                recipientEmail: "fail@example.com",
+                error: expect.objectContaining({ message: "mailbox full" }),
+            }),
+        );
+        expect(info).toHaveBeenCalledWith(
+            "anniversary-reminder",
+            expect.objectContaining({
+                event: "send_succeeded",
+                recipientEmail: "ok@example.com",
+            }),
+        );
+        expect(info).toHaveBeenCalledWith(
+            "anniversary-reminder",
+            expect.objectContaining({
+                event: "run_complete",
+                outcome: "failed",
+                processed: 2,
+                succeeded: 1,
+                failed: 1,
+            }),
+        );
+    });
+
+    it("logs load_members_failed when member lookup throws", async () => {
+        (prisma.worker.findMany as jest.Mock).mockResolvedValue([worker()]);
+        (prisma.organizationMember.findMany as jest.Mock).mockRejectedValue(
+            new Error("db down"),
+        );
+
+        await expect(runAnniversaryReminders(today)).resolves.toEqual({
+            processed: 1,
+            succeeded: 0,
+            failed: 1,
+        });
+        expect(error).toHaveBeenCalledWith(
+            "anniversary-reminder",
+            expect.objectContaining({
+                event: "load_members_failed",
+                outcome: "failed",
+                organizationId: "org-1",
+                error: expect.objectContaining({ message: "db down" }),
+            }),
+        );
     });
 });
