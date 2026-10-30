@@ -12,8 +12,15 @@ import {
     saveDeactivationSchedule,
 } from "@/services/integrations/deactivationSchedule";
 import { runIssueSequence } from "@/services/integrations/runSequence";
+import {
+    cronError,
+    cronInfo,
+    serializeCronError,
+} from "@/utils/cronLog";
 
 export { requireCronSecret };
+
+const JOB = "scheduled-deactivation";
 export const getDeactivationSchedule = catchErrors(async (req, res) => {
     appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
     res.json({
@@ -44,12 +51,13 @@ export const patchDeactivationSchedule = catchErrors(async (req, res) => {
 });
 export const postScheduledDeactivations = catchErrors(async (_req, res) => {
     const now = new Date();
+    const berlinDay = berlinToday(now);
     const issues = await prisma.issue.findMany({
         where: {
             sequence: { in: [...DEACTIVATION_SEQUENCES] },
             status: { in: [...executableStatuses] },
             scheduledDeactivateAt: {
-                lt: new Date(`${berlinToday(now)}T00:00:00Z`),
+                lt: new Date(`${berlinDay}T00:00:00Z`),
             },
             AND: [
                 {
@@ -73,26 +81,51 @@ export const postScheduledDeactivations = catchErrors(async (_req, res) => {
     const deadline = Date.now() + 120_000;
     const queue = [...issues];
     const execute = async (issue: (typeof issues)[number]) => {
+        const organizationId = issue.workerEngagement?.organizationId ?? null;
         try {
-            if (!issue.workerEngagement || !issue.scheduledDeactivateByUserId)
+            if (!issue.workerEngagement || !issue.scheduledDeactivateByUserId) {
                 throw new Error(
                     "Geplante Deaktivierung ohne Organisation oder Benutzer.",
                 );
+            }
             const result = await runIssueSequence({
                 issueId: issue.id,
                 organizationId: issue.workerEngagement.organizationId,
                 actorUserId: issue.scheduledDeactivateByUserId,
                 scheduled: true,
             });
-            console.info("scheduled-deactivation", {
+            if (result.status === "completed") {
+                cronInfo(JOB, {
+                    event: "task_succeeded",
+                    outcome: "ok",
+                    berlinDay,
+                    issueId: issue.id,
+                    organizationId,
+                    actorUserId: issue.scheduledDeactivateByUserId,
+                    ...result,
+                });
+                return true;
+            }
+            cronError(JOB, {
+                event: "task_failed",
+                outcome: "failed",
+                berlinDay,
                 issueId: issue.id,
-                ...result,
+                organizationId,
+                actorUserId: issue.scheduledDeactivateByUserId,
+                status: result.status,
+                message: result.message,
             });
-            return result.status === "completed";
+            return false;
         } catch (error) {
-            console.error("scheduled-deactivation", {
+            cronError(JOB, {
+                event: "task_failed",
+                outcome: "failed",
+                berlinDay,
                 issueId: issue.id,
-                error,
+                organizationId,
+                actorUserId: issue.scheduledDeactivateByUserId,
+                error: serializeCronError(error),
             });
             return false;
         }
@@ -111,6 +144,13 @@ export const postScheduledDeactivations = catchErrors(async (_req, res) => {
         succeeded,
         failed: results.length - succeeded,
     };
+    cronInfo(JOB, {
+        event: "run_complete",
+        outcome: data.failed ? "failed" : "ok",
+        berlinDay,
+        dueCount: issues.length,
+        ...data,
+    });
     // Signal partial failure to the cron command while retaining successful work.
     res.status(data.failed ? 503 : 200).json(data);
 });
