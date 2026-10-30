@@ -824,19 +824,26 @@ model EngagementMaterial {
   @@map("engagement_materials")
 }
 
+enum ClothingPrintType {
+  bedruckt
+  sondersachen
+  unbedruckt
+}
+
 model ClothingStockItem {
-  id             String   @id @default(uuid())
-  organizationId String   @map("organization_id")
-  name           String   @db.VarChar(255)
-  size           String   @default("") @db.VarChar(32)
+  id             String            @id @default(uuid())
+  organizationId String            @map("organization_id")
+  name           String            @db.VarChar(255)
+  size           String            @default("") @db.VarChar(32)
+  printType      ClothingPrintType @default(unbedruckt) @map("print_type")
   quantity       Int
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime          @updatedAt @map("updated_at") @db.Timestamptz()
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   clothingOrders EngagementClothing[]
 
-  @@unique([organizationId, name, size])
+  @@unique([organizationId, name, size, printType])
   @@index([organizationId])
   @@map("clothing_stock_items")
 }
@@ -847,17 +854,19 @@ enum ClothingSource {
 }
 
 model EngagementClothing {
-  id               String         @id @default(uuid())
-  engagementId     String         @map("engagement_id")
-  stockItemId      String?        @map("stock_item_id")
-  name             String         @db.VarChar(255)
-  size             String         @default("") @db.VarChar(32)
-  productUrl       String?        @map("product_url") @db.VarChar(2048)
+  id               String            @id @default(uuid())
+  engagementId     String            @map("engagement_id")
+  stockItemId      String?           @map("stock_item_id")
+  name             String            @db.VarChar(255)
+  size             String            @default("") @db.VarChar(32)
+  printType        ClothingPrintType @default(unbedruckt) @map("print_type")
+  productUrl       String?           @map("product_url") @db.VarChar(2048)
   source           ClothingSource
   quantity         Int
-  returnedQuantity Int            @default(0) @map("returned_quantity")
-  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt        DateTime       @updatedAt @map("updated_at") @db.Timestamptz()
+  returnedQuantity Int               @default(0) @map("returned_quantity")
+  issuedAt         DateTime          @default(now()) @map("issued_at") @db.Date
+  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime          @updatedAt @map("updated_at") @db.Timestamptz()
 
   engagement WorkerEngagement   @relation(fields: [engagementId], references: [id], onDelete: Cascade)
   stockItem  ClothingStockItem? @relation(fields: [stockItemId], references: [id], onDelete: SetNull)

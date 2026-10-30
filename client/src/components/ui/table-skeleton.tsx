@@ -32,6 +32,7 @@ export function TableSkeletonRows({
       case 'clothing':
         return [
           name,
+          line('w-16'),
           line('w-10'),
           line('w-8'),
           line('w-24'),
@@ -91,7 +92,12 @@ export function TableSkeletonRows({
           <Skeleton className="size-8 rounded-md" />,
         ];
       case 'stock':
-        return [name, line('w-10'), <Skeleton className="h-9 w-24" />];
+        return [
+          name,
+          line('w-10'),
+          line('w-20'),
+          <Skeleton className="h-9 w-24" />,
+        ];
       case 'templates':
         return [name, <Skeleton className="ml-auto h-8 w-20 rounded-2xl" />];
       case 'documents':

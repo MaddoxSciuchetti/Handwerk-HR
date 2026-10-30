@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TableCell, TableRow } from '@/components/ui/table';
 import TrashButton from '@/components/TrashButton';
+import { formatCalendarDate, parseCalendarDate } from '@shared/calendarDate';
 import { useEffect, useState } from 'react';
 import type { EngagementClothingItem } from '../../api/engagementClothing.api';
 
@@ -17,6 +18,11 @@ const sourceLabel = {
   storage: 'Aus Bestand',
   purchased: 'Neu gekauft',
 } as const;
+
+function issuedLabel(value: string) {
+  const date = parseCalendarDate(value);
+  return date ? formatCalendarDate(date) : value;
+}
 
 export function ClothingOrderRow({
   item,
@@ -59,6 +65,7 @@ export function ClothingOrderRow({
       <TableCell className="whitespace-normal break-words pl-10 font-medium">
         {item.name}
       </TableCell>
+      <TableCell>{issuedLabel(item.issuedAt)}</TableCell>
       <TableCell className="whitespace-normal break-words">
         {item.size || '—'}
       </TableCell>

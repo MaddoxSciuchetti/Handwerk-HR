@@ -1,3 +1,4 @@
+import type { ClothingPrintType } from '@shared/clothing';
 import { apiJson } from '@/config/apiClient';
 
 export type ClothingSource = 'storage' | 'purchased';
@@ -6,19 +7,23 @@ export type EngagementClothingItem = {
   id: string;
   name: string;
   size: string;
+  printType: ClothingPrintType;
   productUrl: string | null;
   source: ClothingSource;
   quantity: number;
   returnedQuantity: number;
   stockItemId: string | null;
+  issuedAt: string;
 };
 
 export type CreateEngagementClothingInput = {
   stockItemId?: string;
   name?: string;
   size?: string;
+  printType?: ClothingPrintType;
   productUrl?: string;
   quantity: number;
+  issuedAt?: string;
 };
 
 type ClothingListResponse = {

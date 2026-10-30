@@ -47,7 +47,8 @@ describe("engagement clothing", () => {
         (stock.findFirst as jest.Mock).mockResolvedValue({
             id: "stock-1",
             name: "Schuhe",
-            size: "43",
+            size: "L",
+            printType: "bedruckt",
             quantity: 4,
         });
         (stock.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
@@ -66,14 +67,17 @@ describe("engagement clothing", () => {
                 stockItemId: "stock-1",
                 productUrl: "https://shop.example/schuhe",
                 quantity: 2,
+                issuedAt: "2026-03-17",
             }),
         ).resolves.toMatchObject({
             name: "Schuhe",
-            size: "43",
+            size: "L",
+            printType: "bedruckt",
             source: "storage",
             quantity: 2,
             productUrl: "https://shop.example/schuhe",
             stockItemId: "stock-1",
+            issuedAt: "2026-03-17",
         });
 
         expect(stock.updateMany).toHaveBeenCalledWith({
@@ -83,6 +87,12 @@ describe("engagement clothing", () => {
                 quantity: { gte: 2 },
             },
             data: { quantity: { decrement: 2 } },
+        });
+        expect(clothing.create).toHaveBeenCalledWith({
+            data: expect.objectContaining({
+                issuedAt: new Date("2026-03-17T00:00:00.000Z"),
+                printType: "bedruckt",
+            }),
         });
     });
 
@@ -102,13 +112,17 @@ describe("engagement clothing", () => {
             createEngagementClothing(scope, {
                 name: "Jacke",
                 size: "L",
+                printType: "unbedruckt",
                 quantity: 1,
+                issuedAt: "2026-05-25",
             }),
         ).resolves.toMatchObject({
             name: "Jacke",
             size: "L",
+            printType: "unbedruckt",
             source: "purchased",
             stockItemId: null,
+            issuedAt: "2026-05-25",
         });
         expect(stock.updateMany).not.toHaveBeenCalled();
     });
@@ -118,7 +132,8 @@ describe("engagement clothing", () => {
         (stock.findFirst as jest.Mock).mockResolvedValue({
             id: "stock-1",
             name: "Schuhe",
-            size: "43",
+            size: "L",
+            printType: "bedruckt",
             quantity: 1,
         });
         (stock.updateMany as jest.Mock).mockResolvedValue({ count: 0 });
@@ -136,22 +151,26 @@ describe("engagement clothing", () => {
         (clothing.findFirst as jest.Mock).mockResolvedValue({
             id: "line-1",
             name: "Schuhe",
-            size: "43",
+            size: "L",
+            printType: "bedruckt",
             productUrl: null,
             source: "storage",
             quantity: 2,
             returnedQuantity: 0,
             stockItemId: "stock-1",
+            issuedAt: new Date("2026-03-17T00:00:00.000Z"),
         });
         (stock.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
         (clothing.update as jest.Mock).mockImplementation(
             async ({ data }: { data: Record<string, unknown> }) => ({
                 id: "line-1",
                 name: "Schuhe",
-                size: "43",
+                size: "L",
+                printType: "bedruckt",
                 productUrl: null,
                 source: "storage",
                 quantity: 2,
+                issuedAt: new Date("2026-03-17T00:00:00.000Z"),
                 ...data,
             }),
         );
@@ -171,11 +190,13 @@ describe("engagement clothing", () => {
             id: "line-2",
             name: "Jacke",
             size: "L",
+            printType: "unbedruckt",
             productUrl: null,
             source: "purchased",
             quantity: 1,
             returnedQuantity: 0,
             stockItemId: null,
+            issuedAt: new Date("2026-05-25T00:00:00.000Z"),
         });
         (stock.findFirst as jest.Mock).mockResolvedValue(null);
         (stock.create as jest.Mock).mockResolvedValue({ id: "stock-new" });
@@ -184,9 +205,11 @@ describe("engagement clothing", () => {
                 id: "line-2",
                 name: "Jacke",
                 size: "L",
+                printType: "unbedruckt",
                 productUrl: null,
                 source: "purchased",
                 quantity: 1,
+                issuedAt: new Date("2026-05-25T00:00:00.000Z"),
                 ...data,
             }),
         );
@@ -200,6 +223,7 @@ describe("engagement clothing", () => {
                 organizationId: "org",
                 name: "Jacke",
                 size: "L",
+                printType: "unbedruckt",
                 quantity: 1,
             },
             select: { id: true },
@@ -210,12 +234,14 @@ describe("engagement clothing", () => {
         (clothing.findFirst as jest.Mock).mockResolvedValue({
             id: "line-1",
             name: "Schuhe",
-            size: "43",
+            size: "L",
+            printType: "bedruckt",
             productUrl: null,
             source: "storage",
             quantity: 2,
             returnedQuantity: 1,
             stockItemId: "stock-1",
+            issuedAt: new Date("2026-03-17T00:00:00.000Z"),
         });
         (stock.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
 

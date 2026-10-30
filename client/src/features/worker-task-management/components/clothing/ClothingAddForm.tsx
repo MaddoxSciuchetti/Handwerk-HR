@@ -11,6 +11,12 @@ import {
 import type { ClothingStockItem } from '@/features/bestand/bestand.api';
 import SidebarContent from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarContent';
 import SidebarFooter from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarFooter';
+import {
+  CLOTHING_PRINT_TYPES,
+  CLOTHING_PRINT_TYPE_LABELS,
+  type ClothingPrintType,
+} from '@shared/clothing';
+import { berlinToday } from '@shared/calendarDate';
 import { FormEvent, useEffect, useState } from 'react';
 import type { CreateEngagementClothingInput } from '../../api/engagementClothing.api';
 
@@ -26,7 +32,8 @@ type ClothingAddFormProps = {
 
 function stockLabel(item: ClothingStockItem) {
   const size = item.size || 'ohne Größe';
-  return `${item.name} · ${size} · ${item.quantity} im Bestand`;
+  const type = CLOTHING_PRINT_TYPE_LABELS[item.printType];
+  return `${item.name} · ${size} · ${type} · ${item.quantity} im Bestand`;
 }
 
 export function ClothingAddForm({
@@ -40,8 +47,10 @@ export function ClothingAddForm({
   const [choice, setChoice] = useState(PURCHASED);
   const [name, setName] = useState('');
   const [size, setSize] = useState('');
+  const [printType, setPrintType] = useState<ClothingPrintType>('bedruckt');
   const [productUrl, setProductUrl] = useState('');
   const [quantity, setQuantity] = useState('1');
+  const [issuedAt, setIssuedAt] = useState(berlinToday);
   const [error, setError] = useState<string | null>(null);
 
   const selectedStock =
@@ -53,8 +62,10 @@ export function ClothingAddForm({
     setChoice(PURCHASED);
     setName('');
     setSize('');
+    setPrintType('bedruckt');
     setProductUrl('');
     setQuantity('1');
+    setIssuedAt(berlinToday());
     setError(null);
   }, [open]);
 
@@ -73,17 +84,24 @@ export function ClothingAddForm({
       setError('Artikel fehlt.');
       return;
     }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(issuedAt)) {
+      setError('Datum muss im Format JJJJ-MM-TT sein.');
+      return;
+    }
 
     const input: CreateEngagementClothingInput = fromStorage
       ? {
           stockItemId: selectedStock.id,
           quantity: parsedQuantity,
+          issuedAt,
           ...(productUrl.trim() ? { productUrl: productUrl.trim() } : {}),
         }
       : {
           name: name.trim(),
           size: size.trim(),
+          printType,
           quantity: parsedQuantity,
+          issuedAt,
           ...(productUrl.trim() ? { productUrl: productUrl.trim() } : {}),
         };
 
@@ -148,8 +166,36 @@ export function ClothingAddForm({
                 onChange={(event) => setSize(event.target.value)}
               />
             </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="clothing-type">Typ</Label>
+              <Select
+                value={printType}
+                onValueChange={(value) => setPrintType(value as ClothingPrintType)}
+              >
+                <SelectTrigger id="clothing-type" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CLOTHING_PRINT_TYPES.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {CLOTHING_PRINT_TYPE_LABELS[option]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </>
         )}
+        <div className="grid gap-1.5">
+          <Label htmlFor="clothing-issued-at">Erhalten am</Label>
+          <Input
+            id="clothing-issued-at"
+            type="date"
+            value={issuedAt}
+            onChange={(event) => setIssuedAt(event.target.value)}
+            required
+          />
+        </div>
         <div className="grid gap-1.5">
           <Label htmlFor="clothing-quantity">Anzahl</Label>
           <Input

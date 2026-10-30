@@ -17,6 +17,8 @@ import {
   useEngagementClothing,
 } from '@/features/worker-task-management/hooks/useEngagementClothing';
 import { cn } from '@/lib/utils';
+import { berlinToday } from '@shared/calendarDate';
+import { CLOTHING_PRINT_TYPE_LABELS } from '@shared/clothing';
 import { Plus, X } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
@@ -31,14 +33,17 @@ type Draft = {
   key: string;
   stockItemId: string;
   quantity: string;
+  issuedAt: string;
 };
 
 type IssuedRow = {
   clothingId: string;
   stockItemId: string;
   quantity: string;
+  issuedAt: string;
   originalStockItemId: string;
   originalQuantity: number;
+  originalIssuedAt: string;
   name: string;
   size: string;
   dirty: boolean;
@@ -50,6 +55,11 @@ const rowClass =
 const fieldClass =
   'h-8 w-full min-w-0 border-transparent bg-muted/50 text-right text-sm shadow-none focus:border-border focus:bg-muted focus-visible:border-border focus-visible:ring-0 dark:bg-muted/50 dark:focus:bg-muted';
 
+const dateFieldClass = cn(
+  fieldClass,
+  '[&::-webkit-datetime-edit]:flex [&::-webkit-datetime-edit]:flex-1 [&::-webkit-datetime-edit]:justify-end [&::-webkit-datetime-edit-fields-wrapper]:flex [&::-webkit-datetime-edit-fields-wrapper]:justify-end [&::-webkit-calendar-picker-indicator]:ml-2 [&::-webkit-date-and-time-value]:text-right'
+);
+
 let draftSequence = 0;
 
 function emptyDraft(): Draft {
@@ -58,6 +68,7 @@ function emptyDraft(): Draft {
     key: `clothing-draft-${draftSequence}`,
     stockItemId: '',
     quantity: '1',
+    issuedAt: berlinToday(),
   };
 }
 
@@ -70,8 +81,15 @@ function isIssuedDirty(row: IssuedRow) {
   return (
     row.dirty &&
     (row.stockItemId !== row.originalStockItemId ||
-      amountOf(row.quantity) !== row.originalQuantity)
+      amountOf(row.quantity) !== row.originalQuantity ||
+      row.issuedAt !== row.originalIssuedAt)
   );
+}
+
+function stockLabel(item: ClothingStockItem) {
+  const size = item.size || 'ohne Größe';
+  const type = CLOTHING_PRINT_TYPE_LABELS[item.printType];
+  return `${item.name} · ${size} · ${type} · ${item.quantity} verfügbar`;
 }
 
 function reservedByOthers(
@@ -124,6 +142,7 @@ export default function WorkerClothingPanel({ workerId, engagements }: Props) {
           clothingId: item.id,
           originalStockItemId: item.stockItemId ?? '',
           originalQuantity: outstanding,
+          originalIssuedAt: item.issuedAt,
           name: item.name,
           size: item.size,
         };
@@ -131,13 +150,15 @@ export default function WorkerClothingPanel({ workerId, engagements }: Props) {
         if (
           previous?.dirty &&
           (previous.stockItemId !== serverStockItemId ||
-            amountOf(previous.quantity) !== outstanding)
+            amountOf(previous.quantity) !== outstanding ||
+            previous.issuedAt !== item.issuedAt)
         ) {
           return [
             {
               ...base,
               stockItemId: previous.stockItemId,
               quantity: previous.quantity,
+              issuedAt: previous.issuedAt,
               dirty: true,
             },
           ];
@@ -147,6 +168,7 @@ export default function WorkerClothingPanel({ workerId, engagements }: Props) {
             ...base,
             stockItemId: serverStockItemId,
             quantity: String(outstanding),
+            issuedAt: item.issuedAt,
             dirty: false,
           },
         ];
@@ -231,6 +253,15 @@ export default function WorkerClothingPanel({ workerId, engagements }: Props) {
     return amount <= freeFor(stockItemId, except);
   }
 
+  function validIssuedAt(value: string) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+    const date = new Date(`${value}T00:00:00.000Z`);
+    return (
+      Number.isFinite(date.getTime()) &&
+      date.toISOString().slice(0, 10) === value
+    );
+  }
+
   async function removeIssued(clothingId: string) {
     if (pending) return;
     setError(null);
@@ -254,11 +285,13 @@ export default function WorkerClothingPanel({ workerId, engagements }: Props) {
       ...drafts.map((draft) => ({
         stockItemId: draft.stockItemId,
         quantity: draft.quantity,
+        issuedAt: draft.issuedAt,
         except: { draftKey: draft.key },
       })),
       ...dirtyIssued.map((row) => ({
         stockItemId: row.stockItemId,
         quantity: row.quantity,
+        issuedAt: row.issuedAt,
         except: { clothingId: row.clothingId },
       })),
     ];
@@ -268,6 +301,10 @@ export default function WorkerClothingPanel({ workerId, engagements }: Props) {
     }
     if (entries.some((entry) => amountOf(entry.quantity) < 1)) {
       setError('Anzahl muss eine ganze Zahl ab 1 sein.');
+      return;
+    }
+    if (entries.some((entry) => !validIssuedAt(entry.issuedAt))) {
+      setError('Datum muss im Format JJJJ-MM-TT sein.');
       return;
     }
     if (
@@ -285,14 +322,24 @@ export default function WorkerClothingPanel({ workerId, engagements }: Props) {
         await remove.mutateAsync(row.clothingId);
         await create.mutateAsync(
           row.stockItemId
-            ? { stockItemId: row.stockItemId, quantity }
-            : { name: row.name, size: row.size, quantity }
+            ? {
+                stockItemId: row.stockItemId,
+                quantity,
+                issuedAt: row.issuedAt,
+              }
+            : {
+                name: row.name,
+                size: row.size,
+                quantity,
+                issuedAt: row.issuedAt,
+              }
         );
       }
       for (const draft of drafts) {
         await create.mutateAsync({
           stockItemId: draft.stockItemId,
           quantity: amountOf(draft.quantity),
+          issuedAt: draft.issuedAt,
         });
         setDrafts((rows) => rows.filter((row) => row.key !== draft.key));
       }
@@ -317,11 +364,15 @@ export default function WorkerClothingPanel({ workerId, engagements }: Props) {
   const dirtyIssued = issued.filter(isIssuedDirty);
   const rowsReady =
     (drafts.length > 0 || dirtyIssued.length > 0) &&
-    drafts.every((draft) =>
-      rowFits(draft.stockItemId, draft.quantity, { draftKey: draft.key })
+    drafts.every(
+      (draft) =>
+        rowFits(draft.stockItemId, draft.quantity, { draftKey: draft.key }) &&
+        validIssuedAt(draft.issuedAt)
     ) &&
-    dirtyIssued.every((row) =>
-      rowFits(row.stockItemId, row.quantity, { clothingId: row.clothingId })
+    dirtyIssued.every(
+      (row) =>
+        rowFits(row.stockItemId, row.quantity, { clothingId: row.clothingId }) &&
+        validIssuedAt(row.issuedAt)
     );
 
   return (
@@ -376,13 +427,18 @@ export default function WorkerClothingPanel({ workerId, engagements }: Props) {
         </div>
       </div>
       {issued.map((row) => (
-        <ClothingDraftRows
+        <ClothingIssueFields
           key={row.clothingId}
           draft={{
             key: row.clothingId,
             stockItemId: row.stockItemId,
             quantity: row.quantity,
+            issuedAt: row.issuedAt,
           }}
+          size={
+            catalog.find((item) => item.id === row.stockItemId)?.size ??
+            row.size
+          }
           available={choicesFor({ clothingId: row.clothingId })}
           max={
             row.stockItemId
@@ -392,13 +448,15 @@ export default function WorkerClothingPanel({ workerId, engagements }: Props) {
           disabled={pending || stock.isLoading || stock.isError}
           onArticle={(stockItemId) => updateIssued(row.clothingId, { stockItemId })}
           onQuantity={(quantity) => updateIssued(row.clothingId, { quantity })}
+          onIssuedAt={(issuedAt) => updateIssued(row.clothingId, { issuedAt })}
           onRemove={() => removeIssued(row.clothingId)}
         />
       ))}
       {drafts.map((draft) => (
-        <ClothingDraftRows
+        <ClothingIssueFields
           key={draft.key}
           draft={draft}
+          size={catalog.find((item) => item.id === draft.stockItemId)?.size ?? ''}
           available={choicesFor({ draftKey: draft.key })}
           max={
             draft.stockItemId
@@ -408,6 +466,7 @@ export default function WorkerClothingPanel({ workerId, engagements }: Props) {
           disabled={pending || stock.isLoading || stock.isError}
           onArticle={(stockItemId) => updateDraft(draft.key, { stockItemId })}
           onQuantity={(quantity) => updateDraft(draft.key, { quantity })}
+          onIssuedAt={(issuedAt) => updateDraft(draft.key, { issuedAt })}
           onRemove={() =>
             setDrafts((rows) => rows.filter((row) => row.key !== draft.key))
           }
@@ -435,64 +494,103 @@ export default function WorkerClothingPanel({ workerId, engagements }: Props) {
   );
 }
 
-type ClothingDraftRowsProps = {
+type ClothingIssueFieldsProps = {
   draft: Draft;
+  size: string;
   available: ClothingStockItem[];
   max: number | undefined;
   disabled: boolean;
   onArticle: (stockItemId: string) => void;
   onQuantity: (quantity: string) => void;
+  onIssuedAt: (issuedAt: string) => void;
   onRemove: () => void;
 };
 
-function ClothingDraftRows({
+function ClothingIssueFields({
   draft,
+  size,
   available,
   max,
   disabled,
   onArticle,
   onQuantity,
+  onIssuedAt,
   onRemove,
-}: ClothingDraftRowsProps) {
+}: ClothingIssueFieldsProps) {
   const [open, setOpen] = useState(false);
   const quantityId = `worker-clothing-quantity-${draft.key}`;
+  const issuedAtId = `worker-clothing-issued-at-${draft.key}`;
 
   return (
-    <div className={rowClass}>
-      <span className="text-sm text-muted-foreground">Artikel</span>
-      <div className="flex min-w-0 items-center gap-2">
-        <Select
-          open={open}
-          onOpenChange={(next) => {
-            if (next && available.length === 0) {
-              toast.info('Kein Bestand vorhanden.');
-              return;
-            }
-            setOpen(next);
-          }}
-          value={draft.stockItemId}
-          onValueChange={onArticle}
-          disabled={disabled}
-        >
-          <SelectTrigger
-            id={`worker-clothing-article-${draft.key}`}
-            aria-label="Artikel aus Bestand"
-            className={cn(
-              fieldClass,
-              'min-w-0 flex-1 justify-between *:data-[slot=select-value]:ml-auto'
-            )}
+    <div className="border-b border-border/50 py-1">
+      <div className={cn(rowClass, 'border-0')}>
+        <span className="text-sm text-muted-foreground">Artikel</span>
+        <div className="flex min-w-0 items-center gap-2">
+          <Select
+            open={open}
+            onOpenChange={(next) => {
+              if (next && available.length === 0) {
+                toast.info('Kein Bestand vorhanden.');
+                return;
+              }
+              setOpen(next);
+            }}
+            value={draft.stockItemId}
+            onValueChange={onArticle}
+            disabled={disabled}
           >
-            <SelectValue placeholder="Artikel auswählen" />
-          </SelectTrigger>
-          <SelectContent>
-            {available.map((item) => (
-              <SelectItem key={item.id} value={item.id}>
-                {item.name} · {item.size || 'ohne Größe'} · {item.quantity}{' '}
-                verfügbar
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+            <SelectTrigger
+              id={`worker-clothing-article-${draft.key}`}
+              aria-label="Artikel aus Bestand"
+              className={cn(
+                fieldClass,
+                'min-w-0 flex-1 justify-between *:data-[slot=select-value]:ml-auto'
+              )}
+            >
+              <SelectValue placeholder="Artikel auswählen" />
+            </SelectTrigger>
+            <SelectContent>
+              {available.map((item) => (
+                <SelectItem key={item.id} value={item.id}>
+                  {stockLabel(item)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            type="button"
+            size="icon-sm"
+            variant="ghost"
+            className="shrink-0 rounded-2xl text-muted-foreground"
+            aria-label="Zeile entfernen"
+            disabled={disabled}
+            onClick={onRemove}
+          >
+            <X aria-hidden="true" />
+          </Button>
+        </div>
+      </div>
+      <div className={cn(rowClass, 'border-0')}>
+        <span className="text-sm text-muted-foreground">Erhalten am</span>
+        <Input
+          id={issuedAtId}
+          aria-label="Erhalten am"
+          type="date"
+          value={draft.issuedAt}
+          onChange={(event) => onIssuedAt(event.target.value)}
+          required
+          disabled={disabled}
+          className={dateFieldClass}
+        />
+      </div>
+      <div className={cn(rowClass, 'border-0')}>
+        <span className="text-sm text-muted-foreground">Größe</span>
+        <span className="text-right text-sm" aria-label="Größe">
+          {size || '—'}
+        </span>
+      </div>
+      <div className={cn(rowClass, 'border-0')}>
+        <span className="text-sm text-muted-foreground">Anzahl</span>
         <Input
           id={quantityId}
           aria-label="Anzahl"
@@ -504,19 +602,8 @@ function ClothingDraftRows({
           onChange={(event) => onQuantity(event.target.value)}
           required
           disabled={disabled}
-          className={cn(fieldClass, 'w-16 shrink-0 px-2')}
+          className={cn(fieldClass, 'w-24 justify-self-end px-2')}
         />
-        <Button
-          type="button"
-          size="icon-sm"
-          variant="ghost"
-          className="shrink-0 rounded-2xl text-muted-foreground"
-          aria-label="Zeile entfernen"
-          disabled={disabled}
-          onClick={onRemove}
-        >
-          <X aria-hidden="true" />
-        </Button>
       </div>
     </div>
   );
