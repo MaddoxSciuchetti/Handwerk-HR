@@ -7,10 +7,12 @@ import { cn } from '@/lib/utils';
 export function FilePrintButton({
   label,
   onPrint,
+  onPrefetch,
   className,
 }: {
   label: string;
   onPrint: () => Promise<void>;
+  onPrefetch?: () => void;
   className?: string;
 }) {
   const [printing, setPrinting] = useState(false);
@@ -28,6 +30,8 @@ export function FilePrintButton({
         printing && 'opacity-100',
         className
       )}
+      onPointerEnter={() => onPrefetch?.()}
+      onFocus={() => onPrefetch?.()}
       onClick={async (event) => {
         event.stopPropagation();
         setPrinting(true);

@@ -1,5 +1,8 @@
 import { FilePrintButton } from '../FilePrintButton';
-import { printStoredFile } from '../../../printStoredFile';
+import {
+  prefetchStoredFile,
+  printStoredFile,
+} from '../../../printStoredFile';
 import { Button } from '@/components/ui/button';
 import { FileText, X } from 'lucide-react';
 import { STORED_FILE_DRAG_TYPE } from '../../../hooks/useFolderFileDrop';
@@ -35,10 +38,16 @@ export function PersonnelDocumentRow({
         event.dataTransfer.effectAllowed = 'move';
       }}
       className="group relative flex flex-col rounded-xl border border-border p-4 transition-colors hover:bg-(--dropdown-surface)"
+      onPointerEnter={() => {
+        void prefetchStoredFile(document.presignedUrl);
+      }}
     >
       <div className="flex justify-end">
         <FilePrintButton
           label={document.originalFileName}
+          onPrefetch={() => {
+            void prefetchStoredFile(document.presignedUrl);
+          }}
           onPrint={() =>
             printStoredFile(
               document.presignedUrl,

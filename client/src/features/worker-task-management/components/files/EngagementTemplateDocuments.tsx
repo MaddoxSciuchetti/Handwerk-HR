@@ -1,7 +1,7 @@
 import { printTemplateDocument } from '../../api/templateDocument.api';
 import { printPdfBlob } from '../../printPdf';
 import { FileText } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTemplateDocuments } from '../../hooks/useTemplateDocuments';
 import { StoredFileBox } from './StoredFileBox';
 import { TemplateDocumentDialog } from './TemplateDocumentDialog';
@@ -17,6 +17,22 @@ export function EngagementTemplateDocuments({
 }: EngagementTemplateDocumentsProps) {
   const documents = useTemplateDocuments(workerId, engagementId);
   const [openId, setOpenId] = useState<string | null>(null);
+  const printCache = useRef(new Map<string, Promise<Blob>>());
+
+  const prefetchPrint = (documentId: string) => {
+    const cached = printCache.current.get(documentId);
+    if (cached) return cached;
+    const pending = printTemplateDocument(
+      workerId,
+      engagementId,
+      documentId
+    ).catch((error) => {
+      printCache.current.delete(documentId);
+      throw error;
+    });
+    printCache.current.set(documentId, pending);
+    return pending;
+  };
 
   return (
     <>
@@ -31,10 +47,11 @@ export function EngagementTemplateDocuments({
           label={document.name}
           icon={FileText}
           onOpen={() => setOpenId(document.id)}
+          onPrefetchPrint={() => {
+            void prefetchPrint(document.id);
+          }}
           onPrint={async () => {
-            await printPdfBlob(
-              await printTemplateDocument(workerId, engagementId, document.id)
-            );
+            await printPdfBlob(await prefetchPrint(document.id));
           }}
         />
       ))}

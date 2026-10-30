@@ -9,6 +9,7 @@ type StoredFileBoxProps = Omit<ComponentProps<'button'>, 'children'> & {
   icon: LucideIcon;
   onOpen: () => void;
   onPrint?: () => Promise<void>;
+  onPrefetchPrint?: () => void;
 };
 
 export function StoredFileBox({
@@ -16,11 +17,15 @@ export function StoredFileBox({
   icon: Icon,
   onOpen,
   onPrint,
+  onPrefetchPrint,
   className,
   ...props
 }: StoredFileBoxProps) {
   return (
-    <div className="group relative min-w-0">
+    <div
+      className="group relative min-w-0"
+      onPointerEnter={() => onPrefetchPrint?.()}
+    >
       <Button
         type="button"
         variant="ghost"
@@ -39,6 +44,7 @@ export function StoredFileBox({
         <FilePrintButton
           label={label}
           onPrint={onPrint}
+          onPrefetch={onPrefetchPrint}
           className="absolute right-2 top-2"
         />
       ) : null}

@@ -2,15 +2,21 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { FileText } from 'lucide-react';
 import { StoredFileBox } from '@/features/worker-task-management/components/files/StoredFileBox';
-import { printStoredFile } from '@/features/worker-task-management/printStoredFile';
+import {
+  clearStoredFilePrintCache,
+  prefetchStoredFile,
+  printStoredFile,
+} from '@/features/worker-task-management/printStoredFile';
 import { printPdfBlob } from '@/features/worker-task-management/printPdf';
 import { toast } from 'sonner';
 
 vi.mock('@/features/worker-task-management/printPdf', () => ({
   printPdfBlob: vi.fn().mockResolvedValue(undefined),
+  printHtml: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock('sonner', () => ({ toast: { error: vi.fn() } }));
 afterEach(() => {
+  clearStoredFilePrintCache();
   vi.unstubAllGlobals();
   vi.clearAllMocks();
 });
@@ -79,7 +85,17 @@ it('does not send unsupported file types to the browser print viewer', async () 
       })
   );
   await expect(
-    printStoredFile('https://storage.test/file', 'Vertrag.doc')
+    printStoredFile('https://storage.test/unsupported.doc', 'Vertrag.doc')
   ).rejects.toThrow('Dieser Dateityp');
   expect(printPdfBlob).not.toHaveBeenCalled();
+});
+
+it('reuses a prefetched blob so print does not wait on a second download', async () => {
+  const blob = new Blob(['%PDF'], { type: 'application/pdf' });
+  const fetch = vi.fn().mockResolvedValue({ ok: true, blob: async () => blob });
+  vi.stubGlobal('fetch', fetch);
+  await prefetchStoredFile('https://storage.test/cached.pdf');
+  await printStoredFile('https://storage.test/cached.pdf', 'cached.pdf');
+  expect(fetch).toHaveBeenCalledOnce();
+  expect(printPdfBlob).toHaveBeenCalledOnce();
 });

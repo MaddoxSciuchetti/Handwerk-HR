@@ -1,5 +1,5 @@
 import { printContent } from '../../printStoredFile';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FileText } from 'lucide-react';
@@ -40,6 +40,50 @@ function displayValue(value: string | undefined, type: string) {
     return value.split('-').reverse().join('.');
   }
   return value;
+}
+
+function buildQuestionnairePrintContent(
+  data: CompletedQuestionnaire,
+  engagementLabel: string
+) {
+  const content = document.createElement('article');
+  const add = (tag: string, text: string) => {
+    const element = document.createElement(tag);
+    element.textContent = text;
+    content.append(element);
+  };
+  add('h1', data.name || 'Fragebogen');
+  add('p', engagementLabel);
+  add('p', data.intro);
+  data.items.forEach((item, index) => {
+    if (index === 0 || data.items[index - 1].section !== item.section) {
+      add('h2', item.section);
+    }
+    const value = data.answers[item.key];
+    if (item.kind === 'repeater') {
+      const rows = Array.isArray(value) ? value : [];
+      if (!rows.length) add('p', 'Keine Angaben');
+      rows.forEach((row, rowIndex) => {
+        add('h3', `${rowIndex + 1}.`);
+        item.columns.forEach((column) => {
+          add('dt', column.label);
+          add('dd', displayValue(row[column.key], column.type));
+        });
+      });
+    } else {
+      add('dt', item.label);
+      add(
+        'dd',
+        item.type === 'file'
+          ? data.files?.[item.key]?.name || '—'
+          : displayValue(
+              typeof value === 'string' ? value : undefined,
+              item.type
+            )
+      );
+    }
+  });
+  return content;
 }
 
 function QuestionnairePreview({
@@ -210,6 +254,25 @@ export function EngagementQuestionnaireList({
   const [selected, setSelected] = useState<EngagementQuestionnaireLink | null>(
     null
   );
+  const printCache = useRef(
+    new Map<string, Promise<{ data: CompletedQuestionnaire }>>()
+  );
+
+  const loadCompleted = (engagementId: string) => {
+    const cached = printCache.current.get(engagementId);
+    if (cached) return cached;
+    const pending = apiJson
+      .get<{ data: CompletedQuestionnaire }>(
+        `worker/${workerId}/engagements/${engagementId}/questionnaire/completed`
+      )
+      .catch((error) => {
+        printCache.current.delete(engagementId);
+        throw error;
+      });
+    printCache.current.set(engagementId, pending);
+    return pending;
+  };
+
   if (!questionnaires.length) return null;
 
   return (
@@ -220,53 +283,18 @@ export function EngagementQuestionnaireList({
           label="Fragebogen"
           icon={FileText}
           onOpen={() => setSelected(questionnaire)}
+          onPrefetchPrint={() => {
+            void loadCompleted(questionnaire.engagementId);
+          }}
           onPrint={async () => {
-            const { data } = await apiJson.get<{
-              data: CompletedQuestionnaire;
-            }>(
-              `worker/${workerId}/engagements/${questionnaire.engagementId}/questionnaire/completed`
+            const { data } = await loadCompleted(questionnaire.engagementId);
+            await printContent(
+              data.name || 'Fragebogen',
+              buildQuestionnairePrintContent(
+                data,
+                questionnaire.engagementLabel
+              )
             );
-            const content = document.createElement('article');
-            const add = (tag: string, text: string) => {
-              const element = document.createElement(tag);
-              element.textContent = text;
-              content.append(element);
-            };
-            add('h1', data.name || 'Fragebogen');
-            add('p', questionnaire.engagementLabel);
-            add('p', data.intro);
-            data.items.forEach((item, index) => {
-              if (
-                index === 0 ||
-                data.items[index - 1].section !== item.section
-              ) {
-                add('h2', item.section);
-              }
-              const value = data.answers[item.key];
-              if (item.kind === 'repeater') {
-                const rows = Array.isArray(value) ? value : [];
-                if (!rows.length) add('p', 'Keine Angaben');
-                rows.forEach((row, rowIndex) => {
-                  add('h3', `${rowIndex + 1}.`);
-                  item.columns.forEach((column) => {
-                    add('dt', column.label);
-                    add('dd', displayValue(row[column.key], column.type));
-                  });
-                });
-              } else {
-                add('dt', item.label);
-                add(
-                  'dd',
-                  item.type === 'file'
-                    ? data.files?.[item.key]?.name || '—'
-                    : displayValue(
-                        typeof value === 'string' ? value : undefined,
-                        item.type
-                      )
-                );
-              }
-            });
-            await printContent(data.name || 'Fragebogen', content);
           }}
         />
       ))}
