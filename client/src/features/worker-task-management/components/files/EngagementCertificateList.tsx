@@ -1,3 +1,4 @@
+import { printContent } from '../../printStoredFile';
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { FileText } from 'lucide-react';
@@ -32,6 +33,18 @@ export function EngagementCertificateList({
           label={fileBoxTitle(certificate.name, 'Arbeitszeugnis')}
           icon={FileText}
           onOpen={() => setOpenId(certificate.id)}
+          onPrint={async () => {
+            const content = document.createElement('article');
+            const title = document.createElement('h1');
+            title.textContent = fileBoxTitle(
+              certificate.name,
+              'Arbeitszeugnis'
+            );
+            const text = document.createElement('p');
+            text.textContent = certificate.text;
+            content.append(title, text);
+            await printContent(title.textContent, content);
+          }}
         />
       ))}
       {open

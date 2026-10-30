@@ -1,3 +1,4 @@
+import { printContent } from '../../printStoredFile';
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -219,6 +220,54 @@ export function EngagementQuestionnaireList({
           label="Fragebogen"
           icon={FileText}
           onOpen={() => setSelected(questionnaire)}
+          onPrint={async () => {
+            const { data } = await apiJson.get<{
+              data: CompletedQuestionnaire;
+            }>(
+              `worker/${workerId}/engagements/${questionnaire.engagementId}/questionnaire/completed`
+            );
+            const content = document.createElement('article');
+            const add = (tag: string, text: string) => {
+              const element = document.createElement(tag);
+              element.textContent = text;
+              content.append(element);
+            };
+            add('h1', data.name || 'Fragebogen');
+            add('p', questionnaire.engagementLabel);
+            add('p', data.intro);
+            data.items.forEach((item, index) => {
+              if (
+                index === 0 ||
+                data.items[index - 1].section !== item.section
+              ) {
+                add('h2', item.section);
+              }
+              const value = data.answers[item.key];
+              if (item.kind === 'repeater') {
+                const rows = Array.isArray(value) ? value : [];
+                if (!rows.length) add('p', 'Keine Angaben');
+                rows.forEach((row, rowIndex) => {
+                  add('h3', `${rowIndex + 1}.`);
+                  item.columns.forEach((column) => {
+                    add('dt', column.label);
+                    add('dd', displayValue(row[column.key], column.type));
+                  });
+                });
+              } else {
+                add('dt', item.label);
+                add(
+                  'dd',
+                  item.type === 'file'
+                    ? data.files?.[item.key]?.name || '—'
+                    : displayValue(
+                        typeof value === 'string' ? value : undefined,
+                        item.type
+                      )
+                );
+              }
+            });
+            await printContent(data.name || 'Fragebogen', content);
+          }}
         />
       ))}
       {selected

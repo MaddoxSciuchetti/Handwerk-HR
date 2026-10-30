@@ -84,9 +84,9 @@ export function printTemplateDocument(
   workerId: string,
   engagementId: string,
   documentId: string,
-  values: Record<string, string>
+  values?: Record<string, string>
 ) {
-  return apiJson.post<Blob, { values: Record<string, string> }>(
+  return apiJson.post<Blob, { values?: Record<string, string> }>(
     documentPath(workerId, engagementId, documentId) + '/print',
     { values },
     { responseType: 'blob' }

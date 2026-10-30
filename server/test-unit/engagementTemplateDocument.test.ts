@@ -206,3 +206,18 @@ it("prints the saved template values without the employment contract", async () 
     );
     expect(prisma).not.toHaveProperty("employmentContract");
 });
+
+it("prints directly from saved values without writing the document again", async () => {
+    (prisma.engagementTemplateDocument.findFirst as jest.Mock).mockResolvedValue(
+        stored({ values: [{ key: "worker.vorname", value: "Ada" }] }),
+    );
+    await printEngagementTemplateDocument({ ...params, documentId: "doc" });
+    expect(generateDocumentPdf).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ "worker.vorname": "Ada" }),
+    );
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(prisma.engagementTemplateDocument.update).not.toHaveBeenCalled();
+    expect(prisma.engagementTemplateDocumentValue.deleteMany).not.toHaveBeenCalled();
+    expect(prisma.engagementTemplateDocumentValue.createMany).not.toHaveBeenCalled();
+});

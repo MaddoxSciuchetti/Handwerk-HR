@@ -1,7 +1,7 @@
 export function printPdfBlob(blob: Blob) {
   const url = URL.createObjectURL(blob);
   const iframe = document.createElement('iframe');
-  iframe.title = 'Arbeitsvertrag';
+  iframe.title = 'Druckansicht';
   iframe.style.position = 'fixed';
   iframe.style.right = '0';
   iframe.style.bottom = '0';

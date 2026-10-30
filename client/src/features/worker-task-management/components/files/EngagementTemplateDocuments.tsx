@@ -1,3 +1,5 @@
+import { printTemplateDocument } from '../../api/templateDocument.api';
+import { printPdfBlob } from '../../printPdf';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -14,7 +16,10 @@ import { useDocumentMasters } from '@/features/settings/documents/useDocumentMas
 import { FilePlus, FileText } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { useCreateTemplateDocument, useTemplateDocuments } from '../../hooks/useTemplateDocuments';
+import {
+  useCreateTemplateDocument,
+  useTemplateDocuments,
+} from '../../hooks/useTemplateDocuments';
 import { StoredFileBox } from './StoredFileBox';
 import { TemplateDocumentDialog } from './TemplateDocumentDialog';
 
@@ -65,6 +70,11 @@ export function EngagementTemplateDocuments({
           label={document.name}
           icon={FileText}
           onOpen={() => setOpenId(document.id)}
+          onPrint={async () => {
+            await printPdfBlob(
+              await printTemplateDocument(workerId, engagementId, document.id)
+            );
+          }}
         />
       ))}
       {showCreate ? (
@@ -95,7 +105,9 @@ export function EngagementTemplateDocuments({
               </p>
             ) : null}
             {masters.isPending ? (
-              <p className="text-sm text-muted-foreground">Vorlagen werden geladen…</p>
+              <p className="text-sm text-muted-foreground">
+                Vorlagen werden geladen…
+              </p>
             ) : null}
             {!masters.isPending && choices.length === 0 ? (
               <p className="text-sm text-muted-foreground">
