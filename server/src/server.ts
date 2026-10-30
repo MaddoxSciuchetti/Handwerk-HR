@@ -1,4 +1,6 @@
-import { requireCronSecret, postScheduledDeactivations } from "./controllers/scheduledDeactivations.controller";
+import { postAnniversaryReminders } from "./controllers/anniversaryReminders.controller";
+import { postScheduledDeactivations } from "./controllers/scheduledDeactivations.controller";
+import { requireCronSecret } from "./middleware/requireCronSecret";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -88,6 +90,7 @@ app.get("/", (req, res) => {
 });
 
 app.post("/internal/cron/scheduled-deactivations", requireCronSecret, postScheduledDeactivations);
+app.post("/internal/cron/anniversary-reminders", requireCronSecret, postAnniversaryReminders);
 
 app.use("/test", testRoutes);
 

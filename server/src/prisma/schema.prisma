@@ -54,6 +54,7 @@ model User {
   confirmedEmploymentContracts EmploymentContract[] @relation("EmploymentContractConfirmedBy")
   orgChatMessages        OrgChatMessage[]
   issueMentions          IssueMention[]
+  anniversaryRemindersSent AnniversaryReminderSent[]
 
   @@map("users")
 }
@@ -134,6 +135,7 @@ model Organization {
   integrations               OrganizationIntegration[]
   chatMessages               OrgChatMessage[]
   mentionIssues              Issue[]                    @relation("OrgMentionIssues")
+  anniversaryRemindersSent   AnniversaryReminderSent[]
 
 
   @@map("organizations")
@@ -250,6 +252,7 @@ model Worker {
   engagements      WorkerEngagement[]
   workwear         WorkerWorkwear[]
   externalAccounts WorkerExternalAccount[]
+  anniversaryRemindersSent AnniversaryReminderSent[]
 
   @@index([organizationId])
   @@index([email])
@@ -416,6 +419,25 @@ model IssueMention {
   @@unique([issueId, userId])
   @@index([userId, seenAt])
   @@map("issue_mentions")
+}
+
+model AnniversaryReminderSent {
+  id               String   @id @default(uuid())
+  organizationId   String   @map("organization_id")
+  workerId         String   @map("worker_id")
+  years            Int
+  anniversaryDate  DateTime @map("anniversary_date") @db.Date
+  recipientUserId  String   @map("recipient_user_id")
+  sentAt           DateTime @default(now()) @map("sent_at") @db.Timestamptz()
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  worker       Worker       @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  recipient    User         @relation(fields: [recipientUserId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, workerId, years, anniversaryDate, recipientUserId])
+  @@index([anniversaryDate])
+  @@index([organizationId, anniversaryDate])
+  @@map("anniversary_reminders_sent")
 }
 
 model IssueAuditLog {
