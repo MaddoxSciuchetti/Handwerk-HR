@@ -1,6 +1,7 @@
 import {
     getEngagementContract,
     freezePrintedContract,
+    unfreezePrintedContract,
     downloadPrintedContract,
     persistMatchedContractValues,
     resyncEngagementContractFromQuestionnaire,
@@ -662,6 +663,50 @@ describe("printed contract snapshots", () => {
         expect(contract.printedAt).toBe(firstPrint);
         expect(contract.body).toEqual(firstBody);
         expect(prisma.employmentContract.update).toHaveBeenCalledTimes(1);
+    });
+
+    it("unlocks edits and Fragebogen sync when the print freeze is released", async () => {
+        contract.values = [{ key: "contract.vorname", value: "Ada" }];
+        contract.engagement.questionnaireSubmission = {
+            id: "submission",
+            revision: 2,
+            status: "completed",
+            formDefinition: {
+                intro: "",
+                items: [{
+                    kind: "field",
+                    key: "firstName",
+                    label: "Vorname",
+                    section: "Person",
+                    type: "text",
+                    contractFieldKey: "contract.vorname",
+                }],
+            },
+            answers: [{ key: "firstName", value: "Augusta" }],
+        };
+        await freezePrintedContract(prisma as any, "eng");
+        const frozenBody = structuredClone(contract.body);
+        await unfreezePrintedContract(prisma as any, "eng");
+        expect(contract.printedAt).toBeNull();
+        expect(contract.status).toBe("draft");
+        expect(contract.body).toEqual(frozenBody);
+        const saved = await saveEngagementContractDraft({
+            ...params,
+            values: { "contract.vorname": "Ada Lovelace" },
+        });
+        expect(saved.values).toEqual({ "contract.vorname": "Ada Lovelace" });
+        const synced = await resyncEngagementContractFromQuestionnaire(params);
+        expect(synced.values).toEqual({ "contract.vorname": "Augusta" });
+        expect(synced.printedAt).toBeNull();
+    });
+
+    it("does not unlock a signed contract", async () => {
+        contract.printedAt = new Date();
+        contract.status = "signed";
+        await unfreezePrintedContract(prisma as any, "eng");
+        expect(contract.printedAt).toBeTruthy();
+        expect(contract.status).toBe("signed");
+        expect(prisma.employmentContract.update).not.toHaveBeenCalled();
     });
 
     it("downloads from the frozen body and values instead of the latest master", async () => {

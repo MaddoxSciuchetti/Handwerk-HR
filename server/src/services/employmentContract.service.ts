@@ -601,9 +601,7 @@ export async function readPreparedEmploymentContractPdf(
     return downloadStoredFile(selected.s3Key);
 }
 
-/** Completion records the paper contract independently of email delivery.
- * Reopening the task deliberately does not release this snapshot.
- */
+/** Completion locks the paper contract. Reopening the print task releases it. */
 export async function freezePrintedContract(tx: Prisma.TransactionClient, engagementId: string) {
     await tx.$queryRaw`SELECT id FROM worker_engagements WHERE id = ${engagementId} FOR UPDATE`;
     await tx.$queryRaw`SELECT id FROM employment_contracts WHERE engagement_id = ${engagementId} FOR UPDATE`;
@@ -631,6 +629,26 @@ export async function freezePrintedContract(tx: Prisma.TransactionClient, engage
             update: { value },
         });
     }
+}
+
+/** Unticking Arbeitsvertrag drucken unlocks edits, Vorlage switch, and Fragebogen sync. */
+export async function unfreezePrintedContract(
+    tx: Prisma.TransactionClient,
+    engagementId: string,
+) {
+    await tx.$queryRaw`SELECT id FROM worker_engagements WHERE id = ${engagementId} FOR UPDATE`;
+    await tx.$queryRaw`SELECT id FROM employment_contracts WHERE engagement_id = ${engagementId} FOR UPDATE`;
+    const contract = await tx.employmentContract.findUnique({
+        where: { engagementId },
+    });
+    if (!contract?.printedAt || contract.sentAt || contract.status === "signed") return;
+    await tx.employmentContract.update({
+        where: { id: contract.id },
+        data: {
+            printedAt: null,
+            status: "draft",
+        },
+    });
 }
 
 export async function downloadPrintedContract(params: ContractParams) {
