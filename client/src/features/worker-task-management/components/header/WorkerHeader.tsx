@@ -35,7 +35,7 @@ const titles: Record<WorkerTab, string> = {
 };
 
 const headerActionClassName =
-  'h-7 w-32 rounded-2xl bg-black px-2 text-[0.8rem] text-white hover:bg-black/90';
+  'h-7 w-32 rounded-2xl bg-primary px-2 text-[0.8rem] text-primary-foreground hover:bg-primary/90';
 
 const WorkerHeader = ({
   activeTab,
@@ -77,7 +77,7 @@ const WorkerHeader = ({
             data-testid="open-task-create"
             disabled={isLoading}
             aria-label="Aufgabe hinzufügen"
-            className="size-7 rounded-2xl bg-black text-white hover:bg-black/90"
+            className="size-7 rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90"
             onClick={openForCreate}
           >
             <Plus aria-hidden="true" />
@@ -93,7 +93,7 @@ const WorkerHeader = ({
                   data-testid="open-file-upload"
                   disabled={isLoading}
                   aria-label="Hinzufügen"
-                  className="size-7 rounded-2xl bg-black text-white hover:bg-black/90"
+                  className="size-7 rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90"
                 >
                   <Plus aria-hidden="true" />
                 </Button>
