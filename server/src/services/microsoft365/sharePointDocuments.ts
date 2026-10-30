@@ -120,6 +120,55 @@ const MOCK_FILES: SharePointFileHit[] = [
     },
 ];
 
+function matchesQuery(name: string, query: string) {
+    return name.toLocaleLowerCase("de").includes(query.toLocaleLowerCase("de"));
+}
+
+function collectHits(
+    hits: SharePointFileHit[],
+    seen: Set<string>,
+    resource: SearchHitResource | null | undefined,
+) {
+    const mapped = resource ? mapHit(resource) : null;
+    if (!mapped) return;
+    const key = `${mapped.driveId}:${mapped.id}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    hits.push(mapped);
+}
+
+function searchQueryString(trimmed: string) {
+    const safe = trimmed.replace(/"/g, "");
+    return `"${safe}" (FileExtension:docx OR FileExtension:pdf OR FileExtension:txt OR FileType:docx OR FileType:pdf OR FileType:txt)`;
+}
+
+async function searchIndexedFiles(token: string, trimmed: string) {
+    const response = await graphFetch(token, "/search/query", {
+        method: "POST",
+        body: JSON.stringify({
+            requests: [
+                {
+                    entityTypes: ["driveItem"],
+                    query: { queryString: searchQueryString(trimmed) },
+                    from: 0,
+                    size: 25,
+                },
+            ],
+        }),
+    });
+    return response;
+}
+
+async function searchRecentFiles(token: string, trimmed: string) {
+    // Recent files are activity-based, not search-index-based, so brand-new
+    // uploads the user just touched show up here before Graph Search indexes them.
+    const response = await graphFetch(
+        token,
+        "/me/drive/recent?$top=50&$select=id,name,size,webUrl,lastModifiedDateTime,file,parentReference",
+    );
+    return { response, trimmed };
+}
+
 export async function searchSharePointFiles(
     actor: Actor,
     query: string,
@@ -128,64 +177,62 @@ export async function searchSharePointFiles(
     if (!trimmed) return [];
     if (integrationsMocked()) {
         await assertActiveMember(actor);
-        const needle = trimmed.toLocaleLowerCase("de");
-        return MOCK_FILES.filter((file) =>
-            file.name.toLocaleLowerCase("de").includes(needle),
-        );
+        return MOCK_FILES.filter((file) => matchesQuery(file.name, trimmed));
     }
 
     const auth = await accessToken(actor);
-    const response = await graphFetch(auth.token, "/search/query", {
-        method: "POST",
-        body: JSON.stringify({
-            requests: [
-                {
-                    entityTypes: ["driveItem"],
-                    query: {
-                        queryString: `${trimmed} (FileExtension:docx OR FileExtension:pdf OR FileExtension:txt)`,
-                    },
-                    from: 0,
-                    size: 25,
-                },
-            ],
-        }),
-    });
-    if (response.status === 401) {
+    const [indexedResponse, recentResult] = await Promise.all([
+        searchIndexedFiles(auth.token, trimmed),
+        searchRecentFiles(auth.token, trimmed),
+    ]);
+
+    if (indexedResponse.status === 401 || recentResult.response.status === 401) {
         await authenticationRejected(actor);
         throw new TeamsError(
             "reconnect_required",
             "Bitte Microsoft unter Einstellungen → Integrationen erneut verbinden.",
         );
     }
-    if (!response.ok) {
+    if (!indexedResponse.ok && !recentResult.response.ok) {
         throw new TeamsError(
             "sharepoint_search_failed",
             "Microsoft konnte die SharePoint-Suche nicht ausführen. Bitte Berechtigungen prüfen.",
-            response.status === 403 ? 403 : 503,
+            indexedResponse.status === 403 || recentResult.response.status === 403
+                ? 403
+                : 503,
         );
     }
 
-    const payload = (await response.json()) as {
-        value?: Array<{
-            hitsContainers?: Array<{
-                hits?: Array<{ resource?: SearchHitResource }>;
-            }>;
-        }>;
-    };
     const hits: SharePointFileHit[] = [];
     const seen = new Set<string>();
-    for (const container of payload.value ?? []) {
-        for (const hitContainer of container.hitsContainers ?? []) {
-            for (const hit of hitContainer.hits ?? []) {
-                const mapped = hit.resource ? mapHit(hit.resource) : null;
-                if (!mapped) continue;
-                const key = `${mapped.driveId}:${mapped.id}`;
-                if (seen.has(key)) continue;
-                seen.add(key);
-                hits.push(mapped);
+
+    if (indexedResponse.ok) {
+        const payload = (await indexedResponse.json()) as {
+            value?: Array<{
+                hitsContainers?: Array<{
+                    hits?: Array<{ resource?: SearchHitResource }>;
+                }>;
+            }>;
+        };
+        for (const container of payload.value ?? []) {
+            for (const hitContainer of container.hitsContainers ?? []) {
+                for (const hit of hitContainer.hits ?? []) {
+                    collectHits(hits, seen, hit.resource);
+                }
             }
         }
     }
+
+    if (recentResult.response.ok) {
+        const payload = (await recentResult.response.json()) as {
+            value?: SearchHitResource[];
+        };
+        for (const item of payload.value ?? []) {
+            if (!item.name || !matchesQuery(item.name, trimmed)) continue;
+            collectHits(hits, seen, item);
+        }
+    }
+
     return hits;
 }
 
