@@ -14,20 +14,19 @@ beforeEach(() => {
   api.get.mockResolvedValue({ data: { scheduledDeactivateAt: '2099-12-31' } });
   api.patch.mockResolvedValue({ data: { scheduledDeactivateAt: null } });
 });
-it('shows the shadcn calendar only after enabling scheduling', async () => {
+it('opens the calendar when enabling scheduling', async () => {
   function Harness() {
     const [value, setValue] = useState<string | null>(null);
     return <DeactivationScheduleField value={value} onChange={setValue} />;
   }
   render(<Harness />);
   const user = userEvent.setup();
-  expect(screen.queryByText('Letzter aktiver Tag')).not.toBeInTheDocument();
+  expect(screen.queryByRole('grid')).not.toBeInTheDocument();
   await user.click(screen.getByRole('switch', { name: 'Planen' }));
-  await user.click(screen.getByRole('button', { name: /Letzter aktiver Tag/ }));
   expect(screen.getByRole('grid')).toBeInTheDocument();
   await user.keyboard('{Escape}');
-  await user.click(screen.getByRole('switch', { name: 'Planen' }));
-  expect(screen.queryByText('Letzter aktiver Tag')).not.toBeInTheDocument();
+  expect(screen.queryByRole('switch', { name: 'Planen' })).not.toBeChecked();
+  expect(screen.queryByRole('grid')).not.toBeInTheDocument();
 });
 it('loads the saved schedule on opening and cancels without executing', async () => {
   renderWithProviders(
@@ -68,4 +67,35 @@ it('changes an existing schedule using the calendar', async () => {
     )
   );
   expect(await screen.findByText('Geplant · 30.12.2099')).toBeInTheDocument();
+});
+it('asks for a date as soon as scheduling is enabled in the sidebar', async () => {
+  const date = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Berlin',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+  const displayDate = new Date(`${date}T12:00:00`).toLocaleDateString('de');
+  api.get.mockResolvedValue({ data: { scheduledDeactivateAt: null } });
+  api.patch.mockResolvedValue({
+    data: { scheduledDeactivateAt: date },
+  });
+  renderWithProviders(
+    <TaskDeactivationSchedule taskId="task" disabled={false} />
+  );
+  const user = userEvent.setup();
+  await screen.findByRole('switch', { name: 'Planen' });
+  await user.click(screen.getByRole('switch', { name: 'Planen' }));
+  expect(screen.getByRole('grid')).toBeInTheDocument();
+  const day = screen
+    .getAllByRole('button')
+    .find((button) => button.getAttribute('data-day') === displayDate);
+  expect(day).toBeDefined();
+  await user.click(day!);
+  await waitFor(() =>
+    expect(api.patch).toHaveBeenCalledWith(
+      '/automation/issues/task/deactivation-schedule',
+      { scheduledDeactivateAt: date }
+    )
+  );
 });
