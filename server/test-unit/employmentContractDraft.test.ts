@@ -10,6 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { fromSegments } from "../../shared/document";
 import { invalidatePreparedDocuments } from "@/services/preparedDocument";
 import { QUESTIONNAIRE_FIELDS } from "@/services/questionnaireForm";
+import { Prisma } from "@prisma/client";
 
 jest.mock("@/lib/prisma", () => ({
     prisma: {
@@ -98,7 +99,9 @@ beforeEach(() => {
     );
     (prisma.employmentContract.update as jest.Mock).mockImplementation(
         async ({ data }) => {
-            Object.assign(contract, data);
+            const next = { ...data };
+            if (next.body === Prisma.DbNull) next.body = null;
+            Object.assign(contract, next);
             return contract;
         },
     );
@@ -437,7 +440,9 @@ describe("changing a worker's contract template", () => {
         );
         (prisma.employmentContract.update as jest.Mock).mockImplementation(
             async ({ data }) => {
-                Object.assign(contract, data);
+                const next = { ...data };
+                if (next.body === Prisma.DbNull) next.body = null;
+                Object.assign(contract, next);
                 if (data.masterId === replacement.id)
                     contract.master = replacement;
                 return contract;
@@ -692,4 +697,70 @@ it("keeps automatic dates on the day the print task was completed", async () => 
     } finally {
         jest.useRealTimers();
     }
+});
+
+it("stores person-specific contract text without changing the master", async () => {
+    const personalized = fromSegments([
+        { type: "text", text: "Nur für diese Person. " },
+        { type: "input", key: "contract.vorname", label: "Vorname" },
+    ]);
+    const masterBefore = structuredClone(contract.master.body);
+    const saved = await saveEngagementContractDraft({
+        ...params,
+        values: { "contract.vorname": "Ada" },
+        document: personalized,
+    });
+    expect(saved.followsMaster).toBe(false);
+    expect(saved.document).toEqual(personalized);
+    expect(contract.body).toEqual(personalized);
+    expect(contract.master.body).toEqual(masterBefore);
+    const valuesOnly = await saveEngagementContractDraft({
+        ...params,
+        values: { "contract.vorname": "Augusta" },
+    });
+    expect(valuesOnly.followsMaster).toBe(false);
+    expect(contract.body).toEqual(personalized);
+    expect(valuesOnly.values).toEqual({ "contract.vorname": "Augusta" });
+});
+
+it("keeps person-specific text when questionnaire values are synced", async () => {
+    const personalized = fromSegments([
+        { type: "text", text: "Individuell. " },
+        { type: "input", key: "contract.vorname", label: "Vorname" },
+    ]);
+    contract.body = personalized;
+    contract.engagement.questionnaireSubmission = {
+        id: "submission",
+        revision: 2,
+        status: "completed",
+        formDefinition: {
+            intro: "",
+            items: [{
+                kind: "field",
+                key: "firstName",
+                label: "Vorname",
+                section: "Person",
+                type: "text",
+                contractFieldKey: "contract.vorname",
+            }],
+        },
+        answers: [{ key: "firstName", value: "Augusta" }],
+    };
+    const synced = await resyncEngagementContractFromQuestionnaire(params);
+    expect(synced.followsMaster).toBe(false);
+    expect(contract.body).toEqual(personalized);
+    expect(synced.values).toEqual({ "contract.vorname": "Augusta" });
+});
+
+
+it("freezes person-specific wording when the print task completes", async () => {
+    const personalized = fromSegments([{ type: "text", text: "Person-specific printed wording" }]);
+    contract.body = personalized;
+    await freezePrintedContract(prisma as any, "eng");
+    expect(contract.body).toEqual(personalized);
+    expect(contract.printedAt).toBeTruthy();
+    contract.master.body = fromSegments([{ type: "text", text: "Changed master" }]);
+    const view = await getEngagementContract(params);
+    expect(view?.document).toEqual(personalized);
+    expect(view?.followsMaster).toBe(false);
 });

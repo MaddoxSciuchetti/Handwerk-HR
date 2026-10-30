@@ -3,6 +3,12 @@ import { useEditor, useEditorState } from '@tiptap/react';
 import type { StyledDocument } from '../styledDocument';
 import { normalizeLineLabels } from '../util/lineLayout.util';
 import { insertDroppedDocumentField } from '../util/insertDroppedDocumentField';
+import {
+  handleDocumentPaste,
+  transformDocumentPastedHTML,
+  transformDocumentPastedSlice,
+  transformDocumentPastedText,
+} from '../util/documentPaste.util';
 import { documentEditorExtensions } from '../editor/documentEditorExtensions';
 import { usePaginationLayout } from './usePaginationLayout';
 import { useEditorEditable } from './useEditorEditable';
@@ -28,6 +34,7 @@ export function useStyledDocumentEditor({
 }: UseStyledDocumentEditorArgs) {
   const latest = useRef({ document, onChange, section, master, readOnly });
   const publishRef = useRef<(next: unknown) => void>(() => undefined);
+  const editable = !readOnly;
   useLayoutEffect(() => {
     latest.current = { document, onChange, section, master, readOnly };
   }, [document, onChange, section, master, readOnly]);
@@ -43,7 +50,7 @@ export function useStyledDocumentEditor({
   const editor = useEditor({
     extensions,
     content: initialContent,
-    editable: master && !readOnly,
+    editable,
     onUpdate: ({ editor: current }) => {
       const next = current.getJSON();
       publishRef.current(next);
@@ -55,13 +62,17 @@ export function useStyledDocumentEditor({
     editorProps: {
       handleDrop: (view, event) =>
         insertDroppedDocumentField(view, event, latest.current),
+      handlePaste: (view, event) => handleDocumentPaste(view, event),
+      transformPastedHTML: transformDocumentPastedHTML,
+      transformPastedText: transformDocumentPastedText,
+      transformPasted: transformDocumentPastedSlice,
     },
   });
   const publish = useEditorContentSync(editor, document[section]);
   useLayoutEffect(() => {
     publishRef.current = publish;
   }, [publish]);
-  useEditorEditable(editor, master && !readOnly);
+  useEditorEditable(editor, editable);
   useEditorPageLayout({
     editor,
     pageView,

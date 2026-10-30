@@ -39,6 +39,28 @@ const FIELD_ALIASES: Record<string, string[]> = {
     exitDate: ["austritt", "austrittsdatum", "entlassung", "exitdate"],
 };
 
+/** Questionnaire labels/keys often differ from contract field wording. */
+const LABEL_SYNONYM_GROUPS = [
+    [
+        "urlaubstage",
+        "urlaubsanspruch",
+        "urlaubsanspruchkalenderjahr",
+        "jahresurlaub",
+        "urlaub",
+    ],
+    [
+        "gehalt",
+        "monatsgehalt",
+        "bruttogehalt",
+        "grundgehalt",
+        "lohn",
+        "entgelt",
+        "verguetung",
+        "salary",
+        "bsbsalary",
+    ],
+];
+
 function fold(value: string) {
     return value
         .toLowerCase()
@@ -49,6 +71,51 @@ function fold(value: string) {
         .normalize("NFD")
         .replace(/\p{M}/gu, "")
         .replace(/[^a-z0-9]/g, "");
+}
+
+function keyTail(key: string) {
+    return fold(key.split(".").at(-1) ?? key);
+}
+
+function synonymCanonical(folded: string) {
+    for (const group of LABEL_SYNONYM_GROUPS) {
+        if (
+            group.some(
+                (alias) =>
+                    folded === alias ||
+                    (alias.length >= 6 && folded.includes(alias)),
+            )
+        )
+            return group[0];
+    }
+    return null;
+}
+
+function sameSynonymGroup(left: string, right: string) {
+    const a = synonymCanonical(left);
+    const b = synonymCanonical(right);
+    return Boolean(a && b && a === b);
+}
+
+function labelsMatch(questionnaire: MatchField, contract: { key: string; label: string }) {
+    const answerLabel = fold(questionnaire.label);
+    const answerKey = keyTail(questionnaire.key);
+    const contractLabel = fold(contract.label);
+    const contractKey = keyTail(contract.key);
+    // Exact label/key wording, then vacation/pay synonym groups. Do not equate
+    // arbitrary shared key tails (e.g. custom.confirmed vs contract.confirmed).
+    if (
+        (answerLabel &&
+            (answerLabel === contractLabel || answerLabel === contractKey)) ||
+        (answerKey && answerKey === contractLabel)
+    )
+        return true;
+    return (
+        sameSynonymGroup(answerLabel, contractLabel) ||
+        sameSynonymGroup(answerLabel, contractKey) ||
+        sameSynonymGroup(answerKey, contractLabel) ||
+        sameSynonymGroup(answerKey, contractKey)
+    );
 }
 
 function answerValues(
@@ -176,14 +243,14 @@ export function deterministicContractValues(
     }
 
     for (const field of fields) {
-        if (consumed.has(field.key) || !field.label.trim()) continue;
+        if (consumed.has(field.key) || (!field.label.trim() && !field.key.trim()))
+            continue;
         const value = formatMatchValue(field, answerString(answers, field.key));
         if (!value) continue;
-        const folded = fold(field.label);
         const segment = segments.find((item) => {
             if (item.type !== "input" || skipQuestionnaireMatch(item) || filled.has(item.key))
                 return false;
-            return fold(item.label) === folded || fold(item.key) === folded;
+            return labelsMatch(field, item);
         });
         if (!segment || segment.type !== "input" || !canCopyAnswer(segment, value)) continue;
         filled.add(segment.key);

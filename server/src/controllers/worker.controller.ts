@@ -516,6 +516,17 @@ export const saveEngagementContractDraft = catchErrors(
                 .status(400)
                 .json({ success: false, message: "Werte fehlen." });
         }
+        const document = req.body?.document;
+        if (
+            document !== undefined &&
+            (document === null ||
+                typeof document !== "object" ||
+                Array.isArray(document))
+        ) {
+            return res
+                .status(400)
+                .json({ success: false, message: "Dokument ist ungültig." });
+        }
 
         const contract =
             await employmentContractService.saveEngagementContractDraft({
@@ -523,6 +534,7 @@ export const saveEngagementContractDraft = catchErrors(
                 workerId: param(req, "workerId"),
                 engagementId: param(req, "engagementId"),
                 values: values as Record<string, unknown>,
+                document,
             });
         return res.status(200).json({ success: true, data: contract });
     },

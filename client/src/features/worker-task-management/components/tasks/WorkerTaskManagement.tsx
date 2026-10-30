@@ -17,7 +17,10 @@ import { PersonnelFoldersSkeleton } from '../files/FileSkeletons';
 import { ClothingOrderTable } from '../clothing/ClothingOrderTable';
 import { MaterialsTableSkeleton } from '../materials/MaterialsTable';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { ScrollableTableViewport } from '@/components/ui/scrollable-table-viewport';
+import {
+  ScrollableTableViewport,
+  stickyTableHeadClassName,
+} from '@/components/ui/scrollable-table-viewport';
 import {
   Table,
   TableBody,
@@ -106,6 +109,7 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
   const [questionnaireEngagementId, setQuestionnaireEngagementId] = useState<
     string | null
   >(null);
+  const [taskHeaderScrolled, setTaskHeaderScrolled] = useState(false);
 
   useEffect(() => {
     setActiveTab(defaultTabForWorker(workerId));
@@ -491,12 +495,17 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
               value="form"
               className="mt-0 flex min-h-0 flex-1 flex-col"
             >
-              <ScrollableTableViewport>
-                <Table aria-busy={isLoading}>
-                  <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-0">
+              <ScrollableTableViewport
+                onScrolledChange={setTaskHeaderScrolled}
+              >
+                <Table
+                  aria-busy={isLoading}
+                  className="border-separate border-spacing-0"
+                >
+                  <TableHeader className="[&_tr]:border-0">
                     <TableRow className="border-0 hover:bg-transparent">
                       <TableHead
-                        className={`relative ${sectionHeaderClassName} bg-card`}
+                        className={`relative ${sectionHeaderClassName} ${stickyTableHeadClassName(taskHeaderScrolled)}`}
                       >
                         <div className="absolute inset-y-0 left-0 flex w-10 items-center justify-center">
                           <TableSelectAllCheckbox
@@ -512,7 +521,9 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
                         </div>
                         Titel
                       </TableHead>
-                      <TableHead className="h-12 bg-card py-3 px-2 text-right">
+                      <TableHead
+                        className={`h-12 py-3 px-2 text-right ${stickyTableHeadClassName(taskHeaderScrolled)}`}
+                      >
                         Beschreibung
                       </TableHead>
                     </TableRow>

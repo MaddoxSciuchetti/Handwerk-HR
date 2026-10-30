@@ -17,7 +17,7 @@ export function RowSelectButton({
   return (
     <div
       data-row-select=""
-      className="absolute inset-y-0 left-0 z-20 flex w-10 items-center justify-center"
+      className="absolute inset-y-0 left-0 z-10 flex w-10 items-center justify-center"
     >
       <Checkbox
         checked={isSelected}

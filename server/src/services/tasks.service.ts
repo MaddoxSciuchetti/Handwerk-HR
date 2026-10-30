@@ -332,6 +332,7 @@ const HUMAN_READABLE_FIELDS = new Set([
     "priority",
     "dueDate",
     "scheduledDeactivateAt",
+    "scheduledDeactivateTestAt",
     "executionSource",
     "automation",
     "integrationProvider",

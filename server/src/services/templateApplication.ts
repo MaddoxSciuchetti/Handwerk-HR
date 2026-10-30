@@ -221,7 +221,7 @@ type Outcome = {
 async function applicationTasks(issueIds: string[], organizationId: string) {
     return prisma.issue.findMany({
         where: { id: { in: issueIds }, workerEngagement: { organizationId } },
-        select: { id: true, title: true, status: true, sequence: true, scheduledDeactivateAt: true },
+        select: { id: true, title: true, status: true, sequence: true, scheduledDeactivateAt: true, scheduledDeactivateTestAt: true },
         orderBy: { createdAt: "asc" },
     });
 }
@@ -253,7 +253,7 @@ export async function readTemplateApplication(context: {
                   workerEngagement: { organizationId: context.organizationId },
                   templateItem: { issueTemplateId: receipt.templateId },
               },
-              select: { id: true, title: true, status: true, sequence: true, scheduledDeactivateAt: true },
+              select: { id: true, title: true, status: true, sequence: true, scheduledDeactivateAt: true, scheduledDeactivateTestAt: true },
               orderBy: { createdAt: "asc" },
           });
     // The receipt describes the original run. Tasks can be retried separately,
@@ -294,6 +294,9 @@ export async function readTemplateApplication(context: {
                 status: "failed",
                 message: latestError.get(task.id) ?? outcome.message,
             };
+        if (task.scheduledDeactivateTestAt && isDeactivation(task.sequence) &&
+            (task.status === "open" || task.status === "in_progress"))
+            return { issueId: task.id, status: "scheduled", message: `Geplant · ${task.scheduledDeactivateTestAt.toISOString()}` };
         if (task.scheduledDeactivateAt && isDeactivation(task.sequence) &&
             (task.status === "open" || task.status === "in_progress"))
             return { issueId: task.id, status: "scheduled", message: `Geplant · ${task.scheduledDeactivateAt.toISOString().slice(0, 10)}` };

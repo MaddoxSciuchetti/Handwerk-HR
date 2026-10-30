@@ -1,10 +1,16 @@
 import { Extension } from '@tiptap/core';
+import { keymap } from '@tiptap/pm/keymap';
+import { Plugin } from '@tiptap/pm/state';
 import {
   BLANK_UNDERLINE_BORDER_PT,
   LAYOUT_MAX_PT,
   MAX_BLANK_UNDERLINE_PT,
   MAX_TABLE_MARGIN_PT,
 } from '../consts/editor.consts';
+import {
+  cellDepthAt,
+  insertStyledSalaryRowAfter,
+} from '../util/salaryTableEnter.util';
 
 const LIST_STYLE_TYPES: Record<string, string> = {
   disc: 'disc',
@@ -26,6 +32,50 @@ const SPACED_BLOCK_ATTRS = [
 
 export const Layout = Extension.create({
   name: 'documentLayout',
+  addProseMirrorPlugins() {
+    const editor = this.editor;
+    return [
+      // Salary amount cells are the right column of a 2-col table. Enter must
+      // open a new row on the left, not another right-aligned paragraph.
+      keymap({
+        Enter: () => insertStyledSalaryRowAfter(editor),
+      }),
+      new Plugin({
+        // TipTap copies textAlign onto the block created by Enter. An empty
+        // right/center line then parks the caret on the right edge.
+        appendTransaction(transactions, _oldState, newState) {
+          if (!transactions.some((transaction) => transaction.docChanged))
+            return null;
+          const { $from } = newState.selection;
+          if ($from.parentOffset !== 0) return null;
+          const parent = $from.parent;
+          if (
+            (parent.type.name !== 'paragraph' &&
+              parent.type.name !== 'heading') ||
+            parent.content.size > 0
+          )
+            return null;
+          const align = parent.attrs.textAlign;
+          if (align !== 'right' && align !== 'center') return null;
+          // Inside a salary amount cell, Enter already inserts a new row.
+          if (cellDepthAt($from) >= 0) return null;
+          const index = $from.index($from.depth - 1);
+          if (index === 0) return null;
+          const previous = $from.node($from.depth - 1).child(index - 1);
+          if (
+            previous.type !== parent.type ||
+            previous.content.size === 0 ||
+            previous.attrs.textAlign !== align
+          )
+            return null;
+          return newState.tr.setNodeMarkup($from.before(), undefined, {
+            ...parent.attrs,
+            textAlign: 'left',
+          });
+        },
+      }),
+    ];
+  },
   addGlobalAttributes() {
     return [
       {

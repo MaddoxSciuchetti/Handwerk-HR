@@ -42,7 +42,7 @@ export function DocumentEditorSkeleton({
   showCorner?: boolean;
   showOriginalToggle?: boolean;
 }) {
-  const showToolbar = master && !readOnly;
+  const showToolbar = !readOnly;
   const framed = showToolbar || showCorner;
   return (
     <div

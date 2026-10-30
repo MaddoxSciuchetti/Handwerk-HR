@@ -32,6 +32,7 @@ const FIELD_LABELS: Record<string, string> = {
   priority: 'Priorität',
   dueDate: 'Fälligkeit',
   scheduledDeactivateAt: 'Letzter aktiver Tag',
+  scheduledDeactivateTestAt: 'Testtermin',
   executionSource: 'Ausführung',
   automation: 'Automation',
   automationError: 'Fehler',

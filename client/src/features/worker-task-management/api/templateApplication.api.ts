@@ -36,6 +36,7 @@ export type TemplateApplicationResult = {
       | 'not_applicable';
     sequence: string | null;
     scheduledDeactivateAt?: string | null;
+    scheduledDeactivateTestAt?: string | null;
   }>;
   count: number;
   issueIds: string[];

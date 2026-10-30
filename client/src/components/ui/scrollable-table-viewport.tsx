@@ -7,13 +7,14 @@ type ScrollableTableViewportProps = {
   onScrolledChange?: (scrolled: boolean) => void;
 };
 
-/** Apply on each sticky `th` so row content cannot show through. */
-export function stickyTableHeadClassName(scrolled: boolean) {
+/**
+ * Apply on each sticky `th`.
+ * Opaque white fill + high z-index so scrolled rows cannot show through.
+ */
+export function stickyTableHeadClassName(scrolled = false) {
   return cn(
-    'sticky top-0 z-20 transition-colors',
-    scrolled
-      ? 'bg-[var(--hover-bg)] shadow-[inset_0_-1px_0_0_var(--border)]'
-      : 'bg-[var(--card)]'
+    'sticky top-0 z-30 isolate bg-[var(--card)] transition-shadow',
+    scrolled && 'shadow-[inset_0_-1px_0_0_var(--border)]'
   );
 }
 
