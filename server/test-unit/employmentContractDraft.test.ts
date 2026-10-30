@@ -645,3 +645,37 @@ it("keeps person-specific text when questionnaire values are synced", async () =
     expect(contract.body).toEqual(personalized);
     expect(synced.values).toEqual({ "contract.vorname": "Augusta" });
 });
+
+it("offers matching for empty hours on an existing draft without a new questionnaire revision", async () => {
+    contract.master.body = fromSegments([{ type: "input", key: "contract.hours", label: "Anzahl der Stunden" }]);
+    contract.matchedQuestionnaireRevision = 3;
+    contract.engagement.questionnaireSubmission = {
+        id: "submission", revision: 3, status: "completed",
+        formDefinition: { intro: "", items: [{ kind: "field", key: "employmentExtent", label: "Wöchentliche Arbeitszeit", section: "Beruf", type: "text" }] },
+        answers: [{ key: "employmentExtent", value: "37,5" }],
+    };
+    const view = await getEngagementContract(params);
+    expect(view?.questionnaireSyncNeeded).toBe(true);
+    expect(view?.values).toEqual({});
+    const synced = await resyncEngagementContractFromQuestionnaire(params);
+    expect(synced.values).toEqual({ "contract.hours": "37,5" });
+    expect(synced.questionnaireSyncNeeded).toBe(false);
+});
+it("does not flag existing manual hours for replacement at the same revision", async () => {
+    contract.master.body = fromSegments([{ type: "input", key: "contract.hours", label: "Wochenstunden" }]);
+    contract.values = [{ key: "contract.hours", value: "30" }];
+    contract.matchedQuestionnaireRevision = 3;
+    contract.engagement.questionnaireSubmission = {
+        id: "submission", revision: 3, status: "completed",
+        formDefinition: { intro: "", items: [{ kind: "field", key: "employmentExtent", label: "Wöchentliche Arbeitszeit", section: "Beruf", type: "text" }] },
+        answers: [{ key: "employmentExtent", value: "40" }],
+    };
+    const view = await getEngagementContract(params);
+    expect(view?.questionnaireSyncNeeded).toBe(false);
+    expect(view?.values["contract.hours"]).toBe("30");
+});
+it("does not offer to rematch missing fields on a sent contract", async () => {
+    contract.sentAt = new Date();
+    contract.engagement.questionnaireSubmission = { id: "submission", revision: 3, status: "completed", answers: [{ key: "firstName", value: "Ada" }] };
+    expect((await getEngagementContract(params))?.questionnaireSyncNeeded).toBe(false);
+});

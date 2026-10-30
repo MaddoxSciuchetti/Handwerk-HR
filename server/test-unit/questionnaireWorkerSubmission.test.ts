@@ -1,5 +1,7 @@
 import { getPublicQuestionnaire, submitPublicQuestionnaire } from "@/services/questionnaire.service";
 import { prisma } from "@/lib/prisma";
+import { matchQuestionnaireToContract } from "@/services/contractFieldMatchAi";
+import { fromSegments } from "../../shared/document";
 
 jest.mock("@/lib/prisma", () => ({
     prisma: {
@@ -9,7 +11,7 @@ jest.mock("@/lib/prisma", () => ({
         },
         questionnaireAnswer: { createMany: jest.fn() },
         worker: { update: jest.fn() },
-        issue: { updateMany: jest.fn() },
+        issue: { updateMany: jest.fn(), findFirst: jest.fn() },
         $transaction: jest.fn(),
     },
 }));
@@ -209,4 +211,42 @@ it.each([undefined, '', 'nein', true, 'true'])("rejects a submission without exp
     const transactionCalls = (prisma.$transaction as jest.Mock).mock.calls.length;
     await expect(submitPublicQuestionnaire("token", { declaration })).rejects.toThrow("Bitte bestätigen Sie die Erklärung der beschäftigten Person.");
     expect(prisma.$transaction).toHaveBeenCalledTimes(transactionCalls);
+});
+
+it("matches questionnaire data against the worker's customized contract body", async () => {
+    const personalSegments = [{ type: "input" as const, key: "contract.hours", label: "Wochenstunden" }];
+    (prisma.questionnaireSubmission.findUnique as jest.Mock).mockResolvedValue({
+        id: "submission", engagementId: "engagement", status: "sent",
+        formDefinition: {
+            intro: "",
+            items: [{
+                kind: "field",
+                key: "custom.weekly-hours",
+                label: "Arbeitszeit pro Woche",
+                section: "Beruf",
+                type: "text",
+                required: true,
+            }],
+        },
+        engagement: {
+            workerId: "worker", responsibleUserId: "user", worker: { email: "ada@example.test" },
+            employmentContract: {
+                id: "contract",
+                status: "draft",
+                body: fromSegments(personalSegments),
+                master: { body: fromSegments([{ type: "text", text: "Original master" }]), revision: 1 },
+            },
+        },
+    });
+    (prisma.questionnaireSubmission.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+    (prisma.$transaction as jest.Mock).mockImplementation((fn) => fn(prisma));
+    (prisma.issue.findFirst as jest.Mock).mockResolvedValue({ id: "print-task" });
+    (matchQuestionnaireToContract as jest.Mock).mockResolvedValue([{ key: "contract.hours", value: "40" }]);
+    await submitPublicQuestionnaire("token", { "custom.weekly-hours": "40", declaration: "ja" });
+    expect(matchQuestionnaireToContract).toHaveBeenCalledWith(
+        expect.arrayContaining([expect.objectContaining({ key: "contract.hours", label: "Wochenstunden" })]),
+        expect.objectContaining({ "custom.weekly-hours": "40" }),
+        "ada@example.test",
+        expect.any(Array),
+    );
 });
