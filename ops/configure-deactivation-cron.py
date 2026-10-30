@@ -7,7 +7,7 @@ suspended; resume them only after deploying the endpoint and migration.
 import json
 import os
 import secrets
-import shlex
+from pathlib import Path
 import urllib.request
 import urllib.error
 
@@ -53,22 +53,20 @@ def configure():
         secret = secret or secrets.token_urlsafe(48)
         request(f"/services/{api_id}/env-vars/CRON_SECRET", "PUT", {"value": secret})
         url = api["serviceDetails"]["url"]
-        # Docker command overrides the image entrypoint. A disabled job sends no requests.
-        script = ('[ "$SCHEDULED_DEACTIVATIONS_ENABLED" = true ] || exit 0; '
-                  'exec curl --fail-with-body --silent --show-error --connect-timeout 10 '
-                  '--max-time 240 -X POST -H "Authorization: Bearer $CRON_SECRET" '
-                  '"$API_URL/internal/cron/scheduled-deactivations"')
+        # Use a mounted script so Render never needs to parse nested shell quotes.
+        script = Path(__file__).with_name("scheduled-deactivations.sh").read_text()
         result = request("/services", "POST", {
             "type": "cron_job", "name": name, "ownerId": api["ownerId"],
             "autoDeployTrigger": "off",
             "image": {"ownerId": api["ownerId"], "imagePath": "docker.io/curlimages/curl:8.17.0"},
+            "secretFiles": [{"name": "scheduled-deactivations.sh", "content": script}],
             "envVars": [{"key": "CRON_SECRET", "value": secret},
                         {"key": "API_URL", "value": url},
                         {"key": "SCHEDULED_DEACTIVATIONS_ENABLED", "value": "false"}],
             "serviceDetails": {
-                "runtime": "image", "schedule": "*/5 * * * *", "plan": "starter",
+                "runtime": "image", "schedule": "* * * * *" if environment == "staging" else "*/5 * * * *", "plan": "starter",
                 "region": api["serviceDetails"]["region"],
-                "envSpecificDetails": {"dockerCommand": "sh -c " + shlex.quote(script),
+                "envSpecificDetails": {"dockerCommand": "/bin/sh /etc/secrets/scheduled-deactivations.sh",
                                        "dockerContext": "", "dockerfilePath": ""},
             },
         })
