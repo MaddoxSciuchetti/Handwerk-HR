@@ -188,7 +188,7 @@ export async function submitPublicQuestionnaire(token: string, body: unknown) {
     const matched =
         contract?.status === "draft"
             ? await matchQuestionnaireToContract(
-                  readDocumentSegments(contract.master.body),
+                  readDocumentSegments(contract.body ?? contract.master.body),
                   matchAnswers,
                   submission.engagement.worker.email ?? "",
                   matchFields,

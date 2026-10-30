@@ -41,6 +41,7 @@ const FIELD_ALIASES: Record<string, string[]> = {
 
 /** Questionnaire labels/keys often differ from contract field wording. */
 const LABEL_SYNONYM_GROUPS = [
+    ["stundenlohn", "stundengehalt", "stundenverguetung", "stundenentgelt", "lohnprostunde", "verguetungprostunde", "hourlyrate", "hourlypay"],
     [
         "urlaubstage",
         "urlaubsanspruch",
@@ -97,25 +98,48 @@ function sameSynonymGroup(left: string, right: string) {
     return Boolean(a && b && a === b);
 }
 
-function labelsMatch(questionnaire: MatchField, contract: { key: string; label: string }) {
+type HoursKind = "weekly" | "daily" | "monthly" | "generic" | "excluded";
+function hoursKind(value: string): HoursKind | null {
+    const text = fold(value);
+    if (/stundenlohn|stundengehalt|stundenverguetung|stundenentgelt|lohnprostunde|verguetungprostunde|hourlyrate|hourlypay|ueberstunden|mehrarbeit|pausen/.test(text)) return "excluded";
+    if (/stundenprotag|stundenamtag|taeglich|dailyhours|hoursperday|hoursmonday|hourstuesday|hourswednesday|hoursthursday|hoursfriday|hourssaturday|hourssunday/.test(text)) return "daily";
+    if (/monatsstunden|stundenpromonat|monatlichearbeitszeit|hourspermonth|monthlyhours/.test(text)) return "monthly";
+    if (/wochenstunden|wochenarbeitszeit|woechentlich|prowoche|jewoche|weeklyhours|hoursperweek/.test(text)) return "weekly";
+    if (/^(anzahl(der)?stunden|stundenzahl|arbeitsstunden|stunden|arbeitszeit|workinghours|employmentextent)$/.test(text)) return "generic";
+    return null;
+}
+function fieldHoursKind(field: { key: string; label: string }, context = "") {
+    const kind = hoursKind(field.label) ?? hoursKind(keyTail(field.key));
+    return kind === "generic" ? hoursKind(context) ?? kind : kind;
+}
+function numericHours(value: string, max = 744) {
+    const number = /^(\d{1,3}(?:[.,]\d{1,2})?)(?:\s*(?:h|std\.?|stunden)(?:\s*(?:pro|je)\s*woche)?)?$/i.exec(value.trim());
+    return Boolean(number && Number(number[1].replace(",", ".")) <= max);
+}
+function matchScore(questionnaire: MatchField, contract: { key: string; label: string }, value: string, context: string) {
     const answerLabel = fold(questionnaire.label);
     const answerKey = keyTail(questionnaire.key);
     const contractLabel = fold(contract.label);
     const contractKey = keyTail(contract.key);
-    // Exact label/key wording, then vacation/pay synonym groups. Do not equate
-    // arbitrary shared key tails (e.g. custom.confirmed vs contract.confirmed).
-    if (
-        (answerLabel &&
-            (answerLabel === contractLabel || answerLabel === contractKey)) ||
-        (answerKey && answerKey === contractLabel)
-    )
-        return true;
-    return (
-        sameSynonymGroup(answerLabel, contractLabel) ||
+    const sourceHours = fieldHoursKind(questionnaire);
+    const targetHours = fieldHoursKind(contract, context);
+    if (targetHours && targetHours !== "excluded") {
+        // A full/part-time description or hourly wage is not a quantity of hours.
+        const max = targetHours === "weekly" || sourceHours === "weekly" ? 168 :
+            targetHours === "daily" || sourceHours === "daily" ? 24 : 744;
+        if (!numericHours(value, max) || sourceHours === "excluded") return 0;
+        if (sourceHours && sourceHours !== "generic" && targetHours !== "generic" && sourceHours !== targetHours) return 0;
+        if (targetHours === "generic" && (sourceHours === "daily" || sourceHours === "monthly")) return 0;
+        if (sourceHours === "generic" && (targetHours === "daily" || targetHours === "monthly")) return 0;
+    }
+    // Do not equate arbitrary shared key tails (custom.confirmed vs contract.confirmed).
+    if ((answerLabel && (answerLabel === contractLabel || answerLabel === contractKey)) ||
+        (answerKey && answerKey === contractLabel)) return 3;
+    if (sourceHours && sourceHours !== "excluded" && targetHours && targetHours !== "excluded" && numericHours(value)) return 2;
+    return sameSynonymGroup(answerLabel, contractLabel) ||
         sameSynonymGroup(answerLabel, contractKey) ||
         sameSynonymGroup(answerKey, contractLabel) ||
-        sameSynonymGroup(answerKey, contractKey)
-    );
+        sameSynonymGroup(answerKey, contractKey) ? 1 : 0;
 }
 
 function answerValues(
@@ -203,7 +227,6 @@ export function deterministicContractValues(
 ) {
     const entries: { key: string; value: string }[] = [];
     const filled = new Set<string>();
-    const consumed = new Set<string>();
 
     for (const field of fields) {
         if (!field.contractFieldKey) continue;
@@ -220,7 +243,6 @@ export function deterministicContractValues(
         const value = formatMatchValue(field, answerString(answers, field.key));
         if (!value || !canCopyAnswer(segment, value)) continue;
         filled.add(segment.key);
-        consumed.add(field.key);
         entries.push({
             key: segment.key,
             value: normalizeDocumentFieldValue(segment.fieldType, value),
@@ -235,30 +257,26 @@ export function deterministicContractValues(
         if (filled.has(entry.key)) continue;
         filled.add(entry.key);
         entries.push(entry);
-        for (const field of fields) {
-            if (consumed.has(field.key)) continue;
-            const value = formatMatchValue(field, answerString(answers, field.key));
-            if (value && value === entry.value) consumed.add(field.key);
-        }
     }
 
-    for (const field of fields) {
-        if (consumed.has(field.key) || (!field.label.trim() && !field.key.trim()))
-            continue;
-        const value = formatMatchValue(field, answerString(answers, field.key));
-        if (!value) continue;
-        const segment = segments.find((item) => {
-            if (item.type !== "input" || skipQuestionnaireMatch(item) || filled.has(item.key))
-                return false;
-            return labelsMatch(field, item);
+    // Match each placeholder independently: an answer can appear in several places.
+    // Conflicting answers at the same match strength are left for review.
+    for (const [index, segment] of segments.entries()) {
+        if (segment.type !== "input" || skipQuestionnaireMatch(segment) || filled.has(segment.key)) continue;
+        const before = segments[index - 1];
+        const after = segments[index + 1];
+        const context = `${before?.type === "text" ? before.text.slice(-160) : ""} ${after?.type === "text" ? after.text.slice(0, 160) : ""}`;
+        const candidates = fields.flatMap((field) => {
+            const value = formatMatchValue(field, answerString(answers, field.key));
+            if (!value || !canCopyAnswer(segment, value)) return [];
+            const score = matchScore(field, segment, value, context);
+            return score ? [{ value: normalizeDocumentFieldValue(segment.fieldType, value), score }] : [];
         });
-        if (!segment || segment.type !== "input" || !canCopyAnswer(segment, value)) continue;
+        const best = Math.max(0, ...candidates.map((candidate) => candidate.score));
+        const values = new Set(candidates.filter((candidate) => candidate.score === best).map((candidate) => candidate.value));
+        if (values.size !== 1) continue;
         filled.add(segment.key);
-        consumed.add(field.key);
-        entries.push({
-            key: segment.key,
-            value: normalizeDocumentFieldValue(segment.fieldType, value),
-        });
+        entries.push({ key: segment.key, value: [...values][0] });
     }
 
     const salutation = salutationFromSex(answerString(answers, "sex"));

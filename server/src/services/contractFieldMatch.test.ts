@@ -412,3 +412,65 @@ it.each([
         }
     },
 );
+
+describe("reliable hours and repeated questionnaire matching", () => {
+    const hours = (value: string) => ({ employmentExtent: value } as unknown as QuestionnaireAnswers);
+    const fields = [{ key: "employmentExtent", label: "Wöchentliche Arbeitszeit" }];
+    it.each(["Wochenstunden", "Arbeitszeit pro Woche", "Anzahl der Stunden", "Stundenzahl"])("copies weekly hours into %s", (label) => {
+        expect(deterministicContractValues([{ type: "input", key: "contract.hours", label }], hours("37,5"), "", fields))
+            .toEqual([{ key: "contract.hours", value: "37,5" }]);
+    });
+    it("fills repeated placeholders with the same questionnaire answer", () => {
+        expect(deterministicContractValues([
+            { type: "input", key: "contract.hours", label: "Wochenstunden" },
+            { type: "input", key: "contract.hoursAgain", label: "Anzahl der Stunden" },
+        ], hours("40"), "", fields)).toEqual([
+            { key: "contract.hours", value: "40" }, { key: "contract.hoursAgain", value: "40" },
+        ]);
+    });
+    it("reuses non-hours answers across repeated contract fields", () => {
+        expect(deterministicContractValues([
+            { type: "input", key: "contract.vacation", label: "Urlaubstage" },
+            { type: "input", key: "contract.vacationAgain", label: "Urlaubsanspruch" },
+        ], { "custom.vacation": "30" } as unknown as QuestionnaireAnswers, "", [{ key: "custom.vacation", label: "Urlaubsanspruch" }]))
+            .toEqual([{ key: "contract.vacation", value: "30" }, { key: "contract.vacationAgain", value: "30" }]);
+    });
+    it.each(["Vollzeit", "Teilzeit", ""])("does not invent numeric hours from %s", (value) => {
+        expect(deterministicContractValues([{ type: "input", key: "contract.hours", label: "Anzahl der Stunden" }], hours(value), "", fields)).toEqual([]);
+    });
+    it.each(["Stundenlohn", "Stunden pro Tag", "Monatsstunden", "Überstunden"])("does not put weekly hours into %s", (label) => {
+        expect(deterministicContractValues([{ type: "input", key: "contract.hours", label }], hours("40"), "", fields)).toEqual([]);
+    });
+    it("uses surrounding text to distinguish daily from weekly hours", () => {
+        expect(deterministicContractValues([
+            { type: "text", text: "Die tägliche Arbeitszeit beträgt " },
+            { type: "input", key: "contract.hours", label: "Anzahl der Stunden" },
+            { type: "text", text: " Stunden." },
+        ], hours("40"), "", fields)).toEqual([]);
+    });
+    it("leaves conflicting questionnaire values empty rather than taking the first", () => {
+        expect(deterministicContractValues([{ type: "input", key: "contract.hours", label: "Anzahl der Stunden" }], {
+            "custom.a": "35", "custom.b": "40",
+        } as unknown as QuestionnaireAnswers, "", [
+            { key: "custom.a", label: "Wochenstunden" }, { key: "custom.b", label: "Wöchentliche Arbeitszeit" },
+        ])).toEqual([]);
+    });
+    it("keeps hourly pay separate from monthly salary", () => {
+        expect(deterministicContractValues([{ type: "input", key: "contract.pay", label: "Stundenlohn" }], {
+            "custom.salary": "4200",
+        } as unknown as QuestionnaireAnswers, "", [{ key: "custom.salary", label: "Gehalt" }])).toEqual([]);
+    });
+});
+
+it("does not confuse an unspecified quantity with daily hours", () => {
+    expect(deterministicContractValues([{ type: "input", key: "contract.hours", label: "Stunden pro Tag" }],
+        { "custom.hours": "8" } as unknown as QuestionnaireAnswers, "", [{ key: "custom.hours", label: "Anzahl der Stunden" }])).toEqual([]);
+});
+it("does not treat daily questionnaire hours as a weekly contract quantity", () => {
+    expect(deterministicContractValues([{ type: "input", key: "contract.hours", label: "Anzahl der Stunden" }],
+        { hoursMonday: "8" } as unknown as QuestionnaireAnswers, "", [{ key: "hoursMonday", label: "Mo" }])).toEqual([]);
+});
+it("rejects impossible weekly hours instead of automatically inserting them", () => {
+    expect(deterministicContractValues([{ type: "input", key: "contract.hours", label: "Wochenstunden" }],
+        { employmentExtent: "200" } as unknown as QuestionnaireAnswers, "", [{ key: "employmentExtent", label: "Wöchentliche Arbeitszeit" }])).toEqual([]);
+});

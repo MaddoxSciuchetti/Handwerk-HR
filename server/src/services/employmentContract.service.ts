@@ -1,6 +1,6 @@
 import { BAD_REQUEST, CONFLICT, NOT_FOUND } from "@/constants/http";
 import { prisma } from "@/lib/prisma";
-import { unmatchedQuestionnaireAnswers, type MatchField } from "@/services/contractFieldMatch";
+import { deterministicContractValues, unmatchedQuestionnaireAnswers, type MatchField } from "@/services/contractFieldMatch";
 import { matchQuestionnaireToContract } from "@/services/contractFieldMatchAi";
 import {
     definitionFields,
@@ -180,6 +180,10 @@ function present(
               )
             : [];
     const document = readStyledDocument(source);
+    const canRefresh = submission?.status === "completed" && !contract.sentAt && contract.status !== "signed";
+    const missingQuestionnaireValues = canRefresh && deterministicContractValues(
+        segments, questionnaireAnswersFromStored(submission.answers), contract.engagement.worker.email ?? "", matchFields,
+    ).some((entry) => !values[entry.key]?.trim());
 
     return {
         id: contract.id,
@@ -203,8 +207,8 @@ function present(
         questionnaireCompleted: submission?.status === "completed",
         questionnaireRevision: submission?.revision ?? 0,
         matchedQuestionnaireRevision: contract.matchedQuestionnaireRevision ?? 0,
-        questionnaireSyncNeeded: submission?.status === "completed" &&
-            (submission.revision ?? 0) > (contract.matchedQuestionnaireRevision ?? 0),
+        questionnaireSyncNeeded: Boolean(canRefresh &&
+            ((submission.revision ?? 0) > (contract.matchedQuestionnaireRevision ?? 0) || missingQuestionnaireValues)),
         printedAt: contract.printedAt?.toISOString() ?? null,
         sentAt: contract.sentAt?.toISOString() ?? null,
         signedFileUrl: null as string | null,
