@@ -29,9 +29,3 @@ Each request selects up to 25 tasks with five concurrent executions and stops st
 Manual and cron deactivation share a database claim. Active claims reject schedule edits and duplicate execution; crashed claims expire after ten minutes. Successful execution clears the date; failures retain it for the next run. Task history records the scheduling user and whether execution came from cron or a manual run.
 
 To pause execution, suspend the relevant cron. Cancelling an individual schedule does not deactivate the account. Setting a task to done, cancelled, or not applicable excludes it from cron execution.
-
-## One-minute staging test
-
-Set `DEACTIVATION_SCHEDULE_TESTS=true` on the staging API and deploy the test-timestamp migration. The task sidebar then shows **In 1 Min. testen** for both account deactivation sequences. The server saves a timestamp 60 seconds after accepting the click. Staging cron checks every minute, so execution normally happens within one to two minutes. Closing the browser does not cancel it. The task displays its saved execution time and **Test abbrechen**; choosing a regular date after cancellation returns to end-of-day scheduling.
-
-The test uses the normal provider executor, credentials, audit history, claim, and retry handling. It is a real account deactivation unless Microsoft simulation is enabled. It does not delete memberships. Production rejects this test action even if the test flag is accidentally set. Local development supports the button without the Render flag; local testing requires calling the cron endpoint with its secret on a short interval.

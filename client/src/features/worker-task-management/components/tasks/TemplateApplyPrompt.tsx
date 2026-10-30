@@ -514,24 +514,18 @@ export function TemplateApplyPrompt({
                     'scheduledDeactivateAt' in task
                       ? task.scheduledDeactivateAt
                       : null;
-                  const testAt =
-                    'scheduledDeactivateTestAt' in task
-                      ? task.scheduledDeactivateTestAt
-                      : null;
-                  const label = testAt
-                    ? `Geplant · ${new Intl.DateTimeFormat('de-DE', { timeZone: 'Europe/Berlin', timeStyle: 'medium' }).format(new Date(String(testAt)))}`
-                    : date
-                      ? `Geplant · ${scheduleDateLabel(String(date))}`
-                      : (
-                          {
-                            done: 'Abgeschlossen',
-                            error: 'Fehlgeschlagen',
-                            open: 'Offen',
-                            in_progress: 'In Bearbeitung',
-                            cancelled: 'Abgebrochen',
-                            not_applicable: 'Nicht zutreffend',
-                          } as Record<string, string>
-                        )[task.status];
+                  const label = date
+                    ? `Geplant · ${scheduleDateLabel(String(date))}`
+                    : (
+                        {
+                          done: 'Abgeschlossen',
+                          error: 'Fehlgeschlagen',
+                          open: 'Offen',
+                          in_progress: 'In Bearbeitung',
+                          cancelled: 'Abgebrochen',
+                          not_applicable: 'Nicht zutreffend',
+                        } as Record<string, string>
+                      )[task.status];
                   const Icon =
                     task.status === 'done'
                       ? CheckCircle2

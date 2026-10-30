@@ -8,7 +8,6 @@ import { BAD_REQUEST } from "@/constants/http";
 import { CRON_SECRET } from "@/constants/env";
 import {
     berlinToday,
-    deactivationScheduleTestsEnabled,
     DEACTIVATION_SEQUENCES,
     executableStatuses,
     readDeactivationSchedule,
@@ -47,18 +46,14 @@ export const patchDeactivationSchedule = catchErrors(async (req, res) => {
         "Organisation oder Benutzer fehlt.",
     );
     const body = z
-        .union([
-            z.object({ scheduledDeactivateAt: z.string().nullable() }).strict(),
-            z.object({ testInOneMinute: z.literal(true) }).strict(),
-        ])
+        .object({ scheduledDeactivateAt: z.string().nullable() })
+        .strict()
         .parse(req.body);
     const data = await saveDeactivationSchedule({
         organizationId: req.orgId,
         actorUserId: req.userId!,
         issueId: String(req.params.issueId),
-        scheduledDeactivateAt:
-            "scheduledDeactivateAt" in body ? body.scheduledDeactivateAt : null,
-        ...("testInOneMinute" in body ? { testInOneMinute: true } : {}),
+        scheduledDeactivateAt: body.scheduledDeactivateAt,
     });
     res.json({ success: true, data });
 });
@@ -68,20 +63,10 @@ export const postScheduledDeactivations = catchErrors(async (_req, res) => {
         where: {
             sequence: { in: [...DEACTIVATION_SEQUENCES] },
             status: { in: [...executableStatuses] },
+            scheduledDeactivateAt: {
+                lt: new Date(`${berlinToday(now)}T00:00:00Z`),
+            },
             AND: [
-                {
-                    OR: [
-                        {
-                            scheduledDeactivateTestAt: null,
-                            scheduledDeactivateAt: {
-                                lt: new Date(`${berlinToday(now)}T00:00:00Z`),
-                            },
-                        },
-                        ...(deactivationScheduleTestsEnabled()
-                            ? [{ scheduledDeactivateTestAt: { lte: now } }]
-                            : []),
-                    ],
-                },
                 {
                     OR: [
                         { deactivationClaimUntil: null },

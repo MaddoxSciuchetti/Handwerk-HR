@@ -919,12 +919,9 @@ export async function updateIssue(params: UpdateIssueInput) {
             if ((sequence !== undefined && sequence !== current?.sequence) ||
                 (newWorkerEngagementId !== undefined && newWorkerEngagementId !== current?.workerEngagementId)) {
                 data.scheduledDeactivateAt = null;
-                data.scheduledDeactivateTestAt = null;
                 data.scheduledDeactivateByUserId = null;
                 oldValue.scheduledDeactivateAt = current?.scheduledDeactivateAt?.toISOString().slice(0, 10) ?? null;
                 keys.push("scheduledDeactivateAt");
-                oldValue.scheduledDeactivateTestAt = current?.scheduledDeactivateTestAt?.toISOString() ?? null;
-                keys.push("scheduledDeactivateTestAt");
             }
         }
         const updated = await tx.issue.update({
