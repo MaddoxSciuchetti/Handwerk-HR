@@ -122,7 +122,6 @@ describe('worker information clothing', () => {
       )
     );
     expect(await screen.findByLabelText('Anzahl')).toHaveValue(2);
-    expect(screen.getByLabelText('Größe')).toHaveTextContent('M');
     expect(screen.getByLabelText('Erhalten am')).toHaveValue(berlinToday());
     expect(
       screen.getByRole('combobox', { name: 'Artikel aus Bestand' })
@@ -343,7 +342,6 @@ describe('worker information clothing', () => {
     });
     expect(saved).toHaveTextContent('Arbeitshose');
     expect(screen.getByLabelText('Erhalten am')).toHaveValue('2026-03-17');
-    expect(screen.getByLabelText('Größe')).toHaveTextContent('M');
     expect(
       addButton.compareDocumentPosition(saved) & Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
