@@ -6,6 +6,7 @@ import {
   getEngagementClothing,
   returnEngagementClothing,
   type CreateEngagementClothingInput,
+  type EngagementClothingItem,
 } from '../api/engagementClothing.api';
 
 export const engagementClothingKey = (
@@ -25,13 +26,21 @@ export function useEngagementClothing(
   });
 }
 
-function useRefreshClothing(workerId: string, engagementId: string | null) {
+function useClothingCache(workerId: string, engagementId: string | null) {
   const queryClient = useQueryClient();
-  return () => {
-    void queryClient.invalidateQueries({
-      queryKey: engagementClothingKey(workerId, engagementId),
-    });
-    void queryClient.invalidateQueries({ queryKey: clothingStockKey });
+  const key = engagementClothingKey(workerId, engagementId);
+
+  return {
+    async write(
+      updater: (
+        current: EngagementClothingItem[] | undefined
+      ) => EngagementClothingItem[]
+    ) {
+      await queryClient.cancelQueries({ queryKey: key });
+      queryClient.setQueryData<EngagementClothingItem[]>(key, updater);
+      void queryClient.invalidateQueries({ queryKey: clothingStockKey });
+      void queryClient.invalidateQueries({ queryKey: key });
+    },
   };
 }
 
@@ -39,13 +48,19 @@ export function useCreateEngagementClothing(
   workerId: string,
   engagementId: string | null
 ) {
-  const refresh = useRefreshClothing(workerId, engagementId);
+  const cache = useClothingCache(workerId, engagementId);
   return useMutation({
     mutationFn: (input: CreateEngagementClothingInput) => {
       if (!engagementId) throw new Error('Engagement fehlt.');
       return createEngagementClothing(workerId, engagementId, input);
     },
-    onSuccess: refresh,
+    onSuccess: async (created) => {
+      await cache.write((current) =>
+        current?.some((item) => item.id === created.id)
+          ? current.map((item) => (item.id === created.id ? created : item))
+          : [...(current ?? []), created]
+      );
+    },
   });
 }
 
@@ -53,13 +68,30 @@ export function useReturnEngagementClothing(
   workerId: string,
   engagementId: string | null
 ) {
-  const refresh = useRefreshClothing(workerId, engagementId);
+  const cache = useClothingCache(workerId, engagementId);
   return useMutation({
-    mutationFn: ({ clothingId, quantity }: { clothingId: string; quantity: number }) => {
+    mutationFn: ({
+      clothingId,
+      quantity,
+    }: {
+      clothingId: string;
+      quantity: number;
+    }) => {
       if (!engagementId) throw new Error('Engagement fehlt.');
-      return returnEngagementClothing(workerId, engagementId, clothingId, quantity);
+      return returnEngagementClothing(
+        workerId,
+        engagementId,
+        clothingId,
+        quantity
+      );
     },
-    onSuccess: refresh,
+    onSuccess: async (updated) => {
+      await cache.write((current) =>
+        (current ?? []).map((item) =>
+          item.id === updated.id ? updated : item
+        )
+      );
+    },
   });
 }
 
@@ -67,12 +99,16 @@ export function useDeleteEngagementClothing(
   workerId: string,
   engagementId: string | null
 ) {
-  const refresh = useRefreshClothing(workerId, engagementId);
+  const cache = useClothingCache(workerId, engagementId);
   return useMutation({
     mutationFn: (clothingId: string) => {
       if (!engagementId) throw new Error('Engagement fehlt.');
       return deleteEngagementClothing(workerId, engagementId, clothingId);
     },
-    onSuccess: refresh,
+    onSuccess: async (_result, clothingId) => {
+      await cache.write((current) =>
+        (current ?? []).filter((item) => item.id !== clothingId)
+      );
+    },
   });
 }
