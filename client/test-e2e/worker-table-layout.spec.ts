@@ -91,9 +91,10 @@ for (const team of [false, true]) {
       'opacity',
       '1'
     );
+    await expect(page.getByRole('menuitem', { name: 'Birthday' })).toBeVisible();
     await page.getByRole('menuitem', { name: 'Anniversary date' }).click();
-    await expect(add).toHaveCount(0);
-    const anniversary = page.getByRole('columnheader', { name: 'Anniversary' });
+    await expect(add).toHaveCount(1);
+    const anniversary = page.getByRole('columnheader', { name: /Anniversary/ });
     await expect(anniversary).toHaveCount(1);
     await expect(
       page.locator('tbody tr').first().locator('td').last()

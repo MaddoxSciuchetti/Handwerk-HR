@@ -3,10 +3,14 @@ import { RowSelectButton } from '@/features/all-tasks/components/ui/RowSelectBut
 import { LifecycleType } from '@/features/worker-task-management/types/index.types';
 import { cn } from '@/lib/utils';
 import type { Dispatch, MouseEvent, SetStateAction } from 'react';
+import type { ExtraWorkerColumnId } from '../consts/extra-worker-columns';
 import { EngagementType, WorkerRecord } from '../types/index.types';
 import { getFirstFormType } from '../utils/formtype';
 import { nextCompanyAnniversary } from '../utils/companyAnniversary';
-import { formatCalendarDate } from '../utils/calendarDate';
+import {
+  formatCalendarDate,
+  parseCalendarDate,
+} from '../utils/calendarDate';
 import { getWorkerIssueCount } from '../utils/workerHealth.utils';
 import { EngagementProgressPicker } from './ui/EngagementProgressPicker';
 import EngagementTypeSwitch from './EngagementTypeSwitch';
@@ -25,7 +29,7 @@ export type WorkerSelection = {
 type ProjectItemSharedProps = {
   worker: WorkerRecord;
   hideTaskColumns?: boolean;
-  showAnniversary?: boolean;
+  extraColumns?: ExtraWorkerColumnId[];
   gotopage: (
     taskId: string,
     form_type: LifecycleType,
@@ -79,10 +83,14 @@ function ProjectItem(props: ProjectItemProps) {
   };
 
   const issueCount = getWorkerIssueCount(worker);
-  const showAnniversary = !isTeam && props.showAnniversary;
+  const extraColumns = !isTeam ? (props.extraColumns ?? []) : [];
+  const showAnniversary = extraColumns.includes('anniversary');
+  const showBirthday = extraColumns.includes('birthday');
+  const hasExtraColumns = extraColumns.length > 0;
   const anniversary = showAnniversary
     ? nextCompanyAnniversary(worker.entryDate)
     : null;
+  const birthday = showBirthday ? parseCalendarDate(worker.birthday ?? '') : null;
 
   return (
     <TableRow
@@ -151,12 +159,12 @@ function ProjectItem(props: ProjectItemProps) {
             className={cn(
               'transition-colors group-hover:bg-muted/50',
               props.hideTaskColumns &&
-                !showAnniversary &&
+                !hasExtraColumns &&
                 'group-hover:rounded-r-xl',
               props.isSelected && 'bg-[var(--hover-bg)]',
               props.isSelected &&
                 props.hideTaskColumns &&
-                !showAnniversary &&
+                !hasExtraColumns &&
                 'rounded-r-xl'
             )}
           >
@@ -181,9 +189,9 @@ function ProjectItem(props: ProjectItemProps) {
               <TableCell
                 className={cn(
                   'transition-colors group-hover:bg-muted/50',
-                  !showAnniversary && 'group-hover:rounded-r-xl',
+                  !hasExtraColumns && 'group-hover:rounded-r-xl',
                   props.isSelected && 'bg-[var(--hover-bg)]',
-                  props.isSelected && !showAnniversary && 'rounded-r-xl'
+                  props.isSelected && !hasExtraColumns && 'rounded-r-xl'
                 )}
               >
                 {worker.engagements[0].type === 'transfer' ? (
@@ -199,16 +207,30 @@ function ProjectItem(props: ProjectItemProps) {
               </TableCell>
             </>
           )}
-          {showAnniversary && (
-            <TableCell
-              className={cn(
-                'tabular-nums text-muted-foreground transition-colors group-hover:rounded-r-xl group-hover:bg-muted/50',
-                props.isSelected && 'rounded-r-xl bg-[var(--hover-bg)]'
-              )}
-            >
-              {anniversary ? formatCalendarDate(anniversary.date) : '—'}
-            </TableCell>
-          )}
+          {extraColumns.map((column, index) => {
+            const isLast = index === extraColumns.length - 1;
+            const value =
+              column === 'anniversary'
+                ? anniversary
+                  ? formatCalendarDate(anniversary.date)
+                  : '—'
+                : birthday
+                  ? formatCalendarDate(birthday)
+                  : '—';
+            return (
+              <TableCell
+                key={column}
+                className={cn(
+                  'tabular-nums text-muted-foreground transition-colors group-hover:bg-muted/50',
+                  isLast && 'group-hover:rounded-r-xl',
+                  props.isSelected && 'bg-[var(--hover-bg)]',
+                  props.isSelected && isLast && 'rounded-r-xl'
+                )}
+              >
+                {value}
+              </TableCell>
+            );
+          })}
         </>
       )}
     </TableRow>

@@ -6,8 +6,17 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Plus } from 'lucide-react';
+import type { ExtraWorkerColumnOption } from '../consts/extra-worker-columns';
 
-export function AddWorkerColumn({ onAdd }: { onAdd: () => void }) {
+export function AddWorkerColumn({
+  options,
+  onAdd,
+}: {
+  options: ExtraWorkerColumnOption[];
+  onAdd: (id: ExtraWorkerColumnOption['id']) => void;
+}) {
+  if (options.length === 0) return null;
+
   return (
     <div className="group/add-column absolute inset-y-0 right-0 flex w-10 items-center justify-center">
       <DropdownMenu>
@@ -23,7 +32,14 @@ export function AddWorkerColumn({ onAdd }: { onAdd: () => void }) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onSelect={onAdd}>Anniversary date</DropdownMenuItem>
+          {options.map((option) => (
+            <DropdownMenuItem
+              key={option.id}
+              onSelect={() => onAdd(option.id)}
+            >
+              {option.menuLabel}
+            </DropdownMenuItem>
+          ))}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

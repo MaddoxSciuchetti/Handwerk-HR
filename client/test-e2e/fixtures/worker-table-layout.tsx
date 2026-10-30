@@ -9,8 +9,14 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { AddWorkerColumn } from '@/features/worker-lifecycle/components/AddWorkerColumn';
+import { WorkerColumnSortButton } from '@/features/worker-lifecycle/components/WorkerColumnSortButton';
 import { WorkerTable } from '@/features/worker-lifecycle/components/WorkerTable';
 import ProjectItem from '@/features/worker-lifecycle/components/ProjectItem';
+import {
+  EXTRA_WORKER_COLUMN_OPTIONS,
+  type ExtraColumnSort,
+  type ExtraWorkerColumnId,
+} from '@/features/worker-lifecycle/consts/extra-worker-columns';
 import type {
   EngagementType,
   WorkerRecord,
@@ -23,14 +29,21 @@ const queryClient = new QueryClient();
 export function Harness() {
   const [type, setType] = useState<EngagementType>('transfer');
   const [pending, setPending] = useState(false);
-  const [showAnniversary, setShowAnniversary] = useState(false);
+  const [extraColumns, setExtraColumns] = useState<ExtraWorkerColumnId[]>([]);
+  const [columnSort, setColumnSort] = useState<ExtraColumnSort | null>(null);
   const [headerScrolled, setHeaderScrolled] = useState(false);
   const team = new URLSearchParams(location.search).has('team');
+  const availableExtraColumns = EXTRA_WORKER_COLUMN_OPTIONS.filter(
+    (option) => !extraColumns.includes(option.id)
+  );
+  const showAddColumn = availableExtraColumns.length > 0;
+  const addColumnOnLastFixed = showAddColumn && extraColumns.length === 0;
   const workers = Array.from({ length: 16 }, (_, index) => ({
     id: `worker-${index}`,
     firstName: index ? `Worker ${index}` : 'Alexandra',
     lastName: 'Example',
     entryDate: index ? '2017-03-04' : '2022-11-12',
+    birthday: index ? '1990-04-01' : '1985-12-15',
     engagements: [
       {
         id: `phase-${index}`,
@@ -56,7 +69,10 @@ export function Harness() {
           );
         }}
       >
-        <WorkerTable hideTaskColumns={team} showAnniversary={showAnniversary}>
+        <WorkerTable
+          hideTaskColumns={team}
+          extraColumnCount={extraColumns.length}
+        >
           <TableHeader className="[&_tr]:border-b-0">
             <TableRow className="border-0 hover:bg-transparent">
               {[
@@ -64,19 +80,70 @@ export function Harness() {
                 'Typ',
                 'Verantwortlich',
                 ...(!team ? ['Aufgaben', 'Status'] : []),
-                ...(showAnniversary ? ['Anniversary'] : []),
               ].map((name) => (
                 <TableHead
                   key={name}
-                  className={`relative pr-10 ${stickyTableHeadClassName(headerScrolled)}`}
+                  className={`relative ${addColumnOnLastFixed && name === (team ? 'Verantwortlich' : 'Status') ? 'pr-10' : 'pr-2'} ${stickyTableHeadClassName(headerScrolled)}`}
                 >
                   {name}
-                  {!showAnniversary &&
+                  {addColumnOnLastFixed &&
                     name === (team ? 'Verantwortlich' : 'Status') && (
-                      <AddWorkerColumn onAdd={() => setShowAnniversary(true)} />
+                      <AddWorkerColumn
+                        options={availableExtraColumns}
+                        onAdd={(id) =>
+                          setExtraColumns((previous) =>
+                            previous.includes(id) ? previous : [...previous, id]
+                          )
+                        }
+                      />
                     )}
                 </TableHead>
               ))}
+              {extraColumns.map((columnId, index) => {
+                const option = EXTRA_WORKER_COLUMN_OPTIONS.find(
+                  (entry) => entry.id === columnId
+                );
+                if (!option) return null;
+                const showAdd =
+                  showAddColumn && index === extraColumns.length - 1;
+                return (
+                  <TableHead
+                    key={option.id}
+                    className={`relative ${showAdd ? 'pr-10' : 'pr-2'} ${stickyTableHeadClassName(headerScrolled)}`}
+                  >
+                    <span className="inline-flex items-center">
+                      {option.headerLabel}
+                      <WorkerColumnSortButton
+                        column={option.id}
+                        sort={columnSort}
+                        onToggle={(column) =>
+                          setColumnSort((previous) =>
+                            previous?.column === column
+                              ? {
+                                  column,
+                                  direction:
+                                    previous.direction === 'asc'
+                                      ? 'desc'
+                                      : 'asc',
+                                }
+                              : { column, direction: 'asc' }
+                          )
+                        }
+                      />
+                    </span>
+                    {showAdd && (
+                      <AddWorkerColumn
+                        options={availableExtraColumns}
+                        onAdd={(id) =>
+                          setExtraColumns((previous) =>
+                            previous.includes(id) ? previous : [...previous, id]
+                          )
+                        }
+                      />
+                    )}
+                  </TableHead>
+                );
+              })}
             </TableRow>
           </TableHeader>
           <TableBody className="[&_td]:py-4 [&_td]:px-2 [&_td:first-child]:pl-10">
@@ -85,7 +152,7 @@ export function Harness() {
                 key={worker.id}
                 worker={worker}
                 hideTaskColumns={team}
-                showAnniversary={showAnniversary}
+                extraColumns={extraColumns}
                 gotopage={() => undefined}
                 isSelected={false}
                 setLargeEditMode={() => undefined}

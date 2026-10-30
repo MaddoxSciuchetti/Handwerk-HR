@@ -26,8 +26,23 @@ import type {
 } from '@/features/worker-lifecycle/types/index.types';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import { Archive, ArchiveRestore } from 'lucide-react';
-import { useRef, useState, type Dispatch, type SetStateAction } from 'react';
+import {
+  useMemo,
+  useRef,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
 import { QuestionnaireSendDialog } from '@/features/questionnaire/QuestionnaireSendDialog';
+import {
+  EXTRA_WORKER_COLUMN_OPTIONS,
+  type ExtraColumnSort,
+  type ExtraWorkerColumnId,
+} from '../consts/extra-worker-columns';
+import {
+  nextExtraColumnSort,
+  sortWorkersByExtraColumn,
+} from '../utils/extraColumnSort';
 import GreetingHeader from './GreetingHeader';
 import ProjectItem, { type WorkerSelection } from './ProjectItem';
 import { WorkerSidebar } from './WorkerSidebar';
@@ -36,6 +51,7 @@ import { useChangeResponsibleUser } from '../hooks/useChangeResponsibleUser';
 import { WorkerTypeFilter } from './WorkerTypeFilter';
 import { WorkerTable } from './WorkerTable';
 import { AddWorkerColumn } from './AddWorkerColumn';
+import { WorkerColumnSortButton } from './WorkerColumnSortButton';
 
 function WorkerLifeCycle() {
   const { user, isLoading, isError } = useAuth();
@@ -49,7 +65,8 @@ function WorkerLifeCycle() {
   } = useHome();
   const [isWorkerSidebarOpen, setIsWorkerSidebarOpen] = useState(false);
   const [headerScrolled, setHeaderScrolled] = useState(false);
-  const [showAnniversary, setShowAnniversary] = useState(false);
+  const [extraColumns, setExtraColumns] = useState<ExtraWorkerColumnId[]>([]);
+  const [columnSort, setColumnSort] = useState<ExtraColumnSort | null>(null);
   const [questionnaireEngagementId, setQuestionnaireEngagementId] = useState<
     string | null
   >(null);
@@ -82,6 +99,23 @@ function WorkerLifeCycle() {
     pendingResponsible.size > 0;
   const { employees, isTeamMode, selectedTypes, filteredWorkers, toggleType } =
     useWorkerFilter(workers, user?.id, user?.organizationId);
+  const availableExtraColumns = EXTRA_WORKER_COLUMN_OPTIONS.filter(
+    (option) => !extraColumns.includes(option.id)
+  );
+  const sortedWorkers = useMemo(
+    () => sortWorkersByExtraColumn(filteredWorkers, columnSort),
+    [filteredWorkers, columnSort]
+  );
+  const addExtraColumn = (id: ExtraWorkerColumnId) => {
+    setExtraColumns((previous) =>
+      previous.includes(id) ? previous : [...previous, id]
+    );
+  };
+  const toggleColumnSort = (column: ExtraWorkerColumnId) => {
+    setColumnSort((previous) => nextExtraColumnSort(previous, column));
+  };
+  const showAddColumn = availableExtraColumns.length > 0;
+  const addColumnOnLastFixed = showAddColumn && extraColumns.length === 0;
 
   useBodyScrollLock();
 
@@ -254,7 +288,7 @@ function WorkerLifeCycle() {
             >
               <WorkerTable
                 hideTaskColumns={isTeamMode}
-                showAnniversary={showAnniversary}
+                extraColumnCount={extraColumns.length}
                 aria-busy={isLoading || workersLoading}
               >
                 <TableHeader className="[&_tr]:border-b-0">
@@ -264,7 +298,7 @@ function WorkerLifeCycle() {
                     >
                       <div className="absolute inset-y-0 left-0 flex w-10 items-center justify-center">
                         <WorkerSelectAllCheckbox
-                          workers={filteredWorkers}
+                          workers={sortedWorkers}
                           selected={editModeData}
                           onChange={handleSetEditModeData}
                           disabled={
@@ -280,12 +314,13 @@ function WorkerLifeCycle() {
                       Typ
                     </TableHead>
                     <TableHead
-                      className={`relative py-3 pl-2 ${isTeamMode && !showAnniversary ? 'pr-10' : 'pr-2'} ${stickyTableHeadClassName(headerScrolled)}`}
+                      className={`relative py-3 pl-2 ${isTeamMode && addColumnOnLastFixed ? 'pr-10' : 'pr-2'} ${stickyTableHeadClassName(headerScrolled)}`}
                     >
                       Verantwortlich
-                      {isTeamMode && !showAnniversary && (
+                      {isTeamMode && addColumnOnLastFixed && (
                         <AddWorkerColumn
-                          onAdd={() => setShowAnniversary(true)}
+                          options={availableExtraColumns}
+                          onAdd={addExtraColumn}
                         />
                       )}
                     </TableHead>
@@ -297,39 +332,62 @@ function WorkerLifeCycle() {
                           Aufgaben
                         </TableHead>
                         <TableHead
-                          className={`relative py-3 pl-2 ${!showAnniversary ? 'pr-10' : 'pr-2'} ${stickyTableHeadClassName(headerScrolled)}`}
+                          className={`relative py-3 pl-2 ${addColumnOnLastFixed ? 'pr-10' : 'pr-2'} ${stickyTableHeadClassName(headerScrolled)}`}
                         >
                           Status
-                          {!showAnniversary && (
+                          {addColumnOnLastFixed && (
                             <AddWorkerColumn
-                              onAdd={() => setShowAnniversary(true)}
+                              options={availableExtraColumns}
+                              onAdd={addExtraColumn}
                             />
                           )}
                         </TableHead>
                       </>
                     )}
-                    {showAnniversary && (
-                      <TableHead
-                        className={`py-3 px-2 ${stickyTableHeadClassName(headerScrolled)}`}
-                      >
-                        Anniversary
-                      </TableHead>
-                    )}
+                    {extraColumns.map((columnId, index) => {
+                      const option = EXTRA_WORKER_COLUMN_OPTIONS.find(
+                        (entry) => entry.id === columnId
+                      );
+                      if (!option) return null;
+                      const showAdd =
+                        showAddColumn && index === extraColumns.length - 1;
+                      return (
+                        <TableHead
+                          key={option.id}
+                          className={`relative py-3 pl-2 ${showAdd ? 'pr-10' : 'pr-2'} ${stickyTableHeadClassName(headerScrolled)}`}
+                        >
+                          <span className="inline-flex items-center">
+                            {option.headerLabel}
+                            <WorkerColumnSortButton
+                              column={option.id}
+                              sort={columnSort}
+                              onToggle={toggleColumnSort}
+                            />
+                          </span>
+                          {showAdd && (
+                            <AddWorkerColumn
+                              options={availableExtraColumns}
+                              onAdd={addExtraColumn}
+                            />
+                          )}
+                        </TableHead>
+                      );
+                    })}
                   </TableRow>
                 </TableHeader>
                 <TableBody className="[&_tr]:border-0 [&_td]:py-4 [&_td]:px-2 [&_td:first-child]:pl-10">
                   {isLoading || workersLoading ? (
                     <TableSkeletonRows
                       variant="workers"
-                      columns={(isTeamMode ? 3 : 5) + Number(showAnniversary)}
+                      columns={(isTeamMode ? 3 : 5) + extraColumns.length}
                     />
                   ) : (
-                    filteredWorkers.map((worker) => (
+                    sortedWorkers.map((worker) => (
                       <ProjectItem
                         key={worker.id}
                         worker={worker}
                         hideTaskColumns={isTeamMode}
-                        showAnniversary={showAnniversary}
+                        extraColumns={extraColumns}
                         gotopage={handleNavigate}
                         isSelected={editModeData.some(
                           (item) => item.engagementNumber === worker.id

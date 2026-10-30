@@ -64,15 +64,16 @@ beforeEach(() => {
   state.team = false;
   state.loading = false;
   state.workers = [
-    ['worker-a', 'Alex', '2022-11-12', 'onboarding'],
-    ['worker-b', 'Ben', '2017-03-04', 'offboarding'],
-    ['worker-c', 'Chris', null, 'transfer'],
-    ['worker-d', 'Dana', 'invalid', 'transfer'],
-  ].map(([id, firstName, entryDate, type]) => ({
+    ['worker-a', 'Alex', '2022-11-12', '1998-12-13', 'onboarding'],
+    ['worker-b', 'Ben', '2017-03-04', '2005-01-07', 'offboarding'],
+    ['worker-c', 'Chris', null, null, 'transfer'],
+    ['worker-d', 'Dana', 'invalid', 'invalid', 'transfer'],
+  ].map(([id, firstName, entryDate, birthday, type]) => ({
     id,
     firstName,
     lastName: 'Example',
     entryDate,
+    birthday,
     engagements: [
       {
         id: `${id}-phase`,
@@ -85,26 +86,44 @@ beforeEach(() => {
 });
 afterEach(() => vi.useRealTimers());
 
-async function addColumn() {
+async function openAddColumn() {
   const user = userEvent.setup();
   await user.click(screen.getByRole('button', { name: 'Add column' }));
-  expect(screen.getAllByRole('menuitem')).toHaveLength(1);
-  await user.click(screen.getByRole('menuitem', { name: 'Anniversary date' }));
+  return user;
 }
+
+async function addColumn(label: string) {
+  const user = await openAddColumn();
+  await user.click(screen.getByRole('menuitem', { name: label }));
+  return user;
+}
+
 const workerRow = (name: string) => screen.getByText(name).closest('tr')!;
+
+it('offers anniversary and birthday in the add-column menu', async () => {
+  render(<WorkerLifeCycle />);
+  await openAddColumn();
+  expect(
+    screen.getByRole('menuitem', { name: 'Anniversary date' })
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole('menuitem', { name: 'Birthday' })
+  ).toBeInTheDocument();
+  expect(screen.getAllByRole('menuitem')).toHaveLength(2);
+});
 
 it('adds one date column tied to each worker through reorder, filtering and refresh', async () => {
   const view = render(<WorkerLifeCycle />);
   expect(
-    screen.queryByRole('columnheader', { name: 'Anniversary' })
+    screen.queryByRole('columnheader', { name: /Anniversary/ })
   ).not.toBeInTheDocument();
-  await addColumn();
+  await addColumn('Anniversary date');
   expect(
-    screen.getAllByRole('columnheader', { name: 'Anniversary' })
+    screen.getAllByRole('columnheader', { name: /Anniversary/ })
   ).toHaveLength(1);
   expect(
-    screen.queryByRole('button', { name: 'Add column' })
-  ).not.toBeInTheDocument();
+    screen.getByRole('button', { name: 'Add column' })
+  ).toBeInTheDocument();
   expect(screen.queryByRole('menu')).not.toBeInTheDocument();
   expect(within(workerRow('Alex')).getByText('12.11.2027')).toBeInTheDocument();
   expect(within(workerRow('Ben')).getByText('04.03.2027')).toBeInTheDocument();
@@ -125,10 +144,48 @@ it('adds one date column tied to each worker through reorder, filtering and refr
   view.unmount();
   render(<WorkerLifeCycle />);
   expect(
-    screen.queryByRole('columnheader', { name: 'Anniversary' })
+    screen.queryByRole('columnheader', { name: /Anniversary/ })
   ).not.toBeInTheDocument();
   expect(
     screen.getByRole('button', { name: 'Add column' })
+  ).toBeInTheDocument();
+});
+
+it('adds a birthday column and keeps anniversary available', async () => {
+  render(<WorkerLifeCycle />);
+  await addColumn('Birthday');
+  expect(
+    screen.getAllByRole('columnheader', { name: /Birthday/ })
+  ).toHaveLength(1);
+  expect(within(workerRow('Alex')).getByText('13.12.1998')).toBeInTheDocument();
+  expect(within(workerRow('Ben')).getByText('07.01.2005')).toBeInTheDocument();
+  const user = await openAddColumn();
+  expect(screen.getAllByRole('menuitem')).toHaveLength(1);
+  await user.click(screen.getByRole('menuitem', { name: 'Anniversary date' }));
+  expect(
+    screen.getAllByRole('columnheader', { name: /Anniversary/ })
+  ).toHaveLength(1);
+  expect(
+    screen.queryByRole('button', { name: 'Add column' })
+  ).not.toBeInTheDocument();
+});
+
+it('sorts the added column ascending then descending', async () => {
+  const user = userEvent.setup();
+  render(<WorkerLifeCycle />);
+  await addColumn('Birthday');
+  const names = () =>
+    screen.getAllByRole('row').slice(1).map((row) => within(row).getAllByRole('cell')[0].textContent);
+  expect(names()).toEqual(['Alex', 'Ben', 'Chris', 'Dana']);
+  await user.click(screen.getByRole('button', { name: 'Sort column' }));
+  expect(names()).toEqual(['Ben', 'Alex', 'Chris', 'Dana']);
+  expect(
+    screen.getByRole('button', { name: 'Sort ascending' })
+  ).toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Sort ascending' }));
+  expect(names()).toEqual(['Alex', 'Ben', 'Chris', 'Dana']);
+  expect(
+    screen.getByRole('button', { name: 'Sort descending' })
   ).toBeInTheDocument();
 });
 
@@ -138,7 +195,7 @@ it.each([false, true])(
     state.team = team;
     state.loading = true;
     const { container } = render(<WorkerLifeCycle />);
-    await addColumn();
+    await addColumn('Anniversary date');
     const columns = team ? 4 : 6;
     expect(screen.getAllByRole('columnheader')).toHaveLength(columns);
     expect(container.querySelectorAll('colgroup col')).toHaveLength(columns);
