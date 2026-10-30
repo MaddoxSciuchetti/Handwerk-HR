@@ -11,6 +11,8 @@ import { Check, Upload, X } from 'lucide-react';
 import { FormEvent, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { DocumentKindSelect } from './components/DocumentKindSelect';
+import { SharePointFilePicker } from './components/SharePointFilePicker';
+import type { SharePointFileHit } from './documentMasters.api';
 import {
   DOCUMENT_MASTER_KINDS,
   TEMPLATE_DOCUMENT_KINDS,
@@ -18,6 +20,7 @@ import {
   normalizeDocumentKind,
 } from './documentMaster.types';
 import { useCreateDocumentMaster } from './useCreateDocumentMaster';
+import { useImportSharePointDocumentMaster } from './useImportSharePointDocumentMaster';
 
 type AddDocumentMasterDialogProps = {
   onClose: () => void;
@@ -72,6 +75,7 @@ export function AddDocumentMasterDialog({
 }: AddDocumentMasterDialogProps) {
   const navigate = useNavigate();
   const createMaster = useCreateDocumentMaster();
+  const importSharePoint = useImportSharePointDocumentMaster();
   const presetKinds =
     purpose === 'template' ? TEMPLATE_DOCUMENT_KINDS : DOCUMENT_MASTER_KINDS;
   const initialLabel =
@@ -85,6 +89,8 @@ export function AddDocumentMasterDialog({
   const [kindLabel, setKindLabel] = useState(initialLabel);
   const [name, setName] = useState('');
   const [drafts, setDrafts] = useState<UploadDraft[]>([]);
+  const [sharePointFile, setSharePointFile] =
+    useState<SharePointFileHit | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -97,7 +103,9 @@ export function AddDocumentMasterDialog({
     Boolean(kindsReady) &&
     (multiple
       ? drafts.every((draft) => draft.name.trim().length > 0)
-      : drafts.length === 1 && name.trim().length > 0);
+      : sharePointFile
+        ? name.trim().length > 0
+        : drafts.length === 1 && name.trim().length > 0);
 
   const rememberKind = (label: string) => {
     const next = label.trim();
@@ -118,7 +126,19 @@ export function AddDocumentMasterDialog({
       return;
     }
     setError(null);
+    setSharePointFile(null);
     setDrafts(draftsFromFiles(files, initialLabel));
+  };
+
+  const selectSharePointFile = (file: SharePointFileHit | null) => {
+    setError(null);
+    setSharePointFile(file);
+    if (file) {
+      setDrafts([]);
+      if (!name.trim()) {
+        setName(file.name.replace(/\.[^.]+$/, ''));
+      }
+    }
   };
 
   const updateDraft = (key: string, patch: Partial<UploadDraft>) => {
@@ -137,6 +157,37 @@ export function AddDocumentMasterDialog({
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
     if (!ready || pending) return;
+
+    if (sharePointFile && !multiple) {
+      const kind =
+        purpose === 'contract'
+          ? 'employment_contract'
+          : normalizeDocumentKind(kindLabel);
+      if (!kind) {
+        setError('Bitte eine Art angeben.');
+        return;
+      }
+      setPending(true);
+      setError(null);
+      try {
+        const created = await importSharePoint.mutateAsync({
+          kind,
+          name: name.trim(),
+          driveId: sharePointFile.driveId,
+          itemId: sharePointFile.id,
+        });
+        onClose();
+        navigate({
+          to: '/settings/documents/$id',
+          params: { id: created.id },
+        });
+      } catch (submitError) {
+        setError(messageFrom(submitError));
+      } finally {
+        setPending(false);
+      }
+      return;
+    }
 
     const uploads = multiple
       ? drafts.map((draft) => ({
@@ -283,6 +334,14 @@ export function AddDocumentMasterDialog({
                 ) : null}
               </button>
             </div>
+
+            {multiple ? null : (
+              <SharePointFilePicker
+                disabled={pending}
+                selected={sharePointFile}
+                onSelect={selectSharePointFile}
+              />
+            )}
 
             {multiple ? (
               drafts.map((draft, index) => (

@@ -9,6 +9,8 @@ import {
   updateMaster,
   getDocumentFontStatus,
   previewMasterPdf,
+  searchSharePointMasters,
+  importSharePointMaster,
 } from "@/controllers/documentMaster.controller";
 import { upload } from "@/middleware/fileparser";
 
@@ -24,6 +26,8 @@ documentMasterRoutes.post("/description-sentences", createDescriptionSentence);
 
 documentMasterRoutes.get("/", listMasters);
 documentMasterRoutes.get("/font-status", getDocumentFontStatus);
+documentMasterRoutes.get("/sharepoint/search", searchSharePointMasters);
+documentMasterRoutes.post("/sharepoint/import", importSharePointMaster);
 documentMasterRoutes.post("/", upload.single("file"), createMaster);
 documentMasterRoutes.get("/:id/preview.pdf", previewMasterPdf);
 documentMasterRoutes.post("/:id/preview.pdf", previewMasterPdf);

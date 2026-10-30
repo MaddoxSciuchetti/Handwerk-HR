@@ -15,6 +15,12 @@ import {
   segmentsFromText,
 } from "@/services/documentBody";
 import { importStyledDocument } from "@/services/importStyledDocument";
+import {
+  downloadSharePointFile,
+  searchSharePointFiles,
+  sharePointFileAsMulter,
+} from "@/services/microsoft365/sharePointDocuments";
+import { TeamsError } from "@/services/microsoftTeams/connection";
 import { parseStyledDocument } from "@/services/styledDocument";
 import { fontStatus, fontBytes } from "@/services/documentFonts";
 import { uploadFileToS3 } from "@/config/aws";
@@ -41,6 +47,51 @@ export const listMasters = catchErrors(async (req, res) => {
   return res.status(OK).json(masters);
 });
 
+async function persistImportedMaster(params: {
+  organizationId: string;
+  kind: string;
+  name: string;
+  file: Express.Multer.File;
+}) {
+  const imported = await importStyledDocument(params.file);
+  const document = parseStyledDocument({
+    ...imported.document,
+    importWarnings: imported.warnings
+      .slice(0, 100)
+      .map((warning) => warning.slice(0, 500)),
+  });
+  const stored = await uploadFileToS3(
+    params.file,
+    params.organizationId,
+    "documents/originals",
+  );
+  appAssert(
+    stored.success && stored.key,
+    BAD_REQUEST,
+    "Original konnte nicht gespeichert werden.",
+  );
+
+  const master = await createDocumentMaster({
+    organizationId: params.organizationId,
+    kind: params.kind,
+    name: params.name,
+    document,
+    sourceKey: stored.key,
+    sourceName: params.file.originalname,
+    sourceMime: params.file.mimetype,
+  });
+
+  return { ...master, importWarnings: imported.warnings };
+}
+
+function requireActor(req: { orgId?: string; userId?: string }) {
+  appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
+  if (!req.userId) {
+    throw new TeamsError("access_denied", "Bitte erneut anmelden.", 403);
+  }
+  return { organizationId: req.orgId, userId: req.userId };
+}
+
 export const createMaster = catchErrors(async (req, res) => {
   appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
   const file = req.file;
@@ -52,33 +103,61 @@ export const createMaster = catchErrors(async (req, res) => {
   appAssert(body.kind, BAD_REQUEST, "Dokumentart fehlt.");
   const name = requireName(typeof body.name === "string" ? body.name : "");
 
-  const imported = await importStyledDocument(file);
-  const document = parseStyledDocument({
-    ...imported.document,
-    importWarnings: imported.warnings
-      .slice(0, 100)
-      .map((warning) => warning.slice(0, 500)),
-  });
-  const stored = await uploadFileToS3(file, req.orgId, "documents/originals");
-  appAssert(
-    stored.success && stored.key,
-    BAD_REQUEST,
-    "Original konnte nicht gespeichert werden.",
-  );
-
-  const master = await createDocumentMaster({
+  const master = await persistImportedMaster({
     organizationId: req.orgId,
     kind: body.kind,
     name,
-    document,
-    sourceKey: stored.key,
-    sourceName: file.originalname,
-    sourceMime: file.mimetype,
+    file,
   });
 
-  return res
-    .status(CREATED)
-    .json({ ...master, importWarnings: imported.warnings });
+  return res.status(CREATED).json(master);
+});
+
+export const searchSharePointMasters = catchErrors(async (req, res) => {
+  const actor = requireActor(req);
+  const query = typeof req.query.q === "string" ? req.query.q : "";
+  const files = await searchSharePointFiles(actor, query);
+  return res.status(OK).json({ files });
+});
+
+export const importSharePointMaster = catchErrors(async (req, res) => {
+  const actor = requireActor(req);
+  const body = req.body as {
+    kind?: string;
+    name?: string;
+    driveId?: string;
+    itemId?: string;
+  };
+  appAssert(body.kind, BAD_REQUEST, "Dokumentart fehlt.");
+  appAssert(
+    typeof body.driveId === "string" && body.driveId.trim(),
+    BAD_REQUEST,
+    "SharePoint-Datei fehlt.",
+  );
+  appAssert(
+    typeof body.itemId === "string" && body.itemId.trim(),
+    BAD_REQUEST,
+    "SharePoint-Datei fehlt.",
+  );
+
+  const downloaded = await downloadSharePointFile(actor, {
+    driveId: body.driveId,
+    itemId: body.itemId,
+  });
+  const name = requireName(
+    typeof body.name === "string" && body.name.trim()
+      ? body.name
+      : downloaded.name.replace(/\.[^.]+$/, ""),
+  );
+  const file = sharePointFileAsMulter(downloaded);
+  const master = await persistImportedMaster({
+    organizationId: actor.organizationId,
+    kind: body.kind,
+    name,
+    file,
+  });
+
+  return res.status(CREATED).json(master);
 });
 
 export const getMaster = catchErrors(async (req, res) => {

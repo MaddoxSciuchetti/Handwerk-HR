@@ -6,7 +6,11 @@ import {
   setPrimaryDocumentMaster,
 } from '@/features/settings/documents/documentMasters.api';
 import { listDocumentMasters } from '@/features/settings/documents/documentMasters.api';
-import { createDocumentMaster } from '@/features/settings/documents/documentMasters.api';
+import {
+  createDocumentMaster,
+  importSharePointDocumentMaster,
+  searchSharePointFiles,
+} from '@/features/settings/documents/documentMasters.api';
 import { fromSegments } from '@/features/settings/documents/styledDocument';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -14,6 +18,10 @@ import { renderWithProviders } from 'test-unit/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const navigate = vi.fn();
+const teamsMocks = vi.hoisted(() => ({
+  getConnection: vi.fn(),
+  connectTeams: vi.fn(),
+}));
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
   const actual =
@@ -24,17 +32,56 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
   };
 });
 
+vi.mock('@/features/user-profile/hooks/useAuth', () => ({
+  default: () => ({
+    user: { id: 'user-1', organizationId: 'org-1' },
+    isLoading: false,
+    isError: false,
+  }),
+}));
+
+vi.mock('@/features/microsoft-teams/teams.api', () => ({
+  connectionKey: (userId?: string, organizationId?: string) => [
+    'microsoft-teams',
+    organizationId,
+    userId,
+  ],
+  getConnection: teamsMocks.getConnection,
+  connectTeams: teamsMocks.connectTeams,
+  teamsError: (error: unknown) =>
+    error &&
+    typeof error === 'object' &&
+    'message' in error &&
+    typeof error.message === 'string'
+      ? error.message
+      : 'Microsoft Teams ist derzeit nicht verfügbar.',
+}));
+
 vi.mock('@/features/settings/documents/documentMasters.api', () => ({
   listDocumentMasters: vi.fn(),
   setPrimaryDocumentMaster: vi.fn(),
   createDocumentMaster: vi.fn(),
   deleteDocumentMaster: vi.fn(),
+  searchSharePointFiles: vi.fn(),
+  importSharePointDocumentMaster: vi.fn(),
 }));
 
 describe('document settings', () => {
   beforeEach(() => {
     navigate.mockClear();
     vi.mocked(createDocumentMaster).mockReset();
+    vi.mocked(searchSharePointFiles).mockReset();
+    vi.mocked(importSharePointDocumentMaster).mockReset();
+    teamsMocks.getConnection.mockReset();
+    teamsMocks.connectTeams.mockReset();
+    teamsMocks.getConnection.mockResolvedValue({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      ready: true,
+      live: true,
+      status: 'connected',
+      account: { displayName: 'Ada', username: 'ada@example.test' },
+    });
   });
   it('requires a chosen name instead of copying a generated upload filename', async () => {
     const user = userEvent.setup();
@@ -72,6 +119,64 @@ describe('document settings', () => {
       })
     );
   });
+
+  it('imports a selected SharePoint file into the document editor', async () => {
+    const user = userEvent.setup();
+    vi.mocked(searchSharePointFiles).mockResolvedValue({
+      files: [
+        {
+          id: 'item-1',
+          driveId: 'drive-1',
+          name: 'Montagevertrag.docx',
+          size: 1000,
+          lastModified: null,
+          mimeType:
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          webUrl: null,
+          libraryName: 'Vorlagen',
+        },
+      ],
+    });
+    vi.mocked(importSharePointDocumentMaster).mockResolvedValue({
+      id: 'sharepoint-master',
+    } as Awaited<ReturnType<typeof importSharePointDocumentMaster>>);
+
+    renderWithProviders(<AddDocumentMasterDialog onClose={vi.fn()} />);
+
+    const sharePointSearch = await screen.findByLabelText('SharePoint');
+    fireEvent.change(sharePointSearch, {
+      target: { value: 'Montagevertrag' },
+    });
+    await waitFor(
+      () =>
+        expect(searchSharePointFiles).toHaveBeenCalledWith('Montagevertrag'),
+      { timeout: 2000 }
+    );
+    await user.click(
+      await screen.findByRole('option', { name: /Montagevertrag\.docx/i })
+    );
+    expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue(
+      'Montagevertrag'
+    );
+    fireEvent.submit(
+      screen.getByRole('button', { name: 'Anlegen' }).closest('form')!
+    );
+    await waitFor(() =>
+      expect(importSharePointDocumentMaster).toHaveBeenCalledWith({
+        kind: 'employment_contract',
+        name: 'Montagevertrag',
+        driveId: 'drive-1',
+        itemId: 'item-1',
+      })
+    );
+    await waitFor(() =>
+      expect(navigate).toHaveBeenCalledWith({
+        to: '/settings/documents/$id',
+        params: { id: 'sharepoint-master' },
+      })
+    );
+  });
+
   it('chooses the new document type from a dropdown containing Arbeitszeugnis', async () => {
     const user = userEvent.setup();
     renderWithProviders(<AddDocumentMasterDialog onClose={vi.fn()} />);

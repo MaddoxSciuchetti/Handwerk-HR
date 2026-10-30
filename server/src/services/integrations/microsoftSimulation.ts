@@ -39,6 +39,64 @@ export async function microsoftGraphFetch(
 
     const path = new URL(url).pathname.replace(/^\/v1\.0/, "");
     const method = init?.method ?? "GET";
+    if (method === "POST" && path === "/search/query") {
+        return Response.json({
+            value: [
+                {
+                    hitsContainers: [
+                        {
+                            hits: [
+                                {
+                                    resource: {
+                                        id: "simulation-sharepoint-contract",
+                                        name: "Arbeitsvertrag Vorlage.docx",
+                                        size: 12345,
+                                        webUrl: "https://example.test/contract.docx",
+                                        lastModifiedDateTime:
+                                            "2026-01-15T10:00:00Z",
+                                        file: {
+                                            mimeType:
+                                                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                                        },
+                                        parentReference: {
+                                            driveId: "simulation-drive",
+                                            name: "Vorlagen",
+                                            path: "/drives/simulation-drive/root:/Vorlagen",
+                                        },
+                                    },
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        });
+    }
+    const driveItem = path.match(
+        /^\/drives\/([^/]+)\/items\/([^/]+)(?:\/content)?$/,
+    );
+    if (driveItem) {
+        const [, driveId, itemId] = driveItem;
+        const isContent = path.endsWith("/content");
+        if (method === "GET" && !isContent) {
+            return Response.json({
+                id: decodeURIComponent(itemId),
+                name: "Arbeitsvertrag Vorlage.docx",
+                size: 12345,
+                file: {
+                    mimeType:
+                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                },
+                parentReference: { driveId: decodeURIComponent(driveId) },
+            });
+        }
+        if (method === "GET" && isContent) {
+            return new Response("Simulierter SharePoint-Inhalt", {
+                status: 200,
+                headers: { "Content-Type": "text/plain" },
+            });
+        }
+    }
     if (method === "GET" && path === "/groups") {
         return Response.json({
             value: [
