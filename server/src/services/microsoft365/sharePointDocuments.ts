@@ -8,6 +8,7 @@ import {
 import {
     authenticationRejected,
     graphFetch,
+    paginationPath,
 } from "@/services/microsoftTeams/graph";
 
 const GRAPH = "https://graph.microsoft.com/v1.0";
@@ -17,6 +18,10 @@ const MIME_BY_EXTENSION: Record<string, string> = {
     docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     txt: "text/plain",
 };
+const MAX_LIVE_DRIVES = 5;
+const MAX_LIVE_ITEMS_PER_DRIVE = 300;
+const MAX_LIVE_FOLDER_EXPANDS = 40;
+const MAX_RESULTS = 40;
 
 export type SharePointFileHit = {
     id: string;
@@ -36,13 +41,11 @@ type SearchHitResource = {
     webUrl?: string;
     lastModifiedDateTime?: string;
     file?: { mimeType?: string };
+    folder?: Record<string, unknown>;
     parentReference?: {
         driveId?: string;
         name?: string;
         path?: string;
-        sharepointIds?: { listId?: string };
-    };
-    listItem?: {
         sharepointIds?: { listId?: string };
     };
 };
@@ -70,9 +73,13 @@ function libraryNameFrom(resource: SearchHitResource) {
     return null;
 }
 
-function mapHit(resource: SearchHitResource): SharePointFileHit | null {
+function mapHit(
+    resource: SearchHitResource,
+    fallbackDriveId?: string,
+): SharePointFileHit | null {
     const id = resource.id?.trim();
-    const driveId = resource.parentReference?.driveId?.trim();
+    const driveId =
+        resource.parentReference?.driveId?.trim() || fallbackDriveId?.trim();
     const name = resource.name?.trim();
     if (!id || !driveId || !name || !isAllowedFile(name)) return null;
     return {
@@ -97,6 +104,36 @@ const MOCK_FILES: SharePointFileHit[] = [
         mimeType: MIME_BY_EXTENSION.docx,
         webUrl: "https://example.test/Arbeitsvertrag%20Vorlage.docx",
         libraryName: "Vorlagen",
+    },
+    {
+        id: "mock-sharepoint-text-1",
+        driveId: "mock-drive",
+        name: "Text 1.docx",
+        size: 100,
+        lastModified: "2026-10-30T12:00:00Z",
+        mimeType: MIME_BY_EXTENSION.docx,
+        webUrl: "https://example.test/Text%201.docx",
+        libraryName: "Neue_Mitarbeiter",
+    },
+    {
+        id: "mock-sharepoint-text-2",
+        driveId: "mock-drive",
+        name: "Text 2.docx",
+        size: 100,
+        lastModified: "2026-10-30T12:01:00Z",
+        mimeType: MIME_BY_EXTENSION.docx,
+        webUrl: "https://example.test/Text%202.docx",
+        libraryName: "Neue_Mitarbeiter",
+    },
+    {
+        id: "mock-sharepoint-text-4",
+        driveId: "mock-drive",
+        name: "Text 4.docx",
+        size: 100,
+        lastModified: "2026-10-30T12:04:00Z",
+        mimeType: MIME_BY_EXTENSION.docx,
+        webUrl: "https://example.test/Text%204.docx",
+        libraryName: "Neue_Mitarbeiter",
     },
     {
         id: "mock-sharepoint-nda",
@@ -128,22 +165,25 @@ function collectHits(
     hits: SharePointFileHit[],
     seen: Set<string>,
     resource: SearchHitResource | null | undefined,
+    fallbackDriveId?: string,
 ) {
-    const mapped = resource ? mapHit(resource) : null;
+    const mapped = resource ? mapHit(resource, fallbackDriveId) : null;
     if (!mapped) return;
-    const key = `${mapped.driveId}:${mapped.id}`;
+    // Same file can appear from recent + live scan with different item ids.
+    const key = `${mapped.driveId}:${mapped.name.toLocaleLowerCase("de")}`;
     if (seen.has(key)) return;
     seen.add(key);
     hits.push(mapped);
 }
 
 function searchQueryString(trimmed: string) {
-    const safe = trimmed.replace(/"/g, "");
-    return `"${safe}" (FileExtension:docx OR FileExtension:pdf OR FileExtension:txt OR FileType:docx OR FileType:pdf OR FileType:txt)`;
+    const safe = trimmed.replace(/["\\]/g, "");
+    // Prefix/wildcard matching so "text" hits Text 1.docx … Text 4.docx, not only one ranked hit.
+    return `(filename:${safe}* OR ${safe}*) (FileExtension:docx OR FileExtension:pdf OR FileExtension:txt OR FileType:docx OR FileType:pdf OR FileType:txt)`;
 }
 
 async function searchIndexedFiles(token: string, trimmed: string) {
-    const response = await graphFetch(token, "/search/query", {
+    return graphFetch(token, "/search/query", {
         method: "POST",
         body: JSON.stringify({
             requests: [
@@ -151,22 +191,123 @@ async function searchIndexedFiles(token: string, trimmed: string) {
                     entityTypes: ["driveItem"],
                     query: { queryString: searchQueryString(trimmed) },
                     from: 0,
-                    size: 25,
+                    size: 50,
                 },
             ],
         }),
     });
-    return response;
 }
 
-async function searchRecentFiles(token: string, trimmed: string) {
-    // Recent files are activity-based, not search-index-based, so brand-new
-    // uploads the user just touched show up here before Graph Search indexes them.
-    const response = await graphFetch(
+async function fetchRecentFiles(token: string) {
+    return graphFetch(
         token,
-        "/me/drive/recent?$top=50&$select=id,name,size,webUrl,lastModifiedDateTime,file,parentReference",
+        "/me/drive/recent?$top=100&$select=id,name,size,webUrl,lastModifiedDateTime,file,folder,parentReference",
     );
-    return { response, trimmed };
+}
+
+type DriveChildPage = {
+    value?: SearchHitResource[];
+    "@odata.nextLink"?: string;
+};
+
+async function listDriveChildren(
+    token: string,
+    driveId: string,
+    itemId: string,
+): Promise<SearchHitResource[]> {
+    const items: SearchHitResource[] = [];
+    let path: string | undefined =
+        `/drives/${encodeURIComponent(driveId)}/items/${encodeURIComponent(itemId)}/children?$top=200&$select=id,name,size,webUrl,lastModifiedDateTime,file,folder,parentReference`;
+    const visited = new Set<string>();
+    while (path && items.length < MAX_LIVE_ITEMS_PER_DRIVE) {
+        if (visited.has(path) || visited.size >= 20) break;
+        visited.add(path);
+        const response = await graphFetch(token, path);
+        if (response.status === 401) return Promise.reject({ status: 401 });
+        if (!response.ok) break;
+        const payload = (await response.json()) as DriveChildPage;
+        items.push(...(payload.value ?? []));
+        path = payload["@odata.nextLink"]
+            ? paginationPath(payload["@odata.nextLink"])
+            : undefined;
+    }
+    return items;
+}
+
+/** Walk the live drive tree (not the search index) so new files appear immediately. */
+async function liveScanDrive(
+    token: string,
+    driveId: string,
+    query: string,
+): Promise<SearchHitResource[]> {
+    const matches: SearchHitResource[] = [];
+    const queue: string[] = ["root"];
+    let itemsSeen = 0;
+    let foldersExpanded = 0;
+
+    while (queue.length > 0 && itemsSeen < MAX_LIVE_ITEMS_PER_DRIVE) {
+        const itemId = queue.shift()!;
+        let children: SearchHitResource[];
+        try {
+            children = await listDriveChildren(token, driveId, itemId);
+        } catch (error) {
+            if (
+                error &&
+                typeof error === "object" &&
+                "status" in error &&
+                error.status === 401
+            ) {
+                throw error;
+            }
+            break;
+        }
+        for (const child of children) {
+            itemsSeen += 1;
+            if (!child.id) continue;
+            if (child.folder) {
+                if (foldersExpanded < MAX_LIVE_FOLDER_EXPANDS) {
+                    foldersExpanded += 1;
+                    queue.push(child.id);
+                }
+                continue;
+            }
+            if (
+                child.file &&
+                child.name &&
+                isAllowedFile(child.name) &&
+                matchesQuery(child.name, query)
+            ) {
+                matches.push({
+                    ...child,
+                    parentReference: {
+                        ...child.parentReference,
+                        driveId,
+                    },
+                });
+            }
+            if (matches.length >= MAX_RESULTS) return matches;
+        }
+    }
+    return matches;
+}
+
+function uniqueDriveIds(items: SearchHitResource[]) {
+    const ids: string[] = [];
+    const seen = new Set<string>();
+    for (const item of items) {
+        const driveId = item.parentReference?.driveId?.trim();
+        if (!driveId || seen.has(driveId)) continue;
+        seen.add(driveId);
+        ids.push(driveId);
+        if (ids.length >= MAX_LIVE_DRIVES) break;
+    }
+    return ids;
+}
+
+function sortHits(hits: SharePointFileHit[]) {
+    return hits.sort((a, b) =>
+        a.name.localeCompare(b.name, "de", { numeric: true }),
+    );
 }
 
 export async function searchSharePointFiles(
@@ -177,27 +318,29 @@ export async function searchSharePointFiles(
     if (!trimmed) return [];
     if (integrationsMocked()) {
         await assertActiveMember(actor);
-        return MOCK_FILES.filter((file) => matchesQuery(file.name, trimmed));
+        return sortHits(
+            MOCK_FILES.filter((file) => matchesQuery(file.name, trimmed)),
+        );
     }
 
     const auth = await accessToken(actor);
-    const [indexedResponse, recentResult] = await Promise.all([
+    const [indexedResponse, recentResponse] = await Promise.all([
         searchIndexedFiles(auth.token, trimmed),
-        searchRecentFiles(auth.token, trimmed),
+        fetchRecentFiles(auth.token),
     ]);
 
-    if (indexedResponse.status === 401 || recentResult.response.status === 401) {
+    if (indexedResponse.status === 401 || recentResponse.status === 401) {
         await authenticationRejected(actor);
         throw new TeamsError(
             "reconnect_required",
             "Bitte Microsoft unter Einstellungen → Integrationen erneut verbinden.",
         );
     }
-    if (!indexedResponse.ok && !recentResult.response.ok) {
+    if (!indexedResponse.ok && !recentResponse.ok) {
         throw new TeamsError(
             "sharepoint_search_failed",
             "Microsoft konnte die SharePoint-Suche nicht ausführen. Bitte Berechtigungen prüfen.",
-            indexedResponse.status === 403 || recentResult.response.status === 403
+            indexedResponse.status === 403 || recentResponse.status === 403
                 ? 403
                 : 503,
         );
@@ -205,6 +348,18 @@ export async function searchSharePointFiles(
 
     const hits: SharePointFileHit[] = [];
     const seen = new Set<string>();
+    let recentItems: SearchHitResource[] = [];
+
+    if (recentResponse.ok) {
+        const payload = (await recentResponse.json()) as {
+            value?: SearchHitResource[];
+        };
+        recentItems = payload.value ?? [];
+        for (const item of recentItems) {
+            if (!item.name || !matchesQuery(item.name, trimmed)) continue;
+            collectHits(hits, seen, item);
+        }
+    }
 
     if (indexedResponse.ok) {
         const payload = (await indexedResponse.json()) as {
@@ -223,17 +378,37 @@ export async function searchSharePointFiles(
         }
     }
 
-    if (recentResult.response.ok) {
-        const payload = (await recentResult.response.json()) as {
-            value?: SearchHitResource[];
-        };
-        for (const item of payload.value ?? []) {
-            if (!item.name || !matchesQuery(item.name, trimmed)) continue;
-            collectHits(hits, seen, item);
+    const driveIds = uniqueDriveIds(recentItems);
+    if (driveIds.length > 0) {
+        const liveResults = await Promise.all(
+            driveIds.map(async (driveId) => {
+                try {
+                    return await liveScanDrive(auth.token, driveId, trimmed);
+                } catch (error) {
+                    if (
+                        error &&
+                        typeof error === "object" &&
+                        "status" in error &&
+                        error.status === 401
+                    ) {
+                        await authenticationRejected(actor);
+                        throw new TeamsError(
+                            "reconnect_required",
+                            "Bitte Microsoft unter Einstellungen → Integrationen erneut verbinden.",
+                        );
+                    }
+                    return [] as SearchHitResource[];
+                }
+            }),
+        );
+        for (const [index, items] of liveResults.entries()) {
+            for (const item of items) {
+                collectHits(hits, seen, item, driveIds[index]);
+            }
         }
     }
 
-    return hits;
+    return sortHits(hits).slice(0, MAX_RESULTS);
 }
 
 export async function downloadSharePointFile(

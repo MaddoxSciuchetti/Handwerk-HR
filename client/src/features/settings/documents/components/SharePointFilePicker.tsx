@@ -9,7 +9,7 @@ import {
 } from '@/features/microsoft-teams/teams.api';
 import useAuth from '@/features/user-profile/hooks/useAuth';
 import { cn } from '@/lib/utils';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import {
@@ -37,7 +37,7 @@ export function SharePointFilePicker({
   const [debounced, setDebounced] = useState('');
 
   useEffect(() => {
-    const handle = window.setTimeout(() => setDebounced(query.trim()), 300);
+    const handle = window.setTimeout(() => setDebounced(query.trim()), 120);
     return () => window.clearTimeout(handle);
   }, [query]);
 
@@ -66,10 +66,12 @@ export function SharePointFilePicker({
     queryKey: ['sharepoint-files', user?.organizationId, user?.id, debounced],
     queryFn: () => searchSharePointFiles(debounced),
     enabled: Boolean(microsoftReady && debounced.length > 0 && !disabled),
-    staleTime: 15_000,
+    staleTime: 5_000,
+    placeholderData: keepPreviousData,
   });
 
   const files = search.data?.files ?? [];
+  const showResults = Boolean(debounced) && !search.isError;
 
   return (
     <div className="flex flex-col gap-2">
@@ -137,14 +139,14 @@ export function SharePointFilePicker({
               {searchErrorMessage(search.error)}
             </p>
           ) : null}
-          {debounced && !search.isFetching && !search.isError ? (
-            files.length === 0 ? (
+          {showResults ? (
+            files.length === 0 && !search.isFetching ? (
               <p className="text-sm text-muted-foreground">
                 Keine passenden Dateien gefunden.
               </p>
-            ) : (
+            ) : files.length > 0 ? (
               <ul
-                className="max-h-48 overflow-y-auto rounded-2xl border border-border"
+                className="max-h-56 overflow-y-auto rounded-2xl border border-border"
                 role="listbox"
                 aria-label="SharePoint-Dateien"
               >
@@ -178,7 +180,7 @@ export function SharePointFilePicker({
                   );
                 })}
               </ul>
-            )
+            ) : null
           ) : null}
         </>
       )}
