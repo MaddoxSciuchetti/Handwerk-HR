@@ -18,7 +18,6 @@ import { useMemo, useState } from 'react';
 import useHome from '../hooks/useHome';
 import { nextUpcomingAnniversary } from '../utils/companyAnniversary';
 import { compareTeamWorkers, isTeamMember } from '../utils/teamMembers';
-import NextAnniversary from './NextAnniversary';
 import ProjectItem from './ProjectItem';
 
 function TeamPage() {
@@ -48,10 +47,6 @@ function TeamPage() {
   return (
     <div className="mx-auto flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-card p-6 text-card-foreground md:max-w-8xl">
       <div className="flex h-full min-h-0 w-full flex-col">
-        <NextAnniversary
-          people={teamWorkers}
-          isLoading={isLoading || workersLoading}
-        />
         <Card className="flex min-h-0 flex-1 flex-col gap-0 border border-border py-0 shadow-none ring-0">
           <CardHeader className="flex shrink-0 flex-row items-center px-6 py-3">
             <CardTitle className="text-base font-medium">Team</CardTitle>
