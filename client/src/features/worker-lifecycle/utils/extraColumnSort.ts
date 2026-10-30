@@ -1,5 +1,8 @@
 import type { WorkerRecord } from '../types/index.types';
-import type { ExtraColumnSort, ExtraWorkerColumnId } from '../consts/extra-worker-columns';
+import type {
+  ExtraColumnSort,
+  ExtraWorkerColumnId,
+} from '../consts/extra-worker-columns';
 import { nextCompanyAnniversary } from './companyAnniversary';
 import { parseCalendarDate } from './calendarDate';
 
@@ -16,13 +19,25 @@ function anniversarySortKey(entryDate: string | null | undefined): number {
   return anniversary.date.getTime();
 }
 
+function calendarDateSortKey(value: string | null | undefined): number {
+  if (!value) return Number.POSITIVE_INFINITY;
+  const date = parseCalendarDate(value);
+  if (!date) return Number.POSITIVE_INFINITY;
+  return date.getTime();
+}
+
 function columnSortKey(
   worker: WorkerRecord,
   column: ExtraWorkerColumnId
 ): number {
-  return column === 'birthday'
-    ? birthdaySortKey(worker.birthday)
-    : anniversarySortKey(worker.entryDate);
+  switch (column) {
+    case 'birthday':
+      return birthdaySortKey(worker.birthday);
+    case 'entryDate':
+      return calendarDateSortKey(worker.entryDate);
+    case 'anniversary':
+      return anniversarySortKey(worker.entryDate);
+  }
 }
 
 export function sortWorkersByExtraColumn(

@@ -1,4 +1,8 @@
-export const EXTRA_WORKER_COLUMN_IDS = ['anniversary', 'birthday'] as const;
+export const EXTRA_WORKER_COLUMN_IDS = [
+  'anniversary',
+  'birthday',
+  'entryDate',
+] as const;
 
 export type ExtraWorkerColumnId = (typeof EXTRA_WORKER_COLUMN_IDS)[number];
 
@@ -18,6 +22,11 @@ export const EXTRA_WORKER_COLUMN_OPTIONS: ExtraWorkerColumnOption[] = [
     id: 'birthday',
     menuLabel: 'Birthday',
     headerLabel: 'Birthday',
+  },
+  {
+    id: 'entryDate',
+    menuLabel: 'Eintrittsdatum',
+    headerLabel: 'Eintrittsdatum',
   },
 ];
 

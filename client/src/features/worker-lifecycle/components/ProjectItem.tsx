@@ -86,11 +86,17 @@ function ProjectItem(props: ProjectItemProps) {
   const extraColumns = !isTeam ? (props.extraColumns ?? []) : [];
   const showAnniversary = extraColumns.includes('anniversary');
   const showBirthday = extraColumns.includes('birthday');
+  const showEntryDate = extraColumns.includes('entryDate');
   const hasExtraColumns = extraColumns.length > 0;
   const anniversary = showAnniversary
     ? nextCompanyAnniversary(worker.entryDate)
     : null;
-  const birthday = showBirthday ? parseCalendarDate(worker.birthday ?? '') : null;
+  const birthday = showBirthday
+    ? parseCalendarDate(worker.birthday ?? '')
+    : null;
+  const entryDate = showEntryDate
+    ? parseCalendarDate(worker.entryDate ?? '')
+    : null;
 
   return (
     <TableRow
@@ -214,9 +220,13 @@ function ProjectItem(props: ProjectItemProps) {
                 ? anniversary
                   ? formatCalendarDate(anniversary.date)
                   : '—'
-                : birthday
-                  ? formatCalendarDate(birthday)
-                  : '—';
+                : column === 'birthday'
+                  ? birthday
+                    ? formatCalendarDate(birthday)
+                    : '—'
+                  : entryDate
+                    ? formatCalendarDate(entryDate)
+                    : '—';
             return (
               <TableCell
                 key={column}

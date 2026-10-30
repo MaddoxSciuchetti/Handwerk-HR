@@ -56,4 +56,18 @@ describe('extra column sort', () => {
       }).map((entry) => entry.firstName)
     ).toEqual(['Alex', 'Ben', 'Chris']);
   });
+
+  it('sorts entry dates chronologically with missing values last', () => {
+    const workers = [
+      worker('Alex', { entryDate: '2022-11-12' }),
+      worker('Ben', { entryDate: '2017-03-04' }),
+      worker('Chris', { entryDate: null }),
+    ];
+    expect(
+      sortWorkersByExtraColumn(workers, {
+        column: 'entryDate',
+        direction: 'asc',
+      }).map((entry) => entry.firstName)
+    ).toEqual(['Ben', 'Alex', 'Chris']);
+  });
 });

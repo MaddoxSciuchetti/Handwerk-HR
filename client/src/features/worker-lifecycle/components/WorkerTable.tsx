@@ -9,17 +9,22 @@ type WorkerTableProps = ComponentProps<typeof Table> & {
 
 function columnWidths(hideTaskColumns: boolean, extraColumnCount: number) {
   if (hideTaskColumns) {
-    if (extraColumnCount >= 2) return [28, 18, 24, 15, 15];
+    if (extraColumnCount >= 3) return [24, 16, 20, 13, 13, 14];
+    if (extraColumnCount === 2) return [28, 18, 24, 15, 15];
     if (extraColumnCount === 1) return [32, 20, 28, 20];
     return [40, 25, 35];
   }
-  if (extraColumnCount >= 2) return [20, 14, 20, 10, 10, 13, 13];
+  if (extraColumnCount >= 3) return [18, 12, 18, 9, 9, 11, 11, 12];
+  if (extraColumnCount === 2) return [20, 14, 20, 10, 10, 13, 13];
   if (extraColumnCount === 1) return [24, 16, 24, 10, 10, 16];
   return [28, 18, 30, 12, 12];
 }
 
 function minWidthClass(hideTaskColumns: boolean, extraColumnCount: number) {
-  if (extraColumnCount >= 2) {
+  if (extraColumnCount >= 3) {
+    return hideTaskColumns ? 'min-w-240' : 'min-w-280';
+  }
+  if (extraColumnCount === 2) {
     return hideTaskColumns ? 'min-w-220' : 'min-w-260';
   }
   if (extraColumnCount === 1) {

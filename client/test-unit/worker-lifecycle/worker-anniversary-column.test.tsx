@@ -100,7 +100,7 @@ async function addColumn(label: string) {
 
 const workerRow = (name: string) => screen.getByText(name).closest('tr')!;
 
-it('offers anniversary and birthday in the add-column menu', async () => {
+it('offers anniversary, birthday and entry date in the add-column menu', async () => {
   render(<WorkerLifeCycle />);
   await openAddColumn();
   expect(
@@ -109,7 +109,10 @@ it('offers anniversary and birthday in the add-column menu', async () => {
   expect(
     screen.getByRole('menuitem', { name: 'Birthday' })
   ).toBeInTheDocument();
-  expect(screen.getAllByRole('menuitem')).toHaveLength(2);
+  expect(
+    screen.getByRole('menuitem', { name: 'Eintrittsdatum' })
+  ).toBeInTheDocument();
+  expect(screen.getAllByRole('menuitem')).toHaveLength(3);
 });
 
 it('adds one date column tied to each worker through reorder, filtering and refresh', async () => {
@@ -151,7 +154,7 @@ it('adds one date column tied to each worker through reorder, filtering and refr
   ).toBeInTheDocument();
 });
 
-it('adds a birthday column and keeps anniversary available', async () => {
+it('adds birthday and entry-date columns and keeps remaining options available', async () => {
   render(<WorkerLifeCycle />);
   await addColumn('Birthday');
   expect(
@@ -159,7 +162,15 @@ it('adds a birthday column and keeps anniversary available', async () => {
   ).toHaveLength(1);
   expect(within(workerRow('Alex')).getByText('13.12.1998')).toBeInTheDocument();
   expect(within(workerRow('Ben')).getByText('07.01.2005')).toBeInTheDocument();
-  const user = await openAddColumn();
+  let user = await openAddColumn();
+  expect(screen.getAllByRole('menuitem')).toHaveLength(2);
+  await user.click(screen.getByRole('menuitem', { name: 'Eintrittsdatum' }));
+  expect(
+    screen.getAllByRole('columnheader', { name: /Eintrittsdatum/ })
+  ).toHaveLength(1);
+  expect(within(workerRow('Alex')).getByText('12.11.2022')).toBeInTheDocument();
+  expect(within(workerRow('Ben')).getByText('04.03.2017')).toBeInTheDocument();
+  user = await openAddColumn();
   expect(screen.getAllByRole('menuitem')).toHaveLength(1);
   await user.click(screen.getByRole('menuitem', { name: 'Anniversary date' }));
   expect(
