@@ -19,6 +19,8 @@ export const GRAPH_SCOPES = [
     "Team.ReadBasic.All",
     "Channel.ReadBasic.All",
     "ChannelMessage.Send",
+    "Files.Read.All",
+    "Sites.Read.All",
 ];
 export const AUTH_SCOPES = [
     "openid",

@@ -30,6 +30,38 @@ export function createDocumentMaster(input: {
   return API.post<FormData, DocumentMasterDetail>('/document-masters', form);
 }
 
+export type SharePointFileHit = {
+  id: string;
+  driveId: string;
+  name: string;
+  size: number | null;
+  lastModified: string | null;
+  mimeType: string | null;
+  webUrl: string | null;
+  libraryName: string | null;
+};
+
+export function searchSharePointFiles(
+  query: string
+): Promise<{ files: SharePointFileHit[] }> {
+  return API.get<{ files: SharePointFileHit[] }, { files: SharePointFileHit[] }>(
+    '/document-masters/sharepoint/search',
+    { params: { q: query } }
+  );
+}
+
+export function importSharePointDocumentMaster(input: {
+  kind: string;
+  name: string;
+  driveId: string;
+  itemId: string;
+}): Promise<DocumentMasterDetail> {
+  return API.post<typeof input, DocumentMasterDetail>(
+    '/document-masters/sharepoint/import',
+    input
+  );
+}
+
 export function duplicateDocumentMaster(
   id: string
 ): Promise<DocumentMasterDetail> {
