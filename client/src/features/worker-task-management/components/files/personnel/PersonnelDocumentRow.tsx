@@ -1,3 +1,5 @@
+import { FilePrintButton } from '../FilePrintButton';
+import { printStoredFile } from '../../../printStoredFile';
 import { Button } from '@/components/ui/button';
 import { FileText, X } from 'lucide-react';
 import { STORED_FILE_DRAG_TYPE } from '../../../hooks/useFolderFileDrop';
@@ -35,6 +37,16 @@ export function PersonnelDocumentRow({
       className="group relative flex flex-col rounded-xl border border-border p-4 transition-colors hover:bg-(--dropdown-surface)"
     >
       <div className="flex justify-end">
+        <FilePrintButton
+          label={document.originalFileName}
+          onPrint={() =>
+            printStoredFile(
+              document.presignedUrl,
+              document.originalFileName,
+              document.mimeType
+            )
+          }
+        />
         <Button
           type="button"
           size="icon-sm"

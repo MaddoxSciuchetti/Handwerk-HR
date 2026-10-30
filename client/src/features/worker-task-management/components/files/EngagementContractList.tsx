@@ -1,3 +1,7 @@
+import { apiJson } from '@/config/apiClient';
+import { getEngagementContract } from '../../api/employmentContract.api';
+import { printPdfBlob } from '../../printPdf';
+import { printStoredFile } from '../../printStoredFile';
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { FileText } from 'lucide-react';
@@ -33,6 +37,26 @@ export function EngagementContractList({
           label="Vertrag"
           icon={FileText}
           onOpen={() => setOpenEngagementId(contract.engagementId)}
+          onPrint={async () => {
+            const draft = await getEngagementContract(
+              workerId,
+              contract.engagementId
+            );
+            const storedUrl = draft.signedFileUrl || draft.outgoingFileUrl;
+            if (storedUrl) {
+              await printStoredFile(
+                storedUrl,
+                `${draft.name}.pdf`,
+                'application/pdf'
+              );
+            } else {
+              const blob = await apiJson.get<Blob>(
+                `worker/${workerId}/engagements/${contract.engagementId}/contract/print`,
+                { responseType: 'blob' }
+              );
+              await printPdfBlob(blob);
+            }
+          }}
         />
       ))}
       {openEngagementId

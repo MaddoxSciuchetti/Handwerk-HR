@@ -1,3 +1,5 @@
+import { FilePrintButton } from './FilePrintButton';
+import { printStoredFile } from '../../printStoredFile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PERSONNEL_DOCUMENTS } from '@/features/worker-task-management/consts/query-key.consts';
@@ -42,7 +44,8 @@ export function QuestionnaireStoredFile({
       setName(result.data.name);
       await refresh();
     },
-    onError: () => toast.error('Der Dateiname konnte nicht gespeichert werden.'),
+    onError: () =>
+      toast.error('Der Dateiname konnte nicht gespeichert werden.'),
   });
   const store = useMutation({
     mutationFn: () =>
@@ -63,7 +66,7 @@ export function QuestionnaireStoredFile({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="group flex flex-wrap items-center gap-2">
       <Input
         aria-label="Dateiname"
         value={name}
@@ -75,9 +78,18 @@ export function QuestionnaireStoredFile({
           if (event.key === 'Enter') event.currentTarget.blur();
         }}
       />
-      <a href={file.url} target="_blank" rel="noreferrer" className="text-sm underline">
+      <a
+        href={file.url}
+        target="_blank"
+        rel="noreferrer"
+        className="text-sm underline"
+      >
         Öffnen
       </a>
+      <FilePrintButton
+        label={file.name}
+        onPrint={() => printStoredFile(file.url, file.name)}
+      />
       <Button
         type="button"
         variant="outline"

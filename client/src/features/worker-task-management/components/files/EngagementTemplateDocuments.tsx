@@ -1,3 +1,5 @@
+import { printTemplateDocument } from '../../api/templateDocument.api';
+import { printPdfBlob } from '../../printPdf';
 import { FileText } from 'lucide-react';
 import { useState } from 'react';
 import { useTemplateDocuments } from '../../hooks/useTemplateDocuments';
@@ -29,6 +31,11 @@ export function EngagementTemplateDocuments({
           label={document.name}
           icon={FileText}
           onOpen={() => setOpenId(document.id)}
+          onPrint={async () => {
+            await printPdfBlob(
+              await printTemplateDocument(workerId, engagementId, document.id)
+            );
+          }}
         />
       ))}
       {openId ? (

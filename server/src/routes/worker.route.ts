@@ -1,3 +1,4 @@
+import { printEmploymentContract } from "../controllers/contractPrint.controller";
 import express from "express";
 
 import { upload } from "../middleware/fileparser";
@@ -12,6 +13,10 @@ const worker = express.Router();
 worker.get(
     "/:workerId/engagements/:engagementId/contract/printed-pdf",
     workerController.downloadPrintedContract,
+);
+worker.get(
+    "/:workerId/engagements/:engagementId/contract/print",
+    printEmploymentContract,
 );
 worker.post(
     "/:workerId/engagements/:engagementId/contract/prepare-pdf",

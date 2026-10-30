@@ -210,3 +210,36 @@ it('creates a template document, confirms sync, and prints the filled values', a
   );
   expect(printPdfBlob).toHaveBeenCalled();
 });
+
+it('prints an existing template document from its card without saving it again', async () => {
+  vi.clearAllMocks();
+  vi.mocked(useDocumentMasters).mockReturnValue({
+    data: [],
+  } as unknown as ReturnType<typeof useDocumentMasters>);
+  vi.mocked(listTemplateDocuments).mockResolvedValue([draft]);
+  const blob = new Blob(['pdf'], { type: 'application/pdf' });
+  vi.mocked(printTemplateDocument).mockResolvedValue(blob);
+  render(
+    <QueryClientProvider
+      client={
+        new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      }
+    >
+      <EngagementTemplateDocuments
+        workerId="worker"
+        engagementId="engagement"
+      />
+    </QueryClientProvider>
+  );
+  await userEvent.click(
+    await screen.findByRole('button', { name: 'KFZ-Bescheinigung drucken' })
+  );
+  expect(printTemplateDocument).toHaveBeenCalledWith(
+    'worker',
+    'engagement',
+    'doc-1'
+  );
+  expect(printPdfBlob).toHaveBeenCalledWith(blob);
+  expect(saveTemplateDocument).not.toHaveBeenCalled();
+  expect(getTemplateDocument).not.toHaveBeenCalled();
+});

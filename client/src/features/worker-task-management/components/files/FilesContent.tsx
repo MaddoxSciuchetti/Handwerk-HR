@@ -1,3 +1,5 @@
+import { FilePrintButton } from './FilePrintButton';
+import { printStoredFile } from '../../printStoredFile';
 import { STORED_FILE_DRAG_TYPE } from '../../hooks/useFolderFileDrop';
 import { Button } from '@/components/ui/button';
 
@@ -35,6 +37,16 @@ const FilesContent = ({ fetchFiles, deleteFiles }: FilesContentProps) => {
               className="group flex flex-col rounded-xl border border-border hover:bg-(--dropdown-surface) p-3 transition-colors"
             >
               <div className="flex justify-end">
+                <FilePrintButton
+                  label={getFileName(file.presignedUrl, file.name)}
+                  onPrint={() =>
+                    printStoredFile(
+                      file.presignedUrl,
+                      getFileName(file.presignedUrl, file.name),
+                      file.mimeType
+                    )
+                  }
+                />
                 <Button
                   size={'icon-sm'}
                   variant={'ghost'}
