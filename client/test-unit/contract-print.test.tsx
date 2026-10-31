@@ -145,7 +145,7 @@ it('saves without printing, completing the task or closing, and allows later que
       questionnaireSyncNeeded: true,
     });
   });
-  await user.click(await screen.findByRole('button', { name: 'Sync?' }));
+  await user.click(await screen.findByRole('button', { name: 'Sync' }));
   await waitFor(() =>
     expect(resyncEngagementContractFromQuestionnaire).toHaveBeenCalledWith(
       'worker',
@@ -365,7 +365,7 @@ it.each(['questionnaire', 'template'] as const)(
         'other-master'
       );
     } else {
-      await user.click(screen.getByRole('button', { name: 'Sync?' }));
+      await user.click(screen.getByRole('button', { name: 'Sync' }));
     }
     await waitFor(() => expect(syncApi).toHaveBeenCalled());
     expect(saveEngagementContractDraft).toHaveBeenCalledWith(

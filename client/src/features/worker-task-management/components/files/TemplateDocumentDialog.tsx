@@ -45,7 +45,6 @@ export function TemplateDocumentDialog({
   const saveDraft = useSaveTemplateDocument(workerId, engagementId, documentId);
   const sync = useSyncTemplateDocument(workerId, engagementId, documentId);
   const [values, setValues] = useState<Record<string, string>>({});
-  const [confirmSync, setConfirmSync] = useState(false);
   const [printing, setPrinting] = useState(false);
   const edited = useRef(false);
 
@@ -119,62 +118,32 @@ export function TemplateDocumentDialog({
             <DialogHeader className="shrink-0 pr-8">
               <DialogTitle>{data.name}</DialogTitle>
               <DialogDescription>
-                Prüfen Sie die Felder, gleichen Sie sie mit dem Fragebogen ab
-                und drucken Sie das Dokument.
+                Prüfen Sie die Felder und drucken Sie das Dokument.
               </DialogDescription>
             </DialogHeader>
             <div className="flex shrink-0 flex-col gap-2">
               {data.questionnaireCompleted ? (
-                confirmSync ? (
-                  <>
-                    <p className="text-sm text-muted-foreground">
-                      Abgleichen ersetzt alle Eingaben durch die Antworten des
-                      Fragebogens, auch Werte, die von Hand geändert wurden.
-                    </p>
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        disabled={busy}
-                        onClick={() => setConfirmSync(false)}
-                      >
-                        Abbrechen
-                      </Button>
-                      <Button
-                        type="button"
-                        disabled={busy}
-                        onClick={() =>
-                          sync.mutate(undefined, {
-                            onSuccess: (saved) => {
-                              edited.current = false;
-                              setValues(saved.values);
-                              setConfirmSync(false);
-                              toast.success(
-                                'Dokument wurde mit dem Fragebogen abgeglichen'
-                              );
-                            },
-                            onError: (error) =>
-                              toast.error(
-                                (error as { message?: string }).message ??
-                                  'Abgleich ist fehlgeschlagen'
-                              ),
-                          })
-                        }
-                      >
-                        {sync.isPending ? 'Wird abgeglichen…' : 'Werte ersetzen'}
-                      </Button>
-                    </div>
-                  </>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={busy}
-                    onClick={() => setConfirmSync(true)}
-                  >
-                    Abgleichen
-                  </Button>
-                )
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() =>
+                    sync.mutate(undefined, {
+                      onSuccess: (saved) => {
+                        edited.current = false;
+                        setValues(saved.values);
+                        toast.success('Dokument synchronisiert');
+                      },
+                      onError: (error) =>
+                        toast.error(
+                          (error as { message?: string }).message ??
+                            'Sync ist fehlgeschlagen'
+                        ),
+                    })
+                  }
+                >
+                  {sync.isPending ? 'Synchronisiert…' : 'Sync'}
+                </Button>
               ) : (
                 <p className="text-sm text-muted-foreground">
                   Der Fragebogen ist noch nicht ausgefüllt.

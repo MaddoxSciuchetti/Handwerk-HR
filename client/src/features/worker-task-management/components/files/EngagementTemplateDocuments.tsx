@@ -108,7 +108,7 @@ export function EngagementTemplateDocuments({
               <DialogTitle>Dokument aus Vorlage</DialogTitle>
               <DialogDescription>
                 Wählen Sie eine Vorlage. Das Dokument wird für dieses Engagement
-                angelegt und kann mit dem Fragebogen abgeglichen werden.
+                angelegt und kann mit dem Fragebogen synchronisiert werden.
               </DialogDescription>
             </DialogHeader>
             {masters.isError ? (

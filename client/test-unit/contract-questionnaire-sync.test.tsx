@@ -17,7 +17,7 @@ const contract = {
 } as unknown as EmploymentContractDraft;
 beforeEach(() => vi.clearAllMocks());
 
-it('offers Sync? for changed questionnaire data and applies the response only after clicking', async () => {
+it('offers Sync for changed questionnaire data and applies the response only after clicking', async () => {
   const onSynced = vi.fn();
   const saved = {
     ...contract,
@@ -34,7 +34,7 @@ it('offers Sync? for changed questionnaire data and applies the response only af
     />
   );
   expect(resyncEngagementContractFromQuestionnaire).not.toHaveBeenCalled();
-  await userEvent.click(screen.getByRole('button', { name: 'Sync?' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Sync' }));
   await waitFor(() => expect(onSynced).toHaveBeenCalledWith(saved));
   expect(resyncEngagementContractFromQuestionnaire).toHaveBeenCalledWith(
     'worker',
@@ -49,7 +49,7 @@ it('offers Sync? for changed questionnaire data and applies the response only af
     />
   );
   expect(
-    screen.queryByRole('button', { name: 'Sync?' })
+    screen.queryByRole('button', { name: 'Sync' })
   ).not.toBeInTheDocument();
 });
 
@@ -66,8 +66,8 @@ it('keeps the prompt available after a failed sync', async () => {
       onSynced={onSynced}
     />
   );
-  await userEvent.click(screen.getByRole('button', { name: 'Sync?' }));
-  expect(await screen.findByRole('button', { name: 'Sync?' })).toBeEnabled();
+  await userEvent.click(screen.getByRole('button', { name: 'Sync' }));
+  expect(await screen.findByRole('button', { name: 'Sync' })).toBeEnabled();
   expect(onSynced).not.toHaveBeenCalled();
 });
 
@@ -82,7 +82,7 @@ it('does not offer to overwrite sent or signed contracts', () => {
   );
   expect(container).toBeEmptyDOMElement();
   expect(
-    screen.queryByRole('button', { name: 'Sync?' })
+    screen.queryByRole('button', { name: 'Sync' })
   ).not.toBeInTheDocument();
 });
 
@@ -100,7 +100,7 @@ it('does not sync when saving pending edits fails', async () => {
       onBusy={onBusy}
     />
   );
-  await userEvent.click(screen.getByRole('button', { name: 'Sync?' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Sync' }));
   await waitFor(() => expect(onBusy).toHaveBeenLastCalledWith(false));
   expect(beforeSync).toHaveBeenCalledOnce();
   expect(resyncEngagementContractFromQuestionnaire).not.toHaveBeenCalled();

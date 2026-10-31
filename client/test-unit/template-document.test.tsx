@@ -92,7 +92,7 @@ function renderDocuments() {
   );
 }
 
-it('creates a template document, confirms sync, and prints the filled values', async () => {
+it('creates a template document, syncs from the Fragebogen, and prints the filled values', async () => {
   vi.mocked(useDocumentMasters).mockReturnValue({
     data: [
       {
@@ -148,11 +148,7 @@ it('creates a template document, confirms sync, and prints the filled values', a
   expect(screen.getByRole('heading', { name: 'Fragebogen' })).toBeInTheDocument();
   expect(screen.getByText('Hilti Bohrmaschine')).toBeInTheDocument();
 
-  await user.click(screen.getByRole('button', { name: 'Abgleichen' }));
-  expect(
-    screen.getByText(/ersetzt alle Eingaben durch die Antworten des Fragebogens/)
-  ).toBeInTheDocument();
-  await user.click(screen.getByRole('button', { name: 'Werte ersetzen' }));
+  await user.click(screen.getByRole('button', { name: 'Sync' }));
 
   expect(syncTemplateDocument).toHaveBeenCalledWith(
     'worker',
