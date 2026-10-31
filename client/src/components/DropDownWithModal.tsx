@@ -13,7 +13,7 @@ const TrashWithModal = ({
   disabled,
   description,
   onConfirm,
-  confirmLabel = 'Löschen',
+  confirmLabel: _confirmLabel = 'Löschen',
 }: TrashWithModalProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 

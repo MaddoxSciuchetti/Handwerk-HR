@@ -9,13 +9,10 @@ function useDeleteSession(sessionId: string) {
     mutationFn: () => deleteSession(sessionId),
     onSuccess: () => {
       queryClient.setQueryData<SessionCache>([SESSIONS], (cache) => {
-        const updatedCache =
-          cache?.filter((session) => session.id !== sessionId) ?? [];
-        return updatedCache;
+        return cache?.filter((session) => session.id !== sessionId) ?? [];
       });
     },
   });
-  const updatedCache = queryClient.getQueryData([SESSIONS]);
 
   return { deleteSession: mutate, ...rest };
 }

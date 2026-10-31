@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LoaderCircle } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { MailMessageField } from './MailMessageField';
 import { customMailPlaceholders } from './mailPlaceholders';
 import type { MailTemplateContent } from './mailTemplate.api';
@@ -20,11 +20,14 @@ const emptyDraft: MailTemplateContent = {
 
 export function MailTemplateForm({ templateId, page }: MailTemplateFormProps) {
   const save = useSaveMailTemplate(templateId);
-  const [draft, setDraft] = useState<MailTemplateContent>(emptyDraft);
-
-  useEffect(() => {
+  const [draft, setDraft] = useState<MailTemplateContent>(
+    () => page.settings ?? emptyDraft
+  );
+  const [prevSettings, setPrevSettings] = useState(page.settings);
+  if (page.settings !== prevSettings) {
+    setPrevSettings(page.settings);
     setDraft(page.settings ?? emptyDraft);
-  }, [page.settings]);
+  }
 
   const canSave =
     draft.subject.trim().length > 0 && draft.body.trim().length > 0;

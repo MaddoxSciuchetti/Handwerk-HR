@@ -63,7 +63,7 @@ export function QuestionnaireQuestion({
       : undefined;
   if (question.type === 'file') {
     return (
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-3">
         <QuestionnaireFileInput
           question={question}
           value={value}
@@ -81,8 +81,8 @@ export function QuestionnaireQuestion({
       <fieldset
         className={
           fillable
-            ? 'flex flex-col gap-2 rounded-xl bg-muted p-3'
-            : 'flex flex-col gap-2'
+            ? 'flex flex-col gap-3 rounded-xl bg-muted p-3'
+            : 'flex flex-col gap-3'
         }
       >
         {question.label || labelControl ? (
@@ -90,7 +90,7 @@ export function QuestionnaireQuestion({
             <QuestionText question={question} labelControl={labelControl} />
           </legend>
         ) : null}
-        <div className="grid gap-2 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2">
           {(question.options ?? []).map((option) => (
             <label
               key={option}
@@ -122,8 +122,8 @@ export function QuestionnaireQuestion({
       <fieldset
         className={
           fillable
-            ? 'flex flex-col gap-2 rounded-xl bg-muted p-3'
-            : 'flex flex-col gap-2'
+            ? 'flex flex-col gap-3 rounded-xl bg-muted p-3'
+            : 'flex flex-col gap-3'
         }
       >
         {question.label || labelControl ? (
@@ -131,7 +131,7 @@ export function QuestionnaireQuestion({
             <QuestionText question={question} labelControl={labelControl} />
           </legend>
         ) : null}
-        <div className="flex flex-wrap gap-x-6 gap-y-2">
+        <div className="flex flex-wrap gap-x-6 gap-y-3">
           {(question.options ?? []).map((option) => (
             <label
               key={option}
@@ -158,8 +158,8 @@ export function QuestionnaireQuestion({
       <div
         className={
           fillable
-            ? 'flex flex-col gap-2 rounded-xl bg-muted p-3'
-            : 'flex flex-col gap-2'
+            ? 'flex flex-col gap-3 rounded-xl bg-muted p-3'
+            : 'flex flex-col gap-3'
         }
       >
         <label className="flex items-start gap-3 text-sm text-foreground">
@@ -180,7 +180,7 @@ export function QuestionnaireQuestion({
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3">
       <Label htmlFor={question.key}>
         <QuestionText question={question} labelControl={labelControl} />
       </Label>

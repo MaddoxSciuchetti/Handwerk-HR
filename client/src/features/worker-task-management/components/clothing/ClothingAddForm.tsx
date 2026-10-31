@@ -17,7 +17,7 @@ import {
   type ClothingPrintType,
 } from '@shared/clothing';
 import { berlinToday } from '@shared/calendarDate';
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useState } from 'react';
 import type { CreateEngagementClothingInput } from '../../api/engagementClothing.api';
 
 const PURCHASED = 'purchased';
@@ -59,17 +59,20 @@ export function ClothingAddForm({
     choice === PURCHASED ? null : available.find((item) => item.id === choice) ?? null;
   const fromStorage = selectedStock !== null;
 
-  useEffect(() => {
-    if (open) return;
-    setChoice(PURCHASED);
-    setName('');
-    setSize('');
-    setPrintType('bedruckt');
-    setProductUrl('');
-    setQuantity('1');
-    setIssuedAt(berlinToday());
-    setError(null);
-  }, [open]);
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (!open) {
+      setChoice(PURCHASED);
+      setName('');
+      setSize('');
+      setPrintType('bedruckt');
+      setProductUrl('');
+      setQuantity('1');
+      setIssuedAt(berlinToday());
+      setError(null);
+    }
+  }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

@@ -21,7 +21,7 @@ import { cn } from '@/lib/utils';
 import { berlinToday } from '@shared/calendarDate';
 import { CLOTHING_PRINT_TYPE_LABELS } from '@shared/clothing';
 import { Plus, X } from 'lucide-react';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 import type { WorkerDetailResponse } from '../types/index.types';
 
@@ -159,11 +159,12 @@ export default function WorkerClothingPanel({ workerId, engagements }: Props) {
   const catalog = stock.data ?? [];
   const pending = create.isPending || remove.isPending;
 
-  useEffect(() => {
-    if (!clothing.data) return;
+  const [syncedClothingData, setSyncedClothingData] = useState(clothing.data);
+  if (clothing.data && clothing.data !== syncedClothingData) {
+    setSyncedClothingData(clothing.data);
     setIssued((current) => {
       const edits = new Map(current.map((row) => [row.clothingId, row]));
-      return clothing.data.flatMap<IssuedRow>((item) => {
+      return clothing.data!.flatMap<IssuedRow>((item) => {
         const outstanding = item.quantity - item.returnedQuantity;
         if (outstanding < 1) return [];
         const previous = edits.get(item.id);
@@ -203,31 +204,43 @@ export default function WorkerClothingPanel({ workerId, engagements }: Props) {
         ];
       });
     });
-  }, [clothing.data]);
+  }
 
-  useEffect(() => {
-    if (!stock.data) return;
-    const claimed = new Map<string, number>();
-    let changed = false;
-    const next = drafts.map((draft) => {
-      if (!draft.stockItemId) return draft;
-      const item = stock.data?.find((entry) => entry.id === draft.stockItemId);
-      const reserved = reservedByOthers(issued, [], draft.stockItemId, {});
-      const free =
-        (item ? item.quantity - reserved : 0) -
-        (claimed.get(draft.stockItemId) ?? 0);
-      if (!item || free < 1) {
-        changed = true;
-        return { ...draft, stockItemId: '' };
-      }
-      claimed.set(
-        draft.stockItemId,
-        (claimed.get(draft.stockItemId) ?? 0) + amountOf(draft.quantity)
+  const [draftStockSync, setDraftStockSync] = useState({
+    drafts,
+    issued,
+    stockData: stock.data,
+  });
+  if (stock.data) {
+    const stockChanged =
+      draftStockSync.stockData !== stock.data ||
+      draftStockSync.drafts !== drafts ||
+      draftStockSync.issued !== issued;
+    if (stockChanged) {
+      const claimed = new Map<string, number>();
+      const next = drafts.map((draft) => {
+        if (!draft.stockItemId) return draft;
+        const item = stock.data?.find((entry) => entry.id === draft.stockItemId);
+        const reserved = reservedByOthers(issued, [], draft.stockItemId, {});
+        const free =
+          (item ? item.quantity - reserved : 0) -
+          (claimed.get(draft.stockItemId) ?? 0);
+        if (!item || free < 1) {
+          return { ...draft, stockItemId: '' };
+        }
+        claimed.set(
+          draft.stockItemId,
+          (claimed.get(draft.stockItemId) ?? 0) + amountOf(draft.quantity)
+        );
+        return draft;
+      });
+      const changed = next.some(
+        (row, index) => row.stockItemId !== drafts[index]?.stockItemId
       );
-      return draft;
-    });
-    if (changed) setDrafts(next);
-  }, [drafts, issued, stock.data]);
+      setDraftStockSync({ drafts, issued, stockData: stock.data });
+      if (changed) setDrafts(next);
+    }
+  }
 
   function resetDraft() {
     setDrafts([]);

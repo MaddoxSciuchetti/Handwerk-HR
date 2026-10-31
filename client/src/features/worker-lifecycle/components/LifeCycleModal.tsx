@@ -1,6 +1,6 @@
 import { AddWorker } from '@/features/worker-lifecycle/schemas/zod.schemas';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import ModalContent from './lifycycle-modal-content/ModalContent';
 
 type LifeCycleModalProps = {
@@ -14,11 +14,13 @@ const LifeCycleModal = ({ toggleModal, modal, onQuestionnaire }: LifeCycleModalP
     AddWorker['type'] | null
   >(null);
 
-  useEffect(() => {
-    if (!modal) {
-      setSelectedOption(null);
-    }
-  }, [modal]);
+  const [prevModal, setPrevModal] = useState(modal);
+  if (!modal && prevModal) {
+    setPrevModal(modal);
+    setSelectedOption(null);
+  } else if (modal !== prevModal) {
+    setPrevModal(modal);
+  }
 
   return (
     <>
