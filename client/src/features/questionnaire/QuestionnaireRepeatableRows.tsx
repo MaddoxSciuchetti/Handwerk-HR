@@ -25,10 +25,7 @@ export function QuestionnaireRepeatableRows({
   };
 
   return (
-    <section className="flex flex-col gap-3">
-      <h2 className="pt-2 text-base font-medium text-foreground">
-        {repeater.section}
-      </h2>
+    <section className="flex flex-col gap-3" aria-label={repeater.section}>
       {rows.map((row, index) => (
         <div key={index} className="grid gap-3 sm:grid-cols-3">
           {repeater.columns.map((column) => (

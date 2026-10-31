@@ -29,57 +29,72 @@ export function QuestionnaireSectionCard({
 
   return (
     <section
-      className={`rounded-2xl border border-border bg-card/60 p-4 sm:p-5 ${
-        omitted ? 'border-dashed opacity-80' : ''
+      className={`rounded-2xl border bg-muted/50 ${
+        omitted ? 'border-dashed border-border opacity-80' : 'border-border'
       }`}
       aria-label={heading}
     >
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-4">
+        <div className="min-w-0 flex-1">
           <h2 className="text-base font-semibold text-foreground">{heading}</h2>
           {hint ? (
             <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>
           ) : null}
         </div>
         {showGate ? (
-          <fieldset className="flex shrink-0 flex-col gap-1.5 sm:items-end">
+          <fieldset className="flex shrink-0 items-center gap-3">
             <legend className="sr-only">{heading} mitsenden</legend>
-            <p className="text-xs font-medium text-foreground">
-              Für diesen Mitarbeiter erforderlich?
-            </p>
-            <div className="flex gap-4">
-              <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
-                <input
-                  type="radio"
-                  name={`section-include-${title}`}
-                  checked={!omitted}
-                  className="size-4 accent-primary"
-                  onChange={() => onOmitChange?.(false)}
-                />
-                Ja
-              </Label>
-              <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
-                <input
-                  type="radio"
-                  name={`section-include-${title}`}
-                  checked={omitted}
-                  className="size-4 accent-primary"
-                  onChange={() => onOmitChange?.(true)}
-                />
-                Nein
-              </Label>
-            </div>
+            <span className="text-sm text-muted-foreground">Mitsenden</span>
+            <Label className="flex cursor-pointer items-center gap-1.5 text-sm font-normal">
+              <input
+                type="radio"
+                name={`section-include-${title}`}
+                checked={!omitted}
+                className="size-4 accent-primary"
+                onChange={() => onOmitChange?.(false)}
+              />
+              Ja
+            </Label>
+            <Label className="flex cursor-pointer items-center gap-1.5 text-sm font-normal">
+              <input
+                type="radio"
+                name={`section-include-${title}`}
+                checked={omitted}
+                className="size-4 accent-primary"
+                onChange={() => onOmitChange?.(true)}
+              />
+              Nein
+            </Label>
           </fieldset>
         ) : null}
       </div>
       {omitted ? (
-        <p className="text-sm text-muted-foreground">
+        <p className="border-t border-border/60 px-5 py-3 text-sm text-muted-foreground">
           Dieser Abschnitt wird nicht mitgesendet. Der Mitarbeiter muss hier
           nichts ausfüllen.
         </p>
       ) : (
-        <div className="flex flex-col gap-4">{children}</div>
+        <div className="flex flex-col gap-2 border-t border-border/60 px-3 pt-1 pb-3">
+          {wrapQuestionCards(children)}
+        </div>
       )}
     </section>
   );
+}
+
+/** Put each direct child in a white card so the fill UI matches the editor. */
+function wrapQuestionCards(children: ReactNode) {
+  if (children == null) return null;
+  const list = Array.isArray(children) ? children : [children];
+  return list.map((child, index) => {
+    if (child == null || child === false) return null;
+    return (
+      <div
+        key={index}
+        className="rounded-xl border border-border bg-card px-4 py-4"
+      >
+        {child}
+      </div>
+    );
+  });
 }

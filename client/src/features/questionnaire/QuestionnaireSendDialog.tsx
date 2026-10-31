@@ -1,7 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Pencil, Check, X } from 'lucide-react';
-import { QuestionnaireForm } from './QuestionnaireForm';
-import { candidateItems } from './questionnairePreview';
+import { X } from 'lucide-react';
 import {
   QuestionnaireStack,
   type DragPayload,
@@ -77,7 +75,6 @@ export function QuestionnaireSendDialog({
 }: QuestionnaireSendDialogProps) {
   const cache = useQueryClient();
   const sendButton = useRef<HTMLButtonElement>(null);
-  const [editing, setEditing] = useState(false);
   const [localItems, setLocalItems] = useState<TemplateItem[] | null>(null);
   const draft = useQuery({
     queryKey: ['questionnaire-draft', engagementId],
@@ -273,8 +270,7 @@ export function QuestionnaireSendDialog({
             event.altKey ||
             event.ctrlKey ||
             event.metaKey ||
-            event.shiftKey ||
-            editing
+            event.shiftKey
           )
             return;
           const target = event.target as HTMLElement;
@@ -291,39 +287,6 @@ export function QuestionnaireSendDialog({
         <div className="flex h-[80vh] flex-col gap-4 overflow-hidden rounded-2xl border border-border bg-card p-6 text-card-foreground">
           <DialogTitle className="sr-only">Fragebogen</DialogTitle>
           <div className="-mt-3 -mr-3 flex shrink-0 items-center justify-end gap-1">
-            {data && !sent ? (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                disabled={persist.isPending || send.isPending}
-                aria-pressed={editing}
-                aria-label={editing ? 'Fertig' : 'Bearbeiten'}
-                className="gap-1.5 transition-colors duration-200 motion-reduce:transition-none"
-                onClick={() => setEditing(!editing)}
-              >
-                <span aria-hidden="true" className="relative size-4 shrink-0">
-                  <Pencil
-                    className={`absolute inset-0 size-4 transition-[opacity,transform] duration-[240ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${editing ? 'scale-75 -rotate-45 opacity-0' : 'scale-100 rotate-0 opacity-100'}`}
-                  />
-                  <Check
-                    className={`absolute inset-0 size-4 transition-[opacity,transform] duration-[240ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${editing ? 'scale-100 rotate-0 opacity-100' : 'scale-75 rotate-45 opacity-0'}`}
-                  />
-                </span>
-                <span aria-hidden="true" className="grid text-left">
-                  <span
-                    className={`[grid-area:1/1] transition-[opacity,transform] duration-[240ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${editing ? '-translate-y-0.5 opacity-0' : 'translate-y-0 opacity-100'}`}
-                  >
-                    Bearbeiten
-                  </span>
-                  <span
-                    className={`[grid-area:1/1] transition-[opacity,transform] duration-[240ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${editing ? 'translate-y-0 opacity-100' : 'translate-y-0.5 opacity-0'}`}
-                  >
-                    Fertig
-                  </span>
-                </span>
-              </Button>
-            ) : null}
             <DialogClose asChild>
               <Button
                 type="button"
@@ -350,63 +313,48 @@ export function QuestionnaireSendDialog({
                 {draft.data.data.mockEnabled ? (
                   <p
                     role="status"
-                    className="rounded-lg border border-border bg-muted p-3 text-sm"
+                    className="mb-4 rounded-lg border border-border bg-muted p-3 text-sm"
                   >
                     Testmodus: Senden füllt den Fragebogen mit Beispielantworten
                     aus. Es wird keine E-Mail verschickt.
                   </p>
                 ) : null}
-                {editing ? (
-                  <>
-                    <p className="mb-4 text-xs text-muted-foreground">
-                      Änderungen gelten nur für diesen Einsatz.
-                    </p>
-                    <h1 className="mb-4 text-xl font-medium">
-                      {data?.name ?? 'Personalfragebogen'}
-                    </h1>
-                    <QuestionnaireStack
-                      blocks={blocks}
-                      contractFields={data?.contractFields ?? []}
-                      onDrop={drop}
-                      onInsert={insertItems}
-                      onReplaceItems={setLocalItems}
-                      onChangeField={changeField}
-                      onChangeRepeater={changeRepeater}
-                      onChangeSection={changeSection}
-                      onCommitField={changeField}
-                      onRemove={(id) =>
-                        setLocalItems(
-                          syncItemsToHeadlines(
-                            itemsFromBlocks(
-                              blocks.filter((block) => block.id !== id)
-                            )
-                          )
-                        )
-                      }
-                    />
-                  </>
-                ) : (
-                  <QuestionnaireForm
-                    embedded
-                    preview={{
-                      name: data?.name,
-                      intro: data?.intro,
-                      items: candidateItems(items),
-                    }}
-                    onPresetChange={(key, value) =>
-                      setLocalItems(
-                        items.map((item) =>
-                          item.kind === 'field' && item.key === key
-                            ? { ...item, defaultValue: value }
-                            : item
+                <p className="mb-4 text-xs text-muted-foreground">
+                  Änderungen gelten nur für diesen Einsatz.
+                </p>
+                <h1 className="mb-4 text-xl font-medium">
+                  {data?.name ?? 'Personalfragebogen'}
+                </h1>
+                {data?.intro ? (
+                  <p className="mb-4 text-sm whitespace-pre-wrap text-muted-foreground">
+                    {data.intro}
+                  </p>
+                ) : null}
+                <QuestionnaireStack
+                  blocks={blocks}
+                  contractFields={data?.contractFields ?? []}
+                  onDrop={drop}
+                  onInsert={insertItems}
+                  onReplaceItems={setLocalItems}
+                  onChangeField={changeField}
+                  onChangeRepeater={changeRepeater}
+                  onChangeSection={changeSection}
+                  onCommitField={changeField}
+                  onSectionOmitChange={(section, omitted) =>
+                    setLocalItems((current) =>
+                      setSectionOmitted(current ?? items, section, omitted)
+                    )
+                  }
+                  onRemove={(id) =>
+                    setLocalItems(
+                      syncItemsToHeadlines(
+                        itemsFromBlocks(
+                          blocks.filter((block) => block.id !== id)
                         )
                       )
-                    }
-                    onSectionOmitChange={(section, omitted) =>
-                      setLocalItems(setSectionOmitted(items, section, omitted))
-                    }
-                  />
-                )}
+                    )
+                  }
+                />
               </>
             ) : null}
           </div>
