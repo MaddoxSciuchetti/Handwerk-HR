@@ -12,7 +12,6 @@ import {
 import { useQuestionnaireAnswerDrop } from '@/features/worker-task-management/components/files/questionnaireAnswerDrag';
 
 import { DocumentFieldDetails } from './components/DocumentFieldDetails';
-import { DocumentFieldRemove } from './components/DocumentFieldRemove';
 import { DocumentValuesContext } from './DocumentValuesContext';
 
 type InlineValueProps = {
@@ -180,7 +179,7 @@ function DocumentFieldView({
     <NodeViewWrapper
       as="span"
       {...answerDrop}
-      className={`group/document-field relative inline-block max-w-full align-baseline whitespace-nowrap ${!context.master && !context.readOnly ? 'pr-4' : ''} ${answerDrop.className}`}
+      className={`group/document-field relative inline-block max-w-full align-baseline whitespace-nowrap ${answerDrop.className}`}
       style={{ whiteSpace: 'nowrap' }}
       contentEditable={false}
     >
@@ -288,9 +287,6 @@ function DocumentFieldView({
           onChange={(e) => context.onValueChange(key, e.target.value)}
         />
       )}
-      {!context.master && !context.readOnly ? (
-        <DocumentFieldRemove label={label} onRemove={deleteNode} />
-      ) : null}
     </NodeViewWrapper>
   );
 }
