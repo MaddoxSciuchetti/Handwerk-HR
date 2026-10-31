@@ -1,4 +1,5 @@
-import { act, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Editor } from '@tiptap/core';
 import { expect, it, vi } from 'vitest';
 import { renderWithProviders } from './test-utils';
@@ -21,6 +22,7 @@ it.each([
   'removes only the clicked %s field (glyph %s) and supports undo',
   async (fieldType, glyph) => {
     const spy = vi.spyOn(Editor.prototype, 'setOptions');
+    const user = userEvent.setup();
     try {
       const document = fromSegments([
         { type: 'text', text: 'Before ' },
@@ -53,32 +55,47 @@ it.each([
       renderWithProviders(
         <StyledDocumentEditor document={document} master onChange={onChange} />
       );
-      const remove = await screen.findByRole('button', {
-        name: 'Name entfernen',
-      });
       const editor = spy.mock.instances.at(-1) as Editor;
-      fireEvent.mouseDown(remove);
-      fireEvent.click(remove.querySelector('svg')!);
-      await waitFor(() =>
-        expect(
-          screen.queryByRole('button', { name: 'Name entfernen' })
-        ).toBeNull()
+      // Avoid ProseMirror scrollToSelection crashes under jsdom.
+      editor.setOptions({
+        editorProps: {
+          ...editor.options.editorProps,
+          handleScrollToSelection: () => true,
+        },
+      });
+      const fieldLabel =
+        fieldType === 'checkbox'
+          ? await screen.findByLabelText(
+              glyph ? 'Name (contract.name)' : 'Name'
+            )
+          : await screen.findByText('Name');
+      await user.click(fieldLabel);
+      const dialog = await screen.findByRole('dialog');
+      await user.click(
+        within(dialog).getByRole('button', { name: 'Feld entfernen' })
       );
-      expect(
-        screen.getByRole('button', { name: 'Other occurrence entfernen' })
-      ).toBeInTheDocument();
+      await waitFor(() =>
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      );
+      await waitFor(() => {
+        const keys = JSON.stringify(editor.getJSON()).match(
+          /"key":"contract\.name"/g
+        );
+        expect(keys).toHaveLength(1);
+      });
       expect(editor.getText()).toContain('Before');
       expect(editor.getText()).toContain('After');
       expect(onChange).toHaveBeenCalled();
       act(() => {
         editor.commands.undo();
       });
-      expect(
-        await screen.findByRole('button', { name: 'Name entfernen' })
-      ).toBeInTheDocument();
-      expect(JSON.stringify(editor.getJSON())).not.toContain(
-        'document-field-remove'
-      );
+      await waitFor(() => {
+        const keys = JSON.stringify(editor.getJSON()).match(
+          /"key":"contract\.name"/g
+        );
+        expect(keys).toHaveLength(2);
+      });
+      expect(screen.queryByRole('button', { name: 'Name entfernen' })).toBeNull();
     } finally {
       spy.mockRestore();
     }

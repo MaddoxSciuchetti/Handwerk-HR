@@ -24,6 +24,7 @@ type DocumentFieldDetailsProps = {
   onUseTodayChange?: (checked: boolean) => void;
   onLabelChange?: (label: string) => void;
   onKeyChange?: (key: string) => void;
+  onRemove?: () => void;
   children: ReactElement<{ onMouseDownCapture?: (event: MouseEvent) => void }>;
 };
 
@@ -39,11 +40,12 @@ export function DocumentFieldDetails({
   onUseTodayChange,
   onLabelChange,
   onKeyChange,
+  onRemove,
 }: DocumentFieldDetailsProps) {
   const [open, setOpen] = useState(false);
   const [draftLabel, setDraftLabel] = useState(label);
   const [draftKey, setDraftKey] = useState(fieldKey);
-  const editable = Boolean(onLabelChange || onKeyChange);
+  const editable = Boolean(onLabelChange || onKeyChange || onRemove);
 
   useEffect(() => {
     if (!open) return;
@@ -138,9 +140,27 @@ export function DocumentFieldDetails({
                 </p>
               </div>
             ) : null}
-            <Button type="submit" size="sm" className="self-start">
-              Übernehmen
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              {onLabelChange || onKeyChange ? (
+                <Button type="submit" size="sm">
+                  Übernehmen
+                </Button>
+              ) : null}
+              {onRemove ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  onClick={() => {
+                    setOpen(false);
+                    onRemove();
+                  }}
+                >
+                  Feld entfernen
+                </Button>
+              ) : null}
+            </div>
           </form>
         ) : (
           <>
