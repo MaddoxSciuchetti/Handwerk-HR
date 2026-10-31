@@ -6,6 +6,7 @@ import {
   type NodeViewProps,
 } from '@tiptap/react';
 import { DescriptionPointsEditor } from './components/DescriptionPointsEditor';
+import { DocumentFieldDetails } from './components/DocumentFieldDetails';
 import { DocumentFieldRemove } from './components/DocumentFieldRemove';
 import { DocumentValuesContext } from './DocumentValuesContext';
 
@@ -14,31 +15,32 @@ function MasterDescriptionPoints({
   label,
   readOnly,
   onRename,
+  onKeyChange,
 }: {
   fieldKey: string;
   label: string;
   readOnly: boolean;
   onRename: (label: string) => void;
+  onKeyChange: (key: string) => void;
 }) {
-  const rename = () => {
-    if (readOnly) return;
-    const next = window.prompt(
-      'Bezeichnung (Schlüssel bleibt unverändert)',
-      label
-    );
-    if (next?.trim()) onRename(next.trim());
-  };
   return (
-    <div data-drag-handle className="cursor-grab" onDoubleClick={rename}>
-      <p className="text-sm font-medium text-blue-950">{label}</p>
-      <p className="mt-1 text-xs leading-5 text-blue-900/80">
-        Diese Punkte werden vor dem Versand eingetragen. Sie haben keinen
-        gespeicherten Wert.
-      </p>
-      <p className="mt-1 font-mono text-[10px] text-muted-foreground">
-        {fieldKey}
-      </p>
-    </div>
+    <DocumentFieldDetails
+      fieldKey={fieldKey}
+      label={label}
+      onLabelChange={readOnly ? undefined : onRename}
+      onKeyChange={readOnly ? undefined : onKeyChange}
+    >
+      <div data-drag-handle className="cursor-grab">
+        <p className="text-sm font-medium text-blue-950">{label}</p>
+        <p className="mt-1 text-xs leading-5 text-blue-900/80">
+          Diese Punkte werden vor dem Versand eingetragen. Sie haben keinen
+          gespeicherten Wert.
+        </p>
+        <p className="mt-1 font-mono text-[10px] text-muted-foreground">
+          {fieldKey}
+        </p>
+      </div>
+    </DocumentFieldDetails>
   );
 }
 
@@ -54,7 +56,7 @@ function DescriptionPointsView({
     <NodeViewWrapper
       as="div"
       contentEditable={false}
-      className="group/document-field relative my-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-slate-900"
+      className="group/document-field relative my-1 rounded-md border border-blue-200 bg-blue-50 px-2 py-1.5 text-slate-900"
       data-description-points=""
     >
       {context.master ? (
@@ -63,14 +65,11 @@ function DescriptionPointsView({
           label={label}
           readOnly={context.readOnly}
           onRename={(next) => updateAttributes({ label: next })}
+          onKeyChange={(next) => updateAttributes({ key: next })}
         />
       ) : (
         <>
           <p className="mb-1 text-xs font-medium text-blue-950">{label}</p>
-          <p className="mb-1 text-xs text-blue-900/80">
-            Satz auswählen oder eigenen Text eingeben. Tab für Vorschläge, Enter
-            zum Auswählen oder Hinzufügen.
-          </p>
           <DescriptionPointsEditor
             label={label}
             value={context.values[key] ?? ''}

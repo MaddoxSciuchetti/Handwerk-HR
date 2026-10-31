@@ -1,9 +1,13 @@
 import {
   cloneElement,
+  useEffect,
   useState,
+  type FormEvent,
   type MouseEvent,
   type ReactElement,
 } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Popover,
   PopoverAnchor,
@@ -18,8 +22,14 @@ type DocumentFieldDetailsProps = {
   label: string;
   useToday?: boolean;
   onUseTodayChange?: (checked: boolean) => void;
+  onLabelChange?: (label: string) => void;
+  onKeyChange?: (key: string) => void;
   children: ReactElement<{ onMouseDownCapture?: (event: MouseEvent) => void }>;
 };
+
+function sanitizeFieldKey(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9_.]/g, '').slice(0, 120);
+}
 
 export function DocumentFieldDetails({
   fieldKey,
@@ -27,8 +37,20 @@ export function DocumentFieldDetails({
   children,
   useToday,
   onUseTodayChange,
+  onLabelChange,
+  onKeyChange,
 }: DocumentFieldDetailsProps) {
   const [open, setOpen] = useState(false);
+  const [draftLabel, setDraftLabel] = useState(label);
+  const [draftKey, setDraftKey] = useState(fieldKey);
+  const editable = Boolean(onLabelChange || onKeyChange);
+
+  useEffect(() => {
+    if (!open) return;
+    setDraftLabel(label);
+    setDraftKey(fieldKey);
+  }, [open, label, fieldKey]);
+
   const field = cloneElement(children, {
     onMouseDownCapture: (event: MouseEvent) => {
       event.preventDefault();
@@ -36,36 +58,113 @@ export function DocumentFieldDetails({
       children.props.onMouseDownCapture?.(event);
     },
   });
+
+  const save = (event?: FormEvent) => {
+    event?.preventDefault();
+    const nextLabel = draftLabel.trim();
+    const nextKey = sanitizeFieldKey(draftKey);
+    if (onLabelChange && nextLabel && nextLabel !== label)
+      onLabelChange(nextLabel);
+    if (onKeyChange && nextKey && nextKey !== fieldKey) onKeyChange(nextKey);
+    setOpen(false);
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverAnchor asChild>{field}</PopoverAnchor>
       <PopoverContent
         align="start"
-        className="w-64"
+        className="w-72"
         onOpenAutoFocus={(event) => event.preventDefault()}
         onCloseAutoFocus={(event) => event.preventDefault()}
       >
         <PopoverHeader>
-          <PopoverTitle>Gespeicherter Wert</PopoverTitle>
-          {label ? <PopoverDescription>{label}</PopoverDescription> : null}
+          <PopoverTitle>
+            {editable ? 'Feld bearbeiten' : 'Gespeicherter Wert'}
+          </PopoverTitle>
+          {!editable && label ? (
+            <PopoverDescription>{label}</PopoverDescription>
+          ) : null}
         </PopoverHeader>
-        <p className="font-mono text-sm break-all">{fieldKey}</p>
-        {onUseTodayChange ? (
-          <div className="space-y-2">
-            <label className="flex items-start gap-2 text-sm">
-              <input
-                type="checkbox"
-                className="mt-0.5"
-                checked={useToday}
-                onChange={(event) => onUseTodayChange(event.target.checked)}
-              />
-              Immer aktuelles Datum verwenden
-            </label>
-            <p className="text-xs text-muted-foreground">
-              Wird bei Verwendung des Dokuments automatisch ausgefüllt.
-            </p>
-          </div>
-        ) : null}
+        {editable ? (
+          <form className="flex flex-col gap-3" onSubmit={save}>
+            {onLabelChange ? (
+              <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+                Bezeichnung
+                <Input
+                  aria-label="Feldbezeichnung"
+                  value={draftLabel}
+                  onChange={(event) => setDraftLabel(event.target.value)}
+                  className="h-8 text-sm text-foreground"
+                  maxLength={400}
+                />
+              </label>
+            ) : null}
+            {onKeyChange ? (
+              <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+                Schlüssel
+                <Input
+                  aria-label="Feldschlüssel"
+                  value={draftKey}
+                  onChange={(event) =>
+                    setDraftKey(sanitizeFieldKey(event.target.value))
+                  }
+                  className="h-8 font-mono text-sm text-foreground"
+                  maxLength={120}
+                />
+                <span>
+                  Gleicher Schlüssel = gemeinsamer Wert. Ein neuer Schlüssel
+                  macht dieses Feld unabhängig.
+                </span>
+              </label>
+            ) : (
+              <p className="font-mono text-sm break-all">{fieldKey}</p>
+            )}
+            {onUseTodayChange ? (
+              <div className="space-y-2">
+                <label className="flex items-start gap-2 text-sm text-foreground">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5"
+                    checked={useToday}
+                    onChange={(event) =>
+                      onUseTodayChange(event.target.checked)
+                    }
+                  />
+                  Immer aktuelles Datum verwenden
+                </label>
+                <p className="text-xs text-muted-foreground">
+                  Wird bei Verwendung des Dokuments automatisch ausgefüllt.
+                </p>
+              </div>
+            ) : null}
+            <Button type="submit" size="sm" className="self-start">
+              Übernehmen
+            </Button>
+          </form>
+        ) : (
+          <>
+            <p className="font-mono text-sm break-all">{fieldKey}</p>
+            {onUseTodayChange ? (
+              <div className="space-y-2">
+                <label className="flex items-start gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5"
+                    checked={useToday}
+                    onChange={(event) =>
+                      onUseTodayChange(event.target.checked)
+                    }
+                  />
+                  Immer aktuelles Datum verwenden
+                </label>
+                <p className="text-xs text-muted-foreground">
+                  Wird bei Verwendung des Dokuments automatisch ausgefüllt.
+                </p>
+              </div>
+            ) : null}
+          </>
+        )}
       </PopoverContent>
     </Popover>
   );
