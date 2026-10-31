@@ -7,7 +7,6 @@ import {
 } from '@tiptap/react';
 import { DescriptionPointsEditor } from './components/DescriptionPointsEditor';
 import { DocumentFieldDetails } from './components/DocumentFieldDetails';
-import { DocumentFieldRemove } from './components/DocumentFieldRemove';
 import { DocumentValuesContext } from './DocumentValuesContext';
 
 function MasterDescriptionPoints({
@@ -80,9 +79,6 @@ function DescriptionPointsView({
             readOnly={context.readOnly}
             onChange={(next) => context.onValueChange(key, next)}
           />
-          {!context.readOnly ? (
-            <DocumentFieldRemove label={label} onRemove={deleteNode} />
-          ) : null}
         </>
       )}
     </NodeViewWrapper>

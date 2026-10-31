@@ -1,4 +1,4 @@
-import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Editor } from '@tiptap/core';
 import { expect, it, vi } from 'vitest';
@@ -102,22 +102,18 @@ it.each([
   }
 );
 
-it('allows removal in a person-specific draft and hides removal in read-only documents', async () => {
+it('does not show an inline remove control on filled contract previews', async () => {
   const document = fromSegments([
     { type: 'input', key: 'contract.name', label: 'Name' },
   ]);
-  const { unmount } = renderWithProviders(
+  renderWithProviders(
     <StyledDocumentEditor
       document={document}
       values={{ 'contract.name': 'Ada' }}
     />
   );
-  fireEvent.click(
-    await screen.findByRole('button', { name: 'Name entfernen' })
+  expect(await screen.findByRole('textbox', { name: 'Name' })).toHaveTextContent(
+    'Ada'
   );
-  expect(screen.queryByRole('textbox', { name: 'Name' })).toBeNull();
-  unmount();
-  renderWithProviders(<StyledDocumentEditor document={document} readOnly />);
-  await screen.findByRole('textbox', { name: 'Name' });
   expect(screen.queryByRole('button', { name: 'Name entfernen' })).toBeNull();
 });
