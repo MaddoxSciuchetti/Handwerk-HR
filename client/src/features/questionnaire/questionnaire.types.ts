@@ -13,6 +13,7 @@ export type QuestionnaireQuestion = {
   builtin?: boolean;
   contractFieldKey?: string;
   max?: number;
+  omitFromWorker?: boolean;
 };
 
 export type QuestionnaireRepeater = {
@@ -20,6 +21,7 @@ export type QuestionnaireRepeater = {
   section: string;
   afterSection: string;
   allowMoreRows?: boolean;
+  omitFromWorker?: boolean;
   columns: {
     key: string;
     label: string;

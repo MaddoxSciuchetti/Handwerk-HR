@@ -2,6 +2,7 @@ import {
     acceptModelMatches,
     contractValuesFromAnswers,
     deterministicContractValues,
+    resolveExclusiveCheckboxes,
     unmatchedQuestionnaireAnswers,
 } from "@/services/contractFieldMatch";
 import type { DocumentSegment } from "@/services/documentBody";
@@ -460,6 +461,140 @@ describe("reliable hours and repeated questionnaire matching", () => {
             "custom.salary": "4200",
         } as unknown as QuestionnaireAnswers, "", [{ key: "custom.salary", label: "Gehalt" }])).toEqual([]);
     });
+});
+
+it("copies weekly hours into stunden_anzahl from context and weekday totals", () => {
+    expect(
+        deterministicContractValues(
+            [
+                { type: "text", text: "Die durchschnittliche Arbeitszeit beträgt " },
+                {
+                    type: "input",
+                    key: "stunden_anzahl",
+                    label: "stunden_anzahl",
+                },
+                { type: "text", text: " Stunden pro Woche." },
+            ],
+            {
+                employmentExtent: "Vollzeit",
+                hoursMonday: "8",
+                hoursTuesday: "8",
+                hoursWednesday: "8",
+                hoursThursday: "8",
+                hoursFriday: "8",
+            } as unknown as QuestionnaireAnswers,
+            "",
+            [
+                { key: "employmentExtent", label: "Wöchentliche Arbeitszeit" },
+                { key: "hoursMonday", label: "Mo" },
+                { key: "hoursTuesday", label: "Di" },
+                { key: "hoursWednesday", label: "Mi" },
+                { key: "hoursThursday", label: "Do" },
+                { key: "hoursFriday", label: "Fr" },
+            ],
+        ),
+    ).toEqual([{ key: "stunden_anzahl", value: "40" }]);
+});
+
+it("does not put ja/nein into Gehalt or other euro amount fields", () => {
+    expect(
+        deterministicContractValues(
+            [
+                {
+                    type: "input",
+                    key: "lohn_gehalt",
+                    label: "Lohn/Gehalt/Grundentgelt",
+                },
+                {
+                    type: "input",
+                    key: "brutto_insgesamt",
+                    label: "Brutto-Arbeitsentgelt insgesamt",
+                },
+            ],
+            {
+                "custom.probezeit": "ja",
+                "custom.bsb-salary": "ja",
+            } as unknown as QuestionnaireAnswers,
+            "",
+            [
+                { key: "custom.probezeit", label: "Probezeit" },
+                { key: "custom.bsb-salary", label: "Gehalt" },
+            ],
+        ),
+    ).toEqual([]);
+});
+
+it("clears exclusive je Stunde / je Monat checkboxes when both were checked", () => {
+    expect(
+        deterministicContractValues(
+            [
+                { type: "text", text: "Brutto-Arbeitsentgelt je Stunde " },
+                {
+                    type: "input",
+                    key: "pay.hour",
+                    label: "je Stunde",
+                    fieldType: "checkbox",
+                },
+                { type: "text", text: " / je Monat " },
+                {
+                    type: "input",
+                    key: "pay.month",
+                    label: "je Monat",
+                    fieldType: "checkbox",
+                },
+            ],
+            {
+                "custom.hour": "ja",
+                "custom.month": "ja",
+            } as unknown as QuestionnaireAnswers,
+            "",
+            [
+                {
+                    key: "custom.hour",
+                    label: "je Stunde",
+                    contractFieldKey: "pay.hour",
+                },
+                {
+                    key: "custom.month",
+                    label: "je Monat",
+                    contractFieldKey: "pay.month",
+                },
+            ],
+        ),
+    ).toEqual([
+        { key: "pay.hour", value: "false" },
+        { key: "pay.month", value: "false" },
+    ]);
+});
+
+it("keeps monthly pay period when the clause says monatliche", () => {
+    expect(
+        resolveExclusiveCheckboxes(
+            [
+                { type: "text", text: "folgendes monatliche Brutto-Arbeitsentgelt je Stunde " },
+                {
+                    type: "input",
+                    key: "pay.hour",
+                    label: "je Stunde",
+                    fieldType: "checkbox",
+                },
+                { type: "text", text: " / je Monat " },
+                {
+                    type: "input",
+                    key: "pay.month",
+                    label: "je Monat",
+                    fieldType: "checkbox",
+                },
+            ],
+            [
+                { key: "pay.hour", value: "true" },
+                { key: "pay.month", value: "true" },
+            ],
+        ),
+    ).toEqual([
+        { key: "pay.hour", value: "false" },
+        { key: "pay.month", value: "true" },
+    ]);
 });
 
 it("maps Dauer der Probezeit onto anzahl_probezeit and drops a repeated unit", () => {

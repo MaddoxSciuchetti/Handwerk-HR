@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import {
     applyOverrides,
     definitionFields,
+    definitionForWorker,
     definitionRepeaters,
     presentQuestions,
     parseQuestionnaireDefinition,
@@ -199,12 +200,14 @@ export async function sendEngagementQuestionnaire(params: {
     }
 
     const draft = readEngagementDraft(engagement.questionnaireOverrides);
-    const definition = applyOverrides(
-        withAddedQuestions(
-            draft.definition ?? await questionnaireForOrganization(params.organizationId),
-            draft.questions,
+    const definition = definitionForWorker(
+        applyOverrides(
+            withAddedQuestions(
+                draft.definition ?? await questionnaireForOrganization(params.organizationId),
+                draft.questions,
+            ),
+            draft.values,
         ),
-        draft.values,
     );
     const token = randomUUID();
     await prisma.$transaction(async (tx) => {

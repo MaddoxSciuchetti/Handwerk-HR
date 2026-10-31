@@ -4,7 +4,8 @@ import { flushSync } from 'react-dom';
 import { QuestionInsertGap } from './QuestionInsertGap';
 import { QuestionnaireFieldControls } from './QuestionnaireFieldControls';
 import type { QuestionnaireBlock } from './questionnaireBlocks';
-import { isWeeklyHoursItem } from './questionnaireBlocks';
+import { isWeeklyHoursItem, itemsFromBlocks } from './questionnaireBlocks';
+import { SectionHeadlineCard } from './SectionHeadlineCard';
 import { TableQuestionCard } from './TableQuestionCard';
 import { WeeklyHoursEditor } from './WeeklyHoursEditor';
 import { useQuestionnaireDragPreview } from './useQuestionnaireDragPreview';
@@ -15,6 +16,7 @@ import {
   type TemplateField,
   type TemplateItem,
   type TemplateRepeater,
+  type TemplateSection,
 } from './questionnaireTemplate.types';
 
 export type DragPayload = {
@@ -27,8 +29,10 @@ type QuestionnaireStackProps = {
   contractFields: ContractFieldOption[];
   onDrop: (index: number, payload: DragPayload) => void;
   onInsert: (index: number, items: TemplateItem[]) => void;
+  onReplaceItems: (items: TemplateItem[]) => void;
   onChangeField: (field: TemplateField) => void;
   onChangeRepeater: (repeater: TemplateRepeater) => void;
+  onChangeSection: (section: TemplateSection) => void;
   onCommitField: (field: TemplateField) => void;
   onRemove: (id: string) => void;
 };
@@ -38,14 +42,17 @@ export function QuestionnaireStack({
   contractFields,
   onDrop,
   onInsert,
+  onReplaceItems,
   onChangeField,
   onChangeRepeater,
+  onChangeSection,
   onCommitField,
   onRemove,
 }: QuestionnaireStackProps) {
   const [insertAt, setInsertAt] = useState<number | null>(null);
   const { rootRef, preview, start, cancel, over, finish } =
     useQuestionnaireDragPreview();
+  const flatItems = itemsFromBlocks(blocks);
 
   const dropAt = (index: number, event: DragEvent) => {
     event.preventDefault();
@@ -57,16 +64,25 @@ export function QuestionnaireStack({
     if (payload) onDrop(target, payload);
   };
 
+  const itemOffset = (blockIndex: number) =>
+    blocks
+      .slice(0, blockIndex)
+      .reduce((sum, block) => sum + block.items.length, 0);
+
   const gap = (index: number) => (
     <QuestionInsertGap
       open={insertAt === index}
       onOpen={() => setInsertAt(index)}
       onClose={() => setInsertAt(null)}
-      existingKeys={blocks.flatMap((block) =>
-        block.items.map((item) => item.key)
-      )}
+      items={flatItems}
+      insertAt={itemOffset(index)}
+      existingKeys={flatItems.map((item) => item.key)}
       onAdd={(fields) => {
         onInsert(index, fields);
+        setInsertAt(null);
+      }}
+      onReplaceItems={(next) => {
+        onReplaceItems(next);
         setInsertAt(null);
       }}
       onDrop={(event) => dropAt(index, event)}
@@ -105,7 +121,7 @@ export function QuestionnaireStack({
       ) : null}
       {blocks.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          Ziehen Sie Felder hierher. Sie stehen untereinander.
+          Ziehen Sie Felder hierher oder fügen Sie eine Überschrift hinzu.
         </p>
       ) : null}
       {blocks.map((block, index) => (
@@ -117,8 +133,6 @@ export function QuestionnaireStack({
             preview
               ? {
                   transform: `translateY(${preview.offsets.get(block.id) ?? 0}px)`,
-                  // WebKit cancels native dragging when its source is fully
-                  // invisible or stops accepting pointer events.
                   opacity: preview.id === block.id ? 0.001 : 1,
                 }
               : undefined
@@ -142,7 +156,11 @@ export function QuestionnaireStack({
               start(block.id, event);
             }}
             onDrop={(event) => dropAt(index, event)}
-            className="relative min-w-0 cursor-default rounded-2xl border border-border bg-card py-5 pr-12 pl-5 outline-none"
+            className={`relative min-w-0 cursor-default rounded-2xl border py-5 pr-12 pl-5 outline-none ${
+              block.items[0]?.kind === 'section'
+                ? 'border-foreground/20 bg-muted/40'
+                : 'border-border bg-card'
+            }`}
           >
             <button
               type="button"
@@ -159,6 +177,7 @@ export function QuestionnaireStack({
               contractFields={contractFields}
               onChangeField={onChangeField}
               onChangeRepeater={onChangeRepeater}
+              onChangeSection={onChangeSection}
               onCommitField={onCommitField}
               onAdd={(field) => onInsert(index, [field])}
             />
@@ -176,6 +195,7 @@ function BlockBody({
   contractFields,
   onChangeField,
   onChangeRepeater,
+  onChangeSection,
   onCommitField,
   onAdd,
 }: {
@@ -183,10 +203,16 @@ function BlockBody({
   contractFields: ContractFieldOption[];
   onChangeField: (field: TemplateField) => void;
   onChangeRepeater: (repeater: TemplateRepeater) => void;
+  onChangeSection: (section: TemplateSection) => void;
   onCommitField: (field: TemplateField) => void;
   onAdd: (field: TemplateField) => void;
 }) {
   const first = block.items[0];
+  if (first?.kind === 'section') {
+    return (
+      <SectionHeadlineCard section={first} onChange={onChangeSection} />
+    );
+  }
   if (first?.kind === 'repeater') {
     return <TableQuestionCard repeater={first} onChange={onChangeRepeater} />;
   }

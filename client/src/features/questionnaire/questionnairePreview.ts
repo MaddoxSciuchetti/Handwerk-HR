@@ -20,6 +20,7 @@ export type PreviewField = {
   defaultValue?: string;
   bsbOnly?: boolean;
   officeOnly?: boolean;
+  omitFromWorker?: boolean;
 };
 
 export type PreviewRepeater = {
@@ -28,9 +29,18 @@ export type PreviewRepeater = {
   section: string;
   columns: QuestionnaireRepeater['columns'];
   allowMoreRows?: boolean;
+  omitFromWorker?: boolean;
 };
 
-export type PreviewItem = PreviewField | PreviewRepeater;
+export type PreviewSection = {
+  kind: 'section';
+  key: string;
+  title: string;
+  optional?: boolean;
+  omitFromWorker?: boolean;
+};
+
+export type PreviewItem = PreviewField | PreviewRepeater | PreviewSection;
 
 export type QuestionnairePreviewDraft = {
   name?: string;
@@ -40,7 +50,8 @@ export type QuestionnairePreviewDraft = {
 
 export type CandidateItem =
   | (QuestionnaireQuestion & { kind: 'field' })
-  | (QuestionnaireRepeater & { kind: 'repeater' });
+  | (QuestionnaireRepeater & { kind: 'repeater' })
+  | PreviewSection;
 
 export function rememberQuestionnaireDraft(draft: QuestionnairePreviewDraft) {
   sessionStorage.setItem(PREVIEW_KEY, JSON.stringify(draft));
@@ -69,6 +80,15 @@ export function forgetQuestionnaireDraft() {
 
 export function candidateItems(items: PreviewItem[]): CandidateItem[] {
   return items.map((item) => {
+    if (item.kind === 'section') {
+      return {
+        kind: 'section',
+        key: item.key,
+        title: item.title,
+        optional: item.optional,
+        omitFromWorker: item.omitFromWorker,
+      };
+    }
     if (item.kind === 'repeater') {
       return {
         kind: 'repeater',
@@ -77,6 +97,7 @@ export function candidateItems(items: PreviewItem[]): CandidateItem[] {
         afterSection: '',
         columns: item.columns,
         allowMoreRows: item.allowMoreRows,
+        omitFromWorker: item.omitFromWorker,
       };
     }
     const preset = item.defaultValue?.trim() ?? '';
@@ -103,6 +124,7 @@ export function candidateItems(items: PreviewItem[]): CandidateItem[] {
       employerFilled:
         officeOnly || (!isWeekdayHourKey(item.key) && preset.length > 0),
       bsbOnly: officeOnly || undefined,
+      omitFromWorker: item.omitFromWorker,
     };
   });
 }

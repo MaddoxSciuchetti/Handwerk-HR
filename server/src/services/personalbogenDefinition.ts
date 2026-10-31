@@ -4,13 +4,14 @@ import {
     WEEKLY_HOURS_PROMPT,
     WEEKLY_HOURS_SECTION,
 } from "../../../shared/weeklyHours";
+import { VWL_QUESTIONNAIRE_SECTION } from "../../../shared/questionnaireSections";
 
 const PERSONAL = "Persönliche Angaben";
 const JOB = "Beschäftigung";
 const TERM = "Befristung";
 const TAX = "Steuer";
 const SOCIAL = "Sozialversicherung";
-const VWL = "VWL - nur notwendig, wenn Vertrag vorliegt";
+const VWL = VWL_QUESTIONNAIRE_SECTION;
 
 type PersonalField = {
     kind: "field";

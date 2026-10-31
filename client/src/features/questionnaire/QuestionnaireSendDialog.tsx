@@ -15,7 +15,12 @@ import type {
   TemplateItem,
   TemplateField,
   TemplateRepeater,
+  TemplateSection,
 } from '@/features/settings/questionnaire/questionnaireTemplate.types';
+import {
+  setSectionOmitted,
+  syncItemsToHeadlines,
+} from '@shared/questionnaireSections';
 import {
   Dialog,
   DialogClose,
@@ -104,6 +109,26 @@ export function QuestionnaireSendDialog({
         item.key === repeater.key ? repeater : item
       )
     );
+  const changeSection = (section: TemplateSection) =>
+    setLocalItems((current) => {
+      const list = current ?? items;
+      const previous = list.find(
+        (item) => item.kind === 'section' && item.key === section.key
+      );
+      const oldTitle =
+        previous && previous.kind === 'section' ? previous.title : section.title;
+      return list.map((item) => {
+        if (item.kind === 'section' && item.key === section.key) return section;
+        if (
+          item.kind !== 'section' &&
+          oldTitle !== section.title &&
+          item.section === oldTitle
+        ) {
+          return { ...item, section: section.title };
+        }
+        return item;
+      });
+    });
   const insertItems = (index: number, incoming: TemplateItem[]) => {
     const placed = new Set(items.map((item) => item.key));
     const offset = blocks
@@ -111,7 +136,7 @@ export function QuestionnaireSendDialog({
       .reduce((sum, block) => sum + block.items.length, 0);
     const next = [...items];
     next.splice(offset, 0, ...incoming.filter((item) => !placed.has(item.key)));
-    setLocalItems(next);
+    setLocalItems(syncItemsToHeadlines(next));
   };
   const drop = (index: number, payload: DragPayload) => {
     if (payload.source !== 'stack') return;
@@ -120,7 +145,7 @@ export function QuestionnaireSendDialog({
     if (from < 0) return;
     const [moved] = next.splice(from, 1);
     next.splice(from < index ? index - 1 : index, 0, moved!);
-    setLocalItems(itemsFromBlocks(next));
+    setLocalItems(syncItemsToHeadlines(itemsFromBlocks(next)));
   };
   const sent = Boolean(draft.data?.data.sent);
   const retryMock =
@@ -341,8 +366,10 @@ export function QuestionnaireSendDialog({
                       contractFields={data?.contractFields ?? []}
                       onDrop={drop}
                       onInsert={insertItems}
+                      onReplaceItems={setLocalItems}
                       onChangeField={changeField}
                       onChangeRepeater={changeRepeater}
+                      onChangeSection={changeSection}
                       onCommitField={changeField}
                       onRemove={(id) =>
                         setLocalItems(
@@ -369,6 +396,9 @@ export function QuestionnaireSendDialog({
                             : item
                         )
                       )
+                    }
+                    onSectionOmitChange={(section, omitted) =>
+                      setLocalItems(setSectionOmitted(items, section, omitted))
                     }
                   />
                 )}

@@ -13,6 +13,7 @@ import {
     isWeekdayHourKey,
     normalizeHour,
 } from "../../../shared/weeklyHours";
+import { VWL_QUESTIONNAIRE_SECTION } from "../../../shared/questionnaireSections";
 
 export const QUESTIONNAIRE_INTRO =
     "Dieser Personalfragebogen dient zur Vorerfassung von Personaldaten für das DATEV-Lohnabrechnungsprogramm. Zur Wahrung der Aufbewahrungsfrist wird der ausgefüllte Personalfragebogen von dem Arbeitgeber / der lohnabrechnenden Stelle gespeichert.";
@@ -20,7 +21,7 @@ export const QUESTIONNAIRE_INTRO =
 const DECLARATION = QUESTIONNAIRE_DECLARATION.label;
 
 const HOURS_SECTION = WEEKLY_HOURS_SECTION;
-const VWL_SECTION = "VWL - nur notwendig, wenn Vertrag vorliegt";
+const VWL_SECTION = VWL_QUESTIONNAIRE_SECTION;
 const SOCIAL_SECTION = "Sozialversicherung";
 
 type QuestionnaireFieldType = "text" | "date" | "single" | "check" | "file";

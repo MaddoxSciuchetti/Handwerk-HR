@@ -17,6 +17,10 @@ import {
     isWeeklyHoursKey,
     normalizeHour,
 } from "../../../shared/weeklyHours";
+import {
+    isOptionalQuestionnaireSection,
+    withSectionHeadlines,
+} from "../../../shared/questionnaireSections";
 
 export type QuestionnaireFieldItem = {
     kind: "field";
@@ -34,6 +38,8 @@ export type QuestionnaireFieldItem = {
     builtin?: boolean;
     contractFieldKey?: string;
     officeOnly?: boolean;
+    /** BSB switched this optional section off before send. */
+    omitFromWorker?: boolean;
 };
 
 export type QuestionnaireRepeaterItem = {
@@ -42,9 +48,21 @@ export type QuestionnaireRepeaterItem = {
     section: string;
     columns: QuestionnaireColumn[];
     allowMoreRows?: boolean;
+    omitFromWorker?: boolean;
 };
 
-export type QuestionnaireItem = QuestionnaireFieldItem | QuestionnaireRepeaterItem;
+export type QuestionnaireSectionItem = {
+    kind: "section";
+    key: string;
+    title: string;
+    optional?: boolean;
+    omitFromWorker?: boolean;
+};
+
+export type QuestionnaireItem =
+    | QuestionnaireFieldItem
+    | QuestionnaireRepeaterItem
+    | QuestionnaireSectionItem;
 
 export type QuestionnaireDefinition = {
     name?: string;
@@ -54,6 +72,7 @@ export type QuestionnaireDefinition = {
 
 const CUSTOM_KEY = /^custom\.[a-z0-9-]{8,80}$/;
 const CUSTOM_ROWS = /^rows\.[a-z0-9-]{8,80}$/;
+const SECTION_KEY = /^section\.[a-z0-9-]{1,80}$/;
 const COLUMN_KEY = /^[a-z][a-z0-9]{0,30}$/;
 const CONTRACT_KEY = /^[a-zA-Z0-9._-]{1,120}$/;
 const CUSTOM_SECTION = "Weitere Angaben";
@@ -127,7 +146,11 @@ export function seedQuestionnaireDefinition(): QuestionnaireDefinition {
         }
         items.splice(insertAt, 0, repeaterItem(repeater));
     }
-    return { name: "Personalfragebogen", intro: QUESTIONNAIRE_INTRO, items };
+    return {
+        name: "Personalfragebogen",
+        intro: QUESTIONNAIRE_INTRO,
+        items: withSectionHeadlines(items) as QuestionnaireItem[],
+    };
 }
 
 export function definitionFields(definition: QuestionnaireDefinition) {
@@ -137,10 +160,10 @@ export function definitionFields(definition: QuestionnaireDefinition) {
 export function definitionRepeaters(definition: QuestionnaireDefinition): QuestionnaireRepeater[] {
     const repeaters: QuestionnaireRepeater[] = [];
     definition.items.forEach((item, index) => {
-        if (item.kind !== "repeater") return;
+        if (item.kind !== "repeater" || item.omitFromWorker) return;
         const previous = definition.items
             .slice(0, index)
-            .findLast((entry) => entry.kind === "field");
+            .findLast((entry) => entry.kind === "field" && !entry.omitFromWorker);
         repeaters.push({
             key: item.key,
             section: item.section,
@@ -180,20 +203,31 @@ export function questionRequired(field: {
 }
 
 export function presentQuestions(definition: QuestionnaireDefinition) {
-    return definitionFields(definition).map((field) => ({
-        key: field.key,
-        label: field.label,
-        section: field.section,
-        type: field.type,
-        required: questionRequired(field) && !field.bsbOnly,
-        options: field.options,
-        max: field.max,
-        layout: field.layout,
-        employerFilled: fieldIsLocked(field),
-        bsbOnly: field.bsbOnly,
-        defaultValue: field.defaultValue,
-        builtin: field.builtin,
-    }));
+    return definitionFields(definition)
+        .filter((field) => !field.omitFromWorker)
+        .map((field) => ({
+            key: field.key,
+            label: field.label,
+            section: field.section,
+            type: field.type,
+            required: questionRequired(field) && !field.bsbOnly,
+            options: field.options,
+            max: field.max,
+            layout: field.layout,
+            employerFilled: fieldIsLocked(field),
+            bsbOnly: field.bsbOnly,
+            defaultValue: field.defaultValue,
+            builtin: field.builtin,
+        }));
+}
+
+export function definitionForWorker(
+    definition: QuestionnaireDefinition,
+): QuestionnaireDefinition {
+    return {
+        ...definition,
+        items: definition.items.filter((item) => !item.omitFromWorker),
+    };
 }
 
 function cleanDefault(field: QuestionnaireFieldItem, value: string) {
@@ -243,20 +277,44 @@ export function parseQuestionnaireDefinition(input: unknown): QuestionnaireDefin
     const name = body.name === undefined ? "Personalfragebogen" :
         typeof body.name === "string" ? body.name.trim() : "";
     if (!name || name.length > 200) reject("Der Fragebogen braucht einen Namen mit höchstens 200 Zeichen.");
-    if (!Array.isArray(body.items) || body.items.length === 0 || body.items.length > 80) {
+    if (!Array.isArray(body.items) || body.items.length === 0 || body.items.length > 120) {
         reject("Der Fragebogen braucht mindestens eine Frage.");
     }
     const seen = new Set<string>();
     const items = body.items.map((raw) => parseItem(raw, seen));
+    if (!items.some((item) => item.kind === "field" || item.kind === "repeater")) {
+        reject("Der Fragebogen braucht mindestens eine Frage.");
+    }
     return { name, intro: QUESTIONNAIRE_INTRO, items };
 }
 
 function parseItem(raw: unknown, seen: Set<string>): QuestionnaireItem {
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) reject("Eine Frage ist ungültig.");
     const item = raw as { kind?: unknown; key?: unknown };
+    if (item.kind === "section") return parseSection(item, seen);
     if (item.kind === "repeater") return parseRepeater(item, seen);
     if (item.kind === "field") return parseField(item, seen);
     reject("Eine Frage ist ungültig.");
+}
+
+function parseSection(raw: object, seen: Set<string>): QuestionnaireSectionItem {
+    const key = "key" in raw && typeof raw.key === "string" ? raw.key.trim() : "";
+    if (!SECTION_KEY.test(key)) reject("Die Überschrift ist ungültig.");
+    if (seen.has(key)) reject("Jede Überschrift darf nur einmal vorkommen.");
+    seen.add(key);
+    const title = "title" in raw && typeof raw.title === "string" ? raw.title.trim() : "";
+    if (!title || title.length > 400) reject("Jede Überschrift braucht einen Text.");
+    const optional =
+        ("optional" in raw && raw.optional === true) ||
+        isOptionalQuestionnaireSection(title) ||
+        undefined;
+    return {
+        kind: "section",
+        key,
+        title,
+        optional: optional ? true : undefined,
+        omitFromWorker: readOmitFromWorker(raw),
+    };
 }
 
 function parseRepeater(raw: object, seen: Set<string>): QuestionnaireRepeaterItem {
@@ -285,6 +343,7 @@ function parseRepeater(raw: object, seen: Set<string>): QuestionnaireRepeaterIte
             }),
         }),
         allowMoreRows: "allowMoreRows" in raw && raw.allowMoreRows === true ? true : undefined,
+        omitFromWorker: readOmitFromWorker(raw),
     };
 }
 
@@ -308,6 +367,7 @@ function parseCustomTable(raw: object, key: string, seen: Set<string>): Question
         section,
         columns,
         allowMoreRows: "allowMoreRows" in raw && raw.allowMoreRows === true ? true : undefined,
+        omitFromWorker: readOmitFromWorker(raw),
     };
 }
 
@@ -353,6 +413,7 @@ function parseField(raw: object, seen: Set<string>): QuestionnaireFieldItem {
         bsbOnly: ("bsbOnly" in raw && typeof raw.bsbOnly === "boolean" ? raw.bsbOnly : readOfficeOnly(raw)),
         officeOnly: (("bsbOnly" in raw && typeof raw.bsbOnly === "boolean" ? raw.bsbOnly : readOfficeOnly(raw))) ? true : undefined,
         defaultValue: undefined,
+        omitFromWorker: readOmitFromWorker(raw),
     };
     const posted = "defaultValue" in raw && typeof raw.defaultValue === "string" ? raw.defaultValue : "";
     draft.defaultValue = cleanDefault(draft, posted);
@@ -438,6 +499,10 @@ function readOfficeOnly(raw: object) {
     return "officeOnly" in raw && raw.officeOnly === true;
 }
 
+function readOmitFromWorker(raw: object) {
+    return "omitFromWorker" in raw && raw.omitFromWorker === true ? true : undefined;
+}
+
 function readContractKey(raw: object) {
     if (!("contractFieldKey" in raw) || typeof raw.contractFieldKey !== "string") return undefined;
     const key = raw.contractFieldKey.trim();
@@ -461,6 +526,39 @@ export function applyOverrides(
                 required: questionRequired(item),
                 employerFilled: fieldIsLocked({ ...item, defaultValue: next }),
             };
+        }),
+    };
+}
+
+export function renameSectionTitle(
+    definition: QuestionnaireDefinition,
+    key: string,
+    title: string,
+): QuestionnaireDefinition {
+    const trimmed = title.trim();
+    if (!trimmed) return definition;
+    const current = definition.items.find(
+        (item) => item.kind === "section" && item.key === key,
+    );
+    if (!current || current.kind !== "section") return definition;
+    const previous = current.title;
+    return {
+        ...definition,
+        items: definition.items.map((item) => {
+            if (item.kind === "section" && item.key === key) {
+                return {
+                    ...item,
+                    title: trimmed,
+                    optional:
+                        item.optional === true ||
+                        isOptionalQuestionnaireSection(trimmed) ||
+                        undefined,
+                };
+            }
+            if (item.kind !== "section" && item.section === previous) {
+                return { ...item, section: trimmed };
+            }
+            return item;
         }),
     };
 }

@@ -55,9 +55,10 @@ function buildQuestionnairePrintContent(
   add('h1', data.name || 'Fragebogen');
   add('p', engagementLabel);
   add('p', data.intro);
-  data.items.forEach((item, index) => {
-    if (index === 0 || data.items[index - 1].section !== item.section) {
-      add('h2', item.section);
+  data.items.forEach((item) => {
+    if (item.kind === 'section') {
+      add('h2', item.title);
+      return;
     }
     const value = data.answers[item.key];
     if (item.kind === 'repeater') {
@@ -171,6 +172,16 @@ function QuestionnairePreview({
               </Button>
             ) : null}
             {data.items.map((item, index) => {
+              if (item.kind === 'section') {
+                return (
+                  <h3
+                    key={item.key}
+                    className="mb-1 pt-2 text-base font-semibold"
+                  >
+                    {item.title}
+                  </h3>
+                );
+              }
               const value = data.answers[item.key];
               if (item.kind === 'repeater') {
                 const rows = Array.isArray(value) ? value : [];
@@ -203,10 +214,16 @@ function QuestionnairePreview({
                   </section>
                 );
               }
+              const previous = data.items[index - 1];
+              const showLegacyHeading =
+                !data.items.some((entry) => entry.kind === 'section') &&
+                (index === 0 ||
+                  (previous &&
+                    previous.kind !== 'section' &&
+                    previous.section !== item.section));
               return (
                 <div key={item.key}>
-                  {index === 0 ||
-                  data.items[index - 1].section !== item.section ? (
+                  {showLegacyHeading ? (
                     <h3 className="mb-3 font-semibold">{item.section}</h3>
                   ) : null}
                   <dl className="grid gap-2 border-b border-border pb-3 sm:grid-cols-2">

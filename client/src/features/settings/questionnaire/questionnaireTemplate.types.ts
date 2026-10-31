@@ -14,6 +14,7 @@ export type TemplateField = {
   builtin?: boolean;
   contractFieldKey?: string;
   officeOnly?: boolean;
+  omitFromWorker?: boolean;
 };
 
 export type TemplateRepeater = {
@@ -27,9 +28,18 @@ export type TemplateRepeater = {
     officeOnly?: boolean;
   }[];
   allowMoreRows?: boolean;
+  omitFromWorker?: boolean;
 };
 
-export type TemplateItem = TemplateField | TemplateRepeater;
+export type TemplateSection = {
+  kind: 'section';
+  key: string;
+  title: string;
+  optional?: boolean;
+  omitFromWorker?: boolean;
+};
+
+export type TemplateItem = TemplateField | TemplateRepeater | TemplateSection;
 
 export type ContractFieldOption = {
   key: string;
