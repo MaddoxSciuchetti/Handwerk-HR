@@ -1,5 +1,9 @@
 # Agent instructions
 
+## Pull requests
+
+When creating or updating a GitHub PR, fill `.github/pull_request_template.md` as the body (do not invent a different layout). Always fill **Testing**, **Risk**, and **How to revert** with concrete content for the change—not placeholders. Agents may draft those sections; the author owns the sign-off. Delete optional sections that do not apply.
+
 ## Ship staging
 
 When the user says `ship staging` (or clearly the same intent in few words):

@@ -1,0 +1,14 @@
+---
+description: Always use the repo GitHub PR template when creating or updating pull requests
+alwaysApply: true
+---
+
+# Pull request body
+
+When creating or updating a GitHub pull request with `gh pr create` / `gh pr edit`:
+
+1. Read `.github/pull_request_template.md`.
+2. Fill **that** template as the PR body. Do not invent a different structure (no custom `## Summary` / `## Test plan` layout).
+3. Always fill **Testing**, **Risk**, and **How to revert** with concrete content for this change (not placeholders). Agents may draft them; the author still owns the sign-off.
+4. Delete optional sections that do not apply (e.g. Screenshots when there is no UI change).
+5. Keep the Description concrete; use the Ready checklist only for items that matter for this PR.
