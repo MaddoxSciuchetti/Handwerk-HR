@@ -287,13 +287,21 @@ it("fills Vorname by alias and asks the model only for Anrede", async () => {
 
     const request = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
     const payload = JSON.parse(request.messages[1].content) as {
+        instruction?: string;
+        emptyFieldCount?: number;
+        alreadyFilled?: { key: string; value: string }[];
         fields: { key: string }[];
         answers: { key: string; value: string }[];
     };
     expect(request.messages[0].content).toContain(
-        "Ein Antwortwert darf und soll alle passenden Vertragsfelder befüllen",
+        "Befülle so viele noch leere Vertragsfelder wie möglich",
     );
-    expect(request.messages[0].content).toContain("answerKey=address");
+    expect(request.messages[0].content).toContain('key „address“');
+    expect(payload.instruction).toContain("Maximal befüllen");
+    expect(payload.emptyFieldCount).toBe(1);
+    expect(payload.alreadyFilled).toEqual([
+        { key: "contract.vorname", value: "Max" },
+    ]);
     expect(payload.fields.map((field) => field.key)).toEqual([
         "contract.anrede",
     ]);
@@ -307,6 +315,46 @@ it("fills Vorname by alias and asks the model only for Anrede", async () => {
         { key: "contract.vorname", value: "Max" },
         { key: "contract.anrede", value: "Herr" },
     ]);
+});
+
+it("gives the model section cues and wider context for leftover fields", async () => {
+    modelResult([]);
+    await matchQuestionnaireToContract(
+        [
+            {
+                type: "text",
+                text: "§ 3 Vergütung\nDas monatliche Bruttogehalt beträgt ",
+            },
+            { type: "input", key: "contract.salary", label: "Betrag" },
+            { type: "text", text: " Euro." },
+        ],
+        { "custom.salary": "4200" } as unknown as QuestionnaireAnswers,
+        "",
+        [{ key: "custom.salary", label: "Monatsgehalt" }],
+    );
+    const payload = JSON.parse(
+        JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)).messages[1]
+            .content,
+    ) as {
+        fields: {
+            key: string;
+            section: string;
+            context: string;
+            label: string;
+        }[];
+        answers: { key: string; value: string }[];
+    };
+    expect(payload.fields).toEqual([
+        expect.objectContaining({
+            key: "contract.salary",
+            label: "Betrag",
+            section: expect.stringContaining("§ 3 Vergütung"),
+            context: expect.stringContaining("Bruttogehalt"),
+        }),
+    ]);
+    expect(payload.answers).toContainEqual(
+        expect.objectContaining({ key: "custom.salary", value: "4200" }),
+    );
 });
 
 it("fills Adresse and every Nachname placeholder from questionnaire aliases", async () => {
