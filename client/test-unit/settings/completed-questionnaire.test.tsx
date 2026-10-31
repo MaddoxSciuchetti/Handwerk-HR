@@ -2,21 +2,29 @@ import { CompletedQuestionnaireEditor } from '@/features/worker-task-management/
 import type { CompletedQuestionnaire } from '@/features/worker-task-management/components/files/EngagementQuestionnaireList';
 import { EngagementQuestionnaireList } from '@/features/worker-task-management/components/files/EngagementQuestionnaireList';
 import { apiJson } from '@/config/apiClient';
-import { screen } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from 'test-unit/test-utils';
-import { beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 vi.mock('@/config/apiClient', () => ({
   apiJson: { get: vi.fn(), put: vi.fn() },
 }));
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
 
-it('opens saved answers for the selected engagement and renders a read-only preview', async () => {
+it('opens the completed Fragebogen directly in the editable form', async () => {
+  const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
   vi.mocked(apiJson.get).mockResolvedValue({
     success: true,
     data: {
+      revision: 0,
       name: 'Personalbogen Baustelle',
       intro: 'Saved introduction',
       items: [
@@ -66,18 +74,20 @@ it('opens saved answers for the selected engagement and renders a read-only prev
     />
   );
   expect(screen.queryByText(/Ausgefüllt/)).not.toBeInTheDocument();
-  expect(screen.queryByText(/Eintritt/)).not.toBeInTheDocument();
   const entries = screen.getAllByRole('button', { name: 'Fragebogen' });
-  await userEvent.click(entries[1]);
-  expect(await screen.findByText('Lovelace')).toBeInTheDocument();
+  await user.click(entries[1]);
+  expect(
+    await screen.findByRole('textbox', { name: 'Familienname' })
+  ).toHaveValue('Lovelace');
   expect(screen.getByText('Personalbogen Baustelle')).toBeInTheDocument();
-  expect(screen.getByText('ja')).toBeInTheDocument();
-  expect(screen.getByText('01.04.2018')).toBeInTheDocument();
-  expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+  expect(screen.getByText('Saved introduction')).toBeInTheDocument();
+  expect(
+    screen.queryByRole('button', { name: 'Bearbeiten' })
+  ).not.toBeInTheDocument();
   expect(apiJson.get).toHaveBeenCalledWith(
     'worker/worker/engagements/engagement-two/questionnaire/completed'
   );
-  await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+  await user.click(screen.getByRole('button', { name: 'Schließen' }));
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 });
 
@@ -89,6 +99,7 @@ it('does not render an entry when there are no completed questionnaires', () => 
 });
 
 it('shows a load error without displaying answers when the request fails', async () => {
+  const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
   vi.mocked(apiJson.get).mockRejectedValue(new Error('Not found'));
   renderWithProviders(
     <EngagementQuestionnaireList
@@ -102,9 +113,7 @@ it('shows a load error without displaying answers when the request fails', async
       ]}
     />
   );
-  await userEvent.click(
-    screen.getAllByRole('button', { name: /Fragebogen/ })[0]!
-  );
+  await user.click(screen.getAllByRole('button', { name: /Fragebogen/ })[0]!);
   expect(
     await screen.findByText(
       'Der ausgefüllte Fragebogen konnte nicht geladen werden.'
@@ -126,7 +135,9 @@ const editableQuestionnaire = {
   ],
   answers: { lastName: 'Wrong' },
 };
+
 async function openEditable() {
+  const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
   vi.mocked(apiJson.get).mockResolvedValue({ data: editableQuestionnaire });
   renderWithProviders(
     <EngagementQuestionnaireList
@@ -136,16 +147,14 @@ async function openEditable() {
       ]}
     />
   );
-  await userEvent.click(screen.getByRole('button', { name: 'Fragebogen' }));
-  await userEvent.click(
-    await screen.findByRole('button', { name: 'Bearbeiten' })
-  );
-  const input = screen.getByRole('textbox', { name: 'Familienname' });
-  await userEvent.clear(input);
-  await userEvent.type(input, 'Correct');
+  await user.click(screen.getByRole('button', { name: 'Fragebogen' }));
+  const input = await screen.findByRole('textbox', { name: 'Familienname' });
+  await user.clear(input);
+  await user.type(input, 'Correct');
+  return user;
 }
 
-it('saves corrections only on explicit save, including the revision', async () => {
+it('autosaves corrections with the revision after a short delay', async () => {
   vi.mocked(apiJson.put).mockResolvedValue({
     data: {
       ...editableQuestionnaire,
@@ -155,29 +164,30 @@ it('saves corrections only on explicit save, including the revision', async () =
   });
   await openEditable();
   expect(apiJson.put).not.toHaveBeenCalled();
-  await userEvent.click(screen.getByRole('button', { name: 'Speichern' }));
-  expect(apiJson.put).toHaveBeenCalledWith(
-    'worker/worker/engagements/eng/questionnaire/completed',
-    {
-      revision: 0,
-      answers: { lastName: 'Correct' },
-    }
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(350);
+  });
+  await waitFor(() =>
+    expect(apiJson.put).toHaveBeenCalledWith(
+      'worker/worker/engagements/eng/questionnaire/completed',
+      {
+        revision: 0,
+        answers: { lastName: 'Correct' },
+      }
+    )
   );
-  expect(await screen.findByText('Correct')).toBeInTheDocument();
-  expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+  expect(screen.getByRole('textbox', { name: 'Familienname' })).toHaveValue(
+    'Correct'
+  );
+  expect(await screen.findByRole('status')).toHaveTextContent('Gespeichert');
 });
 
-it('discards edits on cancel without saving', async () => {
-  await openEditable();
-  await userEvent.click(screen.getByRole('button', { name: 'Abbrechen' }));
-  expect(await screen.findByText('Wrong')).toBeInTheDocument();
-  expect(apiJson.put).not.toHaveBeenCalled();
-});
-
-it('keeps entered corrections when saving fails', async () => {
+it('keeps entered corrections when autosave fails', async () => {
   vi.mocked(apiJson.put).mockRejectedValue({ status: 409 });
   await openEditable();
-  await userEvent.click(screen.getByRole('button', { name: 'Speichern' }));
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(350);
+  });
   expect(await screen.findByRole('alert')).toHaveTextContent(
     'inzwischen geändert'
   );
@@ -187,22 +197,23 @@ it('keeps entered corrections when saving fails', async () => {
 });
 
 it('keeps the original edit revision when newer answers arrive in the background', async () => {
+  const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
   vi.mocked(apiJson.put).mockRejectedValue({ status: 409 });
   const initial = editableQuestionnaire as CompletedQuestionnaire;
-  const onDone = vi.fn();
+  const onClose = vi.fn();
   const onBusy = vi.fn();
   const view = renderWithProviders(
     <CompletedQuestionnaireEditor
       workerId="worker"
       engagementId="eng"
       questionnaire={initial}
-      onDone={onDone}
+      onClose={onClose}
       onBusy={onBusy}
     />
   );
   const input = screen.getByRole('textbox', { name: 'Familienname' });
-  await userEvent.clear(input);
-  await userEvent.type(input, 'My correction');
+  await user.clear(input);
+  await user.type(input, 'My correction');
   view.rerender(
     <CompletedQuestionnaireEditor
       workerId="worker"
@@ -212,17 +223,21 @@ it('keeps the original edit revision when newer answers arrive in the background
         revision: 1,
         answers: { lastName: 'Another editor' },
       }}
-      onDone={onDone}
+      onClose={onClose}
       onBusy={onBusy}
     />
   );
-  await userEvent.click(screen.getByRole('button', { name: 'Speichern' }));
-  expect(apiJson.put).toHaveBeenCalledWith(
-    'worker/worker/engagements/eng/questionnaire/completed',
-    {
-      revision: 0,
-      answers: { lastName: 'My correction' },
-    }
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(350);
+  });
+  await waitFor(() =>
+    expect(apiJson.put).toHaveBeenCalledWith(
+      'worker/worker/engagements/eng/questionnaire/completed',
+      {
+        revision: 0,
+        answers: { lastName: 'My correction' },
+      }
+    )
   );
   expect(await screen.findByRole('alert')).toHaveTextContent(
     'inzwischen geändert'
@@ -230,6 +245,7 @@ it('keeps the original edit revision when newer answers arrive in the background
 });
 
 it('allows correcting completed questionnaire data alongside empty legacy office-only fields', async () => {
+  const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
   const initial = {
     ...editableQuestionnaire,
     items: [
@@ -247,27 +263,31 @@ it('allows correcting completed questionnaire data alongside empty legacy office
     answers: { ...editableQuestionnaire.answers, officeSalary: '' },
   } as CompletedQuestionnaire;
   vi.mocked(apiJson.put).mockResolvedValue({
-    data: { ...initial, revision: 1 },
+    data: { ...initial, revision: 1, answers: { lastName: 'Correct', officeSalary: '' } },
   });
   renderWithProviders(
     <CompletedQuestionnaireEditor
       workerId="worker"
       engagementId="eng"
       questionnaire={initial}
-      onDone={vi.fn()}
+      onClose={vi.fn()}
       onBusy={vi.fn()}
     />
   );
   expect(screen.getByRole('textbox', { name: 'Gehalt' })).toBeEnabled();
   const input = screen.getByRole('textbox', { name: 'Familienname' });
-  await userEvent.clear(input);
-  await userEvent.type(input, 'Correct');
-  await userEvent.click(screen.getByRole('button', { name: 'Speichern' }));
-  expect(apiJson.put).toHaveBeenCalledWith(
-    'worker/worker/engagements/eng/questionnaire/completed',
-    {
-      revision: 0,
-      answers: { lastName: 'Correct' },
-    }
+  await user.clear(input);
+  await user.type(input, 'Correct');
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(350);
+  });
+  await waitFor(() =>
+    expect(apiJson.put).toHaveBeenCalledWith(
+      'worker/worker/engagements/eng/questionnaire/completed',
+      {
+        revision: 0,
+        answers: { lastName: 'Correct' },
+      }
+    )
   );
 });

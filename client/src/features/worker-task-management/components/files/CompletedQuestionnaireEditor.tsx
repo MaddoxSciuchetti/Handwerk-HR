@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { apiJson } from '@/config/apiClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,15 +20,15 @@ import {
 import { employmentContractKey } from '../../hooks/useEmploymentContract';
 import { WORKERBYID } from '../../consts/query-key.consts';
 import { ALL_WORKER_DATA } from '@/features/worker-lifecycle/consts/query-key.consts';
-import { toast } from 'sonner';
 import type { CompletedQuestionnaire } from './EngagementQuestionnaireList';
 
 type Props = {
   workerId: string;
   engagementId: string;
   questionnaire: CompletedQuestionnaire;
-  onDone: () => void;
+  onClose: () => void;
   onBusy: (busy: boolean) => void;
+  onFlushReady?: (flush: () => Promise<void>) => void;
 };
 
 type Section = {
@@ -38,9 +38,11 @@ type Section = {
   repeater?: QuestionnaireRepeater;
 };
 
-function buildSections(
-  items: CompletedQuestionnaire['items']
-): Section[] {
+type Answers = CompletedQuestionnaire['answers'];
+
+const AUTOSAVE_MS = 300;
+
+function buildSections(items: CompletedQuestionnaire['items']): Section[] {
   const editableItems = items.filter((item) => item.key !== 'declaration');
   const hasHeadlines = editableItems.some((item) => item.kind === 'section');
   return editableItems.reduce<Section[]>((list, item) => {
@@ -92,91 +94,183 @@ function buildSections(
   }, []);
 }
 
+function correctionsFrom(
+  items: CompletedQuestionnaire['items'],
+  before: Answers,
+  after: Answers
+) {
+  return Object.fromEntries(
+    items.flatMap((item) => {
+      if (item.kind === 'field' && item.type === 'file') return [];
+      const previous =
+        before[item.key] ?? (item.kind === 'repeater' ? [] : '');
+      const next = after[item.key] ?? (item.kind === 'repeater' ? [] : '');
+      return JSON.stringify(previous) === JSON.stringify(next)
+        ? []
+        : [[item.key, next]];
+    })
+  );
+}
+
 export function CompletedQuestionnaireEditor({
   workerId,
   engagementId,
   questionnaire: initialQuestionnaire,
-  onDone,
+  onClose,
   onBusy,
+  onFlushReady,
 }: Props) {
-  // Keep the revision and baseline from when editing began. Background refetches
-  // must not make an old draft look like it was based on newer answers.
+  // Freeze structure from open; revision/answers advance via autosave refs.
   const [questionnaire] = useState(initialQuestionnaire);
   const [answers, setAnswers] = useState(() =>
     structuredClone(questionnaire.answers)
   );
+  const [status, setStatus] = useState<'saved' | 'pending' | 'error'>('saved');
   const [error, setError] = useState('');
   const queryClient = useQueryClient();
   const questions = questionnaire.items.flatMap((item) =>
     item.kind === 'field' ? [item] : []
   );
   const sections = buildSections(questionnaire.items);
-  const save = useMutation({
-    mutationFn: () => {
-      const corrections = Object.fromEntries(
-        questionnaire.items.flatMap((item) => {
-          if (item.kind === 'field' && item.type === 'file') return [];
-          const before =
-            questionnaire.answers[item.key] ??
-            (item.kind === 'repeater' ? [] : '');
-          const after =
-            answers[item.key] ?? (item.kind === 'repeater' ? [] : '');
-          return JSON.stringify(before) === JSON.stringify(after)
-            ? []
-            : [[item.key, after]];
-        })
-      );
-      return apiJson.put<{ data: CompletedQuestionnaire }>(
-        `worker/${workerId}/engagements/${engagementId}/questionnaire/completed`,
-        { revision: questionnaire.revision, answers: corrections }
-      );
-    },
-    onSuccess: ({ data }) => {
-      queryClient.setQueryData(
-        ['completed-questionnaire', workerId, engagementId],
-        data
-      );
-      void queryClient.invalidateQueries({
-        queryKey: employmentContractKey(workerId, engagementId),
-      });
-      void queryClient.invalidateQueries({ queryKey: [WORKERBYID, workerId] });
-      void queryClient.invalidateQueries({ queryKey: [ALL_WORKER_DATA] });
-      toast.success('Fragebogen gespeichert');
-      onDone();
-    },
-    onError: (failure: {
-      message?: string;
-      status?: number;
-      errors?: { path: string; message: string }[];
-    }) => {
-      if (failure.status === 409) {
-        setError(
-          'Der Fragebogen wurde inzwischen geändert. Bitte abbrechen und neu öffnen.'
+
+  const answersRef = useRef(answers);
+  const savedRef = useRef(structuredClone(questionnaire.answers));
+  const revisionRef = useRef(questionnaire.revision);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const runningRef = useRef(false);
+  const queuedRef = useRef(false);
+  const mountedRef = useRef(true);
+
+  answersRef.current = answers;
+
+  const persist = async () => {
+    if (runningRef.current) {
+      queuedRef.current = true;
+      return;
+    }
+    runningRef.current = true;
+    onBusy(true);
+    try {
+      while (true) {
+        queuedRef.current = false;
+        const snapshot = structuredClone(answersRef.current);
+        const corrections = correctionsFrom(
+          questionnaire.items,
+          savedRef.current,
+          snapshot
         );
-      } else if (failure.status === 400) {
-        const labels = questionnaire.items
-          .filter((item) =>
-            failure.errors?.some(
-              (issue) =>
-                issue.path === item.key || issue.path.startsWith(`${item.key}.`)
-            )
-          )
-          .map((item) => (item.kind === 'field' ? item.label : item.section));
-        setError(
-          labels.length
-            ? `Bitte Eingaben prüfen: ${labels.join(', ')}.`
-            : 'Bitte die eingegebenen Werte prüfen.'
-        );
-      } else {
-        setError(
-          failure.message ?? 'Die Änderungen konnten nicht gespeichert werden.'
-        );
+        if (Object.keys(corrections).length === 0) {
+          if (mountedRef.current) {
+            setStatus('saved');
+            setError('');
+          }
+          break;
+        }
+        try {
+          const { data } = await apiJson.put<{ data: CompletedQuestionnaire }>(
+            `worker/${workerId}/engagements/${engagementId}/questionnaire/completed`,
+            { revision: revisionRef.current, answers: corrections }
+          );
+          revisionRef.current = data.revision;
+          savedRef.current = structuredClone(data.answers);
+          queryClient.setQueryData(
+            ['completed-questionnaire', workerId, engagementId],
+            data
+          );
+          void queryClient.invalidateQueries({
+            queryKey: employmentContractKey(workerId, engagementId),
+          });
+          void queryClient.invalidateQueries({
+            queryKey: [WORKERBYID, workerId],
+          });
+          void queryClient.invalidateQueries({ queryKey: [ALL_WORKER_DATA] });
+          if (!queuedRef.current && mountedRef.current) {
+            setStatus('saved');
+            setError('');
+          }
+        } catch (failure: unknown) {
+          const issue = failure as {
+            message?: string;
+            status?: number;
+            errors?: { path: string; message: string }[];
+          };
+          if (mountedRef.current) {
+            setStatus('error');
+            if (issue.status === 409) {
+              setError(
+                'Der Fragebogen wurde inzwischen geändert. Bitte schließen und neu öffnen.'
+              );
+            } else if (issue.status === 400) {
+              const labels = questionnaire.items
+                .filter((item) =>
+                  issue.errors?.some(
+                    (entry) =>
+                      entry.path === item.key ||
+                      entry.path.startsWith(`${item.key}.`)
+                  )
+                )
+                .map((item) =>
+                  item.kind === 'field' ? item.label : item.section
+                );
+              setError(
+                labels.length
+                  ? `Bitte Eingaben prüfen: ${labels.join(', ')}.`
+                  : 'Bitte die eingegebenen Werte prüfen.'
+              );
+            } else {
+              setError(
+                issue.message ??
+                  'Die Änderungen konnten nicht gespeichert werden.'
+              );
+            }
+          }
+          break;
+        }
+        if (!queuedRef.current) break;
       }
-    },
-    onSettled: () => onBusy(false),
-  });
-  const update = (key: string, value: string | Record<string, string>[]) =>
-    setAnswers((current) => ({ ...current, [key]: value }));
+    } finally {
+      runningRef.current = false;
+      onBusy(false);
+    }
+  };
+
+  const scheduleSave = () => {
+    setStatus('pending');
+    setError('');
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => void persist(), AUTOSAVE_MS);
+  };
+
+  const flush = async () => {
+    clearTimeout(timerRef.current);
+    await persist();
+  };
+  const flushRef = useRef(flush);
+  flushRef.current = flush;
+
+  useEffect(() => {
+    mountedRef.current = true;
+    onFlushReady?.(() => flushRef.current());
+    return () => {
+      mountedRef.current = false;
+      clearTimeout(timerRef.current);
+    };
+  }, [onFlushReady]);
+
+  const update = (key: string, value: string | Record<string, string>[]) => {
+    setAnswers((current) => {
+      const next = { ...current, [key]: value };
+      answersRef.current = next;
+      return next;
+    });
+    scheduleSave();
+  };
+
+  const close = async () => {
+    await flush();
+    if (mountedRef.current) onClose();
+  };
+
   const fieldValue = (key: string) => {
     const value = answers[key];
     return typeof value === 'string' ? value : '';
@@ -186,79 +280,135 @@ export function CompletedQuestionnaireEditor({
   );
 
   return (
-    <form
-      className="flex flex-col gap-4"
-      onSubmit={(event) => {
-        event.preventDefault();
-        setError('');
-        onBusy(true);
-        save.mutate();
-      }}
-    >
-      <h1 className="text-xl font-medium">
-        {questionnaire.name ?? 'Personalfragebogen'}
-      </h1>
-      {questionnaire.intro ? (
-        <p className="text-sm text-muted-foreground">{questionnaire.intro}</p>
-      ) : null}
-      <fieldset disabled={save.isPending} className="flex flex-col gap-4">
-        {sections.map((section, index) => {
-          const weekly = section.questions.some((question) =>
-            isWeeklyHoursKey(question.key)
-          );
-          const value = section.repeater
-            ? answers[section.repeater.key]
-            : undefined;
-          const rows = Array.isArray(value) ? value : [];
-          const repeaterBlock = section.repeater ? (
-            section.repeater.key.startsWith('rows.') ? (
-              <QuestionnaireTableRows
-                repeater={{
-                  ...section.repeater,
-                  columns: section.repeater.columns.map((column) => ({
-                    ...column,
-                    officeOnly: false,
-                  })),
-                }}
-                rows={rows}
-                onChange={(next) => update(section.repeater!.key, next)}
-              />
-            ) : (
-              <QuestionnaireRepeatableRows
-                repeater={{
-                  ...section.repeater,
-                  columns: section.repeater.columns.map((column) => ({
-                    ...column,
-                    officeOnly: false,
-                  })),
-                }}
-                rows={rows}
-                onChange={(next) => update(section.repeater!.key, next)}
-              />
-            )
-          ) : null;
-
-          return (
-            <QuestionnaireSectionCard
-              key={`${index}-${section.title}`}
-              title={section.title}
-              optional={section.optional}
+    <div className="flex h-full min-h-0 flex-col gap-4">
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="text-xl font-medium">
+              {questionnaire.name ?? 'Personalfragebogen'}
+            </h1>
+            <p
+              role="status"
+              className="shrink-0 pt-1 text-xs text-muted-foreground"
             >
-              {section.questions.length === 0 && repeaterBlock
-                ? repeaterBlock
-                : weekly ? (
-                    <>
-                      <WeeklyHoursAnswer
-                        questions={questions}
-                        values={fieldValues}
-                        fillBsb={section.questions.some((question) =>
-                          isWeekdayHourKey(question.key)
-                        )}
-                        onChange={(key, next) => update(key, next)}
-                      />
-                      {section.questions
-                        .filter((question) => !isWeeklyHoursKey(question.key))
-                        .map((question) =>
+              {status === 'pending'
+                ? 'Speichert…'
+                : status === 'error'
+                  ? 'Nicht gespeichert'
+                  : 'Gespeichert'}
+            </p>
+          </div>
+          {questionnaire.intro ? (
+            <p className="text-sm text-muted-foreground">{questionnaire.intro}</p>
+          ) : null}
+          <div className="flex flex-col gap-4">
+            {sections.map((section, index) => {
+              const weekly = section.questions.some((question) =>
+                isWeeklyHoursKey(question.key)
+              );
+              const value = section.repeater
+                ? answers[section.repeater.key]
+                : undefined;
+              const rows = Array.isArray(value) ? value : [];
+              const repeaterBlock = section.repeater ? (
+                section.repeater.key.startsWith('rows.') ? (
+                  <QuestionnaireTableRows
+                    repeater={{
+                      ...section.repeater,
+                      columns: section.repeater.columns.map((column) => ({
+                        ...column,
+                        officeOnly: false,
+                      })),
+                    }}
+                    rows={rows}
+                    onChange={(next) => update(section.repeater!.key, next)}
+                  />
+                ) : (
+                  <QuestionnaireRepeatableRows
+                    repeater={{
+                      ...section.repeater,
+                      columns: section.repeater.columns.map((column) => ({
+                        ...column,
+                        officeOnly: false,
+                      })),
+                    }}
+                    rows={rows}
+                    onChange={(next) => update(section.repeater!.key, next)}
+                  />
+                )
+              ) : null;
+
+              return (
+                <QuestionnaireSectionCard
+                  key={`${index}-${section.title}`}
+                  title={section.title}
+                  optional={section.optional}
+                >
+                  {section.questions.length === 0 && repeaterBlock
+                    ? repeaterBlock
+                    : weekly ? (
+                        <>
+                          <WeeklyHoursAnswer
+                            questions={questions}
+                            values={fieldValues}
+                            fillBsb={section.questions.some((question) =>
+                              isWeekdayHourKey(question.key)
+                            )}
+                            onChange={(key, next) => update(key, next)}
+                          />
+                          {section.questions
+                            .filter(
+                              (question) => !isWeeklyHoursKey(question.key)
+                            )
+                            .map((question) =>
+                              question.type === 'file' ? (
+                                <p key={question.key} className="text-sm">
+                                  {question.label}:{' '}
+                                  {questionnaire.files?.[question.key]?.name ??
+                                    '—'}
+                                </p>
+                              ) : (
+                                <QuestionnaireQuestion
+                                  key={question.key}
+                                  question={{
+                                    ...question,
+                                    required: question.bsbOnly
+                                      ? false
+                                      : question.required,
+                                    officeEditable: true,
+                                  }}
+                                  value={fieldValue(question.key)}
+                                  onChange={(next) =>
+                                    update(question.key, next)
+                                  }
+                                />
+                              )
+                            )}
+                        </>
+                      ) : section.questions.every(
+                          (question) => question.layout === 'inline'
+                        ) ? (
+                        <div className="grid grid-cols-4 gap-3 sm:grid-cols-7">
+                          {section.questions.map((question) => (
+                            <div
+                              key={question.key}
+                              className="flex flex-col gap-2"
+                            >
+                              <Label htmlFor={question.key}>
+                                {question.label}
+                              </Label>
+                              <Input
+                                id={question.key}
+                                value={fieldValue(question.key)}
+                                onChange={(event) =>
+                                  update(question.key, event.target.value)
+                                }
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        section.questions.map((question) =>
                           question.type === 'file' ? (
                             <p key={question.key} className="text-sm">
                               {question.label}:{' '}
@@ -278,76 +428,30 @@ export function CompletedQuestionnaireEditor({
                               onChange={(next) => update(question.key, next)}
                             />
                           )
-                        )}
-                    </>
-                  ) : section.questions.every(
-                      (question) => question.layout === 'inline'
-                    ) ? (
-                    <div className="grid grid-cols-4 gap-3 sm:grid-cols-7">
-                      {section.questions.map((question) => (
-                        <div key={question.key} className="flex flex-col gap-2">
-                          <Label htmlFor={question.key}>{question.label}</Label>
-                          <Input
-                            id={question.key}
-                            value={fieldValue(question.key)}
-                            onChange={(event) =>
-                              update(question.key, event.target.value)
-                            }
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    section.questions.map((question) =>
-                      question.type === 'file' ? (
-                        <p key={question.key} className="text-sm">
-                          {question.label}:{' '}
-                          {questionnaire.files?.[question.key]?.name ?? '—'}
-                        </p>
-                      ) : (
-                        <QuestionnaireQuestion
-                          key={question.key}
-                          question={{
-                            ...question,
-                            required: question.bsbOnly
-                              ? false
-                              : question.required,
-                            officeEditable: true,
-                          }}
-                          value={fieldValue(question.key)}
-                          onChange={(next) => update(question.key, next)}
-                        />
-                      )
-                    )
-                  )}
-              {section.questions.length > 0 ? repeaterBlock : null}
-            </QuestionnaireSectionCard>
-          );
-        })}
-      </fieldset>
-      {error ? (
-        <p role="alert" className="text-sm text-destructive">
-          {error}
-        </p>
-      ) : null}
-      <div className="flex justify-end gap-2">
+                        )
+                      )}
+                  {section.questions.length > 0 ? repeaterBlock : null}
+                </QuestionnaireSectionCard>
+              );
+            })}
+          </div>
+          {error ? (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          ) : null}
+        </div>
+      </div>
+      <div className="flex shrink-0 justify-end">
         <Button
           type="button"
           variant="outline"
           className="rounded-2xl"
-          disabled={save.isPending}
-          onClick={onDone}
+          onClick={() => void close()}
         >
-          Abbrechen
-        </Button>
-        <Button
-          type="submit"
-          className="rounded-2xl"
-          disabled={save.isPending}
-        >
-          {save.isPending ? 'Speichert…' : 'Speichern'}
+          Schließen
         </Button>
       </div>
-    </form>
+    </div>
   );
 }
