@@ -1,5 +1,5 @@
 import { X } from 'lucide-react';
-import { useState, type DragEvent } from 'react';
+import { useState, type DragEvent, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
 import { QuestionInsertGap } from './QuestionInsertGap';
 import { QuestionnaireFieldControls } from './QuestionnaireFieldControls';
@@ -36,6 +36,15 @@ type QuestionnaireStackProps = {
   onCommitField: (field: TemplateField) => void;
   onRemove: (id: string) => void;
 };
+
+type StackGroup =
+  | {
+      type: 'section';
+      index: number;
+      block: QuestionnaireBlock;
+      children: { index: number; block: QuestionnaireBlock }[];
+    }
+  | { type: 'item'; index: number; block: QuestionnaireBlock };
 
 export function QuestionnaireStack({
   blocks,
@@ -95,10 +104,80 @@ export function QuestionnaireStack({
     />
   );
 
+  const renderSortItem = (
+    block: QuestionnaireBlock,
+    index: number,
+    article: ReactNode,
+    options?: { articleClassName?: string; afterArticle?: ReactNode }
+  ) => (
+    <div
+      key={block.id}
+      data-questionnaire-sort-item={block.id}
+      className="questionnaire-sort-item min-w-0"
+      style={
+        preview
+          ? {
+              transform: `translateY(${preview.offsets.get(block.id) ?? 0}px)`,
+              opacity: preview.id === block.id ? 0.001 : 1,
+            }
+          : undefined
+      }
+    >
+      <article
+        draggable
+        onDragStart={(event) => {
+          if (dragStartsOnControl(event)) {
+            event.preventDefault();
+            return;
+          }
+          flushSync(() => setInsertAt(null));
+          const payload: DragPayload = { source: 'stack', id: block.id };
+          event.dataTransfer.effectAllowed = 'move';
+          event.dataTransfer.setData(
+            QUESTION_DRAG_TYPE,
+            JSON.stringify(payload)
+          );
+          event.dataTransfer.setData('text/plain', JSON.stringify(payload));
+          start(block.id, event);
+        }}
+        onDrop={(event) => dropOnBlock(index, event)}
+        className={
+          options?.articleClassName ??
+          'relative min-w-0 cursor-default rounded-2xl border border-border bg-card py-5 pr-12 pl-5 outline-none'
+        }
+      >
+        <button
+          type="button"
+          data-no-drag
+          aria-label="Entfernen"
+          title="Entfernen"
+          className="absolute top-3 right-3 inline-flex size-6 items-center justify-center rounded-md text-destructive outline-none hover:bg-destructive/10 focus-visible:bg-destructive/10"
+          onClick={() => onRemove(block.id)}
+        >
+          <X aria-hidden="true" className="size-4" strokeWidth={1.75} />
+        </button>
+        {article}
+      </article>
+      {options?.afterArticle}
+    </div>
+  );
+
+  const blockBody = (block: QuestionnaireBlock, index: number) => (
+    <BlockBody
+      block={block}
+      contractFields={contractFields}
+      onChangeField={onChangeField}
+      onChangeRepeater={onChangeRepeater}
+      onChangeSection={onChangeSection}
+      onCommitField={onCommitField}
+      onAdd={(field) => onInsert(index, [field])}
+    />
+  );
+
   return (
     <div
       ref={rootRef}
-      className="questionnaire-sort-stack flex flex-col"
+      className="questionnaire-sort-stack flex flex-col gap-3"
       data-sorting={Boolean(preview)}
       onDragOver={(event) => {
         event.preventDefault();
@@ -130,81 +209,123 @@ export function QuestionnaireStack({
           Ziehen Sie Felder hierher oder fügen Sie eine Überschrift hinzu.
         </p>
       ) : null}
-      {blocks.map((block, index) => {
-        let nested = false;
-        if (block.items[0]?.kind !== 'section') {
-          for (let cursor = index - 1; cursor >= 0; cursor -= 1) {
-            if (blocks[cursor]?.items[0]?.kind === 'section') {
-              nested = true;
-              break;
-            }
-          }
+      {stackGroups(blocks).map((group) => {
+        if (group.type === 'item') {
+          return (
+            <div key={group.block.id} className="min-w-0">
+              {renderSortItem(
+                group.block,
+                group.index,
+                blockBody(group.block, group.index),
+                { afterArticle: gap(group.index + 1) }
+              )}
+            </div>
+          );
         }
+
+        const firstChildIndex = group.index + 1;
         return (
-        <div
-          key={block.id}
-          data-questionnaire-sort-item={block.id}
-          className={`questionnaire-sort-item min-w-0 ${nested ? 'ml-4 border-l-2 border-border pl-3' : ''}`}
-          style={
-            preview
-              ? {
-                  transform: `translateY(${preview.offsets.get(block.id) ?? 0}px)`,
-                  opacity: preview.id === block.id ? 0.001 : 1,
-                }
-              : undefined
-          }
-        >
-          <article
-            draggable
-            onDragStart={(event) => {
-              if (dragStartsOnControl(event)) {
-                event.preventDefault();
-                return;
-              }
-              flushSync(() => setInsertAt(null));
-              const payload: DragPayload = { source: 'stack', id: block.id };
-              event.dataTransfer.effectAllowed = 'move';
-              event.dataTransfer.setData(
-                QUESTION_DRAG_TYPE,
-                JSON.stringify(payload)
-              );
-              event.dataTransfer.setData('text/plain', JSON.stringify(payload));
-              start(block.id, event);
-            }}
-            onDrop={(event) => dropOnBlock(index, event)}
-            className={`relative min-w-0 cursor-default rounded-2xl border py-5 pr-12 pl-5 outline-none ${
-              block.items[0]?.kind === 'section'
-                ? 'border-foreground/20 bg-muted/40'
-                : 'border-border bg-card'
-            }`}
+          <div
+            key={group.block.id}
+            className="min-w-0 overflow-hidden rounded-2xl border border-border bg-card"
           >
-            <button
-              type="button"
-              data-no-drag
-              aria-label="Entfernen"
-              title="Entfernen"
-              className="absolute top-3 right-3 inline-flex size-6 items-center justify-center rounded-md text-destructive outline-none hover:bg-destructive/10 focus-visible:bg-destructive/10"
-              onClick={() => onRemove(block.id)}
-            >
-              <X aria-hidden="true" className="size-4" strokeWidth={1.75} />
-            </button>
-            <BlockBody
-              block={block}
-              contractFields={contractFields}
-              onChangeField={onChangeField}
-              onChangeRepeater={onChangeRepeater}
-              onChangeSection={onChangeSection}
-              onCommitField={onCommitField}
-              onAdd={(field) => onInsert(index, [field])}
-            />
-          </article>
-          {gap(index + 1)}
-        </div>
+            {renderSortItem(
+              group.block,
+              group.index,
+              blockBody(group.block, group.index),
+              {
+                articleClassName:
+                  'relative min-w-0 cursor-default rounded-none border-0 bg-transparent py-4 pr-12 pl-5 outline-none',
+              }
+            )}
+            <div className="flex flex-col border-t border-border/70 bg-background px-3 pt-1 pb-3">
+              {group.children.length > 0 ? gap(firstChildIndex) : null}
+              {group.children.map((child) =>
+                renderSortItem(
+                  child.block,
+                  child.index,
+                  blockBody(child.block, child.index),
+                  {
+                    articleClassName:
+                      'relative min-w-0 cursor-default rounded-xl border border-border bg-card py-4 pr-12 pl-4 outline-none',
+                    afterArticle: gap(child.index + 1),
+                  }
+                )
+              )}
+              {group.children.length === 0 ? (
+                <>
+                  <SectionDropZone
+                    onDrop={(event) => dropAt(firstChildIndex, event)}
+                  />
+                  {gap(firstChildIndex)}
+                </>
+              ) : null}
+            </div>
+          </div>
         );
       })}
       {blocks.length === 0 ? gap(0) : null}
     </div>
   );
+}
+
+function SectionDropZone({ onDrop }: { onDrop: (event: DragEvent) => void }) {
+  const [active, setActive] = useState(false);
+  return (
+    <div
+      data-no-drag
+      role="group"
+      aria-label="Frage hier ablegen"
+      onDragEnter={(event) => {
+        event.preventDefault();
+        setActive(true);
+      }}
+      onDragOver={(event) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
+        setActive(true);
+      }}
+      onDragLeave={() => setActive(false)}
+      onDrop={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setActive(false);
+        onDrop(event);
+      }}
+      className={`flex min-h-12 items-center justify-center rounded-xl border border-dashed px-3 py-3 text-sm transition-colors ${
+        active
+          ? 'border-primary bg-primary/5 text-foreground'
+          : 'border-border text-muted-foreground'
+      }`}
+    >
+      Frage hier ablegen
+    </div>
+  );
+}
+
+function stackGroups(blocks: QuestionnaireBlock[]): StackGroup[] {
+  const groups: StackGroup[] = [];
+  let index = 0;
+  while (index < blocks.length) {
+    const block = blocks[index]!;
+    if (block.items[0]?.kind === 'section') {
+      const children: { index: number; block: QuestionnaireBlock }[] = [];
+      let cursor = index + 1;
+      while (
+        cursor < blocks.length &&
+        blocks[cursor]?.items[0]?.kind !== 'section'
+      ) {
+        children.push({ index: cursor, block: blocks[cursor]! });
+        cursor += 1;
+      }
+      groups.push({ type: 'section', index, block, children });
+      index = cursor;
+      continue;
+    }
+    groups.push({ type: 'item', index, block });
+    index += 1;
+  }
+  return groups;
 }
 
 function BlockBody({

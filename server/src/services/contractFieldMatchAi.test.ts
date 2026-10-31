@@ -65,8 +65,9 @@ function modelResult(matches: unknown[]) {
     } as Response);
 }
 
-it("uses context and reuses a placed choice for complementary checkboxes and matches vocational education", async () => {
+it("uses context for complementary checkboxes and matches vocational education via AI only", async () => {
     modelResult([
+        match("contract.kind", "custom.kind", "Befristet"),
         match("contract.fixed", "custom.kind", "true"),
         match("contract.permanent", "custom.kind", "false"),
         match(
@@ -74,7 +75,6 @@ it("uses context and reuses a placed choice for complementary checkboxes and mat
             "custom.degree",
             "Anerkannte Berufsausbildung",
         ),
-        match("contract.kind", "custom.kind", "false"),
         match("contract.unrelated", "custom.other", "25 €"),
     ]);
     const result = await matchQuestionnaireToContract(
@@ -101,7 +101,7 @@ it("uses context and reuses a placed choice for complementary checkboxes and mat
         input.fields.some(
             (field: { key: string }) => field.key === "contract.kind",
         ),
-    ).toBe(false);
+    ).toBe(true);
     expect(input.answers).toContainEqual({
         key: "custom.kind",
         label: "Arbeitsverhältnis",
@@ -189,7 +189,7 @@ it("rejects unknown sources, uncertainty, invented text, invalid booleans and du
 });
 
 it.each(["failure", "invalid-json", "http-error", "no-match"])(
-    "preserves deterministic values and the sidebar on %s",
+    "leaves fields empty when AI fails on %s (deterministic disabled)",
     async (mode) => {
         if (mode === "failure")
             fetchMock.mockRejectedValue(new Error("timeout"));
@@ -209,7 +209,7 @@ it.each(["failure", "invalid-json", "http-error", "no-match"])(
             "",
             fields,
         );
-        expect(result).toEqual([{ key: "contract.kind", value: "Befristet" }]);
+        expect(result).toEqual([]);
         expect(
             unmatchedQuestionnaireAnswers(
                 segments,
@@ -234,29 +234,39 @@ it.each(["failure", "invalid-json", "http-error", "no-match"])(
     },
 );
 
-it("skips AI when there is no key or no unfilled field", async () => {
+it("skips AI when there is no key", async () => {
     delete process.env.OPENAI_API_KEY;
     expect(
         await matchQuestionnaireToContract(segments, answers, "", fields),
-    ).toEqual([{ key: "contract.kind", value: "Befristet" }]);
-    process.env.OPENAI_API_KEY = "test-key";
-    await matchQuestionnaireToContract([segments[0]], answers, "", fields);
-    expect(fetchMock).not.toHaveBeenCalled();
+    ).toEqual([]);
 });
 
-it("fills Anrede from Geschlecht without asking the model", async () => {
-    process.env.OPENAI_API_KEY = "test-key";
+it("asks the model for Anrede (deterministic salutation disabled)", async () => {
+    modelResult([
+        {
+            key: "contract.anrede",
+            value: "Frau",
+            answerKey: "sex",
+            confidence: "high",
+        },
+    ]);
     await expect(
         matchQuestionnaireToContract(
             [{ type: "input", key: "contract.anrede", label: "Anrede" }],
             { sex: "weiblich", firstName: "Ada" } as QuestionnaireAnswers,
         ),
     ).resolves.toEqual([{ key: "contract.anrede", value: "Frau" }]);
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
 });
 
-it("lets the model set Anrede from the first name when Geschlecht does not decide it", async () => {
+it("lets the model fill Vorname and Anrede when deterministic links are off", async () => {
     modelResult([
+        {
+            key: "contract.vorname",
+            value: "Max",
+            answerKey: "firstName",
+            confidence: "high",
+        },
         {
             key: "contract.anrede",
             value: "Herr",
@@ -287,7 +297,10 @@ it("lets the model set Anrede from the first name when Geschlecht does not decid
         answers: { key: string; value: string }[];
     };
     expect(request.messages[0].content).toContain("Ausnahme ist allein die Anrede");
-    expect(payload.fields.map((field) => field.key)).toEqual(["contract.anrede"]);
+    expect(payload.fields.map((field) => field.key)).toEqual([
+        "contract.vorname",
+        "contract.anrede",
+    ]);
     expect(payload.answers).toEqual(
         expect.arrayContaining([
             expect.objectContaining({ key: "firstName", value: "Max" }),
