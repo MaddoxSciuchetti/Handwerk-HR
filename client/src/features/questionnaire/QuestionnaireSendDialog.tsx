@@ -19,7 +19,6 @@ import type {
 } from '@/features/settings/questionnaire/questionnaireTemplate.types';
 import {
   ensureSectionHeadlines,
-  setSectionMembers,
   setSectionOmitted,
   syncItemsToHeadlines,
 } from '@shared/questionnaireSections';
@@ -133,10 +132,6 @@ export function QuestionnaireSendDialog({
         return item;
       });
     });
-  const changeSectionMembers = (sectionKey: string, memberKeys: string[]) =>
-    setLocalItems((current) =>
-      setSectionMembers(current ?? items, sectionKey, memberKeys)
-    );
   const insertItems = (index: number, incoming: TemplateItem[]) => {
     const placed = new Set(items.map((item) => item.key));
     const offset = blocks
@@ -378,12 +373,13 @@ export function QuestionnaireSendDialog({
                       onChangeField={changeField}
                       onChangeRepeater={changeRepeater}
                       onChangeSection={changeSection}
-                      onSectionMembersChange={changeSectionMembers}
                       onCommitField={changeField}
                       onRemove={(id) =>
                         setLocalItems(
-                          itemsFromBlocks(
-                            blocks.filter((block) => block.id !== id)
+                          syncItemsToHeadlines(
+                            itemsFromBlocks(
+                              blocks.filter((block) => block.id !== id)
+                            )
                           )
                         )
                       }

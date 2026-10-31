@@ -1,5 +1,4 @@
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import {
   isOptionalQuestionnaireSection,
   placeSectionHeadline,
@@ -15,12 +14,6 @@ type NewSectionFormProps = {
   onCancel?: () => void;
 };
 
-function itemLabel(item: TemplateItem) {
-  if (item.kind === 'section') return item.title;
-  if (item.kind === 'repeater') return item.section;
-  return item.label || item.key;
-}
-
 export function NewSectionForm({
   items,
   insertAt,
@@ -29,16 +22,6 @@ export function NewSectionForm({
 }: NewSectionFormProps) {
   const titleId = useId();
   const [title, setTitle] = useState('');
-  const [selected, setSelected] = useState<string[]>([]);
-  const assignable = items.filter((item) => item.kind !== 'section');
-
-  const toggle = (key: string) => {
-    setSelected((current) =>
-      current.includes(key)
-        ? current.filter((entry) => entry !== key)
-        : [...current, key]
-    );
-  };
 
   const submit = () => {
     const name = title.trim();
@@ -50,7 +33,7 @@ export function NewSectionForm({
       optional: isOptionalQuestionnaireSection(name) || undefined,
     };
     onAdd(
-      placeSectionHeadline(items, insertAt, headline, selected) as TemplateItem[]
+      placeSectionHeadline(items, insertAt, headline, []) as TemplateItem[]
     );
   };
 
@@ -84,37 +67,8 @@ export function NewSectionForm({
         />
       </div>
       <p className="text-xs text-muted-foreground">
-        Wählen Sie Fragen, die unter dieser Überschrift stehen sollen. Sie
-        können später weitere Fragen darunter ziehen.
+        Danach Fragen unter die Überschrift ziehen.
       </p>
-      {assignable.length === 0 ? (
-        <p className="text-xs text-muted-foreground">
-          Noch keine Fragen zum Zuordnen.
-        </p>
-      ) : (
-        <ul className="max-h-48 space-y-1 overflow-y-auto rounded-lg border border-border p-2">
-          {assignable.map((item) => (
-            <li key={item.key}>
-              <Label className="flex cursor-pointer items-start gap-2 rounded-md px-2 py-1.5 text-sm font-normal hover:bg-muted">
-                <input
-                  type="checkbox"
-                  className="mt-0.5 size-4 accent-primary"
-                  checked={selected.includes(item.key)}
-                  onChange={() => toggle(item.key)}
-                />
-                <span className="min-w-0">
-                  <span className="block truncate">{itemLabel(item)}</span>
-                  {item.kind !== 'section' && item.section ? (
-                    <span className="block truncate text-xs text-muted-foreground">
-                      bisher: {item.section}
-                    </span>
-                  ) : null}
-                </span>
-              </Label>
-            </li>
-          ))}
-        </ul>
-      )}
       <div className="flex justify-end">
         <Button
           type="button"

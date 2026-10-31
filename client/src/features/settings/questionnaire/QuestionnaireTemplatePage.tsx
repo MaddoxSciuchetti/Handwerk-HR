@@ -27,7 +27,6 @@ import type {
 } from './questionnaireTemplate.types';
 import {
   ensureSectionHeadlines,
-  setSectionMembers,
   syncItemsToHeadlines,
 } from '@shared/questionnaireSections';
 
@@ -91,7 +90,7 @@ export function QuestionnaireTemplatePage() {
       .reduce((sum, block) => sum + block.items.length, 0);
     const current = [...items];
     current.splice(offset, 0, ...incoming);
-    setItems(current);
+    setItems(syncItemsToHeadlines(current));
   };
 
   const drop = (index: number, payload: DragPayload) => {
@@ -143,12 +142,12 @@ export function QuestionnaireTemplatePage() {
     });
   };
 
-  const changeSectionMembers = (sectionKey: string, memberKeys: string[]) => {
-    setItems((current) => setSectionMembers(current, sectionKey, memberKeys));
-  };
-
   const remove = (id: string) => {
-    setItems(itemsFromBlocks(blocks.filter((block) => block.id !== id)));
+    setItems(
+      syncItemsToHeadlines(
+        itemsFromBlocks(blocks.filter((block) => block.id !== id))
+      )
+    );
   };
 
   return (
@@ -216,7 +215,6 @@ export function QuestionnaireTemplatePage() {
               onChangeField={changeField}
               onChangeRepeater={changeRepeater}
               onChangeSection={changeSection}
-              onSectionMembersChange={changeSectionMembers}
               onCommitField={changeField}
               onRemove={remove}
             />
