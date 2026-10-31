@@ -90,6 +90,10 @@ export function questionnaireSectionKey(title: string) {
   return `section.${slug || "abschnitt"}`;
 }
 
+function sectionGroupLabel(value: string) {
+  return questionnaireSectionHeading(value).title;
+}
+
 /** Insert explicit headline markers before each new section group. */
 export function withSectionHeadlines<
   T extends { kind: string; section?: string; title?: string; key: string },
@@ -109,27 +113,125 @@ export function withSectionHeadlines<
   const seen = new Set<string>();
   for (const item of items) {
     if (item.kind === "section") {
-      out.push(item);
-      last = sectionItemTitle(item);
+      const title = sectionGroupLabel(sectionItemTitle(item) || item.title || "");
+      out.push({
+        ...item,
+        kind: "section",
+        title,
+        optional:
+          item.optional === true ||
+          isOptionalQuestionnaireSection(sectionItemTitle(item) || title) ||
+          undefined,
+      });
+      last = title;
       seen.add(item.key);
       continue;
     }
-    const section = (item.section ?? "").trim();
-    if (section && section !== last) {
-      let key = questionnaireSectionKey(section);
+    const raw = (item.section ?? "").trim();
+    const label = raw ? sectionGroupLabel(raw) : "";
+    if (label && label !== last) {
+      let key = questionnaireSectionKey(label);
       if (seen.has(key)) key = `${key}-${seen.size}`;
       seen.add(key);
       out.push({
         kind: "section",
         key,
-        title: section,
-        optional: isOptionalQuestionnaireSection(section) || undefined,
+        title: label,
+        optional: isOptionalQuestionnaireSection(raw || label) || undefined,
       });
-      last = section;
+      last = label;
     }
-    out.push(item);
+    out.push(label ? { ...item, section: label } : item);
   }
   return out;
+}
+
+type SectionLike = {
+  kind: string;
+  key: string;
+  title?: string;
+  section?: string;
+  optional?: boolean;
+  omitFromWorker?: boolean;
+};
+
+/** Rebuild missing Personalbogen headlines; keep optional/omit flags when titles match. */
+export function ensureSectionHeadlines<T extends SectionLike>(items: T[]): T[] {
+  const previous = new Map<string, T>();
+  for (const item of items) {
+    if (item.kind !== "section") continue;
+    previous.set(item.key, item);
+    previous.set(questionnaireSectionKey(sectionGroupLabel(item.title ?? "")), item);
+  }
+  const rebuilt = withSectionHeadlines(items.filter((item) => item.kind !== "section"));
+  return rebuilt.map((item) => {
+    if (item.kind !== "section") return item as T;
+    const prior =
+      previous.get(item.key) ||
+      previous.get(questionnaireSectionKey(item.title));
+    if (!prior || prior.kind !== "section") return item as T;
+    return {
+      ...item,
+      optional: prior.optional === true || item.optional || undefined,
+      omitFromWorker: prior.omitFromWorker === true || undefined,
+    } as T;
+  });
+}
+
+/** Keys currently sitting under a headline (until the next headline). */
+export function membersUnderSection(
+  items: { kind: string; key: string }[],
+  sectionKey: string,
+) {
+  const start = items.findIndex(
+    (item) => item.kind === "section" && item.key === sectionKey,
+  );
+  if (start < 0) return [] as string[];
+  const keys: string[] = [];
+  for (let index = start + 1; index < items.length; index += 1) {
+    const item = items[index];
+    if (!item || item.kind === "section") break;
+    keys.push(item.key);
+  }
+  return keys;
+}
+
+/** Replace which questions belong under an existing headline. */
+export function setSectionMembers<
+  T extends { kind: string; key: string; section?: string; title?: string },
+>(items: T[], sectionKey: string, memberKeys: string[]): T[] {
+  const sectionIndex = items.findIndex(
+    (item) => item.kind === "section" && item.key === sectionKey,
+  );
+  if (sectionIndex < 0) return items;
+  const section = items[sectionIndex];
+  if (!section || section.kind !== "section") return items;
+  const title = (section.title ?? "").trim();
+  const selected = new Set(memberKeys);
+  const nextSection = items.findIndex(
+    (item, index) => index > sectionIndex && item.kind === "section",
+  );
+  const end = nextSection < 0 ? items.length : nextSection;
+  const between = items.slice(sectionIndex + 1, end);
+  const deselected = between.filter(
+    (item) => item.kind !== "section" && !selected.has(item.key),
+  );
+  const members = items
+    .filter((item) => item.kind !== "section" && selected.has(item.key))
+    .map((item) => ({ ...item, section: title }));
+  const before = items
+    .slice(0, sectionIndex)
+    .filter((item) => item.kind === "section" || !selected.has(item.key));
+  const after = items
+    .slice(end)
+    .filter((item) => item.kind === "section" || !selected.has(item.key));
+  return syncItemsToHeadlines([
+    ...before,
+    ...deselected,
+    section,
+    ...members,
+    ...after,
+  ]);
 }
 
 /**

@@ -25,7 +25,11 @@ import type {
   TemplateRepeater,
   TemplateSection,
 } from './questionnaireTemplate.types';
-import { syncItemsToHeadlines } from '@shared/questionnaireSections';
+import {
+  ensureSectionHeadlines,
+  setSectionMembers,
+  syncItemsToHeadlines,
+} from '@shared/questionnaireSections';
 
 export function QuestionnaireTemplatePage() {
   const navigate = useNavigate();
@@ -42,9 +46,9 @@ export function QuestionnaireTemplatePage() {
   // Seed the editor once. Refetches and save responses must not replace local edits.
   if (template.data && !initialized) {
     setInitialized(true);
-    setItems(
-      (draftOnOpen?.items as TemplateItem[] | undefined) ?? template.data.items
-    );
+    const source =
+      (draftOnOpen?.items as TemplateItem[] | undefined) ?? template.data.items;
+    setItems(ensureSectionHeadlines(source) as TemplateItem[]);
     setName(draftOnOpen?.name ?? template.data.name ?? 'Personalfragebogen');
   }
 
@@ -139,6 +143,10 @@ export function QuestionnaireTemplatePage() {
     });
   };
 
+  const changeSectionMembers = (sectionKey: string, memberKeys: string[]) => {
+    setItems((current) => setSectionMembers(current, sectionKey, memberKeys));
+  };
+
   const remove = (id: string) => {
     setItems(itemsFromBlocks(blocks.filter((block) => block.id !== id)));
   };
@@ -208,6 +216,7 @@ export function QuestionnaireTemplatePage() {
               onChangeField={changeField}
               onChangeRepeater={changeRepeater}
               onChangeSection={changeSection}
+              onSectionMembersChange={changeSectionMembers}
               onCommitField={changeField}
               onRemove={remove}
             />
