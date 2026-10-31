@@ -5,6 +5,7 @@ import { renderWithProviders } from './test-utils';
 import { StyledDocumentEditor } from '@/features/settings/documents/StyledDocumentEditor';
 import { fromSegments } from '@/features/settings/documents/styledDocument';
 
+
 it('lets the master rename a dragged field key from the details popover', async () => {
   const user = userEvent.setup();
   const document = fromSegments([
@@ -31,4 +32,30 @@ it('lets the master rename a dragged field key from the details popover', async 
   const saved = onChange.mock.calls.at(-1)?.[0];
   expect(JSON.stringify(saved)).toContain('"key":"anzahl_probezeit"');
   expect(JSON.stringify(saved)).not.toContain('"key":"contract.feld"');
+});
+
+it('keeps master fields flush without an inline remove control', async () => {
+  const user = userEvent.setup();
+  renderWithProviders(
+    <StyledDocumentEditor
+      document={fromSegments([
+        {
+          type: 'input',
+          key: 'contract.salutation',
+          label: 'Salutation',
+          fieldType: 'text',
+        },
+      ])}
+      master
+    />
+  );
+  expect(
+    screen.queryByRole('button', { name: 'Salutation entfernen' })
+  ).toBeNull();
+  await user.click(await screen.findByText('Salutation'));
+  expect(
+    within(screen.getByRole('dialog')).getByRole('button', {
+      name: 'Feld entfernen',
+    })
+  ).toBeInTheDocument();
 });

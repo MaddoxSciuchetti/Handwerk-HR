@@ -76,18 +76,22 @@ function MasterDocumentField({
   fieldKey,
   label,
   fieldType,
+  checkboxGlyph,
   readOnly,
   onRename,
   onKeyChange,
+  onRemove,
   useToday,
   onUseTodayChange,
 }: {
   fieldKey: string;
   label: string;
   fieldType: string;
+  checkboxGlyph?: string | null;
   readOnly: boolean;
   onRename: (label: string) => void;
   onKeyChange: (key: string) => void;
+  onRemove: () => void;
   useToday: boolean;
   onUseTodayChange: (checked: boolean) => void;
 }) {
@@ -101,13 +105,16 @@ function MasterDocumentField({
       }
       onLabelChange={readOnly ? undefined : onRename}
       onKeyChange={readOnly ? undefined : onKeyChange}
+      onRemove={readOnly ? undefined : onRemove}
     >
       <span
         data-drag-handle
         className="inline-block max-w-full align-bottom"
         title={`${label} (${fieldKey})`}
       >
-        {fieldType === 'checkbox' ? (
+        {fieldType === 'checkbox' && checkboxGlyph ? (
+          <span aria-label={`${label} (${fieldKey})`}>{checkboxGlyph}</span>
+        ) : fieldType === 'checkbox' ? (
           <span
             role="checkbox"
             aria-checked={false}
@@ -173,74 +180,20 @@ function DocumentFieldView({
     <NodeViewWrapper
       as="span"
       {...answerDrop}
-      className={`group/document-field relative inline-block max-w-full align-baseline whitespace-nowrap ${context.readOnly ? '' : 'pr-4'} ${answerDrop.className}`}
+      className={`group/document-field relative inline-block max-w-full align-baseline whitespace-nowrap ${!context.master && !context.readOnly ? 'pr-4' : ''} ${answerDrop.className}`}
       style={{ whiteSpace: 'nowrap' }}
       contentEditable={false}
     >
-      {node.attrs.fieldType === 'checkbox' && glyph ? (
-        context.master ? (
-          <span
-            data-drag-handle
-            title={`${label} (${key})`}
-            aria-label={`${label} (${key})`}
-          >
-            {glyph}
-          </span>
-        ) : (
-          <span
-            style={{ position: 'relative', display: 'inline-block' }}
-            title={`${label} (${key})`}
-          >
-            <span
-              aria-hidden="true"
-              style={{
-                visibility:
-                  checkboxSymbol !== glyph && glyph !== '□'
-                    ? 'hidden'
-                    : 'visible',
-              }}
-            >
-              {glyph}
-            </span>
-            {checkboxSymbol !== glyph ? (
-              <span
-                aria-hidden="true"
-                style={{ position: 'absolute', inset: 0, textAlign: 'center' }}
-              >
-                {checkboxSymbol}
-              </span>
-            ) : null}
-            <input
-              type="checkbox"
-              aria-label={label}
-              checked={checked}
-              disabled={context.readOnly}
-              onChange={(event) =>
-                context.onValueChange(
-                  key,
-                  event.target.checked ? 'true' : 'false'
-                )
-              }
-              style={{
-                position: 'absolute',
-                inset: 0,
-                width: '100%',
-                height: '100%',
-                margin: 0,
-                opacity: 0,
-                cursor: context.readOnly ? 'default' : 'pointer',
-              }}
-            />
-          </span>
-        )
-      ) : context.master ? (
+      {context.master ? (
         <MasterDocumentField
           fieldKey={key}
           label={label}
           fieldType={String(node.attrs.fieldType)}
+          checkboxGlyph={glyph}
           readOnly={context.readOnly}
           onRename={(next) => updateAttributes({ label: next })}
           onKeyChange={(next) => updateAttributes({ key: next })}
+          onRemove={deleteNode}
           useToday={useToday}
           onUseTodayChange={(checked) => {
             const transaction = editor.state.tr;
@@ -258,6 +211,52 @@ function DocumentFieldView({
             editor.view.dispatch(transaction);
           }}
         />
+      ) : node.attrs.fieldType === 'checkbox' && glyph ? (
+        <span
+          style={{ position: 'relative', display: 'inline-block' }}
+          title={`${label} (${key})`}
+        >
+          <span
+            aria-hidden="true"
+            style={{
+              visibility:
+                checkboxSymbol !== glyph && glyph !== '□'
+                  ? 'hidden'
+                  : 'visible',
+            }}
+          >
+            {glyph}
+          </span>
+          {checkboxSymbol !== glyph ? (
+            <span
+              aria-hidden="true"
+              style={{ position: 'absolute', inset: 0, textAlign: 'center' }}
+            >
+              {checkboxSymbol}
+            </span>
+          ) : null}
+          <input
+            type="checkbox"
+            aria-label={label}
+            checked={checked}
+            disabled={context.readOnly}
+            onChange={(event) =>
+              context.onValueChange(
+                key,
+                event.target.checked ? 'true' : 'false'
+              )
+            }
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              margin: 0,
+              opacity: 0,
+              cursor: context.readOnly ? 'default' : 'pointer',
+            }}
+          />
+        </span>
       ) : node.attrs.fieldType === 'text' ? (
         <InlineValue
           label={label}
@@ -289,7 +288,7 @@ function DocumentFieldView({
           onChange={(e) => context.onValueChange(key, e.target.value)}
         />
       )}
-      {!context.readOnly ? (
+      {!context.master && !context.readOnly ? (
         <DocumentFieldRemove label={label} onRemove={deleteNode} />
       ) : null}
     </NodeViewWrapper>

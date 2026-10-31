@@ -16,12 +16,14 @@ function MasterDescriptionPoints({
   readOnly,
   onRename,
   onKeyChange,
+  onRemove,
 }: {
   fieldKey: string;
   label: string;
   readOnly: boolean;
   onRename: (label: string) => void;
   onKeyChange: (key: string) => void;
+  onRemove: () => void;
 }) {
   return (
     <DocumentFieldDetails
@@ -29,6 +31,7 @@ function MasterDescriptionPoints({
       label={label}
       onLabelChange={readOnly ? undefined : onRename}
       onKeyChange={readOnly ? undefined : onKeyChange}
+      onRemove={readOnly ? undefined : onRemove}
     >
       <div data-drag-handle className="cursor-grab">
         <p className="text-sm font-medium text-blue-950">{label}</p>
@@ -66,6 +69,7 @@ function DescriptionPointsView({
           readOnly={context.readOnly}
           onRename={(next) => updateAttributes({ label: next })}
           onKeyChange={(next) => updateAttributes({ key: next })}
+          onRemove={deleteNode}
         />
       ) : (
         <>
@@ -76,11 +80,11 @@ function DescriptionPointsView({
             readOnly={context.readOnly}
             onChange={(next) => context.onValueChange(key, next)}
           />
+          {!context.readOnly ? (
+            <DocumentFieldRemove label={label} onRemove={deleteNode} />
+          ) : null}
         </>
       )}
-      {!context.readOnly ? (
-        <DocumentFieldRemove label={label} onRemove={deleteNode} />
-      ) : null}
     </NodeViewWrapper>
   );
 }
