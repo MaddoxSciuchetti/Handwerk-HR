@@ -18,7 +18,6 @@ import {
   type TemplateRepeater,
   type TemplateSection,
 } from './questionnaireTemplate.types';
-import { membersUnderSection } from '@shared/questionnaireSections';
 
 export type DragPayload = {
   source: 'palette' | 'stack';
@@ -34,7 +33,6 @@ type QuestionnaireStackProps = {
   onChangeField: (field: TemplateField) => void;
   onChangeRepeater: (repeater: TemplateRepeater) => void;
   onChangeSection: (section: TemplateSection) => void;
-  onSectionMembersChange: (sectionKey: string, memberKeys: string[]) => void;
   onCommitField: (field: TemplateField) => void;
   onRemove: (id: string) => void;
 };
@@ -48,7 +46,6 @@ export function QuestionnaireStack({
   onChangeField,
   onChangeRepeater,
   onChangeSection,
-  onSectionMembersChange,
   onCommitField,
   onRemove,
 }: QuestionnaireStackProps) {
@@ -65,6 +62,12 @@ export function QuestionnaireStack({
       : readPayload(event);
     const target = finish(index, event);
     if (payload) onDrop(target, payload);
+  };
+
+  /** Dropping on a headline itself places the question under it. */
+  const dropOnBlock = (index: number, event: DragEvent) => {
+    const isSection = blocks[index]?.items[0]?.kind === 'section';
+    dropAt(isSection ? index + 1 : index, event);
   };
 
   const itemOffset = (blockIndex: number) =>
@@ -168,7 +171,7 @@ export function QuestionnaireStack({
               event.dataTransfer.setData('text/plain', JSON.stringify(payload));
               start(block.id, event);
             }}
-            onDrop={(event) => dropAt(index, event)}
+            onDrop={(event) => dropOnBlock(index, event)}
             className={`relative min-w-0 cursor-default rounded-2xl border py-5 pr-12 pl-5 outline-none ${
               block.items[0]?.kind === 'section'
                 ? 'border-foreground/20 bg-muted/40'
@@ -187,12 +190,10 @@ export function QuestionnaireStack({
             </button>
             <BlockBody
               block={block}
-              items={flatItems}
               contractFields={contractFields}
               onChangeField={onChangeField}
               onChangeRepeater={onChangeRepeater}
               onChangeSection={onChangeSection}
-              onSectionMembersChange={onSectionMembersChange}
               onCommitField={onCommitField}
               onAdd={(field) => onInsert(index, [field])}
             />
@@ -208,35 +209,25 @@ export function QuestionnaireStack({
 
 function BlockBody({
   block,
-  items,
   contractFields,
   onChangeField,
   onChangeRepeater,
   onChangeSection,
-  onSectionMembersChange,
   onCommitField,
   onAdd,
 }: {
   block: QuestionnaireBlock;
-  items: TemplateItem[];
   contractFields: ContractFieldOption[];
   onChangeField: (field: TemplateField) => void;
   onChangeRepeater: (repeater: TemplateRepeater) => void;
   onChangeSection: (section: TemplateSection) => void;
-  onSectionMembersChange: (sectionKey: string, memberKeys: string[]) => void;
   onCommitField: (field: TemplateField) => void;
   onAdd: (field: TemplateField) => void;
 }) {
   const first = block.items[0];
   if (first?.kind === 'section') {
     return (
-      <SectionHeadlineCard
-        section={first}
-        items={items}
-        memberKeys={membersUnderSection(items, first.key)}
-        onChange={onChangeSection}
-        onMembersChange={(keys) => onSectionMembersChange(first.key, keys)}
-      />
+      <SectionHeadlineCard section={first} onChange={onChangeSection} />
     );
   }
   if (first?.kind === 'repeater') {
