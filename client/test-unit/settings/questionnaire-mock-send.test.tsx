@@ -124,16 +124,12 @@ it('sends with Enter after the dialog loads', async () => {
   );
 });
 
-it('does not send with Enter while editing', async () => {
+it('does not send with Enter while typing an answer', async () => {
   renderWithProviders(
     <QuestionnaireSendDialog engagementId="engagement" onClose={vi.fn()} />
   );
-  await userEvent.click(
-    await screen.findByRole('button', { name: 'Bearbeiten' })
-  );
-  fireEvent.keyDown(screen.getByRole('textbox', { name: 'Antwort' }), {
-    key: 'Enter',
-  });
+  const answer = await screen.findByRole('textbox', { name: 'Antwort' });
+  fireEvent.keyDown(answer, { key: 'Enter' });
   expect(apiJson.post).not.toHaveBeenCalled();
 });
 
@@ -216,41 +212,39 @@ it('can retry a pending mock after reopening the send dialog', async () => {
   await waitFor(() => expect(onClose).toHaveBeenCalled());
 });
 
-it('opens the real preview and edits questions only through the engagement editor', async () => {
+it('edits questions in the same stack UI as settings', async () => {
   const user = userEvent.setup();
   const onClose = vi.fn();
   renderWithProviders(
     <QuestionnaireSendDialog engagementId="engagement" onClose={onClose} />
   );
   await screen.findByRole('heading', { name: 'Personalfragebogen' });
-  expect(screen.queryByText('Neue Frage')).not.toBeInTheDocument();
   expect(
     screen.queryByRole('button', { name: 'Absenden' })
   ).not.toBeInTheDocument();
-  expect(
-    screen.queryByRole('button', { name: 'Frage hier einfügen' })
-  ).not.toBeInTheDocument();
-  await user.click(screen.getByRole('button', { name: 'Bearbeiten' }));
   expect(screen.getByRole('textbox', { name: 'Frage' })).toBeInTheDocument();
   await user.type(screen.getByRole('textbox', { name: 'Antwort' }), 'Lukas');
-  await user.click(screen.getByRole('button', { name: 'Frage hier einfügen' }));
+  await user.click(
+    screen.getAllByRole('button', {
+      name: 'Frage oder Überschrift hier einfügen',
+    })[0]!
+  );
+  await user.click(screen.getByRole('button', { name: 'Frage' }));
   await user.type(screen.getByPlaceholderText('Frage'), 'Zusatzfrage');
   await user.click(screen.getByRole('button', { name: 'Hinzufügen' }));
-  await user.click(screen.getByRole('button', { name: 'Fertig' }));
-  expect(screen.getByLabelText(/^Vorname/)).toHaveValue('Lukas');
-  expect(screen.getByLabelText(/^Vorname/)).toBeDisabled();
-  expect(screen.getByLabelText(/^Zusatzfrage/)).toBeInTheDocument();
-  expect(screen.queryByText('Neue Frage')).not.toBeInTheDocument();
+  expect(screen.getByDisplayValue('Lukas')).toBeInTheDocument();
+  expect(screen.getByDisplayValue('Vorname')).toBeInTheDocument();
+  expect(screen.getByDisplayValue('Zusatzfrage')).toBeInTheDocument();
   await user.click(screen.getByRole('button', { name: 'Schließen' }));
   await waitFor(() => expect(onClose).toHaveBeenCalled());
   expect(apiJson.put).toHaveBeenCalledWith(
     '/worker/engagements/engagement/questionnaire',
     expect.objectContaining({
       definition: expect.objectContaining({
-        items: [
+        items: expect.arrayContaining([
           expect.objectContaining({ key: 'firstName', defaultValue: 'Lukas' }),
           expect.objectContaining({ label: 'Zusatzfrage', builtin: false }),
-        ],
+        ]),
       }),
     })
   );
@@ -263,7 +257,7 @@ it('opens the real preview and edits questions only through the engagement edito
   ).toBe(true);
 });
 
-it('keeps a BSB answer typed in the preview for this engagement', async () => {
+it('keeps a BSB answer typed in the stack for this engagement', async () => {
   vi.mocked(apiJson.get).mockResolvedValue({
     ...draft,
     data: {
@@ -284,9 +278,8 @@ it('keeps a BSB answer typed in the preview for this engagement', async () => {
   renderWithProviders(
     <QuestionnaireSendDialog engagementId="engagement" onClose={onClose} />
   );
-  const salary = await screen.findByRole('textbox', { name: 'Gehalt' });
+  const salary = await screen.findByRole('textbox', { name: 'Antwort' });
   expect(salary).toBeEnabled();
-  expect(salary).toHaveClass('bg-muted');
   await user.type(salary, '3200');
   await user.click(screen.getByRole('button', { name: 'Schließen' }));
   await waitFor(() => expect(onClose).toHaveBeenCalled());
@@ -295,19 +288,19 @@ it('keeps a BSB answer typed in the preview for this engagement', async () => {
     expect.objectContaining({
       values: expect.objectContaining({ salary: '3200' }),
       definition: expect.objectContaining({
-        items: [
+        items: expect.arrayContaining([
           expect.objectContaining({
             key: 'salary',
             bsbOnly: true,
             defaultValue: '3200',
           }),
-        ],
+        ]),
       }),
     })
   );
 });
 
-it('does not offer editing after sending', async () => {
+it('still shows the questionnaire after sending', async () => {
   vi.mocked(apiJson.get).mockResolvedValue({
     ...draft,
     data: { ...draft.data, sent: true },
@@ -316,9 +309,8 @@ it('does not offer editing after sending', async () => {
     <QuestionnaireSendDialog engagementId="engagement" onClose={vi.fn()} />
   );
   await screen.findByRole('heading', { name: 'Personalfragebogen' });
-  expect(
-    screen.queryByRole('button', { name: 'Bearbeiten' })
-  ).not.toBeInTheDocument();
+  expect(screen.getByRole('textbox', { name: 'Antwort' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Senden' })).toBeDisabled();
 });
 
 it('preserves all weekday and built-in table office-only edits for an individual engagement', async () => {
@@ -344,8 +336,10 @@ it('preserves all weekday and built-in table office-only edits for an individual
   renderWithProviders(
     <QuestionnaireSendDialog engagementId="engagement" onClose={onClose} />
   );
-  await user.click(await screen.findByRole('button', { name: 'Bearbeiten' }));
-  const switches = screen.getAllByRole('switch', { name: 'Nur vom Betrieb' });
+  await screen.findByRole('heading', { name: 'Personalfragebogen' });
+  const switches = await screen.findAllByRole('switch', {
+    name: 'Nur vom Betrieb',
+  });
   expect(switches).toHaveLength(2);
   await user.click(switches[0]);
   await user.click(switches[1]);
@@ -355,17 +349,17 @@ it('preserves all weekday and built-in table office-only edits for an individual
     '/worker/engagements/engagement/questionnaire',
     expect.objectContaining({
       definition: expect.objectContaining({
-        items: [
+        items: expect.arrayContaining([
           ...weeklyHoursFields().map((field, index) =>
             index === 0
-              ? field
+              ? expect.objectContaining({ key: field.key })
               : expect.objectContaining({ key: field.key, officeOnly: true })
           ),
           expect.objectContaining({
             key: 'children',
             columns: [expect.objectContaining({ officeOnly: true })],
           }),
-        ],
+        ]),
       }),
     })
   );

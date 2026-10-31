@@ -26,8 +26,7 @@ export function QuestionnaireTableRows({
   };
 
   return (
-    <section className="flex flex-col gap-3">
-      <h2 className="pt-2 text-base font-medium text-foreground">{repeater.section}</h2>
+    <section className="flex flex-col gap-3" aria-label={repeater.section}>
       <div className="overflow-x-auto rounded-md border border-border">
         <div
           className="grid min-w-[36rem]"

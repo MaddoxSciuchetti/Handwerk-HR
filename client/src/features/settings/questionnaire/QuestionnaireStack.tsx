@@ -236,12 +236,16 @@ export function QuestionnaireStack({
         }
 
         const firstChildIndex = group.index + 1;
+        const sectionItem = group.block.items[0];
+        const omitted =
+          sectionItem?.kind === 'section' &&
+          sectionItem.omitFromWorker === true;
         return (
           <div
             key={group.block.id}
-            className={`min-w-0 rounded-2xl border border-border bg-muted/50 ${
-              preview ? 'overflow-visible' : 'overflow-hidden'
-            }`}
+            className={`min-w-0 rounded-2xl border bg-muted/50 ${
+              omitted ? 'border-dashed border-border opacity-80' : 'border-border'
+            } ${preview ? 'overflow-visible' : 'overflow-hidden'}`}
           >
             {renderSortItem(
               group.block,
@@ -253,27 +257,35 @@ export function QuestionnaireStack({
               }
             )}
             <div className="flex flex-col border-t border-border/60 px-3 pt-1 pb-3">
-              {group.children.length > 0 ? gap(firstChildIndex) : null}
-              {group.children.map((child) =>
-                renderSortItem(
-                  child.block,
-                  child.index,
-                  blockBody(child.block, child.index),
-                  {
-                    articleClassName:
-                      'relative min-w-0 cursor-default rounded-xl border border-border bg-card py-4 pr-12 pl-4 outline-none',
-                    afterArticle: gap(child.index + 1),
-                  }
-                )
-              )}
-              {group.children.length === 0 ? (
+              {omitted ? (
+                <p className="px-1 py-3 text-sm text-muted-foreground">
+                  Dieser Abschnitt wird nicht mitgesendet.
+                </p>
+              ) : (
                 <>
-                  <SectionDropZone
-                    onDrop={(event) => dropAt(firstChildIndex, event)}
-                  />
-                  {gap(firstChildIndex)}
+                  {group.children.length > 0 ? gap(firstChildIndex) : null}
+                  {group.children.map((child) =>
+                    renderSortItem(
+                      child.block,
+                      child.index,
+                      blockBody(child.block, child.index),
+                      {
+                        articleClassName:
+                          'relative min-w-0 cursor-default rounded-xl border border-border bg-card py-4 pr-12 pl-4 outline-none',
+                        afterArticle: gap(child.index + 1),
+                      }
+                    )
+                  )}
+                  {group.children.length === 0 ? (
+                    <>
+                      <SectionDropZone
+                        onDrop={(event) => dropAt(firstChildIndex, event)}
+                      />
+                      {gap(firstChildIndex)}
+                    </>
+                  ) : null}
                 </>
-              ) : null}
+              )}
             </div>
           </div>
         );
@@ -349,6 +361,7 @@ function BlockBody({
   onChangeRepeater,
   onChangeSection,
   onCommitField,
+  onSectionOmitChange,
   onAdd,
 }: {
   block: QuestionnaireBlock;
@@ -357,12 +370,21 @@ function BlockBody({
   onChangeRepeater: (repeater: TemplateRepeater) => void;
   onChangeSection: (section: TemplateSection) => void;
   onCommitField: (field: TemplateField) => void;
+  onSectionOmitChange?: (section: string, omitted: boolean) => void;
   onAdd: (field: TemplateField) => void;
 }) {
   const first = block.items[0];
   if (first?.kind === 'section') {
     return (
-      <SectionHeadlineCard section={first} onChange={onChangeSection} />
+      <SectionHeadlineCard
+        section={first}
+        onChange={onChangeSection}
+        onOmitChange={
+          onSectionOmitChange
+            ? (omitted) => onSectionOmitChange(first.title, omitted)
+            : undefined
+        }
+      />
     );
   }
   if (first?.kind === 'repeater') {
