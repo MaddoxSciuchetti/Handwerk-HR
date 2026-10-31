@@ -199,12 +199,6 @@ export async function createEngagementTemplateDocument(
         select: { id: true, kind: true },
     });
     if (!master) throw new AppError(NOT_FOUND, "Vorlage nicht gefunden.");
-    if (master.kind === "employment_contract") {
-        throw new AppError(
-            BAD_REQUEST,
-            "Der Arbeitsvertrag wird direkt aus dem Fragebogen befüllt. Wählen Sie eine andere Vorlage.",
-        );
-    }
 
     const existing = await prisma.engagementTemplateDocument.findFirst({
         where: { engagementId: params.engagementId, masterId: master.id },

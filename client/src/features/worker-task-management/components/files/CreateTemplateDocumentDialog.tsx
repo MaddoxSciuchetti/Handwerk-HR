@@ -6,10 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  documentKindLabel,
-  isTemplateDocumentKind,
-} from '@/features/settings/documents/documentMaster.types';
+import { documentKindLabel } from '@/features/settings/documents/documentMaster.types';
 import { useDocumentMasters } from '@/features/settings/documents/useDocumentMasters';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -32,9 +29,7 @@ export function CreateTemplateDocumentDialog({
   const masters = useDocumentMasters();
   const create = useCreateTemplateDocument(workerId, engagementId);
   const [openId, setOpenId] = useState<string | null>(null);
-  const choices = (masters.data ?? []).filter((master) =>
-    isTemplateDocumentKind(master.kind)
-  );
+  const choices = masters.data ?? [];
 
   const choose = (masterId: string) => {
     create.mutate(masterId, {
