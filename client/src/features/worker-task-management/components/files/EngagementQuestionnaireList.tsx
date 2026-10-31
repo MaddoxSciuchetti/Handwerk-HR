@@ -129,17 +129,21 @@ function QuestionnairePreview({
 
   return (
     <Dialog open onOpenChange={(next) => { if (!next && !saving) onClose(); }}>
-      <DialogContent aria-describedby={undefined} className="w-full max-w-4xl border-0 bg-transparent p-0 shadow-none sm:max-w-4xl">
-      <div className="flex max-h-[85vh] flex-col gap-4 overflow-hidden rounded-2xl bg-card p-6 text-card-foreground">
-        <div className="pr-8">
-          <DialogTitle className="text-lg font-semibold">Fragebogen</DialogTitle>
-          {data?.name ? (
-            <p className="text-sm font-medium">{data.name}</p>
-          ) : null}
-          <p className="text-sm text-muted-foreground">
-            {questionnaire.engagementLabel} · Ausgefüllt
-          </p>
-        </div>
+      <DialogContent aria-describedby={undefined} className="w-full max-w-3xl border-0 bg-transparent p-0 shadow-none sm:max-w-3xl">
+      <div className="flex h-[80vh] flex-col gap-4 overflow-hidden rounded-2xl border border-border bg-card p-6 text-card-foreground">
+        {editing ? (
+          <DialogTitle className="sr-only">Fragebogen bearbeiten</DialogTitle>
+        ) : (
+          <div className="pr-8">
+            <DialogTitle className="text-lg font-semibold">Fragebogen</DialogTitle>
+            {data?.name ? (
+              <p className="text-sm font-medium">{data.name}</p>
+            ) : null}
+            <p className="text-sm text-muted-foreground">
+              {questionnaire.engagementLabel} · Ausgefüllt
+            </p>
+          </div>
+        )}
         {data && !editing ? (
           <div><Button type="button" variant="outline" onClick={() => setEditing(true)}>Bearbeiten</Button></div>
         ) : null}
@@ -150,12 +154,12 @@ function QuestionnairePreview({
           </p>
         ) : null}
         {data && editing ? (
-          <div className="overflow-auto">
+          <div className="min-h-0 flex-1 overflow-y-auto">
             <CompletedQuestionnaireEditor workerId={workerId} engagementId={questionnaire.engagementId}
               questionnaire={data} onDone={() => setEditing(false)} onBusy={setSaving} />
           </div>
         ) : data ? (
-          <div className="space-y-6 overflow-auto">
+          <div className="min-h-0 flex-1 space-y-6 overflow-y-auto">
             <p className="text-sm whitespace-pre-wrap text-muted-foreground">
               {data.intro}
             </p>
