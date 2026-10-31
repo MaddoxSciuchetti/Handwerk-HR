@@ -155,6 +155,7 @@ async function openEditable() {
 }
 
 it('autosaves corrections with the revision after a short delay', async () => {
+  const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
   let finishSave!: (value: { data: CompletedQuestionnaire }) => void;
   vi.mocked(apiJson.put).mockImplementation(
     () =>
@@ -162,7 +163,33 @@ it('autosaves corrections with the revision after a short delay', async () => {
         finishSave = resolve;
       })
   );
-  await openEditable();
+  const withTwoFields = {
+    ...editableQuestionnaire,
+    items: [
+      ...editableQuestionnaire.items,
+      {
+        kind: 'field' as const,
+        key: 'firstName',
+        label: 'Vorname',
+        section: 'Person',
+        type: 'text' as const,
+      },
+    ],
+    answers: { lastName: 'Wrong', firstName: 'Ada' },
+  };
+  vi.mocked(apiJson.get).mockResolvedValue({ data: withTwoFields });
+  renderWithProviders(
+    <EngagementQuestionnaireList
+      workerId="worker"
+      questionnaires={[
+        { id: 'one', engagementId: 'eng', engagementLabel: 'Eintritt' },
+      ]}
+    />
+  );
+  await user.click(screen.getByRole('button', { name: 'Fragebogen' }));
+  const lastName = await screen.findByRole('textbox', { name: 'Familienname' });
+  await user.clear(lastName);
+  await user.type(lastName, 'Correct');
   expect(apiJson.put).not.toHaveBeenCalled();
   await act(async () => {
     await vi.advanceTimersByTimeAsync(350);
@@ -176,22 +203,24 @@ it('autosaves corrections with the revision after a short delay', async () => {
     }
   );
   expect(screen.getByRole('status', { name: 'Speichert…' })).toBeInTheDocument();
-  expect(screen.getByRole('textbox', { name: 'Familienname' })).toBeDisabled();
+  expect(lastName.closest('[aria-busy="true"]')).toBeTruthy();
+  expect(
+    screen.getByRole('textbox', { name: 'Vorname' }).closest('[aria-busy="true"]')
+  ).toBeNull();
+  expect(lastName).toBeEnabled();
   await act(async () => {
     finishSave({
       data: {
-        ...editableQuestionnaire,
+        ...withTwoFields,
         revision: 1,
-        answers: { lastName: 'Correct' },
+        answers: { lastName: 'Correct', firstName: 'Ada' },
       },
     });
   });
   await waitFor(() =>
-    expect(screen.getByRole('textbox', { name: 'Familienname' })).toBeEnabled()
+    expect(lastName.closest('[aria-busy="true"]')).toBeNull()
   );
-  expect(screen.getByRole('textbox', { name: 'Familienname' })).toHaveValue(
-    'Correct'
-  );
+  expect(lastName).toHaveValue('Correct');
   expect(
     screen.queryByRole('status', { name: 'Speichert…' })
   ).not.toBeInTheDocument();
