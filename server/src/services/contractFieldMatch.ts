@@ -614,7 +614,10 @@ export function acceptSemanticModelMatches(
 
 type PayPeriod = "hour" | "month" | null;
 
-function payPeriodOf(segment: DocumentSegment, nearby: string): PayPeriod {
+function payPeriodOf(
+    segment: Extract<DocumentSegment, { type: "input" }>,
+    nearby: string,
+): PayPeriod {
     const blob = fold(`${segment.label} ${nearby}`);
     if (/jestunde|prostunde|stundengehalt|stundenlohn|hourly/.test(blob))
         return "hour";
@@ -648,8 +651,8 @@ export function resolveExclusiveCheckboxes(
         if (byKey.get(left.key) !== "true" || byKey.get(right.key) !== "true")
             continue;
 
-        const before =
-            segments[index - 1]?.type === "text" ? segments[index - 1].text : "";
+        const previous = segments[index - 1];
+        const before = previous?.type === "text" ? previous.text : "";
         const frame = `${before} ${left.label} ${between} ${right.label}`;
         const leftPeriod = payPeriodOf(left, `${before} ${between}`);
         const rightPeriod = payPeriodOf(right, between);

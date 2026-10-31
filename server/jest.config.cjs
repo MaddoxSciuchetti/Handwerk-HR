@@ -13,6 +13,8 @@ module.exports = {
     testMatch: ["**/*.test.ts"],
     moduleNameMapper: {
         "^@/(.*)$": "<rootDir>/src/$1",
+        "^pdfjs-dist/legacy/build/pdf\\.mjs$":
+            "<rootDir>/test-unit/__mocks__/pdfjsDist.cjs",
     },
     transform: {
         "^.+\\.ts$": [

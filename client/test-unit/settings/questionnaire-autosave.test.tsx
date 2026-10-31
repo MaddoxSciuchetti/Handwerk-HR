@@ -47,13 +47,24 @@ beforeEach(() => {
     data: { ...template, ...(body as object) },
   }));
 });
+function withoutSectionHeadlines(body: unknown) {
+  if (!body || typeof body !== 'object') return body;
+  const payload = body as { items?: { kind?: string }[] };
+  if (!Array.isArray(payload.items)) return body;
+  return {
+    ...payload,
+    items: payload.items.filter((item) => item.kind !== 'section'),
+  };
+}
+
 async function expectSaved(expected: object) {
-  await waitFor(() =>
-    expect(apiJson.put).toHaveBeenLastCalledWith(
-      '/automation/questionnaire',
+  await waitFor(() => {
+    expect(apiJson.put).toHaveBeenCalled();
+    const [, body] = vi.mocked(apiJson.put).mock.calls.at(-1)!;
+    expect(withoutSectionHeadlines(body)).toEqual(
       expect.objectContaining(expected)
-    )
-  );
+    );
+  });
   await waitFor(() =>
     expect(screen.getByRole('button', { name: 'Speichern' })).toHaveAttribute(
       'aria-busy',
@@ -103,7 +114,12 @@ it('autosaves dragging, table settings, adding fields, and removing questions', 
       getData: () => JSON.stringify({ source: 'stack', id: 'rows.children' }),
     },
   });
-  await expectSaved({ items: [items[1], items[0]] });
+  await expectSaved({
+    items: [
+      expect.objectContaining({ key: 'rows.children', kind: 'repeater' }),
+      expect.objectContaining({ key: 'custom.name', kind: 'field' }),
+    ],
+  });
   await user.click(
     screen.getByRole('button', { name: 'Weitere Zeilen erlauben' })
   );
@@ -113,26 +129,36 @@ it('autosaves dragging, table settings, adding fields, and removing questions', 
   await expectSaved({
     items: [
       expect.objectContaining({
+        key: 'rows.children',
         allowMoreRows: true,
         columns: [expect.objectContaining({ officeOnly: true })],
       }),
-      items[0],
+      expect.objectContaining({ key: 'custom.name' }),
     ],
   });
   await user.click(
-    screen.getAllByRole('button', { name: 'Frage hier einfügen' }).at(-1)!
+    screen
+      .getAllByRole('button', { name: 'Frage oder Überschrift hier einfügen' })
+      .at(-1)!
   );
+  await user.click(screen.getByRole('button', { name: 'Frage' }));
   await user.type(screen.getByPlaceholderText('Frage'), 'Zusatz');
   await user.click(screen.getByRole('button', { name: 'Hinzufügen' }));
   await expectSaved({
     items: [
-      expect.anything(),
-      items[0],
+      expect.objectContaining({ key: 'rows.children' }),
+      expect.objectContaining({ key: 'custom.name' }),
       expect.objectContaining({ label: 'Zusatz' }),
     ],
   });
-  await user.click(screen.getAllByRole('button', { name: 'Entfernen' })[2]);
-  await expectSaved({ items: [expect.anything(), items[0]] });
+  const removeButtons = screen.getAllByRole('button', { name: 'Entfernen' });
+  await user.click(removeButtons.at(-1)!);
+  await expectSaved({
+    items: [
+      expect.objectContaining({ key: 'rows.children' }),
+      expect.objectContaining({ key: 'custom.name' }),
+    ],
+  });
 });
 it('serializes saves and preserves reverts made while a request is pending', async () => {
   let resolve!: (value: unknown) => void;
@@ -187,12 +213,14 @@ it('flushes pending edits when leaving the editor before the debounce', async ()
   fireEvent.change(name, { target: { value: 'Montage' } });
   expect(apiJson.put).not.toHaveBeenCalled();
   view.unmount();
-  await waitFor(() =>
-    expect(apiJson.put).toHaveBeenCalledWith('/automation/questionnaire', {
+  await waitFor(() => {
+    expect(apiJson.put).toHaveBeenCalled();
+    const [, body] = vi.mocked(apiJson.put).mock.calls.at(-1)!;
+    expect(withoutSectionHeadlines(body)).toEqual({
       name: 'Montage',
       items,
-    })
-  );
+    });
+  });
 });
 
 it('autosaves checkbox options and weekly hour edits', async () => {

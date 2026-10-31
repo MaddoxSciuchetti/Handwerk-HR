@@ -35,7 +35,7 @@ it('opens the mentioned task directly under its Handwerker', async () => {
     params: { Id: 'worker-1' },
     search: {
       workerName: 'Ada Test',
-      prevPage: 'Worker Lifecycle',
+      prevPage: 'Handwerker',
       taskId: 'task-1',
     },
   });
@@ -60,4 +60,10 @@ it('lets the recipient choose the task and Handwerker when several mentions arri
       search: expect.objectContaining({ taskId: 'task-2' }),
     })
   );
+  expect(JSON.parse(localStorage.getItem('seen-mention-task-ids') ?? '[]')).toEqual([
+    'task-2',
+  ]);
+  expect(
+    screen.getByRole('button', { name: 'Aufgabe öffnen: Vertrag prüfen' })
+  ).toBeInTheDocument();
 });

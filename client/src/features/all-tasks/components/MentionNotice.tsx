@@ -37,16 +37,17 @@ export function MentionNotice() {
   const { data } = useQuery(tasksQueries.fetchTasks());
   const mentions = useMemo(() => openMentionTasks(data), [data]);
   const [notice, setNotice] = useState<IssueResponse[]>([]);
-  const [syncedMentions, setSyncedMentions] = useState(mentions);
+  const [syncedMentions, setSyncedMentions] = useState<IssueResponse[] | null>(
+    null
+  );
 
   if (mentions !== syncedMentions) {
     setSyncedMentions(mentions);
     const seen = readSeenMentionIds();
-    const fresh = mentions.filter((task) => !seen.has(task.id));
-    if (fresh.length > 0) setNotice(fresh);
+    setNotice(mentions.filter((task) => !seen.has(task.id)));
   }
 
-  const dismiss = () => {
+  const dismissAll = () => {
     rememberMentionIds(notice.map((task) => task.id));
     setNotice([]);
   };
@@ -54,14 +55,15 @@ export function MentionNotice() {
   const openTask = (task: IssueResponse) => {
     const workerId = task.workerEngagement?.workerId;
     if (!workerId) return;
-    dismiss();
-    navigate({
+    rememberMentionIds([task.id]);
+    setNotice((prev) => prev.filter((item) => item.id !== task.id));
+    void navigate({
       to: '/user/$Id',
       params: { Id: workerId },
       search: {
         workerName:
           `${task.workerEngagement?.worker?.firstName ?? ''} ${task.workerEngagement?.worker?.lastName ?? ''}`.trim(),
-        prevPage: 'Worker Lifecycle',
+        prevPage: 'Handwerker',
         taskId: task.id,
       },
     });
@@ -73,7 +75,7 @@ export function MentionNotice() {
     <Dialog
       open={count > 0}
       onOpenChange={(open) => {
-        if (!open) dismiss();
+        if (!open) dismissAll();
       }}
     >
       <DialogContent className="sm:max-w-md">
@@ -98,10 +100,10 @@ export function MentionNotice() {
           ))}
         </ul>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={dismiss}>
+          <Button type="button" variant="outline" onClick={dismissAll}>
             Schließen
           </Button>
-          {count === 1 ? (
+          {count === 1 && notice[0]?.workerEngagement?.workerId ? (
             <Button type="button" onClick={() => openTask(notice[0])}>
               Zur Aufgabe
             </Button>

@@ -48,7 +48,7 @@ export function TaskItem({
     onOpenEdit({
       taskId: task.id,
       title: task.title,
-      workerEngagementId: task.workerEngagementId,
+      workerEngagementId: task.workerEngagementId ?? '',
       assigneeUserId: task.assigneeUserId ?? '',
       status: task.status,
       automation: storedTaskAutomation(task.automation),

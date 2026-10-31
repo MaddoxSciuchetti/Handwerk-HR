@@ -1,6 +1,6 @@
 import API from '@/config/apiClient';
 
-import { Session_API, SuccessResponse } from '@/types/api.types';
+import { SuccessResponse } from '@/types/api.types';
 
 import { User } from '@/features/user-profile/types/auth.type';
 import {
@@ -54,11 +54,6 @@ export const verifyEmail = async (
 ): Promise<string> => {
   return API.get<Verify, string>(`/auth/email/verify/${verificationCode.code}`);
 };
-
-export const getSessions = async (): Promise<Session_API> =>
-  API.get('/sessions');
-export const deleteSession = async (id: string): Promise<void> =>
-  API.delete(`/sessions/${id}`);
 
 export const resetPassword = async ({
   verificationCode,

@@ -690,7 +690,11 @@ export async function upsertIssueCommentInOrg(
         `${actor?.firstName ?? ""} ${actor?.lastName ?? ""}`.trim() ||
         actor?.email ||
         "Ein Kollege";
-    const actionUrl = mentionedTaskUrl(issue.workerEngagement!.workerId, issue.id);
+    const workerId = issue.workerEngagement?.workerId;
+    if (!workerId) {
+        throw new Error("Task has no worker for mention notification");
+    }
+    const actionUrl = mentionedTaskUrl(workerId, issue.id);
     let mailFailed = false;
     await recordIssueMentions(
         issue.id,

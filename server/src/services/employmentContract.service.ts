@@ -148,9 +148,10 @@ function reloadContract(
     });
 }
 
-function activeContractBody(
-    contract: NonNullable<Awaited<ReturnType<typeof findContract>>>,
-) {
+function activeContractBody(contract: {
+    body: Prisma.JsonValue | null;
+    master: { body: Prisma.JsonValue };
+}) {
     return contract.body ?? contract.master.body;
 }
 

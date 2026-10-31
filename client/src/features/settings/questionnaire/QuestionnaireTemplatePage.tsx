@@ -56,7 +56,8 @@ export function QuestionnaireTemplatePage() {
     template.data
       ? {
           name: template.data.name ?? 'Personalfragebogen',
-          items: template.data.items,
+          // Match editor seeding so headlines alone do not mark the form dirty.
+          items: ensureSectionHeadlines(template.data.items) as TemplateItem[],
         }
       : null,
     initialized ? { name: name.trim(), items } : null
@@ -128,7 +129,9 @@ export function QuestionnaireTemplatePage() {
         (item) => item.kind === 'section' && item.key === section.key
       );
       const oldTitle =
-        previous && previous.kind === 'section' ? previous.title : section.title;
+        previous && previous.kind === 'section'
+          ? previous.title
+          : section.title;
       return current.map((item) => {
         if (item.kind === 'section' && item.key === section.key) return section;
         if (

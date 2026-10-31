@@ -1,5 +1,4 @@
 import API from '@/config/apiClient';
-import { TFeatureForm } from '@/features/sidebar/schemas/sidebar.schemas';
 import { FileResponse } from '@/types/api.types';
 
 export const logout = async () => API.get('/auth/v2/logout');
@@ -13,25 +12,6 @@ export const createWorkerFile = async (
   const response = await API.post<FileResponse, FileResponse>(
     `/worker/${id}/files`,
     formData
-  );
-  return response;
-};
-
-export const sendFeatureRequest = async (data: TFeatureForm) => {
-  const form = new FormData();
-  console.log(data);
-  if (data.file === undefined) {
-    form.append('importance', data.importance);
-    form.append('text', data.textarea);
-  } else {
-    data.file.forEach((file) => form.append('files', file));
-    form.append('importance', data.importance);
-    form.append('text', data.textarea);
-  }
-
-  const response = await API.post<TFeatureForm, TFeatureForm>(
-    `/index/featurerequest`,
-    form
   );
   return response;
 };

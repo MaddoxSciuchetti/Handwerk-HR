@@ -125,10 +125,6 @@ export function DocumentMasterEditor({
       void navigate({ to: '/settings/documents' });
       return;
     }
-    if (pending.returnTo === 'tasks') {
-      void navigate({ to: '/tasks' });
-      return;
-    }
     void navigate({
       to: '/user/$Id',
       params: { Id: pending.workerId },
