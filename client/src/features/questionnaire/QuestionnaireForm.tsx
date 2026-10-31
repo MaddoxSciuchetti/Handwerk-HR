@@ -19,7 +19,7 @@ import {
   normalizeHour,
 } from '@shared/weeklyHours';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { QuestionnaireQuestion } from './QuestionnaireQuestion';
 import { QuestionnaireSectionCard } from './QuestionnaireSectionCard';
 import { WeeklyHoursAnswer } from './WeeklyHoursAnswer';
@@ -149,15 +149,17 @@ export function QuestionnaireForm({
   ).filter((question) => question.key !== 'declaration');
   const repeaters = data?.repeaters ?? [];
 
-  useEffect(() => {
-    if (questions.length === 0) return;
+  const questionsSeed = questions.map((question) => question.key).join('|');
+  const [seededQuestions, setSeededQuestions] = useState('');
+  if (questions.length > 0 && questionsSeed !== seededQuestions) {
+    setSeededQuestions(questionsSeed);
     setValues((current) => {
       if (Object.keys(current).length > 0) return current;
       return Object.fromEntries(
         questions.map((question) => [question.key, question.defaultValue ?? ''])
       );
     });
-  }, [questions]);
+  }
 
   const submit = useMutation({
     mutationFn: () => {

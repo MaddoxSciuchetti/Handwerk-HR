@@ -1,5 +1,5 @@
 import { cn } from '@/lib/trycatch';
-import { useEffect, useRef, type ComponentPropsWithoutRef } from 'react';
+import { useEffect, useRef, useState, type ComponentPropsWithoutRef } from 'react';
 import '@/components/ui/right-sidebar.css';
 
 export type SidebarAsideProps = ComponentPropsWithoutRef<'aside'> & {
@@ -15,9 +15,9 @@ export function SidebarAside({
   ...props
 }: SidebarAsideProps) {
   const sidebarRef = useRef<HTMLElement>(null);
-  const hasOpened = useRef(isOpen);
-  if (isOpen) hasOpened.current = true;
-  const motionState = isOpen ? 'open' : hasOpened.current ? 'closed' : 'idle';
+  const [hasOpened, setHasOpened] = useState(isOpen);
+  if (isOpen && !hasOpened) setHasOpened(true);
+  const motionState = isOpen ? 'open' : hasOpened ? 'closed' : 'idle';
 
   useEffect(() => {
     if (!isOpen) return;

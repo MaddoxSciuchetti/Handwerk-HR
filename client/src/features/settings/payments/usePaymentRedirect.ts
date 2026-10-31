@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 type RedirectStatus = 'idle' | 'success' | 'canceled';
 
@@ -7,20 +7,18 @@ type PaymentRedirectState = {
   sessionId: string | null;
 };
 
+function readPaymentRedirectState(): PaymentRedirectState {
+  const query = new URLSearchParams(window.location.search);
+  if (query.get('success')) {
+    return { status: 'success', sessionId: query.get('session_id') };
+  }
+  if (query.get('canceled')) {
+    return { status: 'canceled', sessionId: null };
+  }
+  return { status: 'idle', sessionId: null };
+}
+
 export function usePaymentRedirect(): PaymentRedirectState {
-  const [state, setState] = useState<PaymentRedirectState>({
-    status: 'idle',
-    sessionId: null,
-  });
-
-  useEffect(() => {
-    const query = new URLSearchParams(window.location.search);
-    if (query.get('success')) {
-      setState({ status: 'success', sessionId: query.get('session_id') });
-    } else if (query.get('canceled')) {
-      setState({ status: 'canceled', sessionId: null });
-    }
-  }, []);
-
+  const [state] = useState(readPaymentRedirectState);
   return state;
 }

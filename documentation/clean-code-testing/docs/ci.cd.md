@@ -1,6 +1,8 @@
 # Information about CI/CD pipeline
 
-Currently we are using Github Actions to create workflows for our tests. There is one E2E nightly job running all the end to end tests in this application. The reason for this is that the end to end test cover major parts of this application and are testing important code.
+Currently we are using Github Actions to create workflows for the tests inside this repository.
+
+There is one E2E nightly job running all the end to end tests in this application. The reason for this is that the end to end test cover major parts of this application and are testing important code.
 
 ## Checklist: adding a new GitHub Actions workflow
 

@@ -4,7 +4,7 @@ import { Auth } from '../types/auth.type';
 
 export const AUTH = 'auth';
 
-const useAuth = (opts: Record<string, any> = {}): Auth => {
+const useAuth = (): Auth => {
   const {
     data: user,
     isLoading,

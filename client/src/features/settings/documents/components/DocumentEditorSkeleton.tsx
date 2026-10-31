@@ -27,7 +27,7 @@ function ToolbarButtonSkeleton({ label }: { label: string }) {
 
 export function DocumentEditorSkeleton({
   document,
-  master = false,
+  master: _master = false,
   readOnly = false,
   section = 'content',
   pageView = false,

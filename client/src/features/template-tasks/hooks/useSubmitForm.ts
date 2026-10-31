@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SubmitHandler, useForm } from 'react-hook-form';
+import { z } from 'zod';
 import { toast } from 'sonner';
 import {
   AddDescriptionMutation,
@@ -10,7 +11,7 @@ import useTemplateModalContext from './useTemplateModalContext';
 
 function useSubmitForm(
   mode: 'EDIT' | 'ADD' | undefined,
-  schema: any,
+  schema: z.ZodType<HandleAddSubmit | HandleEditSubmit>,
   editDescriptionMutation: EditDescriptionMutation,
   handleAddSubmitMutation: AddDescriptionMutation
 ) {

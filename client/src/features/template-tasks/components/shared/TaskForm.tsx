@@ -26,7 +26,7 @@ type TaskFormProps<T extends FieldValues> = {
 };
 
 const TaskForm = <T extends FieldValues>({
-  templateHeaderAdjective,
+  templateHeaderAdjective: _templateHeaderAdjective,
   buttonsaveText,
   register,
   errors,

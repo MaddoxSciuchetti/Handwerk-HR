@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dialog';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { tasksQueries } from '../query/tasks.query';
 import type { IssueResponse } from '../types/index.types';
 import { openMentionTasks } from '../utilts/mention-tasks.utils';
@@ -37,13 +37,14 @@ export function MentionNotice() {
   const { data } = useQuery(tasksQueries.fetchTasks());
   const mentions = useMemo(() => openMentionTasks(data), [data]);
   const [notice, setNotice] = useState<IssueResponse[]>([]);
+  const [syncedMentions, setSyncedMentions] = useState(mentions);
 
-  useEffect(() => {
+  if (mentions !== syncedMentions) {
+    setSyncedMentions(mentions);
     const seen = readSeenMentionIds();
     const fresh = mentions.filter((task) => !seen.has(task.id));
-    if (fresh.length === 0) return;
-    setNotice(fresh);
-  }, [mentions]);
+    if (fresh.length > 0) setNotice(fresh);
+  }
 
   const dismiss = () => {
     rememberMentionIds(notice.map((task) => task.id));

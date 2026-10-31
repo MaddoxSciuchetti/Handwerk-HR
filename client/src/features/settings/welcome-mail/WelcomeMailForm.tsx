@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { MailMessageField } from '@/features/settings/mail-template/MailMessageField';
 import { welcomeMailPlaceholders } from '@/features/settings/mail-template/mailPlaceholders';
 import { LoaderCircle } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { WelcomeMailGroupSelect } from './WelcomeMailGroupSelect';
 import type {
   WelcomeMailPageData,
@@ -27,11 +27,14 @@ const emptyDraft: WelcomeMailSettings = {
 
 export function WelcomeMailForm({ page }: WelcomeMailFormProps) {
   const save = useSaveWelcomeMail();
-  const [draft, setDraft] = useState<WelcomeMailSettings>(emptyDraft);
-
-  useEffect(() => {
+  const [draft, setDraft] = useState<WelcomeMailSettings>(
+    () => page.settings ?? emptyDraft
+  );
+  const [prevSettings, setPrevSettings] = useState(page.settings);
+  if (page.settings !== prevSettings) {
+    setPrevSettings(page.settings);
     setDraft(page.settings ?? emptyDraft);
-  }, [page.settings]);
+  }
 
   const canSave =
     draft.senderAddress.trim().length > 0 &&

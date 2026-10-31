@@ -11,7 +11,7 @@ import {
   renameQuestionnaireFile,
 } from '@/features/worker-task-management/api/questionnaireFiles.api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 type QuestionnaireStoredFileProps = {
@@ -29,9 +29,11 @@ export function QuestionnaireStoredFile({
 }: QuestionnaireStoredFileProps) {
   const queryClient = useQueryClient();
   const [name, setName] = useState(file.name);
-  useEffect(() => {
+  const [prevFileName, setPrevFileName] = useState(file.name);
+  if (file.name !== prevFileName) {
+    setPrevFileName(file.name);
     setName(file.name);
-  }, [file.name]);
+  }
   const refresh = async () => {
     await queryClient.invalidateQueries({
       queryKey: ['completed-questionnaire', workerId, engagementId],

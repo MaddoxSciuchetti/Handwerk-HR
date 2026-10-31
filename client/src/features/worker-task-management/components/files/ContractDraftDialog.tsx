@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import type { StyledDocument } from '@/features/settings/documents/styledDocument';
 import { Download, Loader2 } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import {
   fetchPreparedEmploymentContractPdf,
@@ -64,13 +64,14 @@ export function ContractDraftDialog({
   const [syncing, setSyncing] = useState(false);
   const [values, setValues] = useState<Record<string, string>>({});
   const [document, setDocument] = useState<StyledDocument | null>(null);
-  const documentEdited = useRef(false);
+  const [documentEdited, setDocumentEdited] = useState(false);
 
-  useEffect(() => {
-    if (!data) return;
+  const [syncedContract, setSyncedContract] = useState(data);
+  if (data && data !== syncedContract) {
+    setSyncedContract(data);
     setValues(data.values);
-    if (!documentEdited.current) setDocument(data.document);
-  }, [data]);
+    if (!documentEdited) setDocument(data.document);
+  }
 
   const readOnly = Boolean(
     data?.printedAt || data?.sentAt || data?.status === 'signed'
@@ -78,7 +79,7 @@ export function ContractDraftDialog({
   const draftPayload = () => ({
     values,
     document:
-      documentEdited.current && document ? document : undefined,
+      documentEdited && document ? document : undefined,
   });
   const downloadPdf = useMutation({
     mutationFn: async () => {
@@ -107,7 +108,7 @@ export function ContractDraftDialog({
       }
 
       const dirty =
-        documentEdited.current ||
+        documentEdited ||
         JSON.stringify(values) !== JSON.stringify(data.values);
       let blob: Blob;
       if (!dirty && data.prepared?.id) {
@@ -119,7 +120,7 @@ export function ContractDraftDialog({
       } else {
         if (dirty) {
           const saved = await saveDraft.mutateAsync(draftPayload());
-          documentEdited.current = false;
+          setDocumentEdited(false);
           setDocument(saved.document);
           setValues(saved.values);
         }
@@ -160,7 +161,7 @@ export function ContractDraftDialog({
     if (!data || readOnly) return;
     saveDraft.mutate(draftPayload(), {
       onSuccess: (saved) => {
-        documentEdited.current = false;
+        setDocumentEdited(false);
         setDocument(saved.document);
         setValues(saved.values);
         toast.success('Entwurf gespeichert');
@@ -205,20 +206,20 @@ export function ContractDraftDialog({
                   contract={data}
                   beforeSync={async () => {
                     const dirty =
-                      documentEdited.current ||
+                      documentEdited ||
                       JSON.stringify(values) !== JSON.stringify(data.values);
                     if (dirty) await saveDraft.mutateAsync(draftPayload());
                   }}
                   onBusy={setSyncing}
                   disabled={busy}
                   onSynced={(saved) => {
-                    documentEdited.current = false;
+                    setDocumentEdited(false);
                     setValues(saved.values);
                     setDocument(saved.document);
                   }}
                 />
               </div>
-              {data.followsMaster && !documentEdited.current ? null : (
+              {data.followsMaster && !documentEdited ? null : (
                 <p className="shrink-0 text-sm text-muted-foreground">
                   {FROZEN_NOTE}
                 </p>
@@ -236,7 +237,7 @@ export function ContractDraftDialog({
                     readOnly
                       ? undefined
                       : (next) => {
-                          documentEdited.current = true;
+                          setDocumentEdited(true);
                           setDocument(next);
                         }
                   }

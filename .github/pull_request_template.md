@@ -27,7 +27,5 @@ it's really helpful.
 - [ ] Added in-code documentation (wherever needed)
 - [ ] Wrote tests for new components/features
 - [ ] Ran the relevant tests (client: Vitest, server: Jest)
-- [ ] Ran coverage and avoided a meaningful regression (see `clean-code-testing/docs/tests.md`)
-- [ ] Ran Aikido Security (or equivalent) on the pushed change
+- [ ] Ran coverage and avoided a meaningful regression (see `documentation/clean-code-testing/docs/tests.md`)
 - [ ] Ran the linter to ensure style guidelines were followed
-- [ ] Created a demo

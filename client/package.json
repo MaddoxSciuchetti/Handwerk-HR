@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "lint": "eslint .",
+    "lint:src": "eslint src",
     "lint:fix": "eslint . --fix",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "format": "prettier --write .",
     "dev": "vite",
     "router:generate": "npx @tanstack/router-cli generate",

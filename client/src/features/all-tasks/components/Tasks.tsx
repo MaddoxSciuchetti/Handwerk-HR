@@ -20,7 +20,6 @@ import {
   peekContractSendReturn,
 } from '@/features/worker-task-management/contractSendReturn';
 import {
-  useEffect,
   useMemo,
   useState,
   type Dispatch,
@@ -35,6 +34,13 @@ import { ArbeitszeugnisSendDialog } from '@/features/worker-task-management/comp
 import { TaskItem } from './TaskItem';
 import { TaskSidebar } from './TaskSidebar';
 import { Segment, TaskSegmentToggle } from './ui/taskHeader';
+
+function readInitialTasksContractReturn() {
+  const pending = peekContractSendReturn();
+  if (!pending || pending.returnTo !== 'tasks') return null;
+  window.setTimeout(() => clearContractSendReturn(), 0);
+  return pending;
+}
 
 function Tasks() {
   const { user } = useAuth();
@@ -57,31 +63,26 @@ function Tasks() {
     workerId: string;
     engagementId: string;
     issueId: string;
-  } | null>(null);
+  } | null>(() => {
+    const pending = readInitialTasksContractReturn();
+    if (!pending || pending.kind === 'arbeitszeugnis') return null;
+    return {
+      workerId: pending.workerId,
+      engagementId: pending.engagementId,
+      issueId: pending.issueId,
+    };
+  });
   const [contractConfirm, setContractConfirm] = useState<{
     workerId: string;
     engagementId: string;
     issueId: string;
   } | null>(null);
 
-  const [zeugnisIssueId, setZeugnisIssueId] = useState<string | null>(null);
+  const [zeugnisIssueId, setZeugnisIssueId] = useState<string | null>(() => {
+    const pending = readInitialTasksContractReturn();
+    return pending?.kind === 'arbeitszeugnis' ? pending.issueId : null;
+  });
   const [headerScrolled, setHeaderScrolled] = useState(false);
-
-  useEffect(() => {
-    const pending = peekContractSendReturn();
-    if (!pending || pending.returnTo !== 'tasks') return;
-    if (pending.kind === 'arbeitszeugnis') {
-      setZeugnisIssueId(pending.issueId);
-    } else {
-      setContractSend({
-        workerId: pending.workerId,
-        engagementId: pending.engagementId,
-        issueId: pending.issueId,
-      });
-    }
-    const timeout = window.setTimeout(() => clearContractSendReturn(), 0);
-    return () => window.clearTimeout(timeout);
-  }, []);
   const [largeEditMode, setLargeEditMode] = useState(false);
   const [editModeData, setEditModeData] = useState<
     { taskNumber: string; taskTitle: string }[]

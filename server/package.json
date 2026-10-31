@@ -15,6 +15,7 @@
         "coverage:webhook-handler": "jest --coverage --collectCoverageFrom=src/controllers/stripeWebhook.controller.ts --collectCoverageFrom=src/services/stripe-webhook/intent-handlers/CheckoutSessionCompleted.ts",
         "test:e2e": "jest ----testPathPatterns=./e2e",
         "build": "esbuild src/index.ts --bundle --platform=node --outfile=dist/index.js --format=esm --packages=external",
+        "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
         "start": "node dist/index.js",
         "dev": "tsx watch src/index.ts",
         "dev:documents": "docker compose -f ../compose.documents.yml up -d && tsx src/index.ts",

@@ -48,7 +48,7 @@ export function QuestionnaireSectionCard({
           Dieser Abschnitt wird nicht mitgesendet.
         </p>
       ) : (
-        <div className="flex flex-col gap-2 border-t border-border/60 px-3 pt-1 pb-3">
+        <div className="flex flex-col gap-4 border-t border-border/60 px-3 pt-3 pb-4">
           {wrapQuestionCards(children)}
         </div>
       )}

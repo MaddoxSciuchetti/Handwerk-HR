@@ -1,6 +1,6 @@
 import FormFields from '@/components/form/FormFields';
 import FormSelectOptions from '@/components/form/FormSelectOptions';
-import { AutomationRequirementNotice } from '@/features/settings/integrations/AutomationRequirementNotice';
+/* eslint-disable react-refresh/only-export-components */
 import {
   INTEGRATION_NONE,
   INTEGRATION_SEQUENCES,

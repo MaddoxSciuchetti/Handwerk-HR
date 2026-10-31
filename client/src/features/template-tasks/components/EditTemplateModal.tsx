@@ -7,8 +7,7 @@ import { editSchema } from '../schemas/taskForm.schema';
 import { HandleEditSubmit } from '../types/taskForm.types';
 import TaskForm from './shared/TaskForm';
 
-type EditTemplateModalProps = {};
-const EditTemplateModal = ({}: EditTemplateModalProps) => {
+const EditTemplateModal = () => {
   const { closeTask, modalState, tab } = useTemplateModalContext();
   const { editDescriptionMutation } = useEditDescription();
   const isModalStateEdit = modalState.kind === 'open-edit';
