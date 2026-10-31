@@ -57,7 +57,6 @@ export function TemplateTasks({ templateId, name }: TemplateTasksProps) {
             </Button>
           }
           title={name}
-          description="Füge Aufgaben zu dieser Vorlage hinzu"
         />
         <Card className="mt-5 flex min-h-0 w-full flex-1 flex-col gap-0 border border-border py-0 shadow-none ring-0">
           <CardHeader className="flex shrink-0 flex-row items-center justify-end px-6 py-3">

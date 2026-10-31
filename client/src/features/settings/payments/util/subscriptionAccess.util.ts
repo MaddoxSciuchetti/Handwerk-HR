@@ -7,7 +7,7 @@ function hasStripeRecord(s: BillingSubscription | null | undefined) {
 export function hasStripeManagedSubscription(
   s: BillingSubscription | null | undefined
 ): boolean {
-  if (!hasStripeRecord(s)) return false;
+  if (!s || !hasStripeRecord(s)) return false;
   return (
     s.status === 'active' || s.status === 'past_due' || s.status === 'trialing'
   );

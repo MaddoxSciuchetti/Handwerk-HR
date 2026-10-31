@@ -14,10 +14,7 @@ import type {
   QuestionnaireQuestion as QuestionnaireQuestionData,
   QuestionnaireRepeater,
 } from '@/features/questionnaire/questionnaire.types';
-import {
-  isWeekdayHourKey,
-  isWeeklyHoursKey,
-} from '@shared/weeklyHours';
+import { isWeekdayHourKey, isWeeklyHoursKey } from '@shared/weeklyHours';
 import { employmentContractKey } from '../../hooks/useEmploymentContract';
 import { WORKERBYID } from '../../consts/query-key.consts';
 import { ALL_WORKER_DATA } from '@/features/worker-lifecycle/consts/query-key.consts';
@@ -124,8 +121,7 @@ function correctionsFrom(
   return Object.fromEntries(
     items.flatMap((item) => {
       if (item.kind === 'field' && item.type === 'file') return [];
-      const previous =
-        before[item.key] ?? (item.kind === 'repeater' ? [] : '');
+      const previous = before[item.key] ?? (item.kind === 'repeater' ? [] : '');
       const next = after[item.key] ?? (item.kind === 'repeater' ? [] : '');
       return JSON.stringify(previous) === JSON.stringify(next)
         ? []
@@ -238,9 +234,11 @@ export function CompletedQuestionnaireEditor({
                       entry.path.startsWith(`${item.key}.`)
                   )
                 )
-                .map((item) =>
-                  item.kind === 'field' ? item.label : item.section
-                );
+                .map((item) => {
+                  if (item.kind === 'field') return item.label;
+                  if (item.kind === 'repeater') return item.section;
+                  return item.title;
+                });
               setError(
                 labels.length
                   ? `Bitte Eingaben prüfen: ${labels.join(', ')}.`
@@ -317,7 +315,9 @@ export function CompletedQuestionnaireEditor({
             {questionnaire.name ?? 'Personalfragebogen'}
           </h1>
           {questionnaire.intro ? (
-            <p className="text-sm text-muted-foreground">{questionnaire.intro}</p>
+            <p className="text-sm text-muted-foreground">
+              {questionnaire.intro}
+            </p>
           ) : null}
           <div className="flex flex-col gap-4">
             {sections.map((section, index) => {
@@ -372,79 +372,23 @@ export function CompletedQuestionnaireEditor({
                   title={section.title}
                   optional={section.optional}
                 >
-                  {section.questions.length === 0 && repeaterBlock
-                    ? repeaterBlock
-                    : weekly ? (
-                        <>
-                          <SavingField saving={weeklySaving}>
-                            <WeeklyHoursAnswer
-                              questions={questions}
-                              values={fieldValues}
-                              fillBsb={section.questions.some((question) =>
-                                isWeekdayHourKey(question.key)
-                              )}
-                              onChange={(key, next) => update(key, next)}
-                            />
-                          </SavingField>
-                          {section.questions
-                            .filter(
-                              (question) => !isWeeklyHoursKey(question.key)
-                            )
-                            .map((question) =>
-                              question.type === 'file' ? (
-                                <p key={question.key} className="text-sm">
-                                  {question.label}:{' '}
-                                  {questionnaire.files?.[question.key]?.name ??
-                                    '—'}
-                                </p>
-                              ) : (
-                                <SavingField
-                                  key={question.key}
-                                  saving={savingKeys.includes(question.key)}
-                                >
-                                  <QuestionnaireQuestion
-                                    question={{
-                                      ...question,
-                                      required: question.bsbOnly
-                                        ? false
-                                        : question.required,
-                                      officeEditable: true,
-                                    }}
-                                    value={fieldValue(question.key)}
-                                    onChange={(next) =>
-                                      update(question.key, next)
-                                    }
-                                  />
-                                </SavingField>
-                              )
-                            )}
-                        </>
-                      ) : section.questions.every(
-                          (question) => question.layout === 'inline'
-                        ) ? (
-                        <div className="grid grid-cols-4 gap-3 sm:grid-cols-7">
-                          {section.questions.map((question) => (
-                            <SavingField
-                              key={question.key}
-                              saving={savingKeys.includes(question.key)}
-                            >
-                              <div className="flex flex-col gap-2">
-                                <Label htmlFor={question.key}>
-                                  {question.label}
-                                </Label>
-                                <Input
-                                  id={question.key}
-                                  value={fieldValue(question.key)}
-                                  onChange={(event) =>
-                                    update(question.key, event.target.value)
-                                  }
-                                />
-                              </div>
-                            </SavingField>
-                          ))}
-                        </div>
-                      ) : (
-                        section.questions.map((question) =>
+                  {section.questions.length === 0 && repeaterBlock ? (
+                    repeaterBlock
+                  ) : weekly ? (
+                    <>
+                      <SavingField saving={weeklySaving}>
+                        <WeeklyHoursAnswer
+                          questions={questions}
+                          values={fieldValues}
+                          fillBsb={section.questions.some((question) =>
+                            isWeekdayHourKey(question.key)
+                          )}
+                          onChange={(key, next) => update(key, next)}
+                        />
+                      </SavingField>
+                      {section.questions
+                        .filter((question) => !isWeeklyHoursKey(question.key))
+                        .map((question) =>
                           question.type === 'file' ? (
                             <p key={question.key} className="text-sm">
                               {question.label}:{' '}
@@ -464,14 +408,63 @@ export function CompletedQuestionnaireEditor({
                                   officeEditable: true,
                                 }}
                                 value={fieldValue(question.key)}
-                                onChange={(next) =>
-                                  update(question.key, next)
-                                }
+                                onChange={(next) => update(question.key, next)}
                               />
                             </SavingField>
                           )
-                        )
-                      )}
+                        )}
+                    </>
+                  ) : section.questions.every(
+                      (question) => question.layout === 'inline'
+                    ) ? (
+                    <div className="grid grid-cols-4 gap-3 sm:grid-cols-7">
+                      {section.questions.map((question) => (
+                        <SavingField
+                          key={question.key}
+                          saving={savingKeys.includes(question.key)}
+                        >
+                          <div className="flex flex-col gap-2">
+                            <Label htmlFor={question.key}>
+                              {question.label}
+                            </Label>
+                            <Input
+                              id={question.key}
+                              value={fieldValue(question.key)}
+                              onChange={(event) =>
+                                update(question.key, event.target.value)
+                              }
+                            />
+                          </div>
+                        </SavingField>
+                      ))}
+                    </div>
+                  ) : (
+                    section.questions.map((question) =>
+                      question.type === 'file' ? (
+                        <p key={question.key} className="text-sm">
+                          {question.label}:{' '}
+                          {questionnaire.files?.[question.key]?.name ?? '—'}
+                        </p>
+                      ) : (
+                        <SavingField
+                          key={question.key}
+                          saving={savingKeys.includes(question.key)}
+                        >
+                          <QuestionnaireQuestion
+                            question={{
+                              ...question,
+                              required: question.bsbOnly
+                                ? false
+                                : question.required,
+                              officeEditable: true,
+                            }}
+                            value={fieldValue(question.key)}
+                            onChange={(next) => update(question.key, next)}
+                          />
+                        </SavingField>
+                      )
+                    )
+                  )}
                   {section.questions.length > 0 ? repeaterBlock : null}
                 </QuestionnaireSectionCard>
               );

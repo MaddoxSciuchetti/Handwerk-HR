@@ -20,7 +20,7 @@ function withPrimaryMaster<T>(previous: T, id: string): T {
     'kind' in previous &&
     previous.kind === 'employment_contract'
   ) {
-    const detail = previous as DocumentMasterDetail;
+    const detail = previous as unknown as DocumentMasterDetail;
     return { ...detail, isPrimary: detail.id === id } as T;
   }
   return previous;

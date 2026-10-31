@@ -40,8 +40,10 @@ function groupOpenTasksByAssignee(data: EmployeeWorker) {
   }
 
   return Array.from(groups.entries()).map(
-    ([assigneeId, engagementsByAssignee]) =>
-      [assigneeId, Array.from(engagementsByAssignee.values())] as const
+    ([assigneeId, engagementsByAssignee]): [string, WorkerEngagement[]] => [
+      assigneeId,
+      Array.from(engagementsByAssignee.values()),
+    ]
   );
 }
 

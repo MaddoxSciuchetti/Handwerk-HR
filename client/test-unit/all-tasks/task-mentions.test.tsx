@@ -46,18 +46,23 @@ describe('task mentions', () => {
     expect(screen.getByText('Vertrag prüfen')).toBeInTheDocument();
   });
 
-  it('counts the source task once and excludes tasks without a mention or already completed', () => {
+  it('counts the source task once and excludes tasks without a mention, worker, or already completed', () => {
+    const withWorker = {
+      ...task,
+      workerEngagement: { workerId: 'worker-1' },
+    };
     expect(
       openMentionTasks([
-        { ...task, mentioned: true },
-        { ...task, id: 'no-mention', mentioned: false },
+        { ...withWorker, mentioned: true },
+        { ...withWorker, id: 'no-mention', mentioned: false },
         {
-          ...task,
+          ...withWorker,
           id: 'legacy-mention',
           assigneeOnly: true,
           assigneeUserId: 'recipient',
         },
-        { ...task, id: 'done', mentioned: true, status: 'done' },
+        { ...withWorker, id: 'done', mentioned: true, status: 'done' },
+        { ...task, id: 'no-worker', mentioned: true },
       ]).map((item) => item.id)
     ).toEqual(['source-task']);
   });

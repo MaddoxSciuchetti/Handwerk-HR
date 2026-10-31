@@ -9,64 +9,39 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as BestandRouteImport } from './routes/bestand'
-import { Route as CockpitRouteImport } from './routes/cockpit'
-import { Route as LandingRouteImport } from './routes/landing'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as SignupRouteImport } from './routes/signup'
 import { Route as WorkerLifycycleRouteImport } from './routes/worker-lifycycle'
-import { Route as FragebogenTokenRouteImport } from './routes/fragebogen/$token'
-import { Route as FragebogenPreviewRouteImport } from './routes/fragebogen/preview'
-import { Route as PasswordForgotRouteImport } from './routes/password/forgot'
-import { Route as PasswordResetRouteImport } from './routes/password/reset'
-import { Route as SettingsAutomationRouteImport } from './routes/settings/automation'
-import { Route as SettingsDepartureMailRouteImport } from './routes/settings/departure-mail'
-import { Route as SettingsDocumentsRouteImport } from './routes/settings/documents'
-import { Route as SettingsEmployeesRouteImport } from './routes/settings/employees'
-import { Route as SettingsGeneralRouteImport } from './routes/settings/general'
-import { Route as SettingsIntegrationsRouteImport } from './routes/settings/integrations'
-import { Route as SettingsPaymentsRouteImport } from './routes/settings/payments'
-import { Route as SettingsPlansRouteImport } from './routes/settings/plans'
-import { Route as SettingsProfileRouteImport } from './routes/settings/profile'
-import { Route as SettingsQuestionnaireRouteImport } from './routes/settings/questionnaire'
-import { Route as SettingsWelcomeMailRouteImport } from './routes/settings/welcome-mail'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as LandingRouteImport } from './routes/landing'
+import { Route as CockpitRouteImport } from './routes/cockpit'
+import { Route as BestandRouteImport } from './routes/bestand'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as UserIdRouteImport } from './routes/user/$Id'
-import { Route as EmailVerifyCodeRouteImport } from './routes/email/verify/$code'
-import { Route as SettingsDocumentsIdRouteImport } from './routes/settings/documents/$id'
-import { Route as SettingsMailTemplatesIdRouteImport } from './routes/settings/mail-templates/$id'
-import { Route as SettingsTemplatesIdRouteImport } from './routes/settings/templates/$id'
+import { Route as SettingsWelcomeMailRouteImport } from './routes/settings/welcome-mail'
+import { Route as SettingsQuestionnaireRouteImport } from './routes/settings/questionnaire'
+import { Route as SettingsProfileRouteImport } from './routes/settings/profile'
+import { Route as SettingsPlansRouteImport } from './routes/settings/plans'
+import { Route as SettingsPaymentsRouteImport } from './routes/settings/payments'
+import { Route as SettingsIntegrationsRouteImport } from './routes/settings/integrations'
+import { Route as SettingsGeneralRouteImport } from './routes/settings/general'
+import { Route as SettingsEmployeesRouteImport } from './routes/settings/employees'
+import { Route as SettingsDocumentsRouteImport } from './routes/settings/documents'
+import { Route as SettingsDepartureMailRouteImport } from './routes/settings/departure-mail'
+import { Route as SettingsAutomationRouteImport } from './routes/settings/automation'
+import { Route as PasswordResetRouteImport } from './routes/password/reset'
+import { Route as PasswordForgotRouteImport } from './routes/password/forgot'
+import { Route as FragebogenPreviewRouteImport } from './routes/fragebogen/preview'
+import { Route as FragebogenTokenRouteImport } from './routes/fragebogen/$token'
 import { Route as SettingsTemplatesTemplateRouteImport } from './routes/settings/templates/template'
+import { Route as SettingsTemplatesIdRouteImport } from './routes/settings/templates/$id'
+import { Route as SettingsMailTemplatesIdRouteImport } from './routes/settings/mail-templates/$id'
+import { Route as SettingsDocumentsIdRouteImport } from './routes/settings/documents/$id'
+import { Route as EmailVerifyCodeRouteImport } from './routes/email/verify/$code'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BestandRoute = BestandRouteImport.update({
-  id: '/bestand',
-  path: '/bestand',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CockpitRoute = CockpitRouteImport.update({
-  id: '/cockpit',
-  path: '/cockpit',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LandingRoute = LandingRouteImport.update({
-  id: '/landing',
-  path: '/landing',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
+const WorkerLifycycleRoute = WorkerLifycycleRouteImport.update({
+  id: '/worker-lifycycle',
+  path: '/worker-lifycycle',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignupRoute = SignupRouteImport.update({
@@ -74,74 +49,44 @@ const SignupRoute = SignupRouteImport.update({
   path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
-const WorkerLifycycleRoute = WorkerLifycycleRouteImport.update({
-  id: '/worker-lifycycle',
-  path: '/worker-lifycycle',
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
-const FragebogenTokenRoute = FragebogenTokenRouteImport.update({
-  id: '/fragebogen/$token',
-  path: '/fragebogen/$token',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const FragebogenPreviewRoute = FragebogenPreviewRouteImport.update({
-  id: '/fragebogen/preview',
-  path: '/fragebogen/preview',
+const LandingRoute = LandingRouteImport.update({
+  id: '/landing',
+  path: '/landing',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PasswordForgotRoute = PasswordForgotRouteImport.update({
-  id: '/password/forgot',
-  path: '/password/forgot',
+const CockpitRoute = CockpitRouteImport.update({
+  id: '/cockpit',
+  path: '/cockpit',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PasswordResetRoute = PasswordResetRouteImport.update({
-  id: '/password/reset',
-  path: '/password/reset',
+const BestandRoute = BestandRouteImport.update({
+  id: '/bestand',
+  path: '/bestand',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SettingsAutomationRoute = SettingsAutomationRouteImport.update({
-  id: '/automation',
-  path: '/automation',
-  getParentRoute: () => SettingsRoute,
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const SettingsDepartureMailRoute = SettingsDepartureMailRouteImport.update({
-  id: '/departure-mail',
-  path: '/departure-mail',
-  getParentRoute: () => SettingsRoute,
+const UserIdRoute = UserIdRouteImport.update({
+  id: '/user/$Id',
+  path: '/user/$Id',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const SettingsDocumentsRoute = SettingsDocumentsRouteImport.update({
-  id: '/documents',
-  path: '/documents',
-  getParentRoute: () => SettingsRoute,
-} as any)
-const SettingsEmployeesRoute = SettingsEmployeesRouteImport.update({
-  id: '/employees',
-  path: '/employees',
-  getParentRoute: () => SettingsRoute,
-} as any)
-const SettingsGeneralRoute = SettingsGeneralRouteImport.update({
-  id: '/general',
-  path: '/general',
-  getParentRoute: () => SettingsRoute,
-} as any)
-const SettingsIntegrationsRoute = SettingsIntegrationsRouteImport.update({
-  id: '/integrations',
-  path: '/integrations',
-  getParentRoute: () => SettingsRoute,
-} as any)
-const SettingsPaymentsRoute = SettingsPaymentsRouteImport.update({
-  id: '/payments',
-  path: '/payments',
-  getParentRoute: () => SettingsRoute,
-} as any)
-const SettingsPlansRoute = SettingsPlansRouteImport.update({
-  id: '/plans',
-  path: '/plans',
-  getParentRoute: () => SettingsRoute,
-} as any)
-const SettingsProfileRoute = SettingsProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
+const SettingsWelcomeMailRoute = SettingsWelcomeMailRouteImport.update({
+  id: '/welcome-mail',
+  path: '/welcome-mail',
   getParentRoute: () => SettingsRoute,
 } as any)
 const SettingsQuestionnaireRoute = SettingsQuestionnaireRouteImport.update({
@@ -149,35 +94,70 @@ const SettingsQuestionnaireRoute = SettingsQuestionnaireRouteImport.update({
   path: '/questionnaire',
   getParentRoute: () => SettingsRoute,
 } as any)
-const SettingsWelcomeMailRoute = SettingsWelcomeMailRouteImport.update({
-  id: '/welcome-mail',
-  path: '/welcome-mail',
+const SettingsProfileRoute = SettingsProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => SettingsRoute,
 } as any)
-const UserIdRoute = UserIdRouteImport.update({
-  id: '/user/$Id',
-  path: '/user/$Id',
+const SettingsPlansRoute = SettingsPlansRouteImport.update({
+  id: '/plans',
+  path: '/plans',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SettingsPaymentsRoute = SettingsPaymentsRouteImport.update({
+  id: '/payments',
+  path: '/payments',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SettingsIntegrationsRoute = SettingsIntegrationsRouteImport.update({
+  id: '/integrations',
+  path: '/integrations',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SettingsGeneralRoute = SettingsGeneralRouteImport.update({
+  id: '/general',
+  path: '/general',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SettingsEmployeesRoute = SettingsEmployeesRouteImport.update({
+  id: '/employees',
+  path: '/employees',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SettingsDocumentsRoute = SettingsDocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SettingsDepartureMailRoute = SettingsDepartureMailRouteImport.update({
+  id: '/departure-mail',
+  path: '/departure-mail',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SettingsAutomationRoute = SettingsAutomationRouteImport.update({
+  id: '/automation',
+  path: '/automation',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const PasswordResetRoute = PasswordResetRouteImport.update({
+  id: '/password/reset',
+  path: '/password/reset',
   getParentRoute: () => rootRouteImport,
 } as any)
-const EmailVerifyCodeRoute = EmailVerifyCodeRouteImport.update({
-  id: '/email/verify/$code',
-  path: '/email/verify/$code',
+const PasswordForgotRoute = PasswordForgotRouteImport.update({
+  id: '/password/forgot',
+  path: '/password/forgot',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SettingsDocumentsIdRoute = SettingsDocumentsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => SettingsDocumentsRoute,
+const FragebogenPreviewRoute = FragebogenPreviewRouteImport.update({
+  id: '/fragebogen/preview',
+  path: '/fragebogen/preview',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const SettingsMailTemplatesIdRoute = SettingsMailTemplatesIdRouteImport.update({
-  id: '/mail-templates/$id',
-  path: '/mail-templates/$id',
-  getParentRoute: () => SettingsRoute,
-} as any)
-const SettingsTemplatesIdRoute = SettingsTemplatesIdRouteImport.update({
-  id: '/templates/$id',
-  path: '/templates/$id',
-  getParentRoute: () => SettingsRoute,
+const FragebogenTokenRoute = FragebogenTokenRouteImport.update({
+  id: '/fragebogen/$token',
+  path: '/fragebogen/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsTemplatesTemplateRoute =
   SettingsTemplatesTemplateRouteImport.update({
@@ -185,6 +165,26 @@ const SettingsTemplatesTemplateRoute =
     path: '/templates/template',
     getParentRoute: () => SettingsRoute,
   } as any)
+const SettingsTemplatesIdRoute = SettingsTemplatesIdRouteImport.update({
+  id: '/templates/$id',
+  path: '/templates/$id',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SettingsMailTemplatesIdRoute = SettingsMailTemplatesIdRouteImport.update({
+  id: '/mail-templates/$id',
+  path: '/mail-templates/$id',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SettingsDocumentsIdRoute = SettingsDocumentsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => SettingsDocumentsRoute,
+} as any)
+const EmailVerifyCodeRoute = EmailVerifyCodeRouteImport.update({
+  id: '/email/verify/$code',
+  path: '/email/verify/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -395,46 +395,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/bestand': {
-      id: '/bestand'
-      path: '/bestand'
-      fullPath: '/bestand'
-      preLoaderRoute: typeof BestandRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cockpit': {
-      id: '/cockpit'
-      path: '/cockpit'
-      fullPath: '/cockpit'
-      preLoaderRoute: typeof CockpitRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/landing': {
-      id: '/landing'
-      path: '/landing'
-      fullPath: '/landing'
-      preLoaderRoute: typeof LandingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
+    '/worker-lifycycle': {
+      id: '/worker-lifycycle'
+      path: '/worker-lifycycle'
+      fullPath: '/worker-lifycycle'
+      preLoaderRoute: typeof WorkerLifycycleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signup': {
@@ -444,102 +409,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/worker-lifycycle': {
-      id: '/worker-lifycycle'
-      path: '/worker-lifycycle'
-      fullPath: '/worker-lifycycle'
-      preLoaderRoute: typeof WorkerLifycycleRouteImport
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/fragebogen/$token': {
-      id: '/fragebogen/$token'
-      path: '/fragebogen/$token'
-      fullPath: '/fragebogen/$token'
-      preLoaderRoute: typeof FragebogenTokenRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/fragebogen/preview': {
-      id: '/fragebogen/preview'
-      path: '/fragebogen/preview'
-      fullPath: '/fragebogen/preview'
-      preLoaderRoute: typeof FragebogenPreviewRouteImport
+    '/landing': {
+      id: '/landing'
+      path: '/landing'
+      fullPath: '/landing'
+      preLoaderRoute: typeof LandingRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/password/forgot': {
-      id: '/password/forgot'
-      path: '/password/forgot'
-      fullPath: '/password/forgot'
-      preLoaderRoute: typeof PasswordForgotRouteImport
+    '/cockpit': {
+      id: '/cockpit'
+      path: '/cockpit'
+      fullPath: '/cockpit'
+      preLoaderRoute: typeof CockpitRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/password/reset': {
-      id: '/password/reset'
-      path: '/password/reset'
-      fullPath: '/password/reset'
-      preLoaderRoute: typeof PasswordResetRouteImport
+    '/bestand': {
+      id: '/bestand'
+      path: '/bestand'
+      fullPath: '/bestand'
+      preLoaderRoute: typeof BestandRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/settings/automation': {
-      id: '/settings/automation'
-      path: '/automation'
-      fullPath: '/settings/automation'
-      preLoaderRoute: typeof SettingsAutomationRouteImport
-      parentRoute: typeof SettingsRoute
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/settings/departure-mail': {
-      id: '/settings/departure-mail'
-      path: '/departure-mail'
-      fullPath: '/settings/departure-mail'
-      preLoaderRoute: typeof SettingsDepartureMailRouteImport
-      parentRoute: typeof SettingsRoute
+    '/user/$Id': {
+      id: '/user/$Id'
+      path: '/user/$Id'
+      fullPath: '/user/$Id'
+      preLoaderRoute: typeof UserIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/settings/documents': {
-      id: '/settings/documents'
-      path: '/documents'
-      fullPath: '/settings/documents'
-      preLoaderRoute: typeof SettingsDocumentsRouteImport
-      parentRoute: typeof SettingsRoute
-    }
-    '/settings/employees': {
-      id: '/settings/employees'
-      path: '/employees'
-      fullPath: '/settings/employees'
-      preLoaderRoute: typeof SettingsEmployeesRouteImport
-      parentRoute: typeof SettingsRoute
-    }
-    '/settings/general': {
-      id: '/settings/general'
-      path: '/general'
-      fullPath: '/settings/general'
-      preLoaderRoute: typeof SettingsGeneralRouteImport
-      parentRoute: typeof SettingsRoute
-    }
-    '/settings/integrations': {
-      id: '/settings/integrations'
-      path: '/integrations'
-      fullPath: '/settings/integrations'
-      preLoaderRoute: typeof SettingsIntegrationsRouteImport
-      parentRoute: typeof SettingsRoute
-    }
-    '/settings/payments': {
-      id: '/settings/payments'
-      path: '/payments'
-      fullPath: '/settings/payments'
-      preLoaderRoute: typeof SettingsPaymentsRouteImport
-      parentRoute: typeof SettingsRoute
-    }
-    '/settings/plans': {
-      id: '/settings/plans'
-      path: '/plans'
-      fullPath: '/settings/plans'
-      preLoaderRoute: typeof SettingsPlansRouteImport
-      parentRoute: typeof SettingsRoute
-    }
-    '/settings/profile': {
-      id: '/settings/profile'
-      path: '/profile'
-      fullPath: '/settings/profile'
-      preLoaderRoute: typeof SettingsProfileRouteImport
+    '/settings/welcome-mail': {
+      id: '/settings/welcome-mail'
+      path: '/welcome-mail'
+      fullPath: '/settings/welcome-mail'
+      preLoaderRoute: typeof SettingsWelcomeMailRouteImport
       parentRoute: typeof SettingsRoute
     }
     '/settings/questionnaire': {
@@ -549,39 +472,102 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsQuestionnaireRouteImport
       parentRoute: typeof SettingsRoute
     }
-    '/settings/welcome-mail': {
-      id: '/settings/welcome-mail'
-      path: '/welcome-mail'
-      fullPath: '/settings/welcome-mail'
-      preLoaderRoute: typeof SettingsWelcomeMailRouteImport
+    '/settings/profile': {
+      id: '/settings/profile'
+      path: '/profile'
+      fullPath: '/settings/profile'
+      preLoaderRoute: typeof SettingsProfileRouteImport
       parentRoute: typeof SettingsRoute
     }
-    '/user/$Id': {
-      id: '/user/$Id'
-      path: '/user/$Id'
-      fullPath: '/user/$Id'
-      preLoaderRoute: typeof UserIdRouteImport
+    '/settings/plans': {
+      id: '/settings/plans'
+      path: '/plans'
+      fullPath: '/settings/plans'
+      preLoaderRoute: typeof SettingsPlansRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/settings/payments': {
+      id: '/settings/payments'
+      path: '/payments'
+      fullPath: '/settings/payments'
+      preLoaderRoute: typeof SettingsPaymentsRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/settings/integrations': {
+      id: '/settings/integrations'
+      path: '/integrations'
+      fullPath: '/settings/integrations'
+      preLoaderRoute: typeof SettingsIntegrationsRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/settings/general': {
+      id: '/settings/general'
+      path: '/general'
+      fullPath: '/settings/general'
+      preLoaderRoute: typeof SettingsGeneralRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/settings/employees': {
+      id: '/settings/employees'
+      path: '/employees'
+      fullPath: '/settings/employees'
+      preLoaderRoute: typeof SettingsEmployeesRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/settings/documents': {
+      id: '/settings/documents'
+      path: '/documents'
+      fullPath: '/settings/documents'
+      preLoaderRoute: typeof SettingsDocumentsRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/settings/departure-mail': {
+      id: '/settings/departure-mail'
+      path: '/departure-mail'
+      fullPath: '/settings/departure-mail'
+      preLoaderRoute: typeof SettingsDepartureMailRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/settings/automation': {
+      id: '/settings/automation'
+      path: '/automation'
+      fullPath: '/settings/automation'
+      preLoaderRoute: typeof SettingsAutomationRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/password/reset': {
+      id: '/password/reset'
+      path: '/password/reset'
+      fullPath: '/password/reset'
+      preLoaderRoute: typeof PasswordResetRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/email/verify/$code': {
-      id: '/email/verify/$code'
-      path: '/email/verify/$code'
-      fullPath: '/email/verify/$code'
-      preLoaderRoute: typeof EmailVerifyCodeRouteImport
+    '/password/forgot': {
+      id: '/password/forgot'
+      path: '/password/forgot'
+      fullPath: '/password/forgot'
+      preLoaderRoute: typeof PasswordForgotRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/settings/documents/$id': {
-      id: '/settings/documents/$id'
-      path: '/$id'
-      fullPath: '/settings/documents/$id'
-      preLoaderRoute: typeof SettingsDocumentsIdRouteImport
-      parentRoute: typeof SettingsDocumentsRoute
+    '/fragebogen/preview': {
+      id: '/fragebogen/preview'
+      path: '/fragebogen/preview'
+      fullPath: '/fragebogen/preview'
+      preLoaderRoute: typeof FragebogenPreviewRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/settings/mail-templates/$id': {
-      id: '/settings/mail-templates/$id'
-      path: '/mail-templates/$id'
-      fullPath: '/settings/mail-templates/$id'
-      preLoaderRoute: typeof SettingsMailTemplatesIdRouteImport
+    '/fragebogen/$token': {
+      id: '/fragebogen/$token'
+      path: '/fragebogen/$token'
+      fullPath: '/fragebogen/$token'
+      preLoaderRoute: typeof FragebogenTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/templates/template': {
+      id: '/settings/templates/template'
+      path: '/templates/template'
+      fullPath: '/settings/templates/template'
+      preLoaderRoute: typeof SettingsTemplatesTemplateRouteImport
       parentRoute: typeof SettingsRoute
     }
     '/settings/templates/$id': {
@@ -591,12 +577,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsTemplatesIdRouteImport
       parentRoute: typeof SettingsRoute
     }
-    '/settings/templates/template': {
-      id: '/settings/templates/template'
-      path: '/templates/template'
-      fullPath: '/settings/templates/template'
-      preLoaderRoute: typeof SettingsTemplatesTemplateRouteImport
+    '/settings/mail-templates/$id': {
+      id: '/settings/mail-templates/$id'
+      path: '/mail-templates/$id'
+      fullPath: '/settings/mail-templates/$id'
+      preLoaderRoute: typeof SettingsMailTemplatesIdRouteImport
       parentRoute: typeof SettingsRoute
+    }
+    '/settings/documents/$id': {
+      id: '/settings/documents/$id'
+      path: '/$id'
+      fullPath: '/settings/documents/$id'
+      preLoaderRoute: typeof SettingsDocumentsIdRouteImport
+      parentRoute: typeof SettingsDocumentsRoute
+    }
+    '/email/verify/$code': {
+      id: '/email/verify/$code'
+      path: '/email/verify/$code'
+      fullPath: '/email/verify/$code'
+      preLoaderRoute: typeof EmailVerifyCodeRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }

@@ -20,8 +20,8 @@ import {
 
 const MODEL = "gpt-4o-mini";
 
-/** TEMP: set true to restore full synonym/score matching before AI. */
-export const USE_DETERMINISTIC_CONTRACT_MATCH = false;
+/** Deterministic synonym/score matching before AI leftover fills. */
+export const USE_DETERMINISTIC_CONTRACT_MATCH = true;
 
 const SYSTEM_PROMPT = `Ziel: Befülle so viele noch leere Vertragsfelder wie möglich mit Antworten aus dem Personalfragebogen. Arbeite jedes Feld in fields ab und gib einen Match zurück, sobald Label, key, section oder context eindeutig zu einer Antwort passen. Lasse ein Feld nur weg, wenn wirklich keine passende Antwort existiert — nicht aus Vorsicht.
 
