@@ -29,6 +29,7 @@ export type EmploymentContractDraft = {
   questionnaireRevision?: number;
   matchedQuestionnaireRevision?: number;
   questionnaireSyncNeeded?: boolean;
+  printedAt?: string | null;
   sentAt: string | null;
   signedFileUrl: string | null;
   outgoingFileUrl?: string | null;
@@ -157,4 +158,14 @@ export function selectEngagementContractTemplate(
     `worker/${workerId}/engagements/${engagementId}/contract/template`,
     { masterId }
   ).then((response) => response.data);
+}
+
+export function fetchPrintedEmploymentContractPdf(
+  workerId: string,
+  engagementId: string
+) {
+  return apiJson.get<Blob>(
+    `worker/${workerId}/engagements/${engagementId}/contract/printed-pdf`,
+    { responseType: 'blob' }
+  );
 }

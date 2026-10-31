@@ -179,6 +179,19 @@ describe("questionnaire answer reuse", () => {
             deterministicContractValues(segments, { sex: "divers" } as QuestionnaireAnswers),
         ).toEqual([]);
     });
+
+    it("fills both English-named salutation fields used by staging", () => {
+        const segments: DocumentSegment[] = [
+            { type: "input", key: "contract.salutation", label: "Salutation" },
+            { type: "input", key: "contract.salutation_2", label: "salutation" },
+        ];
+        expect(
+            deterministicContractValues(segments, { sex: "weiblich" } as QuestionnaireAnswers),
+        ).toEqual([
+            { key: "contract.salutation", value: "Frau" },
+            { key: "contract.salutation_2", value: "Frau" },
+        ]);
+    });
     it("keeps historical custom answers visible even when their label is unavailable", () => {
         expect(
             unmatchedQuestionnaireAnswers([], {}, [

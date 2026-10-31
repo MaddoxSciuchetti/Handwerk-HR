@@ -9,10 +9,12 @@ import { BAD_REQUEST } from "@/constants/http";
 import type { Prisma } from "@prisma/client";
 import { z } from "zod";
 import {
+    applyEngagementMailTemplate,
     isMailSequence,
     normalizeRecipients,
     listBsbMailAddresses,
 } from "./engagementMail";
+import { formatWelcomeEntryDate } from "./welcomeMail";
 import { listOrganizationIntegrations } from "./integrations/store";
 import { runIssueSequence } from "./integrations/runSequence";
 import {
@@ -57,6 +59,8 @@ export const templateApplyInput = z.object({
                     .min(1)
                     .max(50)
                     .optional(),
+                subject: z.string().max(400).optional(),
+                body: z.string().max(20_000).optional(),
             }),
         )
         .default({}),
@@ -76,7 +80,20 @@ async function loadTemplate(context: Context, engagementId: string) {
             workerId: context.workerId,
             organizationId: context.organizationId,
         },
-        select: { id: true },
+        select: {
+            id: true,
+            worker: {
+                select: {
+                    firstName: true,
+                    lastName: true,
+                    workEmail: true,
+                    microsoftEmail: true,
+                    position: true,
+                    entryDate: true,
+                    exitDate: true,
+                },
+            },
+        },
     });
     if (!engagement) throw new AppError(BAD_REQUEST, "Einsatz nicht gefunden.");
     const template = await prisma.issueTemplate.findFirst({
@@ -84,15 +101,62 @@ async function loadTemplate(context: Context, engagementId: string) {
             id: context.templateId,
             organizationId: context.organizationId,
         },
-        include: { items: { orderBy: [{ orderIndex: "asc" }, { id: "asc" }] } },
+        include: {
+            items: {
+                orderBy: [{ orderIndex: "asc" }, { id: "asc" }],
+                include: {
+                    mailTemplate: {
+                        select: { id: true, subject: true, body: true },
+                    },
+                },
+            },
+        },
     });
     if (!template) throw new AppError(BAD_REQUEST, "Template nicht gefunden.");
-    return template;
+    return { template, worker: engagement.worker };
 }
 
-function templateRevision(template: Awaited<ReturnType<typeof loadTemplate>>) {
+function filledMessage(
+    mailTemplate: { subject: string; body: string } | null | undefined,
+    worker: Awaited<ReturnType<typeof loadTemplate>>["worker"],
+    sequence: string | null,
+) {
+    if (
+        !mailTemplate ||
+        (!isMailSequence(sequence) &&
+            sequence !== "microsoft_send_teams_message")
+    )
+        return null;
+    const values = {
+        firstName: worker.firstName.trim(),
+        lastName: worker.lastName.trim(),
+        workEmail:
+            worker.microsoftEmail?.trim() || worker.workEmail?.trim() || "",
+        position: worker.position?.trim() || "",
+        entryDate: formatWelcomeEntryDate(worker.entryDate),
+        exitDate: formatWelcomeEntryDate(worker.exitDate),
+    };
+    return {
+        subject: isMailSequence(sequence)
+            ? applyEngagementMailTemplate(mailTemplate.subject, values)
+                  .replace(/\s+/g, " ")
+                  .trim()
+            : null,
+        body: applyEngagementMailTemplate(mailTemplate.body, values),
+    };
+}
+
+function templateRevision(
+    template: Awaited<ReturnType<typeof loadTemplate>>["template"],
+) {
     return createHash("sha256")
-        .update(JSON.stringify(template.items))
+        .update(
+            JSON.stringify(
+                template.items.map(
+                    ({ mailTemplate: _mailTemplate, ...item }) => item,
+                ),
+            ),
+        )
         .digest("hex");
 }
 
@@ -100,7 +164,7 @@ export async function templateApplicationPreview(
     context: Context,
     engagementId: string,
 ) {
-    const template = await loadTemplate(context, engagementId);
+    const { template, worker } = await loadTemplate(context, engagementId);
     const mocked = integrationsMocked();
     const integrations = mocked
         ? []
@@ -127,6 +191,7 @@ export async function templateApplicationPreview(
                 title: item.title,
                 sequence: item.sequence,
                 integrationProvider: item.integrationProvider,
+                message: filledMessage(item.mailTemplate, worker, item.sequence),
                 blockedReason: mocked || !item.sequence
                     ? null
                     : item.sequence === "microsoft_send_teams_message"
@@ -285,10 +350,10 @@ export async function applyTemplateApplication(
     input: TemplateApplyInput,
     createTasks: (
         tx: Prisma.TransactionClient,
-        template: Awaited<ReturnType<typeof loadTemplate>>,
+        template: Awaited<ReturnType<typeof loadTemplate>>["template"],
     ) => Promise<{ count: number; issueIds: string[] }>,
 ) {
-    const template = await loadTemplate(context, input.workerEngagementId);
+    const { template } = await loadTemplate(context, input.workerEngagementId);
     // A new explicit demo click can replace a finished receipt; retries still reuse it.
     const repeatDemo = (receipt: { completedAt: Date | null; idempotencyKey: string }) =>
         integrationsMocked() && Boolean(receipt.completedAt) &&
@@ -498,6 +563,7 @@ export async function applyTemplateApplication(
                         {
                             idempotencyKey: `${receipt.id}:${issue.id}`,
                             destinations: choice.destinations!,
+                            body: choice?.body?.trim() || undefined,
                         },
                     );
                     if (op.status === "completed")
@@ -538,6 +604,8 @@ export async function applyTemplateApplication(
                             issueId: issue.id,
                             actorUserId: context.actorUserId,
                             senderAddress: choice?.senderAddress,
+                            subject: choice?.subject?.trim() || undefined,
+                            body: choice?.body?.trim() || undefined,
                         })),
                     };
             } catch (error) {

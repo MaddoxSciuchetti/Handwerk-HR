@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import {
   fetchPreparedEmploymentContractPdf,
+  fetchPrintedEmploymentContractPdf,
   prepareEmploymentContractDownload,
   selectEngagementContractTemplate,
 } from '../../api/employmentContract.api';
@@ -94,7 +95,7 @@ export function ContractSendDialog({
     engagementId
   );
   const templates = useDocumentMasters(
-    Boolean(data && !data.sentAt && data.status !== 'signed')
+    Boolean(data && !data.printedAt && !data.sentAt && data.status !== 'signed')
   );
   const [syncing, setSyncing] = useState(false);
   const [values, setValues] = useState<Record<string, string>>({});
@@ -132,9 +133,18 @@ export function ContractSendDialog({
       )
     : false;
   const alreadySent = Boolean(data?.sentAt);
-  const readOnly = data?.status === 'signed' || alreadySent;
+  const readOnly = Boolean(
+    data?.printedAt || data?.status === 'signed' || alreadySent
+  );
   const savePdf = useMutation({
     mutationFn: async () => {
+      if (data?.printedAt) {
+        downloadBlob(
+          await fetchPrintedEmploymentContractPdf(workerId, engagementId),
+          `${data.name ?? 'Arbeitsvertrag'}.pdf`
+        );
+        return;
+      }
       let blob: Blob;
       if (prepared) {
         blob = await fetchPreparedEmploymentContractPdf(
@@ -370,6 +380,12 @@ export function ContractSendDialog({
                   </div>
                 ) : null}
               </div>
+              {data.printedAt ? (
+                <p className="shrink-0 text-sm text-muted-foreground">
+                  Als gedruckt abgeschlossen. Änderungen am Mustertext werden
+                  nicht mehr übernommen.
+                </p>
+              ) : null}
               {data.outgoingFileUrl ? (
                 <a
                   href={data.outgoingFileUrl}

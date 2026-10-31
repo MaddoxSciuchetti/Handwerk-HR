@@ -17,6 +17,7 @@ import {
 import type { EngagementCertificateLink } from './EngagementCertificateList';
 import type { EngagementContractLink } from './EngagementContractList';
 import FilesContent from './FilesContent';
+import { CreateTemplateDocumentDialog } from './CreateTemplateDocumentDialog';
 import type { EngagementQuestionnaireLink } from './EngagementQuestionnaireList';
 import { AddPersonnelFolder } from './personnel/AddPersonnelFolder';
 import { PersonnelDocumentFolders } from './personnel/PersonnelDocumentFolders';
@@ -34,6 +35,8 @@ type WorkerFileUploadsProps = {
   questionnaires?: EngagementQuestionnaireLink[];
   isUploadModalOpen: boolean;
   setIsUploadModalOpen: (open: boolean) => void;
+  createTemplateOpen?: boolean;
+  setCreateTemplateOpen?: (open: boolean) => void;
   createFolderOpen: boolean;
   setCreateFolderOpen: (open: boolean) => void;
 };
@@ -46,6 +49,8 @@ function WorkerFileUploads({
   questionnaires = [],
   isUploadModalOpen,
   setIsUploadModalOpen,
+  createTemplateOpen = false,
+  setCreateTemplateOpen,
   createFolderOpen,
   setCreateFolderOpen,
 }: WorkerFileUploadsProps) {
@@ -100,6 +105,14 @@ function WorkerFileUploads({
         </div>
       ) : null}
 
+      {defaultEngagementId && setCreateTemplateOpen ? (
+        <CreateTemplateDocumentDialog
+          workerId={workerId}
+          engagementId={defaultEngagementId}
+          open={createTemplateOpen}
+          onOpenChange={setCreateTemplateOpen}
+        />
+      ) : null}
       <AddPersonnelFolder
         open={createFolderOpen}
         workerId={workerId}
@@ -125,8 +138,6 @@ function WorkerFileUploads({
               <PersonnelDocumentUploadForm
                 setModal={setIsUploadModalOpen}
                 workerId={workerId}
-                engagements={engagements}
-                folders={folders}
               />
             </div>
           </SheetContent>

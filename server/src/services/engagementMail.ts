@@ -477,6 +477,8 @@ export async function sendIssueMail(params: {
     organizationId: string;
     issueId: string;
     senderAddress?: string | null;
+    subject?: string | null;
+    body?: string | null;
     origin?: "departure";
     once?: "departure";
 }): Promise<
@@ -496,6 +498,8 @@ export async function sendIssueMail(params: {
     if (params.once === "departure" && loaded.worker.departureMailSentAt) {
         return { status: "already_sent" };
     }
+    const subject = params.subject?.trim();
+    const body = params.body?.trim();
     const sent = await deliverMail({
         organizationId: params.organizationId,
         engagementId: loaded.engagementId,
@@ -503,6 +507,8 @@ export async function sendIssueMail(params: {
         worker: loaded.worker,
         template: loaded.template,
         senderAddress: params.senderAddress?.trim() || loaded.mailSenderAddress,
+        subject,
+        body,
     });
     if (sent.status !== "sent") return sent;
     if (params.once === "departure") {
@@ -599,6 +605,8 @@ async function deliverMail(params: {
     worker: MailWorker;
     template: { subject: string; body: string };
     senderAddress?: string | null;
+    subject?: string;
+    body?: string;
 }): Promise<{ status: "sent" } | { status: "failed"; message: string }> {
     const requestedSender = params.senderAddress?.trim() ?? "";
     if (!requestedSender.includes("@")) {
@@ -642,8 +650,10 @@ async function deliverMail(params: {
         token,
         senderAddress: requestedSender,
         recipients: resolved.addresses,
-        subject: filledSubject(params.template.subject, values),
-        text: applyEngagementMailTemplate(params.template.body, values),
+        subject: params.subject || filledSubject(params.template.subject, values),
+        text:
+            params.body ||
+            applyEngagementMailTemplate(params.template.body, values),
         rejectedLog: "Microsoft Graph engagement mail failed",
         failureMessage: "Microsoft Graph hat die E-Mail abgelehnt.",
     });

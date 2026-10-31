@@ -259,6 +259,29 @@ it("asks the model for Anrede (deterministic salutation disabled)", async () => 
     expect(fetchMock).toHaveBeenCalledTimes(1);
 });
 
+it("fills both staging salutation fields via AI when deterministic matching is off", async () => {
+    modelResult([
+        match("contract.vorname", "firstName", "Max"),
+        match("contract.salutation", "firstName", "Herr"),
+        match("contract.salutation_2", "firstName", "Herr"),
+    ]);
+    const result = await matchQuestionnaireToContract(
+        [
+            { type: "input", key: "contract.vorname", label: "Vorname" },
+            { type: "input", key: "contract.salutation", label: "Salutation" },
+            { type: "input", key: "contract.salutation_2", label: "salutation" },
+        ],
+        { firstName: "Max" } as QuestionnaireAnswers,
+        "",
+        [{ key: "firstName", label: "Vorname", contractFieldKey: "contract.vorname" }],
+    );
+    expect(result).toEqual([
+        { key: "contract.vorname", value: "Max" },
+        { key: "contract.salutation", value: "Herr" },
+        { key: "contract.salutation_2", value: "Herr" },
+    ]);
+});
+
 it("fills Vorname by alias and asks the model only for Anrede", async () => {
     modelResult([
         {

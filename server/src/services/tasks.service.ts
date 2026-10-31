@@ -18,6 +18,7 @@ import {
 import { createIssue, updateIssue } from "@/services/worker.service";
 import AppError from "@/utils/AppError";
 import { BAD_REQUEST } from "@/constants/http";
+import { isStagingEnvironment } from "@/constants/stagingMail";
 import { getTaskMentionTemplate } from "@/utils/emailTemplates";
 import { sendMail } from "@/utils/sendMail";
 
@@ -593,9 +594,9 @@ export async function getTaskHistoryInOrg(
     return merged;
 }
 
-function tasksPageUrl() {
+function mentionedTaskUrl(workerId: string, taskId: string) {
     const origin = APP_ORIGIN.split(",")[0]?.trim().replace(/\/$/, "") ?? "";
-    return `${origin}/tasks`;
+    return `${origin}/user/${encodeURIComponent(workerId)}?taskId=${encodeURIComponent(taskId)}`;
 }
 
 const commentUserSelect = {
@@ -622,7 +623,7 @@ export async function upsertIssueCommentInOrg(
             id: issueId,
             workerEngagement: { organizationId: orgId },
         },
-        select: { id: true, title: true, workerEngagementId: true },
+        select: { id: true, title: true, workerEngagementId: true, workerEngagement: { select: { workerId: true } } },
     });
     if (!issue) {
         throw new Error("Task not found for organization");
@@ -689,13 +690,14 @@ export async function upsertIssueCommentInOrg(
         `${actor?.firstName ?? ""} ${actor?.lastName ?? ""}`.trim() ||
         actor?.email ||
         "Ein Kollege";
-    const actionUrl = tasksPageUrl();
+    const actionUrl = mentionedTaskUrl(issue.workerEngagement!.workerId, issue.id);
     let mailFailed = false;
     await recordIssueMentions(
         issue.id,
         mentioned.map((person) => person.id),
     );
 
+    const stagingMail = isStagingEnvironment();
     for (const person of mentioned) {
         const recipientName =
             `${person.firstName} ${person.lastName}`.trim() || person.email;
@@ -706,13 +708,21 @@ export async function upsertIssueCommentInOrg(
             message: body,
             actionUrl,
         });
+        // Staging keeps mention alerts on Resend, same as Fragebogen/password mail.
+        // Production uses the org Microsoft mailbox when USE_MICROSOFT_MAIL is on.
         const sent = await sendMail({
             to: person.email,
             subject: template.subject,
             text: template.text,
             html: template.html,
+            ...(stagingMail
+                ? { via: "resend" as const }
+                : { organizationId: orgId }),
         });
-        if (sent.error) mailFailed = true;
+        if (sent.error) {
+            console.error("Mention mail failed", sent.error.message);
+            mailFailed = true;
+        }
     }
 
     return { comment, mailFailed };

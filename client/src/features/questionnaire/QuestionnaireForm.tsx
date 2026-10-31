@@ -1,3 +1,4 @@
+import './questionnaire-mobile.css';
 import { isValidTaxId } from '@shared/taxId';
 import {
   QUESTIONNAIRE_DECLARATION_HEADING,
@@ -199,22 +200,19 @@ export function QuestionnaireForm({
     if (preview && question?.bsbOnly) onPresetChange?.(key, value);
   };
   const fillStagingDemo = () => {
-    const demo = mockQuestionnaireValues(
-      [
-        ...questions
-          .filter((question) => question.type !== 'file')
-          .map((question) => ({
-            key: question.key,
-            type: question.type,
-            defaultValue: question.defaultValue,
-            options: question.options,
-            max: question.max,
-            required: question.required,
-          })),
-        { key: 'declaration', type: 'check', required: true },
-      ],
-      'staging.demo@example.test'
-    );
+    const demo = mockQuestionnaireValues([
+      ...questions
+        .filter((question) => question.type !== 'file')
+        .map((question) => ({
+          key: question.key,
+          type: question.type,
+          defaultValue: question.defaultValue,
+          options: question.options,
+          max: question.max,
+          required: question.required,
+        })),
+      { key: 'declaration', type: 'check', required: true },
+    ]);
     setValues((current) => ({
       ...current,
       ...demo,
@@ -286,12 +284,18 @@ export function QuestionnaireForm({
     return list;
   }, []);
   return (
-    <div className={embedded ? undefined : 'h-full overflow-y-auto px-4 py-8'}>
+    <div
+      className={
+        embedded
+          ? undefined
+          : 'min-h-dvh px-2 py-4 sm:px-4 sm:py-8'
+      }
+    >
       <div
         className={
           embedded
             ? 'w-full'
-            : 'mx-auto w-full max-w-3xl rounded-lg border border-border bg-card p-8 text-card-foreground shadow-lg'
+            : 'mx-auto w-full max-w-3xl rounded-lg border border-border bg-card p-4 text-card-foreground sm:p-8 shadow-lg'
         }
       >
         <h1 className="text-xl font-medium">
@@ -312,7 +316,7 @@ export function QuestionnaireForm({
         ) : null}
         {data?.status === 'sent' && !done ? (
           <form
-            className="mt-6 flex flex-col gap-4"
+            className="questionnaire-form mt-6 flex min-w-0 flex-col gap-4"
             onSubmit={(event) => {
               event.preventDefault();
               if (embedded || missing || submit.isPending) return;
@@ -418,7 +422,7 @@ export function QuestionnaireForm({
                       (question) => question.layout === 'inline'
                     ) ? (
                     <>
-                      <div className="grid grid-cols-4 gap-3 sm:grid-cols-7">
+                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-7">
                         {section.questions.map((question) => {
                           const open = fillsBsb(question);
                           const locked =

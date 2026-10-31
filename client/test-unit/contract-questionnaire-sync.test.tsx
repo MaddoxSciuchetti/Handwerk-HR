@@ -106,3 +106,17 @@ it('does not sync when saving pending edits fails', async () => {
   expect(resyncEngagementContractFromQuestionnaire).not.toHaveBeenCalled();
   expect(onSynced).not.toHaveBeenCalled();
 });
+
+it('does not offer questionnaire syncing after the contract is printed', () => {
+  renderWithProviders(
+    <ContractQuestionnaireSync
+      workerId="worker"
+      engagementId="eng"
+      contract={{ ...contract, printedAt: '2026-10-29T12:00:00.000Z' }}
+      onSynced={vi.fn()}
+    />
+  );
+  expect(
+    screen.queryByRole('button', { name: 'Sync?' })
+  ).not.toBeInTheDocument();
+});

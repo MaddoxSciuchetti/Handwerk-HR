@@ -41,8 +41,8 @@ it('fills demo answers from the staging button and leaves the control hidden oth
   await user.click(
     screen.getByRole('button', { name: 'Fill out with staging' })
   );
-  expect(screen.getByLabelText('Vorname *')).toHaveValue('Staging');
-  expect(screen.getByLabelText('Nachname *')).toHaveValue('Demo');
+  expect(screen.getByLabelText('Vorname *')).toHaveValue('Lukas');
+  expect(screen.getByLabelText('Nachname *')).toHaveValue('Adler');
   expect(screen.getByRole('checkbox')).toBeChecked();
   await waitFor(() =>
     expect(screen.getByRole('button', { name: /absenden/i })).toBeEnabled()

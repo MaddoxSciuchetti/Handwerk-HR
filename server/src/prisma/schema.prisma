@@ -594,6 +594,7 @@ model EmploymentContract {
   fileUrl           String?                  @map("file_url") @db.VarChar(2048)
   conversationId    String?                  @unique @map("conversation_id") @db.VarChar(512)
   sentAt                DateTime?                @map("sent_at") @db.Timestamptz()
+  printedAt             DateTime?                @map("printed_at") @db.Timestamptz()
   matchedMasterRevision Int?                     @map("matched_master_revision")
   matchedQuestionnaireRevision Int @default(0) @map("matched_questionnaire_revision")
   confirmedAt           DateTime?                @map("confirmed_at") @db.Timestamptz()

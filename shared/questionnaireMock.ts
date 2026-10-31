@@ -7,10 +7,10 @@ export type MockQuestionnaireField = {
   required?: boolean;
 };
 
-/** Generate answers for the actual sent form, including custom questions. */
+/** Synthetic example data only; never sourced from an actual employee. */
 export function mockQuestionnaireValues(
   fields: readonly MockQuestionnaireField[],
-  email: string
+  email = 'lukas.adler@example.test'
 ) {
   const names = email
     .split('@')[0]
@@ -24,26 +24,41 @@ export function mockQuestionnaireValues(
   const today = new Date().toISOString().slice(0, 10);
   const samples: Record<string, string> = {
     firstName: names[0] || 'Lukas',
-    lastName: names.slice(1).join(' ') || 'Mustermann',
-    street: 'Musterstraße 12',
+    lastName: names.slice(1).join(' ') || 'Adler',
+    street: 'Lindenstraße 12',
     postalCode: '10115',
     city: 'Berlin',
     birthday: '1990-04-01',
+    birthName: names.slice(1).join(' ') || 'Adler',
+    sex: 'männlich',
     insuranceNumber: '10010490A443',
     jobTitle: 'Anlagenmechaniker',
     entryDate: today,
+    employmentExtent: 'Vollzeit',
+    employmentKind: 'Hauptbeschäftigung',
+    otherJobs: 'nein',
+    marginalJob: 'nein',
+    schoolDegree: 'Mittlere Reife/gleichwertiger Abschluss',
+    vocationalDegree: 'Anerkannte Berufsausbildung',
+    trainingStart: '2007-08-01',
+    trainingEnd: '2010-07-31',
+    constructionSince: '2010-08-01',
     birthPlace: 'Berlin, Deutschland',
     nationality: 'deutsch',
-    employeeNumber: 'MOCK-001',
+    employeeNumber: '1042',
     iban: 'DE89370400440532013000',
     bic: 'COBADEFFXXX',
     taxId: '12345678911',
     taxClass: '1',
     childAllowance: '0',
     religion: 'keine',
-    healthInsurance: 'Musterkrankenkasse',
+    healthInsurance: 'Techniker Krankenkasse',
+    vwlRecipient: 'Bausparkasse Schwäbisch Hall',
     vwlAmount: '40',
-    vwlContractNumber: 'MOCK-VWL-001',
+    vwlSince: `${today.slice(0, 4)}-01-01`,
+    signatureDate: today,
+    minorSignatureDate: today,
+    vwlContractNumber: '7842156093',
     vwlIban: 'DE89370400440532013000',
     vwlBic: 'COBADEFFXXX',
     hoursDistribution: 'ja',
@@ -64,11 +79,13 @@ export function mockQuestionnaireValues(
       if (field.type === 'single' || field.type === 'check')
         return [
           field.key,
-          field.options?.[0] ?? (field.type === 'check' ? 'ja' : ''),
+          (field.options?.includes(samples[field.key])
+            ? samples[field.key]
+            : field.options?.[0]) ?? (field.type === 'check' ? 'ja' : ''),
         ];
       return [
         field.key,
-        (samples[field.key] ?? 'Testwert').slice(0, field.max ?? 255),
+        (samples[field.key] ?? 'Keine weiteren Angaben').slice(0, field.max ?? 255),
       ];
     })
   );

@@ -9,6 +9,15 @@ import type { ReactNode } from 'react';
 import { QuestionnaireFileInput } from './QuestionnaireFileInput';
 import type { QuestionnaireQuestion as QuestionnaireQuestionData } from './questionnaire.types';
 
+const autocomplete: Record<string, string> = {
+  firstName: 'given-name',
+  lastName: 'family-name',
+  street: 'street-address',
+  postalCode: 'postal-code',
+  city: 'address-level2',
+  birthday: 'bday',
+};
+
 type QuestionnaireQuestionProps = {
   question: QuestionnaireQuestionData;
   value: string;
@@ -187,7 +196,30 @@ export function QuestionnaireQuestion({
       <Input
         id={question.key}
         type={question.type === 'date' ? 'date' : 'text'}
-        inputMode={question.key === 'taxId' ? 'numeric' : undefined}
+        inputMode={
+          ['taxId', 'postalCode'].includes(question.key) ? 'numeric' : undefined
+        }
+        autoComplete={autocomplete[question.key]}
+        name={question.key}
+        autoCapitalize={
+          ['iban', 'bic', 'insuranceNumber', 'vwlIban', 'vwlBic'].includes(
+            question.key
+          )
+            ? 'characters'
+            : undefined
+        }
+        spellCheck={
+          [
+            'iban',
+            'bic',
+            'insuranceNumber',
+            'taxId',
+            'vwlIban',
+            'vwlBic',
+          ].includes(question.key)
+            ? false
+            : undefined
+        }
         required={question.required && !locked}
         disabled={locked}
         value={value}

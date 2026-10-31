@@ -58,6 +58,9 @@ export const taskMutations = {
         toast.error('Aufgabe konnte nicht gespeichert werden.');
       },
       onSettled: (_data, _error, { taskId }) => {
+        void queryClient.invalidateQueries({
+          queryKey: ['employment-contract'],
+        });
         void queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] });
         void queryClient.invalidateQueries({ queryKey: [WORKERBYID] });
         void queryClient.invalidateQueries({ queryKey: [ALL_WORKER_DATA] });

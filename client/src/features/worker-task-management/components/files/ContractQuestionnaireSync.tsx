@@ -23,7 +23,9 @@ export function ContractQuestionnaireSync({
   onBusy,
 }: Props) {
   const sync = useResyncEmploymentContract(workerId, engagementId, beforeSync);
-  const locked = Boolean(contract.sentAt || contract.status === 'signed');
+  const locked = Boolean(
+    contract.printedAt || contract.sentAt || contract.status === 'signed'
+  );
   if (!contract.questionnaireSyncNeeded || locked) return null;
   return (
     <Button

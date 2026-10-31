@@ -48,7 +48,11 @@ function RootLayout() {
     return (
       <main
         className={
-          isLanding ? 'h-dvh overflow-y-auto' : 'h-dvh overflow-hidden'
+          isQuestionnairePage
+            ? 'min-h-dvh'
+            : isLanding
+              ? 'h-dvh overflow-y-auto'
+              : 'h-dvh overflow-hidden'
         }
       >
         <Outlet />

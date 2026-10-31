@@ -1,5 +1,9 @@
 import {
     getEngagementContract,
+    freezePrintedContract,
+    unfreezePrintedContract,
+    downloadPrintedContract,
+    persistMatchedContractValues,
     resyncEngagementContractFromQuestionnaire,
     saveEngagementContractDraft,
 } from "@/services/employmentContract.service";
@@ -20,6 +24,7 @@ jest.mock("@/lib/prisma", () => ({
         employmentContractValue: {
             deleteMany: jest.fn(),
             createMany: jest.fn(),
+            upsert: jest.fn(),
         },
         $transaction: jest.fn(),
         $queryRaw: jest.fn(),
@@ -42,6 +47,7 @@ jest.mock("@/services/preparedDocument", () => ({
     currentPreparation: jest.fn().mockResolvedValue(null),
     DeliveryRejected: class extends Error {},
 }));
+jest.mock("@/services/documentPdf", () => ({ generateDocumentPdf: jest.fn() }));
 jest.mock("@/utils/sendMail", () => ({ sendMail: jest.fn() }));
 jest.mock("@/services/graphMail", () => ({ sendGraphMail: jest.fn() }));
 jest.mock("@/config/aws", () => ({ generatePresignedUrl: jest.fn() }));
@@ -217,6 +223,36 @@ it("replaces contract values from the Fragebogen and drops removed fields", asyn
     expect(view.values).toEqual({ "contract.nachname": "Lovelace" });
     expect(view.matchedMasterRevision).toBe(4);
     expect(view.masterRevision).toBe(4);
+});
+
+it("persists both staging salutation fields and returns them when the contract is reopened", async () => {
+    contract.master = {
+        name: "Vertrag",
+        revision: 4,
+        body: fromSegments([
+            { type: "input", key: "contract.salutation", label: "Salutation" },
+            { type: "input", key: "contract.salutation_2", label: "salutation" },
+        ]),
+    };
+    contract.values = [
+        { key: "contract.salutation", value: "old value" },
+        { key: "contract.salutation_2", value: "old value" },
+    ];
+    contract.engagement.questionnaireSubmission = {
+        id: "submission", revision: 1, status: "completed",
+        answers: [{ key: "sex", value: "weiblich" }],
+    };
+
+    const synced = await resyncEngagementContractFromQuestionnaire(params);
+    expect(prisma.employmentContractValue.createMany).toHaveBeenCalledWith({
+        data: [
+            { employmentContractId: "contract", key: "contract.salutation", value: "Frau" },
+            { employmentContractId: "contract", key: "contract.salutation_2", value: "Frau" },
+        ],
+    });
+    const expected = { "contract.salutation": "Frau", "contract.salutation_2": "Frau" };
+    expect(synced.values).toEqual(expected);
+    expect((await getEngagementContract(params))?.values).toEqual(expected);
 });
 
 it("keeps manual pay, allowances, checkboxes and description points when syncing questionnaire fields", async () => {
@@ -593,6 +629,121 @@ it("invalidates the prepared PDF when saved values change", async () => {
     ]);
 });
 
+
+describe("printed contract snapshots", () => {
+    it("keeps the paper wording and worker values after later master edits", async () => {
+        contract.values = [{ key: "contract.vorname", value: "Ada" }];
+        await freezePrintedContract(prisma as any, "eng");
+        const frozenBody = structuredClone(contract.body);
+        contract.master.body = fromSegments([{ type: "text", text: "Changed master" }]);
+        const view = await getEngagementContract(params);
+        expect(view).toMatchObject({
+            followsMaster: false,
+            status: "ready",
+            sentAt: null,
+            document: frozenBody,
+            values: { "contract.vorname": "Ada" },
+            prepared: null,
+        });
+        expect(view?.printedAt).toBeTruthy();
+        await expect(saveEngagementContractDraft({ ...params, values: {} })).rejects.toThrow();
+        await expect(resyncEngagementContractFromQuestionnaire(params)).rejects.toThrow();
+        await persistMatchedContractValues(prisma as any, {
+            contractId: "contract", entries: [{ key: "contract.vorname", value: "Changed" }], masterRevision: 2,
+        });
+        expect(prisma.employmentContractValue.deleteMany).not.toHaveBeenCalled();
+    });
+
+    it("does not replace an existing snapshot when completion is repeated", async () => {
+        await freezePrintedContract(prisma as any, "eng");
+        const firstPrint = contract.printedAt;
+        const firstBody = structuredClone(contract.body);
+        contract.master.body = fromSegments([{ type: "text", text: "Changed master" }]);
+        await freezePrintedContract(prisma as any, "eng");
+        expect(contract.printedAt).toBe(firstPrint);
+        expect(contract.body).toEqual(firstBody);
+        expect(prisma.employmentContract.update).toHaveBeenCalledTimes(1);
+    });
+
+    it("unlocks edits and Fragebogen sync when the print freeze is released", async () => {
+        contract.values = [{ key: "contract.vorname", value: "Ada" }];
+        contract.engagement.questionnaireSubmission = {
+            id: "submission",
+            revision: 2,
+            status: "completed",
+            formDefinition: {
+                intro: "",
+                items: [{
+                    kind: "field",
+                    key: "firstName",
+                    label: "Vorname",
+                    section: "Person",
+                    type: "text",
+                    contractFieldKey: "contract.vorname",
+                }],
+            },
+            answers: [{ key: "firstName", value: "Augusta" }],
+        };
+        await freezePrintedContract(prisma as any, "eng");
+        const frozenBody = structuredClone(contract.body);
+        await unfreezePrintedContract(prisma as any, "eng");
+        expect(contract.printedAt).toBeNull();
+        expect(contract.status).toBe("draft");
+        expect(contract.body).toEqual(frozenBody);
+        const saved = await saveEngagementContractDraft({
+            ...params,
+            values: { "contract.vorname": "Ada Lovelace" },
+        });
+        expect(saved.values).toEqual({ "contract.vorname": "Ada Lovelace" });
+        const synced = await resyncEngagementContractFromQuestionnaire(params);
+        expect(synced.values).toEqual({ "contract.vorname": "Augusta" });
+        expect(synced.printedAt).toBeNull();
+    });
+
+    it("does not unlock a signed contract", async () => {
+        contract.printedAt = new Date();
+        contract.status = "signed";
+        await unfreezePrintedContract(prisma as any, "eng");
+        expect(contract.printedAt).toBeTruthy();
+        expect(contract.status).toBe("signed");
+        expect(prisma.employmentContract.update).not.toHaveBeenCalled();
+    });
+
+    it("downloads from the frozen body and values instead of the latest master", async () => {
+        const { generateDocumentPdf } = await import("@/services/documentPdf");
+        const bytes = Buffer.from("frozen-pdf");
+        (generateDocumentPdf as jest.Mock).mockResolvedValue({ bytes });
+        contract.values = [{ key: "contract.vorname", value: "Ada" }];
+        await freezePrintedContract(prisma as any, "eng");
+        const frozenBody = structuredClone(contract.body);
+        contract.master.body = fromSegments([{ type: "text", text: "Changed master" }]);
+        expect(await downloadPrintedContract(params)).toBe(bytes);
+        expect(generateDocumentPdf).toHaveBeenCalledWith(frozenBody, { "contract.vorname": "Ada" });
+    });
+});
+
+
+it("keeps automatic dates on the day the print task was completed", async () => {
+    jest.useFakeTimers().setSystemTime(new Date("2026-10-29T12:00:00Z"));
+    try {
+        contract.master.body = fromSegments([{
+            type: "input", key: "contract.datum", label: "Datum", fieldType: "date", dateMode: "today",
+        }]);
+        (prisma.employmentContractValue.upsert as jest.Mock).mockImplementation(async ({ create }) => {
+            contract.values.push(create);
+            return create;
+        });
+        await freezePrintedContract(prisma as any, "eng");
+        const printed = await getEngagementContract(params);
+        jest.setSystemTime(new Date("2026-11-01T12:00:00Z"));
+        const later = await getEngagementContract(params);
+        expect(printed?.values["contract.datum"]).toBeTruthy();
+        expect(later?.values).toEqual(printed?.values);
+    } finally {
+        jest.useRealTimers();
+    }
+});
+
 it("stores person-specific contract text without changing the master", async () => {
     const personalized = fromSegments([
         { type: "text", text: "Nur für diese Person. " },
@@ -644,6 +795,18 @@ it("keeps person-specific text when questionnaire values are synced", async () =
     expect(synced.followsMaster).toBe(false);
     expect(contract.body).toEqual(personalized);
     expect(synced.values).toEqual({ "contract.vorname": "Augusta" });
+});
+
+it("freezes person-specific wording when the print task completes", async () => {
+    const personalized = fromSegments([{ type: "text", text: "Person-specific printed wording" }]);
+    contract.body = personalized;
+    await freezePrintedContract(prisma as any, "eng");
+    expect(contract.body).toEqual(personalized);
+    expect(contract.printedAt).toBeTruthy();
+    contract.master.body = fromSegments([{ type: "text", text: "Changed master" }]);
+    const view = await getEngagementContract(params);
+    expect(view?.document).toEqual(personalized);
+    expect(view?.followsMaster).toBe(false);
 });
 
 it("offers matching for empty hours on an existing draft without a new questionnaire revision", async () => {

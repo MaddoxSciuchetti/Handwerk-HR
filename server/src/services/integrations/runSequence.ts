@@ -81,6 +81,8 @@ async function runMicrosoft(
         issueId: string;
         previousStatus: string;
         senderAddress?: string | null;
+        subject?: string | null;
+        body?: string | null;
         microsoftAccountId?: string | null;
     },
 ): Promise<SequenceRunResult> {
@@ -118,6 +120,8 @@ async function runMicrosoft(
             organizationId: params.organizationId,
             issueId: params.issueId,
             senderAddress: params.senderAddress,
+            subject: params.subject,
+            body: params.body,
         });
         if (mailed.status === "failed") return mailed;
         return { status: "completed" };
@@ -183,6 +187,8 @@ async function executeIssueSequence(params: {
     issueId: string;
     actorUserId: string;
     senderAddress?: string | null;
+    subject?: string | null;
+    body?: string | null;
     scheduled?: boolean;
 }): Promise<SequenceRunResult> {
     const issue = await prisma.issue.findFirst({
@@ -222,6 +228,8 @@ async function executeIssueSequence(params: {
         previousStatus: issue.status,
         microsoftAccountId: issue.microsoftAccountId,
         senderAddress: params.senderAddress,
+        subject: params.subject,
+        body: params.body,
     };
 
     if (issue.integrationProvider === "crewmeister") {

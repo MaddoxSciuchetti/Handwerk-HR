@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { expect, it, vi } from 'vitest';
+import WorkerHeader from '@/features/worker-task-management/components/header/WorkerHeader';
+import { CreateTemplateDocumentDialog } from '@/features/worker-task-management/components/files/CreateTemplateDocumentDialog';
 import { EngagementTemplateDocuments } from '@/features/worker-task-management/components/files/EngagementTemplateDocuments';
 import {
   createTemplateDocument,
@@ -66,7 +69,9 @@ const draft = {
   masterId: 'kfz',
   name: 'KFZ-Bescheinigung',
   kind: 'kfz_ueberlassungsvertrag' as const,
-  segments: [{ type: 'input' as const, key: 'worker.vorname', label: 'Vorname' }],
+  segments: [
+    { type: 'input' as const, key: 'worker.vorname', label: 'Vorname' },
+  ],
   document: fromSegments([
     { type: 'input' as const, key: 'worker.vorname', label: 'Vorname' },
   ]),
@@ -81,13 +86,40 @@ const draft = {
   questionnaireCompleted: true,
 };
 
+function TemplateFiles() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <WorkerHeader
+        activeTab="files"
+        openForCreate={vi.fn()}
+        onOpenFileUpload={vi.fn()}
+        onCreateTemplateDocument={() => setOpen(true)}
+        onExportFiles={vi.fn()}
+        onUploadMaterials={vi.fn()}
+        onAddClothing={vi.fn()}
+      />
+      <EngagementTemplateDocuments
+        workerId="worker"
+        engagementId="engagement"
+      />
+      <CreateTemplateDocumentDialog
+        workerId="worker"
+        engagementId="engagement"
+        open={open}
+        onOpenChange={setOpen}
+      />
+    </>
+  );
+}
+
 function renderDocuments() {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
   return render(
     <QueryClientProvider client={client}>
-      <EngagementTemplateDocuments workerId="worker" engagementId="engagement" />
+      <TemplateFiles />
     </QueryClientProvider>
   );
 }
@@ -131,7 +163,9 @@ it('creates a template document, syncs from the Fragebogen, and prints the fille
   const user = userEvent.setup();
   renderDocuments();
 
-  await user.click(await screen.findByRole('button', { name: 'Aus Vorlage' }));
+  expect(screen.queryByText('Aus Vorlage')).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Hinzufügen' }));
+  await user.click(screen.getByRole('menuitem', { name: 'Aus Vorlage' }));
   expect(
     await screen.findByRole('button', { name: /Arbeitsvertrag_Main/ })
   ).toBeInTheDocument();
@@ -144,7 +178,9 @@ it('creates a template document, syncs from the Fragebogen, and prints the fille
     'engagement',
     'kfz'
   );
-  expect(await screen.findByRole('heading', { name: 'KFZ-Bescheinigung' })).toBeInTheDocument();
+  expect(
+    await screen.findByRole('heading', { name: 'KFZ-Bescheinigung' })
+  ).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: 'Fragebogen' })).toBeInTheDocument();
   expect(screen.getByText('Hilti Bohrmaschine')).toBeInTheDocument();
 
@@ -155,7 +191,9 @@ it('creates a template document, syncs from the Fragebogen, and prints the fille
     'engagement',
     'doc-1'
   );
-  expect(await screen.findByRole('textbox', { name: 'Vorname' })).toHaveValue('Ada');
+  expect(await screen.findByRole('textbox', { name: 'Vorname' })).toHaveValue(
+    'Ada'
+  );
 
   await user.click(screen.getByRole('button', { name: 'Drucken' }));
   expect(saveTemplateDocument).toHaveBeenCalledWith(

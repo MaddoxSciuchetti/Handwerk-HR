@@ -160,6 +160,7 @@ function present(
     // Person-specific text (or a send snapshot) freezes the body away from the live master.
     const followsMaster =
         contract.body == null &&
+        !contract.printedAt &&
         !contract.sentAt &&
         contract.status !== "signed";
     const source = activeContractBody(contract);
@@ -217,6 +218,7 @@ function present(
         matchedQuestionnaireRevision: contract.matchedQuestionnaireRevision ?? 0,
         questionnaireSyncNeeded: Boolean(canRefresh &&
             ((submission.revision ?? 0) > (contract.matchedQuestionnaireRevision ?? 0) || missingQuestionnaireValues)),
+        printedAt: contract.printedAt?.toISOString() ?? null,
         sentAt: contract.sentAt?.toISOString() ?? null,
         signedFileUrl: null as string | null,
         outgoingFileUrl: null as string | null,
@@ -241,7 +243,7 @@ export async function getEngagementContract(params: ContractParams) {
                 },
                 contract.outgoingPdfId,
             ),
-            prepared: await currentPreparation({
+            prepared: contract.printedAt ? null : await currentPreparation({
                 organizationId: params.organizationId,
                 engagementId: params.engagementId,
                 kind: "employment_contract",
@@ -262,7 +264,7 @@ export async function saveEngagementContractDraft(
     if (!contract) {
         throw new AppError(NOT_FOUND, "Vertrag nicht gefunden.");
     }
-    if (contract.status === "signed" || contract.sentAt) {
+    if (contract.printedAt || contract.status === "signed" || contract.sentAt) {
         throw new AppError(CONFLICT, "Der Vertrag ist kein Entwurf mehr.");
     }
 
@@ -291,10 +293,10 @@ export async function saveEngagementContractDraft(
             where: { id: contract.id },
             include: { values: true },
         });
-        if (latest?.sentAt || latest?.status === "signed")
+        if (latest?.printedAt || latest?.sentAt || latest?.status === "signed")
             throw new AppError(
                 CONFLICT,
-                "Der Vertrag wurde bereits versendet.",
+                latest?.printedAt ? "Der Vertrag wurde bereits gedruckt." : "Der Vertrag wurde bereits versendet.",
             );
         if (!latest || latest.masterId !== contract.masterId) {
             throw new AppError(
@@ -371,10 +373,12 @@ export async function persistMatchedContractValues(
         preserveDescriptionPoints?: boolean;
     },
 ) {
+    await tx.$queryRaw`SELECT id FROM employment_contracts WHERE id = ${params.contractId} FOR UPDATE`;
     const current = await tx.employmentContract.findUnique({
         where: { id: params.contractId },
         include: { master: true, values: true },
     });
+    if (current?.printedAt || current?.sentAt || current?.status === "signed") return;
     const segments = current
         ? readDocumentSegments(current.body ?? current.master.body)
         : [];
@@ -427,8 +431,8 @@ export async function resyncEngagementContractFromQuestionnaire(
     if (!contract) {
         throw new AppError(NOT_FOUND, "Vertrag nicht gefunden.");
     }
-    if (contract.sentAt || contract.status === "signed") {
-        throw new AppError(CONFLICT, "Der Vertrag wurde bereits versendet.");
+    if (contract.printedAt || contract.sentAt || contract.status === "signed") {
+        throw new AppError(CONFLICT, contract.printedAt ? "Der Vertrag wurde bereits gedruckt." : "Der Vertrag wurde bereits versendet.");
     }
     const submission = contract.engagement.questionnaireSubmission;
     if (!submission || submission.status !== "completed") {
@@ -464,6 +468,7 @@ export async function resyncEngagementContractFromQuestionnaire(
     );
 
     const saved = await prisma.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT id FROM worker_engagements WHERE id = ${params.engagementId} FOR UPDATE`;
         // Claim the exact questionnaire revision used for matching. A concurrent
         // correction must never be marked as synchronized without being applied.
         const claimed = await tx.questionnaireSubmission.updateMany({
@@ -482,10 +487,10 @@ export async function resyncEngagementContractFromQuestionnaire(
         const latest = await tx.employmentContract.findUnique({
             where: { id: contract.id },
         });
-        if (latest?.sentAt || latest?.status === "signed") {
+        if (latest?.printedAt || latest?.sentAt || latest?.status === "signed") {
             throw new AppError(
                 CONFLICT,
-                "Der Vertrag wurde bereits versendet.",
+                latest?.printedAt ? "Der Vertrag wurde bereits gedruckt." : "Der Vertrag wurde bereits versendet.",
             );
         }
         if (!latest || latest.masterId !== contract.masterId) {
@@ -544,7 +549,7 @@ export async function confirmEngagementContractForSend(params: ContractParams) {
     if (!contract) {
         throw new AppError(NOT_FOUND, "Vertrag nicht gefunden.");
     }
-    if (contract.status === "ready") return present(contract);
+    if (contract.printedAt || contract.status === "ready") return present(contract);
     if (contract.status !== "draft") {
         throw new AppError(CONFLICT, "Der Vertrag ist kein Entwurf mehr.");
     }
@@ -567,7 +572,7 @@ export async function prepareEmploymentContractPdf(
     params: ContractParams & { values: Record<string, unknown>; includeBytes?: boolean },
 ) {
     const contract = await findContract(params);
-    if (!contract || contract.sentAt || contract.status === "signed")
+    if (!contract || contract.printedAt || contract.sentAt || contract.status === "signed")
         throw new AppError(CONFLICT, "Vertrag kann nicht vorbereitet werden.");
     await saveEngagementContractDraft(params);
     const latest = await findContract(params);
@@ -603,4 +608,64 @@ export async function readPreparedEmploymentContractPdf(
     });
     if (!selected) throw new AppError(NOT_FOUND, "PDF nicht gefunden.");
     return downloadStoredFile(selected.s3Key);
+}
+
+/** Completion locks the paper contract. Reopening the print task releases it. */
+export async function freezePrintedContract(tx: Prisma.TransactionClient, engagementId: string) {
+    await tx.$queryRaw`SELECT id FROM worker_engagements WHERE id = ${engagementId} FOR UPDATE`;
+    await tx.$queryRaw`SELECT id FROM employment_contracts WHERE engagement_id = ${engagementId} FOR UPDATE`;
+    const contract = await tx.employmentContract.findUnique({
+        where: { engagementId },
+        include: { master: true, values: true },
+    });
+    if (!contract || contract.printedAt || contract.sentAt || contract.status === "signed") return;
+    const document = readStyledDocument(activeContractBody(contract));
+    const savedValues = Object.fromEntries(contract.values.map((entry) => [entry.key, entry.value]));
+    const values = resolveCurrentDateValues(document, savedValues);
+    await tx.employmentContract.update({
+        where: { id: contract.id },
+        data: {
+            printedAt: new Date(),
+            body: document as unknown as Prisma.InputJsonValue,
+            status: "ready",
+        },
+    });
+    for (const [key, value] of Object.entries(values)) {
+        if (savedValues[key] === value) continue;
+        await tx.employmentContractValue.upsert({
+            where: { employmentContractId_key: { employmentContractId: contract.id, key } },
+            create: { employmentContractId: contract.id, key, value },
+            update: { value },
+        });
+    }
+}
+
+/** Unticking Arbeitsvertrag drucken unlocks edits, Vorlage switch, and Fragebogen sync. */
+export async function unfreezePrintedContract(
+    tx: Prisma.TransactionClient,
+    engagementId: string,
+) {
+    await tx.$queryRaw`SELECT id FROM worker_engagements WHERE id = ${engagementId} FOR UPDATE`;
+    await tx.$queryRaw`SELECT id FROM employment_contracts WHERE engagement_id = ${engagementId} FOR UPDATE`;
+    const contract = await tx.employmentContract.findUnique({
+        where: { engagementId },
+    });
+    if (!contract?.printedAt || contract.sentAt || contract.status === "signed") return;
+    await tx.employmentContract.update({
+        where: { id: contract.id },
+        data: {
+            printedAt: null,
+            status: "draft",
+        },
+    });
+}
+
+export async function downloadPrintedContract(params: ContractParams) {
+    const contract = await findContract(params);
+    if (!contract?.printedAt || !contract.body)
+        throw new AppError(NOT_FOUND, "Gedruckter Vertrag nicht gefunden.");
+    const { generateDocumentPdf } = await import("@/services/documentPdf");
+    const pdf = await generateDocumentPdf(readStyledDocument(contract.body),
+        Object.fromEntries(contract.values.map((entry) => [entry.key, entry.value])));
+    return pdf.bytes;
 }

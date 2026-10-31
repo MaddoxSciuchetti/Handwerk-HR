@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import {
   fetchPreparedEmploymentContractPdf,
+  fetchPrintedEmploymentContractPdf,
   prepareEmploymentContractDownload,
 } from '../../api/employmentContract.api';
 import { downloadBlob } from '../../downloadBlob';
@@ -72,7 +73,9 @@ export function ContractDraftDialog({
     if (!documentEdited) setDocument(data.document);
   }
 
-  const readOnly = Boolean(data?.sentAt || data?.status === 'signed');
+  const readOnly = Boolean(
+    data?.printedAt || data?.sentAt || data?.status === 'signed'
+  );
   const draftPayload = () => ({
     values,
     document:
@@ -89,6 +92,14 @@ export function ContractDraftDialog({
       }
       if (data.signedFileUrl) {
         openStoredPdf(data.signedFileUrl, filename);
+        return;
+      }
+
+      if (data.printedAt) {
+        downloadBlob(
+          await fetchPrintedEmploymentContractPdf(workerId, engagementId),
+          filename
+        );
         return;
       }
 
@@ -182,7 +193,11 @@ export function ContractDraftDialog({
                 <div>
                   <h2 className="text-base font-medium">{data.name}</h2>
                   <p className="text-sm text-muted-foreground">
-                    {STATUS_LABEL[data.status]}
+                    {data.status === 'signed'
+                      ? STATUS_LABEL.signed
+                      : data.printedAt
+                        ? 'Gedruckt'
+                        : STATUS_LABEL[data.status]}
                   </p>
                 </div>
                 <ContractQuestionnaireSync

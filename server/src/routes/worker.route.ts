@@ -11,6 +11,10 @@ import * as workerController from "../controllers/worker.controller";
 
 const worker = express.Router();
 worker.get(
+    "/:workerId/engagements/:engagementId/contract/printed-pdf",
+    workerController.downloadPrintedContract,
+);
+worker.get(
     "/:workerId/engagements/:engagementId/contract/print",
     printEmploymentContract,
 );

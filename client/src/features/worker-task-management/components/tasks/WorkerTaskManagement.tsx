@@ -34,6 +34,7 @@ import { LargeEditMode } from '@/features/all-tasks/components/LargeEditMode';
 import { TaskItem } from '@/features/all-tasks/components/TaskItem';
 import { TaskSidebar } from '@/features/all-tasks/components/TaskSidebar';
 import { useTaskSidebar } from '@/features/all-tasks/hooks/useTaskSidebar';
+import { storedTaskAutomation } from '@/features/all-tasks/consts/task-automation.consts';
 import {
   clearContractSendReturn,
   peekContractSendReturn,
@@ -70,6 +71,7 @@ import { TemplateApplyPrompt } from './TemplateApplyPrompt';
 
 type TaskManagementProps = {
   workerId: string;
+  taskId?: string;
 };
 
 const sectionHeaderClassName = 'h-12 py-3 pl-12 pr-2 text-sm font-medium';
@@ -84,13 +86,14 @@ function defaultTabForWorker(workerId: string): WorkerTab {
   return cachedEngagementType(workerId) === 'transfer' ? 'information' : 'form';
 }
 
-const TaskManagement = ({ workerId }: TaskManagementProps) => {
+const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
   const taskQueryClient = useQueryClient();
   const [selectedTab, setActiveTab] = useState<WorkerTab>(() =>
     defaultTabForWorker(workerId)
   );
   const [clothingAddOpen, setClothingAddOpen] = useState(false);
   const [isFileUploadOpen, setIsFileUploadOpen] = useState(false);
+  const [createTemplateOpen, setCreateTemplateOpen] = useState(false);
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
   const materialFileInputRef = useRef<HTMLInputElement>(null);
   const [contractSend, setContractSend] = useState<{
@@ -155,11 +158,17 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
   );
   const { displayData: allTasks } = useFilteredData(data);
   const engagements = data?.data.engagements ?? [];
+  const linkedTask = allTasks.find((task) => task.id === taskId);
+  const linkedEngagement = linkedTask
+    ? engagements.find(
+        (engagement) => engagement.id === linkedTask.workerEngagementId
+      )
+    : undefined;
   const hasOffboarding = engagements.some(
     (engagement) => engagement.type === 'offboarding'
   );
   const currentType = engagements[0]?.type ?? listType;
-  const isTeam = currentType === 'transfer';
+  const isTeam = currentType === 'transfer' && !linkedTask;
   const activeTab =
     isTeam && selectedTab === 'form' ? 'information' : selectedTab;
   const phaseKey = `${workerId}:${engagements[0]?.id}:${currentType}:${engagements
@@ -230,6 +239,34 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
     openForCreate,
     patchTaskEditState,
   } = useTaskSidebar();
+  const openedTaskLink = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!taskId) {
+      openedTaskLink.current = null;
+      return;
+    }
+    const linkKey = `${workerId}:${taskId}`;
+    if (!linkedTask || !linkedEngagement || openedTaskLink.current === linkKey)
+      return;
+    openedTaskLink.current = linkKey;
+    setActiveTab('form');
+    const phase = taskPhaseForType(linkedEngagement.type);
+    if (phase !== 'team') setPhaseSelection({ key: phaseKey, phase });
+    openForEdit({
+      taskId: linkedTask.id,
+      title: linkedTask.title,
+      workerEngagementId: linkedTask.workerEngagementId,
+      assigneeUserId: linkedTask.assigneeUserId ?? '',
+      status: linkedTask.status,
+      automation: storedTaskAutomation(linkedTask.automation),
+      integrationProvider: linkedTask.integrationProvider ?? null,
+      sequence: linkedTask.sequence ?? null,
+      mailTemplateId: linkedTask.mailTemplateId ?? null,
+      mailSenderAddress: linkedTask.mailSenderAddress ?? null,
+      microsoftAccountId: linkedTask.microsoftAccountId ?? null,
+    });
+  }, [taskId, workerId, linkedTask, linkedEngagement, phaseKey, openForEdit]);
 
   useEffect(() => {
     if (!sidebarProps.isOpen || sidebarProps.taskState !== 'edit') return;
@@ -284,6 +321,24 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
       !engagement.questionnaireSubmission
   );
 
+  const selectedTask = allTasks.find(
+    (task) => task.id === sidebarProps.taskEditState.taskId
+  );
+  const openContract =
+    selectedTask &&
+    (selectedTask.kind === 'contract_send' ||
+      selectedTask.kind === 'contract_confirm') &&
+    selectedTask.workerEngagementId
+      ? () => {
+          const target = {
+            engagementId: selectedTask.workerEngagementId!,
+            issueId: selectedTask.id,
+          };
+          if (selectedTask.kind === 'contract_confirm') setContractConfirm(target);
+          else setContractSend(target);
+        }
+      : undefined;
+
   return (
     <div
       className={cn(
@@ -295,6 +350,7 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
         key={sidebarKey}
         {...sidebarProps}
         showWorkerLink={false}
+        onOpenContract={openContract}
         onOpenArbeitszeugnis={setZeugnisIssueId}
       />
       {contractSend ? (
@@ -407,6 +463,9 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
               hideCreate={taskEngagements.length === 0}
               onOpenFileUpload={() => setIsFileUploadOpen(true)}
               onAddFolder={() => setCreateFolderOpen(true)}
+              onCreateTemplateDocument={
+                engagements.length ? () => setCreateTemplateOpen(true) : undefined
+              }
               onExportFiles={() => void handleZipExport(fetchFiles)}
               onUploadMaterials={() => materialFileInputRef.current?.click()}
               materialsUploadDisabled={engagements.length === 0}
@@ -481,18 +540,6 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                             (item) => item.taskNumber === task.id
                           )}
                           onOpenEdit={openForEdit}
-                          onOpenContractSend={() =>
-                            setContractSend({
-                              engagementId: task.workerEngagementId,
-                              issueId: task.id,
-                            })
-                          }
-                          onOpenContractConfirm={() =>
-                            setContractConfirm({
-                              engagementId: task.workerEngagementId,
-                              issueId: task.id,
-                            })
-                          }
                           setLargeEditMode={setLargeEditMode}
                           setEditModeData={handleSetEditModeData}
                         />
@@ -566,6 +613,8 @@ const TaskManagement = ({ workerId }: TaskManagementProps) => {
                     )}
                     isUploadModalOpen={isFileUploadOpen}
                     setIsUploadModalOpen={setIsFileUploadOpen}
+                    createTemplateOpen={createTemplateOpen}
+                    setCreateTemplateOpen={setCreateTemplateOpen}
                     createFolderOpen={createFolderOpen}
                     setCreateFolderOpen={setCreateFolderOpen}
                   />

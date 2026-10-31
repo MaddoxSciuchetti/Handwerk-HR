@@ -18,6 +18,7 @@ type WorkerHeaderProps = {
   hideCreate?: boolean;
   onOpenFileUpload: () => void;
   onAddFolder?: () => void;
+  onCreateTemplateDocument?: () => void;
   onExportFiles: () => void;
   onUploadMaterials: () => void;
   materialsUploadDisabled?: boolean;
@@ -45,6 +46,7 @@ const WorkerHeader = ({
   hideCreate = false,
   onOpenFileUpload,
   onAddFolder,
+  onCreateTemplateDocument,
   onExportFiles,
   onUploadMaterials,
   materialsUploadDisabled = false,
@@ -105,6 +107,11 @@ const WorkerHeader = ({
                 <DropdownMenuItem onSelect={() => onAddFolder?.()}>
                   Ordner
                 </DropdownMenuItem>
+                {onCreateTemplateDocument ? (
+                  <DropdownMenuItem onSelect={onCreateTemplateDocument}>
+                    Aus Vorlage
+                  </DropdownMenuItem>
+                ) : null}
               </DropdownMenuContent>
             </DropdownMenu>
             <Button

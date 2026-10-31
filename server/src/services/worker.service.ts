@@ -1,5 +1,9 @@
 import { isDeactivation, lockDeactivation } from "./integrations/deactivationSchedule";
 import z from "zod";
+import {
+    freezePrintedContract,
+    unfreezePrintedContract,
+} from "@/services/employmentContract.service";
 import { integrationsMocked } from "./integrations/localMock";
 import { applyTemplateApplication, type TemplateApplyInput } from './templateApplication';
 
@@ -907,6 +911,18 @@ export async function updateIssue(params: UpdateIssueInput) {
     }
 
     return prisma.$transaction(async (tx) => {
+        if (existing.kind === "contract_send") {
+            const engagementId = newWorkerEngagementId ?? workerEngagementId;
+            if (status === "done" && existing.status !== "done") {
+                await freezePrintedContract(tx, engagementId);
+            } else if (
+                existing.status === "done" &&
+                status !== undefined &&
+                status !== "done"
+            ) {
+                await unfreezePrintedContract(tx, engagementId);
+            }
+        }
         if (isDeactivation(existing.sequence) || existing.scheduledDeactivateAt) {
             await lockDeactivation(tx, issueId);
             const current = await tx.issue.findFirst({ where: { id: issueId, workerEngagementId } });

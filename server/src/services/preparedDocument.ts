@@ -97,6 +97,7 @@ async function assertCurrentDraft(
         if (
             !contract ||
             contract.masterId !== masterId ||
+            contract.printedAt ||
             contract.sentAt ||
             contract.status === "signed"
         )

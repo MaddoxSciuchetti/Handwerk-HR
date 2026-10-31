@@ -1,7 +1,12 @@
 import { TableCell, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import { Headset } from 'lucide-react';
-import type { Dispatch, KeyboardEvent, MouseEvent, SetStateAction } from 'react';
+import type {
+  Dispatch,
+  KeyboardEvent,
+  MouseEvent,
+  SetStateAction,
+} from 'react';
 import {
   storedTaskAutomation,
   TASK_AUTOMATION_NONE,
@@ -19,8 +24,6 @@ type TaskItemProps = {
   task: IssueResponse;
   isSelected: boolean;
   onOpenEdit: (seed: TaskEditState) => void;
-  onOpenContractSend?: (task: IssueResponse) => void;
-  onOpenContractConfirm?: (task: IssueResponse) => void;
   setLargeEditMode: Dispatch<SetStateAction<boolean>>;
   setEditModeData: Dispatch<
     SetStateAction<{ taskNumber: string; taskTitle: string }[]>
@@ -31,8 +34,6 @@ export function TaskItem({
   task,
   isSelected,
   onOpenEdit,
-  onOpenContractSend,
-  onOpenContractConfirm,
   setLargeEditMode,
   setEditModeData,
 }: TaskItemProps) {
@@ -44,14 +45,6 @@ export function TaskItem({
     isConfirmationTask || task.kind === 'contract_send';
 
   const openTask = () => {
-    if (task.kind === 'contract_send') {
-      onOpenContractSend?.(task);
-      return;
-    }
-    if (task.kind === 'contract_confirm') {
-      onOpenContractConfirm?.(task);
-      return;
-    }
     onOpenEdit({
       taskId: task.id,
       title: task.title,
