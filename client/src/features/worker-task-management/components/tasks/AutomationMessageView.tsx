@@ -1,10 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -40,8 +36,8 @@ export function AutomationMessageView({
 
   useEffect(() => {
     if (!open || body === savedBody.current) return;
+    setSaving(true);
     const timeout = window.setTimeout(() => {
-      setSaving(true);
       onSaveRef.current({ ...messageRef.current, body });
       savedBody.current = body;
       setSaving(false);
