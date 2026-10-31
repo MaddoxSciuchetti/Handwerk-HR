@@ -9,7 +9,6 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import type { CandidateItem } from '@/features/questionnaire/questionnairePreview';
 import { StoredFileBox } from './StoredFileBox';
-import { QuestionnaireStoredFile } from './QuestionnaireStoredFile';
 import { fileQuestionnaireDocuments } from '../../api/questionnaireFiles.api';
 import { PERSONNEL_DOCUMENTS } from '../../consts/query-key.consts';
 import { toast } from 'sonner';
@@ -108,8 +107,8 @@ function QuestionnairePreview({
         )
         .then((response) => response.data),
   });
-  const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const flushRef = useRef<() => Promise<void>>(async () => undefined);
   const queryClient = useQueryClient();
   const unfiled = Object.values(data?.files ?? {}).filter((file) => !file.filed);
   const storeAll = useMutation({
@@ -118,7 +117,11 @@ function QuestionnairePreview({
     onSuccess: async () => {
       toast.success('Dateien abgelegt');
       await queryClient.invalidateQueries({
-        queryKey: ['completed-questionnaire', workerId, questionnaire.engagementId],
+        queryKey: [
+          'completed-questionnaire',
+          workerId,
+          questionnaire.engagementId,
+        ],
       });
       await queryClient.invalidateQueries({
         queryKey: [PERSONNEL_DOCUMENTS, workerId],
@@ -128,138 +131,59 @@ function QuestionnairePreview({
   });
 
   return (
-    <Dialog open onOpenChange={(next) => { if (!next && !saving) onClose(); }}>
-      <DialogContent aria-describedby={undefined} className="w-full max-w-3xl border-0 bg-transparent p-0 shadow-none sm:max-w-3xl">
-      <div className="flex h-[80vh] flex-col gap-4 overflow-hidden rounded-2xl border border-border bg-card p-6 text-card-foreground">
-        {editing ? (
-          <DialogTitle className="sr-only">Fragebogen bearbeiten</DialogTitle>
-        ) : (
-          <div className="pr-8">
-            <DialogTitle className="text-lg font-semibold">Fragebogen</DialogTitle>
-            {data?.name ? (
-              <p className="text-sm font-medium">{data.name}</p>
-            ) : null}
-            <p className="text-sm text-muted-foreground">
-              {questionnaire.engagementLabel} · Ausgefüllt
+    <Dialog
+      open
+      onOpenChange={(next) => {
+        if (next || saving) return;
+        void (async () => {
+          await flushRef.current();
+          onClose();
+        })();
+      }}
+    >
+      <DialogContent
+        aria-describedby={undefined}
+        className="w-full max-w-3xl border-0 bg-transparent p-0 shadow-none sm:max-w-3xl"
+      >
+        <div className="flex h-[80vh] flex-col gap-4 overflow-hidden rounded-2xl border border-border bg-card p-6 text-card-foreground">
+          <DialogTitle className="sr-only">Fragebogen</DialogTitle>
+          {isLoading ? <LoadingAlert /> : null}
+          {isError ? (
+            <p role="alert" className="text-sm text-destructive">
+              Der ausgefüllte Fragebogen konnte nicht geladen werden.
             </p>
-          </div>
-        )}
-        {data && !editing ? (
-          <div><Button type="button" variant="outline" onClick={() => setEditing(true)}>Bearbeiten</Button></div>
-        ) : null}
-        {isLoading ? <LoadingAlert /> : null}
-        {isError ? (
-          <p role="alert" className="text-sm text-destructive">
-            Der ausgefüllte Fragebogen konnte nicht geladen werden.
-          </p>
-        ) : null}
-        {data && editing ? (
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            <CompletedQuestionnaireEditor workerId={workerId} engagementId={questionnaire.engagementId}
-              questionnaire={data} onDone={() => setEditing(false)} onBusy={setSaving} />
-          </div>
-        ) : data ? (
-          <div className="min-h-0 flex-1 space-y-6 overflow-y-auto">
-            <p className="text-sm whitespace-pre-wrap text-muted-foreground">
-              {data.intro}
-            </p>
-            {unfiled.length > 0 ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="rounded-2xl"
-                disabled={storeAll.isPending}
-                onClick={() => storeAll.mutate()}
-              >
-                {storeAll.isPending ? 'Legt ab…' : 'Alle Dateien ablegen'}
-              </Button>
-            ) : null}
-            {data.items.map((item, index) => {
-              if (item.kind === 'section') {
-                return (
-                  <h3
-                    key={item.key}
-                    className="mb-1 pt-2 text-base font-semibold"
+          ) : null}
+          {data ? (
+            <>
+              {unfiled.length > 0 ? (
+                <div className="shrink-0">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="rounded-2xl"
+                    disabled={storeAll.isPending || saving}
+                    onClick={() => storeAll.mutate()}
                   >
-                    {item.title}
-                  </h3>
-                );
-              }
-              const value = data.answers[item.key];
-              if (item.kind === 'repeater') {
-                const rows = Array.isArray(value) ? value : [];
-                return (
-                  <section key={item.key}>
-                    <h3 className="mb-3 font-semibold">{item.section}</h3>
-                    {rows.length ? (
-                      rows.map((row, rowIndex) => (
-                        <dl
-                          key={rowIndex}
-                          className="mb-3 grid gap-3 rounded-xl border border-border p-4 sm:grid-cols-3"
-                        >
-                          {item.columns.map((column) => (
-                            <div key={column.key}>
-                              <dt className="text-sm text-muted-foreground">
-                                {column.label}
-                              </dt>
-                              <dd className="text-sm whitespace-pre-wrap break-words">
-                                {displayValue(row[column.key], column.type)}
-                              </dd>
-                            </div>
-                          ))}
-                        </dl>
-                      ))
-                    ) : (
-                      <p className="text-sm text-muted-foreground">
-                        Keine Angaben
-                      </p>
-                    )}
-                  </section>
-                );
-              }
-              const previous = data.items[index - 1];
-              const showLegacyHeading =
-                !data.items.some((entry) => entry.kind === 'section') &&
-                (index === 0 ||
-                  (previous &&
-                    previous.kind !== 'section' &&
-                    previous.section !== item.section));
-              return (
-                <div key={item.key}>
-                  {showLegacyHeading ? (
-                    <h3 className="mb-3 font-semibold">{item.section}</h3>
-                  ) : null}
-                  <dl className="grid gap-2 border-b border-border pb-3 sm:grid-cols-2">
-                    <dt className="text-sm text-muted-foreground">
-                      {item.label}
-                    </dt>
-                    <dd className="text-sm whitespace-pre-wrap break-words">
-                      {item.type === 'file' ? (
-                        data.files?.[item.key] ? (
-                          <QuestionnaireStoredFile
-                            workerId={workerId}
-                            engagementId={questionnaire.engagementId}
-                            questionKey={item.key}
-                            file={data.files[item.key]}
-                          />
-                        ) : (
-                          '—'
-                        )
-                      ) : (
-                        displayValue(
-                          typeof value === 'string' ? value : undefined,
-                          item.type
-                        )
-                      )}
-                    </dd>
-                  </dl>
+                    {storeAll.isPending ? 'Legt ab…' : 'Alle Dateien ablegen'}
+                  </Button>
                 </div>
-              );
-            })}
-          </div>
-        ) : null}
-      </div>
+              ) : null}
+              <div className="min-h-0 flex-1">
+                <CompletedQuestionnaireEditor
+                  workerId={workerId}
+                  engagementId={questionnaire.engagementId}
+                  questionnaire={data}
+                  onClose={onClose}
+                  onBusy={setSaving}
+                  onFlushReady={(flush) => {
+                    flushRef.current = flush;
+                  }}
+                />
+              </div>
+            </>
+          ) : null}
+        </div>
       </DialogContent>
     </Dialog>
   );
