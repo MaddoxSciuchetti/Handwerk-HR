@@ -375,31 +375,10 @@ export function deterministicContractValues(
         entries.push({ key: segment.key, value: [...values][0] });
     }
 
-    const weekdayTotal = weekdayHoursTotal(
-        Object.fromEntries(
-            fields.map((field) => [field.key, answerString(answers, field.key)]),
-        ),
-    );
-    if (weekdayTotal > 0) {
-        const hoursValue = formatHours(weekdayTotal);
-        for (const [index, segment] of segments.entries()) {
-            if (
-                segment.type !== "input" ||
-                skipQuestionnaireMatch(segment) ||
-                filled.has(segment.key) ||
-                segment.fieldType === "checkbox"
-            )
-                continue;
-            const before = segments[index - 1];
-            const after = segments[index + 1];
-            const context = `${before?.type === "text" ? before.text.slice(-160) : ""} ${after?.type === "text" ? after.text.slice(0, 160) : ""}`;
-            // Weekday totals are weekly hours only — never fill bare/generic
-            // "Anzahl der Stunden" without a weekly cue in the clause.
-            if (fieldHoursKind(segment, context) !== "weekly") continue;
-            if (!canCopyAnswer(segment, hoursValue, context)) continue;
-            filled.add(segment.key);
-            entries.push({ key: segment.key, value: hoursValue });
-        }
+    for (const entry of weekdayTotalContractValues(segments, answers, fields)) {
+        if (filled.has(entry.key)) continue;
+        filled.add(entry.key);
+        entries.push(entry);
     }
 
     const salutation = salutationFromSex(answerString(answers, "sex"));
@@ -455,6 +434,76 @@ export function contractValuesFromAnswers(
     }
 
     return entries;
+}
+
+/**
+ * Sum Mo–So hours from the Fragebogen and fill weekly contract quantities
+ * (e.g. stunden_anzahl … "Stunden pro Woche") when day hours are present.
+ */
+export function weekdayTotalContractValues(
+    segments: DocumentSegment[],
+    answers: QuestionnaireAnswers,
+    fields: MatchField[] = [],
+): { key: string; value: string }[] {
+    const byKey =
+        fields.length > 0
+            ? Object.fromEntries(
+                  fields.map((field) => [
+                      field.key,
+                      answerString(answers, field.key),
+                  ]),
+              )
+            : Object.fromEntries(
+                  Object.entries(answers).flatMap(([key, value]) =>
+                      typeof value === "string" ? [[key, value]] : [],
+                  ),
+              );
+    const weekdayTotal = weekdayHoursTotal(byKey);
+    if (weekdayTotal <= 0) return [];
+    const hoursValue = formatHours(weekdayTotal);
+    const entries: { key: string; value: string }[] = [];
+    const seen = new Set<string>();
+    for (const [index, segment] of segments.entries()) {
+        if (
+            segment.type !== "input" ||
+            skipQuestionnaireMatch(segment) ||
+            seen.has(segment.key) ||
+            segment.fieldType === "checkbox"
+        )
+            continue;
+        const before = segments[index - 1];
+        const after = segments[index + 1];
+        const context = `${before?.type === "text" ? before.text.slice(-160) : ""} ${after?.type === "text" ? after.text.slice(0, 160) : ""}`;
+        // Weekday totals are weekly hours only — never fill bare/generic
+        // "Anzahl der Stunden" without a weekly cue in the clause.
+        if (fieldHoursKind(segment, context) !== "weekly") continue;
+        if (!canCopyAnswer(segment, hoursValue, context)) continue;
+        seen.add(segment.key);
+        entries.push({ key: segment.key, value: hoursValue });
+    }
+    return entries;
+}
+
+/** Composed weekly hours string for AI matching (Mo–So sum). */
+export function composeWeeklyHours(
+    answers: QuestionnaireAnswers,
+    fields: MatchField[] = [],
+) {
+    const byKey =
+        fields.length > 0
+            ? Object.fromEntries(
+                  fields.map((field) => [
+                      field.key,
+                      answerString(answers, field.key),
+                  ]),
+              )
+            : Object.fromEntries(
+                  Object.entries(answers).flatMap(([key, value]) =>
+                      typeof value === "string" ? [[key, value]] : [],
+                  ),
+              );
+    const total = weekdayHoursTotal(byKey);
+    return total > 0 ? formatHours(total) : "";
 }
 
 export function acceptModelMatches(
