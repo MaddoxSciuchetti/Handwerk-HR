@@ -49,7 +49,7 @@ export function ContractQuestionnaireSync({
         });
       }}
     >
-      {sync.isPending ? 'Synchronisiert…' : 'Sync?'}
+      {sync.isPending ? 'Synchronisiert…' : 'Sync'}
     </Button>
   );
 }
