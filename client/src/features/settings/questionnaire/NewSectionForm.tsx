@@ -66,9 +66,6 @@ export function NewSectionForm({
           onChange={(event) => setTitle(event.target.value)}
         />
       </div>
-      <p className="text-xs text-muted-foreground">
-        Danach Fragen unter die Überschrift ziehen.
-      </p>
       <div className="flex justify-end">
         <Button
           type="button"

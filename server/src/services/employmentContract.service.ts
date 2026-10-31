@@ -1,7 +1,10 @@
 import { BAD_REQUEST, CONFLICT, NOT_FOUND } from "@/constants/http";
 import { prisma } from "@/lib/prisma";
 import { deterministicContractValues, unmatchedQuestionnaireAnswers, type MatchField } from "@/services/contractFieldMatch";
-import { matchQuestionnaireToContract } from "@/services/contractFieldMatchAi";
+import {
+    matchQuestionnaireToContract,
+    USE_DETERMINISTIC_CONTRACT_MATCH,
+} from "@/services/contractFieldMatchAi";
 import {
     definitionFields,
     parseQuestionnaireDefinition,
@@ -181,9 +184,15 @@ function present(
             : [];
     const document = readStyledDocument(source);
     const canRefresh = submission?.status === "completed" && !contract.sentAt && contract.status !== "signed";
-    const missingQuestionnaireValues = canRefresh && deterministicContractValues(
-        segments, questionnaireAnswersFromStored(submission.answers), contract.engagement.worker.email ?? "", matchFields,
-    ).some((entry) => !values[entry.key]?.trim());
+    const missingQuestionnaireValues =
+        canRefresh &&
+        USE_DETERMINISTIC_CONTRACT_MATCH &&
+        deterministicContractValues(
+            segments,
+            questionnaireAnswersFromStored(submission.answers),
+            contract.engagement.worker.email ?? "",
+            matchFields,
+        ).some((entry) => !values[entry.key]?.trim());
 
     return {
         id: contract.id,

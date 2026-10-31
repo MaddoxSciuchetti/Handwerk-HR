@@ -16,6 +16,9 @@ import {
 
 const MODEL = "gpt-4o-mini";
 
+/** TEMP: set true to restore label/alias/synonym matching before AI. */
+export const USE_DETERMINISTIC_CONTRACT_MATCH = false;
+
 const matchSchema = {
     type: "object",
     additionalProperties: false,
@@ -159,12 +162,14 @@ export async function matchQuestionnaireToContract(
     email = "",
     matchFields: MatchField[] = [],
 ) {
-    const placedEntries = deterministicContractValues(
-        segments,
-        answers,
-        email,
-        matchFields,
-    );
+    const placedEntries = USE_DETERMINISTIC_CONTRACT_MATCH
+        ? deterministicContractValues(
+              segments,
+              answers,
+              email,
+              matchFields,
+          )
+        : [];
     const filled = new Set(placedEntries.map((entry) => entry.key));
     const fields = leftoverFields(segments, filled);
     // Reuse answers already placed by deterministic rules: a choice may also
