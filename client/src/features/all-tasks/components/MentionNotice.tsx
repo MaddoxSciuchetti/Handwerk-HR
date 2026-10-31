@@ -52,12 +52,26 @@ export function MentionNotice() {
     setNotice([]);
   };
 
-  const openTasks = () => {
+  const openMention = () => {
+    const task = notice[0];
+    const workerId = task?.workerEngagement?.workerId;
+    const worker = task?.workerEngagement?.worker;
     dismiss();
-    navigate({ to: '/tasks' });
+    if (!workerId) return;
+    void navigate({
+      to: '/user/$Id',
+      params: { Id: workerId },
+      search: {
+        workerName: worker
+          ? `${worker.firstName} ${worker.lastName}`.trim()
+          : '',
+        prevPage: 'Handwerker',
+      },
+    });
   };
 
   const count = notice.length;
+  const canOpenWorker = Boolean(notice[0]?.workerEngagement?.workerId);
 
   return (
     <Dialog
@@ -92,9 +106,11 @@ export function MentionNotice() {
           <Button type="button" variant="outline" onClick={dismiss}>
             Schließen
           </Button>
-          <Button type="button" onClick={openTasks}>
-            Zu den Aufgaben
-          </Button>
+          {canOpenWorker ? (
+            <Button type="button" onClick={openMention}>
+              Zur Aufgabe
+            </Button>
+          ) : null}
         </DialogFooter>
       </DialogContent>
     </Dialog>
