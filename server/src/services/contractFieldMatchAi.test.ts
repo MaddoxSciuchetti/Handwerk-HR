@@ -421,6 +421,44 @@ it("fills Adresse and every Nachname placeholder from questionnaire aliases", as
     );
 });
 
+it("fills stunden_anzahl from the Mo–So day-hour sum without AI", async () => {
+    modelResult([]);
+    const result = await matchQuestionnaireToContract(
+        [
+            {
+                type: "text",
+                text: "Die durchschnittliche Arbeitszeit beträgt ",
+            },
+            {
+                type: "input",
+                key: "stunden_anzahl",
+                label: "stunden_anzahl",
+            },
+            { type: "text", text: " Stunden pro Woche." },
+        ],
+        {
+            employmentExtent: "Vollzeit",
+            hoursMonday: "8",
+            hoursTuesday: "8",
+            hoursWednesday: "8",
+            hoursThursday: "8",
+            hoursFriday: "8",
+        } as unknown as QuestionnaireAnswers,
+        "",
+        [
+            { key: "employmentExtent", label: "Wöchentliche Arbeitszeit" },
+            { key: "hoursMonday", label: "Mo" },
+            { key: "hoursTuesday", label: "Di" },
+            { key: "hoursWednesday", label: "Mi" },
+            { key: "hoursThursday", label: "Do" },
+            { key: "hoursFriday", label: "Fr" },
+        ],
+    );
+    expect(result).toEqual([{ key: "stunden_anzahl", value: "40" }]);
+    // Already filled by weekday sum — AI is not asked for leftover hours fields.
+    expect(fetchMock).not.toHaveBeenCalled();
+});
+
 it("accepts the composed address answer for Adresse fields", () => {
     expect(
         acceptSemanticModelMatches(
