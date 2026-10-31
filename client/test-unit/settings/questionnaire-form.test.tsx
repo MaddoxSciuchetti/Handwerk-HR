@@ -157,7 +157,12 @@ describe('QuestionnaireForm', () => {
         name: 'Kinder, für die eine Elterneigenschaft nachgewiesen werden kann',
       })
     ).toBeInTheDocument();
-    expect(screen.getByLabelText('Geburtsdatum (TT.MM.JJJJ) Zeile 1')).toHaveAttribute('type', 'date');
+    expect(screen.getByText('Geburtsdatum (TT.MM.JJJJ)')).toBeInTheDocument();
+    expect(screen.getByText('Keine Angaben')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Weitere Zeile' }));
+    expect(
+      screen.getByLabelText('Geburtsdatum (TT.MM.JJJJ) Zeile 1')
+    ).toHaveAttribute('type', 'date');
     expect(screen.getAllByLabelText(/Zeile 1/)).toHaveLength(3);
     await userEvent.click(screen.getByRole('button', { name: 'Weitere Zeile' }));
     expect(screen.getByLabelText('Name Zeile 2')).toBeInTheDocument();

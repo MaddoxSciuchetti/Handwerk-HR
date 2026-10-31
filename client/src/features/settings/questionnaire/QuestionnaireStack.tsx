@@ -35,7 +35,7 @@ type QuestionnaireStackProps = {
   onChangeSection: (section: TemplateSection) => void;
   onCommitField: (field: TemplateField) => void;
   onRemove: (id: string) => void;
-  onSectionOmitChange?: (section: string, omitted: boolean) => void;
+  onSectionOmitChange: (section: string, omitted: boolean) => void;
 };
 
 type StackGroup =
@@ -370,7 +370,7 @@ function BlockBody({
   onChangeRepeater: (repeater: TemplateRepeater) => void;
   onChangeSection: (section: TemplateSection) => void;
   onCommitField: (field: TemplateField) => void;
-  onSectionOmitChange?: (section: string, omitted: boolean) => void;
+  onSectionOmitChange: (section: string, omitted: boolean) => void;
   onAdd: (field: TemplateField) => void;
 }) {
   const first = block.items[0];
@@ -379,10 +379,8 @@ function BlockBody({
       <SectionHeadlineCard
         section={first}
         onChange={onChangeSection}
-        onOmitChange={
-          onSectionOmitChange
-            ? (omitted) => onSectionOmitChange(first.title, omitted)
-            : undefined
+        onOmitChange={(omitted) =>
+          onSectionOmitChange(first.title, omitted)
         }
       />
     );

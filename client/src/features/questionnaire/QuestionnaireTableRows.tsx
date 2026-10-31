@@ -22,15 +22,19 @@ export function QuestionnaireTableRows({
     '--questionnaire-columns': `repeat(${repeater.columns.length}, minmax(0, 1fr))`,
   } as CSSProperties;
   const canAdd = repeater.allowMoreRows === true;
-  const shown = rows.length > 0 ? rows : [{}];
+  // Do not invent a blank row when nothing was answered yet — that looked like
+  // empty filled-in data under Files / send preview.
+  const shown = rows.length > 0 ? rows : canAdd ? [] : [{}];
 
   const update = (index: number, key: string, value: string) => {
-    const base = rows.length > 0 ? rows : [{}];
-    onChange(
-      base.map((row, rowIndex) =>
-        rowIndex === index ? { ...row, [key]: value } : row
-      )
-    );
+    const base = rows.length > 0 ? rows : canAdd ? [] : [{}];
+    const next =
+      base.length === 0
+        ? [{ [key]: value }]
+        : base.map((row, rowIndex) =>
+            rowIndex === index ? { ...row, [key]: value } : row
+          );
+    onChange(next);
   };
 
   return (
@@ -89,6 +93,11 @@ export function QuestionnaireTableRows({
               ))}
             </div>
           ))}
+          {shown.length === 0 ? (
+            <p className="px-1 py-3 text-sm text-muted-foreground sm:px-3">
+              Keine Angaben
+            </p>
+          ) : null}
         </div>
       </div>
       {canAdd && shown.length > 1 ? (

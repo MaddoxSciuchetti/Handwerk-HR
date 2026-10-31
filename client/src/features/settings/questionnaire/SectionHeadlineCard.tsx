@@ -1,12 +1,11 @@
-import { Label } from '@/components/ui/label';
 import { PflichtfeldSwitch } from './PflichtfeldSwitch';
 import type { TemplateSection } from './questionnaireTemplate.types';
 
 type SectionHeadlineCardProps = {
   section: TemplateSection;
   onChange: (section: TemplateSection) => void;
-  /** When set (send dialog), BSB chooses whether this section goes to the worker. */
-  onOmitChange?: (omitted: boolean) => void;
+  /** Send or omit this section for the worker. */
+  onOmitChange: (omitted: boolean) => void;
 };
 
 export function SectionHeadlineCard({
@@ -14,8 +13,7 @@ export function SectionHeadlineCard({
   onChange,
   onOmitChange,
 }: SectionHeadlineCardProps) {
-  const omitted = section.omitFromWorker === true;
-  const showOmit = Boolean(onOmitChange) && section.optional === true;
+  const send = section.omitFromWorker !== true;
 
   return (
     <div
@@ -31,43 +29,11 @@ export function SectionHeadlineCard({
           onChange({ ...section, title: event.target.value })
         }
       />
-      {showOmit ? (
-        <fieldset className="flex shrink-0 items-center gap-3">
-          <legend className="sr-only">{section.title} mitsenden</legend>
-          <span className="text-sm text-muted-foreground">Mitsenden</span>
-          <Label className="flex cursor-pointer items-center gap-1.5 text-sm font-normal">
-            <input
-              type="radio"
-              name={`section-include-${section.key}`}
-              checked={!omitted}
-              className="size-4 accent-primary"
-              onChange={() => onOmitChange?.(false)}
-            />
-            Ja
-          </Label>
-          <Label className="flex cursor-pointer items-center gap-1.5 text-sm font-normal">
-            <input
-              type="radio"
-              name={`section-include-${section.key}`}
-              checked={omitted}
-              className="size-4 accent-primary"
-              onChange={() => onOmitChange?.(true)}
-            />
-            Nein
-          </Label>
-        </fieldset>
-      ) : (
-        <PflichtfeldSwitch
-          label="Optional"
-          checked={section.optional === true}
-          onChange={(checked) =>
-            onChange({
-              ...section,
-              optional: checked || undefined,
-            })
-          }
-        />
-      )}
+      <PflichtfeldSwitch
+        label="Mitsenden"
+        checked={send}
+        onChange={(checked) => onOmitChange(!checked)}
+      />
     </div>
   );
 }
