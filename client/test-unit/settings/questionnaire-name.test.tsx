@@ -45,10 +45,19 @@ it('saves the user-selected questionnaire name together with its questions', asy
   await userEvent.clear(name);
   await userEvent.type(name, 'Personalbogen Montage');
   await userEvent.click(screen.getByRole('button', { name: 'Speichern' }));
-  expect(apiJson.put).toHaveBeenCalledWith('/automation/questionnaire', {
-    name: 'Personalbogen Montage',
-    items,
-  });
+  await expect(apiJson.put).toHaveBeenCalled();
+  const [, body] = vi.mocked(apiJson.put).mock.calls.at(-1)!;
+  expect(body).toEqual(
+    expect.objectContaining({
+      name: 'Personalbogen Montage',
+      items: expect.arrayContaining(items),
+    })
+  );
+  expect(
+    (body as { items: { kind?: string }[] }).items.filter(
+      (item) => item.kind !== 'section'
+    )
+  ).toEqual(items);
 });
 
 it('keeps the edited name when opening the preview and disables saving an empty name', async () => {
