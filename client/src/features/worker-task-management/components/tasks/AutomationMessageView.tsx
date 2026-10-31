@@ -32,13 +32,16 @@ export function AutomationMessageView({
   const savedBody = useRef(message.body);
   const messageRef = useRef(message);
   const onSaveRef = useRef(onSave);
-  messageRef.current = message;
-  onSaveRef.current = onSave;
+
+  useEffect(() => {
+    messageRef.current = message;
+    onSaveRef.current = onSave;
+  }, [message, onSave]);
 
   useEffect(() => {
     if (!open || body === savedBody.current) return;
-    setSaving(true);
     const timeout = window.setTimeout(() => {
+      setSaving(true);
       onSaveRef.current({ ...messageRef.current, body });
       savedBody.current = body;
       setSaving(false);

@@ -96,7 +96,13 @@ function sectionGroupLabel(value: string) {
 
 /** Insert explicit headline markers before each new section group. */
 export function withSectionHeadlines<
-  T extends { kind: string; section?: string; title?: string; key: string },
+  T extends {
+    kind: string;
+    section?: string;
+    title?: string;
+    key: string;
+    optional?: boolean;
+  },
 >(items: T[]): (T | {
   kind: "section";
   key: string;
@@ -168,7 +174,7 @@ export function ensureSectionHeadlines<T extends SectionLike>(items: T[]): T[] {
     if (item.kind !== "section") return item as T;
     const prior =
       previous.get(item.key) ||
-      previous.get(questionnaireSectionKey(item.title));
+      previous.get(questionnaireSectionKey(item.title ?? ""));
     if (!prior || prior.kind !== "section") return item as T;
     return {
       ...item,
