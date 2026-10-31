@@ -259,14 +259,8 @@ it("asks the model for Anrede (deterministic salutation disabled)", async () => 
     expect(fetchMock).toHaveBeenCalledTimes(1);
 });
 
-it("lets the model fill Vorname and Anrede when deterministic links are off", async () => {
+it("fills Vorname by alias and asks the model only for Anrede", async () => {
     modelResult([
-        {
-            key: "contract.vorname",
-            value: "Max",
-            answerKey: "firstName",
-            confidence: "high",
-        },
         {
             key: "contract.anrede",
             value: "Herr",
@@ -296,9 +290,11 @@ it("lets the model fill Vorname and Anrede when deterministic links are off", as
         fields: { key: string }[];
         answers: { key: string; value: string }[];
     };
-    expect(request.messages[0].content).toContain("Ausnahme ist allein die Anrede");
+    expect(request.messages[0].content).toContain(
+        "Ein Antwortwert darf und soll alle passenden Vertragsfelder befüllen",
+    );
+    expect(request.messages[0].content).toContain("answerKey=address");
     expect(payload.fields.map((field) => field.key)).toEqual([
-        "contract.vorname",
         "contract.anrede",
     ]);
     expect(payload.answers).toEqual(
@@ -310,5 +306,98 @@ it("lets the model fill Vorname and Anrede when deterministic links are off", as
     expect(result).toEqual([
         { key: "contract.vorname", value: "Max" },
         { key: "contract.anrede", value: "Herr" },
+    ]);
+});
+
+it("fills Adresse and every Nachname placeholder from questionnaire aliases", async () => {
+    modelResult([]);
+    const result = await matchQuestionnaireToContract(
+        [
+            { type: "text", text: "Zwischen … und " },
+            { type: "input", key: "contract.anrede", label: "Anrede" },
+            { type: "input", key: "contract.vorname", label: "Vorname" },
+            { type: "input", key: "contract.nachname", label: "Nachname" },
+            {
+                type: "text",
+                text: ", geboren am …, wohnhaft in ",
+            },
+            { type: "input", key: "contract.adresse", label: "adresse" },
+            {
+                type: "text",
+                text: ". § 1 … 1. ",
+            },
+            { type: "input", key: "contract.anrede2", label: "Herr/Frau" },
+            { type: "input", key: "contract.nachname2", label: "nachname" },
+            { type: "text", text: " wird eingestellt." },
+        ],
+        {
+            firstName: "Lukas",
+            lastName: "Adler",
+            street: "Beispielweg 4",
+            postalCode: "10115",
+            city: "Berlin",
+            sex: "männlich",
+        } as QuestionnaireAnswers,
+    );
+    expect(result).toEqual(
+        expect.arrayContaining([
+            { key: "contract.vorname", value: "Lukas" },
+            { key: "contract.nachname", value: "Adler" },
+            { key: "contract.nachname2", value: "Adler" },
+            {
+                key: "contract.adresse",
+                value: "Beispielweg 4, 10115 Berlin",
+            },
+        ]),
+    );
+    const request = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
+    const payload = JSON.parse(request.messages[1].content) as {
+        fields: { key: string }[];
+        answers: { key: string; value: string }[];
+    };
+    expect(payload.fields.map((field) => field.key).sort()).toEqual([
+        "contract.anrede",
+        "contract.anrede2",
+    ]);
+    expect(payload.answers).toEqual(
+        expect.arrayContaining([
+            expect.objectContaining({
+                key: "address",
+                value: "Beispielweg 4, 10115 Berlin",
+            }),
+            expect.objectContaining({
+                key: "fullName",
+                value: "Lukas Adler",
+            }),
+        ]),
+    );
+});
+
+it("accepts the composed address answer for Adresse fields", () => {
+    expect(
+        acceptSemanticModelMatches(
+            [{ key: "contract.adresse", label: "adresse" }],
+            [
+                {
+                    key: "address",
+                    value: "Beispielweg 4, 10115 Berlin",
+                },
+            ],
+            {
+                matches: [
+                    {
+                        key: "contract.adresse",
+                        answerKey: "address",
+                        value: "Beispielweg 4, 10115 Berlin",
+                        confidence: "high",
+                    },
+                ],
+            },
+        ),
+    ).toEqual([
+        {
+            key: "contract.adresse",
+            value: "Beispielweg 4, 10115 Berlin",
+        },
     ]);
 });

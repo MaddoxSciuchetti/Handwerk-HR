@@ -102,7 +102,9 @@ it('shows a load error without displaying answers when the request fails', async
       ]}
     />
   );
-  await userEvent.click(screen.getByRole('button', { name: /Fragebogen/ }));
+  await userEvent.click(
+    screen.getAllByRole('button', { name: /Fragebogen/ })[0]!
+  );
   expect(
     await screen.findByText(
       'Der ausgefüllte Fragebogen konnte nicht geladen werden.'

@@ -4,6 +4,7 @@ import { apiJson } from '@/config/apiClient';
 import { Button } from '@/components/ui/button';
 import { QuestionnaireQuestion } from '@/features/questionnaire/QuestionnaireQuestion';
 import { QuestionnaireRepeatableRows } from '@/features/questionnaire/QuestionnaireRepeatableRows';
+import { QuestionnaireTableRows } from '@/features/questionnaire/QuestionnaireTableRows';
 import { employmentContractKey } from '../../hooks/useEmploymentContract';
 import { WORKERBYID } from '../../consts/query-key.consts';
 import { ALL_WORKER_DATA } from '@/features/worker-lifecycle/consts/query-key.consts';
@@ -116,22 +117,39 @@ export function CompletedQuestionnaireEditor({
       </p>
       <fieldset disabled={save.isPending} className="space-y-6">
         {questionnaire.items.map((item) => {
-          const value = answers[item.key];
-          if (item.kind === 'repeater')
+          if (item.kind === 'section') {
             return (
+              <h3 key={item.key} className="pt-2 text-base font-semibold">
+                {item.title}
+              </h3>
+            );
+          }
+          const value = answers[item.key];
+          if (item.kind === 'repeater') {
+            const rows = Array.isArray(value) ? value : [];
+            const repeater = {
+              ...item,
+              columns: item.columns.map((column) => ({
+                ...column,
+                officeOnly: false,
+              })),
+            };
+            return item.key.startsWith('rows.') ? (
+              <QuestionnaireTableRows
+                key={item.key}
+                repeater={repeater}
+                rows={rows}
+                onChange={(next) => update(item.key, next)}
+              />
+            ) : (
               <QuestionnaireRepeatableRows
                 key={item.key}
-                repeater={{
-                  ...item,
-                  columns: item.columns.map((column) => ({
-                    ...column,
-                    officeOnly: false,
-                  })),
-                }}
-                rows={Array.isArray(value) ? value : []}
-                onChange={(rows) => update(item.key, rows)}
+                repeater={repeater}
+                rows={rows}
+                onChange={(next) => update(item.key, next)}
               />
             );
+          }
           if (item.type === 'file')
             return (
               <p key={item.key} className="text-sm">

@@ -158,6 +158,8 @@ describe('QuestionnaireForm', () => {
       })
     ).toBeInTheDocument();
     expect(screen.getByText('Geburtsdatum (TT.MM.JJJJ)')).toBeInTheDocument();
+    expect(screen.getByText('Keine Angaben')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Weitere Zeile' }));
     expect(screen.getAllByLabelText(/Zeile 1/)).toHaveLength(3);
     await userEvent.click(screen.getByRole('button', { name: 'Weitere Zeile' }));
     expect(screen.getByLabelText('Name Zeile 2')).toBeInTheDocument();

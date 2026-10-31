@@ -27,6 +27,7 @@ import type {
 } from './questionnaireTemplate.types';
 import {
   ensureSectionHeadlines,
+  setSectionOmitted,
   syncItemsToHeadlines,
 } from '@shared/questionnaireSections';
 
@@ -216,6 +217,11 @@ export function QuestionnaireTemplatePage() {
               onChangeRepeater={changeRepeater}
               onChangeSection={changeSection}
               onCommitField={changeField}
+              onSectionOmitChange={(section, omitted) =>
+                setItems((current) =>
+                  setSectionOmitted(current, section, omitted)
+                )
+              }
               onRemove={remove}
             />
           )}

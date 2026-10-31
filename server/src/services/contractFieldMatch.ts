@@ -181,28 +181,39 @@ function matchScore(questionnaire: MatchField, contract: { key: string; label: s
         sameSynonymGroup(answerKey, contractKey) ? 1 : 0;
 }
 
+/** Street + PLZ + city for a single Adresse/Anschrift contract field. */
+export function composeContractAddress(answers: QuestionnaireAnswers) {
+    const street = answerString(answers, "street").trim();
+    const postalCode = answerString(answers, "postalCode").trim();
+    const city = answerString(answers, "city").trim();
+    return [street, `${postalCode} ${city}`.trim()]
+        .filter((part) => part.length > 0)
+        .join(", ");
+}
+
+export function composeContractFullName(answers: QuestionnaireAnswers) {
+    const firstName = answerString(answers, "firstName").trim();
+    const lastName = answerString(answers, "lastName").trim();
+    return [firstName, lastName].filter((part) => part.length > 0).join(" ");
+}
+
 function answerValues(
     answers: QuestionnaireAnswers,
     email: string,
 ): Record<string, string> {
-    const birthday = germanDate(answers.birthday);
-    const street = answerString(answers, "street");
-    const postalCode = answerString(answers, "postalCode");
-    const city = answerString(answers, "city");
-    const address = [street, `${postalCode} ${city}`.trim()]
-        .filter((part) => part.length > 0)
-        .join(", ");
-
+    const street = answerString(answers, "street").trim();
+    const postalCode = answerString(answers, "postalCode").trim();
+    const city = answerString(answers, "city").trim();
     const firstName = answerString(answers, "firstName").trim();
     const lastName = answerString(answers, "lastName").trim();
 
     return {
         firstName,
         lastName,
-        fullName: [firstName, lastName].filter((part) => part.length > 0).join(" "),
+        fullName: composeContractFullName(answers),
         email: email.trim(),
-        birthday,
-        address,
+        birthday: germanDate(answers.birthday),
+        address: composeContractAddress(answers),
         street,
         postalCode,
         city,

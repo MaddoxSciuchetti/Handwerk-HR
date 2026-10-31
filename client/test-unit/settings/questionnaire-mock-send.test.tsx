@@ -124,12 +124,16 @@ it('sends with Enter after the dialog loads', async () => {
   );
 });
 
-it('does not send with Enter while typing an answer', async () => {
+it('does not send with Enter while editing', async () => {
   renderWithProviders(
     <QuestionnaireSendDialog engagementId="engagement" onClose={vi.fn()} />
   );
-  const answer = await screen.findByRole('textbox', { name: 'Antwort' });
-  fireEvent.keyDown(answer, { key: 'Enter' });
+  await userEvent.click(
+    await screen.findByRole('button', { name: 'Bearbeiten' })
+  );
+  fireEvent.keyDown(screen.getByRole('textbox', { name: 'Antwort' }), {
+    key: 'Enter',
+  });
   expect(apiJson.post).not.toHaveBeenCalled();
 });
 
@@ -212,7 +216,7 @@ it('can retry a pending mock after reopening the send dialog', async () => {
   await waitFor(() => expect(onClose).toHaveBeenCalled());
 });
 
-it('edits questions in the same stack UI as settings', async () => {
+it('opens the worker preview and edits structure only through Bearbeiten', async () => {
   const user = userEvent.setup();
   const onClose = vi.fn();
   renderWithProviders(
@@ -222,6 +226,10 @@ it('edits questions in the same stack UI as settings', async () => {
   expect(
     screen.queryByRole('button', { name: 'Absenden' })
   ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('textbox', { name: 'Antwort' })
+  ).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Bearbeiten' }));
   expect(screen.getByRole('textbox', { name: 'Frage' })).toBeInTheDocument();
   await user.type(screen.getByRole('textbox', { name: 'Antwort' }), 'Lukas');
   await user.click(
@@ -232,9 +240,9 @@ it('edits questions in the same stack UI as settings', async () => {
   await user.click(screen.getByRole('button', { name: 'Frage' }));
   await user.type(screen.getByPlaceholderText('Frage'), 'Zusatzfrage');
   await user.click(screen.getByRole('button', { name: 'Hinzufügen' }));
-  expect(screen.getByDisplayValue('Lukas')).toBeInTheDocument();
-  expect(screen.getByDisplayValue('Vorname')).toBeInTheDocument();
-  expect(screen.getByDisplayValue('Zusatzfrage')).toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Fertig' }));
+  expect(screen.getByLabelText(/^Vorname/)).toHaveValue('Lukas');
+  expect(screen.getByLabelText(/^Zusatzfrage/)).toBeInTheDocument();
   await user.click(screen.getByRole('button', { name: 'Schließen' }));
   await waitFor(() => expect(onClose).toHaveBeenCalled());
   expect(apiJson.put).toHaveBeenCalledWith(
@@ -248,16 +256,9 @@ it('edits questions in the same stack UI as settings', async () => {
       }),
     })
   );
-  expect(
-    vi
-      .mocked(apiJson.put)
-      .mock.calls.every(
-        ([path]) => path === '/worker/engagements/engagement/questionnaire'
-      )
-  ).toBe(true);
 });
 
-it('keeps a BSB answer typed in the stack for this engagement', async () => {
+it('keeps a BSB answer typed in the preview for this engagement', async () => {
   vi.mocked(apiJson.get).mockResolvedValue({
     ...draft,
     data: {
@@ -278,7 +279,7 @@ it('keeps a BSB answer typed in the stack for this engagement', async () => {
   renderWithProviders(
     <QuestionnaireSendDialog engagementId="engagement" onClose={onClose} />
   );
-  const salary = await screen.findByRole('textbox', { name: 'Antwort' });
+  const salary = await screen.findByRole('textbox', { name: 'Gehalt' });
   expect(salary).toBeEnabled();
   await user.type(salary, '3200');
   await user.click(screen.getByRole('button', { name: 'Schließen' }));
@@ -300,7 +301,7 @@ it('keeps a BSB answer typed in the stack for this engagement', async () => {
   );
 });
 
-it('still shows the questionnaire after sending', async () => {
+it('does not offer editing after sending', async () => {
   vi.mocked(apiJson.get).mockResolvedValue({
     ...draft,
     data: { ...draft.data, sent: true },
@@ -309,8 +310,9 @@ it('still shows the questionnaire after sending', async () => {
     <QuestionnaireSendDialog engagementId="engagement" onClose={vi.fn()} />
   );
   await screen.findByRole('heading', { name: 'Personalfragebogen' });
-  expect(screen.getByRole('textbox', { name: 'Antwort' })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Senden' })).toBeDisabled();
+  expect(
+    screen.queryByRole('button', { name: 'Bearbeiten' })
+  ).not.toBeInTheDocument();
 });
 
 it('preserves all weekday and built-in table office-only edits for an individual engagement', async () => {
@@ -336,10 +338,8 @@ it('preserves all weekday and built-in table office-only edits for an individual
   renderWithProviders(
     <QuestionnaireSendDialog engagementId="engagement" onClose={onClose} />
   );
-  await screen.findByRole('heading', { name: 'Personalfragebogen' });
-  const switches = await screen.findAllByRole('switch', {
-    name: 'Nur vom Betrieb',
-  });
+  await user.click(await screen.findByRole('button', { name: 'Bearbeiten' }));
+  const switches = screen.getAllByRole('switch', { name: 'Nur vom Betrieb' });
   expect(switches).toHaveLength(2);
   await user.click(switches[0]);
   await user.click(switches[1]);

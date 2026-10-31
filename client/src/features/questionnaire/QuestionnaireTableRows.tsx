@@ -1,3 +1,5 @@
+import { useId, type CSSProperties } from 'react';
+import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { QuestionnaireRepeater } from './questionnaire.types';
@@ -15,49 +17,87 @@ export function QuestionnaireTableRows({
   rows,
   onChange,
 }: QuestionnaireTableRowsProps) {
+  const id = useId();
+  const columns = {
+    '--questionnaire-columns': `repeat(${repeater.columns.length}, minmax(0, 1fr))`,
+  } as CSSProperties;
   const canAdd = repeater.allowMoreRows === true;
-  const shown = rows.length > 0 ? rows : [{}];
+  // Do not invent a blank row when nothing was answered yet — that looked like
+  // empty filled-in data under Files / send preview.
+  const shown = rows.length > 0 ? rows : canAdd ? [] : [{}];
 
   const update = (index: number, key: string, value: string) => {
-    const base = rows.length > 0 ? rows : [{}];
-    onChange(
-      base.map((row, rowIndex) => (rowIndex === index ? { ...row, [key]: value } : row))
-    );
+    const base = rows.length > 0 ? rows : canAdd ? [] : [{}];
+    const next =
+      base.length === 0
+        ? [{ [key]: value }]
+        : base.map((row, rowIndex) =>
+            rowIndex === index ? { ...row, [key]: value } : row
+          );
+    onChange(next);
   };
 
   return (
     <section className="flex flex-col gap-3" aria-label={repeater.section}>
-      <div className="overflow-x-auto rounded-md border border-border">
+      <div className="min-w-0 sm:overflow-x-auto sm:rounded-md sm:border sm:border-border">
         <div
-          className="grid min-w-[36rem]"
-          style={{ gridTemplateColumns: `repeat(${repeater.columns.length}, minmax(0, 1fr))` }}
+          className="flex flex-col gap-3 sm:min-w-[36rem] sm:gap-0"
+          style={columns}
         >
-          {repeater.columns.map((column) => (
+          <div className="hidden sm:grid sm:grid-cols-[var(--questionnaire-columns)]">
+            {repeater.columns.map((column) => (
+              <div
+                key={column.key}
+                className="border-r border-b border-border px-3 py-2 text-sm font-medium last:border-r-0"
+              >
+                {column.label}
+              </div>
+            ))}
+          </div>
+          {shown.map((row, index) => (
             <div
-              key={column.key}
-              className="border-r border-b border-border px-3 py-2 text-sm font-medium last:border-r-0"
+              key={index}
+              role="group"
+              aria-label={`Eintrag ${index + 1}`}
+              className="grid min-w-0 grid-cols-1 gap-3 rounded-lg border border-border p-3 sm:grid-cols-[var(--questionnaire-columns)] sm:gap-0 sm:rounded-none sm:border-0 sm:p-0"
             >
-              {column.label}
+              <p className="text-sm font-medium sm:hidden">Zeile {index + 1}</p>
+              {repeater.columns.map((column) => (
+                <div
+                  key={column.key}
+                  className="flex min-w-0 flex-col gap-2 sm:border-r sm:border-b sm:border-border sm:p-2 sm:last:border-r-0"
+                >
+                  <Label
+                    className="sm:sr-only"
+                    htmlFor={`${id}-${index}-${column.key}`}
+                  >
+                    {column.label}
+                  </Label>
+                  <Input
+                    id={`${id}-${index}-${column.key}`}
+                    aria-label={`${column.label} Zeile ${index + 1}`}
+                    type={column.type === 'date' ? 'date' : 'text'}
+                    disabled={column.officeOnly === true}
+                    value={row[column.key] ?? ''}
+                    placeholder={column.label}
+                    className={
+                      column.officeOnly
+                        ? 'bg-muted text-muted-foreground'
+                        : undefined
+                    }
+                    onChange={(event) =>
+                      update(index, column.key, event.target.value)
+                    }
+                  />
+                </div>
+              ))}
             </div>
           ))}
-          {shown.map((row, index) =>
-            repeater.columns.map((column) => (
-              <div
-                key={`${index}-${column.key}`}
-                className="border-r border-b border-border p-2 last:border-r-0"
-              >
-                <Input
-                  aria-label={`${column.label} Zeile ${index + 1}`}
-                  type={column.type === 'date' ? 'date' : 'text'}
-                  disabled={column.officeOnly === true}
-                  value={row[column.key] ?? ''}
-                  placeholder={column.label}
-                  className={column.officeOnly ? 'bg-muted text-muted-foreground' : undefined}
-                  onChange={(event) => update(index, column.key, event.target.value)}
-                />
-              </div>
-            ))
-          )}
+          {shown.length === 0 ? (
+            <p className="px-1 py-3 text-sm text-muted-foreground sm:px-3">
+              Keine Angaben
+            </p>
+          ) : null}
         </div>
       </div>
       {canAdd && shown.length > 1 ? (
@@ -68,7 +108,9 @@ export function QuestionnaireTableRows({
               type="button"
               variant="outline"
               className="rounded-2xl"
-              onClick={() => onChange(shown.filter((_, rowIndex) => rowIndex !== index))}
+              onClick={() =>
+                onChange(shown.filter((_, rowIndex) => rowIndex !== index))
+              }
             >
               Zeile {index + 1} entfernen
             </Button>

@@ -1,9 +1,6 @@
-import { Label } from '@/components/ui/label';
-import {
-  isOptionalQuestionnaireSection,
-  questionnaireSectionHeading,
-} from '@shared/questionnaireSections';
+import { questionnaireSectionHeading } from '@shared/questionnaireSections';
 import type { ReactNode } from 'react';
+import { PflichtfeldSwitch } from '@/features/settings/questionnaire/PflichtfeldSwitch';
 
 type QuestionnaireSectionCardProps = {
   title: string;
@@ -16,16 +13,13 @@ type QuestionnaireSectionCardProps = {
 
 export function QuestionnaireSectionCard({
   title,
-  optional: optionalProp,
   preview,
   omitted = false,
   onOmitChange,
   children,
 }: QuestionnaireSectionCardProps) {
   const { title: heading, hint } = questionnaireSectionHeading(title);
-  const optional =
-    optionalProp === true || isOptionalQuestionnaireSection(title);
-  const showGate = Boolean(preview && optional && onOmitChange);
+  const showOmit = Boolean(preview && onOmitChange);
 
   return (
     <section
@@ -41,37 +35,17 @@ export function QuestionnaireSectionCard({
             <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>
           ) : null}
         </div>
-        {showGate ? (
-          <fieldset className="flex shrink-0 items-center gap-3">
-            <legend className="sr-only">{heading} mitsenden</legend>
-            <span className="text-sm text-muted-foreground">Mitsenden</span>
-            <Label className="flex cursor-pointer items-center gap-1.5 text-sm font-normal">
-              <input
-                type="radio"
-                name={`section-include-${title}`}
-                checked={!omitted}
-                className="size-4 accent-primary"
-                onChange={() => onOmitChange?.(false)}
-              />
-              Ja
-            </Label>
-            <Label className="flex cursor-pointer items-center gap-1.5 text-sm font-normal">
-              <input
-                type="radio"
-                name={`section-include-${title}`}
-                checked={omitted}
-                className="size-4 accent-primary"
-                onChange={() => onOmitChange?.(true)}
-              />
-              Nein
-            </Label>
-          </fieldset>
+        {showOmit ? (
+          <PflichtfeldSwitch
+            label="Mitsenden"
+            checked={!omitted}
+            onChange={(checked) => onOmitChange?.(!checked)}
+          />
         ) : null}
       </div>
       {omitted ? (
         <p className="border-t border-border/60 px-5 py-3 text-sm text-muted-foreground">
-          Dieser Abschnitt wird nicht mitgesendet. Der Mitarbeiter muss hier
-          nichts ausfüllen.
+          Dieser Abschnitt wird nicht mitgesendet.
         </p>
       ) : (
         <div className="flex flex-col gap-2 border-t border-border/60 px-3 pt-1 pb-3">

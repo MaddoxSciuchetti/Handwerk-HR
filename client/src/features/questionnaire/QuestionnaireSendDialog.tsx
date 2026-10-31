@@ -1,5 +1,7 @@
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { Check, Pencil, X } from 'lucide-react';
+import { QuestionnaireForm } from './QuestionnaireForm';
+import { candidateItems } from './questionnairePreview';
 import {
   QuestionnaireStack,
   type DragPayload,
@@ -75,6 +77,7 @@ export function QuestionnaireSendDialog({
 }: QuestionnaireSendDialogProps) {
   const cache = useQueryClient();
   const sendButton = useRef<HTMLButtonElement>(null);
+  const [editing, setEditing] = useState(false);
   const [localItems, setLocalItems] = useState<TemplateItem[] | null>(null);
   const draft = useQuery({
     queryKey: ['questionnaire-draft', engagementId],
@@ -270,7 +273,8 @@ export function QuestionnaireSendDialog({
             event.altKey ||
             event.ctrlKey ||
             event.metaKey ||
-            event.shiftKey
+            event.shiftKey ||
+            editing
           )
             return;
           const target = event.target as HTMLElement;
@@ -287,6 +291,25 @@ export function QuestionnaireSendDialog({
         <div className="flex h-[80vh] flex-col gap-4 overflow-hidden rounded-2xl border border-border bg-card p-6 text-card-foreground">
           <DialogTitle className="sr-only">Fragebogen</DialogTitle>
           <div className="-mt-3 -mr-3 flex shrink-0 items-center justify-end gap-1">
+            {data && !sent ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={persist.isPending || send.isPending}
+                aria-pressed={editing}
+                aria-label={editing ? 'Fertig' : 'Bearbeiten'}
+                className="gap-1.5"
+                onClick={() => setEditing(!editing)}
+              >
+                {editing ? (
+                  <Check className="size-4" aria-hidden="true" />
+                ) : (
+                  <Pencil className="size-4" aria-hidden="true" />
+                )}
+                {editing ? 'Fertig' : 'Bearbeiten'}
+              </Button>
+            ) : null}
             <DialogClose asChild>
               <Button
                 type="button"
@@ -319,42 +342,64 @@ export function QuestionnaireSendDialog({
                     aus. Es wird keine E-Mail verschickt.
                   </p>
                 ) : null}
-                <p className="mb-4 text-xs text-muted-foreground">
-                  Änderungen gelten nur für diesen Einsatz.
-                </p>
-                <h1 className="mb-4 text-xl font-medium">
-                  {data?.name ?? 'Personalfragebogen'}
-                </h1>
-                {data?.intro ? (
-                  <p className="mb-4 text-sm whitespace-pre-wrap text-muted-foreground">
-                    {data.intro}
-                  </p>
-                ) : null}
-                <QuestionnaireStack
-                  blocks={blocks}
-                  contractFields={data?.contractFields ?? []}
-                  onDrop={drop}
-                  onInsert={insertItems}
-                  onReplaceItems={setLocalItems}
-                  onChangeField={changeField}
-                  onChangeRepeater={changeRepeater}
-                  onChangeSection={changeSection}
-                  onCommitField={changeField}
-                  onSectionOmitChange={(section, omitted) =>
-                    setLocalItems((current) =>
-                      setSectionOmitted(current ?? items, section, omitted)
-                    )
-                  }
-                  onRemove={(id) =>
-                    setLocalItems(
-                      syncItemsToHeadlines(
-                        itemsFromBlocks(
-                          blocks.filter((block) => block.id !== id)
+                {editing ? (
+                  <>
+                    <p className="mb-4 text-xs text-muted-foreground">
+                      Änderungen gelten nur für diesen Einsatz.
+                    </p>
+                    <h1 className="mb-4 text-xl font-medium">
+                      {data?.name ?? 'Personalfragebogen'}
+                    </h1>
+                    <QuestionnaireStack
+                      blocks={blocks}
+                      contractFields={data?.contractFields ?? []}
+                      onDrop={drop}
+                      onInsert={insertItems}
+                      onReplaceItems={setLocalItems}
+                      onChangeField={changeField}
+                      onChangeRepeater={changeRepeater}
+                      onChangeSection={changeSection}
+                      onCommitField={changeField}
+                      onSectionOmitChange={(section, omitted) =>
+                        setLocalItems((current) =>
+                          setSectionOmitted(current ?? items, section, omitted)
+                        )
+                      }
+                      onRemove={(id) =>
+                        setLocalItems(
+                          syncItemsToHeadlines(
+                            itemsFromBlocks(
+                              blocks.filter((block) => block.id !== id)
+                            )
+                          )
+                        )
+                      }
+                    />
+                  </>
+                ) : (
+                  <QuestionnaireForm
+                    embedded
+                    preview={{
+                      name: data?.name,
+                      intro: data?.intro,
+                      items: candidateItems(items),
+                    }}
+                    onPresetChange={(key, value) =>
+                      setLocalItems(
+                        items.map((item) =>
+                          item.kind === 'field' && item.key === key
+                            ? { ...item, defaultValue: value }
+                            : item
                         )
                       )
-                    )
-                  }
-                />
+                    }
+                    onSectionOmitChange={(section, omitted) =>
+                      setLocalItems((current) =>
+                        setSectionOmitted(current ?? items, section, omitted)
+                      )
+                    }
+                  />
+                )}
               </>
             ) : null}
           </div>
