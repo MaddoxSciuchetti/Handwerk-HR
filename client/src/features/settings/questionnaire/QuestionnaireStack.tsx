@@ -18,6 +18,7 @@ import {
   type TemplateRepeater,
   type TemplateSection,
 } from './questionnaireTemplate.types';
+import { membersUnderSection } from '@shared/questionnaireSections';
 
 export type DragPayload = {
   source: 'palette' | 'stack';
@@ -33,6 +34,7 @@ type QuestionnaireStackProps = {
   onChangeField: (field: TemplateField) => void;
   onChangeRepeater: (repeater: TemplateRepeater) => void;
   onChangeSection: (section: TemplateSection) => void;
+  onSectionMembersChange: (sectionKey: string, memberKeys: string[]) => void;
   onCommitField: (field: TemplateField) => void;
   onRemove: (id: string) => void;
 };
@@ -46,6 +48,7 @@ export function QuestionnaireStack({
   onChangeField,
   onChangeRepeater,
   onChangeSection,
+  onSectionMembersChange,
   onCommitField,
   onRemove,
 }: QuestionnaireStackProps) {
@@ -124,11 +127,21 @@ export function QuestionnaireStack({
           Ziehen Sie Felder hierher oder fügen Sie eine Überschrift hinzu.
         </p>
       ) : null}
-      {blocks.map((block, index) => (
+      {blocks.map((block, index) => {
+        let nested = false;
+        if (block.items[0]?.kind !== 'section') {
+          for (let cursor = index - 1; cursor >= 0; cursor -= 1) {
+            if (blocks[cursor]?.items[0]?.kind === 'section') {
+              nested = true;
+              break;
+            }
+          }
+        }
+        return (
         <div
           key={block.id}
           data-questionnaire-sort-item={block.id}
-          className="questionnaire-sort-item min-w-0"
+          className={`questionnaire-sort-item min-w-0 ${nested ? 'ml-4 border-l-2 border-border pl-3' : ''}`}
           style={
             preview
               ? {
@@ -174,17 +187,20 @@ export function QuestionnaireStack({
             </button>
             <BlockBody
               block={block}
+              items={flatItems}
               contractFields={contractFields}
               onChangeField={onChangeField}
               onChangeRepeater={onChangeRepeater}
               onChangeSection={onChangeSection}
+              onSectionMembersChange={onSectionMembersChange}
               onCommitField={onCommitField}
               onAdd={(field) => onInsert(index, [field])}
             />
           </article>
           {gap(index + 1)}
         </div>
-      ))}
+        );
+      })}
       {blocks.length === 0 ? gap(0) : null}
     </div>
   );
@@ -192,25 +208,35 @@ export function QuestionnaireStack({
 
 function BlockBody({
   block,
+  items,
   contractFields,
   onChangeField,
   onChangeRepeater,
   onChangeSection,
+  onSectionMembersChange,
   onCommitField,
   onAdd,
 }: {
   block: QuestionnaireBlock;
+  items: TemplateItem[];
   contractFields: ContractFieldOption[];
   onChangeField: (field: TemplateField) => void;
   onChangeRepeater: (repeater: TemplateRepeater) => void;
   onChangeSection: (section: TemplateSection) => void;
+  onSectionMembersChange: (sectionKey: string, memberKeys: string[]) => void;
   onCommitField: (field: TemplateField) => void;
   onAdd: (field: TemplateField) => void;
 }) {
   const first = block.items[0];
   if (first?.kind === 'section') {
     return (
-      <SectionHeadlineCard section={first} onChange={onChangeSection} />
+      <SectionHeadlineCard
+        section={first}
+        items={items}
+        memberKeys={membersUnderSection(items, first.key)}
+        onChange={onChangeSection}
+        onMembersChange={(keys) => onSectionMembersChange(first.key, keys)}
+      />
     );
   }
   if (first?.kind === 'repeater') {

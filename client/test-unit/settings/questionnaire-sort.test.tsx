@@ -53,6 +53,7 @@ function Harness({ scroll = false }: { scroll?: boolean }) {
         onChangeField={vi.fn()}
         onChangeRepeater={vi.fn()}
         onChangeSection={vi.fn()}
+        onSectionMembersChange={vi.fn()}
         onCommitField={vi.fn()}
         onRemove={vi.fn()}
       />

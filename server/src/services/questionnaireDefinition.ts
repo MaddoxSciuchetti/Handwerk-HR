@@ -19,7 +19,7 @@ import {
 } from "../../../shared/weeklyHours";
 import {
     isOptionalQuestionnaireSection,
-    withSectionHeadlines,
+    ensureSectionHeadlines,
 } from "../../../shared/questionnaireSections";
 
 export type QuestionnaireFieldItem = {
@@ -149,7 +149,7 @@ export function seedQuestionnaireDefinition(): QuestionnaireDefinition {
     return {
         name: "Personalfragebogen",
         intro: QUESTIONNAIRE_INTRO,
-        items: withSectionHeadlines(items) as QuestionnaireItem[],
+        items: ensureSectionHeadlines(items) as QuestionnaireItem[],
     };
 }
 

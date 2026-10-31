@@ -18,6 +18,8 @@ import type {
   TemplateSection,
 } from '@/features/settings/questionnaire/questionnaireTemplate.types';
 import {
+  ensureSectionHeadlines,
+  setSectionMembers,
   setSectionOmitted,
   syncItemsToHeadlines,
 } from '@shared/questionnaireSections';
@@ -86,18 +88,20 @@ export function QuestionnaireSendDialog({
       ),
   });
   const data = draft.data?.data;
-  const items: TemplateItem[] = localItems ??
-    data?.items ?? [
-      ...(data?.questions ?? []).map((question) => ({
-        ...question,
-        kind: 'field' as const,
-      })),
-      ...(data?.repeaters ?? []).map((repeater) => ({
-        ...repeater,
-        kind: 'repeater' as const,
-        key: repeater.key as 'children' | 'priorEmployment',
-      })),
-    ];
+  const items: TemplateItem[] = ensureSectionHeadlines(
+    localItems ??
+      data?.items ?? [
+        ...(data?.questions ?? []).map((question) => ({
+          ...question,
+          kind: 'field' as const,
+        })),
+        ...(data?.repeaters ?? []).map((repeater) => ({
+          ...repeater,
+          kind: 'repeater' as const,
+          key: repeater.key as 'children' | 'priorEmployment',
+        })),
+      ]
+  ) as TemplateItem[];
   const blocks = blocksFromItems(items);
   const changeField = (field: TemplateField) =>
     setLocalItems((current) =>
@@ -129,6 +133,10 @@ export function QuestionnaireSendDialog({
         return item;
       });
     });
+  const changeSectionMembers = (sectionKey: string, memberKeys: string[]) =>
+    setLocalItems((current) =>
+      setSectionMembers(current ?? items, sectionKey, memberKeys)
+    );
   const insertItems = (index: number, incoming: TemplateItem[]) => {
     const placed = new Set(items.map((item) => item.key));
     const offset = blocks
@@ -370,6 +378,7 @@ export function QuestionnaireSendDialog({
                       onChangeField={changeField}
                       onChangeRepeater={changeRepeater}
                       onChangeSection={changeSection}
+                      onSectionMembersChange={changeSectionMembers}
                       onCommitField={changeField}
                       onRemove={(id) =>
                         setLocalItems(
