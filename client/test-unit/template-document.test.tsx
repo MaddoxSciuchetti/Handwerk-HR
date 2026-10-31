@@ -77,6 +77,10 @@ const draft = {
   ]),
   values: {} as Record<string, string>,
   unmatchedAnswers: [],
+  questionnaireAnswers: [
+    { key: 'firstName', label: 'Vorname', value: 'Ada' },
+    { key: 'tools', label: 'Werkzeuge', value: 'Hilti Bohrmaschine' },
+  ],
   masterRevision: 1,
   matchedMasterRevision: null,
   questionnaireCompleted: true,
@@ -177,6 +181,8 @@ it('creates a template document, confirms sync, and prints the filled values', a
   expect(
     await screen.findByRole('heading', { name: 'KFZ-Bescheinigung' })
   ).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'Fragebogen' })).toBeInTheDocument();
+  expect(screen.getByText('Hilti Bohrmaschine')).toBeInTheDocument();
 
   await user.click(screen.getByRole('button', { name: 'Abgleichen' }));
   expect(
