@@ -49,8 +49,10 @@ function Harness({ scroll = false }: { scroll?: boolean }) {
           setItems(itemsFromBlocks(blocks));
         }}
         onInsert={vi.fn()}
+        onReplaceItems={setItems}
         onChangeField={vi.fn()}
         onChangeRepeater={vi.fn()}
+        onChangeSection={vi.fn()}
         onCommitField={vi.fn()}
         onRemove={vi.fn()}
       />

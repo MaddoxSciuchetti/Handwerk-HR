@@ -20,6 +20,7 @@ import {
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { QuestionnaireQuestion } from './QuestionnaireQuestion';
+import { QuestionnaireSectionCard } from './QuestionnaireSectionCard';
 import { WeeklyHoursAnswer } from './WeeklyHoursAnswer';
 import { QuestionnaireRepeatableRows } from './QuestionnaireRepeatableRows';
 import { QuestionnaireTableRows } from './QuestionnaireTableRows';
@@ -28,6 +29,7 @@ import type {
   QuestionnaireQuestion as QuestionnaireQuestionData,
   QuestionnaireRepeater,
 } from './questionnaire.types';
+import { sectionIsOmitted } from '@shared/questionnaireSections';
 
 type QuestionnaireResponse = {
   success: boolean;
@@ -41,6 +43,13 @@ type QuestionnaireResponse = {
     items?: Array<
       | (QuestionnaireQuestionData & { kind: 'field' })
       | (QuestionnaireRepeater & { kind: 'repeater' })
+      | {
+          kind: 'section';
+          key: string;
+          title: string;
+          optional?: boolean;
+          omitFromWorker?: boolean;
+        }
     >;
   };
 };
@@ -54,10 +63,12 @@ type QuestionnaireFormProps = {
     items: CandidateItem[];
   };
   onPresetChange?: (key: string, value: string) => void;
+  onSectionOmitChange?: (section: string, omitted: boolean) => void;
 };
 
 type Section = {
   title: string;
+  optional?: boolean;
   questions: QuestionnaireQuestionData[];
   repeater?: QuestionnaireRepeater;
 };
@@ -106,6 +117,7 @@ export function QuestionnaireForm({
   preview,
   embedded,
   onPresetChange,
+  onSectionOmitChange,
 }: QuestionnaireFormProps) {
   const [values, setValues] = useState<Record<string, string>>({});
   const [rows, setRows] = useState<Record<string, Record<string, string>[]>>(
@@ -211,47 +223,66 @@ export function QuestionnaireForm({
     Boolean(preview) && question.bsbOnly === true && question.type !== 'file';
 
   const done = submitted || data?.status === 'completed';
+  const visibleQuestions = questions.filter((question) => !question.omitFromWorker);
   const missing =
     values.declaration !== 'ja' ||
-    questions.some(
-      (question) => !question.bsbOnly && unanswered(question, values, questions)
+    visibleQuestions.some(
+      (question) => !question.bsbOnly && unanswered(question, values, visibleQuestions)
     );
-  const sections = data?.items
-    ? data.items
-        .filter((item) => item.key !== 'declaration')
-        .reduce<Section[]>((list, item) => {
-          if (item.kind === 'repeater') {
-            list.push({ title: item.section, questions: [], repeater: item });
-            return list;
-          }
-          const current = list.at(-1);
-          if (!current || current.repeater || current.title !== item.section) {
-            list.push({ title: item.section, questions: [item] });
-          } else {
-            current.questions.push(item);
-          }
-          return list;
-        }, [])
-    : questions.reduce<Section[]>((list, question) => {
+  const allSectionItems =
+    data?.items?.filter((item) => item.key !== 'declaration') ??
+    [
+      ...questions.map((question) => ({ ...question, kind: 'field' as const })),
+      ...repeaters.map((repeater) => ({ ...repeater, kind: 'repeater' as const })),
+    ];
+  const hasHeadlines = allSectionItems.some((item) => item.kind === 'section');
+  const sections = allSectionItems.reduce<Section[]>((list, item) => {
+    if (item.kind === 'section') {
+      list.push({
+        title: item.title,
+        optional: item.optional,
+        questions: [],
+      });
+      return list;
+    }
+    if (item.kind === 'repeater') {
+      if (hasHeadlines) {
         const current = list.at(-1);
-        if (!current || current.title !== question.section) {
-          list.push({ title: question.section, questions: [question] });
-        } else {
-          current.questions.push(question);
+        if (current && !current.repeater && current.questions.length === 0) {
+          current.repeater = item;
+          return list;
         }
-        return list;
-      }, []);
-  if (!data?.items) {
-    repeaters.forEach((repeater) => {
-      const index = sections.findIndex(
-        (section) => section.title === repeater.afterSection
-      );
-      const block = { title: repeater.section, questions: [], repeater };
-      if (index === -1) sections.push(block);
-      else sections.splice(index + 1, 0, block);
-    });
-  }
-
+        if (current && !current.repeater) {
+          current.repeater = item;
+          return list;
+        }
+      }
+      list.push({ title: item.section, questions: [], repeater: item });
+      return list;
+    }
+    if (hasHeadlines) {
+      const current = list.at(-1);
+      if (!current) {
+        list.push({ title: item.section, questions: [item] });
+      } else if (current.repeater && current.questions.length > 0) {
+        list.push({
+          title: current.title,
+          optional: current.optional,
+          questions: [item],
+        });
+      } else {
+        current.questions.push(item);
+      }
+      return list;
+    }
+    const current = list.at(-1);
+    if (!current || current.repeater || current.title !== item.section) {
+      list.push({ title: item.section, questions: [item] });
+    } else {
+      current.questions.push(item);
+    }
+    return list;
+  }, []);
   return (
     <div className={embedded ? undefined : 'h-full overflow-y-auto px-4 py-8'}>
       <div
@@ -289,40 +320,69 @@ export function QuestionnaireForm({
             {data.intro ? (
               <p className="text-sm text-muted-foreground">{data.intro}</p>
             ) : null}
-            {sections.map((section, index) => (
-              <div
-                key={`${index}-${section.title}`}
-                className="flex flex-col gap-4"
-              >
-                {section.repeater ? (
-                  section.repeater.key.startsWith('rows.') ? (
-                    <QuestionnaireTableRows
-                      repeater={section.repeater}
-                      rows={rows[section.repeater.key] ?? []}
-                      onChange={(next) =>
-                        setRows((current) => ({
-                          ...current,
-                          [section.repeater!.key]: next,
-                        }))
-                      }
-                    />
-                  ) : (
-                    <QuestionnaireRepeatableRows
-                      repeater={section.repeater}
-                      rows={rows[section.repeater.key] ?? []}
-                      onChange={(next) =>
-                        setRows((current) => ({
-                          ...current,
-                          [section.repeater!.key]: next,
-                        }))
-                      }
-                    />
-                  )
+            {sections.map((section, index) => {
+              const sectionMembers = [
+                ...(data?.items ?? []).filter((item) => {
+                  if (item.kind === 'section')
+                    return item.title === section.title;
+                  if (item.kind === 'repeater')
+                    return (
+                      item.section === section.title ||
+                      section.repeater?.key === item.key
+                    );
+                  return item.section === section.title;
+                }),
+                ...section.questions,
+                ...(section.repeater ? [section.repeater] : []),
+              ];
+              const omitted =
+                Boolean(preview) &&
+                sectionIsOmitted(sectionMembers, section.title);
+              const weekly = section.questions.some((question) =>
+                isWeeklyHoursKey(question.key)
+              );
+              const repeaterBlock = section.repeater ? (
+                section.repeater.key.startsWith('rows.') ? (
+                  <QuestionnaireTableRows
+                    repeater={section.repeater}
+                    rows={rows[section.repeater.key] ?? []}
+                    onChange={(next) =>
+                      setRows((current) => ({
+                        ...current,
+                        [section.repeater!.key]: next,
+                      }))
+                    }
+                  />
                 ) : (
-                  <>
-                    {section.questions.some((question) =>
-                      isWeeklyHoursKey(question.key)
-                    ) ? (
+                  <QuestionnaireRepeatableRows
+                    repeater={section.repeater}
+                    rows={rows[section.repeater.key] ?? []}
+                    onChange={(next) =>
+                      setRows((current) => ({
+                        ...current,
+                        [section.repeater!.key]: next,
+                      }))
+                    }
+                  />
+                )
+              ) : null;
+              return (
+                <QuestionnaireSectionCard
+                  key={`${index}-${section.title}`}
+                  title={section.title}
+                  optional={section.optional}
+                  preview={Boolean(preview)}
+                  omitted={omitted}
+                  onOmitChange={
+                    onSectionOmitChange
+                      ? (next) => onSectionOmitChange(section.title, next)
+                      : undefined
+                  }
+                >
+                  {section.questions.length === 0 && repeaterBlock
+                    ? repeaterBlock
+                    : weekly ? (
+                    <>
                       <WeeklyHoursAnswer
                         questions={questions}
                         values={values}
@@ -332,15 +392,7 @@ export function QuestionnaireForm({
                         )}
                         onChange={remember}
                       />
-                    ) : (
-                      <h2 className="pt-2 text-base font-medium text-foreground">
-                        {section.title}
-                      </h2>
-                    )}
-                    {section.questions.some((question) =>
-                      isWeeklyHoursKey(question.key)
-                    ) ? (
-                      section.questions
+                      {section.questions
                         .filter((question) => !isWeeklyHoursKey(question.key))
                         .map((question) => (
                           <QuestionnaireQuestion
@@ -358,82 +410,83 @@ export function QuestionnaireForm({
                             value={values[question.key] ?? ''}
                             onChange={(value) => remember(question.key, value)}
                           />
-                        ))
-                    ) : section.questions.every(
-                        (question) => question.layout === 'inline'
+                        ))}
+                    </>
+                  ) : section.questions.every(
+                      (question) => question.layout === 'inline'
+                    ) ? (
+                    <>
+                      <div className="grid grid-cols-4 gap-3 sm:grid-cols-7">
+                        {section.questions.map((question) => {
+                          const open = fillsBsb(question);
+                          const locked =
+                            !open &&
+                            (question.employerFilled || question.bsbOnly);
+                          return (
+                            <div
+                              key={question.key}
+                              className="flex flex-col gap-2"
+                            >
+                              <Label htmlFor={question.key}>
+                                {question.label}
+                              </Label>
+                              <Input
+                                id={question.key}
+                                disabled={locked}
+                                value={values[question.key] ?? ''}
+                                className={
+                                  open
+                                    ? 'bg-muted dark:bg-muted'
+                                    : locked
+                                      ? 'bg-muted text-muted-foreground'
+                                      : undefined
+                                }
+                                onChange={(event) =>
+                                  remember(question.key, event.target.value)
+                                }
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {section.questions.some(
+                        (question) =>
+                          !fillsBsb(question) &&
+                          (question.employerFilled || question.bsbOnly)
                       ) ? (
-                      <>
-                        <div className="grid grid-cols-4 gap-3 sm:grid-cols-7">
-                          {section.questions.map((question) => {
-                            const open = fillsBsb(question);
-                            const locked =
-                              !open &&
-                              (question.employerFilled || question.bsbOnly);
-                            return (
-                              <div
-                                key={question.key}
-                                className="flex flex-col gap-2"
-                              >
-                                <Label htmlFor={question.key}>
-                                  {question.label}
-                                </Label>
-                                <Input
-                                  id={question.key}
-                                  disabled={locked}
-                                  value={values[question.key] ?? ''}
-                                  className={
-                                    open
-                                      ? 'bg-muted dark:bg-muted'
-                                      : locked
-                                        ? 'bg-muted text-muted-foreground'
-                                        : undefined
-                                  }
-                                  onChange={(event) =>
-                                    remember(question.key, event.target.value)
-                                  }
-                                />
-                              </div>
-                            );
-                          })}
-                        </div>
-                        {section.questions.some(
-                          (question) =>
-                            !fillsBsb(question) &&
-                            (question.employerFilled || question.bsbOnly)
-                        ) ? (
-                          <p className="text-xs text-muted-foreground">
-                            {section.questions.some(
-                              (question) => question.bsbOnly
-                            )
-                              ? 'Nur von BSB auszufüllen'
-                              : 'Vom Betrieb ausgefüllt'}
-                          </p>
-                        ) : null}
-                      </>
-                    ) : (
-                      section.questions.map((question) => (
-                        <QuestionnaireQuestion
-                          key={question.key}
-                          question={question}
-                          disabled={
-                            (question.employerFilled || question.bsbOnly) &&
-                            !fillsBsb(question)
-                          }
-                          employerFilled={question.employerFilled}
-                          fillable={fillsBsb(question)}
-                          uploadToken={token}
-                          onUploadBusy={(busy) =>
-                            setUploads((count) => count + (busy ? 1 : -1))
-                          }
-                          value={values[question.key] ?? ''}
-                          onChange={(value) => remember(question.key, value)}
-                        />
-                      ))
-                    )}
-                  </>
-                )}
-              </div>
-            ))}
+                        <p className="text-xs text-muted-foreground">
+                          {section.questions.some(
+                            (question) => question.bsbOnly
+                          )
+                            ? 'Nur von BSB auszufüllen'
+                            : 'Vom Betrieb ausgefüllt'}
+                        </p>
+                      ) : null}
+                    </>
+                  ) : (
+                    section.questions.map((question) => (
+                      <QuestionnaireQuestion
+                        key={question.key}
+                        question={question}
+                        disabled={
+                          (question.employerFilled || question.bsbOnly) &&
+                          !fillsBsb(question)
+                        }
+                        employerFilled={question.employerFilled}
+                        fillable={fillsBsb(question)}
+                        uploadToken={token}
+                        onUploadBusy={(busy) =>
+                          setUploads((count) => count + (busy ? 1 : -1))
+                        }
+                        value={values[question.key] ?? ''}
+                        onChange={(value) => remember(question.key, value)}
+                      />
+                    ))
+                  )}
+                  {section.questions.length > 0 ? repeaterBlock : null}
+                </QuestionnaireSectionCard>
+              );
+            })}
             <label className="mt-4 flex items-start gap-3 border-t border-border pt-4 text-sm text-foreground">
               <input
                 type="checkbox"

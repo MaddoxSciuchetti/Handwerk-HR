@@ -57,24 +57,33 @@ function publicPayload(definition: QuestionnaireDefinition | null) {
         intro: definition.intro,
         questions: [...presentQuestions(definition).filter((field) => field.key !== "declaration"), QUESTIONNAIRE_DECLARATION],
         repeaters: definitionRepeaters(definition),
-        items: [...definition.items.filter((item) => item.key !== "declaration").map((item) =>
-            item.kind === "repeater"
-                ? item
-                : {
-                      kind: "field" as const,
-                      key: item.key,
-                      label: item.label,
-                      section: item.section,
-                      type: item.type,
-                      required: questionRequired(item) && !item.bsbOnly,
-                      options: item.options,
-                      max: item.max,
-                      layout: item.layout,
-                      employerFilled: fieldIsLocked(item),
-                      bsbOnly: item.bsbOnly,
-                      defaultValue: item.defaultValue,
-                  },
-        ), { kind: "field" as const, ...QUESTIONNAIRE_DECLARATION, employerFilled: false }],
+        items: [...definition.items
+            .filter((item) => item.key !== "declaration" && !item.omitFromWorker)
+            .map((item) => {
+                if (item.kind === "section") {
+                    return {
+                        kind: "section" as const,
+                        key: item.key,
+                        title: item.title,
+                        optional: item.optional,
+                    };
+                }
+                if (item.kind === "repeater") return item;
+                return {
+                    kind: "field" as const,
+                    key: item.key,
+                    label: item.label,
+                    section: item.section,
+                    type: item.type,
+                    required: questionRequired(item) && !item.bsbOnly,
+                    options: item.options,
+                    max: item.max,
+                    layout: item.layout,
+                    employerFilled: fieldIsLocked(item),
+                    bsbOnly: item.bsbOnly,
+                    defaultValue: item.defaultValue,
+                };
+            }), { kind: "field" as const, ...QUESTIONNAIRE_DECLARATION, employerFilled: false }],
     };
 }
 

@@ -23,7 +23,9 @@ import type {
   TemplateField,
   TemplateItem,
   TemplateRepeater,
+  TemplateSection,
 } from './questionnaireTemplate.types';
+import { syncItemsToHeadlines } from '@shared/questionnaireSections';
 
 export function QuestionnaireTemplatePage() {
   const navigate = useNavigate();
@@ -97,7 +99,7 @@ export function QuestionnaireTemplatePage() {
     if (!moved) return;
     const target = from < index ? index - 1 : index;
     current.splice(target, 0, moved);
-    setItems(itemsFromBlocks(current));
+    setItems(syncItemsToHeadlines(itemsFromBlocks(current)));
   };
 
   const changeRepeater = (repeater: TemplateRepeater) => {
@@ -114,6 +116,27 @@ export function QuestionnaireTemplatePage() {
         item.kind === 'field' && item.key === field.key ? field : item
       )
     );
+  };
+
+  const changeSection = (section: TemplateSection) => {
+    setItems((current) => {
+      const previous = current.find(
+        (item) => item.kind === 'section' && item.key === section.key
+      );
+      const oldTitle =
+        previous && previous.kind === 'section' ? previous.title : section.title;
+      return current.map((item) => {
+        if (item.kind === 'section' && item.key === section.key) return section;
+        if (
+          item.kind !== 'section' &&
+          oldTitle !== section.title &&
+          item.section === oldTitle
+        ) {
+          return { ...item, section: section.title };
+        }
+        return item;
+      });
+    });
   };
 
   const remove = (id: string) => {
@@ -181,8 +204,10 @@ export function QuestionnaireTemplatePage() {
               contractFields={template.data?.contractFields ?? []}
               onDrop={drop}
               onInsert={insertItems}
+              onReplaceItems={setItems}
               onChangeField={changeField}
               onChangeRepeater={changeRepeater}
+              onChangeSection={changeSection}
               onCommitField={changeField}
               onRemove={remove}
             />

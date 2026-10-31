@@ -2,6 +2,10 @@ import {
     isCurrentDateField,
     normalizeDocumentFieldValue,
 } from "../../../shared/document";
+import {
+    formatHours,
+    weekdayHoursTotal,
+} from "../../../shared/weeklyHours";
 import type { DocumentSegment } from "@/services/documentBody";
 import {
     answerString,
@@ -114,8 +118,29 @@ function hoursKind(value: string): HoursKind | null {
     if (/stundenprotag|stundenamtag|taeglich|dailyhours|hoursperday|hoursmonday|hourstuesday|hourswednesday|hoursthursday|hoursfriday|hourssaturday|hourssunday/.test(text)) return "daily";
     if (/monatsstunden|stundenpromonat|monatlichearbeitszeit|hourspermonth|monthlyhours/.test(text)) return "monthly";
     if (/wochenstunden|wochenarbeitszeit|woechentlich|prowoche|jewoche|weeklyhours|hoursperweek/.test(text)) return "weekly";
-    if (/^(anzahl(der)?stunden|stundenzahl|arbeitsstunden|stunden|arbeitszeit|workinghours|employmentextent)$/.test(text)) return "generic";
+    if (/^(anzahl(der)?stunden|stundenanzahl|stundenzahl|arbeitsstunden|stunden|arbeitszeit|workinghours|employmentextent)$/.test(text)) return "generic";
     return null;
+}
+
+function isYesNoValue(value: string) {
+    return /^(ja|nein|yes|no|true|false)$/i.test(value.trim());
+}
+
+function isNumericMoney(value: string) {
+    return /^\d{1,7}(?:[.,]\d{1,2})?\s*(?:€|eur|euro)?$/i.test(value.trim());
+}
+
+/** Pay amount placeholders (not Stunde/Monat choice checkboxes). */
+export function isMoneyAmountField(
+    field: { key: string; label?: string; fieldType?: string },
+    context = "",
+) {
+    if (field.fieldType === "checkbox") return false;
+    const blob = fold(`${field.label ?? ""} ${keyTail(field.key)} ${context}`);
+    if (/jestunde|jemonat|prostunde|promonat/.test(blob)) return false;
+    return /gehalt|lohn|grundentgelt|bruttoarbeitsentgelt|bruttogehalt|zulage|verguetung|salary|monatsgehalt|netto|betrag|arbeitsentgelt|entgelt/.test(
+        blob,
+    );
 }
 function fieldHoursKind(field: { key: string; label: string }, context = "") {
     const kind = hoursKind(field.label) ?? hoursKind(keyTail(field.key));
@@ -125,11 +150,16 @@ function numericHours(value: string, max = 744) {
     const number = /^(\d{1,3}(?:[.,]\d{1,2})?)(?:\s*(?:h|std\.?|stunden)(?:\s*(?:pro|je)\s*woche)?)?$/i.exec(value.trim());
     return Boolean(number && Number(number[1].replace(",", ".")) <= max);
 }
-function matchScore(questionnaire: MatchField, contract: { key: string; label: string }, value: string, context: string) {
+function matchScore(questionnaire: MatchField, contract: { key: string; label: string; fieldType?: string }, value: string, context: string) {
     const answerLabel = fold(questionnaire.label);
     const answerKey = keyTail(questionnaire.key);
     const contractLabel = fold(contract.label);
     const contractKey = keyTail(contract.key);
+    if (
+        isMoneyAmountField(contract, context) &&
+        (isYesNoValue(value) || !isNumericMoney(value))
+    )
+        return 0;
     const sourceHours = fieldHoursKind(questionnaire);
     const targetHours = fieldHoursKind(contract, context);
     if (targetHours && targetHours !== "excluded") {
@@ -234,10 +264,18 @@ function skipQuestionnaireMatch(segment: DocumentSegment) {
     return segment.type === "input" && (segment.fieldType === "points" || isCurrentDateField(segment));
 }
 
-function canCopyAnswer(segment: DocumentSegment, value: string) {
-    if (segment.type !== "input" || segment.fieldType !== "checkbox") return true;
-    const normalized = normalizeDocumentFieldValue("checkbox", value);
-    return normalized === "true" || normalized === "false";
+function canCopyAnswer(segment: DocumentSegment, value: string, context = "") {
+    if (segment.type !== "input") return false;
+    if (segment.fieldType === "checkbox") {
+        const normalized = normalizeDocumentFieldValue("checkbox", value);
+        return normalized === "true" || normalized === "false";
+    }
+    if (
+        isMoneyAmountField(segment, context) &&
+        (isYesNoValue(value) || !isNumericMoney(value))
+    )
+        return false;
+    return true;
 }
 
 export function isSalutationField(field: { key: string; label?: string }) {
@@ -310,7 +348,7 @@ export function deterministicContractValues(
         const context = `${before?.type === "text" ? before.text.slice(-160) : ""} ${after?.type === "text" ? after.text.slice(0, 160) : ""}`;
         const candidates = fields.flatMap((field) => {
             const raw = formatMatchValue(field, answerString(answers, field.key));
-            if (!raw || !canCopyAnswer(segment, raw)) return [];
+            if (!raw || !canCopyAnswer(segment, raw, context)) return [];
             const score = matchScore(field, segment, raw, context);
             if (!score) return [];
             const value = adaptContractFieldValue(raw, segment, context);
@@ -321,6 +359,33 @@ export function deterministicContractValues(
         if (values.size !== 1) continue;
         filled.add(segment.key);
         entries.push({ key: segment.key, value: [...values][0] });
+    }
+
+    const weekdayTotal = weekdayHoursTotal(
+        Object.fromEntries(
+            fields.map((field) => [field.key, answerString(answers, field.key)]),
+        ),
+    );
+    if (weekdayTotal > 0) {
+        const hoursValue = formatHours(weekdayTotal);
+        for (const [index, segment] of segments.entries()) {
+            if (
+                segment.type !== "input" ||
+                skipQuestionnaireMatch(segment) ||
+                filled.has(segment.key) ||
+                segment.fieldType === "checkbox"
+            )
+                continue;
+            const before = segments[index - 1];
+            const after = segments[index + 1];
+            const context = `${before?.type === "text" ? before.text.slice(-160) : ""} ${after?.type === "text" ? after.text.slice(0, 160) : ""}`;
+            // Weekday totals are weekly hours only — never fill bare/generic
+            // "Anzahl der Stunden" without a weekly cue in the clause.
+            if (fieldHoursKind(segment, context) !== "weekly") continue;
+            if (!canCopyAnswer(segment, hoursValue, context)) continue;
+            filled.add(segment.key);
+            entries.push({ key: segment.key, value: hoursValue });
+        }
     }
 
     const salutation = salutationFromSex(answerString(answers, "sex"));
@@ -338,7 +403,7 @@ export function deterministicContractValues(
         }
     }
 
-    return entries;
+    return resolveExclusiveCheckboxes(segments, entries);
 }
 
 function matchAlias(label: string, key: string) {
@@ -463,6 +528,11 @@ export function acceptSemanticModelMatches(
             if (value !== "true" && value !== "false") return [];
         } else if (isSalutationField(field) && acceptedSalutation(value)) {
             // Anrede may be Herr or Frau derived from Geschlecht or the first name.
+        } else if (
+            isMoneyAmountField(field) &&
+            (isYesNoValue(value) || !isNumericMoney(value))
+        ) {
+            return [];
         } else if (value !== source) {
             // Allow stripping "6 Monate" → "6" when the template already has the unit.
             const duration = durationQuantity(source);
@@ -477,6 +547,72 @@ export function acceptSemanticModelMatches(
             }),
         }];
     });
+}
+
+type PayPeriod = "hour" | "month" | null;
+
+function payPeriodOf(segment: DocumentSegment, nearby: string): PayPeriod {
+    const blob = fold(`${segment.label} ${nearby}`);
+    if (/jestunde|prostunde|stundengehalt|stundenlohn|hourly/.test(blob))
+        return "hour";
+    if (/jemonat|promonat|monatsgehalt|monatlich|monthly/.test(blob))
+        return "month";
+    return null;
+}
+
+/** "je Stunde □ / je Monat □" cannot both be true. */
+export function resolveExclusiveCheckboxes(
+    segments: DocumentSegment[],
+    entries: { key: string; value: string }[],
+) {
+    const byKey = new Map(entries.map((entry) => [entry.key, entry.value]));
+
+    for (let index = 0; index < segments.length; index++) {
+        const left = segments[index];
+        if (left.type !== "input" || left.fieldType !== "checkbox") continue;
+
+        let between = "";
+        let right: DocumentSegment | undefined;
+        for (let next = index + 1; next < Math.min(index + 6, segments.length); next++) {
+            const item = segments[next];
+            if (item.type === "text") between += item.text;
+            if (item.type === "input" && item.fieldType === "checkbox") {
+                right = item;
+                break;
+            }
+        }
+        if (!right || right.type !== "input") continue;
+        if (byKey.get(left.key) !== "true" || byKey.get(right.key) !== "true")
+            continue;
+
+        const before =
+            segments[index - 1]?.type === "text" ? segments[index - 1].text : "";
+        const frame = `${before} ${left.label} ${between} ${right.label}`;
+        const leftPeriod = payPeriodOf(left, `${before} ${between}`);
+        const rightPeriod = payPeriodOf(right, between);
+        const exclusivePair =
+            (leftPeriod && rightPeriod && leftPeriod !== rightPeriod) ||
+            (between.includes("/") && fold(between).length < 48);
+        if (!exclusivePair) continue;
+
+        const folded = fold(frame);
+        const preferMonth = /monatlich|monatsgehalt|monatslohn/.test(folded);
+        const preferHour = /stundenlohn|stundengehalt/.test(folded);
+
+        let keep: PayPeriod = null;
+        if (preferMonth && !preferHour) keep = "month";
+        else if (preferHour && !preferMonth) keep = "hour";
+
+        if (leftPeriod && rightPeriod && keep) {
+            byKey.set(left.key, leftPeriod === keep ? "true" : "false");
+            byKey.set(right.key, rightPeriod === keep ? "true" : "false");
+        } else {
+            byKey.set(left.key, "false");
+            byKey.set(right.key, "false");
+        }
+    }
+
+    return [...byKey].map(([key, value]) => ({ key, value }));
 }
 
 export function valuesForDocumentSegments(
