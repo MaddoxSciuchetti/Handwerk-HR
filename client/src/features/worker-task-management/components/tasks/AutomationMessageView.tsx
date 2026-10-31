@@ -36,7 +36,6 @@ export function AutomationMessageView({
 
   useEffect(() => {
     if (!open || body === savedBody.current) return;
-    setSaving(true);
     const timeout = window.setTimeout(() => {
       onSaveRef.current({ ...messageRef.current, body });
       savedBody.current = body;
@@ -80,7 +79,10 @@ export function AutomationMessageView({
               disabled={disabled}
               rows={14}
               className="min-h-72 resize-none rounded-xl border-0 p-4 text-sm shadow-none focus-visible:ring-0 md:text-sm"
-              onChange={(event) => setBody(event.target.value)}
+              onChange={(event) => {
+                setBody(event.target.value);
+                setSaving(true);
+              }}
             />
             {saving && (
               <Spinner
