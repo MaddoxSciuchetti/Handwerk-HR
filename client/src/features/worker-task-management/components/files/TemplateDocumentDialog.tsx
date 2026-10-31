@@ -18,6 +18,7 @@ import {
 } from '../../hooks/useTemplateDocuments';
 import { printPdfBlob } from '../../printPdf';
 import { ContractDraftBody } from './ContractDraftBody';
+import { UnmatchedQuestionnaireAnswers } from './UnmatchedQuestionnaireAnswers';
 import {
   documentPreviewModalPanel,
   documentPreviewModalSize,
@@ -180,12 +181,26 @@ export function TemplateDocumentDialog({
                 </p>
               )}
             </div>
-            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+            <div className="flex min-h-0 min-w-0 flex-1 gap-4 overflow-hidden">
+              {(data.questionnaireAnswers ?? data.unmatchedAnswers).length >
+              0 ? (
+                <UnmatchedQuestionnaireAnswers
+                  title="Fragebogen"
+                  description="Alle Angaben aus dem Fragebogen. Ziehen Sie eine Angabe auf ein markiertes Feld im Dokument."
+                  answers={
+                    data.questionnaireAnswers ?? data.unmatchedAnswers
+                  }
+                />
+              ) : null}
               <ContractDraftBody
                 document={data.document}
                 segments={data.segments}
                 values={values}
                 readOnly={false}
+                acceptAnswerDrop={
+                  (data.questionnaireAnswers ?? data.unmatchedAnswers)
+                    .length > 0
+                }
                 onValueChange={(key, value) => {
                   edited.current = true;
                   setValues((current) => ({ ...current, [key]: value }));

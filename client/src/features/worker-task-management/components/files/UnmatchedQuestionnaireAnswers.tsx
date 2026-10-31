@@ -8,8 +8,9 @@ import {
 
 type UnmatchedQuestionnaireAnswersProps = {
   answers: UnmatchedQuestionnaireAnswer[];
-  onEditMaster: () => void;
-  saving: boolean;
+  onEditMaster?: () => void;
+  saving?: boolean;
+  title?: string;
   description?: string;
   unresolvedLabels?: string[];
   masterHint?: string;
@@ -19,7 +20,8 @@ type UnmatchedQuestionnaireAnswersProps = {
 export function UnmatchedQuestionnaireAnswers({
   answers,
   onEditMaster,
-  saving,
+  saving = false,
+  title = 'Nicht zugeordnet',
   description = 'Diese Angaben aus dem Fragebogen konnten keinem Feld zugeordnet werden. Ziehen Sie eine Angabe auf ein markiertes Feld im Vertrag. Eine grüne Umrandung zeigt, wo Sie loslassen können.',
   unresolvedLabels = [],
   masterHint = 'Fehlt das Feld im Vertrag, ergänzen Sie die Eingabe im Mustervertrag und kehren Sie danach hierher zurück.',
@@ -29,7 +31,7 @@ export function UnmatchedQuestionnaireAnswers({
   return (
     <aside className="flex w-60 shrink-0 flex-col gap-3 overflow-auto">
       <div>
-        <h3 className="text-sm font-medium">Nicht zugeordnet</h3>
+        <h3 className="text-sm font-medium">{title}</h3>
         {description ? (
           <p className="mt-1 text-xs leading-5 text-muted-foreground">
             {description}
@@ -76,18 +78,20 @@ export function UnmatchedQuestionnaireAnswers({
           </li>
         ))}
       </ul>
-      <div className="mt-auto flex flex-col gap-2 border-t border-border pt-3">
-        <p className="text-xs leading-5 text-muted-foreground">{masterHint}</p>
-        <Button
-          type="button"
-          variant="outline"
-          className="rounded-2xl"
-          disabled={saving}
-          onClick={onEditMaster}
-        >
-          {saving ? 'Speichert…' : masterAction}
-        </Button>
-      </div>
+      {onEditMaster ? (
+        <div className="mt-auto flex flex-col gap-2 border-t border-border pt-3">
+          <p className="text-xs leading-5 text-muted-foreground">{masterHint}</p>
+          <Button
+            type="button"
+            variant="outline"
+            className="rounded-2xl"
+            disabled={saving}
+            onClick={onEditMaster}
+          >
+            {saving ? 'Speichert…' : masterAction}
+          </Button>
+        </div>
+      ) : null}
     </aside>
   );
 }
