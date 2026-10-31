@@ -35,6 +35,7 @@ type QuestionnaireStackProps = {
   onChangeSection: (section: TemplateSection) => void;
   onCommitField: (field: TemplateField) => void;
   onRemove: (id: string) => void;
+  onSectionOmitChange?: (section: string, omitted: boolean) => void;
 };
 
 type StackGroup =
@@ -57,6 +58,7 @@ export function QuestionnaireStack({
   onChangeSection,
   onCommitField,
   onRemove,
+  onSectionOmitChange,
 }: QuestionnaireStackProps) {
   const [insertAt, setInsertAt] = useState<number | null>(null);
   const { rootRef, preview, start, cancel, over, finish } =
@@ -109,7 +111,15 @@ export function QuestionnaireStack({
     index: number,
     article: ReactNode,
     options?: { articleClassName?: string; afterArticle?: ReactNode }
-  ) => (
+  ) => {
+    // Keep section headlines still while a nested field is dragged so the
+    // translate preview cannot slide them out of the section card.
+    const isSection = block.items[0]?.kind === 'section';
+    const dragOffset =
+      preview && !(isSection && preview.id !== block.id)
+        ? (preview.offsets.get(block.id) ?? 0)
+        : 0;
+    return (
     <div
       key={block.id}
       data-questionnaire-sort-item={block.id}
@@ -117,7 +127,7 @@ export function QuestionnaireStack({
       style={
         preview
           ? {
-              transform: `translateY(${preview.offsets.get(block.id) ?? 0}px)`,
+              transform: `translateY(${dragOffset}px)`,
               opacity: preview.id === block.id ? 0.001 : 1,
             }
           : undefined
@@ -160,7 +170,8 @@ export function QuestionnaireStack({
       </article>
       {options?.afterArticle}
     </div>
-  );
+    );
+  };
 
   const blockBody = (block: QuestionnaireBlock, index: number) => (
     <BlockBody
@@ -170,6 +181,7 @@ export function QuestionnaireStack({
       onChangeRepeater={onChangeRepeater}
       onChangeSection={onChangeSection}
       onCommitField={onCommitField}
+      onSectionOmitChange={onSectionOmitChange}
       onAdd={(field) => onInsert(index, [field])}
     />
   );
@@ -227,7 +239,9 @@ export function QuestionnaireStack({
         return (
           <div
             key={group.block.id}
-            className="min-w-0 overflow-hidden rounded-2xl border border-border bg-card"
+            className={`min-w-0 rounded-2xl border border-border bg-muted/50 ${
+              preview ? 'overflow-visible' : 'overflow-hidden'
+            }`}
           >
             {renderSortItem(
               group.block,
@@ -238,7 +252,7 @@ export function QuestionnaireStack({
                   'relative min-w-0 cursor-default rounded-none border-0 bg-transparent py-4 pr-12 pl-5 outline-none',
               }
             )}
-            <div className="flex flex-col border-t border-border/70 bg-background px-3 pt-1 pb-3">
+            <div className="flex flex-col border-t border-border/60 px-3 pt-1 pb-3">
               {group.children.length > 0 ? gap(firstChildIndex) : null}
               {group.children.map((child) =>
                 renderSortItem(
