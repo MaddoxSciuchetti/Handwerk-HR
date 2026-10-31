@@ -4,6 +4,7 @@ import { apiJson } from '@/config/apiClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Spinner } from '@/components/ui/spinner';
 import { QuestionnaireQuestion } from '@/features/questionnaire/QuestionnaireQuestion';
 import { QuestionnaireRepeatableRows } from '@/features/questionnaire/QuestionnaireRepeatableRows';
 import { QuestionnaireSectionCard } from '@/features/questionnaire/QuestionnaireSectionCard';
@@ -126,6 +127,7 @@ export function CompletedQuestionnaireEditor({
     structuredClone(questionnaire.answers)
   );
   const [status, setStatus] = useState<'saved' | 'pending' | 'error'>('saved');
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const queryClient = useQueryClient();
   const questions = questionnaire.items.flatMap((item) =>
@@ -150,6 +152,7 @@ export function CompletedQuestionnaireEditor({
     }
     runningRef.current = true;
     onBusy(true);
+    if (mountedRef.current) setSaving(true);
     try {
       while (true) {
         queuedRef.current = false;
@@ -230,6 +233,7 @@ export function CompletedQuestionnaireEditor({
       }
     } finally {
       runningRef.current = false;
+      if (mountedRef.current) setSaving(false);
       onBusy(false);
     }
   };
@@ -283,25 +287,16 @@ export function CompletedQuestionnaireEditor({
     <div className="flex h-full min-h-0 flex-col gap-4">
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="flex flex-col gap-4">
-          <div className="flex items-start justify-between gap-3">
-            <h1 className="text-xl font-medium">
-              {questionnaire.name ?? 'Personalfragebogen'}
-            </h1>
-            <p
-              role="status"
-              className="shrink-0 pt-1 text-xs text-muted-foreground"
-            >
-              {status === 'pending'
-                ? 'Speichert…'
-                : status === 'error'
-                  ? 'Nicht gespeichert'
-                  : 'Gespeichert'}
-            </p>
-          </div>
+          <h1 className="text-xl font-medium">
+            {questionnaire.name ?? 'Personalfragebogen'}
+          </h1>
           {questionnaire.intro ? (
             <p className="text-sm text-muted-foreground">{questionnaire.intro}</p>
           ) : null}
-          <div className="flex flex-col gap-4">
+          <fieldset
+            disabled={saving}
+            className="flex flex-col gap-4 disabled:opacity-100 [&:disabled_input]:bg-muted [&:disabled_textarea]:bg-muted [&:disabled_select]:bg-muted [&:disabled_button]:bg-muted"
+          >
             {sections.map((section, index) => {
               const weekly = section.questions.some((question) =>
                 isWeeklyHoursKey(question.key)
@@ -434,7 +429,7 @@ export function CompletedQuestionnaireEditor({
                 </QuestionnaireSectionCard>
               );
             })}
-          </div>
+          </fieldset>
           {error ? (
             <p role="alert" className="text-sm text-destructive">
               {error}
@@ -442,7 +437,13 @@ export function CompletedQuestionnaireEditor({
           ) : null}
         </div>
       </div>
-      <div className="flex shrink-0 justify-end">
+      <div className="flex shrink-0 items-center justify-end gap-3">
+        {status === 'pending' || saving ? (
+          <Spinner
+            className="size-4 text-muted-foreground"
+            aria-label="Speichert…"
+          />
+        ) : null}
         <Button
           type="button"
           variant="outline"

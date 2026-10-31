@@ -155,31 +155,46 @@ async function openEditable() {
 }
 
 it('autosaves corrections with the revision after a short delay', async () => {
-  vi.mocked(apiJson.put).mockResolvedValue({
-    data: {
-      ...editableQuestionnaire,
-      revision: 1,
-      answers: { lastName: 'Correct' },
-    },
-  });
+  let finishSave!: (value: { data: CompletedQuestionnaire }) => void;
+  vi.mocked(apiJson.put).mockImplementation(
+    () =>
+      new Promise((resolve) => {
+        finishSave = resolve;
+      })
+  );
   await openEditable();
   expect(apiJson.put).not.toHaveBeenCalled();
   await act(async () => {
     await vi.advanceTimersByTimeAsync(350);
   });
-  await waitFor(() =>
-    expect(apiJson.put).toHaveBeenCalledWith(
-      'worker/worker/engagements/eng/questionnaire/completed',
-      {
-        revision: 0,
+  await waitFor(() => expect(apiJson.put).toHaveBeenCalled());
+  expect(apiJson.put).toHaveBeenCalledWith(
+    'worker/worker/engagements/eng/questionnaire/completed',
+    {
+      revision: 0,
+      answers: { lastName: 'Correct' },
+    }
+  );
+  expect(screen.getByRole('status', { name: 'Speichert…' })).toBeInTheDocument();
+  expect(screen.getByRole('textbox', { name: 'Familienname' })).toBeDisabled();
+  await act(async () => {
+    finishSave({
+      data: {
+        ...editableQuestionnaire,
+        revision: 1,
         answers: { lastName: 'Correct' },
-      }
-    )
+      },
+    });
+  });
+  await waitFor(() =>
+    expect(screen.getByRole('textbox', { name: 'Familienname' })).toBeEnabled()
   );
   expect(screen.getByRole('textbox', { name: 'Familienname' })).toHaveValue(
     'Correct'
   );
-  expect(await screen.findByRole('status')).toHaveTextContent('Gespeichert');
+  expect(
+    screen.queryByRole('status', { name: 'Speichert…' })
+  ).not.toBeInTheDocument();
 });
 
 it('keeps entered corrections when autosave fails', async () => {
