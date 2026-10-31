@@ -2,9 +2,21 @@ import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiJson } from '@/config/apiClient';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { QuestionnaireQuestion } from '@/features/questionnaire/QuestionnaireQuestion';
 import { QuestionnaireRepeatableRows } from '@/features/questionnaire/QuestionnaireRepeatableRows';
+import { QuestionnaireSectionCard } from '@/features/questionnaire/QuestionnaireSectionCard';
 import { QuestionnaireTableRows } from '@/features/questionnaire/QuestionnaireTableRows';
+import { WeeklyHoursAnswer } from '@/features/questionnaire/WeeklyHoursAnswer';
+import type {
+  QuestionnaireQuestion as QuestionnaireQuestionData,
+  QuestionnaireRepeater,
+} from '@/features/questionnaire/questionnaire.types';
+import {
+  isWeekdayHourKey,
+  isWeeklyHoursKey,
+} from '@shared/weeklyHours';
 import { employmentContractKey } from '../../hooks/useEmploymentContract';
 import { WORKERBYID } from '../../consts/query-key.consts';
 import { ALL_WORKER_DATA } from '@/features/worker-lifecycle/consts/query-key.consts';
@@ -18,6 +30,67 @@ type Props = {
   onDone: () => void;
   onBusy: (busy: boolean) => void;
 };
+
+type Section = {
+  title: string;
+  optional?: boolean;
+  questions: QuestionnaireQuestionData[];
+  repeater?: QuestionnaireRepeater;
+};
+
+function buildSections(
+  items: CompletedQuestionnaire['items']
+): Section[] {
+  const editableItems = items.filter((item) => item.key !== 'declaration');
+  const hasHeadlines = editableItems.some((item) => item.kind === 'section');
+  return editableItems.reduce<Section[]>((list, item) => {
+    if (item.kind === 'section') {
+      list.push({
+        title: item.title,
+        optional: item.optional,
+        questions: [],
+      });
+      return list;
+    }
+    if (item.kind === 'repeater') {
+      if (hasHeadlines) {
+        const current = list.at(-1);
+        if (current && !current.repeater && current.questions.length === 0) {
+          current.repeater = item;
+          return list;
+        }
+        if (current && !current.repeater) {
+          current.repeater = item;
+          return list;
+        }
+      }
+      list.push({ title: item.section, questions: [], repeater: item });
+      return list;
+    }
+    if (hasHeadlines) {
+      const current = list.at(-1);
+      if (!current) {
+        list.push({ title: item.section, questions: [item] });
+      } else if (current.repeater && current.questions.length > 0) {
+        list.push({
+          title: current.title,
+          optional: current.optional,
+          questions: [item],
+        });
+      } else {
+        current.questions.push(item);
+      }
+      return list;
+    }
+    const current = list.at(-1);
+    if (!current || current.repeater || current.title !== item.section) {
+      list.push({ title: item.section, questions: [item] });
+    } else {
+      current.questions.push(item);
+    }
+    return list;
+  }, []);
+}
 
 export function CompletedQuestionnaireEditor({
   workerId,
@@ -34,6 +107,10 @@ export function CompletedQuestionnaireEditor({
   );
   const [error, setError] = useState('');
   const queryClient = useQueryClient();
+  const questions = questionnaire.items.flatMap((item) =>
+    item.kind === 'field' ? [item] : []
+  );
+  const sections = buildSections(questionnaire.items);
   const save = useMutation({
     mutationFn: () => {
       const corrections = Object.fromEntries(
@@ -100,10 +177,17 @@ export function CompletedQuestionnaireEditor({
   });
   const update = (key: string, value: string | Record<string, string>[]) =>
     setAnswers((current) => ({ ...current, [key]: value }));
+  const fieldValue = (key: string) => {
+    const value = answers[key];
+    return typeof value === 'string' ? value : '';
+  };
+  const fieldValues = Object.fromEntries(
+    questions.map((question) => [question.key, fieldValue(question.key)])
+  );
 
   return (
     <form
-      className="space-y-6"
+      className="flex flex-col gap-4"
       onSubmit={(event) => {
         event.preventDefault();
         setError('');
@@ -111,62 +195,133 @@ export function CompletedQuestionnaireEditor({
         save.mutate();
       }}
     >
-      <p className="text-sm text-muted-foreground">
-        Änderungen werden erst mit „Speichern“ übernommen. Der Vertrag wird
-        separat synchronisiert.
-      </p>
-      <fieldset disabled={save.isPending} className="space-y-6">
-        {questionnaire.items.map((item) => {
-          if (item.kind === 'section') {
-            return (
-              <h3 key={item.key} className="pt-2 text-base font-semibold">
-                {item.title}
-              </h3>
-            );
-          }
-          const value = answers[item.key];
-          if (item.kind === 'repeater') {
-            const rows = Array.isArray(value) ? value : [];
-            const repeater = {
-              ...item,
-              columns: item.columns.map((column) => ({
-                ...column,
-                officeOnly: false,
-              })),
-            };
-            return item.key.startsWith('rows.') ? (
+      <h1 className="text-xl font-medium">
+        {questionnaire.name ?? 'Personalfragebogen'}
+      </h1>
+      {questionnaire.intro ? (
+        <p className="text-sm text-muted-foreground">{questionnaire.intro}</p>
+      ) : null}
+      <fieldset disabled={save.isPending} className="flex flex-col gap-4">
+        {sections.map((section, index) => {
+          const weekly = section.questions.some((question) =>
+            isWeeklyHoursKey(question.key)
+          );
+          const value = section.repeater
+            ? answers[section.repeater.key]
+            : undefined;
+          const rows = Array.isArray(value) ? value : [];
+          const repeaterBlock = section.repeater ? (
+            section.repeater.key.startsWith('rows.') ? (
               <QuestionnaireTableRows
-                key={item.key}
-                repeater={repeater}
+                repeater={{
+                  ...section.repeater,
+                  columns: section.repeater.columns.map((column) => ({
+                    ...column,
+                    officeOnly: false,
+                  })),
+                }}
                 rows={rows}
-                onChange={(next) => update(item.key, next)}
+                onChange={(next) => update(section.repeater!.key, next)}
               />
             ) : (
               <QuestionnaireRepeatableRows
-                key={item.key}
-                repeater={repeater}
+                repeater={{
+                  ...section.repeater,
+                  columns: section.repeater.columns.map((column) => ({
+                    ...column,
+                    officeOnly: false,
+                  })),
+                }}
                 rows={rows}
-                onChange={(next) => update(item.key, next)}
+                onChange={(next) => update(section.repeater!.key, next)}
               />
-            );
-          }
-          if (item.type === 'file')
-            return (
-              <p key={item.key} className="text-sm">
-                {item.label}: {questionnaire.files?.[item.key]?.name ?? '—'}
-              </p>
-            );
+            )
+          ) : null;
+
           return (
-            <QuestionnaireQuestion
-              key={item.key}
-              question={{
-                ...item,
-                required: item.bsbOnly ? false : item.required,
-                officeEditable: true,
-              }}
-              value={typeof value === 'string' ? value : ''}
-              onChange={(next) => update(item.key, next)}
-            />
+            <QuestionnaireSectionCard
+              key={`${index}-${section.title}`}
+              title={section.title}
+              optional={section.optional}
+            >
+              {section.questions.length === 0 && repeaterBlock
+                ? repeaterBlock
+                : weekly ? (
+                    <>
+                      <WeeklyHoursAnswer
+                        questions={questions}
+                        values={fieldValues}
+                        fillBsb={section.questions.some((question) =>
+                          isWeekdayHourKey(question.key)
+                        )}
+                        onChange={(key, next) => update(key, next)}
+                      />
+                      {section.questions
+                        .filter((question) => !isWeeklyHoursKey(question.key))
+                        .map((question) =>
+                          question.type === 'file' ? (
+                            <p key={question.key} className="text-sm">
+                              {question.label}:{' '}
+                              {questionnaire.files?.[question.key]?.name ?? '—'}
+                            </p>
+                          ) : (
+                            <QuestionnaireQuestion
+                              key={question.key}
+                              question={{
+                                ...question,
+                                required: question.bsbOnly
+                                  ? false
+                                  : question.required,
+                                officeEditable: true,
+                              }}
+                              value={fieldValue(question.key)}
+                              onChange={(next) => update(question.key, next)}
+                            />
+                          )
+                        )}
+                    </>
+                  ) : section.questions.every(
+                      (question) => question.layout === 'inline'
+                    ) ? (
+                    <div className="grid grid-cols-4 gap-3 sm:grid-cols-7">
+                      {section.questions.map((question) => (
+                        <div key={question.key} className="flex flex-col gap-2">
+                          <Label htmlFor={question.key}>{question.label}</Label>
+                          <Input
+                            id={question.key}
+                            value={fieldValue(question.key)}
+                            onChange={(event) =>
+                              update(question.key, event.target.value)
+                            }
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    section.questions.map((question) =>
+                      question.type === 'file' ? (
+                        <p key={question.key} className="text-sm">
+                          {question.label}:{' '}
+                          {questionnaire.files?.[question.key]?.name ?? '—'}
+                        </p>
+                      ) : (
+                        <QuestionnaireQuestion
+                          key={question.key}
+                          question={{
+                            ...question,
+                            required: question.bsbOnly
+                              ? false
+                              : question.required,
+                            officeEditable: true,
+                          }}
+                          value={fieldValue(question.key)}
+                          onChange={(next) => update(question.key, next)}
+                        />
+                      )
+                    )
+                  )}
+              {section.questions.length > 0 ? repeaterBlock : null}
+            </QuestionnaireSectionCard>
           );
         })}
       </fieldset>
@@ -179,12 +334,17 @@ export function CompletedQuestionnaireEditor({
         <Button
           type="button"
           variant="outline"
+          className="rounded-2xl"
           disabled={save.isPending}
           onClick={onDone}
         >
           Abbrechen
         </Button>
-        <Button type="submit" disabled={save.isPending}>
+        <Button
+          type="submit"
+          className="rounded-2xl"
+          disabled={save.isPending}
+        >
           {save.isPending ? 'Speichert…' : 'Speichern'}
         </Button>
       </div>
