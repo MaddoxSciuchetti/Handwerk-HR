@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { apiJson } from '@/config/apiClient';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,27 @@ import { employmentContractKey } from '../../hooks/useEmploymentContract';
 import { WORKERBYID } from '../../consts/query-key.consts';
 import { ALL_WORKER_DATA } from '@/features/worker-lifecycle/consts/query-key.consts';
 import type { CompletedQuestionnaire } from './EngagementQuestionnaireList';
+
+function SavingField({
+  saving,
+  children,
+}: {
+  saving: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      aria-busy={saving || undefined}
+      className={
+        saving
+          ? '[&_input]:bg-muted [&_textarea]:bg-muted [&_select]:bg-muted'
+          : undefined
+      }
+    >
+      {children}
+    </div>
+  );
+}
 
 type Props = {
   workerId: string;
@@ -127,13 +148,14 @@ export function CompletedQuestionnaireEditor({
     structuredClone(questionnaire.answers)
   );
   const [status, setStatus] = useState<'saved' | 'pending' | 'error'>('saved');
-  const [saving, setSaving] = useState(false);
+  const [savingKeys, setSavingKeys] = useState<string[]>([]);
   const [error, setError] = useState('');
   const queryClient = useQueryClient();
   const questions = questionnaire.items.flatMap((item) =>
     item.kind === 'field' ? [item] : []
   );
   const sections = buildSections(questionnaire.items);
+  const saving = savingKeys.length > 0;
 
   const answersRef = useRef(answers);
   const savedRef = useRef(structuredClone(questionnaire.answers));
@@ -152,7 +174,6 @@ export function CompletedQuestionnaireEditor({
     }
     runningRef.current = true;
     onBusy(true);
-    if (mountedRef.current) setSaving(true);
     try {
       while (true) {
         queuedRef.current = false;
@@ -162,13 +183,16 @@ export function CompletedQuestionnaireEditor({
           savedRef.current,
           snapshot
         );
-        if (Object.keys(corrections).length === 0) {
+        const keys = Object.keys(corrections);
+        if (keys.length === 0) {
           if (mountedRef.current) {
+            setSavingKeys([]);
             setStatus('saved');
             setError('');
           }
           break;
         }
+        if (mountedRef.current) setSavingKeys(keys);
         try {
           const { data } = await apiJson.put<{ data: CompletedQuestionnaire }>(
             `worker/${workerId}/engagements/${engagementId}/questionnaire/completed`,
@@ -188,6 +212,7 @@ export function CompletedQuestionnaireEditor({
           });
           void queryClient.invalidateQueries({ queryKey: [ALL_WORKER_DATA] });
           if (!queuedRef.current && mountedRef.current) {
+            setSavingKeys([]);
             setStatus('saved');
             setError('');
           }
@@ -198,6 +223,7 @@ export function CompletedQuestionnaireEditor({
             errors?: { path: string; message: string }[];
           };
           if (mountedRef.current) {
+            setSavingKeys([]);
             setStatus('error');
             if (issue.status === 409) {
               setError(
@@ -233,7 +259,7 @@ export function CompletedQuestionnaireEditor({
       }
     } finally {
       runningRef.current = false;
-      if (mountedRef.current) setSaving(false);
+      if (mountedRef.current && !queuedRef.current) setSavingKeys([]);
       onBusy(false);
     }
   };
@@ -293,10 +319,7 @@ export function CompletedQuestionnaireEditor({
           {questionnaire.intro ? (
             <p className="text-sm text-muted-foreground">{questionnaire.intro}</p>
           ) : null}
-          <fieldset
-            disabled={saving}
-            className="flex flex-col gap-4 disabled:opacity-100 [&:disabled_input]:bg-muted [&:disabled_textarea]:bg-muted [&:disabled_select]:bg-muted [&:disabled_button]:bg-muted"
-          >
+          <div className="flex flex-col gap-4">
             {sections.map((section, index) => {
               const weekly = section.questions.some((question) =>
                 isWeeklyHoursKey(question.key)
@@ -305,32 +328,42 @@ export function CompletedQuestionnaireEditor({
                 ? answers[section.repeater.key]
                 : undefined;
               const rows = Array.isArray(value) ? value : [];
+              const repeaterSaving = Boolean(
+                section.repeater && savingKeys.includes(section.repeater.key)
+              );
+              const weeklySaving = section.questions.some(
+                (question) =>
+                  isWeeklyHoursKey(question.key) &&
+                  savingKeys.includes(question.key)
+              );
               const repeaterBlock = section.repeater ? (
-                section.repeater.key.startsWith('rows.') ? (
-                  <QuestionnaireTableRows
-                    repeater={{
-                      ...section.repeater,
-                      columns: section.repeater.columns.map((column) => ({
-                        ...column,
-                        officeOnly: false,
-                      })),
-                    }}
-                    rows={rows}
-                    onChange={(next) => update(section.repeater!.key, next)}
-                  />
-                ) : (
-                  <QuestionnaireRepeatableRows
-                    repeater={{
-                      ...section.repeater,
-                      columns: section.repeater.columns.map((column) => ({
-                        ...column,
-                        officeOnly: false,
-                      })),
-                    }}
-                    rows={rows}
-                    onChange={(next) => update(section.repeater!.key, next)}
-                  />
-                )
+                <SavingField saving={repeaterSaving}>
+                  {section.repeater.key.startsWith('rows.') ? (
+                    <QuestionnaireTableRows
+                      repeater={{
+                        ...section.repeater,
+                        columns: section.repeater.columns.map((column) => ({
+                          ...column,
+                          officeOnly: false,
+                        })),
+                      }}
+                      rows={rows}
+                      onChange={(next) => update(section.repeater!.key, next)}
+                    />
+                  ) : (
+                    <QuestionnaireRepeatableRows
+                      repeater={{
+                        ...section.repeater,
+                        columns: section.repeater.columns.map((column) => ({
+                          ...column,
+                          officeOnly: false,
+                        })),
+                      }}
+                      rows={rows}
+                      onChange={(next) => update(section.repeater!.key, next)}
+                    />
+                  )}
+                </SavingField>
               ) : null;
 
               return (
@@ -343,14 +376,16 @@ export function CompletedQuestionnaireEditor({
                     ? repeaterBlock
                     : weekly ? (
                         <>
-                          <WeeklyHoursAnswer
-                            questions={questions}
-                            values={fieldValues}
-                            fillBsb={section.questions.some((question) =>
-                              isWeekdayHourKey(question.key)
-                            )}
-                            onChange={(key, next) => update(key, next)}
-                          />
+                          <SavingField saving={weeklySaving}>
+                            <WeeklyHoursAnswer
+                              questions={questions}
+                              values={fieldValues}
+                              fillBsb={section.questions.some((question) =>
+                                isWeekdayHourKey(question.key)
+                              )}
+                              onChange={(key, next) => update(key, next)}
+                            />
+                          </SavingField>
                           {section.questions
                             .filter(
                               (question) => !isWeeklyHoursKey(question.key)
@@ -363,20 +398,24 @@ export function CompletedQuestionnaireEditor({
                                     '—'}
                                 </p>
                               ) : (
-                                <QuestionnaireQuestion
+                                <SavingField
                                   key={question.key}
-                                  question={{
-                                    ...question,
-                                    required: question.bsbOnly
-                                      ? false
-                                      : question.required,
-                                    officeEditable: true,
-                                  }}
-                                  value={fieldValue(question.key)}
-                                  onChange={(next) =>
-                                    update(question.key, next)
-                                  }
-                                />
+                                  saving={savingKeys.includes(question.key)}
+                                >
+                                  <QuestionnaireQuestion
+                                    question={{
+                                      ...question,
+                                      required: question.bsbOnly
+                                        ? false
+                                        : question.required,
+                                      officeEditable: true,
+                                    }}
+                                    value={fieldValue(question.key)}
+                                    onChange={(next) =>
+                                      update(question.key, next)
+                                    }
+                                  />
+                                </SavingField>
                               )
                             )}
                         </>
@@ -385,21 +424,23 @@ export function CompletedQuestionnaireEditor({
                         ) ? (
                         <div className="grid grid-cols-4 gap-3 sm:grid-cols-7">
                           {section.questions.map((question) => (
-                            <div
+                            <SavingField
                               key={question.key}
-                              className="flex flex-col gap-2"
+                              saving={savingKeys.includes(question.key)}
                             >
-                              <Label htmlFor={question.key}>
-                                {question.label}
-                              </Label>
-                              <Input
-                                id={question.key}
-                                value={fieldValue(question.key)}
-                                onChange={(event) =>
-                                  update(question.key, event.target.value)
-                                }
-                              />
-                            </div>
+                              <div className="flex flex-col gap-2">
+                                <Label htmlFor={question.key}>
+                                  {question.label}
+                                </Label>
+                                <Input
+                                  id={question.key}
+                                  value={fieldValue(question.key)}
+                                  onChange={(event) =>
+                                    update(question.key, event.target.value)
+                                  }
+                                />
+                              </div>
+                            </SavingField>
                           ))}
                         </div>
                       ) : (
@@ -410,18 +451,24 @@ export function CompletedQuestionnaireEditor({
                               {questionnaire.files?.[question.key]?.name ?? '—'}
                             </p>
                           ) : (
-                            <QuestionnaireQuestion
+                            <SavingField
                               key={question.key}
-                              question={{
-                                ...question,
-                                required: question.bsbOnly
-                                  ? false
-                                  : question.required,
-                                officeEditable: true,
-                              }}
-                              value={fieldValue(question.key)}
-                              onChange={(next) => update(question.key, next)}
-                            />
+                              saving={savingKeys.includes(question.key)}
+                            >
+                              <QuestionnaireQuestion
+                                question={{
+                                  ...question,
+                                  required: question.bsbOnly
+                                    ? false
+                                    : question.required,
+                                  officeEditable: true,
+                                }}
+                                value={fieldValue(question.key)}
+                                onChange={(next) =>
+                                  update(question.key, next)
+                                }
+                              />
+                            </SavingField>
                           )
                         )
                       )}
@@ -429,7 +476,7 @@ export function CompletedQuestionnaireEditor({
                 </QuestionnaireSectionCard>
               );
             })}
-          </fieldset>
+          </div>
           {error ? (
             <p role="alert" className="text-sm text-destructive">
               {error}
