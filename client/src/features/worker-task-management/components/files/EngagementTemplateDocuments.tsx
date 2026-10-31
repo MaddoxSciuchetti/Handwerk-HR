@@ -8,10 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  documentKindLabel,
-  isTemplateDocumentKind,
-} from '@/features/settings/documents/documentMaster.types';
+import { documentKindLabel } from '@/features/settings/documents/documentMaster.types';
 import { useDocumentMasters } from '@/features/settings/documents/useDocumentMasters';
 import { FilePlus, FileText } from 'lucide-react';
 import { useRef, useState } from 'react';
@@ -40,9 +37,7 @@ export function EngagementTemplateDocuments({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const printCache = useRef(new Map<string, Promise<Blob>>());
-  const choices = (masters.data ?? []).filter((master) =>
-    isTemplateDocumentKind(master.kind)
-  );
+  const choices = masters.data ?? [];
 
   const prefetchPrint = (documentId: string) => {
     const cached = printCache.current.get(documentId);

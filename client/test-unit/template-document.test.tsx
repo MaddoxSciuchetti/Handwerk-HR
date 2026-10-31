@@ -129,8 +129,8 @@ it('creates a template document, confirms sync, and prints the filled values', a
 
   await user.click(await screen.findByRole('button', { name: 'Aus Vorlage' }));
   expect(
-    screen.queryByRole('button', { name: /Arbeitsvertrag_Main/ })
-  ).not.toBeInTheDocument();
+    await screen.findByRole('button', { name: /Arbeitsvertrag_Main/ })
+  ).toBeInTheDocument();
   await user.click(
     await screen.findByRole('button', { name: /KFZ-Bescheinigung/ })
   );
