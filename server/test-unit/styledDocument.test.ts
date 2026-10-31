@@ -5,6 +5,7 @@ import {
   filledDocument,
 } from "../../shared/document";
 import {
+  lineGroupHeight,
   renderNode,
   requiredFonts,
   validateFieldValues,
@@ -249,6 +250,21 @@ describe("styled document compatibility and rendering", () => {
     expect(html).toContain("width:208.7pt");
     expect(html).toContain(">den</span>");
   });
+  it("collapses page-relative rule bands into flow height instead of page Y", () => {
+    const group = {
+      type: "lineGroup",
+      attrs: {
+        pageRelative: true,
+        height: 240,
+        labels: [],
+        lines: [{ left: 10, top: 220, width: 100, thickness: 0.5 }],
+      },
+    };
+    expect(lineGroupHeight(group)).toBeCloseTo(0.5);
+    expect(renderNode(group, {})).toContain("top:0pt");
+    expect(renderNode(group, {})).toContain("height:0.5pt");
+  });
+
   it("accepts letterhead labels stored as line nodes", () => {
     const document = fromSegments([{ type: "text", text: "Vertrag" }]);
     document.header.content = [

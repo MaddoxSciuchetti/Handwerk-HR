@@ -78,6 +78,7 @@ function MasterDocumentField({
   fieldType,
   readOnly,
   onRename,
+  onKeyChange,
   useToday,
   onUseTodayChange,
 }: {
@@ -86,17 +87,10 @@ function MasterDocumentField({
   fieldType: string;
   readOnly: boolean;
   onRename: (label: string) => void;
+  onKeyChange: (key: string) => void;
   useToday: boolean;
   onUseTodayChange: (checked: boolean) => void;
 }) {
-  const rename = () => {
-    if (readOnly) return;
-    const next = window.prompt(
-      'Feldbezeichnung (Schlüssel bleibt unverändert)',
-      label
-    );
-    if (next?.trim()) onRename(next.trim());
-  };
   return (
     <DocumentFieldDetails
       fieldKey={fieldKey}
@@ -105,11 +99,13 @@ function MasterDocumentField({
       onUseTodayChange={
         fieldType === 'date' && !readOnly ? onUseTodayChange : undefined
       }
+      onLabelChange={readOnly ? undefined : onRename}
+      onKeyChange={readOnly ? undefined : onKeyChange}
     >
       <span
         data-drag-handle
         className="inline-block max-w-full align-bottom"
-        onDoubleClick={rename}
+        title={`${label} (${fieldKey})`}
       >
         {fieldType === 'checkbox' ? (
           <span
@@ -121,7 +117,7 @@ function MasterDocumentField({
           />
         ) : (
           <span
-            title={label}
+            title={`${label} (${fieldKey})`}
             className="mx-0.5 inline-block max-w-full overflow-hidden rounded border bg-blue-50 px-1 align-bottom text-ellipsis whitespace-nowrap text-blue-900"
           >
             {label}
@@ -244,6 +240,7 @@ function DocumentFieldView({
           fieldType={String(node.attrs.fieldType)}
           readOnly={context.readOnly}
           onRename={(next) => updateAttributes({ label: next })}
+          onKeyChange={(next) => updateAttributes({ key: next })}
           useToday={useToday}
           onUseTodayChange={(checked) => {
             const transaction = editor.state.tr;

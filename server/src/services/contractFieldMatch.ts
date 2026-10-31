@@ -60,6 +60,15 @@ const LABEL_SYNONYM_GROUPS = [
         "salary",
         "bsbsalary",
     ],
+    // Bare "probezeit" (ja/nein) stays out so it does not fill Anzahl/Dauer fields.
+    [
+        "probezeitdauer",
+        "dauerderprobezeit",
+        "dauerdprobezeit",
+        "anzahlprobezeit",
+        "probezeitmonate",
+        "laengederprobezeit",
+    ],
 ];
 
 function fold(value: string) {
@@ -186,6 +195,41 @@ function formatMatchValue(field: MatchField, raw: string) {
     return formatted.slice(0, 8000);
 }
 
+/** "6 Monate" → amount/unit when the contract already writes the unit. */
+function durationQuantity(value: string) {
+    const match =
+        /^(\d{1,3}(?:[.,]\d{1,2})?)\s*(monate?|wochen?|tage?|months?|weeks?|days?)?\.?$/i.exec(
+            value.trim(),
+        );
+    if (!match) return null;
+    return { amount: match[1], unit: (match[2] ?? "").toLowerCase() };
+}
+
+function unitInText(unit: string, text: string) {
+    if (!unit) return false;
+    const stem = unit.replace(/e?s$/i, "").replace(/e$/i, "");
+    return new RegExp(stem + "e?s?", "i").test(text);
+}
+
+/** Drop a repeated unit when the template already has "… Monate" after the field. */
+export function adaptContractFieldValue(
+    value: string,
+    contract: { key: string; label?: string },
+    context = "",
+) {
+    const duration = durationQuantity(value);
+    if (!duration) return value;
+    const key = keyTail(contract.key);
+    const label = fold(contract.label ?? "");
+    const wantsCount =
+        key.includes("anzahl") ||
+        label.includes("anzahl") ||
+        key.includes("probezeitdauer") ||
+        label.includes("dauer");
+    if (wantsCount || unitInText(duration.unit, context)) return duration.amount;
+    return value;
+}
+
 function skipQuestionnaireMatch(segment: DocumentSegment) {
     return segment.type === "input" && (segment.fieldType === "points" || isCurrentDateField(segment));
 }
@@ -237,8 +281,9 @@ export function deterministicContractValues(
             filled.has(segment.key)
         )
             continue;
-        const value = formatMatchValue(field, answerString(answers, field.key));
-        if (!value || !canCopyAnswer(segment, value)) continue;
+        const raw = formatMatchValue(field, answerString(answers, field.key));
+        if (!raw || !canCopyAnswer(segment, raw)) continue;
+        const value = adaptContractFieldValue(raw, segment);
         filled.add(segment.key);
         entries.push({
             key: segment.key,
@@ -264,10 +309,12 @@ export function deterministicContractValues(
         const after = segments[index + 1];
         const context = `${before?.type === "text" ? before.text.slice(-160) : ""} ${after?.type === "text" ? after.text.slice(0, 160) : ""}`;
         const candidates = fields.flatMap((field) => {
-            const value = formatMatchValue(field, answerString(answers, field.key));
-            if (!value || !canCopyAnswer(segment, value)) return [];
-            const score = matchScore(field, segment, value, context);
-            return score ? [{ value: normalizeDocumentFieldValue(segment.fieldType, value), score }] : [];
+            const raw = formatMatchValue(field, answerString(answers, field.key));
+            if (!raw || !canCopyAnswer(segment, raw)) return [];
+            const score = matchScore(field, segment, raw, context);
+            if (!score) return [];
+            const value = adaptContractFieldValue(raw, segment, context);
+            return [{ value: normalizeDocumentFieldValue(segment.fieldType, value), score }];
         });
         const best = Math.max(0, ...candidates.map((candidate) => candidate.score));
         const values = new Set(candidates.filter((candidate) => candidate.score === best).map((candidate) => candidate.value));
@@ -416,9 +463,19 @@ export function acceptSemanticModelMatches(
             if (value !== "true" && value !== "false") return [];
         } else if (isSalutationField(field) && acceptedSalutation(value)) {
             // Anrede may be Herr or Frau derived from Geschlecht or the first name.
-        } else if (value !== source) return [];
+        } else if (value !== source) {
+            // Allow stripping "6 Monate" → "6" when the template already has the unit.
+            const duration = durationQuantity(source);
+            if (!duration || value !== duration.amount) return [];
+        }
         seen.add(match.key);
-        return [{ key: match.key, value }];
+        return [{
+            key: match.key,
+            value: adaptContractFieldValue(value, {
+                key: match.key,
+                label: field.label,
+            }),
+        }];
     });
 }
 
@@ -512,6 +569,8 @@ export function unmatchedQuestionnaireAnswers(
     const consumed = new Set<string>();
     for (const [key, value] of byKey) {
         if (placed.has(value)) consumed.add(key);
+        const duration = durationQuantity(value);
+        if (duration && placed.has(duration.amount)) consumed.add(key);
         const field = fields.find((item) => item.key === key);
         const placedCheckbox = segments.some((segment) =>
             segment.type === "input" &&

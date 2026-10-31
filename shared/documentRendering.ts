@@ -135,14 +135,39 @@ function storedLabelText(label: Record<string, unknown>): string {
 // their reserved row and overlap the following paragraph.
 export const LINE_LABEL_LINE_HEIGHT = 1.2;
 
+type LineRule = {
+  left?: unknown;
+  top?: unknown;
+  width?: unknown;
+  thickness?: unknown;
+  color?: unknown;
+};
+
+/** Page-anchored Word rules store page Y; in flow only the rule band matters. */
+export function lineGroupFlowLines(node: DocumentNode): LineRule[] {
+  const lines = Array.isArray(node.attrs?.lines)
+    ? (node.attrs.lines as LineRule[])
+    : [];
+  const hasLabels = Boolean(
+    node.content?.some((child) => child.type === "lineLabel") ||
+      (Array.isArray(node.attrs?.labels) && node.attrs.labels.length > 0),
+  );
+  if (node.attrs?.pageRelative !== true || hasLabels || lines.length === 0)
+    return lines;
+  const origin = Math.min(...lines.map((line) => Number(line.top) || 0));
+  return lines.map((line) => ({
+    ...line,
+    top: (Number(line.top) || 0) - origin,
+  }));
+}
+
 export function lineGroupHeight(node: DocumentNode): number {
   const labels = node.content?.filter((child) => child.type === "lineLabel");
   const stored = Array.isArray(node.attrs?.labels) ? node.attrs.labels : [];
-  const extents = (
-    labels?.length
-      ? labels
-      : stored.map((attrs) => ({ type: "lineLabel", attrs }))
-  ).map((label: DocumentNode) => {
+  const labelNodes = labels?.length
+    ? labels
+    : stored.map((attrs) => ({ type: "lineLabel", attrs }));
+  const extents = labelNodes.map((label: DocumentNode) => {
     const attrs = label.attrs ?? {};
     const sizes = (label.content ?? [])
       .flatMap((part) =>
@@ -154,9 +179,19 @@ export function lineGroupHeight(node: DocumentNode): number {
     const size = Math.max(Number(attrs.fontSize) || 11, ...sizes);
     return (Number(attrs.top) || 0) + size * LINE_LABEL_LINE_HEIGHT;
   });
+  const flowLines = lineGroupFlowLines(node);
+  const lineExtents = flowLines.map(
+    (line) => (Number(line.top) || 0) + (Number(line.thickness) || 0.5),
+  );
+  const contentHeight = Math.max(0, ...extents, ...lineExtents);
+  // Page-relative rule-only groups must not keep the original page Y as height.
+  const storedHeight =
+    node.attrs?.pageRelative === true && labelNodes.length === 0
+      ? contentHeight
+      : Number(node.attrs?.height) || 0;
   return Math.max(
     0,
-    Math.min(2000, Math.max(Number(node.attrs?.height) || 0, ...extents)),
+    Math.min(2000, Math.max(storedHeight, contentHeight)),
   );
 }
 
@@ -343,40 +378,34 @@ export function renderNode(
       0,
       Math.min(2000, Number(node.attrs?.marginBottom) || 0),
     );
-    const lines = Array.isArray(node.attrs?.lines)
-      ? node.attrs.lines
-          .slice(0, 50)
-          .map((raw) => {
-            const line = raw as Record<string, unknown>;
-            const left = Math.max(
-              -2000,
-              Math.min(2000, Number(line.left) || 0),
-            );
-            const top = Math.max(-2000, Math.min(2000, Number(line.top) || 0));
-            const width = Math.max(0, Math.min(2000, Number(line.width) || 0));
-            const thickness = Math.max(
-              0.25,
-              Math.min(10, Number(line.thickness) || 0.5),
-            );
-            const color = /^#[0-9a-f]{6}$/i.test(String(line.color))
-              ? String(line.color)
-              : "#000000";
-            return (
-              '<span style="position:absolute;left:' +
-              left +
-              "pt;top:" +
-              top +
-              "pt;width:" +
-              width +
-              "pt;border-top:" +
-              thickness +
-              "pt solid " +
-              color +
-              '"></span>'
-            );
-          })
-          .join("")
-      : "";
+    const lines = lineGroupFlowLines(node)
+      .slice(0, 50)
+      .map((line) => {
+        const left = Math.max(-2000, Math.min(2000, Number(line.left) || 0));
+        const top = Math.max(-2000, Math.min(2000, Number(line.top) || 0));
+        const width = Math.max(0, Math.min(2000, Number(line.width) || 0));
+        const thickness = Math.max(
+          0.25,
+          Math.min(10, Number(line.thickness) || 0.5),
+        );
+        const color = /^#[0-9a-f]{6}$/i.test(String(line.color))
+          ? String(line.color)
+          : "#000000";
+        return (
+          '<span style="position:absolute;left:' +
+          left +
+          "pt;top:" +
+          top +
+          "pt;width:" +
+          width +
+          "pt;border-top:" +
+          thickness +
+          "pt solid " +
+          color +
+          '"></span>'
+        );
+      })
+      .join("");
     const storedLabels = Array.isArray(node.attrs?.labels)
       ? node.attrs.labels.slice(0, 100)
       : [];

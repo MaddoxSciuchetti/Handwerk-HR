@@ -40,7 +40,8 @@ body {
 .styled-document p {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  margin-bottom: 8pt;
+  /* Word spacing comes from paragraph attrs; do not stack a CSS default on top. */
+  margin: 0;
 }
 .styled-document h1 {
   font-size: 20pt;

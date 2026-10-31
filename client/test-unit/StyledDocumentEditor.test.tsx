@@ -463,11 +463,7 @@ it('lets the sender type Tätigkeitspunkte without a stored field value', async 
       readOnly={false}
     />
   );
-  expect(
-    await screen.findByText(
-      'Satz auswählen oder eigenen Text eingeben. Tab für Vorschläge, Enter zum Auswählen oder Hinzufügen.'
-    )
-  ).toBeTruthy();
+  expect(await screen.findByText('Tätigkeiten')).toBeTruthy();
   const point = await screen.findByRole('combobox', { name: 'Tätigkeiten 1' });
   expect(point).toHaveValue('Montage');
   fireEvent.change(point, { target: { value: 'Wartung' } });

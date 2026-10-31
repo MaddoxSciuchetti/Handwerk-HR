@@ -449,6 +449,77 @@ describe("reliable hours and repeated questionnaire matching", () => {
     });
 });
 
+it("maps Dauer der Probezeit onto anzahl_probezeit and drops a repeated unit", () => {
+    expect(
+        deterministicContractValues(
+            [
+                { type: "text", text: "Die ersten " },
+                {
+                    type: "input",
+                    key: "anzahl_probezeit",
+                    label: "anzahl_probezeit",
+                },
+                { type: "text", text: " Monate gelten als Probezeit." },
+            ],
+            {
+                "custom.probezeit": "ja",
+                "custom.probezeit-dauer": "6 Monate",
+            } as unknown as QuestionnaireAnswers,
+            "",
+            [
+                {
+                    key: "custom.probezeit",
+                    label: "Probezeit",
+                    type: "single",
+                },
+                {
+                    key: "custom.probezeit-dauer",
+                    label: "Dauer der Probezeit",
+                },
+            ],
+        ),
+    ).toEqual([{ key: "anzahl_probezeit", value: "6" }]);
+});
+
+it("does not put the Probezeit ja/nein answer into an Anzahl field", () => {
+    expect(
+        deterministicContractValues(
+            [
+                {
+                    type: "input",
+                    key: "anzahl_probezeit",
+                    label: "anzahl_probezeit",
+                },
+            ],
+            { "custom.probezeit": "ja" } as unknown as QuestionnaireAnswers,
+            "",
+            [{ key: "custom.probezeit", label: "Probezeit", type: "single" }],
+        ),
+    ).toEqual([]);
+});
+
+it("hides Dauer der Probezeit once the quantity was written into the contract", () => {
+    expect(
+        unmatchedQuestionnaireAnswers(
+            [
+                {
+                    type: "input",
+                    key: "anzahl_probezeit",
+                    label: "anzahl_probezeit",
+                },
+            ],
+            { anzahl_probezeit: "6" },
+            [{ key: "custom.probezeit-dauer", value: "6 Monate" }],
+            [
+                {
+                    key: "custom.probezeit-dauer",
+                    label: "Dauer der Probezeit",
+                },
+            ],
+        ),
+    ).toEqual([]);
+});
+
 it("does not confuse an unspecified quantity with daily hours", () => {
     expect(deterministicContractValues([{ type: "input", key: "contract.hours", label: "Stunden pro Tag" }],
         { "custom.hours": "8" } as unknown as QuestionnaireAnswers, "", [{ key: "custom.hours", label: "Anzahl der Stunden" }])).toEqual([]);

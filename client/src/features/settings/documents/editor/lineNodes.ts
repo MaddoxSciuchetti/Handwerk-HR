@@ -1,4 +1,8 @@
-import { lineGroupHeight, LINE_LABEL_LINE_HEIGHT } from '@shared/documentRendering';
+import {
+  lineGroupFlowLines,
+  lineGroupHeight,
+  LINE_LABEL_LINE_HEIGHT,
+} from '@shared/documentRendering';
 import { canSplit } from '@tiptap/pm/transform';
 import { TextSelection } from '@tiptap/pm/state';
 import { Node } from '@tiptap/core';
@@ -164,9 +168,10 @@ export const LineGroup = Node.create({
           dom.style.cssText = style;
           lastStyle = style;
         }
-        const lines = JSON.stringify(current.attrs.lines);
+        const flowLines = lineGroupFlowLines(current.toJSON());
+        const lines = JSON.stringify(flowLines);
         if (lines !== lastRules) {
-          paintRules(rules, current.attrs.lines);
+          paintRules(rules, flowLines);
           lastRules = lines;
         }
       };
