@@ -1159,6 +1159,17 @@ enum QuestionnaireSubmissionStatus {
 enum IntegrationProvider {
   microsoft_graph
   crewmeister
+  gc_gruppe
+  lapone
+  wiedemann
+  nupnau
+  obeta
+  luftkontor
+  makita
+  boettcher
+  strauss
+  telekom
+  easypark
 }
 
 enum IntegrationSequence {

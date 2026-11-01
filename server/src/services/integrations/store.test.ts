@@ -146,4 +146,23 @@ describe("integration settings on staging", () => {
         ).rejects.toMatchObject({ statusCode: 400 });
         expect(upsert).not.toHaveBeenCalled();
     });
+
+    it("saves a toggle-only provider without credentials", async () => {
+        const saved = await saveOrganizationIntegration({
+            organizationId: microsoft.organizationId,
+            provider: "strauss",
+            enabled: true,
+        });
+        expect(upsert.mock.calls[0][0].create).toMatchObject({
+            provider: "strauss",
+            enabled: true,
+        });
+        expect(saved).toMatchObject({
+            provider: "strauss",
+            enabled: true,
+            ready: false,
+            hasClientSecret: false,
+            hasToken: false,
+        });
+    });
 });

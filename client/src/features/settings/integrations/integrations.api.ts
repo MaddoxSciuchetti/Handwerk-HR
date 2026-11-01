@@ -1,7 +1,8 @@
 import { apiJson } from '@/config/apiClient';
+import type { IntegrationProviderValue } from './integration.consts';
 
 export type OrganizationIntegration = {
-  provider: 'microsoft_graph' | 'crewmeister';
+  provider: IntegrationProviderValue;
   enabled: boolean;
   tenantId: string;
   clientId: string;

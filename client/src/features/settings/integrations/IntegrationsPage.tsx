@@ -13,6 +13,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useId, useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import {
+  TOGGLE_ONLY_INTEGRATION_PROVIDERS,
+  integrationLabel,
+} from './integration.consts';
+import { TOGGLE_ONLY_INTEGRATION_LOGOS } from './integrationLogos';
+import {
   getIntegrations,
   saveIntegration,
   type OrganizationIntegration,
@@ -222,7 +227,7 @@ function CrewmeisterForm({
 
   return (
     <form
-      className="flex min-w-0 flex-col gap-3 px-3 py-6"
+      className="flex min-w-0 flex-col gap-3 border-b border-border px-3 py-6"
       onSubmit={(event) => {
         event.preventDefault();
         save.mutate();
@@ -280,6 +285,72 @@ function CrewmeisterForm({
   );
 }
 
+function ToggleOnlyIntegration({
+  integration,
+}: {
+  integration: OrganizationIntegration;
+}) {
+  const queryClient = useQueryClient();
+  const label = integrationLabel(integration.provider);
+  const [enabled, setEnabled] = useState(integration.enabled);
+  const save = useMutation({
+    mutationFn: (next: boolean) =>
+      saveIntegration(integration.provider, { enabled: next }),
+    onSuccess: (saved) => {
+      setEnabled(saved.enabled);
+      queryClient.setQueryData<OrganizationIntegration[]>(
+        QUERY_KEY,
+        (current) =>
+          current?.map((item) =>
+            item.provider === saved.provider ? saved : item
+          )
+      );
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      toast.success(`${label} wurde gespeichert.`);
+    },
+    onError: (error: { message?: string }) => {
+      setEnabled(integration.enabled);
+      toast.error(error.message || `${label} konnte nicht gespeichert werden.`);
+    },
+  });
+
+  const logo =
+    TOGGLE_ONLY_INTEGRATION_LOGOS[
+      integration.provider as keyof typeof TOGGLE_ONLY_INTEGRATION_LOGOS
+    ];
+
+  return (
+    <section className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-border px-3 py-6 last:border-b-0">
+      <h3 className="flex min-h-12 min-w-0 items-center gap-2 text-base font-semibold">
+        <span
+          className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-background"
+          aria-hidden="true"
+        >
+          {logo ? (
+            <img
+              src={logo}
+              alt=""
+              width={28}
+              height={28}
+              className="size-7 object-contain"
+            />
+          ) : null}
+        </span>
+        {label}
+      </h3>
+      <IntegrationSwitch
+        label={label}
+        checked={enabled}
+        disabled={save.isPending}
+        onChange={(next) => {
+          setEnabled(next);
+          save.mutate(next);
+        }}
+      />
+    </section>
+  );
+}
+
 function OrganizationIntegrations() {
   const query = useQuery({ queryKey: QUERY_KEY, queryFn: getIntegrations });
 
@@ -290,6 +361,9 @@ function OrganizationIntegrations() {
   const crewmeister = integrations.find(
     (item) => item.provider === 'crewmeister'
   );
+  const toggleOnly = TOGGLE_ONLY_INTEGRATION_PROVIDERS.map((item) =>
+    integrations.find((integration) => integration.provider === item.value)
+  ).filter((item): item is OrganizationIntegration => Boolean(item));
 
   return (
     <>
@@ -312,6 +386,12 @@ function OrganizationIntegrations() {
             key={crewmeister.provider}
             integration={crewmeister}
           />
+          {toggleOnly.map((integration) => (
+            <ToggleOnlyIntegration
+              key={integration.provider}
+              integration={integration}
+            />
+          ))}
         </div>
       )}
     </>
