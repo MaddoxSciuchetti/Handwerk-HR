@@ -1,0 +1,11 @@
+ALTER TYPE "IntegrationProvider" ADD VALUE IF NOT EXISTS 'gc_gruppe';
+ALTER TYPE "IntegrationProvider" ADD VALUE IF NOT EXISTS 'lapone';
+ALTER TYPE "IntegrationProvider" ADD VALUE IF NOT EXISTS 'wiedemann';
+ALTER TYPE "IntegrationProvider" ADD VALUE IF NOT EXISTS 'nupnau';
+ALTER TYPE "IntegrationProvider" ADD VALUE IF NOT EXISTS 'obeta';
+ALTER TYPE "IntegrationProvider" ADD VALUE IF NOT EXISTS 'luftkontor';
+ALTER TYPE "IntegrationProvider" ADD VALUE IF NOT EXISTS 'makita';
+ALTER TYPE "IntegrationProvider" ADD VALUE IF NOT EXISTS 'boettcher';
+ALTER TYPE "IntegrationProvider" ADD VALUE IF NOT EXISTS 'strauss';
+ALTER TYPE "IntegrationProvider" ADD VALUE IF NOT EXISTS 'telekom';
+ALTER TYPE "IntegrationProvider" ADD VALUE IF NOT EXISTS 'easypark';

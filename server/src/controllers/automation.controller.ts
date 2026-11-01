@@ -15,6 +15,7 @@ import {
     readEngagementMailRecipients,
     saveEngagementMailRecipients,
 } from "@/services/engagementMail";
+import { INTEGRATION_PROVIDERS } from "@/services/integrations/catalog";
 import { runIssueSequence } from "@/services/integrations/runSequence";
 import {
     listOrganizationIntegrations,
@@ -101,7 +102,7 @@ export const putIntegration = catchErrors(async (req, res) => {
     appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
     assertOrgAdmin(req.membershipRole);
     const provider = z
-        .enum(["microsoft_graph", "crewmeister"])
+        .enum(INTEGRATION_PROVIDERS)
         .parse(req.params.provider);
     const body = integrationInput.parse(req.body);
     return res.status(200).json({

@@ -40,3 +40,14 @@ playwright/.cache/
 **/*.webm
 **/*.png
 !src/features/settings/integrations/crewmeister-logo.png
+!src/features/settings/integrations/boettcher-logo.png
+!src/features/settings/integrations/easypark-logo.png
+!src/features/settings/integrations/gc-gruppe-logo.png
+!src/features/settings/integrations/lapone-logo.png
+!src/features/settings/integrations/luftkontor-logo.png
+!src/features/settings/integrations/makita-logo.png
+!src/features/settings/integrations/nupnau-logo.png
+!src/features/settings/integrations/obeta-logo.png
+!src/features/settings/integrations/strauss-logo.png
+!src/features/settings/integrations/telekom-logo.png
+!src/features/settings/integrations/wiedemann-logo.png
