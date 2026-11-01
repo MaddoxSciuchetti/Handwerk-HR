@@ -294,8 +294,7 @@ function ToggleOnlyIntegration({
   const label = integrationLabel(integration.provider);
   const [enabled, setEnabled] = useState(integration.enabled);
   const save = useMutation({
-    mutationFn: (next: boolean) =>
-      saveIntegration(integration.provider, { enabled: next }),
+    mutationFn: () => saveIntegration(integration.provider, { enabled }),
     onSuccess: (saved) => {
       setEnabled(saved.enabled);
       queryClient.setQueryData<OrganizationIntegration[]>(
@@ -309,7 +308,6 @@ function ToggleOnlyIntegration({
       toast.success(`${label} wurde gespeichert.`);
     },
     onError: (error: { message?: string }) => {
-      setEnabled(integration.enabled);
       toast.error(error.message || `${label} konnte nicht gespeichert werden.`);
     },
   });
@@ -338,15 +336,20 @@ function ToggleOnlyIntegration({
         </span>
         {label}
       </h3>
-      <IntegrationSwitch
-        label={label}
-        checked={enabled}
-        disabled={save.isPending}
-        onChange={(next) => {
-          setEnabled(next);
-          save.mutate(next);
-        }}
-      />
+      <div className="flex flex-wrap items-center gap-3">
+        <IntegrationSwitch
+          label={label}
+          checked={enabled}
+          onChange={setEnabled}
+        />
+        <Button
+          type="button"
+          disabled={save.isPending}
+          onClick={() => save.mutate()}
+        >
+          Speichern
+        </Button>
+      </div>
     </section>
   );
 }
