@@ -188,6 +188,11 @@ export function PersonnelDocumentFolders({
             key={engagement.id}
             workerId={workerId}
             engagementId={engagement.id}
+            questionnaireCompleted={questionnaires.some(
+              (questionnaire) =>
+                questionnaire.engagementId === engagement.id &&
+                Boolean(questionnaire.completedAt)
+            )}
           />
         ))}
         <EngagementCertificateList certificates={certificates} />
