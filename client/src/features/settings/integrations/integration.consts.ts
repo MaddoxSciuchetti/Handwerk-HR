@@ -1,28 +1,8 @@
 export const INTEGRATION_NONE = 'none';
 
-export const CREDENTIAL_INTEGRATION_PROVIDERS = [
+export const INTEGRATION_PROVIDERS = [
   { value: 'microsoft_graph', label: 'Microsoft' },
   { value: 'crewmeister', label: 'Crewmeister' },
-] as const;
-
-/** Settings toggles only — no credentials or sequences yet. */
-export const TOGGLE_ONLY_INTEGRATION_PROVIDERS = [
-  { value: 'gc_gruppe', label: 'B&O / GC-Gruppe' },
-  { value: 'lapone', label: 'LAPONE' },
-  { value: 'wiedemann', label: 'WIEDEMANN' },
-  { value: 'nupnau', label: 'NUPNAU' },
-  { value: 'obeta', label: 'OBETA' },
-  { value: 'luftkontor', label: 'Luftkontor' },
-  { value: 'makita', label: 'Makita' },
-  { value: 'boettcher', label: 'Böttcher AG' },
-  { value: 'strauss', label: 'Strauss' },
-  { value: 'telekom', label: 'Telekom' },
-  { value: 'easypark', label: 'EasyPark' },
-] as const;
-
-export const INTEGRATION_PROVIDERS = [
-  ...CREDENTIAL_INTEGRATION_PROVIDERS,
-  ...TOGGLE_ONLY_INTEGRATION_PROVIDERS,
 ] as const;
 
 export const INTEGRATION_SEQUENCES = [

@@ -12,33 +12,27 @@ export function IntegrationsSkeleton() {
         <div className="px-3 pt-4">
           <Skeleton className="h-5 w-96 max-w-full" />
         </div>
-        {['Microsoft', 'Crewmeister', 'Strauss', 'EasyPark'].map(
-          (provider, index) => (
-            <div
-              key={provider}
-              className={`flex min-w-0 flex-col gap-3 border-b border-border px-3 py-6 ${index > 1 ? 'last:border-b-0' : ''}`}
-            >
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-base font-semibold">{provider}</h2>
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <Skeleton className="h-5 w-9 rounded-full" />
-                    <Skeleton className="h-5 w-10" />
-                  </div>
-                  {index < 2 ? (
-                    <Skeleton className="h-8 w-20 rounded-lg" />
-                  ) : null}
+        {['Microsoft', 'Crewmeister'].map((provider) => (
+          <div
+            key={provider}
+            className="flex min-w-0 flex-col gap-3 border-b border-border px-3 py-6"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-base font-semibold">{provider}</h2>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-5 w-9 rounded-full" />
+                  <Skeleton className="h-5 w-10" />
                 </div>
+                <Skeleton className="h-8 w-20 rounded-lg" />
               </div>
-              {index < 2 ? (
-                <div className="flex w-fit items-center gap-1.5 py-1">
-                  <Skeleton className="h-5 w-24" />
-                  <Skeleton className="size-4" />
-                </div>
-              ) : null}
             </div>
-          )
-        )}
+            <div className="flex w-fit items-center gap-1.5 py-1">
+              <Skeleton className="h-5 w-24" />
+              <Skeleton className="size-4" />
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

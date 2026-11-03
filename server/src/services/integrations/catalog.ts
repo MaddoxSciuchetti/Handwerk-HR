@@ -3,29 +3,9 @@ import type {
     IntegrationSequence,
 } from "@prisma/client";
 
-export const CREDENTIAL_INTEGRATION_PROVIDERS = [
+export const INTEGRATION_PROVIDERS = [
     "microsoft_graph",
     "crewmeister",
-] as const satisfies readonly [IntegrationProvider, ...IntegrationProvider[]];
-
-/** Settings toggles only — no credentials or sequences yet. */
-export const TOGGLE_ONLY_INTEGRATION_PROVIDERS = [
-    "gc_gruppe",
-    "lapone",
-    "wiedemann",
-    "nupnau",
-    "obeta",
-    "luftkontor",
-    "makita",
-    "boettcher",
-    "strauss",
-    "telekom",
-    "easypark",
-] as const satisfies readonly [IntegrationProvider, ...IntegrationProvider[]];
-
-export const INTEGRATION_PROVIDERS = [
-    ...CREDENTIAL_INTEGRATION_PROVIDERS,
-    ...TOGGLE_ONLY_INTEGRATION_PROVIDERS,
 ] as const satisfies readonly [IntegrationProvider, ...IntegrationProvider[]];
 
 export const INTEGRATION_SEQUENCES = [

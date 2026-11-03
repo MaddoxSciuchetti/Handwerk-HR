@@ -1,10 +1,7 @@
 import { BAD_REQUEST } from "@/constants/http";
 import { microsoftSimulationEnabled } from "@/constants/env";
 import { prisma } from "@/lib/prisma";
-import {
-    INTEGRATION_PROVIDERS,
-    TOGGLE_ONLY_INTEGRATION_PROVIDERS,
-} from "@/services/integrations/catalog";
+import { INTEGRATION_PROVIDERS } from "@/services/integrations/catalog";
 import { integrationsLive } from "@/services/integrations/runtime";
 import {
     decryptIntegrationSecret,
@@ -31,12 +28,6 @@ export type IntegrationView = {
 };
 
 const providers: IntegrationProvider[] = [...INTEGRATION_PROVIDERS];
-
-const toggleOnlyProviders = new Set<string>(TOGGLE_ONLY_INTEGRATION_PROVIDERS);
-
-function isToggleOnly(provider: IntegrationProvider) {
-    return toggleOnlyProviders.has(provider);
-}
 
 function view(
     provider: IntegrationProvider,
@@ -69,17 +60,16 @@ function view(
                       : "",
               }
             : {}),
-        ready: isToggleOnly(provider)
-            ? false
-            : provider === "microsoft_graph"
-              ? Boolean(
-                    row?.tenantId &&
-                        row.clientId &&
-                        row.domain &&
-                        row.licenseSkuId &&
-                        row.clientSecretCiphertext,
-                )
-              : Boolean(row?.tokenCiphertext),
+        ready:
+            provider === "microsoft_graph"
+                ? Boolean(
+                      row?.tenantId &&
+                          row.clientId &&
+                          row.domain &&
+                          row.licenseSkuId &&
+                          row.clientSecretCiphertext,
+                  )
+                : Boolean(row?.tokenCiphertext),
         live: integrationsLive(),
         simulated: provider === "microsoft_graph" && microsoftSimulationEnabled(),
     };
@@ -154,26 +144,6 @@ export async function saveOrganizationIntegration(params: {
             throw new AppError(BAD_REQUEST, error.message);
         }
         throw error;
-    }
-
-    if (isToggleOnly(params.provider)) {
-        const saved = await prisma.organizationIntegration.upsert({
-            where: {
-                organizationId_provider: {
-                    organizationId: params.organizationId,
-                    provider: params.provider,
-                },
-            },
-            create: {
-                organizationId: params.organizationId,
-                provider: params.provider,
-                enabled: params.enabled,
-            },
-            update: {
-                enabled: params.enabled,
-            },
-        });
-        return view(params.provider, saved, true);
     }
 
     if (params.enabled && params.provider === "microsoft_graph" && !microsoftSimulationEnabled()) {
