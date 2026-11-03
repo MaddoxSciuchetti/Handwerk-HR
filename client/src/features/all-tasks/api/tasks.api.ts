@@ -23,10 +23,12 @@ export const updateTask = async ({
 
 export const runIssueSequence = async (
   taskId: string,
-  senderAddress?: string
+  senderAddress?: string,
+  accessGroupIds?: string[]
 ): Promise<unknown> => {
   return API.post(`/automation/issues/${taskId}/sequence`, {
     ...(senderAddress ? { senderAddress } : {}),
+    ...(accessGroupIds ? { accessGroupIds } : {}),
   });
 };
 
