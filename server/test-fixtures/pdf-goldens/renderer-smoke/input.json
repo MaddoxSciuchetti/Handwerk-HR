@@ -1,0 +1,579 @@
+{
+  "document": {
+    "version": 3,
+    "content": {
+      "type": "doc",
+      "content": [
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Arbeitsvertrag",
+              "marks": [
+                {
+                  "type": "bold"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Dieser Vertrag wird geschlossen mit "
+            },
+            {
+              "type": "documentField",
+              "attrs": {
+                "type": "input",
+                "key": "contract.name",
+                "label": "Name",
+                "fieldType": "text",
+                "required": true
+              }
+            },
+            {
+              "type": "text",
+              "text": "."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Die nachfolgenden Absätze müssen natürlich umbrechen."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Bestätigt: "
+            },
+            {
+              "type": "documentField",
+              "attrs": {
+                "type": "input",
+                "key": "contract.accept",
+                "label": "Bestätigung",
+                "fieldType": "checkbox",
+                "required": false
+              }
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "content": [
+            {
+              "type": "tableRow",
+              "content": [
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Arbeitsbeginn"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "09.10.2026"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 1: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 2: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 3: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 4: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 5: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 6: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 7: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 8: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 9: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 10: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 11: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 12: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 13: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 14: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 15: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 16: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 17: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 18: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 19: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 20: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 21: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 22: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 23: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 24: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 25: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 26: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 27: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 28: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 29: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 30: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 31: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 32: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 33: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 34: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 35: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 36: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 37: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 38: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 39: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 40: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 41: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 42: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 43: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 44: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Absatz 45: Ä, Ö, Ü, ß – mehrseitiger Vertrag ohne überlappende Inhalte."
+            }
+          ]
+        }
+      ]
+    },
+    "header": {
+      "type": "doc",
+      "content": [
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "BSB – Rendererprüfung"
+            }
+          ]
+        }
+      ]
+    },
+    "footer": {
+      "type": "doc",
+      "content": [
+        {
+          "type": "paragraph",
+          "attrs": {
+            "textAlign": "right"
+          },
+          "content": [
+            {
+              "type": "text",
+              "text": "Seite "
+            },
+            {
+              "type": "pageField",
+              "attrs": {
+                "kind": "page"
+              }
+            },
+            {
+              "type": "text",
+              "text": " von "
+            },
+            {
+              "type": "pageField",
+              "attrs": {
+                "kind": "pages"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "page": {
+      "width": 210,
+      "height": 297,
+      "marginTop": 20,
+      "marginBottom": 20,
+      "marginLeft": 20,
+      "marginRight": 20,
+      "fontFamily": "Calibri",
+      "fontSize": 11
+    }
+  },
+  "values": {
+    "contract.name": "Jörg Maximilian Müller-Lüdenscheidt mit einem bewusst langen vollständigen Namen",
+    "contract.accept": "true"
+  }
+}

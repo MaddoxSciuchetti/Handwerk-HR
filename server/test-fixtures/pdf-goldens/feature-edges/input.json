@@ -1,0 +1,381 @@
+{
+  "document": {
+    "version": 3,
+    "page": {
+      "width": 210,
+      "height": 297,
+      "marginTop": 20,
+      "marginBottom": 25,
+      "marginLeft": 20,
+      "marginRight": 20,
+      "fontFamily": "Arial",
+      "fontSize": 11
+    },
+    "header": {
+      "type": "doc",
+      "content": [
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Feature-Edges Header"
+            }
+          ]
+        }
+      ]
+    },
+    "footer": {
+      "type": "doc",
+      "content": [
+        {
+          "type": "paragraph",
+          "attrs": {
+            "textAlign": "center"
+          },
+          "content": [
+            {
+              "type": "text",
+              "text": "S. "
+            },
+            {
+              "type": "pageField",
+              "attrs": {
+                "kind": "page"
+              }
+            },
+            {
+              "type": "text",
+              "text": "/"
+            },
+            {
+              "type": "pageField",
+              "attrs": {
+                "kind": "pages"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "content": {
+      "type": "doc",
+      "content": [
+        {
+          "type": "heading",
+          "attrs": {
+            "level": 1
+          },
+          "content": [
+            {
+              "type": "text",
+              "text": "Feature Edges"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Plain "
+            },
+            {
+              "type": "text",
+              "text": "bold",
+              "marks": [
+                {
+                  "type": "bold"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "text": " "
+            },
+            {
+              "type": "text",
+              "text": "italic",
+              "marks": [
+                {
+                  "type": "italic"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "text": " "
+            },
+            {
+              "type": "text",
+              "text": "under",
+              "marks": [
+                {
+                  "type": "underline"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "text": " "
+            },
+            {
+              "type": "text",
+              "text": "strike",
+              "marks": [
+                {
+                  "type": "strike"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "text": " and blank "
+            },
+            {
+              "type": "text",
+              "text": " ",
+              "marks": [
+                {
+                  "type": "textStyle",
+                  "attrs": {
+                    "blankUnderlineWidth": 40
+                  }
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "text": "."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Accept: "
+            },
+            {
+              "type": "documentField",
+              "attrs": {
+                "key": "accept",
+                "label": "Accept",
+                "fieldType": "checkbox",
+                "required": false
+              }
+            },
+            {
+              "type": "text",
+              "text": " Date: "
+            },
+            {
+              "type": "documentField",
+              "attrs": {
+                "key": "start",
+                "label": "Start",
+                "fieldType": "date"
+              }
+            }
+          ]
+        },
+        {
+          "type": "bulletList",
+          "content": [
+            {
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Erstpunkt"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Zweitpunkt"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "orderedList",
+          "attrs": {
+            "start": 3
+          },
+          "content": [
+            {
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Nummeriert ab 3"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "blockquote",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Zitat mit Rand."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "attrs": {
+            "border": "box"
+          },
+          "content": [
+            {
+              "type": "tableRow",
+              "content": [
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Box A"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Box B"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "attrs": {
+            "border": "none"
+          },
+          "content": [
+            {
+              "type": "tableRow",
+              "content": [
+                {
+                  "type": "tableCell",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "NoBorder"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "lineGroup",
+          "attrs": {
+            "height": 36,
+            "lines": [
+              {
+                "left": 20,
+                "top": 18,
+                "width": 120,
+                "thickness": 0.75,
+                "color": "#000000"
+              },
+              {
+                "left": 180,
+                "top": 18,
+                "width": 120,
+                "thickness": 0.75,
+                "color": "#000000"
+              }
+            ],
+            "labels": [
+              {
+                "text": "(Arbeitgeber)",
+                "left": 80,
+                "top": 22,
+                "fontSize": 7,
+                "fontFamily": "Arial",
+                "color": "#000000",
+                "centered": true
+              },
+              {
+                "text": "(Arbeitnehmer)",
+                "left": 240,
+                "top": 22,
+                "fontSize": 7,
+                "fontFamily": "Arial",
+                "color": "#000000",
+                "centered": true
+              }
+            ]
+          }
+        },
+        {
+          "type": "pageBreak"
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Zweite Seite nach pageBreak – Unicode ☐ und ☑ im Fließtext."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "values": {
+    "accept": "true",
+    "start": "2026-03-15"
+  }
+}

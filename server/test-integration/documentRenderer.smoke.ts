@@ -17,7 +17,6 @@ if (!process.env.DOCUMENT_SMOKE_FONT_DIR) {
     );
 }
 process.env.DOCUMENT_FONT_DIR = fontDirectory;
-process.env.GOTENBERG_URL = "http://localhost:3001";
 const { generateDocumentPdf } = await import("../src/services/documentPdf");
 const document = fromSegments([
     {
@@ -37,7 +36,7 @@ const document = fromSegments([
         required: false,
     },
 ]);
-document.page.fontFamily = "Arial";
+document.page.fontFamily = "Calibri";
 document.content.content![0].content![0].marks = [{ type: "bold" }];
 document.header = fromSegments([
     { type: "text", text: "BSB – Rendererprüfung" },
