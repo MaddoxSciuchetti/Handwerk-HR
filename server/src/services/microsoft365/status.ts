@@ -6,6 +6,8 @@ const REQUIRED_PERMISSIONS = [
     "User.ReadWrite.All",
     "Directory.ReadWrite.All",
     "Mail.Send",
+    "Group.Read.All",
+    "GroupMember.ReadWrite.All",
 ] as const;
 
 export async function microsoft365AutomationStatus(

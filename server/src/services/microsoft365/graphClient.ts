@@ -1,6 +1,7 @@
 import { isMicrosoftAddressConflict } from "./addressConflict";
 import { buildUserPrincipalName } from "./identity";
 import type {
+    AddGroupMemberInput,
     AssignLicenseInput,
     CreateGraphUserInput,
     GraphUser,
@@ -172,6 +173,29 @@ export function createMicrosoft365GraphClient(
         return true;
     }
 
+    async function addGroupMember(params: AddGroupMemberInput) {
+        const { response, payload } = await graphRequest(
+            params.token,
+            `/groups/${encodeURIComponent(params.groupId)}/members/$ref`,
+            {
+                method: "POST",
+                body: JSON.stringify({
+                    "@odata.id": `${GRAPH}/directoryObjects/${params.userId}`,
+                }),
+            },
+        );
+        if (response.ok || response.status === 409) return { ok: true as const };
+        const body = JSON.stringify(payload ?? "");
+        if (response.status === 400 && /already.*(exist|member)/i.test(body)) {
+            return { ok: true as const };
+        }
+        console.error("Microsoft 365 group membership failed", response.status);
+        return {
+            ok: false as const,
+            message: `Microsoft Graph konnte die Gruppe ${params.groupId} nicht zuweisen.`,
+        };
+    }
+
     async function deleteUser(token: string, externalId: string) {
         const { response } = await graphRequest(
             token,
@@ -181,5 +205,11 @@ export function createMicrosoft365GraphClient(
         return response.status === 204;
     }
 
-    return { getToken, createUser: createGraphUser, assignLicense, deleteUser };
+    return {
+        getToken,
+        createUser: createGraphUser,
+        assignLicense,
+        addGroupMember,
+        deleteUser,
+    };
 }
