@@ -106,6 +106,7 @@ function QuestionnairePreview({
           `worker/${workerId}/engagements/${questionnaire.engagementId}/questionnaire/completed`
         )
         .then((response) => response.data),
+    retry: false,
   });
   const [saving, setSaving] = useState(false);
   const flushRef = useRef<() => Promise<void>>(async () => undefined);
@@ -215,6 +216,9 @@ export function EngagementQuestionnaireList({
         throw error;
       });
     printCache.current.set(engagementId, pending);
+    // Prefetch uses `void loadCompleted(...)`; keep failed warm-ups from
+    // becoming unhandled rejections while print still awaits the same promise.
+    void pending.catch(() => undefined);
     return pending;
   };
 

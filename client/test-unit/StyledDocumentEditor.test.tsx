@@ -68,11 +68,11 @@ it('shows a checkbox as a box and reveals its stored key only when the field is 
   render(<StyledDocumentEditor document={document} master />);
   const box = await screen.findByRole('checkbox', { name: 'Bestätigung' });
   expect(box).not.toHaveTextContent('Bestätigung');
-  expect(screen.queryByText('contract.accept')).not.toBeInTheDocument();
+  expect(screen.queryByLabelText('Feldschlüssel')).not.toBeInTheDocument();
   fireEvent.mouseDown(box);
-  expect(await screen.findByText('contract.accept')).toBeInTheDocument();
+  expect(await screen.findByDisplayValue('contract.accept')).toBeInTheDocument();
   fireEvent.mouseDown(screen.getByText('Vorname'));
-  expect(await screen.findByText('contract.vorname')).toBeInTheDocument();
+  expect(await screen.findByDisplayValue('contract.vorname')).toBeInTheDocument();
 });
 it('allows inline value, checkbox, and surrounding wording edits for a person-specific contract', async () => {
   const onValueChange = vi.fn();

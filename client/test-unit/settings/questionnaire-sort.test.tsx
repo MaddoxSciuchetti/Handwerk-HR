@@ -115,10 +115,11 @@ beforeEach(() => {
       let top = 0;
       let height = 528;
       if (wrapper) {
+        // Sort items are wrapped for layout; measure against the stack root.
         const siblings = [
-          ...wrapper.parentElement!.querySelectorAll<HTMLElement>(
-            '[data-questionnaire-sort-item]'
-          ),
+          ...wrapper
+            .closest('.questionnaire-sort-stack')!
+            .querySelectorAll<HTMLElement>('[data-questionnaire-sort-item]'),
         ];
         const index = siblings.indexOf(wrapper);
         top = siblings
@@ -291,7 +292,8 @@ it('finishes an in-progress neighbour animation when the pointer is released', (
     configurable: true,
     value: () => {
       const rect = getRect.call(beta) as DOMRect;
-      return beta.parentElement?.dataset.sorting === 'true'
+      return beta.closest('.questionnaire-sort-stack')?.dataset.sorting ===
+        'true'
         ? { ...rect, top: 78, bottom: 78 + rect.height, y: 78 }
         : rect;
     },

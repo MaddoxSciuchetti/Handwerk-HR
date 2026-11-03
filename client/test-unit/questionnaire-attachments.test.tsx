@@ -1,9 +1,10 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { expect, it, vi } from 'vitest';
+import { afterEach, expect, it, vi } from 'vitest';
 import { renderWithProviders } from './test-utils';
 import { PersonnelDocumentFolders } from '@/features/worker-task-management/components/files/personnel/PersonnelDocumentFolders';
 import type { PersonnelDocument } from '@/features/worker-task-management/api/personnelDocuments.api';
+import { clearStoredFilePrintCache } from '@/features/worker-task-management/printStoredFile';
 
 vi.mock(
   '@/features/worker-task-management/components/files/EngagementTemplateDocuments',
@@ -12,7 +13,19 @@ vi.mock(
   })
 );
 
+afterEach(() => {
+  clearStoredFilePrintCache();
+  vi.unstubAllGlobals();
+});
+
 it('shows and opens filed questionnaire attachments from every engagement', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue({
+      ok: true,
+      blob: async () => new Blob(['x'], { type: 'image/png' }),
+    })
+  );
   const user = userEvent.setup();
   const open = vi.spyOn(window, 'open').mockImplementation(() => null);
   const attachment: PersonnelDocument = {

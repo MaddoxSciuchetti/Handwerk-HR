@@ -25,7 +25,7 @@ export function useSaveDocumentMaster(id: string) {
           return {
             ...previous,
             ...saved,
-            sourceUrl: saved.sourceUrl ?? previous?.sourceUrl,
+            sourceUrl: previous?.sourceUrl ?? saved.sourceUrl,
           };
         }
       );
