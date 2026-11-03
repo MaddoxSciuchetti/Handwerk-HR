@@ -42,6 +42,7 @@ function setup() {
             getToken: jest.fn().mockResolvedValue("token"),
             createUser: jest.fn().mockResolvedValue({ ok: true, ...account }),
             assignLicense: jest.fn().mockResolvedValue(true),
+            addGroupMember: jest.fn().mockResolvedValue({ ok: true }),
             deleteUser: jest.fn().mockResolvedValue(true),
         },
         isLive: jest.fn().mockReturnValue(true),
@@ -84,12 +85,55 @@ it("creates and licenses the account, mails the password, then saves it", async 
     expect(d.graph.createUser.mock.invocationCallOrder[0]).toBeLessThan(
         d.graph.assignLicense.mock.invocationCallOrder[0],
     );
+    expect(d.graph.addGroupMember).not.toHaveBeenCalled();
     expect(d.graph.assignLicense.mock.invocationCallOrder[0]).toBeLessThan(
         d.sendPasswordMail.mock.invocationCallOrder[0],
     );
     expect(d.sendPasswordMail.mock.invocationCallOrder[0]).toBeLessThan(
         d.repository.saveAccount.mock.invocationCallOrder[0],
     );
+});
+
+it("adds selected Entra groups after licensing and before the password mail", async () => {
+    const { dependencies: d, provision } = setup();
+    const groupId = "11111111-1111-1111-1111-111111111111";
+    expect(
+        await provision({ ...input, accessGroupIds: [groupId] }),
+    ).toMatchObject({ status: "created" });
+    expect(d.graph.addGroupMember).toHaveBeenCalledWith({
+        token: "token",
+        groupId,
+        userId: account.externalId,
+    });
+    expect(d.graph.assignLicense.mock.invocationCallOrder[0]).toBeLessThan(
+        d.graph.addGroupMember.mock.invocationCallOrder[0],
+    );
+    expect(d.graph.addGroupMember.mock.invocationCallOrder[0]).toBeLessThan(
+        d.sendPasswordMail.mock.invocationCallOrder[0],
+    );
+});
+
+it("deletes the new user when group membership fails", async () => {
+    const { dependencies: d, provision } = setup();
+    d.graph.addGroupMember.mockResolvedValue({
+        ok: false,
+        message: "Microsoft Graph konnte die Gruppe x nicht zuweisen.",
+    });
+    expect(
+        await provision({
+            ...input,
+            accessGroupIds: ["11111111-1111-1111-1111-111111111111"],
+        }),
+    ).toEqual({
+        status: "failed",
+        message: "Microsoft Graph konnte die Gruppe x nicht zuweisen.",
+    });
+    expect(d.graph.deleteUser).toHaveBeenCalledWith(
+        "token",
+        account.externalId,
+    );
+    expect(d.sendPasswordMail).not.toHaveBeenCalled();
+    expect(d.repository.saveAccount).not.toHaveBeenCalled();
 });
 
 it("does not read the database or call Microsoft without configuration", async () => {

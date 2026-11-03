@@ -1,5 +1,6 @@
 import { isMicrosoftAddressConflict } from "./microsoft365/addressConflict";
 import { microsoftAppAuthError } from "./microsoft365/authError";
+import { normalizeAccessGroupIds } from "./microsoft365/accessGroups";
 import { randomBytes } from "crypto";
 import type { Microsoft365EnvKey } from "@/constants/env";
 import { microsoftSimulationEnabled } from "@/constants/env";
@@ -14,6 +15,8 @@ const REQUIRED_PERMISSIONS = [
     "User.ReadWrite.All",
     "Directory.ReadWrite.All",
     "Mail.Send",
+    "Group.Read.All",
+    "GroupMember.ReadWrite.All",
 ] as const;
 const MAX_ADDRESS_ATTEMPTS = 20;
 
@@ -296,11 +299,39 @@ async function assignLicense(params: {
     return true;
 }
 
+async function addGroupMember(params: {
+    token: string;
+    groupId: string;
+    userId: string;
+}): Promise<{ ok: true } | { ok: false; message: string }> {
+    const { response, payload } = await graphRequest(
+        params.token,
+        `/groups/${encodeURIComponent(params.groupId)}/members/$ref`,
+        {
+            method: "POST",
+            body: JSON.stringify({
+                "@odata.id": `${GRAPH}/directoryObjects/${params.userId}`,
+            }),
+        },
+    );
+    if (response.ok || response.status === 409) return { ok: true };
+    const body = JSON.stringify(payload ?? "");
+    if (response.status === 400 && /already.*(exist|member)/i.test(body)) {
+        return { ok: true };
+    }
+    console.error("Microsoft 365 group membership failed", response.status);
+    return {
+        ok: false,
+        message: `Microsoft Graph konnte die Gruppe ${params.groupId} nicht zuweisen.`,
+    };
+}
+
 export async function provisionMicrosoft365Account(params: {
     organizationId: string;
     workerId: string;
     config: Microsoft365Config | null;
     senderAddress?: string | null;
+    accessGroupIds?: string[] | null;
 }): Promise<ProvisionMicrosoft365Result> {
     const config = params.config;
     if (!config) return { status: "skipped", reason: "not_configured" };
@@ -375,6 +406,18 @@ export async function provisionMicrosoft365Account(params: {
             created,
             "Microsoft Graph hat die Lizenz abgelehnt.",
         );
+    }
+
+    const accessGroupIds = normalizeAccessGroupIds(params.accessGroupIds);
+    for (const groupId of accessGroupIds) {
+        const membership = await addGroupMember({
+            token,
+            groupId,
+            userId: created.externalId,
+        });
+        if (!membership.ok) {
+            return removeUnsentAccount(token, created, membership.message);
+        }
     }
 
     if (!microsoftSimulationEnabled()) {
