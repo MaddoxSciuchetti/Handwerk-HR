@@ -145,7 +145,7 @@ export function DocumentPrintPreview({
         Druckvorschau konnte nicht erstellt werden.
         {detail
           ? ' ' + detail
-          : ' Bitte prüfen Sie den PDF-Dienst und die Dokumentschriften.'}
+          : ' Bitte prüfen Sie die Dokumentschriften und versuchen Sie es erneut.'}
       </p>
     );
   }

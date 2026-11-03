@@ -287,16 +287,10 @@ npm run dev
 
 Open `http://localhost:5173`.
 
-For document previews and **Drucken**, start Docker Desktop and use
-`npm run dev:documents` instead of `npm run dev` in the backend terminal. This
-starts the local PDF renderer on port 3001 before starting the API. If the API is
-already running, start just the renderer from the repository root:
-
-```bash
-docker compose -f compose.documents.yml up -d
-```
-
-See `docs/styled-documents.md` for the required font and storage configuration.
+Document PDFs (contracts, Arbeitszeugnis, master previews) render **in-process**
+via `@react-pdf/renderer`. Ensure `DOCUMENT_FONT_DIR` points at the TTF bundle
+(defaults to `server/document-fonts` in development). No separate PDF Docker
+service is required — `npm run dev` is enough.
 
 ## Common scripts
 
@@ -305,7 +299,7 @@ Backend (`server/`):
 | Command                                | Purpose                                           |
 | -------------------------------------- | ------------------------------------------------- |
 | `npm run dev`                          | Run the API with tsx in watch mode                |
-| `npm run dev:documents`                | Start the local PDF renderer and run the API      |
+| `npm run test:pdf-visual`              | Compare native PDFs to Chromium golden rasters    |
 | `npm run build`                        | Bundle to `dist/index.js` with esbuild            |
 | `npm start`                            | Run the built bundle                              |
 | `npm run prisma:generate`              | Regenerate the Prisma client after schema changes |
