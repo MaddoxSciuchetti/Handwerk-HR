@@ -10,8 +10,14 @@ import {
 } from "@/services/questionnaireDefinition";
 import {
     QUESTIONNAIRE_FIELDS,
+    flattenQuestionnaireAnswers,
     questionnaireAnswersFromStored,
 } from "@/services/questionnaireForm";
+import {
+    questionnaireAnswersFromWorker,
+    workerHasStammdaten,
+    workerMatchEmail,
+} from "@/services/questionnaireWorkerProfile";
 import { parseStyledDocument } from "@/services/styledDocument";
 import AppError from "@/utils/AppError";
 import { Prisma } from "@prisma/client";
@@ -38,7 +44,22 @@ const documentInclude = {
                     answers: { select: { key: true, value: true } },
                 },
             },
-            worker: { select: { email: true } },
+            worker: {
+                select: {
+                    firstName: true,
+                    lastName: true,
+                    email: true,
+                    workEmail: true,
+                    microsoftEmail: true,
+                    phoneNumber: true,
+                    street: true,
+                    postalCode: true,
+                    city: true,
+                    birthday: true,
+                    position: true,
+                    entryDate: true,
+                },
+            },
         },
     },
 } satisfies Prisma.EngagementTemplateDocumentInclude;
@@ -106,16 +127,31 @@ function present(document: StoredDocument) {
         if (allowed.has(entry.key)) values[entry.key] = entry.value;
     }
     const submission = document.engagement.questionnaireSubmission;
-    const matchFields = matchFieldsFrom(submission?.formDefinition);
-    const unmatchedAnswers =
-        submission?.status === "completed"
-            ? unmatchedQuestionnaireAnswers(
-                  segments,
-                  values,
-                  submission.answers,
-                  matchFields,
-              )
-            : [];
+    const questionnaireCompleted = submission?.status === "completed";
+    const completedSubmission = questionnaireCompleted ? submission : null;
+    const matchFields = matchFieldsFrom(completedSubmission?.formDefinition);
+    const worker = document.engagement.worker;
+    const workerAnswers = questionnaireAnswersFromWorker(worker);
+    const workerAnswerRows = flattenQuestionnaireAnswers(
+        workerAnswers,
+        QUESTIONNAIRE_FIELDS.map((field) => ({
+            key: field.key,
+            label: field.label,
+            type: field.type,
+        })),
+    );
+    const sourceAnswers = completedSubmission
+        ? completedSubmission.answers
+        : workerAnswerRows;
+    const sourceFields = completedSubmission
+        ? matchFields
+        : matchFieldsFrom(null);
+    const unmatchedAnswers = unmatchedQuestionnaireAnswers(
+        segments,
+        values,
+        sourceAnswers,
+        sourceFields,
+    );
 
     return {
         id: document.id,
@@ -127,13 +163,19 @@ function present(document: StoredDocument) {
         document: readStyledDocument(document.master.body),
         values: resolveCurrentDateValues(readStyledDocument(document.master.body), values),
         unmatchedAnswers,
-        questionnaireAnswers:
-            submission?.status === "completed"
-                ? unmatchedQuestionnaireAnswers([], {}, submission.answers, matchFields)
-                : [],
+        questionnaireAnswers: unmatchedQuestionnaireAnswers(
+            [],
+            {},
+            sourceAnswers,
+            sourceFields,
+        ),
         masterRevision: document.master.revision,
         matchedMasterRevision: document.matchedMasterRevision,
-        questionnaireCompleted: submission?.status === "completed",
+        questionnaireCompleted,
+        canSyncFromWorker: workerHasStammdaten(worker),
+        syncSource: questionnaireCompleted
+            ? ("questionnaire" as const)
+            : ("worker" as const),
     };
 }
 
@@ -287,17 +329,27 @@ export async function syncEngagementTemplateDocument(
     const document = await load(params);
     if (!document) throw new AppError(NOT_FOUND, "Dokument nicht gefunden.");
     const submission = document.engagement.questionnaireSubmission;
-    if (!submission || submission.status !== "completed") {
-        throw new AppError(BAD_REQUEST, "Der Fragebogen ist noch nicht ausgefüllt.");
-    }
+    const questionnaireCompleted = submission?.status === "completed";
+    const worker = document.engagement.worker;
 
     const segments = readDocumentSegments(document.master.body);
-    const answers = questionnaireAnswersFromStored(submission.answers);
+    const answers = questionnaireCompleted
+        ? questionnaireAnswersFromStored(submission.answers)
+        : questionnaireAnswersFromWorker(worker);
+    if (!questionnaireCompleted && !workerHasStammdaten(worker)) {
+        throw new AppError(
+            BAD_REQUEST,
+            "Weder Fragebogen noch Stammdaten sind vorhanden.",
+        );
+    }
+
     const matched = await matchQuestionnaireToContract(
         segments,
         answers,
-        document.engagement.worker.email ?? "",
-        matchFieldsFrom(submission.formDefinition),
+        workerMatchEmail(worker),
+        questionnaireCompleted
+            ? matchFieldsFrom(submission.formDefinition)
+            : matchFieldsFrom(null),
     );
     const pointKeys = new Set(
         segments.flatMap((segment) =>

@@ -219,6 +219,7 @@ function answerValues(
         city,
         entryDate: germanDate(answers.entryDate),
         position: (answers.jobTitle ?? "").trim(),
+        phone: answerString(answers, "phone").trim(),
     };
 }
 

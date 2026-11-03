@@ -1,5 +1,7 @@
 import {
     fillWorkerProfileFromQuestionnaires,
+    questionnaireAnswersFromWorker,
+    workerHasStammdaten,
     workerProfileFromQuestionnaire,
 } from "@/services/questionnaireWorkerProfile";
 import { questionnaireAnswersFromStored } from "@/services/questionnaireForm";
@@ -18,6 +20,30 @@ const completed = {
     completedAt: new Date("2026-10-17"),
     answers,
 };
+
+it("maps worker Stammdaten into questionnaire-shaped answers", () => {
+    const answers = questionnaireAnswersFromWorker({
+        firstName: "Ada",
+        lastName: "Lovelace",
+        street: "King St 1",
+        postalCode: "10115",
+        city: "Berlin",
+        birthday: new Date("1815-12-10T00:00:00Z"),
+        position: "Mathematikerin",
+        entryDate: new Date("2026-01-01T00:00:00Z"),
+        phoneNumber: "030123",
+        email: "ada@example.com",
+    });
+    expect(answers.firstName).toBe("Ada");
+    expect(answers.lastName).toBe("Lovelace");
+    expect(answers.street).toBe("King St 1");
+    expect(answers.jobTitle).toBe("Mathematikerin");
+    expect(answers.birthday).toBe("1815-12-10");
+    expect(answers.entryDate).toBe("2026-01-01");
+    expect((answers as Record<string, unknown>).phone).toBe("030123");
+    expect(workerHasStammdaten({ firstName: "Ada" })).toBe(true);
+    expect(workerHasStammdaten({ firstName: "", lastName: "" })).toBe(false);
+});
 
 it("maps questionnaire data into the worker profile, including both dates and position", () => {
     expect(

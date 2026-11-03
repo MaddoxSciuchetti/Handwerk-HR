@@ -20,6 +20,8 @@ export type TemplateDocumentDraft = TemplateDocumentLink & {
   masterRevision: number;
   matchedMasterRevision: number | null;
   questionnaireCompleted: boolean;
+  canSyncFromWorker?: boolean;
+  syncSource?: 'questionnaire' | 'worker';
 };
 
 type ListResponse = { success: boolean; data: TemplateDocumentLink[] };

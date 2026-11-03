@@ -188,20 +188,75 @@ it("fills template fields from the completed questionnaire and keeps description
     });
 });
 
-it("refuses to sync before the questionnaire is completed", async () => {
+it("refuses to sync when neither questionnaire nor Stammdaten exist", async () => {
     (prisma.engagementTemplateDocument.findFirst as jest.Mock).mockResolvedValue(
         stored({
             engagement: {
                 questionnaireSubmission: { status: "sent", formDefinition: null, answers: [] },
-                worker: { email: "" },
+                worker: {
+                    firstName: "",
+                    lastName: "",
+                    email: "",
+                    workEmail: null,
+                    microsoftEmail: null,
+                    phoneNumber: null,
+                    street: null,
+                    postalCode: null,
+                    city: null,
+                    birthday: null,
+                    position: null,
+                    entryDate: null,
+                },
             },
         }),
     );
 
     await expect(
         syncEngagementTemplateDocument({ ...params, documentId: "doc" }),
-    ).rejects.toThrow("Der Fragebogen ist noch nicht ausgefüllt.");
+    ).rejects.toThrow("Weder Fragebogen noch Stammdaten sind vorhanden.");
     expect(prisma.$transaction).not.toHaveBeenCalled();
+});
+
+it("fills template fields from worker Stammdaten when the questionnaire is incomplete", async () => {
+    const current = stored({
+        engagement: {
+            questionnaireSubmission: { status: "sent", formDefinition: null, answers: [] },
+            worker: {
+                firstName: "Ada",
+                lastName: "Lovelace",
+                email: "ada@example.com",
+                workEmail: null,
+                microsoftEmail: null,
+                phoneNumber: null,
+                street: "King St 1",
+                postalCode: "10115",
+                city: "Berlin",
+                birthday: null,
+                position: "Entwicklerin",
+                entryDate: null,
+            },
+        },
+    });
+    (prisma.engagementTemplateDocument.findFirst as jest.Mock).mockResolvedValue(current);
+    (prisma.engagementTemplateDocument.findFirstOrThrow as jest.Mock).mockImplementation(
+        async () =>
+            stored({
+                values: [{ key: "worker.vorname", value: "Ada" }],
+                engagement: current.engagement,
+            }),
+    );
+
+    const saved = await syncEngagementTemplateDocument({
+        ...params,
+        documentId: "doc",
+    });
+
+    expect(saved.values).toEqual({ "worker.vorname": "Ada" });
+    expect(prisma.engagementTemplateDocumentValue.createMany).toHaveBeenCalledWith({
+        data: expect.arrayContaining([
+            expect.objectContaining({ key: "worker.vorname", value: "Ada" }),
+        ]),
+    });
 });
 
 it("prints the saved template values without the employment contract", async () => {
