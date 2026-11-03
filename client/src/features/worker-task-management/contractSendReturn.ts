@@ -2,7 +2,7 @@ const STORAGE_KEY = 'handwerk.contractSendReturn';
 
 export type ContractSendReturn = {
   kind: 'contract' | 'arbeitszeugnis';
-  returnTo: 'tasks' | 'worker';
+  returnTo: 'worker';
   workerId: string;
   engagementId: string;
   issueId: string;
@@ -20,7 +20,7 @@ export function peekContractSendReturn(): ContractSendReturn | null {
   try {
     const parsed = JSON.parse(raw) as Partial<ContractSendReturn>;
     if (
-      (parsed.returnTo !== 'tasks' && parsed.returnTo !== 'worker') ||
+      parsed.returnTo !== 'worker' ||
       !parsed.workerId ||
       !parsed.engagementId ||
       !parsed.issueId
@@ -29,7 +29,7 @@ export function peekContractSendReturn(): ContractSendReturn | null {
     }
     return {
       kind: parsed.kind === 'arbeitszeugnis' ? 'arbeitszeugnis' : 'contract',
-      returnTo: parsed.returnTo,
+      returnTo: 'worker',
       workerId: parsed.workerId,
       engagementId: parsed.engagementId,
       issueId: parsed.issueId,

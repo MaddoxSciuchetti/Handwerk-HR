@@ -12,6 +12,9 @@ vi.mock('@/config/apiClient', () => ({
 vi.mock('@tanstack/react-router', () => ({ useNavigate: () => vi.fn() }));
 
 let savedItems: TemplateItem[];
+function savedFields() {
+  return savedItems.filter((item) => item.kind !== 'section');
+}
 beforeEach(() => {
   vi.clearAllMocks();
   sessionStorage.clear();
@@ -62,7 +65,7 @@ it('edits the master inline without a separate edit button and reloads saved cha
   await user.tab();
   await user.click(screen.getByRole('button', { name: 'Speichern' }));
   await waitFor(() =>
-    expect(savedItems[0]).toMatchObject({
+    expect(savedFields()[0]).toMatchObject({
       key: 'custom.employment',
       label: 'Beschäftigungsart',
       contractFieldKey: 'contract.employment',
@@ -88,7 +91,7 @@ it('saves the BSB-only toggle and keeps the field editable for the office', asyn
   expect(screen.getByRole('radio', { name: 'Befristet' })).toBeEnabled();
   await user.click(screen.getByRole('button', { name: 'Speichern' }));
   await waitFor(() =>
-    expect(savedItems[0]).toMatchObject({ officeOnly: true, required: true })
+    expect(savedFields()[0]).toMatchObject({ officeOnly: true, required: true })
   );
   view.unmount();
   renderWithProviders(<QuestionnaireTemplatePage />);
@@ -98,7 +101,7 @@ it('saves the BSB-only toggle and keeps the field editable for the office', asyn
   await user.click(screen.getByRole('switch', { name: 'Nur vom Betrieb' }));
   await user.click(screen.getByRole('button', { name: 'Speichern' }));
   await waitFor(() =>
-    expect(savedItems[0]).toMatchObject({
+    expect(savedFields()[0]).toMatchObject({
       officeOnly: undefined,
       required: true,
     })
@@ -123,5 +126,7 @@ it('clears a selected radio answer when clicked again and saves the cleared defa
   await user.click(selected);
   expect(selected).not.toBeChecked();
   await user.click(screen.getByRole('button', { name: 'Speichern' }));
-  await waitFor(() => expect(savedItems[0]).toHaveProperty('defaultValue', ''));
+  await waitFor(() =>
+    expect(savedFields()[0]).toHaveProperty('defaultValue', '')
+  );
 });

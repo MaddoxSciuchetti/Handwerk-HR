@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { scheduleDateLabel } from '../utils/deactivationSchedule';
 import { de } from 'date-fns/locale';
@@ -32,9 +32,11 @@ export function DeactivationScheduleField({
     day: '2-digit',
   }).format(new Date());
 
-  useEffect(() => {
+  const [prevValue, setPrevValue] = useState(value);
+  if (value !== prevValue) {
+    setPrevValue(value);
     if (value === '') setOpen(true);
-  }, [value]);
+  }
 
   return (
     <div className="space-y-2">

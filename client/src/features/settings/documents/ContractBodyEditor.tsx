@@ -202,7 +202,12 @@ export function ContractBodyEditor({
         const range =
           (root && hit ? rangeInEditor(root, hit) : null) ?? savedRange.current;
         if (!range || !root) return;
-        insertChip(dragged.key, dragged.label, range, dragged.source);
+        insertChip(
+          dragged.key,
+          dragged.label,
+          range,
+          'source' in dragged ? dragged.source : null
+        );
         setDraggedContractInput(null);
       }}
       onInput={publish}

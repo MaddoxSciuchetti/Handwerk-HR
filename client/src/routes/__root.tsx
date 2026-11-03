@@ -35,7 +35,6 @@ function RootLayout() {
     '/password/forgot',
     '/password/reset',
     '/',
-    '/home',
     '/landing',
   ]);
 

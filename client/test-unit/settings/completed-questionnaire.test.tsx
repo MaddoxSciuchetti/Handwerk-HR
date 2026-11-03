@@ -99,7 +99,8 @@ it('does not render an entry when there are no completed questionnaires', () => 
 });
 
 it('shows a load error without displaying answers when the request fails', async () => {
-  const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+  vi.useRealTimers();
+  const user = userEvent.setup();
   vi.mocked(apiJson.get).mockRejectedValue(new Error('Not found'));
   renderWithProviders(
     <EngagementQuestionnaireList

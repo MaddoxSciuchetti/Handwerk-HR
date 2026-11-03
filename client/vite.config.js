@@ -48,8 +48,6 @@ export default defineConfig({
       'node_modules/**',
       'dist/**',
       'coverage/**',
-      'test-e2e/**',
-      '**/playwright-report/**',
     ],
     coverage: coverageFullTree
       ? {

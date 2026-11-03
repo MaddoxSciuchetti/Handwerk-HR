@@ -4,12 +4,13 @@ import { Button } from '@/components/ui/button';
 import type { StyledDocument } from '@/features/settings/documents/styledDocument';
 import { Download, Loader2 } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import {
   fetchPreparedEmploymentContractPdf,
   fetchPrintedEmploymentContractPdf,
   prepareEmploymentContractDownload,
+  type EmploymentContractDraft,
 } from '../../api/employmentContract.api';
 import { downloadBlob } from '../../downloadBlob';
 import {
@@ -63,22 +64,23 @@ export function ContractDraftDialog({
   const saveDraft = useSaveEmploymentContract(workerId, engagementId);
   const [syncing, setSyncing] = useState(false);
   const [values, setValues] = useState<Record<string, string>>({});
-  const [document, setDocument] = useState<StyledDocument | null>(null);
-  const documentEdited = useRef(false);
+  const [contractDocument, setContractDocument] =
+    useState<StyledDocument | null>(null);
+  const [documentEdited, setDocumentEdited] = useState(false);
 
-  useEffect(() => {
-    if (!data) return;
+  const [syncedContract, setSyncedContract] = useState(data);
+  if (data && data !== syncedContract) {
+    setSyncedContract(data);
     setValues(data.values);
-    if (!documentEdited.current) setDocument(data.document);
-  }, [data]);
+    if (!documentEdited) setContractDocument(data.document);
+  }
 
   const readOnly = Boolean(
     data?.printedAt || data?.sentAt || data?.status === 'signed'
   );
   const draftPayload = () => ({
     values,
-    document:
-      documentEdited.current && document ? document : undefined,
+    document: documentEdited && contractDocument ? contractDocument : undefined,
   });
   const downloadPdf = useMutation({
     mutationFn: async () => {
@@ -107,7 +109,7 @@ export function ContractDraftDialog({
       }
 
       const dirty =
-        documentEdited.current ||
+        documentEdited ||
         JSON.stringify(values) !== JSON.stringify(data.values);
       let blob: Blob;
       if (!dirty && data.prepared?.id) {
@@ -119,8 +121,8 @@ export function ContractDraftDialog({
       } else {
         if (dirty) {
           const saved = await saveDraft.mutateAsync(draftPayload());
-          documentEdited.current = false;
-          setDocument(saved.document);
+          setDocumentEdited(false);
+          setContractDocument(saved.document);
           setValues(saved.values);
         }
         const result = await prepareEmploymentContractDownload(
@@ -129,14 +131,14 @@ export function ContractDraftDialog({
           values
         );
         blob = result.blob;
-        queryClient.setQueryData(
+        queryClient.setQueryData<EmploymentContractDraft>(
           employmentContractKey(workerId, engagementId),
           (previous) =>
             previous
               ? {
                   ...previous,
                   values,
-                  document: document ?? previous.document,
+                  document: contractDocument ?? previous.document,
                   prepared: result.prepared,
                 }
               : previous
@@ -160,8 +162,8 @@ export function ContractDraftDialog({
     if (!data || readOnly) return;
     saveDraft.mutate(draftPayload(), {
       onSuccess: (saved) => {
-        documentEdited.current = false;
-        setDocument(saved.document);
+        setDocumentEdited(false);
+        setContractDocument(saved.document);
         setValues(saved.values);
         toast.success('Entwurf gespeichert');
       },
@@ -205,27 +207,27 @@ export function ContractDraftDialog({
                   contract={data}
                   beforeSync={async () => {
                     const dirty =
-                      documentEdited.current ||
+                      documentEdited ||
                       JSON.stringify(values) !== JSON.stringify(data.values);
                     if (dirty) await saveDraft.mutateAsync(draftPayload());
                   }}
                   onBusy={setSyncing}
                   disabled={busy}
                   onSynced={(saved) => {
-                    documentEdited.current = false;
+                    setDocumentEdited(false);
                     setValues(saved.values);
-                    setDocument(saved.document);
+                    setContractDocument(saved.document);
                   }}
                 />
               </div>
-              {data.followsMaster && !documentEdited.current ? null : (
+              {data.followsMaster && !documentEdited ? null : (
                 <p className="shrink-0 text-sm text-muted-foreground">
                   {FROZEN_NOTE}
                 </p>
               )}
               <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
                 <ContractDraftBody
-                  document={document ?? data.document}
+                  document={contractDocument ?? data.document}
                   segments={data.segments}
                   values={values}
                   readOnly={readOnly || syncing || downloadPdf.isPending}
@@ -236,8 +238,8 @@ export function ContractDraftDialog({
                     readOnly
                       ? undefined
                       : (next) => {
-                          documentEdited.current = true;
-                          setDocument(next);
+                          setDocumentEdited(true);
+                          setContractDocument(next);
                         }
                   }
                 />

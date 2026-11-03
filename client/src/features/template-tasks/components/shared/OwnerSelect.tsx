@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { HandleAddSubmit } from '../../types/taskForm.types';
 
 type OwnerSelectProps<T extends FieldValues> = {
-  control: Control<T, any, T>;
+  control: Control<T, unknown, T>;
   errors: FieldErrors<HandleAddSubmit>;
   defaultvalue?: string;
 };

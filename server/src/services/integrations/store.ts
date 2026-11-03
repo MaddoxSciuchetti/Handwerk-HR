@@ -1,6 +1,7 @@
 import { BAD_REQUEST } from "@/constants/http";
 import { microsoftSimulationEnabled } from "@/constants/env";
 import { prisma } from "@/lib/prisma";
+import { INTEGRATION_PROVIDERS } from "@/services/integrations/catalog";
 import { integrationsLive } from "@/services/integrations/runtime";
 import {
     decryptIntegrationSecret,
@@ -26,7 +27,7 @@ export type IntegrationView = {
     simulated: boolean;
 };
 
-const providers: IntegrationProvider[] = ["microsoft_graph", "crewmeister"];
+const providers: IntegrationProvider[] = [...INTEGRATION_PROVIDERS];
 
 function view(
     provider: IntegrationProvider,

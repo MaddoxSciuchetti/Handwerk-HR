@@ -35,18 +35,32 @@ export function useSaveEmploymentContract(
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: EmploymentContractDraftInput | Record<string, string>) => {
-      if ('values' in input) {
-        return input.document
+    mutationFn: (
+      input: EmploymentContractDraftInput | Record<string, string>
+    ) => {
+      if (
+        typeof input === 'object' &&
+        input !== null &&
+        'values' in input &&
+        typeof input.values === 'object' &&
+        input.values !== null &&
+        !Array.isArray(input.values)
+      ) {
+        const draft = input as EmploymentContractDraftInput;
+        return draft.document
           ? saveEngagementContractDraft(
               workerId,
               engagementId,
-              input.values,
-              input.document
+              draft.values,
+              draft.document
             )
-          : saveEngagementContractDraft(workerId, engagementId, input.values);
+          : saveEngagementContractDraft(workerId, engagementId, draft.values);
       }
-      return saveEngagementContractDraft(workerId, engagementId, input);
+      return saveEngagementContractDraft(
+        workerId,
+        engagementId,
+        input as Record<string, string>
+      );
     },
     onSuccess: (saved) => {
       queryClient.setQueryData<EmploymentContractDraft>(

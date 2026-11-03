@@ -1,9 +1,10 @@
 import FormFields from '@/components/form/FormFields';
 import FormSelectOptions from '@/components/form/FormSelectOptions';
-import { AutomationRequirementNotice } from '@/features/settings/integrations/AutomationRequirementNotice';
+/* eslint-disable react-refresh/only-export-components */
 import {
   INTEGRATION_NONE,
   INTEGRATION_SEQUENCES,
+  integrationLabel,
 } from '@/features/settings/integrations/integration.consts';
 import { getIntegrations } from '@/features/settings/integrations/integrations.api';
 import { useMailTemplates } from '@/features/settings/mail-template/useMailTemplates';
@@ -57,16 +58,19 @@ export function TaskSidebar({
   const sequence = useWatch({ control, name: 'sequence' });
   const mailTemplateId = useWatch({ control, name: 'mailTemplateId' });
   const { data: mailTemplates = [] } = useMailTemplates();
+  const sequenceProviders = new Set<string>(
+    INTEGRATION_SEQUENCES.map((item) => item.provider)
+  );
   const integrationOptions = [
     { value: INTEGRATION_NONE, label: 'Keine' },
     ...integrations
-      .filter((integration) => integration.enabled)
+      .filter(
+        (integration) =>
+          integration.enabled && sequenceProviders.has(integration.provider)
+      )
       .map((integration) => ({
         value: integration.provider,
-        label:
-          integration.provider === 'microsoft_graph'
-            ? 'Microsoft'
-            : 'Crewmeister',
+        label: integrationLabel(integration.provider),
       })),
   ];
   const hasIntegration =

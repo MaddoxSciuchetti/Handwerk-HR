@@ -167,9 +167,7 @@ export function ArbeitszeugnisSendDialog({
     const search = new URLSearchParams(window.location.search);
     rememberContractSendReturn({
       kind: 'arbeitszeugnis',
-      returnTo: window.location.pathname.startsWith('/tasks')
-        ? 'tasks'
-        : 'worker',
+      returnTo: 'worker',
       workerId: data.workerId,
       engagementId: data.engagementId,
       issueId,

@@ -311,8 +311,10 @@ export function TemplateApplyPrompt({
       resultTarget &&
       sessionStorage.getItem(resultsDismissKey(resultTarget.engagementId))
     );
-  useEffect(() => {
-    if (!savedRun.data?.dismissed || !resultTarget) return;
+  const serverDismissed = Boolean(savedRun.data?.dismissed);
+  const [handledServerDismissed, setHandledServerDismissed] = useState(false);
+  if (serverDismissed && !handledServerDismissed && resultTarget) {
+    setHandledServerDismissed(true);
     const engagementId = resultTarget.engagementId;
     sessionStorage.setItem(resultsDismissKey(engagementId), '1');
     setHiddenIds((current) =>
@@ -321,7 +323,9 @@ export function TemplateApplyPrompt({
     setResultsDismissed(true);
     setShowResults(false);
     setOpen(false);
-  }, [savedRun.data?.dismissed, resultTarget]);
+  } else if (!serverDismissed && handledServerDismissed) {
+    setHandledServerDismissed(false);
+  }
   useEffect(() => {
     if (!apply.isPending || synchronizing) return;
     const timer = window.setInterval(() => {

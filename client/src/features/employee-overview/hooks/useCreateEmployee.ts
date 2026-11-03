@@ -18,11 +18,17 @@ function useCreateEmployee(toggleModal: () => void) {
   } = useForm<CreateWorker>(employeeFormOptions.createEmployee);
 
   const onFormSubmit: SubmitHandler<CreateWorker> = (data: CreateWorker) => {
-    createEmployee(data, {
-      onSuccess: () => {
-        toggleModal();
+    createEmployee(
+      {
+        ...data,
+        displayName: `${data.firstName} ${data.lastName}`.trim(),
       },
-    });
+      {
+        onSuccess: () => {
+          toggleModal();
+        },
+      }
+    );
   };
 
   return {

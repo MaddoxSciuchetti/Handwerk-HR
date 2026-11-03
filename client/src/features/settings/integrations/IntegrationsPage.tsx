@@ -222,7 +222,7 @@ function CrewmeisterForm({
 
   return (
     <form
-      className="flex min-w-0 flex-col gap-3 px-3 py-6"
+      className="flex min-w-0 flex-col gap-3 border-b border-border px-3 py-6"
       onSubmit={(event) => {
         event.preventDefault();
         save.mutate();

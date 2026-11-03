@@ -9,7 +9,7 @@ export function useEditorContentSync(editor: Editor | null, content: unknown) {
   };
   useEffect(() => {
     if (!editor) return;
-    const incoming = normalizeLineLabels(content);
+    const incoming = normalizeLineLabels(content) as Record<string, unknown>;
     const json = JSON.stringify(incoming);
     if (
       json !== lastPublished.current &&

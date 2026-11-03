@@ -5,7 +5,7 @@ import SidebarContent from '@/features/worker-task-management/components/tasks/t
 import SidebarHeader from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarHeader';
 import { SidebarPanel } from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarPanel';
 import { ChevronLeft, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   EMPLOYEE_SIDEBAR_TITLES,
   EmployeeSidebarAction,
@@ -27,9 +27,23 @@ const EmployeeSidebar = ({
   const [selectedAction, setSelectedAction] =
     useState<EmployeeSidebarAction | null>(null);
 
-  useEffect(() => {
-    if (!isOpen) setSelectedAction(null);
-  }, [isOpen, employee?.id]);
+  const [sidebarSync, setSidebarSync] = useState({
+    isOpen,
+    employeeId: employee?.id,
+  });
+  if (
+    !isOpen &&
+    (sidebarSync.isOpen !== isOpen ||
+      sidebarSync.employeeId !== employee?.id)
+  ) {
+    setSidebarSync({ isOpen, employeeId: employee?.id });
+    setSelectedAction(null);
+  } else if (
+    sidebarSync.isOpen !== isOpen ||
+    sidebarSync.employeeId !== employee?.id
+  ) {
+    setSidebarSync({ isOpen, employeeId: employee?.id });
+  }
 
   const headerLabel = selectedAction
     ? EMPLOYEE_SIDEBAR_TITLES[selectedAction]

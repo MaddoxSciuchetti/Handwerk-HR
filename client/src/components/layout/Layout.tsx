@@ -28,21 +28,35 @@ function Layout() {
     [isFetched, isError, subscription]
   );
 
-  useEffect(() => {
-    if (
-      location.pathname.startsWith('/settings') ||
-      location.pathname === '/bestand'
-    ) {
+  const pathOpensSettings =
+    location.pathname.startsWith('/settings') ||
+    location.pathname === '/bestand';
+  const subscriptionForcesSettings =
+    subscriptionLocked &&
+    isAdmin &&
+    location.pathname !== '/settings/payments' &&
+    location.pathname !== '/settings/plans';
+
+  const [prevPathname, setPrevPathname] = useState(location.pathname);
+  if (location.pathname !== prevPathname) {
+    setPrevPathname(location.pathname);
+    if (pathOpensSettings || subscriptionForcesSettings) {
       setIsSettingOpen(true);
     }
-  }, [location.pathname]);
+  }
+
+  const [prevSubscriptionLocked, setPrevSubscriptionLocked] =
+    useState(subscriptionLocked);
+  if (subscriptionLocked !== prevSubscriptionLocked) {
+    setPrevSubscriptionLocked(subscriptionLocked);
+    if (subscriptionForcesSettings) setIsSettingOpen(true);
+  }
 
   useEffect(() => {
     if (!subscriptionLocked || !isAdmin) return;
     const path = location.pathname;
     if (path === '/settings/payments' || path === '/settings/plans') return;
     navigate({ to: '/settings/payments' });
-    setIsSettingOpen(true);
   }, [subscriptionLocked, isAdmin, location.pathname, navigate]);
 
   useEffect(() => {

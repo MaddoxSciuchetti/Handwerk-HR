@@ -1,4 +1,4 @@
-import { LifecycleType } from '@/features/task-management/types/index.types';
+import { LifecycleType } from '@/features/worker-task-management/types/index.types';
 import {
   EngagementType,
   WorkerRecord,

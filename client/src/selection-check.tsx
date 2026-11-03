@@ -1,10 +1,18 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { EditorContent } from '@tiptap/react';
+import type { Editor } from '@tiptap/core';
 import { useStyledDocumentEditor } from './features/settings/documents/hooks/useStyledDocumentEditor';
 import { DocumentValuesContext } from './features/settings/documents/DocumentValuesContext';
 import { fromSegments } from '@shared/document';
 import './index.css';
+
+declare global {
+  interface Window {
+    selectionEditor?: Editor | null;
+  }
+}
+
 const document = fromSegments([
   { type: 'input', key: 'contract.name', label: 'Name' },
   {
@@ -34,7 +42,8 @@ document.content.content!.push({
     ],
   },
 });
-function App() {
+
+export function App() {
   const { editor } = useStyledDocumentEditor({
     document,
     master: true,
@@ -42,7 +51,14 @@ function App() {
     section: 'content',
     pageView: false,
   });
-  (window as any).selectionEditor = editor;
+
+  useEffect(() => {
+    window.selectionEditor = editor;
+    return () => {
+      window.selectionEditor = undefined;
+    };
+  }, [editor]);
+
   return (
     <DocumentValuesContext.Provider
       value={{
@@ -66,4 +82,5 @@ function App() {
     </DocumentValuesContext.Provider>
   );
 }
+
 createRoot(window.document.getElementById('root')!).render(<App />);

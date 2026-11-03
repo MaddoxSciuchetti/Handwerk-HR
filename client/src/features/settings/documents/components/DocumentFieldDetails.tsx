@@ -1,6 +1,5 @@
 import {
   cloneElement,
-  useEffect,
   useState,
   type FormEvent,
   type MouseEvent,
@@ -47,16 +46,35 @@ export function DocumentFieldDetails({
   const [draftKey, setDraftKey] = useState(fieldKey);
   const editable = Boolean(onLabelChange || onKeyChange || onRemove);
 
-  useEffect(() => {
-    if (!open) return;
+  const [draftSync, setDraftSync] = useState({ open, label, fieldKey });
+  if (
+    open &&
+    (draftSync.open !== open ||
+      draftSync.label !== label ||
+      draftSync.fieldKey !== fieldKey)
+  ) {
+    setDraftSync({ open, label, fieldKey });
     setDraftLabel(label);
     setDraftKey(fieldKey);
-  }, [open, label, fieldKey]);
+  } else if (
+    draftSync.open !== open ||
+    draftSync.label !== label ||
+    draftSync.fieldKey !== fieldKey
+  ) {
+    setDraftSync({ open, label, fieldKey });
+  }
 
   const field = cloneElement(children, {
     onMouseDownCapture: (event: MouseEvent) => {
       event.preventDefault();
-      setOpen((current) => !current);
+      setOpen((current) => {
+        const nextOpen = !current;
+        if (nextOpen) {
+          setDraftLabel(label);
+          setDraftKey(fieldKey);
+        }
+        return nextOpen;
+      });
       children.props.onMouseDownCapture?.(event);
     },
   });

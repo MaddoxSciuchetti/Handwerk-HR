@@ -321,7 +321,6 @@ Frontend (`client/`):
 | `npm run build`     | Production build            |
 | `npm run preview`   | Serve the production build  |
 | `npm run test:unit` | Vitest unit tests           |
-| `npm run test:e2e`  | Playwright end-to-end tests |
 
 ## Database changes
 

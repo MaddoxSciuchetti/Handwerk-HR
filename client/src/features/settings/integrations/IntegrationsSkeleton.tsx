@@ -12,10 +12,10 @@ export function IntegrationsSkeleton() {
         <div className="px-3 pt-4">
           <Skeleton className="h-5 w-96 max-w-full" />
         </div>
-        {['Microsoft', 'Crewmeister'].map((provider, index) => (
+        {['Microsoft', 'Crewmeister'].map((provider) => (
           <div
             key={provider}
-            className={`flex min-w-0 flex-col gap-3 px-3 py-6 ${index === 0 ? 'border-b border-border' : ''}`}
+            className="flex min-w-0 flex-col gap-3 border-b border-border px-3 py-6"
           >
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-base font-semibold">{provider}</h2>

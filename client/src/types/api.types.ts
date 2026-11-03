@@ -41,13 +41,6 @@ export type FileResponse = {
   cloud_key: string;
 };
 
-export type Session_API = {
-  id: string;
-  userAgent: string;
-  createdAt: string;
-  isCurrent: boolean;
-};
-
 export type NewDescriptionField = {
   timestamp: Date | null;
   form_field_id: number;

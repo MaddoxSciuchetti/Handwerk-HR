@@ -100,7 +100,7 @@ function ProjectItem(props: ProjectItemProps) {
 
   return (
     <TableRow
-      className="group cursor-pointer border-0 hover:bg-transparent"
+      className="group cursor-pointer border-0 hover:bg-transparent has-aria-expanded:bg-transparent"
       onClick={(event) => {
         const target = event.target;
         if (

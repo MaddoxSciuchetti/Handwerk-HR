@@ -10,14 +10,10 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WorkerLifycycleRouteImport } from './routes/worker-lifycycle'
-import { Route as TeamRouteImport } from './routes/team'
-import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LandingRouteImport } from './routes/landing'
-import { Route as HomeRouteImport } from './routes/home'
 import { Route as CockpitRouteImport } from './routes/cockpit'
 import { Route as BestandRouteImport } from './routes/bestand'
 import { Route as IndexRouteImport } from './routes/index'
@@ -48,16 +44,6 @@ const WorkerLifycycleRoute = WorkerLifycycleRouteImport.update({
   path: '/worker-lifycycle',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TeamRoute = TeamRouteImport.update({
-  id: '/team',
-  path: '/team',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TasksRoute = TasksRouteImport.update({
-  id: '/tasks',
-  path: '/tasks',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
@@ -68,11 +54,6 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProfileRoute = ProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -81,11 +62,6 @@ const LoginRoute = LoginRouteImport.update({
 const LandingRoute = LandingRouteImport.update({
   id: '/landing',
   path: '/landing',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HomeRoute = HomeRouteImport.update({
-  id: '/home',
-  path: '/home',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CockpitRoute = CockpitRouteImport.update({
@@ -214,14 +190,10 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/bestand': typeof BestandRoute
   '/cockpit': typeof CockpitRoute
-  '/home': typeof HomeRoute
   '/landing': typeof LandingRoute
   '/login': typeof LoginRoute
-  '/profile': typeof ProfileRoute
   '/settings': typeof SettingsRouteWithChildren
   '/signup': typeof SignupRoute
-  '/tasks': typeof TasksRoute
-  '/team': typeof TeamRoute
   '/worker-lifycycle': typeof WorkerLifycycleRoute
   '/fragebogen/$token': typeof FragebogenTokenRoute
   '/fragebogen/preview': typeof FragebogenPreviewRoute
@@ -249,14 +221,10 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bestand': typeof BestandRoute
   '/cockpit': typeof CockpitRoute
-  '/home': typeof HomeRoute
   '/landing': typeof LandingRoute
   '/login': typeof LoginRoute
-  '/profile': typeof ProfileRoute
   '/settings': typeof SettingsRouteWithChildren
   '/signup': typeof SignupRoute
-  '/tasks': typeof TasksRoute
-  '/team': typeof TeamRoute
   '/worker-lifycycle': typeof WorkerLifycycleRoute
   '/fragebogen/$token': typeof FragebogenTokenRoute
   '/fragebogen/preview': typeof FragebogenPreviewRoute
@@ -285,14 +253,10 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/bestand': typeof BestandRoute
   '/cockpit': typeof CockpitRoute
-  '/home': typeof HomeRoute
   '/landing': typeof LandingRoute
   '/login': typeof LoginRoute
-  '/profile': typeof ProfileRoute
   '/settings': typeof SettingsRouteWithChildren
   '/signup': typeof SignupRoute
-  '/tasks': typeof TasksRoute
-  '/team': typeof TeamRoute
   '/worker-lifycycle': typeof WorkerLifycycleRoute
   '/fragebogen/$token': typeof FragebogenTokenRoute
   '/fragebogen/preview': typeof FragebogenPreviewRoute
@@ -322,14 +286,10 @@ export interface FileRouteTypes {
     | '/'
     | '/bestand'
     | '/cockpit'
-    | '/home'
     | '/landing'
     | '/login'
-    | '/profile'
     | '/settings'
     | '/signup'
-    | '/tasks'
-    | '/team'
     | '/worker-lifycycle'
     | '/fragebogen/$token'
     | '/fragebogen/preview'
@@ -357,14 +317,10 @@ export interface FileRouteTypes {
     | '/'
     | '/bestand'
     | '/cockpit'
-    | '/home'
     | '/landing'
     | '/login'
-    | '/profile'
     | '/settings'
     | '/signup'
-    | '/tasks'
-    | '/team'
     | '/worker-lifycycle'
     | '/fragebogen/$token'
     | '/fragebogen/preview'
@@ -392,14 +348,10 @@ export interface FileRouteTypes {
     | '/'
     | '/bestand'
     | '/cockpit'
-    | '/home'
     | '/landing'
     | '/login'
-    | '/profile'
     | '/settings'
     | '/signup'
-    | '/tasks'
-    | '/team'
     | '/worker-lifycycle'
     | '/fragebogen/$token'
     | '/fragebogen/preview'
@@ -428,14 +380,10 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BestandRoute: typeof BestandRoute
   CockpitRoute: typeof CockpitRoute
-  HomeRoute: typeof HomeRoute
   LandingRoute: typeof LandingRoute
   LoginRoute: typeof LoginRoute
-  ProfileRoute: typeof ProfileRoute
   SettingsRoute: typeof SettingsRouteWithChildren
   SignupRoute: typeof SignupRoute
-  TasksRoute: typeof TasksRoute
-  TeamRoute: typeof TeamRoute
   WorkerLifycycleRoute: typeof WorkerLifycycleRoute
   FragebogenTokenRoute: typeof FragebogenTokenRoute
   FragebogenPreviewRoute: typeof FragebogenPreviewRoute
@@ -454,20 +402,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkerLifycycleRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/team': {
-      id: '/team'
-      path: '/team'
-      fullPath: '/team'
-      preLoaderRoute: typeof TeamRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/tasks': {
-      id: '/tasks'
-      path: '/tasks'
-      fullPath: '/tasks'
-      preLoaderRoute: typeof TasksRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/signup': {
       id: '/signup'
       path: '/signup'
@@ -482,13 +416,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/profile': {
-      id: '/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof ProfileRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -501,13 +428,6 @@ declare module '@tanstack/react-router' {
       path: '/landing'
       fullPath: '/landing'
       preLoaderRoute: typeof LandingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/home': {
-      id: '/home'
-      path: '/home'
-      fullPath: '/home'
-      preLoaderRoute: typeof HomeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cockpit': {
@@ -734,14 +654,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BestandRoute: BestandRoute,
   CockpitRoute: CockpitRoute,
-  HomeRoute: HomeRoute,
   LandingRoute: LandingRoute,
   LoginRoute: LoginRoute,
-  ProfileRoute: ProfileRoute,
   SettingsRoute: SettingsRouteWithChildren,
   SignupRoute: SignupRoute,
-  TasksRoute: TasksRoute,
-  TeamRoute: TeamRoute,
   WorkerLifycycleRoute: WorkerLifycycleRoute,
   FragebogenTokenRoute: FragebogenTokenRoute,
   FragebogenPreviewRoute: FragebogenPreviewRoute,

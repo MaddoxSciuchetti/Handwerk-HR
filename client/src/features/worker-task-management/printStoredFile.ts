@@ -21,6 +21,9 @@ export function prefetchStoredFile(url: string) {
     });
     blobCache.set(url, pending);
   }
+  // Fire-and-forget callers use `void prefetchStoredFile(...)`; attach a no-op
+  // rejection handler so a failed warm-up never becomes an unhandled rejection.
+  void pending.catch(() => undefined);
   return pending;
 }
 

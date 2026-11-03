@@ -1,10 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -32,12 +28,14 @@ export function AutomationMessageView({
   const savedBody = useRef(message.body);
   const messageRef = useRef(message);
   const onSaveRef = useRef(onSave);
-  messageRef.current = message;
-  onSaveRef.current = onSave;
+
+  useEffect(() => {
+    messageRef.current = message;
+    onSaveRef.current = onSave;
+  }, [message, onSave]);
 
   useEffect(() => {
     if (!open || body === savedBody.current) return;
-    setSaving(true);
     const timeout = window.setTimeout(() => {
       onSaveRef.current({ ...messageRef.current, body });
       savedBody.current = body;
@@ -81,7 +79,10 @@ export function AutomationMessageView({
               disabled={disabled}
               rows={14}
               className="min-h-72 resize-none rounded-xl border-0 p-4 text-sm shadow-none focus-visible:ring-0 md:text-sm"
-              onChange={(event) => setBody(event.target.value)}
+              onChange={(event) => {
+                setBody(event.target.value);
+                setSaving(true);
+              }}
             />
             {saving && (
               <Spinner

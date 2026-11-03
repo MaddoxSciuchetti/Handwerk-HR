@@ -51,13 +51,4 @@ export default defineConfig([
       ...prettier.rules,
     },
   },
-  {
-    files: ['tests/**/*.{ts,tsx}', 'playwright.config.ts'],
-    languageOptions: {
-      globals: {
-        ...globals.browser,
-        ...globals.node,
-      },
-    },
-  },
 ]);

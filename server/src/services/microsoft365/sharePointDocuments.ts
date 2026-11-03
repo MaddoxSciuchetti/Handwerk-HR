@@ -391,12 +391,10 @@ function uniqueDriveIds(items: SearchHitResource[]) {
 }
 
 function isAuthError(error: unknown): error is { status: 401 } {
-    return (
-        Boolean(error) &&
-        typeof error === "object" &&
-        "status" in error &&
-        error.status === 401
-    );
+    if (!error || typeof error !== "object" || !("status" in error)) {
+        return false;
+    }
+    return (error as { status?: unknown }).status === 401;
 }
 
 function sortHits(hits: SharePointFileHit[]) {

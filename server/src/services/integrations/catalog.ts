@@ -6,7 +6,7 @@ import type {
 export const INTEGRATION_PROVIDERS = [
     "microsoft_graph",
     "crewmeister",
-] as const satisfies readonly IntegrationProvider[];
+] as const satisfies readonly [IntegrationProvider, ...IntegrationProvider[]];
 
 export const INTEGRATION_SEQUENCES = [
     "microsoft_create_account",

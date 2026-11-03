@@ -271,9 +271,7 @@ export function ContractSendDialog({
     const search = new URLSearchParams(window.location.search);
     rememberContractSendReturn({
       kind: 'contract',
-      returnTo: window.location.pathname.startsWith('/tasks')
-        ? 'tasks'
-        : 'worker',
+      returnTo: 'worker',
       workerId,
       engagementId,
       issueId,
@@ -459,12 +457,12 @@ export function ContractSendDialog({
                       aria-label="PDF herunterladen"
                       title="PDF herunterladen"
                       onClick={() => {
-                        const link = document.createElement('a');
+                        const link = globalThis.document.createElement('a');
                         link.href = data.outgoingFileUrl!;
                         link.download = `${data.name ?? 'Arbeitsvertrag'}.pdf`;
                         link.target = '_blank';
                         link.rel = 'noreferrer';
-                        document.body.appendChild(link);
+                        globalThis.document.body.appendChild(link);
                         link.click();
                         link.remove();
                       }}

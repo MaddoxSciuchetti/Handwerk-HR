@@ -16,7 +16,7 @@ import {
   CLOTHING_SIZES,
   type ClothingPrintType,
 } from '@shared/clothing';
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useState } from 'react';
 import { stockErrorMessage } from './stockError';
 import { useCreateClothingStockItem } from './useBestand';
 
@@ -35,14 +35,17 @@ export function BestandAddForm({ open, onAdded }: BestandAddFormProps) {
   const [quantity, setQuantity] = useState('1');
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (open) return;
-    setName('');
-    setSize('');
-    setPrintType('bedruckt');
-    setQuantity('1');
-    setError(null);
-  }, [open]);
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (!open) {
+      setName('');
+      setSize('');
+      setPrintType('bedruckt');
+      setQuantity('1');
+      setError(null);
+    }
+  }
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
