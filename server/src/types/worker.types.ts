@@ -130,6 +130,7 @@ export interface CreateIssueInput {
     mailTemplateId?: string | null;
     mailSenderAddress?: string | null;
     microsoftAccountId?: string | null;
+    microsoftAccessGroupIds?: string[] | null;
     assigneeOnly?: boolean;
 }
 
@@ -151,6 +152,7 @@ export interface UpdateIssueInput {
     mailTemplateId?: string | null;
     mailSenderAddress?: string | null;
     microsoftAccountId?: string | null;
+    microsoftAccessGroupIds?: string[] | null;
 }
 
 

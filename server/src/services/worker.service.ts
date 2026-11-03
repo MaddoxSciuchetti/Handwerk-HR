@@ -776,6 +776,7 @@ export async function createIssue(params: CreateIssueInput) {
         mailTemplateId,
         mailSenderAddress,
         microsoftAccountId,
+        microsoftAccessGroupIds,
         assigneeOnly,
     } = params;
 
@@ -809,6 +810,7 @@ export async function createIssue(params: CreateIssueInput) {
                 mailTemplateId,
                 mailSenderAddress,
                 microsoftAccountId,
+                microsoftAccessGroupIds,
                 assigneeOnly: assigneeOnly ?? false,
             },
             include: {
@@ -859,6 +861,7 @@ export async function updateIssue(params: UpdateIssueInput) {
         mailTemplateId,
         mailSenderAddress,
         microsoftAccountId,
+        microsoftAccessGroupIds,
     } = params;
 
     const existing = await prisma.issue.findFirst({
@@ -880,6 +883,9 @@ export async function updateIssue(params: UpdateIssueInput) {
     if (mailTemplateId !== undefined) data.mailTemplateId = mailTemplateId;
     if (mailSenderAddress !== undefined) data.mailSenderAddress = mailSenderAddress;
     if (microsoftAccountId !== undefined) data.microsoftAccountId = microsoftAccountId;
+    if (microsoftAccessGroupIds !== undefined) {
+        data.microsoftAccessGroupIds = microsoftAccessGroupIds;
+    }
 
     const keys = Object.keys(data).filter((key) => {
         const previous = (existing as unknown as Record<string, unknown>)[key];

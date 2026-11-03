@@ -6,6 +6,11 @@ import {
     saveAutomationDocument,
 } from "@/services/automationDocument";
 import { microsoft365AutomationStatus } from "@/services/microsoft365Account";
+import {
+    listMicrosoftAccessGroups,
+    normalizeAccessGroupIds,
+} from "@/services/microsoft365/accessGroups";
+import { prisma } from "@/lib/prisma";
 import { pingMicrosoftLicenseAdmin } from "@/services/microsoft365/licensePing";
 import { microsoft365LicenseAvailability } from "@/services/microsoft365/licenses";
 import {
@@ -67,6 +72,14 @@ export const getMicrosoft365Licenses = catchErrors(async (req, res) => {
     return res.status(200).json({ success: true, data: await microsoft365LicenseAvailability(req.orgId) });
 });
 
+export const getMicrosoft365AccessGroups = catchErrors(async (req, res) => {
+    appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
+    return res.status(200).json({
+        success: true,
+        data: await listMicrosoftAccessGroups(req.orgId),
+    });
+});
+
 export const getMicrosoft365Automation = catchErrors(async (req, res) => {
     appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
     return res.status(200).json({
@@ -124,6 +137,22 @@ export const postIssueSequence = catchErrors(async (req, res) => {
         req.body?.senderAddress == null
             ? undefined
             : senderAddressInput.parse(req.body.senderAddress);
+    const accessGroupIds =
+        req.body?.accessGroupIds == null
+            ? undefined
+            : normalizeAccessGroupIds(
+                  z.array(z.string()).max(50).parse(req.body.accessGroupIds),
+              );
+    if (accessGroupIds !== undefined) {
+        await prisma.issue.updateMany({
+            where: {
+                id: String(req.params.issueId),
+                workerEngagement: { organizationId: req.orgId },
+                sequence: "microsoft_create_account",
+            },
+            data: { microsoftAccessGroupIds: accessGroupIds },
+        });
+    }
     const result = await runIssueSequence({
         organizationId: req.orgId,
         issueId: String(req.params.issueId),

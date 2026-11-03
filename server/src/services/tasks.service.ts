@@ -16,6 +16,7 @@ import {
     unreadMentionInclude,
 } from "@/services/issueMentions";
 import { createIssue, updateIssue } from "@/services/worker.service";
+import { normalizeAccessGroupIds } from "@/services/microsoft365/accessGroups";
 import AppError from "@/utils/AppError";
 import { BAD_REQUEST } from "@/constants/http";
 import { isStagingEnvironment } from "@/constants/stagingMail";
@@ -103,7 +104,13 @@ export const queryTasks = async (orgId: string, viewerUserId: string) => {
 
 async function taskSequenceFields(
     orgId: string,
-    body: { sequence?: unknown; mailTemplateId?: unknown; mailSenderAddress?: unknown; microsoftAccountId?: unknown },
+    body: {
+        sequence?: unknown;
+        mailTemplateId?: unknown;
+        mailSenderAddress?: unknown;
+        microsoftAccountId?: unknown;
+        microsoftAccessGroupIds?: unknown;
+    },
 ) {
     if (body.sequence === undefined) return {};
     if (body.sequence === null || body.sequence === "none" || body.sequence === "") {
@@ -113,6 +120,7 @@ async function taskSequenceFields(
             mailTemplateId: null,
             mailSenderAddress: null,
             microsoftAccountId: null,
+            microsoftAccessGroupIds: null,
         };
     }
     if (!INTEGRATION_SEQUENCES.includes(body.sequence as IntegrationSequence)) {
@@ -161,7 +169,19 @@ async function taskSequenceFields(
     if (microsoftAccountId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(microsoftAccountId)) {
         throw new AppError(BAD_REQUEST, "Bitte gib eine gültige Microsoft-Konto-ID ein.");
     }
-    return { integrationProvider, sequence, mailTemplateId, mailSenderAddress, microsoftAccountId, automation: null };
+    const microsoftAccessGroupIds =
+        sequence === "microsoft_create_account"
+            ? normalizeAccessGroupIds(body.microsoftAccessGroupIds)
+            : null;
+    return {
+        integrationProvider,
+        sequence,
+        mailTemplateId,
+        mailSenderAddress,
+        microsoftAccountId,
+        microsoftAccessGroupIds,
+        automation: null,
+    };
 }
 
 export async function createTaskInOrg(
