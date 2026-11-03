@@ -1,7 +1,7 @@
 import { ISSUE_STATUSES } from '@/features/all-tasks/consts/issue-status.consts';
 import {
-  CREDENTIAL_INTEGRATION_PROVIDERS,
   INTEGRATION_NONE,
+  INTEGRATION_PROVIDERS,
   INTEGRATION_SEQUENCES,
 } from '@/features/settings/integrations/integration.consts';
 import z from 'zod';
@@ -21,7 +21,7 @@ export const templateTaskFormSchema = z
     orderIndex: z.number(),
     integrationProvider: z.enum([
       INTEGRATION_NONE,
-      ...CREDENTIAL_INTEGRATION_PROVIDERS.map((item) => item.value),
+      ...INTEGRATION_PROVIDERS.map((item) => item.value),
     ]),
     sequence: z.enum([
       INTEGRATION_NONE,
