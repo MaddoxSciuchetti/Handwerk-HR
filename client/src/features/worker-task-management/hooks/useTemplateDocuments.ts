@@ -42,36 +42,31 @@ export function useTemplateDocument(
   });
 }
 
-export function useCreateTemplateDocument(
+function cacheLink(
+  queryClient: ReturnType<typeof useQueryClient>,
   workerId: string,
-  engagementId: string
+  engagementId: string,
+  saved: TemplateDocumentDraft
 ) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (masterId: string) =>
-      createTemplateDocument(workerId, engagementId, masterId),
-    onSuccess: (saved) => {
-      queryClient.setQueryData<TemplateDocumentDraft>(
-        templateDocumentKey(workerId, engagementId, saved.id),
-        saved
-      );
-      queryClient.setQueryData<TemplateDocumentLink[]>(
-        templateDocumentsKey(workerId, engagementId),
-        (current) => {
-          const next = {
-            id: saved.id,
-            engagementId: saved.engagementId,
-            masterId: saved.masterId,
-            name: saved.name,
-            kind: saved.kind,
-          };
-          if (!current) return [next];
-          if (current.some((item) => item.id === saved.id)) return current;
-          return [...current, next];
-        }
-      );
-    },
-  });
+  queryClient.setQueryData<TemplateDocumentDraft>(
+    templateDocumentKey(workerId, engagementId, saved.id),
+    saved
+  );
+  queryClient.setQueryData<TemplateDocumentLink[]>(
+    templateDocumentsKey(workerId, engagementId),
+    (current) => {
+      const next = {
+        id: saved.id,
+        engagementId: saved.engagementId,
+        masterId: saved.masterId,
+        name: saved.name,
+        kind: saved.kind,
+      };
+      if (!current) return [next];
+      if (current.some((item) => item.id === saved.id)) return current;
+      return [...current, next];
+    }
+  );
 }
 
 function cacheDraft(
@@ -84,6 +79,52 @@ function cacheDraft(
     templateDocumentKey(workerId, engagementId, saved.id),
     saved
   );
+}
+
+export type BatchDocumentResult = {
+  ok: TemplateDocumentDraft[];
+  failed: number;
+};
+
+export function useCreateTemplateDocument(
+  workerId: string,
+  engagementId: string
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (masterId: string) =>
+      createTemplateDocument(workerId, engagementId, masterId),
+    onSuccess: (saved) => {
+      cacheLink(queryClient, workerId, engagementId, saved);
+    },
+  });
+}
+
+export function useCreateTemplateDocuments(
+  workerId: string,
+  engagementId: string
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (masterIds: string[]): Promise<BatchDocumentResult> => {
+      const ok: TemplateDocumentDraft[] = [];
+      let failed = 0;
+      for (const masterId of masterIds) {
+        try {
+          const saved = await createTemplateDocument(
+            workerId,
+            engagementId,
+            masterId
+          );
+          cacheLink(queryClient, workerId, engagementId, saved);
+          ok.push(saved);
+        } catch {
+          failed += 1;
+        }
+      }
+      return { ok, failed };
+    },
+  });
 }
 
 export function useSaveTemplateDocument(
@@ -108,5 +149,32 @@ export function useSyncTemplateDocument(
   return useMutation({
     mutationFn: () => syncTemplateDocument(workerId, engagementId, documentId),
     onSuccess: (saved) => cacheDraft(queryClient, workerId, engagementId, saved),
+  });
+}
+
+export function useSyncTemplateDocuments(
+  workerId: string,
+  engagementId: string
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (documentIds: string[]): Promise<BatchDocumentResult> => {
+      const ok: TemplateDocumentDraft[] = [];
+      let failed = 0;
+      for (const documentId of documentIds) {
+        try {
+          const saved = await syncTemplateDocument(
+            workerId,
+            engagementId,
+            documentId
+          );
+          cacheDraft(queryClient, workerId, engagementId, saved);
+          ok.push(saved);
+        } catch {
+          failed += 1;
+        }
+      }
+      return { ok, failed };
+    },
   });
 }

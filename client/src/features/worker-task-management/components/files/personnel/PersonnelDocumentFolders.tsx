@@ -30,7 +30,9 @@ import {
   useDeletePersonnelFolder,
 } from '../../../hooks/usePersonnelDocuments';
 import type { StoredFileDrag } from '../../../hooks/useFolderFileDrop';
+import { printTemplateDocument } from '../../../api/templateDocument.api';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -91,6 +93,35 @@ export function PersonnelDocumentFolders({
     engagementId: string,
     folderId?: string
   ) => {
+    if (file.source === 'template') {
+      const templateEngagementId = file.engagementId ?? engagementId;
+      void (async () => {
+        try {
+          const blob = await printTemplateDocument(
+            workerId,
+            templateEngagementId,
+            file.id
+          );
+          const safeName = (file.label || 'Dokument').replace(
+            /[\\/:*?"<>|]+/g,
+            '-'
+          );
+          const pdf = new File([blob], `${safeName}.pdf`, {
+            type: 'application/pdf',
+          });
+          upload.mutate(
+            { engagementId, name, folderId, file: pdf },
+            {
+              onSuccess: () =>
+                toast.success(`„${safeName}“ in Ordner abgelegt`),
+            }
+          );
+        } catch {
+          toast.error('Dokument konnte nicht in den Ordner gelegt werden.');
+        }
+      })();
+      return;
+    }
     move.mutate({
       documentId: file.id,
       source: file.source,
@@ -136,6 +167,34 @@ export function PersonnelDocumentFolders({
         : !document.folderId && document.name === openBuiltin?.value
     );
     const uploadEngagementId = openCustom?.engagementId ?? defaultEngagementId;
+    const builtinTargets = PERSONNEL_DOCUMENT_NAMES.filter(
+      (item) =>
+        item.value !== 'fragebogen' &&
+        item.value !== openBuiltin?.value &&
+        (!hiddenFolders.includes(item.value) ||
+          documents.some(
+            (document) => !document.folderId && document.name === item.value
+          ))
+    ).map((item) => ({
+      key: `builtin:${item.value}`,
+      label: item.label,
+      onOpen: () => setOpenFolder({ kind: 'builtin', name: item.value }),
+      onMove: (file: StoredFileDrag) =>
+        moveFile(file, item.value, defaultEngagementId),
+      onFiles: (files: File[]) =>
+        uploadFiles(files, item.value, defaultEngagementId),
+    }));
+    const customTargets = folders
+      .filter((folder) => folder.id !== openCustom?.id)
+      .map((folder) => ({
+        key: folder.id,
+        label: folder.label,
+        onOpen: () => setOpenFolder({ kind: 'custom', id: folder.id }),
+        onMove: (file: StoredFileDrag) =>
+          moveFile(file, 'ordner', folder.engagementId, folder.id),
+        onFiles: (files: File[]) =>
+          uploadFiles(files, 'ordner', folder.engagementId, folder.id),
+      }));
     return (
       <OpenPersonnelFolder
         label={label}
@@ -143,6 +202,7 @@ export function PersonnelDocumentFolders({
         deletingId={deletingId}
         onBack={() => setOpenFolder(null)}
         onDelete={onDelete}
+        moveTargets={[...builtinTargets, ...customTargets]}
         onMove={(file) =>
           moveFile(
             file,
