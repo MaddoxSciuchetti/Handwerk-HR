@@ -334,7 +334,8 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
             engagementId: selectedTask.workerEngagementId!,
             issueId: selectedTask.id,
           };
-          if (selectedTask.kind === 'contract_confirm') setContractConfirm(target);
+          if (selectedTask.kind === 'contract_confirm')
+            setContractConfirm(target);
           else setContractSend(target);
         }
       : undefined;
@@ -464,7 +465,9 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
               onOpenFileUpload={() => setIsFileUploadOpen(true)}
               onAddFolder={() => setCreateFolderOpen(true)}
               onCreateTemplateDocument={
-                engagements.length ? () => setCreateTemplateOpen(true) : undefined
+                engagements.length
+                  ? () => setCreateTemplateOpen(true)
+                  : undefined
               }
               onExportFiles={() => void handleZipExport(fetchFiles)}
               onUploadMaterials={() => materialFileInputRef.current?.click()}
@@ -487,7 +490,7 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
             )}
           >
             <TabsContent value="information" className="mt-0 flex-none">
-              <div className="mx-auto w-full max-w-3xl px-4 py-4">
+              <div className="mx-auto w-full max-w-5xl px-4 py-4">
                 <WorkerInformation workerId={workerId} />
               </div>
             </TabsContent>
@@ -495,9 +498,7 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
               value="form"
               className="mt-0 flex min-h-0 flex-1 flex-col"
             >
-              <ScrollableTableViewport
-                onScrolledChange={setTaskHeaderScrolled}
-              >
+              <ScrollableTableViewport onScrolledChange={setTaskHeaderScrolled}>
                 <Table
                   aria-busy={isLoading}
                   className="border-separate border-spacing-0"
