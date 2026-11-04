@@ -61,6 +61,7 @@ export type WorkerDetailResponse = {
     firstName: string;
     lastName: string;
     email: string | null;
+    phoneNumber?: string | null;
     workEmail: string | null;
     microsoftEmail?: string | null;
     birthday: string | null;

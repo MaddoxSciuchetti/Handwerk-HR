@@ -30,7 +30,9 @@ export const EXTRA_WORKER_COLUMN_OPTIONS: ExtraWorkerColumnOption[] = [
   },
 ];
 
+export type WorkerSortColumnId = ExtraWorkerColumnId | 'name';
+
 export type ExtraColumnSort = {
-  column: ExtraWorkerColumnId;
+  column: WorkerSortColumnId;
   direction: 'asc' | 'desc';
 };

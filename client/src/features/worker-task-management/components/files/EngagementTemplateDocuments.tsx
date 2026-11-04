@@ -10,6 +10,7 @@ import {
   writeStoredFileDrag,
 } from '../../hooks/useFolderFileDrop';
 import {
+  useDeleteTemplateDocument,
   useSyncTemplateDocuments,
   useTemplateDocuments,
 } from '../../hooks/useTemplateDocuments';
@@ -27,6 +28,7 @@ export function EngagementTemplateDocuments({
 }: EngagementTemplateDocumentsProps) {
   const documents = useTemplateDocuments(workerId, engagementId);
   const syncMany = useSyncTemplateDocuments(workerId, engagementId);
+  const removeDocument = useDeleteTemplateDocument(workerId, engagementId);
   const [openId, setOpenId] = useState<string | null>(null);
   const [pendingSyncIds, setPendingSyncIds] = useState<string[]>([]);
   const printCache = useRef(new Map<string, Promise<Blob>>());
@@ -124,6 +126,23 @@ export function EngagementTemplateDocuments({
           }}
           onPrint={async () => {
             await printPdfBlob(await prefetchPrint(document.id));
+          }}
+          deleting={
+            removeDocument.isPending && removeDocument.variables === document.id
+          }
+          onDelete={() => {
+            removeDocument.mutate(document.id, {
+              onSuccess: () => {
+                setPendingSyncIds((current) =>
+                  current.filter((id) => id !== document.id)
+                );
+                if (openId === document.id) setOpenId(null);
+                toast.success('Dokument gelöscht');
+              },
+              onError: () => {
+                toast.error('Das Dokument konnte nicht gelöscht werden');
+              },
+            });
           }}
         />
       ))}

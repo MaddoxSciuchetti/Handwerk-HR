@@ -21,6 +21,11 @@ vi.mock('@/features/worker-task-management/hooks/useTemplateDocuments', () => ({
   useCreateTemplateDocument: () => ({ mutate: vi.fn(), isPending: false }),
   useCreateTemplateDocuments: () => ({ mutate: vi.fn(), isPending: false }),
   useSyncTemplateDocuments: () => ({ mutate: vi.fn(), isPending: false }),
+  useDeleteTemplateDocument: () => ({
+    mutate: vi.fn(),
+    isPending: false,
+    variables: undefined,
+  }),
 }));
 vi.mock('@/features/settings/documents/useDocumentMasters', () => ({
   useDocumentMasters: () => ({ data: [], isPending: false, isError: false }),

@@ -1,24 +1,27 @@
 import { Button } from '@/components/ui/button';
 import { ArrowDown, ArrowUp } from 'lucide-react';
-import type { ExtraColumnSort, ExtraWorkerColumnId } from '../consts/extra-worker-columns';
+import type {
+  ExtraColumnSort,
+  WorkerSortColumnId,
+} from '../consts/extra-worker-columns';
 
 export function WorkerColumnSortButton({
   column,
   sort,
   onToggle,
 }: {
-  column: ExtraWorkerColumnId;
+  column: WorkerSortColumnId;
   sort: ExtraColumnSort | null;
-  onToggle: (column: ExtraWorkerColumnId) => void;
+  onToggle: (column: WorkerSortColumnId) => void;
 }) {
   const active = sort?.column === column;
   const direction = active ? sort.direction : null;
   const label =
     direction === 'asc'
-      ? 'Sort ascending'
+      ? 'A–Z sortieren'
       : direction === 'desc'
-        ? 'Sort descending'
-        : 'Sort column';
+        ? 'Z–A sortieren'
+        : 'Alphabetisch sortieren';
 
   return (
     <Button

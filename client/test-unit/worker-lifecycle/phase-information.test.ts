@@ -18,6 +18,25 @@ it('requires last name only when one was already saved', () => {
   });
 });
 
+it('exposes an editable phone number field under Information', () => {
+  const worker = {
+    firstName: 'Ada',
+    lastName: 'Lovelace',
+    phoneNumber: '+49 170 1234567',
+    engagements: [],
+  } as unknown as WorkerDetailResponse['data'];
+  expect(
+    workerEngagementInfoItems(worker).find(
+      (item) => item.label === 'Telefonnummer'
+    )
+  ).toMatchObject({
+    value: '+49 170 1234567',
+    editable: 'phoneNumber',
+    inputType: 'tel',
+    maxLength: 32,
+  });
+});
+
 it('uses the current type for the Information task count, including a return to Team', () => {
   const onboarding = {
     id: 'entry',

@@ -1,3 +1,9 @@
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -131,7 +137,8 @@ function reservedByOthers(
     if (row.clothingId === except.clothingId) return sum;
     const released =
       row.originalStockItemId === stockItemId ? row.originalQuantity : 0;
-    const planned = row.stockItemId === stockItemId ? amountOf(row.quantity) : 0;
+    const planned =
+      row.stockItemId === stockItemId ? amountOf(row.quantity) : 0;
     return sum + planned - released;
   }, 0);
   const pending = drafts.reduce((sum, draft) => {
@@ -156,6 +163,7 @@ export default function WorkerClothingPanel({ workerId, engagements }: Props) {
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [issued, setIssued] = useState<IssuedRow[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [openSection, setOpenSection] = useState('artikel');
   const catalog = stock.data ?? [];
   const pending = create.isPending || remove.isPending;
 
@@ -220,7 +228,9 @@ export default function WorkerClothingPanel({ workerId, engagements }: Props) {
       const claimed = new Map<string, number>();
       const next = drafts.map((draft) => {
         if (!draft.stockItemId) return draft;
-        const item = stock.data?.find((entry) => entry.id === draft.stockItemId);
+        const item = stock.data?.find(
+          (entry) => entry.id === draft.stockItemId
+        );
         const reserved = reservedByOthers(issued, [], draft.stockItemId, {});
         const free =
           (item ? item.quantity - reserved : 0) -
@@ -274,7 +284,11 @@ export default function WorkerClothingPanel({ workerId, engagements }: Props) {
       : undefined;
     const released =
       row?.originalStockItemId === stockItemId ? row.originalQuantity : 0;
-    return item.quantity + released - reservedByOthers(issued, drafts, stockItemId, except);
+    return (
+      item.quantity +
+      released -
+      reservedByOthers(issued, drafts, stockItemId, except)
+    );
   }
 
   function choicesFor(except: { clothingId?: string; draftKey?: string }) {
@@ -314,10 +328,7 @@ export default function WorkerClothingPanel({ workerId, engagements }: Props) {
       );
     } catch (removeError) {
       setError(
-        stockErrorMessage(
-          removeError,
-          'Kleidung konnte nicht entfernt werden.'
-        )
+        stockErrorMessage(removeError, 'Kleidung konnte nicht entfernt werden.')
       );
     }
   }
@@ -423,121 +434,191 @@ export default function WorkerClothingPanel({ workerId, engagements }: Props) {
     ) &&
     dirtyIssued.every(
       (row) =>
-        rowFits(row.stockItemId, row.quantity, { clothingId: row.clothingId }) &&
-        validIssuedAt(row.issuedAt)
+        rowFits(row.stockItemId, row.quantity, {
+          clothingId: row.clothingId,
+        }) && validIssuedAt(row.issuedAt)
     );
 
+  const hasBody =
+    clothing.isLoading ||
+    clothing.isError ||
+    stock.isError ||
+    engagements.length > 1 ||
+    issued.length > 0 ||
+    drafts.length > 0 ||
+    Boolean(error);
+
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col">
-      {engagements.length > 1 ? (
-        <div className={rowClass}>
-          <span className="text-sm text-muted-foreground">Engagement</span>
-          <MaterialsEngagementPicker
-            engagements={engagements}
-            value={selectedId}
-            onChange={(id) => {
-              setEngagementId(id);
-              resetDraft();
-            }}
-            className="min-w-0"
-            triggerClassName={cn(
-              fieldClass,
-              'justify-between *:data-[slot=select-value]:ml-auto'
-            )}
-          />
-        </div>
-      ) : null}
-      {clothing.isLoading ? (
-        <p className="py-3.5 text-sm text-muted-foreground">
-          Kleidung wird geladen …
-        </p>
-      ) : null}
-      {clothing.isError ? (
-        <p role="alert" className="py-3.5 text-sm text-destructive">
-          Kleidung konnte nicht geladen werden.
-        </p>
-      ) : null}
-      {stock.isError ? (
-        <p role="alert" className="py-3.5 text-sm text-destructive">
-          Bestand konnte nicht geladen werden.
-        </p>
-      ) : null}
-      <div className={rowClass}>
-        <span className="text-sm text-muted-foreground">Artikel</span>
-        <div className="flex justify-end">
-          <Button
-            type="button"
-            size="icon-sm"
-            variant="outline"
-            className="rounded-2xl"
-            aria-label="Zeile hinzufügen"
-            disabled={pending || stock.isLoading || stock.isError}
-            onClick={() => setDrafts((rows) => [...rows, emptyDraft()])}
-          >
-            <Plus aria-hidden="true" />
-          </Button>
-        </div>
-      </div>
-      {issued.map((row) => (
-        <ClothingIssueFields
-          key={row.clothingId}
-          draft={{
-            key: row.clothingId,
-            stockItemId: row.stockItemId,
-            quantity: row.quantity,
-            issuedAt: row.issuedAt,
-          }}
-          available={choicesFor({ clothingId: row.clothingId })}
-          max={
-            row.stockItemId
-              ? Math.max(freeFor(row.stockItemId, { clothingId: row.clothingId }), 0)
-              : undefined
-          }
-          disabled={pending || stock.isLoading || stock.isError}
-          onArticle={(stockItemId) => updateIssued(row.clothingId, { stockItemId })}
-          onQuantity={(quantity) => updateIssued(row.clothingId, { quantity })}
-          onIssuedAt={(issuedAt) => updateIssued(row.clothingId, { issuedAt })}
-          onRemove={() => removeIssued(row.clothingId)}
-        />
-      ))}
-      {drafts.map((draft) => (
-        <ClothingIssueFields
-          key={draft.key}
-          draft={draft}
-          available={choicesFor({ draftKey: draft.key })}
-          max={
-            draft.stockItemId
-              ? Math.max(freeFor(draft.stockItemId, { draftKey: draft.key }), 0)
-              : undefined
-          }
-          disabled={pending || stock.isLoading || stock.isError}
-          onArticle={(stockItemId) => updateDraft(draft.key, { stockItemId })}
-          onQuantity={(quantity) => updateDraft(draft.key, { quantity })}
-          onIssuedAt={(issuedAt) => updateDraft(draft.key, { issuedAt })}
-          onRemove={() =>
-            setDrafts((rows) => rows.filter((row) => row.key !== draft.key))
-          }
-        />
-      ))}
-      {error ? (
-        <p role="alert" className="py-2 text-right text-sm text-destructive">
-          {error}
-        </p>
-      ) : null}
-      {drafts.length > 0 || dirtyIssued.length > 0 ? (
-        <div className="flex justify-end py-3.5">
-          <Button
-            type="submit"
-            size="sm"
-            variant="outline"
-            className="rounded-2xl"
-            disabled={pending || stock.isLoading || stock.isError || !rowsReady}
-          >
-            Speichern
-          </Button>
-        </div>
-      ) : null}
-    </form>
+    <article className="mt-4 rounded-2xl border border-border/60">
+      <Accordion
+        type="single"
+        collapsible
+        value={openSection}
+        onValueChange={setOpenSection}
+      >
+        <AccordionItem value="artikel" className="border-0">
+          <div className="flex h-11 items-center gap-2 px-4">
+            <div className="min-w-0 flex-1">
+              <AccordionTrigger
+                className={cn(
+                  'w-full items-center justify-start gap-2 border-0 p-0 py-0',
+                  'hover:no-underline focus-visible:ring-0',
+                  '**:data-[slot=accordion-trigger-icon]:ml-0 **:data-[slot=accordion-trigger-icon]:size-4'
+                )}
+              >
+                Artikel
+              </AccordionTrigger>
+            </div>
+            <Button
+              type="button"
+              size="icon-sm"
+              variant="outline"
+              className="size-7 shrink-0 rounded-full"
+              aria-label="Zeile hinzufügen"
+              disabled={pending || stock.isLoading || stock.isError}
+              onClick={() => {
+                setDrafts((rows) => [...rows, emptyDraft()]);
+                setOpenSection('artikel');
+              }}
+            >
+              <Plus aria-hidden="true" className="size-3.5" />
+            </Button>
+          </div>
+          {hasBody ? (
+            <AccordionContent className="border-t border-border/50 px-4 pt-1 pb-3">
+              <form onSubmit={handleSubmit} className="flex flex-col">
+                {engagements.length > 1 ? (
+                  <div className={rowClass}>
+                    <span className="text-sm text-muted-foreground">
+                      Engagement
+                    </span>
+                    <MaterialsEngagementPicker
+                      engagements={engagements}
+                      value={selectedId}
+                      onChange={(id) => {
+                        setEngagementId(id);
+                        resetDraft();
+                      }}
+                      className="min-w-0"
+                      triggerClassName={cn(
+                        fieldClass,
+                        'justify-between *:data-[slot=select-value]:ml-auto'
+                      )}
+                    />
+                  </div>
+                ) : null}
+                {clothing.isLoading ? (
+                  <p className="py-3.5 text-sm text-muted-foreground">
+                    Kleidung wird geladen …
+                  </p>
+                ) : null}
+                {clothing.isError ? (
+                  <p role="alert" className="py-3.5 text-sm text-destructive">
+                    Kleidung konnte nicht geladen werden.
+                  </p>
+                ) : null}
+                {stock.isError ? (
+                  <p role="alert" className="py-3.5 text-sm text-destructive">
+                    Bestand konnte nicht geladen werden.
+                  </p>
+                ) : null}
+                {issued.map((row) => (
+                  <ClothingIssueFields
+                    key={row.clothingId}
+                    draft={{
+                      key: row.clothingId,
+                      stockItemId: row.stockItemId,
+                      quantity: row.quantity,
+                      issuedAt: row.issuedAt,
+                    }}
+                    available={choicesFor({ clothingId: row.clothingId })}
+                    max={
+                      row.stockItemId
+                        ? Math.max(
+                            freeFor(row.stockItemId, {
+                              clothingId: row.clothingId,
+                            }),
+                            0
+                          )
+                        : undefined
+                    }
+                    disabled={pending || stock.isLoading || stock.isError}
+                    onArticle={(stockItemId) =>
+                      updateIssued(row.clothingId, { stockItemId })
+                    }
+                    onQuantity={(quantity) =>
+                      updateIssued(row.clothingId, { quantity })
+                    }
+                    onIssuedAt={(issuedAt) =>
+                      updateIssued(row.clothingId, { issuedAt })
+                    }
+                    onRemove={() => removeIssued(row.clothingId)}
+                  />
+                ))}
+                {drafts.map((draft) => (
+                  <ClothingIssueFields
+                    key={draft.key}
+                    draft={draft}
+                    available={choicesFor({ draftKey: draft.key })}
+                    max={
+                      draft.stockItemId
+                        ? Math.max(
+                            freeFor(draft.stockItemId, {
+                              draftKey: draft.key,
+                            }),
+                            0
+                          )
+                        : undefined
+                    }
+                    disabled={pending || stock.isLoading || stock.isError}
+                    onArticle={(stockItemId) =>
+                      updateDraft(draft.key, { stockItemId })
+                    }
+                    onQuantity={(quantity) =>
+                      updateDraft(draft.key, { quantity })
+                    }
+                    onIssuedAt={(issuedAt) =>
+                      updateDraft(draft.key, { issuedAt })
+                    }
+                    onRemove={() =>
+                      setDrafts((rows) =>
+                        rows.filter((row) => row.key !== draft.key)
+                      )
+                    }
+                  />
+                ))}
+                {error ? (
+                  <p
+                    role="alert"
+                    className="py-2 text-right text-sm text-destructive"
+                  >
+                    {error}
+                  </p>
+                ) : null}
+                {drafts.length > 0 || dirtyIssued.length > 0 ? (
+                  <div className="flex justify-end py-3.5">
+                    <Button
+                      type="submit"
+                      size="sm"
+                      variant="outline"
+                      className="rounded-2xl"
+                      disabled={
+                        pending ||
+                        stock.isLoading ||
+                        stock.isError ||
+                        !rowsReady
+                      }
+                    >
+                      Speichern
+                    </Button>
+                  </div>
+                ) : null}
+              </form>
+            </AccordionContent>
+          ) : null}
+        </AccordionItem>
+      </Accordion>
+    </article>
   );
 }
 

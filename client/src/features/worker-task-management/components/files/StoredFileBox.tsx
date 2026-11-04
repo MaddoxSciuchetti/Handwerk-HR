@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PopoverAnchor } from '@/components/ui/popover';
 import type { LucideIcon } from 'lucide-react';
+import { X } from 'lucide-react';
 import type { ComponentProps, MouseEvent, ReactNode } from 'react';
 import { FilePrintButton } from './FilePrintButton';
 import { cn } from '@/lib/utils';
@@ -12,6 +13,8 @@ type StoredFileBoxProps = Omit<ComponentProps<'button'>, 'children'> & {
   onOpen: () => void;
   onPrint?: () => Promise<void>;
   onPrefetchPrint?: () => void;
+  onDelete?: () => void;
+  deleting?: boolean;
   selected?: boolean;
   onSelectedChange?: (selected: boolean) => void;
   selectionAnchor?: boolean;
@@ -30,12 +33,26 @@ function CheckboxHost({
   return children;
 }
 
+function topActionPadding(
+  selectable: boolean,
+  printable: boolean,
+  deletable: boolean
+) {
+  const count = Number(selectable) + Number(printable) + Number(deletable);
+  if (count >= 3) return 'pr-20';
+  if (count === 2) return 'pr-16';
+  if (count === 1) return 'pr-12';
+  return null;
+}
+
 export function StoredFileBox({
   label,
   icon: Icon,
   onOpen,
   onPrint,
   onPrefetchPrint,
+  onDelete,
+  deleting,
   selected,
   onSelectedChange,
   selectionAnchor,
@@ -43,7 +60,9 @@ export function StoredFileBox({
   ...props
 }: StoredFileBoxProps) {
   const selectable = Boolean(onSelectedChange);
-  const hasTopActions = selectable || Boolean(onPrint);
+  const printable = Boolean(onPrint);
+  const deletable = Boolean(onDelete);
+  const hasTopActions = selectable || printable || deletable;
 
   return (
     <div
@@ -58,7 +77,7 @@ export function StoredFileBox({
         onClick={onOpen}
         className={cn(
           'h-auto w-full min-w-0 flex-col items-start gap-2 overflow-hidden rounded-xl border border-border p-3 text-left font-normal hover:bg-(--dropdown-surface) hover:text-foreground focus-visible:ring-0 focus-visible:border-muted-foreground',
-          selectable && onPrint ? 'pr-16' : hasTopActions ? 'pr-12' : null,
+          topActionPadding(selectable, printable, deletable),
           selected ? 'border-primary bg-primary/5' : null,
           className
         )}
@@ -92,12 +111,30 @@ export function StoredFileBox({
               </div>
             </CheckboxHost>
           ) : null}
-          {onPrint ? (
+          {printable ? (
             <FilePrintButton
               label={label}
-              onPrint={onPrint}
+              onPrint={onPrint!}
               onPrefetch={onPrefetchPrint}
             />
+          ) : null}
+          {deletable ? (
+            <Button
+              type="button"
+              size="icon-sm"
+              variant="ghost"
+              disabled={deleting}
+              draggable={false}
+              aria-label={`${label} löschen`}
+              onClick={(event) => {
+                event.stopPropagation();
+                onDelete?.();
+              }}
+              onPointerDown={(event) => event.stopPropagation()}
+              className="cursor-pointer text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100"
+            >
+              <X className="h-4 w-4" />
+            </Button>
           ) : null}
         </div>
       ) : null}

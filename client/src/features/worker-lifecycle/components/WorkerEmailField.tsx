@@ -50,7 +50,7 @@ function WorkerEmailField({ workerId, email }: WorkerEmailFieldProps) {
   };
 
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] items-center gap-4 border-b border-border/50 py-2.5">
+    <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] items-center gap-4 border-b border-border/50 py-2.5 last:border-b-0">
       <span className="text-sm text-muted-foreground">{label}</span>
       <div className="min-w-0">
         <Input

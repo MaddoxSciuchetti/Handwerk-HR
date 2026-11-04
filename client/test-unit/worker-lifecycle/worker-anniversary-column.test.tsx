@@ -186,18 +186,23 @@ it('sorts the added column ascending then descending', async () => {
   render(<WorkerLifeCycle />);
   await addColumn('Birthday');
   const names = () =>
-    screen.getAllByRole('row').slice(1).map((row) => within(row).getAllByRole('cell')[0].textContent);
+    screen
+      .getAllByRole('row')
+      .slice(1)
+      .map((row) => within(row).getAllByRole('cell')[0].textContent);
+  const birthdaySort = () =>
+    within(
+      screen.getByRole('columnheader', { name: /Birthday/ })
+    ).getByRole('button', {
+      name: /sortieren/i,
+    });
   expect(names()).toEqual(['Alex', 'Ben', 'Chris', 'Dana']);
-  await user.click(screen.getByRole('button', { name: 'Sort column' }));
+  await user.click(birthdaySort());
   expect(names()).toEqual(['Ben', 'Alex', 'Chris', 'Dana']);
-  expect(
-    screen.getByRole('button', { name: 'Sort ascending' })
-  ).toBeInTheDocument();
-  await user.click(screen.getByRole('button', { name: 'Sort ascending' }));
+  expect(birthdaySort()).toHaveAccessibleName('A–Z sortieren');
+  await user.click(birthdaySort());
   expect(names()).toEqual(['Alex', 'Ben', 'Chris', 'Dana']);
-  expect(
-    screen.getByRole('button', { name: 'Sort descending' })
-  ).toBeInTheDocument();
+  expect(birthdaySort()).toHaveAccessibleName('Z–A sortieren');
 });
 
 it.each([false, true])(

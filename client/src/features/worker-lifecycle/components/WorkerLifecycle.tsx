@@ -38,6 +38,7 @@ import {
   EXTRA_WORKER_COLUMN_OPTIONS,
   type ExtraColumnSort,
   type ExtraWorkerColumnId,
+  type WorkerSortColumnId,
 } from '../consts/extra-worker-columns';
 import {
   nextExtraColumnSort,
@@ -111,7 +112,7 @@ function WorkerLifeCycle() {
       previous.includes(id) ? previous : [...previous, id]
     );
   };
-  const toggleColumnSort = (column: ExtraWorkerColumnId) => {
+  const toggleColumnSort = (column: WorkerSortColumnId) => {
     setColumnSort((previous) => nextExtraColumnSort(previous, column));
   };
   const showAddColumn = availableExtraColumns.length > 0;
@@ -306,7 +307,14 @@ function WorkerLifeCycle() {
                           }
                         />
                       </div>
-                      Name
+                      <span className="inline-flex items-center">
+                        Name
+                        <WorkerColumnSortButton
+                          column="name"
+                          sort={columnSort}
+                          onToggle={toggleColumnSort}
+                        />
+                      </span>
                     </TableHead>
                     <TableHead
                       className={`py-3 px-2 ${stickyTableHeadClassName(headerScrolled)}`}

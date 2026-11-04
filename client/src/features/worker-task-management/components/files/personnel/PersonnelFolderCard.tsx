@@ -55,7 +55,7 @@ export function PersonnelFolderCard({
             onDelete();
           }}
           onPointerDown={(event) => event.stopPropagation()}
-          className="absolute right-2 top-2 z-10 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100"
+          className="absolute right-2 top-2 z-10 cursor-pointer text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100"
         >
           <X className="h-4 w-4" />
         </Button>

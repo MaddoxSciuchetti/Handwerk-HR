@@ -4,6 +4,7 @@ import API from '@/config/apiClient';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react';
 import { WORKERBYID } from '@/features/worker-task-management/consts/query-key.consts';
+import { parseWorkerPhoneNumber, phoneNumberInput } from '@shared/phoneNumber';
 import { ALL_WORKER_DATA } from '../consts/query-key.consts';
 import type { WorkerEngagementInfoItem } from '../consts/worker-engagement-info.consts';
 import { useSwitchEngagementType } from '../hooks/useSwitchEngagementType';
@@ -63,6 +64,18 @@ export default function WorkerInfoField({ workerId, item }: Props) {
       return;
     }
     let nextValue: string | null = value || null;
+    if (item.editable === 'phoneNumber') {
+      const parsed = parseWorkerPhoneNumber(value);
+      if (!parsed.ok) {
+        setError(parsed.message);
+        return;
+      }
+      nextValue = parsed.value;
+      if ((nextValue ?? '') === item.value.trim()) {
+        setError('');
+        return;
+      }
+    }
     if (item.inputType === 'date' && value) {
       const date = new Date(`${value}T00:00:00.000Z`);
       if (
@@ -89,7 +102,11 @@ export default function WorkerInfoField({ workerId, item }: Props) {
         '[&::-webkit-datetime-edit]:flex [&::-webkit-datetime-edit]:flex-1 [&::-webkit-datetime-edit]:justify-end [&::-webkit-datetime-edit-fields-wrapper]:flex [&::-webkit-datetime-edit-fields-wrapper]:justify-end [&::-webkit-calendar-picker-indicator]:ml-2 [&::-webkit-date-and-time-value]:text-right'
     ),
     onChange: (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-      setDraft(event.target.value);
+      const next =
+        item.editable === 'phoneNumber'
+          ? phoneNumberInput(event.target.value)
+          : event.target.value;
+      setDraft(next);
       setError('');
     },
     onBlur: item.editable === 'phase' ? undefined : save,
@@ -108,7 +125,7 @@ export default function WorkerInfoField({ workerId, item }: Props) {
   };
 
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] items-center gap-4 border-b border-border/50 py-2.5">
+    <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] items-center gap-4 border-b border-border/50 py-2.5 last:border-b-0">
       <span className="text-sm text-muted-foreground">{item.label}</span>
       <div className="min-w-0">
         {item.editable === 'phase' ? (
@@ -141,6 +158,8 @@ export default function WorkerInfoField({ workerId, item }: Props) {
           <Input
             {...shared}
             type={item.inputType ?? 'text'}
+            inputMode={item.editable === 'phoneNumber' ? 'tel' : undefined}
+            autoComplete={item.editable === 'phoneNumber' ? 'tel' : undefined}
             maxLength={item.maxLength}
             required={item.required}
           />
