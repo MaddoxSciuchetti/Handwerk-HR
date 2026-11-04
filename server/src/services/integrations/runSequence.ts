@@ -14,10 +14,12 @@ import {
     NOT_LIVE_MESSAGE,
 } from "@/services/integrations/runtime";
 import {
+    assignMicrosoftAccessGroups,
     provisionMicrosoft365Account,
     microsoftGraphToken,
 } from "@/services/microsoft365Account";
 import { normalizeAccessGroupIds } from "@/services/microsoft365/accessGroups";
+import { ensureMicrosoftAccessGroupsFollowUp } from "@/services/microsoft365/accessGroupsFollowUp";
 import { isMailSequence, sendIssueMail } from "@/services/engagementMail";
 import { blockMicrosoftSignIn } from "@/services/offboardingAutomation";
 import type { IntegrationSequence } from "@prisma/client";
@@ -99,12 +101,32 @@ async function runMicrosoft(
             where: { id: params.actorUserId },
             select: { email: true },
         });
+        const provisioned = await provisionMicrosoft365Account({
+            organizationId: params.organizationId,
+            workerId: params.workerId,
+            config,
+            senderAddress: actor?.email,
+            accessGroupIds: params.accessGroupIds,
+        });
+        const result = finish(provisioned);
+        if (
+            result.status === "completed" &&
+            normalizeAccessGroupIds(params.accessGroupIds).length === 0
+        ) {
+            await ensureMicrosoftAccessGroupsFollowUp({
+                organizationId: params.organizationId,
+                engagementId: params.engagementId,
+                actorUserId: params.actorUserId,
+            });
+        }
+        return result;
+    }
+    if (sequence === "microsoft_assign_access_groups") {
         return finish(
-            await provisionMicrosoft365Account({
+            await assignMicrosoftAccessGroups({
                 organizationId: params.organizationId,
                 workerId: params.workerId,
                 config,
-                senderAddress: actor?.email,
                 accessGroupIds: params.accessGroupIds,
             }),
         );

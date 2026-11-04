@@ -1175,6 +1175,7 @@ enum IntegrationProvider {
 
 enum IntegrationSequence {
   microsoft_create_account
+  microsoft_assign_access_groups
   microsoft_send_onboarding_email
   microsoft_send_offboarding_email
   microsoft_send_email

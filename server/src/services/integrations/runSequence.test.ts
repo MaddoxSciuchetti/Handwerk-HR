@@ -7,7 +7,11 @@ jest.mock("./deactivationSchedule", () => ({
 import { runIssueSequence } from "./runSequence";
 import { prisma } from "@/lib/prisma";
 import { executionStatus } from "./issueExecutionStatus";
-import { provisionMicrosoft365Account } from "../microsoft365Account";
+import {
+    assignMicrosoftAccessGroups,
+    provisionMicrosoft365Account,
+} from "../microsoft365Account";
+import { ensureMicrosoftAccessGroupsFollowUp } from "../microsoft365/accessGroupsFollowUp";
 import {
     createCrewmeisterAccount,
     deactivateCrewmeisterAccount,
@@ -25,6 +29,10 @@ jest.mock("./issueExecutionStatus", () => ({
 }));
 jest.mock("../microsoft365Account", () => ({
     provisionMicrosoft365Account: jest.fn(),
+    assignMicrosoftAccessGroups: jest.fn(),
+}));
+jest.mock("../microsoft365/accessGroupsFollowUp", () => ({
+    ensureMicrosoftAccessGroupsFollowUp: jest.fn(),
 }));
 jest.mock("./runtime", () => ({
     loadMicrosoft365Config: jest.fn(async () => ({})),
@@ -63,10 +71,55 @@ it("marks a successful retry in progress then done", async () => {
     expect(provisionMicrosoft365Account).toHaveBeenCalledWith(
         expect.objectContaining({ senderAddress: "hr@firma.de" }),
     );
+    expect(ensureMicrosoftAccessGroupsFollowUp).toHaveBeenCalledWith({
+        organizationId: "org",
+        engagementId: "engagement",
+        actorUserId: "user",
+    });
     expect((executionStatus as jest.Mock).mock.calls).toEqual([
         ["issue", "user", "in_progress"],
         ["issue", "user", "done", undefined],
     ]);
+});
+
+it("does not create a groups follow-up when create-account selected groups", async () => {
+    (prisma.issue.findFirst as jest.Mock).mockResolvedValue({
+        id: "issue",
+        status: "open",
+        sequence: "microsoft_create_account",
+        integrationProvider: "microsoft_graph",
+        microsoftAccessGroupIds: ["11111111-1111-1111-1111-111111111111"],
+        workerEngagement: { id: "engagement", workerId: "worker" },
+    });
+    (provisionMicrosoft365Account as jest.Mock).mockResolvedValue({
+        status: "created",
+    });
+    expect(await runIssueSequence(input)).toEqual({ status: "completed" });
+    expect(ensureMicrosoftAccessGroupsFollowUp).not.toHaveBeenCalled();
+});
+
+it("assigns access groups for the follow-up sequence", async () => {
+    (prisma.issue.findFirst as jest.Mock).mockResolvedValue({
+        id: "issue",
+        status: "open",
+        sequence: "microsoft_assign_access_groups",
+        integrationProvider: "microsoft_graph",
+        microsoftAccessGroupIds: ["11111111-1111-1111-1111-111111111111"],
+        workerEngagement: { id: "engagement", workerId: "worker" },
+    });
+    (assignMicrosoftAccessGroups as jest.Mock).mockResolvedValue({
+        status: "completed",
+    });
+    expect(await runIssueSequence(input)).toEqual({ status: "completed" });
+    expect(assignMicrosoftAccessGroups).toHaveBeenCalledWith(
+        expect.objectContaining({
+            organizationId: "org",
+            workerId: "worker",
+            accessGroupIds: ["11111111-1111-1111-1111-111111111111"],
+        }),
+    );
+    expect(provisionMicrosoft365Account).not.toHaveBeenCalled();
+    expect(ensureMicrosoftAccessGroupsFollowUp).not.toHaveBeenCalled();
 });
 it.each([false, true])(
     "persists returned and thrown errors (throws=%s)",

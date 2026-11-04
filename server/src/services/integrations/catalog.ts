@@ -10,6 +10,7 @@ export const INTEGRATION_PROVIDERS = [
 
 export const INTEGRATION_SEQUENCES = [
     "microsoft_create_account",
+    "microsoft_assign_access_groups",
     "microsoft_send_onboarding_email",
     "microsoft_send_offboarding_email",
     "microsoft_send_email",
@@ -25,6 +26,7 @@ export const SEQUENCE_PROVIDER: Record<
     IntegrationProvider
 > = {
     microsoft_create_account: "microsoft_graph",
+    microsoft_assign_access_groups: "microsoft_graph",
     microsoft_send_onboarding_email: "microsoft_graph",
     microsoft_send_offboarding_email: "microsoft_graph",
     microsoft_send_email: "microsoft_graph",

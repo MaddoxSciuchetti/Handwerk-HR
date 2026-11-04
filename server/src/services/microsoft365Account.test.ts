@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { sendMail } from "@/utils/sendMail";
 import {
+    assignMicrosoftAccessGroups,
     microsoftGraphToken,
     buildUserPrincipalName,
     foldMailPart,
@@ -429,6 +430,73 @@ describe("microsoft 365 account", () => {
         expect(fetchSpy).not.toHaveBeenCalled();
         expect(transaction).not.toHaveBeenCalled();
         fetchSpy.mockRestore();
+    });
+
+    it("rejects assigning groups without a selection", async () => {
+        configureEnv();
+        await expect(
+            assignMicrosoftAccessGroups({
+                organizationId: "org-1",
+                workerId: "worker-1",
+                config,
+                accessGroupIds: [],
+            }),
+        ).resolves.toEqual({
+            status: "failed",
+            message: "Bitte mindestens eine Microsoft-Gruppe auswählen.",
+        });
+        expect(findWorker).not.toHaveBeenCalled();
+    });
+
+    it("rejects assigning groups when no Microsoft account exists", async () => {
+        configureEnv();
+        findWorker.mockResolvedValue({
+            id: "worker-1",
+            externalAccounts: [],
+        });
+        await expect(
+            assignMicrosoftAccessGroups({
+                organizationId: "org-1",
+                workerId: "worker-1",
+                config,
+                accessGroupIds: ["11111111-1111-1111-1111-111111111111"],
+            }),
+        ).resolves.toEqual({
+            status: "failed",
+            message:
+                "Für diesen Mitarbeiter ist noch kein Microsoft-365-Konto hinterlegt.",
+        });
+    });
+
+    it("assigns selected groups to the existing Microsoft account", async () => {
+        configureEnv();
+        findWorker.mockResolvedValue({
+            id: "worker-1",
+            externalAccounts: [{ externalId: "graph-1" }],
+        });
+        const groupId = "11111111-1111-1111-1111-111111111111";
+        const fetchSpy = jest.spyOn(global, "fetch").mockImplementation(async (input, init) => {
+            const url = String(input);
+            if (url.includes("/oauth2/v2.0/token")) {
+                return jsonResponse({ access_token: "token" });
+            }
+            if (url.includes(`/groups/${groupId}/members/$ref`) && init?.method === "POST") {
+                return jsonResponse(null, 204);
+            }
+            throw new Error(`unexpected ${init?.method ?? "GET"} ${url}`);
+        });
+        try {
+            await expect(
+                assignMicrosoftAccessGroups({
+                    organizationId: "org-1",
+                    workerId: "worker-1",
+                    config,
+                    accessGroupIds: [groupId],
+                }),
+            ).resolves.toEqual({ status: "completed" });
+        } finally {
+            fetchSpy.mockRestore();
+        }
     });
 });
 

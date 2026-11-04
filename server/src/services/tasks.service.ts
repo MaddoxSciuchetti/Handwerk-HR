@@ -169,7 +169,8 @@ async function taskSequenceFields(
         throw new AppError(BAD_REQUEST, "Bitte gib eine gültige Microsoft-Konto-ID ein.");
     }
     const microsoftAccessGroupIds =
-        sequence === "microsoft_create_account"
+        sequence === "microsoft_create_account" ||
+        sequence === "microsoft_assign_access_groups"
             ? normalizeAccessGroupIds(body.microsoftAccessGroupIds)
             : null;
     return {

@@ -471,6 +471,71 @@ export async function provisionMicrosoft365Account(params: {
     };
 }
 
+export type AssignMicrosoftAccessGroupsResult =
+    | { status: "completed" }
+    | { status: "failed"; message: string }
+    | { status: "skipped"; reason: "not_configured" | "not_live" };
+
+export async function assignMicrosoftAccessGroups(params: {
+    organizationId: string;
+    workerId: string;
+    config: Microsoft365Config | null;
+    accessGroupIds?: string[] | null;
+}): Promise<AssignMicrosoftAccessGroupsResult> {
+    const config = params.config;
+    if (!config) return { status: "skipped", reason: "not_configured" };
+    if (!integrationsLive() && !microsoftSimulationEnabled()) {
+        return { status: "skipped", reason: "not_live" };
+    }
+    const accessGroupIds = normalizeAccessGroupIds(params.accessGroupIds);
+    if (accessGroupIds.length === 0) {
+        return {
+            status: "failed",
+            message: "Bitte mindestens eine Microsoft-Gruppe auswählen.",
+        };
+    }
+    const worker = await prisma.worker.findFirst({
+        where: { id: params.workerId, organizationId: params.organizationId },
+        select: {
+            id: true,
+            externalAccounts: {
+                where: { provider: "microsoft_365" },
+                select: { externalId: true },
+                take: 1,
+            },
+        },
+    });
+    if (!worker) {
+        return { status: "failed", message: "Mitarbeiter nicht gefunden." };
+    }
+    const externalId = worker.externalAccounts[0]?.externalId.trim() ?? "";
+    if (!externalId) {
+        return {
+            status: "failed",
+            message:
+                "Für diesen Mitarbeiter ist noch kein Microsoft-365-Konto hinterlegt.",
+        };
+    }
+    const token = await microsoftGraphToken(config);
+    if (!token) {
+        return {
+            status: "failed",
+            message: "Microsoft Graph hat die Anmeldung abgelehnt.",
+        };
+    }
+    for (const groupId of accessGroupIds) {
+        const membership = await addGroupMember({
+            token,
+            groupId,
+            userId: externalId,
+        });
+        if (!membership.ok) {
+            return { status: "failed", message: membership.message };
+        }
+    }
+    return { status: "completed" };
+}
+
 async function deleteCreatedUser(token: string, externalId: string) {
     try {
         const { response } = await graphRequest(

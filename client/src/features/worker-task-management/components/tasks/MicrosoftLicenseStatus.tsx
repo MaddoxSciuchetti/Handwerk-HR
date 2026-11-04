@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import useAuth from '@/features/user-profile/hooks/useAuth';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 import {
   getMicrosoftLicenseAvailability,
   pingMicrosoftLicenseAdmin,
@@ -43,10 +44,15 @@ export function MicrosoftLicenseStatus({
       : count == null
         ? '–'
         : String(count);
+  const pingLabel = ping.isPending
+    ? 'Sendet…'
+    : ping.isSuccess
+      ? 'Gesendet'
+      : 'ping admin';
   return (
-    <div className="flex items-center gap-2">
+    <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
       <p
-        className={`text-xs whitespace-nowrap ${count === 0 || error ? 'text-destructive' : 'text-muted-foreground'}`}
+        className={`m-0 text-xs leading-none whitespace-nowrap ${count === 0 || error ? 'text-destructive' : 'text-muted-foreground'}`}
         role={count === 0 || error ? 'alert' : 'status'}
         title={
           error ||
@@ -63,17 +69,20 @@ export function MicrosoftLicenseStatus({
               : `${count} ${count === 1 ? 'Microsoft-Lizenz' : 'Microsoft-Lizenzen'} verfügbar`
           : `Microsoft 365 - ${label}`}
       </p>
-      {count === 0 && !error && engagementId && (
-        <button
+      {count === 0 && !error && engagementId ? (
+        <Button
           type="button"
-          className="text-xs text-blue-600 underline underline-offset-2 disabled:opacity-50"
+          variant="outline"
+          size="sm"
+          className="justify-self-end"
           disabled={ping.isPending || ping.isSuccess}
           onClick={() => ping.mutate()}
-          title="Administration um eine neue Microsoft-Lizenz für diesen Mitarbeiter bitten"
+          title="Sendet eine E-Mail an die Administration mit der Bitte um eine neue Microsoft-Lizenz für diesen Mitarbeiter"
+          aria-label={pingLabel}
         >
-          {ping.isPending ? 'Sendet…' : ping.isSuccess ? 'Gesendet' : 'Ping'}
-        </button>
-      )}
+          {pingLabel}
+        </Button>
+      ) : null}
     </div>
   );
 }

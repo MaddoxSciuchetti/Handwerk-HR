@@ -2,7 +2,7 @@ import { ISSUE_STATUSES } from '@/features/all-tasks/consts/issue-status.consts'
 import {
   INTEGRATION_NONE,
   INTEGRATION_PROVIDERS,
-  INTEGRATION_SEQUENCES,
+  SELECTABLE_INTEGRATION_SEQUENCES,
 } from '@/features/settings/integrations/integration.consts';
 import z from 'zod';
 
@@ -25,7 +25,7 @@ export const templateTaskFormSchema = z
     ]),
     sequence: z.enum([
       INTEGRATION_NONE,
-      ...INTEGRATION_SEQUENCES.map((item) => item.value),
+      ...SELECTABLE_INTEGRATION_SEQUENCES.map((item) => item.value),
     ]),
     mailTemplateId: z.string(),
   })
@@ -48,7 +48,7 @@ export const templateTaskFormSchema = z
       });
       return;
     }
-    const sequence = INTEGRATION_SEQUENCES.find(
+    const sequence = SELECTABLE_INTEGRATION_SEQUENCES.find(
       (item) => item.value === value.sequence
     );
     if (sequence?.provider !== value.integrationProvider) {

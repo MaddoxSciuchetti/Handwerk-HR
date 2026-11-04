@@ -71,10 +71,12 @@ function selectionLabel(labels: string[]) {
 function FieldRow({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex items-center gap-3">
-      <span className="w-24 shrink-0 text-xs text-muted-foreground">
+      <span className="flex h-8 w-24 shrink-0 items-center text-xs leading-none text-muted-foreground">
         {label}:
       </span>
-      <div className="min-w-0 flex-1">{children}</div>
+      <div className="flex min-h-8 min-w-0 flex-1 items-center justify-end">
+        {children}
+      </div>
     </div>
   );
 }
@@ -286,7 +288,10 @@ export function TemplateAutomationConfirmation({
                 key={item.id}
                 className="min-w-0 rounded-lg border border-border p-2"
               >
-                <AccordionTrigger disabled={busy} className="py-0">
+                <AccordionTrigger
+                  disabled={busy}
+                  className="py-0 hover:no-underline focus-visible:border-transparent focus-visible:ring-0"
+                >
                   <span className="flex flex-1 items-center justify-between gap-2">
                     <span>{item.title}</span>
                     {choice.scheduledDeactivateAt && (

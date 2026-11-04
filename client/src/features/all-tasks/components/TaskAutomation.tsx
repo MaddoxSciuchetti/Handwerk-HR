@@ -62,8 +62,14 @@ function ExistingTaskAutomation({
         ? ''
         : 'Sequenzen werden in dieser Umgebung nicht ausgeführt.';
 
+  const needsAccessGroups =
+    sequence === 'microsoft_create_account' ||
+    sequence === 'microsoft_assign_access_groups';
+  const assignRequiresGroups =
+    sequence === 'microsoft_assign_access_groups' && accessGroupIds.length === 0;
+
   const onGo = async () => {
-    if (disabled || isRunning || blockedReason) return;
+    if (disabled || isRunning || blockedReason || assignRequiresGroups) return;
     setIsRunning(true);
     if (beforeRun && !(await beforeRun())) {
       setIsRunning(false);
@@ -71,7 +77,7 @@ function ExistingTaskAutomation({
     }
     const sender = senderAddress?.trim() || undefined;
     const [, error] = await tryCatch(
-      sequence === 'microsoft_create_account'
+      needsAccessGroups
         ? runIssueSequence(taskId, sender, accessGroupIds)
         : runIssueSequence(taskId, sender)
     );
@@ -113,17 +119,23 @@ function ExistingTaskAutomation({
       {blockedReason ? (
         <p className="text-sm text-muted-foreground">{blockedReason}</p>
       ) : null}
-      {sequence === 'microsoft_create_account' && !blockedReason ? (
+      {needsAccessGroups && !blockedReason ? (
         <MicrosoftAccessGroupPicker
           selectedIds={accessGroupIds}
           onChange={setAccessGroupIds}
           disabled={disabled || isRunning}
+          showOptionalNote={sequence === 'microsoft_create_account'}
         />
       ) : null}
       <Button
         type="button"
         className="rounded-2xl"
-        disabled={disabled || isRunning || Boolean(blockedReason)}
+        disabled={
+          disabled ||
+          isRunning ||
+          Boolean(blockedReason) ||
+          assignRequiresGroups
+        }
         aria-busy={isRunning}
         onClick={() => void onGo()}
       >
