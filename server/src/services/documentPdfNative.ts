@@ -1,4 +1,5 @@
 import { createElement, type ReactElement, type ReactNode } from "react";
+import { createCanvas } from "@napi-rs/canvas";
 import {
   Document,
   Font,
@@ -25,16 +26,12 @@ import {
 } from "../../../shared/documentRendering";
 
 const MM_TO_PT = 72 / 25.4;
-/** Optical scale: Yoga + react-pdf metrics run larger than Chromium for same TTF. */
-const FONT_SCALE = 0.93;
-/**
- * react-pdf line boxes run taller than Chromium for the same CSS line-height.
- * Map authored values down so 1.5 ≈ Chromium 1.5 visually (~1.18 here).
- */
+// Chromium's print font advances measure 1.37% below React-PDF with the same
+// embedded faces. Keep this small cross-engine calibration uniform; never vary
+// typography with field values or document text.
+const FONT_SCALE = 0.9863;
 function pdfLineHeight(value: number) {
-  if (!Number.isFinite(value) || value <= 0) return undefined;
-  if (value <= 1.05) return 1;
-  return 1 + (value - 1) * 0.36;
+  return Number.isFinite(value) && value > 0 ? value : undefined;
 }
 const HEADING_SIZE: Record<number, number> = {
   1: 20,
@@ -49,10 +46,23 @@ function mm(n: number) {
   return n * MM_TO_PT;
 }
 
-function familyName(
-  family: string,
-  familyMap: Record<string, string>,
-): string {
+const underlineImages = new Map<string, string>();
+function underlineImage(color: string, width: number) {
+  const key = `${color}:${width}`;
+  const cached = underlineImages.get(key);
+  if (cached) return cached;
+  // Inline attachments preserve aspect ratio, so the bitmap must itself have
+  // the aspect ratio of the requested half-point rule.
+  const canvas = createCanvas(Math.max(1, Math.round(width * 2)), 1);
+  const context = canvas.getContext("2d");
+  context.fillStyle = color;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  const src = canvas.toDataURL("image/png");
+  underlineImages.set(key, src);
+  return src;
+}
+
+function familyName(family: string, familyMap: Record<string, string>): string {
   return familyMap[family] ?? family;
 }
 
@@ -75,24 +85,99 @@ export function registerDocumentFonts(
     file: string;
   }[] = [
     { logical: "Calibri", weight: 400, style: "normal", file: "Calibri.ttf" },
-    { logical: "Calibri", weight: 700, style: "normal", file: "Calibri-Bold.ttf" },
-    { logical: "Calibri", weight: 400, style: "italic", file: "Calibri-Italic.ttf" },
-    { logical: "Calibri", weight: 700, style: "italic", file: "Calibri-BoldItalic.ttf" },
+    {
+      logical: "Calibri",
+      weight: 700,
+      style: "normal",
+      file: "Calibri-Bold.ttf",
+    },
+    {
+      logical: "Calibri",
+      weight: 400,
+      style: "italic",
+      file: "Calibri-Italic.ttf",
+    },
+    {
+      logical: "Calibri",
+      weight: 700,
+      style: "italic",
+      file: "Calibri-BoldItalic.ttf",
+    },
     { logical: "Arial", weight: 400, style: "normal", file: "Arial.ttf" },
     { logical: "Arial", weight: 700, style: "normal", file: "Arial-Bold.ttf" },
-    { logical: "Arial", weight: 400, style: "italic", file: "Arial-Italic.ttf" },
-    { logical: "Arial", weight: 700, style: "italic", file: "Arial-BoldItalic.ttf" },
-    { logical: "Helvetica", weight: 400, style: "normal", file: "Helvetica.ttf" },
-    { logical: "Helvetica", weight: 700, style: "normal", file: "Helvetica-Bold.ttf" },
-    { logical: "Helvetica", weight: 400, style: "italic", file: "Helvetica-Italic.ttf" },
-    { logical: "Helvetica", weight: 700, style: "italic", file: "Helvetica-BoldItalic.ttf" },
-    { logical: "Times New Roman", weight: 400, style: "normal", file: "TimesNewRoman.ttf" },
-    { logical: "Times New Roman", weight: 700, style: "normal", file: "TimesNewRoman-Bold.ttf" },
-    { logical: "Times New Roman", weight: 400, style: "italic", file: "TimesNewRoman-Italic.ttf" },
-    { logical: "Times New Roman", weight: 700, style: "italic", file: "TimesNewRoman-BoldItalic.ttf" },
+    {
+      logical: "Arial",
+      weight: 400,
+      style: "italic",
+      file: "Arial-Italic.ttf",
+    },
+    {
+      logical: "Arial",
+      weight: 700,
+      style: "italic",
+      file: "Arial-BoldItalic.ttf",
+    },
+    {
+      logical: "Helvetica",
+      weight: 400,
+      style: "normal",
+      file: "Helvetica.ttf",
+    },
+    {
+      logical: "Helvetica",
+      weight: 700,
+      style: "normal",
+      file: "Helvetica-Bold.ttf",
+    },
+    {
+      logical: "Helvetica",
+      weight: 400,
+      style: "italic",
+      file: "Helvetica-Italic.ttf",
+    },
+    {
+      logical: "Helvetica",
+      weight: 700,
+      style: "italic",
+      file: "Helvetica-BoldItalic.ttf",
+    },
+    {
+      logical: "Times New Roman",
+      weight: 400,
+      style: "normal",
+      file: "TimesNewRoman.ttf",
+    },
+    {
+      logical: "Times New Roman",
+      weight: 700,
+      style: "normal",
+      file: "TimesNewRoman-Bold.ttf",
+    },
+    {
+      logical: "Times New Roman",
+      weight: 400,
+      style: "italic",
+      file: "TimesNewRoman-Italic.ttf",
+    },
+    {
+      logical: "Times New Roman",
+      weight: 700,
+      style: "italic",
+      file: "TimesNewRoman-BoldItalic.ttf",
+    },
     { logical: "Symbol", weight: 400, style: "normal", file: "Symbol.ttf" },
-    { logical: "Apple Symbols", weight: 400, style: "normal", file: "AppleSymbols.ttf" },
-    { logical: "Wingdings", weight: 400, style: "normal", file: "Wingdings.ttf" },
+    {
+      logical: "Apple Symbols",
+      weight: 400,
+      style: "normal",
+      file: "AppleSymbols.ttf",
+    },
+    {
+      logical: "Wingdings",
+      weight: 400,
+      style: "normal",
+      file: "Wingdings.ttf",
+    },
   ];
 
   const byFamily = new Map<
@@ -131,12 +216,20 @@ type Ctx = {
   pageSize: number;
   inFixed?: boolean;
   inList?: boolean;
+  inCheckboxRow?: boolean;
+  lineHeight?: number;
 };
 
 function isViewChild(node: ReactNode): boolean {
   if (!node || typeof node !== "object" || !("type" in node)) return false;
   const type = (node as ReactElement).type;
-  return type === View || type === Checkbox || type === GlyphCheckbox || type === Image || type === Svg;
+  return (
+    type === View ||
+    type === Checkbox ||
+    type === GlyphCheckbox ||
+    type === Image ||
+    type === Svg
+  );
 }
 
 function nodeTextStyle(
@@ -225,44 +318,78 @@ function GlyphCheckbox({
   empty: boolean;
   fontSize?: number;
 }) {
-  // Word often stores ☐/☒ at 14pt beside 8pt body text. Size the drawn square
-  // to the body x-height (~8pt), not the oversized glyph em-square.
-  const authored = fontSize ?? 10;
-  const bodyPt = authored >= 12 ? 8 : authored;
-  const box = Math.max(6.5, Math.min(9, bodyPt * FONT_SCALE * 0.85));
-  // Draw the square with SVG so all four sides stay visible (View borders
-  // often drop the right edge under Yoga rounding). No vertical margin — the
-  // parent row uses flex-start so the box shares the text cap-line.
+  // Match Chromium printText(): ☐/☒ keep a glyph-sized advance (~0.78em of the
+  // authored mark, often 14pt) while the drawn square sits near 8pt body size.
+  // Same advance on lineGroup + paragraph rows so the following text lines up.
+  const authored = Math.max(7, fontSize ?? 10);
+  const em = authored * FONT_SCALE;
+  const slot = Math.max(7, em * (authored >= 12 ? 0.78 : 0.9));
+  const drawn = Math.max(6.5, Math.min(slot * 0.75, 8.5));
+  const inset = Math.max(0, drawn < slot ? (em * 0.5 - drawn) / 2 : 0);
   return createElement(
     View,
     {
       style: {
-        width: box,
-        height: box,
-        marginRight: 1.5,
-        alignItems: "center",
-        justifyContent: "center",
+        width: slot,
+        height: drawn,
+        marginTop: inset,
+        // Remaining slot width is the Chromium "breathing room" before the label.
+        marginRight: 0,
+        alignItems: "flex-start",
+        justifyContent: "flex-start",
       },
     },
     createElement(
       Svg,
-      { viewBox: "0 0 12 12", width: box, height: box },
+      { viewBox: "0 0 12 12", width: drawn, height: drawn },
       createElement(Path, {
         d: "M0.75 0.75H11.25V11.25H0.75Z",
         stroke: "#000",
-        strokeWidth: 0.9,
+        strokeWidth: 0.85,
         fill: "none",
       }),
       checked && !empty
         ? createElement(Path, {
             d: "M2.2 2.2L9.8 9.8M9.8 2.2L2.2 9.8",
             stroke: "#000",
-            strokeWidth: 1.1,
+            strokeWidth: 1.05,
             fill: "none",
           })
         : null,
     ),
   );
+}
+
+/** Carlito/Arial often lack ☐/☒; always draw them as SVG (lineGroup + paragraphs). */
+function nodesForTextWithCheckboxes(
+  raw: string,
+  style: Record<string, string | number | undefined>,
+  keyPrefix: string,
+  checkboxFontSize?: number,
+): ReactNode[] {
+  const parts: ReactNode[] = [];
+  let buffer = "";
+  const flush = (key: string) => {
+    if (!buffer) return;
+    parts.push(createElement(Text, { key, style: style as never }, buffer));
+    buffer = "";
+  };
+  for (let i = 0; i < raw.length; i++) {
+    const ch = raw[i]!;
+    if (ch === "☐" || ch === "☒" || ch === "☑") {
+      flush(keyPrefix + "t" + i);
+      parts.push(
+        createElement(GlyphCheckbox, {
+          key: keyPrefix + "c" + i,
+          checked: ch !== "☐",
+          empty: ch === "☐",
+          fontSize: checkboxFontSize,
+        }),
+      );
+    } else buffer += ch;
+  }
+  flush(keyPrefix + "end");
+  return parts;
 }
 
 function renderInlineText(
@@ -305,16 +432,37 @@ function renderInlineText(
       if (mark.type === "strike") style.textDecoration = "line-through";
       if (mark.type === "textStyle")
         Object.assign(style, nodeTextStyle(mark.attrs, ctx));
-      const blankWidth = Number(mark.attrs?.blankUnderlineWidth);
-      if (mark.type === "textStyle" && blankWidth > 0) {
-        style.borderBottomWidth = 0.5;
-        style.borderBottomColor = String(style.color ?? "#000");
-        style.width = blankWidth;
-        style.minWidth = blankWidth;
-      }
     }
+    const blankWidth = Number(
+      marks?.find(
+        (mark) =>
+          mark.type === "textStyle" &&
+          Number(mark.attrs?.blankUnderlineWidth) > 0,
+      )?.attrs?.blankUnderlineWidth,
+    );
+    if (blankUnderline && !chunk.trim()) {
+      // Nested Text borders/widths are ignored by React-PDF. An inline image
+      // attachment reserves the exact authored advance and paints the rule on
+      // the text baseline, including in right-aligned cells and wrapped text.
+      parts.push(
+        createElement(
+          Text,
+          { key, style: style as never },
+          createElement(Image, {
+            src: underlineImage(String(style.color ?? "#000000"), blankWidth),
+            style: { width: blankWidth, height: 0.5 },
+          }),
+        ),
+      );
+      return;
+    }
+    if (blankUnderline) style.textDecoration = "underline";
     // Checkbox glyphs are often marked 14pt; keep sibling spaces from inflating the line.
-    if (/^\s+$/.test(chunk) && Number(style.fontSize) > 9 * FONT_SCALE) {
+    if (
+      ctx.inCheckboxRow &&
+      /^\s+$/.test(chunk) &&
+      Number(style.fontSize) > 9 * FONT_SCALE
+    ) {
       style.fontSize = 8 * FONT_SCALE;
       style.lineHeight = 1;
     }
@@ -340,6 +488,31 @@ function renderInlineText(
 }
 
 function renderNode(node: DocumentNode, ctx: Ctx, key: string): ReactNode {
+  if (node.type === "paragraph") {
+    ctx = {
+      ...ctx,
+      inCheckboxRow: (node.content ?? []).some(
+        (part) =>
+          /[☐☒☑]/.test(part.text ?? "") || part.attrs?.fieldType === "checkbox",
+      ),
+    };
+  }
+  if (
+    [
+      "bulletList",
+      "orderedList",
+      "blockquote",
+      "table",
+      "tableCell",
+      "tableHeader",
+    ].includes(node.type)
+  ) {
+    ctx = {
+      ...ctx,
+      pageSize: Number(node.attrs?.fontSize) || ctx.pageSize,
+      lineHeight: Number(node.attrs?.lineHeight) || ctx.lineHeight,
+    };
+  }
   if (node.type === "text") {
     const parts = renderInlineText(node.text, node.marks, ctx);
     if (parts.some(isViewChild))
@@ -451,29 +624,31 @@ function renderNode(node: DocumentNode, ctx: Ctx, key: string): ReactNode {
       0,
       Math.min(2000, Number(node.attrs?.marginBottom) || 0),
     );
-    const lines = lineGroupFlowLines(node).slice(0, 50).map((line, i) => {
-      const left = Math.max(-2000, Math.min(2000, Number(line.left) || 0));
-      const top = Math.max(-2000, Math.min(2000, Number(line.top) || 0));
-      const width = Math.max(0, Math.min(2000, Number(line.width) || 0));
-      const thickness = Math.max(
-        0.25,
-        Math.min(10, Number(line.thickness) || 0.5),
-      );
-      const color = /^#[0-9a-f]{6}$/i.test(String(line.color))
-        ? String(line.color)
-        : "#000000";
-      return createElement(View, {
-        key: "l" + i,
-        style: {
-          position: "absolute",
-          left,
-          top,
-          width,
-          borderTopWidth: thickness,
-          borderTopColor: color,
-        },
+    const lines = lineGroupFlowLines(node)
+      .slice(0, 50)
+      .map((line, i) => {
+        const left = Math.max(-2000, Math.min(2000, Number(line.left) || 0));
+        const top = Math.max(-2000, Math.min(2000, Number(line.top) || 0));
+        const width = Math.max(0, Math.min(2000, Number(line.width) || 0));
+        const thickness = Math.max(
+          0.25,
+          Math.min(10, Number(line.thickness) || 0.5),
+        );
+        const color = /^#[0-9a-f]{6}$/i.test(String(line.color))
+          ? String(line.color)
+          : "#000000";
+        return createElement(View, {
+          key: "l" + i,
+          style: {
+            position: "absolute",
+            left,
+            top,
+            width,
+            borderTopWidth: thickness,
+            borderTopColor: color,
+          },
+        });
       });
-    });
     const storedLabels = Array.isArray(node.attrs?.labels)
       ? (node.attrs.labels as Record<string, unknown>[]).slice(0, 100)
       : [];
@@ -496,53 +671,136 @@ function renderNode(node: DocumentNode, ctx: Ctx, key: string): ReactNode {
       )
         ? familyName(String(attrs.fontFamily), ctx.familyMap)
         : familyName(ctx.pageFamily, ctx.familyMap);
-      let inner: ReactNode;
+      const runNodes: ReactNode[] = [];
       if (stored && Array.isArray(stored.runs)) {
-        inner = (stored.runs as { text?: unknown; props?: Record<string, unknown> }[])
-          .slice(0, 500)
-          .map((run, ri) =>
-            createElement(
-              Text,
-              {
-                key: ri,
-                style: {
-                  ...nodeTextStyle(run.props, ctx),
-                  fontWeight: run.props?.bold === true ? 700 : 400,
-                  fontStyle: run.props?.italic === true ? "italic" : "normal",
-                  textDecoration:
-                    run.props?.underline === true ? "underline" : undefined,
-                },
-              },
-              String(run.text ?? ""),
+        const runs = (
+          stored.runs as {
+            text?: unknown;
+            props?: Record<string, unknown>;
+          }[]
+        ).slice(0, 500);
+        for (const [ri, run] of runs.entries()) {
+          const runStyle: Record<string, string | number | undefined> = {
+            ...nodeTextStyle(run.props, ctx),
+            fontWeight: run.props?.bold === true ? 700 : 400,
+            fontStyle: run.props?.italic === true ? "italic" : "normal",
+            textDecoration:
+              run.props?.underline === true ? "underline" : undefined,
+          };
+          const runFont =
+            Number(run.props?.fontSize) > 0
+              ? Number(run.props?.fontSize)
+              : fontSize;
+          const text = String(run.text ?? "");
+          // Word stores a 14pt space after ☐; paragraph rows have no gap after
+          // the SVG. Drop that spacer so both option lines share one text column.
+          const prev = runs[ri - 1];
+          const prevText = String(prev?.text ?? "");
+          if (/^\s+$/.test(text) && /[☐☒☑]/.test(prevText) && runFont >= 12) {
+            continue;
+          }
+          if (/[☐☒☑]/.test(text)) {
+            for (const part of nodesForTextWithCheckboxes(
+              text,
+              runStyle,
+              "lb" + index + "r" + ri,
+              runFont,
+            )) {
+              runNodes.push(
+                isViewChild(part)
+                  ? part
+                  : createElement(
+                      View,
+                      {
+                        key: "lb" + index + "w" + ri + runNodes.length,
+                        style: { flexShrink: 0 },
+                      },
+                      part,
+                    ),
+              );
+            }
+          } else {
+            // Body copy next to ☐ is 8pt; don't let a 14pt run inflate the row.
+            if (
+              runs.some((run) => /[☐☒☑]/.test(String(run.text ?? ""))) &&
+              /^\s+$/.test(text) &&
+              Number(runStyle.fontSize) > 9 * FONT_SCALE
+            ) {
+              runStyle.fontSize = 8 * FONT_SCALE;
+              runStyle.lineHeight = 1;
+            }
+            runNodes.push(
+              createElement(
+                Text,
+                { key: "lb" + index + "r" + ri, style: runStyle as never },
+                text,
+              ),
+            );
+          }
+        }
+      } else if (stored) {
+        const text = String(stored.text ?? "");
+        if (/[☐☒☑]/.test(text)) {
+          runNodes.push(
+            ...nodesForTextWithCheckboxes(
+              text,
+              {},
+              "lb" + index + "t",
+              fontSize,
             ),
           );
-      } else if (stored) {
-        inner = String(stored.text ?? "");
+        } else runNodes.push(text);
       } else if (child) {
-        inner = (child.content ?? []).map((part, pi) =>
-          renderNode(part, ctx, "p" + pi),
+        runNodes.push(
+          ...(child.content ?? []).map((part, pi) =>
+            renderNode(part, ctx, "p" + pi),
+          ),
         );
-      } else inner = "";
-      // react-pdf does not support CSS translateX; approximate centered labels.
-      const label = String(
-        stored?.text ??
-          (Array.isArray(stored?.runs)
-            ? (stored!.runs as { text?: string }[])
-                .map((r) => r.text ?? "")
-                .join("")
-            : ""),
-      );
-      const approxWidth =
-        attrs.centered === true
-          ? Math.max(label.length, 1) * fontSize * 0.45
-          : 0;
+      }
+      // SVG checkboxes cannot nest inside Text — use a row View.
+      if (runNodes.some(isViewChild)) {
+        return createElement(
+          View,
+          {
+            key: "lb" + index,
+            style: {
+              position: "absolute",
+              left: attrs.centered === true ? 0 : left,
+              width: attrs.centered === true ? left * 2 : undefined,
+              justifyContent: attrs.centered === true ? "center" : "flex-start",
+              top,
+              flexDirection: "row",
+              flexWrap: "nowrap",
+              alignItems: "flex-start",
+              fontFamily: family,
+              // Use body size on the row so a 14pt ☐ mark does not stretch height.
+              fontSize: Math.min(fontSize, 8),
+              lineHeight: 1.15,
+              color,
+            },
+          },
+          ...runNodes.map((part, pi) =>
+            isViewChild(part)
+              ? part
+              : createElement(
+                  View,
+                  { key: "lbt" + index + pi, style: { flexShrink: 0 } },
+                  typeof part === "string"
+                    ? createElement(Text, null, part)
+                    : part,
+                ),
+          ),
+        );
+      }
       return createElement(
         Text,
         {
           key: "lb" + index,
           style: {
             position: "absolute",
-            left: attrs.centered === true ? left - approxWidth / 2 : left,
+            left: attrs.centered === true ? 0 : left,
+            width: attrs.centered === true ? left * 2 : undefined,
+            textAlign: attrs.centered === true ? "center" : "left",
             top,
             fontFamily: family,
             fontSize,
@@ -553,7 +811,7 @@ function renderNode(node: DocumentNode, ctx: Ctx, key: string): ReactNode {
             textDecoration: attrs.underline === true ? "underline" : undefined,
           },
         },
-        inner,
+        ...runNodes,
       );
     });
     return createElement(
@@ -584,71 +842,40 @@ function renderNode(node: DocumentNode, ctx: Ctx, key: string): ReactNode {
       src,
       style: {
         maxWidth: "100%",
-        ...(width > 0 && width <= 2000 ? { width } : {}),
+        ...(width > 0 && width <= 2000 ? { width: width * 0.75 } : {}),
       },
     });
   }
 
-  // Approximate CSS margin collapsing: drop marginTop on blocks after the first.
-  const collapseMargins = (child: DocumentNode, index: number): DocumentNode => {
-    if (
-      index === 0 ||
-      !child.attrs ||
-      !["paragraph", "heading", "bulletList", "orderedList", "blockquote", "table", "lineGroup"].includes(
-        child.type,
-      )
-    )
-      return child;
-    if (!child.attrs.marginTop) return child;
-    const { marginTop: _drop, ...attrs } = child.attrs;
-    return { ...child, attrs };
-  };
-
-  const isEmptyParagraph = (child: DocumentNode) =>
-    child.type === "paragraph" &&
-    !(child.content ?? []).some(
-      (part) =>
-        (part.type === "text" && String(part.text ?? "").length > 0) ||
-        part.type === "documentField" ||
-        part.type === "image" ||
-        (part.content?.length ?? 0) > 0,
+  const source = node.content ?? [];
+  const children = source.map((child, index) => {
+    if (node.type !== "doc" || index === 0)
+      return renderNode(child, ctx, String(index));
+    // CSS collapses adjoining vertical block margins to their maximum.
+    const previous = source[index - 1]!;
+    const defaultBottom = (type: string) =>
+      [
+        "paragraph",
+        "heading",
+        "bulletList",
+        "orderedList",
+        "blockquote",
+      ].includes(type)
+        ? 8
+        : 0;
+    const bottom = Number(
+      previous.attrs?.marginBottom ?? defaultBottom(previous.type),
     );
-
-  const children = (() => {
-    const source = node.content ?? [];
-    if (node.type !== "doc")
-      return source.map((child, i) => renderNode(child, ctx, String(i)));
-    const out: ReactNode[] = [];
-    let emptyRun = 0;
-    for (let i = 0; i < source.length; i++) {
-      const child = collapseMargins(source[i]!, i);
-      if (isEmptyParagraph(child)) {
-        emptyRun++;
-        const next = source[i + 1];
-        if (next && isEmptyParagraph(next)) continue;
-        // Chromium collapses adjacent empty <p><br></p> tightly; keep a short spacer.
-        // Tiny preserveEmpty runs (8pt signature gaps) are nearly invisible in Chromium.
-        const size = Number(child.attrs?.fontSize) || ctx.pageSize;
-        if (size <= 8 && emptyRun <= 2) {
-          emptyRun = 0;
-          continue;
-        }
-        out.push(
-          createElement(View, {
-            key: "e" + i,
-            style: {
-              height: Math.max(2, size * 0.15 * Math.min(emptyRun, 2)),
-            },
-          }),
-        );
-        emptyRun = 0;
-        continue;
-      }
-      emptyRun = 0;
-      out.push(renderNode(child, ctx, String(i)));
-    }
-    return out;
-  })();
+    const top = Number(child.attrs?.marginTop ?? 0);
+    return renderNode(
+      {
+        ...child,
+        attrs: { ...child.attrs, marginTop: Math.max(0, top - bottom) },
+      },
+      ctx,
+      String(index),
+    );
+  });
 
   if (node.type === "doc") return createElement(View, { key }, ...children);
 
@@ -656,6 +883,8 @@ function renderNode(node: DocumentNode, ctx: Ctx, key: string): ReactNode {
     const empty = !(node.content ?? []).length;
     const baseStyle = {
       ...styles.paragraph,
+      fontSize: ctx.pageSize * FONT_SCALE,
+      lineHeight: ctx.lineHeight ?? 1.5,
       ...nodeTextStyle(node.attrs, ctx),
       fontFamily: familyName(
         String(node.attrs?.fontFamily ?? ctx.pageFamily),
@@ -666,14 +895,15 @@ function renderNode(node: DocumentNode, ctx: Ctx, key: string): ReactNode {
       ...(ctx.inList ? { marginBottom: 0, marginTop: 0 } : {}),
     };
     if (empty) {
-      // Match Chromium empty <p><br></p> without Yoga's heavier Text line box.
+      // A preserved empty paragraph still contributes its authored line box.
       const size =
         Number((baseStyle as { fontSize?: number }).fontSize) || ctx.pageSize;
       return createElement(View, {
         key,
         style: {
-          height: Math.max(4, size * 0.45),
-          marginBottom: 0,
+          ...baseStyle,
+          height:
+            size * (Number(node.attrs?.lineHeight) || ctx.lineHeight || 1.5),
         },
       });
     }
@@ -722,6 +952,7 @@ function renderNode(node: DocumentNode, ctx: Ctx, key: string): ReactNode {
       Text,
       {
         key,
+        minPresenceAhead: 24,
         style: {
           ...styles.heading,
           fontSize: HEADING_SIZE[level]! * FONT_SCALE,
@@ -744,7 +975,11 @@ function renderNode(node: DocumentNode, ctx: Ctx, key: string): ReactNode {
       Number(node.attrs?.start) > 0
         ? Number(node.attrs?.start)
         : 1;
-    const listCtx = { ...ctx, inList: true };
+    const listCtx = {
+      ...ctx,
+      inList: true,
+      pageSize: Number(node.attrs?.fontSize) || ctx.pageSize,
+    };
     const listFont =
       (Number(node.attrs?.fontSize) > 0
         ? Number(node.attrs?.fontSize)
@@ -770,7 +1005,6 @@ function renderNode(node: DocumentNode, ctx: Ctx, key: string): ReactNode {
           ...styles.list,
           ...listStyle,
           paddingLeft: Math.max(padLeft, markerWidth + 2),
-          marginBottom: 1,
           fontSize: listFont,
         },
       },
@@ -807,8 +1041,11 @@ function renderNode(node: DocumentNode, ctx: Ctx, key: string): ReactNode {
                 width: markerWidth,
                 marginLeft: -markerWidth,
                 fontSize: listFont,
-                color: listStyle.color,
-                lineHeight: 1.12,
+                color:
+                  typeof listStyle.color === "string"
+                    ? listStyle.color
+                    : undefined,
+                lineHeight: 1.5,
               },
             },
             marker,
@@ -831,7 +1068,10 @@ function renderNode(node: DocumentNode, ctx: Ctx, key: string): ReactNode {
   if (node.type === "blockquote")
     return createElement(
       View,
-      { key, style: { ...styles.blockquote, ...nodeTextStyle(node.attrs, ctx) } },
+      {
+        key,
+        style: { ...styles.blockquote, ...nodeTextStyle(node.attrs, ctx) },
+      },
       ...children,
     );
 
@@ -964,6 +1204,8 @@ function flattenInlineNodes(
         {
           key: keyPrefix,
           style: {
+            ...nodeTextStyle(node.attrs, ctx),
+            fontSize: Number(node.attrs?.fontSize) || ctx.pageSize,
             flexDirection: "row",
             flexWrap: "wrap",
             justifyContent:
@@ -981,7 +1223,11 @@ function flattenInlineNodes(
   }
   if (node.type === "text")
     return [
-      createElement(Text, { key: keyPrefix }, ...(renderInlineText(node.text, node.marks, ctx) as ReactNode[])),
+      createElement(
+        Text,
+        { key: keyPrefix },
+        ...(renderInlineText(node.text, node.marks, ctx) as ReactNode[]),
+      ),
     ];
   if (node.type === "pageField") {
     const kind = node.attrs?.kind === "pages" ? "pages" : "page";
@@ -996,15 +1242,11 @@ function flattenInlineNodes(
         }: {
           pageNumber: number;
           totalPages: number;
-        }) =>
-          String(
-            kind === "pages"
-              ? totalPages || ""
-              : pageNumber || "",
-          ),
+        }) => String(kind === "pages" ? totalPages || "" : pageNumber || ""),
       }),
     ];
   }
+  if (node.type === "image") return [renderNode(node, ctx, keyPrefix)];
   if (node.type === "documentField" || node.type === "hardBreak")
     return [renderNode(node, ctx, keyPrefix)];
   return (node.content ?? []).flatMap((child, i) =>
@@ -1024,10 +1266,23 @@ function HeaderFooter({
   page: StyledDocument["page"];
 }) {
   if (!sectionHasContent(section)) return null;
+  const footerHeight = (section.content ?? []).reduce((height, node) => {
+    if (!node.content?.length) return height;
+    const size = Number(node.attrs?.fontSize) || page.fontSize;
+    return (
+      height +
+      size * FONT_SCALE * (Number(node.attrs?.lineHeight) || 1.5) +
+      Number(node.attrs?.marginTop || 0) +
+      Number(node.attrs?.marginBottom || 0)
+    );
+  }, 0);
   const top =
     position === "header"
-      ? mm(10)
-      : mm(page.height - page.marginBottom + 4);
+      ? mm(5)
+      : Math.min(
+          mm(page.height - page.marginBottom + 4),
+          mm(page.height - 4) - footerHeight,
+        );
   return createElement(
     View,
     {
@@ -1046,24 +1301,22 @@ function HeaderFooter({
 }
 
 const styles = StyleSheet.create({
-  // Chromium DOCUMENT_CSS: p margin 0 0 8pt, body line-height 1.5.
-  // react-pdf line boxes measure taller than Chromium for the same CSS numbers,
-  // so defaults are tightened until golden page fills match.
+  // Keep defaults aligned with shared DOCUMENT_CSS.
   paragraph: {
     marginTop: 0,
-    marginBottom: 2.5,
-    lineHeight: 1.12,
+    marginBottom: 8,
+    lineHeight: 1.5,
     color: "#111",
   },
   heading: {
     marginTop: 0,
-    marginBottom: 4,
-    lineHeight: 1.15,
+    marginBottom: 8,
+    lineHeight: 1.5,
     color: "#111",
   },
   list: {
-    marginBottom: 1,
-    paddingLeft: 18,
+    marginBottom: 8,
+    paddingLeft: 20,
   },
   listItem: {
     flexDirection: "row",
@@ -1113,18 +1366,14 @@ export function buildDocumentElement(
     pageFamily: page.fontFamily,
     pageSize: page.fontSize,
   };
-  // Chromium's used print width is slightly wider than Yoga's content box for the
-  // same mm margins (scrollbar/rounding). Nudge horizontal padding so wraps match.
   const pageStyle = {
     paddingTop: mm(page.marginTop),
     paddingBottom: mm(page.marginBottom),
-    paddingLeft: Math.max(0, mm(page.marginLeft) - 2),
-    paddingRight: Math.max(0, mm(page.marginRight) - 2),
+    paddingLeft: mm(page.marginLeft),
+    paddingRight: mm(page.marginRight),
     fontFamily: familyName(page.fontFamily, familyMap),
-    // Slight optical downscale: Yoga metrics run a hair larger than Chromium for
-    // the same TTF, which otherwise adds ~1 page on long contracts.
     fontSize: page.fontSize * FONT_SCALE,
-    lineHeight: 1.08,
+    lineHeight: 1.5,
     color: "#111",
     backgroundColor: "#fff",
   };
@@ -1167,12 +1416,10 @@ export async function renderStyledDocumentPdf(
     familyMap: Record<string, string>;
   },
 ): Promise<Buffer> {
+  // Browser print does not insert dictionary hyphens into authored words.
+  Font.registerHyphenationCallback((word) => [word]);
   registerDocumentFonts(fonts.assets, fonts.familyMap ?? {});
-  const element = buildDocumentElement(
-    document,
-    values,
-    fonts.familyMap ?? {},
-  );
+  const element = buildDocumentElement(document, values, fonts.familyMap ?? {});
   const instance = pdf(element as never);
   // toBuffer() returns a Node readable stream (misnamed API).
   const stream = (await instance.toBuffer()) as NodeJS.ReadableStream;
