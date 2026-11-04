@@ -113,7 +113,7 @@ export function CreateTemplateDocumentDialog({
     >
       <DialogContent className="gap-3 p-4 sm:max-w-sm">
         <DialogHeader className="pr-8">
-          <DialogTitle>Vorlagen auswählen</DialogTitle>
+          <DialogTitle className="truncate">Vorlagen auswählen</DialogTitle>
         </DialogHeader>
         {masters.isError ? (
           <p className="text-sm text-destructive">
@@ -168,6 +168,7 @@ export function CreateTemplateDocumentDialog({
                       key={master.id}
                       className="flex min-w-0 cursor-pointer items-center gap-2 overflow-hidden rounded-md px-2 py-2 hover:bg-muted/50"
                       title={master.name}
+                      onPointerDown={(event) => event.preventDefault()}
                     >
                       <Checkbox
                         checked={selected}
