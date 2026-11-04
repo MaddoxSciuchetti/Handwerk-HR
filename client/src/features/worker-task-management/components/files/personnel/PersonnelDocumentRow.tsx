@@ -39,7 +39,7 @@ export function PersonnelDocumentRow({
         void prefetchStoredFile(document.presignedUrl);
       }}
     >
-      <div className="absolute right-2 top-2 z-10 flex">
+      <div className="absolute right-2 top-2 z-10 flex items-center gap-1">
         <FilePrintButton
           label={document.originalFileName}
           onPrefetch={() => {
