@@ -19,6 +19,8 @@ vi.mock('@/features/worker-task-management/api/personnelDocuments.api', () => ({
 vi.mock('@/features/worker-task-management/hooks/useTemplateDocuments', () => ({
   useTemplateDocuments: () => ({ data: [] }),
   useCreateTemplateDocument: () => ({ mutate: vi.fn(), isPending: false }),
+  useCreateTemplateDocuments: () => ({ mutate: vi.fn(), isPending: false }),
+  useSyncTemplateDocuments: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 vi.mock('@/features/settings/documents/useDocumentMasters', () => ({
   useDocumentMasters: () => ({ data: [], isPending: false, isError: false }),
@@ -85,7 +87,14 @@ it('shows the questionnaire, contract, and folders as file boxes', async () => {
 
   expect(screen.queryByText('Leer')).not.toBeInTheDocument();
   expect(screen.queryByText('Keine Datei')).not.toBeInTheDocument();
-  expect(screen.queryByText(/Datei/)).not.toBeInTheDocument();
+  expect(
+    screen.queryByText('Datei hierher oder in einen anderen Ordner ziehen')
+  ).not.toBeInTheDocument();
+  expect(
+    screen.getByRole('button', {
+      name: 'Zurück zu allen Ordnern, Personalausweis',
+    })
+  ).toBeInTheDocument();
 });
 
 it('uploads dropped files into built-in, custom, and open folders', async () => {
@@ -204,18 +213,24 @@ it('moves existing personnel and legacy files into folders without uploading aga
     screen.getByText('personal.pdf').closest('[draggable]')!,
     { dataTransfer: transfer }
   );
+  const storedPayload = JSON.stringify({
+    id: storedDocument.id,
+    source: 'personnel',
+    engagementId: engagement.id,
+  });
   expect(transfer.setData).toHaveBeenCalledWith(
     'application/x-handwerk-file',
-    JSON.stringify({
-      id: storedDocument.id,
-      source: 'personnel',
-      engagementId: engagement.id,
-    })
+    storedPayload
+  );
+  expect(transfer.setData).toHaveBeenCalledWith(
+    'text/plain',
+    `handwerk-file:${storedPayload}`
   );
   const dataTransfer = {
     types: ['application/x-handwerk-file'],
     files: [],
-    getData: () => transfer.setData.mock.calls[0][1],
+    getData: (type: string) =>
+      type === 'application/x-handwerk-file' ? storedPayload : '',
     dropEffect: 'none',
   };
   const folder = screen.getByRole('button', { name: 'Zeugnisse' });
@@ -244,6 +259,86 @@ it('moves existing personnel and legacy files into folders without uploading aga
       engagementId: engagement.id,
       name: 'ordner',
       folderId: 'folder-1',
+    })
+  );
+});
+
+it('still moves a file when the browser only exposes text/plain during dragover', async () => {
+  vi.mocked(movePersonnelDocument).mockClear();
+  renderLibrary();
+  const transfer = { setData: vi.fn(), effectAllowed: 'none' };
+  fireEvent.dragStart(
+    screen.getByText('personal.pdf').closest('[draggable]')!,
+    { dataTransfer: transfer }
+  );
+  const storedPayload = JSON.stringify({
+    id: storedDocument.id,
+    source: 'personnel',
+    engagementId: engagement.id,
+  });
+  const dataTransfer = {
+    types: ['text/plain'],
+    files: [],
+    getData: (type: string) =>
+      type === 'text/plain' ? `handwerk-file:${storedPayload}` : '',
+    dropEffect: 'none',
+  };
+  const folder = screen.getByRole('button', { name: 'Zeugnisse' });
+  fireEvent.dragOver(folder, { dataTransfer });
+  expect(dataTransfer.dropEffect).toBe('move');
+  fireEvent.drop(folder, { dataTransfer });
+  await waitFor(() =>
+    expect(movePersonnelDocument).toHaveBeenCalledWith('worker', {
+      documentId: 'document-1',
+      source: 'personnel',
+      engagementId: engagement.id,
+      name: 'ordner',
+      folderId: 'folder-1',
+    })
+  );
+});
+
+it('moves a file from an open folder into another folder by dropping on it', async () => {
+  vi.mocked(movePersonnelDocument).mockClear();
+  renderLibrary([
+    {
+      ...storedDocument,
+      id: 'in-folder',
+      name: 'ordner',
+      folderId: 'folder-1',
+      originalFileName: 'zeugnis.pdf',
+    },
+  ]);
+  await userEvent.click(screen.getByRole('button', { name: 'Zeugnisse' }));
+  expect(screen.getByText('zeugnis.pdf')).toBeInTheDocument();
+  expect(
+    screen.getByRole('button', {
+      name: 'Zurück zu allen Ordnern, Zeugnisse',
+    })
+  ).toBeInTheDocument();
+  const transfer = { setData: vi.fn(), effectAllowed: 'none' };
+  fireEvent.dragStart(screen.getByText('zeugnis.pdf').closest('[draggable]')!, {
+    dataTransfer: transfer,
+  });
+  const storedPayload = transfer.setData.mock.calls[0][1] as string;
+  const dataTransfer = {
+    types: ['application/x-handwerk-file'],
+    files: [],
+    getData: (type: string) =>
+      type === 'application/x-handwerk-file' ? storedPayload : '',
+    dropEffect: 'none',
+  };
+  const identityFolder = screen.getByRole('button', {
+    name: 'Personalausweis',
+  });
+  fireEvent.drop(identityFolder, { dataTransfer });
+  await waitFor(() =>
+    expect(movePersonnelDocument).toHaveBeenCalledWith('worker', {
+      documentId: 'in-folder',
+      source: 'personnel',
+      engagementId: engagement.id,
+      name: 'personalausweis',
+      folderId: undefined,
     })
   );
 });

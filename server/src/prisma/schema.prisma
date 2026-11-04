@@ -361,6 +361,7 @@ model Issue {
   deactivationClaimToken String? @map("deactivation_claim_token")
   deactivationClaimUntil DateTime? @map("deactivation_claim_until") @db.Timestamptz()
   microsoftAccountId String?            @map("microsoft_account_id") @db.VarChar(36)
+  microsoftAccessGroupIds Json?         @map("microsoft_access_group_ids")
   mailSenderAddress  String?            @map("mail_sender_address") @db.VarChar(254)
   isTemporary        Boolean            @default(false) @map("is_temporary")
   assigneeOnly       Boolean            @default(false) @map("assignee_only")

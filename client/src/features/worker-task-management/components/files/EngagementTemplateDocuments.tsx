@@ -1,9 +1,14 @@
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent } from '@/components/ui/popover';
 import { FileText } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { printTemplateDocument } from '../../api/templateDocument.api';
 import { printPdfBlob } from '../../printPdf';
+import {
+  endStoredFileDrag,
+  writeStoredFileDrag,
+} from '../../hooks/useFolderFileDrop';
 import {
   useSyncTemplateDocuments,
   useTemplateDocuments,
@@ -14,20 +19,20 @@ import { TemplateDocumentDialog } from './TemplateDocumentDialog';
 type EngagementTemplateDocumentsProps = {
   workerId: string;
   engagementId: string;
-  questionnaireCompleted: boolean;
 };
 
 export function EngagementTemplateDocuments({
   workerId,
   engagementId,
-  questionnaireCompleted,
 }: EngagementTemplateDocumentsProps) {
   const documents = useTemplateDocuments(workerId, engagementId);
   const syncMany = useSyncTemplateDocuments(workerId, engagementId);
   const [openId, setOpenId] = useState<string | null>(null);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [pendingSyncIds, setPendingSyncIds] = useState<string[]>([]);
   const printCache = useRef(new Map<string, Promise<Blob>>());
   const items = documents.data ?? [];
+  const syncPopoverOpen = pendingSyncIds.length > 0;
+  const anchorId = pendingSyncIds[0] ?? null;
 
   const prefetchPrint = (documentId: string) => {
     const cached = printCache.current.get(documentId);
@@ -44,34 +49,38 @@ export function EngagementTemplateDocuments({
     return pending;
   };
 
-  const toggleSelected = (documentId: string, selected: boolean) => {
-    setSelectedIds((current) => {
-      if (selected) {
-        return current.includes(documentId)
-          ? current
-          : [...current, documentId];
-      }
-      return current.filter((id) => id !== documentId);
-    });
+  const clearPendingSync = () => {
+    if (syncMany.isPending) return;
+    setPendingSyncIds([]);
   };
 
-  const syncSelected = async () => {
-    if (selectedIds.length === 0 || syncMany.isPending) return;
-    const result = await syncMany.mutateAsync(selectedIds);
+  const toggleSelected = (documentId: string, selected: boolean) => {
+    if (!selected) {
+      setPendingSyncIds((current) => current.filter((id) => id !== documentId));
+      return;
+    }
+    setPendingSyncIds((current) =>
+      current.includes(documentId) ? current : [...current, documentId]
+    );
+  };
+
+  const syncPending = async () => {
+    if (pendingSyncIds.length === 0 || syncMany.isPending) return;
+    const result = await syncMany.mutateAsync(pendingSyncIds);
     if (result.ok.length > 0 && result.failed === 0) {
       toast.success(
         `${result.ok.length} Dokument${
           result.ok.length === 1 ? '' : 'e'
         } synchronisiert`
       );
-      setSelectedIds([]);
+      setPendingSyncIds([]);
       return;
     }
     if (result.ok.length > 0) {
       toast.error(
         `${result.ok.length} synchronisiert, ${result.failed} fehlgeschlagen`
       );
-      setSelectedIds((current) =>
+      setPendingSyncIds((current) =>
         current.filter((id) => !result.ok.some((doc) => doc.id === id))
       );
       return;
@@ -80,54 +89,35 @@ export function EngagementTemplateDocuments({
   };
 
   return (
-    <>
+    <Popover
+      open={syncPopoverOpen}
+      onOpenChange={(next) => {
+        if (!next) clearPendingSync();
+      }}
+    >
       {documents.isError ? (
         <p className="col-span-full text-sm text-destructive">
           Dokumente aus Vorlagen konnten nicht geladen werden.
         </p>
-      ) : null}
-      {selectedIds.length > 0 ? (
-        <div className="col-span-full flex flex-wrap items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2">
-          <span className="text-sm text-muted-foreground">
-            {selectedIds.length} ausgewählt
-          </span>
-          <Button
-            type="button"
-            size="sm"
-            disabled={syncMany.isPending}
-            onClick={() => void syncSelected()}
-          >
-            {syncMany.isPending
-              ? 'Wird synchronisiert…'
-              : questionnaireCompleted
-                ? 'Mit Fragebogen synchronisieren'
-                : 'Mit Stammdaten synchronisieren'}
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            disabled={syncMany.isPending}
-            onClick={() => setSelectedIds([])}
-          >
-            Auswahl aufheben
-          </Button>
-          {!questionnaireCompleted ? (
-            <span className="text-sm text-muted-foreground">
-              Kein Fragebogen — es werden die Handwerker-Informationen verwendet.
-            </span>
-          ) : null}
-        </div>
       ) : null}
       {items.map((document) => (
         <StoredFileBox
           key={document.id}
           label={document.name}
           icon={FileText}
-          selected={selectedIds.includes(document.id)}
-          onSelectedChange={(selected) =>
-            toggleSelected(document.id, selected)
-          }
+          draggable
+          onDragStart={(event) => {
+            writeStoredFileDrag(event.dataTransfer, {
+              id: document.id,
+              source: 'template',
+              engagementId,
+              label: document.name,
+            });
+          }}
+          onDragEnd={() => endStoredFileDrag()}
+          selected={pendingSyncIds.includes(document.id)}
+          selectionAnchor={document.id === anchorId}
+          onSelectedChange={(selected) => toggleSelected(document.id, selected)}
           onOpen={() => setOpenId(document.id)}
           onPrefetchPrint={() => {
             void prefetchPrint(document.id);
@@ -137,6 +127,32 @@ export function EngagementTemplateDocuments({
           }}
         />
       ))}
+      <PopoverContent
+        side="top"
+        align="start"
+        sideOffset={6}
+        collisionPadding={12}
+        className="w-auto gap-0 p-1.5"
+        onInteractOutside={(event) => {
+          const target = event.target;
+          if (
+            target instanceof Element &&
+            target.closest('[data-template-file-select]')
+          ) {
+            event.preventDefault();
+          }
+        }}
+      >
+        <Button
+          type="button"
+          size="sm"
+          className="h-8"
+          disabled={syncMany.isPending}
+          onClick={() => void syncPending()}
+        >
+          {syncMany.isPending ? '…' : 'Sync'}
+        </Button>
+      </PopoverContent>
       {openId ? (
         <TemplateDocumentDialog
           workerId={workerId}
@@ -145,6 +161,6 @@ export function EngagementTemplateDocuments({
           onClose={() => setOpenId(null)}
         />
       ) : null}
-    </>
+    </Popover>
   );
 }

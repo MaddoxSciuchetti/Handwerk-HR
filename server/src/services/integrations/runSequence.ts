@@ -17,6 +17,7 @@ import {
     provisionMicrosoft365Account,
     microsoftGraphToken,
 } from "@/services/microsoft365Account";
+import { normalizeAccessGroupIds } from "@/services/microsoft365/accessGroups";
 import { isMailSequence, sendIssueMail } from "@/services/engagementMail";
 import { blockMicrosoftSignIn } from "@/services/offboardingAutomation";
 import type { IntegrationSequence } from "@prisma/client";
@@ -84,6 +85,7 @@ async function runMicrosoft(
         subject?: string | null;
         body?: string | null;
         microsoftAccountId?: string | null;
+        accessGroupIds?: string[] | null;
     },
 ): Promise<SequenceRunResult> {
     if (sequence === "microsoft_send_teams_message")
@@ -103,6 +105,7 @@ async function runMicrosoft(
                 workerId: params.workerId,
                 config,
                 senderAddress: actor?.email,
+                accessGroupIds: params.accessGroupIds,
             }),
         );
     }
@@ -201,6 +204,7 @@ async function executeIssueSequence(params: {
             status: true,
             sequence: true,
             microsoftAccountId: true,
+            microsoftAccessGroupIds: true,
             integrationProvider: true,
             workerEngagement: {
                 select: {
@@ -227,6 +231,7 @@ async function executeIssueSequence(params: {
         issueId: issue.id,
         previousStatus: issue.status,
         microsoftAccountId: issue.microsoftAccountId,
+        accessGroupIds: normalizeAccessGroupIds(issue.microsoftAccessGroupIds),
         senderAddress: params.senderAddress,
         subject: params.subject,
         body: params.body,

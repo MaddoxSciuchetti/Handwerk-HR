@@ -18,6 +18,7 @@ import { tryCatch } from '@/lib/trycatch';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { MicrosoftAccessGroupPicker } from '@/features/worker-task-management/components/tasks/MicrosoftAccessGroupPicker';
 import { runIssueSequence } from '../api/tasks.api';
 import { FETCHDESCRIPTION } from '../consts/query.consts';
 
@@ -42,6 +43,7 @@ function ExistingTaskAutomation({
 }: TaskAutomationProps & { onCompleted: () => void }) {
   const queryClient = useQueryClient();
   const [isRunning, setIsRunning] = useState(false);
+  const [accessGroupIds, setAccessGroupIds] = useState<string[]>([]);
   const integrations = useQuery({
     queryKey: ['settings', 'integrations'],
     queryFn: getIntegrations,
@@ -67,8 +69,11 @@ function ExistingTaskAutomation({
       setIsRunning(false);
       return;
     }
+    const sender = senderAddress?.trim() || undefined;
     const [, error] = await tryCatch(
-      runIssueSequence(taskId, senderAddress?.trim() || undefined)
+      sequence === 'microsoft_create_account'
+        ? runIssueSequence(taskId, sender, accessGroupIds)
+        : runIssueSequence(taskId, sender)
     );
     setIsRunning(false);
     void queryClient.invalidateQueries({
@@ -107,6 +112,13 @@ function ExistingTaskAutomation({
       {integration?.simulated && <MicrosoftSimulationNotice />}
       {blockedReason ? (
         <p className="text-sm text-muted-foreground">{blockedReason}</p>
+      ) : null}
+      {sequence === 'microsoft_create_account' && !blockedReason ? (
+        <MicrosoftAccessGroupPicker
+          selectedIds={accessGroupIds}
+          onChange={setAccessGroupIds}
+          disabled={disabled || isRunning}
+        />
       ) : null}
       <Button
         type="button"

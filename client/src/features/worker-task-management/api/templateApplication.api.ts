@@ -8,6 +8,7 @@ export type AutomationChoice = {
   destinations?: Array<{ teamId: string; channelId: string }>;
   subject?: string;
   body?: string;
+  accessGroupIds?: string[];
 };
 export type TemplatePreview = {
   mocked?: boolean;

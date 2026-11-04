@@ -3,14 +3,18 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { documentKindLabel } from '@/features/settings/documents/documentMaster.types';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { useDocumentMasters } from '@/features/settings/documents/useDocumentMasters';
-import { useEffect, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import {
   useCreateTemplateDocuments,
@@ -37,27 +41,27 @@ export function CreateTemplateDocumentDialog({
   const syncMany = useSyncTemplateDocuments(workerId, engagementId);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [progress, setProgress] = useState<string | null>(null);
-  const choices = masters.data ?? [];
-  const busy = createMany.isPending || syncMany.isPending;
-
-  useEffect(() => {
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
     if (!open) {
       setSelectedIds([]);
       setProgress(null);
+      setPickerOpen(false);
     }
-  }, [open]);
+  }
+  const choices = masters.data ?? [];
+  const busy = createMany.isPending || syncMany.isPending;
+  const selectedLabels = choices
+    .filter((master) => selectedIds.includes(master.id))
+    .map((master) => master.name);
 
   const toggle = (masterId: string) => {
     setSelectedIds((current) =>
       current.includes(masterId)
         ? current.filter((id) => id !== masterId)
         : [...current, masterId]
-    );
-  };
-
-  const toggleAll = () => {
-    setSelectedIds((current) =>
-      current.length === choices.length ? [] : choices.map((master) => master.id)
     );
   };
 
@@ -107,14 +111,9 @@ export function CreateTemplateDocumentDialog({
         if (!next && !busy) onOpenChange(false);
       }}
     >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Dokument aus Vorlage</DialogTitle>
-          <DialogDescription>
-            Wählen Sie eine oder mehrere Vorlagen. Die Dokumente werden für
-            dieses Engagement unter Dateien angelegt. Optional können die
-            Eingabefelder direkt mit dem Fragebogen abgeglichen werden.
-          </DialogDescription>
+      <DialogContent className="gap-3 p-4 sm:max-w-sm">
+        <DialogHeader className="pr-8">
+          <DialogTitle>Vorlagen auswählen</DialogTitle>
         </DialogHeader>
         {masters.isError ? (
           <p className="text-sm text-destructive">
@@ -132,76 +131,87 @@ export function CreateTemplateDocumentDialog({
           </p>
         ) : null}
         {choices.length > 0 ? (
-          <div className="flex items-center gap-2">
-            <Checkbox
-              checked={
-                selectedIds.length > 0 && selectedIds.length === choices.length
-              }
-              disabled={busy}
-              aria-label="Alle Vorlagen auswählen"
-              onCheckedChange={toggleAll}
-            />
-            <span className="text-sm text-muted-foreground">
-              {selectedIds.length} ausgewählt
-            </span>
-          </div>
-        ) : null}
-        <div className="flex max-h-80 flex-col gap-2 overflow-auto">
-          {choices.map((master) => {
-            const selected = selectedIds.includes(master.id);
-            return (
-              <label
-                key={master.id}
-                className="flex h-auto cursor-pointer items-center gap-3 rounded-md border border-border px-3 py-3 text-left hover:bg-muted/40 has-disabled:cursor-not-allowed has-disabled:opacity-50"
-              >
-                <Checkbox
-                  checked={selected}
-                  disabled={busy}
-                  aria-label={
-                    selected
-                      ? `${master.name} aus der Auswahl entfernen`
-                      : `${master.name} auswählen`
-                  }
-                  onCheckedChange={() => toggle(master.id)}
-                />
-                <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                  {master.name}
-                </span>
-                <span className="shrink-0 text-xs text-muted-foreground">
-                  {documentKindLabel(master.kind)}
-                </span>
-              </label>
-            );
-          })}
-        </div>
-        {progress ? (
-          <p className="text-sm text-muted-foreground">{progress}</p>
-        ) : null}
-            {!questionnaireCompleted ? (
-              <p className="text-sm text-muted-foreground">
-                Kein ausgefüllter Fragebogen. Beim Synchronisieren werden die
-                Stammdaten aus den Handwerker-Informationen verwendet.
-              </p>
-            ) : null}
-            <DialogFooter className="gap-2 sm:justify-between">
+          <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+            <PopoverTrigger asChild>
               <Button
                 type="button"
                 variant="outline"
-                disabled={selectedIds.length === 0 || busy}
-                onClick={() => void runInsert(false)}
+                disabled={busy}
+                className="h-auto min-h-10 w-full justify-between gap-2 overflow-hidden px-3 py-2 font-normal"
+                aria-label="Vorlagen auswählen"
+                title={
+                  selectedLabels.length === 1 ? selectedLabels[0] : undefined
+                }
               >
-                Einfügen
+                <span className="min-w-0 flex-1 truncate text-left">
+                  {selectedLabels.length === 0
+                    ? 'Vorlagen auswählen'
+                    : selectedLabels.length === 1
+                      ? selectedLabels[0]
+                      : `${selectedLabels.length} Vorlagen ausgewählt`}
+                </span>
+                <ChevronDown
+                  className="size-4 shrink-0 opacity-60"
+                  aria-hidden
+                />
               </Button>
-              <Button
-                type="button"
-                disabled={selectedIds.length === 0 || busy}
-                onClick={() => void runInsert(true)}
-              >
-                {questionnaireCompleted
-                  ? 'Einfügen und synchronisieren'
-                  : 'Einfügen und mit Stammdaten füllen'}
-              </Button>
-            </DialogFooter>
+            </PopoverTrigger>
+            <PopoverContent
+              align="start"
+              className="w-[var(--radix-popover-trigger-width)] overflow-hidden p-1"
+            >
+              <div className="max-h-64 overflow-auto">
+                {choices.map((master) => {
+                  const selected = selectedIds.includes(master.id);
+                  return (
+                    <label
+                      key={master.id}
+                      className="flex min-w-0 cursor-pointer items-center gap-2 overflow-hidden rounded-md px-2 py-2 hover:bg-muted/50"
+                      title={master.name}
+                    >
+                      <Checkbox
+                        checked={selected}
+                        disabled={busy}
+                        className="shrink-0"
+                        aria-label={
+                          selected
+                            ? `${master.name} aus der Auswahl entfernen`
+                            : `${master.name} auswählen`
+                        }
+                        onCheckedChange={() => toggle(master.id)}
+                      />
+                      <span className="min-w-0 flex-1 truncate text-sm">
+                        {master.name}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </PopoverContent>
+          </Popover>
+        ) : null}
+        {progress ? (
+          <p className="text-sm text-muted-foreground">{progress}</p>
+        ) : null}
+        <DialogFooter className="mx-0 mb-0 gap-2 rounded-none border-0 bg-transparent p-0 sm:justify-between">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={selectedIds.length === 0 || busy}
+            onClick={() => void runInsert(false)}
+          >
+            Einfügen
+          </Button>
+          <Button
+            type="button"
+            disabled={selectedIds.length === 0 || busy}
+            onClick={() => void runInsert(true)}
+          >
+            {questionnaireCompleted
+              ? 'Einfügen und synchronisieren'
+              : 'Einfügen und mit Stammdaten füllen'}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   ) : null;

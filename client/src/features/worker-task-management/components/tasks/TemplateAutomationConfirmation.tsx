@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/popover';
 import { useState, type ReactNode } from 'react';
 import { AutomationMessageView } from './AutomationMessageView';
+import { MicrosoftAccessGroupPicker } from './MicrosoftAccessGroupPicker';
 import { MicrosoftLicenseStatus } from './MicrosoftLicenseStatus';
 import { useMutation } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -317,7 +318,21 @@ export function TemplateAutomationConfirmation({
                       />
                     )}
                     {item.sequence === 'microsoft_create_account' && (
-                      <MicrosoftLicenseStatus key={engagementId} engagementId={engagementId} />
+                      <>
+                        <MicrosoftLicenseStatus
+                          key={engagementId}
+                          engagementId={engagementId}
+                        />
+                        <FieldRow label="Gruppen">
+                          <MicrosoftAccessGroupPicker
+                            selectedIds={choice.accessGroupIds ?? []}
+                            onChange={(accessGroupIds) =>
+                              change(item.id, { accessGroupIds })
+                            }
+                            disabled={busy}
+                          />
+                        </FieldRow>
+                      </>
                     )}
                     {(isMail || isTeams) && (
                       <FieldRow label="Absender">
@@ -529,7 +544,9 @@ export function TemplateAutomationConfirmation({
                           }}
                           onSave={(next) =>
                             change(item.id, {
-                              ...(isMail ? { subject: next.subject ?? '' } : {}),
+                              ...(isMail
+                                ? { subject: next.subject ?? '' }
+                                : {}),
                               body: next.body,
                             })
                           }

@@ -1,5 +1,6 @@
 import { Folder, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { StoredFileBox } from '../StoredFileBox';
 import {
   useFolderFileDrop,
@@ -25,13 +26,21 @@ export function PersonnelFolderCard({
 }: PersonnelFolderCardProps) {
   const { isDragging, dropHandlers } = useFolderFileDrop(onFiles, onMove);
   return (
-    <div className="group relative min-w-0">
+    <div
+      className={cn('group relative min-w-0', isDragging && 'rounded-xl')}
+      {...dropHandlers}
+    >
       <StoredFileBox
         label={label}
         icon={Folder}
         onOpen={onOpen}
+        // Also attach on the button so dragover/preventDefault hits the element
+        // under the cursor; onDrop stopPropagation avoids double-handling.
         {...dropHandlers}
-        className={`w-full ${isDragging ? 'border-muted-foreground bg-muted/50' : ''}`}
+        className={cn(
+          'w-full',
+          isDragging && 'border-muted-foreground bg-muted/50'
+        )}
       />
       {onDelete && (
         <Button
@@ -39,12 +48,14 @@ export function PersonnelFolderCard({
           size="icon-sm"
           variant="ghost"
           disabled={deleting}
+          draggable={false}
           aria-label={`${label} löschen`}
           onClick={(event) => {
             event.stopPropagation();
             onDelete();
           }}
-          className="absolute right-2 top-2 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100"
+          onPointerDown={(event) => event.stopPropagation()}
+          className="absolute right-2 top-2 z-10 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100"
         >
           <X className="h-4 w-4" />
         </Button>

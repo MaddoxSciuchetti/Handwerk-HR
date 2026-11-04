@@ -1,9 +1,9 @@
 import { FilePrintButton } from './FilePrintButton';
+import { prefetchStoredFile, printStoredFile } from '../../printStoredFile';
 import {
-  prefetchStoredFile,
-  printStoredFile,
-} from '../../printStoredFile';
-import { STORED_FILE_DRAG_TYPE } from '../../hooks/useFolderFileDrop';
+  endStoredFileDrag,
+  writeStoredFileDrag,
+} from '../../hooks/useFolderFileDrop';
 import { Button } from '@/components/ui/button';
 
 import { SuccessResponse } from '@/types/api.types';
@@ -31,12 +31,12 @@ const FilesContent = ({ fetchFiles, deleteFiles }: FilesContentProps) => {
               key={index}
               draggable
               onDragStart={(event) => {
-                event.dataTransfer.setData(
-                  STORED_FILE_DRAG_TYPE,
-                  JSON.stringify({ id: file.id, source: 'worker' })
-                );
-                event.dataTransfer.effectAllowed = 'move';
+                writeStoredFileDrag(event.dataTransfer, {
+                  id: file.id,
+                  source: 'worker',
+                });
               }}
+              onDragEnd={() => endStoredFileDrag()}
               className="group flex flex-col rounded-xl border border-border hover:bg-(--dropdown-surface) p-3 transition-colors"
               onPointerEnter={() => {
                 void prefetchStoredFile(file.presignedUrl);

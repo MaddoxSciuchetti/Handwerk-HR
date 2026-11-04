@@ -16,7 +16,7 @@ const REQUIREMENT_NOTES: Record<string, { summary: string; details: string }> =
     microsoft_create_account: {
       summary: 'Freie Microsoft-Lizenz erforderlich.',
       details:
-        'Für die Kontoerstellung muss in Microsoft 365 bereits eine passende, noch nicht zugewiesene Lizenz verfügbar sein. Prüfe vor der Ausführung, ob eine solche Lizenz vorhanden ist.',
+        'Für die Kontoerstellung muss in Microsoft 365 bereits eine passende, noch nicht zugewiesene Lizenz verfügbar sein. Optional kannst du Entra-Gruppen wählen; die Gruppenrechte (SharePoint/Teams) bleiben in Microsoft. Ohne Gruppenauswahl entsteht nur das Konto mit Lizenz.',
     },
   };
 

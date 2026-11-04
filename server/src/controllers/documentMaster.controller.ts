@@ -1,5 +1,5 @@
 import { generateDocumentPdf } from "@/services/documentPdf";
-import { documentFields, resolveCurrentDateValues } from "../../../shared/document";
+import { resolveCurrentDateValues } from "../../../shared/document";
 import { BAD_REQUEST, CREATED, NO_CONTENT, OK } from "@/constants/http";
 import {
   createDocumentMaster,
@@ -213,7 +213,10 @@ export const duplicateMaster = catchErrors(async (req, res) => {
 
 export const setPrimaryMaster = catchErrors(async (req, res) => {
   appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
-  const master = await setPrimaryDocumentMaster(param(req.params.id), req.orgId);
+  const master = await setPrimaryDocumentMaster(
+    param(req.params.id),
+    req.orgId,
+  );
   return res.status(OK).json(master);
 });
 
@@ -230,17 +233,16 @@ export const getDocumentFont = catchErrors(async (req, res) => {
 export const previewMasterPdf = catchErrors(async (req, res) => {
   appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
   const master = await getDocumentMaster(param(req.params.id), req.orgId);
-  const document = req.method === "POST"
-    ? parseStyledDocument(req.body?.document)
-    : master.document;
+  const document =
+    req.method === "POST"
+      ? parseStyledDocument(req.body?.document)
+      : master.document;
   appAssert(document, BAD_REQUEST, "Dokument fehlt.");
-  const values = Object.fromEntries(
-    documentFields(document).map((field) => [
-      field.key,
-      field.fieldType === "checkbox" ? "false" : field.label,
-    ]),
+  // Editor labels describe inputs; they are never printable field values.
+  const result = await generateDocumentPdf(
+    document,
+    resolveCurrentDateValues(document, {}),
   );
-  const result = await generateDocumentPdf(document, resolveCurrentDateValues(document, values));
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader(
     "Content-Disposition",
