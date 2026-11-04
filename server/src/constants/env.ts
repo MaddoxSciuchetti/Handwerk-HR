@@ -47,11 +47,7 @@ export const GOOGLE_OAUTH_REDIRECT_URI =
 export const GOOGLE_OAUTH_REFRESH_TOKEN =
     process.env.GOOGLE_OAUTH_REFRESH_TOKEN?.trim() ?? "";
 export const OPENAI_API_KEY = process.env.OPENAI_API_KEY?.trim() ?? "";
-// Local document previews use the repository's private renderer and font assets.
-// Production still requires an explicitly configured renderer and font directory.
-export const GOTENBERG_URL =
-    process.env.GOTENBERG_URL?.trim() ||
-    (NODE_ENV === "development" ? "http://127.0.0.1:3001" : "");
+// Document PDFs render in-process via @react-pdf/renderer using these fonts.
 export const DOCUMENT_FONT_DIR =
     process.env.DOCUMENT_FONT_DIR?.trim() ||
     (NODE_ENV === "development" ? resolve("document-fonts") : "");

@@ -287,40 +287,41 @@ npm run dev
 
 Open `http://localhost:5173`.
 
-For document previews and **Drucken**, start Docker Desktop and use
-`npm run dev:documents` instead of `npm run dev` in the backend terminal. This
-starts the local PDF renderer on port 3001 before starting the API. If the API is
-already running, start just the renderer from the repository root:
+Document PDFs (contracts, Arbeitszeugnis, master previews) render **in-process**
+via `@react-pdf/renderer`. Ensure `DOCUMENT_FONT_DIR` points at the TTF bundle
+(defaults to `server/document-fonts` in development). No separate PDF Docker
+service is required — `npm run dev` is enough.
 
-```bash
-docker compose -f compose.documents.yml up -d
-```
-
-See `docs/styled-documents.md` for the required font and storage configuration.
+PDF visual checks require Poppler (`pdftoppm` and `pdftotext`). Run them from
+`server/` with `DOCUMENT_FONT_DIR=./document-fonts npm run test:pdf-visual`.
+They verify text coverage, page placement, absolute text coordinates, and then
+compare aligned rasters. The layout checks render two different field values
+through the real engine without mocking PDF output.
 
 ## Common scripts
 
 Backend (`server/`):
 
-| Command                                | Purpose                                           |
-| -------------------------------------- | ------------------------------------------------- |
-| `npm run dev`                          | Run the API with tsx in watch mode                |
-| `npm run dev:documents`                | Start the local PDF renderer and run the API      |
-| `npm run build`                        | Bundle to `dist/index.js` with esbuild            |
-| `npm start`                            | Run the built bundle                              |
-| `npm run prisma:generate`              | Regenerate the Prisma client after schema changes |
-| `npx prisma migrate dev --name <desc>` | Create + apply a new migration                    |
-| `npx prisma migrate deploy`            | Apply pending migrations (CI / production)        |
-| `npm test`                             | Jest unit tests                                   |
+| Command                                | Purpose                                                     |
+| -------------------------------------- | ----------------------------------------------------------- |
+| `npm run dev`                          | Run the API with tsx in watch mode                          |
+| `npm run test:pdf-visual`              | Compare native PDFs to Chromium text geometry and rasters   |
+| `npm run test:pdf-layout`              | Check real PDF spacing, labels, fields, logos, and counters |
+| `npm run build`                        | Bundle to `dist/index.js` with esbuild                      |
+| `npm start`                            | Run the built bundle                                        |
+| `npm run prisma:generate`              | Regenerate the Prisma client after schema changes           |
+| `npx prisma migrate dev --name <desc>` | Create + apply a new migration                              |
+| `npx prisma migrate deploy`            | Apply pending migrations (CI / production)                  |
+| `npm test`                             | Jest unit tests                                             |
 
 Frontend (`client/`):
 
-| Command             | Purpose                     |
-| ------------------- | --------------------------- |
-| `npm run dev`       | Vite dev server             |
-| `npm run build`     | Production build            |
-| `npm run preview`   | Serve the production build  |
-| `npm run test:unit` | Vitest unit tests           |
+| Command             | Purpose                    |
+| ------------------- | -------------------------- |
+| `npm run dev`       | Vite dev server            |
+| `npm run build`     | Production build           |
+| `npm run preview`   | Serve the production build |
+| `npm run test:unit` | Vitest unit tests          |
 
 ## Database changes
 

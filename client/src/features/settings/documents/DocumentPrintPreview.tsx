@@ -110,8 +110,10 @@ export function DocumentPrintPreview({
       if (!(bytes instanceof Blob))
         throw new Error('PDF-Vorschau konnte nicht geladen werden.');
       const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist');
-      const worker = await import('pdfjs-dist/build/pdf.worker.min.mjs?url');
-      GlobalWorkerOptions.workerSrc = worker.default;
+      GlobalWorkerOptions.workerSrc = new URL(
+        'pdfjs-dist/build/pdf.worker.min.mjs',
+        import.meta.url
+      ).href;
       const pdf = await getDocument({
         data: new Uint8Array(await bytes.arrayBuffer()),
       }).promise;
@@ -145,7 +147,7 @@ export function DocumentPrintPreview({
         Druckvorschau konnte nicht erstellt werden.
         {detail
           ? ' ' + detail
-          : ' Bitte prüfen Sie den PDF-Dienst und die Dokumentschriften.'}
+          : ' Bitte prüfen Sie die Dokumentschriften und versuchen Sie es erneut.'}
       </p>
     );
   }

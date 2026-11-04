@@ -66,12 +66,10 @@ it('shows and opens filed questionnaire attachments from every engagement', asyn
       onDelete={vi.fn()}
     />
   );
-  expect(
-    screen.getByRole('button', { name: 'other.png öffnen' })
-  ).toBeVisible();
-  await user.click(screen.getByRole('button', { name: 'kk.png öffnen' }));
+  expect(screen.getByRole('link', { name: 'other.png öffnen' })).toBeVisible();
+  await user.click(screen.getByRole('link', { name: 'kk.png öffnen' }));
   expect(open).toHaveBeenCalledWith(attachment.presignedUrl, '_blank');
-  await user.click(screen.getByRole('button', { name: 'other.png öffnen' }));
+  await user.click(screen.getByRole('link', { name: 'other.png öffnen' }));
   expect(open).toHaveBeenCalledWith(otherUrl, '_blank');
   open.mockRestore();
 });

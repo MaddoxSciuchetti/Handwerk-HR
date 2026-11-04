@@ -1,12 +1,21 @@
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, Folder } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import type { PersonnelDocument } from '../../../api/personnelDocuments.api';
 import { PersonnelDocumentRow } from './PersonnelDocumentRow';
+import { PersonnelFolderCard } from './PersonnelFolderCard';
 import {
   useFolderFileDrop,
   type StoredFileDrag,
 } from '../../../hooks/useFolderFileDrop';
 import { cn } from '@/lib/utils';
+
+export type PersonnelFolderMoveTarget = {
+  key: string;
+  label: string;
+  onOpen?: () => void;
+  onMove: (file: StoredFileDrag) => void;
+  onFiles: (files: File[]) => void;
+};
 
 type OpenPersonnelFolderProps = {
   label: string;
@@ -16,6 +25,7 @@ type OpenPersonnelFolderProps = {
   onBack: () => void;
   onDelete: (documentId: string) => void;
   onFiles: (files: File[]) => void;
+  moveTargets?: PersonnelFolderMoveTarget[];
 };
 
 export function OpenPersonnelFolder({
@@ -26,6 +36,7 @@ export function OpenPersonnelFolder({
   onDelete,
   onFiles,
   onMove,
+  moveTargets = [],
 }: OpenPersonnelFolderProps) {
   const { isDragging, dropHandlers } = useFolderFileDrop(onFiles, onMove);
   return (
@@ -40,16 +51,32 @@ export function OpenPersonnelFolder({
         type="button"
         variant="ghost"
         size="sm"
-        className="mb-3 -ml-2"
+        className="mb-3 -ml-2 gap-1"
         onClick={onBack}
+        aria-label={`Zurück zu allen Ordnern, ${label}`}
       >
         <ChevronLeft className="h-4 w-4" />
-        Alle Ordner
-      </Button>
-      <div className="mb-4 flex items-center gap-2 text-sm font-medium">
-        <Folder className="h-4 w-4 text-muted-foreground" aria-hidden />
         {label}
-      </div>
+      </Button>
+      {moveTargets.length > 0 ? (
+        <div className="mb-4 grid grid-cols-2 gap-4 md:grid-cols-3">
+          {moveTargets.map((target) => (
+            <PersonnelFolderCard
+              key={target.key}
+              label={target.label}
+              onOpen={target.onOpen ?? onBack}
+              onMove={(file) => {
+                target.onMove(file);
+                target.onOpen?.();
+              }}
+              onFiles={(files) => {
+                target.onFiles(files);
+                target.onOpen?.();
+              }}
+            />
+          ))}
+        </div>
+      ) : null}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
         {documents.map((document) => (
           <PersonnelDocumentRow

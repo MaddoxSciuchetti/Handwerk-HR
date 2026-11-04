@@ -111,6 +111,11 @@ function WorkerFileUploads({
           engagementId={defaultEngagementId}
           open={createTemplateOpen}
           onOpenChange={setCreateTemplateOpen}
+          questionnaireCompleted={questionnaires.some(
+            (questionnaire) =>
+              questionnaire.engagementId === defaultEngagementId &&
+              Boolean(questionnaire.completedAt)
+          )}
         />
       ) : null}
       <AddPersonnelFolder

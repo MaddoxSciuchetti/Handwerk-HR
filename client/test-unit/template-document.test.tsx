@@ -108,6 +108,7 @@ function TemplateFiles() {
         engagementId="engagement"
         open={open}
         onOpenChange={setOpen}
+        questionnaireCompleted
       />
     </>
   );
@@ -167,10 +168,16 @@ it('creates a template document, syncs from the Fragebogen, and prints the fille
   await user.click(screen.getByRole('button', { name: 'Hinzufügen' }));
   await user.click(screen.getByRole('menuitem', { name: 'Aus Vorlage' }));
   expect(
-    await screen.findByRole('button', { name: /Arbeitsvertrag_Main/ })
+    await screen.findByRole('heading', { name: 'Vorlagen auswählen' })
   ).toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Vorlagen auswählen' }));
   await user.click(
-    await screen.findByRole('button', { name: /KFZ-Bescheinigung/ })
+    await screen.findByRole('checkbox', {
+      name: 'KFZ-Bescheinigung auswählen',
+    })
+  );
+  await user.click(
+    screen.getByRole('button', { name: 'Einfügen und synchronisieren' })
   );
 
   expect(createTemplateDocument).toHaveBeenCalledWith(
@@ -178,10 +185,20 @@ it('creates a template document, syncs from the Fragebogen, and prints the fille
     'engagement',
     'kfz'
   );
+  expect(syncTemplateDocument).toHaveBeenCalledWith(
+    'worker',
+    'engagement',
+    'doc-1'
+  );
+  await user.click(
+    await screen.findByRole('button', { name: 'KFZ-Bescheinigung' })
+  );
   expect(
     await screen.findByRole('heading', { name: 'KFZ-Bescheinigung' })
   ).toBeInTheDocument();
-  expect(screen.getByRole('heading', { name: 'Fragebogen' })).toBeInTheDocument();
+  expect(
+    screen.getByRole('heading', { name: 'Fragebogen' })
+  ).toBeInTheDocument();
   expect(screen.getByText('Hilti Bohrmaschine')).toBeInTheDocument();
 
   await user.click(screen.getByRole('button', { name: 'Sync' }));
