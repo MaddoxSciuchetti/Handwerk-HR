@@ -122,7 +122,7 @@ export function TemplateDocumentDialog({
               </DialogDescription>
             </DialogHeader>
             <div className="flex shrink-0 flex-col gap-2">
-              {data.questionnaireCompleted ? (
+              {data.questionnaireCompleted || data.canSyncFromWorker ? (
                 <Button
                   type="button"
                   variant="outline"
@@ -132,7 +132,11 @@ export function TemplateDocumentDialog({
                       onSuccess: (saved) => {
                         edited.current = false;
                         setValues(saved.values);
-                        toast.success('Dokument synchronisiert');
+                        toast.success(
+                          data.questionnaireCompleted
+                            ? 'Dokument mit Fragebogen synchronisiert'
+                            : 'Dokument mit Stammdaten synchronisiert'
+                        );
                       },
                       onError: (error) =>
                         toast.error(
@@ -142,20 +146,37 @@ export function TemplateDocumentDialog({
                     })
                   }
                 >
-                  {sync.isPending ? 'Synchronisiert…' : 'Sync'}
+                  {sync.isPending
+                    ? 'Synchronisiert…'
+                    : data.questionnaireCompleted
+                      ? 'Sync'
+                      : 'Mit Stammdaten synchronisieren'}
                 </Button>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  Der Fragebogen ist noch nicht ausgefüllt.
+                  Weder Fragebogen noch Stammdaten sind vorhanden.
                 </p>
               )}
+              {!data.questionnaireCompleted && data.canSyncFromWorker ? (
+                <p className="text-sm text-muted-foreground">
+                  Kein ausgefüllter Fragebogen — Sync nutzt die Handwerker-Informationen.
+                </p>
+              ) : null}
             </div>
             <div className="flex min-h-0 min-w-0 flex-1 gap-4 overflow-hidden">
               {(data.questionnaireAnswers ?? data.unmatchedAnswers).length >
               0 ? (
                 <UnmatchedQuestionnaireAnswers
-                  title="Fragebogen"
-                  description="Alle Angaben aus dem Fragebogen. Ziehen Sie eine Angabe auf ein markiertes Feld im Dokument."
+                  title={
+                    data.questionnaireCompleted
+                      ? 'Fragebogen'
+                      : 'Stammdaten'
+                  }
+                  description={
+                    data.questionnaireCompleted
+                      ? 'Alle Angaben aus dem Fragebogen. Ziehen Sie eine Angabe auf ein markiertes Feld im Dokument.'
+                      : 'Angaben aus den Handwerker-Informationen. Ziehen Sie eine Angabe auf ein markiertes Feld im Dokument.'
+                  }
                   answers={
                     data.questionnaireAnswers ?? data.unmatchedAnswers
                   }
