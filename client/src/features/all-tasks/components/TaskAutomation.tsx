@@ -69,12 +69,11 @@ function ExistingTaskAutomation({
       setIsRunning(false);
       return;
     }
+    const sender = senderAddress?.trim() || undefined;
     const [, error] = await tryCatch(
-      runIssueSequence(
-        taskId,
-        senderAddress?.trim() || undefined,
-        sequence === 'microsoft_create_account' ? accessGroupIds : undefined
-      )
+      sequence === 'microsoft_create_account'
+        ? runIssueSequence(taskId, sender, accessGroupIds)
+        : runIssueSequence(taskId, sender)
     );
     setIsRunning(false);
     void queryClient.invalidateQueries({

@@ -810,7 +810,10 @@ export async function createIssue(params: CreateIssueInput) {
                 mailTemplateId,
                 mailSenderAddress,
                 microsoftAccountId,
-                microsoftAccessGroupIds,
+                microsoftAccessGroupIds:
+                    microsoftAccessGroupIds === null
+                        ? Prisma.DbNull
+                        : microsoftAccessGroupIds,
                 assigneeOnly: assigneeOnly ?? false,
             },
             include: {
@@ -884,7 +887,10 @@ export async function updateIssue(params: UpdateIssueInput) {
     if (mailSenderAddress !== undefined) data.mailSenderAddress = mailSenderAddress;
     if (microsoftAccountId !== undefined) data.microsoftAccountId = microsoftAccountId;
     if (microsoftAccessGroupIds !== undefined) {
-        data.microsoftAccessGroupIds = microsoftAccessGroupIds;
+        data.microsoftAccessGroupIds =
+            microsoftAccessGroupIds === null
+                ? Prisma.DbNull
+                : microsoftAccessGroupIds;
     }
 
     const keys = Object.keys(data).filter((key) => {

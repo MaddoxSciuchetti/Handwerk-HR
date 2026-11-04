@@ -6,8 +6,7 @@ import {
 } from "@/constants/taskAutomation.consts";
 import { prisma } from "@/lib/prisma";
 import { INTEGRATION_SEQUENCES, SEQUENCE_PROVIDER } from "@/services/integrations/catalog";
-import type { IntegrationSequence } from "@prisma/client";
-import type { IssueStatus } from "@prisma/client";
+import { Prisma, type IntegrationSequence, type IssueStatus } from "@prisma/client";
 import { issueVisibleToViewer } from "@/services/issueVisibility";
 import {
     attachMentionFlag,
@@ -316,6 +315,10 @@ export async function updateTaskInOrg(
     }
 
     if (!existing.workerEngagementId) {
+        const {
+            microsoftAccessGroupIds: accessGroupIds,
+            ...sequenceWithoutGroups
+        } = sequenceFields;
         return prisma.issue.update({
             where: { id: existing.id },
             data: {
@@ -324,7 +327,15 @@ export async function updateTaskInOrg(
                 ...(body.status !== undefined ? { status: body.status } : {}),
                 ...(assigneeUserId !== undefined ? { assigneeUserId } : {}),
                 ...(automation !== undefined ? { automation } : {}),
-                ...sequenceFields,
+                ...sequenceWithoutGroups,
+                ...(accessGroupIds !== undefined
+                    ? {
+                          microsoftAccessGroupIds:
+                              accessGroupIds === null
+                                  ? Prisma.DbNull
+                                  : accessGroupIds,
+                      }
+                    : {}),
             },
         });
     }
