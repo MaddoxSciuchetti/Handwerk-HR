@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   createTemplateDocument,
+  deleteTemplateDocument,
   getTemplateDocument,
   listTemplateDocuments,
   saveTemplateDocument,
@@ -136,7 +137,8 @@ export function useSaveTemplateDocument(
   return useMutation({
     mutationFn: (values: Record<string, string>) =>
       saveTemplateDocument(workerId, engagementId, documentId, values),
-    onSuccess: (saved) => cacheDraft(queryClient, workerId, engagementId, saved),
+    onSuccess: (saved) =>
+      cacheDraft(queryClient, workerId, engagementId, saved),
   });
 }
 
@@ -148,7 +150,8 @@ export function useSyncTemplateDocument(
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: () => syncTemplateDocument(workerId, engagementId, documentId),
-    onSuccess: (saved) => cacheDraft(queryClient, workerId, engagementId, saved),
+    onSuccess: (saved) =>
+      cacheDraft(queryClient, workerId, engagementId, saved),
   });
 }
 
@@ -175,6 +178,26 @@ export function useSyncTemplateDocuments(
         }
       }
       return { ok, failed };
+    },
+  });
+}
+
+export function useDeleteTemplateDocument(
+  workerId: string,
+  engagementId: string
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (documentId: string) =>
+      deleteTemplateDocument(workerId, engagementId, documentId),
+    onSuccess: (_result, documentId) => {
+      queryClient.setQueryData<TemplateDocumentLink[]>(
+        templateDocumentsKey(workerId, engagementId),
+        (current) => current?.filter((item) => item.id !== documentId)
+      );
+      queryClient.removeQueries({
+        queryKey: templateDocumentKey(workerId, engagementId, documentId),
+      });
     },
   });
 }

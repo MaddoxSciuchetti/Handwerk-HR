@@ -8,6 +8,7 @@ import { CreateTemplateDocumentDialog } from '@/features/worker-task-management/
 import { EngagementTemplateDocuments } from '@/features/worker-task-management/components/files/EngagementTemplateDocuments';
 import {
   createTemplateDocument,
+  deleteTemplateDocument,
   getTemplateDocument,
   listTemplateDocuments,
   printTemplateDocument,
@@ -32,6 +33,7 @@ vi.mock('@/features/worker-task-management/api/templateDocument.api', () => ({
   saveTemplateDocument: vi.fn(),
   syncTemplateDocument: vi.fn(),
   printTemplateDocument: vi.fn(),
+  deleteTemplateDocument: vi.fn(),
 }));
 vi.mock(
   '@/features/worker-task-management/components/files/ContractDraftBody',
@@ -258,5 +260,35 @@ it('prints an existing template document from its card without saving it again',
   );
   expect(printPdfBlob).toHaveBeenCalledWith(blob);
   expect(saveTemplateDocument).not.toHaveBeenCalled();
+  expect(getTemplateDocument).not.toHaveBeenCalled();
+});
+
+it('deletes a template document from its card without opening it', async () => {
+  vi.clearAllMocks();
+  vi.mocked(useDocumentMasters).mockReturnValue({
+    data: [],
+  } as unknown as ReturnType<typeof useDocumentMasters>);
+  vi.mocked(listTemplateDocuments).mockResolvedValue([draft]);
+  vi.mocked(deleteTemplateDocument).mockResolvedValue(undefined);
+  render(
+    <QueryClientProvider
+      client={
+        new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      }
+    >
+      <EngagementTemplateDocuments
+        workerId="worker"
+        engagementId="engagement"
+      />
+    </QueryClientProvider>
+  );
+  await userEvent.click(
+    await screen.findByRole('button', { name: 'KFZ-Bescheinigung löschen' })
+  );
+  expect(deleteTemplateDocument).toHaveBeenCalledWith(
+    'worker',
+    'engagement',
+    'doc-1'
+  );
   expect(getTemplateDocument).not.toHaveBeenCalled();
 });

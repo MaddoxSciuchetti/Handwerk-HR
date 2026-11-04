@@ -11,20 +11,20 @@ import * as workerController from "../controllers/worker.controller";
 
 const worker = express.Router();
 worker.get(
-    "/:workerId/engagements/:engagementId/contract/printed-pdf",
-    workerController.downloadPrintedContract,
+  "/:workerId/engagements/:engagementId/contract/printed-pdf",
+  workerController.downloadPrintedContract,
 );
 worker.get(
-    "/:workerId/engagements/:engagementId/contract/print",
-    printEmploymentContract,
+  "/:workerId/engagements/:engagementId/contract/print",
+  printEmploymentContract,
 );
 worker.post(
-    "/:workerId/engagements/:engagementId/contract/prepare-pdf",
-    workerController.prepareEmploymentContractPdf,
+  "/:workerId/engagements/:engagementId/contract/prepare-pdf",
+  workerController.prepareEmploymentContractPdf,
 );
 worker.get(
-    "/:workerId/engagements/:engagementId/contract/prepared-pdf/:artifactId",
-    workerController.readPreparedEmploymentContractPdf,
+  "/:workerId/engagements/:engagementId/contract/prepared-pdf/:artifactId",
+  workerController.readPreparedEmploymentContractPdf,
 );
 
 worker.post("/", workerController.createWorker);
@@ -32,16 +32,16 @@ worker.post("/bulk-delete", workerController.deleteWorkers);
 worker.post("/fast-track", workerController.startExpectedOnboarding);
 worker.get("/questionnaire-senders", workerController.getQuestionnaireSenders);
 worker.get(
-    "/engagements/:engagementId/questionnaire",
-    workerController.getEngagementQuestionnaire,
+  "/engagements/:engagementId/questionnaire",
+  workerController.getEngagementQuestionnaire,
 );
 worker.put(
-    "/engagements/:engagementId/questionnaire",
-    workerController.saveEngagementQuestionnaire,
+  "/engagements/:engagementId/questionnaire",
+  workerController.saveEngagementQuestionnaire,
 );
 worker.post(
-    "/engagements/:engagementId/questionnaire/send",
-    workerController.sendEngagementQuestionnaireHandler,
+  "/engagements/:engagementId/questionnaire/send",
+  workerController.sendEngagementQuestionnaireHandler,
 );
 worker.get("/", workerController.getWorkerData);
 worker.get("/statistics", workerController.getLifecycleStatistics);
@@ -54,157 +54,170 @@ worker.patch("/:workerId/unarchive", workerController.unarchiveWorker);
 
 worker.post("/:workerId/engagements", workerController.createEngagement);
 worker.get(
-    "/:workerId/engagements/:engagementId/questionnaire/completed",
-    workerController.getCompletedEngagementQuestionnaire,
+  "/:workerId/engagements/:engagementId/questionnaire/completed",
+  workerController.getCompletedEngagementQuestionnaire,
 );
 worker.put(
-    "/:workerId/engagements/:engagementId/questionnaire/completed",
-    workerController.saveCompletedEngagementQuestionnaire,
+  "/:workerId/engagements/:engagementId/questionnaire/completed",
+  workerController.saveCompletedEngagementQuestionnaire,
 );
 worker.post(
-    "/:workerId/engagements/:engagementId/questionnaire/files",
-    workerController.fileCompletedQuestionnaireFiles,
+  "/:workerId/engagements/:engagementId/questionnaire/files",
+  workerController.fileCompletedQuestionnaireFiles,
 );
 worker.patch(
-    "/:workerId/engagements/:engagementId/questionnaire/files",
-    workerController.renameCompletedQuestionnaireFile,
+  "/:workerId/engagements/:engagementId/questionnaire/files",
+  workerController.renameCompletedQuestionnaireFile,
 );
 worker.get(
-    "/:workerId/engagements/:engagementId/contract",
-    workerController.getEngagementContract,
+  "/:workerId/engagements/:engagementId/contract",
+  workerController.getEngagementContract,
 );
 worker.put(
-    "/:workerId/engagements/:engagementId/contract",
-    workerController.saveEngagementContractDraft,
+  "/:workerId/engagements/:engagementId/contract",
+  workerController.saveEngagementContractDraft,
 );
 worker.post(
-    "/:workerId/engagements/:engagementId/contract/confirm-send",
-    workerController.confirmEngagementContractForSend,
+  "/:workerId/engagements/:engagementId/contract/confirm-send",
+  workerController.confirmEngagementContractForSend,
 );
 worker.post(
-    "/:workerId/engagements/:engagementId/contract/template",
-    workerController.selectEngagementContractTemplate,
+  "/:workerId/engagements/:engagementId/contract/template",
+  workerController.selectEngagementContractTemplate,
 );
 worker.post(
-    "/:workerId/engagements/:engagementId/contract/resync",
-    workerController.resyncEngagementContractFromQuestionnaire,
+  "/:workerId/engagements/:engagementId/contract/resync",
+  workerController.resyncEngagementContractFromQuestionnaire,
 );
 worker.get(
-    "/:workerId/engagements/:engagementId/template-documents",
-    engagementTemplateDocumentController.listEngagementTemplateDocuments,
+  "/:workerId/engagements/:engagementId/template-documents",
+  engagementTemplateDocumentController.listEngagementTemplateDocuments,
 );
 worker.post(
-    "/:workerId/engagements/:engagementId/template-documents",
-    engagementTemplateDocumentController.createEngagementTemplateDocument,
+  "/:workerId/engagements/:engagementId/template-documents",
+  engagementTemplateDocumentController.createEngagementTemplateDocument,
 );
 worker.get(
-    "/:workerId/engagements/:engagementId/template-documents/:documentId",
-    engagementTemplateDocumentController.getEngagementTemplateDocument,
+  "/:workerId/engagements/:engagementId/template-documents/:documentId",
+  engagementTemplateDocumentController.getEngagementTemplateDocument,
 );
 worker.put(
-    "/:workerId/engagements/:engagementId/template-documents/:documentId",
-    engagementTemplateDocumentController.saveEngagementTemplateDocument,
+  "/:workerId/engagements/:engagementId/template-documents/:documentId",
+  engagementTemplateDocumentController.saveEngagementTemplateDocument,
 );
 worker.post(
-    "/:workerId/engagements/:engagementId/template-documents/:documentId/sync",
-    engagementTemplateDocumentController.syncEngagementTemplateDocument,
+  "/:workerId/engagements/:engagementId/template-documents/:documentId/sync",
+  engagementTemplateDocumentController.syncEngagementTemplateDocument,
 );
 worker.post(
-    "/:workerId/engagements/:engagementId/template-documents/:documentId/print",
-    engagementTemplateDocumentController.printEngagementTemplateDocument,
-);
-worker.post(
-    "/:workerId/engagements/:engagementId/contract/confirm-return",
-    workerController.confirmReturnedEmploymentContractHandler,
-);
-worker.get(
-    "/:workerId/engagements/:engagementId/materials",
-    engagementMaterialController.listEngagementMaterials,
-);
-worker.post(
-    "/:workerId/engagements/:engagementId/materials",
-    upload.single("file"),
-    engagementMaterialController.uploadEngagementMaterial,
-);
-worker.patch(
-    "/:workerId/engagements/:engagementId/materials/:materialId",
-    engagementMaterialController.updateEngagementMaterial,
+  "/:workerId/engagements/:engagementId/template-documents/:documentId/print",
+  engagementTemplateDocumentController.printEngagementTemplateDocument,
 );
 worker.delete(
-    "/:workerId/engagements/:engagementId/materials/:materialId",
-    engagementMaterialController.deleteEngagementMaterial,
+  "/:workerId/engagements/:engagementId/template-documents/:documentId",
+  engagementTemplateDocumentController.deleteEngagementTemplateDocument,
+);
+worker.post(
+  "/:workerId/engagements/:engagementId/contract/confirm-return",
+  workerController.confirmReturnedEmploymentContractHandler,
+);
+worker.get(
+  "/:workerId/engagements/:engagementId/materials",
+  engagementMaterialController.listEngagementMaterials,
+);
+worker.post(
+  "/:workerId/engagements/:engagementId/materials",
+  upload.single("file"),
+  engagementMaterialController.uploadEngagementMaterial,
+);
+worker.patch(
+  "/:workerId/engagements/:engagementId/materials/:materialId",
+  engagementMaterialController.updateEngagementMaterial,
+);
+worker.delete(
+  "/:workerId/engagements/:engagementId/materials/:materialId",
+  engagementMaterialController.deleteEngagementMaterial,
 );
 
 worker.get(
-    "/:workerId/engagements/:engagementId/clothing",
-    engagementClothingController.listEngagementClothingHandler,
+  "/:workerId/engagements/:engagementId/clothing",
+  engagementClothingController.listEngagementClothingHandler,
 );
 worker.post(
-    "/:workerId/engagements/:engagementId/clothing",
-    engagementClothingController.postEngagementClothing,
+  "/:workerId/engagements/:engagementId/clothing",
+  engagementClothingController.postEngagementClothing,
 );
 worker.post(
-    "/:workerId/engagements/:engagementId/clothing/:clothingId/return",
-    engagementClothingController.returnEngagementClothingHandler,
+  "/:workerId/engagements/:engagementId/clothing/:clothingId/return",
+  engagementClothingController.returnEngagementClothingHandler,
 );
 worker.delete(
-    "/:workerId/engagements/:engagementId/clothing/:clothingId",
-    engagementClothingController.removeEngagementClothing,
+  "/:workerId/engagements/:engagementId/clothing/:clothingId",
+  engagementClothingController.removeEngagementClothing,
 );
 
 worker.get(
-    "/:workerId/personnel-documents",
-    personnelDocumentController.listPersonnelDocuments,
+  "/:workerId/personnel-documents",
+  personnelDocumentController.listPersonnelDocuments,
 );
 worker.post(
-    "/:workerId/engagements/:engagementId/personnel-folders",
-    personnelDocumentController.createPersonnelFolder,
+  "/:workerId/engagements/:engagementId/personnel-folders",
+  personnelDocumentController.createPersonnelFolder,
 );
 worker.delete(
-    "/:workerId/personnel-folders/:folderId",
-    personnelDocumentController.deletePersonnelFolder,
+  "/:workerId/personnel-folders/:folderId",
+  personnelDocumentController.deletePersonnelFolder,
 );
 worker.patch(
-    "/:workerId/personnel-documents/:documentId/location",
-    personnelDocumentController.movePersonnelDocument,
+  "/:workerId/personnel-documents/:documentId/location",
+  personnelDocumentController.movePersonnelDocument,
 );
 worker.post(
-    "/:workerId/engagements/:engagementId/personnel-documents",
-    upload.single("file"),
-    personnelDocumentController.uploadPersonnelDocument,
+  "/:workerId/engagements/:engagementId/personnel-documents",
+  upload.single("file"),
+  personnelDocumentController.uploadPersonnelDocument,
 );
 worker.patch(
-    "/:workerId/personnel-documents/:documentId",
-    personnelDocumentController.renamePersonnelDocument,
+  "/:workerId/personnel-documents/:documentId",
+  personnelDocumentController.renamePersonnelDocument,
 );
 worker.delete(
-    "/:workerId/personnel-documents/:documentId",
-    personnelDocumentController.deletePersonnelDocument,
+  "/:workerId/personnel-documents/:documentId",
+  personnelDocumentController.deletePersonnelDocument,
 );
 
 worker.put(
-    "/:workerId/engagements/:engagementId",
-    workerController.updateEngagement,
+  "/:workerId/engagements/:engagementId",
+  workerController.updateEngagement,
 );
 worker.delete(
-    "/:workerId/engagements/:engagementId",
-    workerController.deleteEngagement,
+  "/:workerId/engagements/:engagementId",
+  workerController.deleteEngagement,
 );
 
 worker.get(
-    "/:workerId/issues/:issueId/audit-logs",
-    workerController.getIssueAuditLogs,
+  "/:workerId/issues/:issueId/audit-logs",
+  workerController.getIssueAuditLogs,
 );
 worker.post("/:workerId/issues", workerController.createIssue);
 worker.put("/:workerId/issues/:issueId", workerController.updateIssue);
 worker.delete("/:workerId/issues/:issueId", workerController.deleteIssue);
 
-worker.get("/:workerId/template-application", workerController.getTemplateApplication);
-worker.post("/:workerId/template-application/dismiss", workerController.dismissTemplateApplication);
-worker.get("/:workerId/templates/:templateId/preview", workerController.previewIssueTemplate);
+worker.get(
+  "/:workerId/template-application",
+  workerController.getTemplateApplication,
+);
 worker.post(
-    "/:workerId/templates/:templateId/apply",
-    workerController.applyIssueTemplate,
+  "/:workerId/template-application/dismiss",
+  workerController.dismissTemplateApplication,
+);
+worker.get(
+  "/:workerId/templates/:templateId/preview",
+  workerController.previewIssueTemplate,
+);
+worker.post(
+  "/:workerId/templates/:templateId/apply",
+  workerController.applyIssueTemplate,
 );
 
 worker.post("/:workerId/absences", workerController.createAbsence);
@@ -214,9 +227,9 @@ worker.delete("/:workerId/absences/:absenceId", workerController.deleteAbsence);
 worker.patch("/:workerId/data-points", workerController.updateDataPoint);
 
 worker.post(
-    "/:workerId/files",
-    upload.array("files"),
-    workerController.uploadWorkerFile,
+  "/:workerId/files",
+  upload.array("files"),
+  workerController.uploadWorkerFile,
 );
 worker.get("/:workerId/files", workerController.getWorkerFiles);
 worker.delete("/:workerId/files/:fileId", workerController.deleteWorkerFile);

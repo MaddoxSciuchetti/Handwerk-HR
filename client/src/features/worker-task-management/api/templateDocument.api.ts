@@ -94,3 +94,13 @@ export function printTemplateDocument(
     { responseType: 'blob' }
   );
 }
+
+export function deleteTemplateDocument(
+  workerId: string,
+  engagementId: string,
+  documentId: string
+) {
+  return API.delete(documentPath(workerId, engagementId, documentId)).then(
+    () => undefined
+  );
+}
