@@ -49,9 +49,17 @@ export const INTEGRATION_SEQUENCES = [
   },
 ] as const;
 
-export const SELECTABLE_INTEGRATION_SEQUENCES = INTEGRATION_SEQUENCES.filter(
-  (item) => !('systemOnly' in item && item.systemOnly)
-);
+type IntegrationSequenceOption = (typeof INTEGRATION_SEQUENCES)[number];
+type SelectableIntegrationSequenceOption = Exclude<
+  IntegrationSequenceOption,
+  { systemOnly: true }
+>;
+
+export const SELECTABLE_INTEGRATION_SEQUENCES =
+  INTEGRATION_SEQUENCES.filter(
+    (item): item is SelectableIntegrationSequenceOption =>
+      !('systemOnly' in item && item.systemOnly === true)
+  );
 
 export const crewmeisterRemovalWarning =
   'Entfernt die deaktivierte Crewmeister-Mitgliedschaft dauerhaft, auch bei einer noch offenen Einladung. Der globale Crewmeister-Login bleibt bestehen. Nur ausführen, wenn diese Mitgliedschaft wirklich entfernt werden soll.';
