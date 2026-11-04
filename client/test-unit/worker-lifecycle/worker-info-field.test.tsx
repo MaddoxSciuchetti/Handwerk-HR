@@ -112,6 +112,32 @@ describe('worker info editing', () => {
     expect(put).not.toHaveBeenCalled();
   });
 
+  it('persists a valid phone number and rejects an invalid one', async () => {
+    const put = vi.spyOn(API, 'put').mockResolvedValue({ data: {} });
+    const input = show({
+      label: 'Telefonnummer',
+      value: '',
+      editable: 'phoneNumber',
+      inputType: 'tel',
+      maxLength: 32,
+    });
+    // Letters are stripped on input; too few digits still fail parse.
+    fireEvent.change(input, { target: { value: '12345' } });
+    fireEvent.blur(input);
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Ungültige Telefonnummer'
+    );
+    expect(put).not.toHaveBeenCalled();
+
+    fireEvent.change(input, { target: { value: '+49 170 1234567' } });
+    fireEvent.blur(input);
+    await waitFor(() =>
+      expect(put).toHaveBeenCalledWith('/worker/worker-1', {
+        phoneNumber: '+49 170 1234567',
+      })
+    );
+  });
+
   it('allows an empty last name when it was never filled out', () => {
     const put = vi.spyOn(API, 'put');
     const input = show({

@@ -11,6 +11,7 @@ export type WorkerEngagementInfoItem = {
   value: string;
   editable?:
     | 'email'
+    | 'phoneNumber'
     | 'firstName'
     | 'lastName'
     | 'birthday'
@@ -24,7 +25,7 @@ export type WorkerEngagementInfoItem = {
     | 'position'
     | 'workwearSize'
     | 'phase';
-  inputType?: 'text' | 'date';
+  inputType?: 'text' | 'date' | 'tel';
   required?: boolean;
   maxLength?: number;
   itemName?: 'Hose' | 'T-Shirt';
@@ -63,6 +64,13 @@ export function workerEngagementInfoItems(
       maxLength: 120,
     },
     { label: 'E-Mail', value: worker.email ?? '', editable: 'email' },
+    {
+      label: 'Telefonnummer',
+      value: worker.phoneNumber ?? '',
+      editable: 'phoneNumber',
+      inputType: 'tel',
+      maxLength: 32,
+    },
     {
       label: 'Microsoft-E-Mail',
       value: worker.microsoftEmail ?? '',
