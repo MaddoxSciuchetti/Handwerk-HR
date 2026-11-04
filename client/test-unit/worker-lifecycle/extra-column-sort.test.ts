@@ -33,7 +33,10 @@ describe('extra column sort', () => {
       nextExtraColumnSort({ column: 'birthday', direction: 'asc' }, 'birthday')
     ).toEqual({ column: 'birthday', direction: 'desc' });
     expect(
-      nextExtraColumnSort({ column: 'birthday', direction: 'desc' }, 'anniversary')
+      nextExtraColumnSort(
+        { column: 'birthday', direction: 'desc' },
+        'anniversary'
+      )
     ).toEqual({ column: 'anniversary', direction: 'asc' });
   });
 
@@ -69,5 +72,25 @@ describe('extra column sort', () => {
         direction: 'asc',
       }).map((entry) => entry.firstName)
     ).toEqual(['Ben', 'Alex', 'Chris']);
+  });
+
+  it('sorts names A–Z and Z–A by last name then first name', () => {
+    const workers = [
+      worker('Zoe', { lastName: 'Müller' }),
+      worker('Anna', { lastName: 'Berger' }),
+      worker('Ben', { lastName: 'Berger' }),
+    ];
+    expect(
+      sortWorkersByExtraColumn(workers, {
+        column: 'name',
+        direction: 'asc',
+      }).map((entry) => `${entry.lastName} ${entry.firstName}`)
+    ).toEqual(['Berger Anna', 'Berger Ben', 'Müller Zoe']);
+    expect(
+      sortWorkersByExtraColumn(workers, {
+        column: 'name',
+        direction: 'desc',
+      }).map((entry) => `${entry.lastName} ${entry.firstName}`)
+    ).toEqual(['Müller Zoe', 'Berger Ben', 'Berger Anna']);
   });
 });
