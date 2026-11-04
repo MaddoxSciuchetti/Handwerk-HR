@@ -60,6 +60,12 @@ export type AssignLicenseInput = {
     licenseSkuId: string;
 };
 
+export type AddGroupMemberInput = {
+    token: string;
+    groupId: string;
+    userId: string;
+};
+
 export type PasswordMailInput = {
     firstName: string;
     workEmail: string;
@@ -72,6 +78,7 @@ export type ProvisionMicrosoft365Input = {
     organizationId: string;
     workerId: string;
     config: Microsoft365Config | null;
+    accessGroupIds?: string[] | null;
 };
 
 export type ProvisioningWorker = WorkerIdentity & {
@@ -96,6 +103,9 @@ export type Microsoft365GraphClient = {
     getToken: (config: Microsoft365Config | null) => Promise<string | null>;
     createUser: (input: CreateGraphUserInput) => Promise<CreateGraphUserResult>;
     assignLicense: (input: AssignLicenseInput) => Promise<boolean>;
+    addGroupMember: (
+        input: AddGroupMemberInput,
+    ) => Promise<{ ok: true } | { ok: false; message: string }>;
     deleteUser: (token: string, externalId: string) => Promise<boolean>;
 };
 

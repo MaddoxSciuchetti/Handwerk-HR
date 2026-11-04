@@ -23,6 +23,7 @@ import {
 } from "./integrations/issueExecutionStatus";
 import { sendTeams } from "./microsoftTeams/messages";
 import { connectionStatus } from "./microsoftTeams/connection";
+import { normalizeAccessGroupIds } from "./microsoft365/accessGroups";
 import { randomUUID, createHash } from "node:crypto";
 
 const recipient = z.object({
@@ -61,6 +62,7 @@ export const templateApplyInput = z.object({
                     .optional(),
                 subject: z.string().max(400).optional(),
                 body: z.string().max(20_000).optional(),
+                accessGroupIds: z.array(z.string().max(36)).max(50).optional(),
             }),
         )
         .default({}),
@@ -525,6 +527,16 @@ export async function applyTemplateApplication(
                         data: {
                             mailSenderAddress: choice.senderAddress,
                             automationRecipients: normalized.get(item.id)!,
+                        },
+                    });
+                }
+                if (item.sequence === "microsoft_create_account") {
+                    await prisma.issue.update({
+                        where: { id: issue.id },
+                        data: {
+                            microsoftAccessGroupIds: normalizeAccessGroupIds(
+                                choice?.accessGroupIds,
+                            ),
                         },
                     });
                 }

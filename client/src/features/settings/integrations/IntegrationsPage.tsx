@@ -183,6 +183,12 @@ function MicrosoftForm({
             onChange={(event) => setLicenseSkuId(event.target.value)}
           />
         </div>
+        <p className="text-sm text-muted-foreground">
+          Für die optionale Gruppenzuweisung bei der Kontoanlage braucht die App
+          in Entra die Anwendungsberechtigungen Group.Read.All und
+          GroupMember.ReadWrite.All (Administratorzustimmung). SharePoint- und
+          Teams-Rechte bleiben an den Gruppen in Microsoft.
+        </p>
       </IntegrationFields>
     </form>
   );

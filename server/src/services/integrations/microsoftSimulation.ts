@@ -103,10 +103,18 @@ export async function microsoftGraphFetch(
                 {
                     id: "simulation-microsoft-office",
                     displayName: "Büro (Test)",
+                    securityEnabled: true,
+                    mailEnabled: true,
+                    groupTypes: ["Unified"],
+                    isAssignableToRole: false,
                 },
                 {
                     id: "simulation-microsoft-field",
                     displayName: "Handwerk (Test)",
+                    securityEnabled: true,
+                    mailEnabled: false,
+                    groupTypes: [],
+                    isAssignableToRole: false,
                 },
             ],
         });
@@ -120,6 +128,9 @@ export async function microsoftGraphFetch(
         return Response.json({
             value: [{ mail: "team@staging.example.test" }],
         });
+    }
+    if (method === "POST" && /^\/groups\/[^/]+\/members\/\$ref$/.test(path)) {
+        return new Response(null, { status: 204 });
     }
     if (method === "POST" && /^\/users\/[^/]+\/sendMail$/.test(path)) {
         return new Response(null, { status: 202 });

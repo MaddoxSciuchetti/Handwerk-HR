@@ -8,6 +8,7 @@ import {
     getDepartureMail,
     getIntegrations,
     getMicrosoft365Automation,
+    getMicrosoft365AccessGroups,
     getMicrosoft365Licenses,
     postMicrosoftLicensePing,
     getEngagementMailRecipients,
@@ -47,6 +48,7 @@ automationRoutes.post("/issues/:issueId/teams-review", postDeliveryReview);
 
 automationRoutes.get("/microsoft-365", getMicrosoft365Automation);
 automationRoutes.get("/microsoft-365/licenses", getMicrosoft365Licenses);
+automationRoutes.get("/microsoft-365/access-groups", getMicrosoft365AccessGroups);
 automationRoutes.post("/engagements/:engagementId/microsoft-license-ping", postMicrosoftLicensePing);
 automationRoutes.get("/microsoft-addresses", getMicrosoftMailAddresses);
 automationRoutes.get("/integrations", getIntegrations);

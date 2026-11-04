@@ -82,6 +82,34 @@ export function createMicrosoft365Provisioner(
             };
         }
 
+        const accessGroupIds = Array.isArray(params.accessGroupIds)
+            ? params.accessGroupIds
+            : [];
+        for (const groupId of accessGroupIds) {
+            const membership = await dependencies.graph.addGroupMember({
+                token,
+                groupId,
+                userId: created.externalId,
+            });
+            if (!membership.ok) {
+                let deleted = false;
+                try {
+                    deleted = await dependencies.graph.deleteUser(
+                        token,
+                        created.externalId,
+                    );
+                } catch {
+                    // A network failure leaves the deletion outcome unknown.
+                }
+                return {
+                    status: "failed",
+                    message: deleted
+                        ? membership.message
+                        : `${membership.message} Die Löschung des neu erstellten Kontos ${created.workEmail} (ID: ${created.externalId}) wurde nicht bestätigt. Bitte prüfe das Konto in Microsoft 365, bevor du die Kontoerstellung erneut ausführst.`,
+                };
+            }
+        }
+
         const passwordMailSent = await dependencies.sendPasswordMail({
             to: privateEmail,
             firstName: worker.firstName,
