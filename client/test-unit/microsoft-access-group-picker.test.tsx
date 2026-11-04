@@ -26,21 +26,24 @@ describe('MicrosoftAccessGroupPicker', () => {
     });
   });
 
-  it('loads groups in a dropdown without requiring a choice', async () => {
+  it('allows selecting multiple groups without requiring a choice', async () => {
     const onChange = vi.fn();
-    renderWithProviders(
+    const { rerender } = renderWithProviders(
       <MicrosoftAccessGroupPicker selectedIds={[]} onChange={onChange} />
     );
-    const trigger = await screen.findByRole('combobox', {
-      name: 'Microsoft-Gruppe',
-    });
-    await userEvent.click(trigger);
     await waitFor(() =>
-      expect(
-        screen.getByRole('option', { name: 'Handwerk' })
-      ).toBeInTheDocument()
+      expect(screen.getByLabelText('Handwerk')).toBeInTheDocument()
     );
-    await userEvent.click(screen.getByRole('option', { name: 'Handwerk' }));
+    await userEvent.click(screen.getByLabelText('Handwerk'));
     expect(onChange).toHaveBeenCalledWith(['group-field']);
+
+    rerender(
+      <MicrosoftAccessGroupPicker
+        selectedIds={['group-field']}
+        onChange={onChange}
+      />
+    );
+    await userEvent.click(screen.getByLabelText('Büro'));
+    expect(onChange).toHaveBeenCalledWith(['group-field', 'group-office']);
   });
 });

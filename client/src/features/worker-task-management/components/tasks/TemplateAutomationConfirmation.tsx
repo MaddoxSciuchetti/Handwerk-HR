@@ -323,7 +323,7 @@ export function TemplateAutomationConfirmation({
                           key={engagementId}
                           engagementId={engagementId}
                         />
-                        <FieldRow label="Gruppe">
+                        <FieldRow label="Gruppen">
                           <MicrosoftAccessGroupPicker
                             selectedIds={choice.accessGroupIds ?? []}
                             onChange={(accessGroupIds) =>

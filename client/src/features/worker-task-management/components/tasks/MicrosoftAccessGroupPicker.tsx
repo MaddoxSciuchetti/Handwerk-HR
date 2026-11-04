@@ -1,14 +1,6 @@
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useQuery } from '@tanstack/react-query';
 import { getMicrosoftAccessGroups } from '../../api/microsoftAccessGroups.api';
-
-const NONE = '__none__';
 
 type MicrosoftAccessGroupPickerProps = {
   selectedIds: string[];
@@ -30,7 +22,16 @@ export function MicrosoftAccessGroupPicker({
   const error = groups.isError
     ? 'Microsoft-Gruppen konnten nicht geladen werden.'
     : groups.data?.error;
-  const selected = selectedIds[0] ?? NONE;
+  const selected = new Set(selectedIds);
+
+  const toggle = (id: string, checked: boolean) => {
+    if (checked) {
+      if (selected.has(id)) return;
+      onChange([...selectedIds, id]);
+      return;
+    }
+    onChange(selectedIds.filter((entry) => entry !== id));
+  };
 
   if (groups.isPending) {
     return (
@@ -49,25 +50,29 @@ export function MicrosoftAccessGroupPicker({
   }
 
   return (
-    <Select
-      value={selected}
-      onValueChange={(value) => onChange(value === NONE ? [] : [value])}
-      disabled={disabled}
+    <ul
+      className="flex max-h-40 flex-col gap-2 overflow-y-auto"
+      aria-label="Microsoft-Gruppen"
     >
-      <SelectTrigger
-        aria-label="Microsoft-Gruppe"
-        className="h-8 w-full text-xs"
-      >
-        <SelectValue placeholder="Gruppe wählen" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value={NONE}>Keine</SelectItem>
-        {options.map((group) => (
-          <SelectItem key={group.id} value={group.id}>
-            {group.displayName}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+      {options.map((group) => {
+        const id = `microsoft-access-group-${group.id}`;
+        return (
+          <li key={group.id} className="flex items-center gap-2">
+            <Checkbox
+              id={id}
+              checked={selected.has(group.id)}
+              disabled={disabled}
+              onCheckedChange={(value) => toggle(group.id, value === true)}
+            />
+            <label
+              htmlFor={id}
+              className="text-xs leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              {group.displayName}
+            </label>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
