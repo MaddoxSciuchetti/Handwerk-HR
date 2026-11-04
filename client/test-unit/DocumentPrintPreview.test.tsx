@@ -3,15 +3,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi, it, expect } from 'vitest';
 import { DocumentPrintPreview } from '@/features/settings/documents/DocumentPrintPreview';
 import { apiJson } from '@/config/apiClient';
+import { GlobalWorkerOptions } from 'pdfjs-dist';
 
 const fixture = vi.hoisted(() => ({
   render: vi.fn(() => ({ promise: Promise.resolve(), cancel: vi.fn() })),
   destroy: vi.fn(),
 }));
 vi.mock('@/config/apiClient', () => ({ apiJson: { get: vi.fn() } }));
-vi.mock('pdfjs-dist/build/pdf.worker.min.mjs?url', () => ({
-  default: '/worker.js',
-}));
 vi.mock('pdfjs-dist', () => ({
   GlobalWorkerOptions: {},
   getDocument: () => ({
@@ -43,6 +41,8 @@ it('shows separate pages with PDF paper dimensions, and zooms without changing t
     </QueryClientProvider>
   );
   const first = await screen.findByLabelText('Druckseite 1');
+  expect(typeof GlobalWorkerOptions.workerSrc).toBe('string');
+  expect(GlobalWorkerOptions.workerSrc).toContain('pdf.worker.min.mjs');
   const second = screen.getByLabelText('Druckseite 2');
   expect(parseFloat(first.style.width)).toBeCloseTo(210, 1);
   expect(parseFloat(first.style.height)).toBeCloseTo(297, 1);
