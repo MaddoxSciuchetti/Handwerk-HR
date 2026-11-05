@@ -7,10 +7,7 @@ import type { ExtraWorkerColumnId } from '../consts/extra-worker-columns';
 import { EngagementType, WorkerRecord } from '../types/index.types';
 import { getFirstFormType } from '../utils/formtype';
 import { nextCompanyAnniversary } from '../utils/companyAnniversary';
-import {
-  formatCalendarDate,
-  parseCalendarDate,
-} from '../utils/calendarDate';
+import { formatCalendarDate, parseCalendarDate } from '../utils/calendarDate';
 import { getWorkerIssueCount } from '../utils/workerHealth.utils';
 import { EngagementProgressPicker } from './ui/EngagementProgressPicker';
 import EngagementTypeSwitch from './EngagementTypeSwitch';
@@ -121,9 +118,7 @@ function ProjectItem(props: ProjectItemProps) {
           isTeam
             ? 'rounded-xl px-6 group-hover:rounded-xl'
             : 'pl-10 pr-2 group-hover:rounded-l-xl',
-          !isTeam &&
-            props.isSelected &&
-            'rounded-l-xl bg-[var(--hover-bg)]'
+          !isTeam && props.isSelected && 'rounded-l-xl bg-[var(--hover-bg)]'
         )}
       >
         {isTeam ? null : (
@@ -138,7 +133,7 @@ function ProjectItem(props: ProjectItemProps) {
             !isTeam && 'pl-2'
           )}
         >
-          <span className="truncate">{worker.firstName}</span>
+          <span className="truncate">{fullname.trim()}</span>
           {isTeam && props.marked ? (
             <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-normal text-muted-foreground">
               Nächstes Jubiläum

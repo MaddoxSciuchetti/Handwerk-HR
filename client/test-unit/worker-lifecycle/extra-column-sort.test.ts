@@ -74,23 +74,24 @@ describe('extra column sort', () => {
     ).toEqual(['Ben', 'Alex', 'Chris']);
   });
 
-  it('sorts names A–Z and Z–A by last name then first name', () => {
+  it('sorts names A–Z and Z–A by first name then last name', () => {
     const workers = [
       worker('Zoe', { lastName: 'Müller' }),
       worker('Anna', { lastName: 'Berger' }),
       worker('Ben', { lastName: 'Berger' }),
+      worker('Anna', { id: 'anna-klein', lastName: 'Klein' }),
     ];
     expect(
       sortWorkersByExtraColumn(workers, {
         column: 'name',
         direction: 'asc',
-      }).map((entry) => `${entry.lastName} ${entry.firstName}`)
-    ).toEqual(['Berger Anna', 'Berger Ben', 'Müller Zoe']);
+      }).map((entry) => `${entry.firstName} ${entry.lastName}`)
+    ).toEqual(['Anna Berger', 'Anna Klein', 'Ben Berger', 'Zoe Müller']);
     expect(
       sortWorkersByExtraColumn(workers, {
         column: 'name',
         direction: 'desc',
-      }).map((entry) => `${entry.lastName} ${entry.firstName}`)
-    ).toEqual(['Müller Zoe', 'Berger Ben', 'Berger Anna']);
+      }).map((entry) => `${entry.firstName} ${entry.lastName}`)
+    ).toEqual(['Zoe Müller', 'Ben Berger', 'Anna Klein', 'Anna Berger']);
   });
 });
