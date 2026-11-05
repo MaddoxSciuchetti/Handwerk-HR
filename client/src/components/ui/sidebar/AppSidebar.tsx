@@ -3,8 +3,13 @@ import { ProfileDropdown } from './ProfileDropdown';
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { BookOpen } from 'lucide-react';
 import SideBarMenu from './sidebar-menu-item';
 
 function AppSidebar({
@@ -37,6 +42,24 @@ function AppSidebar({
           }))}
         />
       </SidebarContent>
+      <SidebarFooter className="mt-auto px-2 pb-2">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Dokumentation">
+              <a
+                href={
+                  import.meta.env.VITE_DOCS_URL ?? 'http://localhost:3001/docs'
+                }
+                target="_blank"
+                rel="noreferrer"
+              >
+                <BookOpen />
+                <span>Dokumentation</span>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   );
 }

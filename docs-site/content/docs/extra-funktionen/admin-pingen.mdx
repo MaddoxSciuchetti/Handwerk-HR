@@ -1,0 +1,29 @@
+---
+title: Admin pingen
+description: Administration per E-Mail informieren wenn keine Microsoft Lizenz mehr frei ist.
+---
+
+## Was ist die Admin ping funktion?
+
+`ping admin` ist ein Button der die Administration per E-Mail informiert wenn für einen Mitarbeiter eine neue Microsoft 365 Lizenz gebraucht wird.
+
+## Wie funktioniert die Admin ping funktion?
+
+1. Beim Anlegen eines Microsoft Kontos zeigt Hadox wie viele Lizenzen frei sind
+2. Steht dort `0 Microsoft-Lizenzen verfügbar` erscheint der Button `ping admin`
+3. Ein Klick schickt eine E-Mail an alle aktiven Admins der Organisation
+4. In der Mail steht für welchen Mitarbeiter die Lizenz fehlt
+5. Die Administration stellt in Microsoft 365 eine Lizenz bereit
+6. Du startest die Konto Erstellung erneut
+
+Mehr zum Konto anlegen unter [Microsoft](/docs/automatisierungen/microsoft).
+
+<Hint>
+Der Button ist nur sichtbar wenn wirklich 0 Lizenzen frei sind. Sind noch
+Lizenzen verfügbar oder die Lizenzanzahl konnte nicht geladen werden
+erscheint er nicht.
+</Hint>
+
+## Warum?
+
+Microsoft lässt Lizenzen nicht über die Schnittstelle kaufen. Wenn keine Lizenz frei ist bleibt die Automatisierung stecken. Der Ping sagt der Admin schnell Bescheid statt dass jemand manuell nachfragen muss.
