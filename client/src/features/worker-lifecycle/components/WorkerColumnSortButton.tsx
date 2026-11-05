@@ -18,10 +18,10 @@ export function WorkerColumnSortButton({
   const direction = active ? sort.direction : null;
   const label =
     direction === 'asc'
-      ? 'A–Z sortieren'
+      ? 'Vorname A–Z sortieren'
       : direction === 'desc'
-        ? 'Z–A sortieren'
-        : 'Alphabetisch sortieren';
+        ? 'Vorname Z–A sortieren'
+        : 'Nach Vorname sortieren';
 
   return (
     <Button

@@ -33,6 +33,7 @@ import { Route as PasswordResetRouteImport } from './routes/password/reset'
 import { Route as PasswordForgotRouteImport } from './routes/password/forgot'
 import { Route as FragebogenPreviewRouteImport } from './routes/fragebogen/preview'
 import { Route as FragebogenTokenRouteImport } from './routes/fragebogen/$token'
+import { Route as DocsSplatRouteImport } from './routes/docs.$'
 import { Route as SettingsTemplatesTemplateRouteImport } from './routes/settings/templates/template'
 import { Route as SettingsTemplatesIdRouteImport } from './routes/settings/templates/$id'
 import { Route as SettingsMailTemplatesIdRouteImport } from './routes/settings/mail-templates/$id'
@@ -159,6 +160,11 @@ const FragebogenTokenRoute = FragebogenTokenRouteImport.update({
   path: '/fragebogen/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DocsSplatRoute = DocsSplatRouteImport.update({
+  id: '/docs/$',
+  path: '/docs/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsTemplatesTemplateRoute =
   SettingsTemplatesTemplateRouteImport.update({
     id: '/templates/template',
@@ -195,6 +201,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRouteWithChildren
   '/signup': typeof SignupRoute
   '/worker-lifycycle': typeof WorkerLifycycleRoute
+  '/docs/$': typeof DocsSplatRoute
   '/fragebogen/$token': typeof FragebogenTokenRoute
   '/fragebogen/preview': typeof FragebogenPreviewRoute
   '/password/forgot': typeof PasswordForgotRoute
@@ -226,6 +233,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRouteWithChildren
   '/signup': typeof SignupRoute
   '/worker-lifycycle': typeof WorkerLifycycleRoute
+  '/docs/$': typeof DocsSplatRoute
   '/fragebogen/$token': typeof FragebogenTokenRoute
   '/fragebogen/preview': typeof FragebogenPreviewRoute
   '/password/forgot': typeof PasswordForgotRoute
@@ -258,6 +266,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRouteWithChildren
   '/signup': typeof SignupRoute
   '/worker-lifycycle': typeof WorkerLifycycleRoute
+  '/docs/$': typeof DocsSplatRoute
   '/fragebogen/$token': typeof FragebogenTokenRoute
   '/fragebogen/preview': typeof FragebogenPreviewRoute
   '/password/forgot': typeof PasswordForgotRoute
@@ -291,6 +300,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/worker-lifycycle'
+    | '/docs/$'
     | '/fragebogen/$token'
     | '/fragebogen/preview'
     | '/password/forgot'
@@ -322,6 +332,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/worker-lifycycle'
+    | '/docs/$'
     | '/fragebogen/$token'
     | '/fragebogen/preview'
     | '/password/forgot'
@@ -353,6 +364,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/worker-lifycycle'
+    | '/docs/$'
     | '/fragebogen/$token'
     | '/fragebogen/preview'
     | '/password/forgot'
@@ -385,6 +397,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRouteWithChildren
   SignupRoute: typeof SignupRoute
   WorkerLifycycleRoute: typeof WorkerLifycycleRoute
+  DocsSplatRoute: typeof DocsSplatRoute
   FragebogenTokenRoute: typeof FragebogenTokenRoute
   FragebogenPreviewRoute: typeof FragebogenPreviewRoute
   PasswordForgotRoute: typeof PasswordForgotRoute
@@ -563,6 +576,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FragebogenTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/docs/$': {
+      id: '/docs/$'
+      path: '/docs/$'
+      fullPath: '/docs/$'
+      preLoaderRoute: typeof DocsSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings/templates/template': {
       id: '/settings/templates/template'
       path: '/templates/template'
@@ -659,6 +679,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRouteWithChildren,
   SignupRoute: SignupRoute,
   WorkerLifycycleRoute: WorkerLifycycleRoute,
+  DocsSplatRoute: DocsSplatRoute,
   FragebogenTokenRoute: FragebogenTokenRoute,
   FragebogenPreviewRoute: FragebogenPreviewRoute,
   PasswordForgotRoute: PasswordForgotRoute,

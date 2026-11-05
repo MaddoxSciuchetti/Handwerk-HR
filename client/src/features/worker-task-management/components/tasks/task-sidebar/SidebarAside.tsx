@@ -59,7 +59,7 @@ export function SidebarAside({
         showCloseButton={false}
         className={className}
         style={{
-          width: 'min(32rem, calc(100vw - 0.5rem))',
+          width: 'min(32rem, 100%)',
           ...props.style,
         }}
         contentClassName="flex flex-col p-0 md:p-0"
@@ -75,23 +75,37 @@ export function SidebarAside({
   if (typeof document === 'undefined') return null;
 
   return createPortal(
-    <aside
-      ref={sidebarRef}
-      data-sidebar-aside=""
-      aria-hidden={!isOpen}
-      inert={!isOpen}
-      data-state={motionState}
-      className={cn(
-        'right-sidebar fixed right-0 top-1 bottom-1 z-50 overflow-hidden rounded-[26px] border border-border bg-(--card)',
-        !isOpen && 'pointer-events-none',
-        // Never-opened panels still painted a sliver on the viewport edge.
-        motionState === 'idle' && 'invisible',
-        className
-      )}
-      {...props}
-    >
-      {children}
-    </aside>,
+    <>
+      {motionState !== 'idle' ? (
+        <button
+          type="button"
+          aria-label="Schließen"
+          tabIndex={-1}
+          disabled={!isOpen}
+          data-state={motionState}
+          className="cockpit-drawer-overlay fixed inset-0 z-40 bg-black/15"
+          onClick={onClose}
+        />
+      ) : null}
+      <aside
+        ref={sidebarRef}
+        data-sidebar-aside=""
+        aria-hidden={!isOpen}
+        inert={!isOpen}
+        data-state={motionState}
+        className={cn(
+          // Flush + square the right edge so radius never leaves a viewport strip.
+          'right-sidebar fixed inset-y-0 right-0 z-50 overflow-hidden rounded-l-[26px] border border-r-0 border-border bg-(--card)',
+          !isOpen && 'pointer-events-none',
+          // Never-opened panels still painted a sliver on the viewport edge.
+          motionState === 'idle' && 'invisible',
+          className
+        )}
+        {...props}
+      >
+        {children}
+      </aside>
+    </>,
     document.body
   );
 }

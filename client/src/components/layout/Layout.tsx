@@ -2,14 +2,12 @@ import { useBillingSubscription } from '@/features/settings/payments/hooks/useBi
 import useAuth from '@/features/user-profile/hooks/useAuth';
 import { isSubscriptionLocked } from '@/features/settings/payments/util/subscriptionAccess.util';
 import { MentionNotice } from '@/features/all-tasks/components/MentionNotice';
+import { isCockpitOwnedPath } from '@/features/worker-lifecycle/components/cockpit-section.consts';
 import { useThemeProvider } from '@/hooks/useThemeProvider';
 import { Outlet, useLocation, useNavigate } from '@tanstack/react-router';
 import { useEffect, useMemo, useState } from 'react';
 import AppSidebar from '../ui/sidebar/AppSidebar';
-import {
-  SidebarInset,
-  SidebarTrigger,
-} from '@/components/ui/sidebar';
+import { SidebarInset } from '@/components/ui/sidebar';
 import PagePath from './headers/PagePath';
 import { SettingsSidebar } from './SettingsSidebar';
 
@@ -28,9 +26,12 @@ function Layout() {
     [isFetched, isError, subscription]
   );
 
+  // Dokumente / Templates / etc. live under Cockpit. Their leftover /settings/*
+  // URLs must not flip the shell into the stripped SettingsSidebar.
   const pathOpensSettings =
-    location.pathname.startsWith('/settings') ||
-    location.pathname === '/bestand';
+    (location.pathname.startsWith('/settings') ||
+      location.pathname === '/bestand') &&
+    !isCockpitOwnedPath(location.pathname);
   const subscriptionForcesSettings =
     subscriptionLocked &&
     isAdmin &&
@@ -42,6 +43,8 @@ function Layout() {
     setPrevPathname(location.pathname);
     if (pathOpensSettings || subscriptionForcesSettings) {
       setIsSettingOpen(true);
+    } else if (!subscriptionForcesSettings) {
+      setIsSettingOpen(false);
     }
   }
 
@@ -80,12 +83,11 @@ function Layout() {
           setIsSettingOpen={setIsSettingOpen}
         />
       )}
-      <SidebarInset className="mt-1 mb-1 ml-1 flex h-[calc(100svh-0.5rem)] grow flex-col overflow-hidden rounded-[26px] border border-border bg-background">
-        <header className="flex h-16 shrink-0 items-center gap-2 px-4">
-          <SidebarTrigger className="-ml-1" />
+      <SidebarInset className="flex h-svh grow flex-col overflow-hidden border-border bg-background">
+        <header className="flex shrink-0 items-center gap-2 px-10 pt-6 md:px-12 md:pt-8 xl:px-14 xl:pt-14">
           <PagePath />
         </header>
-        <main className="flex min-h-0 grow flex-col gap-4 bg-background p-4 lg:items-center">
+        <main className="flex min-h-0 grow flex-col gap-4 bg-background px-4 py-6 md:px-6 xl:px-8 lg:items-center">
           <div className="h-full w-full min-h-0 min-w-0 grow overflow-hidden">
             {subscriptionLocked && !isAdmin ? (
               <div className="flex h-full items-center justify-center rounded-2xl bg-card p-6 text-card-foreground">

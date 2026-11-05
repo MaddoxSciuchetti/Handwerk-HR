@@ -287,6 +287,21 @@ npm run dev
 
 Open `http://localhost:5173`.
 
+### Documentation
+
+Open `http://localhost:5173/docs` or choose **Dokumentation** in the app sidebar.
+The documentation runs inside the existing Vite client and ships in the same
+`client/dist` build. It does not require Next.js, a second server, or a separate
+hosting service. Nested documentation URLs use the same SPA fallback as the app.
+
+Edit MDX pages in `client/src/features/documentation/content/`. Each directory's
+`meta.json` controls navigation order. Vite compiles the pages, frontmatter, and
+table of contents at build time; full-text search runs locally in the browser.
+Each page has a bottom **Seite öffnen** card to copy Markdown or open ChatGPT / Claude; it can be collapsed.
+
+Validate documentation changes from `client/` with `npm run lint`,
+`npm run typecheck`, and `npm run build`.
+
 Document PDFs (contracts, Arbeitszeugnis, master previews) render **in-process**
 via `@react-pdf/renderer`. Ensure `DOCUMENT_FONT_DIR` points at the TTF bundle
 (defaults to `server/document-fonts` in development). No separate PDF Docker

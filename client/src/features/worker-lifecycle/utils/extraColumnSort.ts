@@ -28,7 +28,7 @@ function calendarDateSortKey(value: string | null | undefined): number {
 }
 
 function nameSortKey(worker: WorkerRecord): string {
-  return `${worker.lastName} ${worker.firstName}`.trim();
+  return `${worker.firstName} ${worker.lastName}`.trim();
 }
 
 function compareNames(left: WorkerRecord, right: WorkerRecord): number {

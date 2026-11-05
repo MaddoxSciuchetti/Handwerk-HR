@@ -15,3 +15,14 @@ When the user says `ship staging` (or clearly the same intent in few words):
 5. Reply with the commit hash and the staging merge result.
 
 Follow normal git safety rules: no force-push, no config changes, no skipping hooks unless explicitly asked.
+
+## Local Prisma sync
+
+Before starting/restarting the local API (or after pull/merge that touches `server/src/prisma/**`), sync local Postgres + Prisma Client so enum/column drift does not surface as app 500s:
+
+1. Confirm `DATABASE_URL` is local (`127.0.0.1` / `localhost`) — never migrate prod/staging here.
+2. From `server/`: `npx prisma migrate status --schema=src/prisma/schema.prisma`
+3. If pending: `npx prisma migrate deploy --schema=src/prisma/schema.prisma` then `npx prisma generate --schema=src/prisma/schema.prisma`
+4. Restart the API after regenerate (`tsx watch` may not reload Client).
+
+Full playbook: `.cursor/skills/local-prisma-sync/SKILL.md`. Classic symptom: `PrismaClientValidationError` / `Expected IntegrationSequence` on `/automation/issues/.../sequence`.

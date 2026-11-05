@@ -5,9 +5,24 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
+import mdx from '@mdx-js/rollup';
+import remarkFrontmatter from 'remark-frontmatter';
+import remarkMdxFrontmatter from 'remark-mdx-frontmatter';
+import remarkGfm from 'remark-gfm';
+import { remarkHeading } from 'fumadocs-core/mdx-plugins/remark-heading';
+import { rehypeToc } from 'fumadocs-core/mdx-plugins/rehype-toc';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const documentationMdx = mdx({
+  remarkPlugins: [
+    remarkFrontmatter,
+    remarkMdxFrontmatter,
+    remarkGfm,
+    remarkHeading,
+  ],
+  rehypePlugins: [rehypeToc],
+});
 
 const coverageFullTree = process.env.VITEST_COVERAGE_FULL_TREE === '1';
 
@@ -19,6 +34,15 @@ const coverageSharedExclude = [
 
 export default defineConfig({
   plugins: [
+    {
+      ...documentationMdx,
+      transform(code, id) {
+        // MDX's plugin strips query strings. Preserve Vite's raw imports for
+        // browser search and Markdown exports instead of compiling them again.
+        if (id.split('?')[1]?.split('&').includes('raw')) return null;
+        return documentationMdx.transform.call(this, code, id);
+      },
+    },
     tanstackRouter({
       target: 'react',
       autoCodeSplitting: true,
