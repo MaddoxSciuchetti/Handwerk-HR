@@ -1,3 +1,5 @@
+import { useDrawerStack } from '@/components/ui/drawer-stack';
+import { MailTemplatePage } from '@/features/settings/mail-template/MailTemplatePage';
 import FormFields from '@/components/form/FormFields';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -45,6 +47,7 @@ export function MailTemplateSidebar({
   editState,
 }: MailTemplateSidebarProps) {
   const navigate = useNavigate();
+  const drawers = useDrawerStack();
   const create = useCreateMailTemplate();
   const update = useUpdateMailTemplateDetails();
   const {
@@ -69,6 +72,13 @@ export function MailTemplateSidebar({
         onSuccess: (template) => {
           toast.success('E-Mail erstellt');
           setIsOpen(false);
+          if (drawers) {
+            drawers.push(
+              template.name,
+              <MailTemplatePage templateId={template.id} />
+            );
+            return;
+          }
           void navigate({
             to: '/settings/mail-templates/$id',
             params: { id: template.id },

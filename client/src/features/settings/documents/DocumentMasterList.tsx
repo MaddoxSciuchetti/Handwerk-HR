@@ -1,8 +1,10 @@
+import type { ReactNode } from 'react';
 import { TableSelectAllCheckbox } from '@/components/ui/table-select-all-checkbox';
 import { TableSkeletonRows } from '@/components/ui/table-skeleton';
 import {
   Table,
   TableBody,
+  TableCell,
   TableHead,
   TableHeader,
   TableRow,
@@ -17,6 +19,7 @@ import type { DocumentMasterListItem } from './documentMaster.types';
 
 type DocumentMasterListProps = {
   isLoading?: boolean;
+  headerAction?: ReactNode;
   masters: DocumentMasterListItem[];
   selectedIds: string[];
   onToggle: (id: string) => void;
@@ -26,18 +29,13 @@ type DocumentMasterListProps = {
 
 export function DocumentMasterList({
   isLoading = false,
+  headerAction,
   masters,
   selectedIds,
   onToggle,
   onSelectAll,
   emptyLabel,
 }: DocumentMasterListProps) {
-  if (!isLoading && masters.length === 0) {
-    return (
-      <p className="px-3 py-6 text-sm text-muted-foreground">{emptyLabel}</p>
-    );
-  }
-
   return (
     <Table aria-busy={isLoading} className={settingsTableClassName}>
       <TableHeader>
@@ -55,7 +53,12 @@ export function DocumentMasterList({
             </div>
           </TableHead>
           <TableHead className="h-12 px-2 py-3">Name</TableHead>
-          <TableHead className="px-2 py-3">Art</TableHead>
+          <TableHead className="px-2 py-3">
+            <div className="flex items-center justify-between gap-4 pr-4">
+              <span>Art</span>
+              {headerAction}
+            </div>
+          </TableHead>
         </TableRow>
       </TableHeader>
       <TableBody
@@ -66,6 +69,12 @@ export function DocumentMasterList({
       >
         {isLoading ? (
           <TableSkeletonRows variant="documents" />
+        ) : masters.length === 0 ? (
+          <TableRow>
+            <TableCell colSpan={3} className="h-24 text-muted-foreground">
+              {emptyLabel}
+            </TableCell>
+          </TableRow>
         ) : (
           masters.map((master) => (
             <DocumentMasterRow

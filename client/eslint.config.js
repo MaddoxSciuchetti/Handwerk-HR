@@ -9,8 +9,9 @@ import { defineConfig } from 'eslint/config';
 import globals from 'globals';
 
 export default defineConfig([
+  // Global ignores exclude generated output before file matching.
+  { ignores: ['**/dist/**', '**/node_modules/**'] },
   {
-    ignores: ['dist', 'node_modules'],
     files: ['**/*.{js,jsx,ts,tsx}'],
 
     languageOptions: {

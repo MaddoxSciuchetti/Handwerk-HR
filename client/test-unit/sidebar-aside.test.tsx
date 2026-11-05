@@ -23,6 +23,19 @@ function Harness() {
 }
 
 describe('SidebarAside', () => {
+  it('portals outside transformed ancestors so it stays fixed to the viewport', () => {
+    const { container } = render(
+      <div style={{ transform: 'translateX(0)' }}>
+        <SidebarAside isOpen onClose={() => {}}>
+          Nested panel
+        </SidebarAside>
+      </div>
+    );
+    const panel = screen.getByText('Nested panel');
+    expect(panel.parentElement).toBe(document.body);
+    expect(container).not.toContainElement(panel);
+  });
+
   it('stays parked off-screen until it has been opened', async () => {
     const user = userEvent.setup();
     render(<Harness />);

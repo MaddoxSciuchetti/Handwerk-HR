@@ -1,20 +1,27 @@
 .right-sidebar {
   width: min(32rem, calc(100vw - 0.5rem));
-  transform: translateX(calc(100% + 0.25rem));
+  /* Extra offset so borders/shadows never peek when parked. */
+  transform: translateX(calc(100% + 1rem));
+  will-change: transform;
 }
 
 .right-sidebar[data-state='open'] {
-  transform: translateX(0);
-  animation: right-sidebar-in 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  /* Animation owns transform while open — a static translateX(0) here
+     flashes the panel on-screen for a frame before the slide starts. */
+  animation: right-sidebar-in 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .right-sidebar[data-state='closed'] {
-  animation: right-sidebar-out 180ms ease-in both;
+  animation: right-sidebar-out 200ms ease-in both;
+}
+
+.right-sidebar[data-state='idle'] {
+  visibility: hidden;
 }
 
 @keyframes right-sidebar-in {
   from {
-    transform: translateX(calc(100% + 0.25rem));
+    transform: translateX(calc(100% + 1rem));
   }
   to {
     transform: translateX(0);
@@ -26,13 +33,109 @@
     transform: translateX(0);
   }
   to {
-    transform: translateX(calc(100% + 0.25rem));
+    transform: translateX(calc(100% + 1rem));
+  }
+}
+
+/* Fade only the overlay opacity: no backdrop filter or shell layout changes. */
+.cockpit-drawer-overlay[data-state='open'] {
+  animation: cockpit-overlay-in 300ms ease-out both;
+}
+
+.cockpit-drawer-overlay[data-state='closed'] {
+  animation: cockpit-overlay-out 220ms ease-in both;
+  pointer-events: none;
+}
+
+@keyframes cockpit-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes cockpit-overlay-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Wide cockpit drawer: same motion, no 32rem width lock. */
+.cockpit-drawer {
+  transform: translateX(calc(100% + 1.25rem));
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.cockpit-drawer[data-state='open'] {
+  animation: cockpit-drawer-in 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.cockpit-drawer[data-state='closed'] {
+  animation: cockpit-drawer-out 220ms ease-in both;
+}
+
+.cockpit-drawer[data-state='idle'] {
+  visibility: hidden;
+}
+
+@keyframes cockpit-drawer-in {
+  from {
+    transform: translateX(calc(100% + 1.25rem));
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes cockpit-drawer-out {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(100% + 1.25rem));
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .right-sidebar[data-state] {
+  .right-sidebar[data-state],
+  .cockpit-drawer[data-state],
+  .cockpit-drawer-overlay[data-state] {
     animation: none;
     transition: none;
   }
+
+  .right-sidebar[data-state='open'],
+  .cockpit-drawer[data-state='open'] {
+    transform: translateX(0);
+  }
+
+  .cockpit-drawer-overlay[data-state='closed'] {
+    opacity: 0;
+  }
+
+  .cockpit-drawer[data-state='idle'] {
+    visibility: hidden;
+  }
+}
+
+body:has([data-drawer-layer]) [data-slot='dialog-overlay'] {
+  z-index: 200;
+}
+body:has([data-drawer-layer]) [data-slot='dialog-content'] {
+  z-index: 201;
+}
+body:has([data-drawer-layer])
+  :is(
+    [data-slot='popover-content'],
+    [data-slot='select-content'],
+    [data-slot='dropdown-menu-content'],
+    [data-slot='tooltip-content']
+  ) {
+  z-index: 220;
 }

@@ -1,3 +1,4 @@
+import { useDrawerStack } from '@/components/ui/drawer-stack';
 import LoadingAlert from '@/components/alerts/LoadingAlert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,6 +14,7 @@ type MailTemplatePageProps = {
 
 export function MailTemplatePage({ templateId }: MailTemplatePageProps) {
   const navigate = useNavigate();
+  const drawers = useDrawerStack();
   const { data, isLoading, isError } = useMailTemplate(templateId);
 
   if (isLoading) {
@@ -30,7 +32,11 @@ export function MailTemplatePage({ templateId }: MailTemplatePageProps) {
               size="icon"
               className="rounded-full"
               aria-label="Zurück"
-              onClick={() => navigate({ to: '/settings/templates/template' })}
+              onClick={() =>
+                drawers?.back
+                  ? drawers.back()
+                  : navigate({ to: '/settings/templates/template' })
+              }
             >
               <ArrowLeft className="size-5" />
             </Button>

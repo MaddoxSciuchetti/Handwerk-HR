@@ -1,11 +1,15 @@
+import { useDrawerStack } from '@/components/ui/drawer-stack';
+import { BestandItemDetails } from './BestandItemDetails';
+import { SettingsPageHeader } from '@/features/settings/components/SettingsPageHeader';
 import { TableSelectAllCheckbox } from '@/components/ui/table-select-all-checkbox';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { TableSkeletonRows } from '@/components/ui/table-skeleton';
 import { ScrollableTableViewport } from '@/components/ui/scrollable-table-viewport';
 import {
   Table,
   TableBody,
+  TableCell,
   TableHead,
   TableHeader,
   TableRow,
@@ -13,6 +17,7 @@ import {
 import { useState } from 'react';
 import {
   settingsTableBodyClassName,
+  settingsTableCardClassName,
   settingsTableClassName,
 } from '@/features/settings/components/settingsTable';
 import { cn } from '@/lib/utils';
@@ -24,6 +29,7 @@ import { useClothingStock } from './useBestand';
 
 export function BestandTab({ isLoading = false }: { isLoading?: boolean }) {
   const stock = useClothingStock();
+  const drawers = useDrawerStack();
   const [addOpen, setAddOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleting, setDeleting] = useState(false);
@@ -44,28 +50,13 @@ export function BestandTab({ isLoading = false }: { isLoading?: boolean }) {
   };
 
   return (
-    <Card
-      className="flex min-h-0 flex-1 flex-col gap-0 border border-border py-0 shadow-none ring-0"
+    <section
+      className="flex min-h-0 w-full flex-1 flex-col"
       data-testid="bestand-tab"
     >
-      <CardHeader className="flex min-h-14 shrink-0 flex-row flex-wrap items-center justify-between gap-4 px-6 py-3">
-        <CardTitle className="text-base font-medium">Bestand</CardTitle>
-        <Button
-          type="button"
-          className="rounded-2xl"
-          data-testid="open-bestand-add"
-          onClick={() => setAddOpen(true)}
-        >
-          Hinzufügen
-        </Button>
-      </CardHeader>
-      <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-0">
-        {stock.isError ? (
-          <p className="px-8 py-6 text-sm text-destructive">
-            Bestand konnte nicht geladen werden.
-          </p>
-        ) : null}
-        {isLoading || stock.isLoading || stock.data ? (
+      <SettingsPageHeader title="Bestand" />
+      <Card className={settingsTableCardClassName}>
+        <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden px-0 pb-0">
           <ScrollableTableViewport>
             <Table
               aria-busy={isLoading || stock.isLoading}
@@ -89,7 +80,17 @@ export function BestandTab({ isLoading = false }: { isLoading?: boolean }) {
                   <TableHead className="bg-card py-3 px-2">Größe</TableHead>
                   <TableHead className="bg-card py-3 px-2">Typ</TableHead>
                   <TableHead className="bg-card py-3 px-2">
-                    Anzahl bei BSB
+                    <div className="flex items-center justify-between gap-4 pr-4">
+                      <span>Anzahl bei BSB</span>
+                      <Button
+                        type="button"
+                        className="rounded-2xl"
+                        data-testid="open-bestand-add"
+                        onClick={() => setAddOpen(true)}
+                      >
+                        Hinzufügen
+                      </Button>
+                    </div>
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -101,11 +102,31 @@ export function BestandTab({ isLoading = false }: { isLoading?: boolean }) {
               >
                 {isLoading || stock.isLoading ? (
                   <TableSkeletonRows variant="stock" />
+                ) : stock.isError || items.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={4}
+                      className="h-24 text-muted-foreground"
+                    >
+                      {stock.isError
+                        ? 'Bestand konnte nicht geladen werden.'
+                        : 'Noch keine Artikel vorhanden.'}
+                    </TableCell>
+                  </TableRow>
                 ) : (
                   stock.data?.map((item) => (
                     <BestandRow
                       key={item.id}
                       item={item}
+                      onOpen={
+                        drawers
+                          ? () =>
+                              drawers.push(
+                                item.name,
+                                <BestandItemDetails id={item.id} />
+                              )
+                          : undefined
+                      }
                       isSelected={selectedIds.includes(item.id)}
                       onToggle={toggle}
                       selectionDisabled={deleting}
@@ -115,17 +136,17 @@ export function BestandTab({ isLoading = false }: { isLoading?: boolean }) {
               </TableBody>
             </Table>
           </ScrollableTableViewport>
-        ) : null}
-        {selected.length > 0 ? (
-          <BestandSelectionBar
-            selected={selected}
-            onChange={changeSelection}
-            deleting={deleting}
-            setDeleting={setDeleting}
-          />
-        ) : null}
-        <BestandAddSidebar open={addOpen} onOpenChange={setAddOpen} />
-      </CardContent>
-    </Card>
+          {selected.length > 0 ? (
+            <BestandSelectionBar
+              selected={selected}
+              onChange={changeSelection}
+              deleting={deleting}
+              setDeleting={setDeleting}
+            />
+          ) : null}
+          <BestandAddSidebar open={addOpen} onOpenChange={setAddOpen} />
+        </CardContent>
+      </Card>
+    </section>
   );
 }

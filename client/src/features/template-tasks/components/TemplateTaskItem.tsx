@@ -22,10 +22,35 @@ export function TemplateTaskItem({
   setTemplateTaskState,
 }: TemplateTaskItemProps) {
   const { deleteTemplateTask } = useDeleteTemplateTask();
+  const openTask = (task: TemplateTaskResponse) => {
+    setIsOpen(true);
+    setEditTemplateTask({
+      taskId: task.id,
+      taskName: task.taskName,
+      taskDescription: task.taskDescription ?? '',
+      defaultStatus: task.defaultStatus,
+      defaultAssigneeUserId: task.defaultAssigneeUserId ?? '',
+      orderIndex: task.orderIndex,
+      integrationProvider: task.integrationProvider ?? INTEGRATION_NONE,
+      sequence: task.sequence ?? INTEGRATION_NONE,
+      mailTemplateId: task.mailTemplateId ?? '',
+    });
+    setTemplateTaskState('edit');
+  };
   return (
     <>
       {templateTasks.map((task) => (
-        <TableRow key={task.id} className="group hover:bg-transparent">
+        <TableRow
+          key={task.id}
+          className="group cursor-pointer hover:bg-transparent"
+          onClick={(event) => {
+            if (
+              !(event.target instanceof Element) ||
+              !event.target.closest('button, a, input')
+            )
+              openTask(task);
+          }}
+        >
           <TableCell className="whitespace-normal">
             <p className="typo-body-sm text-text-primary">{task.taskName}</p>
           </TableCell>
@@ -37,22 +62,7 @@ export function TemplateTaskItem({
                 size="icon-sm"
                 className="text-muted-foreground hover:text-foreground"
                 aria-label="Aufgabe bearbeiten"
-                onClick={() => {
-                  setIsOpen(true);
-                  setEditTemplateTask({
-                    taskId: task.id,
-                    taskName: task.taskName,
-                    taskDescription: task.taskDescription ?? '',
-                    defaultStatus: task.defaultStatus,
-                    defaultAssigneeUserId: task.defaultAssigneeUserId ?? '',
-                    orderIndex: task.orderIndex,
-                    integrationProvider:
-                      task.integrationProvider ?? INTEGRATION_NONE,
-                    sequence: task.sequence ?? INTEGRATION_NONE,
-                    mailTemplateId: task.mailTemplateId ?? '',
-                  });
-                  setTemplateTaskState('edit');
-                }}
+                onClick={() => openTask(task)}
               >
                 <PencilIcon className="size-4" />
               </Button>

@@ -1,3 +1,6 @@
+import { useDrawerStack } from '@/components/ui/drawer-stack';
+import { QuestionnaireForm } from '@/features/questionnaire/QuestionnaireForm';
+import { candidateItems } from '@/features/questionnaire/questionnairePreview';
 import { Skeleton } from '@/components/ui/skeleton';
 import { QuestionnaireSkeleton } from './QuestionnaireSkeleton';
 import { Button } from '@/components/ui/button';
@@ -33,6 +36,7 @@ import {
 
 export function QuestionnaireTemplatePage() {
   const navigate = useNavigate();
+  const drawers = useDrawerStack();
   const template = useQuery({
     queryKey: templateKey,
     queryFn: getQuestionnaireTemplate,
@@ -70,6 +74,19 @@ export function QuestionnaireTemplatePage() {
       intro: template.data.intro,
       items,
     });
+    if (drawers) {
+      drawers.push(
+        'Fragebogen-Vorschau',
+        <QuestionnaireForm
+          preview={{
+            name: name.trim(),
+            intro: template.data.intro,
+            items: candidateItems(items),
+          }}
+        />
+      );
+      return;
+    }
     void navigate({ to: '/fragebogen/preview' });
   };
 

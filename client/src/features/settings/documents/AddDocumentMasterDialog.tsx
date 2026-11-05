@@ -1,3 +1,5 @@
+import { useDrawerStack } from '@/components/ui/drawer-stack';
+import { DocumentMasterEditor } from './DocumentMasterEditor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -74,6 +76,11 @@ export function AddDocumentMasterDialog({
   existingKinds = [],
 }: AddDocumentMasterDialogProps) {
   const navigate = useNavigate();
+  const drawers = useDrawerStack();
+  const openCreated = (id: string) => {
+    if (drawers) drawers.push('Dokument', <DocumentMasterEditor id={id} />);
+    else void navigate({ to: '/settings/documents/$id', params: { id } });
+  };
   const createMaster = useCreateDocumentMaster();
   const importSharePoint = useImportSharePointDocumentMaster();
   const presetKinds =
@@ -177,10 +184,7 @@ export function AddDocumentMasterDialog({
           itemId: sharePointFile.id,
         });
         onClose();
-        navigate({
-          to: '/settings/documents/$id',
-          params: { id: created.id },
-        });
+        openCreated(created.id);
       } catch (submitError) {
         setError(messageFrom(submitError));
       } finally {
@@ -228,10 +232,7 @@ export function AddDocumentMasterDialog({
       }
       onClose();
       if (created.length === 1) {
-        navigate({
-          to: '/settings/documents/$id',
-          params: { id: created[0].id },
-        });
+        openCreated(created[0].id);
       }
     } catch (submitError) {
       setError(messageFrom(submitError));

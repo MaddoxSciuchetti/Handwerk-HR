@@ -2,6 +2,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
+import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 
@@ -44,11 +45,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './test/setup.ts',
     include: ['**/*.{test,spec}.{ts,tsx}'],
-    exclude: [
-      'node_modules/**',
-      'dist/**',
-      'coverage/**',
-    ],
+    exclude: ['node_modules/**', 'dist/**', 'coverage/**'],
     coverage: coverageFullTree
       ? {
           provider: 'v8',

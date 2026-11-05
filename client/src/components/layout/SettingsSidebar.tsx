@@ -10,6 +10,14 @@ import { useNavigate } from '@tanstack/react-router';
 import { ArrowLeftIcon } from 'lucide-react';
 import SideBarMenu from '../ui/sidebar/sidebar-menu-item';
 
+// These sections are available from Cockpit; keep their routes and labels.
+const cockpitSectionPaths = new Set([
+  '/settings/templates/template',
+  '/settings/documents',
+  '/settings/questionnaire',
+  '/bestand',
+]);
+
 export function SettingsSidebar({
   setIsSettingOpen,
   subscriptionLocked,
@@ -28,7 +36,9 @@ export function SettingsSidebar({
   };
 
   const visibleItems = SETTINGSITEMS.filter(
-    (item) => !('adminOnly' in item && item.adminOnly) || isAdmin
+    (item) =>
+      !cockpitSectionPaths.has(item.to) &&
+      (!('adminOnly' in item && item.adminOnly) || isAdmin)
   );
   const itemsSource = subscriptionLocked
     ? visibleItems.filter((item) => item.to === '/settings/payments')
@@ -56,8 +66,7 @@ export function SettingsSidebar({
             label: item.title,
             icon: item.icon,
             to: item.to,
-            activePaths:
-              'activePaths' in item ? item.activePaths : undefined,
+            activePaths: 'activePaths' in item ? item.activePaths : undefined,
           }))}
         />
       </SidebarContent>

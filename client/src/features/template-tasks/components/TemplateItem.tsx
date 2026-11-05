@@ -1,3 +1,5 @@
+import { useDrawerStack } from '@/components/ui/drawer-stack';
+import { TemplateTasks } from './template-items/TemplateTasks';
 import { Button } from '@/components/ui/button';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { useNavigate } from '@tanstack/react-router';
@@ -21,11 +23,18 @@ export function TemplateItem({
   setTemplateState,
 }: TemplateItemProps) {
   const navigate = useNavigate();
+  const drawers = useDrawerStack();
 
   const { deleteTemplate } = useDeleteTemplate();
 
   if (templates.length === 0) {
-    return null;
+    return (
+      <TableRow>
+        <TableCell colSpan={2} className="h-24 text-muted-foreground">
+          Noch keine Aufgaben-Templates vorhanden.
+        </TableCell>
+      </TableRow>
+    );
   }
 
   return (
@@ -35,13 +44,21 @@ export function TemplateItem({
           key={template.id}
           className="group cursor-pointer hover:bg-transparent"
           onClick={() =>
-            navigate({
-              to: '/settings/templates/$id',
-              params: { id: template.id },
-              search: {
-                name: template.name,
-              },
-            })
+            drawers
+              ? drawers.push(
+                  template.name,
+                  <TemplateTasks
+                    templateId={template.id}
+                    name={template.name}
+                  />
+                )
+              : navigate({
+                  to: '/settings/templates/$id',
+                  params: { id: template.id },
+                  search: {
+                    name: template.name,
+                  },
+                })
           }
         >
           <TableCell className="whitespace-normal">

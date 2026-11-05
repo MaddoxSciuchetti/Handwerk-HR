@@ -12,6 +12,7 @@ type BestandRowProps = {
   isSelected: boolean;
   onToggle: (id: string) => void;
   selectionDisabled?: boolean;
+  onOpen?: () => void;
 };
 
 function sizeLabel(size: string) {
@@ -23,6 +24,7 @@ export function BestandRow({
   isSelected,
   onToggle,
   selectionDisabled,
+  onOpen,
 }: BestandRowProps) {
   const updateQuantity = useUpdateClothingStockQuantity();
   const [draft, setDraft] = useState({
@@ -70,7 +72,18 @@ export function BestandRow({
     <TableRow
       data-testid={`bestand-row-${item.id}`}
       data-selected={isSelected ? 'true' : undefined}
-      className="group border-0 hover:bg-transparent"
+      className={
+        onOpen
+          ? 'group cursor-pointer border-0 hover:bg-transparent'
+          : 'group border-0 hover:bg-transparent'
+      }
+      onClick={(event) => {
+        if (
+          !(event.target instanceof Element) ||
+          !event.target.closest('button, input, a, [role="checkbox"]')
+        )
+          onOpen?.();
+      }}
     >
       <TableCell className="relative font-medium">
         <div className="absolute inset-y-0 left-0 z-20 flex w-10 items-center justify-center">

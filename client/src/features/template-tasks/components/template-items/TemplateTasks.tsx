@@ -1,3 +1,4 @@
+import { useDrawerStack } from '@/components/ui/drawer-stack';
 import { TableSkeletonRows } from '@/components/ui/table-skeleton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -30,6 +31,7 @@ type TemplateTasksProps = {
 
 export function TemplateTasks({ templateId, name }: TemplateTasksProps) {
   const navigate = useNavigate();
+  const drawers = useDrawerStack();
   const [isOpen, setIsOpen] = useState(false);
   const { data: templateTasks, isLoading } = useGetTemplateTasks(templateId);
   const [editTemplateTask, setEditTemplateTask] =
@@ -51,7 +53,11 @@ export function TemplateTasks({ templateId, name }: TemplateTasksProps) {
               size="icon"
               className="rounded-full"
               aria-label="Zurück"
-              onClick={() => navigate({ to: '/settings/templates/template' })}
+              onClick={() =>
+                drawers?.back
+                  ? drawers.back()
+                  : navigate({ to: '/settings/templates/template' })
+              }
             >
               <ArrowLeft className="size-5" />
             </Button>
