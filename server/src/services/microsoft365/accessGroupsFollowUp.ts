@@ -29,7 +29,7 @@ export async function ensureMicrosoftAccessGroupsFollowUp(params: {
     if (!engagement) return null;
 
     const assigneeUserId =
-        params.actorUserId || engagement.responsibleUserId || params.actorUserId;
+        engagement.responsibleUserId || params.actorUserId;
 
     const created = await prisma.issue.create({
         data: {

@@ -109,8 +109,9 @@ async function runMicrosoft(
             accessGroupIds: params.accessGroupIds,
         });
         const result = finish(provisioned);
+        // Only after a newly created bare account — not already_provisioned retries.
         if (
-            result.status === "completed" &&
+            provisioned.status === "created" &&
             normalizeAccessGroupIds(params.accessGroupIds).length === 0
         ) {
             await ensureMicrosoftAccessGroupsFollowUp({

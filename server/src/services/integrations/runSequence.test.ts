@@ -98,6 +98,16 @@ it("does not create a groups follow-up when create-account selected groups", asy
     expect(ensureMicrosoftAccessGroupsFollowUp).not.toHaveBeenCalled();
 });
 
+it("does not create a groups follow-up when the account already existed", async () => {
+    (provisionMicrosoft365Account as jest.Mock).mockResolvedValue({
+        status: "skipped",
+        reason: "already_provisioned",
+        workEmail: "worker@firma.de",
+    });
+    expect(await runIssueSequence(input)).toEqual({ status: "completed" });
+    expect(ensureMicrosoftAccessGroupsFollowUp).not.toHaveBeenCalled();
+});
+
 it("assigns access groups for the follow-up sequence", async () => {
     (prisma.issue.findFirst as jest.Mock).mockResolvedValue({
         id: "issue",

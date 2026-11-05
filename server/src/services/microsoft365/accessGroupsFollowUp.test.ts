@@ -41,13 +41,28 @@ it("creates a temporary assign-groups task when none is open", async () => {
         data: expect.objectContaining({
             workerEngagementId: "engagement",
             createdByUserId: "user",
-            assigneeUserId: "user",
+            assigneeUserId: "owner",
             status: "open",
             isTemporary: true,
             sequence: "microsoft_assign_access_groups",
             integrationProvider: "microsoft_graph",
             title: "Microsoft-Gruppen zuweisen",
         }),
+        select: { id: true },
+    });
+});
+
+it("assigns the actor when the engagement has no owner", async () => {
+    findIssue.mockResolvedValue(null);
+    findEngagement.mockResolvedValue({ responsibleUserId: null });
+    createIssue.mockResolvedValue({ id: "created" });
+    await ensureMicrosoftAccessGroupsFollowUp({
+        organizationId: "org",
+        engagementId: "engagement",
+        actorUserId: "user",
+    });
+    expect(createIssue).toHaveBeenCalledWith({
+        data: expect.objectContaining({ assigneeUserId: "user" }),
         select: { id: true },
     });
 });
