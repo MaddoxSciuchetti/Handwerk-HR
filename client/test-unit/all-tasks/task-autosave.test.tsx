@@ -37,6 +37,23 @@ it('does not save on mount and saves only the edited dropdown immediately', asyn
   expect(save).toHaveBeenCalledExactlyOnceWith({ status: 'done' });
   expect(result.current.state).toBe('saved');
 });
+it('waits for a type after selecting an automation provider', async () => {
+  const { result, save } = setup();
+  act(() => result.current.form.setValue('sequence', ''));
+  await tick();
+  expect(save).not.toHaveBeenCalled();
+  expect(result.current.state).toBe('invalid');
+  act(() =>
+    result.current.form.setValue('sequence', 'crewmeister_create_account')
+  );
+  await tick();
+  expect(save).toHaveBeenCalledExactlyOnceWith({
+    sequence: 'crewmeister_create_account',
+    mailTemplateId: '',
+    mailSenderAddress: '',
+  });
+  expect(result.current.state).toBe('saved');
+});
 it('coalesces typing into one title save after 250ms even with an unassigned task', async () => {
   const { result, save } = setup();
   act(() => result.current.form.setValue('title', 'A'));

@@ -5,6 +5,13 @@ import FormSelectOptions from '@/components/form/FormSelectOptions';
 import { Button } from '@/components/ui/button';
 import { FieldGroup } from '@/components/ui/field';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { MailSenderSelect } from '@/features/all-tasks/components/MailSenderSelect';
 import TaskAutomation from '@/features/all-tasks/components/TaskAutomation';
 import { MicrosoftAccountIdField } from './MicrosoftAccountIdField';
@@ -35,7 +42,13 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { X } from 'lucide-react';
 import { TaskSaveButton } from './TaskSaveButton';
-import { useMemo, type Dispatch, type SetStateAction } from 'react';
+import {
+  useId,
+  useMemo,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
 import { useWatch } from 'react-hook-form';
 import { useFetchEngagements } from '../hooks/useFetchEngagements';
 import { useTasks } from '../hooks/useTasks';
@@ -71,6 +84,7 @@ export function TaskSidebar({
     autoSaveState,
     flushAutoSave,
     saveManually,
+    setValue,
   } = useTasks(taskEditState, taskState, setIsOpen, {
     autoSave: isOpen && taskState === 'edit',
   });
@@ -83,6 +97,15 @@ export function TaskSidebar({
   const selectedAutomation = INTEGRATION_SEQUENCES.find(
     (item) => item.value === sequence
   );
+  const [savedProvider] = useState(() =>
+    sequence && sequence !== 'none'
+      ? selectedAutomation?.provider ||
+        taskEditState.integrationProvider ||
+        'saved'
+      : 'none'
+  );
+  const [provider, setProvider] = useState(savedProvider);
+  const providerId = useId();
   const mailSenderAddress = useWatch({ control, name: 'mailSenderAddress' });
   const workerEngagementId = useWatch({
     control,
@@ -93,20 +116,46 @@ export function TaskSidebar({
     queryKey: ['settings', 'integrations'],
     queryFn: getIntegrations,
   });
-  const automationOptions = [
+  const providerOptions = [
     { value: 'none', label: 'Keine' },
-    ...SELECTABLE_INTEGRATION_SEQUENCES.filter((item) =>
-      integrations.some(
+    ...integrations
+      .filter(
         (integration) =>
-          integration.provider === item.provider && integration.enabled
+          integration.enabled &&
+          SELECTABLE_INTEGRATION_SEQUENCES.some(
+            (item) => item.provider === integration.provider
+          )
       )
+      .map((integration) => ({
+        value: integration.provider,
+        label: integrationLabel(integration.provider),
+      })),
+  ];
+  if (!providerOptions.some((item) => item.value === savedProvider)) {
+    providerOptions.push({
+      value: savedProvider,
+      label:
+        savedProvider === 'saved'
+          ? 'Bestehende Automatisierung'
+          : integrationLabel(savedProvider),
+    });
+  }
+  const automationOptions: { value: string; label: string }[] =
+    SELECTABLE_INTEGRATION_SEQUENCES.filter(
+      (item) =>
+        item.provider === provider &&
+        integrations.some(
+          (integration) =>
+            integration.provider === provider && integration.enabled
+        )
     ).map((item) => ({
       value: item.value,
-      label: `${integrationLabel(item.provider)} · ${item.label}`,
-    })),
-  ];
+      label: item.label,
+    }));
   if (
+    provider === savedProvider &&
     taskEditState.sequence &&
+    taskEditState.sequence !== 'none' &&
     !automationOptions.some((item) => item.value === taskEditState.sequence)
   ) {
     automationOptions.push({
@@ -246,20 +295,61 @@ export function TaskSidebar({
               <div
                 className={cn(
                   'flex flex-col gap-4',
-                  ((sequence && sequence !== 'none') ||
+                  (provider !== 'none' ||
                     taskEditState.automation === ARBEITSZEUGNIS) &&
                     'rounded-2xl border border-border bg-muted/50 p-4'
                 )}
               >
                 <div className="flex flex-col gap-2">
-                  <FormSelectOptions
-                    name="sequence"
-                    control={control}
-                    errors={errors}
-                    data={automationOptions}
-                    label="Automation"
-                    placeholder="Automation wählen"
-                  />
+                  <Label htmlFor={providerId}>Automatisierung</Label>
+                  <Select
+                    value={provider}
+                    onValueChange={(value) => {
+                      setProvider(value);
+                      setValue('sequence', value === 'none' ? 'none' : '', {
+                        shouldDirty: true,
+                      });
+                      setValue('mailTemplateId', '', { shouldDirty: true });
+                      setValue('mailSenderAddress', '', { shouldDirty: true });
+                      if (value !== 'none') {
+                        setValue('title', integrationLabel(value), {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                        });
+                      }
+                    }}
+                  >
+                    <SelectTrigger
+                      id={providerId}
+                      className="w-full rounded-xl"
+                    >
+                      <SelectValue placeholder="Automatisierung wählen" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {providerOptions.map((item) => (
+                        <SelectItem key={item.value} value={item.value}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {provider !== 'none' ? (
+                    <FormSelectOptions
+                      name="sequence"
+                      control={control}
+                      errors={errors}
+                      data={automationOptions}
+                      label="Typ"
+                      placeholder="Typ wählen"
+                      onValueChange={(value) => {
+                        setValue(
+                          'title',
+                          `${integrationLabel(provider)}: ${sequenceLabel(value)}`,
+                          { shouldDirty: true, shouldValidate: true }
+                        );
+                      }}
+                    />
+                  ) : null}
                   <AutomationRequirementNotice sequence={sequence} />
                 </div>
                 <MicrosoftAccountIdField
