@@ -26,11 +26,20 @@ describe('MicrosoftAccessGroupPicker', () => {
     });
   });
 
-  it('allows selecting multiple groups without requiring a choice', async () => {
+  it('allows selecting multiple groups from a dropdown without requiring a choice', async () => {
     const onChange = vi.fn();
     const { rerender } = renderWithProviders(
       <MicrosoftAccessGroupPicker selectedIds={[]} onChange={onChange} />
     );
+    const trigger = await screen.findByRole('button', {
+      name: 'Microsoft-Gruppen',
+    });
+    expect(trigger).toHaveTextContent('Gruppen auswählen');
+    expect(
+      screen.getByRole('button', { name: 'Hinweis zu Microsoft-Gruppen' })
+    ).toBeInTheDocument();
+    await userEvent.click(trigger);
+
     await waitFor(() =>
       expect(screen.getByLabelText('Handwerk')).toBeInTheDocument()
     );
@@ -43,7 +52,25 @@ describe('MicrosoftAccessGroupPicker', () => {
         onChange={onChange}
       />
     );
+    expect(
+      screen.getByRole('button', { name: 'Microsoft-Gruppen' })
+    ).toHaveTextContent('Handwerk');
+
     await userEvent.click(screen.getByLabelText('Büro'));
     expect(onChange).toHaveBeenCalledWith(['group-field', 'group-office']);
+  });
+
+  it('can hide the optional-groups note for required assign flows', async () => {
+    renderWithProviders(
+      <MicrosoftAccessGroupPicker
+        selectedIds={[]}
+        onChange={vi.fn()}
+        showOptionalNote={false}
+      />
+    );
+    await screen.findByRole('button', { name: 'Microsoft-Gruppen' });
+    expect(
+      screen.queryByRole('button', { name: 'Hinweis zu Microsoft-Gruppen' })
+    ).not.toBeInTheDocument();
   });
 });

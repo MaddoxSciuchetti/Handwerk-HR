@@ -3,7 +3,7 @@ import FormSelectOptions from '@/components/form/FormSelectOptions';
 /* eslint-disable react-refresh/only-export-components */
 import {
   INTEGRATION_NONE,
-  INTEGRATION_SEQUENCES,
+  SELECTABLE_INTEGRATION_SEQUENCES,
   integrationLabel,
 } from '@/features/settings/integrations/integration.consts';
 import { getIntegrations } from '@/features/settings/integrations/integrations.api';
@@ -59,7 +59,7 @@ export function TaskSidebar({
   const mailTemplateId = useWatch({ control, name: 'mailTemplateId' });
   const { data: mailTemplates = [] } = useMailTemplates();
   const sequenceProviders = new Set<string>(
-    INTEGRATION_SEQUENCES.map((item) => item.provider)
+    SELECTABLE_INTEGRATION_SEQUENCES.map((item) => item.provider)
   );
   const integrationOptions = [
     { value: INTEGRATION_NONE, label: 'Keine' },
@@ -75,7 +75,7 @@ export function TaskSidebar({
   ];
   const hasIntegration =
     Boolean(integrationProvider) && integrationProvider !== INTEGRATION_NONE;
-  const sequenceOptions = INTEGRATION_SEQUENCES.filter(
+  const sequenceOptions = SELECTABLE_INTEGRATION_SEQUENCES.filter(
     (item) => item.provider === integrationProvider
   ).map((item) => ({
     value: item.value,

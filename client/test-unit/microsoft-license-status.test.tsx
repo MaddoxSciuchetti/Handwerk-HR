@@ -66,12 +66,17 @@ it('shows lookup errors without claiming seats are exhausted', async () => {
   expect(screen.queryByText('Microsoft 365 - 0')).not.toBeInTheDocument();
 });
 
-it('pings the administrator for the current engagement and prevents repeat clicks', async () => {
+it('emails the administrator for the current engagement and prevents repeat clicks', async () => {
   mocks.licenses.mockResolvedValue({ available: 0, occupied: 10, error: null });
   mocks.ping.mockResolvedValue({ success: true });
   renderWithProviders(<MicrosoftLicenseStatus engagementId="engagement-123" />);
-  const ping = await screen.findByRole('button', { name: 'Ping' });
-  expect(ping).toHaveClass('text-blue-600', 'underline');
+  const ping = await screen.findByRole('button', {
+    name: 'ping admin',
+  });
+  expect(ping).toHaveAttribute(
+    'title',
+    'Sendet eine E-Mail an die Administration mit der Bitte um eine neue Microsoft-Lizenz für diesen Mitarbeiter'
+  );
   await userEvent.click(ping);
   expect(mocks.ping).toHaveBeenCalledWith('engagement-123');
   expect(
@@ -81,12 +86,14 @@ it('pings the administrator for the current engagement and prevents repeat click
 it.each([
   { available: 1, error: null },
   { available: null, error: 'Microsoft ist nicht erreichbar.' },
-])('hides Ping unless seats are confirmed exhausted: %j', async (result) => {
+])('hides ping unless seats are confirmed exhausted: %j', async (result) => {
   mocks.licenses.mockResolvedValue(result);
-  renderWithProviders(<MicrosoftLicenseStatus engagementId="engagement-123" />);
+  renderWithProviders(
+    <MicrosoftLicenseStatus engagementId="engagement-123" />
+  );
   await screen.findByText(/Microsoft 365 -/);
   expect(
-    screen.queryByRole('button', { name: 'Ping' })
+    screen.queryByRole('button', { name: 'ping admin' })
   ).not.toBeInTheDocument();
 });
 it('allows retry when sending fails', async () => {
@@ -95,6 +102,14 @@ it('allows retry when sending fails', async () => {
     message: 'E-Mail konnte nicht gesendet werden.',
   });
   renderWithProviders(<MicrosoftLicenseStatus engagementId="engagement-123" />);
-  await userEvent.click(await screen.findByRole('button', { name: 'Ping' }));
-  expect(await screen.findByRole('button', { name: 'Ping' })).toBeEnabled();
+  await userEvent.click(
+    await screen.findByRole('button', {
+      name: 'ping admin',
+    })
+  );
+  expect(
+    await screen.findByRole('button', {
+      name: 'ping admin',
+    })
+  ).toBeEnabled();
 });

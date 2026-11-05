@@ -17,6 +17,12 @@ export const INTEGRATION_SEQUENCES = [
     label: 'Konto anlegen',
   },
   {
+    value: 'microsoft_assign_access_groups',
+    provider: 'microsoft_graph',
+    label: 'Gruppenrechte zuweisen',
+    systemOnly: true,
+  },
+  {
     value: 'microsoft_send_email',
     provider: 'microsoft_graph',
     label: 'E-Mail senden',
@@ -42,6 +48,18 @@ export const INTEGRATION_SEQUENCES = [
     label: 'Mitgliedschaft entfernen',
   },
 ] as const;
+
+type IntegrationSequenceOption = (typeof INTEGRATION_SEQUENCES)[number];
+type SelectableIntegrationSequenceOption = Exclude<
+  IntegrationSequenceOption,
+  { systemOnly: true }
+>;
+
+export const SELECTABLE_INTEGRATION_SEQUENCES =
+  INTEGRATION_SEQUENCES.filter(
+    (item): item is SelectableIntegrationSequenceOption =>
+      !('systemOnly' in item && item.systemOnly === true)
+  );
 
 export const crewmeisterRemovalWarning =
   'Entfernt die deaktivierte Crewmeister-Mitgliedschaft dauerhaft, auch bei einer noch offenen Einladung. Der globale Crewmeister-Login bleibt bestehen. Nur ausführen, wenn diese Mitgliedschaft wirklich entfernt werden soll.';

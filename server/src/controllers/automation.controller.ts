@@ -148,7 +148,12 @@ export const postIssueSequence = catchErrors(async (req, res) => {
             where: {
                 id: String(req.params.issueId),
                 workerEngagement: { organizationId: req.orgId },
-                sequence: "microsoft_create_account",
+                sequence: {
+                    in: [
+                        "microsoft_create_account",
+                        "microsoft_assign_access_groups",
+                    ],
+                },
             },
             data: { microsoftAccessGroupIds: accessGroupIds },
         });

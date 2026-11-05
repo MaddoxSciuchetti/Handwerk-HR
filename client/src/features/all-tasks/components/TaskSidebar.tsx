@@ -12,6 +12,7 @@ import { AutomationRequirementNotice } from '@/features/settings/integrations/Au
 import { EngagementMailRecipients } from '@/features/worker-task-management/components/tasks/EngagementMailRecipients';
 import {
   INTEGRATION_SEQUENCES,
+  SELECTABLE_INTEGRATION_SEQUENCES,
   integrationLabel,
   isMailSequence,
   sequenceLabel,
@@ -94,7 +95,7 @@ export function TaskSidebar({
   });
   const automationOptions = [
     { value: 'none', label: 'Keine' },
-    ...INTEGRATION_SEQUENCES.filter((item) =>
+    ...SELECTABLE_INTEGRATION_SEQUENCES.filter((item) =>
       integrations.some(
         (integration) =>
           integration.provider === item.provider && integration.enabled
