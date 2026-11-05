@@ -1,8 +1,14 @@
+import { useDrawerStack } from '@/components/ui/drawer-stack';
 import { DocumentPrintPreview } from './DocumentPrintPreview';
 import { DocumentMasterEditorSkeleton } from './components/DocumentEditorSkeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { peekContractSendReturn } from '@/features/worker-task-management/contractSendReturn';
 import { Link, useNavigate } from '@tanstack/react-router';
@@ -35,6 +41,7 @@ export function DocumentMasterEditor({
   const pendingRename = useRef<Promise<DocumentMasterDetail> | null>(null);
   const setPrimary = useSetPrimaryDocumentMaster();
   const navigate = useNavigate();
+  const drawers = useDrawerStack();
   const [name, setName] = useState('');
   const [revision, setRevision] = useState(1);
   const [document, setDocument] = useState<StyledDocument>(fromSegments([]));
@@ -45,7 +52,9 @@ export function DocumentMasterEditor({
   const [returnEditing, setReturnEditing] = useState(false);
   const editing = manualEditing || returnEditing;
   const [showOriginal, setShowOriginal] = useState(false);
-  const [previewDocument, setPreviewDocument] = useState<StyledDocument | null>(null);
+  const [previewDocument, setPreviewDocument] = useState<StyledDocument | null>(
+    null
+  );
   const [expanded, setExpanded] = useState(false);
   const editStartedAt = useRef(0);
   // Keep the form on the latest saved master until the user starts editing.
@@ -84,15 +93,17 @@ export function DocumentMasterEditor({
       approved: Boolean(data.approvedAt),
     });
     pendingRename.current = request;
-    void request.then(
-      (saved) => {
-        setRevision(saved.revision);
-        toast.success('Name gespeichert');
-      },
-      () => toast.error('Name konnte nicht gespeichert werden')
-    ).finally(() => {
-      if (pendingRename.current === request) pendingRename.current = null;
-    });
+    void request
+      .then(
+        (saved) => {
+          setRevision(saved.revision);
+          toast.success('Name gespeichert');
+        },
+        () => toast.error('Name konnte nicht gespeichert werden')
+      )
+      .finally(() => {
+        if (pendingRename.current === request) pendingRename.current = null;
+      });
   };
 
   const save = async () => {
@@ -135,8 +146,6 @@ export function DocumentMasterEditor({
     });
   };
 
-
-
   if (isLoading) {
     return <DocumentMasterEditorSkeleton />;
   }
@@ -147,9 +156,15 @@ export function DocumentMasterEditor({
         <p className="text-sm text-destructive">
           Dokument konnte nicht geladen werden.
         </p>
-        <Link to="/settings/documents" className="text-sm underline">
-          Zurück zur Liste
-        </Link>
+        {drawers?.back ? (
+          <Button variant="link" onClick={drawers.back}>
+            Zurück zur Liste
+          </Button>
+        ) : (
+          <Link to="/settings/documents" className="text-sm underline">
+            Zurück zur Liste
+          </Link>
+        )}
       </div>
     );
   }
@@ -157,16 +172,29 @@ export function DocumentMasterEditor({
   return (
     <div
       className={
-        expanded
+        expanded && !drawers
           ? 'fixed inset-2 z-50 flex min-h-0 min-w-0 flex-col gap-3 overflow-hidden rounded-2xl border bg-card p-4 text-card-foreground shadow-xl'
           : 'mx-auto flex h-full min-h-0 min-w-0 w-full flex-col gap-3 overflow-y-auto rounded-2xl bg-card p-4 text-card-foreground'
       }
     >
-      <Dialog open={previewDocument !== null} onOpenChange={(open) => { if (!open) setPreviewDocument(null); }}>
+      <Dialog
+        open={previewDocument !== null}
+        onOpenChange={(open) => {
+          if (!open) setPreviewDocument(null);
+        }}
+      >
         <DialogContent className="flex h-[90vh] max-w-[95vw] flex-col overflow-hidden bg-card sm:max-w-[95vw]">
           <DialogTitle>PDF-Vorschau</DialogTitle>
-          <DialogDescription className="sr-only">Vorschau des aktuellen Vertrags als PDF.</DialogDescription>
-          {previewDocument ? <DocumentPrintPreview id={id} revision={revision} document={previewDocument} /> : null}
+          <DialogDescription className="sr-only">
+            Vorschau des aktuellen Vertrags als PDF.
+          </DialogDescription>
+          {previewDocument ? (
+            <DocumentPrintPreview
+              id={id}
+              revision={revision}
+              document={previewDocument}
+            />
+          ) : null}
         </DialogContent>
       </Dialog>
       <div className="shrink-0">
@@ -175,8 +203,21 @@ export function DocumentMasterEditor({
             type="button"
             variant="ghost"
             size="icon"
-            aria-label={returnKind === 'arbeitszeugnis' ? 'Zurück zum Arbeitszeugnis' : 'Zurück zum Vertrag'}
+            aria-label={
+              returnKind === 'arbeitszeugnis'
+                ? 'Zurück zum Arbeitszeugnis'
+                : 'Zurück zum Vertrag'
+            }
             onClick={returnToContract}
+          >
+            <ArrowLeft className="size-4" aria-hidden="true" />
+          </Button>
+        ) : drawers?.back ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Zurück"
+            onClick={drawers.back}
           >
             <ArrowLeft className="size-4" aria-hidden="true" />
           </Button>
@@ -192,7 +233,9 @@ export function DocumentMasterEditor({
         <div className="flex flex-wrap items-end gap-3">
           {editing ? (
             <div className="flex w-full max-w-sm min-w-0 items-center gap-3">
-              <Label htmlFor="master-name" className="shrink-0">Name</Label>
+              <Label htmlFor="master-name" className="shrink-0">
+                Name
+              </Label>
               <Input
                 id="master-name"
                 className="min-w-0 flex-1"
@@ -230,7 +273,18 @@ export function DocumentMasterEditor({
           <DocumentMasterActions
             pending={saveMaster.isPending || !name.trim()}
             onSave={save}
-            onPreview={() => setPreviewDocument(document)}
+            onPreview={() =>
+              drawers
+                ? drawers.push(
+                    'PDF-Vorschau',
+                    <DocumentPrintPreview
+                      id={id}
+                      revision={revision}
+                      document={document}
+                    />
+                  )
+                : setPreviewDocument(document)
+            }
           />
         </div>
         {returnContract && isContract ? (

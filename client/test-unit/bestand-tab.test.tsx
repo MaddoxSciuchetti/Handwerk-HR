@@ -171,7 +171,7 @@ it('keeps the stock headers and controls while replacing loading rows, then show
     screen.getByRole('columnheader', { name: 'Typ' })
   ).toBeInTheDocument();
   expect(
-    screen.getByRole('columnheader', { name: 'Anzahl bei BSB' })
+    screen.getByRole('columnheader', { name: 'Anzahl bei BSB Hinzufügen' })
   ).toBeInTheDocument();
   expect(screen.getByTestId('open-bestand-add')).toBeInTheDocument();
   expect(screen.getByRole('status')).toHaveTextContent('Daten werden geladen');

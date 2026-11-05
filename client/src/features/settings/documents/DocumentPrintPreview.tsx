@@ -1,3 +1,4 @@
+import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?worker&url';
 import { PdfSkeleton } from '@/components/ui/pdf-skeleton';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useEffect, useRef, useState } from 'react';
@@ -110,10 +111,7 @@ export function DocumentPrintPreview({
       if (!(bytes instanceof Blob))
         throw new Error('PDF-Vorschau konnte nicht geladen werden.');
       const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist');
-      GlobalWorkerOptions.workerSrc = new URL(
-        'pdfjs-dist/build/pdf.worker.min.mjs',
-        import.meta.url
-      ).href;
+      GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
       const pdf = await getDocument({
         data: new Uint8Array(await bytes.arrayBuffer()),
       }).promise;

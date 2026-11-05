@@ -1,6 +1,6 @@
 import { TableSkeletonRows } from '@/components/ui/table-skeleton';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { ScrollableTableViewport } from '@/components/ui/scrollable-table-viewport';
 import {
   Table,
@@ -12,6 +12,7 @@ import {
 import { SettingsPageHeader } from '@/features/settings/components/SettingsPageHeader';
 import {
   alignedSettingsTableClassName,
+  settingsTableCardClassName,
   settingsTableBodyClassName,
 } from '@/features/settings/components/settingsTable';
 
@@ -45,21 +46,8 @@ function Templates() {
       <div className="flex h-full min-h-0 w-full flex-col items-center gap-5">
         <section className="flex min-h-0 w-full flex-1 flex-col">
           <SettingsPageHeader title="Template Aufgaben" />
-          <Card className="mt-5 flex min-h-0 w-full flex-1 flex-col gap-0 border border-border py-0 shadow-none ring-0">
-            <CardHeader className="flex shrink-0 flex-row items-center justify-end px-6 py-3">
-              <Button
-                type="button"
-                className="rounded-2xl"
-                onClick={() => {
-                  setCreateOpenNonce((n) => n + 1);
-                  setIsOpen(true);
-                  setTemplateState('create');
-                }}
-              >
-                Hinzufügen
-              </Button>
-            </CardHeader>
-            <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-0">
+          <Card className={settingsTableCardClassName}>
+            <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden px-0 pb-0">
               <ScrollableTableViewport>
                 <Table
                   aria-busy={isLoading}
@@ -67,7 +55,7 @@ function Templates() {
                 >
                   <colgroup>
                     <col />
-                    <col className="w-32" />
+                    <col className="w-40" />
                   </colgroup>
                   <TableHeader className="sticky top-0 z-10 bg-card [&_tr]:border-b-0">
                     <TableRow className="border-0 hover:bg-transparent">
@@ -75,7 +63,18 @@ function Templates() {
                         Name
                       </TableHead>
                       <TableHead className="bg-card py-3 pr-6 text-right">
-                        Aktionen
+                        <span className="sr-only">Aktionen</span>
+                        <Button
+                          type="button"
+                          className="rounded-2xl"
+                          onClick={() => {
+                            setCreateOpenNonce((n) => n + 1);
+                            setIsOpen(true);
+                            setTemplateState('create');
+                          }}
+                        >
+                          Hinzufügen
+                        </Button>
                       </TableHead>
                     </TableRow>
                   </TableHeader>

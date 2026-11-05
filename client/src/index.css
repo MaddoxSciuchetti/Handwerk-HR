@@ -12,8 +12,20 @@
 @theme {
   --font-sans: 'Calibri', Arial, sans-serif;
 }
+
+html {
+  /* Prevent modal scroll-lock from shifting the left chrome. */
+  scrollbar-gutter: stable;
+}
+
 body {
   font-family: 'Calibri', Arial, sans-serif;
+}
+
+/* App shell already owns scrolling; neutralize remove-scroll body padding. */
+body[data-scroll-locked] {
+  margin-right: 0 !important;
+  padding-right: 0 !important;
 }
 .styled-document {
   color: #111;
