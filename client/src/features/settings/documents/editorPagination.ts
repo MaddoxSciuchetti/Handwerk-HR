@@ -80,7 +80,20 @@ export function editorPagination(
               lastLayout = JSON.stringify(layout);
               if (!layout.enabled || !alive) return;
               const px = CSS_PX_PER_INCH / MM_PER_INCH;
-              const body = (layout.height - layout.top - layout.bottom) * px;
+              const footer = view.dom
+                .closest('.document-editor-paper')
+                ?.querySelector<HTMLElement>('.document-editor-page-footer');
+              const footerHeight = footer
+                ? footer.getBoundingClientRect().height / layout.zoom
+                : 0;
+              // The footer is anchored 5mm above the sheet bottom. Imported
+              // margins can be smaller than a multi-line footer, so reserve
+              // its actual height plus a small gap before placing body blocks.
+              const bottom = Math.max(
+                layout.bottom * px,
+                footerHeight > 0 ? footerHeight + 5 * px + 8 : 0
+              );
+              const body = Math.max(1, (layout.height - layout.top) * px - bottom);
               const pitch = layout.height * px + PAGE_SHEET_GAP_PX;
               const spacers = Array.from(
                 view.dom.querySelectorAll<HTMLElement>('[data-editor-page-gap]')
