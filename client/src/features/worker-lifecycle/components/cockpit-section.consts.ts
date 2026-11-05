@@ -43,3 +43,24 @@ export const COCKPIT_SECTIONS: readonly CockpitSection[] = [
     icon: Shirt,
   },
 ];
+
+/** Settings nav targets that now live under Cockpit — hide from SettingsSidebar. */
+export const COCKPIT_OWNED_SETTINGS_PATHS = [
+  '/settings/templates/template',
+  '/settings/documents',
+  '/settings/questionnaire',
+  '/bestand',
+] as const;
+
+/** True for Cockpit section routes (and their detail URLs) that must not open settings chrome. */
+export function isCockpitOwnedPath(pathname: string): boolean {
+  if (pathname === '/bestand') return true;
+  return (
+    pathname.startsWith('/settings/documents') ||
+    pathname.startsWith('/settings/templates') ||
+    pathname.startsWith('/settings/questionnaire') ||
+    pathname.startsWith('/settings/mail-templates') ||
+    pathname.startsWith('/settings/welcome-mail') ||
+    pathname.startsWith('/settings/departure-mail')
+  );
+}

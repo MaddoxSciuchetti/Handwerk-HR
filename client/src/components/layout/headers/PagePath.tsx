@@ -1,33 +1,46 @@
-import { useLocation } from '@tanstack/react-router';
+import { Link, useLocation } from '@tanstack/react-router';
 import {
-  getCurrentPageLabel,
-  getSidebarItemLabel,
-  getWorkerLifecycleLabel,
-} from '../utils/header.utils';
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
+import { getBreadcrumbCrumbs } from '../utils/header.utils';
+import { Fragment } from 'react';
 
 const PagePath = () => {
   const { pathname, search } = useLocation();
   const params = new URLSearchParams(search);
-
-  const previousPage = params.get('prevPage') ?? '';
   const workerName = params.get('workerName') ?? '';
-  const isUserPath = pathname.startsWith('/user/');
-  const sidebarLabel = getSidebarItemLabel(pathname);
-  const currentPage = getCurrentPageLabel(isUserPath, workerName, sidebarLabel);
-  const previousPageLabel = isUserPath
-    ? getWorkerLifecycleLabel()
-    : sidebarLabel || previousPage;
+  const crumbs = getBreadcrumbCrumbs({ pathname, workerName });
+
+  if (crumbs.length === 0) return null;
 
   return (
-    <div className="flex items-center gap-1 text-sm font-medium">
-      {previousPageLabel && previousPageLabel !== currentPage && (
-        <>
-          <span className="text-muted-foreground">{previousPageLabel}</span>
-          <span className="text-muted-foreground">/</span>
-        </>
-      )}
-      <span className="text-foreground">{currentPage}</span>
-    </div>
+    <Breadcrumb>
+      <BreadcrumbList>
+        {crumbs.map((crumb, index) => {
+          const isLast = index === crumbs.length - 1;
+
+          return (
+            <Fragment key={`${crumb.label}-${index}`}>
+              {index > 0 ? <BreadcrumbSeparator /> : null}
+              <BreadcrumbItem>
+                {isLast || !crumb.to ? (
+                  <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+                ) : (
+                  <BreadcrumbLink asChild>
+                    <Link to={crumb.to}>{crumb.label}</Link>
+                  </BreadcrumbLink>
+                )}
+              </BreadcrumbItem>
+            </Fragment>
+          );
+        })}
+      </BreadcrumbList>
+    </Breadcrumb>
   );
 };
 

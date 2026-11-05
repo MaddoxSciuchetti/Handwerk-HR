@@ -55,7 +55,12 @@ export function DocumentMasterEditor({
   const [previewDocument, setPreviewDocument] = useState<StyledDocument | null>(
     null
   );
-  const [expanded, setExpanded] = useState(false);
+  const [pageExpanded, setPageExpanded] = useState(false);
+  const expanded = drawers?.expanded ?? pageExpanded;
+  const toggleExpanded = () => {
+    if (drawers?.toggleExpanded) drawers.toggleExpanded();
+    else setPageExpanded((open) => !open);
+  };
   const editStartedAt = useRef(0);
   // Keep the form on the latest saved master until the user starts editing.
   if (data && !manualEditing && !returnEditing && data !== syncedMaster) {
@@ -327,7 +332,7 @@ export function DocumentMasterEditor({
                   pageView
                   onChange={setDocument}
                   expanded={expanded}
-                  onToggleExpanded={() => setExpanded((open) => !open)}
+                  onToggleExpanded={toggleExpanded}
                   showOriginalToggle={
                     Boolean(data.sourceUrl) &&
                     data.sourceMime === 'application/pdf'
@@ -340,7 +345,7 @@ export function DocumentMasterEditor({
                   <div className="flex justify-end bg-card px-2 py-2">
                     <DocumentEditorCorner
                       expanded={expanded}
-                      onToggleExpanded={() => setExpanded((open) => !open)}
+                      onToggleExpanded={toggleExpanded}
                       showOriginalToggle={
                         Boolean(data.sourceUrl) &&
                         data.sourceMime === 'application/pdf'

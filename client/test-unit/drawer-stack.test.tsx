@@ -39,11 +39,16 @@ function List() {
     </>
   );
 }
-function Harness() {
+function Harness({ width }: { width?: string } = {}) {
   const [open, setOpen] = useState(true);
   return (
     <DrawerStackProvider>
-      <DrawerLayer open={open} title="List" onClose={() => setOpen(false)}>
+      <DrawerLayer
+        open={open}
+        title="List"
+        onClose={() => setOpen(false)}
+        style={width ? { width } : undefined}
+      >
         <List />
       </DrawerLayer>
     </DrawerStackProvider>
@@ -52,6 +57,33 @@ function Harness() {
 afterEach(() => vi.useRealTimers());
 
 describe('stacked drawers', () => {
+  it('expands only the width and restores without losing edits', () => {
+    render(<Harness width="60vw" />);
+    const drawer = screen.getByRole('dialog', { name: 'List' });
+    const originalWidth = drawer.style.width;
+    const originalTop = drawer.style.top;
+    const originalBottom = drawer.style.bottom;
+    fireEvent.change(screen.getByLabelText('List filter'), {
+      target: { value: 'keep this filter' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Ansicht erweitern' }));
+    // Inset with left/right — never 100vw (scrollbar gutter overshoot).
+    expect(drawer.style.width).toBe('auto');
+    expect(drawer.style.left).toBe('4px');
+    expect(drawer.style.right).toBe('4px');
+    expect(drawer.style.top).toBe(originalTop);
+    expect(drawer.style.bottom).toBe(originalBottom);
+    expect(drawer).toHaveClass('rounded-[26px]');
+    expect(drawer.style.borderRadius).toBe('');
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Ansicht verkleinern' })
+    );
+    expect(drawer.style.width).toBe(originalWidth);
+    expect(screen.getByLabelText('List filter')).toHaveValue(
+      'keep this filter'
+    );
+  });
+
   it('opens progressively smaller layers and pops only the top layer on each left click', () => {
     vi.useFakeTimers();
     render(<Harness />);
