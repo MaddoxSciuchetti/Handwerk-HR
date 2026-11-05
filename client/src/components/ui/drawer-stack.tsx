@@ -278,7 +278,7 @@ export function DrawerLayer({
             className
           )}
           style={{
-            width: `max(min(20rem, 95vw), calc(min(80vw, 72rem) - ${(depth - 1) * 0.75}rem))`,
+            width: `max(min(20rem, 95vw), calc(min(80vw, 72rem) - ${(depth - 1) * 0.25}rem))`,
             top: 4 + (depth - 1) * 4,
             bottom: 4 + (depth - 1) * 4,
             zIndex: 51 + depth * 2,
