@@ -17,7 +17,7 @@ export const taskFormSchema = z
     status: z.enum(ISSUE_STATUSES, {
       message: 'Bitte wähle einen Status aus',
     }),
-    sequence: z.string(),
+    sequence: z.string().min(1, { message: 'Bitte wähle einen Typ' }),
     mailTemplateId: z.string(),
     mailSenderAddress: z.string(),
     microsoftAccountId: z.string().trim().optional(),

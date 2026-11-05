@@ -1,19 +1,31 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
+import { renderWithProviders } from 'test-unit/test-utils';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, expect, it, vi } from 'vitest';
 import { useForm } from 'react-hook-form';
 import { TaskSidebar } from '@/features/all-tasks/components/TaskSidebar';
-import { EMPTY_TASK_EDIT_STATE } from '@/features/all-tasks/hooks/useTaskSidebar';
+import {
+  EMPTY_TASK_EDIT_STATE,
+  type TaskEditState,
+} from '@/features/all-tasks/hooks/useTaskSidebar';
 import type { TaskSidebarForm } from '@/features/all-tasks/types/index.types';
 
-const { flushAutoSave } = vi.hoisted(() => ({ flushAutoSave: vi.fn() }));
+const { flushAutoSave, integrations } = vi.hoisted(() => ({
+  flushAutoSave: vi.fn(),
+  integrations: [
+    { provider: 'microsoft_graph', enabled: true },
+    { provider: 'crewmeister', enabled: true },
+  ],
+}));
 vi.mock('@tanstack/react-router', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@tanstack/react-router')>()),
   useNavigate: () => vi.fn(),
 }));
 vi.mock('@tanstack/react-query', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@tanstack/react-query')>()),
-  useQuery: () => ({ data: [] }),
+  useQuery: ({ queryKey }: { queryKey: string[] }) => ({
+    data: queryKey.includes('integrations') ? integrations : [],
+  }),
 }));
 vi.mock('@/features/settings/mail-template/useMailTemplates', () => ({
   useMailTemplates: () => ({ data: [] }),
@@ -25,15 +37,15 @@ vi.mock('@/features/user-profile/hooks/useAuth', () => ({
   default: () => ({ user: { id: 'me' } }),
 }));
 vi.mock('@/features/all-tasks/hooks/useTasks', () => ({
-  useTasks: () => {
+  useTasks: (task: TaskEditState) => {
     const form = useForm<TaskSidebarForm>({
       defaultValues: {
-        title: 'Arbeitsvertrag drucken',
+        title: task.title,
         workerEngagementId: 'engagement',
         assigneeUserId: '',
         status: 'open',
         automation: 'none',
-        sequence: 'none',
+        sequence: task.sequence || 'none',
       },
     });
     return {
@@ -51,6 +63,9 @@ vi.mock('@/features/all-tasks/components/TaskChat', () => ({
     <textarea aria-label="Nachricht" data-task-id={taskId} />
   ),
 }));
+vi.mock('@/features/all-tasks/components/TaskAutomation', () => ({
+  default: () => null,
+}));
 vi.mock(
   '@/features/worker-task-management/components/tasks/task-sidebar/task-history/TaskHistory',
   () => ({ default: () => null })
@@ -59,13 +74,17 @@ vi.mock(
 beforeEach(() => {
   vi.clearAllMocks();
   flushAutoSave.mockResolvedValue(true);
+  integrations.forEach((integration) => {
+    integration.enabled = true;
+  });
 });
 
 function renderSidebar(
   onOpenContract?: () => void,
-  taskState: 'create' | 'edit' = 'edit'
+  taskState: 'create' | 'edit' = 'edit',
+  seed: Partial<TaskEditState> = {}
 ) {
-  return render(
+  return renderWithProviders(
     <TaskSidebar
       isOpen
       setIsOpen={vi.fn()}
@@ -75,6 +94,7 @@ function renderSidebar(
         taskId: 'contract-task',
         title: 'Arbeitsvertrag drucken',
         workerEngagementId: 'engagement',
+        ...seed,
       }}
       onOpenContract={onOpenContract}
     />
@@ -120,3 +140,62 @@ it.each(['standard', 'create'])(
     ).not.toBeInTheDocument();
   }
 );
+
+it('selects the automation provider before offering only its types', async () => {
+  const user = userEvent.setup();
+  renderSidebar(undefined, 'create');
+  expect(screen.queryByText('Typ')).not.toBeInTheDocument();
+  await user.click(screen.getByRole('combobox', { name: 'Automatisierung' }));
+  expect(
+    screen.queryByRole('option', { name: /Microsoft ·/ })
+  ).not.toBeInTheDocument();
+  await user.click(
+    screen.getByRole('option', { name: 'Microsoft', exact: true })
+  );
+  expect(screen.getByPlaceholderText('Titel')).toHaveValue('Microsoft');
+  await user.click(document.getElementById('sequence')!);
+  expect(
+    screen.queryByRole('option', { name: 'Mitgliedschaft entfernen' })
+  ).not.toBeInTheDocument();
+  await user.click(screen.getByRole('option', { name: 'Konto anlegen' }));
+  expect(screen.getByPlaceholderText('Titel')).toHaveValue(
+    'Microsoft: Konto anlegen'
+  );
+
+  await user.click(screen.getByRole('combobox', { name: 'Automatisierung' }));
+  await user.click(
+    screen.getByRole('option', { name: 'Crewmeister', exact: true })
+  );
+  expect(document.getElementById('sequence')).toHaveTextContent('Typ wählen');
+  await user.click(document.getElementById('sequence')!);
+  expect(
+    screen.queryByRole('option', { name: 'E-Mail senden' })
+  ).not.toBeInTheDocument();
+  await user.click(
+    screen.getByRole('option', { name: 'Mitgliedschaft entfernen' })
+  );
+  expect(screen.getByPlaceholderText('Titel')).toHaveValue(
+    'Crewmeister: Mitgliedschaft entfernen'
+  );
+
+  await user.click(screen.getByRole('combobox', { name: 'Automatisierung' }));
+  await user.click(screen.getByRole('option', { name: 'Keine', exact: true }));
+  expect(screen.queryByText('Typ')).not.toBeInTheDocument();
+});
+
+it('preserves a saved system automation when its provider is disabled', () => {
+  integrations[0].enabled = false;
+  renderSidebar(undefined, 'edit', {
+    sequence: 'microsoft_assign_access_groups',
+    integrationProvider: 'microsoft_graph',
+  });
+  expect(
+    screen.getByRole('combobox', { name: 'Automatisierung' })
+  ).toHaveTextContent('Microsoft');
+  expect(document.getElementById('sequence')).toHaveTextContent(
+    'Gruppenrechte zuweisen'
+  );
+  expect(screen.getByPlaceholderText('Titel')).toHaveValue(
+    'Arbeitsvertrag drucken'
+  );
+});
