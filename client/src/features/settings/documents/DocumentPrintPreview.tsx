@@ -151,7 +151,7 @@ export function DocumentPrintPreview({
   }
   if (!result.data)
     return (
-      <>
+      <div className="flex h-full min-h-0 flex-1 flex-col gap-3 overflow-hidden">
         <div
           className="flex shrink-0 items-center justify-between gap-2 text-sm"
           aria-hidden="true"
@@ -161,12 +161,12 @@ export function DocumentPrintPreview({
         </div>
         <PdfSkeleton
           page={document?.page}
-          className="min-h-[60vh] rounded-none border-0 bg-card"
+          className="min-h-0 flex-1 rounded-none border-0 bg-card"
         />
-      </>
+      </div>
     );
   return (
-    <>
+    <div className="flex h-full min-h-0 flex-1 flex-col gap-3 overflow-hidden">
       <div className="flex shrink-0 items-center justify-between gap-2 text-sm">
         <span>
           {result.data.pdf.numPages} Druckseiten · Original-Seitenformat
@@ -183,13 +183,13 @@ export function DocumentPrintPreview({
           ))}
         </select>
       </div>
-      <div className="min-h-[60vh] min-w-0 flex-1 overflow-auto bg-card p-4">
+      <div className="min-h-0 min-w-0 flex-1 overflow-auto bg-card p-4">
         <div style={{ zoom: zoom / 100 }}>
           {result.data.pages.map((page) => (
             <PrintPage key={page.number} pdf={result.data.pdf} {...page} />
           ))}
         </div>
       </div>
-    </>
+    </div>
   );
 }

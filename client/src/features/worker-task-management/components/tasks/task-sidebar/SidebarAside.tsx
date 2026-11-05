@@ -58,6 +58,10 @@ export function SidebarAside({
         onClose={onClose}
         showCloseButton={false}
         className={className}
+        style={{
+          width: 'min(32rem, calc(100vw - 0.5rem))',
+          ...props.style,
+        }}
         contentClassName="flex flex-col p-0 md:p-0"
         data-sidebar-aside=""
       >

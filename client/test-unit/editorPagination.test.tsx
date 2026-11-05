@@ -29,6 +29,82 @@ it('keeps content within paper margins and handles explicit page breaks', () => 
     pages: 3,
   });
 });
+
+it.each([0.75, 1, 1.25])(
+  'reserves the rendered footer when imported bottom margins are too small at zoom %s',
+  (zoom) => {
+    let frame: Parameters<typeof requestAnimationFrame>[0] | undefined;
+    vi.stubGlobal(
+      'requestAnimationFrame',
+      (callback: Parameters<typeof requestAnimationFrame>[0]) => {
+        frame = callback;
+        return 1;
+      }
+    );
+    vi.stubGlobal('cancelAnimationFrame', () => {});
+    const rects = vi
+      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockImplementation(function (this: HTMLElement) {
+        const top = this.textContent === 'Second' ? 30 : 0;
+        const height = this.classList.contains('document-editor-page-footer')
+          ? 20
+          : this.tagName === 'P'
+            ? 30
+            : 0;
+        return {
+          x: 0,
+          y: top * zoom,
+          top: top * zoom,
+          bottom: (top + height) * zoom,
+          left: 0,
+          right: 100,
+          width: 100,
+          height: height * zoom,
+          toJSON: () => ({}),
+        };
+      });
+    const paper = document.createElement('div');
+    paper.className = 'document-editor-paper';
+    const footer = document.createElement('div');
+    footer.className = 'document-editor-page-footer';
+    paper.append(footer);
+    document.body.append(paper);
+    let editor: Editor | undefined;
+    try {
+      const onPages = vi.fn();
+      editor = new Editor({
+        extensions: [
+          StarterKit,
+          editorPagination(
+            () => ({
+              enabled: true,
+              height: (100 * 25.4) / 96,
+              top: 0,
+              bottom: 0,
+              zoom,
+            }),
+            onPages
+          ),
+        ],
+        content: '<p>First</p><p>Second</p>',
+      });
+      paper.append(editor.view.dom);
+      frame?.(0);
+      expect(onPages).toHaveBeenLastCalledWith(2);
+      const gap = editor.view.dom.querySelector<HTMLElement>(
+        '[data-editor-page-gap]'
+      );
+      expect(Number(gap?.dataset.height)).toBeCloseTo(102);
+      expect(editor.getJSON().content).toHaveLength(2);
+    } finally {
+      editor?.destroy();
+      paper.remove();
+      rects.mockRestore();
+      vi.unstubAllGlobals();
+    }
+  }
+);
+
 it('renders separate editable sheets without publishing pagination into the document', async () => {
   const document = fromSegments([{ type: 'text', text: 'First page' }]);
   document.content.content!.push(

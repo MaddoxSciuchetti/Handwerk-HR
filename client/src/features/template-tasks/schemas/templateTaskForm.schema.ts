@@ -35,7 +35,7 @@ export const templateTaskFormSchema = z
         context.addIssue({
           code: 'custom',
           path: ['sequence'],
-          message: 'Bitte wähle zuerst eine Integration',
+          message: 'Bitte wähle zuerst eine Automatisierung',
         });
       }
       return;
@@ -44,7 +44,7 @@ export const templateTaskFormSchema = z
       context.addIssue({
         code: 'custom',
         path: ['sequence'],
-        message: 'Bitte wähle eine Sequenz',
+        message: 'Bitte wähle einen Typ',
       });
       return;
     }
@@ -55,7 +55,7 @@ export const templateTaskFormSchema = z
       context.addIssue({
         code: 'custom',
         path: ['sequence'],
-        message: 'Die Sequenz gehört nicht zu dieser Integration',
+        message: 'Der Typ gehört nicht zu dieser Automatisierung',
       });
     }
     if (
