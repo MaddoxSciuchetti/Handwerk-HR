@@ -1,5 +1,8 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { printHtml, printPdfBlob } from '@/features/worker-task-management/printPdf';
+import {
+  printHtml,
+  printPdfBlob,
+} from '@/features/worker-task-management/printPdf';
 
 const originalCreateElement = document.createElement.bind(document);
 
@@ -50,11 +53,11 @@ it('resolves after opening the print dialog without waiting for afterprint', asy
   const print = mockFrame();
 
   let settled = false;
-  const pending = printPdfBlob(new Blob(['%PDF'], { type: 'application/pdf' })).then(
-    () => {
-      settled = true;
-    }
-  );
+  const pending = printPdfBlob(
+    new Blob(['%PDF'], { type: 'application/pdf' })
+  ).then(() => {
+    settled = true;
+  });
 
   await vi.advanceTimersByTimeAsync(99);
   expect(print).not.toHaveBeenCalled();
@@ -68,10 +71,13 @@ it('resolves after opening the print dialog without waiting for afterprint', asy
 });
 
 it('prints HTML through srcdoc without the PDF settle delay', async () => {
-  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
-    callback(0);
-    return 1;
-  });
+  vi.stubGlobal(
+    'requestAnimationFrame',
+    (callback: Parameters<typeof requestAnimationFrame>[0]) => {
+      callback(0);
+      return 1;
+    }
+  );
   const print = mockFrame();
   await printHtml('<!doctype html><html><body>Hallo</body></html>');
   expect(print).toHaveBeenCalledOnce();

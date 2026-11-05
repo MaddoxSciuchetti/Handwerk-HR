@@ -10,9 +10,9 @@ import { CockpitSectionCard } from './CockpitSectionCard';
 import { CockpitSectionSheet } from './CockpitSectionSheet';
 import {
   COCKPIT_SECTIONS,
-  CockpitSectionBody,
   type CockpitSectionId,
-} from './cockpitSections';
+} from './cockpit-section.consts';
+import { CockpitSectionBody } from './cockpitSections';
 import GreetingHeader from './GreetingHeader';
 import NextAnniversary from './NextAnniversary';
 

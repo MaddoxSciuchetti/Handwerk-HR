@@ -6,9 +6,9 @@ import {
 } from '@/components/ui/drawer-stack';
 import {
   COCKPIT_SECTIONS,
-  CockpitSectionBody,
   type CockpitSectionId,
-} from './cockpitSections';
+} from './cockpit-section.consts';
+import { CockpitSectionBody } from './cockpitSections';
 
 type CockpitSectionSheetProps = {
   openSection: CockpitSectionId | null;

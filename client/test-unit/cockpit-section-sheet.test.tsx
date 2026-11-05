@@ -4,9 +4,6 @@ import { CockpitSectionSheet } from '@/features/worker-lifecycle/components/Cock
 import { SidebarAside } from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarAside';
 
 vi.mock('@/features/worker-lifecycle/components/cockpitSections', () => ({
-  COCKPIT_SECTIONS: ['templates', 'documents', 'questionnaire', 'bestand'].map(
-    (id) => ({ id, title: id })
-  ),
   CockpitSectionBody: ({ id }: { id: string }) => <p>{id} content</p>,
 }));
 

@@ -61,13 +61,16 @@ it('renders separate editable sheets without publishing pagination into the docu
 it.each([1, 0.75, 1.25])(
   'keeps table page gaps stable across resize measurements at zoom %s',
   (zoom) => {
-    let nextFrame: FrameRequestCallback | undefined;
+    let nextFrame: Parameters<typeof requestAnimationFrame>[0] | undefined;
     let resize = () => {};
     let noise = 0;
-    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
-      nextFrame = callback;
-      return 1;
-    });
+    vi.stubGlobal(
+      'requestAnimationFrame',
+      (callback: Parameters<typeof requestAnimationFrame>[0]) => {
+        nextFrame = callback;
+        return 1;
+      }
+    );
     vi.stubGlobal('cancelAnimationFrame', () => {
       nextFrame = undefined;
     });

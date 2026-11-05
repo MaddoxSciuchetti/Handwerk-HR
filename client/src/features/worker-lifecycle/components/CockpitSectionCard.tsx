@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 import { ChevronRight } from 'lucide-react';
-import type { CockpitSection } from './cockpitSections';
+import type { CockpitSection } from './cockpit-section.consts';
 
 type CockpitSectionCardProps = {
   section: CockpitSection;
