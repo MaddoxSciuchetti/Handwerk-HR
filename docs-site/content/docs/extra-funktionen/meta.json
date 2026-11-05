@@ -1,0 +1,5 @@
+{
+  "title": "Extra Funktionen",
+  "defaultOpen": true,
+  "pages": ["geplante-deaktivierung", "admin-pingen", "gruppenrechte"]
+}
