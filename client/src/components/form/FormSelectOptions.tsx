@@ -28,6 +28,7 @@ type FormSelectOptionsProps<T extends FieldValues> = {
   labelClassName?: string;
   triggerClassName?: string;
   defaultValue?: string;
+  onValueChange?: (value: string) => void;
 };
 
 const FormSelectOptions = <T extends FieldValues>({
@@ -40,6 +41,7 @@ const FormSelectOptions = <T extends FieldValues>({
   labelClassName,
   triggerClassName,
   defaultValue,
+  onValueChange,
 }: FormSelectOptionsProps<T>) => {
   return (
     <>
@@ -51,7 +53,10 @@ const FormSelectOptions = <T extends FieldValues>({
         render={({ field }) => (
           <Select
             value={(field.value as string | undefined) ?? ''}
-            onValueChange={field.onChange}
+            onValueChange={(value) => {
+              field.onChange(value);
+              onValueChange?.(value);
+            }}
           >
             <SelectTrigger
               id={name}

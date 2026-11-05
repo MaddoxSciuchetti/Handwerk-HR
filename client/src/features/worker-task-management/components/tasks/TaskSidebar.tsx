@@ -161,9 +161,19 @@ export function TaskSidebar({
                 control={control}
                 data={integrationOptions}
                 name="integrationProvider"
-                label="Integration"
+                label="Automatisierung"
                 labelClassName="typo-body-base"
-                placeholder="Integration wählen"
+                placeholder="Automatisierung wählen"
+                onValueChange={(provider) => {
+                  setValue('sequence', INTEGRATION_NONE, { shouldDirty: true });
+                  setValue('mailTemplateId', '', { shouldDirty: true });
+                  if (provider !== INTEGRATION_NONE) {
+                    setValue('taskName', integrationLabel(provider), {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    });
+                  }
+                }}
               />
               {hasIntegration ? (
                 <FormSelectOptions
@@ -171,9 +181,21 @@ export function TaskSidebar({
                   control={control}
                   data={sequenceOptions}
                   name="sequence"
-                  label="Sequenz"
+                  label="Typ"
                   labelClassName="typo-body-base"
-                  placeholder="Sequenz wählen"
+                  placeholder="Typ wählen"
+                  onValueChange={(value) => {
+                    const selected = sequenceOptions.find(
+                      (item) => item.value === value
+                    );
+                    if (selected) {
+                      setValue(
+                        'taskName',
+                        `${integrationLabel(integrationProvider)}: ${selected.label}`,
+                        { shouldDirty: true, shouldValidate: true }
+                      );
+                    }
+                  }}
                 />
               ) : null}
               {sequence === 'microsoft_send_email' ||

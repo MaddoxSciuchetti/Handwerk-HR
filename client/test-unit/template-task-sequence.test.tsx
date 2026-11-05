@@ -52,23 +52,37 @@ it('hides the sequence picker while the integration is Keine', async () => {
 
   renderSidebar();
 
-  expect(screen.queryByText('Sequenz')).not.toBeInTheDocument();
+  expect(screen.getByText('Automatisierung')).toBeInTheDocument();
+  expect(screen.queryByText('Typ')).not.toBeInTheDocument();
 
   await user.click(document.getElementById('integrationProvider')!);
   await user.click(await screen.findByRole('option', { name: 'Microsoft' }));
 
-  expect(screen.getByText('Sequenz')).toBeInTheDocument();
+  expect(screen.getByText('Typ')).toBeInTheDocument();
+  expect(screen.getByRole('textbox')).toHaveValue('Microsoft');
   await user.click(document.getElementById('sequence')!);
   await user.click(
     await screen.findByRole('option', { name: 'E-Mail senden' })
   );
   expect(screen.getByText('E-Mail-Vorlage')).toBeInTheDocument();
+  expect(screen.getByRole('textbox')).toHaveValue('Microsoft: E-Mail senden');
+
+  await user.clear(screen.getByRole('textbox'));
+  await user.type(screen.getByRole('textbox'), 'Eigene Aufgabe');
+  expect(screen.getByRole('textbox')).toHaveValue('Eigene Aufgabe');
+
+  await user.click(document.getElementById('sequence')!);
+  await user.click(
+    await screen.findByRole('option', { name: 'Konto anlegen' })
+  );
+  expect(screen.getByRole('textbox')).toHaveValue('Microsoft: Konto anlegen');
 
   await user.click(document.getElementById('integrationProvider')!);
   await user.click(await screen.findByRole('option', { name: 'Keine' }));
 
-  expect(screen.queryByText('Sequenz')).not.toBeInTheDocument();
+  expect(screen.queryByText('Typ')).not.toBeInTheDocument();
   expect(screen.queryByText('E-Mail-Vorlage')).not.toBeInTheDocument();
+  expect(screen.getByRole('textbox')).toHaveValue('Microsoft: Konto anlegen');
 });
 
 it('offers Crewmeister account deactivation without email-template fields', async () => {
@@ -99,6 +113,9 @@ it('offers Crewmeister account deactivation without email-template fields', asyn
   );
   expect(document.getElementById('sequence')).toHaveTextContent(
     'Konto deaktivieren'
+  );
+  expect(screen.getByRole('textbox')).toHaveValue(
+    'Crewmeister: Konto deaktivieren'
   );
   expect(screen.queryByText('E-Mail-Vorlage')).not.toBeInTheDocument();
 });
