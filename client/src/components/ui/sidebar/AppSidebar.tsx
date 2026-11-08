@@ -8,8 +8,10 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { BookOpen } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
 import SideBarMenu from './sidebar-menu-item';
 
 function AppSidebar({
@@ -22,12 +24,17 @@ function AppSidebar({
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <ProfileDropdown
-          setIsSettingOpen={setIsSettingOpen}
-          subscriptionLocked={subscriptionLocked}
-        />
+        <div className="flex items-center gap-2 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:items-center">
+          <div className="flex min-w-0 flex-1 items-center group-data-[collapsible=icon]:flex-none group-data-[collapsible=icon]:justify-center">
+            <ProfileDropdown
+              setIsSettingOpen={setIsSettingOpen}
+              subscriptionLocked={subscriptionLocked}
+            />
+          </div>
+          <SidebarTrigger className="shrink-0 self-center" />
+        </div>
       </SidebarHeader>
-      <SidebarContent className="mt-3 px-2">
+      <SidebarContent className="p-4 pt-2 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-2">
         <SideBarMenu
           items={LAYOUTITEMS.map((item) => ({
             id: item.to,
@@ -42,20 +49,14 @@ function AppSidebar({
           }))}
         />
       </SidebarContent>
-      <SidebarFooter className="mt-auto px-2 pb-2">
+      <SidebarFooter className="mt-auto">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Dokumentation">
-              <a
-                href={
-                  import.meta.env.VITE_DOCS_URL ?? 'http://localhost:3001/docs'
-                }
-                target="_blank"
-                rel="noreferrer"
-              >
+              <Link to="/docs/$" params={{ _splat: '' }}>
                 <BookOpen />
                 <span>Dokumentation</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

@@ -128,22 +128,32 @@ it('adds one date column tied to each worker through reorder, filtering and refr
     screen.getByRole('button', { name: 'Add column' })
   ).toBeInTheDocument();
   expect(screen.queryByRole('menu')).not.toBeInTheDocument();
-  expect(within(workerRow('Alex')).getByText('12.11.2027')).toBeInTheDocument();
-  expect(within(workerRow('Ben')).getByText('04.03.2027')).toBeInTheDocument();
-  for (const name of ['Chris', 'Dana'])
+  expect(
+    within(workerRow('Alex Example')).getByText('12.11.2027')
+  ).toBeInTheDocument();
+  expect(
+    within(workerRow('Ben Example')).getByText('04.03.2027')
+  ).toBeInTheDocument();
+  for (const name of ['Chris Example', 'Dana Example'])
     expect(
       within(workerRow(name)).getAllByRole('cell').at(-1)
     ).toHaveTextContent('—');
   state.workers = [state.workers[1], state.workers[0]];
   view.rerender(<WorkerLifeCycle />);
-  expect(within(workerRow('Ben')).getByText('04.03.2027')).toBeInTheDocument();
-  expect(within(workerRow('Alex')).getByText('12.11.2027')).toBeInTheDocument();
+  expect(
+    within(workerRow('Ben Example')).getByText('04.03.2027')
+  ).toBeInTheDocument();
+  expect(
+    within(workerRow('Alex Example')).getByText('12.11.2027')
+  ).toBeInTheDocument();
   state.team = true;
   state.workers = [{ ...state.workers[0], entryDate: '2024-02-03' }];
   view.rerender(<WorkerLifeCycle />);
   expect(screen.getAllByRole('columnheader')).toHaveLength(4);
-  expect(within(workerRow('Ben')).getByText('03.02.2029')).toBeInTheDocument();
-  expect(screen.queryByText('Alex')).not.toBeInTheDocument();
+  expect(
+    within(workerRow('Ben Example')).getByText('03.02.2029')
+  ).toBeInTheDocument();
+  expect(screen.queryByText('Alex Example')).not.toBeInTheDocument();
   view.unmount();
   render(<WorkerLifeCycle />);
   expect(
@@ -160,16 +170,24 @@ it('adds birthday and entry-date columns and keeps remaining options available',
   expect(
     screen.getAllByRole('columnheader', { name: /Birthday/ })
   ).toHaveLength(1);
-  expect(within(workerRow('Alex')).getByText('13.12.1998')).toBeInTheDocument();
-  expect(within(workerRow('Ben')).getByText('07.01.2005')).toBeInTheDocument();
+  expect(
+    within(workerRow('Alex Example')).getByText('13.12.1998')
+  ).toBeInTheDocument();
+  expect(
+    within(workerRow('Ben Example')).getByText('07.01.2005')
+  ).toBeInTheDocument();
   let user = await openAddColumn();
   expect(screen.getAllByRole('menuitem')).toHaveLength(2);
   await user.click(screen.getByRole('menuitem', { name: 'Eintrittsdatum' }));
   expect(
     screen.getAllByRole('columnheader', { name: /Eintrittsdatum/ })
   ).toHaveLength(1);
-  expect(within(workerRow('Alex')).getByText('12.11.2022')).toBeInTheDocument();
-  expect(within(workerRow('Ben')).getByText('04.03.2017')).toBeInTheDocument();
+  expect(
+    within(workerRow('Alex Example')).getByText('12.11.2022')
+  ).toBeInTheDocument();
+  expect(
+    within(workerRow('Ben Example')).getByText('04.03.2017')
+  ).toBeInTheDocument();
   user = await openAddColumn();
   expect(screen.getAllByRole('menuitem')).toHaveLength(1);
   await user.click(screen.getByRole('menuitem', { name: 'Anniversary date' }));
@@ -191,17 +209,33 @@ it('sorts the added column ascending then descending', async () => {
       .slice(1)
       .map((row) => within(row).getAllByRole('cell')[0].textContent);
   const birthdaySort = () =>
-    within(
-      screen.getByRole('columnheader', { name: /Birthday/ })
-    ).getByRole('button', {
-      name: /sortieren/i,
-    });
-  expect(names()).toEqual(['Alex', 'Ben', 'Chris', 'Dana']);
+    within(screen.getByRole('columnheader', { name: /Birthday/ })).getByRole(
+      'button',
+      {
+        name: /sortieren/i,
+      }
+    );
+  expect(names()).toEqual([
+    'Alex Example',
+    'Ben Example',
+    'Chris Example',
+    'Dana Example',
+  ]);
   await user.click(birthdaySort());
-  expect(names()).toEqual(['Ben', 'Alex', 'Chris', 'Dana']);
+  expect(names()).toEqual([
+    'Ben Example',
+    'Alex Example',
+    'Chris Example',
+    'Dana Example',
+  ]);
   expect(birthdaySort()).toHaveAccessibleName('A–Z sortieren');
   await user.click(birthdaySort());
-  expect(names()).toEqual(['Alex', 'Ben', 'Chris', 'Dana']);
+  expect(names()).toEqual([
+    'Alex Example',
+    'Ben Example',
+    'Chris Example',
+    'Dana Example',
+  ]);
   expect(birthdaySort()).toHaveAccessibleName('Z–A sortieren');
 });
 

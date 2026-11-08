@@ -128,7 +128,7 @@ describe('worker row type picker', () => {
     expect(
       screen.getByRole('button', { name: 'Typ für Maddox Example ändern' })
     ).toHaveAttribute('aria-busy', 'true');
-    await user.click(screen.getByText('Maddox'));
+    await user.click(screen.getByText('Maddox Example'));
     expect(navigate).toHaveBeenCalledExactlyOnceWith(
       'worker-1',
       'onboarding',
@@ -144,9 +144,9 @@ describe('worker row type picker', () => {
     expect(
       screen.getByRole('menuitemradio', { name: 'Team' })
     ).toBeInTheDocument();
-    expect(getComputedStyle(screen.getByText('Maddox')).pointerEvents).toBe(
-      'none'
-    );
+    expect(
+      getComputedStyle(screen.getByText('Maddox Example')).pointerEvents
+    ).toBe('none');
     expect(navigate).not.toHaveBeenCalled();
   });
 });

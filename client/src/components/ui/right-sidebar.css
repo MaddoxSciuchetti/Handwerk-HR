@@ -1,5 +1,7 @@
 .right-sidebar {
-  width: min(32rem, calc(100vw - 0.5rem));
+  /* Cap to the layout viewport (100%), not 100vw — vw includes the scrollbar
+     gutter and overshoots, which leaves a square strip past rounded corners. */
+  width: min(32rem, 100%);
   /* Extra offset so borders/shadows never peek when parked. */
   transform: translateX(calc(100% + 1rem));
   will-change: transform;

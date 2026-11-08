@@ -40,15 +40,20 @@ function RootLayout() {
 
   const isEmailVerifyPage = pathname.startsWith('/email/verify/');
   const isQuestionnairePage = pathname.startsWith('/fragebogen/');
+  const isDocumentationPage =
+    pathname === '/docs' || pathname.startsWith('/docs/');
   const isDoorman =
-    isVerifiedPage.has(pathname) || isEmailVerifyPage || isQuestionnairePage;
+    isVerifiedPage.has(pathname) ||
+    isEmailVerifyPage ||
+    isQuestionnairePage ||
+    isDocumentationPage;
 
   if (isDoorman) {
     const isLanding = pathname === '/landing';
     return (
       <main
         className={
-          isQuestionnairePage
+          isQuestionnairePage || isDocumentationPage
             ? 'min-h-dvh'
             : isLanding
               ? 'h-dvh overflow-y-auto'

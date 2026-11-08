@@ -89,24 +89,24 @@ export function ProfileDropdown({
                   type="button"
                   variant="ghost"
                   aria-label={displayLabel || 'Profile'}
-                  className="h-8 w-full min-w-0 cursor-pointer justify-start gap-2 overflow-hidden bg-transparent p-0 text-left font-normal ring-1 ring-border hover:bg-transparent hover:text-foreground aria-expanded:bg-transparent focus-visible:border-transparent focus-visible:ring-1 focus-visible:ring-border data-[state=open]:bg-transparent dark:hover:bg-transparent"
+                  className="h-9 w-full min-w-0 cursor-pointer items-center justify-start gap-2 overflow-hidden rounded-lg bg-transparent px-1.5 py-0 text-left font-normal ring-1 ring-border hover:bg-transparent hover:text-foreground aria-expanded:bg-transparent focus-visible:border-transparent focus-visible:ring-1 focus-visible:ring-border data-[state=open]:bg-transparent group-data-[collapsible=icon]:size-9 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0 dark:hover:bg-transparent"
                 >
-                  <Avatar className="size-8 shrink-0 rounded-full">
+                  <Avatar className="size-7 shrink-0 rounded-full">
                     <AvatarImage
                       src={profilePhoto}
                       alt={displayLabel}
                       className="rounded-full"
                     />
-                    <AvatarFallback className="rounded-full bg-muted text-sm font-medium text-muted-foreground">
+                    <AvatarFallback className="rounded-full bg-muted text-xs font-medium text-muted-foreground">
                       {getInitials(displayLabel || 'U')}
                     </AvatarFallback>
                   </Avatar>
                   <div
-                    className="flex min-w-0 flex-1 items-center gap-2 transition-opacity duration-150 motion-reduce:transition-none group-data-[collapsible=icon]:opacity-0"
+                    className="flex min-w-0 flex-1 items-center gap-2 transition-opacity duration-150 motion-reduce:transition-none group-data-[collapsible=icon]:hidden"
                     aria-hidden={isCollapsed}
                   >
-                    <div className="grid min-w-0 flex-1 text-left text-sm leading-tight">
-                      <span className="truncate font-medium">
+                    <div className="grid min-w-0 flex-1 text-left text-sm leading-none">
+                      <span className="truncate font-medium leading-none">
                         {displayLabel}
                       </span>
                     </div>
@@ -120,7 +120,9 @@ export function ProfileDropdown({
             </TooltipContent>
           </Tooltip>
           <DropdownMenuContent
-            className={isCollapsed ? 'min-w-56 rounded-lg' : 'min-w-0 rounded-lg'}
+            className={
+              isCollapsed ? 'min-w-56 rounded-lg' : 'min-w-0 rounded-lg'
+            }
             side="bottom"
             align="start"
             sideOffset={8}
@@ -130,10 +132,7 @@ export function ProfileDropdown({
               <Settings />
               Einstellungen
             </DropdownMenuItem>
-            <DropdownMenuItem
-              disabled={isSigningOut}
-              onClick={() => signOut()}
-            >
+            <DropdownMenuItem disabled={isSigningOut} onClick={() => signOut()}>
               <LogOut />
               Abmelden
             </DropdownMenuItem>
