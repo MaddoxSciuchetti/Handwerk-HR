@@ -1,26 +1,36 @@
 import { useEffect } from 'react';
-import { BookDemoSection } from './BookDemoSection';
-import { LandingHeader } from './LandingHeader';
-import { LandingHero } from './LandingHero';
-import { PlanSection } from './PlanSection';
-import { ProductSection } from './ProductSection';
+import { LandingBrand } from './LandingBrand';
+import { LandingContact } from './LandingContact';
+import { LandingImpressum } from './LandingImpressum';
+import { LandingInquiryForm } from './LandingInquiryForm';
 
 export function LandingPage() {
   useEffect(() => {
     const previousTitle = document.title;
-    document.title = 'Hadox';
+    document.title = 'HADOX';
+
+    const root = document.documentElement;
+    const hadDark = root.classList.contains('dark');
+    root.classList.remove('dark');
+
     return () => {
       document.title = previousTitle;
+      if (hadDark) root.classList.add('dark');
     };
   }, []);
 
   return (
-    <div id="top" className="min-h-dvh bg-background text-foreground">
-      <LandingHeader />
-      <LandingHero />
-      <ProductSection />
-      <PlanSection />
-      <BookDemoSection />
+    <div className="landing-page min-h-dvh bg-white text-black antialiased [&_*]:[font-family:'Inter_Variable',Inter,sans-serif]">
+      <div className="mx-auto flex min-h-dvh w-full max-w-4xl flex-col justify-center px-6 py-14 sm:px-10 sm:py-20">
+        <main className="grid items-start gap-12 md:grid-cols-2 md:gap-16">
+          <div className="flex flex-col gap-10">
+            <LandingBrand />
+            <LandingContact />
+          </div>
+          <LandingInquiryForm />
+        </main>
+        <LandingImpressum />
+      </div>
     </div>
   );
 }

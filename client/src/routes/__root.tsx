@@ -49,7 +49,7 @@ function RootLayout() {
     isDocumentationPage;
 
   if (isDoorman) {
-    const isLanding = pathname === '/landing';
+    const isLanding = pathname === '/' || pathname === '/landing';
     return (
       <main
         className={

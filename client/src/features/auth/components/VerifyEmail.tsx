@@ -37,7 +37,7 @@ function VerifyEmail() {
               <Button
                 type="button"
                 variant="link"
-                onClick={() => navigate({ to: '/' })}
+                onClick={() => navigate({ to: '/login' })}
                 className="h-auto p-0 text-foreground underline hover:bg-transparent hover:text-accent-foreground"
               >
                 Get a new link
@@ -47,7 +47,7 @@ function VerifyEmail() {
           <Button
             type="button"
             variant="link"
-            onClick={() => navigate({ to: '/' })}
+            onClick={() => navigate({ to: '/login' })}
             className="h-auto p-0 text-foreground hover:bg-transparent hover:text-accent-foreground hover:no-underline"
           >
             Jetzt Einloggen
