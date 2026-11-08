@@ -6,7 +6,7 @@ export const LANDING_CONTACT = {
   howItWorksSteps: [
     'Kontaktaufnahme',
     'Unverbindliches Erstgespräch',
-    'Besuchs ihres Betriebes für ein Tag',
+    'Besuch Ihres Betriebs für einen Tag',
     'Vorschlag für Prozessoptimierung',
   ] as const,
   phone: '0151 23180706',
