@@ -16,12 +16,19 @@ export function WorkerColumnSortButton({
 }) {
   const active = sort?.column === column;
   const direction = active ? sort.direction : null;
+  const isNameColumn = column === 'name';
   const label =
     direction === 'asc'
-      ? 'Vorname A–Z sortieren'
+      ? isNameColumn
+        ? 'Vorname A–Z sortieren'
+        : 'A–Z sortieren'
       : direction === 'desc'
-        ? 'Vorname Z–A sortieren'
-        : 'Nach Vorname sortieren';
+        ? isNameColumn
+          ? 'Vorname Z–A sortieren'
+          : 'Z–A sortieren'
+        : isNameColumn
+          ? 'Nach Vorname sortieren'
+          : 'Alphabetisch sortieren';
 
   return (
     <Button
