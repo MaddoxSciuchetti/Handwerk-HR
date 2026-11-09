@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   client:
-    name: Client lint, typecheck & unit tests
+    name: "Client lint, typecheck & unit tests"
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:
@@ -39,7 +39,7 @@ jobs:
         run: npm run test:unit
 
   server:
-    name: Server typecheck & unit tests
+    name: "Server typecheck & unit tests"
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:
