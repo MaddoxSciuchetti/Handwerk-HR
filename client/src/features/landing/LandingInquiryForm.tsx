@@ -63,7 +63,7 @@ export function LandingInquiryForm() {
             rows={5}
             disabled={pending}
             placeholder="Beschreiben Sie kurz Ihr Anliegen"
-            className="min-h-32 rounded-lg"
+            className="min-h-32 resize-none rounded-lg"
           />
         </div>
         <div
