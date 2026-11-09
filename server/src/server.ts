@@ -19,6 +19,7 @@ import authRoutes from "./routes/auth.route";
 import billingRoutes from "./routes/billing.route";
 import { employeeRoutes } from "./routes/employee.route";
 import { indexRoutes } from "./routes/index.route";
+import contactRoutes from "./routes/contact.route";
 import inviteRoutes from "./routes/invite.route";
 import orgRoutes from "./routes/org.route";
 import { questionnaireRoutes } from "./routes/questionnaire.route";
@@ -130,6 +131,7 @@ app.use("/tasks", authenticate, requireSubscriptionAccess, taskRoutes);
 app.use("/org", authenticate, requireSubscriptionAccess, orgRoutes);
 app.use("/invites", inviteRoutes);
 app.use("/fragebogen", questionnaireRoutes);
+app.use("/contact", contactRoutes);
 
 app.use(errorHandler);
 
