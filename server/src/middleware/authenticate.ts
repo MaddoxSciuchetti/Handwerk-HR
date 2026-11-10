@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { updateRequestContext } from "@/observability/requestContext";
+import { context, trace } from "@opentelemetry/api";
 import { RequestHandler } from "express";
 import AppErrorCode from "../constants/appErrorCode";
 import { UNAUTHORIZED } from "../constants/http";
@@ -38,6 +40,22 @@ const authenticate: RequestHandler = async (req, res, next) => {
         }
         req.orgId = member?.organizationId;
         req.membershipRole = member?.membershipRole;
+
+        updateRequestContext({
+            userId: req.userId,
+            orgId: req.orgId,
+        });
+
+        const activeSpan = trace.getSpan(context.active());
+        if (activeSpan) {
+            activeSpan.setAttribute("enduser.id", req.userId);
+            if (req.orgId) {
+                activeSpan.setAttribute("organization.id", req.orgId);
+            }
+            if (req.requestId) {
+                activeSpan.setAttribute("http.request_id", req.requestId);
+            }
+        }
 
         next();
     } catch (err) {
