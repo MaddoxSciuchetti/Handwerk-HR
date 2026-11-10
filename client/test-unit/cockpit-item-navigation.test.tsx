@@ -8,6 +8,11 @@ import { MailTemplateTable } from '@/features/template-tasks/components/MailTemp
 
 const navigate = vi.hoisted(() => vi.fn());
 vi.mock('@tanstack/react-router', () => ({ useNavigate: () => navigate }));
+vi.mock('@/features/settings/documents/LazyDocumentMasterEditor', () => ({
+  LazyDocumentMasterEditor: ({ id }: { id: string }) => (
+    <p>Document editor {id}</p>
+  ),
+}));
 vi.mock('@/features/settings/documents/DocumentMasterEditor', () => ({
   DocumentMasterEditor: ({ id }: { id: string }) => <p>Document editor {id}</p>,
 }));

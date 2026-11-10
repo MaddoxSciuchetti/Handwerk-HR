@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
+import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig } from 'vite';
 import mdx from '@mdx-js/rollup';
 import remarkFrontmatter from 'remark-frontmatter';
@@ -14,6 +15,7 @@ import { rehypeToc } from 'fumadocs-core/mdx-plugins/rehype-toc';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const analyze = process.env.ANALYZE === '1';
 const documentationMdx = mdx({
   remarkPlugins: [
     remarkFrontmatter,
@@ -49,7 +51,16 @@ export default defineConfig({
     }),
     react(),
     tailwindcss(),
-  ],
+    analyze
+      ? visualizer({
+          filename: 'dist/stats.html',
+          gzipSize: true,
+          brotliSize: true,
+          open: false,
+          template: 'treemap',
+        })
+      : null,
+  ].filter(Boolean),
   optimizeDeps: {
     include: [
       '@shadcn/react/message-scroller',

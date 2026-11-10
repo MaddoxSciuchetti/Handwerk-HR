@@ -1,5 +1,5 @@
 import { useDrawerStack } from '@/components/ui/drawer-stack';
-import { DocumentMasterEditor } from './DocumentMasterEditor';
+import { LazyDocumentMasterEditor } from './LazyDocumentMasterEditor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -78,7 +78,7 @@ export function AddDocumentMasterDialog({
   const navigate = useNavigate();
   const drawers = useDrawerStack();
   const openCreated = (id: string) => {
-    if (drawers) drawers.push('Dokument', <DocumentMasterEditor id={id} />);
+    if (drawers) drawers.push('Dokument', <LazyDocumentMasterEditor id={id} />);
     else void navigate({ to: '/settings/documents/$id', params: { id } });
   };
   const createMaster = useCreateDocumentMaster();

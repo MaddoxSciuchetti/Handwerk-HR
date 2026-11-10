@@ -1,5 +1,5 @@
 import { useDrawerStack } from '@/components/ui/drawer-stack';
-import { DocumentMasterEditor } from '../DocumentMasterEditor';
+import { LazyDocumentMasterEditor } from '../LazyDocumentMasterEditor';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { useNavigate } from '@tanstack/react-router';
@@ -34,7 +34,10 @@ export function DocumentMasterRow({
       className="group cursor-pointer border-0 hover:bg-transparent"
       onClick={() =>
         drawers
-          ? drawers.push(master.name, <DocumentMasterEditor id={master.id} />)
+          ? drawers.push(
+              master.name,
+              <LazyDocumentMasterEditor id={master.id} />
+            )
           : navigate({
               to: '/settings/documents/$id',
               params: { id: master.id },
