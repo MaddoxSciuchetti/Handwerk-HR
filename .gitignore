@@ -1,5 +1,7 @@
 .cursor/
 .env
+.claude/
+.rocketride/
 
 tmp/
 .rocketride/
