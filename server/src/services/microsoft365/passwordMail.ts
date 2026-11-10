@@ -1,4 +1,5 @@
 import { isStagingEnvironment } from "@/constants/stagingMail";
+import { logger, serializeError } from "@/observability/logger";
 import { sendMail } from "@/utils/sendMail";
 import type { PasswordMailInput, PasswordMail } from "./types";
 
@@ -69,14 +70,19 @@ export async function sendPasswordMail(
             ...template,
         });
         if (sent.error) {
-            console.error(
-                "Microsoft 365 Passwortmail fehlgeschlagen",
-                sent.error.message,
-            );
+            logger.error("Microsoft 365 password mail failed", {
+                event: "microsoft365.password_mail",
+                outcome: "error",
+                message: sent.error.message,
+            });
         }
         return !sent.error && Boolean(sent.data?.id);
     } catch (error) {
-        console.error("Microsoft 365 Passwortmail fehlgeschlagen", error);
+        logger.error("Microsoft 365 password mail failed", {
+            event: "microsoft365.password_mail",
+            outcome: "error",
+            error: serializeError(error),
+        });
         return false;
     }
 }
