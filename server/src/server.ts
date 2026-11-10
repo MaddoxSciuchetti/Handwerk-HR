@@ -11,9 +11,12 @@ import express from "express";
 import { APP_ORIGIN } from "./constants/env";
 import { resendInboundHandler } from "./controllers/resendInbound.controller";
 import { stripeWebhookHandler } from "./controllers/stripeWebhook.controller";
+import { accessLogMiddleware } from "./middleware/accessLog.middleware";
 import authenticate from "./middleware/authenticate";
 import errorHandler from "./middleware/errorHandler";
+import { requestIdMiddleware } from "./middleware/requestId.middleware";
 import requireSubscriptionAccess from "./middleware/requireSubscriptionAccess";
+import { logger } from "./observability/logger";
 import { automationRoutes } from "./routes/automation.route";
 import authRoutes from "./routes/auth.route";
 import billingRoutes from "./routes/billing.route";
@@ -36,6 +39,9 @@ import { startReturnedContractPolling } from "./services/signedContractReturn.se
 const PORT = process.env.PORT || 3000;
 
 const app = express();
+
+app.use(requestIdMiddleware);
+app.use(accessLogMiddleware);
 
 app.post(
     "/webhooks/resend",
@@ -63,22 +69,9 @@ app.use(
             }
         },
         credentials: true,
-        exposedHeaders: ["X-Prepared-Pdf"],
+        exposedHeaders: ["X-Prepared-Pdf", "X-Request-Id"],
     }),
 );
-
-app.use((req, res, next) => {
-    res.on("finish", () => {
-        const headers = res.getHeaders();
-        if (headers["access-control-allow-origin"]) {
-            console.log(
-                "Final Access-Control-Allow-Origin:",
-                headers["access-control-allow-origin"],
-            );
-        }
-    });
-    next();
-});
 
 app.post(
     "/webhooks/stripe",
@@ -136,6 +129,10 @@ app.use("/contact", contactRoutes);
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-    console.log(`port running on ${PORT}`);
+    logger.info("HTTP server listening", {
+        event: "server.listen",
+        outcome: "ok",
+        port: Number(PORT),
+    });
     startReturnedContractPolling();
 });
