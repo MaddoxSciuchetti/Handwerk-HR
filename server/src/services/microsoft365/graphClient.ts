@@ -1,3 +1,4 @@
+import { logger } from "@/observability/logger";
 import { isMicrosoftAddressConflict } from "./addressConflict";
 import { buildUserPrincipalName } from "./identity";
 import type {
@@ -57,10 +58,11 @@ export function createMicrosoft365GraphClient(
                 ? payload.access_token
                 : "";
         if (!response.ok || !token) {
-            console.error(
-                "Microsoft 365 token request failed",
-                response.status,
-            );
+            logger.error("Microsoft 365 token request failed", {
+                event: "microsoft365.token",
+                outcome: "error",
+                statusCode: response.status,
+            });
             return null;
         }
         return token;
@@ -115,10 +117,11 @@ export function createMicrosoft365GraphClient(
             if (isMicrosoftAddressConflict(response.status, payload)) continue;
 
             if (!response.ok) {
-                console.error(
-                    "Microsoft 365 user create failed",
-                    response.status,
-                );
+                logger.error("Microsoft 365 user create failed", {
+                    event: "microsoft365.user_create",
+                    outcome: "error",
+                    statusCode: response.status,
+                });
                 return {
                     ok: false as const,
                     message: "Microsoft Graph hat das Konto abgelehnt.",
@@ -164,10 +167,11 @@ export function createMicrosoft365GraphClient(
             },
         );
         if (!response.ok) {
-            console.error(
-                "Microsoft 365 license assignment failed",
-                response.status,
-            );
+            logger.error("Microsoft 365 license assignment failed", {
+                event: "microsoft365.license",
+                outcome: "error",
+                statusCode: response.status,
+            });
             return false;
         }
         return true;
@@ -189,7 +193,12 @@ export function createMicrosoft365GraphClient(
         if (response.status === 400 && /already.*(exist|member)/i.test(body)) {
             return { ok: true as const };
         }
-        console.error("Microsoft 365 group membership failed", response.status);
+        logger.error("Microsoft 365 group membership failed", {
+            event: "microsoft365.group_membership",
+            outcome: "error",
+            statusCode: response.status,
+            groupId: params.groupId,
+        });
         return {
             ok: false as const,
             message: `Microsoft Graph konnte die Gruppe ${params.groupId} nicht zuweisen.`,
