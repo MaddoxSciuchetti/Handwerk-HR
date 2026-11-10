@@ -1,3 +1,4 @@
+import { logger } from "@/observability/logger";
 import {
     cronError,
     cronInfo,
@@ -35,9 +36,9 @@ describe("serializeCronError", () => {
 
 describe("cronLog helpers", () => {
     it("emits a searchable job tag plus structured fields", () => {
-        const info = jest.spyOn(console, "info").mockImplementation();
-        const warn = jest.spyOn(console, "warn").mockImplementation();
-        const error = jest.spyOn(console, "error").mockImplementation();
+        const info = jest.spyOn(logger, "info").mockImplementation();
+        const warn = jest.spyOn(logger, "warn").mockImplementation();
+        const error = jest.spyOn(logger, "error").mockImplementation();
 
         cronInfo("anniversary-reminder", {
             event: "run_complete",

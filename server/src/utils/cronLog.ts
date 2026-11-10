@@ -1,3 +1,5 @@
+import { logger, serializeError as serializeSharedError } from "@/observability/logger";
+
 export type CronErrorFields = {
     name: string;
     message: string;
@@ -7,25 +9,10 @@ export type CronErrorFields = {
 export type CronLogFields = Record<string, unknown>;
 
 export function serializeCronError(error: unknown): CronErrorFields {
-    if (error instanceof Error) {
-        return {
-            name: error.name || "Error",
-            message: error.message || "Unknown error",
-            ...(error.stack ? { stack: error.stack } : {}),
-        };
-    }
-    if (error && typeof error === "object" && "message" in error) {
-        const message = String((error as { message: unknown }).message);
-        const name =
-            "name" in error
-                ? String((error as { name: unknown }).name || "Error")
-                : "Error";
-        return { name, message: message || "Unknown error" };
-    }
-    return { name: "Error", message: String(error) };
+    return serializeSharedError(error);
 }
 
-/** Structured cron log: first arg is the job name for Render/log search. */
+/** Structured cron log: message starts with job name for Render/log search. */
 export function cronLog(
     level: "info" | "warn" | "error",
     job: string,
@@ -33,14 +20,14 @@ export function cronLog(
 ) {
     const payload = { job, ...fields };
     if (level === "error") {
-        console.error(job, payload);
+        logger.error(job, payload);
         return;
     }
     if (level === "warn") {
-        console.warn(job, payload);
+        logger.warn(job, payload);
         return;
     }
-    console.info(job, payload);
+    logger.info(job, payload);
 }
 
 export function cronInfo(job: string, fields: CronLogFields) {
