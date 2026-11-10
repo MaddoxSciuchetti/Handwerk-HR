@@ -23,6 +23,13 @@ clean-code-testing/
 pgbench/   Benchmark queries
 ```
 
+## Observability
+
+The API uses structured logging and OpenTelemetry tracing (`requestId` / `traceId` in Render logs).
+
+- Newcomers: [server/README.md](server/README.md)
+- Render incident search: [ops/observability.md](ops/observability.md)
+
 ## Prerequisites
 
 - Node.js 20+
@@ -50,6 +57,9 @@ EMAIL_SENDER=no-reply@example.com
 RESEND_API_KEY=<your Resend key; a placeholder only works if you do not send email>
 STRIPE_SECRET_KEY=<Stripe secret key, or sk_test_ placeholder for local if unused>
 STRIPE_WEBHOOK_SECRET=<Stripe webhook signing secret, or whsec_ placeholder for local>
+# Optional observability:
+# LOG_LEVEL=info
+# OTEL_EXPORTER_OTLP_ENDPOINT=https://otlp.example.com/v1/traces
 ```
 
 If any of these are unset at runtime, the server throws a generic `Missing environment variable` error (the key name is not repeated in the message).
