@@ -121,7 +121,7 @@ it('defaults to offboarding and scopes tasks, template selection and manual crea
     'active'
   );
   expect(screen.queryByText('Onboarding task')).not.toBeInTheDocument();
-  expect(screen.getByTestId('template-target')).toHaveTextContent(
+  expect(await screen.findByTestId('template-target')).toHaveTextContent(
     'offboarding-1'
   );
   await user.click(screen.getByRole('button', { name: 'Aufgabe hinzufügen' }));
@@ -146,7 +146,7 @@ it('defaults to offboarding and scopes tasks, template selection and manual crea
   });
 });
 
-it('shows the toggle and defaults to offboarding when the type changes while mounted', () => {
+it('shows the toggle and defaults to offboarding when the type changes while mounted', async () => {
   state.data = worker([onboarding]);
   const { rerender } = render(<TaskManagement workerId="worker-1" />);
   expect(
@@ -159,7 +159,7 @@ it('shows the toggle and defaults to offboarding when the type changes while mou
     'aria-selected',
     'true'
   );
-  expect(screen.getByTestId('template-target')).toHaveTextContent(
+  expect(await screen.findByTestId('template-target')).toHaveTextContent(
     'offboarding-1'
   );
 });

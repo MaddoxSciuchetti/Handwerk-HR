@@ -55,13 +55,14 @@ export function TableSkeletonRows({
           </div>,
         ];
       case 'workers':
+        // Match real row controls: sm buttons (h-8), type switch w-32, status pill h-7.
         return [
           <div className="inline-flex h-8 items-center gap-2">
             {name}
             <Skeleton className="size-4 rounded-full" />
           </div>,
-          line('w-24'),
-          line('w-24'),
+          <Skeleton className="h-8 w-32 rounded-lg" />,
+          <Skeleton className="h-8 w-36 rounded-lg" />,
           line('w-5'),
           <Skeleton className="h-7 w-16 rounded-full" />,
         ];

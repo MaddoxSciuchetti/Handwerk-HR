@@ -75,6 +75,24 @@ export default defineConfig({
       'test-unit': path.resolve(__dirname, './test-unit'),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return;
+          // Exact package paths only — avoid matching @radix-ui/react-* etc.
+          if (
+            /[/\\]node_modules[/\\](?:react-dom|react|scheduler)[/\\]/.test(id)
+          ) {
+            return 'react-vendor';
+          }
+          if (/[/\\]node_modules[/\\]@tanstack[/\\]/.test(id)) {
+            return 'tanstack-vendor';
+          }
+        },
+      },
+    },
+  },
   test: {
     globals: true,
     environment: 'jsdom',
