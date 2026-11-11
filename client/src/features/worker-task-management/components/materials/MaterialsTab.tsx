@@ -1,6 +1,5 @@
-import { Input } from '@/components/ui/input';
 import type { EngagementType } from '@/features/worker-lifecycle/types/index.types';
-import { useEffect, useState, type RefObject } from 'react';
+import { useEffect, useState } from 'react';
 import {
   useDeleteEngagementMaterial,
   useEngagementMaterials,
@@ -17,10 +16,9 @@ type MaterialsTabProps = {
     type: EngagementType;
     startDate: string | null;
   }>;
-  fileInputRef: RefObject<HTMLInputElement | null>;
-  /** Survives Suspense: header click before the lazy tab mounts the hidden input. */
-  uploadPending?: boolean;
-  onUploadPendingHandled?: () => void;
+  /** File chosen via the parent input (kept outside Suspense for user-activation). */
+  pendingFile?: File | null;
+  onPendingFileConsumed?: () => void;
 };
 
 function errorMessage(error: unknown) {
@@ -34,9 +32,8 @@ function errorMessage(error: unknown) {
 export function MaterialsTab({
   workerId,
   engagements,
-  fileInputRef,
-  uploadPending = false,
-  onUploadPendingHandled,
+  pendingFile = null,
+  onPendingFileConsumed,
 }: MaterialsTabProps) {
   const [engagementId, setEngagementId] = useState<string | null>(
     engagements[0]?.id ?? null
@@ -50,14 +47,19 @@ export function MaterialsTab({
   const upload = useUploadEngagementMaterial(workerId, selectedId);
   const update = useUpdateEngagementMaterial(workerId, selectedId);
   const remove = useDeleteEngagementMaterial(workerId, selectedId);
+  const { mutate: uploadMaterial, isPending: uploadPending } = upload;
 
   useEffect(() => {
-    if (!uploadPending || !selectedId) return;
-    const input = fileInputRef.current;
-    if (!input) return;
-    input.click();
-    onUploadPendingHandled?.();
-  }, [uploadPending, selectedId, fileInputRef, onUploadPendingHandled]);
+    if (!pendingFile || !selectedId || uploadPending) return;
+    uploadMaterial(pendingFile);
+    onPendingFileConsumed?.();
+  }, [
+    pendingFile,
+    selectedId,
+    uploadPending,
+    uploadMaterial,
+    onPendingFileConsumed,
+  ]);
 
   const documents = materials.data?.documents ?? [];
   const unassigned = materials.data?.unassigned ?? [];
@@ -68,21 +70,6 @@ export function MaterialsTab({
       className="flex min-h-full flex-1 flex-col px-4 py-4"
       data-testid="materials-tab"
     >
-      {selectedId ? (
-        <Input
-          ref={fileInputRef}
-          type="file"
-          className="hidden"
-          accept="image/*,.pdf,application/pdf"
-          data-testid="materials-file-input"
-          disabled={upload.isPending}
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            if (file) upload.mutate(file);
-            event.target.value = '';
-          }}
-        />
-      ) : null}
       <MaterialsEngagementPicker
         engagements={engagements}
         value={selectedId ?? ''}

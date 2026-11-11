@@ -124,7 +124,9 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
     defaultTabForWorker(workerId)
   );
   const [clothingAddOpen, setClothingAddOpen] = useState(false);
-  const [materialsUploadPending, setMaterialsUploadPending] = useState(false);
+  const [pendingMaterialFile, setPendingMaterialFile] = useState<File | null>(
+    null
+  );
   const [isFileUploadOpen, setIsFileUploadOpen] = useState(false);
   const [createTemplateOpen, setCreateTemplateOpen] = useState(false);
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
@@ -380,6 +382,19 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
         activeTab === 'information' ? 'overflow-y-auto' : 'overflow-hidden'
       )}
     >
+      {/* Outside Suspense so file-picker click stays in the user-activation stack. */}
+      <input
+        ref={materialFileInputRef}
+        type="file"
+        className="hidden"
+        accept="image/*,.pdf,application/pdf"
+        data-testid="materials-file-input"
+        onChange={(event) => {
+          const file = event.target.files?.[0] ?? null;
+          setPendingMaterialFile(file);
+          event.target.value = '';
+        }}
+      />
       <TaskSidebar
         key={sidebarKey}
         {...sidebarProps}
@@ -438,7 +453,7 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
           ) {
             setActiveTab(value);
             if (value !== 'clothing') setClothingAddOpen(false);
-            if (value !== 'materials') setMaterialsUploadPending(false);
+            if (value !== 'materials') setPendingMaterialFile(null);
             if (value !== 'form') setQuestionnaireEngagementId(null);
           }
         }}
@@ -453,7 +468,7 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
           onTabChange={(tab) => {
             setActiveTab(tab);
             if (tab !== 'clothing') setClothingAddOpen(false);
-            if (tab !== 'materials') setMaterialsUploadPending(false);
+            if (tab !== 'materials') setPendingMaterialFile(null);
             if (tab !== 'form') setQuestionnaireEngagementId(null);
           }}
         />
@@ -517,7 +532,7 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
                   module.default(fetchFiles)
                 );
               }}
-              onUploadMaterials={() => setMaterialsUploadPending(true)}
+              onUploadMaterials={() => materialFileInputRef.current?.click()}
               materialsUploadDisabled={engagements.length === 0}
               onAddClothing={() => setClothingAddOpen(true)}
               clothingAddDisabled={engagements.length === 0}
@@ -698,11 +713,8 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
                   >
                     <MaterialsTab
                       workerId={workerId}
-                      fileInputRef={materialFileInputRef}
-                      uploadPending={materialsUploadPending}
-                      onUploadPendingHandled={() =>
-                        setMaterialsUploadPending(false)
-                      }
+                      pendingFile={pendingMaterialFile}
+                      onPendingFileConsumed={() => setPendingMaterialFile(null)}
                       engagements={engagements.map((engagement) => ({
                         id: engagement.id,
                         type: engagement.type,
