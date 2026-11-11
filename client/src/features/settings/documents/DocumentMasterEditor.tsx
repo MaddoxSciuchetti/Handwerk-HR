@@ -15,7 +15,6 @@ import { Link, useNavigate } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { ArrowLeft } from 'lucide-react';
-import { DocumentFontStyles } from './DocumentFontStyles';
 import { StyledDocumentEditor } from './StyledDocumentEditor';
 import { fromSegments, type StyledDocument } from './styledDocument';
 import { documentKindUsesEditor } from './documentMaster.types';
@@ -153,40 +152,30 @@ export function DocumentMasterEditor({
   };
 
   if (isLoading) {
-    return (
-      <>
-        <DocumentFontStyles />
-        <DocumentMasterEditorSkeleton />
-      </>
-    );
+    return <DocumentMasterEditorSkeleton />;
   }
 
   if (isError || !data) {
     return (
-      <>
-        <DocumentFontStyles />
-        <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 p-6">
-          <p className="text-sm text-destructive">
-            Dokument konnte nicht geladen werden.
-          </p>
-          {drawers?.back ? (
-            <Button variant="link" onClick={drawers.back}>
-              Zurück zur Liste
-            </Button>
-          ) : (
-            <Link to="/settings/documents" className="text-sm underline">
-              Zurück zur Liste
-            </Link>
-          )}
-        </div>
-      </>
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 p-6">
+        <p className="text-sm text-destructive">
+          Dokument konnte nicht geladen werden.
+        </p>
+        {drawers?.back ? (
+          <Button variant="link" onClick={drawers.back}>
+            Zurück zur Liste
+          </Button>
+        ) : (
+          <Link to="/settings/documents" className="text-sm underline">
+            Zurück zur Liste
+          </Link>
+        )}
+      </div>
     );
   }
 
   return (
-    <>
-      <DocumentFontStyles />
-      <div
+    <div
       className={
         expanded && !drawers
           ? 'fixed inset-2 z-50 flex min-h-0 min-w-0 flex-col gap-3 overflow-hidden rounded-2xl border bg-card p-4 text-card-foreground shadow-xl'
@@ -373,6 +362,5 @@ export function DocumentMasterEditor({
         ) : null}
       </div>
     </div>
-    </>
   );
 }

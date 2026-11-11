@@ -1,6 +1,7 @@
 import { DocumentEditorSkeleton } from './components/DocumentEditorSkeleton';
 import { EditorContent } from '@tiptap/react';
 import { DocumentValuesContext } from './DocumentValuesContext';
+import { DocumentFontStyles } from './DocumentFontStyles';
 import type { StyledDocument } from './styledDocument';
 import { useStyledDocumentEditor } from './hooks/useStyledDocumentEditor';
 import { DocumentEditorToolbar } from './components/DocumentEditorToolbar';
@@ -47,15 +48,18 @@ export function StyledDocumentEditor({
   );
   if (!editor || !toolbar)
     return (
-      <DocumentEditorSkeleton
-        document={document}
-        master={master}
-        readOnly={readOnly}
-        section={section}
-        pageView={pageView}
-        showCorner={Boolean(onToggleExpanded)}
-        showOriginalToggle={showOriginalToggle}
-      />
+      <>
+        <DocumentFontStyles />
+        <DocumentEditorSkeleton
+          document={document}
+          master={master}
+          readOnly={readOnly}
+          section={section}
+          pageView={pageView}
+          showCorner={Boolean(onToggleExpanded)}
+          showOriginalToggle={showOriginalToggle}
+        />
+      </>
     );
   const showToolbar = !readOnly;
   const showFieldInsert = master && !readOnly;
@@ -76,6 +80,7 @@ export function StyledDocumentEditor({
     <DocumentValuesContext.Provider
       value={{ master, readOnly, values, onValueChange: changeValue }}
     >
+      <DocumentFontStyles />
       <div
         className={
           framed
