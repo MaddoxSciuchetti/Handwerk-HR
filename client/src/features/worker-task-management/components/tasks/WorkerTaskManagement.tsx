@@ -148,6 +148,11 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
 
   useEffect(() => {
     setActiveTab(defaultTabForWorker(workerId));
+    setPendingMaterialFile(null);
+    setClothingAddOpen(false);
+    setIsFileUploadOpen(false);
+    setCreateTemplateOpen(false);
+    setCreateFolderOpen(false);
   }, [workerId]);
 
   useEffect(() => {
