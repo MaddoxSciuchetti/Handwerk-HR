@@ -86,7 +86,7 @@ it('keeps the send button and saved draft after closing and returning to the wor
   const firstVisit = renderWithProviders(<TaskManagement workerId="worker" />);
   await user.click(screen.getByRole('button', { name: 'Fragebogen senden' }));
   await user.type(
-    await screen.findByRole('textbox', { name: 'Gehalt' }),
+    await screen.findByRole('textbox', { name: 'Gehalt' }, { timeout: 5000 }),
     '3200'
   );
   await user.click(screen.getByRole('button', { name: 'Schließen' }));

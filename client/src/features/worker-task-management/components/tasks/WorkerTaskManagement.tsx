@@ -3,7 +3,6 @@ import {
   taskPhaseForType,
 } from '@/features/worker-lifecycle/utils/taskPhase';
 import { cn } from '@/lib/utils';
-import WorkerInformation from '@/features/worker-lifecycle/components/WorkerInformation';
 import queryClient from '@/config/query.client';
 import { ALL_WORKER_DATA } from '@/features/worker-lifecycle/consts/query-key.consts';
 import type {
@@ -40,6 +39,8 @@ import {
   peekContractSendReturn,
 } from '../../contractSendReturn';
 import {
+  lazy,
+  Suspense,
   useEffect,
   useRef,
   useState,
@@ -51,14 +52,6 @@ import useFilteredData from '../../hooks/useFilteredData';
 import useGetWorkerFiles from '../../hooks/useGetWorkerFiles';
 import useTaskData from '../../hooks/useTaskData';
 import { LifecycleType, WorkerTab } from '../../types/index.types';
-import handleZipExport from '../../utils/handleZipExport';
-import { ContractConfirmDialog } from '../files/ContractConfirmDialog';
-import { ContractSendDialog } from '../files/ContractSendDialog';
-import { ArbeitszeugnisSendDialog } from '../files/ArbeitszeugnisSendDialog';
-import WorkerFileUploads from '../files/WorkerFileUploads';
-import { ClothingTab } from '../clothing/ClothingTab';
-import { MaterialsTab } from '../materials/MaterialsTab';
-import { QuestionnaireSendDialog } from '@/features/questionnaire/QuestionnaireSendDialog';
 import WorkerHeader from '../header/WorkerHeader';
 import { WorkerTabButtons } from '../header/WorkerTabButtons';
 import { engagementsAwaitingTemplate } from '../../pendingTemplate';
@@ -67,7 +60,46 @@ import {
   isAutomationTaskVisible,
   type AutomationReveal,
 } from '../../utils/automationProgress';
-import { TemplateApplyPrompt } from './TemplateApplyPrompt';
+
+const WorkerInformation = lazy(
+  () => import('@/features/worker-lifecycle/components/WorkerInformation')
+);
+const WorkerFileUploads = lazy(() => import('../files/WorkerFileUploads'));
+const ClothingTab = lazy(() =>
+  import('../clothing/ClothingTab').then((module) => ({
+    default: module.ClothingTab,
+  }))
+);
+const MaterialsTab = lazy(() =>
+  import('../materials/MaterialsTab').then((module) => ({
+    default: module.MaterialsTab,
+  }))
+);
+const ContractSendDialog = lazy(() =>
+  import('../files/ContractSendDialog').then((module) => ({
+    default: module.ContractSendDialog,
+  }))
+);
+const ContractConfirmDialog = lazy(() =>
+  import('../files/ContractConfirmDialog').then((module) => ({
+    default: module.ContractConfirmDialog,
+  }))
+);
+const ArbeitszeugnisSendDialog = lazy(() =>
+  import('../files/ArbeitszeugnisSendDialog').then((module) => ({
+    default: module.ArbeitszeugnisSendDialog,
+  }))
+);
+const QuestionnaireSendDialog = lazy(() =>
+  import('@/features/questionnaire/QuestionnaireSendDialog').then((module) => ({
+    default: module.QuestionnaireSendDialog,
+  }))
+);
+const TemplateApplyPrompt = lazy(() =>
+  import('./TemplateApplyPrompt').then((module) => ({
+    default: module.TemplateApplyPrompt,
+  }))
+);
 
 type TaskManagementProps = {
   workerId: string;
@@ -92,6 +124,9 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
     defaultTabForWorker(workerId)
   );
   const [clothingAddOpen, setClothingAddOpen] = useState(false);
+  const [pendingMaterialFile, setPendingMaterialFile] = useState<File | null>(
+    null
+  );
   const [isFileUploadOpen, setIsFileUploadOpen] = useState(false);
   const [createTemplateOpen, setCreateTemplateOpen] = useState(false);
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
@@ -113,6 +148,11 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
 
   useEffect(() => {
     setActiveTab(defaultTabForWorker(workerId));
+    setPendingMaterialFile(null);
+    setClothingAddOpen(false);
+    setIsFileUploadOpen(false);
+    setCreateTemplateOpen(false);
+    setCreateFolderOpen(false);
   }, [workerId]);
 
   useEffect(() => {
@@ -347,6 +387,19 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
         activeTab === 'information' ? 'overflow-y-auto' : 'overflow-hidden'
       )}
     >
+      {/* Outside Suspense so file-picker click stays in the user-activation stack. */}
+      <input
+        ref={materialFileInputRef}
+        type="file"
+        className="hidden"
+        accept="image/*,.pdf,application/pdf"
+        data-testid="materials-file-input"
+        onChange={(event) => {
+          const file = event.target.files?.[0] ?? null;
+          setPendingMaterialFile(file);
+          event.target.value = '';
+        }}
+      />
       <TaskSidebar
         key={sidebarKey}
         {...sidebarProps}
@@ -355,33 +408,41 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
         onOpenArbeitszeugnis={setZeugnisIssueId}
       />
       {contractSend ? (
-        <ContractSendDialog
-          workerId={workerId}
-          engagementId={contractSend.engagementId}
-          issueId={contractSend.issueId}
-          onClose={() => setContractSend(null)}
-        />
+        <Suspense fallback={null}>
+          <ContractSendDialog
+            workerId={workerId}
+            engagementId={contractSend.engagementId}
+            issueId={contractSend.issueId}
+            onClose={() => setContractSend(null)}
+          />
+        </Suspense>
       ) : null}
       {zeugnisIssueId ? (
-        <ArbeitszeugnisSendDialog
-          issueId={zeugnisIssueId}
-          onClose={() => setZeugnisIssueId(null)}
-          onSent={() => setZeugnisIssueId(null)}
-        />
+        <Suspense fallback={null}>
+          <ArbeitszeugnisSendDialog
+            issueId={zeugnisIssueId}
+            onClose={() => setZeugnisIssueId(null)}
+            onSent={() => setZeugnisIssueId(null)}
+          />
+        </Suspense>
       ) : null}
       {questionnaireEngagementId ? (
-        <QuestionnaireSendDialog
-          engagementId={questionnaireEngagementId}
-          onClose={() => setQuestionnaireEngagementId(null)}
-        />
+        <Suspense fallback={null}>
+          <QuestionnaireSendDialog
+            engagementId={questionnaireEngagementId}
+            onClose={() => setQuestionnaireEngagementId(null)}
+          />
+        </Suspense>
       ) : null}
       {contractConfirm ? (
-        <ContractConfirmDialog
-          workerId={workerId}
-          engagementId={contractConfirm.engagementId}
-          issueId={contractConfirm.issueId}
-          onClose={() => setContractConfirm(null)}
-        />
+        <Suspense fallback={null}>
+          <ContractConfirmDialog
+            workerId={workerId}
+            engagementId={contractConfirm.engagementId}
+            issueId={contractConfirm.issueId}
+            onClose={() => setContractConfirm(null)}
+          />
+        </Suspense>
       ) : null}
 
       <Tabs
@@ -397,6 +458,7 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
           ) {
             setActiveTab(value);
             if (value !== 'clothing') setClothingAddOpen(false);
+            if (value !== 'materials') setPendingMaterialFile(null);
             if (value !== 'form') setQuestionnaireEngagementId(null);
           }
         }}
@@ -411,6 +473,7 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
           onTabChange={(tab) => {
             setActiveTab(tab);
             if (tab !== 'clothing') setClothingAddOpen(false);
+            if (tab !== 'materials') setPendingMaterialFile(null);
             if (tab !== 'form') setQuestionnaireEngagementId(null);
           }}
         />
@@ -469,7 +532,11 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
                   ? () => setCreateTemplateOpen(true)
                   : undefined
               }
-              onExportFiles={() => void handleZipExport(fetchFiles)}
+              onExportFiles={() => {
+                void import('../../utils/handleZipExport').then((module) =>
+                  module.default(fetchFiles)
+                );
+              }}
               onUploadMaterials={() => materialFileInputRef.current?.click()}
               materialsUploadDisabled={engagements.length === 0}
               onAddClothing={() => setClothingAddOpen(true)}
@@ -491,7 +558,13 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
           >
             <TabsContent value="information" className="mt-0 flex-none">
               <div className="mx-auto w-full max-w-5xl px-4 py-4">
-                <WorkerInformation workerId={workerId} />
+                <Suspense
+                  fallback={
+                    <p className="text-sm text-muted-foreground">Laden…</p>
+                  }
+                >
+                  <WorkerInformation workerId={workerId} />
+                </Suspense>
               </div>
             </TabsContent>
             <TabsContent
@@ -567,58 +640,62 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
                 {isLoading ? (
                   <PersonnelFoldersSkeleton />
                 ) : (
-                  <WorkerFileUploads
-                    workerId={workerId}
-                    engagements={engagements.map((engagement) => ({
-                      id: engagement.id,
-                      type: engagement.type,
-                      startDate: engagement.startDate,
-                    }))}
-                    questionnaires={engagements.flatMap((engagement) =>
-                      engagement.questionnaireSubmission?.status === 'completed'
-                        ? [
-                            {
-                              id: engagement.questionnaireSubmission.id,
-                              engagementId: engagement.id,
-                              name: engagement.questionnaireSubmission.name,
-                              engagementLabel: `${engagement.type === 'onboarding' ? 'Eintritt' : engagement.type === 'offboarding' ? 'Austritt' : 'Wechsel'}${engagement.startDate ? ` · ${new Date(engagement.startDate).toLocaleDateString('de-DE')}` : ''}`,
-                              completedAt:
-                                engagement.questionnaireSubmission.completedAt,
-                            },
-                          ]
-                        : []
-                    )}
-                    contracts={engagements.flatMap((engagement) =>
-                      engagement.employmentContract
-                        ? [
-                            {
-                              engagementId: engagement.id,
-                              id: engagement.employmentContract.id,
-                              name: engagement.employmentContract.master.name,
-                              status: engagement.employmentContract.status,
-                            },
-                          ]
-                        : []
-                    )}
-                    certificates={engagements.flatMap((engagement) =>
-                      engagement.arbeitszeugnis
-                        ? [
-                            {
-                              id: engagement.arbeitszeugnis.id,
-                              engagementId: engagement.id,
-                              name: engagement.arbeitszeugnis.name,
-                              text: engagement.arbeitszeugnis.text,
-                            },
-                          ]
-                        : []
-                    )}
-                    isUploadModalOpen={isFileUploadOpen}
-                    setIsUploadModalOpen={setIsFileUploadOpen}
-                    createTemplateOpen={createTemplateOpen}
-                    setCreateTemplateOpen={setCreateTemplateOpen}
-                    createFolderOpen={createFolderOpen}
-                    setCreateFolderOpen={setCreateFolderOpen}
-                  />
+                  <Suspense fallback={<PersonnelFoldersSkeleton />}>
+                    <WorkerFileUploads
+                      workerId={workerId}
+                      engagements={engagements.map((engagement) => ({
+                        id: engagement.id,
+                        type: engagement.type,
+                        startDate: engagement.startDate,
+                      }))}
+                      questionnaires={engagements.flatMap((engagement) =>
+                        engagement.questionnaireSubmission?.status ===
+                        'completed'
+                          ? [
+                              {
+                                id: engagement.questionnaireSubmission.id,
+                                engagementId: engagement.id,
+                                name: engagement.questionnaireSubmission.name,
+                                engagementLabel: `${engagement.type === 'onboarding' ? 'Eintritt' : engagement.type === 'offboarding' ? 'Austritt' : 'Wechsel'}${engagement.startDate ? ` · ${new Date(engagement.startDate).toLocaleDateString('de-DE')}` : ''}`,
+                                completedAt:
+                                  engagement.questionnaireSubmission
+                                    .completedAt,
+                              },
+                            ]
+                          : []
+                      )}
+                      contracts={engagements.flatMap((engagement) =>
+                        engagement.employmentContract
+                          ? [
+                              {
+                                engagementId: engagement.id,
+                                id: engagement.employmentContract.id,
+                                name: engagement.employmentContract.master.name,
+                                status: engagement.employmentContract.status,
+                              },
+                            ]
+                          : []
+                      )}
+                      certificates={engagements.flatMap((engagement) =>
+                        engagement.arbeitszeugnis
+                          ? [
+                              {
+                                id: engagement.arbeitszeugnis.id,
+                                engagementId: engagement.id,
+                                name: engagement.arbeitszeugnis.name,
+                                text: engagement.arbeitszeugnis.text,
+                              },
+                            ]
+                          : []
+                      )}
+                      isUploadModalOpen={isFileUploadOpen}
+                      setIsUploadModalOpen={setIsFileUploadOpen}
+                      createTemplateOpen={createTemplateOpen}
+                      setCreateTemplateOpen={setCreateTemplateOpen}
+                      createFolderOpen={createFolderOpen}
+                      setCreateFolderOpen={setCreateFolderOpen}
+                    />
+                  </Suspense>
                 )}
               </ScrollableTableViewport>
             </TabsContent>
@@ -632,15 +709,24 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
                     <MaterialsTableSkeleton />
                   </div>
                 ) : (
-                  <MaterialsTab
-                    workerId={workerId}
-                    fileInputRef={materialFileInputRef}
-                    engagements={engagements.map((engagement) => ({
-                      id: engagement.id,
-                      type: engagement.type,
-                      startDate: engagement.startDate,
-                    }))}
-                  />
+                  <Suspense
+                    fallback={
+                      <div className="px-4 py-4">
+                        <MaterialsTableSkeleton />
+                      </div>
+                    }
+                  >
+                    <MaterialsTab
+                      workerId={workerId}
+                      pendingFile={pendingMaterialFile}
+                      onPendingFileConsumed={() => setPendingMaterialFile(null)}
+                      engagements={engagements.map((engagement) => ({
+                        id: engagement.id,
+                        type: engagement.type,
+                        startDate: engagement.startDate,
+                      }))}
+                    />
+                  </Suspense>
                 )}
               </ScrollableTableViewport>
             </TabsContent>
@@ -661,16 +747,31 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
                     />
                   </div>
                 ) : (
-                  <ClothingTab
-                    workerId={workerId}
-                    addOpen={clothingAddOpen}
-                    onAddOpenChange={setClothingAddOpen}
-                    engagements={engagements.map((engagement) => ({
-                      id: engagement.id,
-                      type: engagement.type,
-                      startDate: engagement.startDate,
-                    }))}
-                  />
+                  <Suspense
+                    fallback={
+                      <div className="px-4 py-4">
+                        <ClothingOrderTable
+                          isLoading
+                          items={[]}
+                          returningId={null}
+                          deletingId={null}
+                          onReturn={async () => undefined}
+                          onDelete={() => undefined}
+                        />
+                      </div>
+                    }
+                  >
+                    <ClothingTab
+                      workerId={workerId}
+                      addOpen={clothingAddOpen}
+                      onAddOpenChange={setClothingAddOpen}
+                      engagements={engagements.map((engagement) => ({
+                        id: engagement.id,
+                        type: engagement.type,
+                        startDate: engagement.startDate,
+                      }))}
+                    />
+                  </Suspense>
                 )}
               </ScrollableTableViewport>
             </TabsContent>
@@ -683,10 +784,12 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
             setEditModeData={handleSetEditModeData}
           />
         ) : activeTab === 'form' ? (
-          <TemplateApplyPrompt
-            key={`${phaseKey}:${taskPhase}`}
-            targets={templateTargets}
-          />
+          <Suspense fallback={null}>
+            <TemplateApplyPrompt
+              key={`${phaseKey}:${taskPhase}`}
+              targets={templateTargets}
+            />
+          </Suspense>
         ) : null}
       </Tabs>
     </div>
