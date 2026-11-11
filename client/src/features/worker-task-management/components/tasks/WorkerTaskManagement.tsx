@@ -124,6 +124,7 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
     defaultTabForWorker(workerId)
   );
   const [clothingAddOpen, setClothingAddOpen] = useState(false);
+  const [materialsUploadPending, setMaterialsUploadPending] = useState(false);
   const [isFileUploadOpen, setIsFileUploadOpen] = useState(false);
   const [createTemplateOpen, setCreateTemplateOpen] = useState(false);
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
@@ -437,6 +438,7 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
           ) {
             setActiveTab(value);
             if (value !== 'clothing') setClothingAddOpen(false);
+            if (value !== 'materials') setMaterialsUploadPending(false);
             if (value !== 'form') setQuestionnaireEngagementId(null);
           }
         }}
@@ -451,6 +453,7 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
           onTabChange={(tab) => {
             setActiveTab(tab);
             if (tab !== 'clothing') setClothingAddOpen(false);
+            if (tab !== 'materials') setMaterialsUploadPending(false);
             if (tab !== 'form') setQuestionnaireEngagementId(null);
           }}
         />
@@ -514,7 +517,7 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
                   module.default(fetchFiles)
                 );
               }}
-              onUploadMaterials={() => materialFileInputRef.current?.click()}
+              onUploadMaterials={() => setMaterialsUploadPending(true)}
               materialsUploadDisabled={engagements.length === 0}
               onAddClothing={() => setClothingAddOpen(true)}
               clothingAddDisabled={engagements.length === 0}
@@ -696,6 +699,10 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
                     <MaterialsTab
                       workerId={workerId}
                       fileInputRef={materialFileInputRef}
+                      uploadPending={materialsUploadPending}
+                      onUploadPendingHandled={() =>
+                        setMaterialsUploadPending(false)
+                      }
                       engagements={engagements.map((engagement) => ({
                         id: engagement.id,
                         type: engagement.type,

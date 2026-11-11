@@ -1,6 +1,6 @@
 import { Input } from '@/components/ui/input';
 import type { EngagementType } from '@/features/worker-lifecycle/types/index.types';
-import { useState, type RefObject } from 'react';
+import { useEffect, useState, type RefObject } from 'react';
 import {
   useDeleteEngagementMaterial,
   useEngagementMaterials,
@@ -18,6 +18,9 @@ type MaterialsTabProps = {
     startDate: string | null;
   }>;
   fileInputRef: RefObject<HTMLInputElement | null>;
+  /** Survives Suspense: header click before the lazy tab mounts the hidden input. */
+  uploadPending?: boolean;
+  onUploadPendingHandled?: () => void;
 };
 
 function errorMessage(error: unknown) {
@@ -32,6 +35,8 @@ export function MaterialsTab({
   workerId,
   engagements,
   fileInputRef,
+  uploadPending = false,
+  onUploadPendingHandled,
 }: MaterialsTabProps) {
   const [engagementId, setEngagementId] = useState<string | null>(
     engagements[0]?.id ?? null
@@ -45,6 +50,14 @@ export function MaterialsTab({
   const upload = useUploadEngagementMaterial(workerId, selectedId);
   const update = useUpdateEngagementMaterial(workerId, selectedId);
   const remove = useDeleteEngagementMaterial(workerId, selectedId);
+
+  useEffect(() => {
+    if (!uploadPending || !selectedId) return;
+    const input = fileInputRef.current;
+    if (!input) return;
+    input.click();
+    onUploadPendingHandled?.();
+  }, [uploadPending, selectedId, fileInputRef, onUploadPendingHandled]);
 
   const documents = materials.data?.documents ?? [];
   const unassigned = materials.data?.unassigned ?? [];
