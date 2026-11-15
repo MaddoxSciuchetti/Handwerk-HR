@@ -1,11 +1,12 @@
 import tailwindcss from '@tailwindcss/vite';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import react from '@vitejs/plugin-react';
+import { sentryVitePlugin } from '@sentry/bundler-plugins/vite';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { visualizer } from 'rollup-plugin-visualizer';
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import mdx from '@mdx-js/rollup';
 import remarkFrontmatter from 'remark-frontmatter';
 import remarkMdxFrontmatter from 'remark-mdx-frontmatter';
@@ -34,82 +35,102 @@ const coverageSharedExclude = [
   'src/**/*.{test,spec}.{ts,tsx}',
 ];
 
-export default defineConfig({
-  plugins: [
-    {
-      ...documentationMdx,
-      transform(code, id) {
-        // MDX's plugin strips query strings. Preserve Vite's raw imports for
-        // browser search and Markdown exports instead of compiling them again.
-        if (id.split('?')[1]?.split('&').includes('raw')) return null;
-        return documentationMdx.transform.call(this, code, id);
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  const sentryAuthToken =
+    env.SENTRY_AUTH_TOKEN || process.env.SENTRY_AUTH_TOKEN;
+
+  return {
+    plugins: [
+      {
+        ...documentationMdx,
+        transform(code, id) {
+          // MDX's plugin strips query strings. Preserve Vite's raw imports for
+          // browser search and Markdown exports instead of compiling them again.
+          if (id.split('?')[1]?.split('&').includes('raw')) return null;
+          return documentationMdx.transform.call(this, code, id);
+        },
+      },
+      tanstackRouter({
+        target: 'react',
+        autoCodeSplitting: true,
+      }),
+      react(),
+      tailwindcss(),
+      analyze
+        ? visualizer({
+            filename: 'dist/stats.html',
+            gzipSize: true,
+            brotliSize: true,
+            open: false,
+            template: 'treemap',
+          })
+        : null,
+      // Upload source maps on production builds when an auth token is present.
+      sentryAuthToken
+        ? sentryVitePlugin({
+            org: 'hadox',
+            project: 'handwerk-hr-frontend',
+            authToken: sentryAuthToken,
+            sourcemaps: {
+              filesToDeleteAfterUpload: ['./dist/**/*.map'],
+            },
+          })
+        : null,
+    ].filter(Boolean),
+    optimizeDeps: {
+      include: [
+        '@shadcn/react/message-scroller',
+        '@base-ui/react/merge-props',
+        '@base-ui/react/use-render',
+      ],
+    },
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src'),
+        '@shared': path.resolve(__dirname, '../shared'),
+        'test-unit': path.resolve(__dirname, './test-unit'),
       },
     },
-    tanstackRouter({
-      target: 'react',
-      autoCodeSplitting: true,
-    }),
-    react(),
-    tailwindcss(),
-    analyze
-      ? visualizer({
-          filename: 'dist/stats.html',
-          gzipSize: true,
-          brotliSize: true,
-          open: false,
-          template: 'treemap',
-        })
-      : null,
-  ].filter(Boolean),
-  optimizeDeps: {
-    include: [
-      '@shadcn/react/message-scroller',
-      '@base-ui/react/merge-props',
-      '@base-ui/react/use-render',
-    ],
-  },
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-      '@shared': path.resolve(__dirname, '../shared'),
-      'test-unit': path.resolve(__dirname, './test-unit'),
-    },
-  },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (!id.includes('node_modules')) return;
-          // Exact package paths only — avoid matching @radix-ui/react-* etc.
-          if (
-            /[/\\]node_modules[/\\](?:react-dom|react|scheduler)[/\\]/.test(id)
-          ) {
-            return 'react-vendor';
-          }
-          if (/[/\\]node_modules[/\\]@tanstack[/\\]/.test(id)) {
-            return 'tanstack-vendor';
-          }
+    build: {
+      sourcemap: sentryAuthToken ? 'hidden' : undefined,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (!id.includes('node_modules')) return;
+            // Exact package paths only — avoid matching @radix-ui/react-* etc.
+            if (
+              /[/\\]node_modules[/\\](?:react-dom|react|scheduler)[/\\]/.test(
+                id
+              )
+            ) {
+              return 'react-vendor';
+            }
+            if (/[/\\]node_modules[/\\]@tanstack[/\\]/.test(id)) {
+              return 'tanstack-vendor';
+            }
+          },
         },
       },
     },
-  },
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: './test/setup.ts',
-    include: ['**/*.{test,spec}.{ts,tsx}'],
-    exclude: ['node_modules/**', 'dist/**', 'coverage/**'],
-    coverage: coverageFullTree
-      ? {
-          provider: 'v8',
-          reportsDirectory: './coverage/full',
-          include: ['src/**/*.{ts,tsx}'],
-          exclude: coverageSharedExclude,
-        }
-      : {
-          provider: 'v8',
-          reportsDirectory: './coverage/imported',
-          exclude: coverageSharedExclude,
-        },
-  },
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      setupFiles: './test/setup.ts',
+      include: ['**/*.{test,spec}.{ts,tsx}'],
+      exclude: ['node_modules/**', 'dist/**', 'coverage/**'],
+      coverage: coverageFullTree
+        ? {
+            provider: 'v8',
+            reportsDirectory: './coverage/full',
+            include: ['src/**/*.{ts,tsx}'],
+            exclude: coverageSharedExclude,
+          }
+        : {
+            provider: 'v8',
+            reportsDirectory: './coverage/imported',
+            exclude: coverageSharedExclude,
+          },
+    },
+  };
 });

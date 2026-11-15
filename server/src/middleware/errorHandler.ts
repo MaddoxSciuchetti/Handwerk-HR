@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node";
 import { ErrorRequestHandler, Response } from "express";
 import z from "zod";
 import { BAD_REQUEST, INTERNAL_SERVER_ERROR } from "../constants/http";
@@ -50,6 +51,7 @@ export const errorHandler: ErrorRequestHandler = (error, req, res, next) => {
 
     if (statusCode >= 500) {
         logger.error("Request failed", logFields);
+        Sentry.captureException(error);
     } else {
         logger.warn("Request failed", logFields);
     }
