@@ -1,12 +1,13 @@
-import { integrationsMocked, mockGroups } from "@/services/integrations/localMock";
-import { MICROSOFT_APP_AUTH_ERROR } from "@/services/microsoft365/authError";
 import { microsoftSimulationEnabled } from "@/constants/env";
+import { logger } from "@/observability/logger";
+import { integrationsMocked, mockGroups } from "@/services/integrations/localMock";
 import { microsoftGraphFetch } from "@/services/integrations/microsoftSimulation";
 import {
     integrationsLive,
     loadMicrosoft365Config,
     NOT_LIVE_MESSAGE,
 } from "@/services/integrations/runtime";
+import { MICROSOFT_APP_AUTH_ERROR } from "@/services/microsoft365/authError";
 import { microsoftGraphToken } from "@/services/microsoft365Account";
 
 const GRAPH = "https://graph.microsoft.com/v1.0";
@@ -81,7 +82,11 @@ async function listGraph<T>(token: string, path: string) {
             headers: { Authorization: `Bearer ${token}` },
         });
         if (!response.ok) {
-            console.error("Microsoft Graph request failed", response.status);
+            logger.error("Microsoft Graph request failed", {
+                event: "microsoft365.graph_list",
+                outcome: "error",
+                statusCode: response.status,
+            });
             return null;
         }
         const list = (await response.json()) as GraphList<T>;

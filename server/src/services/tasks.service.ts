@@ -5,6 +5,7 @@ import {
     taskAutomationName,
 } from "@/constants/taskAutomation.consts";
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/observability/logger";
 import { INTEGRATION_SEQUENCES, SEQUENCE_PROVIDER } from "@/services/integrations/catalog";
 import { Prisma, type IntegrationSequence, type IssueStatus } from "@prisma/client";
 import { issueVisibleToViewer } from "@/services/issueVisibility";
@@ -756,7 +757,13 @@ export async function upsertIssueCommentInOrg(
                 : { organizationId: orgId }),
         });
         if (sent.error) {
-            console.error("Mention mail failed", sent.error.message);
+            logger.error("Mention mail failed", {
+                event: "task.mention_mail",
+                outcome: "error",
+                issueId: issue.id,
+                recipientUserId: person.id,
+                message: sent.error.message,
+            });
             mailFailed = true;
         }
     }

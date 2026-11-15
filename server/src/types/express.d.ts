@@ -3,6 +3,7 @@ import type { OrgMemberRole, User as DbUser } from '@prisma/client';
 declare global {
   namespace Express {
     interface Request {
+      requestId?: string;
       userId: DbUser['id'];
       tokenId?: string;
       sessionId?: string;

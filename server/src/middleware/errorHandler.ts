@@ -1,6 +1,7 @@
 import { ErrorRequestHandler, Response } from "express";
 import z from "zod";
 import { BAD_REQUEST, INTERNAL_SERVER_ERROR } from "../constants/http";
+import { logger, serializeError } from "../observability/logger";
 import AppError from "../utils/AppError";
 import { clearAuthCookies, REFRESH_PATH } from "../utils/cookies";
 
@@ -27,26 +28,48 @@ export const errorHandler: ErrorRequestHandler = (error, req, res, next) => {
         /document-masters|document-fonts|\/contract(?:\/|$)|arbeitszeugnis/.test(
             req.path,
         );
-    if (documentRequest)
-        console.error("Document request failed", {
-            outcome: error instanceof AppError ? "rejected" : "internal_error",
-            message: error instanceof Error ? error.message : "unknown",
-        });
-    else console.log(`PATH: ${req.path}`, error);
+
+    const isAppError = error instanceof AppError;
+    const isZodError = error instanceof z.ZodError;
+    const statusCode = isZodError
+        ? BAD_REQUEST
+        : isAppError
+          ? error.statusCode
+          : INTERNAL_SERVER_ERROR;
+
+    const logFields = {
+        event: "http.error",
+        outcome: isAppError || isZodError ? "rejected" : "internal_error",
+        path: req.path,
+        method: req.method,
+        statusCode,
+        requestId: req.requestId,
+        ...(documentRequest ? { documentRequest: true } : {}),
+        error: serializeError(error),
+    };
+
+    if (statusCode >= 500) {
+        logger.error("Request failed", logFields);
+    } else {
+        logger.warn("Request failed", logFields);
+    }
 
     if (req.path === REFRESH_PATH) {
         clearAuthCookies(res);
     }
 
-    if (error instanceof z.ZodError) {
+    if (isZodError) {
         return handleZodError(res, error);
     }
 
-    if (error instanceof AppError) {
+    if (isAppError) {
         return handleAppError(res, error);
     }
 
-    return res.status(INTERNAL_SERVER_ERROR).send("internal server");
+    return res.status(INTERNAL_SERVER_ERROR).json({
+        message: "internal server",
+        requestId: req.requestId,
+    });
 };
 
 export default errorHandler;
