@@ -8,6 +8,7 @@ export {
 } from "./requestContext";
 export type { RequestContext } from "./requestContext";
 export { redactFields } from "./redact";
+export { metricRoute } from "./metricRoute";
 export {
     registerObservabilityShutdown,
     registerProcessErrorHandlers,

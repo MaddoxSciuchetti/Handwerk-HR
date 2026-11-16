@@ -1,6 +1,8 @@
+import { isSentryEnabled } from "@/instrument";
 import { prisma } from "@/lib/prisma";
 import { updateRequestContext } from "@/observability/requestContext";
 import { context, trace } from "@opentelemetry/api";
+import * as Sentry from "@sentry/node";
 import { RequestHandler } from "express";
 import AppErrorCode from "../constants/appErrorCode";
 import { UNAUTHORIZED } from "../constants/http";
@@ -45,6 +47,17 @@ const authenticate: RequestHandler = async (req, res, next) => {
             userId: req.userId,
             orgId: req.orgId,
         });
+
+        if (isSentryEnabled) {
+            Sentry.setUser({ id: req.userId });
+            const scope = Sentry.getCurrentScope();
+            if (req.orgId) {
+                scope.setTag("org_id", req.orgId);
+            }
+            if (req.requestId) {
+                scope.setTag("request_id", req.requestId);
+            }
+        }
 
         const activeSpan = trace.getSpan(context.active());
         if (activeSpan) {

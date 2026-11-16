@@ -77,8 +77,17 @@ Use `cronInfo` / `cronWarn` / `cronError` from `src/utils/cronLog.ts`. The job n
 
 ## Further reading
 
+- SE_46 deep dive (what shipped + gaps): [`../docs/observability-deep-dive.md`](../docs/observability-deep-dive.md)
 - Incident search on Render: [`../ops/observability.md`](../ops/observability.md)
 
-## Next steps (not in this layer yet)
+## Sentry performance + alerts
 
-Metrics/alerts dashboards, client RUM/Sentry, and a mandatory third-party trace UI.
+When `SENTRY_DSN` is set, Sentry owns tracing (our OTEL NodeSDK stays off). Access logs also emit `http.server.duration` / `http.server.5xx` metrics. Create p95 / 5xx monitors in the Sentry UI for `handwerk-hr-server`.
+
+## Load test
+
+From repo root: `node ops/loadtest/run.mjs` (see `ops/loadtest/README.md`). Or `npm run loadtest` in `server/`.
+
+## Next steps (optional)
+
+Caching/Redis for hot reads, paste first ramp numbers into the deep dive, cron Sentry check-ins.

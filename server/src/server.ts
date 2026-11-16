@@ -11,11 +11,14 @@ import express from "express";
 import { APP_ORIGIN, PORT } from "./constants/env";
 import { resendInboundHandler } from "./controllers/resendInbound.controller";
 import { stripeWebhookHandler } from "./controllers/stripeWebhook.controller";
+import * as Sentry from "@sentry/node";
 import { accessLogMiddleware } from "./middleware/accessLog.middleware";
 import authenticate from "./middleware/authenticate";
 import errorHandler from "./middleware/errorHandler";
 import { requestIdMiddleware } from "./middleware/requestId.middleware";
+import { sentryContextMiddleware } from "./middleware/sentryContext.middleware";
 import requireSubscriptionAccess from "./middleware/requireSubscriptionAccess";
+import { isSentryEnabled } from "./instrument";
 import { logger } from "./observability/logger";
 import { automationRoutes } from "./routes/automation.route";
 import authRoutes from "./routes/auth.route";
@@ -39,6 +42,7 @@ import { startReturnedContractPolling } from "./services/signedContractReturn.se
 const app = express();
 
 app.use(requestIdMiddleware);
+app.use(sentryContextMiddleware);
 app.use(accessLogMiddleware);
 
 app.post(
@@ -123,6 +127,11 @@ app.use("/org", authenticate, requireSubscriptionAccess, orgRoutes);
 app.use("/invites", inviteRoutes);
 app.use("/fragebogen", questionnaireRoutes);
 app.use("/contact", contactRoutes);
+
+// After routes, before our JSON error formatter — links exceptions to the active transaction.
+if (isSentryEnabled) {
+    Sentry.setupExpressErrorHandler(app);
+}
 
 app.use(errorHandler);
 
