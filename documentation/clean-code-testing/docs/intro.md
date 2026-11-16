@@ -1,13 +1,35 @@
 # Clean code & testing — start here
 
-If you want to add code to this project, have improvements to the README.md or for the overall code architecture, clone this repo, create a feature branch and push changes. Ensure that you look at the below listed files to get more context. Also ensure to fill out the pull request template on every pull request that you open. Pull request that do not contain the template will not be looked at and therefore not merged. Below is the template [template](../../../.github/pull_request_template.md)
+The aim of this project is to ensure that the user has the highest quality software product. How we approach this problem can best be seen by two core implementations for frontend and backend:
 
+- Frontend — performance as a product requirement (Web Vitals, measured optimizations): [Frontend intro](../../docs/frontend/Intro.md)
+- Backend — observability as a product requirement (structured logs, tracing, Sentry): [Backend intro](../../docs/backend/Intro.md)
+
+Each of those pages also lists the core tools used in that half of the stack.
+
+If you want to add code to this project, improve the README, or change architecture: clone the repo, create a feature branch, then follow this path before your first PR.
+
+### How to contribute (read in order)
+
+1. Read the clean code principles and style guide — write new code to match them. Lint and Prettier do not enforce DRY / KISS / YAGNI; those stay a human responsibility.
+2. Code on a feature branch — keep following the principles and style guide while you work.
+3. Run Prettier and ESLint (client) before you open a PR when you touched client code:
+   - `npm --prefix client run format`
+   - `npm --prefix client run lint` (or `npm run lint:src` from `client/`)
+   - Details: [Style guide §3.4 / §7.3](style-guide.md). Server has no `lint` / `format` scripts yet — use `npm --prefix server run typecheck` and the tests below.
+4. Open a pull request and fill the [PR template](../../../.github/pull_request_template.md) — PRs without the template will not be reviewed or merged.
+5. CI runs on the PR (lint / typecheck / unit tests) — see [workflow](ci.cd.md). After review, the PR can be merged.
+
+### Context docs
+
+- Frontend quality focus + tools: [Frontend intro](../../docs/frontend/Intro.md)
+- Backend quality focus + tools: [Backend intro](../../docs/backend/Intro.md)
 - High level style guide that will help you quickly write your first lines in this project [Style guide](style-guide.md)
 - Clean code principles and how they are applied in the codebase. Ensure to follow these! [Principles](principles.md)
 - Decisions made in this project [Decisions](decisions.md)
-
 - Handling tests in this project [Tests](tests.md)
 - CI/CD of this project [workflow](ci.cd.md)
+- Before push / review: [Review checklist](review-checklist.md)
 
 ### What is this project about?
 
