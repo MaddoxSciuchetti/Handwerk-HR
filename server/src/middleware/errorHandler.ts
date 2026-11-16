@@ -1,4 +1,3 @@
-import * as Sentry from "@sentry/node";
 import { ErrorRequestHandler, Response } from "express";
 import z from "zod";
 import { BAD_REQUEST, INTERNAL_SERVER_ERROR } from "../constants/http";
@@ -50,12 +49,9 @@ export const errorHandler: ErrorRequestHandler = (error, req, res, next) => {
     };
 
     if (statusCode >= 500) {
+        // Sentry capture is owned by setupExpressErrorHandler when SENTRY_DSN
+        // is set — do not captureException here or 500s duplicate in Sentry.
         logger.error("Request failed", logFields);
-        // Prefer Sentry.setupExpressErrorHandler capture; only capture here if
-        // that middleware did not run (e.g. thrown outside the Express stack).
-        if (!(res as { sentry?: string }).sentry) {
-            Sentry.captureException(error);
-        }
     } else {
         logger.warn("Request failed", logFields);
     }
