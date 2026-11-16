@@ -32,7 +32,7 @@ Improvements I would have made:
 
 1. Land Sentry and OTEL in a clearer order of ownership earlier — today Sentry owns tracing when `SENTRY_DSN` is set, and our NodeSDK is skipped to avoid dual OpenTelemetry. Documenting that trade-off up front would have saved a round of “why aren’t console spans showing?”.
 2. Wire a real OTLP destination (Grafana Cloud / Honeycomb / etc.) in the same PR as the exporter env var, so “optional OTLP” is exercised in staging instead of only ConsoleSpanExporter.
-3. Add a small load / latency baseline (p50/p95 on a few hot routes) *before* calling the section “Performance and Observability” — right now the measurable wins are operational (find a failure), not throughput numbers.
+3. Add a small load / latency baseline (p50/p95 on a few hot routes under realistic concurrency) *before* calling the section “Performance and Observability” — right now the measurable wins are operational (find a failure), not latency under load. Uptime is already covered by UptimeRobot.
 
 ---
 
@@ -162,21 +162,35 @@ Mapped to SE_46 Performance, Scaling, and Observability learning goals.
 | Error monitoring | Done — Sentry client + server |
 | Process / deploy flush | Done — SIGTERM handlers |
 | Trace export | Partial — OTEL SDK + console; OTLP optional and unused in prod if Sentry owns tracing |
-| Metrics time series (Prometheus / Grafana / etc.) | Not yet — no RED/USE dashboards, no custom metrics |
-| Alerting (page on error rate / latency) | Not yet — Sentry issues exist; no SLO burn alerts wired |
+| Metrics time series (Prometheus / Grafana / etc.) | Not yet — no RED/USE dashboards or custom app metrics beyond Render + Sentry |
+| Alerting (page on error rate / latency) | Partial — UptimeRobot covers “is it up?”; Sentry can alert on new issues; no latency/error-rate SLOs yet |
 | Log aggregation UI beyond Render | Not yet — Render search is enough for now; Graylog/ELK optional later |
-| Uptime / synthetic checks | Not covered in these PRs (platform uptime may exist separately) |
+| Uptime / synthetic checks | Done outside these PRs — UptimeRobot pings the API periodically |
 
 ### Learning Goal 1 — Performance and Scaling (open ground)
 
 | Topic | Status | Why it would be interesting next |
 |-------|--------|----------------------------------|
-| Caching | Not in these PRs | Cut repeat reads (tasks list, org settings) under poller load; pairs with frontend staleTime work |
-| Redis | Not introduced | Shared cache / rate limits / short-lived locks across Render instances |
-| Load testing (Locust / k6 / etc.) | Not yet | Need p95 baselines on `/tasks`, auth refresh, document PDF paths before claiming “performance” |
-| Bottleneck finding | Informal only | Combine access-log `durationMs` histograms with Prisma slow-query notes in `documentation/docs/database/` |
+| Caching | Not in these PRs | See “What load tests / caching / metrics mean” below |
+| Redis | Not introduced | Shared cache / rate limits / short-lived locks if we ever run multiple API instances |
+| Load testing (Locust / k6 / etc.) | Not yet | Baseline how hot routes behave under concurrent users — not only “max RPS until crash” |
+| Bottleneck finding | Informal only | Combine access-log `durationMs` with Prisma slow-query notes in `documentation/docs/database/` |
 | Horizontal vs vertical scaling | Docs exist under database scaling notes; app layer not exercised | Stateless API + sticky sessions/cookies need an explicit multi-instance story |
 | Connection pooling / DB pool sizing | Prisma defaults; not tuned here | Shows up first under load tests, not under logging |
+
+### What load tests / caching / metrics mean (for this project)
+
+Load-test baselines: not mainly “how many requests until the server dies.” First measure a few realistic concurrent users hitting real hot paths (`/tasks` poller traffic, auth refresh, worker list, document PDF) and record p50/p95 latency and error rate. That number is the baseline. Later you can push harder to find the ceiling — but the useful SE_46 artifact is “under N concurrent users, `/tasks` stays under X ms,” not a vanity max-RPS number.
+
+Caching (where it would help here): the frontend already keeps some data fresh via React Query `staleTime` / slower polling. Backend caching would help when many clients ask for the same mostly-stable data (org settings, document master metadata, Microsoft license status, template lists) or when a heavy read (worker overview, task board) is hit every 15s by every open tab. Options range from short in-memory TTL cache in the Node process, to HTTP `Cache-Control` on truly public assets (you already use that for some document fonts), to Redis if the cache must be shared across instances. Do not cache personalized or auth-sensitive payloads without org/user keys and short TTLs.
+
+Metrics and alerts (practical stack for us):
+
+- UptimeRobot (already): “is the API reachable?” — keep this; it is the uptime half of monitoring.
+- Sentry (already): alert on new/regression issues, spike in error volume, or failed cron check-ins if we add them.
+- Render native metrics: CPU, memory, instance count — alert if the service is pegged or restarting.
+- Optional next step for “metrics dashboards”: export RED metrics (rate, errors, duration) via OpenTelemetry metrics or a small Prometheus endpoint into Grafana Cloud — so you see p95 latency over time, not only when someone opens Render logs.
+- Alert rule that is still missing: “p95 latency on `/tasks` above X for 5 minutes” or “5xx rate above Y%” — UptimeRobot will not catch a slow-but-up API.
 
 ### Other adjacent ideas (optional, not blocking SE_46 observability evidence)
 
