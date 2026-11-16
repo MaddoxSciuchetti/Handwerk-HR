@@ -6,13 +6,9 @@ if (SENTRY_DSN) {
         dsn: SENTRY_DSN,
         environment: NODE_ENV,
         // Local: capture every trace for verification. Production: 10%.
-<<<<<<< HEAD
-        tracesSampleRate: NODE_ENV === "production" ? 0.1 : 1.0,
-=======
         // These transactions power Sentry Performance + span/metric monitors
         // (Alerts → create monitor on p95 duration or failure rate).
-        tracesSampleRate: isProd ? 0.1 : 1.0,
->>>>>>> origin/main
+        tracesSampleRate: NODE_ENV === "production" ? 0.1 : 1.0,
     });
 }
 
