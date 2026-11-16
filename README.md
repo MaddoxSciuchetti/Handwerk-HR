@@ -342,7 +342,8 @@ Backend (`server/`):
 | `npm run prisma:generate`              | Regenerate the Prisma client after schema changes           |
 | `npx prisma migrate dev --name <desc>` | Create + apply a new migration                              |
 | `npx prisma migrate deploy`            | Apply pending migrations (CI / production)                  |
-| `npm test`                             | Jest unit tests                                             |
+| `npm test`                             | Full Jest suite (`src`, `test-unit`, `test-integration`)    |
+| `npm run test:unit`                    | Jest tests under `test-unit` (same scope as PR CI)          |
 
 Frontend (`client/`):
 
@@ -351,7 +352,8 @@ Frontend (`client/`):
 | `npm run dev`       | Vite dev server            |
 | `npm run build`     | Production build           |
 | `npm run preview`   | Serve the production build |
-| `npm run test:unit` | Vitest unit tests          |
+| `npm run test:unit`     | Vitest unit tests (`test-unit/`) |
+| `npm run test:coverage` | Vitest unit tests + coverage     |
 
 ## Database changes
 

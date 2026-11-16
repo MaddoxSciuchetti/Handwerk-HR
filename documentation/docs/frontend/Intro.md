@@ -12,5 +12,5 @@ This folder is the entry for the React + Vite SPA (`client/`). Use the links bel
 - Frontend performance work and web-vitals notes: [docs/optimization-deep-dive.md](../../../docs/optimization-deep-dive.md)
 - Recurring review checks (routes, mentions, cleanup): [docs/review.md](../../../docs/review.md)
 - Local setup, env vars, and common scripts: [root README](../../../README.md)
-- Client tests (unit / integration / e2e) and coverage: [Tests](../../clean-code-testing/docs/tests.md)
+- Client unit tests and coverage (`npm run test:unit`, `test:coverage`): [Tests](../../clean-code-testing/docs/tests.md)
 - Pull request expectations: [review checklist](../../clean-code-testing/docs/review-checklist.md)
