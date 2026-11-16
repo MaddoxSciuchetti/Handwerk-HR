@@ -30,6 +30,7 @@ The API uses structured logging and OpenTelemetry tracing (`requestId` / `traceI
 - SE_46 deep dive (PRs #225 / #226): [docs/observability-deep-dive.md](docs/observability-deep-dive.md)
 - Newcomers: [server/README.md](server/README.md)
 - Render incident search: [ops/observability.md](ops/observability.md)
+- Concurrent-user load probe: [ops/loadtest/README.md](ops/loadtest/README.md)
 
 ## Prerequisites
 

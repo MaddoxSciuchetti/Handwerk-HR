@@ -162,43 +162,64 @@ Mapped to SE_46 Performance, Scaling, and Observability learning goals.
 | Error monitoring | Done — Sentry client + server |
 | Process / deploy flush | Done — SIGTERM handlers |
 | Trace export | Partial — OTEL SDK + console; OTLP optional and unused in prod if Sentry owns tracing |
-| Metrics time series (Prometheus / Grafana / etc.) | Not yet — no RED/USE dashboards or custom app metrics beyond Render + Sentry |
-| Alerting (page on error rate / latency) | Partial — UptimeRobot covers “is it up?”; Sentry can alert on new issues; no latency/error-rate SLOs yet |
-| Log aggregation UI beyond Render | Not yet — Render search is enough for now; Graylog/ELK optional later |
+| Metrics time series | Done via Sentry — sampled transactions (`tracesSampleRate`) + custom `http.server.duration` / `http.server.5xx` metrics |
+| Alerting (page on error rate / latency) | Configure in Sentry UI (see below); UptimeRobot covers reachability |
+| Log aggregation UI beyond Render | Not yet — Render search is enough for now |
 | Uptime / synthetic checks | Done outside these PRs — UptimeRobot pings the API periodically |
 
-### Learning Goal 1 — Performance and Scaling (open ground)
+### Learning Goal 1 — Performance and Scaling
 
-| Topic | Status | Why it would be interesting next |
-|-------|--------|----------------------------------|
-| Caching | Not in these PRs | See “What load tests / caching / metrics mean” below |
-| Redis | Not introduced | Shared cache / rate limits / short-lived locks if we ever run multiple API instances |
-| Load testing (Locust / k6 / etc.) | Not yet | Baseline how hot routes behave under concurrent users — not only “max RPS until crash” |
-| Bottleneck finding | Informal only | Combine access-log `durationMs` with Prisma slow-query notes in `documentation/docs/database/` |
-| Horizontal vs vertical scaling | Docs exist under database scaling notes; app layer not exercised | Stateless API + sticky sessions/cookies need an explicit multi-instance story |
-| Connection pooling / DB pool sizing | Prisma defaults; not tuned here | Shows up first under load tests, not under logging |
+| Topic | Status | Notes |
+|-------|--------|-------|
+| Caching | Not yet | Still useful for hot read paths; see below |
+| Redis | Not introduced | Only needed if multiple API instances share cache/locks |
+| Load testing | Script added — `ops/loadtest/` | Run baseline + ramp locally/staging; paste numbers here when you have them |
+| Bottleneck finding | Informal + load probe | Pair `durationMs` / Sentry p95 with Prisma notes in `documentation/docs/database/` |
+| Horizontal vs vertical scaling | Docs under database scaling; app layer not exercised | Multi-instance story still open |
+| Connection pooling / DB pool sizing | Prisma defaults | Tune after the first ramp run shows DB wait |
 
-### What load tests / caching / metrics mean (for this project)
+### How Sentry covers latency and alerts (use what we already have)
 
-Load-test baselines: not mainly “how many requests until the server dies.” First measure a few realistic concurrent users hitting real hot paths (`/tasks` poller traffic, auth refresh, worker list, document PDF) and record p50/p95 latency and error rate. That number is the baseline. Later you can push harder to find the ceiling — but the useful SE_46 artifact is “under N concurrent users, `/tasks` stays under X ms,” not a vanity max-RPS number.
+With `SENTRY_DSN` set, our NodeSDK tracing is skipped and Sentry owns performance:
 
-Caching (where it would help here): the frontend already keeps some data fresh via React Query `staleTime` / slower polling. Backend caching would help when many clients ask for the same mostly-stable data (org settings, document master metadata, Microsoft license status, template lists) or when a heavy read (worker overview, task board) is hit every 15s by every open tab. Options range from short in-memory TTL cache in the Node process, to HTTP `Cache-Control` on truly public assets (you already use that for some document fonts), to Redis if the cache must be shared across instances. Do not cache personalized or auth-sensitive payloads without org/user keys and short TTLs.
+1. `tracesSampleRate` (10% prod / 100% local) sends HTTP transactions → Sentry → Performance.
+2. `Sentry.setupExpressErrorHandler` links 500s to the active transaction.
+3. Access logs also emit `http.server.duration` (distribution) and `http.server.5xx` (count) with low-cardinality `route` / `method` / `status_class`.
+4. `request_id` and `org_id` tags + `Sentry.setUser` make Issues searchable the same way as Render logs.
 
-Metrics and alerts (practical stack for us):
+Create the alerts in the Sentry project `handwerk-hr-server` (Alerts / Monitors — UI, not code):
 
-- UptimeRobot (already): “is the API reachable?” — keep this; it is the uptime half of monitoring.
-- Sentry (already): alert on new/regression issues, spike in error volume, or failed cron check-ins if we add them.
-- Render native metrics: CPU, memory, instance count — alert if the service is pegged or restarting.
-- Optional next step for “metrics dashboards”: export RED metrics (rate, errors, duration) via OpenTelemetry metrics or a small Prometheus endpoint into Grafana Cloud — so you see p95 latency over time, not only when someone opens Render logs.
-- Alert rule that is still missing: “p95 latency on `/tasks` above X for 5 minutes” or “5xx rate above Y%” — UptimeRobot will not catch a slow-but-up API.
+- Failure rate or count of `http.server.5xx` above a threshold for 5 minutes.
+- p95 of `http.server.duration` (filter `route:/tasks` if available) above e.g. 2000 ms.
+- Optional: spike in new Issues / regression of a resolved issue.
+- Keep UptimeRobot for “host down”; Sentry for “up but slow or erroring.”
 
-### Other adjacent ideas (optional, not blocking SE_46 observability evidence)
+### Load tests (how many concurrent users?)
 
-- Propagate `X-Request-Id` from the Vite client on every `apiClient` call so browser → API → Render is one id end-to-end.
-- When Sentry is on, still attach `requestId` as a Sentry tag everywhere (partial today via logs; make it explicit on the scope).
-- Turn on a real OTLP backend in staging or lean fully on Sentry performance and delete the unused NodeSDK path to reduce dual-stack confusion.
-- Sampling policy doc: what we keep at info vs debug under traffic growth.
-- Cron-specific Sentry check-ins / monitors for anniversary and deactivation jobs.
+Script: [`ops/loadtest/run.mjs`](../ops/loadtest/run.mjs) (readme next to it).
+
+- baseline: fixed VUs (e.g. 20) for 15s → p50/p95/error%.
+- ramp: raise concurrency until error rate > 5% or p95 > 2s → that step is your practical ceiling for that path.
+
+Example:
+
+```bash
+# Local /tasks with a real user
+LOADTEST_EMAIL='…' LOADTEST_PASSWORD='…' LOADTEST_MODE=ramp \
+  LOADTEST_PATH=/tasks LOADTEST_MAX_VUS=80 node ops/loadtest/run.mjs
+```
+
+Do not point this at production without `LOADTEST_ALLOW_NON_LOCAL=1` and a clear reason — prefer staging. Numbers from a run belong in this doc once collected.
+
+### Caching (still optional)
+
+Frontend already uses React Query `staleTime` / slower polling. Backend caching helps when many tabs re-read the same org-scoped data (`/tasks`, templates, license status). Start with a short in-process TTL before Redis.
+
+### Other adjacent ideas
+
+- Propagate `X-Request-Id` from the Vite `apiClient` so browser → API → Render/Sentry share one id.
+- Cron Sentry check-ins for anniversary / deactivation jobs.
+- Sampling policy under traffic growth (lower `tracesSampleRate` if volume climbs).
 
 ---
 
@@ -225,8 +246,10 @@ server/src/observability/tracing.ts      # NodeSDK start/stop
 server/src/observability/redact.ts
 server/src/observability/shutdown.ts
 server/src/middleware/requestId.middleware.ts
-server/src/middleware/accessLog.middleware.ts
-server/src/middleware/errorHandler.ts    # http.error + Sentry.captureException
+server/src/middleware/sentryContext.middleware.ts
+server/src/middleware/accessLog.middleware.ts  # + Sentry duration/5xx metrics
+server/src/middleware/errorHandler.ts
 client/src/instrument.ts                 # Sentry browser + replay
 ops/observability.md                     # Render search runbook
+ops/loadtest/run.mjs                     # concurrent-user probe
 ```

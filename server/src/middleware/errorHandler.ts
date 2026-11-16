@@ -51,7 +51,11 @@ export const errorHandler: ErrorRequestHandler = (error, req, res, next) => {
 
     if (statusCode >= 500) {
         logger.error("Request failed", logFields);
-        Sentry.captureException(error);
+        // Prefer Sentry.setupExpressErrorHandler capture; only capture here if
+        // that middleware did not run (e.g. thrown outside the Express stack).
+        if (!(res as { sentry?: string }).sentry) {
+            Sentry.captureException(error);
+        }
     } else {
         logger.warn("Request failed", logFields);
     }
