@@ -8,8 +8,36 @@ This repository uses GitHub Actions for checks. Deploy to Render is still driven
 |----------|------|------|------|
 | PR checks | `.github/workflows/pr-checks.yml` | Every pull request (+ `merge_group` for merge queue) | Client lint / typecheck / unit; then server typecheck / unit |
 | Nightly unit tests | `.github/workflows/nightly-unit.yml` | Daily 03:00 UTC + manual | Same client + server unit checks on `main` tip |
+| E2E nightly | `.github/workflows/e2e-nightly.yml` | Daily 03:15 UTC + manual | Postgres + API + Playwright on the GitHub runner (not production, not Render staging) |
 
 `protect-main` ruleset on `main` requires a PR and the status check **Client lint, typecheck & unit tests**. Prefer also requiring **Server typecheck & unit tests** in the ruleset UI once you confirm it is stable.
+
+## Where E2E nightly runs
+
+It runs entirely inside GitHub Actions (`ubuntu-latest`):
+
+1. Starts a Postgres service container on the runner.
+2. Migrates + seeds that DB, starts the API on `localhost:3000`.
+3. Installs the client and runs Playwright against `localhost` (Vite / Playwright config).
+
+It does not call your Render production or staging URLs. The git ref under test defaults to `main` (override with variable `E2E_TARGET_BRANCH` or a manual `workflow_dispatch` ref).
+
+## E2E nightly secrets / variables
+
+Configure under the repo: Settings → Secrets and variables → Actions (not Render env vars):
+
+| Name | Kind | Purpose |
+|------|------|---------|
+| `E2E_STRIPE_SECRET_KEY` | secret | Stripe test `sk_test_…` |
+| `E2E_PLAYWRIGHT_CHEF_EMAIL` | secret | Seeded admin email for authenticated journeys |
+| `E2E_PLAYWRIGHT_CHEF_PASSWORD` | secret | Same password as seed |
+| `E2E_AWS_ACCESS_KEY_ID` | secret | Worker file upload E2E |
+| `E2E_AWS_SECRET_ACCESS_KEY` | secret | Worker file upload E2E |
+| `E2E_AWS_REGION` | variable | AWS region |
+| `E2E_AWS_S3_BUCKET` | variable | S3 bucket used by the CI API (prefer a disposable test bucket) |
+| `E2E_TARGET_BRANCH` | variable (optional) | Override nightly git ref (default `main`) |
+
+Smoke-test: Actions → **E2E nightly** → Run workflow.
 
 ## Merge queue
 
@@ -17,8 +45,8 @@ The PR checks workflow already listens for `merge_group` (GitHub Merge Queue). T
 
 To turn it on (repo admin):
 
-1. GitHub → Settings → General → Pull Requests → enable **Merge queue**.
-2. Settings → Rules → `protect-main` (or branch protection) → require status checks that must pass in the queue (at least the Client check; ideally Server too).
+1. GitHub → Settings → General → Pull Requests → enable **Merge queue** (if offered).
+2. Settings → Rules → `protect-main` → require status checks (at least the Client check; ideally Server too). If **Require merge queue** is not in the rules list for this account, use **Allow auto-merge** plus required checks instead.
 3. Optional: set merge method and batch size.
 4. Merge a test PR via “Merge when ready” / queue to confirm `merge_group` runs PR checks.
 
