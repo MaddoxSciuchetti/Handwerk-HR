@@ -142,12 +142,8 @@ test.describe('Create employee journey', () => {
     await page.goto('/settings/employees');
     await expect(page).toHaveURL(/\/settings\/employees$/);
 
-    const employeeRow = page
-      .locator('div.flex.items-center.relative.group')
-      .filter({
-        hasText: new RegExp(`${employee.firstName}\\s+${employee.lastName}`),
-      })
-      .first();
+    const fullName = `${employee.firstName} ${employee.lastName}`;
+    const employeeRow = page.getByRole('row').filter({ hasText: fullName });
 
     await expect(employeeRow).toBeVisible({ timeout: 15_000 });
 
@@ -163,6 +159,6 @@ test.describe('Create employee journey', () => {
     await expect(confirmDeleteButton).toBeVisible();
     await confirmDeleteButton.click();
 
-    await expect(employeeRow).not.toBeVisible({ timeout: 15_000 });
+    await expect(employeeRow).toHaveCount(0, { timeout: 15_000 });
   });
 });

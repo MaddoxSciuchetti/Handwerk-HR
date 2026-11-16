@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { API_BASE_URL } from './constants';
 import { LoginCredentials, SignupTestUser } from './types';
+import { expectLoggedInAs } from './utils/expect-logged-in';
 
 test.describe('Signin journey', () => {
   test.setTimeout(60_000);
@@ -63,8 +64,6 @@ test.describe('Signin journey', () => {
       timeout: 60_000,
       waitUntil: 'commit',
     });
-    await expect(
-      page.getByText(testUser.vorname, { exact: true })
-    ).toBeVisible();
+    await expectLoggedInAs(page, testUser.vorname);
   });
 });

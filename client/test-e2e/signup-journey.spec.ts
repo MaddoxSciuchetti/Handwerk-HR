@@ -1,7 +1,8 @@
-import { expect, test } from '@playwright/test';
+import { test } from '@playwright/test';
 import { API_BASE_URL } from './constants';
 import type { CompleteSignupUser } from './utils/complete-signup-journey';
 import { completeSignupAndLogin } from './utils/complete-signup-journey';
+import { expectLoggedInAs } from './utils/expect-logged-in';
 
 type SignupJourneyUser = CompleteSignupUser;
 
@@ -32,8 +33,6 @@ test.describe('Signup journey', () => {
 
   test('should complete onboarding signup and login flow', async ({ page }) => {
     await completeSignupAndLogin(page, testUser);
-    await expect(
-      page.getByText(testUser.vorname, { exact: true })
-    ).toBeVisible();
+    await expectLoggedInAs(page, testUser.vorname);
   });
 });

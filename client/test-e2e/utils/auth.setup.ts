@@ -1,8 +1,9 @@
-import { expect, test as setup } from '@playwright/test';
+import { test as setup } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { completeSignupAndLogin } from './complete-signup-journey';
+import { expectLoggedInAs } from './expect-logged-in';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,9 +31,7 @@ setup(
 
     await completeSignupAndLogin(page, testUser);
 
-    await expect(
-      page.getByText(testUser.vorname, { exact: true })
-    ).toBeVisible();
+    await expectLoggedInAs(page, testUser.vorname);
 
     fs.mkdirSync(authDir, { recursive: true });
     fs.writeFileSync(

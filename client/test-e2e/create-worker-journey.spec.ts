@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { Buffer } from 'buffer';
 import { createWorkerFixture } from './fixtures/test-workers';
 import {
-  fillWorkerForm,
+  createWorkerViaFastTrack,
   getWorkerRow,
   openWorkerDetailFromRow,
 } from './utils/create-worker-journey.utils';
@@ -26,24 +26,9 @@ test.describe('Onboarding worker view journey', () => {
     await page.goto('/worker-lifycycle');
     await expect(page).toHaveURL(/\/worker-lifycycle$/);
 
-    await page
-      .getByRole('button', { name: /^Hinzufügen$/i })
-      .first()
-      .click();
+    await createWorkerViaFastTrack(page, worker);
 
-    await page.locator('#radio-onboarding').click();
-
-    await expect(
-      page.getByRole('heading', { name: /Eingabe Onboarding/i })
-    ).toBeVisible();
-
-    await fillWorkerForm(page, worker);
-    await page
-      .locator('aside')
-      .getByRole('button', { name: /^Hinzufügen$/i })
-      .click();
-
-    const workerRow = getWorkerRow(page, worker.firstName);
+    const workerRow = getWorkerRow(page, worker.fullName);
     await expect(workerRow).toHaveCount(1, { timeout: 15_000 });
     await expect(workerRow).toBeVisible({ timeout: 15_000 });
 
@@ -97,16 +82,17 @@ test.describe('Onboarding worker view journey', () => {
     await page.goto('/worker-lifycycle');
     await expect(page).toHaveURL(/\/worker-lifycycle$/);
 
-    const createdWorkerRow = getWorkerRow(page, worker.firstName);
+    const createdWorkerRow = getWorkerRow(page, worker.fullName);
     await expect(createdWorkerRow).toHaveCount(1, { timeout: 15_000 });
     await expect(createdWorkerRow).toBeVisible({ timeout: 15_000 });
 
-    await createdWorkerRow.hover();
-    await createdWorkerRow.getByRole('button', { name: /Auswählen/i }).click();
+    await createdWorkerRow.getByRole('checkbox', { name: /Auswählen/i }).click();
 
     await page
-      .getByRole('button', { name: /Ausgewählte Aufgaben löschen/i })
+      .getByRole('button', { name: /Ausgewählte Handwerker löschen/i })
       .click();
+
+    await page.getByRole('button', { name: /Löschen bestätigen/i }).click();
 
     await expect(createdWorkerRow).toHaveCount(0, { timeout: 15_000 });
   });
