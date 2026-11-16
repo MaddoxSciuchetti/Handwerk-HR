@@ -25,8 +25,9 @@ pgbench/   Benchmark queries
 
 ## Observability
 
-The API uses structured logging and OpenTelemetry tracing (`requestId` / `traceId` in Render logs).
+The API uses structured logging and OpenTelemetry tracing (`requestId` / `traceId` in Render logs). Sentry covers API and client exceptions when DSNs are set.
 
+- SE_46 deep dive (PRs #225 / #226): [docs/observability-deep-dive.md](docs/observability-deep-dive.md)
 - Newcomers: [server/README.md](server/README.md)
 - Render incident search: [ops/observability.md](ops/observability.md)
 

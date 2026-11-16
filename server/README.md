@@ -77,8 +77,9 @@ Use `cronInfo` / `cronWarn` / `cronError` from `src/utils/cronLog.ts`. The job n
 
 ## Further reading
 
+- SE_46 deep dive (what shipped + gaps): [`../docs/observability-deep-dive.md`](../docs/observability-deep-dive.md)
 - Incident search on Render: [`../ops/observability.md`](../ops/observability.md)
 
 ## Next steps (not in this layer yet)
 
-Metrics/alerts dashboards, client RUM/Sentry, and a mandatory third-party trace UI.
+Metrics/alerts dashboards, a mandatory third-party OTLP UI (or lean fully on Sentry performance), load-test baselines, and caching/Redis for the scaling half of SE_46. Client + API Sentry landed in PR #226.
