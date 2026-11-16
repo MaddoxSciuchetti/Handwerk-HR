@@ -4,7 +4,7 @@ This folder is the entry for the React + Vite SPA (`client/`). Quality for users
 
 ## Software quality focus (SE frontend)
 
-We treat frontend performance as a product requirement: slow first paint, layout shift, and heavy polling hurt trust the same way a bug does. The core implementation that shows how seriously we take this is measuring **Web Vitals** (LCP, INP, CLS, and related signals), setting a baseline outside localhost, then shipping optimizations and re-measuring.
+We treat frontend performance as a product requirement: slow first paint, layout shift, and heavy polling hurt trust the same way a bug does. The core implementation that shows how seriously we take this is measuring Web Vitals (LCP, INP, CLS, and related signals), setting a baseline outside localhost, then shipping optimizations and re-measuring.
 
 Read the evidence and approach: [Frontend optimization deep dive](../../../docs/optimization-deep-dive.md).
 

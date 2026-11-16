@@ -4,7 +4,7 @@ This folder is the entry for the Express + Prisma API (`server/`). Quality for u
 
 ## Software quality focus (SE backend)
 
-We treat observability as a product requirement: a failing feature with no `requestId`, structured logs, or exception grouping leaves the user stuck and the team guessing. The core implementation that shows how seriously we take this is **structured logging (pino)**, **request correlation**, **OpenTelemetry**, and **Sentry**, so a production incident can be searched end-to-end.
+We treat observability as a product requirement: a failing feature with no `requestId`, structured logs, or exception grouping leaves the user stuck and the team guessing. The core implementation that shows how seriously we take this is structured logging (pino), request correlation, OpenTelemetry, and Sentry, so a production incident can be searched end-to-end.
 
 Read the evidence and approach: [Observability deep dive](../../../docs/observability-deep-dive.md). Day-to-day logging habits: [server/README.md](../../../server/README.md). Render search runbook: [ops/observability.md](../../../ops/observability.md).
 
