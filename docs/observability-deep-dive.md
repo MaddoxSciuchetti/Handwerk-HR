@@ -9,7 +9,9 @@ SE_46 evidence for the observability side of Performance, Scaling, and Observabi
 
 ## Purpose
 
-#225 and #226 add structured logging, request correlation, OpenTelemetry, and Sentry so production failures are searchable in Render and grouped in Sentry. UptimeRobot still covers host reachability.
+One issue that reminded me of the importance of having observability and being able to search for request ids came up when I was visiting a user and she was trying out a new feature. Of course the feature failed and I did not know directly what to do. This was before me having implemented any form of request ids or tracing. What continued was a rather long search for the error instead of being able to pinpoint the issue right away. This makes me grateful for my current implementation. Whenever there now is a mistake I can pinpoint the issue much faster due to having a much better insight into my request response cycle and being able to gather more information quickly to understand what the problem is about.
+
+That experience is why I built #225 and #226. I added structured logging, request correlation, OpenTelemetry, and Sentry so that when something fails in production I can search Render by a concrete id and see the matching access line, error line, and related domain events — and so that exceptions also show up grouped in Sentry. UptimeRobot still covers whether the host is reachable at all.
 
 What I would do differently next time:
 
@@ -21,45 +23,43 @@ What I would do differently next time:
 
 ## PR #225 — Structured logging and OpenTelemetry
 
-### What we did
+### What I did
 
-- Request id middleware assigns or reuses `X-Request-Id`, binds AsyncLocalStorage, and sets `http.request_id` on the active span.
-- Access log middleware writes one `http.access` line per finished request (`durationMs`, status, path). Health/root stay quiet at debug when healthy.
-- Shared pino logger merges `requestId` / `traceId` / `spanId` / optional `userId` / `orgId`, and redacts secrets.
-- OpenTelemetry boots before Express; spans go to stdout and optionally to `OTEL_EXPORTER_OTLP_ENDPOINT`.
-- Hot paths (Stripe, Microsoft Graph, mention mail, cron) use the same `event` + `outcome` shape.
-- Error handler logs `http.error` and returns `requestId` on 500 JSON.
-- SIGTERM/SIGINT flush traces and logs; process error handlers log unhandled failures.
-- Docs: `ops/observability.md`, `server/README.md`.
+I replaced ad-hoc `console.*` on the hot path with a shared pino logger and request correlation so every meaningful request can be found again later.
+
+I added request id middleware that assigns or reuses `X-Request-Id`, binds that id into AsyncLocalStorage for the rest of the request, and sets `http.request_id` on the active span when one exists. Access log middleware then writes one `http.access` line when the response finishes, including `durationMs`, status, and path. Health and root checks stay at debug when they succeed so they do not flood the info stream on Render.
+
+The shared logger always merges `requestId`, `traceId`, `spanId`, and optional `userId` / `orgId` into the fields I log, and redacts secrets such as passwords, tokens, and cookies. I boot OpenTelemetry before Express is imported so HTTP auto-instrumentation can patch correctly; spans go to stdout and, if I set `OTEL_EXPORTER_OTLP_ENDPOINT`, also to that exporter.
+
+On hot paths — Stripe webhooks, Microsoft Graph, mention mail, and cron via `cronLog` — I use the same `event` + `outcome` shape as the HTTP access logs. The error handler logs `http.error` and returns `requestId` in the 500 JSON body so I can copy that id from a failing client and search it. On SIGTERM/SIGINT I flush traces and logs; I also log unhandled rejections and uncaught exceptions before exit. I documented the search habit in `ops/observability.md` and how to log from new features in `server/README.md`.
 
 ### Effect
 
-Copy `requestId` from a 500 body or response header, search it in Render, and you get the access line, error line, and related domain events for that request — plus per-request timing.
+When something fails, I copy `requestId` from the 500 body or the `X-Request-Id` response header, paste it into Render logs, and get the access line, the error line, and related domain events for that same request, including how long it took. That is the difference from sitting with a user and not knowing where to start.
 
 ### Learning
 
-`requestId` on the response plus structured access/error logs mattered more than the OTEL exporter for day-one ops. Quiet health checks keep deploy noise out of the info stream.
+For day-one ops, putting `requestId` on the response and writing structured access/error logs mattered more than the OTEL exporter itself. Keeping health checks quiet at info level also mattered so deploy noise does not bury real failures.
 
 ---
 
 ## PR #226 — Sentry error monitoring
 
-### What we did
+### What I did
 
-- Server `instrument.ts` initializes `@sentry/node` from `SENTRY_DSN` before the rest of the app.
-- When Sentry is enabled, our OTEL NodeSDK is skipped.
-- Express `setupExpressErrorHandler` plus our JSON error formatter; 500s become Sentry issues.
-- Client `instrument.ts` initializes `@sentry/react` with router tracing and session replay (`VITE_SENTRY_DSN` at build time).
-- Optional Vite source-map upload when `SENTRY_AUTH_TOKEN` is set.
-- Access logs also emit Sentry metrics `http.server.duration` and `http.server.5xx`; scope tags include `request_id` / `org_id` / user.
+I put a product UI on top of the log foundation so I do not only rely on grepping Render.
+
+Server `instrument.ts` initializes `@sentry/node` from `SENTRY_DSN` before the rest of the app. When that DSN is set, I skip my OTEL NodeSDK so two tracing stacks do not fight. I register Express `setupExpressErrorHandler` and keep my JSON error formatter; unexpected 500s become Sentry issues while I still write structured logs for Render.
+
+On the client, `instrument.ts` initializes `@sentry/react` with TanStack Router tracing and session replay, using `VITE_SENTRY_DSN` at build time. If `SENTRY_AUTH_TOKEN` is present, Vite can upload source maps so production stacks stay readable. I also emit Sentry metrics `http.server.duration` and `http.server.5xx` from the access log path, and I tag the Sentry scope with `request_id`, `org_id`, and the user id so an issue lines up with what I search in Render.
 
 ### Effect
 
-Render logs stay useful for searching by `requestId`. Sentry groups exceptions and can alert on slow or erroring routes while the host is still up.
+I still use Render when I already have a `requestId` and want the full log trail. Sentry is where exceptions get grouped and where I can set alerts when a route starts erroring or getting slow even though UptimeRobot still says the host is up.
 
 ### Learning
 
-Pick one tracing owner per process. Client DSN is a frontend build env (`VITE_*`); server DSN is an API runtime env.
+I need one tracing owner per process. The client DSN has to exist at frontend build time (`VITE_*`); the server DSN is a runtime env on the API service — easy to misconfigure across two Render services if I am not careful.
 
 ---
 
@@ -67,8 +67,8 @@ Pick one tracing owner per process. Client DSN is a frontend build env (`VITE_*`
 
 1. Hit an API route → response has `X-Request-Id`.
 2. Force a 500 → body includes `requestId`.
-3. Render → API logs → search that id → `http.access` / `http.error`.
-4. With DSNs set, trigger a test exception once → confirm in Hadox `handwerk-hr-server` / `handwerk-hr-frontend`, then resolve.
+3. In Render → API logs, search that id → `http.access` / `http.error`.
+4. With DSNs set, trigger a test exception once → confirm in Hadox `handwerk-hr-server` / `handwerk-hr-frontend`, then resolve it.
 
 Unit coverage: redact helper, request-id middleware, cron log bridge.
 
@@ -76,33 +76,32 @@ Unit coverage: redact helper, request-id middleware, cron log bridge.
 
 ## Using Sentry for alerts (alongside UptimeRobot)
 
-UptimeRobot: host reachable.  
-Sentry: erroring or slow while still up.
+UptimeRobot tells me whether the host is reachable. Sentry is for when the host is up but requests are failing or slow.
 
-In `handwerk-hr-server` → Alerts / Monitors:
+In project `handwerk-hr-server` → Alerts / Monitors I can create monitors for:
 
-- Spike in `http.server.5xx` or failure rate.
-- p95 of `http.server.duration` (e.g. `/tasks`) above a budget such as 2000 ms.
+- a spike in `http.server.5xx` or failure rate
+- p95 of `http.server.duration` (for example on `/tasks`) above a budget such as 2000 ms
 
 ---
 
 ## Load probe (concurrent users)
 
-Separate from #225/#226. Script: [`ops/loadtest/run.mjs`](../ops/loadtest/run.mjs).
+This is separate from #225 and #226. The script lives at [`ops/loadtest/run.mjs`](../ops/loadtest/run.mjs).
 
-- baseline: fixed concurrent clients → p50/p95/error%.
-- ramp: raise concurrency until error rate or p95 blows a budget.
+- baseline: a fixed number of concurrent clients → p50/p95/error%
+- ramp: raise concurrency until error rate or p95 blows a budget → a practical ceiling for that path
 
-Prefer local/staging. Non-local needs `LOADTEST_ALLOW_NON_LOCAL=1`.
+I prefer local or staging. Non-local targets need `LOADTEST_ALLOW_NON_LOCAL=1`.
 
 ---
 
 ## Still interesting
 
-- Caching hot org-scoped reads (`/tasks`, templates, license status).
-- Paste first load-probe ramp results into this doc.
-- Propagate `X-Request-Id` from the Vite `apiClient` end-to-end.
-- Cron Sentry check-ins for anniversary / deactivation jobs.
+- Caching hot org-scoped reads (`/tasks`, templates, license status)
+- Paste first load-probe ramp results into this doc
+- Propagate `X-Request-Id` from the Vite `apiClient` end-to-end
+- Cron Sentry check-ins for anniversary / deactivation jobs
 
 ---
 
@@ -111,7 +110,7 @@ Prefer local/staging. Non-local needs `LOADTEST_ALLOW_NON_LOCAL=1`.
 | Variable | Where | Role |
 |----------|-------|------|
 | `LOG_LEVEL` | API runtime | pino level |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | API runtime | OTLP export when our NodeSDK runs |
-| `SENTRY_DSN` | API runtime | `@sentry/node` (skips our NodeSDK tracing) |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | API runtime | OTLP export when my NodeSDK runs |
+| `SENTRY_DSN` | API runtime | `@sentry/node` (skips my NodeSDK tracing) |
 | `VITE_SENTRY_DSN` | Frontend build | `@sentry/react` |
 | `SENTRY_AUTH_TOKEN` | Frontend CI/build | Optional source maps |
