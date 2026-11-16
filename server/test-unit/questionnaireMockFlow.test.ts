@@ -14,6 +14,8 @@ import { fromSegments } from "../../shared/document";
 jest.mock("@/constants/env", () => ({
     FRONTENDURL: "http://localhost:5173",
     QUESTIONNAIRE_MOCK_RESPONSES: true,
+    appEnv: () => process.env.APP_ENV?.trim().toLowerCase() ?? "",
+    nodeEnv: () => process.env.NODE_ENV?.trim() || "test",
 }));
 jest.mock("@/lib/prisma", () => ({
     prisma: {
