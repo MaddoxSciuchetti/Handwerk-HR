@@ -4,24 +4,24 @@ Onboarding / offboarding workflow tool. Express + Prisma + PostgreSQL on the bac
 
 > 💡 **Tip — read this before you push**
 >
-> When having push access to this repository, thoroughly read through the entire codebase. To get a better high-level view, start with these two folders under `documentation/`:
+> When having push access to this repository,thoroughly read through the entire codebase. To get a better high-level view, start with these two folders:
 >
-> - Database [intro](./documentation/docs/database/Intro.md)
-> - Clean code & testing [intro](./documentation/clean-code-testing/docs/intro.md)
+> - `database/` [intro](./documentation/docs/database/Intro.md)
+> - `clean-code-testing/` [intro](./documentation/clean-code-testing/docs/intro.md)
 
-The folder `documentation/docs/database/` covers how we store data, performance testing, and maintenance as the project grows (Postgres on **Render**).
+The folder `database/` (under `documentation/docs/`) gives you the current implementation overview regarding how we store the data that we collect. It also contains detailed information on how we test performance and how we approach database maintenance when this project starts to grow. Production Postgres runs on **Render Managed Postgres**.
 
-The folder `documentation/clean-code-testing/` covers how to write code here: style, principles, tests, and CI/CD. Include it in agent context when contributing.
+The folder `clean-code-testing/` (under `documentation/`) provides you with information on how to write code in this project. This includes how this project approaches testing but also the kind of syntax we write and the folder organization this project follows. If you decide to use an Agent, please include this folder in the context.
 
 High level folder architecture
 
 ```
-client/                         React + Vite frontend
-server/                         Express + Prisma backend
-documentation/docs/database/    Schema / performance / backup notes
-documentation/clean-code-testing/
-documentation/pgbench/          Benchmark queries
-ops/                            Render observability & cron helpers
+client/          React + Vite frontend
+server/          Express + Prisma backend
+documentation/
+  docs/database/       Schema notes
+  clean-code-testing/  Style, principles, tests, CI/CD
+  pgbench/             Benchmark queries
 ```
 
 ## Observability

@@ -1,4 +1,4 @@
-Below are clean code principles followed in this project:
+Below are clean code principles followed in this project. Each section links to a live file you can open to show the principle in the codebase:
 
 ## DRY
 

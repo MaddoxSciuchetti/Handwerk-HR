@@ -1,17 +1,17 @@
 # Clean code & testing — start here
 
-If you want to add code to this project, improve the README, or change architecture, clone this repo, create a feature branch, and push changes. Read the files below first. Fill out [`.github/pull_request_template.md`](../../../.github/pull_request_template.md) on every pull request. PRs without the template are not reviewed or merged.
+If you want to add code to this project, have improvements to the README.md or for the overall code architecture, clone this repo, create a feature branch and push changes. Ensure that you look at the below listed files to get more context. Also ensure to fill out the pull request template on every pull request that you open. Pull request that do not contain the template will not be looked at and therefore not merged. Below is the template [template](../../../.github/pull_request_template.md)
 
-- High-level style guide for first contributions: [Style guide](style-guide.md)
-- Clean-code principles with live examples: [Principles](principles.md)
-- Demo map principle → file (for walkthroughs): [Compliance walkthrough](compliance-walkthrough.md)
-- Decisions made in this project: [Decisions](decisions.md)
-- Tests: [Tests](tests.md)
-- CI/CD: [CI/CD](ci.cd.md)
+- High level style guide that will help you quickly write your first lines in this project [Style guide](style-guide.md)
+- Clean code principles and how they are applied in the codebase. Ensure to follow these! [Principles](principles.md)
+- Decisions made in this project [Decisions](decisions.md)
+
+- Handling tests in this project [Tests](tests.md)
+- CI/CD of this project [workflow](ci.cd.md)
 
 ### What is this project about?
 
-This database manages the lifecycle of a handyman that is responsible for repairing heating, ventilation and air-conditioning systems at a HVAC company. Due to turnover being high in the trades industry, companies frequently have to onboard and offboard their workers, each event taking a series of tasks (preparing contract, ordering car) that an office worker has to coordinate. This database tracks the workers, the lifecycle they are in and the tasks within each event.
+This database manages the lifecycle of a handyman that is responsible for repairing heating, ventilation and air-conditioning systems at a hvac company. Due to turnover being high in the trades industry, companies frequently have to onboard and offboard their workers, each event taking a series of tasks (preparing contract, ordering car) that an office worker has to coordinate. This database tracks the workers, the lifecycle they are in and the tasks within each event.
 
 The typical scale consists of 1-10 office workers, 5-50 trades people working with about 5 active engagements. A user may belong to multiple organizations as the organization has the possibility to hire a HR consultant that works on those tasks. There is overall a low concurrency OLTP workload during business hours which is also the only time when the OLTP workload is measurable.
 
