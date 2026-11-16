@@ -45,13 +45,15 @@ const pageHostname =
 
 export const API_URL = alignLocalApiUrl(configuredApiUrl, pageHostname);
 
-export const IS_DEV = Boolean(viteEnv?.DEV);
-export const IS_PROD = Boolean(viteEnv?.PROD);
-export const APP_MODE = viteEnv?.MODE ?? 'development';
-export const VITE_SENTRY_DSN = viteEnv?.VITE_SENTRY_DSN ?? '';
+/** Live reads so `vi.stubEnv('PROD'|'DEV'|...)` matches direct `import.meta.env` access. */
+export const isDev = () => Boolean(import.meta.env.DEV);
+export const isProd = () => Boolean(import.meta.env.PROD);
+export const appMode = () => import.meta.env.MODE ?? 'development';
+export const viteSentryDsn = () =>
+  (import.meta.env.VITE_SENTRY_DSN as string | undefined) ?? '';
 
 // Repeated template applications are available only in the local integration demo.
 export const TEMPLATE_DEMO_MODE =
-  IS_DEV &&
-  APP_MODE !== 'test' &&
+  isDev() &&
+  appMode() !== 'test' &&
   getEnv('VITE_INTEGRATIONS_MOCK', 'false') === 'true';
