@@ -1,6 +1,34 @@
 # Frontend documentation
 
-This folder is the entry for the React + Vite SPA (`client/`). Use the links below to find the right readme.
+This folder is the entry for the React + Vite SPA (`client/`). Quality for users shows up here as fast, stable pages — not just features that work once.
+
+## Software quality focus (SE frontend)
+
+We treat frontend performance as a product requirement: slow first paint, layout shift, and heavy polling hurt trust the same way a bug does. The core implementation that shows how seriously we take this is measuring **Web Vitals** (LCP, INP, CLS, and related signals), setting a baseline outside localhost, then shipping optimizations and re-measuring.
+
+Read the evidence and approach: [Frontend optimization deep dive](../../../docs/optimization-deep-dive.md).
+
+## Core tools
+
+| Area | Tools | Why they matter for quality |
+| --- | --- | --- |
+| App runtime | React 19, TypeScript, Vite | Typed SPA with a fast local/prod build path |
+| Routing & data | TanStack Router, TanStack Query, Axios | Predictable navigation and server-state fetching |
+| UI | Tailwind CSS, Radix / shadcn-style primitives | Shared layout and interaction patterns |
+| Forms & validation | React Hook Form, Zod | Consistent client validation |
+| Quality gates | ESLint, Prettier, `tsc` typecheck | Mechanical correctness and format before review |
+| Tests | Vitest, Testing Library | Unit/UI behaviour coverage (`npm run test:unit`) |
+| Performance | `web-vitals`, Vite bundle analyze, Puppeteer-based route checks (see deep dive) | Prove load/interaction quality with numbers |
+| Errors in prod | Sentry (`@sentry/react`) | Group client exceptions and session context |
+
+Commands joiners use most often (from `client/`):
+
+```bash
+npm run format
+npm run lint
+npm run typecheck
+npm run test:unit
+```
 
 ## Where to go
 

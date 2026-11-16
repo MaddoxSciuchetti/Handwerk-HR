@@ -1,5 +1,12 @@
 # Clean code & testing — start here
 
+The aim of this project is to ensure that the user has the highest quality software product. How we approach this problem can best be seen by two core implementations for frontend and backend:
+
+- **Frontend** — performance as a product requirement (Web Vitals, measured optimizations): [Frontend intro](../../docs/frontend/Intro.md)
+- **Backend** — observability as a product requirement (structured logs, tracing, Sentry): [Backend intro](../../docs/backend/Intro.md)
+
+Each of those pages also lists the core tools used in that half of the stack.
+
 If you want to add code to this project, improve the README, or change architecture: clone the repo, create a feature branch, then follow this path before your first PR.
 
 ### How to contribute (read in order)
@@ -15,6 +22,8 @@ If you want to add code to this project, improve the README, or change architect
 
 ### Context docs
 
+- Frontend quality focus + tools: [Frontend intro](../../docs/frontend/Intro.md)
+- Backend quality focus + tools: [Backend intro](../../docs/backend/Intro.md)
 - High level style guide that will help you quickly write your first lines in this project [Style guide](style-guide.md)
 - Clean code principles and how they are applied in the codebase. Ensure to follow these! [Principles](principles.md)
 - Decisions made in this project [Decisions](decisions.md)
