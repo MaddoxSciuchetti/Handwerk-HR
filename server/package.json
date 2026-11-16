@@ -22,7 +22,8 @@
         "test:pdf-visual": "node --import tsx --require ./jest.setup.cjs test-integration/documentPdf.visual.ts",
         "test:pdf-layout": "node --import tsx --require ./jest.setup.cjs test-integration/documentPdfNative.layout.ts",
         "db:repair-prisma-migration": "prisma db execute --file prisma/repair_modified_migration.sql && prisma migrate deploy",
-        "db:fix-subscription-plan-enum": "prisma db execute --file prisma/fix_subscription_plan_enum_drift.sql"
+        "db:fix-subscription-plan-enum": "prisma db execute --file prisma/fix_subscription_plan_enum_drift.sql",
+        "loadtest": "node ../ops/loadtest/run.mjs"
     },
     "keywords": [],
     "author": "",

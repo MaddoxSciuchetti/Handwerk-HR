@@ -8,6 +8,8 @@ if (dsn) {
         dsn,
         environment: process.env.NODE_ENV ?? "development",
         // Local: capture every trace for verification. Production: 10%.
+        // These transactions power Sentry Performance + span/metric monitors
+        // (Alerts → create monitor on p95 duration or failure rate).
         tracesSampleRate: isProd ? 0.1 : 1.0,
     });
 }
