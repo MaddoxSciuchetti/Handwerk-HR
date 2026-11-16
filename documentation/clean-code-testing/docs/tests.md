@@ -1,6 +1,6 @@
 # Tests
 
-Before pushing changes ensure that you have. (This is also listed in the pull request [template](../../.github/pull_request_template.md))
+Before pushing changes ensure that you have. (This is also listed in the pull request [template](../../../.github/pull_request_template.md))
 
 1. Written a test for this new feature
 2. Ran the test on this feature
