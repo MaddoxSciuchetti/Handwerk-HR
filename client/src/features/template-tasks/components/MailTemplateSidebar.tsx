@@ -1,6 +1,6 @@
 import { useDrawerStack } from '@/components/ui/drawer-stack';
 import { MailTemplatePage } from '@/features/settings/mail-template/MailTemplatePage';
-import FormFields from '@/components/form/FormFields';
+import { FormFields } from '@/components/form/FormFields';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { SidebarAside } from '@/features/worker-task-management/components/tasks/task-sidebar/SidebarAside';

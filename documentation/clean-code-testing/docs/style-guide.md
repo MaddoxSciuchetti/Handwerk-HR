@@ -13,6 +13,8 @@ If in any case you see code that violates the below principles, open a new branc
 
 To create your first React component (a screen or ui component), write `export function MyComponent(...)` at the top of the file—not `export const MyComponent = () => { ... }`.
 
+Exceptions: TanStack Router route modules (`export const Route = createFileRoute(...)`) and TipTap `Node.create` exports.
+
 Good:
 
 ```tsx

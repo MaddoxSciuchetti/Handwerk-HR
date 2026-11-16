@@ -1,4 +1,4 @@
-import FormFields from '@/components/form/FormFields';
+import { FormFields } from '@/components/form/FormFields';
 import FormSelectOptions from '@/components/form/FormSelectOptions';
 /* eslint-disable react-refresh/only-export-components */
 import {

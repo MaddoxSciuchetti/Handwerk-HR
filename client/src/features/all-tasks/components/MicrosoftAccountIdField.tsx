@@ -1,4 +1,4 @@
-import FormFields from '@/components/form/FormFields';
+import { FormFields } from '@/components/form/FormFields';
 import { useId } from 'react';
 import type { FieldErrors, UseFormRegister } from 'react-hook-form';
 import type { TaskSidebarForm } from '../types/index.types';

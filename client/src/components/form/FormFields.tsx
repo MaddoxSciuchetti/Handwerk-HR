@@ -2,8 +2,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { ErrorMessage } from '@hookform/error-message';
-import { ComponentProps } from 'react';
-import {
+import type { ComponentProps } from 'react';
+import type {
   FieldErrors,
   FieldValues,
   Path,
@@ -24,7 +24,7 @@ type FormFieldsProps<TFieldValues extends FieldValues> = Omit<
   required?: boolean;
 };
 
-const FormFields = <TFieldValues extends FieldValues>({
+export function FormFields<TFieldValues extends FieldValues>({
   errors,
   register,
   label,
@@ -33,7 +33,7 @@ const FormFields = <TFieldValues extends FieldValues>({
   className,
   id,
   ...props
-}: FormFieldsProps<TFieldValues>) => {
+}: FormFieldsProps<TFieldValues>) {
   return (
     <div className="flex min-w-0 flex-col gap-2">
       {label && (
@@ -59,6 +59,4 @@ const FormFields = <TFieldValues extends FieldValues>({
       />
     </div>
   );
-};
-
-export default FormFields;
+}

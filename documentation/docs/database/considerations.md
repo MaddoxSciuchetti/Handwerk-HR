@@ -19,6 +19,6 @@ I also considered using a tool such as K6 to monitor the entire speed of an HTTP
 
 ## Independent backups
 
-To not be completely bound to Neon, I also considered setting up a worker that regularly dumps the SQL database to a dedicated storage system. I decided not to do this as the option Neon provides is enough security for the current state of the DB. With an increase of the data volume it would make sense to create this worker.
+To avoid relying only on Render’s managed snapshots, I also considered a worker that regularly runs `pg_dump` to durable object storage. That is not required yet: Render’s daily backups (and PITR on eligible plans) are enough for the current data volume. If retention needs grow or we want vendor-independent archives, schedule logical dumps to object storage.
 
-However, another consideration is that after time dumping the databases is no longer feasible, as they become too big in size and thus also require more storage. Another option would be to use the file-system backup option and run this at midnight. This would lead to the database being down for some time, however, considering the current small number of users and the timezone this project is in, it can prove to be feasible.
+Very large databases make full dumps slower and heavier. At that point prefer Render PITR / snapshot restores for operational recovery, and keep infrequent logical exports only as a long-term archive.

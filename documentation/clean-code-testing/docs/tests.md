@@ -45,20 +45,15 @@ Test coverage is being tested with jest and vite. (playwright is currently not i
 
 Below is an example of a test coverage result before implementing a refactor and after implementing a refactor. The refactor could only be safely made due to extensive testing before ensuring that the refactor did not change the functionality of the refactored code.
 
-## Before
+## Before / after coverage screenshots
 
-Before
+Example coverage screenshots used during a safe refactor:
 
-## After
+- Before: [`before.png`](./before.png)
+- After: [`after.png`](./after.png)
 
-After
+## Code analysis tools
 
-## Code analysis tools:
+This project uses Aikido Security ([docs](https://help.aikido.dev/)).
 
-This project uses Aikido Security [docs](https://help.aikido.dev/)
-
-Aikido is a tool that analyzes the entire codebase for security vulnerabilities. After having pinpointed the issues it gives a severity level and also solutions on how to fix the problem. Use aikido security to ensure that any changes you made do not cause security vulnerbilitues for the codebase.
-
-Below is a screenshot of the aikido manager showing the analysis of my codebase:
-
-image
+Aikido analyzes the codebase for security vulnerabilities, severity, and remediation guidance. Use it so changes do not introduce new security issues.

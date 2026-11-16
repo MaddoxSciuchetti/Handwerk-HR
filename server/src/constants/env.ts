@@ -52,6 +52,15 @@ export const DOCUMENT_FONT_DIR =
     process.env.DOCUMENT_FONT_DIR?.trim() ||
     (NODE_ENV === "development" ? resolve("document-fonts") : "");
 
+export const AWS_REGION = process.env.AWS_REGION?.trim() ?? "";
+export const AWS_S3_BUCKET = process.env.AWS_S3_BUCKET?.trim() ?? "";
+export const contactInquiryTo = () =>
+    process.env.CONTACT_INQUIRY_TO?.trim() ?? "";
+export const LOG_LEVEL = process.env.LOG_LEVEL?.trim() ?? "";
+export const OTEL_EXPORTER_OTLP_ENDPOINT =
+    process.env.OTEL_EXPORTER_OTLP_ENDPOINT?.trim() ?? "";
+export const SENTRY_DSN = process.env.SENTRY_DSN?.trim() ?? "";
+
 export const MICROSOFT_365_ENV_KEYS = [
     "MICROSOFT_365_TENANT_ID",
     "MICROSOFT_365_CLIENT_ID",

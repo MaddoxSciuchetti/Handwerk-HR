@@ -1,15 +1,13 @@
 import * as Sentry from "@sentry/node";
+import { NODE_ENV, SENTRY_DSN } from "@/constants/env";
 
-const dsn = process.env.SENTRY_DSN?.trim();
-const isProd = process.env.NODE_ENV === "production";
-
-if (dsn) {
+if (SENTRY_DSN) {
     Sentry.init({
-        dsn,
-        environment: process.env.NODE_ENV ?? "development",
+        dsn: SENTRY_DSN,
+        environment: NODE_ENV,
         // Local: capture every trace for verification. Production: 10%.
-        tracesSampleRate: isProd ? 0.1 : 1.0,
+        tracesSampleRate: NODE_ENV === "production" ? 0.1 : 1.0,
     });
 }
 
-export const isSentryEnabled = Boolean(dsn);
+export const isSentryEnabled = Boolean(SENTRY_DSN);

@@ -1,3 +1,4 @@
+import { AWS_REGION, AWS_S3_BUCKET } from "@/constants/env";
 import {
   isDeactivation,
   lockDeactivation,
@@ -50,12 +51,12 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Prisma, WorkerStatus, type IssuePriority } from "@prisma/client";
-const s3 = new S3Client({ region: process.env.AWS_REGION });
+const s3 = new S3Client({ region: AWS_REGION });
 const PRESIGN_EXPIRES = 3600;
 
 async function presign(key: string): Promise<string> {
   const cmd = new GetObjectCommand({
-    Bucket: process.env.AWS_S3_BUCKET!,
+    Bucket: AWS_S3_BUCKET,
     Key: key,
   });
   return getSignedUrl(s3, cmd, { expiresIn: PRESIGN_EXPIRES });
@@ -1381,7 +1382,7 @@ export async function deleteWorkerDocument(params: {
   try {
     await s3.send(
       new DeleteObjectCommand({
-        Bucket: process.env.AWS_S3_BUCKET!,
+        Bucket: AWS_S3_BUCKET,
         Key: doc.fileUrl,
       }),
     );

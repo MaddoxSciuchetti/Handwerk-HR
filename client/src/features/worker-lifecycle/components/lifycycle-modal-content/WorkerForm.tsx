@@ -1,4 +1,4 @@
-import FormFields from '@/components/form/FormFields';
+import { FormFields } from '@/components/form/FormFields';
 import { Button } from '@/components/ui/button';
 import { AddWorker } from '@/features/worker-lifecycle/schemas/zod.schemas';
 import { useAddWorker } from '../../hooks/useAddWorker';
@@ -6,21 +6,21 @@ import { useMemoizedInputs } from '../../hooks/useMemoizedInputs';
 import { FastTrackOnboarding } from './FastTrackOnboarding';
 import { TemplateSelect } from './TemplateSelect';
 
-interface WorkerFormProps {
+type WorkerFormProps = {
   setSelectedOption: (value: AddWorker['type'] | null) => void;
   type: AddWorker['type'];
   toggleModal: () => void;
   showInlineFormBackButton?: boolean;
   onQuestionnaire?: (draft: { engagementId: string }) => void;
-}
+};
 
-export const WorkerForm = ({
+export function WorkerForm({
   setSelectedOption,
   type,
   toggleModal,
   showInlineFormBackButton = true,
   onQuestionnaire,
-}: WorkerFormProps) => {
+}: WorkerFormProps) {
   const {
     register,
     handleSubmit,
@@ -93,4 +93,4 @@ export const WorkerForm = ({
       )}
     </div>
   );
-};
+}

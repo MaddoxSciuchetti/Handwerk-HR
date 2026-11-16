@@ -5,10 +5,10 @@ type NaturalSize = {
   h: number;
 };
 
-export const useAvatarBackgroundLayer = (
+export function useAvatarBackgroundLayer(
   previewSize: number,
   naturalSize: NaturalSize
-) => {
+) {
   const backgroundScale =
     naturalSize.w > 0
       ? getCoverScale(previewSize, naturalSize.w, naturalSize.h)
@@ -25,4 +25,4 @@ export const useAvatarBackgroundLayer = (
       : { x: 0, y: 0 };
 
   return { backgroundScale, backgroundPos };
-};
+}

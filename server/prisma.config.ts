@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
-// DIRECT_URL is optional (Neon direct connection for Prisma CLI). Falls back to DATABASE_URL.
+// DIRECT_URL is optional (direct Postgres URL for Prisma CLI, e.g. Render external URL). Falls back to DATABASE_URL.
 const databaseUrl = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
 if (databaseUrl == null || databaseUrl === "") {
     throw new Error(

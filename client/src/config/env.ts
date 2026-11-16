@@ -45,8 +45,13 @@ const pageHostname =
 
 export const API_URL = alignLocalApiUrl(configuredApiUrl, pageHostname);
 
+export const IS_DEV = Boolean(viteEnv?.DEV);
+export const IS_PROD = Boolean(viteEnv?.PROD);
+export const APP_MODE = viteEnv?.MODE ?? 'development';
+export const VITE_SENTRY_DSN = viteEnv?.VITE_SENTRY_DSN ?? '';
+
 // Repeated template applications are available only in the local integration demo.
 export const TEMPLATE_DEMO_MODE =
-  Boolean(viteEnv?.DEV) &&
-  viteEnv?.MODE !== 'test' &&
+  IS_DEV &&
+  APP_MODE !== 'test' &&
   getEnv('VITE_INTEGRATIONS_MOCK', 'false') === 'true';

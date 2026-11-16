@@ -4,23 +4,24 @@ Onboarding / offboarding workflow tool. Express + Prisma + PostgreSQL on the bac
 
 > 💡 **Tip — read this before you push**
 >
-> When having push access to this repository,thoroughly read through the entire codebase. To get a better high-level view, start with these two folders:
+> When having push access to this repository, thoroughly read through the entire codebase. To get a better high-level view, start with these two folders under `documentation/`:
 >
-> - `database/` [intro](/Users/maddoxsciuchetti/fixies-branch/database/Intro.md)
-> - `clean-code-testing/`[intro](/Users/maddoxsciuchetti/fixies-branch/clean-code-testing/docs/intro.md)
+> - Database [intro](./documentation/docs/database/Intro.md)
+> - Clean code & testing [intro](./documentation/clean-code-testing/docs/intro.md)
 
-The folder `database/` gives you the current implementation overview regarding how we store the data that we collect. It also contains detailed information on how we test performance and how we approach database maintenance when this project starts to grow.
+The folder `documentation/docs/database/` covers how we store data, performance testing, and maintenance as the project grows (Postgres on **Render**).
 
-The folder `clean-code-testing/` provides you with information on how to write code in this project. This includes how this project approaches testing but also the kind of syntax we write and the folder organization this project follows. If you decide to use an Agent, please include this folder in the context.
+The folder `documentation/clean-code-testing/` covers how to write code here: style, principles, tests, and CI/CD. Include it in agent context when contributing.
 
 High level folder architecture
 
 ```
-client/    React + Vite frontend
-server/    Express + Prisma backend
-database/  Schema notes
-clean-code-testing/
-pgbench/   Benchmark queries
+client/                         React + Vite frontend
+server/                         Express + Prisma backend
+documentation/docs/database/    Schema / performance / backup notes
+documentation/clean-code-testing/
+documentation/pgbench/          Benchmark queries
+ops/                            Render observability & cron helpers
 ```
 
 ## Observability
@@ -34,7 +35,7 @@ The API uses structured logging and OpenTelemetry tracing (`requestId` / `traceI
 
 - Node.js 20+
 - npm
-- A PostgreSQL database (local or hosted, e.g. Neon)
+- A PostgreSQL database (local Docker/Postgres, or **Render Managed Postgres** in staging/production)
 - `psql` if you want to inspect the DB directly
 
 ## Environment variables

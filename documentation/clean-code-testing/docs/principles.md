@@ -69,7 +69,7 @@ type FormFieldsProps<TFieldValues extends FieldValues> = Omit<
 Then we implement the function body containing the label, input and error message:
 
 ```tsx
-const FormFields = <TFieldValues extends FieldValues>({
+export function FormFields<TFieldValues extends FieldValues>({
     errors,
     register,
     label,
@@ -78,9 +78,9 @@ const FormFields = <TFieldValues extends FieldValues>({
     className,
     id,
     ...props
-}: FormFieldsProps<TFieldValues>) => {
+}: FormFieldsProps<TFieldValues>) {
     return (
-        <div className="flex min-w-0 flex-col gap-3">
+        <div className="flex min-w-0 flex-col gap-2">
             {label && (
                 <Label
                     htmlFor={id}
@@ -99,12 +99,12 @@ const FormFields = <TFieldValues extends FieldValues>({
                 errors={errors}
                 name={name as unknown as never}
                 render={({ message }) => (
-                    <p className="text-sm text-(--destructive)">{message}</p>
+                    <p className="text-sm text-destructive">{message}</p>
                 )}
             />
         </div>
     );
-};
+}
 ```
 
 ## KISS
@@ -149,7 +149,7 @@ export const taskMutations = {
 Below shows a simple hook that is only responsible for fetching the data and then returning the data and a few options returned by `useQuery`.
 
 ```ts
-export const useGetTaskHistory = (taskId: string) => {
+export function useGetTaskHistory(taskId: string) {
     const { data, isLoading, error, refetch } = useQuery(
         workerQueries.getTaskHistory(taskId),
     );
@@ -160,7 +160,7 @@ export const useGetTaskHistory = (taskId: string) => {
         error,
         refetchHistory: refetch,
     };
-};
+}
 ```
 
 ### Example 3: Worker routes

@@ -7,7 +7,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Dispatch, SetStateAction } from 'react';
-import { STATUS_MAP, TaskStatus } from '../../../../utils/selectOptionTernary';
+import { STATUS_MAP, TaskStatus } from '@/features/worker-task-management/utils/selectOptionTernary';
 
 type SelectOwnerProps = {
   setSelectedValue: Dispatch<SetStateAction<TaskStatus>>;

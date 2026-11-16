@@ -17,5 +17,5 @@ Feel free to propose changes for the below files so that this project can be mai
 - Information on monitoring index size and usage over time can be found [here](./index-performance.md).
 - The entry point for diagnosing overall database health when something feels slow can be found [here](./database-performance.md).
 - Thoughts on vertical and horizontal scaling strategies can be found [here](./scaling.md).
-- Information about the backup and point-in-time recovery setup on Neon can be found [here](./backup.md).
+- Information about backups and point-in-time recovery on **Render Managed Postgres** can be found [here](./backup.md).
 - Additional design considerations and trade-offs that were thought through can be found [here](./considerations.md).

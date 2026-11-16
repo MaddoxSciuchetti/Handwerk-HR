@@ -1,11 +1,12 @@
 import pino from "pino";
+import { LOG_LEVEL, NODE_ENV } from "@/constants/env";
 import { getRequestContext } from "./requestContext";
 import { redactFields } from "./redact";
 
-const isProduction = process.env.NODE_ENV === "production";
-const isTest = process.env.NODE_ENV === "test";
+const isProduction = NODE_ENV === "production";
+const isTest = NODE_ENV === "test";
 
-const level = process.env.LOG_LEVEL ?? (isProduction ? "info" : "debug");
+const level = LOG_LEVEL || (isProduction ? "info" : "debug");
 
 export const rootLogger = pino({
     level: isTest ? "silent" : level,

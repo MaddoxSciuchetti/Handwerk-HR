@@ -1,6 +1,6 @@
 import { isDeactivation } from '../utils/deactivationSchedule';
 import { TaskDeactivationSchedule } from './TaskDeactivationSchedule';
-import FormFields from '@/components/form/FormFields';
+import { FormFields } from '@/components/form/FormFields';
 import FormSelectOptions from '@/components/form/FormSelectOptions';
 import { Button } from '@/components/ui/button';
 import { FieldGroup } from '@/components/ui/field';

@@ -4,10 +4,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useWatch } from 'react-hook-form';
-import { Button } from '../../../../../../components/ui/button';
-import { formSchema } from '../../../../schemas/index.schema';
-import { InsertHistoryData } from '../../../../types/index.types';
-import { STATUS_MAP, TaskStatus } from '../../../../utils/selectOptionTernary';
+import { Button } from '@/components/ui/button';
+import { formSchema } from '@/features/worker-task-management/schemas/index.schema';
+import { InsertHistoryData } from '@/features/worker-task-management/types/index.types';
+import { STATUS_MAP, TaskStatus } from '@/features/worker-task-management/utils/selectOptionTernary';
 
 type StatusInformationProps = {
   id: number;

@@ -7,13 +7,13 @@ import {
   type IssueStatusValue,
 } from '@/features/all-tasks/consts/issue-status.consts';
 import { type ReactNode } from 'react';
-import { useGetTaskHistory } from '../../../../hooks/useGetTaskHistory';
+import { useGetTaskHistory } from '@/features/worker-task-management/hooks/useGetTaskHistory';
 import {
   TaskHistoryAuditEntry,
   TaskHistoryChange,
   TaskHistoryCommentEntry,
   TaskHistoryItem,
-} from '../../../../types/index.types';
+} from '@/features/worker-task-management/types/index.types';
 
 type HistoryContentProps = {
   taskId: string;
