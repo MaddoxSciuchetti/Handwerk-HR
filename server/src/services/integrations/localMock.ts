@@ -1,7 +1,9 @@
+import { integrationsMockEnabled, nodeEnv } from "@/constants/env";
+
 // Explicit opt-in for local development; never enabled in production or tests.
+// Uses nodeEnv() / integrationsMockEnabled() so unit tests can flip flags mid-suite.
 export function integrationsMocked() {
-    return process.env.NODE_ENV === "development" &&
-        process.env.INTEGRATIONS_MOCK === "true";
+    return nodeEnv() === "development" && integrationsMockEnabled();
 }
 
 export const MOCK_AUTOMATION_DELAY_MS = 10_000;

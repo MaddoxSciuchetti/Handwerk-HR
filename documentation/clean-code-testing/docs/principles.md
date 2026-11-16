@@ -30,14 +30,14 @@ Instead of passing each item individually I can create a variable containing an 
 ```ts
 export const LAYOUTITEMS = [
     {
+        title: "Cockpit",
+        to: "/cockpit",
+        icon: LayoutDashboard,
+    },
+    {
         title: "Handwerker",
         to: "/worker-lifycycle",
         icon: Inbox,
-    },
-    {
-        title: "Aufgaben",
-        to: "/tasks",
-        icon: Ticket,
     },
 ];
 ```
@@ -194,13 +194,15 @@ Only having status codes that are being used in the client application. If furth
 
 `[client/src/config/query.client.ts](client/src/config/query.client.ts)`
 
-The below code builds a single global query client and only disables query retries. It does not persist cache or set a default staleTime strategy as this is currently not needed in the code. It also follows the clean code principle of preventing over-configurability.
+The below code builds a single global query client with a small set of query defaults (no retries; short `staleTime` / `gcTime`). It does not persist cache or add feature-specific policies here. That keeps the shared client YAGNI-thin.
 
 ```ts
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
             retry: false,
+            staleTime: 30_000,
+            gcTime: 5 * 60_000,
         },
     },
 });

@@ -1,3 +1,5 @@
+import { nodeEnv } from "@/constants/env";
+
 type SentEmailRecord = {
     to: string;
     subject: string;
@@ -9,8 +11,10 @@ type SentEmailRecord = {
 
 const sentEmails: SentEmailRecord[] = [];
 
-const isTestLikeEnvironment = () =>
-    process.env.NODE_ENV === "test" || process.env.NODE_ENV === "development";
+const isTestLikeEnvironment = () => {
+    const env = nodeEnv();
+    return env === "test" || env === "development";
+};
 
 export const recordSentEmail = (email: Omit<SentEmailRecord, "createdAt">) => {
     if (!isTestLikeEnvironment()) {

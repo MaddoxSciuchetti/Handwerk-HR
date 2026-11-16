@@ -29,9 +29,11 @@ Use this page when demoing that the clean-code / style rules are applied in the 
 | Route → controller → service | [`worker.route.ts`](../../../server/src/routes/worker.route.ts) → [`worker.controller.ts`](../../../server/src/controllers/worker.controller.ts) → [`worker.service.ts`](../../../server/src/services/worker.service.ts) |
 | Controllers wrapped with `catchErrors` | [`template.controller.ts`](../../../server/src/controllers/template.controller.ts) |
 | Env only via `@/constants/env` | [`env.ts`](../../../server/src/constants/env.ts), [`aws.ts`](../../../server/src/config/aws.ts), [`contactInquiry.service.ts`](../../../server/src/services/contactInquiry.service.ts) |
-| Tests as `*.test.ts` under `server/tests/` (plus colocated `*.test.ts` where already present) | [`server/tests/`](../../../server/tests/) |
+| Tests as `*.test.ts` under Jest roots | [`server/src/**/*.test.ts`](../../../server/src/), [`server/test-unit/`](../../../server/test-unit/), [`server/test-integration/`](../../../server/test-integration/) |
 
-**Allowed exceptions:** Stripe / Resend / Microsoft OAuth handlers that must shape HTTP redirects or vendor-specific error JSON instead of the generic `catchErrors` path (`stripeWebhook.controller.ts`, `resendInbound.controller.ts`, `microsoftTeams.controller.ts`). Prisma / storage bootstrap may still read `process.env` at the library edge (`prisma.ts`, `storageClientConfig.ts`).
+**Allowed exceptions:** Stripe / Resend / Microsoft OAuth handlers that must shape HTTP redirects or vendor-specific error JSON instead of the generic `catchErrors` path (`stripeWebhook.controller.ts`, `resendInbound.controller.ts`, `microsoftTeams.controller.ts`). Prisma / storage bootstrap may still read `process.env` at the library edge (`prisma.ts`, `storageClientConfig.ts`). Use `nodeEnv()` / other getters from `constants/env.ts` when tests must mutate env mid-suite.
+
+**Known follow-ups (not blocking a walkthrough):** some controllers still call Prisma directly; many helper modules under `services/` omit the `.service.ts` suffix; prefer `import type` and `type` aliases when touching files.
 
 ## Clean-code principles
 

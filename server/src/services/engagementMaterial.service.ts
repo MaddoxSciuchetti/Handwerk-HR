@@ -1,4 +1,5 @@
 import { uploadFileToS3, generatePresignedUrl } from "@/config/aws";
+import { openAiApiKey } from "@/constants/env";
 import { BAD_REQUEST, NOT_FOUND } from "@/constants/http";
 import { prisma } from "@/lib/prisma";
 import AppError from "@/utils/AppError";
@@ -43,7 +44,7 @@ type Scope = {
 };
 
 function openAiKey() {
-    return process.env.OPENAI_API_KEY?.trim() ?? "";
+    return openAiApiKey();
 }
 
 function assertOpenAiConfigured() {

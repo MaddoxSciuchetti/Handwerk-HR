@@ -1,5 +1,6 @@
 import { generatePresignedUrl, uploadFileToS3 } from "@/config/aws";
-import { AWS_REGION, AWS_S3_BUCKET } from "@/constants/env";
+import { storageClientConfig } from "@/config/storageClientConfig";
+import { AWS_S3_BUCKET } from "@/constants/env";
 import { BAD_REQUEST, CONFLICT, NOT_FOUND } from "@/constants/http";
 import { prisma } from "@/lib/prisma";
 import { personnelFolderLabel } from "@/services/personnelFolderLabel";
@@ -17,7 +18,7 @@ import AppError from "@/utils/AppError";
 import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { Prisma } from "@prisma/client";
 
-const s3 = new S3Client({ region: AWS_REGION });
+const s3 = new S3Client(storageClientConfig());
 
 export type PersonnelDocumentDto = {
     id: string;

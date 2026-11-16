@@ -1,3 +1,4 @@
+import { NODE_ENV } from "@/constants/env";
 import { logger, rootLogger, serializeError } from "./logger";
 import { shutdownTracing } from "./tracing";
 
@@ -27,7 +28,7 @@ async function flushObservability(signal: string): Promise<void> {
 
 /** Flush traces/logs on Render deploy signals. Safe to call once. */
 export function registerObservabilityShutdown(): void {
-    if (registered || process.env.NODE_ENV === "test") return;
+    if (registered || NODE_ENV === "test") return;
     registered = true;
 
     const onSignal = (signal: NodeJS.Signals) => {
@@ -41,7 +42,7 @@ export function registerObservabilityShutdown(): void {
 }
 
 export function registerProcessErrorHandlers(): void {
-    if (process.env.NODE_ENV === "test") return;
+    if (NODE_ENV === "test") return;
 
     process.on("unhandledRejection", (reason) => {
         logger.error("Unhandled promise rejection", {

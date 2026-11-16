@@ -1,4 +1,5 @@
-import { AWS_REGION, AWS_S3_BUCKET } from "@/constants/env";
+import { storageClientConfig } from "@/config/storageClientConfig";
+import { AWS_S3_BUCKET } from "@/constants/env";
 import {
   isDeactivation,
   lockDeactivation,
@@ -51,7 +52,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Prisma, WorkerStatus, type IssuePriority } from "@prisma/client";
-const s3 = new S3Client({ region: AWS_REGION });
+const s3 = new S3Client(storageClientConfig());
 const PRESIGN_EXPIRES = 3600;
 
 async function presign(key: string): Promise<string> {
