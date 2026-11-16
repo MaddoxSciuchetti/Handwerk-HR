@@ -69,17 +69,23 @@ Bundle (local production builds):
 | documentMaster.keys | 556.5 KB | ~24.9 KB |
 | Entry index | ~963 KB | ~970 KB |
 
+### Changes
+
+Caching defaults: I set queries to stay fresh for 30s and stay in memory for 5 minutes. What happened: the app refetches less often for no reason.
+
+Task polling: I changed background /tasks from every 5s always to every 15s, and only while the tab is visible. What happened: fewer API calls when idle or when the tab is hidden.
+
+Lazy TipTap: I made the document editor chunk load only when you open an editor, not on the documents list. What happened: the list page stays lighter.
+
+Web Vitals logging: I added logging for TTFB/LCP/CLS/INP in the console and as performance marks. What happened: I can measure in the browser; this does not speed the page up by itself.
+
+Bundle analyzer: I added npm run analyze so the build writes a visual chunk report. What happened: easier for me to see what is large in the build.
+
+Removed unused @react-pdf/renderer: I dropped a dependency the client never imported. What happened: smaller install graph.
+
 ### Description
 
-I set QueryClient staleTime to 30s and gcTime to 5 minutes.
-
-I changed /tasks polling from every 5s always to every 15s only while the tab is visible.
-
-I lazy-loaded the TipTap document editor so the documents list no longer pulls that chunk.
-
-I added web-vitals logging (TTFB, LCP, CLS, INP) and npm run analyze for bundle reports.
-
-I removed unused @react-pdf/renderer.
+In Round 1 I focused on caching, slowing the task poller, and keeping TipTap off the documents list so the first authenticated pages stay lighter and quieter on the network.
 
 ### Learning
 
@@ -127,17 +133,21 @@ Task poller in 16s: 1 → 1 on /worker-lifycycle and /cockpit.
 
 Local analyze: entry ~659 KB (was ~970); /user/$Id chunk ~216 KB (was ~441).
 
+### Changes
+
+Vendor chunks: I split React and TanStack into separate files. What happened: better caching when app code changes.
+
+Lazy worker UI: I lazy-loaded heavy worker tabs/dialogs and jszip so they load when needed. What happened: opening /user/… downloads less up front.
+
+Document fonts: I moved font styles onto the shared editor instead of every app boot. What happened: boot stays lighter; fonts still work for editor and contract review.
+
+Table skeletons: I aligned lifecycle loading placeholders with real row sizes. What happened: less layout jump while the table loads.
+
+Materials upload queue: I queued the file-picker until the lazy tab is mounted. What happened: upload does not get lost during Suspense.
+
 ### Description
 
-I split React and TanStack into separate vendor chunks.
-
-I lazy-loaded heavy worker tabs/dialogs and jszip.
-
-I moved document fonts onto the shared editor instead of app boot.
-
-I aligned lifecycle table skeleton sizes with real rows.
-
-I queued the materials file-picker until the lazy tab mounts.
+In Round 2 I focused on splitting vendor code and lazy-loading the heavy worker detail UI so /user/… ships less JavaScript on first open.
 
 ### Learning
 
@@ -157,9 +167,13 @@ Measured 2026-11-16 with one click per route. No before-PR INP.
 | /settings/documents | 32 |
 | /user/… | 16 |
 
-### Description
+### Changes
 
 I re-ran production with a real click after each load so INP could be recorded.
+
+### Description
+
+This pass only fills the missing INP column on current production after both PRs.
 
 ### Learning
 
