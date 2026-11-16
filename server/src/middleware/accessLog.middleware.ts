@@ -1,5 +1,6 @@
 import { isSentryEnabled } from "@/instrument";
 import { logger } from "@/observability/logger";
+import { metricRoute } from "@/observability/metricRoute";
 import { getRequestContext } from "@/observability/requestContext";
 import * as Sentry from "@sentry/node";
 import type { NextFunction, Request, Response } from "express";
@@ -8,16 +9,6 @@ const QUIET_PATHS = new Set(["/", "/healthz", "/health"]);
 
 function shouldQuietAccessLog(req: Request): boolean {
     return req.method === "GET" && QUIET_PATHS.has(req.path);
-}
-
-/** Collapse ids so Sentry metric attributes stay low-cardinality. */
-function metricRoute(path: string): string {
-    return path
-        .replace(
-            /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi,
-            ":id",
-        )
-        .replace(/\/\d+(?=\/|$)/g, "/:id");
 }
 
 /** One structured access log per finished request (health/root are debug-level). */
