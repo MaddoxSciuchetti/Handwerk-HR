@@ -1,4 +1,4 @@
-# Frontend performance — PRs #223 and #224
+# Optimization Deep Dive — PRs #223 and #224
 
 Production: https://frontendv2-x54r.onrender.com  
 PRs: [#223](https://github.com/MaddoxSciuchetti/Handwerk-HR/pull/223), [#224](https://github.com/MaddoxSciuchetti/Handwerk-HR/pull/224)
