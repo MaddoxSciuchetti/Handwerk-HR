@@ -4,14 +4,15 @@ Onboarding / offboarding workflow tool. Express + Prisma + PostgreSQL on the bac
 
 > 💡 **Tip — read this before you push**
 >
-> When having push access to this repository,thoroughly read through the entire codebase. To get a better high-level view, start with these two folders:
+> When having push access to this repository,thoroughly read through the entire codebase. Start with the documentation meta entry, then open the area you need:
 >
-> - `database/` [intro](./documentation/docs/database/Intro.md)
-> - `clean-code-testing/` [intro](./documentation/clean-code-testing/docs/intro.md)
+> - Meta entry [documentation/docs.md](./documentation/docs.md)
+> - Clean code & testing [intro](./documentation/clean-code-testing/docs/intro.md)
+> - Database [intro](./documentation/docs/database/Intro.md)
+> - Backend [intro](./documentation/docs/backend/Intro.md)
+> - Frontend [intro](./documentation/docs/frontend/Intro.md)
 
-The folder `database/` (under `documentation/docs/`) gives you the current implementation overview regarding how we store the data that we collect. It also contains detailed information on how we test performance and how we approach database maintenance when this project starts to grow. Production Postgres runs on **Render Managed Postgres**.
-
-The folder `clean-code-testing/` (under `documentation/`) provides you with information on how to write code in this project. This includes how this project approaches testing but also the kind of syntax we write and the folder organization this project follows. If you decide to use an Agent, please include this folder in the context.
+The folder `documentation/` holds contributor readmes. `docs.md` is the single entry into clean code, database, backend, and frontend. Each of those pages links on to the detailed files for that area. Production Postgres runs on **Render Managed Postgres**. If you decide to use an Agent, please include `documentation/` in the context.
 
 High level folder architecture
 
@@ -19,9 +20,12 @@ High level folder architecture
 client/          React + Vite frontend
 server/          Express + Prisma backend
 documentation/
-  docs/database/       Schema notes
-  clean-code-testing/  Style, principles, tests, CI/CD
-  pgbench/             Benchmark queries
+  docs.md                Meta entry
+  docs/database/         Database entry + pages
+  docs/backend/          Backend entry
+  docs/frontend/         Frontend entry
+  clean-code-testing/    Clean code entry + pages
+  pgbench/               Benchmark queries
 ```
 
 ## Observability
