@@ -1,8 +1,10 @@
-# Production DB Cutover Runbook
+# Production DB Cutover Runbook (historical)
 
 One-time migration from legacy schema to the current Prisma schema while preserving BSB Gruppe production data.
 
-## Neon branches (V2 pern_project)
+**Status:** Completed 2026-05-24. Production Postgres now runs on **Render Managed Postgres**. Keep this runbook for audit history only; do not use Neon branch IDs for new operations. For current backups and recovery, see [`documentation/docs/database/backup.md`](../../../../documentation/docs/database/backup.md).
+
+## Neon branches used during cutover (V2 pern_project, historical)
 
 | Branch | ID | Purpose |
 |---|---|---|
@@ -11,7 +13,7 @@ One-time migration from legacy schema to the current Prisma schema while preserv
 | prod-backup-2026-05-24 | `br-long-pine-adzmuoak` | Pre-cutover snapshot |
 | migration-rehearsal | `br-rapid-bonus-adox0tpv` | Validated dry run (PASS) |
 
-**PITR:** Note timestamp in Neon console immediately before production cutover for point-in-time restore.
+**PITR (historical):** During the Neon-era cutover, a console timestamp was recorded immediately before production cutover for point-in-time restore.
 
 ## Files
 
@@ -59,8 +61,9 @@ After SQL cutover:
 
 ## Rollback
 
-1. **Fastest:** Neon PITR restore production to pre-cutover timestamp
-2. **Backup branch:** `prod-backup-2026-05-24` (`br-long-pine-adzmuoak`)
+1. **Fastest (at cutover time):** Neon PITR restore production to pre-cutover timestamp
+2. **Backup branch (historical):** `prod-backup-2026-05-24` (`br-long-pine-adzmuoak`)
+   - Today: use Render Managed Postgres backups / PITR — see [`documentation/docs/database/backup.md`](../../../../documentation/docs/database/backup.md)
 3. **Partial failure:** Legacy data remains in `_legacy_*` tables until dropped in a follow-up migration
 4. Re-deploy previous app version if schema rollback is needed
 

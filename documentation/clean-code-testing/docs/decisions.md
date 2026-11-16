@@ -56,9 +56,9 @@ Decision: Express route modules follow `something.route.ts`; controllers `someth
 
 Reason: Filename encodes architectural role without opening the file. Enables faster quick search for file
 
-Decision: Tests colocated as `*.test.ts` near the code under test.
+Decision: Server tests are `*.test.ts` under Jest roots `src/`, `test-unit/`, and `test-integration/` (colocated when they target one module).
 
-Reason: Faster to find specs and scoped coverage runs.
+Reason: Faster to find specs and scoped coverage runs; matches the current Jest config.
 
 ## TypeScript and style
 

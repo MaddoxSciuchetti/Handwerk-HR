@@ -1,11 +1,11 @@
 import { cn } from '@/lib/trycatch';
 import { UploadedFileItem } from './FileItem';
 
-interface UploadedFileListProps {
+type UploadedFileListProps = {
   uploadedFiles: File[];
   fileProgresses: Record<string, number>;
   removeFile: (filename: string) => void;
-}
+};
 
 export function FileList({
   uploadedFiles,

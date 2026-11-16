@@ -1,5 +1,5 @@
 import API from '@/config/apiClient';
-import { IssueResponse } from '../types/index.types';
+import type { IssueResponse } from '../types/index.types';
 import type { TaskHistoryCommentEntry } from '@/features/worker-task-management/types/index.types';
 
 export type UpdateTaskParams = {

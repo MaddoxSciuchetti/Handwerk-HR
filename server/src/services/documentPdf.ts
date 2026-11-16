@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { DOCUMENT_FONT_DIR } from "@/constants/env";
+import { DOCUMENT_FONT_DIR, nodeEnv } from "@/constants/env";
 import { BAD_REQUEST, SERVICE_UNAVAILABLE } from "@/constants/http";
 import AppError from "@/utils/AppError";
 import { loadDocumentFonts } from "@/services/documentFonts";
@@ -111,7 +111,7 @@ export async function generateDocumentPdf(
   document: StyledDocument,
   values: Record<string, string>,
 ) {
-  if (!DOCUMENT_FONT_DIR && process.env.NODE_ENV !== "development")
+  if (!DOCUMENT_FONT_DIR && nodeEnv() !== "development")
     throw new AppError(
       BAD_REQUEST,
       "Die Dokumentschriften sind noch nicht eingerichtet.",

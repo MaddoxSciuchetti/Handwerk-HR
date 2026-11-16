@@ -6,6 +6,10 @@ import {
     InteractionRequiredAuthError,
 } from "@azure/msal-node";
 import { Prisma, type MicrosoftAuthAttempt } from "@prisma/client";
+import {
+    MICROSOFT_TEAMS_REDIRECT_URI,
+    nodeEnv,
+} from "@/constants/env";
 import { prisma } from "@/lib/prisma";
 import {
     decryptIntegrationSecret,
@@ -43,8 +47,8 @@ export class TeamsError extends AppError {
 }
 export function callbackUri() {
     const value =
-        process.env.MICROSOFT_TEAMS_REDIRECT_URI?.trim() ||
-        (process.env.NODE_ENV === "production"
+        MICROSOFT_TEAMS_REDIRECT_URI ||
+        (nodeEnv() === "production"
             ? "https://backendonboarding.onrender.com/auth/microsoft/callback"
             : "");
     if (!value)

@@ -1,4 +1,4 @@
-import FormFields from '@/components/form/FormFields';
+import { FormFields } from '@/components/form/FormFields';
 import { Button } from '@/components/ui/button';
 import { UseMutationResult } from '@tanstack/react-query';
 import {

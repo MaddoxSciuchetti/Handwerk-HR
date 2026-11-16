@@ -8,7 +8,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
 
-import { APP_ORIGIN } from "./constants/env";
+import { APP_ORIGIN, PORT } from "./constants/env";
 import { resendInboundHandler } from "./controllers/resendInbound.controller";
 import { stripeWebhookHandler } from "./controllers/stripeWebhook.controller";
 import * as Sentry from "@sentry/node";
@@ -38,8 +38,6 @@ import { userRoutes } from "./routes/user.route";
 import { clothingStockRoutes } from "./routes/clothingStock.route";
 import { worker } from "./routes/worker.route";
 import { startReturnedContractPolling } from "./services/signedContractReturn.service";
-
-const PORT = process.env.PORT || 3000;
 
 const app = express();
 

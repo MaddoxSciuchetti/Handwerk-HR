@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 # =============================================================================
+# HISTORICAL (Neon-era cutover, completed 2026-05-24).
+# Production Postgres is now Render Managed Postgres — do not run for new ops.
 # 02_apply_target_schema.sh
 # Apply all Prisma migrations to a quarantined branch (after 01_quarantine_legacy).
 #
 # Usage:
-#   export DIRECT_URL="postgresql://..."   # Neon branch connection string
+#   export DIRECT_URL="postgresql://..."   # historical Neon branch connection string
 #   ./02_apply_target_schema.sh
 # =============================================================================
 set -euo pipefail
@@ -13,7 +15,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SERVER_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 
 if [[ -z "${DIRECT_URL:-}" && -z "${DATABASE_URL:-}" ]]; then
-  echo "Error: set DIRECT_URL or DATABASE_URL to the target Neon branch." >&2
+  echo "Error: set DIRECT_URL or DATABASE_URL to the target database URL (historical Neon cutover)." >&2
   exit 1
 fi
 

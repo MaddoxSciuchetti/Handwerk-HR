@@ -1,13 +1,13 @@
 # Clean code & testing — start here
 
-If you want to add code to this project, have improvements to the README.md or for the overall code architecture, clone this repo, create a feature branch and push changes. Ensure that you look at the below listed files to get more context. Also ensure to fill out the pull request template on every pull request that you open. Pull request that do not contain the template will not be looked at and therefore not merged. Below is the template [template](/Users/maddoxsciuchetti/fixies-branch/.github/pull_request_template.md)
+If you want to add code to this project, have improvements to the README.md or for the overall code architecture, clone this repo, create a feature branch and push changes. Ensure that you look at the below listed files to get more context. Also ensure to fill out the pull request template on every pull request that you open. Pull request that do not contain the template will not be looked at and therefore not merged. Below is the template [template](../../../.github/pull_request_template.md)
 
 - High level style guide that will help you quickly write your first lines in this project [Style guide](style-guide.md)
 - Clean code principles and how they are applied in the codebase. Ensure to follow these! [Principles](principles.md)
 - Decisions made in this project [Decisions](decisions.md)
 
 - Handling tests in this project [Tests](tests.md)
-- CI/CD of this project [workflow](/Users/maddoxsciuchetti/fixies-branch/clean-code-testing/docs/cd.md)
+- CI/CD of this project [workflow](ci.cd.md)
 
 ### What is this project about?
 

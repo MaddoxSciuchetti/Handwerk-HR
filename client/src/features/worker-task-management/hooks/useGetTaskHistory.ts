@@ -32,7 +32,7 @@ function clearMention(queryClient: QueryClient, taskId: string) {
   );
 }
 
-export const useGetTaskHistory = (taskId: string) => {
+export function useGetTaskHistory(taskId: string) {
   const queryClient = useQueryClient();
   const { data, isLoading, error, refetch } = useQuery({
     ...workerQueries.getTaskHistory(taskId),
@@ -49,4 +49,4 @@ export const useGetTaskHistory = (taskId: string) => {
     error,
     refetchHistory: refetch,
   };
-};
+}

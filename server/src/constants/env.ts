@@ -12,7 +12,9 @@ const getEnv = (key: string, defaultValue?: string): string => {
 
 export const PORT = getEnv("PORT", "3000");
 export const FRONTENDURL = getEnv("FRONTEND_URL");
+/** Boot-time snapshot. Prefer `nodeEnv()` when tests mutate `process.env.NODE_ENV`. */
 export const NODE_ENV = getEnv("NODE_ENV", "development");
+export const nodeEnv = () => process.env.NODE_ENV?.trim() || NODE_ENV;
 // Explicit staging opt-in; independent of INTEGRATIONS_LIVE and Crewmeister.
 export function microsoftSimulationEnabled() {
     return process.env.MICROSOFT_SIMULATION?.trim().toLowerCase() === "true";
@@ -46,11 +48,27 @@ export const GOOGLE_OAUTH_REDIRECT_URI =
     process.env.GOOGLE_OAUTH_REDIRECT_URI?.trim() ?? "";
 export const GOOGLE_OAUTH_REFRESH_TOKEN =
     process.env.GOOGLE_OAUTH_REFRESH_TOKEN?.trim() ?? "";
-export const OPENAI_API_KEY = process.env.OPENAI_API_KEY?.trim() ?? "";
+// Getter so tests can mutate process.env.OPENAI_API_KEY between cases.
+export const openAiApiKey = () => process.env.OPENAI_API_KEY?.trim() ?? "";
+export const OPENAI_API_KEY = openAiApiKey();
 // Document PDFs render in-process via @react-pdf/renderer using these fonts.
 export const DOCUMENT_FONT_DIR =
     process.env.DOCUMENT_FONT_DIR?.trim() ||
     (NODE_ENV === "development" ? resolve("document-fonts") : "");
+
+export const AWS_REGION = process.env.AWS_REGION?.trim() ?? "";
+export const AWS_S3_BUCKET = process.env.AWS_S3_BUCKET?.trim() ?? "";
+export const contactInquiryTo = () =>
+    process.env.CONTACT_INQUIRY_TO?.trim() ?? "";
+export const appEnv = () => process.env.APP_ENV?.trim().toLowerCase() ?? "";
+export const integrationsMockEnabled = () =>
+    process.env.INTEGRATIONS_MOCK?.trim().toLowerCase() === "true";
+export const LOG_LEVEL = process.env.LOG_LEVEL?.trim() ?? "";
+export const OTEL_EXPORTER_OTLP_ENDPOINT =
+    process.env.OTEL_EXPORTER_OTLP_ENDPOINT?.trim() ?? "";
+export const SENTRY_DSN = process.env.SENTRY_DSN?.trim() ?? "";
+export const MICROSOFT_TEAMS_REDIRECT_URI =
+    process.env.MICROSOFT_TEAMS_REDIRECT_URI?.trim() ?? "";
 
 export const MICROSOFT_365_ENV_KEYS = [
     "MICROSOFT_365_TENANT_ID",

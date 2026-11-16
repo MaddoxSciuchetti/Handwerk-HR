@@ -1,8 +1,13 @@
 # Information about CI/CD pipeline
 
-Currently we are using Github Actions to create workflows for the tests inside this repository.
+Currently we are using GitHub Actions for the checks in this repository.
 
-There is one E2E nightly job running all the end to end tests in this application. The reason for this is that the end to end test cover major parts of this application and are testing important code.
+The main PR workflow is [`.github/workflows/pr-checks.yml`](../../../.github/workflows/pr-checks.yml). On every pull request it runs:
+
+1. **Client lint, typecheck & unit tests** — `lint:src`, `typecheck`, `test:unit` in `client/`
+2. **Server typecheck & unit tests** — `typecheck`, then `jest --testPathPatterns=test-unit` in `server/` (after client succeeds)
+
+There is no separate E2E nightly workflow in `.github/workflows/` right now. Local PDF visual/layout scripts on the server (`test:pdf-visual`, `test:pdf-layout`) are optional and not part of that PR job.
 
 ## Checklist: adding a new GitHub Actions workflow
 

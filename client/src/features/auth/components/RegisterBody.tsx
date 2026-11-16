@@ -1,4 +1,4 @@
-import FormFields from '@/components/form/FormFields';
+import { FormFields } from '@/components/form/FormFields';
 import { FieldErrors, UseFormRegister } from 'react-hook-form';
 import { RegisterOrgFormValues } from '../schemas/auth.schemas';
 import PasswordValidationBar from './password_validation/PasswordValidationBar';

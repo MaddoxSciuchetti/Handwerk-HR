@@ -9,6 +9,11 @@ import {
     type SpanExporter,
 } from "@opentelemetry/sdk-trace";
 import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
+import {
+    LOG_LEVEL,
+    NODE_ENV,
+    OTEL_EXPORTER_OTLP_ENDPOINT,
+} from "@/constants/env";
 import { logger } from "./logger";
 
 const SERVICE_NAME = "handwerk-hr-server";
@@ -16,7 +21,7 @@ const SERVICE_NAME = "handwerk-hr-server";
 let sdk: NodeSDK | undefined;
 
 export function isOtlpEnabled(): boolean {
-    return Boolean(process.env.OTEL_EXPORTER_OTLP_ENDPOINT?.trim());
+    return Boolean(OTEL_EXPORTER_OTLP_ENDPOINT);
 }
 
 function buildTraceExporters(): SpanExporter[] {
@@ -24,7 +29,7 @@ function buildTraceExporters(): SpanExporter[] {
     if (isOtlpEnabled()) {
         exporters.push(
             new OTLPTraceExporter({
-                url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
+                url: OTEL_EXPORTER_OTLP_ENDPOINT,
             }),
         );
     }
@@ -33,13 +38,13 @@ function buildTraceExporters(): SpanExporter[] {
 
 /** Must run before Express is imported so HTTP auto-instrumentation can patch. */
 export function startTracing(): void {
-    if (sdk || process.env.NODE_ENV === "test") {
+    if (sdk || NODE_ENV === "test") {
         return;
     }
 
     const exporters = buildTraceExporters();
     const spanProcessors = exporters.map((exporter) =>
-        process.env.NODE_ENV === "production"
+        NODE_ENV === "production"
             ? new BatchSpanProcessor({ exporter })
             : new SimpleSpanProcessor({ exporter }),
     );
@@ -62,8 +67,8 @@ export function startTracing(): void {
     logger.info("Observability started", {
         event: "observability.started",
         outcome: "ok",
-        nodeEnv: process.env.NODE_ENV ?? "undefined",
-        logLevel: process.env.LOG_LEVEL ?? (process.env.NODE_ENV === "production" ? "info" : "debug"),
+        nodeEnv: NODE_ENV,
+        logLevel: LOG_LEVEL || (NODE_ENV === "production" ? "info" : "debug"),
         otlpEnabled: isOtlpEnabled(),
     });
 }

@@ -1,14 +1,14 @@
 import { Input } from '@/components/ui/input';
 import { Upload } from 'lucide-react';
-import React, { RefObject } from 'react';
+import type { DragEvent, RefObject } from 'react';
 
-interface FileDropzoneProps {
+type FileDropzoneProps = {
   fileInputRef: RefObject<HTMLInputElement | null>;
   handleBoxClick: () => void;
-  handleDragOver: (e: React.DragEvent) => void;
-  handleDrop: (e: React.DragEvent) => void;
+  handleDragOver: (e: DragEvent) => void;
+  handleDrop: (e: DragEvent) => void;
   handleFileSelect: (files: FileList | null) => void;
-}
+};
 
 export function FileDropzone({
   fileInputRef,

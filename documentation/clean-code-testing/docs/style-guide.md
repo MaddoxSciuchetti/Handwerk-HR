@@ -13,6 +13,8 @@ If in any case you see code that violates the below principles, open a new branc
 
 To create your first React component (a screen or ui component), write `export function MyComponent(...)` at the top of the file—not `export const MyComponent = () => { ... }`.
 
+Exceptions: TanStack Router route modules (`export const Route = createFileRoute(...)`) and TipTap `Node.create` exports.
+
 Good:
 
 ```tsx
@@ -223,6 +225,8 @@ Client uses the same idea in `client/src/config/env.ts` — see §1.7.
 
 Mount routes inside `something.route.ts`, keep adapters thin inside `something.controller.ts`, and put database plus branching inside `something.service.ts` under `server/src/` so reviewers follow one layer per file.
 
+New domain modules should use the `.service.ts` suffix. Existing helpers under folders such as `services/microsoft365/`, `services/integrations/`, and `services/microsoftTeams/` may keep descriptive names without the suffix until they are touched for a real change.
+
 Good:
 
 ```
@@ -236,20 +240,25 @@ Bad:
 ```
 
 
-### 2.3 Server tests named `*.test.ts` grouped under `server/tests/`
+### 2.3 Server tests named `*.test.ts`
 
-To add automated tests, save `<testname>.test.ts` inside `server/tests/`
+Jest roots are `server/src`, `server/test-unit`, and `server/test-integration`. Prefer:
+
+- Colocated unit tests next to the code: `server/src/**/*.test.ts`
+- Broader unit suites under `server/test-unit/`
+- Integration suites under `server/test-integration/`
 
 Good:
 
 ```
-server/tests/stripeWebhook.controller.test.ts
+server/src/controllers/stripeWebhook.controller.test.ts
+server/test-unit/auth.service.test.ts
 ```
 
 Bad:
 
 ```
-server/manual-check-stripe.ts //
+server/manual-check-stripe.ts
 ```
 
 
