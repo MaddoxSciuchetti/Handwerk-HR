@@ -10,7 +10,7 @@ Companion frontend evidence: [`optimization-deep-dive.md`](./optimization-deep-d
 Day-to-day runbook: [`ops/observability.md`](../ops/observability.md).  
 Code map for newcomers: [`server/README.md`](../server/README.md).
 
-This write-up is SE_46 evidence for **Performance, Scaling, and Observability** — focused on the observability half we shipped (logging, tracing, error monitoring). The scaling/performance half (caching, Redis, load testing, horizontal scale) is called out under **What we have vs what is still interesting**.
+This write-up is SE_46 evidence for Performance, Scaling, and Observability — focused on the observability half we shipped (logging, tracing, error monitoring). The scaling/performance half (caching, Redis, load testing, horizontal scale) is called out under What we have vs what is still interesting.
 
 ---
 
@@ -38,25 +38,25 @@ Improvements I would have made:
 
 ## Definitions
 
-**requestId:** UUID (or inbound `X-Request-Id`) assigned per HTTP request, echoed on the response, merged into every log line for that request.
+requestId: UUID (or inbound `X-Request-Id`) assigned per HTTP request, echoed on the response, merged into every log line for that request.
 
-**traceId / spanId:** OpenTelemetry identifiers for the distributed trace and the current span. Present on logs when a span is active.
+traceId / spanId: OpenTelemetry identifiers for the distributed trace and the current span. Present on logs when a span is active.
 
-**Access log:** One structured line when the response finishes — method, path, status, `durationMs`, correlation ids.
+Access log: One structured line when the response finishes — method, path, status, `durationMs`, correlation ids.
 
-**event + outcome:** Convention for searchable log fields (`http.access`, `stripe.webhook`, `microsoft365.user_create`, …) with `ok` / `error` / `rejected` / similar.
+event + outcome: Convention for searchable log fields (`http.access`, `stripe.webhook`, `microsoft365.user_create`, …) with `ok` / `error` / `rejected` / similar.
 
-**pino:** JSON logger used in production; pretty-printed locally. Redacts common secret keys.
+pino: JSON logger used in production; pretty-printed locally. Redacts common secret keys.
 
-**AsyncLocalStorage (ALS):** Node API that carries request context across async work so handlers do not pass `requestId` by hand.
+AsyncLocalStorage (ALS): Node API that carries request context across async work so handlers do not pass `requestId` by hand.
 
-**OpenTelemetry (OTEL):** Vendor-neutral tracing SDK. We auto-instrument HTTP/Express (and related libs), print spans to stdout, and optionally push via `OTEL_EXPORTER_OTLP_ENDPOINT`.
+OpenTelemetry (OTEL): Vendor-neutral tracing SDK. We auto-instrument HTTP/Express (and related libs), print spans to stdout, and optionally push via `OTEL_EXPORTER_OTLP_ENDPOINT`.
 
-**Sentry:** Error (and sampled performance) product. Server: `@sentry/node` with `SENTRY_DSN`. Client: `@sentry/react` with `VITE_SENTRY_DSN`, session replay, TanStack Router tracing.
+Sentry: Error (and sampled performance) product. Server: `@sentry/node` with `SENTRY_DSN`. Client: `@sentry/react` with `VITE_SENTRY_DSN`, session replay, TanStack Router tracing.
 
-**Redaction:** Strip passwords, tokens, cookies, Stripe signatures, etc. from structured fields before they hit stdout.
+Redaction: Strip passwords, tokens, cookies, Stripe signatures, etc. from structured fields before they hit stdout.
 
-**SIGTERM flush:** On Render deploy, flush pending spans/logs before exit so the last requests of a release are not lost.
+SIGTERM flush: On Render deploy, flush pending spans/logs before exit so the last requests of a release are not lost.
 
 ---
 
@@ -77,21 +77,21 @@ Improvements I would have made:
 
 ### Changes
 
-**Request id middleware:** Assign or reuse `X-Request-Id`, bind ALS context, set span attribute `http.request_id`. What happened: any log or 500 body can be searched as one incident.
+Request id middleware: Assign or reuse `X-Request-Id`, bind ALS context, set span attribute `http.request_id`. What happened: any log or 500 body can be searched as one incident.
 
-**Access log middleware:** On `res.finish`, emit `http.access` with timing; health/root stay debug-level when healthy. What happened: every real request has a duration and status line.
+Access log middleware: On `res.finish`, emit `http.access` with timing; health/root stay debug-level when healthy. What happened: every real request has a duration and status line.
 
-**pino logger:** Service name `handwerk-hr-server`, ISO timestamps, context merge (`requestId`, `traceId`, `spanId`, `userId`, `orgId`), secret redaction. What happened: Render logs are JSON and greppable by field.
+pino logger: Service name `handwerk-hr-server`, ISO timestamps, context merge (`requestId`, `traceId`, `spanId`, `userId`, `orgId`), secret redaction. What happened: Render logs are JSON and greppable by field.
 
-**OpenTelemetry bootstrap:** `startTracing()` runs from `index.ts` before Express import; auto-instrumentations on (fs/dns off); production uses batch span processor. What happened: HTTP work shows as spans; OTLP is one env var away.
+OpenTelemetry bootstrap: `startTracing()` runs from `index.ts` before Express import; auto-instrumentations on (fs/dns off); production uses batch span processor. What happened: HTTP work shows as spans; OTLP is one env var away.
 
-**Hot-path instrumentation:** Stripe webhook, Microsoft Graph/token/license/group/password-mail, mention mail, cron helpers. What happened: domain failures share the same `event`/`outcome` shape as HTTP.
+Hot-path instrumentation: Stripe webhook, Microsoft Graph/token/license/group/password-mail, mention mail, cron helpers. What happened: domain failures share the same `event`/`outcome` shape as HTTP.
 
-**Error handler:** Structured `http.error` logs; 500 responses return `requestId`. What happened: support can copy an id from the client and find the stack in Render.
+Error handler: Structured `http.error` logs; 500 responses return `requestId`. What happened: support can copy an id from the client and find the stack in Render.
 
-**Shutdown + process handlers:** Flush on SIGTERM/SIGINT; log unhandledRejection / uncaughtException. What happened: deploy cutovers and process crashes leave a trail.
+Shutdown + process handlers: Flush on SIGTERM/SIGINT; log unhandledRejection / uncaughtException. What happened: deploy cutovers and process crashes leave a trail.
 
-**Docs:** `ops/observability.md` (how to search), `server/README.md` (file map + how to log).
+Docs: `ops/observability.md` (how to search), `server/README.md` (file map + how to log).
 
 ### Description
 
@@ -99,7 +99,7 @@ Round 1 turned the API from “print statements and hope” into a correlated ob
 
 ### Learning
 
-The highest-leverage piece was **requestId on the 500 body + access logs**, not the OTEL exporter. Tracing is useful for “how long did children take,” but day-one incident work on Render is still log search. Keeping health checks quiet at info level mattered too — otherwise deploy noise buries real failures.
+The highest-leverage piece was requestId on the 500 body + access logs, not the OTEL exporter. Tracing is useful for “how long did children take,” but day-one incident work on Render is still log search. Keeping health checks quiet at info level mattered too — otherwise deploy noise buries real failures.
 
 ---
 
@@ -109,7 +109,7 @@ The highest-leverage piece was **requestId on the 500 body + access logs**, not 
 
 | Signal | Before (#225 only) | After (#226) |
 |--------|--------------------|--------------|
-| API exceptions | Structured logs in Render | Same logs **and** Sentry issues when `SENTRY_DSN` is set |
+| API exceptions | Structured logs in Render | Same logs and Sentry issues when `SENTRY_DSN` is set |
 | Client exceptions | Browser console / guesswork | `@sentry/react` + replay (sampled) |
 | Tracing ownership | Our OTEL NodeSDK always | If Sentry DSN set → Sentry owns traces; NodeSDK skipped (no dual SDK) |
 | Source maps | — | Optional Vite upload when `SENTRY_AUTH_TOKEN` is set |
@@ -117,15 +117,15 @@ The highest-leverage piece was **requestId on the 500 body + access logs**, not 
 
 ### Changes
 
-**Server `instrument.ts`:** Init `@sentry/node` from `SENTRY_DSN` before the rest of the app. What happened: Express 500 path can `Sentry.captureException`.
+Server `instrument.ts`: Init `@sentry/node` from `SENTRY_DSN` before the rest of the app. What happened: Express 500 path can `Sentry.captureException`.
 
-**Skip dual OTEL:** `index.ts` only calls `startTracing()` when Sentry is off. What happened: one tracing pipeline, not two fighting exporters.
+Skip dual OTEL: `index.ts` only calls `startTracing()` when Sentry is off. What happened: one tracing pipeline, not two fighting exporters.
 
-**Error handler:** Capture on status ≥ 500. What happened: unexpected failures become Sentry issues with stack + request context from logs via `requestId`.
+Error handler: Capture on status ≥ 500. What happened: unexpected failures become Sentry issues with stack + request context from logs via `requestId`.
 
-**Client `instrument.ts`:** Init with TanStack Router browser tracing + session replay; `VITE_SENTRY_DSN` at build time. What happened: UI crashes and sampled traces land in the frontend Sentry project.
+Client `instrument.ts`: Init with TanStack Router browser tracing + session replay; `VITE_SENTRY_DSN` at build time. What happened: UI crashes and sampled traces land in the frontend Sentry project.
 
-**Vite plugin:** Source-map upload only when auth token present. What happened: production stacks stay readable without uploading on every local build.
+Vite plugin: Source-map upload only when auth token present. What happened: production stacks stay readable without uploading on every local build.
 
 ### Description
 
@@ -133,7 +133,7 @@ Round 2 adds a product UI for errors on top of the log/trace foundation. Logs re
 
 ### Learning
 
-Sentry and a hand-rolled OTEL SDK both want to own OpenTelemetry. Picking one owner per process (Sentry when DSN is set) is simpler than running both. Also: client DSN must be present at **frontend build** time (`VITE_*`), while server DSN is a **runtime** env on the API service — easy to misconfigure across two Render services.
+Sentry and a hand-rolled OTEL SDK both want to own OpenTelemetry. Picking one owner per process (Sentry when DSN is set) is simpler than running both. Also: client DSN must be present at frontend build time (`VITE_*`), while server DSN is a runtime env on the API service — easy to misconfigure across two Render services.
 
 ---
 
@@ -143,7 +143,7 @@ Sentry and a hand-rolled OTEL SDK both want to own OpenTelemetry. Picking one ow
 2. Force a 500 (or use a known failing path in staging); body includes `requestId`.
 3. In Render → API service → Logs, search that id — expect `http.access` and `http.error` (and domain events if on a hot path).
 4. With `SENTRY_DSN` / `VITE_SENTRY_DSN` set, trigger a test exception once; confirm the issue in Hadox projects `handwerk-hr-server` / `handwerk-hr-frontend`, then resolve it.
-5. Optional: set `OTEL_EXPORTER_OTLP_ENDPOINT` when Sentry is **unset**, restart, confirm spans leave the process.
+5. Optional: set `OTEL_EXPORTER_OTLP_ENDPOINT` when Sentry is unset, restart, confirm spans leave the process.
 
 Unit coverage already in tree: redact helper, request-id middleware, cron log bridge (`server/test-unit/…`, `cronLog` tests).
 
@@ -151,7 +151,7 @@ Unit coverage already in tree: redact helper, request-id middleware, cron log br
 
 ## What we have vs what is still interesting
 
-Mapped to SE_46 **Performance, Scaling, and Observability** learning goals.
+Mapped to SE_46 Performance, Scaling, and Observability learning goals.
 
 ### Learning Goal 2 — Logging and Monitoring (mostly done)
 
@@ -182,7 +182,7 @@ Mapped to SE_46 **Performance, Scaling, and Observability** learning goals.
 
 - Propagate `X-Request-Id` from the Vite client on every `apiClient` call so browser → API → Render is one id end-to-end.
 - When Sentry is on, still attach `requestId` as a Sentry tag everywhere (partial today via logs; make it explicit on the scope).
-- Turn on a real OTLP backend in staging **or** lean fully on Sentry performance and delete the unused NodeSDK path to reduce dual-stack confusion.
+- Turn on a real OTLP backend in staging or lean fully on Sentry performance and delete the unused NodeSDK path to reduce dual-stack confusion.
 - Sampling policy doc: what we keep at info vs debug under traffic growth.
 - Cron-specific Sentry check-ins / monitors for anniversary and deactivation jobs.
 
@@ -195,7 +195,7 @@ Mapped to SE_46 **Performance, Scaling, and Observability** learning goals.
 | `LOG_LEVEL` | API runtime | pino level (default debug local / info prod) |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | API runtime | Extra OTLP HTTP export when our NodeSDK runs |
 | `SENTRY_DSN` | API runtime | Enables `@sentry/node` (and skips our NodeSDK tracing) |
-| `VITE_SENTRY_DSN` | Frontend **build** | Enables `@sentry/react` |
+| `VITE_SENTRY_DSN` | Frontend build | Enables `@sentry/react` |
 | `SENTRY_AUTH_TOKEN` | Frontend CI/build | Optional source-map upload |
 
 ---
