@@ -1,6 +1,6 @@
 # Tests
 
-Before pushing changes ensure that you have. (This is also listed in the pull request [template](../../../.github/pull_request_template.md))
+Before pushing changes ensure that you have. (This is also listed in the pull request [template](../../.github/pull_request_template.md))
 
 1. Written a test for this new feature
 2. Ran the test on this feature
@@ -8,7 +8,7 @@ Before pushing changes ensure that you have. (This is also listed in the pull re
 
 ## What PR CI runs
 
-GitHub Actions workflow [`.github/workflows/pr-checks.yml`](../../../.github/workflows/pr-checks.yml):
+GitHub Actions workflow [`.github/workflows/pr-checks.yml`](../../.github/workflows/pr-checks.yml):
 
 | Job | Commands |
 | --- | --- |
@@ -72,4 +72,4 @@ Example coverage screenshots used during a safe refactor:
 
 This project uses Aikido Security ([docs](https://help.aikido.dev/)).
 
-Aikido analyzes the codebase for security vulnerabilities, severity, and remediation guidance. Use it so changes do not introduce new security issues. How findings are triaged, how secret/env pushes are detected, and how fast we respond: [`documentation/docs/backend/security.md`](../../docs/backend/security.md).
+Aikido analyzes the codebase for security vulnerabilities, severity, and remediation guidance. Use it so changes do not introduce new security issues. How findings are triaged, how secret/env pushes are detected, and how fast we respond: [`docs/backend/security.md`](../backend/security.md).

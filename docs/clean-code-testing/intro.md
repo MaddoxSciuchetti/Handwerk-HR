@@ -2,8 +2,8 @@
 
 The aim of this project is to ensure that the user has the highest quality software product. How we approach this problem can best be seen by two core implementations for frontend and backend:
 
-- Frontend — performance as a product requirement (Web Vitals, measured optimizations): [Frontend intro](../../docs/frontend/Intro.md)
-- Backend — observability as a product requirement (structured logs, tracing, Sentry): [Backend intro](../../docs/backend/Intro.md)
+- Frontend — performance as a product requirement (Web Vitals, measured optimizations): [Frontend intro](../frontend/Intro.md)
+- Backend — observability as a product requirement (structured logs, tracing, Sentry): [Backend intro](../backend/Intro.md)
 
 Each of those pages also lists the core tools used in that half of the stack.
 
@@ -17,13 +17,13 @@ If you want to add code to this project, improve the README, or change architect
    - `npm --prefix client run format`
    - `npm --prefix client run lint` (or `npm run lint:src` from `client/`)
    - Details: [Style guide §3.4 / §7.3](style-guide.md). Server has no `lint` / `format` scripts yet — use `npm --prefix server run typecheck` and the tests below.
-4. Open a pull request and fill the [PR template](../../../.github/pull_request_template.md) — PRs without the template will not be reviewed or merged.
+4. Open a pull request and fill the [PR template](../../.github/pull_request_template.md) — PRs without the template will not be reviewed or merged.
 5. CI runs on the PR (lint / typecheck / unit tests) — see [workflow](ci.cd.md). After review, the PR can be merged.
 
 ### Context docs
 
-- Frontend quality focus + tools: [Frontend intro](../../docs/frontend/Intro.md)
-- Backend quality focus + tools: [Backend intro](../../docs/backend/Intro.md)
+- Frontend quality focus + tools: [Frontend intro](../frontend/Intro.md)
+- Backend quality focus + tools: [Backend intro](../backend/Intro.md)
 - High level style guide that will help you quickly write your first lines in this project [Style guide](style-guide.md)
 - Clean code principles and how they are applied in the codebase. Ensure to follow these! [Principles](principles.md)
 - Decisions made in this project [Decisions](decisions.md)
