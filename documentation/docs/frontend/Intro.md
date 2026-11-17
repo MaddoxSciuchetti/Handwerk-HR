@@ -6,7 +6,7 @@ This folder is the entry for the React + Vite SPA (`client/`). Quality for users
 
 We treat frontend performance as a product requirement: slow first paint, layout shift, and heavy polling hurt trust the same way a bug does. The core implementation that shows how seriously we take this is measuring Web Vitals (LCP, INP, CLS, and related signals), setting a baseline outside localhost, then shipping optimizations and re-measuring.
 
-Read the evidence and approach: [Frontend optimization deep dive](../../../docs/optimization-deep-dive.md).
+Read the evidence and approach: [Frontend optimization deep dive](./optimization-deep-dive.md).
 
 ## Core tools
 
@@ -37,7 +37,7 @@ npm run test:unit
 - Frontend-specific implementation decisions (context, forms, pagination): [client/decisions.md](../../../client/decisions.md)
 - Styling system frame (tokens, hierarchy, shared UI rules): [client/styling-system-frame.md](../../../client/styling-system-frame.md)
 - Vite / React toolchain notes: [client/README.md](../../../client/README.md)
-- Frontend performance work and web-vitals notes: [docs/optimization-deep-dive.md](../../../docs/optimization-deep-dive.md)
+- Frontend performance work and web-vitals notes: [optimization-deep-dive.md](./optimization-deep-dive.md)
 - Recurring review checks (routes, mentions, cleanup): [docs/review.md](../../../docs/review.md)
 - Local setup, env vars, and common scripts: [root README](../../../README.md)
 - Client unit tests and coverage (`npm run test:unit`, `test:coverage`): [Tests](../../clean-code-testing/docs/tests.md)
