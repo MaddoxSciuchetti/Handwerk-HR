@@ -10,7 +10,7 @@ This repository uses GitHub Actions for checks. Deploy to Render is still driven
 | Nightly unit tests | `.github/workflows/nightly-unit.yml` | Daily 03:00 UTC + manual | Same client + server unit checks on `main` tip |
 | E2E nightly | `.github/workflows/e2e-nightly.yml` | Daily 03:15 UTC + manual | Postgres + API + Playwright on the GitHub runner (not production, not Render staging) |
 
-`protect-main` ruleset on `main` requires a PR and the status check **Client lint, typecheck & unit tests**. Prefer also requiring **Server typecheck & unit tests** in the ruleset UI once you confirm it is stable.
+`protect-main` ruleset on `main` requires a PR and the status check **Client lint, typecheck & unit tests**. Prefer also requiring **Server typecheck & unit tests** in the ruleset UI once you confirm it is stable. Full security posture (stable versions, secret/env push detection, vulnerability response): [`documentation/docs/backend/security.md`](../../docs/backend/security.md).
 
 ## Where E2E nightly runs
 
