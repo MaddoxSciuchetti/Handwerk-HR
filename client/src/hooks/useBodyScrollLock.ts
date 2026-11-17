@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'react';
 
-export const useBodyScrollLock = () => {
+export function useBodyScrollLock() {
   const lockScroll = useCallback(() => {
     // Save current scroll position
     const scrollY = window.scrollY;
@@ -44,4 +44,4 @@ export const useBodyScrollLock = () => {
   }, [lockScroll, unlockScroll]);
 
   return { lockScroll, unlockScroll };
-};
+}

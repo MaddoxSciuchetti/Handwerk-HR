@@ -1,6 +1,6 @@
 import type { RequestHandler, Request } from "express";
 import { z } from "zod";
-import { FRONTENDURL } from "@/constants/env";
+import { FRONTENDURL, NODE_ENV } from "@/constants/env";
 import {
     CALLBACK_COOKIE,
     callbackUri,
@@ -23,7 +23,7 @@ import {
 // navigation and is stored on staging; SameSite=None is treated as a third-party
 // cookie and dropped between the two onrender.com sites.
 const callbackCookieOptions = () => ({
-    secure: process.env.NODE_ENV !== "development",
+    secure: NODE_ENV !== "development",
     sameSite: "lax" as const,
     path: "/auth/microsoft/callback",
 });

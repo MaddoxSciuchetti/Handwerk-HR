@@ -33,8 +33,8 @@ Configure under the repo: Settings → Secrets and variables → Actions (not Re
 | `E2E_PLAYWRIGHT_CHEF_PASSWORD` | secret | Same password as seed |
 | `E2E_AWS_ACCESS_KEY_ID` | secret | Worker file upload E2E |
 | `E2E_AWS_SECRET_ACCESS_KEY` | secret | Worker file upload E2E |
-| `E2E_AWS_REGION` | variable | AWS region |
-| `E2E_AWS_S3_BUCKET` | variable | S3 bucket used by the CI API (prefer a disposable test bucket) |
+| `E2E_AWS_REGION` | variable | AWS region (e.g. `eu-north-1`) |
+| `E2E_AWS_S3_BUCKET` | variable | Staging/test S3 bucket for CI uploads (not production) |
 | `E2E_TARGET_BRANCH` | variable (optional) | Override nightly git ref (default `main`) |
 
 Smoke-test: Actions → **E2E nightly** → Run workflow.

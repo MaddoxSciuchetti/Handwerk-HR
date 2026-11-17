@@ -7,6 +7,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { isProd } from '@/config/env';
 import { ChevronDownIcon } from 'lucide-react';
 import { FETCHDESCRIPTION } from '@/features/all-tasks/consts/query.consts';
 import {
@@ -61,7 +62,7 @@ export function TeamsSendForm({
   beforeSend,
   sidebar = false,
 }: TeamsSendProps & { sidebar?: boolean }) {
-  const showDiagnostics = !import.meta.env.PROD;
+  const showDiagnostics = !isProd();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');

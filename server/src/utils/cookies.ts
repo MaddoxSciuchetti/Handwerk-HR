@@ -1,9 +1,10 @@
 import { CookieOptions, Response } from "express";
+import { NODE_ENV } from "@/constants/env";
 import { fifteenMinutesFromNow, thirtyDaysFromNow } from "./date";
 
 export const REFRESH_PATH = "/auth/v2/refresh";
 export const AUTH_COOKIE_PATH = "/";
-const isDevelopment = process.env.NODE_ENV === "development";
+const isDevelopment = NODE_ENV === "development";
 const isHttpsEnvironment = !isDevelopment;
 
 const defaults: CookieOptions = {

@@ -1,6 +1,8 @@
+import { appEnv, nodeEnv } from "@/constants/env";
+
 /** Staging opts the Fragebogen and the Microsoft password mail onto Resend. */
 export function isStagingEnvironment() {
-    const app = process.env.APP_ENV?.trim().toLowerCase();
+    const app = appEnv();
     if (app) return app === "staging";
-    return process.env.NODE_ENV?.trim().toLowerCase() === "staging";
+    return nodeEnv().toLowerCase() === "staging";
 }

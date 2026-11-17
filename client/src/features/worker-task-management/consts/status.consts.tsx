@@ -1,7 +1,11 @@
 import { ArrowUpCircle, CheckCircle2, Circle } from 'lucide-react';
 import { STATUS_MAP, TaskStatus } from '../utils/selectOptionTernary';
 
-export const StatusIcon = ({ status }: { status: TaskStatus }) => {
+type StatusIconProps = {
+  status: TaskStatus;
+};
+
+export function StatusIcon({ status }: StatusIconProps) {
   switch (status) {
     case 'erledigt':
       return (
@@ -20,4 +24,4 @@ export const StatusIcon = ({ status }: { status: TaskStatus }) => {
     default:
       return <Circle className={`h-4 w-4 ${STATUS_MAP.offen.iconClassName}`} />;
   }
-};
+}

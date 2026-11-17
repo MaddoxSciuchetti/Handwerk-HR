@@ -1,4 +1,4 @@
-import { LINE_LABEL_LINE_HEIGHT } from '../../../../../../shared/documentRendering';
+import { LINE_LABEL_LINE_HEIGHT } from '@shared/documentRendering';
 import {
   DEFAULT_FONT_PT,
   LAYOUT_MAX_PT,

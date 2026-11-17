@@ -6,7 +6,7 @@ import {
   UseFormHandleSubmit,
   UseFormRegister,
 } from 'react-hook-form';
-import FormFields from '../../../../../components/form/FormFields';
+import { FormFields } from '@/components/form/FormFields';
 import { CreateMitarbeiterInputs } from '../../../consts/CreateMitarbeiterInputs';
 
 type FormModalAddProps = {

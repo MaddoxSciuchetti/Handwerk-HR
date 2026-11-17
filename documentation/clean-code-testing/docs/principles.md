@@ -6,7 +6,7 @@ Instead of passing each item individually I can create a variable containing an 
 
 ### Example 1: Sidebar items
 
-`[client/src/components/ui/sidebar/AppSidebar.tsx](client/src/components/ui/sidebar/AppSidebar.tsx)`
+`[client/src/components/ui/sidebar/AppSidebar.tsx](../../../client/src/components/ui/sidebar/AppSidebar.tsx)`
 
 ```tsx
 <SideBarMenu
@@ -25,26 +25,26 @@ Instead of passing each item individually I can create a variable containing an 
 />
 ```
 
-`[client/src/constants/layout.consts.ts](client/src/constants/layout.consts.ts)`
+`[client/src/constants/layout.consts.ts](../../../client/src/constants/layout.consts.ts)`
 
 ```ts
 export const LAYOUTITEMS = [
     {
+        title: "Cockpit",
+        to: "/cockpit",
+        icon: LayoutDashboard,
+    },
+    {
         title: "Handwerker",
         to: "/worker-lifycycle",
         icon: Inbox,
-    },
-    {
-        title: "Aufgaben",
-        to: "/tasks",
-        icon: Ticket,
     },
 ];
 ```
 
 ### Example 2: Reusable form field
 
-`[client/src/components/form/FormFields.tsx](client/src/components/form/FormFields.tsx)`
+`[client/src/components/form/FormFields.tsx](../../../client/src/components/form/FormFields.tsx)`
 
 Below shows a generic TypeScript component. Instead of defining the label, input and error message there is one single component taking in all the arguments that can be reused over and over again.
 
@@ -69,7 +69,7 @@ type FormFieldsProps<TFieldValues extends FieldValues> = Omit<
 Then we implement the function body containing the label, input and error message:
 
 ```tsx
-const FormFields = <TFieldValues extends FieldValues>({
+export function FormFields<TFieldValues extends FieldValues>({
     errors,
     register,
     label,
@@ -78,9 +78,9 @@ const FormFields = <TFieldValues extends FieldValues>({
     className,
     id,
     ...props
-}: FormFieldsProps<TFieldValues>) => {
+}: FormFieldsProps<TFieldValues>) {
     return (
-        <div className="flex min-w-0 flex-col gap-3">
+        <div className="flex min-w-0 flex-col gap-2">
             {label && (
                 <Label
                     htmlFor={id}
@@ -99,19 +99,19 @@ const FormFields = <TFieldValues extends FieldValues>({
                 errors={errors}
                 name={name as unknown as never}
                 render={({ message }) => (
-                    <p className="text-sm text-(--destructive)">{message}</p>
+                    <p className="text-sm text-destructive">{message}</p>
                 )}
             />
         </div>
     );
-};
+}
 ```
 
 ## KISS
 
 ### Example 1: Task mutations in one object
 
-`[client/src/features/all-tasks/query-options/mutations/tasks.mutations.ts](client/src/features/all-tasks/query-options/mutations/tasks.mutations.ts)`
+`[client/src/features/all-tasks/query-options/mutations/tasks.mutations.ts](../../../client/src/features/all-tasks/query-options/mutations/tasks.mutations.ts)`
 
 This is keeping it simple and stupid as my mutation options are all stored in one mutation object. Whenever I want to use any of the mutations I can just access the property on the object.
 
@@ -121,14 +121,19 @@ export const taskMutations = {
         mutationOptions<unknown, Error, unknown>({
             mutationFn: (payload: unknown) => createTask(payload),
             onSuccess: () => {
-                void queryClient.invalidateQueries({
-                    queryKey: [FETCHDESCRIPTION],
-                });
+                void queryClient.invalidateQueries({ queryKey: [FETCHDESCRIPTION] });
+                void queryClient.invalidateQueries({ queryKey: [WORKERBYID] });
+                void queryClient.invalidateQueries({ queryKey: [ALL_WORKER_DATA] });
             },
         }),
 
     updateTask: () =>
-        mutationOptions<unknown, Error, UpdateTaskParams>({
+        mutationOptions<
+            unknown,
+            Error,
+            UpdateTaskParams,
+            { previous: TaskCacheSnapshot }
+        >({
             mutationFn: ({ taskId, data }) => updateTask({ taskId, data }),
             onSuccess: (_, { taskId }) => {
                 void queryClient.invalidateQueries({
@@ -144,15 +149,21 @@ export const taskMutations = {
 
 ### Example 2: Task history hook
 
-`[client/src/features/worker-task-management/hooks/useGetTaskHistory.ts](client/src/features/worker-task-management/hooks/useGetTaskHistory.ts)`
+`[client/src/features/worker-task-management/hooks/useGetTaskHistory.ts](../../../client/src/features/worker-task-management/hooks/useGetTaskHistory.ts)`
 
-Below shows a simple hook that is only responsible for fetching the data and then returning the data and a few options returned by `useQuery`.
+Below shows a focused hook: fetch task history (and clear the mention flag), then return the query result.
 
 ```ts
-export const useGetTaskHistory = (taskId: string) => {
-    const { data, isLoading, error, refetch } = useQuery(
-        workerQueries.getTaskHistory(taskId),
-    );
+export function useGetTaskHistory(taskId: string) {
+    const queryClient = useQueryClient();
+    const { data, isLoading, error, refetch } = useQuery({
+        ...workerQueries.getTaskHistory(taskId),
+        queryFn: async () => {
+            const history = await getTaskHistory(taskId);
+            clearMention(queryClient, taskId);
+            return history;
+        },
+    });
 
     return {
         historyData: data,
@@ -160,14 +171,14 @@ export const useGetTaskHistory = (taskId: string) => {
         error,
         refetchHistory: refetch,
     };
-};
+}
 ```
 
 ### Example 3: Worker routes
 
-`[server/src/routes/worker.route.ts](server/src/routes/worker.route.ts)`
+`[server/src/routes/worker.route.ts](../../../server/src/routes/worker.route.ts)`
 
-The file only contains the route and the controller.
+The file mounts HTTP paths onto controllers only (no Prisma or business branching).
 
 ```ts
 worker.post("/", workerController.createWorker);
@@ -181,7 +192,7 @@ worker.delete("/:workerId", workerController.deleteWorker);
 
 ### Example 1: HTTP status constants
 
-`[client/src/constants/http.consts.ts](client/src/constants/http.consts.ts)`
+`[client/src/constants/http.consts.ts](../../../client/src/constants/http.consts.ts)`
 
 ```ts
 export const UNAUTHORIZED = 401;
@@ -192,15 +203,17 @@ Only having status codes that are being used in the client application. If furth
 
 ### Example 2: Minimal query client config
 
-`[client/src/config/query.client.ts](client/src/config/query.client.ts)`
+`[client/src/config/query.client.ts](../../../client/src/config/query.client.ts)`
 
-The below code builds a single global query client and only disables query retries. It does not persist cache or set a default staleTime strategy as this is currently not needed in the code. It also follows the clean code principle of preventing over-configurability.
+The below code builds a single global query client with a small set of query defaults (no retries; short `staleTime` / `gcTime`). It does not persist cache or add feature-specific policies here. That keeps the shared client YAGNI-thin.
 
 ```ts
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
             retry: false,
+            staleTime: 30_000,
+            gcTime: 5 * 60_000,
         },
     },
 });
@@ -208,7 +221,7 @@ const queryClient = new QueryClient({
 
 ### Example 3: Payment redirect message
 
-`[client/src/features/settings/payments/PaymentRedirectMessage.tsx](client/src/features/settings/payments/PaymentRedirectMessage.tsx)`
+`[client/src/features/settings/payments/PaymentRedirectMessage.tsx](../../../client/src/features/settings/payments/PaymentRedirectMessage.tsx)`
 
 Below only shows the message. There are no icons or variants as this too is not needed for the current requirements.
 
@@ -226,7 +239,7 @@ export function PaymentRedirectMessage({
 
 ## Error handling
 
-See below one pattern used in the /client directory
+See below one pattern used in the /client directory — [`client/src/lib/trycatch.ts`](../../../client/src/lib/trycatch.ts)
 
 ```ts
 export async function tryCatch<T, E = Error>(
@@ -251,7 +264,7 @@ try {
 }
 ```
 
-See below one pattern used in the /server directory
+See below one pattern used in the /server directory — [`server/src/utils/catchErrors.ts`](../../../server/src/utils/catchErrors.ts)
 
 The wrapper is applied before the controller. The error is being handled by the express middleware
 
@@ -267,7 +280,7 @@ const catchErrors =
     };
 ```
 
-Usage pattern: `[server/src/controllers/template.controller.ts](server/src/controllers/template.controller.ts)` — e.g. `export const createTemplate = catchErrors(async (req, res) => { ... })`.
+Usage pattern: `[server/src/controllers/template.controller.ts](../../../server/src/controllers/template.controller.ts)` — e.g. `export const createTemplate = catchErrors(async (req, res) => { ... })`.
 
 ---
 
@@ -279,7 +292,7 @@ The above principle is found in various places in my codebase.
 
 Below is one example where the API calls are always in the same file per feature and always follow the same shape:
 
-`[client/src/features/all-tasks/api/tasks.api.ts](client/src/features/all-tasks/api/tasks.api.ts)`
+`[client/src/features/all-tasks/api/tasks.api.ts](../../../client/src/features/all-tasks/api/tasks.api.ts)`
 
 ```ts
 export const getTasks = async (): Promise<IssueResponse[]> => {
@@ -301,7 +314,7 @@ export const updateTask = async ({
 
 ### Example: Task sidebar naming
 
-`[client/src/features/all-tasks/components/TaskSidebar.tsx](client/src/features/all-tasks/components/TaskSidebar.tsx)`
+`[client/src/features/all-tasks/components/TaskSidebar.tsx](../../../client/src/features/all-tasks/components/TaskSidebar.tsx)`
 
 The variable naming correlates to the responsibility of the variable.
 
@@ -313,7 +326,7 @@ const saveComment = useSaveTaskComment();
 
 - Encapsulate boundary conditions. Boundary conditions are hard to keep track of. Put the processing for them in one place.
 
-`[client/src/config/env.ts](client/src/config/env.ts)`
+`[client/src/config/env.ts](../../../client/src/config/env.ts)`
 
 Ensures that env vars are either defined or if not defined an error is thrown.
 
@@ -333,7 +346,7 @@ export const getEnv = (key: string, defaultValue?: string): string => {
 
 - Choose descriptive and unambiguous names.
 
-`[client/src/config/apiClient.ts](client/src/config/apiClient.ts)`
+`[client/src/config/apiClient.ts](../../../client/src/config/apiClient.ts)`
 
 ```ts
 const isInvalidAccessToken = (status: number, data: ApiErrorResponse) =>
@@ -345,7 +358,7 @@ const isSubscriptionAccessDenied = (status: number, data: ApiErrorResponse) =>
 
 - Make meaningful distinction.
 
-`[client/src/features/settings/payments/util/subscriptionAccess.util.ts](client/src/features/settings/payments/util/subscriptionAccess.util.ts)`
+`[client/src/features/settings/payments/util/subscriptionAccess.util.ts](../../../client/src/features/settings/payments/util/subscriptionAccess.util.ts)`
 
 ```ts
 export function hasStripeManagedSubscription(
@@ -367,7 +380,7 @@ export function isSubscriptionLocked(
 
 - Use pronounceable names.
 
-`[client/src/features/settings/payments/util/trial.util.ts](client/src/features/settings/payments/util/trial.util.ts)`
+`[client/src/features/settings/payments/util/trial.util.ts](../../../client/src/features/settings/payments/util/trial.util.ts)`
 
 ```ts
 export function trialDaysRemainingLabel(
@@ -384,11 +397,11 @@ export function trialDaysRemainingLabel(
 
 - Use searchable names.
 
-`[client/src/features/all-tasks/api/tasks.api.ts](client/src/features/all-tasks/api/tasks.api.ts)` contains searchable names such as `getTasks` or `createTask`.
+`[client/src/features/all-tasks/api/tasks.api.ts](../../../client/src/features/all-tasks/api/tasks.api.ts)` contains searchable names such as `getTasks` or `createTask`.
 
 - Replace magic numbers with named constants.
 
-`[client/src/constants/http.consts.ts](client/src/constants/http.consts.ts)`
+`[client/src/constants/http.consts.ts](../../../client/src/constants/http.consts.ts)`
 
 ```ts
 export const UNAUTHORIZED = 401;
@@ -401,7 +414,7 @@ export const FORBIDDEN = 403;
 
 Trial days remaining is a short focused calculation (input → number / `null`).
 
-`[client/src/features/settings/payments/util/trial.util.ts](client/src/features/settings/payments/util/trial.util.ts)`
+`[client/src/features/settings/payments/util/trial.util.ts](../../../client/src/features/settings/payments/util/trial.util.ts)`
 
 ```ts
 export function trialDaysRemaining(trialEndsAt: string | null): number | null {
@@ -418,7 +431,7 @@ export function trialDaysRemaining(trialEndsAt: string | null): number | null {
 
 Only answers the question if this organization can use the app.
 
-`[client/src/features/settings/payments/util/subscriptionAccess.util.ts](client/src/features/settings/payments/util/subscriptionAccess.util.ts)`
+`[client/src/features/settings/payments/util/subscriptionAccess.util.ts](../../../client/src/features/settings/payments/util/subscriptionAccess.util.ts)`
 
 ```ts
 export function hasSubscriptionAppAccess(
@@ -428,8 +441,8 @@ export function hasSubscriptionAppAccess(
     if (s.status === "cancelled") return false;
     if (s.status === "past_due") return false;
     if (s.status === "active") return true;
-    if (s.status === "trialing" && s.stripeSubscriptionId) return true;
-    if (s.status === "trialing" && !s.stripeSubscriptionId) {
+    if (s.status === "trialing" && hasStripeRecord(s)) return true;
+    if (s.status === "trialing" && !hasStripeRecord(s)) {
         if (!s.trialEndsAt) return true;
         return new Date(s.trialEndsAt) > new Date();
     }
@@ -439,7 +452,7 @@ export function hasSubscriptionAppAccess(
 
 - Prefer fewer arguments.
 
-`[client/src/features/all-tasks/api/tasks.api.ts](client/src/features/all-tasks/api/tasks.api.ts)` takes a single object instead of many positional parameters, reducing risk of wrong argument order.
+`[client/src/features/all-tasks/api/tasks.api.ts](../../../client/src/features/all-tasks/api/tasks.api.ts)` takes a single object instead of many positional parameters, reducing risk of wrong argument order.
 
 ```ts
 export const saveTaskComment = async ({
@@ -456,7 +469,7 @@ export const saveTaskComment = async ({
 
 - Have no side effects.
 
-`[client/src/features/settings/payments/util/trial.util.ts](client/src/features/settings/payments/util/trial.util.ts)`
+`[client/src/features/settings/payments/util/trial.util.ts](../../../client/src/features/settings/payments/util/trial.util.ts)`
 
 Does not contain any side effects (aside from reading the current time via `Date`).
 
@@ -482,7 +495,7 @@ export function trialDaysRemaining(trialEndsAt: string | null): number | null {
 - Use as clarification of code.
 - Use as warning of consequences.
 
-To give one clear example that follows the above criteria view this file `[client/src/config/apiClient.ts](client/src/config/apiClient.ts)`.
+To give one clear example that follows the above criteria view this file `[client/src/config/apiClient.ts](../../../client/src/config/apiClient.ts)`.
 
 The comment clarifies the code as it is not clear why two axios flows run (refresh then retry):
 
@@ -501,13 +514,13 @@ Different layers live in different files/folders. The backend architecture follo
 
 - Related code should appear vertically dense.
 
-`[client/src/features/all-tasks/query-options/mutations/tasks.mutations.ts](client/src/features/all-tasks/query-options/mutations/tasks.mutations.ts)`
+`[client/src/features/all-tasks/query-options/mutations/tasks.mutations.ts](../../../client/src/features/all-tasks/query-options/mutations/tasks.mutations.ts)`
 
 Keeps each mutation's `mutationFn` and its `onSuccess` invalidations together so one screen shows the whole behaviour of that specific action.
 
 - Declare variables close to their usage.
 
-`[client/src/config/apiClient.ts](client/src/config/apiClient.ts)`
+`[client/src/config/apiClient.ts](../../../client/src/config/apiClient.ts)`
 
 The `config`/`response` are taken from the error and are also being used directly after.
 
@@ -521,19 +534,19 @@ if (!response) {
 }
 ```
 
-- Dependent functions should be close. `[client/src/config/apiClient.ts](client/src/config/apiClient.ts)`
-- Similar functions should be close. `[client/src/features/all-tasks/api/tasks.api.ts](client/src/features/all-tasks/api/tasks.api.ts)`
-- Place functions in the downward direction. `[client/src/features/template-tasks/components/template-items/TemplateTasks.tsx](client/src/features/template-tasks/components/template-items/TemplateTasks.tsx)`
-- Keep lines short. `[client/src/features/all-tasks/query-options/mutations/tasks.mutations.ts](client/src/features/all-tasks/query-options/mutations/tasks.mutations.ts)`
+- Dependent functions should be close. `[client/src/config/apiClient.ts](../../../client/src/config/apiClient.ts)`
+- Similar functions should be close. `[client/src/features/all-tasks/api/tasks.api.ts](../../../client/src/features/all-tasks/api/tasks.api.ts)`
+- Place functions in the downward direction. `[client/src/features/template-tasks/components/template-items/TemplateTasks.tsx](../../../client/src/features/template-tasks/components/template-items/TemplateTasks.tsx)`
+- Keep lines short. `[client/src/features/all-tasks/query-options/mutations/tasks.mutations.ts](../../../client/src/features/all-tasks/query-options/mutations/tasks.mutations.ts)`
 - Don't break indentation: TS/TSX in `client/src` uses consistent 2-space indentation.
 
 ### Objects and data structures
 
-- Hide internal structure. `[client/src/features/all-tasks/components/TaskCommentBox.tsx](client/src/features/all-tasks/components/TaskCommentBox.tsx)`
+- Hide internal structure. `[client/src/features/all-tasks/components/TaskCommentBox.tsx](../../../client/src/features/all-tasks/components/TaskCommentBox.tsx)`
 
 The callers pass the props and callbacks. They don't reach into a component's private state.
 
-- Prefer data structures. `[client/src/features/settings/payments/payments.consts.ts](client/src/features/settings/payments/payments.consts.ts)`
+- Prefer data structures. `[client/src/features/settings/payments/payments.consts.ts](../../../client/src/features/settings/payments/payments.consts.ts)`
 
 Plain objects are used as shown below:
 
@@ -549,7 +562,7 @@ export const PAYMENT_PLANS: readonly PaymentPlan[] = [
         id: "pro",
         name: "Pro",
         price: "30 € / Monat",
-        priceId: "price_1TSekYIFABFY32sSYamWuX2h",
+        priceId: "price_1TSekOIFABFY32sSYamWuX2h",
     },
     {
         id: "enterprise",
@@ -560,12 +573,12 @@ export const PAYMENT_PLANS: readonly PaymentPlan[] = [
 ] as const;
 ```
 
-- Should be small. `[client/src/components/form/SingleFormField.tsx](client/src/components/form/SingleFormField.tsx)`
+- Should be small. `[client/src/components/form/SingleFormField.tsx](../../../client/src/components/form/SingleFormField.tsx)`
 
 Shows a small component.
 
-- Do one thing. `[client/src/components/form/SingleFormField.tsx](client/src/components/form/SingleFormField.tsx)`
+- Do one thing. `[client/src/components/form/SingleFormField.tsx](../../../client/src/components/form/SingleFormField.tsx)`
 
 Shows the same component doing only one thing.
 
-- Better to have many functions than to pass some code into a function to select a behavior. `[client/src/features/all-tasks/api/tasks.api.ts](client/src/features/all-tasks/api/tasks.api.ts)`
+- Better to have many functions than to pass some code into a function to select a behavior. `[client/src/features/all-tasks/api/tasks.api.ts](../../../client/src/features/all-tasks/api/tasks.api.ts)`

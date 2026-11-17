@@ -1,4 +1,5 @@
 import { isCurrentDateField } from "../../../shared/document";
+import { openAiApiKey } from "@/constants/env";
 import type { DocumentSegment } from "@/services/documentBody";
 import {
     acceptSemanticModelMatches,
@@ -94,7 +95,7 @@ const matchSchema = {
 } as const;
 
 function openAiKey() {
-    return process.env.OPENAI_API_KEY?.trim() ?? "";
+    return openAiApiKey();
 }
 
 const CONTEXT_CHARS = 900;

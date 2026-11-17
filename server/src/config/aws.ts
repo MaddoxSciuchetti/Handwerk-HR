@@ -5,6 +5,7 @@ import {
     S3Client,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { AWS_REGION, AWS_S3_BUCKET } from "@/constants/env";
 import { storageClientConfig } from "./storageClientConfig";
 
 // Without explicit keys, use the SDK provider chain (AWS_PROFILE/SSO/IAM role).
@@ -14,7 +15,7 @@ export const generatePresignedUrl = async (
     cloudKey: string,
 ): Promise<string> => {
     const command = new GetObjectCommand({
-        Bucket: process.env.AWS_S3_BUCKET!,
+        Bucket: AWS_S3_BUCKET,
         Key: cloudKey,
         ResponseCacheControl: "no-store, no-cache, must-revalidate",
     });
@@ -26,7 +27,7 @@ export const generatePresignedUrl = async (
 
 export async function downloadStoredFile(key: string): Promise<Buffer> {
     const result = await s3Client.send(
-        new GetObjectCommand({ Bucket: process.env.AWS_S3_BUCKET!, Key: key }),
+        new GetObjectCommand({ Bucket: AWS_S3_BUCKET, Key: key }),
     );
     if (!result.Body) throw new Error("Stored file is missing");
     return Buffer.from(await result.Body.transformToByteArray());
@@ -40,7 +41,7 @@ export async function uploadFileToS3(
     const key = `${prefix}/${formId}/${Date.now()}-${crypto.randomUUID()}`;
 
     const command = new PutObjectCommand({
-        Bucket: process.env.AWS_S3_BUCKET!,
+        Bucket: AWS_S3_BUCKET,
         Key: key,
         Body: file.buffer,
         ContentType: file.mimetype,
@@ -48,7 +49,7 @@ export async function uploadFileToS3(
 
     try {
         await s3Client.send(command);
-        const url = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+        const url = `https://${AWS_S3_BUCKET}.s3.${AWS_REGION}.amazonaws.com/${key}`;
 
         return {
             success: true,

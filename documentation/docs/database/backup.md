@@ -1,5 +1,9 @@
 # Backup
 
-Backups are handled through Neon’s managed backup and restore features. The production branch supports point-in-time restore, allowing the database to be restored to an earlier timestamp. This protects against accidental deletes, failed migrations, or corrupted writes.
+Production PostgreSQL runs on **Render Managed Postgres**. Render takes **automatic daily snapshots**; retention and whether **point-in-time recovery (PITR)** is available depend on the Postgres plan in the Render Dashboard ([Render databases](https://render.com/docs/databases)).
 
-Logical dumps with pg_dump could also be scheduled for long term safety, however they are not the main recovery mechanism as they become slower when the database grows and Neons build in option provides a easy to maintain backup option. If in the future the importance of the data stored becomes higher it can make sense to create dumps once in a while to ensure complete safetey and not being bound to Neon.
+Use Dashboard → database → **Backups** to restore a snapshot or (when the plan includes it) a point in time. That protects against accidental deletes, failed migrations, or corrupted writes.
+
+Logical dumps with `pg_dump` (preferably `pg_dump -Fc` for larger databases) can be scheduled for long-term archives you control. They are a secondary mechanism: dumps get slower and larger as the database grows, while Render’s managed backups stay the primary recovery path. Store dumps in durable object storage, not on ephemeral Render service disks.
+
+**Important:** deleting a Managed Postgres instance also removes its Render backups. Export or restore to another instance before deletion if you need continuity.

@@ -12,19 +12,19 @@ const PREVIEW_SIZE = 220;
 const CROP_SIZE = 160;
 const OUTPUT_SIZE = 256;
 
-type Props = {
+type AvatarCropModalProps = {
   file: File;
   onSave: (croppedFile: File) => void;
   onCancel: () => void;
   anchorRect?: DOMRect;
 };
 
-export const AvatarCropModal = ({
+export function AvatarCropModal({
   file,
   onSave,
   onCancel,
   anchorRect,
-}: Props) => {
+}: AvatarCropModalProps) {
   const imgSrc = useMemo(() => URL.createObjectURL(file), [file]);
   const [naturalSize, setNaturalSize] = useState({ w: 0, h: 0 });
   const [imageScale, setImageScale] = useState(1);
@@ -83,4 +83,4 @@ export const AvatarCropModal = ({
     </div>,
     document.body
   );
-};
+}

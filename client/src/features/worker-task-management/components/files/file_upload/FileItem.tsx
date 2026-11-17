@@ -2,11 +2,11 @@ import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
 import { useEffect } from 'react';
 
-interface UploadedFileItemProps {
+type UploadedFileItemProps = {
   file: File;
   progress: number;
   onRemove: (filename: string) => void;
-}
+};
 
 export function UploadedFileItem({
   file,

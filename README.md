@@ -4,23 +4,28 @@ Onboarding / offboarding workflow tool. Express + Prisma + PostgreSQL on the bac
 
 > 💡 **Tip — read this before you push**
 >
-> When having push access to this repository,thoroughly read through the entire codebase. To get a better high-level view, start with these two folders:
+> When having push access to this repository,thoroughly read through the entire codebase. Start with the documentation meta entry, then open the area you need:
 >
-> - `database/` [intro](/Users/maddoxsciuchetti/fixies-branch/database/Intro.md)
-> - `clean-code-testing/`[intro](/Users/maddoxsciuchetti/fixies-branch/clean-code-testing/docs/intro.md)
+> - Meta entry [documentation/docs.md](./documentation/docs.md)
+> - Clean code & testing [intro](./documentation/clean-code-testing/docs/intro.md)
+> - Database [intro](./documentation/docs/database/Intro.md)
+> - Backend [intro](./documentation/docs/backend/Intro.md)
+> - Frontend [intro](./documentation/docs/frontend/Intro.md)
 
-The folder `database/` gives you the current implementation overview regarding how we store the data that we collect. It also contains detailed information on how we test performance and how we approach database maintenance when this project starts to grow.
-
-The folder `clean-code-testing/` provides you with information on how to write code in this project. This includes how this project approaches testing but also the kind of syntax we write and the folder organization this project follows. If you decide to use an Agent, please include this folder in the context.
+The folder `documentation/` holds contributor readmes. `docs.md` is the single entry into clean code, database, backend, and frontend. Each of those pages links on to the detailed files for that area. Production Postgres runs on **Render Managed Postgres**. If you decide to use an Agent, please include `documentation/` in the context.
 
 High level folder architecture
 
 ```
-client/    React + Vite frontend
-server/    Express + Prisma backend
-database/  Schema notes
-clean-code-testing/
-pgbench/   Benchmark queries
+client/          React + Vite frontend
+server/          Express + Prisma backend
+documentation/
+  docs.md                Meta entry
+  docs/database/         Database entry + pages
+  docs/backend/          Backend entry
+  docs/frontend/         Frontend entry
+  clean-code-testing/    Clean code entry + pages
+  pgbench/               Benchmark queries
 ```
 
 ## Observability
@@ -36,7 +41,7 @@ The API uses structured logging and OpenTelemetry tracing (`requestId` / `traceI
 
 - Node.js 20+
 - npm
-- A PostgreSQL database (local or hosted, e.g. Neon)
+- A PostgreSQL database (local Docker/Postgres, or **Render Managed Postgres** in staging/production)
 - `psql` if you want to inspect the DB directly
 
 ## Environment variables
@@ -339,7 +344,8 @@ Backend (`server/`):
 | `npm run prisma:generate`              | Regenerate the Prisma client after schema changes           |
 | `npx prisma migrate dev --name <desc>` | Create + apply a new migration                              |
 | `npx prisma migrate deploy`            | Apply pending migrations (CI / production)                  |
-| `npm test`                             | Jest unit tests                                             |
+| `npm test`                             | Full Jest suite (`src`, `test-unit`, `test-integration`)    |
+| `npm run test:unit`                    | Jest tests under `test-unit` (same scope as PR CI)          |
 
 Frontend (`client/`):
 
@@ -348,7 +354,8 @@ Frontend (`client/`):
 | `npm run dev`       | Vite dev server            |
 | `npm run build`     | Production build           |
 | `npm run preview`   | Serve the production build |
-| `npm run test:unit` | Vitest unit tests          |
+| `npm run test:unit`     | Vitest unit tests (`test-unit/`) |
+| `npm run test:coverage` | Vitest unit tests + coverage     |
 
 ## Database changes
 

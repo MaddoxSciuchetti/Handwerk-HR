@@ -7,10 +7,10 @@ import useFileUpload from '@/features/worker-task-management/hooks/useFileUpload
 import { FileDropzone } from './Dropzone';
 import { FileList } from './FileList';
 
-interface FileUploadFormProps {
+type FileUploadFormProps = {
   workerId: string;
   setModal: (val: boolean) => void;
-}
+};
 
 export default function FileUploadForm({
   workerId,

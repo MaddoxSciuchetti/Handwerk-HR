@@ -22,7 +22,7 @@ type Params = {
   onSave: (croppedFile: File) => void;
 };
 
-export const useAvatarCropSave = ({
+export function useAvatarCropSave({
   naturalSize,
   imagePos,
   imageScale,
@@ -32,8 +32,8 @@ export const useAvatarCropSave = ({
   outputSize,
   imgSrc,
   onSave,
-}: Params) =>
-  useCallback(() => {
+}: Params) {
+  return useCallback(() => {
     if (!naturalSize.w) return;
 
     const cropX = (cropLeft - imagePos.x) / imageScale;
@@ -81,3 +81,4 @@ export const useAvatarCropSave = ({
     imgSrc,
     onSave,
   ]);
+}

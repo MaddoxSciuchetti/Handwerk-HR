@@ -62,4 +62,4 @@
 
 - [ ] Meaningful client edits → `npm --prefix client run lint` (+ format); no blanket eslint-disable to dodge hooks.
 - [ ] Unused params/vars underscored on purpose or removed.
-- [ ] New/changed server tests live as `*.test.ts` under `server/tests/`.
+- [ ] New/changed server tests live as `*.test.ts` under `server/src/`, `server/test-unit/`, or `server/test-integration/`.
