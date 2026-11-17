@@ -34,17 +34,23 @@ test.describe('Onboarding worker view journey', () => {
 
     await openWorkerDetailFromRow(page, workerRow);
     await expect(page).toHaveURL(/\/user\/[^/]+/);
-    await expect(page.getByRole('tab', { name: 'Aufgaben' })).toBeVisible();
+    // Worker detail uses plain Buttons for section nav (not role=tab).
+    await expect(page.getByRole('button', { name: 'Aufgaben' })).toBeVisible();
 
-    await page.getByRole('tab', { name: 'Dateien' }).click();
+    await page.getByRole('button', { name: 'Dateien' }).click();
 
     await page.getByTestId('open-file-upload').click();
+    await page.getByRole('menuitem', { name: /^Datei$/i }).click();
+
     await expect(
-      page.getByRole('button', { name: /Hochladen$/i })
-    ).toBeVisible();
+      page.getByRole('heading', { name: /Datei hochladen/i })
+    ).toBeVisible({ timeout: 15_000 });
+
+    const documentName = 'E2E Test Upload';
+    const uploadedFileName = `${documentName}.png`;
+    await page.getByLabel(/^Dokumentname$/i).fill(documentName);
 
     const fileBuffer = Buffer.from(PNG_B64, 'base64');
-
     await page.locator('#fileUpload').setInputFiles({
       name: TEST_FILE_NAME,
       mimeType: 'image/png',
@@ -63,21 +69,21 @@ test.describe('Onboarding worker view journey', () => {
     await page.getByRole('button', { name: /^Hochladen$/i }).click();
     await uploadResponse;
 
-    await expect(page.getByRole('dialog')).not.toBeVisible({
-      timeout: 30_000,
-    });
+    await expect(
+      page.getByRole('heading', { name: /Datei hochladen/i })
+    ).not.toBeVisible({ timeout: 30_000 });
 
     await expect(
-      page.getByRole('button', { name: `${TEST_FILE_NAME} löschen` })
+      page.getByRole('button', { name: `${uploadedFileName} löschen` })
     ).toBeVisible({ timeout: 15_000 });
 
     await page
-      .getByRole('button', { name: `${TEST_FILE_NAME} löschen` })
+      .getByRole('button', { name: `${uploadedFileName} löschen` })
       .click();
 
-    await expect(page.getByText(TEST_FILE_NAME)).not.toBeVisible({
-      timeout: 15_000,
-    });
+    await expect(
+      page.getByRole('button', { name: `${uploadedFileName} löschen` })
+    ).toHaveCount(0, { timeout: 15_000 });
 
     await page.goto('/worker-lifycycle');
     await expect(page).toHaveURL(/\/worker-lifycycle$/);
