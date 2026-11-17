@@ -72,4 +72,4 @@ Example coverage screenshots used during a safe refactor:
 
 This project uses Aikido Security ([docs](https://help.aikido.dev/)).
 
-Aikido analyzes the codebase for security vulnerabilities, severity, and remediation guidance. Use it so changes do not introduce new security issues.
+Aikido analyzes the codebase for security vulnerabilities, severity, and remediation guidance. Use it so changes do not introduce new security issues. How findings are triaged, how secret/env pushes are detected, and how fast we respond: [`documentation/docs/backend/security.md`](../../docs/backend/security.md).

@@ -63,6 +63,9 @@ jobs:
 
       - name: Typecheck
         run: npm run typecheck
+        env:
+          # tsc on this package has OOMed at the default ~2GB heap on GHA runners
+          NODE_OPTIONS: --max-old-space-size=4096
 
       - name: Unit tests
         run: npx jest --testPathPatterns=test-unit

@@ -41,6 +41,7 @@ npx prisma migrate status --schema=src/prisma/schema.prisma
 - Local Prisma migrate / generate after schema pulls: [AGENTS.md](../../../AGENTS.md)
 - Database model, performance, backups, and scaling: [Database Intro](../database/Intro.md)
 - Server tests and coverage commands: [Tests](../../clean-code-testing/docs/tests.md)
+- Security on `main` (stable versions, secret push detection, vulnerability response): [security.md](./security.md)
 - GitHub Actions notes: [CI/CD](../../clean-code-testing/docs/ci.cd.md)
 
 ## Related (historical)
