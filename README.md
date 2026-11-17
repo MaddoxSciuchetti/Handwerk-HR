@@ -6,24 +6,24 @@ Onboarding / offboarding workflow tool. Express + Prisma + PostgreSQL on the bac
 >
 > When having push access to this repository,thoroughly read through the entire codebase. Start with the documentation meta entry, then open the area you need:
 >
-> - Meta entry [documentation/docs.md](./documentation/docs.md)
-> - Clean code & testing [intro](./documentation/clean-code-testing/docs/intro.md)
-> - Database [intro](./documentation/docs/database/Intro.md)
-> - Backend [intro](./documentation/docs/backend/Intro.md)
-> - Frontend [intro](./documentation/docs/frontend/Intro.md)
+> - Meta entry [docs/docs.md](./docs/docs.md)
+> - Clean code & testing [intro](./docs/clean-code-testing/intro.md)
+> - Database [intro](./docs/database/Intro.md)
+> - Backend [intro](./docs/backend/Intro.md)
+> - Frontend [intro](./docs/frontend/Intro.md)
 
-The folder `documentation/` holds contributor readmes. `docs.md` is the single entry into clean code, database, backend, and frontend. Each of those pages links on to the detailed files for that area. Production Postgres runs on **Render Managed Postgres**. If you decide to use an Agent, please include `documentation/` in the context.
+The folder `docs/` holds contributor readmes. `docs.md` is the single entry into clean code, database, backend, and frontend. Each of those pages links on to the detailed files for that area. Production Postgres runs on **Render Managed Postgres**. If you decide to use an Agent, please include `docs/` in the context.
 
 High level folder architecture
 
 ```
 client/          React + Vite frontend
 server/          Express + Prisma backend
-documentation/
+docs/
   docs.md                Meta entry
-  docs/database/         Database entry + pages
-  docs/backend/          Backend entry
-  docs/frontend/         Frontend entry
+  database/              Database entry + pages
+  backend/               Backend entry
+  frontend/              Frontend entry
   clean-code-testing/    Clean code entry + pages
   pgbench/               Benchmark queries
 ```

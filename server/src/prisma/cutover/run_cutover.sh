@@ -2,7 +2,7 @@
 # =============================================================================
 # HISTORICAL (Neon-era cutover, completed 2026-05-24).
 # Production Postgres is now Render Managed Postgres — do not run for new ops.
-# See documentation/docs/database/backup.md for current recovery.
+# See docs/database/backup.md for current recovery.
 # run_cutover.sh — Execute full cutover sequence on a Neon branch (archive only).
 #
 # Usage:

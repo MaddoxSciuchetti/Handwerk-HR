@@ -3,11 +3,11 @@
 Repo: Handwerk-HR  
 App stable version: **2.0.0** (`client/` and `server/` `package.json`)  
 Ruleset: `protect-main` (targets `refs/heads/main`)  
-CI workflow: [`.github/workflows/pr-checks.yml`](../../../.github/workflows/pr-checks.yml)
+CI workflow: [`.github/workflows/pr-checks.yml`](../../.github/workflows/pr-checks.yml)
 
 This note lives under backend docs because the API holds secrets, auth, and most of the attack surface. It explains the branch protection on `main`, the versions we treat as current/stable, how we handle vulnerabilities, and what stops environment variables from being pushed into Git.
 
-Companion CI overview: [`documentation/clean-code-testing/docs/ci.cd.md`](../../clean-code-testing/docs/ci.cd.md). Vulnerability scanning product: [Aikido Security](https://help.aikido.dev/).
+Companion CI overview: [`docs/clean-code-testing/ci.cd.md`](../clean-code-testing/ci.cd.md). Vulnerability scanning product: [Aikido Security](https://help.aikido.dev/).
 
 ---
 
