@@ -49,8 +49,9 @@ test.describe('Create employee journey', () => {
     page,
     request,
   }) => {
-    await page.goto('/settings/employees');
-    await expect(page).toHaveURL(/\/settings\/employees$/);
+    // /settings/employees redirects; Meine Mitarbeiter lives on Profil.
+    await page.goto('/settings/profile');
+    await expect(page).toHaveURL(/\/settings\/profile$/);
 
     await expect(
       page.getByRole('heading', { name: /Mitarbeiter/i })
@@ -139,8 +140,8 @@ test.describe('Create employee journey', () => {
     expect(verificationEmail?.html).toContain('/email/verify/');
     expect(verificationEmail?.html).toContain(employee.password);
 
-    await page.goto('/settings/employees');
-    await expect(page).toHaveURL(/\/settings\/employees$/);
+    await page.goto('/settings/profile');
+    await expect(page).toHaveURL(/\/settings\/profile$/);
 
     const fullName = `${employee.firstName} ${employee.lastName}`;
     const employeeRow = page.getByRole('row').filter({ hasText: fullName });

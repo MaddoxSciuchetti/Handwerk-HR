@@ -13,12 +13,16 @@ export const getWorkerRow = (page: Page, fullName: string): Locator =>
 
 export const openWorkerDetailFromRow = async (
   page: Page,
-  workerRow: Locator
+  workerRow: Locator,
+  fullName: string
 ) => {
   await workerRow.scrollIntoViewIfNeeded();
   await expect(workerRow).toHaveCount(1);
   await expect(workerRow).toBeVisible({ timeout: 30_000 });
-  await workerRow.click();
+  // Row midpoint hits Typ / Verantwortlich pickers, which swallow navigation.
+  await workerRow
+    .getByText(new RegExp(`^${escapeForRegex(fullName)}$`))
+    .click();
   await expect(page).toHaveURL(/\/user\/[^/]+/, { timeout: 30_000 });
 };
 

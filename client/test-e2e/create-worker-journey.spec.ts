@@ -32,7 +32,7 @@ test.describe('Onboarding worker view journey', () => {
     await expect(workerRow).toHaveCount(1, { timeout: 15_000 });
     await expect(workerRow).toBeVisible({ timeout: 15_000 });
 
-    await openWorkerDetailFromRow(page, workerRow);
+    await openWorkerDetailFromRow(page, workerRow, worker.fullName);
     await expect(page).toHaveURL(/\/user\/[^/]+/);
     // Worker detail uses plain Buttons for section nav (not role=tab).
     await expect(page.getByRole('button', { name: 'Aufgaben' })).toBeVisible();
