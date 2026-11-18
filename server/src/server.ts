@@ -4,6 +4,7 @@ import { requireCronSecret } from "./middleware/requireCronSecret";
 import dotenv from "dotenv";
 dotenv.config();
 
+import compression from "compression";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
@@ -44,6 +45,8 @@ const app = express();
 app.use(requestIdMiddleware);
 app.use(sentryContextMiddleware);
 app.use(accessLogMiddleware);
+// Gzip JSON and other compressible responses (e.g. paginated /tasks).
+app.use(compression());
 
 app.post(
     "/webhooks/resend",
