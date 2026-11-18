@@ -1,17 +1,31 @@
-The following describes decisions done in this project:
+# Client decisions
 
-Implementation:
-Reason:
-Alternatives:
+Start with the project decisions doc — it has the fuller write-up (repo split, TanStack Router, feature folders, naming, tooling):
 
-Implementation: Usecontext for handling modalstate
-Reason: modalstate is spread over multiple components that are still related to one another
-Alternatives: Zustand or Redux
+→ [`docs/clean-code-testing/decisions.md`](../docs/clean-code-testing/decisions.md)
 
-Implementation: Pagination not server side
-Reason: The data being fetched amounts to avg 10-20 tasks
-Alternatives: Pagination through the server
+This page only adds frontend-only choices that are not covered there.
 
----
+## Modal state via React context
 
-Decided to go with RHF because of its ease of use in implementing it. Due to preference i do not like the useForm from tanstack that lets you bind components directly to the form. RHF allows more flexibility.
+**Decision:** Employee modal open/close and related modal state use React context (`EmployeeModalContext` / `ModalProvider`), not a global store.
+
+**Reason:** The state is shared across related components in the employee-overview feature, not across unrelated app areas.
+
+**Alternatives considered:** Zustand, Redux.
+
+## Forms via React Hook Form
+
+**Decision:** Forms use React Hook Form (+ Zod resolvers where needed).
+
+**Reason:** Familiar API and flexible field binding; prefer not binding UI components the way TanStack Form encourages.
+
+**Alternatives considered:** `@tanstack/react-form` (present in dependencies historically; RHF is the pattern in feature forms).
+
+## Client-side pagination for small lists
+
+**Decision:** Paginate small task/template lists in the client instead of server-side page APIs.
+
+**Reason:** Typical fetches are on the order of ~10–20 items; server pagination adds complexity without a clear win at that size.
+
+**Alternatives considered:** Server-side pagination.
