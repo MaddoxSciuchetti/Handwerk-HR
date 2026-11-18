@@ -7,8 +7,28 @@ export type UpdateTaskParams = {
   data: unknown;
 };
 
+type TasksPage = {
+  tasks: IssueResponse[];
+  nextCursor: string | null;
+};
+
+/** Fetches every page (default server page size 50) so list UIs keep a full cache. */
 export const getTasks = async (): Promise<IssueResponse[]> => {
-  return API.get(`/tasks/`);
+  const all: IssueResponse[] = [];
+  let cursor: string | undefined;
+  for (;;) {
+    const page = (await API.get('/tasks/', {
+      params: cursor ? { cursor } : undefined,
+    })) as TasksPage | IssueResponse[];
+    if (Array.isArray(page)) {
+      all.push(...page);
+      break;
+    }
+    all.push(...(page.tasks ?? []));
+    if (!page.nextCursor) break;
+    cursor = page.nextCursor;
+  }
+  return all;
 };
 
 export const createTask = async (payload: unknown): Promise<unknown> => {
