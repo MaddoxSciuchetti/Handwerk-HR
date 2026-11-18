@@ -1,11 +1,14 @@
 import { CREATED, NOT_FOUND, OK } from "@/constants/http";
 import {
+    getCockpitData,
+    invalidateCockpitCache,
+} from "@/services/cockpit.service";
+import {
     insertTemplate,
     insertTemplateTask,
     modifyTemplate,
     modifyTemplateTask,
     queryTemplateById,
-    queryTemplates,
     queryTemplateTasks,
     removeTemplate,
     removeTemplateTask,
@@ -35,14 +38,14 @@ export const createTemplate = catchErrors(async (req, res) => {
         organizationId: orgId,
         createdByUserId: userId,
     });
+    invalidateCockpitCache(orgId);
 
     return res.status(CREATED).json(template);
 });
 
 export const getTemplates = catchErrors(async (req, res) => {
     const orgId = req.orgId;
-
-    const templates = await queryTemplates(orgId);
+    const { templates } = await getCockpitData(orgId);
 
     return res.status(OK).json(templates);
 });
@@ -71,6 +74,7 @@ export const updateTemplate = catchErrors(async (req, res) => {
         name: body.name ?? body.templateName ?? "",
         description: body.description ?? body.templateDescription ?? "",
     });
+    if (orgId) invalidateCockpitCache(orgId);
     return res.status(OK).json(template);
 });
 
@@ -79,6 +83,7 @@ export const deleteTemplate = catchErrors(async (req, res) => {
     const orgId = req.orgId;
 
     await removeTemplate(id, orgId);
+    invalidateCockpitCache(orgId);
 
     return res.status(OK).json({ message: "Template deleted successfully" });
 });
@@ -116,6 +121,7 @@ export const createTemplateTask = catchErrors(async (req, res) => {
                 ? mailTemplateId.trim()
                 : null,
     });
+    invalidateCockpitCache(orgId);
 
     return res.status(CREATED).json({
         id: task.id,
@@ -185,6 +191,7 @@ export const updateTemplateTask = catchErrors(async (req, res) => {
                 ? mailTemplateId.trim()
                 : null,
     });
+    invalidateCockpitCache(orgId);
 
     return res.status(OK).json({
         id: updated.id,
@@ -206,6 +213,7 @@ export const deleteTemplateTask = catchErrors(async (req, res) => {
     const orgId = req.orgId;
 
     await removeTemplateTask(id);
+    invalidateCockpitCache(orgId);
 
     return res.status(OK).json({ message: "Task deleted successfully" });
 });
