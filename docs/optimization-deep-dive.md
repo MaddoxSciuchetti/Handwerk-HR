@@ -25,6 +25,48 @@ Improvements I would have made:
 
 ---
 
+## Architecture choices that also optimize
+
+Not every performance win is a one-off PR tweak. Some of it is how the app is shaped. The sections below are the high-level choices I want people to see next to the measured Round 1 / Round 2 work.
+
+### React SPA + Express API + TanStack Router
+
+The frontend is a React single-page application built with Vite (`client/`). The backend is a separate Express API (`server/`). After the first HTML/JS load, navigation stays in the browser and data comes from the API — we do not re-download a full page document for every click inside the authenticated app.
+
+I chose TanStack Router on purpose. It gives typed routes and typed search params, and it is opinionated at the route level without locking the whole product into a full-stack meta-framework. In `client/vite.config.js` the TanStack Router plugin runs with `autoCodeSplitting: true`, so each route can ship as its own chunk instead of one giant bundle for every screen. That fits an HR product where most of the heavy UI lives behind login (cockpit, tasks, settings, worker detail). Frameworks such as Next.js can help public SEO pages with server-rendered HTML, but they do not remove the JavaScript cost of interactive dashboards — and they add another runtime surface on top. For this app the SPA + API split keeps responsibility clear and keeps the optimization work focused on what users actually download and re-render.
+
+Server state (employees, tasks, documents, …) goes through TanStack Query, not through a global client store. Caching defaults live in [`client/src/config/query.client.ts`](../client/src/config/query.client.ts). That is why Round 1 could cut unnecessary refetches without introducing Redux or Zustand.
+
+### Not overusing React Context
+
+A common fear is that `useContext` re-renders the entire tree and that Redux or Zustand would always be safer. Context does re-render every consumer of that context when the value changes. It does **not** mean every component in the app re-renders — only the ones that subscribe. The real problem starts when one app-wide Context holds lots of unrelated, frequently changing state and many screens subscribe to it.
+
+I deliberately did **not** put server data or large feature state into Context. Context stays narrow:
+
+- Theme (light/dark) — see [`client/src/context/theme-provider/ThemeProvider.tsx`](../client/src/context/theme-provider/ThemeProvider.tsx) and [`client/src/context/theme-provider/themecontext.ts`](../client/src/context/theme-provider/themecontext.ts)
+- Employee modal open/close state for related UI in one feature — see [`client/decisions.md`](../client/decisions.md) and [`client/src/features/employee-overview/context/ModalProvider.tsx`](../client/src/features/employee-overview/context/ModalProvider.tsx)
+- Local document-editor values and small UI primitives (sidebar, drawer stack, toggle group)
+
+That restraint is an optimization decision: fewer broad subscriptions means fewer accidental re-renders while typing, toggling theme, or opening a modal. If a future feature needs fine-grained selectors over large chatty client state, Zustand or Redux can still be introduced for that slice — but we are not paying that cost today for problems we do not have.
+
+### What “vendor chunks” means
+
+In Round 2 I told Vite/Rollup to put React and TanStack packages into their own output files (`react-vendor`, `tanstack-vendor` in `client/vite.config.js`). Those are the **vendor chunks**.
+
+Without that split, library code and app code often land in the same large file. Every time I change a feature, the browser may have to download that whole file again. With vendor chunks, the React/TanStack files stay cacheable in the browser while only the smaller app chunks change. That does not shrink the first visit by itself; it makes **repeat visits and deploys** cheaper because stable dependencies are not invalidated every release.
+
+### What “lazy TipTap” and lazy loading mean
+
+Lazy loading means: do not download and parse a heavy module until the user actually needs it.
+
+TipTap (the rich-text document editor) is large. On the documents list I do not need the editor at all. So the editor is wrapped in `React.lazy` + `Suspense` in [`client/src/features/settings/documents/LazyDocumentMasterEditor.tsx`](../client/src/features/settings/documents/LazyDocumentMasterEditor.tsx). The list stays light; the TipTap chunk loads when someone opens an editor. That is what “lazy TipTap” refers to in Round 1.
+
+We also use lazy loading elsewhere. Round 2 lazy-loaded heavy worker tabs/dialogs (and jszip) on `/user/…`, which cut transferred JS on that route by about 40%. Route-level splitting from TanStack Router is the same idea at the navigation layer: open `/cockpit` without paying for every settings or editor module up front.
+
+Could more lazy loading help? Yes, selectively — any remaining first-load heavy screens (large editors, PDF tooling, rare dialogs) are candidates. Blindly lazy-loading everything can hurt too (extra waterfalls, spinners on every click). The rule I follow is: measure with `npm run analyze` and Web Vitals, then split the modules that actually dominate a route’s JS.
+
+---
+
 ## Definitions
 
 TTFB: time until the first byte of the HTML arrives.
@@ -90,7 +132,7 @@ Caching defaults: I set queries to stay fresh for 30s and stay in memory for 5 m
 
 Task polling: I changed background /tasks from every 5s always to every 15s, and only while the tab is visible. What happened: fewer API calls when idle or when the tab is hidden.
 
-Lazy TipTap: I made the document editor chunk load only when you open an editor, not on the documents list. What happened: the list page stays lighter.
+Lazy TipTap: I made the document editor chunk load only when you open an editor, not on the documents list (see [What “lazy TipTap” and lazy loading mean](#what-lazy-tiptap-and-lazy-loading-mean)). What happened: the list page stays lighter.
 
 Web Vitals logging: I added logging for TTFB/LCP/CLS/INP in the console and as performance marks. What happened: I can measure in the browser; this does not speed the page up by itself.
 
@@ -150,9 +192,9 @@ Local analyze: entry ~659 KB (was ~970); /user/$Id chunk ~216 KB (was ~441).
 
 ### Changes
 
-Vendor chunks: I split React and TanStack into separate files. What happened: better caching when app code changes.
+Vendor chunks: I split React and TanStack into separate files (see [What “vendor chunks” means](#what-vendor-chunks-means)). What happened: better caching when app code changes.
 
-Lazy worker UI: I lazy-loaded heavy worker tabs/dialogs and jszip so they load when needed. What happened: opening /user/… downloads less up front.
+Lazy worker UI: I lazy-loaded heavy worker tabs/dialogs and jszip so they load when needed (same idea as lazy TipTap — see [lazy loading](#what-lazy-tiptap-and-lazy-loading-mean)). What happened: opening /user/… downloads less up front.
 
 Document fonts: I moved font styles onto the shared editor instead of every app boot. What happened: boot stays lighter; fonts still work for editor and contract review.
 
