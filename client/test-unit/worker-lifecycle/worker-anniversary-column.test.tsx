@@ -1,8 +1,9 @@
-import { render, screen, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import WorkerLifeCycle from '@/features/worker-lifecycle/components/WorkerLifecycle';
 import type { WorkerRecord } from '@/features/worker-lifecycle/types/index.types';
+import { renderWithProviders } from 'test-unit/test-utils';
 
 const state = vi.hoisted(() => ({
   workers: [] as WorkerRecord[],
@@ -104,7 +105,7 @@ async function addColumn(label: string) {
 const workerRow = (name: string) => screen.getByText(name).closest('tr')!;
 
 it('offers anniversary, birthday and entry date in the add-column menu', async () => {
-  render(<WorkerLifeCycle />);
+  renderWithProviders(<WorkerLifeCycle />);
   await openAddColumn();
   expect(
     screen.getByRole('menuitem', { name: 'Anniversary date' })
@@ -119,7 +120,7 @@ it('offers anniversary, birthday and entry date in the add-column menu', async (
 });
 
 it('adds one date column tied to each worker through reorder, filtering and refresh', async () => {
-  const view = render(<WorkerLifeCycle />);
+  const view = renderWithProviders(<WorkerLifeCycle />);
   expect(
     screen.queryByRole('columnheader', { name: /Anniversary/ })
   ).not.toBeInTheDocument();
@@ -158,7 +159,7 @@ it('adds one date column tied to each worker through reorder, filtering and refr
   ).toBeInTheDocument();
   expect(screen.queryByText('Alex Example')).not.toBeInTheDocument();
   view.unmount();
-  render(<WorkerLifeCycle />);
+  renderWithProviders(<WorkerLifeCycle />);
   expect(
     screen.getByRole('columnheader', { name: /Anniversary/ })
   ).toBeInTheDocument();
@@ -168,7 +169,7 @@ it('adds one date column tied to each worker through reorder, filtering and refr
 });
 
 it('adds birthday and entry-date columns and keeps remaining options available', async () => {
-  render(<WorkerLifeCycle />);
+  renderWithProviders(<WorkerLifeCycle />);
   await addColumn('Birthday');
   expect(
     screen.getAllByRole('columnheader', { name: /Birthday/ })
@@ -204,7 +205,7 @@ it('adds birthday and entry-date columns and keeps remaining options available',
 
 it('sorts the added column ascending then descending', async () => {
   const user = userEvent.setup();
-  render(<WorkerLifeCycle />);
+  renderWithProviders(<WorkerLifeCycle />);
   await addColumn('Birthday');
   const names = () =>
     screen
@@ -247,7 +248,7 @@ it.each([false, true])(
   async (team) => {
     state.team = team;
     state.loading = true;
-    const { container } = render(<WorkerLifeCycle />);
+    const { container } = renderWithProviders(<WorkerLifeCycle />);
     await addColumn('Anniversary date');
     const columns = team ? 4 : 6;
     expect(screen.getAllByRole('columnheader')).toHaveLength(columns);
