@@ -8,6 +8,8 @@ We treat frontend performance as a product requirement: slow first paint, layout
 
 Read the evidence and approach: [Frontend optimization deep dive](../optimization-deep-dive.md).
 
+Users also work on phones and large monitors, leave mid-flow, and may rely on assistive tech. To keep UX high in that context we persist drafts and prefs on device (`localStorage`), use responsive layouts from touch-sized mobile forms to wide desktop shells, and ship semantic HTML with ARIA. Examples: [questionnaire answer drafts](../../client/src/features/questionnaire/questionnaireAnswerDraft.ts), [responsive questionnaire rows](../../client/src/features/questionnaire/QuestionnaireTableRows.tsx) / [mobile CSS](../../client/src/features/questionnaire/questionnaire-mobile.css), [sidebar ARIA / `sr-only`](../../client/src/components/ui/sidebar.tsx).
+
 ## Core tools
 
 | Area | Tools | Why they matter for quality |
