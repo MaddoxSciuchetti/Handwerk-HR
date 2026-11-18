@@ -5,7 +5,14 @@ on:
     # 03:05 UTC daily (~04:05 Europe/Berlin in winter, 05:05 in summer).
     # Cron bumped from 0 3 to re-activate schedules after public-repo 60-day inactivity disable.
     - cron: "5 3 * * *"
+  # Explicit inputs so Actions UI shows "Run workflow" (same pattern as e2e-nightly).
+  # Bare `workflow_dispatch:` with 0 prior runs often hides the button in the UI.
   workflow_dispatch:
+    inputs:
+      reason:
+        description: "Optional note for this manual run"
+        required: false
+        type: string
 
 concurrency:
   group: nightly-unit
