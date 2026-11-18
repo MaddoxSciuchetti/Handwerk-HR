@@ -1,4 +1,6 @@
-This is documentation for new users and AI. However some of this information can be out dated as this is for university.
+# Documentation meta entry
+
+Entry point for new contributors and AI agents. Prefer the linked area intros and the code they point at (`schema.prisma`, `client/` / `server/` READMEs) when a detail might have drifted.
 
 ## Start here
 

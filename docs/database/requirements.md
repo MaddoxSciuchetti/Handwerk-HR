@@ -5,11 +5,11 @@ The typical scale consists of 1-10 office workers, 5-50 trades people working wi
 | Requirement                                                               | Implemented? |
 | ------------------------------------------------------------------------- | ------------ |
 | Users can register, verify email, and log in with persistent sessions     | Yes          |
-| Users can reset their password using a one-time code                      | Yes          |
+| Users can reset their password via a one-time reset link                  | Yes          |
 | A user can create an organization and becomes its first admin             | Yes          |
 | A user can invite others to an organization with a role (admin or worker) | Yes          |
 | A user can belong to multiple organizations                               | Yes          |
-| New members default to user unless the invite specifies admin             | Yes          |
+| New members default to worker unless the invite specifies admin           | Yes          |
 | Each organization has one subscription                                    | Yes          |
 | The organization’s billing payment method stays in sync with Stripe       | Yes          |
 | The app stores invoices consistent with Stripe                            | Yes          |
