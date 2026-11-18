@@ -53,7 +53,7 @@ function AppSidebar({
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Dokumentation">
-              <Link to="/docs/$" params={{ _splat: '' }}>
+              <Link to="/docs/$" params={{ _splat: '' }} preload="intent">
                 <BookOpen />
                 <span>Dokumentation</span>
               </Link>
