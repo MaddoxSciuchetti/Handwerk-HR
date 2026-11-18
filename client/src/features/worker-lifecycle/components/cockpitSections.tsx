@@ -1,3 +1,6 @@
+import { TableSkeletonRows } from '@/components/ui/table-skeleton';
+import { Table, TableBody } from '@/components/ui/table';
+import { QuestionnaireSkeleton } from '@/features/settings/questionnaire/QuestionnaireSkeleton';
 import { lazy, Suspense } from 'react';
 import type { CockpitSectionId } from './cockpit-section.consts';
 
@@ -22,8 +25,31 @@ const BestandTab = lazy(() =>
   }))
 );
 
-function SectionFallback() {
-  return <p className="p-4 text-sm text-muted-foreground">Laden…</p>;
+function SectionFallback({ id }: { id: CockpitSectionId }) {
+  if (id === 'questionnaire') {
+    return (
+      <div className="p-4">
+        <QuestionnaireSkeleton />
+      </div>
+    );
+  }
+
+  const variant =
+    id === 'templates'
+      ? 'templates'
+      : id === 'documents'
+        ? 'documents'
+        : 'stock';
+
+  return (
+    <div className="p-4">
+      <Table aria-busy="true">
+        <TableBody>
+          <TableSkeletonRows variant={variant} />
+        </TableBody>
+      </Table>
+    </div>
+  );
 }
 
 export function CockpitSectionBody({
@@ -49,5 +75,7 @@ export function CockpitSectionBody({
       break;
   }
 
-  return <Suspense fallback={<SectionFallback />}>{body}</Suspense>;
+  return (
+    <Suspense fallback={<SectionFallback id={id} />}>{body}</Suspense>
+  );
 }
