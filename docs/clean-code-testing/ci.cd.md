@@ -2,7 +2,7 @@
 
 **CI** runs in GitHub Actions. **CD** is not a GitHub Actions deploy job — Render **auto-deploys** from the git branches you wire up in the Render Dashboard (typically staging and production). There is no `deploy.yml` in this repo.
 
-For a joiner: merge (or push) to a branch that a Render service tracks → Render builds and ships that service. Schema changes land safely because **Prisma migrate runs once as a Render pre-deploy step before the new app process starts**.
+For a joiner: merge (or push) to a branch that a Render service tracks → Render builds and ships that service. Schema changes land safely because **Prisma migrate runs once as a Render pre-deploy step after the build succeeds and before the new app process starts**.
 
 ## End-to-end picture
 
@@ -12,8 +12,9 @@ PR opened
 
 PR merged into a Render-tracked branch (e.g. main / staging)
   └─ Render auto-deploy for that service
-       1. Pre-deploy: prisma migrate deploy  (apply pending migrations)
-       2. Build + start the new release
+       1. Build the new release
+       2. Pre-deploy: prisma migrate deploy  (apply pending migrations)
+       3. Start the new process
 ```
 
 GitHub Actions never deploys to Render staging or production. Nightly E2E also stays on the Actions runner (local Postgres + API), not on Render URLs.
@@ -34,12 +35,13 @@ Public repos: GitHub **disables scheduled workflows after 60 days without repo a
 
 Render owns shipping. In the Dashboard, each web service has auto-deploy enabled for its tracked branch. When that branch updates, Render starts a deploy — you do not click “deploy” from GitHub Actions.
 
-**Order on each API deploy (important for schema PRs):**
+**Order on each API deploy (important for schema PRs)** — Render’s lifecycle is build → optional pre-deploy → start ([Render deploys](https://render.com/docs/deploys#pre-deploy-command)):
 
-1. **Pre-deploy command** runs against the service’s `DATABASE_URL` and applies pending migrations with Prisma (`npm run migrate:deploy` from `server/`, which wraps `prisma migrate deploy`). This happens **once per deploy, before** the new release is started.
-2. **Build** (`npm run build`) and **start** (`npm start`) bring up the new app process against the already-migrated database.
+1. **Build** (`npm run build`) produces the new release. If the build fails, pre-deploy never runs (no migration attempt).
+2. **Pre-deploy command** runs against the service’s `DATABASE_URL` and applies pending migrations with Prisma (`npm run migrate:deploy` from `server/`, which wraps `prisma migrate deploy`). This happens **once per successful build, after build and before** the new process is started.
+3. **Start** (`npm start`) brings up the new app process against the already-migrated database.
 
-So: merge a migration on a tracked branch → Render auto-deploy → migrate first → then the new code starts. Do not expect GitHub Actions to run production migrations. Commit migration folders under `server/src/prisma/migrations/` with the app change; Render’s pre-deploy applies them.
+So: merge a migration on a tracked branch → Render auto-deploy → build → migrate → start. Do not expect GitHub Actions to run production migrations. Commit migration folders under `server/src/prisma/migrations/` with the app change; Render’s pre-deploy applies them.
 
 Local / first-time DB setup still uses the same `prisma migrate deploy` command manually — see the root [README](../../README.md) (“First-time setup” and “Production / Render”). Ops runbooks that say “pre-deploy Prisma migrate as usual” mean this same step (e.g. [`ops/anniversary-reminders.md`](../../ops/anniversary-reminders.md)).
 
