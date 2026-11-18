@@ -28,6 +28,52 @@ docs/
   pgbench/               Benchmark queries
 ```
 
+## Frontend optimizations
+
+Living list of **client** performance decisions (`client/`). More detail: [`client/README.md`](./client/README.md), [`docs/optimization-deep-dive.md`](./docs/optimization-deep-dive.md). (API logging / OpenTelemetry are unrelated — see [Observability](#observability) below.)
+
+### Sidebar route preload (PR #248)
+
+**Decision:** Set `preload="intent"` on left-sidebar `Link`s (including the docs link in `AppSidebar`).
+
+**Reason:** TanStack Router’s default preload is off, and our `createRouter` does not set `defaultPreload`. Without the prop, the destination loads only on click. Intent preload starts chunk/loader work on hover/focus (~50 ms delay) so navigation feels faster, without enabling preload for every link in the app.
+
+### Worker-row prefetch (PR #251)
+
+**Decision:** On lifecycle row `onPointerEnter` (`ProjectItem`), call `queryClient.prefetchQuery(workerQueries.taskData(worker.id))`.
+
+**Reason:** The worker detail view already needs `getWorkerById` (`[WORKERBYID, workerId]`). Prefetching on hover fills the Query cache before click so the next screen can reuse data. Hover (not click) runs that work while the user is still deciding.
+
+### SharePoint search debounce (PR #249)
+
+**Decision:** Raise SharePoint search debounce from 120 ms to **300 ms** (`SharePointFilePicker`: local `query` → delayed `debounced` → `useQuery`).
+
+**Reason:** Each keystroke would otherwise hit SharePoint/Graph. 300 ms keeps typing smooth and cuts request chatter; a trimmed empty string disables the query on purpose.
+
+### Shared debounce hook (PR #250)
+
+**Decision:** Add `useDebounce(value, delayMs)` in `client/src/hooks/useDebounce.ts` and use 300 ms for Teams channel filter and docs `LocalSearch` (SharePoint keeps its inline timer for now).
+
+**Reason:** Same timing policy across search UIs without copy-pasted `setTimeout`/`clearTimeout`. Effect cleanup avoids updates after unmount and under rapid typing.
+
+### Theme context split (PR #252)
+
+**Decision:** Split theme into `ThemeDocumentProvider` (CSS on `document.documentElement`: `--theme`, `color-scheme`, `.dark`, `localStorage`) and `ThemeControlsProvider` (React state for toggle UI).
+
+**Reason:** Colors can change via CSS without re-rendering the whole authenticated tree for paint. Only a few React consumers need theme state (e.g. ProfileDropdown). `.dark` stays in the document provider so doorman routes without `Layout` (`/login`, …) still theme correctly.
+
+### Narrow SidebarContext (planned / documented)
+
+**Decision:** Scope `SidebarProvider` / `SidebarContext` to the sidebar and real consumers (e.g. ProfileDropdown), not the entire authenticated shell including `Outlet`.
+
+**Reason:** Almost all `useSidebar` call sites live inside `sidebar.tsx`; the rest of the app should not re-subscribe when the sidebar opens/collapses. (Implementation may land as a follow-up PR — recorded here as the intent.)
+
+### Font audit
+
+**Decision:** No code change; document that custom `@font-face` rules already use `font-display: swap`.
+
+**Reason:** Avoids re-auditing the same question and records that FOIT for custom fonts is already mitigated.
+
 ## Observability
 
 The API uses structured logging and OpenTelemetry tracing (`requestId` / `traceId` in Render logs). Sentry covers API and client exceptions when DSNs are set.
@@ -36,52 +82,6 @@ The API uses structured logging and OpenTelemetry tracing (`requestId` / `traceI
 - Newcomers: [server/README.md](server/README.md)
 - Render incident search: [ops/observability.md](ops/observability.md)
 - Concurrent-user load probe: [ops/loadtest/README.md](ops/loadtest/README.md)
-
-## Frontend-Optimierungen
-
-Die Root-`README.md` beschreibt das **gesamte** Repo (Backend + Frontend). Dieser Abschnitt ist die lebende Liste der **Frontend**-Performance-Entscheidungen (Client unter `client/`). Backend-Themen wie Structured Logging / OpenTelemetry stehen unter [Observability](#observability); Postgres unter [Prerequisites](#prerequisites). Weitere Client-Details: [`client/README.md`](./client/README.md), [`docs/optimization-deep-dive.md`](./docs/optimization-deep-dive.md).
-
-### Sidebar-Route-Preload (PR #248)
-
-**Entscheidung:** Auf den linken Sidebar-`Link`s `preload="intent"` setzen (inkl. Docs-Link in `AppSidebar`).
-
-**Warum:** TanStack Router hat standardmäßig kein globales `defaultPreload` (bei uns in `createRouter` ebenfalls nicht gesetzt). Ohne Prop lädt die Zielroute erst beim Klick. Intent-Preload startet Chunk/`loader`-Arbeit bei Hover/Focus (~50 ms Delay), sodass Navigation spürbar schneller wirkt — ohne alle Links der App zu preloaden.
-
-### Worker-Row Prefetch (PR #251)
-
-**Entscheidung:** Beim `onPointerEnter` einer Lifecycle-Zeile (`ProjectItem`) `queryClient.prefetchQuery(workerQueries.taskData(worker.id))` ausführen.
-
-**Warum:** Die Worker-Detailansicht braucht ohnehin `getWorkerById` (`[WORKERBYID, workerId]`). Prefetch beim Hover füllt den Query-Cache vor dem Klick; der Folge-Screen kann gecachte Daten nutzen statt kalt zu laden. Bewusst Hover statt Click, damit der Prefetch parallel zur Entscheidungszeit des Users läuft.
-
-### SharePoint-Suche Debounce (PR #249)
-
-**Entscheidung:** Debounce der SharePoint-Suchzeichenkette von 120 ms auf **300 ms** anheben (`SharePointFilePicker`: lokales `query` → verzögertes `debounced` → `useQuery`).
-
-**Warum:** Jeder Tastenanschlag würde sonst eine Graph-/SharePoint-Suche anstoßen. 300 ms hält die Eingabe flüssig und senkt Request-Last; getrimmter String und leerer Debounce deaktivieren die Query bewusst.
-
-### Gemeinsamer Debounce-Hook (PR #250)
-
-**Entscheidung:** Kleinen Hook `useDebounce(value, delayMs)` in `client/src/hooks/useDebounce.ts` einführen und Teams-Channel-Filter sowie Docs-`LocalSearch` damit auf 300 ms legen (SharePoint behält vorerst sein Inline-Pattern).
-
-**Warum:** Gleiches Timing-Policy an mehreren Such-UIs ohne copy-paste von `setTimeout`/`clearTimeout`. Cleanup im Effect verhindert Updates nach Unmount und bei schnellem Tippen.
-
-### Theme-Context aufgeteilt (PR #252)
-
-**Entscheidung:** Theme in `ThemeDocumentProvider` (CSS auf `document.documentElement`: `--theme`, `color-scheme`, `.dark`, `localStorage`) und `ThemeControlsProvider` (React-State für Toggle-UI) splitten.
-
-**Warum:** Farben sollen per CSS wechseln, ohne dass der ganze Authenticated-Tree nur wegen Theme neu rendert. React-Consumers bleiben wenige (z. B. ProfileDropdown). `.dark` bleibt im Document-Provider, damit Doorman-Routen ohne `Layout` (`/login`, …) korrekt themed sind.
-
-### SidebarContext eingegrenzt (geplant / dokumentiert)
-
-**Entscheidung:** `SidebarProvider`/`SidebarContext` nur um Sidebar + echte Consumer (z. B. ProfileDropdown) legen, nicht um die gesamte authentifizierte Shell inkl. `Outlet`.
-
-**Warum:** Fast alle `useSidebar`-Aufrufe sitzen in `sidebar.tsx` selbst; der restliche App-Tree braucht Open/Collapse-State nicht und soll bei Sidebar-Toggles nicht mit-subscriben. (Umsetzung ggf. als Follow-up-PR — hier als Ziel festgehalten.)
-
-### Font-Audit
-
-**Entscheidung:** Keine Code-Änderung; dokumentieren, dass Custom-`@font-face` bereits `font-display: swap` nutzen.
-
-**Warum:** Vermeidet erneute Audits derselben Frage und stellt klar, dass Text-of-Invisible-Text für Custom Fonts schon abgesichert ist.
 
 ## Prerequisites
 
