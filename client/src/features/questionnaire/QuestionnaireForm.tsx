@@ -125,12 +125,24 @@ export function QuestionnaireForm({
   onPresetChange,
   onSectionOmitChange,
 }: QuestionnaireFormProps) {
+  const formToken = preview ? '' : (token ?? '');
+  const [boundToken, setBoundToken] = useState(formToken);
   const [values, setValues] = useState<Record<string, string>>({});
   const [rows, setRows] = useState<Record<string, Record<string, string>[]>>(
     {}
   );
   const [submitted, setSubmitted] = useState(false);
   const [uploads, setUploads] = useState(0);
+  const [seededQuestions, setSeededQuestions] = useState('');
+
+  if (boundToken !== formToken) {
+    setBoundToken(formToken);
+    setValues({});
+    setRows({});
+    setSubmitted(false);
+    setUploads(0);
+    setSeededQuestions('');
+  }
 
   const questionnaire = useQuery({
     queryKey: ['fragebogen', token],
@@ -155,7 +167,6 @@ export function QuestionnaireForm({
   const repeaters = data?.repeaters ?? [];
 
   const questionsSeed = questions.map((question) => question.key).join('|');
-  const [seededQuestions, setSeededQuestions] = useState('');
   if (questions.length > 0 && questionsSeed !== seededQuestions) {
     setSeededQuestions(questionsSeed);
     if (!preview && token && data?.status === 'sent') {
@@ -165,37 +176,32 @@ export function QuestionnaireForm({
         (Object.keys(draft.values).length > 0 ||
           Object.keys(draft.rows).length > 0)
       ) {
-        setValues((current) =>
-          Object.keys(current).length > 0 ? current : draft.values
-        );
-        setRows((current) =>
-          Object.keys(current).length > 0 ? current : draft.rows
-        );
+        setValues(draft.values);
+        setRows(draft.rows);
       } else {
-        setValues((current) => {
-          if (Object.keys(current).length > 0) return current;
-          return Object.fromEntries(
+        setValues(
+          Object.fromEntries(
             questions.map((question) => [
               question.key,
               question.defaultValue ?? '',
             ])
-          );
-        });
+          )
+        );
       }
     } else {
-      setValues((current) => {
-        if (Object.keys(current).length > 0) return current;
-        return Object.fromEntries(
+      setValues(
+        Object.fromEntries(
           questions.map((question) => [
             question.key,
             question.defaultValue ?? '',
           ])
-        );
-      });
+        )
+      );
     }
   }
 
   const done = submitted || data?.status === 'completed';
+  const answersBoundToToken = boundToken === formToken;
 
   useEffect(() => {
     if (preview || !token || data?.status !== 'completed') return;
@@ -203,11 +209,26 @@ export function QuestionnaireForm({
   }, [preview, token, data?.status]);
 
   useEffect(() => {
-    if (preview || !token || done || data?.status !== 'sent') return;
+    if (
+      preview ||
+      !token ||
+      !answersBoundToToken ||
+      done ||
+      data?.status !== 'sent'
+    )
+      return;
     if (Object.keys(values).length === 0 && Object.keys(rows).length === 0)
       return;
     writeAnswerDraft(token, { values, rows });
-  }, [values, rows, token, preview, done, data?.status]);
+  }, [
+    values,
+    rows,
+    token,
+    preview,
+    done,
+    data?.status,
+    answersBoundToToken,
+  ]);
 
   const submit = useMutation({
     mutationFn: () => {

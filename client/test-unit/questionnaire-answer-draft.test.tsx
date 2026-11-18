@@ -123,4 +123,68 @@ describe('questionnaire answer drafts', () => {
     clearAnswerDraft(token);
     expect(localStorage.getItem(`fragebogen-answers:v1:${token}`)).toBeNull();
   });
+
+  it('does not write one token\'s answers into another token\'s draft', async () => {
+    const other = 'other-token';
+    writeAnswerDraft(other, {
+      values: { lastName: 'Andere' },
+      rows: {},
+    });
+    vi.mocked(apiJson.get).mockImplementation(async (path: string) => {
+      if (path.endsWith(other)) {
+        return {
+          success: true,
+          data: {
+            status: 'sent',
+            intro: '',
+            questions: [
+              {
+                key: 'lastName',
+                label: 'Familienname',
+                section: 'Persönliche Angaben',
+                type: 'text',
+                required: true,
+              },
+            ],
+          },
+        };
+      }
+      return {
+        success: true,
+        data: {
+          status: 'sent',
+          intro: '',
+          questions: [
+            {
+              key: 'lastName',
+              label: 'Familienname',
+              section: 'Persönliche Angaben',
+              type: 'text',
+              required: true,
+            },
+          ],
+        },
+      };
+    });
+
+    const user = userEvent.setup();
+    const { rerender } = renderWithProviders(
+      <QuestionnaireForm token={token} />
+    );
+    const field = await screen.findByLabelText('Familienname *');
+    await user.clear(field);
+    await user.type(field, 'Müller');
+    await waitFor(() => {
+      expect(readAnswerDraft(token)?.values.lastName).toBe('Müller');
+    });
+
+    rerender(<QuestionnaireForm token={other} />);
+    expect(await screen.findByLabelText('Familienname *')).toHaveValue(
+      'Andere'
+    );
+    await waitFor(() => {
+      expect(readAnswerDraft(other)?.values.lastName).toBe('Andere');
+    });
+    expect(readAnswerDraft(token)?.values.lastName).toBe('Müller');
+  });
 });

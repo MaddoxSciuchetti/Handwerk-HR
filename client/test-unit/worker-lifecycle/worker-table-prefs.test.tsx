@@ -72,3 +72,15 @@ it('falls back when stored prefs are invalid', () => {
   expect(result.current.extraColumns).toEqual([]);
   expect(result.current.columnSort).toBeNull();
 });
+
+it('keeps the saved extra-column order when restoring preferences', () => {
+  localStorage.setItem(
+    storageKey(),
+    JSON.stringify({
+      extraColumns: ['entryDate', 'birthday', 'entryDate', 'unknown'],
+      columnSort: null,
+    })
+  );
+  const { result } = renderHook(() => useWorkerTablePrefs('user-a', 'org-a'));
+  expect(result.current.extraColumns).toEqual(['entryDate', 'birthday']);
+});

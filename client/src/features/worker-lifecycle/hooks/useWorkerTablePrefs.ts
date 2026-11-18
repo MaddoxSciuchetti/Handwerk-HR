@@ -54,17 +54,14 @@ function readPrefs(key: string | null): WorkerTablePrefs {
     const parsed = JSON.parse(raw) as Partial<WorkerTablePrefs>;
     if (!parsed || typeof parsed !== 'object')
       return { extraColumns: [], columnSort: null };
+    const seen = new Set<ExtraWorkerColumnId>();
     const extraColumns = Array.isArray(parsed.extraColumns)
-      ? EXTRA_WORKER_COLUMN_IDS.filter((id) =>
-          parsed.extraColumns!.includes(id)
-        )
+      ? parsed.extraColumns.filter((id): id is ExtraWorkerColumnId => {
+          if (!isExtraColumnId(id) || seen.has(id)) return false;
+          seen.add(id);
+          return true;
+        })
       : [];
-    if (
-      Array.isArray(parsed.extraColumns) &&
-      parsed.extraColumns.some((id) => !isExtraColumnId(id))
-    ) {
-      // Drop unknown ids but keep known ones already filtered above.
-    }
     return {
       extraColumns,
       columnSort: parseColumnSort(parsed.columnSort),
