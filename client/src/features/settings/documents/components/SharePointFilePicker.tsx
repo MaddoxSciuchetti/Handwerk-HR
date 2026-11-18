@@ -37,7 +37,7 @@ export function SharePointFilePicker({
   const [debounced, setDebounced] = useState('');
 
   useEffect(() => {
-    const handle = window.setTimeout(() => setDebounced(query.trim()), 120);
+    const handle = window.setTimeout(() => setDebounced(query.trim()), 300);
     return () => window.clearTimeout(handle);
   }, [query]);
 
