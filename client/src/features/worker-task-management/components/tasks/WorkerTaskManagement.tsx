@@ -236,8 +236,9 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
   const rememberedPhase = useMemo(() => {
     if (
       phaseSelection &&
-      phaseSelection.storageKey === phaseStorageKey &&
-      phaseSelection.key === phaseKey
+      phaseSelection.key === phaseKey &&
+      (phaseSelection.storageKey === phaseStorageKey ||
+        phaseSelection.storageKey === null)
     ) {
       return phaseSelection.phase;
     }
@@ -251,6 +252,23 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
     setPhaseSelection({ storageKey: phaseStorageKey, key: phaseKey, phase });
     writeTaskPhase(phaseStorageKey, phase);
   };
+
+  useEffect(() => {
+    if (
+      !phaseStorageKey ||
+      !phaseSelection ||
+      phaseSelection.storageKey !== null ||
+      phaseSelection.key !== phaseKey
+    ) {
+      return;
+    }
+    writeTaskPhase(phaseStorageKey, phaseSelection.phase);
+    setPhaseSelection({
+      storageKey: phaseStorageKey,
+      key: phaseKey,
+      phase: phaseSelection.phase,
+    });
+  }, [phaseStorageKey, phaseSelection, phaseKey]);
   const taskEngagements = engagementsForTaskPhase(engagements, taskPhase);
   const taskEngagementIds = new Set(
     taskEngagements.map((engagement) => engagement.id)
