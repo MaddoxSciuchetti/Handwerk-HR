@@ -6,7 +6,7 @@ This folder is the entry for the React + Vite SPA (`client/`). Quality for users
 
 We treat frontend performance as a product requirement: slow first paint, layout shift, and heavy polling hurt trust the same way a bug does. The core implementation that shows how seriously we take this is measuring Web Vitals (LCP, INP, CLS, and related signals), setting a baseline outside localhost, then shipping optimizations and re-measuring.
 
-Read the evidence and approach: [Frontend optimization deep dive](../optimization-deep-dive.md) (measured PR rounds, plus architecture notes on SPA + TanStack Router, Context restraint, vendor chunks, and lazy loading).
+Read the evidence and approach: [Frontend optimization deep dive](../optimization-deep-dive.md) (measured PR rounds, plus what we implemented: SPA + TanStack Router, Context restraint, vendor chunks, lazy loading).
 
 Users also work on phones and large monitors, leave mid-flow, and may rely on assistive tech. To keep UX high in that context we persist drafts and prefs on device (`localStorage`), use responsive layouts from touch-sized mobile forms to wide desktop shells, and ship semantic HTML with ARIA. Examples: [questionnaire answer drafts](../../client/src/features/questionnaire/questionnaireAnswerDraft.ts), [responsive questionnaire rows](../../client/src/features/questionnaire/QuestionnaireTableRows.tsx) / [mobile CSS](../../client/src/features/questionnaire/questionnaire-mobile.css), [sidebar ARIA / `sr-only`](../../client/src/components/ui/sidebar.tsx).
 
