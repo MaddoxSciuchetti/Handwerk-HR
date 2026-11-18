@@ -27,43 +27,47 @@ Improvements I would have made:
 
 ## Architecture choices that also optimize
 
-Not every performance win is a one-off PR tweak. Some of it is how the app is shaped. The sections below are the high-level choices I want people to see next to the measured Round 1 / Round 2 work.
+Not every performance win is a one-off PR tweak. Some of it is how the app is shaped. I wrote the points below in the same style as Round 1 / Round 2: why optimization is needed, what I did, what the change causes, and why I made that change.
 
 ### React SPA + Express API + TanStack Router
 
-The frontend is a React single-page application built with Vite (`client/`). The backend is a separate Express API (`server/`). After the first HTML/JS load, navigation stays in the browser and data comes from the API — we do not re-download a full page document for every click inside the authenticated app.
+Why it needs optimization: Most of this product is an authenticated HR app (cockpit, tasks, settings, worker detail). If every click reloaded a full HTML document, or if every route shipped the whole frontend as one bundle, users would wait on JavaScript and network they do not need for the screen they opened.
 
-I chose TanStack Router on purpose. It gives typed routes and typed search params, and it is opinionated at the route level without locking the whole product into a full-stack meta-framework. In `client/vite.config.js` the TanStack Router plugin runs with `autoCodeSplitting: true`, so each route can ship as its own chunk instead of one giant bundle for every screen. That fits an HR product where most of the heavy UI lives behind login (cockpit, tasks, settings, worker detail). Frameworks such as Next.js can help public SEO pages with server-rendered HTML, but they do not remove the JavaScript cost of interactive dashboards — and they add another runtime surface on top. For this app the SPA + API split keeps responsibility clear and keeps the optimization work focused on what users actually download and re-render.
+What I did: I kept the frontend as a React SPA with Vite (`client/`) and the backend as a separate Express API (`server/`). Routing uses TanStack Router with typed routes / search params and `autoCodeSplitting: true` in `client/vite.config.js`. Server data goes through TanStack Query ([`client/src/config/query.client.ts`](../client/src/config/query.client.ts)), not a global client store.
 
-Server state (employees, tasks, documents, …) goes through TanStack Query, not through a global client store. Caching defaults live in [`client/src/config/query.client.ts`](../client/src/config/query.client.ts). That is why Round 1 could cut unnecessary refetches without introducing Redux or Zustand.
+What the change causes: After the first HTML/JS load, navigation stays in the browser and data comes from the API. Each route can ship as its own chunk. Caching and polling tunings (Round 1) land in Query without Redux or Zustand. What happened: the optimization work stays focused on what users actually download and re-render, instead of fighting a full-stack meta-framework runtime.
+
+Why this change: TanStack Router is opinionated at the route level without locking the product into something like Next.js for every screen. Next.js can help public SEO pages with server-rendered HTML, but it does not remove the JavaScript cost of interactive dashboards. The SPA + API split also keeps frontend and backend responsibility clear.
 
 ### Not overusing React Context
 
-A common fear is that `useContext` re-renders the entire tree and that Redux or Zustand would always be safer. Context does re-render every consumer of that context when the value changes. It does **not** mean every component in the app re-renders — only the ones that subscribe. The real problem starts when one app-wide Context holds lots of unrelated, frequently changing state and many screens subscribe to it.
+Why it needs optimization: A common fear is that `useContext` re-renders the entire tree. Context re-renders every **consumer** when the value changes. If one app-wide Context holds lots of unrelated, frequently changing state, many screens re-render for no reason — that hurts INP and makes the UI feel heavy.
 
-I deliberately did **not** put server data or large feature state into Context. Context stays narrow:
+What I did: I deliberately did **not** put server data or large feature state into Context. Context stays narrow — theme, local modal UI, document-editor values, small UI primitives. Theme example: [`client/src/context/theme-provider/ThemeProvider.tsx`](../client/src/context/theme-provider/ThemeProvider.tsx) and [`client/src/context/theme-provider/themecontext.ts`](../client/src/context/theme-provider/themecontext.ts). Modal example: [`client/src/features/employee-overview/context/ModalProvider.tsx`](../client/src/features/employee-overview/context/ModalProvider.tsx) (also noted in [`client/decisions.md`](../client/decisions.md)).
 
-- Theme (light/dark) — see [`client/src/context/theme-provider/ThemeProvider.tsx`](../client/src/context/theme-provider/ThemeProvider.tsx) and [`client/src/context/theme-provider/themecontext.ts`](../client/src/context/theme-provider/themecontext.ts)
-- Employee modal open/close state for related UI in one feature — see [`client/decisions.md`](../client/decisions.md) and [`client/src/features/employee-overview/context/ModalProvider.tsx`](../client/src/features/employee-overview/context/ModalProvider.tsx)
-- Local document-editor values and small UI primitives (sidebar, drawer stack, toggle group)
+What the change causes: Fewer broad subscriptions. Toggling theme or opening a modal does not force unrelated feature trees to update. What happened: we avoid paying Redux/Zustand complexity for a problem we do not have, while still keeping re-renders local.
 
-That restraint is an optimization decision: fewer broad subscriptions means fewer accidental re-renders while typing, toggling theme, or opening a modal. If a future feature needs fine-grained selectors over large chatty client state, Zustand or Redux can still be introduced for that slice — but we are not paying that cost today for problems we do not have.
+Why this change: Context is the right tool for small, related UI state. Query is the right tool for API data. Zustand or Redux remain an option later if a feature needs fine-grained selectors over large chatty client state.
 
-### What “vendor chunks” means
+### Vendor chunks
 
-In Round 2 I told Vite/Rollup to put React and TanStack packages into their own output files (`react-vendor`, `tanstack-vendor` in `client/vite.config.js`). Those are the **vendor chunks**.
+Why it needs optimization: Without a split, library code and app code often land in the same large file. Every feature deploy can force the browser to download React and TanStack again even though those libraries did not change.
 
-Without that split, library code and app code often land in the same large file. Every time I change a feature, the browser may have to download that whole file again. With vendor chunks, the React/TanStack files stay cacheable in the browser while only the smaller app chunks change. That does not shrink the first visit by itself; it makes **repeat visits and deploys** cheaper because stable dependencies are not invalidated every release.
+What I did: In Round 2 I told Vite/Rollup to put React and TanStack into their own output files (`react-vendor`, `tanstack-vendor` in `client/vite.config.js`). Those files are the **vendor chunks**.
 
-### What “lazy TipTap” and lazy loading mean
+What the change causes: Stable dependency files stay cacheable in the browser; only smaller app chunks change on most deploys. What happened: better caching on repeat visits. This does not shrink the first visit by itself — it makes later visits and releases cheaper.
 
-Lazy loading means: do not download and parse a heavy module until the user actually needs it.
+Why this change: Customers open the app often. Paying the full vendor download on every release wastes time they already spent downloading React once.
 
-TipTap (the rich-text document editor) is large. On the documents list I do not need the editor at all. So the editor is wrapped in `React.lazy` + `Suspense` in [`client/src/features/settings/documents/LazyDocumentMasterEditor.tsx`](../client/src/features/settings/documents/LazyDocumentMasterEditor.tsx). The list stays light; the TipTap chunk loads when someone opens an editor. That is what “lazy TipTap” refers to in Round 1.
+### Lazy TipTap and lazy loading
 
-We also use lazy loading elsewhere. Round 2 lazy-loaded heavy worker tabs/dialogs (and jszip) on `/user/…`, which cut transferred JS on that route by about 40%. Route-level splitting from TanStack Router is the same idea at the navigation layer: open `/cockpit` without paying for every settings or editor module up front.
+Why it needs optimization: TipTap (rich-text editor), worker tabs, dialogs, and jszip are large. If they load on every list page or every `/user/…` open, the first paint waits on JavaScript the user has not asked for yet.
 
-Could more lazy loading help? Yes, selectively — any remaining first-load heavy screens (large editors, PDF tooling, rare dialogs) are candidates. Blindly lazy-loading everything can hurt too (extra waterfalls, spinners on every click). The rule I follow is: measure with `npm run analyze` and Web Vitals, then split the modules that actually dominate a route’s JS.
+What I did: Lazy loading means: do not download and parse a heavy module until it is needed. The document editor is wrapped in `React.lazy` + `Suspense` in [`client/src/features/settings/documents/LazyDocumentMasterEditor.tsx`](../client/src/features/settings/documents/LazyDocumentMasterEditor.tsx) (Round 1 “lazy TipTap”). Round 2 also lazy-loaded heavy worker tabs/dialogs and jszip. TanStack Router route splitting is the same idea at navigation level.
+
+What the change causes: The documents list stays light; TipTap loads when someone opens an editor. Opening `/user/…` downloaded about 40% less JS after Round 2. What happened: measurable wins on JS bytes and LCP where the heavy UI actually lived.
+
+Why this change: Users browse lists more often than they open the editor. Shipping the editor only on demand matches real usage. More lazy loading can still help on other heavy screens, but only after `npm run analyze` and Web Vitals show what dominates — blindly splitting everything adds spinners and waterfalls.
 
 ---
 
