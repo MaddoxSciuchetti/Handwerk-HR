@@ -14,6 +14,14 @@ This page only adds frontend-only choices that are not covered there.
 
 **Alternatives considered:** Zustand, Redux.
 
+## Keep React Context narrow; server state in TanStack Query
+
+**Decision:** Keep React Context narrow (theme, local UI). Put server/API state in TanStack Query, not in a large app-wide Context.
+
+**Reason:** Context re-renders its consumers when the value changes. A large app-wide Context would cause avoidable work. Theme and small feature UI stay in Context; API data stays in Query. Example theme provider: `client/src/context/theme-provider/ThemeProvider.tsx`. Performance write-up: `docs/optimization-deep-dive.md` (What we implemented that also keeps the frontend light).
+
+**Alternatives considered:** Zustand or Redux for fine-grained client state if a feature outgrows Context.
+
 ## Forms via React Hook Form
 
 **Decision:** Forms use React Hook Form (+ Zod resolvers where needed).

@@ -25,6 +25,20 @@ Improvements I would have made:
 
 ---
 
+## What we implemented that also keeps the frontend light
+
+SPA + API + TanStack Router: Frontend is a React SPA (Vite, `client/`); backend is Express (`server/`). TanStack Router uses typed routes and `autoCodeSplitting: true` in `client/vite.config.js`. Server data goes through TanStack Query ([`client/src/config/query.client.ts`](../client/src/config/query.client.ts)). What happened: after the first load, navigation stays in the browser; each route can ship as its own chunk; caching/polling work (Round 1) lands in Query.
+
+Context kept narrow: Server data is not in Context. Context is only for theme, local modal UI, document-editor values, and small UI primitives — e.g. [`ThemeProvider.tsx`](../client/src/context/theme-provider/ThemeProvider.tsx), [`themecontext.ts`](../client/src/context/theme-provider/themecontext.ts), [`ModalProvider.tsx`](../client/src/features/employee-overview/context/ModalProvider.tsx) ([`client/decisions.md`](../client/decisions.md)). What happened: theme toggles and modal opens do not re-render unrelated feature trees.
+
+Vendor chunks (Round 2): React and TanStack go into separate build files (`react-vendor`, `tanstack-vendor` in `client/vite.config.js`). What happened: those files stay cacheable across deploys; app chunks change without forcing a full library re-download.
+
+Lazy TipTap / lazy loading (Rounds 1–2): Heavy modules load only when needed. Document editor: [`LazyDocumentMasterEditor.tsx`](../client/src/features/settings/documents/LazyDocumentMasterEditor.tsx). Worker tabs/dialogs and jszip are also lazy on `/user/…`. What happened: documents list stays light; `/user/…` JS dropped ~40% after Round 2.
+
+Lazy cockpit sections: Templates, documents, questionnaire, and bestand bodies load via `React.lazy` in [`cockpitSections.tsx`](../client/src/features/worker-lifecycle/components/cockpitSections.tsx). What happened: `/cockpit` no longer pulls all four feature trees into the route chunk up front; compact drawer mode only downloads the section you open.
+
+---
+
 ## Definitions
 
 TTFB: time until the first byte of the HTML arrives.
@@ -90,7 +104,7 @@ Caching defaults: I set queries to stay fresh for 30s and stay in memory for 5 m
 
 Task polling: I changed background /tasks from every 5s always to every 15s, and only while the tab is visible. What happened: fewer API calls when idle or when the tab is hidden.
 
-Lazy TipTap: I made the document editor chunk load only when you open an editor, not on the documents list. What happened: the list page stays lighter.
+Lazy TipTap: I made the document editor chunk load only when you open an editor, not on the documents list (see [What we implemented](#what-we-implemented-that-also-keeps-the-frontend-light)). What happened: the list page stays lighter.
 
 Web Vitals logging: I added logging for TTFB/LCP/CLS/INP in the console and as performance marks. What happened: I can measure in the browser; this does not speed the page up by itself.
 
@@ -150,9 +164,9 @@ Local analyze: entry ~659 KB (was ~970); /user/$Id chunk ~216 KB (was ~441).
 
 ### Changes
 
-Vendor chunks: I split React and TanStack into separate files. What happened: better caching when app code changes.
+Vendor chunks: I split React and TanStack into separate files (see [What we implemented](#what-we-implemented-that-also-keeps-the-frontend-light)). What happened: better caching when app code changes.
 
-Lazy worker UI: I lazy-loaded heavy worker tabs/dialogs and jszip so they load when needed. What happened: opening /user/… downloads less up front.
+Lazy worker UI: I lazy-loaded heavy worker tabs/dialogs and jszip so they load when needed (see [What we implemented](#what-we-implemented-that-also-keeps-the-frontend-light)). What happened: opening /user/… downloads less up front.
 
 Document fonts: I moved font styles onto the shared editor instead of every app boot. What happened: boot stays lighter; fonts still work for editor and contract review.
 
