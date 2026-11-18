@@ -31,31 +31,31 @@ Improvements I would have made:
 
 **Decision:** Ship the frontend as a React SPA (Vite, `client/`) against an Express API (`server/`), with TanStack Router (`autoCodeSplitting: true` in `client/vite.config.js`) and TanStack Query for server state ([`client/src/config/query.client.ts`](../client/src/config/query.client.ts)).
 
-**Reason:** After the first load, navigation stays in the browser; each route can ship as its own chunk; caching and polling work (Round 1) lands in Query instead of ad-hoc fetches.
+**Reason:** Full page reloads and uncached ad-hoc fetches make every click feel like a cold start. An SPA keeps navigation in the browser after first load; route-level code splitting keeps unused screens out of the first payload; Query owns caching/polling (Round 1) so list and detail views do not each invent their own fetch lifecycle.
 
 ### Context kept narrow
 
 **Decision:** Keep server/API data out of React Context. Context is only for theme, local modal UI, document-editor values, and small UI primitives — e.g. [`ThemeProvider.tsx`](../client/src/context/theme-provider/ThemeProvider.tsx), [`themecontext.ts`](../client/src/context/theme-provider/themecontext.ts), [`ModalProvider.tsx`](../client/src/features/employee-overview/context/ModalProvider.tsx) ([`client/decisions.md`](../client/decisions.md)).
 
-**Reason:** Theme toggles and modal opens should not re-render unrelated feature trees. A large app-wide Context would force avoidable work on every value change.
+**Reason:** A wide Context re-renders every consumer whenever its value changes. Putting server data or large UI state there would make a theme toggle or modal open redraw unrelated feature trees. Narrow Context + TanStack Query for server state confines that cost.
 
 ### Vendor chunks
 
 **Decision:** Split React and TanStack into separate build files (`react-vendor`, `tanstack-vendor` in `client/vite.config.js`) (Round 2).
 
-**Reason:** Those vendor files stay cacheable across deploys; app chunks can change without forcing a full library re-download.
+**Reason:** Without a stable vendor split, every app deploy can invalidate the big library download even when only feature code changed. Separate vendor chunks stay cacheable across deploys so returning users mostly re-download the smaller app chunks.
 
 ### Lazy TipTap / lazy loading
 
 **Decision:** Load heavy modules only when needed — document editor via [`LazyDocumentMasterEditor.tsx`](../client/src/features/settings/documents/LazyDocumentMasterEditor.tsx); worker tabs/dialogs and jszip lazy on `/user/…` (Rounds 1–2).
 
-**Reason:** The documents list stays light, and `/user/…` JS dropped ~40% after Round 2 because users do not pay for editors and tabs they have not opened.
+**Reason:** TipTap, zip, and rarely opened tabs are expensive relative to the list/header UI. Eager loading them punishes every visit. Lazy loading keeps the documents list light and cut `/user/…` JS by ~40% after Round 2 for users who never open those surfaces.
 
 ### Lazy cockpit sections
 
 **Decision:** Load Templates, documents, questionnaire, and bestand bodies via `React.lazy` in [`cockpitSections.tsx`](../client/src/features/worker-lifecycle/components/cockpitSections.tsx).
 
-**Reason:** `/cockpit` no longer pulls all four feature trees into the route chunk up front; compact drawer mode only downloads the section you open.
+**Reason:** Cockpit is a shell over four feature trees. Shipping all four in the route chunk forces users to download sections they may never open. Lazy section bodies mean `/cockpit` stays thin up front, and compact drawer mode only downloads the section you open.
 
 ### Follow-up optimizations
 
@@ -65,43 +65,43 @@ These continue the same “keep the frontend light” work after the measured ro
 
 **Decision:** Set `preload="intent"` on left-sidebar `Link`s (including the docs link in `AppSidebar` / `sidebar-menu-item.tsx`).
 
-**Reason:** TanStack Router’s default preload is off, and our `createRouter` does not set `defaultPreload`. Without the prop, the destination loads only on click. Intent preload starts chunk/loader work on hover/focus (~50 ms delay) so navigation feels faster, without enabling preload for every link in the app.
+**Reason:** With Router preload off (and no `defaultPreload` in our `createRouter`), the destination chunk/`loader` work starts only on click — so the user waits after they have already committed. Intent preload starts that work on hover/focus (~50 ms delay) so navigation feels ready sooner, without turning on preload for every link in the app.
 
 #### Worker-row prefetch
 
 **Decision:** On lifecycle row `onPointerEnter` (`ProjectItem`), call `queryClient.prefetchQuery(workerQueries.taskData(worker.id))`.
 
-**Reason:** The worker detail view already needs `getWorkerById` (`[WORKERBYID, workerId]`). Prefetching on hover fills the Query cache before click so the next screen can reuse data. Hover (not click) runs that work while the user is still deciding.
+**Reason:** Opening a worker always needs `getWorkerById` (`[WORKERBYID, workerId]`). Starting that fetch only after click leaves a blank wait on the detail screen. Prefetch on hover fills the Query cache during the user’s decide time so the next screen can reuse data immediately.
 
 #### SharePoint search debounce
 
 **Decision:** Raise SharePoint search debounce from 120 ms to **300 ms** (`SharePointFilePicker`: local `query` → delayed `debounced` → `useQuery`).
 
-**Reason:** Each keystroke would otherwise hit SharePoint/Graph. 300 ms keeps typing smooth and cuts request chatter; a trimmed empty string disables the query on purpose.
+**Reason:** Searching SharePoint/Graph on every keystroke wastes quota and makes the UI stutter under load. Waiting 300 ms after typing stops keeps input snappy while cutting chatter; a trimmed empty string disables the query so blank input does not fire a search.
 
 #### Shared debounce hook
 
 **Decision:** Add `useDebounce(value, delayMs)` in [`client/src/hooks/useDebounce.ts`](../client/src/hooks/useDebounce.ts) and use 300 ms for Teams channel filter and docs `LocalSearch` (SharePoint keeps its inline timer for now).
 
-**Reason:** Same timing policy across search UIs without copy-pasted `setTimeout`/`clearTimeout`. Effect cleanup avoids updates after unmount and under rapid typing.
+**Reason:** Teams and docs search needed the same “wait until typing pauses” behavior. Copy-pasted timers drift and forget cleanup. One hook enforces one timing policy and clears pending timeouts on change/unmount so rapid typing and unmount do not leak updates.
 
 #### Theme context split
 
 **Decision:** Split theme into `ThemeDocumentProvider` (CSS on `document.documentElement`: `--theme`, `color-scheme`, `.dark`, `localStorage`) and `ThemeControlsProvider` (React state for toggle UI).
 
-**Reason:** Colors can change via CSS without re-rendering the whole authenticated tree for paint. Only a few React consumers need theme state (e.g. ProfileDropdown). `.dark` stays in the document provider so doorman routes without `Layout` (`/login`, …) still theme correctly. Fits the existing “Context kept narrow” rule above.
+**Reason:** If theme lived only as React state high in the tree, every toggle could re-render large authenticated subtrees just to change colors. Document CSS (`--theme`, `color-scheme`, `.dark`) updates paint without that fan-out; React controls stay for the few toggle UIs (e.g. ProfileDropdown). Document-level `.dark` also covers doorman routes that never mount `Layout` (`/login`, …).
 
 #### Narrow SidebarContext (planned / documented)
 
 **Decision:** Scope `SidebarProvider` / `SidebarContext` to the sidebar and real consumers (e.g. ProfileDropdown), not the entire authenticated shell including `Outlet`.
 
-**Reason:** Almost all `useSidebar` call sites live inside `sidebar.tsx`; the rest of the app should not re-subscribe when the sidebar opens/collapses. Recorded here as intent; ship as a follow-up when ready.
+**Reason:** Almost all `useSidebar` call sites live inside `sidebar.tsx`. Wrapping the whole shell means open/collapse updates can notify page content that does not care. Narrowing the provider keeps that subscription cost on the sidebar region only. Recorded here as intent; ship as a follow-up when ready.
 
 #### Font audit
 
 **Decision:** No code change; document that custom `@font-face` rules already use `font-display: swap`.
 
-**Reason:** Avoids re-auditing the same question and records that FOIT for custom fonts is already mitigated.
+**Reason:** Without `font-display: swap`, custom fonts can block text (FOIT) and hurt LCP/CLS perception. Auditing once and writing it down avoids re-investigating the same question when the files already mitigate that.
 
 ## Interesting
 
