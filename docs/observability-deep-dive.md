@@ -107,11 +107,14 @@ Mode: `baseline`, `LOADTEST_DURATION_MS=15000`, `LOADTEST_ALLOW_NON_LOCAL=1`
 | 100 | 695 | 0% | 2266 ms | 3070 ms | 3868 ms |
 | 150 | 751 | 0% | 3502 ms | 4210 ms | 5388 ms |
 | 200 | 712 | 0% | 4816 ms | 6642 ms | 7740 ms |
+| 500 | 1007 | 0% | 10174 ms | 13987 ms | 40389 ms |
+| 1000 | 1409 | 7.6% | 23317 ms | 31286 ms | 32270 ms |
 
 Notes:
 
-- Zero errors across all five levels; latency grows with concurrency while request count stays roughly flat (~700–750 / 15 s).
-- At 20 VUs, p50/p95 are healthy but **max** includes one extreme outlier (~40 s). An earlier 20 VU run on the same host had max ≈ 1967 ms with p50 ≈ 494 ms / p95 ≈ 910 ms / 589 requests — treat the long max as a cold-start or queueing spike, not the typical tail.
+- Through 500 VUs: zero errors; latency grows steeply with concurrency. Request count stays ~700–750 through 200 VUs, then rises to ~1000 at 500 VUs and ~1400 at 1000 VUs (still far below linear scaling).
+- First errors appear at **1000 VUs** (107 / 1409 ≈ 7.6%), above the script’s default 5% error budget.
+- At 20 VUs, p50/p95 are healthy but **max** includes one extreme outlier (~40 s). An earlier 20 VU run on the same host had max ≈ 1967 ms with p50 ≈ 494 ms / p95 ≈ 910 ms / 589 requests — treat the long max as a cold-start or queueing spike, not the typical tail. A similar ~40 s max also showed up at 500 VUs.
 - The script’s default p95 budget is 2000 ms; staging `/tasks` already exceeds that from ~100 VUs upward under this probe.
 
 ---
