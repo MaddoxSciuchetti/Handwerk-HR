@@ -5,6 +5,14 @@ import { beforeEach, expect, it, vi } from 'vitest';
 import TaskManagement from '@/features/worker-task-management/components/tasks/WorkerTaskManagement';
 import type { WorkerDetailResponse } from '@/features/worker-lifecycle/types/index.types';
 
+vi.mock('@/features/user-profile/hooks/useAuth', () => ({
+  default: () => ({
+    user: { id: 'user-a', organizationId: 'org-a' },
+    isLoading: false,
+    isError: false,
+  }),
+}));
+
 const state = vi.hoisted(() => ({
   data: undefined as WorkerDetailResponse | undefined,
   create: vi.fn(),
@@ -102,7 +110,29 @@ function worker(engagements: unknown[]) {
 }
 beforeEach(() => {
   vi.clearAllMocks();
+  localStorage.clear();
   state.data = worker([offboarding, onboarding]);
+});
+
+it('persists the selected task phase for the worker and restores it', async () => {
+  const user = userEvent.setup();
+  const view = render(<TaskManagement workerId="worker-1" />);
+  await user.click(screen.getByRole('tab', { name: 'Onboarding' }));
+  expect(screen.getByRole('tab', { name: 'Onboarding' })).toHaveAttribute(
+    'aria-selected',
+    'true'
+  );
+  expect(
+    localStorage.getItem('worker-task-phase:v1:org-a:user-a:worker-1')
+  ).toBe('onboarding');
+
+  view.unmount();
+  render(<TaskManagement workerId="worker-1" />);
+  expect(screen.getByRole('tab', { name: 'Onboarding' })).toHaveAttribute(
+    'aria-selected',
+    'true'
+  );
+  expect(screen.getByText('Onboarding task')).toBeInTheDocument();
 });
 
 it('defaults to offboarding and scopes tasks, template selection and manual creation to the selected phase', async () => {

@@ -10,7 +10,9 @@ const state = vi.hoisted(() => ({
   team: false,
 }));
 vi.mock('@/features/user-profile/hooks/useAuth', () => ({
-  default: () => ({ user: { id: 'user', firstName: 'Test' } }),
+  default: () => ({
+    user: { id: 'user', organizationId: 'org', firstName: 'Test' },
+  }),
 }));
 vi.mock('@/features/worker-lifecycle/hooks/useHome', () => ({
   default: () => ({
@@ -59,6 +61,7 @@ vi.mock(
 );
 
 beforeEach(() => {
+  localStorage.clear();
   vi.useFakeTimers({ toFake: ['Date'] });
   vi.setSystemTime(new Date('2026-10-30T12:00:00Z'));
   state.team = false;
@@ -157,8 +160,8 @@ it('adds one date column tied to each worker through reorder, filtering and refr
   view.unmount();
   render(<WorkerLifeCycle />);
   expect(
-    screen.queryByRole('columnheader', { name: /Anniversary/ })
-  ).not.toBeInTheDocument();
+    screen.getByRole('columnheader', { name: /Anniversary/ })
+  ).toBeInTheDocument();
   expect(
     screen.getByRole('button', { name: 'Add column' })
   ).toBeInTheDocument();
