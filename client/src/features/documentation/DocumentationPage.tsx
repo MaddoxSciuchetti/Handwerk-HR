@@ -17,6 +17,7 @@ import {
   SearchDialogList,
   type SharedProps,
 } from 'fumadocs-ui/components/dialog/search';
+import { useDebounce } from '@/hooks/useDebounce';
 import type * as PageTree from 'fumadocs-core/page-tree';
 import type { TOCItemType } from 'fumadocs-core/toc';
 import type { MDXProps } from 'mdx/types';
@@ -96,7 +97,8 @@ const components = { ...defaultMdxComponents, Hint };
 
 function LocalSearch(props: SharedProps) {
   const [search, setSearch] = useState('');
-  const terms = search
+  const debouncedSearch = useDebounce(search, 300);
+  const terms = debouncedSearch
     .toLocaleLowerCase('de')
     .trim()
     .split(/\s+/)
