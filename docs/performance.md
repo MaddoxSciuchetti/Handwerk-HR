@@ -1,10 +1,10 @@
-# Performance — staging `GET /tasks` load probe
+# Performance — staging `GET /tasks`
 
-Probe: [`ops/loadtest/run.mjs`](../ops/loadtest/run.mjs) against staging, seed admin + cookie reuse, baseline mode, 15 s per VU level. Units for latency are milliseconds.
+Load tests against staging. Same login each time. Fifteen seconds per level. Times in milliseconds.
 
-## 1 — Baseline (empty task list)
+## 1 — Empty list
 
-Unchanged `/tasks` (full `findMany`, no pagination, no gzip). Org had **0** tasks.
+No code changes yet. The org had no tasks.
 
 | VUs | Requests | Error rate | p50 | p95 | max |
 |-----|----------|------------|-----|-----|-----|
@@ -16,11 +16,11 @@ Unchanged `/tasks` (full `findMany`, no pagination, no gzip). Org had **0** task
 | 500 | 1007 | 0% | 10174 | 13987 | 40389 |
 | 1000 | 1409 | 7.6% | 23317 | 31286 | 32270 |
 
-Latency scales with concurrency; first errors at 1000 VUs. Max outliers at 20/500 are not typical of the p95.
+More users made the API slower. Errors started at 1000 users.
 
-## 2 — After Prisma `relationJoins` + cursor pagination
+## 2 — Faster query and page size limit
 
-`relationLoadStrategy: "join"`, default page **50** / max **100**, response `{ tasks, nextCursor }` (~49 KB first page). **100** seeded tasks; probe hits the first page only.
+We load related data in one database query and return fifty tasks per page (up to one hundred). One hundred tasks were seeded; the test only asks for the first page.
 
 | VUs | Requests | Error rate | p50 | p95 | max |
 |-----|----------|------------|-----|-----|-----|
@@ -32,11 +32,11 @@ Latency scales with concurrency; first errors at 1000 VUs. Max outliers at 20/50
 | 500 | 790 | 0% | 17160 | 23071 | 24842 |
 | 1000 | 1461 | 15.1% | 31557 | 49187 | 53322 |
 
-Bounded payload helps structure, but a single Starter still saturates; 1000 VU error rate rises vs empty-list baseline.
+Smaller responses help, but one server still struggles at high load. Errors at 1000 users went up.
 
-## 3 — After gzip compression
+## 3 — Gzip
 
-Express `compression()` middleware on top of join + pagination (same 100 seeded tasks / first page).
+Responses are now compressed before they leave the server.
 
 | VUs | Requests | Error rate | p50 | p95 | max |
 |-----|----------|------------|-----|-----|-----|
@@ -48,4 +48,6 @@ Express `compression()` middleware on top of join + pagination (same 100 seeded 
 | 500 | 826 | 0% | 15713 | 20473 | 23579 |
 | 1000 | 2747 | 52.3% | 33176 | 44847 | 55263 |
 
-Low/mid VUs roughly match post-join; 1000 VUs is worse. Next step is **horizontal scaling** — add a second Starter instance on Render so the platform load-balances, because single-instance CPU/memory is the blocker.
+Normal load looks similar. At 1000 users, errors got worse. Compression does not fix a single overloaded server.
+
+**Next step:** Add a second Starter instance on Render so traffic is shared across two servers.
