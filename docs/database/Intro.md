@@ -4,9 +4,21 @@ This folder holds everything related to the database. Below is a quick guide so 
 
 ## Processes
 
-If you want to make changes to the conceptual or physical data model contact maddox(at)test.com. We will discuss the changes and based on that decide if the model needs to be changed or not. Changes will than be applied in mermaid in a new project labeled DB_NAME_VERSION(Number of Version). Once the changes have been applied apply the changes in the schema.ts file. Once this is completed run `npx prisma migrate dev --name <descriptive_name> --schema=src/prisma/schema.prisma` to let prisma generate the migration file. Migration files are always reviewed with 4 eyes before commiting the changes. Once its sound push changes.
+If you want to change the conceptual or physical data model, contact **maddoxsciuchetti@icloud.com**. We discuss the change first and decide whether the diagrams and/or the Prisma schema need an update.
 
-Feel free to propose changes for the below files so that this project can be maintained more efficiently.
+When a schema change is approved:
+
+1. Update the conceptual / physical model pages (and their diagrams) if the entities or relationships change: [conceptual-model.md](./conceptual-model.md), [physical-model.md](./physical-model.md).
+2. Edit the Prisma schema at [`server/src/prisma/schema.prisma`](../../server/src/prisma/schema.prisma) — that file is the source of truth for tables, columns, and relations.
+3. From `server/`, generate a migration:
+
+```bash
+npx prisma migrate dev --name <descriptive_name> --schema=src/prisma/schema.prisma
+```
+
+4. Migration files under `server/src/prisma/migrations/` are reviewed with four eyes before commit. Once the review looks sound, push the changes.
+
+Feel free to propose improvements to the pages below so this project stays maintainable.
 
 - Information regarding the business domain and the workload the database supports can be found [here](./requirements.md).
 - The high-level conceptual model showing the main entities and how they relate can be found [here](./conceptual-model.md).
