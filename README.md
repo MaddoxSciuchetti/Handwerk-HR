@@ -39,15 +39,49 @@ The API uses structured logging and OpenTelemetry tracing (`requestId` / `traceI
 
 ## Frontend-Optimierungen
 
-Lebende Liste — hier landen Frontend-Performance-Verbesserungen; weitere Einträge willkommen.
+Die Root-`README.md` beschreibt das **gesamte** Repo (Backend + Frontend). Dieser Abschnitt ist die lebende Liste der **Frontend**-Performance-Entscheidungen (Client unter `client/`). Backend-Themen wie Structured Logging / OpenTelemetry stehen unter [Observability](#observability); Postgres unter [Prerequisites](#prerequisites). Weitere Client-Details: [`client/README.md`](./client/README.md), [`docs/optimization-deep-dive.md`](./docs/optimization-deep-dive.md).
 
-- **Sidebar-Route-Preload** — TanStack Router `preload="intent"` auf Sidebar-Links (PR #248)
-- **Worker-Row Prefetch** — TanStack Query `prefetchQuery` der Task-Daten beim Hover über Worker-Zeilen (PR #251)
-- **SharePoint-Suche Debounce** — von 120 ms auf 300 ms erhöht (PR #249)
-- **Gemeinsamer Debounce-Hook** — 300 ms `useDebounce` für Teams-Channel- und Docs-Suche (PR #250)
-- **Theme-Context aufgeteilt** — `ThemeDocumentProvider` (CSS-Variablen für Paint) und `ThemeControlsProvider` (React-Context nur für Layout / ProfileDropdown) (PR #252)
-- **SidebarContext eingegrenzt** — Provider umschließt nur Sidebar und ProfileDropdown, nicht die gesamte authentifizierte Shell
-- **Font-Audit** — alle Custom-`@font-face` nutzen bereits `font-display: swap`; keine Änderung nötig
+### Sidebar-Route-Preload (PR #248)
+
+**Entscheidung:** Auf den linken Sidebar-`Link`s `preload="intent"` setzen (inkl. Docs-Link in `AppSidebar`).
+
+**Warum:** TanStack Router hat standardmäßig kein globales `defaultPreload` (bei uns in `createRouter` ebenfalls nicht gesetzt). Ohne Prop lädt die Zielroute erst beim Klick. Intent-Preload startet Chunk/`loader`-Arbeit bei Hover/Focus (~50 ms Delay), sodass Navigation spürbar schneller wirkt — ohne alle Links der App zu preloaden.
+
+### Worker-Row Prefetch (PR #251)
+
+**Entscheidung:** Beim `onPointerEnter` einer Lifecycle-Zeile (`ProjectItem`) `queryClient.prefetchQuery(workerQueries.taskData(worker.id))` ausführen.
+
+**Warum:** Die Worker-Detailansicht braucht ohnehin `getWorkerById` (`[WORKERBYID, workerId]`). Prefetch beim Hover füllt den Query-Cache vor dem Klick; der Folge-Screen kann gecachte Daten nutzen statt kalt zu laden. Bewusst Hover statt Click, damit der Prefetch parallel zur Entscheidungszeit des Users läuft.
+
+### SharePoint-Suche Debounce (PR #249)
+
+**Entscheidung:** Debounce der SharePoint-Suchzeichenkette von 120 ms auf **300 ms** anheben (`SharePointFilePicker`: lokales `query` → verzögertes `debounced` → `useQuery`).
+
+**Warum:** Jeder Tastenanschlag würde sonst eine Graph-/SharePoint-Suche anstoßen. 300 ms hält die Eingabe flüssig und senkt Request-Last; getrimmter String und leerer Debounce deaktivieren die Query bewusst.
+
+### Gemeinsamer Debounce-Hook (PR #250)
+
+**Entscheidung:** Kleinen Hook `useDebounce(value, delayMs)` in `client/src/hooks/useDebounce.ts` einführen und Teams-Channel-Filter sowie Docs-`LocalSearch` damit auf 300 ms legen (SharePoint behält vorerst sein Inline-Pattern).
+
+**Warum:** Gleiches Timing-Policy an mehreren Such-UIs ohne copy-paste von `setTimeout`/`clearTimeout`. Cleanup im Effect verhindert Updates nach Unmount und bei schnellem Tippen.
+
+### Theme-Context aufgeteilt (PR #252)
+
+**Entscheidung:** Theme in `ThemeDocumentProvider` (CSS auf `document.documentElement`: `--theme`, `color-scheme`, `.dark`, `localStorage`) und `ThemeControlsProvider` (React-State für Toggle-UI) splitten.
+
+**Warum:** Farben sollen per CSS wechseln, ohne dass der ganze Authenticated-Tree nur wegen Theme neu rendert. React-Consumers bleiben wenige (z. B. ProfileDropdown). `.dark` bleibt im Document-Provider, damit Doorman-Routen ohne `Layout` (`/login`, …) korrekt themed sind.
+
+### SidebarContext eingegrenzt (geplant / dokumentiert)
+
+**Entscheidung:** `SidebarProvider`/`SidebarContext` nur um Sidebar + echte Consumer (z. B. ProfileDropdown) legen, nicht um die gesamte authentifizierte Shell inkl. `Outlet`.
+
+**Warum:** Fast alle `useSidebar`-Aufrufe sitzen in `sidebar.tsx` selbst; der restliche App-Tree braucht Open/Collapse-State nicht und soll bei Sidebar-Toggles nicht mit-subscriben. (Umsetzung ggf. als Follow-up-PR — hier als Ziel festgehalten.)
+
+### Font-Audit
+
+**Entscheidung:** Keine Code-Änderung; dokumentieren, dass Custom-`@font-face` bereits `font-display: swap` nutzen.
+
+**Warum:** Vermeidet erneute Audits derselben Frage und stellt klar, dass Text-of-Invisible-Text für Custom Fonts schon abgesichert ist.
 
 ## Prerequisites
 
