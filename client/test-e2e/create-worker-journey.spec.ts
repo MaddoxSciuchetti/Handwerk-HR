@@ -34,10 +34,13 @@ test.describe('Onboarding worker view journey', () => {
 
     await openWorkerDetailFromRow(page, workerRow, worker.fullName);
     await expect(page).toHaveURL(/\/user\/[^/]+/);
-    // Worker detail uses plain Buttons for section nav (not role=tab).
-    await expect(page.getByRole('button', { name: 'Aufgaben' })).toBeVisible();
+    // exact: true — lifecycle status triggers use aria-label "…Aufgaben erledigt…",
+    // which substring-matches name: 'Aufgaben' and breaks strict mode (seen on webkit).
+    await expect(
+      page.getByRole('button', { name: 'Aufgaben', exact: true })
+    ).toBeVisible();
 
-    await page.getByRole('button', { name: 'Dateien' }).click();
+    await page.getByRole('button', { name: 'Dateien', exact: true }).click();
 
     await page.getByTestId('open-file-upload').click();
     await page.getByRole('menuitem', { name: /^Datei$/i }).click();
