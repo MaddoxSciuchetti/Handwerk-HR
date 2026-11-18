@@ -29,33 +29,33 @@ Improvements I would have made:
 
 ### SPA + API + TanStack Router
 
-**Decision:** Ship the frontend as a React SPA (Vite, `client/`) against an Express API (`server/`), with TanStack Router (`autoCodeSplitting: true` in `client/vite.config.js`) and TanStack Query for server state ([`client/src/config/query.client.ts`](../client/src/config/query.client.ts)).
+**Decision:** Frontend is a React SPA (Vite, `client/`); backend is Express (`server/`). TanStack Router uses typed routes and `autoCodeSplitting: true` in `client/vite.config.js`. Server data goes through TanStack Query ([`client/src/config/query.client.ts`](../client/src/config/query.client.ts)).
 
-**Reason:** Full page reloads and uncached ad-hoc fetches make every click feel like a cold start. An SPA keeps navigation in the browser after first load; route-level code splitting keeps unused screens out of the first payload; Query owns caching/polling (Round 1) so list and detail views do not each invent their own fetch lifecycle.
+**Reason:** After the first load, navigation stays in the browser; each route can ship as its own chunk; caching/polling work (Round 1) lands in Query.
 
 ### Context kept narrow
 
-**Decision:** Keep server/API data out of React Context. Context is only for theme, local modal UI, document-editor values, and small UI primitives — e.g. [`ThemeProvider.tsx`](../client/src/context/theme-provider/ThemeProvider.tsx), [`themecontext.ts`](../client/src/context/theme-provider/themecontext.ts), [`ModalProvider.tsx`](../client/src/features/employee-overview/context/ModalProvider.tsx) ([`client/decisions.md`](../client/decisions.md)).
+**Decision:** Server data is not in Context. Context is only for theme, local modal UI, document-editor values, and small UI primitives — e.g. [`ThemeProvider.tsx`](../client/src/context/theme-provider/ThemeProvider.tsx), [`themecontext.ts`](../client/src/context/theme-provider/themecontext.ts), [`ModalProvider.tsx`](../client/src/features/employee-overview/context/ModalProvider.tsx) ([`client/decisions.md`](../client/decisions.md)).
 
-**Reason:** A wide Context re-renders every consumer whenever its value changes. Putting server data or large UI state there would make a theme toggle or modal open redraw unrelated feature trees. Narrow Context + TanStack Query for server state confines that cost.
+**Reason:** Theme toggles and modal opens do not re-render unrelated feature trees.
 
-### Vendor chunks
+### Vendor chunks (Round 2)
 
-**Decision:** Split React and TanStack into separate build files (`react-vendor`, `tanstack-vendor` in `client/vite.config.js`) (Round 2).
+**Decision:** React and TanStack go into separate build files (`react-vendor`, `tanstack-vendor` in `client/vite.config.js`).
 
-**Reason:** Without a stable vendor split, every app deploy can invalidate the big library download even when only feature code changed. Separate vendor chunks stay cacheable across deploys so returning users mostly re-download the smaller app chunks.
+**Reason:** Those files stay cacheable across deploys; app chunks change without forcing a full library re-download.
 
-### Lazy TipTap / lazy loading
+### Lazy TipTap / lazy loading (Rounds 1–2)
 
-**Decision:** Load heavy modules only when needed — document editor via [`LazyDocumentMasterEditor.tsx`](../client/src/features/settings/documents/LazyDocumentMasterEditor.tsx); worker tabs/dialogs and jszip lazy on `/user/…` (Rounds 1–2).
+**Decision:** Heavy modules load only when needed. Document editor: [`LazyDocumentMasterEditor.tsx`](../client/src/features/settings/documents/LazyDocumentMasterEditor.tsx). Worker tabs/dialogs and jszip are also lazy on `/user/…`.
 
-**Reason:** TipTap, zip, and rarely opened tabs are expensive relative to the list/header UI. Eager loading them punishes every visit. Lazy loading keeps the documents list light and cut `/user/…` JS by ~40% after Round 2 for users who never open those surfaces.
+**Reason:** Documents list stays light; `/user/…` JS dropped ~40% after Round 2.
 
 ### Lazy cockpit sections
 
-**Decision:** Load Templates, documents, questionnaire, and bestand bodies via `React.lazy` in [`cockpitSections.tsx`](../client/src/features/worker-lifecycle/components/cockpitSections.tsx).
+**Decision:** Templates, documents, questionnaire, and bestand bodies load via `React.lazy` in [`cockpitSections.tsx`](../client/src/features/worker-lifecycle/components/cockpitSections.tsx).
 
-**Reason:** Cockpit is a shell over four feature trees. Shipping all four in the route chunk forces users to download sections they may never open. Lazy section bodies mean `/cockpit` stays thin up front, and compact drawer mode only downloads the section you open.
+**Reason:** `/cockpit` no longer pulls all four feature trees into the route chunk up front; compact drawer mode only downloads the section you open.
 
 ### Follow-up optimizations
 
