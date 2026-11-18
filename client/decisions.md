@@ -1,6 +1,10 @@
 # Client decisions
 
-Frontend-only choices that are not covered in [`docs/clean-code-testing/decisions.md`](../docs/clean-code-testing/decisions.md). Broader stack choices (TanStack Router, feature folders, RHF in the tools table) live there / in the frontend intro.
+Start with the project decisions doc — it has the fuller write-up (repo split, TanStack Router, feature folders, naming, tooling):
+
+→ [`docs/clean-code-testing/decisions.md`](../docs/clean-code-testing/decisions.md)
+
+This page only adds frontend-only choices that are not covered there.
 
 ## Modal state via React context
 

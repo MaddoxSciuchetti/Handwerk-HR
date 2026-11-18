@@ -34,7 +34,8 @@ npm run test:unit
 
 - How features, components, hooks, imports, and env access are organized: [Style guide — Client](../clean-code-testing/style-guide.md)
 - Clean-code principles with live file examples: [Principles](../clean-code-testing/principles.md)
-- Frontend-specific implementation decisions (context, forms, pagination): [client/decisions.md](../../client/decisions.md)
+- Why the stack and folder layout look this way (fuller write-up): [Decisions](../clean-code-testing/decisions.md)
+- Frontend-only extras (modal context, RHF, client pagination): [client/decisions.md](../../client/decisions.md)
 - Client commands and joiner notes: [client/README.md](../../client/README.md)
 - Recurring review checks (routes, mentions, cleanup): [docs/review.md](../review.md)
 - Frontend performance work and web-vitals notes: [optimization-deep-dive.md](../optimization-deep-dive.md)

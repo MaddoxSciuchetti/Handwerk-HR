@@ -33,7 +33,8 @@ Shared color / surface / status tokens are CSS variables in [`src/App.css`](./sr
 
 ## Related
 
-- Frontend-specific decisions (modal context, RHF, client pagination): [`decisions.md`](./decisions.md)
+- Project decisions (fuller): [`docs/clean-code-testing/decisions.md`](../docs/clean-code-testing/decisions.md)
+- Frontend-only extras: [`decisions.md`](./decisions.md)
 - Architecture / folder rules: [`docs/clean-code-testing/style-guide.md`](../docs/clean-code-testing/style-guide.md)
 - Performance / web-vitals: [`docs/optimization-deep-dive.md`](../docs/optimization-deep-dive.md)
 - Root setup and env: [`README.md`](../README.md)
