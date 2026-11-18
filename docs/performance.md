@@ -1,10 +1,10 @@
 # Performance — staging `GET /tasks`
 
-Load tests against staging. Same login each time. Fifteen seconds per level. Times in milliseconds.
+These are load-test results for the staging `/tasks` endpoint. Each run used the same login, lasted fifteen seconds per concurrency level, and records latency in milliseconds.
 
 ## 1 — Empty list
 
-No code changes yet. The org had no tasks.
+This first run was a baseline before any performance changes. The organization had no tasks in the database yet.
 
 | VUs | Requests | Error rate | p50 | p95 | max |
 |-----|----------|------------|-----|-----|-----|
@@ -16,11 +16,11 @@ No code changes yet. The org had no tasks.
 | 500 | 1007 | 0% | 10174 | 13987 | 40389 |
 | 1000 | 1409 | 7.6% | 23317 | 31286 | 32270 |
 
-More users made the API slower. Errors started at 1000 users.
+As more concurrent users hit the API, response times went up. Errors first appeared when we reached one thousand users.
 
 ## 2 — Faster query and page size limit
 
-We load related data in one database query and return fifty tasks per page (up to one hundred). One hundred tasks were seeded; the test only asks for the first page.
+For this run we changed the task list so related data is loaded in one database query, and responses are limited to fifty tasks per page (with a maximum of one hundred). We seeded one hundred tasks, and the probe only requested the first page.
 
 | VUs | Requests | Error rate | p50 | p95 | max |
 |-----|----------|------------|-----|-----|-----|
@@ -32,11 +32,11 @@ We load related data in one database query and return fifty tasks per page (up t
 | 500 | 790 | 0% | 17160 | 23071 | 24842 |
 | 1000 | 1461 | 15.1% | 31557 | 49187 | 53322 |
 
-Smaller responses help, but one server still struggles at high load. Errors at 1000 users went up.
+Smaller pages help keep the response size under control, but a single server still slows down under heavy concurrency. The error rate at one thousand users was higher than in the empty-list baseline.
 
 ## 3 — Gzip
 
-Responses are now compressed before they leave the server.
+On top of the query and pagination changes, we enabled gzip so responses are compressed before they are sent to the client.
 
 | VUs | Requests | Error rate | p50 | p95 | max |
 |-----|----------|------------|-----|-----|-----|
@@ -48,6 +48,6 @@ Responses are now compressed before they leave the server.
 | 500 | 826 | 0% | 15713 | 20473 | 23579 |
 | 1000 | 2747 | 52.3% | 33176 | 44847 | 55263 |
 
-Normal load looks similar. At 1000 users, errors got worse. Compression does not fix a single overloaded server.
+At moderate load the numbers look similar to the previous run, but at one thousand users the error rate got worse. Compression alone does not fix an overloaded single server.
 
-**Next step:** Add a second Starter instance on Render so traffic is shared across two servers.
+**Next step:** Add a second Starter instance on Render so traffic can be shared across two servers.
