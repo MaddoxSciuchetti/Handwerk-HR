@@ -37,6 +37,52 @@ Lazy TipTap / lazy loading (Rounds 1–2): Heavy modules load only when needed. 
 
 Lazy cockpit sections: Templates, documents, questionnaire, and bestand bodies load via `React.lazy` in [`cockpitSections.tsx`](../client/src/features/worker-lifecycle/components/cockpitSections.tsx). What happened: `/cockpit` no longer pulls all four feature trees into the route chunk up front; compact drawer mode only downloads the section you open.
 
+### Follow-up: PRs #248–#252 (Decision / Reason)
+
+These continue the same “keep the frontend light” work after the measured rounds above. Entry from the frontend docs: [frontend/Intro.md](./frontend/Intro.md).
+
+#### Sidebar route preload (PR [#248](https://github.com/MaddoxSciuchetti/Handwerk-HR/pull/248))
+
+**Decision:** Set `preload="intent"` on left-sidebar `Link`s (including the docs link in `AppSidebar` / `sidebar-menu-item.tsx`).
+
+**Reason:** TanStack Router’s default preload is off, and our `createRouter` does not set `defaultPreload`. Without the prop, the destination loads only on click. Intent preload starts chunk/loader work on hover/focus (~50 ms delay) so navigation feels faster, without enabling preload for every link in the app.
+
+#### Worker-row prefetch (PR [#251](https://github.com/MaddoxSciuchetti/Handwerk-HR/pull/251))
+
+**Decision:** On lifecycle row `onPointerEnter` (`ProjectItem`), call `queryClient.prefetchQuery(workerQueries.taskData(worker.id))`.
+
+**Reason:** The worker detail view already needs `getWorkerById` (`[WORKERBYID, workerId]`). Prefetching on hover fills the Query cache before click so the next screen can reuse data. Hover (not click) runs that work while the user is still deciding.
+
+#### SharePoint search debounce (PR [#249](https://github.com/MaddoxSciuchetti/Handwerk-HR/pull/249))
+
+**Decision:** Raise SharePoint search debounce from 120 ms to **300 ms** (`SharePointFilePicker`: local `query` → delayed `debounced` → `useQuery`).
+
+**Reason:** Each keystroke would otherwise hit SharePoint/Graph. 300 ms keeps typing smooth and cuts request chatter; a trimmed empty string disables the query on purpose.
+
+#### Shared debounce hook (PR [#250](https://github.com/MaddoxSciuchetti/Handwerk-HR/pull/250))
+
+**Decision:** Add `useDebounce(value, delayMs)` in [`client/src/hooks/useDebounce.ts`](../client/src/hooks/useDebounce.ts) and use 300 ms for Teams channel filter and docs `LocalSearch` (SharePoint keeps its inline timer for now).
+
+**Reason:** Same timing policy across search UIs without copy-pasted `setTimeout`/`clearTimeout`. Effect cleanup avoids updates after unmount and under rapid typing.
+
+#### Theme context split (PR [#252](https://github.com/MaddoxSciuchetti/Handwerk-HR/pull/252))
+
+**Decision:** Split theme into `ThemeDocumentProvider` (CSS on `document.documentElement`: `--theme`, `color-scheme`, `.dark`, `localStorage`) and `ThemeControlsProvider` (React state for toggle UI).
+
+**Reason:** Colors can change via CSS without re-rendering the whole authenticated tree for paint. Only a few React consumers need theme state (e.g. ProfileDropdown). `.dark` stays in the document provider so doorman routes without `Layout` (`/login`, …) still theme correctly. Fits the existing “Context kept narrow” rule above.
+
+#### Narrow SidebarContext (planned / documented)
+
+**Decision:** Scope `SidebarProvider` / `SidebarContext` to the sidebar and real consumers (e.g. ProfileDropdown), not the entire authenticated shell including `Outlet`.
+
+**Reason:** Almost all `useSidebar` call sites live inside `sidebar.tsx`; the rest of the app should not re-subscribe when the sidebar opens/collapses. Recorded here as intent; ship as a follow-up PR when ready.
+
+#### Font audit
+
+**Decision:** No code change; document that custom `@font-face` rules already use `font-display: swap`.
+
+**Reason:** Avoids re-auditing the same question and records that FOIT for custom fonts is already mitigated.
+
 ## Interesting
 
 Lazy loading in this app has two layers:
