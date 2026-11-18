@@ -11,15 +11,8 @@ import catchErrors from "@/utils/catchErrors";
 
 export const fetchTasks = catchErrors(async (req, res) => {
     const orgId = req.orgId;
-    const limitRaw = req.query.limit;
-    const limit =
-        typeof limitRaw === "string" && limitRaw.trim() !== ""
-            ? Number(limitRaw)
-            : undefined;
-    const cursor =
-        typeof req.query.cursor === "string" ? req.query.cursor : undefined;
-    const page = await queryTasks(orgId, req.userId, { limit, cursor });
-    return res.status(OK).json(page);
+    const tasks = await queryTasks(orgId, req.userId);
+    return res.status(OK).json(tasks);
 });
 
 export const createTask = catchErrors(async (req, res) => {
