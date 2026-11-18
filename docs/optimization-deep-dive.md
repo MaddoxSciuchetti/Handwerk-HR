@@ -27,15 +27,81 @@ Improvements I would have made:
 
 ## What we implemented that also keeps the frontend light
 
-SPA + API + TanStack Router: Frontend is a React SPA (Vite, `client/`); backend is Express (`server/`). TanStack Router uses typed routes and `autoCodeSplitting: true` in `client/vite.config.js`. Server data goes through TanStack Query ([`client/src/config/query.client.ts`](../client/src/config/query.client.ts)). What happened: after the first load, navigation stays in the browser; each route can ship as its own chunk; caching/polling work (Round 1) lands in Query.
+### SPA + API + TanStack Router
 
-Context kept narrow: Server data is not in Context. Context is only for theme, local modal UI, document-editor values, and small UI primitives — e.g. [`ThemeProvider.tsx`](../client/src/context/theme-provider/ThemeProvider.tsx), [`themecontext.ts`](../client/src/context/theme-provider/themecontext.ts), [`ModalProvider.tsx`](../client/src/features/employee-overview/context/ModalProvider.tsx) ([`client/decisions.md`](../client/decisions.md)). What happened: theme toggles and modal opens do not re-render unrelated feature trees.
+Decision: Frontend is a React SPA (Vite, `client/`); backend is Express (`server/`). TanStack Router uses typed routes and `autoCodeSplitting: true` in `client/vite.config.js`. Server data goes through TanStack Query ([`client/src/config/query.client.ts`](../client/src/config/query.client.ts)).
 
-Vendor chunks (Round 2): React and TanStack go into separate build files (`react-vendor`, `tanstack-vendor` in `client/vite.config.js`). What happened: those files stay cacheable across deploys; app chunks change without forcing a full library re-download.
+Reason: After the first load, navigation stays in the browser; each route can ship as its own chunk; caching/polling work (Round 1) lands in Query.
 
-Lazy TipTap / lazy loading (Rounds 1–2): Heavy modules load only when needed. Document editor: [`LazyDocumentMasterEditor.tsx`](../client/src/features/settings/documents/LazyDocumentMasterEditor.tsx). Worker tabs/dialogs and jszip are also lazy on `/user/…`. What happened: documents list stays light; `/user/…` JS dropped ~40% after Round 2.
+### Context kept narrow
 
-Lazy cockpit sections: Templates, documents, questionnaire, and bestand bodies load via `React.lazy` in [`cockpitSections.tsx`](../client/src/features/worker-lifecycle/components/cockpitSections.tsx). What happened: `/cockpit` no longer pulls all four feature trees into the route chunk up front; compact drawer mode only downloads the section you open.
+Decision: Server data is not in Context. Context is only for theme, local modal UI, document-editor values, and small UI primitives — e.g. [`ThemeProvider.tsx`](../client/src/context/theme-provider/ThemeProvider.tsx), [`themecontext.ts`](../client/src/context/theme-provider/themecontext.ts), [`ModalProvider.tsx`](../client/src/features/employee-overview/context/ModalProvider.tsx) ([`client/decisions.md`](../client/decisions.md)).
+
+Reason: Theme toggles and modal opens do not re-render unrelated feature trees.
+
+### Vendor chunks (Round 2)
+
+Decision: React and TanStack go into separate build files (`react-vendor`, `tanstack-vendor` in `client/vite.config.js`).
+
+Reason: Those files stay cacheable across deploys; app chunks change without forcing a full library re-download.
+
+### Lazy TipTap / lazy loading (Rounds 1–2)
+
+Decision: Heavy modules load only when needed. Document editor: [`LazyDocumentMasterEditor.tsx`](../client/src/features/settings/documents/LazyDocumentMasterEditor.tsx). Worker tabs/dialogs and jszip are also lazy on `/user/…`.
+
+Reason: Documents list stays light; `/user/…` JS dropped ~40% after Round 2.
+
+### Lazy cockpit sections
+
+Decision: Templates, documents, questionnaire, and bestand bodies load via `React.lazy` in [`cockpitSections.tsx`](../client/src/features/worker-lifecycle/components/cockpitSections.tsx).
+
+Reason: `/cockpit` no longer pulls all four feature trees into the route chunk up front; compact drawer mode only downloads the section you open.
+
+### Follow-up optimizations
+
+These continue the same “keep the frontend light” work after the measured rounds above. Entry from the frontend docs: [frontend/Intro.md](./frontend/Intro.md).
+
+#### Sidebar route preload
+
+Decision: Set `preload="intent"` on left-sidebar `Link`s (including the docs link in `AppSidebar` / `sidebar-menu-item.tsx`).
+
+Reason: With Router preload off (and no `defaultPreload` in our `createRouter`), the destination chunk/`loader` work starts only on click — so the user waits after they have already committed. Intent preload starts that work on hover/focus (~50 ms delay) so navigation feels ready sooner, without turning on preload for every link in the app.
+
+#### Worker-row prefetch
+
+Decision: On lifecycle row `onPointerEnter` (`ProjectItem`), call `queryClient.prefetchQuery(workerQueries.taskData(worker.id))`.
+
+Reason: Opening a worker always needs `getWorkerById` (`[WORKERBYID, workerId]`). Starting that fetch only after click leaves a blank wait on the detail screen. Prefetch on hover fills the Query cache during the user’s decide time so the next screen can reuse data immediately.
+
+#### SharePoint search debounce
+
+Decision: Raise SharePoint search debounce from 120 ms to **300 ms** (`SharePointFilePicker`: local `query` → delayed `debounced` → `useQuery`).
+
+Reason: Searching SharePoint/Graph on every keystroke wastes quota and makes the UI stutter under load. Waiting 300 ms after typing stops keeps input snappy while cutting chatter; a trimmed empty string disables the query so blank input does not fire a search.
+
+#### Shared debounce hook
+
+Decision: Add `useDebounce(value, delayMs)` in [`client/src/hooks/useDebounce.ts`](../client/src/hooks/useDebounce.ts) and use 300 ms for Teams channel filter and docs `LocalSearch` (SharePoint keeps its inline timer for now).
+
+Reason: Teams and docs search needed the same “wait until typing pauses” behavior. Copy-pasted timers drift and forget cleanup. One hook enforces one timing policy and clears pending timeouts on change/unmount so rapid typing and unmount do not leak updates.
+
+#### Theme context split
+
+Decision: Split theme into `ThemeDocumentProvider` (CSS on `document.documentElement`: `--theme`, `color-scheme`, `.dark`, `localStorage`) and `ThemeControlsProvider` (React state for toggle UI).
+
+Reason: If theme lived only as React state high in the tree, every toggle could re-render large authenticated subtrees just to change colors. Document CSS (`--theme`, `color-scheme`, `.dark`) updates paint without that fan-out; React controls stay for the few toggle UIs (e.g. ProfileDropdown). Document-level `.dark` also covers doorman routes that never mount `Layout` (`/login`, …).
+
+#### Narrow SidebarContext (planned / documented)
+
+Decision: Scope `SidebarProvider` / `SidebarContext` to the sidebar and real consumers (e.g. ProfileDropdown), not the entire authenticated shell including `Outlet`.
+
+Reason: Almost all `useSidebar` call sites live inside `sidebar.tsx`. Wrapping the whole shell means open/collapse updates can notify page content that does not care. Narrowing the provider keeps that subscription cost on the sidebar region only. Recorded here as intent; ship as a follow-up when ready.
+
+#### Font audit
+
+Decision: No code change; document that custom `@font-face` rules already use `font-display: swap`.
+
+Reason: Without `font-display: swap`, custom fonts can block text (FOIT) and hurt LCP/CLS perception. Auditing once and writing it down avoids re-investigating the same question when the files already mitigate that.
 
 ## Interesting
 

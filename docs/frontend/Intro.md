@@ -6,7 +6,7 @@ This folder is the entry for the React + Vite SPA (`client/`). Quality for users
 
 We treat frontend performance as a product requirement: slow first paint, layout shift, and heavy polling hurt trust the same way a bug does. The core implementation that shows how seriously we take this is measuring Web Vitals (LCP, INP, CLS, and related signals), setting a baseline outside localhost, then shipping optimizations and re-measuring.
 
-Read the evidence and approach: [Frontend optimization deep dive](../optimization-deep-dive.md) (measured PR rounds, plus what we implemented: SPA + TanStack Router, Context restraint, vendor chunks, lazy loading).
+Read the evidence and approach: [Frontend optimization deep dive](../optimization-deep-dive.md) (measured PR rounds, what we implemented — SPA + TanStack Router, Context restraint, vendor chunks, lazy loading — and the follow-up Decision/Reason notes for PRs #248–#252: intent preload, worker-row prefetch, search debounce, theme split, etc.).
 
 Users also work on phones and large monitors, leave mid-flow, and may rely on assistive tech. To keep UX high in that context we persist drafts and prefs on device (`localStorage`), use responsive layouts from touch-sized mobile forms to wide desktop shells, and ship semantic HTML with ARIA. Examples: [questionnaire answer drafts](../../client/src/features/questionnaire/questionnaireAnswerDraft.ts), [responsive questionnaire rows](../../client/src/features/questionnaire/QuestionnaireTableRows.tsx) / [mobile CSS](../../client/src/features/questionnaire/questionnaire-mobile.css), [sidebar ARIA / `sr-only`](../../client/src/components/ui/sidebar.tsx).
 
@@ -40,7 +40,7 @@ npm run test:unit
 - Frontend-only extras (modal context, RHF, client pagination): [client/decisions.md](../../client/decisions.md)
 - Client commands and joiner notes: [client/README.md](../../client/README.md)
 - Recurring review checks (routes, mentions, cleanup): [docs/review.md](../review.md)
-- Frontend performance work and web-vitals notes: [optimization-deep-dive.md](../optimization-deep-dive.md)
+- Frontend performance work, web-vitals notes, and later Decision/Reason items (PRs #248–#252): [optimization-deep-dive.md](../optimization-deep-dive.md)
 - Local setup, env vars, and common scripts: [root README](../../README.md)
 - Client unit tests and coverage (`npm run test:unit`, `test:coverage`): [Tests](../clean-code-testing/tests.md)
 - Pull request expectations: [review checklist](../clean-code-testing/review-checklist.md)
