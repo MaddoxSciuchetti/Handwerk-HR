@@ -1,8 +1,24 @@
 # Information about CI/CD pipeline
 
-This repository uses GitHub Actions for checks. Deploy to Render is still driven by Render’s auto-deploy from the branches you configure there (not by a custom deploy workflow in this repo).
+**CI** runs in GitHub Actions. **CD** is not a GitHub Actions deploy job — Render **auto-deploys** from the git branches you wire up in the Render Dashboard (typically staging and production). There is no `deploy.yml` in this repo.
 
-## What runs today
+For a joiner: merge (or push) to a branch that a Render service tracks → Render builds and ships that service. Schema changes land safely because **Prisma migrate runs once as a Render pre-deploy step before the new app process starts**.
+
+## End-to-end picture
+
+```
+PR opened
+  └─ GitHub Actions: PR checks (client, then server)
+
+PR merged into a Render-tracked branch (e.g. main / staging)
+  └─ Render auto-deploy for that service
+       1. Pre-deploy: prisma migrate deploy  (apply pending migrations)
+       2. Build + start the new release
+```
+
+GitHub Actions never deploys to Render staging or production. Nightly E2E also stays on the Actions runner (local Postgres + API), not on Render URLs.
+
+## What CI runs today
 
 | Workflow | File | When | What |
 |----------|------|------|------|
@@ -13,6 +29,19 @@ This repository uses GitHub Actions for checks. Deploy to Render is still driven
 Public repos: GitHub **disables scheduled workflows after 60 days without repo activity**. They stay off until someone re-enables the workflow in the Actions UI, or a write-access commit **changes the `cron`** on the default branch (that reactivates the schedule). Prefer a manual **Run workflow** after restore to prove green immediately — do not wait for the next cron alone.
 
 `protect-main` ruleset on `main` requires a PR and the status check **Client lint, typecheck & unit tests**. Prefer also requiring **Server typecheck & unit tests** in the ruleset UI once you confirm it is stable. Full security posture (stable versions, secret/env push detection, vulnerability response): [`docs/backend/security.md`](../backend/security.md).
+
+## Deploy (Render auto-deploy + Prisma migrate)
+
+Render owns shipping. In the Dashboard, each web service has auto-deploy enabled for its tracked branch. When that branch updates, Render starts a deploy — you do not click “deploy” from GitHub Actions.
+
+**Order on each API deploy (important for schema PRs):**
+
+1. **Pre-deploy command** runs against the service’s `DATABASE_URL` and applies pending migrations with Prisma (`npm run migrate:deploy` from `server/`, which wraps `prisma migrate deploy`). This happens **once per deploy, before** the new release is started.
+2. **Build** (`npm run build`) and **start** (`npm start`) bring up the new app process against the already-migrated database.
+
+So: merge a migration on a tracked branch → Render auto-deploy → migrate first → then the new code starts. Do not expect GitHub Actions to run production migrations. Commit migration folders under `server/src/prisma/migrations/` with the app change; Render’s pre-deploy applies them.
+
+Local / first-time DB setup still uses the same `prisma migrate deploy` command manually — see the root [README](../../README.md) (“First-time setup” and “Production / Render”). Ops runbooks that say “pre-deploy Prisma migrate as usual” mean this same step (e.g. [`ops/anniversary-reminders.md`](../../ops/anniversary-reminders.md)).
 
 ## Where E2E nightly runs
 

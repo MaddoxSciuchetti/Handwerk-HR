@@ -367,7 +367,14 @@ For raw SQL changes (triggers, check constraints, anything Prisma can't express 
 
 ## Production / Render
 
-The backend builds with `npm run build` and starts with `npm start`. Migrations are applied with `npx prisma migrate deploy`. Set the same environment variables listed above in the Render service config.
+**Deploy is Render auto-deploy**, not a GitHub Actions job. When a branch that a Render web service tracks updates (for example after a merge to `main` or `staging`), Render builds and ships that service.
+
+On each API deploy the order is:
+
+1. **Pre-deploy** — `npm run migrate:deploy` (Prisma `migrate deploy`) applies pending migrations to the service’s `DATABASE_URL` **once, before** the new process starts.
+2. **Build / start** — `npm run build` then `npm start`.
+
+Commit migration folders with the app change; you do not run production migrations from your laptop or from Actions. Full CI → CD picture: [`docs/clean-code-testing/ci.cd.md`](docs/clean-code-testing/ci.cd.md). Set the same environment variables listed above in the Render service config.
 
 ### Local template integration simulation
 
