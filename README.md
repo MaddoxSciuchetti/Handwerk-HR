@@ -37,6 +37,18 @@ The API uses structured logging and OpenTelemetry tracing (`requestId` / `traceI
 - Render incident search: [ops/observability.md](ops/observability.md)
 - Concurrent-user load probe: [ops/loadtest/README.md](ops/loadtest/README.md)
 
+## Frontend-Optimierungen
+
+Lebende Liste — hier landen Frontend-Performance-Verbesserungen; weitere Einträge willkommen.
+
+- **Sidebar-Route-Preload** — TanStack Router `preload="intent"` auf Sidebar-Links (PR #248)
+- **Worker-Row Prefetch** — TanStack Query `prefetchQuery` der Task-Daten beim Hover über Worker-Zeilen (PR #251)
+- **SharePoint-Suche Debounce** — von 120 ms auf 300 ms erhöht (PR #249)
+- **Gemeinsamer Debounce-Hook** — 300 ms `useDebounce` für Teams-Channel- und Docs-Suche (PR #250)
+- **Theme-Context aufgeteilt** — `ThemeDocumentProvider` (CSS-Variablen für Paint) und `ThemeControlsProvider` (React-Context nur für Layout / ProfileDropdown) (PR #252)
+- **SidebarContext eingegrenzt** — Provider umschließt nur Sidebar und ProfileDropdown, nicht die gesamte authentifizierte Shell
+- **Font-Audit** — alle Custom-`@font-face` nutzen bereits `font-display: swap`; keine Änderung nötig
+
 ## Prerequisites
 
 - Node.js 20+
