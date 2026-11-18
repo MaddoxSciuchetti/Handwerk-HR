@@ -8,7 +8,7 @@ export type ThemeControls = {
   setTheme: (theme: Theme) => void;
 };
 
-/** React consumers only (Layout class toggle, ProfileDropdown sun/moon). */
+/** React consumers only (ProfileDropdown sun/moon toggle). Root .dark / --theme live in ThemeDocumentProvider. */
 export const ThemeControlsContext = createContext<ThemeControls | null>(null);
 
 /** @deprecated Use ThemeControlsContext — kept name for any stray imports. */

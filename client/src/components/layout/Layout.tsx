@@ -3,7 +3,6 @@ import useAuth from '@/features/user-profile/hooks/useAuth';
 import { isSubscriptionLocked } from '@/features/settings/payments/util/subscriptionAccess.util';
 import { MentionNotice } from '@/features/all-tasks/components/MentionNotice';
 import { isCockpitOwnedPath } from '@/features/worker-lifecycle/components/cockpit-section.consts';
-import { useThemeProvider } from '@/hooks/useThemeProvider';
 import { Outlet, useLocation, useNavigate } from '@tanstack/react-router';
 import { useEffect, useMemo, useState } from 'react';
 import AppSidebar from '../ui/sidebar/AppSidebar';
@@ -12,7 +11,6 @@ import PagePath from './headers/PagePath';
 import { SettingsSidebar } from './SettingsSidebar';
 
 function Layout() {
-  const { theme } = useThemeProvider();
   const [isSettingOpen, setIsSettingOpen] = useState<boolean>(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -61,12 +59,6 @@ function Layout() {
     if (path === '/settings/payments' || path === '/settings/plans') return;
     navigate({ to: '/settings/payments' });
   }, [subscriptionLocked, isAdmin, location.pathname, navigate]);
-
-  // Tailwind dark: variants still key off the root class; CSS var(--theme) is
-  // synced separately by ThemeDocumentProvider for paint-time consumers.
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark');
-  }, [theme]);
 
   return (
     <>

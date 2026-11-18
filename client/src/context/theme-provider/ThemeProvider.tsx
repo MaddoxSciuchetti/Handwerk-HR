@@ -32,6 +32,9 @@ function applyThemeDocument(theme: Theme) {
   // Paint-time signal — CSS can key off var(--theme) without React re-renders.
   root.style.setProperty('--theme', theme);
   root.style.setProperty('color-scheme', theme);
+  // Tailwind dark: tokens need the root class on every route, including
+  // doorman pages (/login, /signup, …) that never mount Layout.
+  root.classList.toggle('dark', theme === 'dark');
   localStorage.setItem(STORAGE_KEY, theme);
 }
 
