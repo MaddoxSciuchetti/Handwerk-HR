@@ -32,7 +32,9 @@ npx prisma migrate status --schema=src/prisma/schema.prisma
 
 ## Where to go
 
+- Backend clean-code map (helpers, routes, controllers, services): [clean-code.md](./clean-code.md)
 - How the HTTP layers are organized (route → controller → service), env access, and naming: [Style guide — Server](../clean-code-testing/style-guide.md)
+- Shared clean-code principles (examples lean frontend; use the map above for server): [Principles](../clean-code-testing/principles.md)
 - Why those choices were made: [Decisions](../clean-code-testing/decisions.md)
 - Structured logs, OpenTelemetry, and how to log in a new feature: [server/README.md](../../server/README.md)
 - Finding a failed request in Render logs: [ops/observability.md](../../ops/observability.md)
