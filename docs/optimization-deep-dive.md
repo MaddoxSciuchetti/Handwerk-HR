@@ -35,6 +35,8 @@ Vendor chunks (Round 2): React and TanStack go into separate build files (`react
 
 Lazy TipTap / lazy loading (Rounds 1–2): Heavy modules load only when needed. Document editor: [`LazyDocumentMasterEditor.tsx`](../client/src/features/settings/documents/LazyDocumentMasterEditor.tsx). Worker tabs/dialogs and jszip are also lazy on `/user/…`. What happened: documents list stays light; `/user/…` JS dropped ~40% after Round 2.
 
+Lazy cockpit sections: Templates, documents, questionnaire, and bestand bodies load via `React.lazy` in [`cockpitSections.tsx`](../client/src/features/worker-lifecycle/components/cockpitSections.tsx). What happened: `/cockpit` no longer pulls all four feature trees into the route chunk up front; compact drawer mode only downloads the section you open.
+
 ---
 
 ## Definitions
