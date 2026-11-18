@@ -65,6 +65,7 @@ function SideBarMenu<TItem extends SideBarMenuLinkItem>({
             >
               <Link
                 to={item.to}
+                preload="intent"
                 {...(item.search !== undefined ? { search: item.search } : {})}
               >
                 <Icon />
