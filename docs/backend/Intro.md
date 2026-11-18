@@ -42,7 +42,7 @@ npx prisma migrate status --schema=src/prisma/schema.prisma
 - Database model, performance, backups, and scaling: [Database Intro](../database/Intro.md)
 - Server tests and coverage commands: [Tests](../clean-code-testing/tests.md)
 - Security on `main` (stable versions, secret push detection, vulnerability response): [security.md](./security.md)
-- GitHub Actions notes: [CI/CD](../clean-code-testing/ci.cd.md)
+- CI (GitHub Actions) and CD (Render auto-deploy; build → Prisma migrate pre-deploy → start): [CI/CD](../clean-code-testing/ci.cd.md)
 
 ## Related (historical)
 

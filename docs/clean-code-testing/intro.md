@@ -18,7 +18,7 @@ If you want to add code to this project, improve the README, or change architect
    - `npm --prefix client run lint` (or `npm run lint:src` from `client/`)
    - Details: [Style guide §3.4 / §7.3](style-guide.md). Server has no `lint` / `format` scripts yet — use `npm --prefix server run typecheck` and the tests below.
 4. Open a pull request and fill the [PR template](../../.github/pull_request_template.md) — PRs without the template will not be reviewed or merged.
-5. CI runs on the PR (lint / typecheck / unit tests) — see [workflow](ci.cd.md). After review, the PR can be merged.
+5. CI runs on the PR (lint / typecheck / unit tests) — see [workflow](ci.cd.md). After review, the PR can be merged. Shipping is **Render auto-deploy** from the tracked branch; API deploys run **build → Prisma migrate (pre-deploy) → start** (same doc).
 
 ### Context docs
 

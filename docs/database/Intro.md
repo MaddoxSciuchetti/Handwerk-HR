@@ -17,6 +17,7 @@ npx prisma migrate dev --name <descriptive_name> --schema=src/prisma/schema.pris
 ```
 
 4. Migration files under `server/src/prisma/migrations/` are reviewed with four eyes before commit. Once the review looks sound, push the changes.
+5. After merge to a branch a Render service tracks, **Render auto-deploys**: **build**, then **Prisma migrate once as pre-deploy**, then **start** (`npm run migrate:deploy` on the API service). A failed build never reaches migrate. You do not apply production/staging migrations from GitHub Actions or by hand for a normal release. Details: [CI/CD — Deploy](../clean-code-testing/ci.cd.md#deploy-render-auto-deploy--prisma-migrate).
 
 Feel free to propose improvements to the pages below so this project stays maintainable.
 

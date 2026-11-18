@@ -109,7 +109,7 @@ So yes: the client linter runs on every pull request. It is not optional for mer
 
 There is also a scheduled nightly unit workflow that re-runs the same style of client and server unit checks against the tip of `main`. That is regression coverage, not a merge gate.
 
-Deploy itself is still Render auto-deploy from the branch I configure there — not a custom deploy workflow in this repo.
+Deploy itself is still Render auto-deploy from the branch I configure there — not a custom deploy workflow in this repo. On each API deploy the order is build → Prisma migrate (pre-deploy) → start. Joiner-oriented write-up: [`docs/clean-code-testing/ci.cd.md`](../clean-code-testing/ci.cd.md#deploy-render-auto-deploy--prisma-migrate).
 
 ---
 
