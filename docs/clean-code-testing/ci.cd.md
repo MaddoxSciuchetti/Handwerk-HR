@@ -7,8 +7,10 @@ This repository uses GitHub Actions for checks. Deploy to Render is still driven
 | Workflow | File | When | What |
 |----------|------|------|------|
 | PR checks | `.github/workflows/pr-checks.yml` | Every pull request (+ `merge_group` for merge queue) | Client lint / typecheck / unit; then server typecheck / unit |
-| Nightly unit tests | `.github/workflows/nightly-unit.yml` | Daily 03:00 UTC + manual | Same client + server unit checks on `main` tip |
-| E2E nightly | `.github/workflows/e2e-nightly.yml` | Daily 03:15 UTC + manual | Postgres + API + Playwright on the GitHub runner (not production, not Render staging) |
+| Nightly unit tests | `.github/workflows/nightly-unit.yml` | Daily 03:05 UTC + manual | Same client + server unit checks on `main` tip |
+| E2E nightly | `.github/workflows/e2e-nightly.yml` | Daily 03:20 UTC + manual | Postgres + API + Playwright on the GitHub runner (not production, not Render staging) |
+
+Public repos: GitHub **disables scheduled workflows after 60 days without repo activity**. They stay off until someone re-enables the workflow in the Actions UI, or a write-access commit **changes the `cron`** on the default branch (that reactivates the schedule). Prefer a manual **Run workflow** after restore to prove green immediately — do not wait for the next cron alone.
 
 `protect-main` ruleset on `main` requires a PR and the status check **Client lint, typecheck & unit tests**. Prefer also requiring **Server typecheck & unit tests** in the ruleset UI once you confirm it is stable. Full security posture (stable versions, secret/env push detection, vulnerability response): [`docs/backend/security.md`](../backend/security.md).
 

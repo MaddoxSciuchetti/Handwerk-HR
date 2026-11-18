@@ -2,7 +2,10 @@ name: E2E nightly
 
 on:
     schedule:
-        - cron: "15 3 * * *"
+        # 03:20 UTC daily (~04:20 Europe/Berlin in winter). Cron bumped from 15 3
+        # to re-activate schedules after public-repo 60-day inactivity disable.
+        # See: https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#schedule
+        - cron: "20 3 * * *"
     workflow_dispatch:
         inputs:
             git_ref:
