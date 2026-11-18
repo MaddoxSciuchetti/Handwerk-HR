@@ -136,7 +136,7 @@ Caching defaults: I set queries to stay fresh for 30s and stay in memory for 5 m
 
 Task polling: I changed background /tasks from every 5s always to every 15s, and only while the tab is visible. What happened: fewer API calls when idle or when the tab is hidden.
 
-Lazy TipTap: I made the document editor chunk load only when you open an editor, not on the documents list (see [What “lazy TipTap” and lazy loading mean](#what-lazy-tiptap-and-lazy-loading-mean)). What happened: the list page stays lighter.
+Lazy TipTap: I made the document editor chunk load only when you open an editor, not on the documents list (see [Lazy TipTap and lazy loading](#lazy-tiptap-and-lazy-loading)). What happened: the list page stays lighter.
 
 Web Vitals logging: I added logging for TTFB/LCP/CLS/INP in the console and as performance marks. What happened: I can measure in the browser; this does not speed the page up by itself.
 
@@ -196,9 +196,9 @@ Local analyze: entry ~659 KB (was ~970); /user/$Id chunk ~216 KB (was ~441).
 
 ### Changes
 
-Vendor chunks: I split React and TanStack into separate files (see [What “vendor chunks” means](#what-vendor-chunks-means)). What happened: better caching when app code changes.
+Vendor chunks: I split React and TanStack into separate files (see [Vendor chunks](#vendor-chunks)). What happened: better caching when app code changes.
 
-Lazy worker UI: I lazy-loaded heavy worker tabs/dialogs and jszip so they load when needed (same idea as lazy TipTap — see [lazy loading](#what-lazy-tiptap-and-lazy-loading-mean)). What happened: opening /user/… downloads less up front.
+Lazy worker UI: I lazy-loaded heavy worker tabs/dialogs and jszip so they load when needed (same idea as lazy TipTap — see [Lazy TipTap and lazy loading](#lazy-tiptap-and-lazy-loading)). What happened: opening /user/… downloads less up front.
 
 Document fonts: I moved font styles onto the shared editor instead of every app boot. What happened: boot stays lighter; fonts still work for editor and contract review.
 
