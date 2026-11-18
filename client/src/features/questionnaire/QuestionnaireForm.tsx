@@ -19,12 +19,17 @@ import {
   normalizeHour,
 } from '@shared/weeklyHours';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { QuestionnaireQuestion } from './QuestionnaireQuestion';
 import { QuestionnaireSectionCard } from './QuestionnaireSectionCard';
 import { WeeklyHoursAnswer } from './WeeklyHoursAnswer';
 import { QuestionnaireRepeatableRows } from './QuestionnaireRepeatableRows';
 import { QuestionnaireTableRows } from './QuestionnaireTableRows';
+import {
+  clearAnswerDraft,
+  readAnswerDraft,
+  writeAnswerDraft,
+} from './questionnaireAnswerDraft';
 import type { CandidateItem } from './questionnairePreview';
 import type {
   QuestionnaireQuestion as QuestionnaireQuestionData,
@@ -153,13 +158,56 @@ export function QuestionnaireForm({
   const [seededQuestions, setSeededQuestions] = useState('');
   if (questions.length > 0 && questionsSeed !== seededQuestions) {
     setSeededQuestions(questionsSeed);
-    setValues((current) => {
-      if (Object.keys(current).length > 0) return current;
-      return Object.fromEntries(
-        questions.map((question) => [question.key, question.defaultValue ?? ''])
-      );
-    });
+    if (!preview && token && data?.status === 'sent') {
+      const draft = readAnswerDraft(token);
+      if (
+        draft &&
+        (Object.keys(draft.values).length > 0 ||
+          Object.keys(draft.rows).length > 0)
+      ) {
+        setValues((current) =>
+          Object.keys(current).length > 0 ? current : draft.values
+        );
+        setRows((current) =>
+          Object.keys(current).length > 0 ? current : draft.rows
+        );
+      } else {
+        setValues((current) => {
+          if (Object.keys(current).length > 0) return current;
+          return Object.fromEntries(
+            questions.map((question) => [
+              question.key,
+              question.defaultValue ?? '',
+            ])
+          );
+        });
+      }
+    } else {
+      setValues((current) => {
+        if (Object.keys(current).length > 0) return current;
+        return Object.fromEntries(
+          questions.map((question) => [
+            question.key,
+            question.defaultValue ?? '',
+          ])
+        );
+      });
+    }
   }
+
+  const done = submitted || data?.status === 'completed';
+
+  useEffect(() => {
+    if (preview || !token || data?.status !== 'completed') return;
+    clearAnswerDraft(token);
+  }, [preview, token, data?.status]);
+
+  useEffect(() => {
+    if (preview || !token || done || data?.status !== 'sent') return;
+    if (Object.keys(values).length === 0 && Object.keys(rows).length === 0)
+      return;
+    writeAnswerDraft(token, { values, rows });
+  }, [values, rows, token, preview, done, data?.status]);
 
   const submit = useMutation({
     mutationFn: () => {
@@ -191,7 +239,10 @@ export function QuestionnaireForm({
         priorEmployment: filledRows(rows.priorEmployment ?? []),
       });
     },
-    onSuccess: () => setSubmitted(true),
+    onSuccess: () => {
+      if (token) clearAnswerDraft(token);
+      setSubmitted(true);
+    },
   });
 
   const remember = (key: string, value: string) => {
@@ -222,7 +273,6 @@ export function QuestionnaireForm({
   const fillsBsb = (question: QuestionnaireQuestionData) =>
     Boolean(preview) && question.bsbOnly === true && question.type !== 'file';
 
-  const done = submitted || data?.status === 'completed';
   const visibleQuestions = questions.filter((question) => !question.omitFromWorker);
   const missing =
     values.declaration !== 'ja' ||
