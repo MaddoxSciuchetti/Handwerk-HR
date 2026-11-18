@@ -1,13 +1,15 @@
 import { createContext } from 'react';
 
-export type Context = {
-  theme: 'dark' | 'light';
+export type Theme = 'dark' | 'light';
+
+export type ThemeControls = {
+  theme: Theme;
   toggle: () => void;
-  setTheme: (theme: 'dark' | 'light') => void;
+  setTheme: (theme: Theme) => void;
 };
 
-export const CreateDarkModecontext = createContext<Context>({
-  theme: 'light',
-  toggle: () => {},
-  setTheme: () => {},
-});
+/** React consumers only (ProfileDropdown sun/moon toggle). Root .dark / --theme live in ThemeDocumentProvider. */
+export const ThemeControlsContext = createContext<ThemeControls | null>(null);
+
+/** @deprecated Use ThemeControlsContext — kept name for any stray imports. */
+export const CreateDarkModecontext = ThemeControlsContext;
