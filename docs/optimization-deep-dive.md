@@ -25,6 +25,33 @@ Improvements I would have made:
 
 ---
 
+## Interesting
+
+Lazy loading in this app has two layers:
+
+| Layer | Tool | What waits |
+| --- | --- | --- |
+| Between pages | TanStack Router (`autoCodeSplitting: true` in `client/vite.config.js`) | Whole route chunks by URL — open `/cockpit` without downloading every settings/editor module |
+| Within a page | `React.lazy` + `Suspense` | Heavy tabs, dialogs, editors on the same screen |
+
+Router = between pages. `React.lazy` = within a page.
+
+### Example: Materials upload on `/user/…`
+
+The worker header (including “upload materials”) is always on the page. Only the Materials **tab content** is lazy — so a header click can fire while that chunk is still loading.
+
+Browsers only open a file picker in the same user-click moment. If the hidden `<input type="file">` lived inside the still-loading Suspense boundary, `input.click()` would fail silently.
+
+What I did:
+
+1. Keep the hidden file input **outside** Suspense in [`WorkerTaskManagement.tsx`](../client/src/features/worker-task-management/components/tasks/WorkerTaskManagement.tsx).
+2. Open it **synchronously** from the header click.
+3. Hand the chosen file to the lazy Materials tab once it mounts; clear pending state when the worker changes.
+
+That keeps the JS win from lazy Materials without breaking upload.
+
+---
+
 ## Definitions
 
 TTFB: time until the first byte of the HTML arrives.
@@ -158,7 +185,7 @@ Document fonts: I moved font styles onto the shared editor instead of every app 
 
 Table skeletons: I aligned lifecycle loading placeholders with real row sizes. What happened: less layout jump while the table loads.
 
-Materials upload queue: I queued the file-picker until the lazy tab is mounted. What happened: upload does not get lost during Suspense.
+Materials upload queue: I queued the file-picker until the lazy tab is mounted (see [Interesting](#interesting)). What happened: upload does not get lost during Suspense.
 
 ### Description
 
