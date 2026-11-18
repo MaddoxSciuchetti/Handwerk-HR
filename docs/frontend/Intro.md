@@ -8,6 +8,8 @@ We treat frontend performance as a product requirement: slow first paint, layout
 
 Read the evidence and approach: [Frontend optimization deep dive](../optimization-deep-dive.md) (measured PR rounds, plus architecture notes on SPA + TanStack Router, Context restraint, vendor chunks, and lazy loading).
 
+Users also work on phones and large monitors, leave mid-flow, and may rely on assistive tech. To keep UX high in that context we persist drafts and prefs on device (`localStorage`), use responsive layouts from touch-sized mobile forms to wide desktop shells, and ship semantic HTML with ARIA. Examples: [questionnaire answer drafts](../../client/src/features/questionnaire/questionnaireAnswerDraft.ts), [responsive questionnaire rows](../../client/src/features/questionnaire/QuestionnaireTableRows.tsx) / [mobile CSS](../../client/src/features/questionnaire/questionnaire-mobile.css), [sidebar ARIA / `sr-only`](../../client/src/components/ui/sidebar.tsx).
+
 ## Core tools
 
 | Area | Tools | Why they matter for quality |
@@ -34,11 +36,11 @@ npm run test:unit
 
 - How features, components, hooks, imports, and env access are organized: [Style guide — Client](../clean-code-testing/style-guide.md)
 - Clean-code principles with live file examples: [Principles](../clean-code-testing/principles.md)
-- Frontend-specific implementation decisions (context, forms, pagination): [client/decisions.md](../../client/decisions.md)
-- Styling system frame (tokens, hierarchy, shared UI rules): [client/styling-system-frame.md](../../client/styling-system-frame.md)
-- Vite / React toolchain notes: [client/README.md](../../client/README.md)
-- Frontend performance work and web-vitals notes: [optimization-deep-dive.md](../optimization-deep-dive.md)
+- Why the stack and folder layout look this way (fuller write-up): [Decisions](../clean-code-testing/decisions.md)
+- Frontend-only extras (modal context, RHF, client pagination): [client/decisions.md](../../client/decisions.md)
+- Client commands and joiner notes: [client/README.md](../../client/README.md)
 - Recurring review checks (routes, mentions, cleanup): [docs/review.md](../review.md)
+- Frontend performance work and web-vitals notes: [optimization-deep-dive.md](../optimization-deep-dive.md)
 - Local setup, env vars, and common scripts: [root README](../../README.md)
 - Client unit tests and coverage (`npm run test:unit`, `test:coverage`): [Tests](../clean-code-testing/tests.md)
 - Pull request expectations: [review checklist](../clean-code-testing/review-checklist.md)
