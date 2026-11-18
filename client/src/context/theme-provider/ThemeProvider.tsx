@@ -1,10 +1,19 @@
-import { ReactNode, useEffect, useMemo, useState } from 'react';
-import { CreateDarkModecontext } from './themecontext';
+import {
+  type ReactNode,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from 'react';
+import {
+  ThemeControlsContext,
+  type Theme,
+  type ThemeControls,
+} from './themecontext';
 
 const STORAGE_KEY = 'theme-preference';
 const isBrowser = typeof window !== 'undefined';
 
-const getInitialTheme = (): 'light' | 'dark' => {
+const getInitialTheme = (): Theme => {
   if (!isBrowser) return 'light';
 
   const storedTheme = localStorage.getItem(STORAGE_KEY);
@@ -17,28 +26,68 @@ const getInitialTheme = (): 'light' | 'dark' => {
     : 'light';
 };
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<'light' | 'dark'>(getInitialTheme);
+function applyThemeDocument(theme: Theme) {
+  if (!isBrowser) return;
+  const root = document.documentElement;
+  // Paint-time signal — CSS can key off var(--theme) without React re-renders.
+  root.style.setProperty('--theme', theme);
+  root.style.setProperty('color-scheme', theme);
+  localStorage.setItem(STORAGE_KEY, theme);
+}
 
-  const toggleModal = () => {
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
-  };
-
-  useEffect(() => {
-    if (!isBrowser) return;
-
-    localStorage.setItem(STORAGE_KEY, theme);
-    document.documentElement.classList.toggle('dark', theme === 'dark');
+/**
+ * Document / CSS side: syncs theme to the root element.
+ * Does not expose React state to the tree.
+ */
+export function ThemeDocumentProvider({
+  theme,
+  children,
+}: {
+  theme: Theme;
+  children: ReactNode;
+}) {
+  useLayoutEffect(() => {
+    applyThemeDocument(theme);
   }, [theme]);
 
-  const value = useMemo(
-    () => ({ theme, toggle: toggleModal, setTheme }),
+  return children;
+}
+
+/**
+ * React consumer side: only Layout and ProfileDropdown should read this.
+ */
+export function ThemeControlsProvider({
+  value,
+  children,
+}: {
+  value: ThemeControls;
+  children: ReactNode;
+}) {
+  return (
+    <ThemeControlsContext.Provider value={value}>
+      {children}
+    </ThemeControlsContext.Provider>
+  );
+}
+
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+
+  const controls = useMemo<ThemeControls>(
+    () => ({
+      theme,
+      setTheme,
+      toggle: () =>
+        setTheme((prev) => (prev === 'dark' ? 'light' : 'dark')),
+    }),
     [theme]
   );
 
   return (
-    <CreateDarkModecontext.Provider value={value}>
-      {children}
-    </CreateDarkModecontext.Provider>
+    <ThemeDocumentProvider theme={theme}>
+      <ThemeControlsProvider value={controls}>
+        {children}
+      </ThemeControlsProvider>
+    </ThemeDocumentProvider>
   );
 }

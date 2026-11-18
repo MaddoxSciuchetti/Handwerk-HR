@@ -62,12 +62,10 @@ function Layout() {
     navigate({ to: '/settings/payments' });
   }, [subscriptionLocked, isAdmin, location.pathname, navigate]);
 
+  // Tailwind dark: variants still key off the root class; CSS var(--theme) is
+  // synced separately by ThemeDocumentProvider for paint-time consumers.
   useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    document.documentElement.classList.toggle('dark', theme === 'dark');
   }, [theme]);
 
   return (
