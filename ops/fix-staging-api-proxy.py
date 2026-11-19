@@ -63,24 +63,37 @@ def service_payload(entry):
     return entry
 
 
-def list_all_services():
-    services = []
+def list_paginated(path: str, wrapper_key: str | None = None):
+    """Fetch every page from a Render list endpoint (default page size is 20)."""
+    items = []
     cursor = None
     while True:
-        path = "/services?limit=100"
+        page_path = f"{path}{'&' if '?' in path else '?'}limit=100"
         if cursor:
-            path += f"&cursor={cursor}"
-        page = request(path) or []
+            page_path += f"&cursor={cursor}"
+        page = request(page_path) or []
         if not page:
             break
         for entry in page:
-            services.append(service_payload(entry))
+            if wrapper_key and isinstance(entry, dict) and wrapper_key in entry:
+                items.append(entry[wrapper_key])
+            else:
+                items.append(service_payload(entry) if wrapper_key is None else entry)
         if len(page) < 100:
             break
-        cursor = page[-1].get("cursor") or service_payload(page[-1]).get("id")
+        cursor = page[-1].get("cursor")
+        if not cursor and wrapper_key and isinstance(page[-1], dict):
+            nested = page[-1].get(wrapper_key) or {}
+            cursor = nested.get("id")
+        if not cursor:
+            cursor = service_payload(page[-1]).get("id")
         if not cursor:
             break
-    return services
+    return items
+
+
+def list_all_services():
+    return list_paginated("/services")
 
 
 def find_frontend(services, api_service):
@@ -103,9 +116,8 @@ def find_frontend(services, api_service):
 
 def ensure_rewrite(frontend_id: str, backend_url: str):
     destination = backend_url.rstrip("/") + "/*"
-    routes = request(f"/services/{frontend_id}/routes") or []
-    for route in routes:
-        item = route.get("route", route)
+    routes = list_paginated(f"/services/{frontend_id}/routes", wrapper_key="route")
+    for item in routes:
         if (
             item.get("type") == "rewrite"
             and item.get("source") == REWRITE_SOURCE
@@ -145,10 +157,11 @@ def ensure_rewrite(frontend_id: str, backend_url: str):
 
 
 def ensure_vite_api_url(frontend_id: str):
-    env_vars = request(f"/services/{frontend_id}/env-vars") or []
+    env_vars = list_paginated(
+        f"/services/{frontend_id}/env-vars", wrapper_key="envVar"
+    )
     current = None
-    for entry in env_vars:
-        env = entry.get("envVar", entry)
+    for env in env_vars:
         if env.get("key") == API_ENV_KEY:
             current = env.get("value")
             break
