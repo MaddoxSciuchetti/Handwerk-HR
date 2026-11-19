@@ -39,11 +39,37 @@ export function alignLocalApiUrl(
   }
 }
 
+// onrender.com is on the Public Suffix List, so each subdomain is its own
+// site. SameSite=Lax cookies set by the API host are not sent on XHR from
+// the frontend host. Prefer same-origin `/api` (Render rewrite) whenever
+// both hosts are `*.onrender.com` and differ.
+export function alignHostedApiUrl(
+  configured: string,
+  pageHostname?: string
+): string {
+  if (!pageHostname?.endsWith('.onrender.com')) return configured;
+  try {
+    const url = new URL(configured);
+    if (
+      url.hostname.endsWith('.onrender.com') &&
+      url.hostname !== pageHostname
+    ) {
+      return '/api';
+    }
+  } catch {
+    // Relative values such as `/api` are already same-origin.
+  }
+  return configured;
+}
+
 const configuredApiUrl = getEnv('VITE_API_URL', 'http://localhost:3000');
 const pageHostname =
   typeof window !== 'undefined' ? window.location.hostname : undefined;
 
-export const API_URL = alignLocalApiUrl(configuredApiUrl, pageHostname);
+export const API_URL = alignHostedApiUrl(
+  alignLocalApiUrl(configuredApiUrl, pageHostname),
+  pageHostname
+);
 
 /** Live reads so `vi.stubEnv('PROD'|'DEV'|...)` matches direct `import.meta.env` access. */
 export const isDev = () => Boolean(import.meta.env.DEV);

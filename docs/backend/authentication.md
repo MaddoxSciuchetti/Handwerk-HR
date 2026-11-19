@@ -27,6 +27,18 @@ return setAuthCookies({ res, accessToken, refreshToken })
 
 `setAuthCookies` writes both cookies as `httpOnly` with `sameSite: "lax"` (and `secure` outside development).
 
+## Same-origin API on Render
+
+`onrender.com` is on the [Public Suffix List](https://publicsuffix.org/), so the staging frontend (`bsb-onboarding-frontend-staging.onrender.com`) and API (`bsb-onboarding-backend-staging.onrender.com`) are **different sites**. A `SameSite=Lax` cookie set by the API host is not sent on XHR from the frontend host, so login appears to succeed then the next authenticated call fails.
+
+Production already avoids this: the static site rewrites `/api/*` to the API service and the SPA is built with `VITE_API_URL=/api` (same origin). Staging must match that:
+
+1. Static site rewrite: source `/api/*` → destination `https://bsb-onboarding-backend-staging.onrender.com/*` (before any SPA `/*` → `/index.html` fallback).
+2. Build env: `VITE_API_URL=/api`.
+3. Confirm `GET https://bsb-onboarding-frontend-staging.onrender.com/api/` returns the API body `here`.
+
+Ops helper: [`ops/fix-staging-api-proxy.py`](../../ops/fix-staging-api-proxy.py) (`RENDER_API_KEY` required). The client also remaps a misconfigured absolute `*.onrender.com` API URL to `/api` at runtime ([`alignHostedApiUrl`](../../client/src/config/env.ts)).
+
 ## Protecting a route
 
 ```ts
