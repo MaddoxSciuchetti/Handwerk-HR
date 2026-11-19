@@ -27,6 +27,7 @@ Grouped by the topics shown in SE_Backend:
 - Why those choices were made: [Decisions](../clean-code-testing/decisions.md)
 - Structured logs, and how to log in a new feature: [server/README.md](../../server/README.md)
 - Finding a failed request in Render logs: [ops/observability.md](../../ops/observability.md)
+- Concurrent-user load probe (how to run + staging ladders including 100 seeded tasks): [load-probe.md](./load-probe.md)
 - SE observability write-up: [docs/observability-deep-dive.md](../observability-deep-dive.md)
 - Local setup, env vars, scripts, Prisma migrate, and Render deploy notes: [root README](../../README.md)
 - Local Prisma migrate / generate after schema pulls: [AGENTS.md](../../AGENTS.md)
