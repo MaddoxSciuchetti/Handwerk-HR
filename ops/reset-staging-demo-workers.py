@@ -104,7 +104,10 @@ def main() -> int:
     admin_id = me["id"]
     print(f"signed in as {me.get('email')} ({admin_id})")
 
-    status, workers_payload = api.request("GET", "/api/worker")
+    # includeArchived=true so a full reset also clears archived Handwerker.
+    status, workers_payload = api.request(
+        "GET", "/api/worker?includeArchived=true"
+    )
     if status != 200 or not isinstance(workers_payload, dict):
         print(f"list workers failed: {status} {workers_payload}", file=sys.stderr)
         return 1
