@@ -18,12 +18,14 @@ This folder is the entry for the Express + Prisma API (`server/`).
 
 ## Where to go
 
+Grouped by the topics shown in SE_Backend:
+
 - JWT cookies, refresh rotation, and the client 401 interceptor: [server/README.md — Authentication](../../server/README.md#authentication-jwt-cookies)
 - Backend clean-code map (helpers, routes, controllers, services): [clean-code.md](./clean-code.md)
 - How the HTTP layers are organized (route → controller → service), env access, and naming: [Style guide — Server](../clean-code-testing/style-guide.md)
 - Shared clean-code principles (examples lean frontend; use the map above for server): [Principles](../clean-code-testing/principles.md)
 - Why those choices were made: [Decisions](../clean-code-testing/decisions.md)
-- Structured logs, OpenTelemetry, and how to log in a new feature: [server/README.md](../../server/README.md)
+- Structured logs, and how to log in a new feature: [server/README.md](../../server/README.md)
 - Finding a failed request in Render logs: [ops/observability.md](../../ops/observability.md)
 - SE observability write-up: [docs/observability-deep-dive.md](../observability-deep-dive.md)
 - Local setup, env vars, scripts, Prisma migrate, and Render deploy notes: [root README](../../README.md)

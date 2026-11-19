@@ -1,10 +1,8 @@
 # Backend clean code — layers & principles
 
-Shared clean-code principles live in [`docs/clean-code-testing/principles.md`](../clean-code-testing/principles.md). That file is useful, but most of its live examples are client-side. This page is the **server counterpart**: the HTTP layer split, helpers to reuse, and the same principles shown with backend code.
+Shared clean-code principles live in [`docs/clean-code-testing/principles.md`](../clean-code-testing/principles.md). However that file mostly includes client side clean code examples. This readme is applying clean code principles to the backend and shows examples.
 
-Naming and folder rules: [`style-guide.md` §2 + §6.2](../clean-code-testing/style-guide.md). Why this split: [`decisions.md`](../clean-code-testing/decisions.md).
-
-## Layer contract
+## Folder structure:
 
 ```
 server.ts
@@ -13,24 +11,22 @@ server.ts
       → services/*.service.ts       Prisma, branching, side effects
 ```
 
-| Layer | File suffix | Owns | Must not |
-| --- | --- | --- | --- |
-| Mount | `server.ts` | Global middleware, `/path` prefixes, webhooks/cron | Domain logic |
-| Route | `.route.ts` | HTTP verb + relative path → controller | Prisma, business `if` trees |
-| Controller | `.controller.ts` | Params/body, `catchErrors`, status + JSON | DB queries, Stripe/mail orchestration |
-| Service | `.service.ts` (preferred) | Transactions, branching, integrations | `res.status` / Express types |
-| Schema | `.schemas.ts` | Zod input shapes | Side effects |
-| Helper | `utils/`, `middleware/`, `lib/` | Cross-cutting reuse | Feature-specific product flow |
+| Layer      | File suffix                     | What it owns                                       | What it does not own                  |
+| ---------- | ------------------------------- | -------------------------------------------------- | ------------------------------------- |
+| Mount      | `server.ts`                     | Global middleware, `/path` prefixes, webhooks/cron | Domain logic                          |
+| Route      | `.route.ts`                     | HTTP verb + relative path → controller             | Prisma, business `if` trees           |
+| Controller | `.controller.ts`                | Params/body, `catchErrors`, status + JSON          | DB queries, Stripe/mail orchestration |
+| Service    | `.service.ts` (preferred)       | Transactions, branching, integrations              | `res.status` / Express types          |
+| Schema     | `.schemas.ts`                   | Zod input shapes                                   | Side effects                          |
+| Helper     | `utils/`, `middleware/`, `lib/` | Cross-cutting reuse                                | Feature-specific product flow         |
 
-Folders: [`routes/`](../../server/src/routes/), [`controllers/`](../../server/src/controllers/), [`services/`](../../server/src/services/), [`schemas/`](../../server/src/schemas/), [`utils/`](../../server/src/utils/), [`middleware/`](../../server/src/middleware/). Prefer `*.service.ts` for new domain work.
+Folders: [`routes/`](../../server/src/routes/), [`controllers/`](../../server/src/controllers/), [`services/`](../../server/src/services/), [`schemas/`](../../server/src/schemas/), [`utils/`](../../server/src/utils/), [`middleware/`](../../server/src/middleware/).
 
 Helpers you will hit most often: [`catchErrors`](../../server/src/utils/catchErrors.ts), [`AppError`](../../server/src/utils/AppError.ts) / [`appAssert`](../../server/src/utils/appAssert.ts), [`withTxRetry`](../../server/src/utils/withTxRetry.ts), [`jwt`](../../server/src/utils/jwt.ts) / [`cookies`](../../server/src/utils/cookies.ts), [`authenticate`](../../server/src/middleware/authenticate.ts) / [`requireSubscriptionAccess`](../../server/src/middleware/requireSubscriptionAccess.ts), [`errorHandler`](../../server/src/middleware/errorHandler.ts), [`lib/prisma`](../../server/src/lib/prisma.ts), [`constants/env`](../../server/src/constants/env.ts).
 
 ---
 
 ## Principles (backend examples)
-
-Same principles as the frontend doc — shown here with server files.
 
 ### DRY
 
@@ -103,7 +99,7 @@ export const FORBIDDEN = 403;
 
 ### Error handling
 
-Throw typed errors at the boundary; let middleware format the response.
+Typed errors are thrown at the boundary. The middleware is responsible for formatting the response. This also follows a clear single responsibility principle.
 
 [`server/src/utils/appAssert.ts`](../../server/src/utils/appAssert.ts) + usage in [`billing.controller.ts`](../../server/src/controllers/billing.controller.ts)
 
