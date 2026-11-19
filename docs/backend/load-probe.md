@@ -1,6 +1,6 @@
 # Load probe
 
-This page explains the concurrent-user load probe for the Express API: what it measures, how to run it, and the staging numbers that were recorded. The script lives at `ops/loadtest/run.mjs`. The probe was added in PR #228. A short empty-list baseline landed on `main` via PR #255. The fuller ladder with one hundred seeded tasks (six tables plus CPU/memory peaks) was written on `staging` as `docs/load-testing-results.md` but was never merged to `main` — those results are restored here.
+This page explains the concurrent-user load probe for the Express API: what it measures and the staging numbers that were recorded. The script lives at `ops/loadtest/run.mjs`. The probe was added in PR #228. A short empty-list baseline landed on `main` via PR #255.
 
 ## What it measures
 
@@ -9,38 +9,11 @@ The probe hits one API path with N concurrent virtual users (VU) and prints requ
 - baseline — fixed concurrency for a fixed duration
 - ramp — raise concurrency in steps until the error rate or p95 budget is blown
 
-## How to run
-
-```bash
-# Public root
-LOADTEST_VUS=20 LOADTEST_DURATION_MS=15000 node ops/loadtest/run.mjs
-
-# Authenticated /tasks
-LOADTEST_EMAIL='you@example.com' \
-LOADTEST_PASSWORD='…' \
-LOADTEST_PATH=/tasks \
-LOADTEST_VUS=20 \
-LOADTEST_DURATION_MS=15000 \
-node ops/loadtest/run.mjs
-
-# Ramp until it hurts
-LOADTEST_MODE=ramp \
-LOADTEST_STEP_VUS=10 \
-LOADTEST_MAX_VUS=80 \
-LOADTEST_DURATION_MS=10000 \
-LOADTEST_EMAIL='you@example.com' \
-LOADTEST_PASSWORD='…' \
-LOADTEST_PATH=/tasks \
-node ops/loadtest/run.mjs
-```
-
 ## Staging results overview
 
 All ladders below used seed admin login, baseline mode, fifteen seconds per VU level, against staging `GET /tasks`. Latencies are milliseconds. CPU and memory peaks are from Render metrics for the staging Starter instance (0.5 CPU, 512 MB RAM) during each ladder — peaks in that window, not a per-VU sample.
 
 ## Empty task list (PR #255)
-
-Unchanged `/tasks` with an empty org task list (no 100-task seed). This is the table that reached `main` first.
 
 | VUs  | Requests | Error rate | p50      | p95      | max      |
 | ---- | -------- | ---------- | -------- | -------- | -------- |
