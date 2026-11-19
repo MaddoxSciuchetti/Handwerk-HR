@@ -36,7 +36,13 @@ Feel free to propose improvements to the pages below so this project stays maint
 
 ## Performance, scaling, and observability
 
-- Information on how to log in a new feature can be found [here](./observability.md).
-- Information on finding a failed request in Render logs can be found [here](../../ops/observability.md).
+### Performance & Scaling
+
 - Information on the concurrent-user load probe (how to run it and staging results) can be found [here](./load-probe.md).
-- The SE observability write-up can be found [here](../observability-deep-dive.md).
+- Information on the database analysis scripts we ran (`EXPLAIN ANALYZE` before and after indexing) can be found [here](../database/performance.md).
+
+### Observability
+
+- Information on Sentry tracing, error grouping, and alerts alongside UptimeRobot can be found [here](../observability-deep-dive.md).
+- Information on pino structured JSON logging and how to log in a new feature can be found [here](./observability.md).
+- Information on finding a failed request in Render logs can be found [here](../../ops/observability.md).

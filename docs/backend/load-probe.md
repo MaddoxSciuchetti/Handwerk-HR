@@ -4,12 +4,10 @@ This page explains the concurrent-user load probe for the Express API: what it m
 
 ## What it measures
 
-The probe hammers one API path with N concurrent clients (VUs) and prints request count, error rate, p50, p95, and max latency. There are two modes:
+The probe hits one API path with N concurrent virtual users (VU) and prints request count, error rate, p50, p95, and max latency. There are two modes:
 
 - baseline — fixed concurrency for a fixed duration
 - ramp — raise concurrency in steps until the error rate or p95 budget is blown
-
-Prefer local or staging. Non-local hosts need `LOADTEST_ALLOW_NON_LOCAL=1`. Do not point this at production.
 
 ## How to run
 
@@ -36,11 +34,9 @@ LOADTEST_PATH=/tasks \
 node ops/loadtest/run.mjs
 ```
 
-Useful env vars include `LOADTEST_BASE_URL`, `LOADTEST_PATH`, `LOADTEST_MODE`, `LOADTEST_VUS`, `LOADTEST_MAX_VUS`, `LOADTEST_STEP_VUS`, `LOADTEST_DURATION_MS`, `LOADTEST_ERROR_BUDGET` (default 0.05), `LOADTEST_P95_BUDGET_MS` (default 2000), and `LOADTEST_ALLOW_NON_LOCAL`. From `server/` you can also run `npm run loadtest`.
-
 ## Staging results overview
 
-All ladders below used seed admin login, baseline mode, fifteen seconds per VU level, against staging `GET /tasks`. Latencies are milliseconds. CPU and memory peaks (where noted) are from Render metrics for the staging Starter instance (0.5 CPU, 512 MB RAM) during each ladder — peaks in that window, not a per-VU sample.
+All ladders below used seed admin login, baseline mode, fifteen seconds per VU level, against staging `GET /tasks`. Latencies are milliseconds. CPU and memory peaks are from Render metrics for the staging Starter instance (0.5 CPU, 512 MB RAM) during each ladder — peaks in that window, not a per-VU sample.
 
 ## Empty task list (PR #255)
 
@@ -64,25 +60,23 @@ Unless noted, each run below used one hundred seeded tasks. These six tables liv
 
 ### 1 — Clean baseline (100 tasks, no optimizations)
 
-Full task list with no Prisma join strategy, no pagination, and no gzip.
-
-Peak during this ladder: CPU ~99%, memory ~400 MB (~78% of 512 MB).
+Full task list with no Prisma join strategy, no pagination, and no gzip (`Accept-Encoding: identity`). Confirmed 100 tasks (~116 KB). Ran 2026-11-19 on staging. Staging still had pool max 20.
 
 | VUs  | Requests | Error rate | p50   | p95   | max   |
 | ---- | -------- | ---------- | ----- | ----- | ----- |
-| 20   | 266      | 0.0%       | 1126  | 1902  | 2771  |
-| 50   | 353      | 0.0%       | 2305  | 2908  | 3618  |
-| 100  | 485      | 0.0%       | 3606  | 4339  | 5063  |
-| 150  | 520      | 0.0%       | 5798  | 7384  | 7914  |
-| 200  | 589      | 0.0%       | 7224  | 8030  | 8944  |
-| 500  | 790      | 0.0%       | 17160 | 23071 | 24842 |
-| 1000 | 1461     | 15.1%      | 31557 | 49187 | 53322 |
+| 20   | 117      | 0.0%       | 2156  | 7060  | 8272  |
+| 50   | 222      | 0.0%       | 4088  | 7140  | 10459 |
+| 100  | 261      | 0.4%       | 6621  | 14585 | 16322 |
+| 150  | 325      | 0.0%       | 8475  | 17987 | 18931 |
+| 200  | 372      | 0.0%       | 13468 | 22057 | 23379 |
+| 500  | 653      | 0.0%       | 27306 | 46868 | 49581 |
+| 1000 | 4017     | 77.9%      | 36599 | 61590 | 70408 |
+
+Observation: Full-list payload is heavy. Errors explode at 1000 VUs (77.9%).
 
 ### 2 — Prisma relationLoadStrategy join + cursor pagination
 
-Same ladder after join strategy and cursor pagination on `/tasks` (same measured latency numbers as table 1 in this record).
-
-Peak during this ladder: CPU ~99%, memory ~400 MB (~78% of 512 MB).
+Change: Join strategy and cursor pagination on `/tasks` (page 50 / max 100; probe hits first page only). Source: staging `docs/performance.md` (`74ede853`). Earlier docs wrongly reused this table as “clean baseline.”
 
 | VUs  | Requests | Error rate | p50   | p95   | max   |
 | ---- | -------- | ---------- | ----- | ----- | ----- |
@@ -93,6 +87,8 @@ Peak during this ladder: CPU ~99%, memory ~400 MB (~78% of 512 MB).
 | 200  | 589      | 0.0%       | 7224  | 8030  | 8944  |
 | 500  | 790      | 0.0%       | 17160 | 23071 | 24842 |
 | 1000 | 1461     | 15.1%      | 31557 | 49187 | 53322 |
+
+Observation: Peak during this ladder: CPU ~99%, memory ~400 MB (~78% of 512 MB). Better than the true clean baseline at mid load; 1000 VU errors still 15.1%.
 
 ### 3 — Gzip on top of join + pagination
 
@@ -160,14 +156,14 @@ Peak during this ladder: CPU 100%, memory ~484 MB (~95% of 512 MB).
 
 ## Resource peaks (summary)
 
-| Run | Peak CPU | Peak memory |
-| --- | -------- | ----------- |
-| 1 — Clean baseline | ~99% | ~400 MB (78%) |
-| 2 — Join + pagination | ~99% | ~400 MB (78%) |
-| 3 — Gzip + join + pagination | ~92% | ~501 MB (98%) |
-| 4 — Gzip only | 100% | ~429 MB (84%) |
-| 5 — Pool max 20 | 100% | ~470 MB (92%) |
-| 6 — Issue indexes | 100% | ~484 MB (95%) |
+| Run                          | Peak CPU | Peak memory   |
+| ---------------------------- | -------- | ------------- |
+| 1 — Clean baseline           | not captured this run | not captured this run |
+| 2 — Join + pagination        | ~99%     | ~400 MB (78%) |
+| 3 — Gzip + join + pagination | ~92%     | ~501 MB (98%) |
+| 4 — Gzip only                | 100%     | ~429 MB (84%) |
+| 5 — Pool max 20              | 100%     | ~470 MB (92%) |
+| 6 — Issue indexes            | 100%     | ~484 MB (95%) |
 
 ## Conclusion
 
