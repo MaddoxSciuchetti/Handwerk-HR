@@ -2,20 +2,17 @@ import { STAGING_HOME_PATH } from '@/config/env';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
 import { createStagingSession } from '../api/auth.api';
+import {
+  clearStagingEnter,
+  consumeAuthBounceToLogin,
+  markStagingEnter,
+  wasStagingEnteredRecently,
+} from '../stagingSessionGuard';
 
 const RETRY_LIMIT = 3;
-const RECENT_ENTER_KEY = 'staging-auto-enter-at';
-const RECENT_ENTER_MS = 15_000;
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function wasEnteredRecently() {
-  const raw = sessionStorage.getItem(RECENT_ENTER_KEY);
-  if (!raw) return false;
-  const at = Number(raw);
-  return Number.isFinite(at) && Date.now() - at < RECENT_ENTER_MS;
 }
 
 /**
@@ -35,9 +32,11 @@ export function StagingAutoEnter() {
     started.current = true;
 
     void (async () => {
-      // If axios bounced us back to /login right after a successful mint
-      // (cookies did not stick), stop auto-retrying to avoid a reload loop.
-      if (wasEnteredRecently()) {
+      // Only block when axios hard-redirected us here after a mint whose
+      // cookies did not stick. Soft revisits (logout, back, /login link)
+      // must still re-enter.
+      const bouncedFromAuth = consumeAuthBounceToLogin();
+      if (bouncedFromAuth && wasStagingEnteredRecently()) {
         setError(
           'Die Staging-Sitzung konnte nicht gehalten werden. Bitte erneut versuchen.'
         );
@@ -48,7 +47,7 @@ export function StagingAutoEnter() {
       for (let attempt = 1; attempt <= RETRY_LIMIT; attempt++) {
         try {
           await createStagingSession();
-          sessionStorage.setItem(RECENT_ENTER_KEY, String(Date.now()));
+          markStagingEnter();
           await navigate({ to: STAGING_HOME_PATH });
           return;
         } catch (err) {
@@ -77,7 +76,7 @@ export function StagingAutoEnter() {
           type="button"
           className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground"
           onClick={() => {
-            sessionStorage.removeItem(RECENT_ENTER_KEY);
+            clearStagingEnter();
             setError(null);
             started.current = false;
             setRetryToken((n) => n + 1);
