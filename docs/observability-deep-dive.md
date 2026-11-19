@@ -17,7 +17,7 @@ What I would do differently next time:
 
 1. Decide earlier that Sentry owns tracing when the DSN is set, instead of discovering dual-OTEL confusion later.
 2. Exercise a real OTLP destination in staging, or lean fully on Sentry Performance.
-3. Run the load probe (`ops/loadtest`) on staging and paste concurrent-user numbers here.
+3. Run the load probe (`ops/loadtest`) on staging and paste concurrent-user numbers here — done; see [Load probe](#load-probe-concurrent-users).
 
 ---
 
@@ -94,12 +94,35 @@ This is separate from #225 and #226. The script lives at [`ops/loadtest/run.mjs`
 
 I prefer local or staging. Non-local targets need `LOADTEST_ALLOW_NON_LOCAL=1`.
 
+### Staging baseline — `GET /tasks`
+
+Target: `https://bsb-onboarding-backend-staging.onrender.com/tasks`  
+Auth: seed admin (`admin@example.com`), one login then cookie reuse  
+Mode: `baseline`, `LOADTEST_DURATION_MS=15000`, `LOADTEST_ALLOW_NON_LOCAL=1`
+
+| VUs | Requests | Error rate | p50 | p95 | max |
+|-----|----------|------------|-----|-----|-----|
+| 20 | 721 | 0% | 395 ms | 778 ms | 40087 ms |
+| 50 | 709 | 0% | 1049 ms | 1591 ms | 2026 ms |
+| 100 | 695 | 0% | 2266 ms | 3070 ms | 3868 ms |
+| 150 | 751 | 0% | 3502 ms | 4210 ms | 5388 ms |
+| 200 | 712 | 0% | 4816 ms | 6642 ms | 7740 ms |
+| 500 | 1007 | 0% | 10174 ms | 13987 ms | 40389 ms |
+| 1000 | 1409 | 7.6% | 23317 ms | 31286 ms | 32270 ms |
+
+Notes:
+
+- Through 500 VUs: zero errors; latency grows steeply with concurrency. Request count stays ~700–750 through 200 VUs, then rises to ~1000 at 500 VUs and ~1400 at 1000 VUs (still far below linear scaling).
+- First errors appear at **1000 VUs** (107 / 1409 ≈ 7.6%), above the script’s default 5% error budget.
+- At 20 VUs, p50/p95 are healthy but **max** includes one extreme outlier (~40 s). An earlier 20 VU run on the same host had max ≈ 1967 ms with p50 ≈ 494 ms / p95 ≈ 910 ms / 589 requests — treat the long max as a cold-start or queueing spike, not the typical tail. A similar ~40 s max also showed up at 500 VUs.
+- The script’s default p95 budget is 2000 ms; staging `/tasks` already exceeds that from ~100 VUs upward under this probe.
+
 ---
 
 ## Still interesting
 
 - Caching hot org-scoped reads (`/tasks`, templates, license status)
-- Paste first load-probe ramp results into this doc
+- Run a load-probe **ramp** on staging and paste the ceiling here
 - Propagate `X-Request-Id` from the Vite `apiClient` end-to-end
 - Cron Sentry check-ins for anniversary / deactivation jobs
 
