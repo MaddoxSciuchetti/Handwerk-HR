@@ -1,5 +1,7 @@
 # Below is the documentation of the key decisions in this project. The goal of this project is to give you a understanding of why certain software patterns are implemented.
 
+Top-level product architecture (monolith, language, Express, Prisma, hosting) lives in [`docs/backend/architecture.md`](../backend/architecture.md) and [`docs/backend/hosting.md`](../backend/hosting.md). This page is the next level: repository and code-shape choices.
+
 ## Repository Architecture
 
 Decision: Split the codebase into `client/` (Vite + React), `server/` (Express + Prisma + Stripe webhooks)

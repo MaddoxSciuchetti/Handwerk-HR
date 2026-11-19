@@ -1,43 +1,55 @@
 # Backend documentation
 
-This folder is the entry for the Express + Prisma API (`server/`).
+This folder holds everything related to the Express + Prisma API in `server/`. Below is a quick guide so you know where to look. Topics follow the same grouping as SE_46 Web Backend Technologies.
 
-## Core tools this backend uses
+The API runs on Express and TypeScript with Zod validation. Day-to-day scripts live in `server/package.json` (`npm run dev`, `typecheck`, `test:unit`, `migrate:deploy`). Full local setup and env vars are in the repository root README. After a schema pull, sync local Postgres and regenerate Prisma Client before restarting the API — steps are in `AGENTS.md` and `.cursor/skills/local-prisma-sync/SKILL.md`.
 
-| Area           | Tools                                                      | Why they matter for quality                       |
-| -------------- | ---------------------------------------------------------- | ------------------------------------------------- |
-| App runtime    | Express, TypeScript, `tsx` (dev), esbuild (prod bundle)    | Typed API with a clear local → deploy path        |
-| Data           | Prisma, PostgreSQL (`pg`)                                  | Schema migrations and type-safe DB access         |
-| Validation     | Zod                                                        | Shared request/payload boundaries                 |
-| Observability  | pino, Sentry (`@sentry/node`)                              | Correlate requests, see latency, group exceptions |
-| Auth & billing | JWT / sessions, Stripe                                     | Secure access and subscription integrity          |
-| Integrations   | Resend, AWS S3, Microsoft Graph / Google APIs (as used)    | External side effects stay explicit and loggable  |
-| Quality gates  | `tsc` typecheck (no ESLint/Prettier scripts on server yet) | Catch type breaks before merge                    |
-| Tests          | Jest, Supertest                                            | Unit/API behaviour coverage (`npm run test:unit`) |
-| Ops probes     | `ops/loadtest`                                             | Concurrent-user pressure checks on staging        |
+Feel free to propose improvements to the pages below so this project stays maintainable.
 
-## Where to go
+## Databases and API design
 
-Grouped by the topics shown in SE_Backend:
+- Information on how the Express HTTP API is designed (mounts, REST habits, JSON, Zod, errors) can be found [here](./api-design.md).
+- Information regarding the database model, performance, backups, and scaling can be found [here](../database/Intro.md).
 
-- JWT cookies, refresh rotation, and the client 401 interceptor: [server/README.md — Authentication](../../server/README.md#authentication-jwt-cookies)
-- Backend clean-code map (helpers, routes, controllers, services): [clean-code.md](./clean-code.md)
-- How the HTTP layers are organized (route → controller → service), env access, and naming: [Style guide — Server](../clean-code-testing/style-guide.md)
-- Shared clean-code principles (examples lean frontend; use the map above for server): [Principles](../clean-code-testing/principles.md)
-- Why those choices were made: [Decisions](../clean-code-testing/decisions.md)
-- Structured logs, and how to log in a new feature: [server/README.md](../../server/README.md)
-- Finding a failed request in Render logs: [ops/observability.md](../../ops/observability.md)
-- Concurrent-user load probe (how to run + staging ladders including 100 seeded tasks): [load-probe.md](./load-probe.md)
-- SE observability write-up: [docs/observability-deep-dive.md](../observability-deep-dive.md)
-- Local setup, env vars, scripts, Prisma migrate, and Render deploy notes: [root README](../../README.md)
-- Local Prisma migrate / generate after schema pulls: [AGENTS.md](../../AGENTS.md)
-- Database model, performance, backups, and scaling: [Database Intro](../database/Intro.md)
-- Server tests and coverage commands: [Tests](../clean-code-testing/tests.md)
-- Security on `main` (stable versions, secret push detection, vulnerability response): [security.md](./security.md)
-- CI (GitHub Actions) and CD (Render auto-deploy; build → Prisma migrate pre-deploy → start): [CI/CD](../clean-code-testing/ci.cd.md)
+## Architecture
 
-Read the evidence and approach: [Observability deep dive](../observability-deep-dive.md). Day-to-day logging habits: [server/README.md](../../server/README.md). Render search runbook: [ops/observability.md](../../ops/observability.md).
+- Information on top-level architecture choices (monolith, TypeScript, Express, Prisma) can be found [here](./architecture.md).
 
-## Related (historical)
+## Hosting
 
-- One-time production schema cutover runbook (completed; Postgres is on Render now): [server/src/prisma/cutover/README.md](../../server/src/prisma/cutover/README.md)
+- Information on Render hosting and the move off Neon for Postgres can be found [here](./hosting.md).
+
+## CI/CD
+
+- Information on CI (GitHub Actions) and CD (Render auto-deploy; build → Prisma migrate pre-deploy → start) can be found [here](./ci.cd.md).
+
+## Code design patterns
+
+- Information on how HTTP work is split across route, controller, and service files can be found [here](./layers.md).
+- Information on clean-code principles with backend examples can be found [here](./principles.md).
+- Information on naming, env access, and folder rules for the server can be found [here](../clean-code-testing/style-guide.md).
+- Notes on why folder and pattern choices were made can be found [here](../clean-code-testing/decisions.md).
+
+## Testing
+
+- Information on server tests and coverage commands can be found [here](../clean-code-testing/tests.md).
+
+## Authentication and authorization
+
+- Information on JWT cookies, refresh rotation, and the client 401 interceptor can be found [here](./authentication.md).
+
+## Security
+
+- Information on stable versions, secret push detection, and vulnerability response can be found [here](./security.md).
+
+## Performance, scaling, and observability
+
+### Performance & Scaling
+
+- Information on the concurrent-user load probe (how to run it and staging results) can be found [here](./load-probe.md).
+- Information on the database analysis scripts we ran (`EXPLAIN ANALYZE` before and after indexing) can be found [here](../database/performance.md).
+
+### Observability
+
+- Information on Sentry tracing, error grouping, Crons, alerts, and UptimeRobot can be found [here](./observability.md).
+- Information on pino structured JSON logging and how to find those logs in Render can be found [here](./logging.md).

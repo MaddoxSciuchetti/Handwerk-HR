@@ -5,6 +5,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { runIssueSequence } from "@/services/integrations/runSequence";
 import { berlinToday } from "@/services/integrations/deactivationSchedule";
+import { cronError, cronInfo } from "@/utils/cronLog";
 
 jest.mock("@/lib/prisma", () => ({
     prisma: { issue: { findMany: jest.fn() } },
@@ -12,6 +13,21 @@ jest.mock("@/lib/prisma", () => ({
 jest.mock("@/services/integrations/runSequence", () => ({
     runIssueSequence: jest.fn(),
 }));
+jest.mock("@/utils/withCronSentryCheckIn", () => ({
+    withCronSentryCheckIn: async (
+        _options: unknown,
+        run: () => Promise<unknown>,
+    ) => run(),
+}));
+jest.mock("@/utils/cronLog", () => {
+    const actual = jest.requireActual("@/utils/cronLog");
+    return {
+        ...actual,
+        cronInfo: jest.fn(),
+        cronError: jest.fn(),
+        cronWarn: jest.fn(),
+    };
+});
 
 const originalSecret = process.env.CRON_SECRET;
 let response: any;
@@ -57,7 +73,6 @@ it("accepts the exact bearer token", () => {
 it("queries due calendar schedules with claim filters and a batch limit", async () => {
     jest.useFakeTimers().setSystemTime(new Date("2026-10-30T23:15:00Z"));
     (prisma.issue.findMany as jest.Mock).mockResolvedValue([]);
-    const log = jest.spyOn(console, "info").mockImplementation();
     await postScheduledDeactivations({} as any, response, next);
     const expectedCutoff = new Date(`${berlinToday()}T00:00:00Z`);
     expect(prisma.issue.findMany).toHaveBeenCalledWith({
@@ -95,12 +110,10 @@ it("queries due calendar schedules with claim filters and a batch limit", async 
         failed: 0,
     });
     expect(runIssueSequence).not.toHaveBeenCalled();
-    log.mockRestore();
 });
 
 it("returns zero counts without due tasks", async () => {
     (prisma.issue.findMany as jest.Mock).mockResolvedValue([]);
-    const log = jest.spyOn(console, "info").mockImplementation();
     await postScheduledDeactivations({} as any, response, next);
     expect(response.status).toHaveBeenCalledWith(200);
     expect(response.json).toHaveBeenCalledWith({
@@ -109,7 +122,7 @@ it("returns zero counts without due tasks", async () => {
         failed: 0,
     });
     expect(runIssueSequence).not.toHaveBeenCalled();
-    expect(log).toHaveBeenCalledWith(
+    expect(cronInfo).toHaveBeenCalledWith(
         "scheduled-deactivation",
         expect.objectContaining({
             event: "run_complete",
@@ -117,7 +130,6 @@ it("returns zero counts without due tasks", async () => {
             dueCount: 0,
         }),
     );
-    log.mockRestore();
 });
 
 it("runs each due task as the scheduling user and returns 200 when all succeed", async () => {
@@ -134,7 +146,6 @@ it("runs each due task as the scheduling user and returns 200 when all succeed",
         },
     ]);
     (runIssueSequence as jest.Mock).mockResolvedValue({ status: "completed" });
-    const log = jest.spyOn(console, "info").mockImplementation();
     await postScheduledDeactivations({} as any, response, next);
     expect(runIssueSequence).toHaveBeenCalledTimes(2);
     expect(runIssueSequence).toHaveBeenCalledWith({
@@ -155,7 +166,7 @@ it("runs each due task as the scheduling user and returns 200 when all succeed",
         succeeded: 2,
         failed: 0,
     });
-    expect(log).toHaveBeenCalledWith(
+    expect(cronInfo).toHaveBeenCalledWith(
         "scheduled-deactivation",
         expect.objectContaining({
             event: "task_succeeded",
@@ -163,7 +174,7 @@ it("runs each due task as the scheduling user and returns 200 when all succeed",
             issueId: "crew",
         }),
     );
-    expect(log).toHaveBeenCalledWith(
+    expect(cronInfo).toHaveBeenCalledWith(
         "scheduled-deactivation",
         expect.objectContaining({
             event: "run_complete",
@@ -173,7 +184,6 @@ it("runs each due task as the scheduling user and returns 200 when all succeed",
             failed: 0,
         }),
     );
-    log.mockRestore();
 });
 
 it("isolates individual failures, scopes executions and signals cron failure", async () => {
@@ -192,8 +202,6 @@ it("isolates individual failures, scopes executions and signals cron failure", a
     (runIssueSequence as jest.Mock)
         .mockResolvedValueOnce({ status: "completed" })
         .mockRejectedValueOnce(new Error("Timeout"));
-    const log = jest.spyOn(console, "info").mockImplementation();
-    const error = jest.spyOn(console, "error").mockImplementation();
     await postScheduledDeactivations({} as any, response, next);
     expect(runIssueSequence).toHaveBeenCalledWith({
         issueId: "a",
@@ -208,7 +216,7 @@ it("isolates individual failures, scopes executions and signals cron failure", a
         failed: 1,
     });
     expect(next).not.toHaveBeenCalled();
-    expect(error).toHaveBeenCalledWith(
+    expect(cronError).toHaveBeenCalledWith(
         "scheduled-deactivation",
         expect.objectContaining({
             event: "task_failed",
@@ -222,7 +230,7 @@ it("isolates individual failures, scopes executions and signals cron failure", a
             }),
         }),
     );
-    expect(log).toHaveBeenCalledWith(
+    expect(cronInfo).toHaveBeenCalledWith(
         "scheduled-deactivation",
         expect.objectContaining({
             event: "run_complete",
@@ -232,8 +240,6 @@ it("isolates individual failures, scopes executions and signals cron failure", a
             failed: 1,
         }),
     );
-    log.mockRestore();
-    error.mockRestore();
 });
 
 it("counts non-completed sequence results as failures for the cron exit signal", async () => {
@@ -248,8 +254,6 @@ it("counts non-completed sequence results as failures for the cron exit signal",
         status: "failed",
         message: "Crewmeister timeout",
     });
-    const log = jest.spyOn(console, "info").mockImplementation();
-    const error = jest.spyOn(console, "error").mockImplementation();
     await postScheduledDeactivations({} as any, response, next);
     expect(response.status).toHaveBeenCalledWith(503);
     expect(response.json).toHaveBeenCalledWith({
@@ -257,8 +261,7 @@ it("counts non-completed sequence results as failures for the cron exit signal",
         succeeded: 0,
         failed: 1,
     });
-    expect(error).toHaveBeenCalledWith("scheduled-deactivation", {
-        job: "scheduled-deactivation",
+    expect(cronError).toHaveBeenCalledWith("scheduled-deactivation", {
         event: "task_failed",
         outcome: "failed",
         berlinDay: expect.any(String),
@@ -268,7 +271,7 @@ it("counts non-completed sequence results as failures for the cron exit signal",
         status: "failed",
         message: "Crewmeister timeout",
     });
-    expect(log).toHaveBeenCalledWith(
+    expect(cronInfo).toHaveBeenCalledWith(
         "scheduled-deactivation",
         expect.objectContaining({
             event: "run_complete",
@@ -276,8 +279,6 @@ it("counts non-completed sequence results as failures for the cron exit signal",
             failed: 1,
         }),
     );
-    log.mockRestore();
-    error.mockRestore();
 });
 
 it("treats missing organisation or scheduling user as a failed task", async () => {
@@ -294,8 +295,6 @@ it("treats missing organisation or scheduling user as a failed task", async () =
         },
     ]);
     (runIssueSequence as jest.Mock).mockResolvedValue({ status: "completed" });
-    const log = jest.spyOn(console, "info").mockImplementation();
-    const error = jest.spyOn(console, "error").mockImplementation();
     await postScheduledDeactivations({} as any, response, next);
     expect(runIssueSequence).toHaveBeenCalledTimes(1);
     expect(runIssueSequence).toHaveBeenCalledWith({
@@ -310,7 +309,7 @@ it("treats missing organisation or scheduling user as a failed task", async () =
         succeeded: 1,
         failed: 1,
     });
-    expect(error).toHaveBeenCalledWith(
+    expect(cronError).toHaveBeenCalledWith(
         "scheduled-deactivation",
         expect.objectContaining({
             event: "task_failed",
@@ -324,8 +323,6 @@ it("treats missing organisation or scheduling user as a failed task", async () =
             }),
         }),
     );
-    log.mockRestore();
-    error.mockRestore();
 });
 
 it("runs due tasks concurrently up to five workers", async () => {
@@ -344,7 +341,6 @@ it("runs due tasks concurrently up to five workers", async () => {
         active -= 1;
         return { status: "completed" };
     });
-    const log = jest.spyOn(console, "info").mockImplementation();
     await postScheduledDeactivations({} as any, response, next);
     expect(runIssueSequence).toHaveBeenCalledTimes(6);
     expect(peak).toBe(5);
@@ -354,5 +350,4 @@ it("runs due tasks concurrently up to five workers", async () => {
         succeeded: 6,
         failed: 0,
     });
-    log.mockRestore();
 });

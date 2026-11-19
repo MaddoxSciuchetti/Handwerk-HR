@@ -18,18 +18,19 @@ If you want to add code to this project, improve the README, or change architect
    - `npm --prefix client run lint` (or `npm run lint:src` from `client/`)
    - Details: [Style guide §3.4 / §7.3](style-guide.md). Server has no `lint` / `format` scripts yet — use `npm --prefix server run typecheck` and the tests below.
 4. Open a pull request and fill the [PR template](../../.github/pull_request_template.md) — PRs without the template will not be reviewed or merged.
-5. CI runs on the PR (lint / typecheck / unit tests) — see [workflow](ci.cd.md). After review, the PR can be merged. Shipping is **Render auto-deploy** from the tracked branch; API deploys run **build → Prisma migrate (pre-deploy) → start** (same doc).
+5. CI runs on the PR (lint / typecheck / unit tests) — see [workflow](../backend/ci.cd.md). After review, the PR can be merged. Shipping is Render auto-deploy from the tracked branch; API deploys run build → Prisma migrate (pre-deploy) → start (same doc).
 
 ### Context docs
 
 - Frontend quality focus + tools: [Frontend intro](../frontend/Intro.md)
 - Backend quality focus + tools: [Backend intro](../backend/Intro.md)
-- Backend clean-code map (helpers, routes, controllers, services): [Backend clean code](../backend/clean-code.md)
+- Backend layers (helpers, routes, controllers, services): [Backend layers](../backend/layers.md)
+- Backend clean-code principles with server examples: [Backend principles](../backend/principles.md)
 - High level style guide that will help you quickly write your first lines in this project [Style guide](style-guide.md)
 - Clean code principles and how they are applied in the codebase. Ensure to follow these! [Principles](principles.md) (examples lean frontend; pair with the backend map above for server work)
 - Decisions made in this project [Decisions](decisions.md)
 - Handling tests in this project [Tests](tests.md)
-- CI/CD of this project [workflow](ci.cd.md)
+- CI/CD of this project [workflow](../backend/ci.cd.md)
 - Before push / review: [Review checklist](review-checklist.md)
 
 ### What is this project about?

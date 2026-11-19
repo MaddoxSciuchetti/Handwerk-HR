@@ -1,50 +1,26 @@
 # Load probe
 
-This page explains the concurrent-user load probe for the Express API: what it measures, how to run it, and the staging numbers that were recorded. The script lives at `ops/loadtest/run.mjs`. The probe was added in PR #228. A short empty-list baseline landed on `main` via PR #255. The fuller ladder with one hundred seeded tasks (six tables plus CPU/memory peaks) was written on `staging` as `docs/load-testing-results.md` but was never merged to `main` — those results are restored here.
+The purose of the following probe is to find out the limits of the current backend setup with the route that is being hit by most users and contains the most data on a request.
 
 ## What it measures
 
-The probe hammers one API path with N concurrent clients (VUs) and prints request count, error rate, p50, p95, and max latency. There are two modes:
-
-- baseline — fixed concurrency for a fixed duration
-- ramp — raise concurrency in steps until the error rate or p95 budget is blown
-
-Prefer local or staging. Non-local hosts need `LOADTEST_ALLOW_NON_LOCAL=1`. Do not point this at production.
-
-## How to run
-
-```bash
-# Public root
-LOADTEST_VUS=20 LOADTEST_DURATION_MS=15000 node ops/loadtest/run.mjs
-
-# Authenticated /tasks
-LOADTEST_EMAIL='you@example.com' \
-LOADTEST_PASSWORD='…' \
-LOADTEST_PATH=/tasks \
-LOADTEST_VUS=20 \
-LOADTEST_DURATION_MS=15000 \
-node ops/loadtest/run.mjs
-
-# Ramp until it hurts
-LOADTEST_MODE=ramp \
-LOADTEST_STEP_VUS=10 \
-LOADTEST_MAX_VUS=80 \
-LOADTEST_DURATION_MS=10000 \
-LOADTEST_EMAIL='you@example.com' \
-LOADTEST_PASSWORD='…' \
-LOADTEST_PATH=/tasks \
-node ops/loadtest/run.mjs
-```
-
-Useful env vars include `LOADTEST_BASE_URL`, `LOADTEST_PATH`, `LOADTEST_MODE`, `LOADTEST_VUS`, `LOADTEST_MAX_VUS`, `LOADTEST_STEP_VUS`, `LOADTEST_DURATION_MS`, `LOADTEST_ERROR_BUDGET` (default 0.05), `LOADTEST_P95_BUDGET_MS` (default 2000), and `LOADTEST_ALLOW_NON_LOCAL`. From `server/` you can also run `npm run loadtest`.
+The probe hits one API path with N concurrent virtual users (VU) and prints request count, error rate, p50, p95, and max latency. There are two modes:
 
 ## Staging results overview
 
-All ladders below used seed admin login, baseline mode, fifteen seconds per VU level, against staging `GET /tasks`. Latencies are milliseconds. CPU and memory peaks (where noted) are from Render metrics for the staging Starter instance (0.5 CPU, 512 MB RAM) during each ladder — peaks in that window, not a per-VU sample.
+All ladders below used seed admin login, baseline mode, fifteen seconds per VU level, against staging `GET /tasks`. Latencies are milliseconds. CPU and memory peaks are from Render metrics for the staging Starter instance (0.5 CPU, 512 MB RAM) during each ladder — peaks in that window, not a per-VU sample.
 
-## Empty task list (PR #255)
+## High-level approach
 
-Unchanged `/tasks` with an empty org task list (no 100-task seed). This is the table that reached `main` first.
+1. Letting concurrent virtual users send requests to our /tasks backend route
+2. Show the output this produced
+3. Make a certain change that my reasoning thought will speed up the process
+4. Re-run and show the result
+5. Compare results and check if any speed gain occured
+
+## Empty task list
+
+Change: Unchanged `/tasks` with an empty org task list (no 100-task seed). This is the table that reached `main` first.
 
 | VUs  | Requests | Error rate | p50      | p95      | max      |
 | ---- | -------- | ---------- | -------- | -------- | -------- |
@@ -56,33 +32,31 @@ Unchanged `/tasks` with an empty org task list (no 100-task seed). This is the t
 | 500  | 1007     | 0%         | 10174 ms | 13987 ms | 40389 ms |
 | 1000 | 1409     | 7.6%       | 23317 ms | 31286 ms | 32270 ms |
 
-First errors at 1000 VUs. Max outliers at 20/500 are not typical of the p95.
+Observation: First errors at 1000 VUs. Max outliers at 20/500 are not typical of the p95.
 
-## Ladder with 100 seeded tasks
+## 100 seeded tasks
 
 Unless noted, each run below used one hundred seeded tasks. These six tables lived on `staging` and were missing from `main` until restored into this page.
 
 ### 1 — Clean baseline (100 tasks, no optimizations)
 
-Full task list with no Prisma join strategy, no pagination, and no gzip.
-
-Peak during this ladder: CPU ~99%, memory ~400 MB (~78% of 512 MB).
+Change: Full task list with no Prisma join strategy, no pagination, and no gzip (`Accept-Encoding: identity`). Confirmed 100 tasks (~116 KB). Ran 2026-11-19 on staging. Staging still had pool max 20.
 
 | VUs  | Requests | Error rate | p50   | p95   | max   |
 | ---- | -------- | ---------- | ----- | ----- | ----- |
-| 20   | 266      | 0.0%       | 1126  | 1902  | 2771  |
-| 50   | 353      | 0.0%       | 2305  | 2908  | 3618  |
-| 100  | 485      | 0.0%       | 3606  | 4339  | 5063  |
-| 150  | 520      | 0.0%       | 5798  | 7384  | 7914  |
-| 200  | 589      | 0.0%       | 7224  | 8030  | 8944  |
-| 500  | 790      | 0.0%       | 17160 | 23071 | 24842 |
-| 1000 | 1461     | 15.1%      | 31557 | 49187 | 53322 |
+| 20   | 117      | 0.0%       | 2156  | 7060  | 8272  |
+| 50   | 222      | 0.0%       | 4088  | 7140  | 10459 |
+| 100  | 261      | 0.4%       | 6621  | 14585 | 16322 |
+| 150  | 325      | 0.0%       | 8475  | 17987 | 18931 |
+| 200  | 372      | 0.0%       | 13468 | 22057 | 23379 |
+| 500  | 653      | 0.0%       | 27306 | 46868 | 49581 |
+| 1000 | 4017     | 77.9%      | 36599 | 61590 | 70408 |
+
+Observation: Full-list payload is heavy. Errors explode at 1000 VUs (77.9%).
 
 ### 2 — Prisma relationLoadStrategy join + cursor pagination
 
-Same ladder after join strategy and cursor pagination on `/tasks` (same measured latency numbers as table 1 in this record).
-
-Peak during this ladder: CPU ~99%, memory ~400 MB (~78% of 512 MB).
+Change: Join strategy and cursor pagination on `/tasks` (page 50 / max 100; probe hits first page only). Source: staging `docs/performance.md` (`74ede853`). Earlier docs wrongly reused this table as “clean baseline.”
 
 | VUs  | Requests | Error rate | p50   | p95   | max   |
 | ---- | -------- | ---------- | ----- | ----- | ----- |
@@ -94,11 +68,11 @@ Peak during this ladder: CPU ~99%, memory ~400 MB (~78% of 512 MB).
 | 500  | 790      | 0.0%       | 17160 | 23071 | 24842 |
 | 1000 | 1461     | 15.1%      | 31557 | 49187 | 53322 |
 
+Observation: Peak during this ladder: CPU ~99%, memory ~400 MB (~78% of 512 MB). Better than the true clean baseline at mid load; 1000 VU errors still 15.1%.
+
 ### 3 — Gzip on top of join + pagination
 
-Express `compression()` enabled while join and pagination were still active.
-
-Peak during this ladder: CPU ~92%, memory ~501 MB (~98% of 512 MB).
+Change: Express `compression()` enabled while join and pagination were still active.
 
 | VUs  | Requests | Error rate | p50   | p95   | max   |
 | ---- | -------- | ---------- | ----- | ----- | ----- |
@@ -110,11 +84,11 @@ Peak during this ladder: CPU ~92%, memory ~501 MB (~98% of 512 MB).
 | 500  | 826      | 0.0%       | 15713 | 20473 | 23579 |
 | 1000 | 2747     | 52.3%      | 33176 | 44847 | 55263 |
 
+Obsevation: Peak during this ladder: CPU ~92%, memory ~501 MB (~98% of 512 MB).
+
 ### 4 — Gzip only (join and pagination reverted)
 
-Gzip kept; join strategy and pagination removed. Zero errors through 500 VUs; about 89% errors at 1000 VUs.
-
-Peak during this ladder: CPU 100%, memory ~429 MB (~84% of 512 MB).
+Change: Gzip kept; join strategy and pagination removed. Zero errors through 500 VUs; about 89% errors at 1000 VUs.
 
 | VUs  | Requests | Error rate | p50   | p95   | max   |
 | ---- | -------- | ---------- | ----- | ----- | ----- |
@@ -126,11 +100,11 @@ Peak during this ladder: CPU 100%, memory ~429 MB (~84% of 512 MB).
 | 500  | 647      | 0.0%       | 28720 | 51604 | 58228 |
 | 1000 | 6721     | 89.2%      | 38170 | 58597 | 61136 |
 
+Observation: Peak during this ladder: CPU 100%, memory ~429 MB (~84% of 512 MB).
+
 ### 5 — Postgres pool max 20
 
-Same gzip-only stack with the Prisma/`pg` pool raised to max 20 and a 10s connection timeout. Zero errors through 500 VUs; about 87% errors at 1000 VUs.
-
-Peak during this ladder: CPU 100%, memory ~470 MB (~92% of 512 MB).
+Change: Same gzip-only stack with the Prisma/`pg` pool raised to max 20 and a 10s connection timeout. Zero errors through 500 VUs; about 87% errors at 1000 VUs.
 
 | VUs  | Requests | Error rate | p50   | p95   | max   |
 | ---- | -------- | ---------- | ----- | ----- | ----- |
@@ -142,11 +116,11 @@ Peak during this ladder: CPU 100%, memory ~470 MB (~92% of 512 MB).
 | 500  | 653      | 0.0%       | 24803 | 43326 | 46806 |
 | 1000 | 6525     | 87.0%      | 34097 | 53200 | 57783 |
 
+Observation: Peak during this ladder: CPU 100%, memory ~470 MB (~92% of 512 MB).
+
 ### 6 — Issue indexes added
 
-Indexes on `assigneeOnly`, `(createdAt, id)`, `(organizationId, createdAt)`, and `(workerEngagementId, createdAt)` on top of the pool-tuned gzip-only stack.
-
-Peak during this ladder: CPU 100%, memory ~484 MB (~95% of 512 MB).
+Change: Indexes on `assigneeOnly`, `(createdAt, id)`, `(organizationId, createdAt)`, and `(workerEngagementId, createdAt)` on top of the pool-tuned gzip-only stack.
 
 | VUs  | Requests | Error rate | p50   | p95   | max   |
 | ---- | -------- | ---------- | ----- | ----- | ----- |
@@ -158,17 +132,23 @@ Peak during this ladder: CPU 100%, memory ~484 MB (~95% of 512 MB).
 | 500  | 639      | 0.0%       | 29652 | 50660 | 51971 |
 | 1000 | 7308     | 89.3%      | 32382 | 56124 | 59093 |
 
+Observation: Peak during this ladder: CPU 100%, memory ~484 MB (~95% of 512 MB).
+
 ## Resource peaks (summary)
 
-| Run | Peak CPU | Peak memory |
-| --- | -------- | ----------- |
-| 1 — Clean baseline | ~99% | ~400 MB (78%) |
-| 2 — Join + pagination | ~99% | ~400 MB (78%) |
-| 3 — Gzip + join + pagination | ~92% | ~501 MB (98%) |
-| 4 — Gzip only | 100% | ~429 MB (84%) |
-| 5 — Pool max 20 | 100% | ~470 MB (92%) |
-| 6 — Issue indexes | 100% | ~484 MB (95%) |
+| Run                          | Peak CPU | Peak memory   |
+| ---------------------------- | -------- | ------------- |
+| 1 — Clean baseline           | n/a      | n/a           |
+| 2 — Join + pagination        | ~99%     | ~400 MB (78%) |
+| 3 — Gzip + join + pagination | ~92%     | ~501 MB (98%) |
+| 4 — Gzip only                | 100%     | ~429 MB (84%) |
+| 5 — Pool max 20              | 100%     | ~470 MB (92%) |
+| 6 — Issue indexes            | 100%     | ~484 MB (95%) |
 
 ## Conclusion
 
-Several backend tweaks were tried (query changes, gzip, bigger DB pool, indexes). None of them stopped failures at 1000 concurrent users. Staging runs on one small Render Starter box (0.5 CPU, 512 MB). Under that load, CPU hits roughly 90–100% and memory climbs into the high hundreds of MB (up to ~98%). The machine itself is saturated — that is why requests fail. The next move is to run two Starter instances so traffic can be split between them.
+- Several backend tweaks were tried (query changes, gzip, bigger DB pool, indexes).
+- None of them stopped failures at 1000 concurrent users.
+- Current backend status: Staging runs on one small Render Starter box (0.5 CPU, 512 MB). Under that load, CPU hits 90–100% and memory climbs into the high hundreds of MB (up to ~98%).
+- Conclusion: The machine itself is saturated which is why when there is high concurrency requests fail start failing.
+- Next moves forward: Do horizontal scaling would would mean adding more machines to the current setup or vertical scaling which would mean upgrading the plan so that the machine i am currentluy using has more Cores and Memory.
