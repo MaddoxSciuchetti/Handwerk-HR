@@ -12,5 +12,5 @@ Start here:
 | -------------------- | ---------------------------------------------------------------------------------- |
 | Clean code & testing | [clean-code-testing/intro.md](./clean-code-testing/intro.md)                       |
 | Database             | [database/Intro.md](./database/Intro.md)                                           |
-| Backend              | [backend/Intro.md](./backend/Intro.md) · [clean-code map](./backend/clean-code.md) |
+| Backend              | [backend/Intro.md](./backend/Intro.md)                                             |
 | Frontend             | [frontend/Intro.md](./frontend/Intro.md)                                           |

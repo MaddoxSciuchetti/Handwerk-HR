@@ -24,7 +24,8 @@ If you want to add code to this project, improve the README, or change architect
 
 - Frontend quality focus + tools: [Frontend intro](../frontend/Intro.md)
 - Backend quality focus + tools: [Backend intro](../backend/Intro.md)
-- Backend clean-code map (helpers, routes, controllers, services): [Backend clean code](../backend/clean-code.md)
+- Backend layers (helpers, routes, controllers, services): [Backend layers](../backend/layers.md)
+- Backend clean-code principles with server examples: [Backend principles](../backend/principles.md)
 - High level style guide that will help you quickly write your first lines in this project [Style guide](style-guide.md)
 - Clean code principles and how they are applied in the codebase. Ensure to follow these! [Principles](principles.md) (examples lean frontend; pair with the backend map above for server work)
 - Decisions made in this project [Decisions](decisions.md)

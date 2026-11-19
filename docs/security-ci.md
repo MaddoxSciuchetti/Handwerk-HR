@@ -2,6 +2,6 @@
 
 This document moved under backend docs:
 
-**[docs/backend/security.md](./backend/security.md)**
+[docs/backend/security.md](./backend/security.md) — stable versions, secret/env push detection, vulnerability handling.
 
-That page covers `protect-main`, the current stable versions (app **2.0.0**, Node **20**), secret/env push detection, vulnerability handling, and response times.
+[docs/clean-code-testing/ci.cd.md](./clean-code-testing/ci.cd.md) — `protect-main`, PR checks, and Render deploy.

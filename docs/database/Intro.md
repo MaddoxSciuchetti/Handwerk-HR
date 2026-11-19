@@ -4,7 +4,7 @@ This folder holds everything related to the database. Below is a quick guide so 
 
 ## Processes
 
-If you want to change the conceptual or physical data model, contact **maddoxsciuchetti@icloud.com**. We discuss the change first and decide whether the diagrams and/or the Prisma schema need an update.
+If you want to change the conceptual or physical data model, contact maddoxsciuchetti@icloud.com. We discuss the change first and decide whether the diagrams and/or the Prisma schema need an update.
 
 When a schema change is approved:
 
@@ -17,7 +17,7 @@ npx prisma migrate dev --name <descriptive_name> --schema=src/prisma/schema.pris
 ```
 
 4. Migration files under `server/src/prisma/migrations/` are reviewed with four eyes before commit. Once the review looks sound, push the changes.
-5. After merge to a branch a Render service tracks, **Render auto-deploys**: **build**, then **Prisma migrate once as pre-deploy**, then **start** (`npm run migrate:deploy` on the API service). A failed build never reaches migrate. You do not apply production/staging migrations from GitHub Actions or by hand for a normal release. Details: [CI/CD — Deploy](../clean-code-testing/ci.cd.md#deploy-render-auto-deploy--prisma-migrate).
+5. After merge to a branch a Render service tracks, Render auto-deploys: build, then Prisma migrate once as pre-deploy, then start (`npm run migrate:deploy` on the API service). A failed build never reaches migrate. You do not apply production/staging migrations from GitHub Actions or by hand for a normal release.
 
 Feel free to propose improvements to the pages below so this project stays maintainable.
 
@@ -30,5 +30,5 @@ Feel free to propose improvements to the pages below so this project stays maint
 - Information on monitoring index size and usage over time can be found [here](./index-performance.md).
 - The entry point for diagnosing overall database health when something feels slow can be found [here](./database-performance.md).
 - Thoughts on vertical and horizontal scaling strategies can be found [here](./scaling.md).
-- Information about backups and point-in-time recovery on **Render Managed Postgres** can be found [here](./backup.md).
+- Information about backups and point-in-time recovery on Render Managed Postgres can be found [here](./backup.md).
 - Additional design considerations and trade-offs that were thought through can be found [here](./considerations.md).

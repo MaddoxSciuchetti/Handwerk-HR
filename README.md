@@ -1,5 +1,3 @@
-Onboarding / offboarding workflow tool. Express + Prisma + PostgreSQL on the backend, React + Vite on the frontend.
-
 ## Repository layout
 
 > 💡 **Tip — read this before you push**
@@ -30,12 +28,7 @@ docs/
 
 ## Observability
 
-The API uses structured logging and OpenTelemetry tracing (`requestId` / `traceId` in Render logs). Sentry covers API and client exceptions when DSNs are set.
-
-- SE_46 deep dive (PRs #225 / #226): [docs/observability-deep-dive.md](docs/observability-deep-dive.md)
-- Newcomers: [server/README.md](server/README.md)
-- Render incident search: [ops/observability.md](ops/observability.md)
-- Concurrent-user load probe: [ops/loadtest/README.md](ops/loadtest/README.md)
+The API uses structured logging and OpenTelemetry tracing (`requestId` / `traceId` in Render logs). Sentry covers API and client exceptions when DSNs are set. Start from the backend documentation entry under `docs/backend/Intro.md` for logging habits, the Render runbook, and the SE deep dive.
 
 ## Prerequisites
 
@@ -48,7 +41,7 @@ The API uses structured logging and OpenTelemetry tracing (`requestId` / `traceI
 
 Create a `.env` file in `server/`.
 
-`npm install` in `server/` runs `prisma generate`, which only needs **`DATABASE_URL`** in `.env` (via `prisma.config.ts`).
+`npm install` in `server/` runs `prisma generate`, which only needs `DATABASE_URL` in `.env` (via `prisma.config.ts`).
 
 To run the API (`npm run dev`), set all of the following (see `server/src/constants/env.ts`):
 
@@ -349,11 +342,11 @@ Backend (`server/`):
 
 Frontend (`client/`):
 
-| Command             | Purpose                    |
-| ------------------- | -------------------------- |
-| `npm run dev`       | Vite dev server            |
-| `npm run build`     | Production build           |
-| `npm run preview`   | Serve the production build |
+| Command                 | Purpose                          |
+| ----------------------- | -------------------------------- |
+| `npm run dev`           | Vite dev server                  |
+| `npm run build`         | Production build                 |
+| `npm run preview`       | Serve the production build       |
 | `npm run test:unit`     | Vitest unit tests (`test-unit/`) |
 | `npm run test:coverage` | Vitest unit tests + coverage     |
 
