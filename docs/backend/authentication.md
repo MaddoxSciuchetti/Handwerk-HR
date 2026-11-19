@@ -29,7 +29,8 @@ return setAuthCookies({ res, accessToken, refreshToken })
 
 ## Staging skip-login
 
-For demo staging only, the SPA can skip the login form and land on the main shell:
+For demo staging only, the SPA skips the login form and lands on the main shell.
+**Shared entry URL:** `/login` (root `/` redirects there when the flag is on).
 
 | Side | Env | Value |
 | --- | --- | --- |
@@ -38,7 +39,7 @@ For demo staging only, the SPA can skip the login form and land on the main shel
 | API | `STAGING_SKIP_LOGIN_EMAIL` | optional, default `admin@example.com` |
 | Frontend build | `VITE_STAGING_SKIP_LOGIN` | `true` |
 
-The client calls `POST /auth/v2/staging-session` (no password in the bundle). The flag is ignored when `APP_ENV=production`. Same-origin `/api` rewrite is still required on Render so the session cookies stick.
+The client on `/login` calls `POST /auth/v2/staging-session` (no password in the bundle). The flag is ignored when `APP_ENV=production`. Same-origin `/api` rewrite is still required on Render so the session cookies stick.
 
 ## Same-origin API on Render
 

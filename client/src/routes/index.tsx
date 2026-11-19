@@ -1,15 +1,17 @@
-import { StagingAutoEnter } from '@/features/auth/components/StagingAutoEnter';
 import { LandingPage } from '@/features/landing/LandingPage';
 import { STAGING_SKIP_LOGIN } from '@/config/env';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/')({
+  beforeLoad: () => {
+    // Staging demo: /login is the shared entry URL (professor link).
+    if (STAGING_SKIP_LOGIN) {
+      throw redirect({ to: '/login' });
+    }
+  },
   component: HomePage,
 });
 
 function HomePage() {
-  if (STAGING_SKIP_LOGIN) {
-    return <StagingAutoEnter />;
-  }
   return <LandingPage />;
 }
