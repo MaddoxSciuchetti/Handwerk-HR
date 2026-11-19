@@ -66,30 +66,30 @@ describe('team membership', () => {
   it('sorts by birthday month and day, with missing birthdays last', () => {
     const people = [
       worker('transfer', 'completed', {
-        firstName: 'Vulnet',
-        lastName: 'Shemsi',
-        birthday: '1998-12-13',
+        firstName: 'Anna',
+        lastName: 'Schneider',
+        birthday: '1991-03-12',
       }),
       worker('transfer', 'completed', {
-        firstName: 'Annika',
-        lastName: 'Bimmel',
-        birthday: '2005-01-07',
+        firstName: 'Lukas',
+        lastName: 'Becker',
+        birthday: '1988-07-22',
       }),
       worker('transfer', 'completed', {
         firstName: 'Ohne',
         lastName: 'Datum',
       }),
       worker('transfer', 'completed', {
-        firstName: 'Sannaullah',
-        lastName: 'Qaderi',
-        birthday: '1997-01-01',
+        firstName: 'Julia',
+        lastName: 'Hoffmann',
+        birthday: '1995-01-04',
       }),
     ];
 
     expect(people.sort(compareTeamWorkers).map((person) => person.lastName)).toEqual([
-      'Qaderi',
-      'Bimmel',
-      'Shemsi',
+      'Hoffmann',
+      'Schneider',
+      'Becker',
       'Datum',
     ]);
   });

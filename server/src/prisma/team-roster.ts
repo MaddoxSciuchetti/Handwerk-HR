@@ -1,35 +1,166 @@
-import type { PrismaClient } from "@prisma/client";
+import type { EngagementType, PrismaClient } from "@prisma/client";
 
-export type TeamRosterPerson = {
+export type DemoWorkerPerson = {
     firstName: string;
     lastName: string;
     birthday: string;
     entryDate: string | null;
+    exitDate?: string | null;
+    position?: string | null;
+    engagementType: EngagementType;
 };
 
-export const TEAM_ROSTER: TeamRosterPerson[] = [
-    { firstName: "Sannaullah", lastName: "Qaderi", birthday: "1997-01-01", entryDate: "2026-07-15" },
-    { firstName: "Annika", lastName: "Bimmel", birthday: "2005-01-07", entryDate: "2025-02-01" },
-    { firstName: "Timo", lastName: "Janik", birthday: "1981-01-09", entryDate: "2015-07-01" },
-    { firstName: "Christoph", lastName: "Stürmer", birthday: "1987-01-30", entryDate: "2026-08-17" },
-    { firstName: "Liridön", lastName: "Aliti", birthday: "2002-02-12", entryDate: "2025-11-17" },
-    { firstName: "Benny", lastName: "Wendt", birthday: "1986-03-25", entryDate: "2014-04-01" },
-    { firstName: "Najeebullah", lastName: "Esazada", birthday: "1985-04-05", entryDate: "2018-08-01" },
-    { firstName: "Marvin", lastName: "Langner", birthday: "1998-04-13", entryDate: "2025-03-17" },
-    { firstName: "Kerem", lastName: "Sen", birthday: "1997-04-14", entryDate: "2023-03-15" },
-    { firstName: "Constantin", lastName: "Romaniuc", birthday: "1993-04-18", entryDate: "2018-01-01" },
-    { firstName: "Sandra", lastName: "Siemon", birthday: "1980-05-31", entryDate: "2005-05-12" },
-    { firstName: "Nico", lastName: "Lange", birthday: "1994-08-10", entryDate: "2025-04-15" },
-    { firstName: "Darius", lastName: "Acosta", birthday: "1996-08-14", entryDate: "2022-12-01" },
-    { firstName: "Franz", lastName: "Raudszus", birthday: "1993-09-08", entryDate: "2022-06-13" },
-    { firstName: "Bekir", lastName: "Yatci", birthday: "2001-09-15", entryDate: "2026-09-01" },
-    { firstName: "Markus", lastName: "Stürzel", birthday: "1973-09-29", entryDate: "2023-05-22" },
-    { firstName: "René", lastName: "Michaelis", birthday: "1968-11-20", entryDate: "2026-07-01" },
-    { firstName: "Stephan", lastName: "Marszal", birthday: "1968-12-05", entryDate: "2018-10-01" },
-    { firstName: "Thomas", lastName: "Hadrich", birthday: "1969-12-15", entryDate: "2015-06-01" },
-    { firstName: "Theresa", lastName: "Hoffmann", birthday: "1990-12-21", entryDate: "2026-01-01" },
-    { firstName: "Vulnet", lastName: "Shemsi", birthday: "1998-12-13", entryDate: null },
+/** Realistic German demo Handwerker for local/staging seed. */
+export const DEMO_WORKERS: DemoWorkerPerson[] = [
+    // Team (no Aufgaben tab)
+    {
+        firstName: "Anna",
+        lastName: "Schneider",
+        birthday: "1991-03-12",
+        entryDate: "2019-04-01",
+        position: "Projektleitung",
+        engagementType: "transfer",
+    },
+    {
+        firstName: "Lukas",
+        lastName: "Becker",
+        birthday: "1988-07-22",
+        entryDate: "2016-09-01",
+        position: "Elektriker",
+        engagementType: "transfer",
+    },
+    {
+        firstName: "Julia",
+        lastName: "Hoffmann",
+        birthday: "1995-11-04",
+        entryDate: "2021-02-15",
+        position: "Bürokauffrau",
+        engagementType: "transfer",
+    },
+    {
+        firstName: "Markus",
+        lastName: "Weber",
+        birthday: "1982-01-30",
+        entryDate: "2012-06-01",
+        position: "Meister Sanitär",
+        engagementType: "transfer",
+    },
+    {
+        firstName: "Sophie",
+        lastName: "Fischer",
+        birthday: "1997-05-18",
+        entryDate: "2023-08-01",
+        position: "Malerin",
+        engagementType: "transfer",
+    },
+    {
+        firstName: "Tim",
+        lastName: "Neumann",
+        birthday: "1993-09-09",
+        entryDate: "2018-03-12",
+        position: "Tischler",
+        engagementType: "transfer",
+    },
+    {
+        firstName: "Laura",
+        lastName: "Schäfer",
+        birthday: "1990-12-02",
+        entryDate: "2017-10-01",
+        position: "Disponentin",
+        engagementType: "transfer",
+    },
+    {
+        firstName: "Jonas",
+        lastName: "Wagner",
+        birthday: "1986-04-25",
+        entryDate: "2014-01-15",
+        position: "Dachdecker",
+        engagementType: "transfer",
+    },
+    {
+        firstName: "Nina",
+        lastName: "Koch",
+        birthday: "1999-08-14",
+        entryDate: "2024-05-02",
+        position: "Azubi Elektro",
+        engagementType: "transfer",
+    },
+    {
+        firstName: "Felix",
+        lastName: "Bauer",
+        birthday: "1984-02-08",
+        entryDate: "2011-11-01",
+        position: "Monteur",
+        engagementType: "transfer",
+    },
+    {
+        firstName: "Claudia",
+        lastName: "Richter",
+        birthday: "1979-06-27",
+        entryDate: "2009-03-01",
+        position: "Personal",
+        engagementType: "transfer",
+    },
+    {
+        firstName: "Tobias",
+        lastName: "Klein",
+        birthday: "1992-10-19",
+        entryDate: "2020-07-01",
+        position: "SHK-Installateur",
+        engagementType: "transfer",
+    },
+    // Onboarding (Aufgaben tab visible)
+    {
+        firstName: "Emma",
+        lastName: "Braun",
+        birthday: "2001-01-16",
+        entryDate: "2026-11-01",
+        position: "Elektrikerin",
+        engagementType: "onboarding",
+    },
+    {
+        firstName: "Paul",
+        lastName: "Zimmermann",
+        birthday: "2003-04-03",
+        entryDate: "2026-12-01",
+        position: "Azubi Tischler",
+        engagementType: "onboarding",
+    },
+    {
+        firstName: "Leon",
+        lastName: "Hartmann",
+        birthday: "1996-09-21",
+        entryDate: "2026-10-15",
+        position: "Monteur",
+        engagementType: "onboarding",
+    },
+    // Offboarding (Aufgaben tab visible)
+    {
+        firstName: "Sarah",
+        lastName: "König",
+        birthday: "1989-05-11",
+        entryDate: "2018-01-08",
+        exitDate: "2026-12-31",
+        position: "Malermeisterin",
+        engagementType: "offboarding",
+    },
+    {
+        firstName: "David",
+        lastName: "Lehmann",
+        birthday: "1985-12-29",
+        entryDate: "2013-04-01",
+        exitDate: "2026-11-30",
+        position: "Fahrer",
+        engagementType: "offboarding",
+    },
 ];
+
+/** @deprecated Use DEMO_WORKERS */
+export const TEAM_ROSTER: DemoWorkerPerson[] = DEMO_WORKERS.filter(
+    (person) => person.engagementType === "transfer",
+);
+
+export type TeamRosterPerson = DemoWorkerPerson;
 
 export function teamPlaceholderEmail(firstName: string, lastName: string) {
     const slug = (value: string) =>
@@ -38,7 +169,7 @@ export function teamPlaceholderEmail(firstName: string, lastName: string) {
             .replace(/\p{M}/gu, "")
             .toLowerCase()
             .replace(/[^a-z0-9]+/g, "");
-    return `${slug(firstName)}.${slug(lastName)}@team.invalid`;
+    return `${slug(firstName)}.${slug(lastName)}@demo.invalid`;
 }
 
 function calendarDate(value: string) {
@@ -50,7 +181,7 @@ export async function seedTeamRoster(
     organizationId: string,
     userId: string,
 ) {
-    for (const person of TEAM_ROSTER) {
+    for (const person of DEMO_WORKERS) {
         const existing = await prisma.worker.findFirst({
             where: {
                 organizationId,
@@ -69,20 +200,32 @@ export async function seedTeamRoster(
                 lastName: person.lastName,
                 email: teamPlaceholderEmail(person.firstName, person.lastName),
                 birthday: calendarDate(person.birthday),
-                entryDate: person.entryDate ? calendarDate(person.entryDate) : null,
+                position: person.position ?? null,
+                entryDate: person.entryDate
+                    ? calendarDate(person.entryDate)
+                    : null,
+                exitDate: person.exitDate
+                    ? calendarDate(person.exitDate)
+                    : null,
                 status: "active",
             },
         });
 
+        const isTeam = person.engagementType === "transfer";
         await prisma.workerEngagement.create({
             data: {
                 workerId: worker.id,
                 organizationId,
                 responsibleUserId: userId,
-                status: "completed",
-                type: "transfer",
-                startDate: person.entryDate ? calendarDate(person.entryDate) : null,
-                completedAt: new Date(),
+                status: isTeam ? "completed" : "pending",
+                type: person.engagementType,
+                startDate: person.entryDate
+                    ? calendarDate(person.entryDate)
+                    : null,
+                endDate: person.exitDate
+                    ? calendarDate(person.exitDate)
+                    : null,
+                completedAt: isTeam ? new Date() : null,
             },
         });
     }
