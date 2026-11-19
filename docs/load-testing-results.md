@@ -2,9 +2,13 @@
 
 All runs used the seed admin login, baseline mode, fifteen seconds per VU level, and one hundred seeded tasks unless noted. Latencies are milliseconds.
 
+**CPU / memory:** Taken from Render metrics for the staging Starter instance (0.5 CPU, 512 MB RAM) during each ladder. Values are the **peak** in that window (not a per-VU sample — each VU step is only 15 seconds, while metrics are ~30–60 second buckets). CPU % is share of the half-core; memory % is of 512 MB.
+
 ## 1 — Clean baseline (100 tasks, no optimizations)
 
 Full task list with no Prisma join strategy, no pagination, and no gzip.
+
+Peak during this ladder: **CPU ~99%**, **memory ~400 MB (~78% of 512 MB)**.
 
 | VUs | Requests | Error rate | p50 | p95 | max |
 |----:|---------:|-----------:|----:|----:|----:|
@@ -18,7 +22,9 @@ Full task list with no Prisma join strategy, no pagination, and no gzip.
 
 ## 2 — Prisma `relationLoadStrategy: "join"` + cursor pagination
 
-Same ladder after join strategy and cursor pagination on `/tasks` (same measured numbers as table 1 in this record).
+Same ladder after join strategy and cursor pagination on `/tasks` (same measured latency numbers as table 1 in this record).
+
+Peak during this ladder: **CPU ~99%**, **memory ~400 MB (~78% of 512 MB)** (same Render window as table 1).
 
 | VUs | Requests | Error rate | p50 | p95 | max |
 |----:|---------:|-----------:|----:|----:|----:|
@@ -34,6 +40,8 @@ Same ladder after join strategy and cursor pagination on `/tasks` (same measured
 
 Express `compression()` enabled while join and pagination were still active.
 
+Peak during this ladder: **CPU ~92%**, **memory ~501 MB (~98% of 512 MB)**.
+
 | VUs | Requests | Error rate | p50 | p95 | max |
 |----:|---------:|-----------:|----:|----:|----:|
 | 20 | 400 | 0.0% | 715 | 1440 | 2547 |
@@ -47,6 +55,8 @@ Express `compression()` enabled while join and pagination were still active.
 ## 4 — Gzip only (join and pagination reverted)
 
 Gzip kept; join strategy and pagination removed. Zero errors through 500 VUs; about 89% errors at 1000 VUs.
+
+Peak during this ladder: **CPU 100%**, **memory ~429 MB (~84% of 512 MB)**.
 
 | VUs | Requests | Error rate | p50 | p95 | max |
 |----:|---------:|-----------:|----:|----:|----:|
@@ -62,6 +72,8 @@ Gzip kept; join strategy and pagination removed. Zero errors through 500 VUs; ab
 
 Same gzip-only stack with the Prisma/`pg` pool raised to max 20 and a 10s connection timeout. Zero errors through 500 VUs; about 87% errors at 1000 VUs.
 
+Peak during this ladder: **CPU 100%**, **memory ~470 MB (~92% of 512 MB)**.
+
 | VUs | Requests | Error rate | p50 | p95 | max |
 |----:|---------:|-----------:|----:|----:|----:|
 | 20 | 198 | 0.0% | 1681 | 3607 | 4359 |
@@ -76,6 +88,8 @@ Same gzip-only stack with the Prisma/`pg` pool raised to max 20 and a 10s connec
 
 Indexes on `assigneeOnly`, `(createdAt, id)`, `(organizationId, createdAt)`, and `(workerEngagementId, createdAt)` on top of the pool-tuned gzip-only stack.
 
+Peak during this ladder: **CPU 100%**, **memory ~484 MB (~95% of 512 MB)**.
+
 | VUs | Requests | Error rate | p50 | p95 | max |
 |----:|---------:|-----------:|----:|----:|----:|
 | 20 | 207 | 0.0% | 1501 | 2899 | 3996 |
@@ -86,6 +100,17 @@ Indexes on `assigneeOnly`, `(createdAt, id)`, `(organizationId, createdAt)`, and
 | 500 | 639 | 0.0% | 29652 | 50660 | 51971 |
 | 1000 | 7308 | 89.3% | 32382 | 56124 | 59093 |
 
+## Resource peaks (summary)
+
+| Run | Peak CPU | Peak memory |
+|-----|---------:|------------:|
+| 1 — Clean baseline | ~99% | ~400 MB (78%) |
+| 2 — Join + pagination | ~99% | ~400 MB (78%) |
+| 3 — Gzip + join + pagination | ~92% | ~501 MB (98%) |
+| 4 — Gzip only | 100% | ~429 MB (84%) |
+| 5 — Pool max 20 | 100% | ~470 MB (92%) |
+| 6 — Issue indexes | 100% | ~484 MB (95%) |
+
 ## Conclusion
 
-Across these runs, query shape, gzip, pool size, and indexes did not remove the cliff at 1000 virtual users on a single Render Starter instance. The bottleneck is single-instance CPU and memory. Next step is horizontal scaling — add a second Starter instance so load can be balanced.
+**Plain version:** We tried several backend tweaks (query changes, gzip, bigger DB pool, indexes). None of them stopped failures at 1000 concurrent users. Staging runs on **one** small Render Starter box (0.5 CPU, 512 MB). Under that load, CPU hits roughly 90–100% and memory climbs into the high hundreds of MB (up to ~98%). So the machine itself is full — that is why requests fail. The next move is to run **two** Starter instances so traffic can be split between them.
