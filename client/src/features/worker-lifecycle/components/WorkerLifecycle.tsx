@@ -34,16 +34,9 @@ import {
   type SetStateAction,
 } from 'react';
 import { QuestionnaireSendDialog } from '@/features/questionnaire/QuestionnaireSendDialog';
-import {
-  EXTRA_WORKER_COLUMN_OPTIONS,
-  type ExtraColumnSort,
-  type ExtraWorkerColumnId,
-  type WorkerSortColumnId,
-} from '../consts/extra-worker-columns';
-import {
-  nextExtraColumnSort,
-  sortWorkersByExtraColumn,
-} from '../utils/extraColumnSort';
+import { EXTRA_WORKER_COLUMN_OPTIONS } from '../consts/extra-worker-columns';
+import { sortWorkersByExtraColumn } from '../utils/extraColumnSort';
+import { useWorkerTablePrefs } from '../hooks/useWorkerTablePrefs';
 import GreetingHeader from './GreetingHeader';
 import ProjectItem, { type WorkerSelection } from './ProjectItem';
 import { WorkerSidebar } from './WorkerSidebar';
@@ -66,8 +59,6 @@ function WorkerLifeCycle() {
   } = useHome();
   const [isWorkerSidebarOpen, setIsWorkerSidebarOpen] = useState(false);
   const [headerScrolled, setHeaderScrolled] = useState(false);
-  const [extraColumns, setExtraColumns] = useState<ExtraWorkerColumnId[]>([]);
-  const [columnSort, setColumnSort] = useState<ExtraColumnSort | null>(null);
   const [questionnaireEngagementId, setQuestionnaireEngagementId] = useState<
     string | null
   >(null);
@@ -100,6 +91,8 @@ function WorkerLifeCycle() {
     pendingResponsible.size > 0;
   const { employees, isTeamMode, selectedTypes, filteredWorkers, toggleType } =
     useWorkerFilter(workers, user?.id, user?.organizationId);
+  const { extraColumns, columnSort, addExtraColumn, toggleColumnSort } =
+    useWorkerTablePrefs(user?.id, user?.organizationId);
   const availableExtraColumns = EXTRA_WORKER_COLUMN_OPTIONS.filter(
     (option) => !extraColumns.includes(option.id)
   );
@@ -107,14 +100,6 @@ function WorkerLifeCycle() {
     () => sortWorkersByExtraColumn(filteredWorkers, columnSort),
     [filteredWorkers, columnSort]
   );
-  const addExtraColumn = (id: ExtraWorkerColumnId) => {
-    setExtraColumns((previous) =>
-      previous.includes(id) ? previous : [...previous, id]
-    );
-  };
-  const toggleColumnSort = (column: WorkerSortColumnId) => {
-    setColumnSort((previous) => nextExtraColumnSort(previous, column));
-  };
   const showAddColumn = availableExtraColumns.length > 0;
   const addColumnOnLastFixed = showAddColumn && extraColumns.length === 0;
 

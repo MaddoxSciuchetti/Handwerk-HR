@@ -1,16 +1,40 @@
-# React + Vite
+# Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + Vite SPA for Handwerk-HR. The frontend docs entry is [`docs/frontend/Intro.md`](../docs/frontend/Intro.md).
 
-Currently, two official plugins are available:
+## Commands (from `client/`)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+| Command                             | Purpose                                   |
+| ----------------------------------- | ----------------------------------------- |
+| `npm run dev`                       | Vite dev server (`http://localhost:5173`) |
+| `npm run format`                    | Prettier write                            |
+| `npm run lint` / `npm run lint:src` | ESLint                                    |
+| `npm run typecheck`                 | `tsc --noEmit`                            |
+| `npm run test:unit`                 | Vitest unit tests                         |
+| `npm run test:coverage`             | Unit tests + coverage                     |
+| `npm run build`                     | Production build                          |
+| `npm run analyze`                   | Bundle analyze (`ANALYZE=1`)              |
 
-## React Compiler
+Optional local API override in `.env`:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```
+VITE_API_URL=http://localhost:3000
+```
 
-## Expanding the ESLint configuration
+## Recurring review checks
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Before merge, re-check routes, mentions, and leftover modules. The living checklist and findings log:
+
+→ [`docs/review.md`](../docs/review.md)
+
+## Styling
+
+Shared color / surface / status tokens are CSS variables in [`src/App.css`](./src/App.css) (Tailwind + shadcn primitives). There is no separate design-token frame doc.
+
+## Related
+
+- Project decisions (fuller): [`docs/clean-code-testing/decisions.md`](../docs/clean-code-testing/decisions.md)
+- Frontend-only extras: [`decisions.md`](./decisions.md)
+- Architecture / folder rules: [`docs/clean-code-testing/style-guide.md`](../docs/clean-code-testing/style-guide.md)
+- Performance / web-vitals: [`docs/frontend/optimization.md`](../docs/frontend/optimization.md)
+- Root setup and env: [`README.md`](../README.md)

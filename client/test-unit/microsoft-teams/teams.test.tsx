@@ -402,9 +402,11 @@ describe('Teams sending', () => {
       name: 'Kanäle suchen',
     });
     await user.type(search, 'Office');
-    expect(
-      screen.queryByRole('checkbox', { name: 'Site · Crew' })
-    ).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('checkbox', { name: 'Site · Crew' })
+      ).not.toBeInTheDocument()
+    );
     await user.click(
       screen.getByRole('checkbox', { name: 'Office · General' })
     );

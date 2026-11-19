@@ -15,12 +15,14 @@ Jobs reuse each environment’s existing `CRON_SECRET` on the API. They are crea
 
 ## Rollout
 
-1. Deploy the migration and application (pre-deploy Prisma migrate as usual).
+1. Deploy the migration and application (Render auto-deploy: build → Prisma migrate pre-deploy → start — see [`docs/backend/ci.cd.md`](../docs/backend/ci.cd.md#deploy-render-auto-deploy--prisma-migrate)).
 2. Check that `POST /internal/cron/anniversary-reminders` returns 401 without the secret, and `{ processed: 0, succeeded: 0, failed: 0 }` with the secret on a day with no due jubilees.
 3. Create the cron with `configure-anniversary-cron.py`, set staging `ANNIVERSARY_REMINDERS_ENABLED=true`, resume it, and verify a test jubilee email.
 4. Enable and resume production the same way.
 
 The Docker command is `/bin/sh /etc/secrets/anniversary-reminders.sh`. The script is uploaded through Render secret files and reads credentials from environment variables at runtime. HTTP errors, including partial execution failure (503), fail the cron run.
+
+When `SENTRY_DSN` is set, the API also sends a Sentry Crons check-in (`anniversary-reminders`) for each run so missed or failed jobs show up under Sentry → Crons.
 
 ## Pause
 

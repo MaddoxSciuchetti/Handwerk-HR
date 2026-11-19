@@ -1,8 +1,8 @@
-import { CreateDarkModecontext } from '@/context/theme-provider/themecontext';
+import { ThemeControlsContext } from '@/context/theme-provider/themecontext';
 import { useContext } from 'react';
 
 export function useThemeProvider() {
-  const context = useContext(CreateDarkModecontext);
+  const context = useContext(ThemeControlsContext);
   if (!context) {
     throw new Error('theme provider must be used in the context');
   }

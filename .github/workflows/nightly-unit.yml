@@ -1,0 +1,80 @@
+name: Nightly unit tests
+
+on:
+  schedule:
+    # 03:05 UTC daily (~04:05 Europe/Berlin in winter, 05:05 in summer).
+    # Cron bumped from 0 3 to re-activate schedules after public-repo 60-day inactivity disable.
+    - cron: "5 3 * * *"
+  # Explicit inputs so Actions UI shows "Run workflow" (same pattern as e2e-nightly).
+  # Bare `workflow_dispatch:` with 0 prior runs often hides the button in the UI.
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Optional note for this manual run"
+        required: false
+        type: string
+
+concurrency:
+  group: nightly-unit
+  cancel-in-progress: false
+
+jobs:
+  client:
+    name: "Client lint, typecheck & unit tests"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint:src
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm run test:unit
+
+  server:
+    name: "Server typecheck & unit tests"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/ci
+
+      - name: Typecheck
+        run: npm run typecheck
+        env:
+          # tsc on this package has OOMed at the default ~2GB heap on GHA runners
+          NODE_OPTIONS: --max-old-space-size=4096
+
+      - name: Unit tests
+        run: npx jest --testPathPatterns=test-unit
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/ci

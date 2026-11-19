@@ -15,12 +15,14 @@ The jobs use separate random `CRON_SECRET` values, matched to their API service,
 
 ## Rollout
 
-1. Deploy the migration and application to staging using the existing pre-deploy Prisma migration command.
+1. Deploy the migration and application to staging via Render auto-deploy (build → Prisma migrate pre-deploy → start — see [`docs/backend/ci.cd.md`](../docs/backend/ci.cd.md#deploy-render-auto-deploy--prisma-migrate)).
 2. Check that the new endpoint responds with 401 without its secret. Check an authenticated empty batch returns `{ processed: 0, succeeded: 0, failed: 0 }` before creating live schedules.
 3. Set the staging cron's `SCHEDULED_DEACTIVATIONS_ENABLED=true` and resume it. Verify mixed immediate/scheduled tasks in the popup, task date edits, and a due Microsoft simulation task. Crewmeister requires a suitable test account for a live validation.
 4. Deploy to production; verify the endpoint, then enable and resume its cron in the same way.
 
 The Docker command is `/bin/sh /etc/secrets/scheduled-deactivations.sh`. The script is uploaded through Render secret files and reads credentials from environment variables at runtime. It sends an HTTP POST with a 10-second connection timeout and 240-second total timeout. HTTP errors, including partial execution failure (503), fail the cron run; Render run logs show the counts. The API logs individual issue IDs and outcomes. Inspect failed runs and task errors; correct the integration configuration or cancel the schedule as appropriate.
+
+When `SENTRY_DSN` is set, the API also sends a Sentry Crons check-in (`scheduled-deactivations`) for each run so missed or failed jobs show up under Sentry → Crons.
 
 ## Execution limits and recovery
 

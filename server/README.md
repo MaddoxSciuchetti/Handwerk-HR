@@ -1,93 +1,17 @@
-# Server observability
+# Server
 
-This API uses **structured logs** (pino) and **OpenTelemetry traces** so you can find exactly when a request failed and how long each step took.
+Package notes for the Express API in `server/`.
 
-## Logs vs traces
+## Scripts you use most
 
-| | Logs | Traces |
-|---|---|---|
-| What | Discrete events (`event` + `outcome`, errors, access lines) | Timed spans for a request |
-| Why | Search Render for “what happened” | See duration and parent/child work |
-| Where | stdout JSON (pretty locally) | stdout span export; optional OTLP |
+From `server/`:
 
-Both share `requestId` / `traceId` when a request is in flight.
-
-## Correlation
-
-1. Middleware assigns `X-Request-Id` (or reuses the inbound header) and echoes it on the response.
-2. Request context (AsyncLocalStorage) carries `requestId`, `traceId`, optional `userId` / `orgId`.
-3. Logger calls merge that context automatically.
-4. HTTP 500 JSON bodies include `requestId` so a client report maps to Render search.
-
-## File map (one job each)
-
-```
-src/observability/
-  logger.ts           # pino + serializeError
-  requestContext.ts   # AsyncLocalStorage bind/get/update
-  tracing.ts          # OpenTelemetry SDK start/stop
-  redact.ts           # strip secrets from structured fields
-  shutdown.ts         # SIGTERM flush + process error handlers
-  index.ts            # re-exports only
-src/middleware/
-  requestId.middleware.ts
-  accessLog.middleware.ts
-src/utils/cronLog.ts  # cron helpers → shared logger
+```bash
+npm run dev
+npm run typecheck
+npm run test:unit
+npm run migrate:deploy
+npm run loadtest
 ```
 
-`src/index.ts` starts tracing **before** importing Express so auto-instrumentation can patch HTTP.
-
-## Local vs production
-
-- **Development:** pretty logs (`pino-pretty`), simple span processor.
-- **Production / Render:** JSON logs, batch span processor.
-- **Test:** logger silent; tracing not started.
-
-Env vars:
-
-| Variable | Purpose |
-|---|---|
-| `LOG_LEVEL` | pino level (default `debug` locally, `info` in production) |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | If set, also export traces via OTLP HTTP |
-
-## How to log in a new feature
-
-```ts
-import { logger } from "@/observability/logger";
-
-logger.info("Document PDF prepared", {
-  event: "document.pdf_prepared",
-  outcome: "ok",
-  artifactId,
-});
-
-logger.error("Mention mail failed", {
-  event: "task.mention_mail",
-  outcome: "error",
-  issueId,
-  error: serializeError(err),
-});
-```
-
-Prefer clear `event` + `outcome` fields. Do **not** log cookies, passwords, tokens, `Authorization`, or raw webhook bodies — `redact.ts` / pino redact cover common keys, but never put secrets in messages.
-
-## Cron jobs
-
-Use `cronInfo` / `cronWarn` / `cronError` from `src/utils/cronLog.ts`. The job name stays searchable in Render (same habit as before).
-
-## Further reading
-
-- SE_46 deep dive (what shipped + gaps): [`../docs/observability-deep-dive.md`](../docs/observability-deep-dive.md)
-- Incident search on Render: [`../ops/observability.md`](../ops/observability.md)
-
-## Sentry performance + alerts
-
-When `SENTRY_DSN` is set, Sentry owns tracing (our OTEL NodeSDK stays off). Access logs also emit `http.server.duration` / `http.server.5xx` metrics. Create p95 / 5xx monitors in the Sentry UI for `handwerk-hr-server`.
-
-## Load test
-
-From repo root: `node ops/loadtest/run.mjs` (see `ops/loadtest/README.md`). Or `npm run loadtest` in `server/`.
-
-## Next steps (optional)
-
-Caching/Redis for hot reads, paste first ramp numbers into the deep dive, cron Sentry check-ins.
+Prisma schema: `src/prisma/schema.prisma`. Prefer `*.service.ts` for new domain work under `src/services/`.

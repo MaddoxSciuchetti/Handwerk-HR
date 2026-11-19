@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { useDeleteMailTemplate } from '@/features/settings/mail-template/useMailTemplates';
+import { activateTableRowOnKeyDown } from '@/lib/accessible-table-row';
 import { PencilIcon, TrashIcon } from 'lucide-react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { MailTemplateEditState } from './MailTemplateSidebar';
@@ -33,8 +34,13 @@ export function MailTemplateRow({
       {templates.map((template) => (
         <TableRow
           key={template.id}
+          tabIndex={0}
+          aria-label={`${template.name} öffnen`}
           className="group cursor-pointer hover:bg-transparent"
           onClick={() => onOpen(template)}
+          onKeyDown={(event) =>
+            activateTableRowOnKeyDown(event, () => onOpen(template))
+          }
         >
           <TableCell className="whitespace-normal">
             <p className="typo-body-sm text-text-primary">{template.name}</p>

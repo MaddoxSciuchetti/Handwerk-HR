@@ -8,6 +8,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { isProd } from '@/config/env';
+import { useDebounce } from '@/hooks/useDebounce';
 import { ChevronDownIcon } from 'lucide-react';
 import { FETCHDESCRIPTION } from '@/features/all-tasks/consts/query.consts';
 import {
@@ -66,6 +67,7 @@ export function TeamsSendForm({
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [channelPickerOpen, setChannelPickerOpen] = useState(false);
   const [selected, setSelected] = useState<Channel[]>([]);
   const [idempotencyKey] = useState(() => crypto.randomUUID());
@@ -151,7 +153,9 @@ export function TeamsSendForm({
   const connected = connection?.status === 'connected' && connection.ready;
   const filtered =
     channels.data?.channels.filter((channel) =>
-      channel.label.toLocaleLowerCase().includes(search.toLocaleLowerCase())
+      channel.label
+        .toLocaleLowerCase()
+        .includes(debouncedSearch.toLocaleLowerCase())
     ) ?? [];
   const selectedKeys = new Set(selected.map(channelKey));
   const choose = (channel: Channel) =>

@@ -1,7 +1,10 @@
 import { TableCell, TableRow } from '@/components/ui/table';
 import { RowSelectButton } from '@/features/all-tasks/components/ui/RowSelectButton';
+import { workerQueries } from '@/features/worker-task-management/query-options/queries/worker.queries';
 import { LifecycleType } from '@/features/worker-task-management/types/index.types';
+import { activateTableRowOnKeyDown } from '@/lib/accessible-table-row';
 import { cn } from '@/lib/utils';
+import { useQueryClient } from '@tanstack/react-query';
 import type { Dispatch, MouseEvent, SetStateAction } from 'react';
 import type { ExtraWorkerColumnId } from '../consts/extra-worker-columns';
 import { EngagementType, WorkerRecord } from '../types/index.types';
@@ -55,9 +58,14 @@ type ProjectItemProps = ProjectItemSharedProps &
 
 function ProjectItem(props: ProjectItemProps) {
   const { worker, gotopage } = props;
+  const queryClient = useQueryClient();
   const isTeam = props.variant === 'team';
   const form_type = getFirstFormType(worker);
   const fullname = `${worker.firstName} ${worker.lastName}`;
+
+  const prefetchWorkerTasks = () => {
+    void queryClient.prefetchQuery(workerQueries.taskData(worker.id));
+  };
 
   const toggleSelection = (e: MouseEvent) => {
     if (props.variant === 'team') return;
@@ -95,9 +103,14 @@ function ProjectItem(props: ProjectItemProps) {
     ? parseCalendarDate(worker.entryDate ?? '')
     : null;
 
+  const openWorker = () => gotopage(worker.id, form_type, fullname);
+
   return (
     <TableRow
+      tabIndex={0}
+      aria-label={`${fullname} öffnen`}
       className="group cursor-pointer border-0 hover:bg-transparent has-aria-expanded:bg-transparent"
+      onPointerEnter={prefetchWorkerTasks}
       onClick={(event) => {
         const target = event.target;
         if (
@@ -109,8 +122,9 @@ function ProjectItem(props: ProjectItemProps) {
         ) {
           return;
         }
-        gotopage(worker.id, form_type, fullname);
+        openWorker();
       }}
+      onKeyDown={(event) => activateTableRowOnKeyDown(event, openWorker)}
     >
       <TableCell
         className={cn(

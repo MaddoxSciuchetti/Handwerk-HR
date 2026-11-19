@@ -42,15 +42,22 @@ import {
   lazy,
   Suspense,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type Dispatch,
   type SetStateAction,
 } from 'react';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
+import useAuth from '@/features/user-profile/hooks/useAuth';
 import useFilteredData from '../../hooks/useFilteredData';
 import useGetWorkerFiles from '../../hooks/useGetWorkerFiles';
 import useTaskData from '../../hooks/useTaskData';
+import {
+  readTaskPhase,
+  taskPhaseStorageKey,
+  writeTaskPhase,
+} from '../../taskPhaseStorage';
 import { LifecycleType, WorkerTab } from '../../types/index.types';
 import WorkerHeader from '../header/WorkerHeader';
 import { WorkerTabButtons } from '../header/WorkerTabButtons';
@@ -120,6 +127,7 @@ function defaultTabForWorker(workerId: string): WorkerTab {
 
 const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
   const taskQueryClient = useQueryClient();
+  const { user } = useAuth();
   const [selectedTab, setActiveTab] = useState<WorkerTab>(() =>
     defaultTabForWorker(workerId)
   );
@@ -215,14 +223,52 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
     .filter((engagement) => engagement.type === 'offboarding')
     .map((engagement) => engagement.id)
     .join(',')}`;
+  const phaseStorageKey = taskPhaseStorageKey(
+    user?.organizationId,
+    user?.id,
+    workerId
+  );
   const [phaseSelection, setPhaseSelection] = useState<{
+    storageKey: string | null;
     key: string;
     phase: LifecycleType;
   } | null>(null);
+  const rememberedPhase = useMemo(() => {
+    if (
+      phaseSelection &&
+      phaseSelection.key === phaseKey &&
+      (phaseSelection.storageKey === phaseStorageKey ||
+        phaseSelection.storageKey === null)
+    ) {
+      return phaseSelection.phase;
+    }
+    return readTaskPhase(phaseStorageKey);
+  }, [phaseSelection, phaseStorageKey, phaseKey]);
   const taskPhase =
-    phaseSelection?.key === phaseKey
-      ? phaseSelection.phase
-      : taskPhaseForType(currentType);
+    rememberedPhase === 'offboarding' && !hasOffboarding
+      ? taskPhaseForType(currentType)
+      : (rememberedPhase ?? taskPhaseForType(currentType));
+  const selectTaskPhase = (phase: LifecycleType) => {
+    setPhaseSelection({ storageKey: phaseStorageKey, key: phaseKey, phase });
+    writeTaskPhase(phaseStorageKey, phase);
+  };
+
+  useEffect(() => {
+    if (
+      !phaseStorageKey ||
+      !phaseSelection ||
+      phaseSelection.storageKey !== null ||
+      phaseSelection.key !== phaseKey
+    ) {
+      return;
+    }
+    writeTaskPhase(phaseStorageKey, phaseSelection.phase);
+    setPhaseSelection({
+      storageKey: phaseStorageKey,
+      key: phaseKey,
+      phase: phaseSelection.phase,
+    });
+  }, [phaseStorageKey, phaseSelection, phaseKey]);
   const taskEngagements = engagementsForTaskPhase(engagements, taskPhase);
   const taskEngagementIds = new Set(
     taskEngagements.map((engagement) => engagement.id)
@@ -292,7 +338,7 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
     openedTaskLink.current = linkKey;
     setActiveTab('form');
     const phase = taskPhaseForType(linkedEngagement.type);
-    if (phase !== 'team') setPhaseSelection({ key: phaseKey, phase });
+    if (phase !== 'team') selectTaskPhase(phase);
     openForEdit({
       taskId: linkedTask.id,
       title: linkedTask.title,
@@ -493,7 +539,7 @@ const TaskManagement = ({ workerId, taskId }: TaskManagementProps) => {
                     onValueChange={(phase) => {
                       if (phase !== 'onboarding' && phase !== 'offboarding')
                         return;
-                      setPhaseSelection({ key: phaseKey, phase });
+                      selectTaskPhase(phase);
                       handleSetEditModeData([]);
                     }}
                     className="shrink-0"

@@ -1,6 +1,7 @@
 import { Table, TableBody } from '@/components/ui/table';
 import ProjectItem from '@/features/worker-lifecycle/components/ProjectItem';
 import type { WorkerRecord } from '@/features/worker-lifecycle/types/index.types';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -37,26 +38,28 @@ function setup(isChangingType = false, hideTaskColumns = false) {
   const changeType = vi.fn();
   const changeResponsible = vi.fn();
   render(
-    <Table>
-      <TableBody>
-        <ProjectItem
-          worker={worker}
-          hideTaskColumns={hideTaskColumns}
-          gotopage={navigate}
-          isSelected={false}
-          setLargeEditMode={vi.fn()}
-          setEditModeData={vi.fn()}
-          onTypeChange={changeType}
-          isChangingType={isChangingType}
-          responsibleUsers={[
-            { id: 'user-1', firstName: 'Local', lastName: '' },
-            { id: 'user-2', firstName: 'Anna', lastName: 'Example' },
-          ]}
-          onResponsibleChange={changeResponsible}
-          isChangingResponsible={false}
-        />
-      </TableBody>
-    </Table>
+    <QueryClientProvider client={new QueryClient()}>
+      <Table>
+        <TableBody>
+          <ProjectItem
+            worker={worker}
+            hideTaskColumns={hideTaskColumns}
+            gotopage={navigate}
+            isSelected={false}
+            setLargeEditMode={vi.fn()}
+            setEditModeData={vi.fn()}
+            onTypeChange={changeType}
+            isChangingType={isChangingType}
+            responsibleUsers={[
+              { id: 'user-1', firstName: 'Local', lastName: '' },
+              { id: 'user-2', firstName: 'Anna', lastName: 'Example' },
+            ]}
+            onResponsibleChange={changeResponsible}
+            isChangingResponsible={false}
+          />
+        </TableBody>
+      </Table>
+    </QueryClientProvider>
   );
   return { user: userEvent.setup(), navigate, changeType, changeResponsible };
 }
