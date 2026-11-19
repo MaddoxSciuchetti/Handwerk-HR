@@ -6,8 +6,9 @@ subdomains are different sites. SameSite=Lax session cookies set by the API
 are not sent on XHR from the frontend unless requests stay same-origin via
 a /api rewrite (as production already does).
 
-Requires RENDER_API_KEY. Idempotent: skips an existing identical rewrite and
-only updates VITE_API_URL when it is not already /api.
+Requires RENDER_API_KEY. Idempotent: keeps an existing identical rewrite at
+priority 0 (ahead of any SPA fallback) and only updates VITE_API_URL when it
+is not already /api.
 """
 from __future__ import annotations
 
@@ -110,7 +111,24 @@ def ensure_rewrite(frontend_id: str, backend_url: str):
             and item.get("source") == REWRITE_SOURCE
             and item.get("destination") == destination
         ):
-            print(f"rewrite already present: {REWRITE_SOURCE} -> {destination}")
+            route_id = item.get("id")
+            priority = item.get("priority")
+            if route_id is not None and priority != 0:
+                # SPA /* → /index.html must not win first for /api/*.
+                updated = request(
+                    f"/services/{frontend_id}/routes/{route_id}",
+                    "PATCH",
+                    {"priority": 0},
+                )
+                print(
+                    f"moved existing rewrite to priority 0: "
+                    f"{REWRITE_SOURCE} -> {destination} (was {priority})"
+                )
+                return updated.get("headers", updated) if isinstance(updated, dict) else updated
+            print(
+                f"rewrite already present at priority 0: "
+                f"{REWRITE_SOURCE} -> {destination}"
+            )
             return item
     created = request(
         f"/services/{frontend_id}/routes",
