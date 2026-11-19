@@ -1,19 +1,26 @@
 # Load probe
 
-This page explains the concurrent-user load probe for the Express API: what it measures and the staging numbers that were recorded. The script lives at `ops/loadtest/run.mjs`. The probe was added in PR #228. A short empty-list baseline landed on `main` via PR #255.
+The purose of the following probe is to find out the limits of the current backend setup with the route that is being hit by most users and contains the most data on a request.
 
 ## What it measures
 
 The probe hits one API path with N concurrent virtual users (VU) and prints request count, error rate, p50, p95, and max latency. There are two modes:
 
-- baseline — fixed concurrency for a fixed duration
-- ramp — raise concurrency in steps until the error rate or p95 budget is blown
-
 ## Staging results overview
 
 All ladders below used seed admin login, baseline mode, fifteen seconds per VU level, against staging `GET /tasks`. Latencies are milliseconds. CPU and memory peaks are from Render metrics for the staging Starter instance (0.5 CPU, 512 MB RAM) during each ladder — peaks in that window, not a per-VU sample.
 
-## Empty task list (PR #255)
+## High-level approach
+
+1. Letting concurrent virtual users send requests to our /tasks backend route
+2. Show the output this produced
+3. Make a certain change that my reasoning thought will speed up the process
+4. Re-run and show the result
+5. Compare results and check if any speed gain occured
+
+## Empty task list
+
+Change: Unchanged `/tasks` with an empty org task list (no 100-task seed). This is the table that reached `main` first.
 
 | VUs  | Requests | Error rate | p50      | p95      | max      |
 | ---- | -------- | ---------- | -------- | -------- | -------- |
@@ -25,15 +32,15 @@ All ladders below used seed admin login, baseline mode, fifteen seconds per VU l
 | 500  | 1007     | 0%         | 10174 ms | 13987 ms | 40389 ms |
 | 1000 | 1409     | 7.6%       | 23317 ms | 31286 ms | 32270 ms |
 
-First errors at 1000 VUs. Max outliers at 20/500 are not typical of the p95.
+Observation: First errors at 1000 VUs. Max outliers at 20/500 are not typical of the p95.
 
 ## 100 seeded tasks
 
-Every run below used one hundred seeded tasks. These tables lived on `staging` and were missing from `main` until restored into this page.
+Unless noted, each run below used one hundred seeded tasks. These six tables lived on `staging` and were missing from `main` until restored into this page.
 
 ### 1 — Clean baseline (100 tasks, no optimizations)
 
-Full task list with no Prisma join strategy, no pagination, and no gzip (`Accept-Encoding: identity`). Confirmed 100 tasks (~116 KB). Ran 2026-11-19 on staging. Staging still had pool max 20.
+Change: Full task list with no Prisma join strategy, no pagination, and no gzip (`Accept-Encoding: identity`). Confirmed 100 tasks (~116 KB). Ran 2026-11-19 on staging. Staging still had pool max 20.
 
 | VUs  | Requests | Error rate | p50   | p95   | max   |
 | ---- | -------- | ---------- | ----- | ----- | ----- |
@@ -77,7 +84,7 @@ Change: Express `compression()` enabled while join and pagination were still act
 | 500  | 826      | 0.0%       | 15713 | 20473 | 23579 |
 | 1000 | 2747     | 52.3%      | 33176 | 44847 | 55263 |
 
-Observation: Peak during this ladder: CPU ~92%, memory ~501 MB (~98% of 512 MB).
+Obsevation: Peak during this ladder: CPU ~92%, memory ~501 MB (~98% of 512 MB).
 
 ### 4 — Gzip only (join and pagination reverted)
 

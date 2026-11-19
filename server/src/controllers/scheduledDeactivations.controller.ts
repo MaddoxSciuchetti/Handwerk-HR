@@ -17,8 +17,12 @@ import {
     cronInfo,
     serializeCronError,
 } from "@/utils/cronLog";
+import { withCronSentryCheckIn } from "@/utils/withCronSentryCheckIn";
 
 export { requireCronSecret };
+
+/** Matches production Render cron (`ops/scheduled-deactivations.md`), UTC. */
+const DEACTIVATION_CRON_SCHEDULE = "*/5 * * * *";
 
 const JOB = "scheduled-deactivation";
 export const getDeactivationSchedule = catchErrors(async (req, res) => {
@@ -50,107 +54,125 @@ export const patchDeactivationSchedule = catchErrors(async (req, res) => {
     res.json({ success: true, data });
 });
 export const postScheduledDeactivations = catchErrors(async (_req, res) => {
-    const now = new Date();
-    const berlinDay = berlinToday(now);
-    const issues = await prisma.issue.findMany({
-        where: {
-            sequence: { in: [...DEACTIVATION_SEQUENCES] },
-            status: { in: [...executableStatuses] },
-            scheduledDeactivateAt: {
-                lt: new Date(`${berlinDay}T00:00:00Z`),
-            },
-            AND: [
-                {
-                    OR: [
-                        { deactivationClaimUntil: null },
-                        { deactivationClaimUntil: { lte: now } },
+    const data = await withCronSentryCheckIn(
+        {
+            monitorSlug: "scheduled-deactivations",
+            schedule: DEACTIVATION_CRON_SCHEDULE,
+            // Render allows up to ~240s HTTP; batch work stops starting after 2 minutes.
+            maxRuntimeMinutes: 5,
+            checkinMarginMinutes: 5,
+            timezone: "UTC",
+        },
+        async () => {
+            const now = new Date();
+            const berlinDay = berlinToday(now);
+            const issues = await prisma.issue.findMany({
+                where: {
+                    sequence: { in: [...DEACTIVATION_SEQUENCES] },
+                    status: { in: [...executableStatuses] },
+                    scheduledDeactivateAt: {
+                        lt: new Date(`${berlinDay}T00:00:00Z`),
+                    },
+                    AND: [
+                        {
+                            OR: [
+                                { deactivationClaimUntil: null },
+                                { deactivationClaimUntil: { lte: now } },
+                            ],
+                        },
                     ],
+                    workerEngagement: { isNot: null },
                 },
-            ],
-            workerEngagement: { isNot: null },
-        },
-        select: {
-            id: true,
-            scheduledDeactivateByUserId: true,
-            workerEngagement: { select: { organizationId: true } },
-        },
-        orderBy: [{ updatedAt: "asc" }, { id: "asc" }],
-        take: 25,
-    });
-    const results: boolean[] = [];
-    const deadline = Date.now() + 120_000;
-    const queue = [...issues];
-    const execute = async (issue: (typeof issues)[number]) => {
-        const organizationId = issue.workerEngagement?.organizationId ?? null;
-        try {
-            if (!issue.workerEngagement || !issue.scheduledDeactivateByUserId) {
-                throw new Error(
-                    "Geplante Deaktivierung ohne Organisation oder Benutzer.",
-                );
-            }
-            const result = await runIssueSequence({
-                issueId: issue.id,
-                organizationId: issue.workerEngagement.organizationId,
-                actorUserId: issue.scheduledDeactivateByUserId,
-                scheduled: true,
+                select: {
+                    id: true,
+                    scheduledDeactivateByUserId: true,
+                    workerEngagement: { select: { organizationId: true } },
+                },
+                orderBy: [{ updatedAt: "asc" }, { id: "asc" }],
+                take: 25,
             });
-            if (result.status === "completed") {
-                cronInfo(JOB, {
-                    event: "task_succeeded",
-                    outcome: "ok",
-                    berlinDay,
-                    issueId: issue.id,
-                    organizationId,
-                    actorUserId: issue.scheduledDeactivateByUserId,
-                    ...result,
-                });
-                return true;
-            }
-            cronError(JOB, {
-                event: "task_failed",
-                outcome: "failed",
+            const results: boolean[] = [];
+            const deadline = Date.now() + 120_000;
+            const queue = [...issues];
+            const execute = async (issue: (typeof issues)[number]) => {
+                const organizationId =
+                    issue.workerEngagement?.organizationId ?? null;
+                try {
+                    if (
+                        !issue.workerEngagement ||
+                        !issue.scheduledDeactivateByUserId
+                    ) {
+                        throw new Error(
+                            "Geplante Deaktivierung ohne Organisation oder Benutzer.",
+                        );
+                    }
+                    const result = await runIssueSequence({
+                        issueId: issue.id,
+                        organizationId: issue.workerEngagement.organizationId,
+                        actorUserId: issue.scheduledDeactivateByUserId,
+                        scheduled: true,
+                    });
+                    if (result.status === "completed") {
+                        cronInfo(JOB, {
+                            event: "task_succeeded",
+                            outcome: "ok",
+                            berlinDay,
+                            issueId: issue.id,
+                            organizationId,
+                            actorUserId: issue.scheduledDeactivateByUserId,
+                            ...result,
+                        });
+                        return true;
+                    }
+                    cronError(JOB, {
+                        event: "task_failed",
+                        outcome: "failed",
+                        berlinDay,
+                        issueId: issue.id,
+                        organizationId,
+                        actorUserId: issue.scheduledDeactivateByUserId,
+                        status: result.status,
+                        message: result.message,
+                    });
+                    return false;
+                } catch (error) {
+                    cronError(JOB, {
+                        event: "task_failed",
+                        outcome: "failed",
+                        berlinDay,
+                        issueId: issue.id,
+                        organizationId,
+                        actorUserId: issue.scheduledDeactivateByUserId,
+                        error: serializeCronError(error),
+                    });
+                    return false;
+                }
+            };
+            await Promise.all(
+                Array.from({ length: Math.min(5, queue.length) }, async () => {
+                    while (queue.length && Date.now() < deadline) {
+                        const issue = queue.shift()!;
+                        results.push(await execute(issue));
+                    }
+                }),
+            );
+            const succeeded = results.filter(Boolean).length;
+            const summary = {
+                processed: results.length,
+                succeeded,
+                failed: results.length - succeeded,
+            };
+            cronInfo(JOB, {
+                event: "run_complete",
+                outcome: summary.failed ? "failed" : "ok",
                 berlinDay,
-                issueId: issue.id,
-                organizationId,
-                actorUserId: issue.scheduledDeactivateByUserId,
-                status: result.status,
-                message: result.message,
+                dueCount: issues.length,
+                ...summary,
             });
-            return false;
-        } catch (error) {
-            cronError(JOB, {
-                event: "task_failed",
-                outcome: "failed",
-                berlinDay,
-                issueId: issue.id,
-                organizationId,
-                actorUserId: issue.scheduledDeactivateByUserId,
-                error: serializeCronError(error),
-            });
-            return false;
-        }
-    };
-    await Promise.all(
-        Array.from({ length: Math.min(5, queue.length) }, async () => {
-            while (queue.length && Date.now() < deadline) {
-                const issue = queue.shift()!;
-                results.push(await execute(issue));
-            }
-        }),
+            return summary;
+        },
+        (summary) => summary.failed === 0,
     );
-    const succeeded = results.filter(Boolean).length;
-    const data = {
-        processed: results.length,
-        succeeded,
-        failed: results.length - succeeded,
-    };
-    cronInfo(JOB, {
-        event: "run_complete",
-        outcome: data.failed ? "failed" : "ok",
-        berlinDay,
-        dueCount: issues.length,
-        ...data,
-    });
     // Signal partial failure to the cron command while retaining successful work.
     res.status(data.failed ? 503 : 200).json(data);
 });

@@ -11,7 +11,15 @@ Feel free to propose improvements to the pages below so this project stays maint
 - Information on how the Express HTTP API is designed (mounts, REST habits, JSON, Zod, errors) can be found [here](./api-design.md).
 - Information regarding the database model, performance, backups, and scaling can be found [here](../database/Intro.md).
 
-## Architecture and hosting
+## Architecture
+
+- Information on top-level architecture choices (monolith, TypeScript, Express, Prisma) can be found [here](./architecture.md).
+
+## Hosting
+
+- Information on Render hosting and the move off Neon for Postgres can be found [here](./hosting.md).
+
+## CI/CD
 
 - Information on CI (GitHub Actions) and CD (Render auto-deploy; build → Prisma migrate pre-deploy → start) can be found [here](./ci.cd.md).
 
@@ -20,7 +28,7 @@ Feel free to propose improvements to the pages below so this project stays maint
 - Information on how HTTP work is split across route, controller, and service files can be found [here](./layers.md).
 - Information on clean-code principles with backend examples can be found [here](./principles.md).
 - Information on naming, env access, and folder rules for the server can be found [here](../clean-code-testing/style-guide.md).
-- Notes on why those architecture choices were made can be found [here](../clean-code-testing/decisions.md).
+- Notes on why folder and pattern choices were made can be found [here](../clean-code-testing/decisions.md).
 
 ## Testing
 
@@ -43,6 +51,5 @@ Feel free to propose improvements to the pages below so this project stays maint
 
 ### Observability
 
-- Information on Sentry tracing, error grouping, and alerts alongside UptimeRobot can be found [here](../observability-deep-dive.md).
-- Information on pino structured JSON logging and how to log in a new feature can be found [here](./observability.md).
-- Information on finding a failed request in Render logs can be found [here](../../ops/observability.md).
+- Information on Sentry tracing, error grouping, Crons, alerts, and UptimeRobot can be found [here](./observability.md).
+- Information on pino structured JSON logging and how to find those logs in Render can be found [here](./logging.md).

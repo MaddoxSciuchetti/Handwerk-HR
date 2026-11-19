@@ -28,7 +28,7 @@ docs/
 
 ## Observability
 
-The API uses structured logging and OpenTelemetry tracing (`requestId` / `traceId` in Render logs). Sentry covers API and client exceptions when DSNs are set. Start from the backend documentation entry under `docs/backend/Intro.md` for logging habits, the Render runbook, and the SE deep dive.
+The API uses structured logging and OpenTelemetry tracing (`requestId` / `traceId` in Render logs). Sentry covers API and client exceptions when DSNs are set. Start from `docs/backend/Intro.md` for logging (`logging.md`) and the SE observability write-up (`observability.md`).
 
 ## Prerequisites
 

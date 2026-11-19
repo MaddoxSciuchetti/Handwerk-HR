@@ -2,6 +2,8 @@
 
 This page covers how we keep secrets out of Git, which versions we treat as stable, and what happens when a vulnerability is found. It lives under backend docs because the API holds secrets, auth, and most of the attack surface. Scanning product: [Aikido Security](https://help.aikido.dev/).
 
+![Aikido Security issues for Handwerk-HR on main — critical findings across workflow, dependencies, and code](./aikido-issues.png)
+
 ## Stable versions
 
 The current stable application version is 2.0.0 in both `client/package.json` and `server/package.json`. Node is major 20 (CI uses `"20"`). Express is `^5.1.0`, Prisma Client `^7.3.0`, React `^19.2.0`, and Sentry for the API `^11.12.0`. When you report a finding or open a PR, assume this stack unless the PR itself bumps a version.

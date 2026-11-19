@@ -22,6 +22,8 @@ Jobs reuse each environment’s existing `CRON_SECRET` on the API. They are crea
 
 The Docker command is `/bin/sh /etc/secrets/anniversary-reminders.sh`. The script is uploaded through Render secret files and reads credentials from environment variables at runtime. HTTP errors, including partial execution failure (503), fail the cron run.
 
+When `SENTRY_DSN` is set, the API also sends a Sentry Crons check-in (`anniversary-reminders`) for each run so missed or failed jobs show up under Sentry → Crons.
+
 ## Pause
 
 Suspend the Render cron job, or set `ANNIVERSARY_REMINDERS_ENABLED=false`.

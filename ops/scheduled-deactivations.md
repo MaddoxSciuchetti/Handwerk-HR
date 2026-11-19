@@ -22,6 +22,8 @@ The jobs use separate random `CRON_SECRET` values, matched to their API service,
 
 The Docker command is `/bin/sh /etc/secrets/scheduled-deactivations.sh`. The script is uploaded through Render secret files and reads credentials from environment variables at runtime. It sends an HTTP POST with a 10-second connection timeout and 240-second total timeout. HTTP errors, including partial execution failure (503), fail the cron run; Render run logs show the counts. The API logs individual issue IDs and outcomes. Inspect failed runs and task errors; correct the integration configuration or cancel the schedule as appropriate.
 
+When `SENTRY_DSN` is set, the API also sends a Sentry Crons check-in (`scheduled-deactivations`) for each run so missed or failed jobs show up under Sentry → Crons.
+
 ## Execution limits and recovery
 
 Each request selects up to 25 tasks with five concurrent executions and stops starting additional tasks after two minutes. Oldest-updated due tasks run first, so repeated failures do not starve other dates. Each external request times out after ten seconds. Terminal tasks are excluded.
