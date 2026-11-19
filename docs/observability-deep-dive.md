@@ -100,15 +100,15 @@ Target: `https://bsb-onboarding-backend-staging.onrender.com/tasks`
 Auth: seed admin (`admin@example.com`), one login then cookie reuse  
 Mode: `baseline`, `LOADTEST_DURATION_MS=15000`, `LOADTEST_ALLOW_NON_LOCAL=1`
 
-| VUs | Requests | Error rate | p50 | p95 | max |
-|-----|----------|------------|-----|-----|-----|
-| 20 | 721 | 0% | 395 ms | 778 ms | 40087 ms |
-| 50 | 709 | 0% | 1049 ms | 1591 ms | 2026 ms |
-| 100 | 695 | 0% | 2266 ms | 3070 ms | 3868 ms |
-| 150 | 751 | 0% | 3502 ms | 4210 ms | 5388 ms |
-| 200 | 712 | 0% | 4816 ms | 6642 ms | 7740 ms |
-| 500 | 1007 | 0% | 10174 ms | 13987 ms | 40389 ms |
-| 1000 | 1409 | 7.6% | 23317 ms | 31286 ms | 32270 ms |
+| VUs  | Requests | Error rate | p50      | p95      | max      |
+| ---- | -------- | ---------- | -------- | -------- | -------- |
+| 20   | 721      | 0%         | 395 ms   | 778 ms   | 40087 ms |
+| 50   | 709      | 0%         | 1049 ms  | 1591 ms  | 2026 ms  |
+| 100  | 695      | 0%         | 2266 ms  | 3070 ms  | 3868 ms  |
+| 150  | 751      | 0%         | 3502 ms  | 4210 ms  | 5388 ms  |
+| 200  | 712      | 0%         | 4816 ms  | 6642 ms  | 7740 ms  |
+| 500  | 1007     | 0%         | 10174 ms | 13987 ms | 40389 ms |
+| 1000 | 1409     | 7.6%       | 23317 ms | 31286 ms | 32270 ms |
 
 Notes:
 
@@ -130,10 +130,10 @@ Notes:
 
 ## Env vars
 
-| Variable | Where | Role |
-|----------|-------|------|
-| `LOG_LEVEL` | API runtime | pino level |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | API runtime | OTLP export when my NodeSDK runs |
-| `SENTRY_DSN` | API runtime | `@sentry/node` (skips my NodeSDK tracing) |
-| `VITE_SENTRY_DSN` | Frontend build | `@sentry/react` |
-| `SENTRY_AUTH_TOKEN` | Frontend CI/build | Optional source maps |
+| Variable                      | Where             | Role                                      |
+| ----------------------------- | ----------------- | ----------------------------------------- |
+| `LOG_LEVEL`                   | API runtime       | pino level                                |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | API runtime       | OTLP export when my NodeSDK runs          |
+| `SENTRY_DSN`                  | API runtime       | `@sentry/node` (skips my NodeSDK tracing) |
+| `VITE_SENTRY_DSN`             | Frontend build    | `@sentry/react`                           |
+| `SENTRY_AUTH_TOKEN`           | Frontend CI/build | Optional source maps                      |
