@@ -104,7 +104,7 @@ Change: Express `compression()` enabled while join and pagination were still act
 | 500  | 826      | 0.0%       | 15713 | 20473 | 23579 |
 | 1000 | 2747     | 52.3%      | 33176 | 44847 | 55263 |
 
-Obsevation: Peak during this ladder: CPU ~92%, memory ~501 MB (~98% of 512 MB).
+Observation: Peak during this ladder: CPU ~92%, memory ~501 MB (~98% of 512 MB).
 
 ### 4 — Gzip only (join and pagination reverted)
 
