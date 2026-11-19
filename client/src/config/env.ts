@@ -83,3 +83,9 @@ export const TEMPLATE_DEMO_MODE =
   isDev() &&
   appMode() !== 'test' &&
   getEnv('VITE_INTEGRATIONS_MOCK', 'false') === 'true';
+
+/** Staging builds only: skip the login form and enter the app as the seed admin. */
+export const STAGING_SKIP_LOGIN =
+  getEnv('VITE_STAGING_SKIP_LOGIN', 'false') === 'true';
+
+export const STAGING_HOME_PATH = '/worker-lifycycle' as const;

@@ -27,6 +27,20 @@ return setAuthCookies({ res, accessToken, refreshToken })
 
 `setAuthCookies` writes both cookies as `httpOnly` with `sameSite: "lax"` (and `secure` outside development).
 
+## Staging skip-login
+
+For demo staging only, the SPA skips the login form and lands on the main shell.
+**Shared entry URL:** `/login` (root `/` redirects there when the flag is on).
+
+| Side | Env | Value |
+| --- | --- | --- |
+| API | `APP_ENV` | `staging` (never `production`) |
+| API | `STAGING_SKIP_LOGIN` | `true` |
+| API | `STAGING_SKIP_LOGIN_EMAIL` | optional, default `admin@example.com` |
+| Frontend build | `VITE_STAGING_SKIP_LOGIN` | `true` |
+
+The client on `/login` calls `POST /auth/v2/staging-session` (no password in the bundle). The flag is ignored when `APP_ENV=production`. Same-origin `/api` rewrite is still required on Render so the session cookies stick.
+
 ## Same-origin API on Render
 
 `onrender.com` is on the [Public Suffix List](https://publicsuffix.org/), so the staging frontend (`bsb-onboarding-frontend-staging.onrender.com`) and API (`bsb-onboarding-backend-staging.onrender.com`) are **different sites**. A `SameSite=Lax` cookie set by the API host is not sent on XHR from the frontend host, so login appears to succeed then the next authenticated call fails.

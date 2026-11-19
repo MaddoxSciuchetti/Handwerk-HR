@@ -12,6 +12,7 @@ authRoutes.get("/microsoft/callback", microsoftCallback);
 authRoutes.post("/v2/register", AuthV2.register);
 authRoutes.post("/v2/register/org", AuthV2.registerOrg);
 authRoutes.post("/v2/login", AuthV2.login);
+authRoutes.post("/v2/staging-session", AuthV2.stagingSession);
 authRoutes.get("/v2/refresh", AuthV2.refresh);
 authRoutes.get("/v2/logout", AuthV2.logout);
 authRoutes.get("/v2/email/verify/:code", AuthV2.verifyEmail);

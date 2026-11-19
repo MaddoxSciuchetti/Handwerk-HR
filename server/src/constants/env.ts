@@ -61,6 +61,25 @@ export const AWS_S3_BUCKET = process.env.AWS_S3_BUCKET?.trim() ?? "";
 export const contactInquiryTo = () =>
     process.env.CONTACT_INQUIRY_TO?.trim() ?? "";
 export const appEnv = () => process.env.APP_ENV?.trim().toLowerCase() ?? "";
+/** Passwordless staging session for local/demo. Never enable on production. */
+export function stagingSkipLoginEnabled() {
+    if (process.env.STAGING_SKIP_LOGIN?.trim().toLowerCase() !== "true") {
+        return false;
+    }
+    const env = appEnv();
+    if (env === "production") return false;
+    return (
+        env === "staging" ||
+        env === "development" ||
+        nodeEnv() === "development"
+    );
+}
+export function stagingSkipLoginEmail() {
+    return (
+        process.env.STAGING_SKIP_LOGIN_EMAIL?.trim().toLowerCase() ||
+        "admin@example.com"
+    );
+}
 export const integrationsMockEnabled = () =>
     process.env.INTEGRATIONS_MOCK?.trim().toLowerCase() === "true";
 export const LOG_LEVEL = process.env.LOG_LEVEL?.trim() ?? "";

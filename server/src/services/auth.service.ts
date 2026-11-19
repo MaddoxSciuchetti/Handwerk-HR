@@ -1,9 +1,14 @@
-import { FRONTENDURL } from "@/constants/env";
+import {
+    FRONTENDURL,
+    stagingSkipLoginEmail,
+    stagingSkipLoginEnabled,
+} from "@/constants/env";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
 
 import {
     CONFLICT,
+    FORBIDDEN,
     INTERNAL_SERVER_ERROR,
     NOT_FOUND,
     TOO_MANY_REQUESTS,
@@ -305,6 +310,47 @@ export const loginUser = async ({
     console.log("user found");
 
     return { user: safeUser, accessToken, refreshToken };
+};
+
+/** Staging-only: mint cookies for the seed admin without a password. */
+export const createStagingSession = async ({
+    userAgent,
+    ipAddress,
+}: {
+    userAgent?: string;
+    ipAddress?: string;
+}) => {
+    appAssert(
+        stagingSkipLoginEnabled(),
+        FORBIDDEN,
+        "Staging skip-login is disabled",
+    );
+
+    const email = stagingSkipLoginEmail();
+    const user = await prisma.user.findUnique({ where: { email } });
+    appAssert(user, NOT_FOUND, `Staging user not found: ${email}`);
+    appAssert(
+        user.status === "active",
+        FORBIDDEN,
+        "Staging user is not active",
+    );
+
+    const { record } = await createRefreshTokenRecord({
+        userId: user.id,
+        userAgent,
+        ipAddress,
+    });
+
+    const refreshToken = signToken(
+        { tokenId: record.id },
+        refreshTokenSignOptions,
+    );
+    const accessToken = signToken({
+        userId: user.id,
+        tokenId: record.id,
+    });
+
+    return { accessToken, refreshToken };
 };
 
 // REFRESH ACCESS TOKEN
