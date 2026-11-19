@@ -32,6 +32,7 @@ npx prisma migrate status --schema=src/prisma/schema.prisma
 
 ## Where to go
 
+- JWT cookies, refresh rotation, and the client 401 interceptor: [server/README.md — Authentication](../../server/README.md#authentication-jwt-cookies)
 - Backend clean-code map (helpers, routes, controllers, services): [clean-code.md](./clean-code.md)
 - How the HTTP layers are organized (route → controller → service), env access, and naming: [Style guide — Server](../clean-code-testing/style-guide.md)
 - Shared clean-code principles (examples lean frontend; use the map above for server): [Principles](../clean-code-testing/principles.md)
