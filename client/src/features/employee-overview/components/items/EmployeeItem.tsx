@@ -2,6 +2,7 @@ import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import TrashButton from '@/components/TrashButton';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { User } from '@/features/user-profile/types/auth.type';
+import { activateTableRowOnKeyDown } from '@/lib/accessible-table-row';
 import { UseMutateFunction } from '@tanstack/react-query';
 import { useState } from 'react';
 import { EmployeeDataArray } from '../../schemas/schema';
@@ -25,11 +26,16 @@ const EmployeeItem = ({
 }: EmployeeItemProps) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const closeDeleteModalHandler = () => setIsDeleteModalOpen(false);
+  const fullName = `${employee.firstName} ${employee.lastName}`;
+  const openEmployee = () => onSelectEmployee(employee);
 
   return (
     <TableRow
+      tabIndex={0}
+      aria-label={`${fullName} öffnen`}
       className="cursor-pointer hover:bg-transparent"
-      onClick={() => onSelectEmployee(employee)}
+      onClick={openEmployee}
+      onKeyDown={(event) => activateTableRowOnKeyDown(event, openEmployee)}
     >
       <TableCell className="min-w-0 truncate whitespace-normal">
         <EmployeeName employee={employee} />
@@ -45,9 +51,7 @@ const EmployeeItem = ({
       </TableCell>
       <TableCell className="text-left" onClick={(e) => e.stopPropagation()}>
         <TrashButton
-          disabled={
-            employee.organizationMembers[0]?.membershipRole === 'admin'
-          }
+          disabled={employee.organizationMembers[0]?.membershipRole === 'admin'}
           description={'Löschen'}
           onClick={() => setIsDeleteModalOpen(true)}
         />

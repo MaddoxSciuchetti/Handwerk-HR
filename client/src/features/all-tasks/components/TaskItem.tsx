@@ -1,12 +1,8 @@
 import { TableCell, TableRow } from '@/components/ui/table';
+import { activateTableRowOnKeyDown } from '@/lib/accessible-table-row';
 import { cn } from '@/lib/utils';
 import { Headset } from 'lucide-react';
-import type {
-  Dispatch,
-  KeyboardEvent,
-  MouseEvent,
-  SetStateAction,
-} from 'react';
+import type { Dispatch, MouseEvent, SetStateAction } from 'react';
 import {
   storedTaskAutomation,
   TASK_AUTOMATION_NONE,
@@ -60,13 +56,6 @@ export function TaskItem({
     });
   };
 
-  const openFromKeyboard = (event: KeyboardEvent<HTMLTableRowElement>) => {
-    if (event.target !== event.currentTarget) return;
-    if (event.key !== 'Enter' && event.key !== ' ') return;
-    event.preventDefault();
-    openTask();
-  };
-
   const toggleSelection = (e: MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
@@ -85,7 +74,7 @@ export function TaskItem({
       tabIndex={0}
       aria-label={`${task.title} öffnen`}
       onClick={openTask}
-      onKeyDown={openFromKeyboard}
+      onKeyDown={(event) => activateTableRowOnKeyDown(event, openTask)}
       className={cn(
         'group cursor-pointer border-0 hover:bg-transparent has-aria-expanded:bg-transparent',
         isAutomationTask && !isContractActionTask && 'automation-task-row'

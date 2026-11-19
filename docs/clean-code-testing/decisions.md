@@ -14,11 +14,11 @@ Reason: Imports are stable and no `../../../../` chains.
 
 ## Client application shape
 
-Frontend-only extras (modal context, React Hook Form preference, client-side pagination) live in [`client/decisions.md`](../../client/decisions.md).
+Top-level frontend toolkit choices (React vs Vue/Angular/Svelte, Vite vs Webpack, npm, TanStack Router) live in [`docs/frontend/architecture.md`](../frontend/architecture.md). Frontend-only extras (modal context, React Hook Form preference, client-side pagination) live in [`client/decisions.md`](../../client/decisions.md).
 
 Decision: Routing is handled with Tanstack Router
 
-Reason: Ensures full type safetey on all routes including first-class search-params for managing the state of the url. Furthermore is it only opionated on the route level but not on the framework level such as Nextjs.
+Reason: Ensures full type safetey on all routes including first-class search-params for managing the state of the url. Furthermore is it only opionated on the route level but not on the framework level such as Nextjs. Fuller toolkit context: [`docs/frontend/architecture.md`](../frontend/architecture.md).
 
 Decision: Domain code is grouped under `features/<kebab-case-name>/` instead of flat folders.
 

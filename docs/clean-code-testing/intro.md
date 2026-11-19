@@ -2,7 +2,7 @@
 
 The aim of this project is to ensure that the user has the highest quality software product. How we approach this problem can best be seen by two core implementations for frontend and backend:
 
-- Frontend — performance as a product requirement (Web Vitals, measured optimizations): [Frontend intro](../frontend/Intro.md)
+- Frontend — performance as a product requirement (Web Vitals, measured optimizations): [Frontend intro](../frontend/Intro.md) and [optimization write-up](../frontend/optimization.md)
 - Backend — observability as a product requirement (structured logs, tracing, Sentry): [Backend intro](../backend/Intro.md)
 
 Each of those pages also lists the core tools used in that half of the stack.
@@ -19,6 +19,7 @@ If you want to add code to this project, improve the README, or change architect
    - Details: [Style guide §3.4 / §7.3](style-guide.md). Server has no `lint` / `format` scripts yet — use `npm --prefix server run typecheck` and the tests below.
 4. Open a pull request and fill the [PR template](../../.github/pull_request_template.md) — PRs without the template will not be reviewed or merged.
 5. CI runs on the PR (lint / typecheck / unit tests) — see [workflow](../backend/ci.cd.md). After review, the PR can be merged. Shipping is Render auto-deploy from the tracked branch; API deploys run build → Prisma migrate (pre-deploy) → start (same doc).
+6. If something goes wrong after your change (especially a schema / migration change), that is your responsibility. You know the change best, so you own fixing it — for example by shipping a correct forward migration, or by coordinating a DB restore when that is the only safe option. Render does not roll migrations back when you redeploy old app code. See [CI/CD deploy](../backend/ci.cd.md) and [backups](../database/backup.md).
 
 ### Context docs
 

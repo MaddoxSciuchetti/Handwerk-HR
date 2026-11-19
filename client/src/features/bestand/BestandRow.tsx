@@ -1,6 +1,7 @@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { TableCell, TableRow } from '@/components/ui/table';
+import { activateTableRowOnKeyDown } from '@/lib/accessible-table-row';
 import { CLOTHING_PRINT_TYPE_LABELS } from '@shared/clothing';
 import { useState } from 'react';
 import type { ClothingStockItem } from './bestand.api';
@@ -68,10 +69,14 @@ export function BestandRow({
     );
   };
 
+  const openItem = () => onOpen?.();
+
   return (
     <TableRow
       data-testid={`bestand-row-${item.id}`}
       data-selected={isSelected ? 'true' : undefined}
+      tabIndex={onOpen ? 0 : undefined}
+      aria-label={onOpen ? `${selectionName} öffnen` : undefined}
       className={
         onOpen
           ? 'group cursor-pointer border-0 hover:bg-transparent'
@@ -82,8 +87,13 @@ export function BestandRow({
           !(event.target instanceof Element) ||
           !event.target.closest('button, input, a, [role="checkbox"]')
         )
-          onOpen?.();
+          openItem();
       }}
+      onKeyDown={
+        onOpen
+          ? (event) => activateTableRowOnKeyDown(event, openItem)
+          : undefined
+      }
     >
       <TableCell className="relative font-medium">
         <div className="absolute inset-y-0 left-0 z-20 flex w-10 items-center justify-center">

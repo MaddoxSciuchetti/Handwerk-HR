@@ -1,27 +1,52 @@
 # Frontend documentation
 
-This folder is the entry for the React + Vite SPA (`client/`). Quality for users shows up here as fast, stable pages — not just features that work once.
+This folder holds everything related to the React + Vite SPA in `client/`. Topics follow the same grouping as SE_45 Web Frontend Technologies.
 
-## Software quality focus (SE frontend)
+The app is a typed SPA: React 19, TypeScript, Vite, TanStack Router, TanStack Query, Tailwind / shadcn-style UI. Day-to-day commands live in `client/package.json` (`npm run dev`, `lint`, `typecheck`, `test:unit`). Full local setup and env vars are in the repository root README.
 
-We treat frontend performance as a product requirement: slow first paint, layout shift, and heavy polling hurt trust the same way a bug does. The core implementation that shows how seriously we take this is measuring Web Vitals (LCP, INP, CLS, and related signals), setting a baseline outside localhost, then shipping optimizations and re-measuring.
+Feel free to propose improvements to the pages below so this project stays maintainable.
 
-Read the evidence and approach: [Frontend optimization deep dive](../optimization-deep-dive.md) (measured PR rounds, what we implemented — SPA + TanStack Router, Context restraint, vendor chunks, lazy loading — and the follow-up Decision/Reason notes for PRs #248–#252: intent preload, worker-row prefetch, search debounce, theme split, etc.).
+## Modern JavaScript, toolkit, and frameworks
 
-Users also work on phones and large monitors, leave mid-flow, and may rely on assistive tech. To keep UX high in that context we persist drafts and prefs on device (`localStorage`), use responsive layouts from touch-sized mobile forms to wide desktop shells, and ship semantic HTML with ARIA. Examples: [questionnaire answer drafts](../../client/src/features/questionnaire/questionnaireAnswerDraft.ts), [responsive questionnaire rows](../../client/src/features/questionnaire/QuestionnaireTableRows.tsx) / [mobile CSS](../../client/src/features/questionnaire/questionnaire-mobile.css), [sidebar ARIA / `sr-only`](../../client/src/components/ui/sidebar.tsx).
+- Information on why we chose TypeScript, React, Vite, npm, TanStack Router, and component-based UI can be found [here](./architecture.md).
+- Information on how features, components, hooks, imports, and env access are organized can be found [here](../clean-code-testing/style-guide.md).
+- Information on feature folders and related code-shape decisions can be found [here](../clean-code-testing/decisions.md).
+- Information on frontend-only extras (modal context, React Hook Form, client pagination) can be found [here](../../client/decisions.md).
+- Information on client commands and joiner notes can be found [here](../../client/README.md).
 
-## Core tools
+## State management and client-side data
 
-| Area | Tools | Why they matter for quality |
-| --- | --- | --- |
-| App runtime | React 19, TypeScript, Vite | Typed SPA with a fast local/prod build path |
-| Routing & data | TanStack Router, TanStack Query, Axios | Predictable navigation and server-state fetching |
-| UI | Tailwind CSS, Radix / shadcn-style primitives | Shared layout and interaction patterns |
-| Forms & validation | React Hook Form, Zod | Consistent client validation |
-| Quality gates | ESLint, Prettier, `tsc` typecheck | Mechanical correctness and format before review |
-| Tests | Vitest, Testing Library | Unit/UI behaviour coverage (`npm run test:unit`) |
-| Performance | `web-vitals`, Vite bundle analyze, Puppeteer-based route checks (see deep dive) | Prove load/interaction quality with numbers |
-| Errors in prod | Sentry (`@sentry/react`) | Group client exceptions and session context |
+- Information on how client state is split (TanStack Query, URL search params, Context, localStorage, auth cookies) can be found [here](./client-side-data.md).
+- Information on narrow Context and modal state decisions can be found [here](../../client/decisions.md).
+- Information on Query defaults and prefetch/hover behavior can be found [here](./optimization.md).
+
+## Modern HTML and CSS
+
+- Information on semantic HTML and accessibility habits (landmarks, labels, `sr-only`, Radix dialogs) can be found [here](./semantic-html.md).
+- Information on the styling stack (Tailwind CSS, Radix / shadcn-style primitives) can be found under `client/src/components/ui/`.
+
+## APIs and asynchronous programming
+
+- Information on how the SPA talks to the Express API (Axios `withCredentials`, TanStack Query) can be found [here](./client-side-data.md) and in `client/src/config/apiClient.ts`.
+- Information on hover/intent work (route preload, worker-row prefetch) can be found [here](./optimization.md).
+
+## Authentication, authorization, and web security
+
+- Information on JWT cookies, refresh rotation, and the client 401 interceptor can be found [here](../backend/authentication.md).
+- Information on where access and refresh tokens live on the client can be found [here](./client-side-data.md).
+- Information on client error monitoring with Sentry can be found in `client/src/instrument.ts`.
+
+## Testing and clean code
+
+- Information on client unit tests and coverage commands can be found [here](../clean-code-testing/tests.md).
+- Information on clean-code principles with examples can be found [here](../clean-code-testing/principles.md).
+- Information on pull request expectations can be found [here](../clean-code-testing/review-checklist.md).
+- Information on recurring review checks (routes, mentions, cleanup) can be found [here](../review.md).
+
+## Deployment and optimization
+
+- Information on how the frontend is hosted and shipped (Render / CI) can be found [here](../backend/ci.cd.md) and in the root README.
+- Information on measured Web Vitals work (baselines, lazy loading, vendor chunks, intent preload, worker-row prefetch, search debounce) can be found [here](./optimization.md).
 
 Commands joiners use most often (from `client/`):
 
@@ -31,16 +56,3 @@ npm run lint
 npm run typecheck
 npm run test:unit
 ```
-
-## Where to go
-
-- How features, components, hooks, imports, and env access are organized: [Style guide — Client](../clean-code-testing/style-guide.md)
-- Clean-code principles with live file examples: [Principles](../clean-code-testing/principles.md)
-- Why the stack and folder layout look this way (fuller write-up): [Decisions](../clean-code-testing/decisions.md)
-- Frontend-only extras (modal context, RHF, client pagination): [client/decisions.md](../../client/decisions.md)
-- Client commands and joiner notes: [client/README.md](../../client/README.md)
-- Recurring review checks (routes, mentions, cleanup): [docs/review.md](../review.md)
-- Frontend performance work, web-vitals notes, and later Decision/Reason items (PRs #248–#252): [optimization-deep-dive.md](../optimization-deep-dive.md)
-- Local setup, env vars, and common scripts: [root README](../../README.md)
-- Client unit tests and coverage (`npm run test:unit`, `test:coverage`): [Tests](../clean-code-testing/tests.md)
-- Pull request expectations: [review checklist](../clean-code-testing/review-checklist.md)
