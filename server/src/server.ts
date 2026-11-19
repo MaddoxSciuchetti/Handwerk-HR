@@ -15,6 +15,10 @@ import * as Sentry from "@sentry/node";
 import { accessLogMiddleware } from "./middleware/accessLog.middleware";
 import authenticate from "./middleware/authenticate";
 import errorHandler from "./middleware/errorHandler";
+import {
+    authLimiter,
+    globalLimiter,
+} from "./middleware/rateLimit.middleware";
 import { requestIdMiddleware } from "./middleware/requestId.middleware";
 import { sentryContextMiddleware } from "./middleware/sentryContext.middleware";
 import requireSubscriptionAccess from "./middleware/requireSubscriptionAccess";
@@ -40,6 +44,9 @@ import { worker } from "./routes/worker.route";
 import { startReturnedContractPolling } from "./services/signedContractReturn.service";
 
 const app = express();
+
+// Render (and local proxies) terminate TLS; need the real client IP for rate limits.
+app.set("trust proxy", 1);
 
 app.use(requestIdMiddleware);
 app.use(sentryContextMiddleware);
@@ -81,6 +88,8 @@ app.post(
     stripeWebhookHandler,
 );
 
+app.use(globalLimiter);
+
 app.get("/", (req, res) => {
     res.send("here");
 });
@@ -90,7 +99,7 @@ app.post("/internal/cron/anniversary-reminders", requireCronSecret, postAnnivers
 
 app.use("/test", testRoutes);
 
-app.use("/auth", authRoutes);
+app.use("/auth", authLimiter, authRoutes);
 app.get("/document-fonts/:filename", getDocumentFont);
 app.use(
     "/automation",

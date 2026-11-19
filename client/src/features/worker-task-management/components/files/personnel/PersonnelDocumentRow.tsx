@@ -71,21 +71,16 @@ export function PersonnelDocumentRow({
         </Button>
       </div>
       {/*
-        Keep the open target as a non-button so the parent `draggable` card can
-        start a drag from the icon/filename (nested buttons block HTML5 drag).
+        Real link (not a button) so the parent `draggable` card can still start
+        a drag from the icon/filename — nested buttons block HTML5 drag.
       */}
-      <div
-        role="link"
-        tabIndex={0}
+      <a
+        href={document.presignedUrl}
+        target="_blank"
+        rel="noreferrer"
         aria-label={`${document.originalFileName} öffnen`}
         className="flex cursor-pointer flex-col items-start gap-2 pr-14 text-left"
-        onClick={() => window.open(document.presignedUrl, '_blank')}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            window.open(document.presignedUrl, '_blank');
-          }
-        }}
+        onClick={(event) => event.stopPropagation()}
       >
         {isImage(document.mimeType) ? (
           <img
@@ -100,7 +95,7 @@ export function PersonnelDocumentRow({
         <span className="block w-full truncate text-sm font-medium">
           {document.originalFileName}
         </span>
-      </div>
+      </a>
     </div>
   );
 }

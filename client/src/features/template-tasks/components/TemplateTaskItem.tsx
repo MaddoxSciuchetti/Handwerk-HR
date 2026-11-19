@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { INTEGRATION_NONE } from '@/features/settings/integrations/integration.consts';
+import { activateTableRowOnKeyDown } from '@/lib/accessible-table-row';
 
 import {
   TemplateTaskFormValues,
@@ -42,6 +43,8 @@ export function TemplateTaskItem({
       {templateTasks.map((task) => (
         <TableRow
           key={task.id}
+          tabIndex={0}
+          aria-label={`${task.taskName} öffnen`}
           className="group cursor-pointer hover:bg-transparent"
           onClick={(event) => {
             if (
@@ -50,6 +53,9 @@ export function TemplateTaskItem({
             )
               openTask(task);
           }}
+          onKeyDown={(event) =>
+            activateTableRowOnKeyDown(event, () => openTask(task))
+          }
         >
           <TableCell className="whitespace-normal">
             <p className="typo-body-sm text-text-primary">{task.taskName}</p>

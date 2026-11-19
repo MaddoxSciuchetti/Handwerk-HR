@@ -28,6 +28,49 @@ We aim to acknowledge a report within 1–2 business days. Critical or high issu
 
 Incoming bodies and params are validated with Zod schemas under [`server/src/schemas/`](../../server/src/schemas/). Controllers parse with those schemas before calling services. Do not trust raw `req.body` fields beyond that boundary.
 
+## Rate limiting
+
+Render / Cloudflare can absorb big DDoS floods. That is not the same as app rate limiting. We still need limits in Express so one IP cannot hammer login or the whole API forever.
+
+We use `express-rate-limit` in `server/src/middleware/rateLimit.middleware.ts`:
+
+- Soft global ceiling: 1000 requests / 15 minutes per IP
+- Tighter on `/auth`: 20 requests / 15 minutes per IP (login, register, refresh, password reset)
+- Skipped for uptime (`GET /`, health), `/webhooks/…`, and `/internal/cron/…`
+- Off in Jest unless `RATE_LIMIT_IN_TEST=1`
+- Over limit → HTTP 429 with a short JSON message
+
+`trust proxy` is set so the limiter sees the real client IP behind Render:
+
+```ts
+// server/src/server.ts
+app.set("trust proxy", 1);
+
+app.use(globalLimiter);
+app.use("/auth", authLimiter, authRoutes);
+```
+
+Rough shape of the limiters:
+
+```ts
+// server/src/middleware/rateLimit.middleware.ts
+export const globalLimiter = createRateLimiter({
+    windowMs: 15 * 60 * 1000,
+    max: 1000,
+    skip: (req) => shouldSkipGlobalRateLimit(req),
+});
+
+export const authLimiter = createRateLimiter({
+    windowMs: 15 * 60 * 1000,
+    max: 20,
+    message: {
+        message: "Too many auth attempts, please try again later",
+    },
+});
+```
+
+Password-reset still has its own domain check (about 2 emails / 5 minutes per user) in `auth.service.ts`. That stays in addition to the HTTP limiters.
+
 ## Habits to keep
 
 Confirm `.env` stays ignored. Prefer the smallest safe dependency upgrade when Aikido or GitHub advisories flag a package. Keep JWT, Stripe, and AWS keys only in Render or Actions secrets.
