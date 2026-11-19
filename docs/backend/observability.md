@@ -1,10 +1,10 @@
 # Observability
 
-This page explains how the API logs and traces requests so you can find when something failed and how long it took. The stack uses pino for structured logs and OpenTelemetry for traces.
+This page explains how the API logs and traces requests so you can find when something failed and how long it took. The stack uses pino for structured logs and Sentry for traces and error grouping. The SE write-up with screenshots lives in [observability-deep-dive.md](../observability-deep-dive.md).
 
 ## Logs and traces
 
-Logs are discrete events (`event`, `outcome`, errors, access lines). They answer what happened and are searchable in Render. Traces are timed spans for a request. They answer how long each step took. Both share `requestId` and `traceId` when a request is in flight.
+Logs are discrete events (`event`, `outcome`, errors, access lines). They answer what happened and are searchable in Render. Traces are timed spans for a request in Sentry Performance. They answer how long each step took. Both share `requestId` (and Sentry tags) when a request is in flight.
 
 ## Assigning request ids
 
@@ -12,7 +12,7 @@ Middleware assigns `X-Request-Id` (or reuses the inbound header) and echoes it o
 
 ## Local versus production
 
-Locally, logs are pretty-printed and spans use a simple processor. On Render, logs are JSON and spans are batched. In tests the logger is silent and tracing is not started.
+Locally, logs are pretty-printed. On Render, logs are JSON. When `SENTRY_DSN` is set, Sentry samples transactions (`tracesSampleRate`) and records the HTTP → Prisma → SQL waterfall. In tests the logger is silent and Sentry is not started.
 
 ## How to log in a new feature
 
