@@ -10,6 +10,7 @@ import {
 import { CREATED, OK, UNAUTHORIZED } from "../constants/http";
 import {
     createAccount,
+    createStagingSession,
     loginUser,
     modifyPassword,
     refreshUserAccessToken,
@@ -62,6 +63,16 @@ export const login = catchErrors(async (req, res) => {
     return setAuthCookies({ res, accessToken, refreshToken })
         .status(OK)
         .json({ message: "Login successful" });
+});
+
+export const stagingSession = catchErrors(async (req, res) => {
+    const { accessToken, refreshToken } = await createStagingSession({
+        userAgent: req.headers["user-agent"],
+        ipAddress: req.ip,
+    });
+    return setAuthCookies({ res, accessToken, refreshToken })
+        .status(OK)
+        .json({ message: "Staging session ready" });
 });
 
 export const refresh = catchErrors(async (req, res) => {

@@ -32,6 +32,9 @@ export const login = async (data: LoginRequest): Promise<LoginResponse> => {
   return API.post<LoginRequest, LoginResponse>('/auth/v2/login', data);
 };
 
+export const createStagingSession = async (): Promise<{ message: string }> =>
+  API.post<unknown, { message: string }>('/auth/v2/staging-session');
+
 export const logout = async (): Promise<{ message: string }> =>
   API.get('/auth/v2/logout');
 export const signup = async (

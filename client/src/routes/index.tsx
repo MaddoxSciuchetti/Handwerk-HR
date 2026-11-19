@@ -1,6 +1,17 @@
 import { LandingPage } from '@/features/landing/LandingPage';
-import { createFileRoute } from '@tanstack/react-router';
+import { STAGING_SKIP_LOGIN } from '@/config/env';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/')({
-  component: LandingPage,
+  beforeLoad: () => {
+    // Staging demo: /login is the shared entry URL (professor link).
+    if (STAGING_SKIP_LOGIN) {
+      throw redirect({ to: '/login' });
+    }
+  },
+  component: HomePage,
 });
+
+function HomePage() {
+  return <LandingPage />;
+}
