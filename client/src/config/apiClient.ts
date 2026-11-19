@@ -1,4 +1,5 @@
 import { FORBIDDEN, UNAUTHORIZED } from '@/constants/http.consts';
+import { markAuthBounceToLogin } from '@/features/auth/stagingSessionGuard';
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 import { API_URL } from './env';
 import queryClient from './query.client';
@@ -28,6 +29,9 @@ const handleTokenRefresh = async (config: AxiosRequestConfig) => {
     return TokenRefreshClient(config);
   } catch {
     queryClient.clear();
+    // Lets staging skip-login distinguish a hard 401 bounce from a normal
+    // /login visit (logout / back), so it does not reload-loop.
+    markAuthBounceToLogin();
     window.location.href = '/login';
   }
 };
