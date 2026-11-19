@@ -54,9 +54,9 @@ Unchanged `/tasks` with an empty org task list (no 100-task seed). This is the t
 
 First errors at 1000 VUs. Max outliers at 20/500 are not typical of the p95.
 
-## Ladder with 100 seeded tasks
+## 100 seeded tasks
 
-Unless noted, each run below used one hundred seeded tasks. These six tables lived on `staging` and were missing from `main` until restored into this page.
+Every run below used one hundred seeded tasks. These tables lived on `staging` and were missing from `main` until restored into this page.
 
 ### 1 — Clean baseline (100 tasks, no optimizations)
 
@@ -92,9 +92,7 @@ Observation: Peak during this ladder: CPU ~99%, memory ~400 MB (~78% of 512 MB).
 
 ### 3 — Gzip on top of join + pagination
 
-Express `compression()` enabled while join and pagination were still active.
-
-Peak during this ladder: CPU ~92%, memory ~501 MB (~98% of 512 MB).
+Change: Express `compression()` enabled while join and pagination were still active.
 
 | VUs  | Requests | Error rate | p50   | p95   | max   |
 | ---- | -------- | ---------- | ----- | ----- | ----- |
@@ -106,11 +104,11 @@ Peak during this ladder: CPU ~92%, memory ~501 MB (~98% of 512 MB).
 | 500  | 826      | 0.0%       | 15713 | 20473 | 23579 |
 | 1000 | 2747     | 52.3%      | 33176 | 44847 | 55263 |
 
+Obsevation: Peak during this ladder: CPU ~92%, memory ~501 MB (~98% of 512 MB).
+
 ### 4 — Gzip only (join and pagination reverted)
 
-Gzip kept; join strategy and pagination removed. Zero errors through 500 VUs; about 89% errors at 1000 VUs.
-
-Peak during this ladder: CPU 100%, memory ~429 MB (~84% of 512 MB).
+Change: Gzip kept; join strategy and pagination removed. Zero errors through 500 VUs; about 89% errors at 1000 VUs.
 
 | VUs  | Requests | Error rate | p50   | p95   | max   |
 | ---- | -------- | ---------- | ----- | ----- | ----- |
@@ -122,11 +120,11 @@ Peak during this ladder: CPU 100%, memory ~429 MB (~84% of 512 MB).
 | 500  | 647      | 0.0%       | 28720 | 51604 | 58228 |
 | 1000 | 6721     | 89.2%      | 38170 | 58597 | 61136 |
 
+Observation: Peak during this ladder: CPU 100%, memory ~429 MB (~84% of 512 MB).
+
 ### 5 — Postgres pool max 20
 
-Same gzip-only stack with the Prisma/`pg` pool raised to max 20 and a 10s connection timeout. Zero errors through 500 VUs; about 87% errors at 1000 VUs.
-
-Peak during this ladder: CPU 100%, memory ~470 MB (~92% of 512 MB).
+Change: Same gzip-only stack with the Prisma/`pg` pool raised to max 20 and a 10s connection timeout. Zero errors through 500 VUs; about 87% errors at 1000 VUs.
 
 | VUs  | Requests | Error rate | p50   | p95   | max   |
 | ---- | -------- | ---------- | ----- | ----- | ----- |
@@ -138,11 +136,11 @@ Peak during this ladder: CPU 100%, memory ~470 MB (~92% of 512 MB).
 | 500  | 653      | 0.0%       | 24803 | 43326 | 46806 |
 | 1000 | 6525     | 87.0%      | 34097 | 53200 | 57783 |
 
+Observation: Peak during this ladder: CPU 100%, memory ~470 MB (~92% of 512 MB).
+
 ### 6 — Issue indexes added
 
-Indexes on `assigneeOnly`, `(createdAt, id)`, `(organizationId, createdAt)`, and `(workerEngagementId, createdAt)` on top of the pool-tuned gzip-only stack.
-
-Peak during this ladder: CPU 100%, memory ~484 MB (~95% of 512 MB).
+Change: Indexes on `assigneeOnly`, `(createdAt, id)`, `(organizationId, createdAt)`, and `(workerEngagementId, createdAt)` on top of the pool-tuned gzip-only stack.
 
 | VUs  | Requests | Error rate | p50   | p95   | max   |
 | ---- | -------- | ---------- | ----- | ----- | ----- |
@@ -154,11 +152,13 @@ Peak during this ladder: CPU 100%, memory ~484 MB (~95% of 512 MB).
 | 500  | 639      | 0.0%       | 29652 | 50660 | 51971 |
 | 1000 | 7308     | 89.3%      | 32382 | 56124 | 59093 |
 
+Observation: Peak during this ladder: CPU 100%, memory ~484 MB (~95% of 512 MB).
+
 ## Resource peaks (summary)
 
 | Run                          | Peak CPU | Peak memory   |
 | ---------------------------- | -------- | ------------- |
-| 1 — Clean baseline           | not captured this run | not captured this run |
+| 1 — Clean baseline           | n/a      | n/a           |
 | 2 — Join + pagination        | ~99%     | ~400 MB (78%) |
 | 3 — Gzip + join + pagination | ~92%     | ~501 MB (98%) |
 | 4 — Gzip only                | 100%     | ~429 MB (84%) |
@@ -167,4 +167,8 @@ Peak during this ladder: CPU 100%, memory ~484 MB (~95% of 512 MB).
 
 ## Conclusion
 
-Several backend tweaks were tried (query changes, gzip, bigger DB pool, indexes). None of them stopped failures at 1000 concurrent users. Staging runs on one small Render Starter box (0.5 CPU, 512 MB). Under that load, CPU hits roughly 90–100% and memory climbs into the high hundreds of MB (up to ~98%). The machine itself is saturated — that is why requests fail. The next move is to run two Starter instances so traffic can be split between them.
+- Several backend tweaks were tried (query changes, gzip, bigger DB pool, indexes).
+- None of them stopped failures at 1000 concurrent users.
+- Current backend status: Staging runs on one small Render Starter box (0.5 CPU, 512 MB). Under that load, CPU hits 90–100% and memory climbs into the high hundreds of MB (up to ~98%).
+- Conclusion: The machine itself is saturated which is why when there is high concurrency requests fail start failing.
+- Next moves forward: Do horizontal scaling would would mean adding more machines to the current setup or vertical scaling which would mean upgrading the plan so that the machine i am currentluy using has more Cores and Memory.
