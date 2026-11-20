@@ -8,6 +8,7 @@ import {
 } from "@/services/integrations/runtime";
 import { applyEngagementMailTemplate } from "@/services/engagementMail";
 import { formatWelcomeEntryDate } from "@/services/welcomeMail";
+import { invalidateTasksListCache } from "@/services/tasksListCache";
 import {
     accessToken,
     assertActiveMember,
@@ -141,6 +142,7 @@ async function finishIfComplete(
             newValue: { status: "done", sendId },
         },
     });
+    await invalidateTasksListCache(actor.organizationId);
 }
 export async function sendTeams(
     actor: Actor,

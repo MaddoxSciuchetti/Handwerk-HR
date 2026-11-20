@@ -1,5 +1,6 @@
 import {
     invalidateTasksListCache,
+    invalidateTasksListCacheForIssue,
     readTasksListCache,
     tasksListCacheKey,
     TASKS_LIST_CACHE_TTL_SECONDS,
@@ -14,6 +15,10 @@ jest.mock("@/lib/redis", () => ({
     redisGetJson: (...args: unknown[]) => mockGetJson(...args),
     redisSetJson: (...args: unknown[]) => mockSetJson(...args),
     redisDel: (...args: unknown[]) => mockDel(...args),
+}));
+
+jest.mock("@/lib/prisma", () => ({
+    prisma: { issue: { findUnique: jest.fn() } },
 }));
 
 beforeEach(() => {
@@ -53,4 +58,22 @@ it("invalidates by deleting the org key", async () => {
 it("skips invalidate when orgId is empty", async () => {
     await invalidateTasksListCache("");
     expect(mockDel).not.toHaveBeenCalled();
+});
+
+it("skips invalidate for assigneeOnly issues", async () => {
+    await invalidateTasksListCacheForIssue({
+        assigneeOnly: true,
+        organizationId: "org-1",
+    });
+    expect(mockDel).not.toHaveBeenCalled();
+});
+
+it("invalidates from engagement org when organizationId is null", async () => {
+    mockDel.mockResolvedValue(undefined);
+    await invalidateTasksListCacheForIssue({
+        assigneeOnly: false,
+        organizationId: null,
+        workerEngagementOrganizationId: "org-2",
+    });
+    expect(mockDel).toHaveBeenCalledWith("tasks:list:org:org-2");
 });

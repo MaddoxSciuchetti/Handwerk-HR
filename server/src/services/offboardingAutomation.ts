@@ -20,6 +20,7 @@ import {
     NOT_LIVE_MESSAGE,
 } from "@/services/integrations/runtime";
 import { microsoftGraphToken } from "@/services/microsoft365Account";
+import { invalidateTasksListCache } from "@/services/tasksListCache";
 
 const GRAPH = "https://graph.microsoft.com/v1.0";
 
@@ -196,6 +197,7 @@ async function markIssueDone(params: {
     issueId: string;
     previousStatus: string;
     actorUserId: string;
+    organizationId: string;
 }) {
     if (params.previousStatus === "done") return;
     await prisma.$transaction(async (tx) => {
@@ -213,6 +215,7 @@ async function markIssueDone(params: {
             },
         });
     });
+    await invalidateTasksListCache(params.organizationId);
 }
 
 async function completeAutomatedTask(params: {
@@ -221,6 +224,7 @@ async function completeAutomatedTask(params: {
     actorUserId: string;
     workerId: string;
     externalId: string;
+    organizationId: string;
 }) {
     await prisma.$transaction(async (tx) => {
         await tx.workerExternalAccount.upsert({
@@ -256,6 +260,9 @@ async function completeAutomatedTask(params: {
             },
         });
     });
+    if (params.previousStatus !== "done") {
+        await invalidateTasksListCache(params.organizationId);
+    }
 }
 
 export async function runTaskAutomation(params: {
@@ -320,6 +327,7 @@ export async function runTaskAutomation(params: {
             issueId: issue.id,
             previousStatus: issue.status,
             actorUserId: params.actorUserId,
+            organizationId: params.organizationId,
         });
         return { status: "completed", alreadyBlocked: false };
     }
@@ -383,6 +391,7 @@ export async function runTaskAutomation(params: {
         actorUserId: params.actorUserId,
         workerId: worker.id,
         externalId: blocked.externalId,
+        organizationId: params.organizationId,
     });
 
     return { status: "completed", alreadyBlocked: blocked.alreadyBlocked };
@@ -450,6 +459,7 @@ export async function confirmArbeitszeugnis(params: {
         issueId: issue.id,
         previousStatus: issue.status,
         actorUserId: params.actorUserId,
+        organizationId: params.organizationId,
     });
     return { status: "completed", alreadyBlocked: false };
 }

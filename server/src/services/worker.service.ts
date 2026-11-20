@@ -28,7 +28,10 @@ import {
   attachMentionFlag,
   unreadMentionInclude,
 } from "@/services/issueMentions";
-import { invalidateTasksListCache } from "@/services/tasksListCache";
+import {
+  invalidateTasksListCache,
+  invalidateTasksListCacheForIssue,
+} from "@/services/tasksListCache";
 import type {
   ArchiveWorkerInput,
   CreateAbsenceInput,
@@ -1293,10 +1296,20 @@ export async function deleteIssue(params: {
 
   const existing = await prisma.issue.findFirst({
     where: { id: issueId, workerEngagementId },
+    include: {
+      workerEngagement: { select: { organizationId: true } },
+    },
   });
   if (!existing) throw new Error("Issue not found");
 
-  return prisma.issue.delete({ where: { id: issueId } });
+  const deleted = await prisma.issue.delete({ where: { id: issueId } });
+  await invalidateTasksListCacheForIssue({
+    assigneeOnly: existing.assigneeOnly,
+    organizationId: existing.organizationId,
+    workerEngagementOrganizationId:
+      existing.workerEngagement?.organizationId ?? null,
+  });
+  return deleted;
 }
 
 export async function createAbsence(params: CreateAbsenceInput) {

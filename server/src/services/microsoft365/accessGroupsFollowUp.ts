@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { invalidateTasksListCache } from "@/services/tasksListCache";
 
 const FOLLOW_UP_TITLE = "Microsoft-Gruppen zuweisen";
 const FOLLOW_UP_DESCRIPTION =
@@ -45,5 +46,6 @@ export async function ensureMicrosoftAccessGroupsFollowUp(params: {
         },
         select: { id: true },
     });
+    await invalidateTasksListCache(params.organizationId);
     return created.id;
 }

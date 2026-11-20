@@ -28,6 +28,8 @@ beforeEach(() => {
         id: "issue",
         status: "open",
         sequence: "microsoft_deactivate_account",
+        organizationId: "org",
+        workerEngagement: { organizationId: "org" },
         scheduledDeactivateAt: new Date("2026-10-30T00:00:00Z"),
         scheduledDeactivateByUserId: "scheduler",
     };

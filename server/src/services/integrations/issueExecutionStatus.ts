@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { invalidateTasksListCacheForIssue } from "@/services/tasksListCache";
 import type { IssueStatus } from "@prisma/client";
 
 export async function executionStatus(
@@ -7,9 +8,15 @@ export async function executionStatus(
     status: IssueStatus,
     message?: string,
 ) {
-    await prisma.$transaction(async (tx) => {
-        const issue = await tx.issue.findUniqueOrThrow({
+    const issue = await prisma.$transaction(async (tx) => {
+        const current = await tx.issue.findUniqueOrThrow({
             where: { id: issueId },
+            select: {
+                status: true,
+                assigneeOnly: true,
+                organizationId: true,
+                workerEngagement: { select: { organizationId: true } },
+            },
         });
         await tx.issue.update({
             where: { id: issueId },
@@ -23,13 +30,19 @@ export async function executionStatus(
                 issueId,
                 actorUserId,
                 action: "issue.updated",
-                oldValue: { status: issue.status },
+                oldValue: { status: current.status },
                 newValue: {
                     status,
                     ...(message ? { automationError: message } : {}),
                 },
             },
         });
+        return current;
+    });
+    await invalidateTasksListCacheForIssue({
+        assigneeOnly: issue.assigneeOnly,
+        organizationId: issue.organizationId,
+        workerEngagementOrganizationId: issue.workerEngagement?.organizationId,
     });
 }
 
