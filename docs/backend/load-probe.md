@@ -145,10 +145,22 @@ Observation: Peak during this ladder: CPU 100%, memory ~484 MB (~95% of 512 MB).
 | 5 — Pool max 20              | 100%     | ~470 MB (92%) |
 | 6 — Issue indexes            | 100%     | ~484 MB (95%) |
 
+## Related backend optimization (not a `/tasks` ladder)
+
+### Cockpit org snapshot — 30s in-memory TTL cache
+
+This is a **backend** optimization, not a frontend one. The cache lives in the Express process (`server/src/utils/ttlCache.ts`, used by `cockpit.service.ts`). It is not the browser and not TanStack Query.
+
+What it does: `GET /cockpit` (and shared panel reads for templates, documents, questionnaire, bestand) loads one org snapshot. On a cache hit within 30 seconds, those reads skip Postgres. Writes that change that data call `invalidateCockpitCache(organizationId)`. Counters are process-local (same tradeoff as skipping Redis — see [architecture.md](./architecture.md)).
+
+Why it is not in the tables above: the load probe measured concurrent `GET /tasks`. Cockpit cache does not change that path. It was shipped with the same staging hardening pass (gzip, pool, indexes) to cut repeated Cockpit DB work under normal UI use.
+
+Do not confuse with frontend caching: the SPA still uses TanStack Query in the browser for request dedupe and stale times. That is a separate layer documented under frontend optimization. The TTL map here is server memory so the API does less SQL when many panel widgets ask for the same org snapshot.
+
 ## Conclusion
 
-- Several backend tweaks were tried (query changes, gzip, bigger DB pool, indexes).
-- None of them stopped failures at 1000 concurrent users.
+- Several backend tweaks were tried (query changes, gzip, bigger DB pool, indexes, plus the Cockpit TTL cache for panel reads).
+- None of them stopped failures at 1000 concurrent users on `/tasks`.
 - Current backend status: Staging runs on one small Render Starter box (0.5 CPU, 512 MB). Under that load, CPU hits 90–100% and memory climbs into the high hundreds of MB (up to ~98%).
 - Conclusion: The machine itself is saturated which is why when there is high concurrency requests fail start failing.
 - Next moves forward: Do horizontal scaling would would mean adding more machines to the current setup or vertical scaling which would mean upgrading the plan so that the machine i am currentluy using has more Cores and Memory.

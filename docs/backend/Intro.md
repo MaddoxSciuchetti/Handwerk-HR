@@ -46,7 +46,7 @@ Feel free to propose improvements to the pages below so this project stays maint
 
 ### Performance & Scaling
 
-- Information on the concurrent-user load probe (how to run it and staging results) can be found [here](./load-probe.md).
+- Information on the concurrent-user load probe (how to run it and staging results), including gzip and the Cockpit 30s server TTL cache, can be found [here](./load-probe.md).
 - Information on the database analysis scripts we ran (`EXPLAIN ANALYZE` before and after indexing) can be found [here](../database/performance.md).
 
 ### Observability
