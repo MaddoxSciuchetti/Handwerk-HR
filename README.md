@@ -57,7 +57,7 @@ Wait a few seconds so Postgres accepts connections (the compose file has no heal
 
 ### 2. Create the API env file
 
-From the **repository root**, copy the example file. Do **not** edit it for the standard setup.
+There is **no** `server/.env` in the repository (it is gitignored). The Quick start uses `server/.env.example`, which already contains every variable the API requires to boot locally. Copy it once; do **not** edit the values for the standard setup.
 
 ```bash
 cp server/.env.example server/.env
@@ -65,8 +65,25 @@ cp server/.env.example server/.env
 
 **Required:** `server/.env` (created by the command above). Without it the API will not start.
 
-**Do not create** `client/.env` for this Quick start. The client already defaults to `http://localhost:3000`.
+These are the values you get (they match `docker-compose.yml`):
 
+| Variable | Value | Purpose |
+| -------- | ----- | ------- |
+| `DATABASE_URL` | `postgresql://handwerk:handwerk@localhost:5432/handwerk_hr` | Local Postgres from step 1 |
+| `PORT` | `3000` | API listen port |
+| `NODE_ENV` | `development` | Local mode |
+| `FRONTEND_URL` | `http://localhost:5173` | Client origin (CORS / redirects) |
+| `APP_ORIGIN` | `http://localhost:5173` | Cookie / origin checks |
+| `JWT_SECRET` | `local-dev-jwt-secret-change-me` | Access-token signing (local only) |
+| `JWT_REFRESH_SECRET` | `local-dev-jwt-refresh-secret-change-me` | Refresh-token signing (local only) |
+| `EMAIL_SENDER` | `no-reply@example.com` | From-address placeholder |
+| `RESEND_API_KEY` | `re_placeholder` | Placeholder so the API boots without real email |
+| `STRIPE_SECRET_KEY` | `sk_test_placeholder` | Placeholder so the API boots without real Stripe |
+| `STRIPE_WEBHOOK_SECRET` | `whsec_placeholder` | Placeholder so the API boots without real webhooks |
+
+Optional extras (`REDIS_URL`, Microsoft, AWS, Sentry, …) are **not** required for this Quick start. Leave them unset.
+
+**Do not create** `client/.env` for this Quick start. The client already defaults to `http://localhost:3000`. Only use `client/.env.example` if the API runs on a different host or port.
 ### 3. Install dependencies, apply migrations, seed the admin user
 
 ```bash
