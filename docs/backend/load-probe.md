@@ -134,6 +134,22 @@ Change: Indexes on `assigneeOnly`, `(createdAt, id)`, `(organizationId, createdA
 
 Observation: Peak during this ladder: CPU 100%, memory ~484 MB (~95% of 512 MB).
 
+### 7 — Redis read-through cache on `GET /tasks`
+
+Change: Org-level Redis/Valkey cache for the shared issue list (`tasks:list:org:{orgId}`, 15s TTL + invalidate on writes), with viewer mention overlay after the cache. Staging API wired to internal `REDIS_URL` on Key Value `bsb-tasks-cache-staging` (`allkeys-lru`). Same probe settings as ladder 6 (100 seeded tasks, seed admin, baseline, 15s/VU). Ran 2026-11-20 Europe/Berlin afternoon.
+
+| VUs  | Requests | Error rate | p50   | p95   | max   |
+| ---- | -------- | ---------- | ----- | ----- | ----- |
+| 20   | 206      | 0.0%       | 1484  | 3325  | 4179  |
+| 50   | 252      | 0.0%       | 2840  | 6842  | 40777 |
+| 100  | 289      | 0.0%       | 4879  | 13400 | 15008 |
+| 150  | 352      | 0.0%       | 7850  | 17707 | 19289 |
+| 200  | 370      | 0.0%       | 13615 | 21791 | 24774 |
+| 500  | 711      | 0.0%       | 22161 | 39414 | 41986 |
+| 1000 | 8088     | 89.7%      | 30667 | 46104 | 54200 |
+
+Observation: Versus ladder 6, mid-load p50/p95 and completed requests improve (e.g. 100 VU p50 7720→4879 ms; 500 VU requests 639→711). At 1000 VUs errors stay ~90% — auth/subscription and Starter CPU still dominate; Redis only shrinks the tasks-query slice. Render CPU/memory peaks for this window were not pulled via CLI; expect similar saturation as ladder 6.
+
 ## Resource peaks (summary)
 
 | Run                          | Peak CPU | Peak memory   |
@@ -144,10 +160,11 @@ Observation: Peak during this ladder: CPU 100%, memory ~484 MB (~95% of 512 MB).
 | 4 — Gzip only                | 100%     | ~429 MB (84%) |
 | 5 — Pool max 20              | 100%     | ~470 MB (92%) |
 | 6 — Issue indexes            | 100%     | ~484 MB (95%) |
+| 7 — Redis `/tasks` cache     | n/a (CLI)| n/a (CLI)     |
 
 ## Conclusion
 
-- Several backend tweaks were tried (query changes, gzip, bigger DB pool, indexes).
+- Several backend tweaks were tried (query changes, gzip, bigger DB pool, indexes, Redis list cache).
 - None of them stopped failures at 1000 concurrent users.
 - Current backend status: Staging runs on one small Render Starter box (0.5 CPU, 512 MB). Under that load, CPU hits 90–100% and memory climbs into the high hundreds of MB (up to ~98%).
 - Conclusion: The machine itself is saturated which is why when there is high concurrency requests fail start failing.
