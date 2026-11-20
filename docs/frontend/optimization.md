@@ -33,33 +33,33 @@ Improvements I would have made:
 
 ### SPA + API + TanStack Router
 
-Decision: Frontend is a React SPA (Vite, `client/`); backend is Express (`server/`). TanStack Router uses typed routes and `autoCodeSplitting: true` in `client/vite.config.js`. Server data goes through TanStack Query ([`client/src/config/query.client.ts`](../../client/src/config/query.client.ts)).
+Change: Frontend is a React SPA (Vite, `client/`); backend is Express (`server/`). TanStack Router uses typed routes and `autoCodeSplitting: true` in `client/vite.config.js`. Server data goes through TanStack Query ([`client/src/config/query.client.ts`](../../client/src/config/query.client.ts)).
 
-Reason: After the first load, navigation stays in the browser; each route can ship as its own chunk; caching/polling work (Round 1) lands in Query.
+Reasoning: After the first load, navigation stays in the browser; each route can ship as its own chunk; caching/polling work (Round 1) lands in Query.
 
 ### Context kept narrow
 
-Decision: Server data is not in Context. Context is only for theme, local modal UI, document-editor values, and small UI primitives — e.g. [`ThemeProvider.tsx`](../../client/src/context/theme-provider/ThemeProvider.tsx), [`themecontext.ts`](../../client/src/context/theme-provider/themecontext.ts), [`ModalProvider.tsx`](../../client/src/features/employee-overview/context/ModalProvider.tsx) ([`client/decisions.md`](../../client/decisions.md)).
+Change: Server data is not in Context. Context is only for theme, local modal UI, document-editor values, and small UI primitives — e.g. [`ThemeProvider.tsx`](../../client/src/context/theme-provider/ThemeProvider.tsx), [`themecontext.ts`](../../client/src/context/theme-provider/themecontext.ts), [`ModalProvider.tsx`](../../client/src/features/employee-overview/context/ModalProvider.tsx) ([`client/decisions.md`](../../client/decisions.md)).
 
-Reason: Theme toggles and modal opens do not re-render unrelated feature trees.
+Reasoning: Theme toggles and modal opens do not re-render unrelated feature trees.
 
 ### Vendor chunks (Round 2)
 
-Decision: React and TanStack go into separate build files (`react-vendor`, `tanstack-vendor` in `client/vite.config.js`).
+Change: React and TanStack go into separate build files (`react-vendor`, `tanstack-vendor` in `client/vite.config.js`).
 
-Reason: Those files stay cacheable across deploys; app chunks change without forcing a full library re-download.
+Reasoning: Those files stay cacheable across deploys; app chunks change without forcing a full library re-download.
 
 ### Lazy TipTap / lazy loading (Rounds 1–2)
 
-Decision: Heavy modules load only when needed. Document editor: [`LazyDocumentMasterEditor.tsx`](../../client/src/features/settings/documents/LazyDocumentMasterEditor.tsx). Worker tabs/dialogs and jszip are also lazy on `/user/…`.
+Change: Heavy modules load only when needed. Document editor: [`LazyDocumentMasterEditor.tsx`](../../client/src/features/settings/documents/LazyDocumentMasterEditor.tsx). Worker tabs/dialogs and jszip are also lazy on `/user/…`.
 
-Reason: Documents list stays light; `/user/…` JS dropped ~40% after Round 2.
+Reasoning: Documents list stays light; `/user/…` JS dropped ~40% after Round 2.
 
 ### Lazy cockpit sections
 
-Decision: Templates, documents, questionnaire, and bestand bodies load via `React.lazy` in [`cockpitSections.tsx`](../../client/src/features/worker-lifecycle/components/cockpitSections.tsx).
+Change: Templates, documents, questionnaire, and bestand bodies load via `React.lazy` in [`cockpitSections.tsx`](../../client/src/features/worker-lifecycle/components/cockpitSections.tsx).
 
-Reason: `/cockpit` no longer pulls all four feature trees into the route chunk up front; compact drawer mode only downloads the section you open.
+Reasoning: `/cockpit` no longer pulls all four feature trees into the route chunk up front; compact drawer mode only downloads the section you open.
 
 ### Follow-up optimizations
 
@@ -67,45 +67,45 @@ These continue the same “keep the frontend light” work after the measured ro
 
 #### Sidebar route preload
 
-Decision: Set `preload="intent"` on left-sidebar `Link`s (including the docs link in `AppSidebar` / `sidebar-menu-item.tsx`).
+Change: Set `preload="intent"` on left-sidebar `Link`s (including the docs link in `AppSidebar` / `sidebar-menu-item.tsx`).
 
-Reason: With Router preload off (and no `defaultPreload` in our `createRouter`), the destination chunk/`loader` work starts only on click — so the user waits after they have already committed. Intent preload starts that work on hover/focus (~50 ms delay) so navigation feels ready sooner, without turning on preload for every link in the app.
+Reasoning: With Router preload off (and no `defaultPreload` in our `createRouter`), the destination chunk/`loader` work starts only on click — so the user waits after they have already committed. Intent preload starts that work on hover/focus (~50 ms delay) so navigation feels ready sooner, without turning on preload for every link in the app.
 
 #### Worker-row prefetch
 
-Decision: On lifecycle row `onPointerEnter` (`ProjectItem`), call `queryClient.prefetchQuery(workerQueries.taskData(worker.id))`.
+Change: On lifecycle row `onPointerEnter` (`ProjectItem`), call `queryClient.prefetchQuery(workerQueries.taskData(worker.id))`.
 
-Reason: Opening a worker always needs `getWorkerById` (`[WORKERBYID, workerId]`). Starting that fetch only after click leaves a blank wait on the detail screen. Prefetch on hover fills the Query cache during the user’s decide time so the next screen can reuse data immediately.
+Reasoning: Opening a worker always needs `getWorkerById` (`[WORKERBYID, workerId]`). Starting that fetch only after click leaves a blank wait on the detail screen. Prefetch on hover fills the Query cache during the user’s decide time so the next screen can reuse data immediately.
 
 #### SharePoint search debounce
 
-Decision: Raise SharePoint search debounce from 120 ms to 300 ms (`SharePointFilePicker`: local `query` → delayed `debounced` → `useQuery`).
+Change: Raise SharePoint search debounce from 120 ms to 300 ms (`SharePointFilePicker`: local `query` → delayed `debounced` → `useQuery`).
 
-Reason: Searching SharePoint/Graph on every keystroke wastes quota and makes the UI stutter under load. Waiting 300 ms after typing stops keeps input snappy while cutting chatter; a trimmed empty string disables the query so blank input does not fire a search.
+Reasoning: Searching SharePoint/Graph on every keystroke wastes quota and makes the UI stutter under load. Waiting 300 ms after typing stops keeps input snappy while cutting chatter; a trimmed empty string disables the query so blank input does not fire a search.
 
 #### Shared debounce hook
 
-Decision: Add `useDebounce(value, delayMs)` in [`client/src/hooks/useDebounce.ts`](../../client/src/hooks/useDebounce.ts) and use 300 ms for Teams channel filter and docs `LocalSearch` (SharePoint keeps its inline timer for now).
+Change: Add `useDebounce(value, delayMs)` in [`client/src/hooks/useDebounce.ts`](../../client/src/hooks/useDebounce.ts) and use 300 ms for Teams channel filter and docs `LocalSearch` (SharePoint keeps its inline timer for now).
 
-Reason: Teams and docs search needed the same “wait until typing pauses” behavior. Copy-pasted timers drift and forget cleanup. One hook enforces one timing policy and clears pending timeouts on change/unmount so rapid typing and unmount do not leak updates.
+Reasoning: Teams and docs search needed the same “wait until typing pauses” behavior. Copy-pasted timers drift and forget cleanup. One hook enforces one timing policy and clears pending timeouts on change/unmount so rapid typing and unmount do not leak updates.
 
 #### Theme context split
 
-Decision: Split theme into `ThemeDocumentProvider` (CSS on `document.documentElement`: `--theme`, `color-scheme`, `.dark`, `localStorage`) and `ThemeControlsProvider` (React state for toggle UI).
+Change: Split theme into `ThemeDocumentProvider` (CSS on `document.documentElement`: `--theme`, `color-scheme`, `.dark`, `localStorage`) and `ThemeControlsProvider` (React state for toggle UI).
 
-Reason: If theme lived only as React state high in the tree, every toggle could re-render large authenticated subtrees just to change colors. Document CSS (`--theme`, `color-scheme`, `.dark`) updates paint without that fan-out; React controls stay for the few toggle UIs (e.g. ProfileDropdown). Document-level `.dark` also covers doorman routes that never mount `Layout` (`/login`, …).
+Reasoning: If theme lived only as React state high in the tree, every toggle could re-render large authenticated subtrees just to change colors. Document CSS (`--theme`, `color-scheme`, `.dark`) updates paint without that fan-out; React controls stay for the few toggle UIs (e.g. ProfileDropdown). Document-level `.dark` also covers doorman routes that never mount `Layout` (`/login`, …).
 
 #### Narrow SidebarContext (planned / documented)
 
-Decision: Scope `SidebarProvider` / `SidebarContext` to the sidebar and real consumers (e.g. ProfileDropdown), not the entire authenticated shell including `Outlet`.
+Change: Scope `SidebarProvider` / `SidebarContext` to the sidebar and real consumers (e.g. ProfileDropdown), not the entire authenticated shell including `Outlet`.
 
-Reason: Almost all `useSidebar` call sites live inside `sidebar.tsx`. Wrapping the whole shell means open/collapse updates can notify page content that does not care. Narrowing the provider keeps that subscription cost on the sidebar region only. Recorded here as intent; ship as a follow-up when ready.
+Reasoning: Almost all `useSidebar` call sites live inside `sidebar.tsx`. Wrapping the whole shell means open/collapse updates can notify page content that does not care. Narrowing the provider keeps that subscription cost on the sidebar region only. Recorded here as intent; ship as a follow-up when ready.
 
 #### Font audit
 
-Decision: No code change; document that custom `@font-face` rules already use `font-display: swap`.
+Change: No code change; document that custom `@font-face` rules already use `font-display: swap`.
 
-Reason: Without `font-display: swap`, custom fonts can block text (FOIT) and hurt LCP/CLS perception. Auditing once and writing it down avoids re-investigating the same question when the files already mitigate that.
+Reasoning: Without `font-display: swap`, custom fonts can block text (FOIT) and hurt LCP/CLS perception. Auditing once and writing it down avoids re-investigating the same question when the files already mitigate that.
 
 ## Interesting
 
@@ -195,17 +195,29 @@ Bundle (local production builds):
 
 ### Changes
 
-Caching defaults: I set queries to stay fresh for 30s and stay in memory for 5 minutes. What happened: the app refetches less often for no reason.
+Change: Set TanStack Query defaults so queries stay fresh for 30s (`staleTime`) and stay in memory for 5 minutes (`gcTime`).
 
-Task polling: I changed background /tasks from every 5s always to every 15s, and only while the tab is visible. What happened: fewer API calls when idle or when the tab is hidden.
+Reasoning: The app refetches less often for no reason.
 
-Lazy TipTap: I made the document editor chunk load only when you open an editor, not on the documents list (see [What we implemented](#what-we-implemented-that-also-keeps-the-frontend-light)). What happened: the list page stays lighter.
+Change: Background `/tasks` polling from every 5s always to every 15s, and only while the tab is visible (`refetchInterval` + `refetchIntervalInBackground: false`).
 
-Web Vitals logging: I added logging for TTFB/LCP/CLS/INP in the console and as performance marks. What happened: I can measure in the browser; this does not speed the page up by itself.
+Reasoning: Fewer API calls when idle or when the tab is hidden.
 
-Bundle analyzer: I added npm run analyze so the build writes a visual chunk report. What happened: easier for me to see what is large in the build.
+Change: Lazy TipTap — document editor chunk loads only when you open an editor via [`LazyDocumentMasterEditor.tsx`](../../client/src/features/settings/documents/LazyDocumentMasterEditor.tsx), not on the documents list (see [What we implemented](#what-we-implemented-that-also-keeps-the-frontend-light)).
 
-Removed unused @react-pdf/renderer: I dropped a dependency the client never imported. What happened: smaller install graph.
+Reasoning: The list page stays lighter.
+
+Change: Web Vitals logging for TTFB/LCP/CLS/INP in the console and as performance marks.
+
+Reasoning: I can measure in the browser; this does not speed the page up by itself.
+
+Change: Bundle analyzer via `npm run analyze` so the build writes a visual chunk report.
+
+Reasoning: Easier to see what is large in the build.
+
+Change: Removed unused `@react-pdf/renderer` (the client never imported it).
+
+Reasoning: Smaller install graph.
 
 ### Description
 
@@ -259,15 +271,25 @@ Local analyze: entry ~659 KB (was ~970); /user/$Id chunk ~216 KB (was ~441).
 
 ### Changes
 
-Vendor chunks: I split React and TanStack into separate files (see [What we implemented](#what-we-implemented-that-also-keeps-the-frontend-light)). What happened: better caching when app code changes.
+Change: Vendor chunks — split React and TanStack into `react-vendor` / `tanstack-vendor` (see [What we implemented](#what-we-implemented-that-also-keeps-the-frontend-light)).
 
-Lazy worker UI: I lazy-loaded heavy worker tabs/dialogs and jszip so they load when needed (see [What we implemented](#what-we-implemented-that-also-keeps-the-frontend-light)). What happened: opening /user/… downloads less up front.
+Reasoning: Better caching when app code changes.
 
-Document fonts: I moved font styles onto the shared editor instead of every app boot. What happened: boot stays lighter; fonts still work for editor and contract review.
+Change: Lazy worker UI — heavy worker tabs/dialogs and jszip load when needed via `React.lazy` (see [What we implemented](#what-we-implemented-that-also-keeps-the-frontend-light)).
 
-Table skeletons: I aligned lifecycle loading placeholders with real row sizes. What happened: less layout jump while the table loads.
+Reasoning: Opening `/user/…` downloads less up front.
 
-Materials upload queue: I queued the file-picker until the lazy tab is mounted (see [Interesting](#interesting)). What happened: upload does not get lost during Suspense.
+Change: Document fonts moved onto the shared editor instead of every app boot.
+
+Reasoning: Boot stays lighter; fonts still work for editor and contract review.
+
+Change: Table skeletons aligned with real lifecycle row sizes.
+
+Reasoning: Less layout jump (CLS) while the table loads.
+
+Change: Materials upload queue — file picker waits until the lazy Materials tab mounts (see [Interesting](#interesting)).
+
+Reasoning: Upload does not get lost during Suspense.
 
 ### Description
 
@@ -281,7 +303,7 @@ Lazy-loading the worker detail surface cut /user/… JS by about 40% (648254 →
 
 ## INP (after both PRs)
 
-Measured 2026-11-16 with one click per route. No before-PR INP.
+Measured with one click per route on production. No before-PR INP.
 
 | Route               | INP (ms) |
 | ------------------- | -------: |
@@ -293,21 +315,15 @@ Measured 2026-11-16 with one click per route. No before-PR INP.
 
 ### Changes
 
-I re-ran production with a real click after each load so INP could be recorded.
+Change: Re-ran production with a real click after each load so INP could be recorded.
 
-### Description
-
-This pass only fills the missing INP column on current production after both PRs.
-
-### Learning
-
-INP needs a real interaction; load-only benches leave it as n/a. These lab clicks all stayed under 200 ms on current production.
+Reasoning: This pass only fills the missing INP column on current production after both PRs. INP needs a real interaction; load-only benches leave it as n/a. These lab clicks all stayed under 200 ms.
 
 ---
 
 ## Follow-ups #248–#252 — Round 3
 
-Change: Re-measure after the follow-up Decision/Reason items (#248–#252) in [Follow-up optimizations](#follow-up-optimizations) (sidebar intent preload, worker-row prefetch, SharePoint/shared search debounce, theme context split). Before = after my #224 (Round 2 After; INP from the [INP pass](#inp-after-both-prs) on 2026-11-16, production, single lab run). After = staging lab average of 3 hard navigations per route on 2026-11-20 (Europe/Berlin).
+Change: Re-measure after the follow-up items in [Follow-up optimizations](#follow-up-optimizations) (`preload="intent"`, `prefetchQuery` on worker rows, SharePoint/`useDebounce` search debounce, `ThemeDocumentProvider` / `ThemeControlsProvider` split). Before = after Round 2 (INP from the [INP pass](#inp-after-both-prs) on production, single lab run). After = staging lab average of 3 hard navigations per route.
 
 Core vitals (ms; CLS unitless):
 
@@ -341,4 +357,4 @@ JS transferred (encoded bytes):
 
 Task poller in 16s: 1 → 1 on /worker-lifycycle and /cockpit.
 
-Observation: /cockpit and /settings/documents show clear FCP/LCP gains in this average (−217 ms / −175 ms LCP). /cockpit JS transferred dropped about 18%. /bestand stayed roughly flat. /user/… warm LCP in runs 2–3 was ~818 ms (below Round 2’s 1076); the 3-run average stayed near baseline because run 1 was a cold outlier (1708 ms). /worker-lifycycle painted slower here than Round 2’s single production run — treat that as lab/host noise unless it repeats. CLS stayed in the good band on every route; INP stayed good (all under 200 ms). The Round 1 poller change still held at 1 poll in 16s. Hard-load vitals understate preload/prefetch/debounce; those help navigation and typing more than cold LCP.
+Reasoning: `/cockpit` and `/settings/documents` show clear FCP/LCP gains in this average (−217 ms / −175 ms LCP). `/cockpit` JS transferred dropped about 18%. `/bestand` stayed roughly flat. `/user/…` warm LCP in runs 2–3 was ~818 ms (below Round 2’s 1076); the 3-run average stayed near baseline because run 1 was a cold outlier (1708 ms). `/worker-lifycycle` painted slower here than Round 2’s single production run — treat that as lab/host noise unless it repeats. CLS stayed in the good band on every route; INP stayed good (all under 200 ms). The Round 1 poller change still held at 1 poll in 16s. Hard-load vitals understate `preload`/`prefetchQuery`/debounce; those help navigation and typing more than cold LCP.
