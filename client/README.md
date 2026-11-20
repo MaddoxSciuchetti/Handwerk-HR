@@ -4,16 +4,16 @@ React + Vite SPA for Handwerk-HR. The frontend docs entry is [`docs/frontend/Int
 
 ## Commands (from `client/`)
 
-| Command | Purpose |
-| --- | --- |
-| `npm run dev` | Vite dev server (`http://localhost:5173`) |
-| `npm run format` | Prettier write |
-| `npm run lint` / `npm run lint:src` | ESLint |
-| `npm run typecheck` | `tsc --noEmit` |
-| `npm run test:unit` | Vitest unit tests |
-| `npm run test:coverage` | Unit tests + coverage |
-| `npm run build` | Production build |
-| `npm run analyze` | Bundle analyze (`ANALYZE=1`) |
+| Command                             | Purpose                                   |
+| ----------------------------------- | ----------------------------------------- |
+| `npm run dev`                       | Vite dev server (`http://localhost:5173`) |
+| `npm run format`                    | Prettier write                            |
+| `npm run lint` / `npm run lint:src` | ESLint                                    |
+| `npm run typecheck`                 | `tsc --noEmit`                            |
+| `npm run test:unit`                 | Vitest unit tests                         |
+| `npm run test:coverage`             | Unit tests + coverage                     |
+| `npm run build`                     | Production build                          |
+| `npm run analyze`                   | Bundle analyze (`ANALYZE=1`)              |
 
 Optional local API override in `.env`:
 
@@ -36,5 +36,5 @@ Shared color / surface / status tokens are CSS variables in [`src/App.css`](./sr
 - Project decisions (fuller): [`docs/clean-code-testing/decisions.md`](../docs/clean-code-testing/decisions.md)
 - Frontend-only extras: [`decisions.md`](./decisions.md)
 - Architecture / folder rules: [`docs/clean-code-testing/style-guide.md`](../docs/clean-code-testing/style-guide.md)
-- Performance / web-vitals: [`docs/optimization-deep-dive.md`](../docs/optimization-deep-dive.md)
+- Performance / web-vitals: [`docs/frontend/optimization.md`](../docs/frontend/optimization.md)
 - Root setup and env: [`README.md`](../README.md)

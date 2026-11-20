@@ -390,6 +390,10 @@ model Issue {
   @@index([status])
   @@index([mailTemplateId])
   @@index([scheduledDeactivateAt])
+  @@index([assigneeOnly])
+  @@index([createdAt, id])
+  @@index([organizationId, createdAt])
+  @@index([workerEngagementId, createdAt])
   @@map("issues")
 }
 

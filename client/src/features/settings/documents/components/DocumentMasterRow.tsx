@@ -2,6 +2,7 @@ import { useDrawerStack } from '@/components/ui/drawer-stack';
 import { LazyDocumentMasterEditor } from '../LazyDocumentMasterEditor';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TableCell, TableRow } from '@/components/ui/table';
+import { activateTableRowOnKeyDown } from '@/lib/accessible-table-row';
 import { useNavigate } from '@tanstack/react-router';
 import type { MouseEvent } from 'react';
 import { documentKindLabel } from '../documentMaster.types';
@@ -28,21 +29,25 @@ export function DocumentMasterRow({
     onToggle(master.id);
   };
 
+  const openMaster = () => {
+    if (drawers) {
+      drawers.push(master.name, <LazyDocumentMasterEditor id={master.id} />);
+      return;
+    }
+    void navigate({
+      to: '/settings/documents/$id',
+      params: { id: master.id },
+    });
+  };
+
   return (
     <TableRow
       data-selected={isSelected ? 'true' : undefined}
+      tabIndex={0}
+      aria-label={`${master.name} öffnen`}
       className="group cursor-pointer border-0 hover:bg-transparent"
-      onClick={() =>
-        drawers
-          ? drawers.push(
-              master.name,
-              <LazyDocumentMasterEditor id={master.id} />
-            )
-          : navigate({
-              to: '/settings/documents/$id',
-              params: { id: master.id },
-            })
-      }
+      onClick={openMaster}
+      onKeyDown={(event) => activateTableRowOnKeyDown(event, openMaster)}
     >
       <TableCell className="w-10 !p-0" onClick={toggle}>
         <div className="flex h-full min-h-12 w-10 items-center justify-center">
