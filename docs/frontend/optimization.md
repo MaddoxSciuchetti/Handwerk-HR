@@ -1,300 +1,246 @@
-# Optimization Deep Dive — PRs #223 and #224
+# Frontend optimizations
 
-Production: https://frontendv2-x54r.onrender.com
+What we shipped to keep the SPA light. Measured numbers live in [web-vitals.md](./web-vitals.md) (PRs [#223](https://github.com/MaddoxSciuchetti/Handwerk-HR/pull/223), [#224](https://github.com/MaddoxSciuchetti/Handwerk-HR/pull/224)).
 
-PRs: [#223](https://github.com/MaddoxSciuchetti/Handwerk-HR/pull/223), [#224](https://github.com/MaddoxSciuchetti/Handwerk-HR/pull/224)
+All notes below are Optimizations: first what we changed in the product, then the usual asset checklist. File links point at where it lives if you want to open the code later.
 
-Round 1 = before my #223 vs after my #223.
+## Optimizations — what we implemented
 
-Round 2 = after my #223 vs after my #224.
+### SPA + API + routing
 
-Routes: /worker-lifycycle, /cockpit, /bestand, /settings/documents, /user/…
+Decision: UI is a React app in the browser. API is a separate Express server. Pages can load as separate downloads; server data is cached in the client.
 
----
+Reason: After the first load you stay in the app when you navigate. You do not download the whole product again for every click. Lists and details reuse cached API data instead of refetching every time.
 
-## Purpose
+What happens: Open cockpit → that page’s code loads. Open workers again → data often comes from cache.
 
-The purpose of the below attempts to improve performance is because I want to offer my customers the highest quality in software. I have seen many softwares that have significant first page load times, overall long request response cycles, large layout shifts and much more. To ensure this high quality, my first approach was testing with Google's web vitals LCP, INP and CLS. The difficulty in doing this was first finding out how I can create a baseline and from there on measure if any changes I implemented have an actual effect. I also ensured to avoid pitfalls such as testing the vitals on my localhost.
-
-Once I created the baseline using the Google web vitals library which sends me the vitals from the current page and using Puppeteer to hit the routes I had the right setup to collect all necessary information. Once this baseline was collected I implemented my changes which are described below. I repeated this process for round 2.
-
-Improvements I would have made:
-
-1. Collect an average of baseline values and an average of values once the changes have been implemented. As can be seen some vitals turned out to be some ms slower than before the optimizations I made. One answer could be that I made a bad change. The other could be that there was network noise that caused this result. By creating an average through many tests I would have the better overall picture.
-2. Implement changes step by step. This means e.g. not including the removal of the 3 Minute polling to the changes that should only focus on e.g. LCP. This would have made the PRs cleaner.
-
----
-
-## What we implemented that also keeps the frontend light
-
-### SPA + API + TanStack Router
-
-Decision: Frontend is a React SPA (Vite, `client/`); backend is Express (`server/`). TanStack Router uses typed routes and `autoCodeSplitting: true` in `client/vite.config.js`. Server data goes through TanStack Query ([`client/src/config/query.client.ts`](../../client/src/config/query.client.ts)).
-
-Reason: After the first load, navigation stays in the browser; each route can ship as its own chunk; caching/polling work (Round 1) lands in Query.
+Where: [client/vite.config.js](../../client/vite.config.js), [client/src/config/query.client.ts](../../client/src/config/query.client.ts).
 
 ### Context kept narrow
 
-Decision: Server data is not in Context. Context is only for theme, local modal UI, document-editor values, and small UI primitives — e.g. [`ThemeProvider.tsx`](../../client/src/context/theme-provider/ThemeProvider.tsx), [`themecontext.ts`](../../client/src/context/theme-provider/themecontext.ts), [`ModalProvider.tsx`](../../client/src/features/employee-overview/context/ModalProvider.tsx) ([`client/decisions.md`](../../client/decisions.md)).
+Decision: API data is not stored in React Context. Context is only for small UI things (theme, open/close modal).
 
-Reason: Theme toggles and modal opens do not re-render unrelated feature trees.
+Reason: Context updates can re-render large parts of the screen. Changing theme or opening a modal must not refresh the whole worker table. Server lists stay in the query cache.
+
+What happens: Open “create employee” → only the modal layer updates. Worker rows keep their cached data.
+
+Where: [ModalProvider.tsx](../../client/src/features/employee-overview/context/ModalProvider.tsx), [ThemeProvider.tsx](../../client/src/context/theme-provider/ThemeProvider.tsx), [client/decisions.md](../../client/decisions.md).
 
 ### Vendor chunks (Round 2)
 
-Decision: React and TanStack go into separate build files (`react-vendor`, `tanstack-vendor` in `client/vite.config.js`).
+Decision: Put React and TanStack into their own build files, separate from our feature code.
 
-Reason: Those files stay cacheable across deploys; app chunks change without forcing a full library re-download.
+Reason: Libraries change less often than our screens. The browser can keep those library files and only re-download our app pieces after a deploy.
 
-### Lazy TipTap / lazy loading (Rounds 1–2)
+What happens: You ship a small feature fix → users often keep the React file cached and only fetch the changed app file.
 
-Decision: Heavy modules load only when needed. Document editor: [`LazyDocumentMasterEditor.tsx`](../../client/src/features/settings/documents/LazyDocumentMasterEditor.tsx). Worker tabs/dialogs and jszip are also lazy on `/user/…`.
+Where: [client/vite.config.js](../../client/vite.config.js).
 
-Reason: Documents list stays light; `/user/…` JS dropped ~40% after Round 2.
+### Lazy document editor and worker UI (Rounds 1–2)
+
+Decision: Do not download the heavy document editor or worker tabs until the user opens them.
+
+Reason: List pages stay smaller. Worker detail used to pull a lot of JavaScript up front; after Round 2 that first download dropped by about 40%.
+
+What happens: Documents list loads without the editor. Open an editor → editor code downloads then. Same idea for materials and other heavy worker tabs.
+
+Where: [LazyDocumentMasterEditor.tsx](../../client/src/features/settings/documents/LazyDocumentMasterEditor.tsx), [WorkerTaskManagement.tsx](../../client/src/features/worker-task-management/components/tasks/WorkerTaskManagement.tsx).
 
 ### Lazy cockpit sections
 
-Decision: Templates, documents, questionnaire, and bestand bodies load via `React.lazy` in [`cockpitSections.tsx`](../../client/src/features/worker-lifecycle/components/cockpitSections.tsx).
+Decision: On cockpit, load Templates, Documents, Questionnaire, and Bestand only when that section is used.
 
-Reason: `/cockpit` no longer pulls all four feature trees into the route chunk up front; compact drawer mode only downloads the section you open.
+Reason: Opening cockpit should not download all four areas at once.
 
-### Follow-up optimizations
+What happens: Cockpit shell appears first. Open Templates → that section’s code loads. The others wait.
 
-These continue the same “keep the frontend light” work after the measured rounds above. Entry from the frontend docs: [Intro.md](./Intro.md).
+Where: [cockpitSections.tsx](../../client/src/features/worker-lifecycle/components/cockpitSections.tsx).
 
-#### Sidebar route preload
+### Sidebar route preload
 
-Decision: Set `preload="intent"` on left-sidebar `Link`s (including the docs link in `AppSidebar` / `sidebar-menu-item.tsx`).
+Decision: Hover or focus a main sidebar link → start loading that page a short moment before the click.
 
-Reason: With Router preload off (and no `defaultPreload` in our `createRouter`), the destination chunk/`loader` work starts only on click — so the user waits after they have already committed. Intent preload starts that work on hover/focus (~50 ms delay) so navigation feels ready sooner, without turning on preload for every link in the app.
+Reason: If loading starts only on click, the user waits after they already decided to go. A short head start feels faster without preloading the whole app.
 
-#### Worker-row prefetch
+What happens: Hover “Cockpit” → cockpit code starts loading → click → screen is closer to ready.
 
-Decision: On lifecycle row `onPointerEnter` (`ProjectItem`), call `queryClient.prefetchQuery(workerQueries.taskData(worker.id))`.
+Where: [sidebar-menu-item.tsx](../../client/src/components/ui/sidebar/sidebar-menu-item.tsx), [AppSidebar.tsx](../../client/src/components/ui/sidebar/AppSidebar.tsx).
 
-Reason: Opening a worker always needs `getWorkerById` (`[WORKERBYID, workerId]`). Starting that fetch only after click leaves a blank wait on the detail screen. Prefetch on hover fills the Query cache during the user’s decide time so the next screen can reuse data immediately.
+### Worker-row prefetch
 
-#### SharePoint search debounce
+Decision: Rest the pointer on a worker row → start fetching that worker’s detail in the background.
 
-Decision: Raise SharePoint search debounce from 120 ms to 300 ms (`SharePointFilePicker`: local `query` → delayed `debounced` → `useQuery`).
+Reason: Opening a worker always needs that request. Starting it only after click leaves a blank pause.
 
-Reason: Searching SharePoint/Graph on every keystroke wastes quota and makes the UI stutter under load. Waiting 300 ms after typing stops keeps input snappy while cutting chatter; a trimmed empty string disables the query so blank input does not fire a search.
+What happens: Hover a row → detail request runs quietly → click → next screen often already has the data.
 
-#### Shared debounce hook
+Where: [ProjectItem.tsx](../../client/src/features/worker-lifecycle/components/ProjectItem.tsx).
 
-Decision: Add `useDebounce(value, delayMs)` in [`client/src/hooks/useDebounce.ts`](../../client/src/hooks/useDebounce.ts) and use 300 ms for Teams channel filter and docs `LocalSearch` (SharePoint keeps its inline timer for now).
+### SharePoint search debounce
 
-Reason: Teams and docs search needed the same “wait until typing pauses” behavior. Copy-pasted timers drift and forget cleanup. One hook enforces one timing policy and clears pending timeouts on change/unmount so rapid typing and unmount do not leak updates.
+Decision: Wait about 300 ms after typing stops before searching SharePoint.
 
-#### Theme context split
+Reason: Searching on every keystroke spams the external API and makes typing feel heavy. Waiting until the pause cuts noise.
 
-Decision: Split theme into `ThemeDocumentProvider` (CSS on `document.documentElement`: `--theme`, `color-scheme`, `.dark`, `localStorage`) and `ThemeControlsProvider` (React state for toggle UI).
+What happens: Type “vertrag” quickly → one search after you stop, not one search per letter. Empty box → no search.
 
-Reason: If theme lived only as React state high in the tree, every toggle could re-render large authenticated subtrees just to change colors. Document CSS (`--theme`, `color-scheme`, `.dark`) updates paint without that fan-out; React controls stay for the few toggle UIs (e.g. ProfileDropdown). Document-level `.dark` also covers doorman routes that never mount `Layout` (`/login`, …).
+Where: [SharePointFilePicker.tsx](../../client/src/features/settings/documents/components/SharePointFilePicker.tsx).
 
-#### Narrow SidebarContext (planned / documented)
+### Shared debounce for other search boxes
 
-Decision: Scope `SidebarProvider` / `SidebarContext` to the sidebar and real consumers (e.g. ProfileDropdown), not the entire authenticated shell including `Outlet`.
+Decision: Same “wait ~300 ms after typing” rule for Teams channel filter and docs search, via one shared helper.
 
-Reason: Almost all `useSidebar` call sites live inside `sidebar.tsx`. Wrapping the whole shell means open/collapse updates can notify page content that does not care. Narrowing the provider keeps that subscription cost on the sidebar region only. Recorded here as intent; ship as a follow-up when ready.
+Reason: The same need showed up in more than one place. Separate timers drift and forget cleanup.
 
-#### Font audit
+What happens: Filter Teams channels or search docs → results update after a short pause, same timing everywhere.
 
-Decision: No code change; document that custom `@font-face` rules already use `font-display: swap`.
+Where: [useDebounce.ts](../../client/src/hooks/useDebounce.ts), [TeamsSendAction.tsx](../../client/src/features/microsoft-teams/TeamsSendAction.tsx), [DocumentationPage.tsx](../../client/src/features/documentation/DocumentationPage.tsx).
 
-Reason: Without `font-display: swap`, custom fonts can block text (FOIT) and hurt LCP/CLS perception. Auditing once and writing it down avoids re-investigating the same question when the files already mitigate that.
+### Theme context split
+
+Decision: Apply light/dark on the document (colours / dark class) separately from the small React state that drives the toggle button.
+
+Reason: If theme were only React state high in the tree, every toggle could re-render large screens just to change colours. Document CSS updates paint without that.
+
+What happens: Toggle light/dark → page colours change; the worker table does not need a full React re-render pass for theme alone. Login still follows the same document theme.
+
+Where: [ThemeProvider.tsx](../../client/src/context/theme-provider/ThemeProvider.tsx).
+
+### Font display
+
+Decision: Custom fonts use “swap”: show text immediately in a fallback, then switch to the real font.
+
+Reason: Without that, text can stay invisible until the font file arrives.
+
+What happens: Contract preview text appears at once → branded font replaces it when loaded.
+
+Where: [DocumentFontStyles.tsx](../../client/src/features/settings/documents/DocumentFontStyles.tsx).
+
+## Optimizations — asset and delivery checklist
+
+Usual “make the frontend fast” bullets. We went through them on purpose.
+
+### 1. Optimize images, videos, and other static files
+
+Decision: Profile photos get a simple crop and small JPEG. No full image/video pipeline.
+
+Reason: Almost all media is uploads or a profile picture. A big pipeline is overload.
+
+What happens: Save avatar → resized square JPEG uploads. Full PDF contracts → stored as uploaded, not recompressed by us.
+
+Where: [preprocessAvatar.ts](../../client/src/lib/preprocessAvatar.ts).
+
+### 2. Remove inefficient / dead code
+
+Decision: No separate “dead code removal” project as a performance feature.
+
+Reason: Clean code, lint, review, and occasional bundle reports already catch this.
+
+What happens: Unused variables fail lint. Unused libraries get dropped when we notice them (for example an unused PDF package in the past). Day to day we do not run a special purge campaign.
+
+Where: [eslint.config.js](../../client/eslint.config.js), [package.json](../../client/package.json) (`analyze`), [principles.md](../clean-code-testing/principles.md).
+
+### 3. Uglify / minify CSS and JS
+
+Decision: Production build minifies CSS and JavaScript.
+
+Reason: Normal for Vite; no second minifier.
+
+What happens: `npm run build` in `client/` → smaller hashed files in `dist/`.
+
+Where: [package.json](../../client/package.json), [vite.config.js](../../client/vite.config.js).
+
+### 4. Compress the SPA bundle (Brotli / gzip) — not user document files
+
+Decision: Compress the built app files at the host (Render Static Site: Brotli, and gzip when the browser asks). Do not gzip PDFs, photos, or other uploads in object storage. Do not add a compression plugin inside the React app.
+
+Reason: Text assets shrink a lot on the wire; the edge should do that. Render already does. PDFs and JPEGs are already compressed; gzipping them again rarely helps. API JSON gzip for the task list was only a load-probe trial; we keep join + pagination there, not gzip on files.
+
+What happens: Browser downloads a compressed JS/CSS chunk from Render. Personnel PDF goes to S3 as the original file bytes.
+
+Where: [hosting.md](../backend/hosting.md), [aws.ts](../../server/src/config/aws.ts), [load-probe.md](../backend/load-probe.md).
+
+### 5. Use a CDN to serve assets
+
+Decision: Do not add a second CDN in front of the SPA.
+
+Reason: Render Static Sites already use Render’s CDN. We have little extra marketing weight. Product files are in object storage. Another CDN is more moving parts for little gain.
+
+What happens: Users hit the Render frontend URL; we do not put Cloudflare/CloudFront in front ourselves.
+
+Where: [hosting.md](../backend/hosting.md), [web-vitals.md](./web-vitals.md).
+
+### 6. Caching rules on static files
+
+Decision: No custom cache-policy layer beyond build + host defaults.
+
+Reason: A full policy needs long cache for fingerprinted files, short cache for HTML, and often a CDN. The build already hashes JS/CSS names. HTML and many authenticated downloads must stay fresh. Not worth a hand-written matrix here.
+
+What happens: A file like `index-abc123.js` can be cached hard because the name changes when content changes. The HTML entry must stay up to date.
+
+Where: [index.html](../../client/index.html), [vite.config.js](../../client/vite.config.js).
+
+### 7. Reduce / remove third-party scripts
+
+Decision: No Hotjar, tag manager, ads, or cookie-banner scripts. Sentry stays for errors.
+
+Reason: Extra tags slow the UI and add privacy cost. Monitoring is the exception.
+
+What happens: HTML shell has no marketing snippets. Sentry starts only when a DSN is set.
+
+Where: [index.html](../../client/index.html), [instrument.ts](../../client/src/instrument.ts).
+
+### 8. Reduce libraries / pick smaller versions
+
+Decision: Load heavy UI only when needed and split large library files, instead of rewriting the whole stack to tiny libraries.
+
+Reason: React + TanStack + Radix-style UI is the product toolkit. Cutting weight on worker detail mattered more than swapping everything.
+
+What happens: TipTap and heavy tabs stay out of the first download; React still ships as a shared vendor file.
+
+Where: [LazyDocumentMasterEditor.tsx](../../client/src/features/settings/documents/LazyDocumentMasterEditor.tsx), [cockpitSections.tsx](../../client/src/features/worker-lifecycle/components/cockpitSections.tsx), [vite.config.js](../../client/vite.config.js).
+
+### 9. Tree shaking / only import what you use
+
+Decision: Import only the icons and modules we use; Tailwind keeps only the CSS classes we use.
+
+Reason: The build already drops unused library code. Tailwind already drops unused CSS.
+
+What happens: A template row pulls pencil and trash icons only, not the whole icon library.
+
+Where: [TemplateItem.tsx](../../client/src/features/template-tasks/components/TemplateItem.tsx), [vite.config.js](../../client/vite.config.js).
+
+### 10. Code-splitting
+
+Decision: Split by route; load heavy tabs and editors only when opened.
+
+Reason: Users download what they need for the screen they are on. Measured in the Web Vitals rounds.
+
+What happens: Visit cockpit → no document editor download. Open an editor → that code loads then.
+
+Where: [vite.config.js](../../client/vite.config.js), [cockpitSections.tsx](../../client/src/features/worker-lifecycle/components/cockpitSections.tsx).
+
+### 11. Defer non-critical CSS
+
+Decision: Do not build a separate “critical CSS” file.
+
+Reason: Tailwind already outputs one stylesheet of the utilities we use. Critical/deferred CSS is for huge hand-written CSS. It does not fit here.
+
+What happens: Styling goes through the normal Tailwind + Vite build. No extra critical-CSS step.
+
+Where: [vite.config.js](../../client/vite.config.js) — intentional non-implementation.
 
 ## Interesting
 
-Lazy loading in this app has two layers:
+Two kinds of “load later”:
 
-| Layer | Tool | What waits |
-| --- | --- | --- |
-| Between pages | TanStack Router (`autoCodeSplitting: true` in `client/vite.config.js`) | Whole route chunks by URL — open `/cockpit` without downloading every settings/editor module |
-| Within a page | `React.lazy` + `Suspense` | Heavy tabs, dialogs, editors on the same screen |
+- Between pages: each URL can have its own chunk (open cockpit without every settings/editor module).
+- Within a page: heavy tabs load when you open them.
 
-Router = between pages. `React.lazy` = within a page.
+### Materials upload on the worker screen
 
-### Example: Materials upload on `/user/…`
+The header (including upload) is always there. The Materials tab body loads later. The file picker must stay outside that late piece, or the browser ignores the click.
 
-The worker header (including “upload materials”) is always on the page. Only the Materials tab content is lazy — so a header click can fire while that chunk is still loading.
+What happens: Click upload in the header → file dialog opens immediately → chosen file is handed to Materials once that tab is ready. Change worker → clear any pending file.
 
-Browsers only open a file picker in the same user-click moment. If the hidden `<input type="file">` lived inside the still-loading Suspense boundary, `input.click()` would fail silently.
-
-What I did:
-
-1. Keep the hidden file input outside Suspense in [`WorkerTaskManagement.tsx`](../../client/src/features/worker-task-management/components/tasks/WorkerTaskManagement.tsx).
-2. Open it synchronously from the header click.
-3. Hand the chosen file to the lazy Materials tab once it mounts; clear pending state when the worker changes.
-
-That keeps the JS win from lazy Materials without breaking upload.
-
----
-
-## Definitions
-
-TTFB: time until the first byte of the HTML arrives.
-
-FCP: first contentful paint — when anything first shows on screen.
-
-LCP: largest contentful paint — when the main content has painted.
-
-CLS: cumulative layout shift — how much the page jumps while loading (lower is better).
-
-INP: interaction to next paint — delay after a click/keypress until the next paint.
-
-Nav: wall-clock time for the scripted page load to settle.
-
-JS bytes: JavaScript downloaded for that visit.
-
-/tasks polls in 16s: how many times /tasks was fetched in 16 seconds after load.
-
----
-
-## PR #223 — Round 1
-
-### Numbers
-
-Core vitals (ms; CLS unitless):
-
-| Route               | Before TTFB | After TTFB | Before FCP | After FCP | Before LCP | After LCP | Before CLS | After CLS |
-| ------------------- | ----------: | ---------: | ---------: | --------: | ---------: | --------: | ---------: | --------: |
-| /worker-lifycycle   |          27 |         17 |        192 |       176 |        n/a |       176 |        n/a |     0.000 |
-| /cockpit            |          24 |        197 |        224 |       672 |        n/a |       820 |        n/a |     0.001 |
-| /bestand            |          28 |        165 |        188 |       444 |        n/a |       444 |        n/a |     0.006 |
-| /settings/documents |          31 |        201 |        228 |       520 |        n/a |       520 |        n/a |     0.001 |
-| /user/…             |          25 |        182 |        308 |       700 |        n/a |      1216 |        n/a |     0.000 |
-
-Task poller:
-
-| Route             | Before /tasks polls in 16s |    After |
-| ----------------- | -------------------------: | -------: |
-| /worker-lifycycle |                    3 (~5s) | 1 (~15s) |
-| /cockpit          |                    3 (~5s) | 1 (~15s) |
-
-Nav (ms):
-
-| Route               | Before | After |
-| ------------------- | -----: | ----: |
-| /worker-lifycycle   |   1037 |  1028 |
-| /cockpit            |   1094 |  2006 |
-| /bestand            |   1100 |  1229 |
-| /settings/documents |   1099 |  1276 |
-| /user/…             |   1568 |  2005 |
-
-Bundle (local production builds):
-
-| Signal                    | Before                        | After                                 |
-| ------------------------- | ----------------------------- | ------------------------------------- |
-| TipTap-heavy shared chunk | documentMaster.keys ~556.5 KB | async editor ~532 KB (on editor open) |
-| documentMaster.keys       | 556.5 KB                      | ~24.9 KB                              |
-| Entry index               | ~963 KB                       | ~970 KB                               |
-
-### Changes
-
-Caching defaults: I set queries to stay fresh for 30s and stay in memory for 5 minutes. What happened: the app refetches less often for no reason.
-
-Task polling: I changed background /tasks from every 5s always to every 15s, and only while the tab is visible. What happened: fewer API calls when idle or when the tab is hidden.
-
-Lazy TipTap: I made the document editor chunk load only when you open an editor, not on the documents list (see [What we implemented](#what-we-implemented-that-also-keeps-the-frontend-light)). What happened: the list page stays lighter.
-
-Web Vitals logging: I added logging for TTFB/LCP/CLS/INP in the console and as performance marks. What happened: I can measure in the browser; this does not speed the page up by itself.
-
-Bundle analyzer: I added npm run analyze so the build writes a visual chunk report. What happened: easier for me to see what is large in the build.
-
-Removed unused @react-pdf/renderer: I dropped a dependency the client never imported. What happened: smaller install graph.
-
-### Description
-
-In Round 1 I focused on caching, slowing the task poller, and keeping TipTap off the documents list so the first authenticated pages stay lighter and quieter on the network.
-
-### Learning
-
-Cutting the task poller (3 → 1 in 16s) and moving TipTap off the documents list are clear, measurable wins. Paint and nav times on a single live CDN run do not by themselves prove or disprove those changes.
-
----
-
-## PR #224 — Round 2
-
-### Numbers
-
-Before = after my #223. After = after my #224.
-
-Core vitals (ms; CLS unitless):
-
-| Route               | Before FCP | After FCP | Before LCP | After LCP | Before CLS | After CLS |
-| ------------------- | ---------: | --------: | ---------: | --------: | ---------: | --------: |
-| /worker-lifycycle   |        176 |       180 |        176 |       180 |      0.000 |     0.000 |
-| /cockpit            |        672 |       528 |        820 |       692 |      0.001 |     0.001 |
-| /bestand            |        444 |       464 |        444 |       464 |      0.006 |     0.002 |
-| /settings/documents |        520 |       504 |        520 |       504 |      0.001 |     0.001 |
-| /user/…             |        700 |       720 |       1216 |      1076 |      0.000 |     0.000 |
-
-Nav (ms):
-
-| Route               | Before | After |
-| ------------------- | -----: | ----: |
-| /worker-lifycycle   |   1028 |  1030 |
-| /cockpit            |   2006 |  1237 |
-| /bestand            |   1229 |  1245 |
-| /settings/documents |   1276 |  1281 |
-| /user/…             |   2005 |  2293 |
-
-JS transferred (encoded bytes):
-
-| Route               | Before |  After |
-| ------------------- | -----: | -----: |
-| /worker-lifycycle   | 338216 | 340168 |
-| /cockpit            | 359382 | 361582 |
-| /bestand            | 301122 | 301439 |
-| /settings/documents | 306205 | 307016 |
-| /user/…             | 648254 | 388850 |
-
-Task poller in 16s: 1 → 1 on /worker-lifycycle and /cockpit.
-
-Local analyze: entry ~659 KB (was ~970); /user/$Id chunk ~216 KB (was ~441).
-
-### Changes
-
-Vendor chunks: I split React and TanStack into separate files (see [What we implemented](#what-we-implemented-that-also-keeps-the-frontend-light)). What happened: better caching when app code changes.
-
-Lazy worker UI: I lazy-loaded heavy worker tabs/dialogs and jszip so they load when needed (see [What we implemented](#what-we-implemented-that-also-keeps-the-frontend-light)). What happened: opening /user/… downloads less up front.
-
-Document fonts: I moved font styles onto the shared editor instead of every app boot. What happened: boot stays lighter; fonts still work for editor and contract review.
-
-Table skeletons: I aligned lifecycle loading placeholders with real row sizes. What happened: less layout jump while the table loads.
-
-Materials upload queue: I queued the file-picker until the lazy tab is mounted (see [Interesting](#interesting)). What happened: upload does not get lost during Suspense.
-
-### Description
-
-In Round 2 I focused on splitting vendor code and lazy-loading the heavy worker detail UI so /user/… ships less JavaScript on first open.
-
-### Learning
-
-Lazy-loading the worker detail surface cut /user/… JS by about 40% (648254 → 388850) and improved LCP on that route (1216 → 1076). List routes stayed roughly flat; the Round 1 poller change still held at 1 poll in 16s.
-
----
-
-## INP (after both PRs)
-
-Measured 2026-11-16 with one click per route. No before-PR INP.
-
-| Route               | INP (ms) |
-| ------------------- | -------: |
-| /worker-lifycycle   |       40 |
-| /cockpit            |       24 |
-| /bestand            |       24 |
-| /settings/documents |       32 |
-| /user/…             |       16 |
-
-### Changes
-
-I re-ran production with a real click after each load so INP could be recorded.
-
-### Description
-
-This pass only fills the missing INP column on current production after both PRs.
-
-### Learning
-
-INP needs a real interaction; load-only benches leave it as n/a. These lab clicks all stayed under 200 ms on current production.
+Where: [WorkerTaskManagement.tsx](../../client/src/features/worker-task-management/components/tasks/WorkerTaskManagement.tsx).

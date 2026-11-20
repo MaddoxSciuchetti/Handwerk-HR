@@ -22,7 +22,7 @@ Alternatives considered: Zustand, Redux.
 
 Decision: Keep React Context narrow (theme, local UI). Put server/API state in TanStack Query, not in a large app-wide Context.
 
-Reason: Context re-renders its consumers when the value changes. A large app-wide Context would cause avoidable work. Theme and small feature UI stay in Context; API data stays in Query. Example theme provider: `client/src/context/theme-provider/ThemeProvider.tsx`. Performance write-up: `docs/frontend/optimization.md` (What we implemented that also keeps the frontend light).
+Reason: Context re-renders its consumers when the value changes. A large app-wide Context would cause avoidable work. Theme and small feature UI stay in Context; API data stays in Query. Example theme provider: `client/src/context/theme-provider/ThemeProvider.tsx`. Performance write-up: `docs/frontend/optimization.md`. Measured numbers: `docs/frontend/web-vitals.md`.
 
 Alternatives considered: Zustand or Redux for fine-grained client state if a feature outgrows Context.
 

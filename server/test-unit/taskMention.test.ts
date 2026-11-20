@@ -148,17 +148,22 @@ describe("task mention badges", () => {
             { id: "other-task", mentions: [] },
         ]);
 
-        const tasks = await queryTasks("org-1", "coworker");
+        const page = await queryTasks("org-1", "coworker");
 
         expect(findTasks).toHaveBeenCalledWith(expect.objectContaining({
+            relationLoadStrategy: "join",
             where: expect.objectContaining({ assigneeOnly: false }),
-            include: expect.objectContaining({
+            take: 51,
+            select: expect.objectContaining({
                 mentions: { where: { userId: "coworker", seenAt: null }, select: { id: true }, take: 1 },
             }),
         }));
-        expect(tasks).toEqual([
-            { ...sourceIssue, assigneeUserId: "someone-else", mentioned: true },
-            { id: "other-task", mentioned: false },
-        ]);
+        expect(page).toEqual({
+            tasks: [
+                { ...sourceIssue, assigneeUserId: "someone-else", mentioned: true },
+                { id: "other-task", mentioned: false },
+            ],
+            nextCursor: null,
+        });
     });
 });

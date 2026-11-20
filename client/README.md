@@ -36,5 +36,6 @@ Shared color / surface / status tokens are CSS variables in [`src/App.css`](./sr
 - Project decisions (fuller): [`docs/clean-code-testing/decisions.md`](../docs/clean-code-testing/decisions.md)
 - Frontend-only extras: [`decisions.md`](./decisions.md)
 - Architecture / folder rules: [`docs/clean-code-testing/style-guide.md`](../docs/clean-code-testing/style-guide.md)
-- Performance / web-vitals: [`docs/frontend/optimization.md`](../docs/frontend/optimization.md)
+- Web Vitals (measured rounds): [`docs/frontend/web-vitals.md`](../docs/frontend/web-vitals.md)
+- Frontend optimizations shipped: [`docs/frontend/optimization.md`](../docs/frontend/optimization.md)
 - Root setup and env: [`README.md`](../README.md)

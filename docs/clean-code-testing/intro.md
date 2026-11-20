@@ -2,7 +2,7 @@
 
 The aim of this project is to ensure that the user has the highest quality software product. How we approach this problem can best be seen by two core implementations for frontend and backend:
 
-- Frontend — performance as a product requirement (Web Vitals, measured optimizations): [Frontend intro](../frontend/Intro.md) and [optimization write-up](../frontend/optimization.md)
+- Frontend — performance as a product requirement (Web Vitals, measured optimizations): [Frontend intro](../frontend/Intro.md), [web vitals](../frontend/web-vitals.md), and [optimizations](../frontend/optimization.md)
 - Backend — observability as a product requirement (structured logs, tracing, Sentry): [Backend intro](../backend/Intro.md)
 
 Each of those pages also lists the core tools used in that half of the stack.

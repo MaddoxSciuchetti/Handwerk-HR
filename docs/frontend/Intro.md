@@ -23,7 +23,6 @@ Feel free to propose improvements to the pages below so this project stays maint
 ## Modern HTML and CSS
 
 - Information on semantic HTML and accessibility habits (landmarks, labels, `sr-only`, Radix dialogs) can be found [here](./semantic-html.md).
-- Information on the styling stack (Tailwind CSS, Radix / shadcn-style primitives) can be found under `client/src/components/ui/`.
 
 ## APIs and asynchronous programming
 
@@ -34,7 +33,7 @@ Feel free to propose improvements to the pages below so this project stays maint
 
 - Information on JWT cookies, refresh rotation, and the client 401 interceptor can be found [here](../backend/authentication.md).
 - Information on where access and refresh tokens live on the client can be found [here](./client-side-data.md).
-- Information on client error monitoring with Sentry can be found in `client/src/instrument.ts`.
+- Information on client error monitoring with Sentry can be found [here](../../client/src/instrument.ts).
 
 ## Testing and clean code
 
@@ -46,7 +45,9 @@ Feel free to propose improvements to the pages below so this project stays maint
 ## Deployment and optimization
 
 - Information on how the frontend is hosted and shipped (Render / CI) can be found [here](../backend/ci.cd.md) and in the root README.
-- Information on measured Web Vitals work (baselines, lazy loading, vendor chunks, intent preload, worker-row prefetch, search debounce) can be found [here](./optimization.md).
+- Information on measured Web Vitals (baselines, PR rounds, numbers) can be found [here](./web-vitals.md).
+- Information on optimizations (what we shipped, plus the asset/CDN/Brotli/CSS Decision checklist) can be found [here](./optimization.md).
+- Information on service workers, offline support, and installable PWA (not built yet; when a future React build would need them) can be found [here](./pwa-offline.md).
 
 Commands joiners use most often (from `client/`):
 

@@ -25,3 +25,7 @@ Reason: I can read Prisma’s syntax much better than writing a lot of raw SQL b
 Decision: The SPA talks to the API with HTTP JSON and cookies. No GraphQL or gRPC.
 
 Reason: Client and backend stay separate apps, so they need a clear boundary. The browser calls the API over HTTP, sends and gets JSON, and keeps the session in cookies. That is enough for this product: one SPA, one API, Zod on the server for bodies. GraphQL or gRPC would add more moving parts between client and backend without a strong reason right now.
+
+Decision: Sign-in is email and password with our own JWT cookies. No “Log in with Google” (or other social / OAuth IdPs).
+
+Reason: Not every user has a Google (or similar) account, so that login path would lock some people out. We also do not want the product tied to third-party identity apps for security: fewer external connections, no OAuth client secrets to babysit, and the session stays under our cookies only. How that cookie flow works is in [authentication.md](./authentication.md).

@@ -1,6 +1,6 @@
 # Frontend toolkit and framework decisions
 
-These are the big choices for the SPA in `client/`. Folder layout and naming are in [decisions.md](../clean-code-testing/decisions.md). Smaller frontend-only habits (modals, forms, pagination) are in [client/decisions.md](../../client/decisions.md). Measured performance work is in [optimization.md](./optimization.md).
+These are the big choices for the SPA in `client/`. Folder layout and naming are in [decisions.md](../clean-code-testing/decisions.md). Smaller frontend-only habits (modals, forms, pagination) are in [client/decisions.md](../../client/decisions.md). Measured Web Vitals are in [web-vitals.md](./web-vitals.md). What we shipped is in [optimization.md](./optimization.md).
 
 Decision: Use TypeScript (and modern JavaScript) on the client.
 

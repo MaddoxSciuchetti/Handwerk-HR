@@ -62,8 +62,31 @@ export type TaskHistoryCommentEntry = {
 
 export type TaskHistoryItem = TaskHistoryAuditEntry | TaskHistoryCommentEntry;
 
-export const queryTasks = async (orgId: string, viewerUserId: string) => {
+/** Default page size for GET /tasks; clients may raise up to TASK_LIST_MAX_LIMIT. */
+export const TASK_LIST_DEFAULT_LIMIT = 50;
+export const TASK_LIST_MAX_LIMIT = 100;
+
+export type QueryTasksPage = {
+    tasks: ReturnType<typeof attachMentionFlag>[];
+    nextCursor: string | null;
+};
+
+function clampTaskListLimit(raw: number | undefined) {
+    if (raw == null || !Number.isFinite(raw)) return TASK_LIST_DEFAULT_LIMIT;
+    return Math.min(TASK_LIST_MAX_LIMIT, Math.max(1, Math.floor(raw)));
+}
+
+export const queryTasks = async (
+    orgId: string,
+    viewerUserId: string,
+    options?: { limit?: number; cursor?: string | null },
+): Promise<QueryTasksPage> => {
+    const limit = clampTaskListLimit(options?.limit);
+    const cursor = options?.cursor?.trim() || undefined;
+
     const issues = await prisma.issue.findMany({
+        // One SQL round trip for issues + nested assignee / engagement / mentions.
+        relationLoadStrategy: "join",
         where: {
             // Legacy mention notifications are not standalone tasks.
             assigneeOnly: false,
@@ -79,7 +102,39 @@ export const queryTasks = async (orgId: string, viewerUserId: string) => {
         },
         // Tasks created together need an immutable tie-breaker across updates.
         orderBy: [{ createdAt: "desc" }, { id: "asc" }],
-        include: {
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+        take: limit + 1,
+        select: {
+            id: true,
+            workerEngagementId: true,
+            organizationId: true,
+            createdByUserId: true,
+            assigneeUserId: true,
+            templateItemId: true,
+            status: true,
+            automation: true,
+            integrationProvider: true,
+            sequence: true,
+            mailTemplateId: true,
+            mailSenderAddress: true,
+            microsoftAccountId: true,
+            microsoftAccessGroupIds: true,
+            automationRecipients: true,
+            scheduledDeactivateAt: true,
+            scheduledDeactivateByUserId: true,
+            deactivationClaimToken: true,
+            deactivationClaimUntil: true,
+            kind: true,
+            isTemporary: true,
+            assigneeOnly: true,
+            title: true,
+            description: true,
+            priority: true,
+            dueDate: true,
+            startedAt: true,
+            completedAt: true,
+            createdAt: true,
+            updatedAt: true,
             assignee: {
                 select: {
                     id: true,
@@ -90,7 +145,13 @@ export const queryTasks = async (orgId: string, viewerUserId: string) => {
             workerEngagement: {
                 select: {
                     workerId: true,
-                    templateApplication: { select: { id: true, completedAt: true, resultsDismissedAt: true } },
+                    templateApplication: {
+                        select: {
+                            id: true,
+                            completedAt: true,
+                            resultsDismissedAt: true,
+                        },
+                    },
                     worker: {
                         select: { firstName: true, lastName: true },
                     },
@@ -99,7 +160,14 @@ export const queryTasks = async (orgId: string, viewerUserId: string) => {
             mentions: unreadMentionInclude(viewerUserId),
         },
     });
-    return issues.map(attachMentionFlag);
+
+    const hasMore = issues.length > limit;
+    const page = hasMore ? issues.slice(0, limit) : issues;
+    const tasks = page.map(attachMentionFlag);
+    return {
+        tasks,
+        nextCursor: hasMore ? page[page.length - 1]!.id : null,
+    };
 };
 
 async function taskSequenceFields(

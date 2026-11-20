@@ -54,9 +54,9 @@ Change: Full task list with no Prisma join strategy, no pagination, and no gzip 
 
 Observation: Full-list payload is heavy. Errors explode at 1000 VUs (77.9%).
 
-### 2 — Prisma relationLoadStrategy join + cursor pagination
+### 2 — Prisma relationLoadStrategy join + cursor pagination (current implementation)
 
-Change: Join strategy and cursor pagination on `/tasks` (page 50 / max 100; probe hits first page only). Source: staging `docs/performance.md` (`74ede853`). Earlier docs wrongly reused this table as “clean baseline.”
+Change: Join strategy and cursor pagination on `/tasks` (page 50 / max 100; probe hits first page only). Source: staging `docs/performance.md` (`74ede853`). Earlier docs wrongly reused this table as “clean baseline.” This is the stack we keep in the app now (not gzip-only; join + pagination restored).
 
 | VUs  | Requests | Error rate | p50   | p95   | max   |
 | ---- | -------- | ---------- | ----- | ----- | ----- |
@@ -149,6 +149,7 @@ Observation: Peak during this ladder: CPU 100%, memory ~484 MB (~95% of 512 MB).
 
 - Several backend tweaks were tried (query changes, gzip, bigger DB pool, indexes).
 - None of them stopped failures at 1000 concurrent users.
+- Kept in code: ladder **2** (join load strategy + cursor pagination on `/tasks`). Gzip was better at mid load but worse at 1000 VUs and near the memory ceiling, so it is not the current app default.
 - Current backend status: Staging runs on one small Render Starter box (0.5 CPU, 512 MB). Under that load, CPU hits 90–100% and memory climbs into the high hundreds of MB (up to ~98%).
 - Conclusion: The machine itself is saturated which is why when there is high concurrency requests fail start failing.
 - Next moves forward: Do horizontal scaling would would mean adding more machines to the current setup or vertical scaling which would mean upgrading the plan so that the machine i am currentluy using has more Cores and Memory.
