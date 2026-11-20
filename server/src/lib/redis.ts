@@ -1,4 +1,4 @@
-import { logger } from "@/observability/logger";
+import { logger, serializeError } from "@/observability/logger";
 import Redis from "ioredis";
 
 /** Empty / unset disables Redis — API falls through to Postgres. */
@@ -28,13 +28,13 @@ function getClient(): Redis | null {
         redis.on("error", (err) => {
             if (!loggedConnectError) {
                 loggedConnectError = true;
-                logger.warn({ err }, "redis_client_error");
+                logger.warn("redis_client_error", { err: serializeError(err) });
             }
         });
         client = redis;
         return client;
     } catch (err) {
-        logger.warn({ err }, "redis_client_init_failed");
+        logger.warn("redis_client_init_failed", { err: serializeError(err) });
         client = null;
         return null;
     }
@@ -61,11 +61,13 @@ async function ensureConnected(redis: Redis): Promise<boolean> {
         if (redis.status === "wait" || redis.status === "end") {
             await redis.connect();
         }
-        return redis.status === "ready";
+        // Re-read after connect — TS narrows status across the await incorrectly.
+        const status: string = redis.status;
+        return status === "ready";
     } catch (err) {
         if (!loggedConnectError) {
             loggedConnectError = true;
-            logger.warn({ err }, "redis_connect_failed");
+            logger.warn("redis_connect_failed", { err: serializeError(err) });
         }
         return false;
     }
@@ -78,7 +80,7 @@ export async function redisGet(key: string): Promise<string | null> {
         if (!(await ensureConnected(redis))) return null;
         return await redis.get(key);
     } catch (err) {
-        logger.warn({ err, key }, "redis_get_failed");
+        logger.warn("redis_get_failed", { key, err: serializeError(err) });
         return null;
     }
 }
@@ -94,7 +96,7 @@ export async function redisSetEx(
         if (!(await ensureConnected(redis))) return;
         await redis.setex(key, ttlSeconds, value);
     } catch (err) {
-        logger.warn({ err, key }, "redis_setex_failed");
+        logger.warn("redis_setex_failed", { key, err: serializeError(err) });
     }
 }
 
@@ -105,7 +107,7 @@ export async function redisDel(key: string): Promise<void> {
         if (!(await ensureConnected(redis))) return;
         await redis.del(key);
     } catch (err) {
-        logger.warn({ err, key }, "redis_del_failed");
+        logger.warn("redis_del_failed", { key, err: serializeError(err) });
     }
 }
 
@@ -115,7 +117,10 @@ export async function redisGetJson<T>(key: string): Promise<T | null> {
     try {
         return JSON.parse(raw) as T;
     } catch (err) {
-        logger.warn({ err, key }, "redis_json_parse_failed");
+        logger.warn("redis_json_parse_failed", {
+            key,
+            err: serializeError(err),
+        });
         return null;
     }
 }
