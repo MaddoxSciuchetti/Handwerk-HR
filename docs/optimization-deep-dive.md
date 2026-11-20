@@ -1,12 +1,16 @@
-# Optimization Deep Dive — PRs #223 and #224
+# Optimization Deep Dive — PRs #223, #224, and follow-ups #248–#252
 
 Production: https://frontendv2-x54r.onrender.com
 
-PRs: [#223](https://github.com/MaddoxSciuchetti/Handwerk-HR/pull/223), [#224](https://github.com/MaddoxSciuchetti/Handwerk-HR/pull/224)
+Staging (Round 3 lab): https://bsb-onboarding-frontend-staging.onrender.com
+
+PRs: [#223](https://github.com/MaddoxSciuchetti/Handwerk-HR/pull/223), [#224](https://github.com/MaddoxSciuchetti/Handwerk-HR/pull/224), [#248](https://github.com/MaddoxSciuchetti/Handwerk-HR/pull/248), [#249](https://github.com/MaddoxSciuchetti/Handwerk-HR/pull/249), [#250](https://github.com/MaddoxSciuchetti/Handwerk-HR/pull/250), [#251](https://github.com/MaddoxSciuchetti/Handwerk-HR/pull/251), [#252](https://github.com/MaddoxSciuchetti/Handwerk-HR/pull/252)
 
 Round 1 = before my #223 vs after my #223.
 
 Round 2 = after my #223 vs after my #224.
+
+Round 3 = after my #224 vs after follow-ups #248–#252 (see [Follow-up optimizations](#follow-up-optimizations)).
 
 Routes: /worker-lifycycle, /cockpit, /bestand, /settings/documents, /user/…
 
@@ -298,3 +302,61 @@ This pass only fills the missing INP column on current production after both PRs
 ### Learning
 
 INP needs a real interaction; load-only benches leave it as n/a. These lab clicks all stayed under 200 ms on current production.
+
+---
+
+## Follow-ups #248–#252 — Round 3
+
+### Numbers
+
+Before = after my #224 (Round 2 After; INP from the [INP pass](#inp-after-both-prs) on 2026-11-16). After = staging lab average of 3 hard navigations per route on 2026-11-20 (Europe/Berlin).
+
+Core vitals (ms; CLS unitless):
+
+| Route               | Before FCP | After FCP | Before LCP | After LCP | Before CLS | After CLS |
+| ------------------- | ---------: | --------: | ---------: | --------: | ---------: | --------: |
+| /worker-lifycycle   |        180 |       377 |        180 |       377 |      0.000 |     0.000 |
+| /cockpit            |        528 |       323 |        692 |       475 |      0.001 |     0.001 |
+| /bestand            |        464 |       429 |        464 |       429 |      0.002 |     0.003 |
+| /settings/documents |        504 |       329 |        504 |       329 |      0.001 |     0.006 |
+| /user/…             |        720 |       500 |       1076 |      1115 |      0.000 |     0.000 |
+
+INP (ms):
+
+| Route               | Before | After |
+| ------------------- | -----: | ----: |
+| /worker-lifycycle   |     40 |    53 |
+| /cockpit            |     24 |    45 |
+| /bestand            |     24 |    32 |
+| /settings/documents |     32 |    43 |
+| /user/…             |     16 |    43 |
+
+JS transferred (encoded bytes):
+
+| Route               | Before |  After |
+| ------------------- | -----: | -----: |
+| /worker-lifycycle   | 340168 | 357605 |
+| /cockpit            | 361582 | 295583 |
+| /bestand            | 301439 | 313197 |
+| /settings/documents | 307016 | 321595 |
+| /user/…             | 388850 | 409499 |
+
+Task poller in 16s: 1 → 1 on /worker-lifycycle and /cockpit.
+
+### Changes
+
+Sidebar intent preload: I set `preload="intent"` on left-sidebar Links (see [Follow-up optimizations](#follow-up-optimizations)). What happened: hard-load LCP on /cockpit and /settings/documents improved in this recheck; intent preload itself mainly helps the click-after-hover path, which this table does not isolate.
+
+Worker-row prefetch: I prefetch `workerQueries.taskData` on lifecycle row hover (see [Follow-up optimizations](#follow-up-optimizations)). What happened: /user/… warm LCP in runs 2–3 was ~818 ms (below Round 2’s 1076); the 3-run average stayed near baseline because run 1 was a cold outlier (1708 ms).
+
+SharePoint / shared search debounce: I raised SharePoint debounce to 300 ms and shared `useDebounce` for Teams and docs search (see [Follow-up optimizations](#follow-up-optimizations)). What happened: no isolated paint win in this load bench; INP stayed good (all under 200 ms). Typing chatter is the intended win, not first paint.
+
+Theme context split: I split document CSS theme sync from React theme controls (see [Follow-up optimizations](#follow-up-optimizations)). What happened: CLS stayed in the good band on every route; /settings/documents CLS moved 0.001 → 0.006 still good.
+
+### Description
+
+In Round 3 I re-measured after the follow-up Decision/Reason items (#248–#252) that continue the “keep the frontend light” work. Before is Round 2 After on production (single lab run). After is a 3-run average on staging so one noisy navigation does not decide the story.
+
+### Learning
+
+/cockpit and /settings/documents show clear FCP/LCP gains in this average (−217 ms / −175 ms LCP). /cockpit JS transferred dropped about 18%. /bestand stayed roughly flat. /user/… warm runs improved while the cold run kept the average near Round 2. /worker-lifycycle painted slower here than Round 2’s single production run — treat that as lab/host noise unless it repeats. The Round 1 poller change still held at 1 poll in 16s. Hard-load vitals understate preload/prefetch/debounce; those help navigation and typing more than cold LCP.
