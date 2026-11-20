@@ -34,6 +34,6 @@ Decision: No Docker or Kubernetes for how we run the API.
 
 Reason: This is one API. Auth, tasks, documents, billing, and integrations all live in that same service. Containers and an orchestrator help when you split many services, scale them separately, or treat identical images as the main delivery path. Here Render already builds and hosts the single Express process; Docker/K8s would mostly add ops surface without changing that shape.
 
-Decision: No Redis. Short-lived cache and rate-limit counters stay in the API process; Postgres stays the source of truth.
+Decision: Optional Redis (`REDIS_URL`) for short-lived shared reads such as the `GET /tasks` list cache. Cockpit org snapshot and rate-limit counters stay in the API process. Postgres stays the source of truth.
 
-Reason: We run one Express instance. The Cockpit org snapshot uses a small in-memory TTL cache, and `express-rate-limit` keeps counters in process. That is enough at this scale. Redis would be another host, another bill, and another failure mode — useful when several API instances must share cache or rate limits, or when we need a job queue / pub-sub bus. We are not there yet.
+Reason: We still run one Express instance. Cockpit uses a small in-memory TTL cache, and `express-rate-limit` keeps counters in process. Staging also has an optional Key Value (Redis/Valkey) for the tasks list so concurrent `GET /tasks` can share a 15s cached payload and fail open to Postgres when Redis is unset or down (see [load-probe.md](./load-probe.md) ladder 7). Full Redis for rate limits, job queues, or multi-instance shared state is still not required until we run several API instances.

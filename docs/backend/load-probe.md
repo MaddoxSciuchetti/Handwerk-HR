@@ -1,6 +1,6 @@
 # Load probe
 
-The purose of the following probe is to find out the limits of the current backend setup with the route that is being hit by most users and contains the most data on a request.
+The purpose of the following probe is to find out the limits of the current backend setup with the route that is being hit by most users and contains the most data on a request.
 
 ## What it measures
 
@@ -162,10 +162,22 @@ Reasoning: Compared with ladder 6, middle load is faster and finishes more reque
 | 6 — Issue indexes            | 100%     | ~484 MB (95%) |
 | 7 — Redis `/tasks` cache     | not recorded | not recorded |
 
+## Related backend optimization (not a `/tasks` ladder)
+
+### Cockpit org snapshot — 30s in-memory TTL cache
+
+This is a **backend** optimization, not a frontend one. The cache lives in the Express process (`server/src/utils/ttlCache.ts`, used by `cockpit.service.ts`). It is not the browser and not TanStack Query.
+
+What it does: `GET /cockpit` (and shared panel reads for templates, documents, questionnaire, bestand) loads one org snapshot. On a cache hit within 30 seconds, those reads skip Postgres. Writes that change that data call `invalidateCockpitCache(organizationId)`. Counters are process-local (see [architecture.md](./architecture.md)). This is separate from the optional Redis cache used for `GET /tasks` in ladder 7.
+
+Why it is not in the tables above: the load probe measured concurrent `GET /tasks`. Cockpit cache does not change that path. It was shipped with the same staging hardening pass (gzip, pool, indexes) to cut repeated Cockpit DB work under normal UI use.
+
+Do not confuse with frontend caching: the SPA still uses TanStack Query in the browser for request dedupe and stale times. That is a separate layer documented under frontend optimization. The TTL map here is server memory so the API does less SQL when many panel widgets ask for the same org snapshot.
+
 ## Conclusion
 
-- Several backend tweaks were tried (query changes, gzip, bigger DB pool, indexes, Redis list cache).
-- None of them stopped failures at 1000 concurrent users.
+- Several backend tweaks were tried (query changes, gzip, bigger DB pool, indexes, Redis list cache for `/tasks`, plus the Cockpit TTL cache for panel reads).
+- None of them stopped failures at 1000 concurrent users on `/tasks`.
 - Current backend status: Staging runs on one small Render Starter box (0.5 CPU, 512 MB). Under that load, CPU hits 90–100% and memory climbs into the high hundreds of MB (up to ~98%).
-- Conclusion: The machine itself is saturated which is why when there is high concurrency requests fail start failing.
-- Next moves forward: Do horizontal scaling would would mean adding more machines to the current setup or vertical scaling which would mean upgrading the plan so that the machine i am currentluy using has more Cores and Memory.
+- Conclusion: The machine itself is saturated, which is why requests start failing at high concurrency.
+- Next moves forward: horizontal scaling (more machines) or vertical scaling (more CPU and memory on the current plan).
