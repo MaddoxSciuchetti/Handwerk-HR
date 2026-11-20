@@ -49,7 +49,7 @@ export function DocumentMasterRow({
       onClick={openMaster}
       onKeyDown={(event) => activateTableRowOnKeyDown(event, openMaster)}
     >
-      <TableCell className="w-10 !p-0">
+      <TableCell className="w-10 !p-0" onClick={toggle}>
         <div className="flex h-full min-h-12 w-10 items-center justify-center">
           <Checkbox
             checked={isSelected}

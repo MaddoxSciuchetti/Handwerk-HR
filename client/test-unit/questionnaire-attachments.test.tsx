@@ -1,5 +1,4 @@
 import { screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { afterEach, expect, it, vi } from 'vitest';
 import { renderWithProviders } from './test-utils';
 import { PersonnelDocumentFolders } from '@/features/worker-task-management/components/files/personnel/PersonnelDocumentFolders';
@@ -26,8 +25,6 @@ it('shows and opens filed questionnaire attachments from every engagement', asyn
       blob: async () => new Blob(['x'], { type: 'image/png' }),
     })
   );
-  const user = userEvent.setup();
-  const open = vi.spyOn(window, 'open').mockImplementation(() => null);
   const attachment: PersonnelDocument = {
     id: 'attachment',
     engagementId: 'engagement',
@@ -66,10 +63,11 @@ it('shows and opens filed questionnaire attachments from every engagement', asyn
       onDelete={vi.fn()}
     />
   );
-  expect(screen.getByRole('link', { name: 'other.png öffnen' })).toBeVisible();
-  await user.click(screen.getByRole('link', { name: 'kk.png öffnen' }));
-  expect(open).toHaveBeenCalledWith(attachment.presignedUrl, '_blank');
-  await user.click(screen.getByRole('link', { name: 'other.png öffnen' }));
-  expect(open).toHaveBeenCalledWith(otherUrl, '_blank');
-  open.mockRestore();
+  const kk = screen.getByRole('link', { name: 'kk.png öffnen' });
+  const other = screen.getByRole('link', { name: 'other.png öffnen' });
+  expect(other).toBeVisible();
+  expect(kk).toHaveAttribute('href', attachment.presignedUrl);
+  expect(kk).toHaveAttribute('target', '_blank');
+  expect(other).toHaveAttribute('href', otherUrl);
+  expect(other).toHaveAttribute('target', '_blank');
 });
