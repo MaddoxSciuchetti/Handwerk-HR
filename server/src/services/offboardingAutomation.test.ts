@@ -144,8 +144,22 @@ describe("offboarding microsoft automation", () => {
         transaction.mockImplementation(
             async (run: (tx: unknown) => unknown) => {
                 const tx = {
+                    $queryRaw: jest.fn(),
                     workerExternalAccount: { upsert: jest.fn() },
-                    issue: { update: jest.fn(), findUniqueOrThrow: jest.fn().mockResolvedValue({ status: "open" }) },
+                    issue: {
+                        update: jest.fn(),
+                        findFirst: jest.fn().mockResolvedValue({
+                            id: "issue-1",
+                            status: "open",
+                            sequence: "microsoft_deactivate_account",
+                            deactivationClaimUntil: null,
+                            scheduledDeactivateAt: null,
+                            scheduledDeactivateByUserId: null,
+                        }),
+                        findUniqueOrThrow: jest
+                            .fn()
+                            .mockResolvedValue({ status: "open" }),
+                    },
                     issueAuditLog: { create: jest.fn() },
                 };
                 await run(tx);

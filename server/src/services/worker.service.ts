@@ -28,6 +28,10 @@ import {
   attachMentionFlag,
   unreadMentionInclude,
 } from "@/services/issueMentions";
+import {
+  invalidateTasksListCache,
+  invalidateTasksListCacheForIssue,
+} from "@/services/tasksListCache";
 import type {
   ArchiveWorkerInput,
   CreateAbsenceInput,
@@ -878,14 +882,16 @@ export async function createIssue(params: CreateIssueInput) {
     throw new Error("WorkerEngagement not found");
   }
 
+  let resolvedOrgId = organizationId ?? null;
   if (workerEngagementId) {
     const engagement = await prisma.workerEngagement.findFirst({
       where: { id: workerEngagementId },
     });
     if (!engagement) throw new Error("WorkerEngagement not found");
+    resolvedOrgId = resolvedOrgId ?? engagement.organizationId;
   }
 
-  return prisma.$transaction(async (tx) => {
+  const created = await prisma.$transaction(async (tx) => {
     const issue = await tx.issue.create({
       data: {
         workerEngagementId,
@@ -938,6 +944,11 @@ export async function createIssue(params: CreateIssueInput) {
     });
     return issue;
   });
+
+  if (resolvedOrgId && !(assigneeOnly ?? false)) {
+    await invalidateTasksListCache(resolvedOrgId);
+  }
+  return created;
 }
 
 export async function updateIssue(params: UpdateIssueInput) {
@@ -963,6 +974,9 @@ export async function updateIssue(params: UpdateIssueInput) {
 
   const existing = await prisma.issue.findFirst({
     where: { id: issueId, workerEngagementId },
+    include: {
+      workerEngagement: { select: { organizationId: true } },
+    },
   });
   if (!existing) throw new Error("Issue not found");
 
@@ -1020,7 +1034,7 @@ export async function updateIssue(params: UpdateIssueInput) {
     oldValue[k] = (existing as unknown as Record<string, unknown>)[k];
   }
 
-  return prisma.$transaction(async (tx) => {
+  const updated = await prisma.$transaction(async (tx) => {
     if (existing.kind === "contract_send") {
       const engagementId = newWorkerEngagementId ?? workerEngagementId;
       if (status === "done" && existing.status !== "done") {
@@ -1055,7 +1069,7 @@ export async function updateIssue(params: UpdateIssueInput) {
         keys.push("scheduledDeactivateAt");
       }
     }
-    const updated = await tx.issue.update({
+    const row = await tx.issue.update({
       where: { id: issueId },
       data,
       include: {
@@ -1071,7 +1085,7 @@ export async function updateIssue(params: UpdateIssueInput) {
     });
     const newValue: Record<string, unknown> = {};
     for (const k of keys) {
-      newValue[k] = (updated as unknown as Record<string, unknown>)[k];
+      newValue[k] = (row as unknown as Record<string, unknown>)[k];
     }
     await tx.issueAuditLog.create({
       data: {
@@ -1082,8 +1096,17 @@ export async function updateIssue(params: UpdateIssueInput) {
         newValue: newValue as Prisma.InputJsonValue,
       },
     });
-    return updated;
+    return row;
   });
+
+  const orgId =
+    existing.organizationId ??
+    existing.workerEngagement?.organizationId ??
+    null;
+  if (orgId && !existing.assigneeOnly) {
+    await invalidateTasksListCache(orgId);
+  }
+  return updated;
 }
 
 export async function getIssueAuditLogs(params: {
@@ -1273,10 +1296,20 @@ export async function deleteIssue(params: {
 
   const existing = await prisma.issue.findFirst({
     where: { id: issueId, workerEngagementId },
+    include: {
+      workerEngagement: { select: { organizationId: true } },
+    },
   });
   if (!existing) throw new Error("Issue not found");
 
-  return prisma.issue.delete({ where: { id: issueId } });
+  const deleted = await prisma.issue.delete({ where: { id: issueId } });
+  await invalidateTasksListCacheForIssue({
+    assigneeOnly: existing.assigneeOnly,
+    organizationId: existing.organizationId,
+    workerEngagementOrganizationId:
+      existing.workerEngagement?.organizationId ?? null,
+  });
+  return deleted;
 }
 
 export async function createAbsence(params: CreateAbsenceInput) {

@@ -8,13 +8,16 @@ import { prisma } from "@/lib/prisma";
 import { logger } from "@/observability/logger";
 import { INTEGRATION_SEQUENCES, SEQUENCE_PROVIDER } from "@/services/integrations/catalog";
 import { Prisma, type IntegrationSequence, type IssueStatus } from "@prisma/client";
-import { issueVisibleToViewer } from "@/services/issueVisibility";
 import {
     attachMentionFlag,
     markIssueMentionsSeen,
     recordIssueMentions,
-    unreadMentionInclude,
 } from "@/services/issueMentions";
+import {
+    invalidateTasksListCache,
+    readTasksListCache,
+    writeTasksListCache,
+} from "@/services/tasksListCache";
 import { createIssue, updateIssue } from "@/services/worker.service";
 import { normalizeAccessGroupIds } from "@/services/microsoft365/accessGroups";
 import AppError from "@/utils/AppError";
@@ -62,44 +65,86 @@ export type TaskHistoryCommentEntry = {
 
 export type TaskHistoryItem = TaskHistoryAuditEntry | TaskHistoryCommentEntry;
 
-export const queryTasks = async (orgId: string, viewerUserId: string) => {
-    const issues = await prisma.issue.findMany({
+const tasksListInclude = {
+    assignee: {
+        select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+        },
+    },
+    workerEngagement: {
+        select: {
+            workerId: true,
+            templateApplication: {
+                select: { id: true, completedAt: true, resultsDismissedAt: true },
+            },
+            worker: {
+                select: { firstName: true, lastName: true },
+            },
+        },
+    },
+} as const;
+
+/** Shared org list (no viewer-specific mention rows) — safe to cache across users. */
+async function loadTasksListForOrg(orgId: string) {
+    return prisma.issue.findMany({
         where: {
             // Legacy mention notifications are not standalone tasks.
             assigneeOnly: false,
-            AND: [
-                {
-                    OR: [
-                        { workerEngagement: { organizationId: orgId } },
-                        { organizationId: orgId },
-                    ],
-                },
-                issueVisibleToViewer(viewerUserId),
+            OR: [
+                { workerEngagement: { organizationId: orgId } },
+                { organizationId: orgId },
             ],
         },
         // Tasks created together need an immutable tie-breaker across updates.
         orderBy: [{ createdAt: "desc" }, { id: "asc" }],
-        include: {
-            assignee: {
-                select: {
-                    id: true,
-                    firstName: true,
-                    lastName: true,
-                },
-            },
-            workerEngagement: {
-                select: {
-                    workerId: true,
-                    templateApplication: { select: { id: true, completedAt: true, resultsDismissedAt: true } },
-                    worker: {
-                        select: { firstName: true, lastName: true },
-                    },
-                },
-            },
-            mentions: unreadMentionInclude(viewerUserId),
-        },
+        include: tasksListInclude,
     });
-    return issues.map(attachMentionFlag);
+}
+
+async function attachViewerMentions<
+    T extends { id: string; mentions?: { id: string }[] },
+>(issues: T[], viewerUserId: string) {
+    if (issues.length === 0) {
+        return issues.map((issue) => attachMentionFlag({ ...issue, mentions: [] }));
+    }
+
+    // Prefer already-loaded mention includes (uncached path); otherwise one query.
+    const needsLookup = issues.every(
+        (issue) => issue.mentions === undefined,
+    );
+    if (!needsLookup) {
+        return issues.map(attachMentionFlag);
+    }
+
+    const unread = await prisma.issueMention.findMany({
+        where: {
+            userId: viewerUserId,
+            seenAt: null,
+            issueId: { in: issues.map((issue) => issue.id) },
+        },
+        select: { issueId: true },
+    });
+    const mentionedIds = new Set(unread.map((row) => row.issueId));
+    return issues.map((issue) =>
+        attachMentionFlag({
+            ...issue,
+            mentions: mentionedIds.has(issue.id) ? [{ id: "1" }] : [],
+        }),
+    );
+}
+
+export const queryTasks = async (orgId: string, viewerUserId: string) => {
+    type CachedIssue = Awaited<ReturnType<typeof loadTasksListForOrg>>[number];
+
+    let issues = await readTasksListCache<CachedIssue[]>(orgId);
+    if (!issues) {
+        issues = await loadTasksListForOrg(orgId);
+        await writeTasksListCache(orgId, issues);
+    }
+
+    return attachViewerMentions(issues, viewerUserId);
 };
 
 async function taskSequenceFields(
@@ -230,7 +275,7 @@ export async function createTaskInOrg(
     const sequenceFields = await taskSequenceFields(orgId, body);
     const title = body.title?.trim() || "Neue Aufgabe";
 
-    return createIssue({
+    const created = await createIssue({
         workerEngagementId: engagement.id,
         createdByUserId: userId,
         status: body.status ?? "open",
@@ -239,11 +284,13 @@ export async function createTaskInOrg(
         automation,
         ...sequenceFields,
     });
+    await invalidateTasksListCache(orgId);
+    return created;
 }
 
 export async function deleteTasksInOrg(orgId: string, taskIds: string[]) {
     if (!taskIds.length) return { count: 0 };
-    return prisma.issue.deleteMany({
+    const result = await prisma.issue.deleteMany({
         where: {
             id: { in: taskIds },
             OR: [
@@ -252,6 +299,8 @@ export async function deleteTasksInOrg(orgId: string, taskIds: string[]) {
             ],
         },
     });
+    await invalidateTasksListCache(orgId);
+    return result;
 }
 
 export async function updateTaskInOrg(
@@ -321,7 +370,7 @@ export async function updateTaskInOrg(
             microsoftAccessGroupIds: accessGroupIds,
             ...sequenceWithoutGroups
         } = sequenceFields;
-        return prisma.issue.update({
+        const updated = await prisma.issue.update({
             where: { id: existing.id },
             data: {
                 ...(newWorkerEngagementId ? { workerEngagementId: newWorkerEngagementId } : {}),
@@ -340,9 +389,11 @@ export async function updateTaskInOrg(
                     : {}),
             },
         });
+        await invalidateTasksListCache(orgId);
+        return updated;
     }
 
-    return updateIssue({
+    const updated = await updateIssue({
         issueId: existing.id,
         workerEngagementId: existing.workerEngagementId,
         newWorkerEngagementId,
@@ -353,6 +404,8 @@ export async function updateTaskInOrg(
         automation,
         ...sequenceFields,
     });
+    await invalidateTasksListCache(orgId);
+    return updated;
 }
 
 const HUMAN_READABLE_FIELDS = new Set([

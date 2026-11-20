@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
+import { invalidateTasksListCache } from "@/services/tasksListCache";
 import AppError from "@/utils/AppError";
 import { BAD_REQUEST } from "@/constants/http";
 
@@ -64,7 +65,7 @@ export async function saveDeactivationSchedule(params: {
         params.scheduledDeactivateAt === null
             ? null
             : validateSchedule(params.scheduledDeactivateAt);
-    return prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
         await lockDeactivation(tx, params.issueId);
         const issue = await tx.issue.findFirst({
             where: {
@@ -115,6 +116,8 @@ export async function saveDeactivationSchedule(params: {
             scheduledDeactivateAt: params.scheduledDeactivateAt,
         };
     });
+    await invalidateTasksListCache(params.organizationId);
+    return result;
 }
 
 // A crashed process releases its claim after ten minutes. Network calls are bounded.
@@ -124,7 +127,7 @@ export async function claimDeactivation(params: {
     actorUserId: string;
     scheduled?: boolean;
 }) {
-    return prisma.$transaction(async (tx) => {
+    const claimed = await prisma.$transaction(async (tx) => {
         await lockDeactivation(tx, params.issueId);
         const issue = await tx.issue.findFirst({
             where: {
@@ -176,6 +179,8 @@ export async function claimDeactivation(params: {
         });
         return { token, actorUserId };
     });
+    if (claimed) await invalidateTasksListCache(params.organizationId);
+    return claimed;
 }
 export async function finishDeactivation(params: {
     issueId: string;
@@ -185,10 +190,13 @@ export async function finishDeactivation(params: {
     message?: string;
     scheduled?: boolean;
 }) {
-    await prisma.$transaction(async (tx) => {
+    const orgId = await prisma.$transaction(async (tx) => {
         await lockDeactivation(tx, params.issueId);
         const issue = await tx.issue.findUniqueOrThrow({
             where: { id: params.issueId },
+            include: {
+                workerEngagement: { select: { organizationId: true } },
+            },
         });
         if (issue.deactivationClaimToken !== params.token)
             throw new Error("Deaktivierungsreservierung abgelaufen.");
@@ -241,5 +249,11 @@ export async function finishDeactivation(params: {
                 },
             },
         });
+        return (
+            issue.organizationId ??
+            issue.workerEngagement?.organizationId ??
+            null
+        );
     });
+    if (orgId) await invalidateTasksListCache(orgId);
 }

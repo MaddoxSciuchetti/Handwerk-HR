@@ -27,6 +27,7 @@ import {
     redactIntegrationSecrets,
     saveOrganizationIntegration,
 } from "@/services/integrations/store";
+import { invalidateTasksListCache } from "@/services/tasksListCache";
 import { assertOrgAdmin } from "@/utils/assertOrgOwner";
 import {
     saveDepartureMailSettings,
@@ -156,6 +157,7 @@ export const postIssueSequence = catchErrors(async (req, res) => {
             },
             data: { microsoftAccessGroupIds: accessGroupIds },
         });
+        await invalidateTasksListCache(req.orgId);
     }
     const result = await runIssueSequence({
         organizationId: req.orgId,

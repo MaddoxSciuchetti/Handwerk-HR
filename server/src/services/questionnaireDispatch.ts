@@ -22,6 +22,7 @@ import {
 import { completeMockQuestionnaire } from "@/services/questionnaireMock";
 import { primaryEmploymentContract } from "@/services/documentMaster.service";
 import { employmentContractFields, questionnaireForOrganization } from "@/services/questionnaireTemplate";
+import { invalidateTasksListCache } from "@/services/tasksListCache";
 import AppError from "@/utils/AppError";
 import { getQuestionnaireTemplate } from "@/utils/emailTemplates";
 import { sendMail } from "@/utils/sendMail";
@@ -246,6 +247,7 @@ export async function sendEngagementQuestionnaire(params: {
         }
     });
 
+    await invalidateTasksListCache(params.organizationId);
     return finishDispatch(
         engagement.worker.email,
         token,

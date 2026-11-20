@@ -9,6 +9,7 @@ import {
     NOT_LIVE_MESSAGE,
 } from "@/services/integrations/runtime";
 import { microsoftGraphToken } from "@/services/microsoft365Account";
+import { invalidateTasksListCache } from "@/services/tasksListCache";
 
 const GRAPH = "https://graph.microsoft.com/v1.0";
 export const WELCOME_MAIL_TASK_TITLE = "Willkommensmail an das Team";
@@ -273,6 +274,7 @@ async function closeWelcomeMailTask(params: {
     engagementId: string;
     actorUserId: string;
     workerId: string;
+    organizationId: string;
 }) {
     await prisma.$transaction(async (tx) => {
         await tx.worker.update({
@@ -303,6 +305,7 @@ async function closeWelcomeMailTask(params: {
             });
         }
     });
+    await invalidateTasksListCache(params.organizationId);
 }
 
 export async function microsoftGroupRecipientAddresses(
@@ -657,6 +660,7 @@ export async function sendTeamWelcomeMail(params: {
         engagementId: params.engagementId,
         actorUserId: params.actorUserId,
         workerId: worker.id,
+        organizationId: params.organizationId,
     });
     return { status: "sent" };
 }

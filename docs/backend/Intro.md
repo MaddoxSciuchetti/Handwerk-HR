@@ -13,7 +13,7 @@ Feel free to propose improvements to the pages below so this project stays maint
 
 ## Architecture
 
-- Information on top-level architecture choices (monolith, TypeScript, Express, Prisma, and why we skip WebSockets, Docker/K8s, and Redis) can be found [here](./architecture.md).
+- Information on top-level architecture choices (monolith, TypeScript, Express, Prisma, WebSockets/Docker choices, and optional Redis) can be found [here](./architecture.md).
 
 ## Hosting
 

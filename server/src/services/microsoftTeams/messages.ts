@@ -8,6 +8,7 @@ import {
 } from "@/services/integrations/runtime";
 import { applyEngagementMailTemplate } from "@/services/engagementMail";
 import { formatWelcomeEntryDate } from "@/services/welcomeMail";
+import { invalidateTasksListCache } from "@/services/tasksListCache";
 import {
     accessToken,
     assertActiveMember,
@@ -113,16 +114,17 @@ async function sendLock<T>(
         return fn(tx);
     });
 }
+/** Marks the issue done when every destination is sent. Returns true if status changed. */
 async function finishIfComplete(
     tx: Prisma.TransactionClient,
     actor: Actor,
     issueId: string,
     sendId: string,
-) {
+): Promise<boolean> {
     const remaining = await tx.teamsSendDestination.count({
         where: { sendId, status: { not: "sent" } },
     });
-    if (remaining) return;
+    if (remaining) return false;
     const issue = await tx.issue.findUniqueOrThrow({ where: { id: issueId } });
     await tx.teamsSend.update({
         where: { id: sendId },
@@ -141,6 +143,7 @@ async function finishIfComplete(
             newValue: { status: "done", sendId },
         },
     });
+    return true;
 }
 export async function sendTeams(
     actor: Actor,
@@ -386,7 +389,7 @@ export async function sendTeams(
             }
         }
     } finally {
-        await prisma.$transaction(async (tx) => {
+        const completed = await prisma.$transaction(async (tx) => {
             await tx.teamsSendDestination.updateMany({
                 where: { sendId: operation.id, status: "posting" },
                 data: {
@@ -409,8 +412,9 @@ export async function sendTeams(
                     },
                 },
             });
-            await finishIfComplete(tx, actor, issueId, operation.id);
+            return finishIfComplete(tx, actor, issueId, operation.id);
         });
+        if (completed) await invalidateTasksListCache(actor.organizationId);
     }
     return prisma.teamsSend.findUniqueOrThrow({
         where: { id: operation.id },
@@ -425,7 +429,7 @@ export async function reviewDestination(
     delivered: boolean,
 ) {
     await taskContext(actor, issueId);
-    return sendLock(issueId, async (tx) => {
+    const { result, completed } = await sendLock(issueId, async (tx) => {
         const op = await tx.teamsSend.findUnique({
             where: { issueId },
             include: includeDestinations,
@@ -468,10 +472,13 @@ export async function reviewDestination(
                 newValue: { sendId: op.id, destinationId, delivered },
             },
         });
-        await finishIfComplete(tx, actor, issueId, op.id);
-        return tx.teamsSend.findUniqueOrThrow({
+        const done = await finishIfComplete(tx, actor, issueId, op.id);
+        const result = await tx.teamsSend.findUniqueOrThrow({
             where: { id: op.id },
             include: includeDestinations,
         });
+        return { result, completed: done };
     });
+    if (completed) await invalidateTasksListCache(actor.organizationId);
+    return result;
 }
