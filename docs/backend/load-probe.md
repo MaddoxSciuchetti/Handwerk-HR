@@ -32,7 +32,7 @@ Change: Called `/tasks` with no seeded tasks (empty list for that organisation).
 | 500  | 1007     | 0%         | 10174 ms | 13987 ms | 40389 ms |
 | 1000 | 1409     | 7.6%       | 23317 ms | 31286 ms | 32270 ms |
 
-Observation: First errors appear at 1000 users. A few max times (at 20 and 500 users) are outliers and do not match the p95.
+Reasoning: First errors appear at 1000 users. A few max times (at 20 and 500 users) are outliers and do not match the p95.
 
 ## 100 seeded tasks
 
@@ -52,7 +52,7 @@ Change: Full task list with no special query joins, no pagination, and responses
 | 500  | 653      | 0.0%       | 27306 | 46868 | 49581 |
 | 1000 | 4017     | 77.9%      | 36599 | 61590 | 70408 |
 
-Observation: Returning the full task list is heavy. At 1000 users most requests fail (77.9%).
+Reasoning: Returning the full task list is heavy. At 1000 users most requests fail (77.9%).
 
 ### 2 — Faster related-data loading + pagination
 
@@ -68,7 +68,7 @@ Change: Load related task data with a single SQL join, and return tasks in pages
 | 500  | 790      | 0.0%       | 17160 | 23071 | 24842 |
 | 1000 | 1461     | 15.1%      | 31557 | 49187 | 53322 |
 
-Observation: Peak during this ladder: CPU ~99%, memory ~400 MB (~78% of 512 MB). Better than the true clean baseline at middle load; at 1000 users 15.1% of requests still fail.
+Reasoning: Peak during this ladder: CPU ~99%, memory ~400 MB (~78% of 512 MB). Better than the true clean baseline at middle load; at 1000 users 15.1% of requests still fail.
 
 ### 3 — Gzip on top of join + pagination
 
@@ -84,7 +84,7 @@ Change: Compress API responses (gzip) while the join and pagination from ladder 
 | 500  | 826      | 0.0%       | 15713 | 20473 | 23579 |
 | 1000 | 2747     | 52.3%      | 33176 | 44847 | 55263 |
 
-Observation: Peak during this ladder: CPU ~92%, memory ~501 MB (~98% of 512 MB).
+Reasoning: Peak during this ladder: CPU ~92%, memory ~501 MB (~98% of 512 MB).
 
 ### 4 — Gzip only (join and pagination reverted)
 
@@ -100,7 +100,7 @@ Change: Keep response compression; remove the join strategy and pagination so `/
 | 500  | 647      | 0.0%       | 28720 | 51604 | 58228 |
 | 1000 | 6721     | 89.2%      | 38170 | 58597 | 61136 |
 
-Observation: Peak during this ladder: CPU 100%, memory ~429 MB (~84% of 512 MB). Zero errors through 500 users; about 89% errors at 1000 users.
+Reasoning: Peak during this ladder: CPU 100%, memory ~429 MB (~84% of 512 MB). Zero errors through 500 users; about 89% errors at 1000 users.
 
 ### 5 — More database connections (pool max 20)
 
@@ -116,7 +116,7 @@ Change: Same gzip-only setup as ladder 4, but allow up to 20 Postgres connection
 | 500  | 653      | 0.0%       | 24803 | 43326 | 46806 |
 | 1000 | 6525     | 87.0%      | 34097 | 53200 | 57783 |
 
-Observation: Peak during this ladder: CPU 100%, memory ~470 MB (~92% of 512 MB). Zero errors through 500 users; about 87% errors at 1000 users.
+Reasoning: Peak during this ladder: CPU 100%, memory ~470 MB (~92% of 512 MB). Zero errors through 500 users; about 87% errors at 1000 users.
 
 ### 6 — Issue indexes added
 
@@ -132,7 +132,7 @@ Change: Add database indexes that help the task list query (including filters an
 | 500  | 639      | 0.0%       | 29652 | 50660 | 51971 |
 | 1000 | 7308     | 89.3%      | 32382 | 56124 | 59093 |
 
-Observation: Peak during this ladder: CPU 100%, memory ~484 MB (~95% of 512 MB).
+Reasoning: Peak during this ladder: CPU 100%, memory ~484 MB (~95% of 512 MB).
 
 ### 7 — Redis cache on `GET /tasks`
 
@@ -148,7 +148,7 @@ Change: Staging now keeps a short-lived copy of each organisation’s task list 
 | 500  | 711      | 0.0%       | 22161 | 39414 | 41986 |
 | 1000 | 8088     | 89.7%      | 30667 | 46104 | 54200 |
 
-Observation: Compared with ladder 6, middle load is faster and finishes more requests (for example at 100 users the median went from 7720 ms to 4879 ms; at 500 users requests went from 639 to 711). At 1000 users about 90% of requests still fail — login and subscription checks still run on every request, and the small staging machine is still the limit. Redis only speeds up the task-list database work, not everything else. CPU and memory peaks for this run were not recorded here.
+Reasoning: Compared with ladder 6, middle load is faster and finishes more requests (for example at 100 users the median went from 7720 ms to 4879 ms; at 500 users requests went from 639 to 711). At 1000 users about 90% of requests still fail — login and subscription checks still run on every request, and the small staging machine is still the limit. Redis only speeds up the task-list database work, not everything else. CPU and memory peaks for this run were not recorded here.
 
 ## Resource peaks (summary)
 
