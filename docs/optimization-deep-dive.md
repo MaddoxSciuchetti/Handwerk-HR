@@ -307,9 +307,7 @@ INP needs a real interaction; load-only benches leave it as n/a. These lab click
 
 ## Follow-ups #248–#252 — Round 3
 
-### Numbers
-
-Before = after my #224 (Round 2 After; INP from the [INP pass](#inp-after-both-prs) on 2026-11-16). After = staging lab average of 3 hard navigations per route on 2026-11-20 (Europe/Berlin).
+Change: Re-measure after the follow-up Decision/Reason items (#248–#252) in [Follow-up optimizations](#follow-up-optimizations) (sidebar intent preload, worker-row prefetch, SharePoint/shared search debounce, theme context split). Before = after my #224 (Round 2 After; INP from the [INP pass](#inp-after-both-prs) on 2026-11-16, production, single lab run). After = staging lab average of 3 hard navigations per route on 2026-11-20 (Europe/Berlin).
 
 Core vitals (ms; CLS unitless):
 
@@ -343,20 +341,4 @@ JS transferred (encoded bytes):
 
 Task poller in 16s: 1 → 1 on /worker-lifycycle and /cockpit.
 
-### Changes
-
-Sidebar intent preload: I set `preload="intent"` on left-sidebar Links (see [Follow-up optimizations](#follow-up-optimizations)). What happened: hard-load LCP on /cockpit and /settings/documents improved in this recheck; intent preload itself mainly helps the click-after-hover path, which this table does not isolate.
-
-Worker-row prefetch: I prefetch `workerQueries.taskData` on lifecycle row hover (see [Follow-up optimizations](#follow-up-optimizations)). What happened: /user/… warm LCP in runs 2–3 was ~818 ms (below Round 2’s 1076); the 3-run average stayed near baseline because run 1 was a cold outlier (1708 ms).
-
-SharePoint / shared search debounce: I raised SharePoint debounce to 300 ms and shared `useDebounce` for Teams and docs search (see [Follow-up optimizations](#follow-up-optimizations)). What happened: no isolated paint win in this load bench; INP stayed good (all under 200 ms). Typing chatter is the intended win, not first paint.
-
-Theme context split: I split document CSS theme sync from React theme controls (see [Follow-up optimizations](#follow-up-optimizations)). What happened: CLS stayed in the good band on every route; /settings/documents CLS moved 0.001 → 0.006 still good.
-
-### Description
-
-In Round 3 I re-measured after the follow-up Decision/Reason items (#248–#252) that continue the “keep the frontend light” work. Before is Round 2 After on production (single lab run). After is a 3-run average on staging so one noisy navigation does not decide the story.
-
-### Learning
-
-/cockpit and /settings/documents show clear FCP/LCP gains in this average (−217 ms / −175 ms LCP). /cockpit JS transferred dropped about 18%. /bestand stayed roughly flat. /user/… warm runs improved while the cold run kept the average near Round 2. /worker-lifycycle painted slower here than Round 2’s single production run — treat that as lab/host noise unless it repeats. The Round 1 poller change still held at 1 poll in 16s. Hard-load vitals understate preload/prefetch/debounce; those help navigation and typing more than cold LCP.
+Observation: /cockpit and /settings/documents show clear FCP/LCP gains in this average (−217 ms / −175 ms LCP). /cockpit JS transferred dropped about 18%. /bestand stayed roughly flat. /user/… warm LCP in runs 2–3 was ~818 ms (below Round 2’s 1076); the 3-run average stayed near baseline because run 1 was a cold outlier (1708 ms). /worker-lifycycle painted slower here than Round 2’s single production run — treat that as lab/host noise unless it repeats. CLS stayed in the good band on every route; INP stayed good (all under 200 ms). The Round 1 poller change still held at 1 poll in 16s. Hard-load vitals understate preload/prefetch/debounce; those help navigation and typing more than cold LCP.
