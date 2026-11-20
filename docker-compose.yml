@@ -1,0 +1,16 @@
+# Local Postgres for Handwerk-HR. Not used in staging/production (Render Managed Postgres).
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: handwerk
+      POSTGRES_PASSWORD: handwerk
+      POSTGRES_DB: handwerk_hr
+    volumes:
+      - handwerk_hr_pg:/var/lib/postgresql/data
+
+volumes:
+  handwerk_hr_pg:
