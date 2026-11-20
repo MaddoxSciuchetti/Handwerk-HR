@@ -25,3 +25,15 @@ Reason: I can read Prisma’s syntax much better than writing a lot of raw SQL b
 Decision: The SPA talks to the API with HTTP JSON and cookies. No GraphQL or gRPC.
 
 Reason: Client and backend stay separate apps, so they need a clear boundary. The browser calls the API over HTTP, sends and gets JSON, and keeps the session in cookies. That is enough for this product: one SPA, one API, Zod on the server for bodies. GraphQL or gRPC would add more moving parts between client and backend without a strong reason right now.
+
+Decision: No WebSockets for live updates. The SPA keeps using normal HTTP (and short polling where a screen must refresh).
+
+Reason: Task notices and similar messages are not sent often enough to need an always-open socket. Request/response HTTP already covers create, list, and update. A WebSocket layer would add connection state, reconnect logic, and a second transport to secure and monitor, without a clear product win for this app today.
+
+Decision: No Docker or Kubernetes for how we run the API.
+
+Reason: This is one API. Auth, tasks, documents, billing, and integrations all live in that same service. Containers and an orchestrator help when you split many services, scale them separately, or treat identical images as the main delivery path. Here Render already builds and hosts the single Express process; Docker/K8s would mostly add ops surface without changing that shape.
+
+Decision: No Redis. Short-lived cache and rate-limit counters stay in the API process; Postgres stays the source of truth.
+
+Reason: We run one Express instance. The Cockpit org snapshot uses a small in-memory TTL cache, and `express-rate-limit` keeps counters in process. That is enough at this scale. Redis would be another host, another bill, and another failure mode — useful when several API instances must share cache or rate limits, or when we need a job queue / pub-sub bus. We are not there yet.

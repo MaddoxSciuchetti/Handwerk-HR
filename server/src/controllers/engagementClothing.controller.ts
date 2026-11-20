@@ -3,6 +3,7 @@ import {
     createEngagementClothingSchema,
     returnEngagementClothingSchema,
 } from "@/schemas/engagementClothing.schemas";
+import { invalidateCockpitCache } from "@/services/cockpit.service";
 import {
     createEngagementClothing,
     deleteEngagementClothing,
@@ -49,27 +50,36 @@ export const listEngagementClothingHandler = catchErrors(
 
 export const postEngagementClothing = catchErrors(
     async (req: Request, res: Response) => {
+        const clothingScope = scope(req);
         const input = parseBody(createEngagementClothingSchema, req.body);
-        const data = await createEngagementClothing(scope(req), input);
+        const data = await createEngagementClothing(clothingScope, input);
+        invalidateCockpitCache(clothingScope.organizationId);
         return res.status(CREATED).json({ success: true, data });
     },
 );
 
 export const returnEngagementClothingHandler = catchErrors(
     async (req: Request, res: Response) => {
+        const clothingScope = scope(req);
         const input = parseBody(returnEngagementClothingSchema, req.body);
         const data = await returnEngagementClothing(
-            scope(req),
+            clothingScope,
             param(req, "clothingId"),
             input.quantity,
         );
+        invalidateCockpitCache(clothingScope.organizationId);
         return res.status(OK).json({ success: true, data });
     },
 );
 
 export const removeEngagementClothing = catchErrors(
     async (req: Request, res: Response) => {
-        await deleteEngagementClothing(scope(req), param(req, "clothingId"));
+        const clothingScope = scope(req);
+        await deleteEngagementClothing(
+            clothingScope,
+            param(req, "clothingId"),
+        );
+        invalidateCockpitCache(clothingScope.organizationId);
         return res.status(OK).json({ success: true });
     },
 );

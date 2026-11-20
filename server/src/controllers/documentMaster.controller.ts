@@ -2,11 +2,14 @@ import { generateDocumentPdf } from "@/services/documentPdf";
 import { resolveCurrentDateValues } from "../../../shared/document";
 import { BAD_REQUEST, CREATED, NO_CONTENT, OK } from "@/constants/http";
 import {
+  getCockpitData,
+  invalidateCockpitCache,
+} from "@/services/cockpit.service";
+import {
   createDocumentMaster,
   deleteDocumentMaster,
   duplicateDocumentMaster,
   getDocumentMaster,
-  listDocumentMasters,
   setPrimaryDocumentMaster,
   updateDocumentMaster,
 } from "@/services/documentMaster.service";
@@ -43,8 +46,8 @@ function requireName(name: string): string {
 
 export const listMasters = catchErrors(async (req, res) => {
   appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
-  const masters = await listDocumentMasters(req.orgId);
-  return res.status(OK).json(masters);
+  const { documents } = await getCockpitData(req.orgId);
+  return res.status(OK).json(documents);
 });
 
 async function persistImportedMaster(params: {
@@ -109,6 +112,7 @@ export const createMaster = catchErrors(async (req, res) => {
     name,
     file,
   });
+  invalidateCockpitCache(req.orgId);
 
   return res.status(CREATED).json(master);
 });
@@ -156,6 +160,7 @@ export const importSharePointMaster = catchErrors(async (req, res) => {
     name,
     file,
   });
+  invalidateCockpitCache(actor.organizationId);
 
   return res.status(CREATED).json(master);
 });
@@ -195,6 +200,7 @@ export const updateMaster = catchErrors(async (req, res) => {
     revision: body.revision,
     approved: body.approved === true,
   });
+  invalidateCockpitCache(req.orgId);
 
   return res.status(OK).json(master);
 });
@@ -202,12 +208,14 @@ export const updateMaster = catchErrors(async (req, res) => {
 export const deleteMaster = catchErrors(async (req, res) => {
   appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
   await deleteDocumentMaster(param(req.params.id), req.orgId);
+  invalidateCockpitCache(req.orgId);
   return res.status(NO_CONTENT).send();
 });
 
 export const duplicateMaster = catchErrors(async (req, res) => {
   appAssert(req.orgId, BAD_REQUEST, "Organisation fehlt.");
   const master = await duplicateDocumentMaster(param(req.params.id), req.orgId);
+  invalidateCockpitCache(req.orgId);
   return res.status(CREATED).json(master);
 });
 
@@ -217,6 +225,7 @@ export const setPrimaryMaster = catchErrors(async (req, res) => {
     param(req.params.id),
     req.orgId,
   );
+  invalidateCockpitCache(req.orgId);
   return res.status(OK).json(master);
 });
 

@@ -4,6 +4,7 @@ import { requireCronSecret } from "./middleware/requireCronSecret";
 import dotenv from "dotenv";
 dotenv.config();
 
+import compression from "compression";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
@@ -15,6 +16,10 @@ import * as Sentry from "@sentry/node";
 import { accessLogMiddleware } from "./middleware/accessLog.middleware";
 import authenticate from "./middleware/authenticate";
 import errorHandler from "./middleware/errorHandler";
+import {
+    authLimiter,
+    globalLimiter,
+} from "./middleware/rateLimit.middleware";
 import { requestIdMiddleware } from "./middleware/requestId.middleware";
 import { sentryContextMiddleware } from "./middleware/sentryContext.middleware";
 import requireSubscriptionAccess from "./middleware/requireSubscriptionAccess";
@@ -36,14 +41,20 @@ import { templateRoutes } from "./routes/template.route";
 import testRoutes from "./routes/test.route";
 import { userRoutes } from "./routes/user.route";
 import { clothingStockRoutes } from "./routes/clothingStock.route";
+import { cockpitRoutes } from "./routes/cockpit.route";
 import { worker } from "./routes/worker.route";
 import { startReturnedContractPolling } from "./services/signedContractReturn.service";
 
 const app = express();
 
+// Render (and local proxies) terminate TLS; need the real client IP for rate limits.
+app.set("trust proxy", 1);
+
 app.use(requestIdMiddleware);
 app.use(sentryContextMiddleware);
 app.use(accessLogMiddleware);
+// Gzip JSON and other compressible responses (e.g. paginated /tasks).
+app.use(compression());
 
 app.post(
     "/webhooks/resend",
@@ -81,6 +92,8 @@ app.post(
     stripeWebhookHandler,
 );
 
+app.use(globalLimiter);
+
 app.get("/", (req, res) => {
     res.send("here");
 });
@@ -90,7 +103,7 @@ app.post("/internal/cron/anniversary-reminders", requireCronSecret, postAnnivers
 
 app.use("/test", testRoutes);
 
-app.use("/auth", authRoutes);
+app.use("/auth", authLimiter, authRoutes);
 app.get("/document-fonts/:filename", getDocumentFont);
 app.use(
     "/automation",
@@ -114,6 +127,7 @@ app.use("/employee", authenticate, requireSubscriptionAccess, employeeRoutes);
 app.use("/index", authenticate, requireSubscriptionAccess, indexRoutes);
 
 app.use("/worker", authenticate, requireSubscriptionAccess, worker);
+app.use("/cockpit", authenticate, requireSubscriptionAccess, cockpitRoutes);
 app.use(
     "/clothing-stock",
     authenticate,
