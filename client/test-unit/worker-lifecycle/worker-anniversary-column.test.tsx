@@ -203,6 +203,32 @@ it('adds birthday and entry-date columns and keeps remaining options available',
   ).not.toBeInTheDocument();
 });
 
+it('removes an added column and returns it to the add menu', async () => {
+  const user = userEvent.setup();
+  renderWithProviders(<WorkerLifeCycle />);
+  await addColumn('Birthday');
+  expect(
+    screen.getByRole('columnheader', { name: /Birthday/ })
+  ).toBeInTheDocument();
+  expect(
+    within(workerRow('Alex Example')).getByText('13.12.1998')
+  ).toBeInTheDocument();
+
+  await user.click(screen.getByRole('button', { name: 'Remove column' }));
+
+  expect(
+    screen.queryByRole('columnheader', { name: /Birthday/ })
+  ).not.toBeInTheDocument();
+  expect(
+    within(workerRow('Alex Example')).queryByText('13.12.1998')
+  ).not.toBeInTheDocument();
+
+  await openAddColumn();
+  expect(
+    screen.getByRole('menuitem', { name: 'Birthday' })
+  ).toBeInTheDocument();
+});
+
 it('sorts the added column ascending then descending', async () => {
   const user = userEvent.setup();
   renderWithProviders(<WorkerLifeCycle />);

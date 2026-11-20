@@ -84,3 +84,33 @@ it('keeps the saved extra-column order when restoring preferences', () => {
   const { result } = renderHook(() => useWorkerTablePrefs('user-a', 'org-a'));
   expect(result.current.extraColumns).toEqual(['entryDate', 'birthday']);
 });
+
+it('removes an extra column and clears sort when that column was active', () => {
+  const { result } = renderHook(() => useWorkerTablePrefs('user-a', 'org-a'));
+
+  act(() => {
+    result.current.addExtraColumn('birthday');
+  });
+  act(() => {
+    result.current.addExtraColumn('anniversary');
+  });
+  act(() => {
+    result.current.toggleColumnSort('birthday');
+  });
+  expect(result.current.extraColumns).toEqual(['birthday', 'anniversary']);
+  expect(result.current.columnSort).toEqual({
+    column: 'birthday',
+    direction: 'asc',
+  });
+
+  act(() => {
+    result.current.removeExtraColumn('birthday');
+  });
+
+  expect(result.current.extraColumns).toEqual(['anniversary']);
+  expect(result.current.columnSort).toBeNull();
+  expect(JSON.parse(localStorage.getItem(storageKey())!)).toEqual({
+    extraColumns: ['anniversary'],
+    columnSort: null,
+  });
+});
