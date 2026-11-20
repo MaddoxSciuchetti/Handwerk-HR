@@ -13,7 +13,7 @@ Feel free to propose improvements to the pages below so this project stays maint
 
 ## Architecture
 
-- Information on top-level architecture choices (monolith, TypeScript, Express, Prisma, and why we skip WebSockets, Docker/K8s, and Redis) can be found [here](./architecture.md).
+- Information on top-level architecture choices (monolith, TypeScript, Express, Prisma, WebSockets/Docker choices, and optional Redis) can be found [here](./architecture.md).
 
 ## Hosting
 
@@ -46,7 +46,7 @@ Feel free to propose improvements to the pages below so this project stays maint
 
 ### Performance & Scaling
 
-- Information on the concurrent-user load probe (how to run it and staging results) can be found [here](./load-probe.md).
+- Information on the concurrent-user load probe (how to run it and staging results), including gzip and the Cockpit 30s server TTL cache, can be found [here](./load-probe.md).
 - Information on the database analysis scripts we ran (`EXPLAIN ANALYZE` before and after indexing) can be found [here](../database/performance.md).
 
 ### Observability
