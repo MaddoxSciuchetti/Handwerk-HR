@@ -108,7 +108,7 @@ export async function createWorker(params: CreateWorkerInput) {
     phoneNumber = parsed.value ?? undefined;
   }
 
-  return prisma.$transaction(async (tx) => {
+  const created = await prisma.$transaction(async (tx) => {
     const worker = await tx.worker.create({
       data: {
         organizationId,
@@ -155,6 +155,11 @@ export async function createWorker(params: CreateWorkerInput) {
 
     return { worker, engagement, issuesCreated };
   });
+
+  if (created.issuesCreated > 0) {
+    await invalidateTasksListCache(organizationId);
+  }
+  return created;
 }
 
 function placeholderNamesFromEmail(email: string) {
@@ -670,7 +675,7 @@ export async function deleteWorkers(params: {
   const workerIds = [...new Set(params.workerIds)];
   if (!workerIds.length) return { count: 0 };
 
-  return withTxRetry(async (tx) => {
+  const result = await withTxRetry(async (tx) => {
     const owned = await tx.worker.findMany({
       where: { id: { in: workerIds }, organizationId },
       select: { id: true },
@@ -684,6 +689,10 @@ export async function deleteWorkers(params: {
       where: { id: { in: workerIds }, organizationId },
     });
   });
+
+  // Cascaded issue deletes leave the org tasks list cache stale until TTL.
+  await invalidateTasksListCache(organizationId);
+  return result;
 }
 
 export async function deleteWorker(params: DeleteWorkerInput) {
@@ -853,7 +862,12 @@ export async function deleteEngagement(params: {
   const { engagementId, workerId, organizationId } = params;
   await assertOwnership(workerId, organizationId);
 
-  return prisma.workerEngagement.delete({ where: { id: engagementId } });
+  const deleted = await prisma.workerEngagement.delete({
+    where: { id: engagementId },
+  });
+  // Engagement delete cascades issues; clear shared tasks list cache.
+  await invalidateTasksListCache(organizationId);
+  return deleted;
 }
 
 export async function createIssue(params: CreateIssueInput) {

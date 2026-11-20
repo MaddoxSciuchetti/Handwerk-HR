@@ -7,7 +7,7 @@ import { sendMail } from "@/utils/sendMail";
 jest.mock("@/lib/prisma", () => ({
     prisma: {
         issue: { findFirst: jest.fn(), findMany: jest.fn() },
-        issueMention: { upsert: jest.fn() },
+        issueMention: { upsert: jest.fn(), findMany: jest.fn() },
         comment: { findFirst: jest.fn(), create: jest.fn(), update: jest.fn() },
         user: { findFirst: jest.fn(), findMany: jest.fn() },
     },
@@ -16,6 +16,12 @@ jest.mock("@/lib/prisma", () => ({
 jest.mock("@/services/worker.service", () => ({
     createIssue: jest.fn(),
     updateIssue: jest.fn(),
+}));
+
+jest.mock("@/services/tasksListCache", () => ({
+    readTasksListCache: jest.fn().mockResolvedValue(null),
+    writeTasksListCache: jest.fn().mockResolvedValue(undefined),
+    invalidateTasksListCache: jest.fn(),
 }));
 
 jest.mock("@/utils/sendMail", () => ({
@@ -143,22 +149,35 @@ describe("task mention comments", () => {
 describe("task mention badges", () => {
     it("marks the original task for the current viewer without exposing comment recipients", async () => {
         const findTasks = prisma.issue.findMany as jest.Mock;
+        const findMentions = prisma.issueMention.findMany as jest.Mock;
         findTasks.mockResolvedValue([
-            { ...sourceIssue, assigneeUserId: "someone-else", mentions: [{ id: "mention-1" }] },
-            { id: "other-task", mentions: [] },
+            { ...sourceIssue, assigneeUserId: "someone-else" },
+            { id: "other-task" },
         ]);
+        findMentions.mockResolvedValue([{ issueId: "issue-1" }]);
 
         const tasks = await queryTasks("org-1", "coworker");
 
+        // Shared list query stays viewer-agnostic (safe to cache across users).
         expect(findTasks).toHaveBeenCalledWith(expect.objectContaining({
             where: expect.objectContaining({ assigneeOnly: false }),
-            include: expect.objectContaining({
-                mentions: { where: { userId: "coworker", seenAt: null }, select: { id: true }, take: 1 },
+            include: expect.not.objectContaining({ mentions: expect.anything() }),
+        }));
+        expect(findMentions).toHaveBeenCalledWith(expect.objectContaining({
+            where: expect.objectContaining({
+                userId: "coworker",
+                seenAt: null,
+                issueId: { in: ["issue-1", "other-task"] },
             }),
         }));
         expect(tasks).toEqual([
-            { ...sourceIssue, assigneeUserId: "someone-else", mentioned: true },
-            { id: "other-task", mentioned: false },
+            expect.objectContaining({
+                ...sourceIssue,
+                assigneeUserId: "someone-else",
+                mentioned: true,
+            }),
+            expect.objectContaining({ id: "other-task", mentioned: false }),
         ]);
+        expect(tasks[0]).not.toHaveProperty("mentions");
     });
 });
