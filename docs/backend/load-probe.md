@@ -20,7 +20,7 @@ All ladders below used seed admin login, baseline mode, fifteen seconds per VU l
 
 ## Empty task list
 
-Change: Unchanged `/tasks` with an empty org task list (no 100-task seed). This is the table that reached `main` first.
+Change: Called `/tasks` with no seeded tasks (empty list for that organisation). This is the first table that reached `main`.
 
 | VUs  | Requests | Error rate | p50      | p95      | max      |
 | ---- | -------- | ---------- | -------- | -------- | -------- |
@@ -32,15 +32,15 @@ Change: Unchanged `/tasks` with an empty org task list (no 100-task seed). This 
 | 500  | 1007     | 0%         | 10174 ms | 13987 ms | 40389 ms |
 | 1000 | 1409     | 7.6%       | 23317 ms | 31286 ms | 32270 ms |
 
-Observation: First errors at 1000 VUs. Max outliers at 20/500 are not typical of the p95.
+Observation: First errors appear at 1000 users. A few max times (at 20 and 500 users) are outliers and do not match the p95.
 
 ## 100 seeded tasks
 
-Unless noted, each run below used one hundred seeded tasks. These six tables lived on `staging` and were missing from `main` until restored into this page.
+Unless noted, each run below used one hundred seeded tasks. These tables lived on `staging` and were missing from `main` until restored into this page.
 
 ### 1 — Clean baseline (100 tasks, no optimizations)
 
-Change: Full task list with no Prisma join strategy, no pagination, and no gzip (`Accept-Encoding: identity`). Confirmed 100 tasks (~116 KB). Ran 2026-11-19 on staging. Staging still had pool max 20.
+Change: Full task list with no special query joins, no pagination, and responses sent without gzip compression. Confirmed 100 tasks (~116 KB response). Database connection pool was still max 20.
 
 | VUs  | Requests | Error rate | p50   | p95   | max   |
 | ---- | -------- | ---------- | ----- | ----- | ----- |
@@ -52,11 +52,11 @@ Change: Full task list with no Prisma join strategy, no pagination, and no gzip 
 | 500  | 653      | 0.0%       | 27306 | 46868 | 49581 |
 | 1000 | 4017     | 77.9%      | 36599 | 61590 | 70408 |
 
-Observation: Full-list payload is heavy. Errors explode at 1000 VUs (77.9%).
+Observation: Returning the full task list is heavy. At 1000 users most requests fail (77.9%).
 
-### 2 — Prisma relationLoadStrategy join + cursor pagination
+### 2 — Faster related-data loading + pagination
 
-Change: Join strategy and cursor pagination on `/tasks` (page 50 / max 100; probe hits first page only). Source: staging `docs/performance.md` (`74ede853`). Earlier docs wrongly reused this table as “clean baseline.”
+Change: Load related task data with a single SQL join, and return tasks in pages (50 per page, max 100). The probe only hits the first page.
 
 | VUs  | Requests | Error rate | p50   | p95   | max   |
 | ---- | -------- | ---------- | ----- | ----- | ----- |
@@ -68,11 +68,11 @@ Change: Join strategy and cursor pagination on `/tasks` (page 50 / max 100; prob
 | 500  | 790      | 0.0%       | 17160 | 23071 | 24842 |
 | 1000 | 1461     | 15.1%      | 31557 | 49187 | 53322 |
 
-Observation: Peak during this ladder: CPU ~99%, memory ~400 MB (~78% of 512 MB). Better than the true clean baseline at mid load; 1000 VU errors still 15.1%.
+Observation: Peak during this ladder: CPU ~99%, memory ~400 MB (~78% of 512 MB). Better than the true clean baseline at middle load; at 1000 users 15.1% of requests still fail.
 
 ### 3 — Gzip on top of join + pagination
 
-Change: Express `compression()` enabled while join and pagination were still active.
+Change: Compress API responses (gzip) while the join and pagination from ladder 2 were still active.
 
 | VUs  | Requests | Error rate | p50   | p95   | max   |
 | ---- | -------- | ---------- | ----- | ----- | ----- |
@@ -84,11 +84,11 @@ Change: Express `compression()` enabled while join and pagination were still act
 | 500  | 826      | 0.0%       | 15713 | 20473 | 23579 |
 | 1000 | 2747     | 52.3%      | 33176 | 44847 | 55263 |
 
-Obsevation: Peak during this ladder: CPU ~92%, memory ~501 MB (~98% of 512 MB).
+Observation: Peak during this ladder: CPU ~92%, memory ~501 MB (~98% of 512 MB).
 
 ### 4 — Gzip only (join and pagination reverted)
 
-Change: Gzip kept; join strategy and pagination removed. Zero errors through 500 VUs; about 89% errors at 1000 VUs.
+Change: Keep response compression; remove the join strategy and pagination so `/tasks` returns the full list again.
 
 | VUs  | Requests | Error rate | p50   | p95   | max   |
 | ---- | -------- | ---------- | ----- | ----- | ----- |
@@ -100,11 +100,11 @@ Change: Gzip kept; join strategy and pagination removed. Zero errors through 500
 | 500  | 647      | 0.0%       | 28720 | 51604 | 58228 |
 | 1000 | 6721     | 89.2%      | 38170 | 58597 | 61136 |
 
-Observation: Peak during this ladder: CPU 100%, memory ~429 MB (~84% of 512 MB).
+Observation: Peak during this ladder: CPU 100%, memory ~429 MB (~84% of 512 MB). Zero errors through 500 users; about 89% errors at 1000 users.
 
-### 5 — Postgres pool max 20
+### 5 — More database connections (pool max 20)
 
-Change: Same gzip-only stack with the Prisma/`pg` pool raised to max 20 and a 10s connection timeout. Zero errors through 500 VUs; about 87% errors at 1000 VUs.
+Change: Same gzip-only setup as ladder 4, but allow up to 20 Postgres connections with a 10 second connection timeout.
 
 | VUs  | Requests | Error rate | p50   | p95   | max   |
 | ---- | -------- | ---------- | ----- | ----- | ----- |
@@ -116,11 +116,11 @@ Change: Same gzip-only stack with the Prisma/`pg` pool raised to max 20 and a 10
 | 500  | 653      | 0.0%       | 24803 | 43326 | 46806 |
 | 1000 | 6525     | 87.0%      | 34097 | 53200 | 57783 |
 
-Observation: Peak during this ladder: CPU 100%, memory ~470 MB (~92% of 512 MB).
+Observation: Peak during this ladder: CPU 100%, memory ~470 MB (~92% of 512 MB). Zero errors through 500 users; about 87% errors at 1000 users.
 
 ### 6 — Issue indexes added
 
-Change: Indexes on `assigneeOnly`, `(createdAt, id)`, `(organizationId, createdAt)`, and `(workerEngagementId, createdAt)` on top of the pool-tuned gzip-only stack.
+Change: Add database indexes that help the task list query (including filters and sort by creation time), on top of the pool-tuned gzip-only stack from ladder 5.
 
 | VUs  | Requests | Error rate | p50   | p95   | max   |
 | ---- | -------- | ---------- | ----- | ----- | ----- |
@@ -136,7 +136,7 @@ Observation: Peak during this ladder: CPU 100%, memory ~484 MB (~95% of 512 MB).
 
 ### 7 — Redis cache on `GET /tasks`
 
-Change: Staging now keeps a short-lived copy of each organisation’s task list in Redis (kept for 15 seconds, cleared when a task is created, updated, or deleted). Mention badges for the current user are still loaded from Postgres after that. Same probe settings as ladder 6 (100 seeded tasks, seed admin, baseline, 15s/VU). Ran 2026-11-20 (Europe/Berlin afternoon).
+Change: Staging now keeps a short-lived copy of each organisation’s task list in Redis (kept for 15 seconds, cleared when a task is created, updated, or deleted). Mention badges for the current user are still loaded from Postgres after that. Same probe settings as ladder 6 (100 seeded tasks, seed admin, baseline, 15s per user level).
 
 | VUs  | Requests | Error rate | p50   | p95   | max   |
 | ---- | -------- | ---------- | ----- | ----- | ----- |
