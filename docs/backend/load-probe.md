@@ -134,9 +134,9 @@ Change: Indexes on `assigneeOnly`, `(createdAt, id)`, `(organizationId, createdA
 
 Observation: Peak during this ladder: CPU 100%, memory ~484 MB (~95% of 512 MB).
 
-### 7 — Redis read-through cache on `GET /tasks`
+### 7 — Redis cache on `GET /tasks`
 
-Change: Org-level Redis/Valkey cache for the shared issue list (`tasks:list:org:{orgId}`, 15s TTL + invalidate on writes), with viewer mention overlay after the cache. Staging API wired to internal `REDIS_URL` on Key Value `bsb-tasks-cache-staging` (`allkeys-lru`). Same probe settings as ladder 6 (100 seeded tasks, seed admin, baseline, 15s/VU). Ran 2026-11-20 Europe/Berlin afternoon.
+Change: Staging now keeps a short-lived copy of each organisation’s task list in Redis (kept for 15 seconds, cleared when a task is created, updated, or deleted). Mention badges for the current user are still loaded from Postgres after that. Same probe settings as ladder 6 (100 seeded tasks, seed admin, baseline, 15s/VU). Ran 2026-11-20 (Europe/Berlin afternoon).
 
 | VUs  | Requests | Error rate | p50   | p95   | max   |
 | ---- | -------- | ---------- | ----- | ----- | ----- |
@@ -148,7 +148,7 @@ Change: Org-level Redis/Valkey cache for the shared issue list (`tasks:list:org:
 | 500  | 711      | 0.0%       | 22161 | 39414 | 41986 |
 | 1000 | 8088     | 89.7%      | 30667 | 46104 | 54200 |
 
-Observation: Versus ladder 6, mid-load p50/p95 and completed requests improve (e.g. 100 VU p50 7720→4879 ms; 500 VU requests 639→711). At 1000 VUs errors stay ~90% — auth/subscription and Starter CPU still dominate; Redis only shrinks the tasks-query slice. Render CPU/memory peaks for this window were not pulled via CLI; expect similar saturation as ladder 6.
+Observation: Compared with ladder 6, middle load is faster and finishes more requests (for example at 100 users the median went from 7720 ms to 4879 ms; at 500 users requests went from 639 to 711). At 1000 users about 90% of requests still fail — login and subscription checks still run on every request, and the small staging machine is still the limit. Redis only speeds up the task-list database work, not everything else. CPU and memory peaks for this run were not recorded here.
 
 ## Resource peaks (summary)
 
@@ -160,7 +160,7 @@ Observation: Versus ladder 6, mid-load p50/p95 and completed requests improve (e
 | 4 — Gzip only                | 100%     | ~429 MB (84%) |
 | 5 — Pool max 20              | 100%     | ~470 MB (92%) |
 | 6 — Issue indexes            | 100%     | ~484 MB (95%) |
-| 7 — Redis `/tasks` cache     | n/a (CLI)| n/a (CLI)     |
+| 7 — Redis `/tasks` cache     | not recorded | not recorded |
 
 ## Conclusion
 
