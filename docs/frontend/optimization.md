@@ -1,12 +1,16 @@
-# Optimization Deep Dive — PRs #223 and #224
+# Optimization Deep Dive — PRs #223, #224, and follow-ups #248–#252
 
 Production: https://frontendv2-x54r.onrender.com
 
-PRs: [#223](https://github.com/MaddoxSciuchetti/Handwerk-HR/pull/223), [#224](https://github.com/MaddoxSciuchetti/Handwerk-HR/pull/224)
+Staging (Round 3 lab): https://bsb-onboarding-frontend-staging.onrender.com
+
+PRs: [#223](https://github.com/MaddoxSciuchetti/Handwerk-HR/pull/223), [#224](https://github.com/MaddoxSciuchetti/Handwerk-HR/pull/224), [#248](https://github.com/MaddoxSciuchetti/Handwerk-HR/pull/248), [#249](https://github.com/MaddoxSciuchetti/Handwerk-HR/pull/249), [#250](https://github.com/MaddoxSciuchetti/Handwerk-HR/pull/250), [#251](https://github.com/MaddoxSciuchetti/Handwerk-HR/pull/251), [#252](https://github.com/MaddoxSciuchetti/Handwerk-HR/pull/252)
 
 Round 1 = before my #223 vs after my #223.
 
 Round 2 = after my #223 vs after my #224.
+
+Round 3 = after my #224 vs after follow-ups #248–#252 (see [Follow-up optimizations](#follow-up-optimizations)).
 
 Routes: /worker-lifycycle, /cockpit, /bestand, /settings/documents, /user/…
 
@@ -298,3 +302,43 @@ This pass only fills the missing INP column on current production after both PRs
 ### Learning
 
 INP needs a real interaction; load-only benches leave it as n/a. These lab clicks all stayed under 200 ms on current production.
+
+---
+
+## Follow-ups #248–#252 — Round 3
+
+Change: Re-measure after the follow-up Decision/Reason items (#248–#252) in [Follow-up optimizations](#follow-up-optimizations) (sidebar intent preload, worker-row prefetch, SharePoint/shared search debounce, theme context split). Before = after my #224 (Round 2 After; INP from the [INP pass](#inp-after-both-prs) on 2026-11-16, production, single lab run). After = staging lab average of 3 hard navigations per route on 2026-11-20 (Europe/Berlin).
+
+Core vitals (ms; CLS unitless):
+
+| Route               | Before FCP | After FCP | Before LCP | After LCP | Before CLS | After CLS |
+| ------------------- | ---------: | --------: | ---------: | --------: | ---------: | --------: |
+| /worker-lifycycle   |        180 |       377 |        180 |       377 |      0.000 |     0.000 |
+| /cockpit            |        528 |       323 |        692 |       475 |      0.001 |     0.001 |
+| /bestand            |        464 |       429 |        464 |       429 |      0.002 |     0.003 |
+| /settings/documents |        504 |       329 |        504 |       329 |      0.001 |     0.006 |
+| /user/…             |        720 |       500 |       1076 |      1115 |      0.000 |     0.000 |
+
+INP (ms):
+
+| Route               | Before | After |
+| ------------------- | -----: | ----: |
+| /worker-lifycycle   |     40 |    53 |
+| /cockpit            |     24 |    45 |
+| /bestand            |     24 |    32 |
+| /settings/documents |     32 |    43 |
+| /user/…             |     16 |    43 |
+
+JS transferred (encoded bytes):
+
+| Route               | Before |  After |
+| ------------------- | -----: | -----: |
+| /worker-lifycycle   | 340168 | 357605 |
+| /cockpit            | 361582 | 295583 |
+| /bestand            | 301439 | 313197 |
+| /settings/documents | 307016 | 321595 |
+| /user/…             | 388850 | 409499 |
+
+Task poller in 16s: 1 → 1 on /worker-lifycycle and /cockpit.
+
+Observation: /cockpit and /settings/documents show clear FCP/LCP gains in this average (−217 ms / −175 ms LCP). /cockpit JS transferred dropped about 18%. /bestand stayed roughly flat. /user/… warm LCP in runs 2–3 was ~818 ms (below Round 2’s 1076); the 3-run average stayed near baseline because run 1 was a cold outlier (1708 ms). /worker-lifycycle painted slower here than Round 2’s single production run — treat that as lab/host noise unless it repeats. CLS stayed in the good band on every route; INP stayed good (all under 200 ms). The Round 1 poller change still held at 1 poll in 16s. Hard-load vitals understate preload/prefetch/debounce; those help navigation and typing more than cold LCP.
