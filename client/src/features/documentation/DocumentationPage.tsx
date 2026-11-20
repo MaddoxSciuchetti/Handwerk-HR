@@ -168,6 +168,9 @@ export default function DocumentationPage() {
         themeSwitch={{ enabled: false }}
         sidebar={{
           defaultOpenLevel: 1,
+          // Keep the nav in its grid column. Collapsible mode slides an
+          // absolute panel over the article instead of reserving space.
+          collapsible: false,
           footer: (
             <div className="flex justify-end">
               <ThemeSwitch mode="light-dark" />

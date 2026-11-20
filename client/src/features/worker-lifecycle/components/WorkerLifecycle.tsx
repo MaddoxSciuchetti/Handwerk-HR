@@ -45,6 +45,7 @@ import { useChangeResponsibleUser } from '../hooks/useChangeResponsibleUser';
 import { WorkerTypeFilter } from './WorkerTypeFilter';
 import { WorkerTable } from './WorkerTable';
 import { AddWorkerColumn } from './AddWorkerColumn';
+import { RemoveWorkerColumn } from './RemoveWorkerColumn';
 import { WorkerColumnSortButton } from './WorkerColumnSortButton';
 
 function WorkerLifeCycle() {
@@ -91,8 +92,13 @@ function WorkerLifeCycle() {
     pendingResponsible.size > 0;
   const { employees, isTeamMode, selectedTypes, filteredWorkers, toggleType } =
     useWorkerFilter(workers, user?.id, user?.organizationId);
-  const { extraColumns, columnSort, addExtraColumn, toggleColumnSort } =
-    useWorkerTablePrefs(user?.id, user?.organizationId);
+  const {
+    extraColumns,
+    columnSort,
+    addExtraColumn,
+    removeExtraColumn,
+    toggleColumnSort,
+  } = useWorkerTablePrefs(user?.id, user?.organizationId);
   const availableExtraColumns = EXTRA_WORKER_COLUMN_OPTIONS.filter(
     (option) => !extraColumns.includes(option.id)
   );
@@ -347,7 +353,7 @@ function WorkerLifeCycle() {
                       return (
                         <TableHead
                           key={option.id}
-                          className={`relative py-3 pl-2 ${showAdd ? 'pr-10' : 'pr-2'} ${stickyTableHeadClassName(headerScrolled)}`}
+                          className={`group/column relative py-3 pl-2 ${showAdd ? 'pr-10' : 'pr-2'} ${stickyTableHeadClassName(headerScrolled)}`}
                         >
                           <span className="inline-flex items-center">
                             {option.headerLabel}
@@ -355,6 +361,10 @@ function WorkerLifeCycle() {
                               column={option.id}
                               sort={columnSort}
                               onToggle={toggleColumnSort}
+                            />
+                            <RemoveWorkerColumn
+                              columnId={option.id}
+                              onRemove={removeExtraColumn}
                             />
                           </span>
                           {showAdd && (
