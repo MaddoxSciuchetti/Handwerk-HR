@@ -2,7 +2,7 @@
 
 > 💡 **Tip — read this before you push**
 >
-> When having push access to this repository,thoroughly read through the entire codebase. Start with the documentation meta entry, then open the area you need:
+> When having push access to this repository, thoroughly read through the entire codebase. Start with the documentation meta entry, then open the area you need:
 >
 > - Meta entry [docs/docs.md](./docs/docs.md)
 > - Clean code & testing [intro](./docs/clean-code-testing/intro.md)
@@ -10,392 +10,112 @@
 > - Backend [intro](./docs/backend/Intro.md)
 > - Frontend [intro](./docs/frontend/Intro.md)
 
-The folder `docs/` holds contributor readmes. `docs.md` is the single entry into clean code, database, backend, and frontend. Each of those pages links on to the detailed files for that area. Production Postgres runs on **Render Managed Postgres**. If you decide to use an Agent, please include `docs/` in the context.
-
-High level folder architecture
+The folder `docs/` holds contributor documentation. [`docs/docs.md`](./docs/docs.md) is the single entry into clean code, database, backend, and frontend. Each intro page links on to the detailed files for that area. If you use an agent, include `docs/` in the context.
 
 ```
-client/          React + Vite frontend
-server/          Express + Prisma backend
+client/              React + Vite frontend
+server/              Express + Prisma backend
+docker-compose.yml   Local Postgres for Quick start
 docs/
-  docs.md                Meta entry
-  database/              Database entry + pages
-  backend/               Backend entry
-  frontend/              Frontend entry
-  clean-code-testing/    Clean code entry + pages
-  pgbench/               Benchmark queries
+  docs.md            Meta entry
+  database/          Database intro + pages
+  backend/           Backend intro + pages
+  frontend/          Frontend intro + pages
+  clean-code-testing/ Clean code intro + pages
 ```
 
-## Observability
+## Quick start (local)
 
-The API uses structured logging and OpenTelemetry tracing (`requestId` / `traceId` in Render logs). Sentry covers API and client exceptions when DSNs are set. Start from `docs/backend/Intro.md` for logging (`logging.md`) and the SE observability write-up (`observability.md`).
+Install these before you begin:
 
-## Prerequisites
+| Requirement | Why |
+| ----------- | --- |
+| Node.js 20+ and npm | Run the API and the React client |
+| Docker Desktop | Runs the local Postgres database via `docker compose` |
 
-- Node.js 20+
-- npm
-- A PostgreSQL database (local Docker/Postgres, or **Render Managed Postgres** in staging/production)
-- `psql` if you want to inspect the DB directly
+You do **not** need `psql`, Resend, Stripe, or a `client/.env` file for this setup.
 
-## Environment variables
+Do these four steps in order from a clean clone. Do not skip steps. Do not substitute hosts.
 
-Create a `.env` file in `server/`.
+**Host rule (required):** always open the app and call the API as `localhost`. Do **not** use `127.0.0.1`. The login cookie is `SameSite=Lax`; `localhost` and `127.0.0.1` are different sites, so mixing them makes login fail after the first request.
 
-`npm install` in `server/` runs `prisma generate`, which only needs `DATABASE_URL` in `.env` (via `prisma.config.ts`).
+### 1. Start Postgres
 
-To run the API (`npm run dev`), set all of the following (see `server/src/constants/env.ts`):
-
-```
-DATABASE_URL=postgresql://user:password@host:5432/dbname
-PORT=3000
-NODE_ENV=development
-FRONTEND_URL=http://localhost:5173
-APP_ORIGIN=http://localhost:5173
-JWT_SECRET=<random string>
-JWT_REFRESH_SECRET=<random string>
-EMAIL_SENDER=no-reply@example.com
-RESEND_API_KEY=<your Resend key; a placeholder only works if you do not send email>
-STRIPE_SECRET_KEY=<Stripe secret key, or sk_test_ placeholder for local if unused>
-STRIPE_WEBHOOK_SECRET=<Stripe webhook signing secret, or whsec_ placeholder for local>
-# Optional observability:
-# LOG_LEVEL=info
-# OTEL_EXPORTER_OTLP_ENDPOINT=https://otlp.example.com/v1/traces
-```
-
-If any of these are unset at runtime, the server throws a generic `Missing environment variable` error (the key name is not repeated in the message).
-
-### Sending real emails locally
-
-Email delivery is available in development, staging and production. The shared
-sender is `server/src/utils/sendMail.ts`; it does not restrict delivery by
-`NODE_ENV`.
-
-For local Resend delivery, configure `server/.env`:
-
-```dotenv
-NODE_ENV=development
-USE_MICROSOFT_MAIL=false
-QUESTIONNAIRE_MOCK_RESPONSES=false
-RESEND_API_KEY=<your real Resend API key>
-EMAIL_SENDER=<sender address authorized for your Resend account>
-```
-
-Restart the API after changing these settings. A placeholder API key or example
-sender address is sufficient for starting the server, but cannot deliver email.
-`QUESTIONNAIRE_MOCK_RESPONSES=true` skips questionnaire email delivery and submits
-sample answers instead, regardless of environment (see below). With
-`USE_MICROSOFT_MAIL=true`, the shared sender uses Microsoft Graph instead of Resend.
-
-Questionnaire links use `FRONTEND_URL`. With a localhost URL, open those links on
-the same computer running the frontend.
-
-### Integrations and automations locally
-
-Integration settings and automation selection are available locally. Configure
-these backend settings in `server/.env`, then restart the API:
-
-```dotenv
-INTEGRATION_SECRET_KEY=<persistent random secret used to encrypt integration credentials>
-INTEGRATIONS_LIVE=true
-```
-
-Generate the encryption key once, for example with
-`node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`.
-Keep that value stable and outside Git: changing it makes saved credentials
-unreadable. When using an existing database with encrypted integration credentials,
-use its existing encryption key.
-
-As an organization administrator, open **Einstellungen → Integrationen**, enter
-the provider credentials, activate the integration and save. Automation selection
-requires the relevant integration to be active. Execution also requires complete
-credentials and `INTEGRATIONS_LIVE=true`; this flag is independent of `NODE_ENV`
-and permits real provider actions, including account changes and messages.
-Microsoft Teams additionally requires the employee's Microsoft connection.
-
-### Microsoft mail token renewal
-
-For automatic Microsoft Graph mail authentication, configure these on the backend:
-
-```env
-USE_MICROSOFT_MAIL=true
-MICROSOFT_365_TENANT_ID=<Microsoft tenant ID>
-MICROSOFT_365_CLIENT_ID=<application client ID>
-MICROSOFT_365_CLIENT_SECRET=<client secret value>
-# Optional fallback when no sender is selected for the operation:
-MICROSOFT_GRAPH_MAILBOX=<sender mailbox address>
-```
-
-The mail service obtains an application token, caches it in memory, and renews it
-on the next mail operation starting one minute before expiry. Concurrent operations
-share token acquisition. A Graph 401 triggers one renewal and one retry of the
-rejected request; timeouts, permission failures and other errors are not retried.
-No periodic timer or user sign-in is needed. Client secrets still need rotation
-before their own expiration.
-
-Grant the Entra application Microsoft Graph **application** permissions
-`Mail.ReadWrite` and `Mail.Send` with administrator consent, and access to the
-sender mailbox. This service creates a draft before sending to retain conversation
-tracking. A questionnaire's selected sender overrides `MICROSOFT_GRAPH_MAILBOX`.
-Application authentication requires an explicit mailbox and cannot use `/me`.
-
-These credentials must be backend environment variables; the organization credentials
-saved under Settings → Integrations serve the separate account/workflow integration.
-When all three application credential variables are absent, the legacy
-`MICROSOFT_GRAPH_TOKEN` remains supported but cannot renew itself. Application
-credentials take precedence over that static token; incomplete credentials fail
-rather than silently falling back. Restart/redeploy after changing the environment.
-
-### Integration credentials and staging tests
-
-The API requires `INTEGRATION_SECRET_KEY` to encrypt saved Microsoft client secrets
-and Crewmeister tokens, including dummy credentials on staging. Generate a random
-key (for example, `openssl rand -hex 32`), set it in the backend service's runtime
-environment, and restart the API. Keep the key stable across deployments; changing
-it makes existing saved secrets unreadable. Use a separate key for each environment.
-
-Saving only checks that required fields are filled; it does not authenticate with
-Microsoft or Crewmeister. Placeholder values can test saving and reloading settings.
-They cannot test a real provider connection.
-
-`INTEGRATIONS_LIVE` defaults to off. Credentials can still be saved, but sequences
-are blocked rather than simulated. To test actual provider operations on staging,
-use valid credentials for dedicated test accounts/tenants and explicitly set
-`INTEGRATIONS_LIVE=true` on that API service. This enables real provider requests,
-including account changes and emails, for all organizations using that service.
-
-For Microsoft workflow tests without real credentials, set this on the staging
-**backend** and restart/redeploy the API:
-
-```env
-MICROSOFT_SIMULATION=true
-INTEGRATIONS_LIVE=false
-```
-
-Enable Microsoft under Integrationen and save; credential fields may be left
-empty in simulation. If you enter a secret, storing it still requires
-`INTEGRATION_SECRET_KEY`. Configure mail templates with a test sender such as
-`admin@staging.example.test`, select one of the sample teams, and save the subject
-and message. Microsoft account creation/deactivation and onboarding/offboarding
-team emails can then be run through their normal task sequences.
-
-The UI shows Testmodus. Accounts use `staging.example.test` and simulated external
-IDs. Microsoft requests and account password emails are not sent. Sequences still
-update staging employee data, sent markers, task completion, and audit history;
-use disposable staging records. This does not simulate other providers or document
-delivery through Resend. Crewmeister remains subject to `INTEGRATIONS_LIVE`.
-
-Crewmeister employee creation uses the web application's V2
-`POST /api/v2/crew/{crewId}/invite/with-email` flow, which creates or reuses the
-login account and sends Crewmeister's invitation. The application does not generate
-or email a Crewmeister password. V3 membership reads verify the crew, employee
-email, user link, and enabled state before the task succeeds. Existing active
-members are reused without another invitation; disabled members require manual
-reactivation. V2 is legacy, so retain coverage for this endpoint until a supported
-V3 invitation replacement is available. An `INVITED` membership confirms setup,
-not email delivery or acceptance.
-
-Crewmeister also supports the `crewmeister_deactivate_account` sequence
-("Konto deaktivieren"). It matches the employee's email within the configured
-crew, verifies the member identity, and sets `disabled: true` through
-`PATCH /api/v3/platform-app/members/{id}`. A readback must confirm deactivation
-before the task completes and the local external-account status becomes disabled.
-Already disabled members are confirmed without another write. This preserves the
-membership and employee records; it does not delete the global login account.
-Deploy the `20261027193000_crewmeister_deactivation` database migration before
-saving tasks or templates using this sequence.
-
-Crewmeister's separate `crewmeister_delete_membership` action ("Mitgliedschaft
-entfernen") uses the documented `DELETE /api/v3/platform-app/members/{id}`
-operation. It requires an explicitly deactivated membership, matches crew and email,
-rechecks the member identity, and verifies a synchronous deletion receipt and an
-empty membership lookup before clearing the matching local external-account link.
-The individual task and template confirmation show a permanent-removal warning and
-require explicit acknowledgement. This removes a membership record, including one
-created by a pending invitation; it does not delete the global User, and the API
-does not document whether previously emailed invitation links are invalidated.
-Crewmeister can deny the operation when the token lacks deletion permissions.
-There is no documented invitation-only revoke/resend operation in the current V3
-Platform specification. A subsequent account-creation task can invite the same email
-when no membership remains. Existing completed tasks are never resent automatically.
-Deploy migration `20261028083000_crewmeister_delete_membership` before using this
-action. Ordinary offboarding continues to use deactivation.
-
-Simulation takes precedence over live Microsoft execution even if
-`INTEGRATIONS_LIVE=true`. Unknown simulated Graph operations fail without network
-access. Remove `MICROSOFT_SIMULATION` or set it to `false` and restart to return to
-normal Microsoft behavior. Keep simulation off in production.
-
-### Simulated questionnaire replies
-
-Set `QUESTIONNAIRE_MOCK_RESPONSES=true` in `server/.env` (or your staging API's
-runtime environment), then restart the API. The default is off.
-
-Create onboarding with an email, then click **Senden** in the questionnaire dialog.
-The dialog shows **Testmodus**. No questionnaire email is sent: sample answers are
-submitted immediately through the normal validation/completion handler. This
-updates worker information, fills matching contract fields and creates the normal
-contract print task. Continue reviewing and preparing the contract as usual.
-
-The mock uses the actual sent form, respects prefilled values and supports custom
-questions. Names are derived from the email; address, birthday and other values
-are synthetic. Required file questions receive a generated test PDF through the
-normal upload path, so they require the usual working storage configuration.
-Contract templates and PDF preparation still use their usual configuration.
-
-Set the flag to `false` or remove it and restart the API to restore real email
-delivery. Test records remain ordinary saved onboarding records. This server-wide
-flag affects all questionnaire sends in that API environment; leave it off in
-production.
-
-Optional in `client/.env` if the API isn't on `localhost:3000`:
-
-```
-VITE_API_URL=http://localhost:3000
-```
-
-## First-time setup
+From the **repository root**:
 
 ```bash
-# from repo root
-cd server && npm install
+docker compose up -d
+```
+
+Wait a few seconds so Postgres accepts connections (the compose file has no healthcheck). This creates Postgres at `localhost:5432` with:
+
+| Setting  | Value         |
+| -------- | ------------- |
+| User     | `handwerk`    |
+| Password | `handwerk`    |
+| Database | `handwerk_hr` |
+
+### 2. Create the API env file
+
+From the **repository root**, copy the example file. Do **not** edit it for the standard setup.
+
+```bash
+cp server/.env.example server/.env
+```
+
+**Required:** `server/.env` (created by the command above). Without it the API will not start.
+
+**Do not create** `client/.env` for this Quick start. The client already defaults to `http://localhost:3000`.
+
+### 3. Install dependencies, apply migrations, seed the admin user
+
+```bash
+cd server
+npm install
 npx prisma migrate deploy --schema=src/prisma/schema.prisma
 npx prisma generate --schema=src/prisma/schema.prisma
-
-cd ../client && npm install
+npx prisma db seed
+cd ../client
+npm install
 ```
 
-`migrate deploy` applies every migration in `server/src/prisma/migrations/` to the database pointed at by `DATABASE_URL`. Use `migrate dev` instead while developing schema changes.
+| Command | Purpose |
+| ------- | ------- |
+| `npm install` (server) | Installs API packages and generates the Prisma client |
+| `prisma migrate deploy` | Creates all application tables in Postgres |
+| `prisma generate` | Ensures the Prisma client matches the schema |
+| `prisma db seed` | Creates the demo organization and admin user in the database |
+| `npm install` (client) | Installs frontend packages |
 
-## Task-driven onboarding and offboarding completion
+Seed only writes the user into Postgres. You cannot log in yet — that happens after step 4, when the API and client are running.
 
-Deploy migration `20261028200000_task_driven_engagement_completion` with the
-application update. It replaces existing “Erwartet” statuses with “Ausstehend”
-and reconciles task completion. Onboarding and offboarding become “Abgeschlossen”
-when every task is closed (`done`, `cancelled`, or `not_applicable`), without
-requiring an emailed contract return. Empty records stay pending. Reopening or
-adding an open task reopens completed work and clears its completion date.
-Cancelled engagements and team records retain their status.
+### 4. Start API and client, then log in
 
-PostgreSQL triggers enforce this for manual edits, automations, bulk changes,
-task moves and deletions. Keep these triggers when changing task write paths.
+Open **two new terminals**. In each one, `cd` to the **repository root** first (`Handwerk-HR`), then run the commands below. Both processes must stay running before you open the browser.
 
-## Run locally
-
-Two terminals.
+**Terminal 1 — API (port 3000):**
 
 ```bash
-# terminal 1 — backend on :3000
 cd server
 npm run dev
 ```
 
+**Terminal 2 — client (port 5173):**
+
 ```bash
-# terminal 2 — frontend on :5173
 cd client
 npm run dev
 ```
 
-Open `http://localhost:5173`.
+Then open this URL only:
 
-### Documentation
+`http://localhost:5173`
 
-Open `http://localhost:5173/docs` or choose **Dokumentation** in the app sidebar.
-The documentation runs inside the existing Vite client and ships in the same
-`client/dist` build. It does not require Next.js, a second server, or a separate
-hosting service. Nested documentation URLs use the same SPA fallback as the app.
+Sign in with exactly these credentials (created by the seed in step 3):
 
-Edit MDX pages in `client/src/features/documentation/content/`. Each directory's
-`meta.json` controls navigation order. Vite compiles the pages, frontmatter, and
-table of contents at build time; full-text search runs locally in the browser.
-Each page has a bottom **Seite öffnen** card to copy Markdown or open ChatGPT / Claude; it can be collapsed.
+| Field    | Value               |
+| -------- | ------------------- |
+| Email    | `admin@example.com` |
+| Password | `Admin123!`         |
 
-Validate documentation changes from `client/` with `npm run lint`,
-`npm run typecheck`, and `npm run build`.
-
-Document PDFs (contracts, Arbeitszeugnis, master previews) render **in-process**
-via `@react-pdf/renderer`. Ensure `DOCUMENT_FONT_DIR` points at the TTF bundle
-(defaults to `server/document-fonts` in development). No separate PDF Docker
-service is required — `npm run dev` is enough.
-
-PDF visual checks require Poppler (`pdftoppm` and `pdftotext`). Run them from
-`server/` with `DOCUMENT_FONT_DIR=./document-fonts npm run test:pdf-visual`.
-They verify text coverage, page placement, absolute text coordinates, and then
-compare aligned rasters. The layout checks render two different field values
-through the real engine without mocking PDF output.
-
-## Common scripts
-
-Backend (`server/`):
-
-| Command                                | Purpose                                                     |
-| -------------------------------------- | ----------------------------------------------------------- |
-| `npm run dev`                          | Run the API with tsx in watch mode                          |
-| `npm run test:pdf-visual`              | Compare native PDFs to Chromium text geometry and rasters   |
-| `npm run test:pdf-layout`              | Check real PDF spacing, labels, fields, logos, and counters |
-| `npm run build`                        | Bundle to `dist/index.js` with esbuild                      |
-| `npm start`                            | Run the built bundle                                        |
-| `npm run prisma:generate`              | Regenerate the Prisma client after schema changes           |
-| `npx prisma migrate dev --name <desc>` | Create + apply a new migration                              |
-| `npx prisma migrate deploy`            | Apply pending migrations (CI / production)                  |
-| `npm test`                             | Full Jest suite (`src`, `test-unit`, `test-integration`)    |
-| `npm run test:unit`                    | Jest tests under `test-unit` (same scope as PR CI)          |
-
-Frontend (`client/`):
-
-| Command                 | Purpose                          |
-| ----------------------- | -------------------------------- |
-| `npm run dev`           | Vite dev server                  |
-| `npm run build`         | Production build                 |
-| `npm run preview`       | Serve the production build       |
-| `npm run test:unit`     | Vitest unit tests (`test-unit/`) |
-| `npm run test:coverage` | Vitest unit tests + coverage     |
-
-## Database changes
-
-1. Edit `server/src/prisma/schema.prisma`.
-2. `npx prisma migrate dev --name describe_the_change` — generates and applies a migration.
-3. Commit the new folder under `server/src/prisma/migrations/`.
-
-For raw SQL changes (triggers, check constraints, anything Prisma can't express in the schema), use `--create-only` to scaffold an empty migration, then write the SQL by hand and run `npx prisma migrate dev` to apply it.
-
-## Production / Render
-
-**Deploy is Render auto-deploy**, not a GitHub Actions job. When a branch that a Render web service tracks updates (for example after a merge to `main` or `staging`), Render builds and ships that service.
-
-On each API deploy the order is (Render: build → pre-deploy → start):
-
-1. **Build** — `npm run build`. A failed build never reaches migrate.
-2. **Pre-deploy** — `npm run migrate:deploy` (Prisma `migrate deploy`) applies pending migrations to the service’s `DATABASE_URL` **once, after build and before** the new process starts.
-3. **Start** — `npm start`.
-
-Commit migration folders with the app change; you do not run production migrations from your laptop or from Actions. Full CI → CD picture: [`docs/backend/ci.cd.md`](docs/backend/ci.cd.md). Set the same environment variables listed above in the Render service config.
-
-### Local template integration simulation
-
-Set `INTEGRATIONS_MOCK=true` in `server/.env` and restart the local API
-(`cd server && npm run dev`). This mode requires `NODE_ENV=development`;
-production and tests ignore the flag. Set it to `false` and restart to use the
-normal integrations again.
-
-Select a template and click **Automatisierung starten**. Demo Microsoft mailboxes,
-groups, and Teams channels are available without credentials. Choose a sender
-and recipients/channels for mail and Teams tasks as usual. Automated tasks stay
-in progress for about ten seconds, then receive simulated successful results.
-The popup shows elapsed time and progress; task statuses and the application
-receipt are saved through the normal database flow. Manual tasks remain
-open. No Microsoft or Crewmeister API is called by the template application in
-this mode. This flag mocks template applications and their selection lookups;
-other integration actions retain their usual behavior.
-
-For repeated local demos, `VITE_INTEGRATIONS_MOCK=true` in `client/.env` keeps the
-bottom template picker available after completion. Each fresh selection creates
-another task batch for that employee, including when switching templates. This
-requires the server mock above; normal deployments keep the one-application
-restriction. Existing demo tasks are retained.
-
-### Questionnaire and password mail
-
-With `USE_MICROSOFT_MAIL=true`, the questionnaire and the new Microsoft account
-password mail are sent through Microsoft Graph. Both use the signed-in user's
-email address as the sender, including on staging. The signed-in address has to
-be an active organization mailbox.
+In-app documentation: `http://localhost:5173/docs`, or **Dokumentation** in the sidebar.
