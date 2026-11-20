@@ -80,10 +80,7 @@ function writePrefs(key: string | null, prefs: WorkerTablePrefs) {
   }
 }
 
-export function useWorkerTablePrefs(
-  userId?: string,
-  organizationId?: string
-) {
+export function useWorkerTablePrefs(userId?: string, organizationId?: string) {
   const storageKey = storageKeyFor(organizationId, userId);
   const [selection, setSelection] = useState(() => ({
     key: storageKey,
@@ -105,6 +102,17 @@ export function useWorkerTablePrefs(
     writePrefs(storageKey, next);
   };
 
+  const removeExtraColumn = (id: ExtraWorkerColumnId) => {
+    if (!storageKey) return;
+    if (!prefs.extraColumns.includes(id)) return;
+    const extraColumns = prefs.extraColumns.filter((column) => column !== id);
+    const columnSort =
+      prefs.columnSort?.column === id ? null : prefs.columnSort;
+    const next = { ...prefs, extraColumns, columnSort };
+    setSelection({ key: storageKey, prefs: next });
+    writePrefs(storageKey, next);
+  };
+
   const toggleColumnSort = (column: WorkerSortColumnId) => {
     if (!storageKey) return;
     const columnSort = nextExtraColumnSort(prefs.columnSort, column);
@@ -117,6 +125,7 @@ export function useWorkerTablePrefs(
     extraColumns: prefs.extraColumns,
     columnSort: prefs.columnSort,
     addExtraColumn,
+    removeExtraColumn,
     toggleColumnSort,
   };
 }
