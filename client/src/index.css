@@ -28,6 +28,17 @@
   --color-fd-popover: hsl(0 0% 100%);
 }
 
+/*
+ * Docs sidebar must reserve its grid column on desktop. Fumadocs sets
+ * --fd-sidebar-width via a `layout:` variant on a child; if that misses,
+ * the absolute aside still paints over the article at content width.
+ */
+@media (width >= 768px) {
+  #nd-docs-layout {
+    --fd-sidebar-width: 268px;
+  }
+}
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 @utility no-scrollbar {

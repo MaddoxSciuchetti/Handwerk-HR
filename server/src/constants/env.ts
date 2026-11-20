@@ -86,6 +86,8 @@ export const LOG_LEVEL = process.env.LOG_LEVEL?.trim() ?? "";
 export const OTEL_EXPORTER_OTLP_ENDPOINT =
     process.env.OTEL_EXPORTER_OTLP_ENDPOINT?.trim() ?? "";
 export const SENTRY_DSN = process.env.SENTRY_DSN?.trim() ?? "";
+/** Optional Redis/Valkey URL for GET /tasks list cache. Empty disables Redis. */
+export const REDIS_URL = process.env.REDIS_URL?.trim() ?? "";
 export const MICROSOFT_TEAMS_REDIRECT_URI =
     process.env.MICROSOFT_TEAMS_REDIRECT_URI?.trim() ?? "";
 

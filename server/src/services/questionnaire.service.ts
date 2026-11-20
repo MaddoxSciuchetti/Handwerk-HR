@@ -8,6 +8,7 @@ import { fileQuestionnaireAnswers } from "@/services/questionnaireFiles.service"
 import { matchQuestionnaireToContract } from "@/services/contractFieldMatchAi";
 import { readDocumentSegments } from "@/services/documentBody";
 import { persistMatchedContractValues } from "@/services/employmentContract.service";
+import { invalidateTasksListCache } from "@/services/tasksListCache";
 import {
     definitionFields,
     definitionRepeaters,
@@ -204,12 +205,14 @@ export async function submitPublicQuestionnaire(token: string, body: unknown) {
               )
             : null;
 
+    let claimedSubmission = false;
     await prisma.$transaction(async (tx) => {
         const claimed = await tx.questionnaireSubmission.updateMany({
             where: { id: submission.id, status: "sent" },
             data: { status: "completed", completedAt: new Date() },
         });
         if (claimed.count === 0) return;
+        claimedSubmission = true;
 
         await tx.questionnaireAnswer.createMany({
             data: flattenQuestionnaireAnswers(
@@ -284,6 +287,9 @@ export async function submitPublicQuestionnaire(token: string, body: unknown) {
         }
     });
 
+    if (claimedSubmission) {
+        await invalidateTasksListCache(submission.engagement.organizationId);
+    }
     return { status: "completed" as const };
 }
 

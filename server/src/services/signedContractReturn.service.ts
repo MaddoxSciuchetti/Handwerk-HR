@@ -9,6 +9,7 @@ import {
     graphMailConfigured,
 } from "@/services/graphMail";
 import { organizationMailToken } from "@/services/organizationMailToken";
+import { invalidateTasksListCache } from "@/services/tasksListCache";
 import AppError from "@/utils/AppError";
 import type { Prisma } from "@prisma/client";
 
@@ -53,7 +54,12 @@ async function storeSignedPdf(params: {
     });
 }
 
-async function openConfirmTask(engagementId: string, actorUserId: string) {
+async function openConfirmTask(
+    engagementId: string,
+    actorUserId: string,
+    organizationId: string,
+) {
+    let created = false;
     await prisma.$transaction(async (tx) => {
         const existing = await tx.issue.findFirst({
             where: { workerEngagementId: engagementId, kind: "contract_confirm" },
@@ -96,7 +102,9 @@ async function openConfirmTask(engagementId: string, actorUserId: string) {
                 title: CONFIRM_TASK_TITLE,
             },
         });
+        created = true;
     });
+    if (created) await invalidateTasksListCache(organizationId);
 }
 
 const CONTRACT_TOKEN = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -111,6 +119,7 @@ const waitingContractSelect = {
     engagement: {
         select: {
             id: true,
+            organizationId: true,
             workerId: true,
             responsibleUserId: true,
             issues: {
@@ -187,6 +196,7 @@ export async function ingestResendContractReply(params: {
     await openConfirmTask(
         contract.engagement.id,
         contract.engagement.responsibleUserId,
+        contract.engagement.organizationId,
     );
 }
 
@@ -358,6 +368,7 @@ export async function pollReturnedContracts() {
             await openConfirmTask(
                 contract.engagement.id,
                 contract.engagement.responsibleUserId,
+                contract.engagement.organizationId,
             );
         } catch (error) {
             console.error(
@@ -491,4 +502,5 @@ export async function confirmReturnedEmploymentContract(params: {
     });
 
     if (!claimedConfirmation) return;
+    await invalidateTasksListCache(params.organizationId);
 }

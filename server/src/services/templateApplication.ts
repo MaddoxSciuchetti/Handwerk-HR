@@ -24,6 +24,7 @@ import {
 import { sendTeams } from "./microsoftTeams/messages";
 import { connectionStatus } from "./microsoftTeams/connection";
 import { normalizeAccessGroupIds } from "./microsoft365/accessGroups";
+import { invalidateTasksListCache } from "./tasksListCache";
 import { randomUUID, createHash } from "node:crypto";
 
 const recipient = z.object({
@@ -492,7 +493,8 @@ export async function applyTemplateApplication(
             applicationId: receipt.id,
             tasks: await applicationTasks(receipt.issueIds, context.organizationId),
         };
-        const outcomes: Outcome[] = [];
+    await invalidateTasksListCache(context.organizationId);
+    const outcomes: Outcome[] = [];
     if (input.runAutomation) {
         const issues = await prisma.issue.findMany({
             where: { id: { in: receipt.issueIds } },
